@@ -18,8 +18,8 @@ vi.mock('../workspaceApi', async () => {
 });
 
 import { TeresaProposalCard } from '../TeresaProposalCard';
-import * as workspaceApi from '../workspaceApi';
 import type { WorkspaceAiProposal } from '../workspaceApi';
+import * as workspaceApi from '../workspaceApi';
 
 const mockedCreateIntent = vi.mocked(workspaceApi.createIntent);
 const mockedDecideProposal = vi.mocked(workspaceApi.decideProposal);
@@ -111,11 +111,15 @@ describe('TeresaProposalCard', () => {
     // Step 1: accept (decide) — still must NOT commit by itself.
     mockedDecideProposal.mockResolvedValue(proposal({ status: 'accepted' }));
     fireEvent.click(screen.getByRole('button', { name: /^accept$/i }));
-    await waitFor(() => expect(mockedDecideProposal).toHaveBeenCalledWith('proposal-1', { decision: 'accept' }));
+    await waitFor(() =>
+      expect(mockedDecideProposal).toHaveBeenCalledWith('proposal-1', { decision: 'accept' })
+    );
     expect(mockedCommitProposal).not.toHaveBeenCalled();
 
     // Step 2: a SEPARATE, explicit "Apply" click actually commits.
-    mockedCommitProposal.mockResolvedValue(proposal({ status: 'accepted', committedAt: '2026-08-01T00:00:00Z' }));
+    mockedCommitProposal.mockResolvedValue(
+      proposal({ status: 'accepted', committedAt: '2026-08-01T00:00:00Z' })
+    );
     const applyButton = await screen.findByRole('button', { name: /^apply$/i });
     expect(applyButton).not.toBeDisabled();
     fireEvent.click(applyButton);

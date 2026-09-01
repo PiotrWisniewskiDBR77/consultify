@@ -64,10 +64,10 @@ import logger from '../../utils/Logger.js';
 import { withPgTransaction } from '../../utils/queryHelpers.js';
 import {
   type CapabilityRegistryEntry,
-  type RegisterCapabilityInput,
   getCapabilityVersion,
   recordIdempotencyKeyCheck,
   registerCapability,
+  type RegisterCapabilityInput,
 } from './capabilityRegistryService.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
@@ -368,10 +368,18 @@ export const internalCommandAdapter: CapabilityAdapter = {
   kind: 'INTERNAL',
   async execute(envelope, binding) {
     if (binding.kind !== 'INTERNAL') {
-      return { ok: false, errorCode: 'CAPABILITY_INTERNAL_ERROR', errorDetail: 'binding_kind_mismatch' };
+      return {
+        ok: false,
+        errorCode: 'CAPABILITY_INTERNAL_ERROR',
+        errorDetail: 'binding_kind_mismatch',
+      };
     }
     if (binding.validateInput && !binding.validateInput(envelope.payload)) {
-      return { ok: false, errorCode: 'CAPABILITY_INPUT_INVALID', errorDetail: 'input_schema_rejected' };
+      return {
+        ok: false,
+        errorCode: 'CAPABILITY_INPUT_INVALID',
+        errorDetail: 'input_schema_rejected',
+      };
     }
 
     const timeoutMs = envelope.timeoutMs ?? binding.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -433,10 +441,18 @@ export const httpApiCapabilityAdapter: CapabilityAdapter = {
   kind: 'HTTP_API',
   async execute(envelope, binding) {
     if (binding.kind !== 'HTTP_API') {
-      return { ok: false, errorCode: 'CAPABILITY_INTERNAL_ERROR', errorDetail: 'binding_kind_mismatch' };
+      return {
+        ok: false,
+        errorCode: 'CAPABILITY_INTERNAL_ERROR',
+        errorDetail: 'binding_kind_mismatch',
+      };
     }
     if (binding.validateInput && !binding.validateInput(envelope.payload)) {
-      return { ok: false, errorCode: 'CAPABILITY_INPUT_INVALID', errorDetail: 'input_schema_rejected' };
+      return {
+        ok: false,
+        errorCode: 'CAPABILITY_INPUT_INVALID',
+        errorDetail: 'input_schema_rejected',
+      };
     }
 
     let parsedUrl: URL;
@@ -446,7 +462,11 @@ export const httpApiCapabilityAdapter: CapabilityAdapter = {
       return { ok: false, errorCode: 'CAPABILITY_UNAVAILABLE', errorDetail: 'binding_url_invalid' };
     }
     if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
-      return { ok: false, errorCode: 'CAPABILITY_UNAVAILABLE', errorDetail: 'binding_url_scheme_rejected' };
+      return {
+        ok: false,
+        errorCode: 'CAPABILITY_UNAVAILABLE',
+        errorDetail: 'binding_url_scheme_rejected',
+      };
     }
 
     const timeoutMs = envelope.timeoutMs ?? binding.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -497,7 +517,10 @@ export const httpApiCapabilityAdapter: CapabilityAdapter = {
       if (rawBody.trim()) {
         try {
           const parsed = JSON.parse(rawBody);
-          output = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : { value: parsed };
+          output =
+            parsed && typeof parsed === 'object'
+              ? (parsed as Record<string, unknown>)
+              : { value: parsed };
         } catch {
           return {
             ok: false,
@@ -516,8 +539,7 @@ export const httpApiCapabilityAdapter: CapabilityAdapter = {
       return {
         ok: true,
         output,
-        resultRef:
-          typeof output.resultRef === 'string' ? output.resultRef : null,
+        resultRef: typeof output.resultRef === 'string' ? output.resultRef : null,
       };
     } catch (error) {
       return {
@@ -836,15 +858,15 @@ export async function executeCapability(
     };
   }
 
-  const errorCode = invocation.ok ? null : invocation.errorCode ?? 'CAPABILITY_INTERNAL_ERROR';
+  const errorCode = invocation.ok ? null : (invocation.errorCode ?? 'CAPABILITY_INTERNAL_ERROR');
   const result: CapabilityExecutionResult = {
     outcome: invocation.ok ? 'SUCCEEDED' : 'FAILED',
     commandId,
     capabilityId,
     capabilityVersion,
     providerType: entry.providerType,
-    output: invocation.ok ? invocation.output ?? {} : {},
-    resultRef: invocation.ok ? invocation.resultRef ?? null : null,
+    output: invocation.ok ? (invocation.output ?? {}) : {},
+    resultRef: invocation.ok ? (invocation.resultRef ?? null) : null,
     errorCode,
     errorDetailRef: invocation.ok ? null : toErrorDetailRef(invocation.errorDetail),
     retryable: errorCode ? RETRYABLE_WITHOUT_READBACK.has(errorCode) : false,
@@ -863,7 +885,8 @@ export async function executeCapability(
   try {
     await withPgTransaction(async (client) => {
       await publishEvent(client, {
-        eventType: result.outcome === 'SUCCEEDED' ? 'capability.invoked' : 'capability.invocation_failed',
+        eventType:
+          result.outcome === 'SUCCEEDED' ? 'capability.invoked' : 'capability.invocation_failed',
         organizationId,
         projectId: optionalTrimmed(envelope.projectId),
         aggregateType: CAPABILITY_AGGREGATE_TYPE,
@@ -873,7 +896,9 @@ export async function executeCapability(
         nodeRunId: optionalTrimmed(envelope.nodeRunId),
         attemptId: optionalTrimmed(envelope.attemptId),
         actorUserId:
-          envelope.actor.type === 'HUMAN' ? actorId : `${SYSTEM_ACTOR_ADAPTER}:${envelope.actor.type.toLowerCase()}`,
+          envelope.actor.type === 'HUMAN'
+            ? actorId
+            : `${SYSTEM_ACTOR_ADAPTER}:${envelope.actor.type.toLowerCase()}`,
         correlationId: optionalTrimmed(envelope.correlationId),
         causationId: optionalTrimmed(envelope.causationId),
         redactedSummary: redact({

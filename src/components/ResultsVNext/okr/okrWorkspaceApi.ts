@@ -53,6 +53,7 @@
  *    draft/publish — a real, disclosed backend gap, not a UI omission.
  */
 import { API_URL, getHeaders } from '@/services/api';
+
 import type { OkrSetStatus } from './okrApi';
 
 // ==========================================
@@ -74,7 +75,10 @@ export class OkrWorkspaceApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+async function getJson<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): Promise<T> {
   const query = params
     ? Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -96,7 +100,11 @@ async function getJson<T>(path: string, params?: Record<string, string | number 
     } catch {
       // non-JSON error body — fall through with generic message
     }
-    throw new OkrWorkspaceApiError(body.error || `Request failed (${res.status})`, res.status, body.code);
+    throw new OkrWorkspaceApiError(
+      body.error || `Request failed (${res.status})`,
+      res.status,
+      body.code
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -117,7 +125,11 @@ async function mutateJson<T>(method: 'POST' | 'PATCH', path: string, body: unkno
     // non-JSON body — fall through with a generic message/empty details
   }
   if (!res.ok) {
-    const { error, code, ...details } = parsed as { error?: string; code?: string; [k: string]: unknown };
+    const { error, code, ...details } = parsed as {
+      error?: string;
+      code?: string;
+      [k: string]: unknown;
+    };
     throw new OkrWorkspaceApiError(
       (typeof error === 'string' && error) || `Request failed (${res.status})`,
       res.status,
@@ -149,21 +161,43 @@ export interface OkrSetTransitionResponse {
   set: OkrSetDto;
 }
 
-function postSetTransition(setId: string, segment: string, input: OkrTransitionInput): Promise<OkrSetTransitionResponse> {
-  return mutateJson<OkrSetTransitionResponse>('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/${segment}`, input);
+function postSetTransition(
+  setId: string,
+  segment: string,
+  input: OkrTransitionInput
+): Promise<OkrSetTransitionResponse> {
+  return mutateJson<OkrSetTransitionResponse>(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/${segment}`,
+    input
+  );
 }
 
-export const submitOkrSetForApproval = (setId: string, input: OkrTransitionInput) => postSetTransition(setId, 'submit', input);
-export const activateOkrSet = (setId: string, input: OkrTransitionInput) => postSetTransition(setId, 'activate', input);
-export const cancelOkrSet = (setId: string, input: OkrTransitionInput) => postSetTransition(setId, 'cancel', input);
-export const openOkrSetReview = (setId: string, input: OkrTransitionInput) => postSetTransition(setId, 'open-review', input);
+export const submitOkrSetForApproval = (setId: string, input: OkrTransitionInput) =>
+  postSetTransition(setId, 'submit', input);
+export const activateOkrSet = (setId: string, input: OkrTransitionInput) =>
+  postSetTransition(setId, 'activate', input);
+export const cancelOkrSet = (setId: string, input: OkrTransitionInput) =>
+  postSetTransition(setId, 'cancel', input);
+export const openOkrSetReview = (setId: string, input: OkrTransitionInput) =>
+  postSetTransition(setId, 'open-review', input);
 
 export interface OkrSetApproveResponse {
   outcome: 'applied' | 'duplicate';
   set: OkrSetDto;
-  snapshot: { snapshotId: string; setId: string; sequenceNumber: number; approvedBy: string; approvedAt: string; contentHash: string };
+  snapshot: {
+    snapshotId: string;
+    setId: string;
+    sequenceNumber: number;
+    approvedBy: string;
+    approvedAt: string;
+    contentHash: string;
+  };
 }
-export function approveOkrSet(setId: string, input: OkrTransitionInput): Promise<OkrSetApproveResponse> {
+export function approveOkrSet(
+  setId: string,
+  input: OkrTransitionInput
+): Promise<OkrSetApproveResponse> {
   return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/approve`, input);
 }
 
@@ -172,8 +206,15 @@ export interface OkrRequestChangesInput {
   changeRequestNotes: string;
   idempotencyKey: string;
 }
-export function requestChangesOnOkrSet(setId: string, input: OkrRequestChangesInput): Promise<OkrSetTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/request-changes`, input);
+export function requestChangesOnOkrSet(
+  setId: string,
+  input: OkrRequestChangesInput
+): Promise<OkrSetTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/request-changes`,
+    input
+  );
 }
 
 // finalScoreOkrSet / closeOkrSet share the exact same request shape as
@@ -181,13 +222,27 @@ export function requestChangesOnOkrSet(setId: string, input: OkrRequestChangesIn
 export interface OkrFinalScoreResponse {
   outcome: 'applied' | 'duplicate';
   set: OkrSetDto;
-  scoredObjectives: Array<{ objectiveId: string; finalScore: string | null; scoringModelUnsupported: boolean }>;
+  scoredObjectives: Array<{
+    objectiveId: string;
+    finalScore: string | null;
+    scoringModelUnsupported: boolean;
+  }>;
 }
-export function finalScoreOkrSet(setId: string, input: OkrTransitionInput): Promise<OkrFinalScoreResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/final-score`, input);
+export function finalScoreOkrSet(
+  setId: string,
+  input: OkrTransitionInput
+): Promise<OkrFinalScoreResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/final-score`,
+    input
+  );
 }
 
-export function closeOkrSet(setId: string, input: OkrTransitionInput): Promise<OkrSetTransitionResponse> {
+export function closeOkrSet(
+  setId: string,
+  input: OkrTransitionInput
+): Promise<OkrSetTransitionResponse> {
   return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/close`, input);
 }
 
@@ -201,8 +256,15 @@ export interface OkrCarryForwardResponse {
   carriedSet: OkrSetDto;
   created: boolean;
 }
-export function carryForwardOkrSet(setId: string, input: OkrCarryForwardInput): Promise<OkrCarryForwardResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/carry-forward`, input);
+export function carryForwardOkrSet(
+  setId: string,
+  input: OkrCarryForwardInput
+): Promise<OkrCarryForwardResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/carry-forward`,
+    input
+  );
 }
 
 // ==========================================
@@ -249,7 +311,9 @@ export interface OkrSetApprovedSnapshotSummary {
   approvedAt: string;
   contentHash: string;
 }
-export async function listOkrSetApprovalSnapshots(setId: string): Promise<OkrSetApprovedSnapshotSummary[]> {
+export async function listOkrSetApprovalSnapshots(
+  setId: string
+): Promise<OkrSetApprovedSnapshotSummary[]> {
   const { snapshots } = await getJson<{ snapshots: OkrSetApprovedSnapshotSummary[] }>(
     `/vnext/results/okr/sets/${encodeURIComponent(setId)}/approval-snapshots`
   );
@@ -304,7 +368,10 @@ export interface OkrAlignmentTreeNode {
   depth: number;
   [key: string]: unknown;
 }
-export async function getAlignmentTreeUnderObjective(objectiveId: string, maxDepth?: number): Promise<OkrAlignmentTreeNode[]> {
+export async function getAlignmentTreeUnderObjective(
+  objectiveId: string,
+  maxDepth?: number
+): Promise<OkrAlignmentTreeNode[]> {
   const { nodes } = await getJson<{ nodes: OkrAlignmentTreeNode[] }>(
     `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/alignment-tree`,
     { maxDepth }
@@ -323,27 +390,55 @@ export interface ProposeAlignmentResponse {
   alignment: OkrAlignmentDto;
   created: boolean;
 }
-export function proposeAlignment(sourceObjectiveId: string, input: ProposeAlignmentInput): Promise<ProposeAlignmentResponse> {
-  return mutateJson('POST', `/vnext/results/okr/objectives/${encodeURIComponent(sourceObjectiveId)}/alignments`, input);
+export function proposeAlignment(
+  sourceObjectiveId: string,
+  input: ProposeAlignmentInput
+): Promise<ProposeAlignmentResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/objectives/${encodeURIComponent(sourceObjectiveId)}/alignments`,
+    input
+  );
 }
 
 export interface OkrAlignmentTransitionResponse {
   outcome: 'applied' | 'duplicate';
   alignment: OkrAlignmentDto;
 }
-export function acceptAlignment(alignmentId: string, input: OkrTransitionInput): Promise<OkrAlignmentTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/accept`, input);
+export function acceptAlignment(
+  alignmentId: string,
+  input: OkrTransitionInput
+): Promise<OkrAlignmentTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/accept`,
+    input
+  );
 }
 export interface RejectAlignmentInput {
   expectedVersion: number;
   responseReason?: string | null;
   idempotencyKey: string;
 }
-export function rejectAlignment(alignmentId: string, input: RejectAlignmentInput): Promise<OkrAlignmentTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/reject`, input);
+export function rejectAlignment(
+  alignmentId: string,
+  input: RejectAlignmentInput
+): Promise<OkrAlignmentTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/reject`,
+    input
+  );
 }
-export function removeAlignment(alignmentId: string, input: OkrTransitionInput): Promise<OkrAlignmentTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/remove`, input);
+export function removeAlignment(
+  alignmentId: string,
+  input: OkrTransitionInput
+): Promise<OkrAlignmentTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/alignments/${encodeURIComponent(alignmentId)}/remove`,
+    input
+  );
 }
 
 // ==========================================
@@ -384,7 +479,9 @@ export interface OkrReviewDto {
 }
 
 export async function listOkrSetReviews(setId: string): Promise<OkrReviewDto[]> {
-  const { reviews } = await getJson<{ reviews: OkrReviewDto[] }>(`/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews`);
+  const { reviews } = await getJson<{ reviews: OkrReviewDto[] }>(
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews`
+  );
   return reviews;
 }
 
@@ -401,11 +498,25 @@ export interface OkrReviewTransitionResponse {
   outcome: 'applied' | 'duplicate';
   review: OkrReviewDto;
 }
-export function submitOkrSetSelfReview(setId: string, input: OkrReviewSubmitInput): Promise<OkrReviewTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/self/submit`, input);
+export function submitOkrSetSelfReview(
+  setId: string,
+  input: OkrReviewSubmitInput
+): Promise<OkrReviewTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/self/submit`,
+    input
+  );
 }
-export function submitOkrSetForManagerReview(setId: string, input: OkrReviewSubmitInput): Promise<OkrReviewTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/submit`, input);
+export function submitOkrSetForManagerReview(
+  setId: string,
+  input: OkrReviewSubmitInput
+): Promise<OkrReviewTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/submit`,
+    input
+  );
 }
 export interface OkrManagerReviewApproveInput {
   expectedVersion: number;
@@ -413,8 +524,15 @@ export interface OkrManagerReviewApproveInput {
   reason?: string | null;
   idempotencyKey: string;
 }
-export function approveOkrSetManagerReview(setId: string, input: OkrManagerReviewApproveInput): Promise<OkrReviewTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/approve`, input);
+export function approveOkrSetManagerReview(
+  setId: string,
+  input: OkrManagerReviewApproveInput
+): Promise<OkrReviewTransitionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/approve`,
+    input
+  );
 }
 export interface OkrManagerReviewRequestChangesInput {
   expectedVersion: number;
@@ -425,7 +543,11 @@ export function requestChangesOnOkrSetManagerReview(
   setId: string,
   input: OkrManagerReviewRequestChangesInput
 ): Promise<OkrReviewTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/request-changes`, input);
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/manager/request-changes`,
+    input
+  );
 }
 export interface OkrReviewCommentInput {
   expectedVersion: number;
@@ -439,12 +561,21 @@ export function recordOkrSetReviewComment(
   reviewType: OkrReviewType,
   input: OkrReviewCommentInput
 ): Promise<OkrReviewTransitionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/${reviewType}/comments`, input);
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/reviews/${reviewType}/comments`,
+    input
+  );
 }
 
 // Reflection (per-Objective) + final score (per-Set)
 
-export const OKR_REFLECTION_DISPOSITIONS = ['complete', 'carry_forward', 'drop', 'redefine'] as const;
+export const OKR_REFLECTION_DISPOSITIONS = [
+  'complete',
+  'carry_forward',
+  'drop',
+  'redefine',
+] as const;
 export type OkrReflectionDisposition = (typeof OKR_REFLECTION_DISPOSITIONS)[number];
 
 export interface OkrFinalScoreKeyResultSnapshot {
@@ -512,7 +643,11 @@ export async function recordObjectiveReflection(
   objectiveId: string,
   input: RecordReflectionInput
 ): Promise<{ outcome: 'applied' | 'duplicate'; reflection: OkrReflectionDto }> {
-  return mutateJson('POST', `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/reflection`, input);
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/reflection`,
+    input
+  );
 }
 
 /**
@@ -524,7 +659,9 @@ export async function recordObjectiveReflection(
  * (the legitimate "never reflected yet" state — `expectedVersion` stays `0`
  * for that Objective).
  */
-export async function getObjectiveReflection(objectiveId: string): Promise<OkrReflectionDto | null> {
+export async function getObjectiveReflection(
+  objectiveId: string
+): Promise<OkrReflectionDto | null> {
   const { reflection } = await getJson<{ reflection: OkrReflectionDto | null }>(
     `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/reflection`
   );
@@ -538,7 +675,12 @@ export async function getObjectiveReflection(objectiveId: string): Promise<OkrRe
 
 export const OKR_SUPPORT_REQUEST_KINDS = ['comment', 'recognition', 'support_request'] as const;
 export type OkrSupportRequestKind = (typeof OKR_SUPPORT_REQUEST_KINDS)[number];
-export const OKR_SUPPORT_REQUEST_STATUSES = ['open', 'acknowledged', 'resolved', 'dismissed'] as const;
+export const OKR_SUPPORT_REQUEST_STATUSES = [
+  'open',
+  'acknowledged',
+  'resolved',
+  'dismissed',
+] as const;
 export type OkrSupportRequestStatus = (typeof OKR_SUPPORT_REQUEST_STATUSES)[number];
 export const OKR_RECOGNITION_VISIBILITIES = ['team', 'organization'] as const;
 export type OkrRecognitionVisibility = (typeof OKR_RECOGNITION_VISIBILITIES)[number];
@@ -568,7 +710,10 @@ export interface OkrSupportRequestDto {
   updatedAt: string;
 }
 
-export async function listSupportRequestsForSet(setId: string, kind?: OkrSupportRequestKind): Promise<OkrSupportRequestDto[]> {
+export async function listSupportRequestsForSet(
+  setId: string,
+  kind?: OkrSupportRequestKind
+): Promise<OkrSupportRequestDto[]> {
   const { supportRequests } = await getJson<{ supportRequests: OkrSupportRequestDto[] }>(
     `/vnext/results/okr/sets/${encodeURIComponent(setId)}/support-requests`,
     { kind }
@@ -586,8 +731,16 @@ export interface OkrSupportRequestMutationResponse {
   outcome: 'applied' | 'duplicate';
   supportRequest: OkrSupportRequestDto;
 }
-export function postOkrComment(setId: string, objectiveId: string, input: PostCommentInput): Promise<OkrSupportRequestMutationResponse> {
-  return mutateJson('POST', `/vnext/results/okr/sets/${encodeURIComponent(setId)}/objectives/${encodeURIComponent(objectiveId)}/comments`, input);
+export function postOkrComment(
+  setId: string,
+  objectiveId: string,
+  input: PostCommentInput
+): Promise<OkrSupportRequestMutationResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/sets/${encodeURIComponent(setId)}/objectives/${encodeURIComponent(objectiveId)}/comments`,
+    input
+  );
 }
 
 export interface PostRecognitionInput {
@@ -629,8 +782,15 @@ export function raiseOkrSupportRequest(
   );
 }
 
-export function acknowledgeSupportRequest(requestId: string, input: OkrTransitionInput): Promise<OkrSupportRequestMutationResponse> {
-  return mutateJson('POST', `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/acknowledge`, input);
+export function acknowledgeSupportRequest(
+  requestId: string,
+  input: OkrTransitionInput
+): Promise<OkrSupportRequestMutationResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/acknowledge`,
+    input
+  );
 }
 export interface ResolveSupportRequestInput {
   expectedVersion: number;
@@ -638,8 +798,15 @@ export interface ResolveSupportRequestInput {
   reason?: string | null;
   idempotencyKey: string;
 }
-export function resolveSupportRequest(requestId: string, input: ResolveSupportRequestInput): Promise<OkrSupportRequestMutationResponse> {
-  return mutateJson('POST', `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/resolve`, input);
+export function resolveSupportRequest(
+  requestId: string,
+  input: ResolveSupportRequestInput
+): Promise<OkrSupportRequestMutationResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/resolve`,
+    input
+  );
 }
 export interface DismissSupportRequestInput {
   expectedVersion: number;
@@ -647,8 +814,15 @@ export interface DismissSupportRequestInput {
   reason?: string | null;
   idempotencyKey: string;
 }
-export function dismissSupportRequest(requestId: string, input: DismissSupportRequestInput): Promise<OkrSupportRequestMutationResponse> {
-  return mutateJson('POST', `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/dismiss`, input);
+export function dismissSupportRequest(
+  requestId: string,
+  input: DismissSupportRequestInput
+): Promise<OkrSupportRequestMutationResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/dismiss`,
+    input
+  );
 }
 
 export interface RequestDecisionInput {
@@ -682,8 +856,15 @@ export interface RequestDecisionResponse {
   supportRequest: OkrSupportRequestDto;
   decisionLink: OkrDecisionLinkDto;
 }
-export function requestDecisionFromSupportRequest(requestId: string, input: RequestDecisionInput): Promise<RequestDecisionResponse> {
-  return mutateJson('POST', `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/request-decision`, input);
+export function requestDecisionFromSupportRequest(
+  requestId: string,
+  input: RequestDecisionInput
+): Promise<RequestDecisionResponse> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/request-decision`,
+    input
+  );
 }
 
 export interface OkrDecisionLinkWithLiveStatus extends OkrDecisionLinkDto {
@@ -691,7 +872,9 @@ export interface OkrDecisionLinkWithLiveStatus extends OkrDecisionLinkDto {
   decisionRationale: string | null;
   decisionDecidedAt: string | null;
 }
-export async function getDecisionLinkForSupportRequest(requestId: string): Promise<OkrDecisionLinkWithLiveStatus | null> {
+export async function getDecisionLinkForSupportRequest(
+  requestId: string
+): Promise<OkrDecisionLinkWithLiveStatus | null> {
   try {
     const { decisionLink } = await getJson<{ decisionLink: OkrDecisionLinkWithLiveStatus }>(
       `/vnext/results/okr/support-requests/${encodeURIComponent(requestId)}/decision-link`
@@ -706,8 +889,18 @@ export async function getDecisionLinkForSupportRequest(requestId: string): Promi
 export function acknowledgeDecisionResolution(
   linkId: string,
   input: OkrTransitionInput
-): Promise<{ outcome: 'applied' | 'duplicate'; decisionLink: OkrDecisionLinkDto; decisionStatus: string | null; decisionRationale: string | null; decisionDecidedAt: string | null }> {
-  return mutateJson('POST', `/vnext/results/okr/decision-links/${encodeURIComponent(linkId)}/acknowledge-resolution`, input);
+): Promise<{
+  outcome: 'applied' | 'duplicate';
+  decisionLink: OkrDecisionLinkDto;
+  decisionStatus: string | null;
+  decisionRationale: string | null;
+  decisionDecidedAt: string | null;
+}> {
+  return mutateJson(
+    'POST',
+    `/vnext/results/okr/decision-links/${encodeURIComponent(linkId)}/acknowledge-resolution`,
+    input
+  );
 }
 
 // Re-exported so consumers only need to import from this ONE workspace api

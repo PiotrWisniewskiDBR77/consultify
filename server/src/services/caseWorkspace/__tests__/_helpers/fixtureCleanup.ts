@@ -74,10 +74,7 @@ export interface CleanupScope {
  * need a join — none of the 30 audited files' fixtures require that, so this stays a
  * flat per-table DELETE for now; extend it here (not per-file) if a future table needs it.
  */
-export async function cleanupSuiteFixtures(
-  client: Queryable,
-  scope: CleanupScope
-): Promise<void> {
+export async function cleanupSuiteFixtures(client: Queryable, scope: CleanupScope): Promise<void> {
   if (scope.organizationIds.length === 0) return;
   for (const table of CLEANUP_ORDER) {
     // eslint-disable-next-line no-await-in-loop
@@ -99,10 +96,9 @@ export async function cleanupSuiteFixtures(
  * the existing test files are ALREADY correctly scoped and do not need
  * this).
  */
-export async function readOutboxRowsForOrganizations<T extends Record<string, unknown> = Record<string, unknown>>(
-  client: Queryable,
-  organizationIds: string[]
-): Promise<T[]> {
+export async function readOutboxRowsForOrganizations<
+  T extends Record<string, unknown> = Record<string, unknown>,
+>(client: Queryable, organizationIds: string[]): Promise<T[]> {
   if (organizationIds.length === 0) return [];
   const result = await client.query<T>(
     `SELECT * FROM case_workspace_event_outbox

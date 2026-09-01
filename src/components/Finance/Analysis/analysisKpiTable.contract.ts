@@ -16,9 +16,12 @@
 
 import { Decimal } from 'decimal.js';
 
-import type { TableColumn, TableRow } from '../../standard/StandardTable';
 import type { AnalysisKpiTier, AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
-import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
+import {
+  financeValueDisplayReasonLabel,
+  formatAnalysisKpiValueForDisplay,
+} from '../../../services/api/financeV2.types';
+import type { TableColumn, TableRow } from '../../standard/StandardTable';
 
 // ---------------------------------------------------------------------------
 // YoY delta — MISSING/NA nigdy nie stają się 0 przez odejmowanie/dzielenie.
@@ -48,7 +51,8 @@ export function computeYoyDelta(
   current: Pick<AnalysisKpiValueDto['value'], 'status' | 'valueDecimal'>,
   prior: Pick<AnalysisKpiValueDto['value'], 'status' | 'valueDecimal'> | null
 ): YoyDelta {
-  const currentIsPresent = current.status === 'PRESENT_ZERO' || current.status === 'PRESENT_NONZERO';
+  const currentIsPresent =
+    current.status === 'PRESENT_ZERO' || current.status === 'PRESENT_NONZERO';
   if (!currentIsPresent || current.valueDecimal === null) {
     return { status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null };
   }
@@ -66,10 +70,18 @@ export function computeYoyDelta(
     // % zmiany od zera jest matematycznie nieokreślona (dzielenie przez 0) —
     // NIGDY nie renderuj 0%/Infinity%, pokaż wartość bezwzględną z jawnym
     // powodem braku procentu, nie fałszywym "0%".
-    return { status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: absoluteDeltaDecimal.toNumber(), percentDelta: null };
+    return {
+      status: 'PRIOR_ZERO_PCT_UNDEFINED',
+      absoluteDelta: absoluteDeltaDecimal.toNumber(),
+      percentDelta: null,
+    };
   }
   const percentDeltaDecimal = absoluteDeltaDecimal.dividedBy(priorDecimal).times(100);
-  return { status: 'COMPUTED', absoluteDelta: absoluteDeltaDecimal.toNumber(), percentDelta: percentDeltaDecimal.toNumber() };
+  return {
+    status: 'COMPUTED',
+    absoluteDelta: absoluteDeltaDecimal.toNumber(),
+    percentDelta: percentDeltaDecimal.toNumber(),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +197,10 @@ export interface AnalysisKpiTableRowInput {
 }
 
 /** Komórka pojedynczego okresu — `undefined` (brak wiersza compute) dostaje WŁASNY powód, różny od MISSING/NA biznesowego. */
-function formatPeriodCell(value: AnalysisKpiValueDto['value'] | undefined, unitType: string): { text: string; isMissingLikeGlyph: boolean } {
+function formatPeriodCell(
+  value: AnalysisKpiValueDto['value'] | undefined,
+  unitType: string
+): { text: string; isMissingLikeGlyph: boolean } {
   if (value === undefined) {
     return { text: '—', isMissingLikeGlyph: true };
   }
@@ -259,9 +274,13 @@ function formatPlPercent1(n: number): string {
 export function formatYoyDeltaText(yoy: YoyDelta): string {
   switch (yoy.status) {
     case 'COMPUTED':
-      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${formatPlPercent1(yoy.percentDelta)}%`;
+      return yoy.percentDelta === null
+        ? '—'
+        : `${yoy.percentDelta >= 0 ? '+' : ''}${formatPlPercent1(yoy.percentDelta)}%`;
     case 'PRIOR_ZERO_PCT_UNDEFINED':
-      return yoy.absoluteDelta === null ? '—' : `${yoy.absoluteDelta >= 0 ? '+' : ''}${yoy.absoluteDelta} (% nieokreślony)`;
+      return yoy.absoluteDelta === null
+        ? '—'
+        : `${yoy.absoluteDelta >= 0 ? '+' : ''}${yoy.absoluteDelta} (% nieokreślony)`;
     case 'MISSING_CURRENT':
     case 'MISSING_PRIOR':
       return '—';
@@ -336,7 +355,9 @@ export function analysisKpiTablePersistKey(businessVersionId: string): string {
  * dostają stały budżet 80px — z zapasem nad zmierzonym „Q4 2026" (≈84px to
  * jedyny zmierzony przypadek szerszy niż `P-2025`/`FY2025`).
  */
-export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; label: string }[]): TableColumn[] {
+export function buildAnalysisKpiColumns(
+  periodLabels: readonly { id: string; label: string }[]
+): TableColumn[] {
   const periodColumns: TableColumn[] = periodLabels.map((p) => ({
     id: `period.${p.id}`,
     label: p.label,
@@ -347,7 +368,14 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
 
   return [
     { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '120px' },
-    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '122px' },
+    {
+      id: 'category',
+      label: 'Kategoria',
+      sortable: true,
+      align: 'left',
+      filterable: true,
+      width: '122px',
+    },
     { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '122px' },
     { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
@@ -357,12 +385,26 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
       align: 'right',
       sortable: true,
       width: '121px',
-      sortAccessor: (row: TableRow) => (row.yoyDelta as YoyDelta).percentDelta ?? Number.NEGATIVE_INFINITY,
+      sortAccessor: (row: TableRow) =>
+        (row.yoyDelta as YoyDelta).percentDelta ?? Number.NEGATIVE_INFINITY,
       render: (row: TableRow) => formatYoyDeltaText(row.yoyDelta as YoyDelta),
     },
-    { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
+    {
+      id: 'benchmark',
+      label: 'Benchmark',
+      align: 'left',
+      width: '110px',
+      render: (row: TableRow) =>
+        formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']),
+    },
     { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
-    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
+    {
+      id: 'qualityFlag',
+      label: 'Jakość / dostępność',
+      align: 'center',
+      filterable: true,
+      width: '176px',
+    },
     { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left', width: '133px' },
   ];
 }

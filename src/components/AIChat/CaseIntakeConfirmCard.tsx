@@ -30,15 +30,22 @@
  * asystenta (poza allowlistem tego pakietu — `AIChat/**` dotyczy WYŁĄCZNIE
  * przycisku/karty potwierdzenia, nie przebudowy czatu).
  */
-import { AlertTriangle, Check, ClipboardCheck, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  ClipboardCheck,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  confirmConversationWorkOrder,
-  getCurrentConversationWorkOrder,
   type CaseIntakeCanonicalWorkOrder,
   type CaseIntakeConfirmResult,
+  confirmConversationWorkOrder,
+  getCurrentConversationWorkOrder,
 } from '@/components/CaseWorkspace/apiIntake';
 
 interface CaseIntakeConfirmCardProps {
@@ -90,7 +97,11 @@ export const CaseIntakeConfirmCard: React.FC<CaseIntakeConfirmCardProps> = ({
       try {
         const fresh = await getCurrentConversationWorkOrder(conversationId);
         if (fresh) {
-          setState({ kind: 'stale', freshWorkOrder: fresh.workOrder, freshDigest: fresh.workOrderDigest });
+          setState({
+            kind: 'stale',
+            freshWorkOrder: fresh.workOrder,
+            freshDigest: fresh.workOrderDigest,
+          });
           return;
         }
       } catch {

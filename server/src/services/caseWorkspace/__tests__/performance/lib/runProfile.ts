@@ -32,9 +32,9 @@ import { collectRunnerEnvInfo, type RunnerEnvInfo } from './envInfo.js';
 import { seedOrgProjectActor } from './fixtures.js';
 import { buildLinearGraph } from './graphBuilder.js';
 import {
+  forceGcIfAvailable,
   type HeapSnapshot,
   type LatencyStats,
-  forceGcIfAvailable,
   mapWithConcurrency,
   round2,
   snapshotHeap,
@@ -265,18 +265,27 @@ export async function runProfile(options: ProfileOptions): Promise<ProfileResult
       getGraphSamples.push(ms);
     }
 
-    const historySampleCaseIds = caseIds.filter((_, i) => i % Math.max(1, Math.floor(caseIds.length / options.queryReps)) === 0).slice(0, options.queryReps);
+    const historySampleCaseIds = caseIds
+      .filter((_, i) => i % Math.max(1, Math.floor(caseIds.length / options.queryReps)) === 0)
+      .slice(0, options.queryReps);
     const historySamples: number[] = [];
     for (const caseId of historySampleCaseIds) {
       const { ms } = await timed(() =>
-        caseHistoryService.listCaseHistoryEventsForCase(caseId, undefined, { limit: 200 }, fixture.actorId)
+        caseHistoryService.listCaseHistoryEventsForCase(
+          caseId,
+          undefined,
+          { limit: 200 },
+          fixture.actorId
+        )
       );
       historySamples.push(ms);
     }
 
     const backlogSamples: number[] = [];
     for (let i = 0; i < Math.min(10, options.queryReps); i += 1) {
-      const { ms } = await timed(() => eventOutboxService.getOutboxBacklog({ organizationId: fixture.orgId }));
+      const { ms } = await timed(() =>
+        eventOutboxService.getOutboxBacklog({ organizationId: fixture.orgId })
+      );
       backlogSamples.push(ms);
     }
     heapSnapshots.push(snapshotHeap('after_read_queries'));
@@ -334,7 +343,13 @@ export async function runProfile(options: ProfileOptions): Promise<ProfileResult
     };
     if (options.runFailureInjection) {
       try {
-        failureInjection = await runFailureInjection(pool, options.databaseUrl, fixture.orgId, fixture.actorId, caseIds[1] ?? caseIds[0]);
+        failureInjection = await runFailureInjection(
+          pool,
+          options.databaseUrl,
+          fixture.orgId,
+          fixture.actorId,
+          caseIds[1] ?? caseIds[0]
+        );
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         errors.push(`failure injection stage threw: ${message}`);
@@ -355,7 +370,9 @@ export async function runProfile(options: ProfileOptions): Promise<ProfileResult
     const totalDurationMs = performance.now() - t0;
 
     const baselineHeapUsedMB = heapSnapshots[0].heapUsedMB;
-    const postSeed = heapSnapshots.find((h) => h.label === 'after_event_seed') ?? heapSnapshots[heapSnapshots.length - 1];
+    const postSeed =
+      heapSnapshots.find((h) => h.label === 'after_event_seed') ??
+      heapSnapshots[heapSnapshots.length - 1];
     const postQueries = heapSnapshots.find((h) => h.label === 'after_read_queries') ?? postSeed;
     const postGc = postGcSnapshot;
 
@@ -523,7 +540,8 @@ async function runFailureInjection(
   // NARROW (matches only the exact injected-crash signature) so it can never
   // silently swallow an unrelated real bug — see the `unexpectedUncaughtException`
   // field in the result this function returns, which surfaces exactly that.
-  const INJECTED_CRASH_SIGNATURE = /terminating connection due to administrator command|ECONNRESET|Connection terminated/i;
+  const INJECTED_CRASH_SIGNATURE =
+    /terminating connection due to administrator command|ECONNRESET|Connection terminated/i;
   const uncaughtGuard = (err: Error) => {
     if (INJECTED_CRASH_SIGNATURE.test(err.message)) {
       // Expected fallout of our own pg_terminate_backend() call above —
@@ -621,7 +639,11 @@ async function runFailureInjection(
 // PERFORMANCE_EVIDENCE.md's explicit EVIDENCE_MISSING note on that gap.
 // ---------------------------------------------------------------------------
 
-async function runSoak(durationMs: number, organizationId: string, actorId: string): Promise<SoakResult> {
+async function runSoak(
+  durationMs: number,
+  organizationId: string,
+  actorId: string
+): Promise<SoakResult> {
   const start = performance.now();
   const heapSamples: HeapSnapshot[] = [snapshotHeap('soak_start')];
   const latencies: number[] = [];
@@ -630,7 +652,9 @@ async function runSoak(durationMs: number, organizationId: string, actorId: stri
   let nextSampleAt = sampleEveryMs;
 
   while (performance.now() - start < durationMs) {
-    const { ms } = await timed(() => caseCoreService.listCasesForOrganization(organizationId, undefined, actorId));
+    const { ms } = await timed(() =>
+      caseCoreService.listCasesForOrganization(organizationId, undefined, actorId)
+    );
     latencies.push(ms);
     iterations += 1;
     const elapsed = performance.now() - start;

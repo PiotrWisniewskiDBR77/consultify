@@ -118,7 +118,8 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
               data-testid={`source-edge-${edge.edgeId}`}
             >
               <p className="text-sm font-medium text-c-text">
-                Krok {index + 1}/{sourceEdges.length}: {financeArtifactTypeLabel(edge.sourceArtifactType)}
+                Krok {index + 1}/{sourceEdges.length}:{' '}
+                {financeArtifactTypeLabel(edge.sourceArtifactType)}
                 {' → '}
                 {financeArtifactTypeLabel(edge.targetArtifactType)}
               </p>

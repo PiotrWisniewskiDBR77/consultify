@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
   try {
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
+    )) as (typeof import('../../services/backupService.js'))['default'];
     const backups = await BackupService.listBackups({
       includeExpired: req.query.includeExpired === 'true',
     });
@@ -65,7 +65,7 @@ router.get('/status', async (req, res) => {
   try {
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
+    )) as (typeof import('../../services/backupService.js'))['default'];
     const status = await BackupService.getBackupStatus();
     return res.json(status);
   } catch (error: any) {
@@ -84,7 +84,7 @@ router.get('/:id/status', async (req, res) => {
     const { id } = req.params;
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
+    )) as (typeof import('../../services/backupService.js'))['default'];
     const backups = await BackupService.listBackups({ includeExpired: true });
     const backup = backups.find((b: any) => b.id === id);
 
@@ -116,7 +116,7 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
   try {
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
+    )) as (typeof import('../../services/backupService.js'))['default'];
     const { backupId, targetDatabaseUrl, expectedOrganizationId } = req.body;
     const result = await BackupService.restoreBackup(backupId, {
       targetDatabaseUrl,
@@ -128,8 +128,13 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
     const code = String(error?.message || 'RESTORE_FAILED');
     logger.warn(`[BackupRoutes] restore rejected: ${code}`);
     if (code === 'BACKUP_NOT_FOUND') return res.status(404).json({ success: false, code });
-    if (code === 'RESTORE_TARGET_NOT_ISOLATED') return res.status(403).json({ success: false, code });
-    if (/REQUIRED|MISMATCH|UNSAFE|UNENCRYPTED|CHECKSUM|HASH|FORMAT|PAYLOAD|ROW_COUNT|INTEGRITY/.test(code)) {
+    if (code === 'RESTORE_TARGET_NOT_ISOLATED')
+      return res.status(403).json({ success: false, code });
+    if (
+      /REQUIRED|MISMATCH|UNSAFE|UNENCRYPTED|CHECKSUM|HASH|FORMAT|PAYLOAD|ROW_COUNT|INTEGRITY/.test(
+        code
+      )
+    ) {
       return res.status(400).json({ success: false, code });
     }
     return res.status(500).json({ success: false, code: 'RESTORE_FAILED' });
@@ -145,7 +150,7 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
   try {
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
+    )) as (typeof import('../../services/backupService.js'))['default'];
     const { id } = req.params;
     await BackupService.deleteBackup(id);
     return res.json({ success: true });
@@ -191,7 +196,8 @@ router.post('/organization/manual', requireActiveMembership, async (req, res) =>
   try {
     const organizationId = String((req as any).user?.organizationId || '');
     const actorId = String((req as any).user?.id || '');
-    if (!organizationId || !actorId) return res.status(403).json({ success: false, code: 'TENANT_CONTEXT_REQUIRED' });
+    if (!organizationId || !actorId)
+      return res.status(403).json({ success: false, code: 'TENANT_CONTEXT_REQUIRED' });
     const type = req.body?.type || 'full';
     if (type !== 'full') {
       return res.status(400).json({ success: false, code: 'BACKUP_TYPE_INVALID' });

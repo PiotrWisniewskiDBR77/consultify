@@ -50,8 +50,15 @@ import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import * as artifactVersionService from './artifactVersionService.js';
-import { computeWeightedRecommendation, type MethodRow, type MethodType } from './valuationComputeService.js';
-import { findMonotonicityViolation, type SensitivityCellValue } from './valuationSensitivityService.js';
+import {
+  computeWeightedRecommendation,
+  type MethodRow,
+  type MethodType,
+} from './valuationComputeService.js';
+import {
+  findMonotonicityViolation,
+  type SensitivityCellValue,
+} from './valuationSensitivityService.js';
 
 // =============================================================================================
 // 1. Provenance / policy constants
@@ -178,7 +185,13 @@ export type EvidenceTable =
  * inventing an evidence location is exactly the failure mode the check exists to catch.
  */
 const EVIDENCE_COLUMN_ALLOWLIST: Record<EvidenceTable, readonly string[]> = {
-  finance_valuation_methods: ['result_ev_decimal', 'weight_pct', 'readiness', 'result_value_status', 'method_type'],
+  finance_valuation_methods: [
+    'result_ev_decimal',
+    'weight_pct',
+    'readiness',
+    'result_value_status',
+    'method_type',
+  ],
   finance_valuation_terminal: [
     'terminal_share_pct',
     'terminal_value_decimal',
@@ -201,8 +214,16 @@ const EVIDENCE_COLUMN_ALLOWLIST: Record<EvidenceTable, readonly string[]> = {
     'current_capital_structure_debt_pct',
     'current_capital_structure_equity_pct',
   ],
-  finance_valuation_ev_equity_bridge: ['enterprise_value_decimal', 'equity_value_decimal', 'as_of_date'],
-  finance_valuation_sensitivity_cells: ['cell_value_decimal', 'row_axis_value', 'column_axis_value'],
+  finance_valuation_ev_equity_bridge: [
+    'enterprise_value_decimal',
+    'equity_value_decimal',
+    'as_of_date',
+  ],
+  finance_valuation_sensitivity_cells: [
+    'cell_value_decimal',
+    'row_axis_value',
+    'column_axis_value',
+  ],
   finance_valuation_sensitivity_grids: ['grid_status', 'grid_label'],
   finance_business_versions: ['freshness', 'status'],
 };
@@ -262,10 +283,18 @@ export interface ValuationAdvisorSnapshot {
   status: string;
   freshness: string;
   variant: { id: string; case_id: string; name: string; description: string | null } | null;
-  wacc: Record<string, string | null> & { id: string } | null;
+  wacc: (Record<string, string | null> & { id: string }) | null;
   methods: MethodRow[];
   terminal: AdvisorTerminalRow[];
-  bridge: { header: { id: string; as_of_date: string; enterprise_value_decimal: string | null; equity_value_decimal: string | null }; components: AdvisorBridgeComponentRow[] } | null;
+  bridge: {
+    header: {
+      id: string;
+      as_of_date: string;
+      enterprise_value_decimal: string | null;
+      equity_value_decimal: string | null;
+    };
+    components: AdvisorBridgeComponentRow[];
+  } | null;
   grids: AdvisorGridSnapshot[];
   usableCompsByMethodId: Record<string, number>;
 }
@@ -278,7 +307,9 @@ export interface ValuationAdvisorSnapshot {
 // exact same SQL a second time. Zero new reads, zero new domain logic.
 // =============================================================================================
 
-export type LoadValuationSnapshotResult = { ok: true; snapshot: ValuationAdvisorSnapshot } | { ok: false; code: 'VARIANT_NOT_FOUND' | 'ORGANIZATION_MISMATCH'; message: string };
+export type LoadValuationSnapshotResult =
+  | { ok: true; snapshot: ValuationAdvisorSnapshot }
+  | { ok: false; code: 'VARIANT_NOT_FOUND' | 'ORGANIZATION_MISMATCH'; message: string };
 
 export async function loadValuationCurrency(organizationId: string): Promise<string | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
@@ -290,16 +321,34 @@ export async function loadValuationCurrency(organizationId: string): Promise<str
   return row?.currency?.trim() || null;
 }
 
-export async function loadValuationSnapshot(organizationId: string, businessVersionId: string): Promise<LoadValuationSnapshotResult> {
+export async function loadValuationSnapshot(
+  organizationId: string,
+  businessVersionId: string
+): Promise<LoadValuationSnapshotResult> {
   const bv = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ business_version_id: string; organization_id: string; artifact_id: string; status: string; freshness: string }>(
+    tx.queryOne<{
+      business_version_id: string;
+      organization_id: string;
+      artifact_id: string;
+      status: string;
+      freshness: string;
+    }>(
       `SELECT business_version_id, organization_id, artifact_id, status, freshness FROM finance_business_versions WHERE business_version_id = ?`,
       [businessVersionId]
     )
   );
-  if (!bv) return { ok: false, code: 'VARIANT_NOT_FOUND', message: `No finance_business_versions row for ${businessVersionId}` };
+  if (!bv)
+    return {
+      ok: false,
+      code: 'VARIANT_NOT_FOUND',
+      message: `No finance_business_versions row for ${businessVersionId}`,
+    };
   if (bv.organization_id !== organizationId) {
-    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: `Variant ${businessVersionId} does not belong to organization ${organizationId}` };
+    return {
+      ok: false,
+      code: 'ORGANIZATION_MISMATCH',
+      message: `Variant ${businessVersionId} does not belong to organization ${organizationId}`,
+    };
   }
   const snapshot = await loadSnapshotInternal(organizationId, businessVersionId, bv);
   return { ok: true, snapshot };
@@ -311,7 +360,12 @@ async function loadSnapshotInternal(
   bv: { artifact_id: string; status: string; freshness: string }
 ): Promise<ValuationAdvisorSnapshot> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const variant = await tx.queryOne<{ id: string; case_id: string; name: string; description: string | null }>(
+    const variant = await tx.queryOne<{
+      id: string;
+      case_id: string;
+      name: string;
+      description: string | null;
+    }>(
       `SELECT id, case_id, name, description FROM finance_valuation_variants
         WHERE business_version_id = ? AND organization_id = ?`,
       [businessVersionId, organizationId]
@@ -340,7 +394,12 @@ async function loadSnapshotInternal(
         )
       : [];
 
-    const bridgeHeader = await tx.queryOne<{ id: string; as_of_date: string; enterprise_value_decimal: string | null; equity_value_decimal: string | null }>(
+    const bridgeHeader = await tx.queryOne<{
+      id: string;
+      as_of_date: string;
+      enterprise_value_decimal: string | null;
+      equity_value_decimal: string | null;
+    }>(
       `SELECT id, as_of_date::text AS as_of_date, enterprise_value_decimal, equity_value_decimal
          FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ? AND organization_id = ?`,
       [businessVersionId, organizationId]
@@ -416,7 +475,12 @@ function num(v: string | number | null | undefined): number | null {
 function formatAmount(n: number): string {
   const rounded = Math.round(n);
   const sign = rounded < 0 ? '-' : '';
-  return sign + Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return (
+    sign +
+    Math.abs(rounded)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  );
 }
 
 function formatPct(n: number, decimals = 2): string {
@@ -433,7 +497,10 @@ function pointer(
   return { table, column, rowId, observedValue, label };
 }
 
-function finding(f: Omit<AdvisorFinding, 'isComparison' | 'comparedVariants'> & Partial<Pick<AdvisorFinding, 'isComparison' | 'comparedVariants'>>): AdvisorFinding {
+function finding(
+  f: Omit<AdvisorFinding, 'isComparison' | 'comparedVariants'> &
+    Partial<Pick<AdvisorFinding, 'isComparison' | 'comparedVariants'>>
+): AdvisorFinding {
   return { isComparison: false, comparedVariants: [], ...f };
 }
 
@@ -443,7 +510,9 @@ function primaryTerminal(snapshot: ValuationAdvisorSnapshot): AdvisorTerminalRow
 }
 
 function readyMethods(snapshot: ValuationAdvisorSnapshot): MethodRow[] {
-  return snapshot.methods.filter((m) => m.readiness === 'READY' && num(m.result_ev_decimal) !== null);
+  return snapshot.methods.filter(
+    (m) => m.readiness === 'READY' && num(m.result_ev_decimal) !== null
+  );
 }
 
 export type HeadlineEvSource = 'BRIDGE' | 'WEIGHTED_BASKET' | 'SINGLE_READY_METHOD' | 'NONE';
@@ -460,13 +529,21 @@ export interface HeadlineEnterpriseValue {
  * Preference: the EV the analyst actually bridged to equity, else the weighted basket, else the
  * sole ready method. Never a silent zero — `value: null` when nothing is computed.
  */
-export function resolveHeadlineEnterpriseValue(snapshot: ValuationAdvisorSnapshot): HeadlineEnterpriseValue {
+export function resolveHeadlineEnterpriseValue(
+  snapshot: ValuationAdvisorSnapshot
+): HeadlineEnterpriseValue {
   const bridgeEv = snapshot.bridge ? num(snapshot.bridge.header.enterprise_value_decimal) : null;
   if (snapshot.bridge && bridgeEv !== null) {
     return {
       source: 'BRIDGE',
       value: bridgeEv,
-      pointer: pointer('finance_valuation_ev_equity_bridge', 'enterprise_value_decimal', snapshot.bridge.header.id, bridgeEv, 'EV→Equity bridge enterprise value'),
+      pointer: pointer(
+        'finance_valuation_ev_equity_bridge',
+        'enterprise_value_decimal',
+        snapshot.bridge.header.id,
+        bridgeEv,
+        'EV→Equity bridge enterprise value'
+      ),
     };
   }
   const basket = computeWeightedRecommendation(snapshot.methods);
@@ -479,7 +556,13 @@ export function resolveHeadlineEnterpriseValue(snapshot: ValuationAdvisorSnapsho
     return {
       source: 'SINGLE_READY_METHOD',
       value,
-      pointer: pointer('finance_valuation_methods', 'result_ev_decimal', ready[0].id, value, `${ready[0].method_type} enterprise value`),
+      pointer: pointer(
+        'finance_valuation_methods',
+        'result_ev_decimal',
+        ready[0].id,
+        value,
+        `${ready[0].method_type} enterprise value`
+      ),
     };
   }
   return { source: 'NONE', value: null, pointer: null };
@@ -497,40 +580,210 @@ export interface AdvisorRuleDescriptor {
 }
 
 export const ADVISOR_RULES: readonly AdvisorRuleDescriptor[] = [
-  { id: 'ADV-R01', kind: 'FACT', trigger: 'primary terminal row has terminal_share_pct', output: 'Terminal value share of EV, with the terminal amount' },
-  { id: 'ADV-R02', kind: 'HYPOTHESIS', trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}%`, output: 'Result is driven by terminal assumptions, not the explicit forecast (HIGH above 85%)' },
-  { id: 'ADV-R03', kind: 'RISK', trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}%`, output: 'Terminal-value concentration risk; impact = terminal amount' },
-  { id: 'ADV-R04', kind: 'ACTION', trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}% and no EXIT_MULTIPLE row on that method`, output: 'Add an exit-multiple terminal cross-check' },
-  { id: 'ADV-R05', kind: 'RISK', trigger: `WACC − g < ${ADVISOR_THRESHOLDS.narrowGordonSpreadPp}pp`, output: 'Narrow Gordon spread — denominator numerically fragile' },
-  { id: 'ADV-R06', kind: 'RISK', trigger: `|g − reinvestment_rate × ROIC| > ${ADVISOR_THRESHOLDS.impliedGTolerancePp}pp`, output: 'Terminal g not reconciled with steady-state reinvestment × ROIC' },
-  { id: 'ADV-R07', kind: 'QUESTION', trigger: 'primary Gordon row lacks reinvestment_rate_pct or roic_pct', output: 'On what steady-state reinvestment/ROIC does terminal g rest?' },
-  { id: 'ADV-R08', kind: 'FACT', trigger: 'recommendation basket is complete (all members READY)', output: 'Weighted recommendation EV and each method contribution' },
-  { id: 'ADV-R09', kind: 'RISK', trigger: 'basket has a member that is not READY', output: 'Recommendation basket incomplete — no weighted result exists' },
-  { id: 'ADV-R10', kind: 'RISK', trigger: 'no method is in the recommendation basket', output: 'No weighted basket configured; result rests on unweighted methods' },
-  { id: 'ADV-R11', kind: 'RISK', trigger: `≥2 READY methods and dispersion > ${ADVISOR_THRESHOLDS.methodDispersionPct}%`, output: `Low method agreement (HIGH above ${ADVISOR_THRESHOLDS.methodDispersionSeverePct}%)` },
-  { id: 'ADV-R12', kind: 'FACT', trigger: '≥2 READY methods', output: 'Method spread: min/max EV and dispersion as % of mean' },
-  { id: 'ADV-R13', kind: 'RISK', trigger: 'no TRADING_COMPS/PRECEDENT_TRANSACTIONS method, or one with 0 usable comps', output: 'No market cross-check — intrinsic value unbenchmarked' },
-  { id: 'ADV-R14', kind: 'ACTION', trigger: 'same trigger as ADV-R13', output: 'Configure a trading-comps peer set (Not configured, not PLN 0)' },
-  { id: 'ADV-R15', kind: 'FACT', trigger: '≥1 COMPLETE sensitivity grid with defined cells', output: 'Sensitivity band min..max and width as % of the base cell' },
-  { id: 'ADV-R16', kind: 'RISK', trigger: `band width > ${ADVISOR_THRESHOLDS.sensitivityWideBandPct}% of base cell`, output: 'Wide sensitivity band — point estimate weakly determined' },
-  { id: 'ADV-R17', kind: 'RISK', trigger: 'findMonotonicityViolation() returns a violation', output: 'Grid not monotonic in WACC/g — model or grid construction suspect (HIGH)' },
-  { id: 'ADV-R18', kind: 'ACTION', trigger: 'no sensitivity grid at all', output: 'Run the 5×5 WACC × terminal-g grid before approval' },
-  { id: 'ADV-R19', kind: 'QUESTION', trigger: '≥1 undefined cell (g ≥ WACC) in a grid', output: 'N of 25 cells undefined — is the axis range appropriate?' },
-  { id: 'ADV-R20', kind: 'FACT', trigger: 'wacc_computed_pct present', output: 'WACC with cost of equity, after-tax cost of debt and target structure' },
-  { id: 'ADV-R21', kind: 'RISK', trigger: 'WACC inputs row missing, or wacc_computed_pct NULL', output: 'Discount rate never computed — EV cannot be relied on' },
-  { id: 'ADV-R22', kind: 'QUESTION', trigger: `|target debt% − current debt%| > ${ADVISOR_THRESHOLDS.capitalStructureDivergencePp}pp`, output: 'Is the transition to the target capital structure financeable?' },
-  { id: 'ADV-R23', kind: 'RISK', trigger: 'cost_of_debt_pretax_pct < risk_free_rate_pct', output: 'Pre-tax cost of debt below the risk-free rate — inconsistent inputs' },
-  { id: 'ADV-R24', kind: 'FACT', trigger: 'EV→Equity bridge exists', output: 'EV → equity with net adjustments and component count' },
-  { id: 'ADV-R25', kind: 'ACTION', trigger: 'no EV→Equity bridge', output: 'Complete the EV→Equity bridge before approval' },
-  { id: 'ADV-R26', kind: 'RISK', trigger: 'bridge equity value ≤ 0', output: 'Non-positive equity value after the bridge' },
-  { id: 'ADV-R27', kind: 'RISK', trigger: `|Σ adjustments| / EV > ${ADVISOR_THRESHOLDS.bridgeAdjustmentDominancePct}%`, output: 'Bridge adjustments dominate the equity result' },
-  { id: 'ADV-R28', kind: 'RISK', trigger: "business version freshness != 'CURRENT'", output: 'Advisor ran on a candidate not marked freshly computed' },
-  { id: 'ADV-C01', kind: 'FACT', trigger: 'both variants have a headline EV', output: 'ΔEV absolute and %' },
-  { id: 'ADV-C02', kind: 'FACT', trigger: 'both variants have wacc_computed_pct', output: 'ΔWACC in pp' },
-  { id: 'ADV-C03', kind: 'FACT', trigger: 'both variants have a primary terminal share', output: 'Δterminal share in pp' },
-  { id: 'ADV-C04', kind: 'HYPOTHESIS', trigger: `|ΔEV| > ${ADVISOR_THRESHOLDS.variantMaterialEvGapPct}% and |ΔWACC| ≥ ${ADVISOR_THRESHOLDS.variantExplanatoryWaccGapPp}pp`, output: 'The EV gap is largely a discount-rate effect' },
-  { id: 'ADV-C05', kind: 'RISK', trigger: `|ΔEV| > ${ADVISOR_THRESHOLDS.variantMaterialEvGapPct}%, |ΔWACC| < ${ADVISOR_THRESHOLDS.variantExplanatoryWaccGapPp}pp, |Δterminal share| < ${ADVISOR_THRESHOLDS.variantSimilarTerminalSharePp}pp`, output: 'Material EV gap unexplained by rate or terminal profile — check operating assumptions' },
-  { id: 'ADV-C06', kind: 'FACT', trigger: 'both variants have a bridged equity value', output: 'Δequity value absolute and %' },
+  {
+    id: 'ADV-R01',
+    kind: 'FACT',
+    trigger: 'primary terminal row has terminal_share_pct',
+    output: 'Terminal value share of EV, with the terminal amount',
+  },
+  {
+    id: 'ADV-R02',
+    kind: 'HYPOTHESIS',
+    trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}%`,
+    output: 'Result is driven by terminal assumptions, not the explicit forecast (HIGH above 85%)',
+  },
+  {
+    id: 'ADV-R03',
+    kind: 'RISK',
+    trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}%`,
+    output: 'Terminal-value concentration risk; impact = terminal amount',
+  },
+  {
+    id: 'ADV-R04',
+    kind: 'ACTION',
+    trigger: `terminal_share_pct > ${ADVISOR_THRESHOLDS.terminalShareHighPct}% and no EXIT_MULTIPLE row on that method`,
+    output: 'Add an exit-multiple terminal cross-check',
+  },
+  {
+    id: 'ADV-R05',
+    kind: 'RISK',
+    trigger: `WACC − g < ${ADVISOR_THRESHOLDS.narrowGordonSpreadPp}pp`,
+    output: 'Narrow Gordon spread — denominator numerically fragile',
+  },
+  {
+    id: 'ADV-R06',
+    kind: 'RISK',
+    trigger: `|g − reinvestment_rate × ROIC| > ${ADVISOR_THRESHOLDS.impliedGTolerancePp}pp`,
+    output: 'Terminal g not reconciled with steady-state reinvestment × ROIC',
+  },
+  {
+    id: 'ADV-R07',
+    kind: 'QUESTION',
+    trigger: 'primary Gordon row lacks reinvestment_rate_pct or roic_pct',
+    output: 'On what steady-state reinvestment/ROIC does terminal g rest?',
+  },
+  {
+    id: 'ADV-R08',
+    kind: 'FACT',
+    trigger: 'recommendation basket is complete (all members READY)',
+    output: 'Weighted recommendation EV and each method contribution',
+  },
+  {
+    id: 'ADV-R09',
+    kind: 'RISK',
+    trigger: 'basket has a member that is not READY',
+    output: 'Recommendation basket incomplete — no weighted result exists',
+  },
+  {
+    id: 'ADV-R10',
+    kind: 'RISK',
+    trigger: 'no method is in the recommendation basket',
+    output: 'No weighted basket configured; result rests on unweighted methods',
+  },
+  {
+    id: 'ADV-R11',
+    kind: 'RISK',
+    trigger: `≥2 READY methods and dispersion > ${ADVISOR_THRESHOLDS.methodDispersionPct}%`,
+    output: `Low method agreement (HIGH above ${ADVISOR_THRESHOLDS.methodDispersionSeverePct}%)`,
+  },
+  {
+    id: 'ADV-R12',
+    kind: 'FACT',
+    trigger: '≥2 READY methods',
+    output: 'Method spread: min/max EV and dispersion as % of mean',
+  },
+  {
+    id: 'ADV-R13',
+    kind: 'RISK',
+    trigger: 'no TRADING_COMPS/PRECEDENT_TRANSACTIONS method, or one with 0 usable comps',
+    output: 'No market cross-check — intrinsic value unbenchmarked',
+  },
+  {
+    id: 'ADV-R14',
+    kind: 'ACTION',
+    trigger: 'same trigger as ADV-R13',
+    output: 'Configure a trading-comps peer set (Not configured, not PLN 0)',
+  },
+  {
+    id: 'ADV-R15',
+    kind: 'FACT',
+    trigger: '≥1 COMPLETE sensitivity grid with defined cells',
+    output: 'Sensitivity band min..max and width as % of the base cell',
+  },
+  {
+    id: 'ADV-R16',
+    kind: 'RISK',
+    trigger: `band width > ${ADVISOR_THRESHOLDS.sensitivityWideBandPct}% of base cell`,
+    output: 'Wide sensitivity band — point estimate weakly determined',
+  },
+  {
+    id: 'ADV-R17',
+    kind: 'RISK',
+    trigger: 'findMonotonicityViolation() returns a violation',
+    output: 'Grid not monotonic in WACC/g — model or grid construction suspect (HIGH)',
+  },
+  {
+    id: 'ADV-R18',
+    kind: 'ACTION',
+    trigger: 'no sensitivity grid at all',
+    output: 'Run the 5×5 WACC × terminal-g grid before approval',
+  },
+  {
+    id: 'ADV-R19',
+    kind: 'QUESTION',
+    trigger: '≥1 undefined cell (g ≥ WACC) in a grid',
+    output: 'N of 25 cells undefined — is the axis range appropriate?',
+  },
+  {
+    id: 'ADV-R20',
+    kind: 'FACT',
+    trigger: 'wacc_computed_pct present',
+    output: 'WACC with cost of equity, after-tax cost of debt and target structure',
+  },
+  {
+    id: 'ADV-R21',
+    kind: 'RISK',
+    trigger: 'WACC inputs row missing, or wacc_computed_pct NULL',
+    output: 'Discount rate never computed — EV cannot be relied on',
+  },
+  {
+    id: 'ADV-R22',
+    kind: 'QUESTION',
+    trigger: `|target debt% − current debt%| > ${ADVISOR_THRESHOLDS.capitalStructureDivergencePp}pp`,
+    output: 'Is the transition to the target capital structure financeable?',
+  },
+  {
+    id: 'ADV-R23',
+    kind: 'RISK',
+    trigger: 'cost_of_debt_pretax_pct < risk_free_rate_pct',
+    output: 'Pre-tax cost of debt below the risk-free rate — inconsistent inputs',
+  },
+  {
+    id: 'ADV-R24',
+    kind: 'FACT',
+    trigger: 'EV→Equity bridge exists',
+    output: 'EV → equity with net adjustments and component count',
+  },
+  {
+    id: 'ADV-R25',
+    kind: 'ACTION',
+    trigger: 'no EV→Equity bridge',
+    output: 'Complete the EV→Equity bridge before approval',
+  },
+  {
+    id: 'ADV-R26',
+    kind: 'RISK',
+    trigger: 'bridge equity value ≤ 0',
+    output: 'Non-positive equity value after the bridge',
+  },
+  {
+    id: 'ADV-R27',
+    kind: 'RISK',
+    trigger: `|Σ adjustments| / EV > ${ADVISOR_THRESHOLDS.bridgeAdjustmentDominancePct}%`,
+    output: 'Bridge adjustments dominate the equity result',
+  },
+  {
+    id: 'ADV-R28',
+    kind: 'RISK',
+    trigger: "business version freshness != 'CURRENT'",
+    output: 'Advisor ran on a candidate not marked freshly computed',
+  },
+  {
+    id: 'ADV-C01',
+    kind: 'FACT',
+    trigger: 'both variants have a headline EV',
+    output: 'ΔEV absolute and %',
+  },
+  {
+    id: 'ADV-C02',
+    kind: 'FACT',
+    trigger: 'both variants have wacc_computed_pct',
+    output: 'ΔWACC in pp',
+  },
+  {
+    id: 'ADV-C03',
+    kind: 'FACT',
+    trigger: 'both variants have a primary terminal share',
+    output: 'Δterminal share in pp',
+  },
+  {
+    id: 'ADV-C04',
+    kind: 'HYPOTHESIS',
+    trigger: `|ΔEV| > ${ADVISOR_THRESHOLDS.variantMaterialEvGapPct}% and |ΔWACC| ≥ ${ADVISOR_THRESHOLDS.variantExplanatoryWaccGapPp}pp`,
+    output: 'The EV gap is largely a discount-rate effect',
+  },
+  {
+    id: 'ADV-C05',
+    kind: 'RISK',
+    trigger: `|ΔEV| > ${ADVISOR_THRESHOLDS.variantMaterialEvGapPct}%, |ΔWACC| < ${ADVISOR_THRESHOLDS.variantExplanatoryWaccGapPp}pp, |Δterminal share| < ${ADVISOR_THRESHOLDS.variantSimilarTerminalSharePp}pp`,
+    output: 'Material EV gap unexplained by rate or terminal profile — check operating assumptions',
+  },
+  {
+    id: 'ADV-C06',
+    kind: 'FACT',
+    trigger: 'both variants have a bridged equity value',
+    output: 'Δequity value absolute and %',
+  },
 ];
 
 // =============================================================================================
@@ -547,7 +800,14 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
     pointers: AdvisorEvidencePointer[],
     derived: AdvisorEvidenceRef['derived'],
     impactUnit: AdvisorEvidenceRef['impactUnit']
-  ): AdvisorEvidenceRef => ({ ruleId, generator: 'RULE_ENGINE', rulesVersion, pointers, derived, impactUnit });
+  ): AdvisorEvidenceRef => ({
+    ruleId,
+    generator: 'RULE_ENGINE',
+    rulesVersion,
+    pointers,
+    derived,
+    impactUnit,
+  });
 
   // ---- Terminal block -----------------------------------------------------------------------
   const term = primaryTerminal(snapshot);
@@ -569,8 +829,24 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         evidenceRef: ev(
           'ADV-R01',
           [
-            pointer('finance_valuation_terminal', 'terminal_share_pct', term.id, terminalShare, 'Terminal share of EV'),
-            ...(terminalValue !== null ? [pointer('finance_valuation_terminal', 'terminal_value_decimal', term.id, terminalValue, 'Terminal value')] : []),
+            pointer(
+              'finance_valuation_terminal',
+              'terminal_share_pct',
+              term.id,
+              terminalShare,
+              'Terminal share of EV'
+            ),
+            ...(terminalValue !== null
+              ? [
+                  pointer(
+                    'finance_valuation_terminal',
+                    'terminal_value_decimal',
+                    term.id,
+                    terminalValue,
+                    'Terminal value'
+                  ),
+                ]
+              : []),
           ],
           { convention: term.convention, methodType: term.method_type },
           'PCT'
@@ -587,7 +863,8 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         finding({
           ruleId: 'ADV-R02',
           outputKind: 'HYPOTHESIS',
-          title: 'The valuation is driven by terminal assumptions rather than the explicit forecast',
+          title:
+            'The valuation is driven by terminal assumptions rather than the explicit forecast',
           narrative:
             `With ${formatPct(terminalShare)}% of enterprise value sitting beyond the explicit projection horizon ` +
             `(threshold ${t.terminalShareHighPct}%), the result is more a statement about steady-state growth and ` +
@@ -595,8 +872,19 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             `than a change to terminal g or the exit multiple.`,
           evidenceRef: ev(
             'ADV-R02',
-            [pointer('finance_valuation_terminal', 'terminal_share_pct', term.id, terminalShare, 'Terminal share of EV')],
-            { thresholdPct: t.terminalShareHighPct, severeThresholdPct: t.terminalShareVeryHighPct },
+            [
+              pointer(
+                'finance_valuation_terminal',
+                'terminal_share_pct',
+                term.id,
+                terminalShare,
+                'Terminal share of EV'
+              ),
+            ],
+            {
+              thresholdPct: t.terminalShareHighPct,
+              severeThresholdPct: t.terminalShareVeryHighPct,
+            },
             'PCT'
           ),
           driverRef: 'TERMINAL_VALUE',
@@ -615,8 +903,24 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           evidenceRef: ev(
             'ADV-R03',
             [
-              pointer('finance_valuation_terminal', 'terminal_share_pct', term.id, terminalShare, 'Terminal share of EV'),
-              ...(terminalValue !== null ? [pointer('finance_valuation_terminal', 'terminal_value_decimal', term.id, terminalValue, 'Terminal value at risk')] : []),
+              pointer(
+                'finance_valuation_terminal',
+                'terminal_share_pct',
+                term.id,
+                terminalShare,
+                'Terminal share of EV'
+              ),
+              ...(terminalValue !== null
+                ? [
+                    pointer(
+                      'finance_valuation_terminal',
+                      'terminal_value_decimal',
+                      term.id,
+                      terminalValue,
+                      'Terminal value at risk'
+                    ),
+                  ]
+                : []),
             ],
             { thresholdPct: t.terminalShareHighPct },
             'CURRENCY'
@@ -627,7 +931,9 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         })
       );
 
-      const hasExitMultiple = snapshot.terminal.some((row) => row.method_id === term.method_id && row.convention === 'EXIT_MULTIPLE');
+      const hasExitMultiple = snapshot.terminal.some(
+        (row) => row.method_id === term.method_id && row.convention === 'EXIT_MULTIPLE'
+      );
       if (!hasExitMultiple) {
         out.push(
           finding({
@@ -640,8 +946,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
               `assumption into something two independent conventions have to agree on.`,
             evidenceRef: ev(
               'ADV-R04',
-              [pointer('finance_valuation_terminal', 'convention', term.id, term.convention, 'Only terminal convention present on this method')],
-              { methodId: term.method_id, methodType: term.method_type, terminalSharePct: terminalShare },
+              [
+                pointer(
+                  'finance_valuation_terminal',
+                  'convention',
+                  term.id,
+                  term.convention,
+                  'Only terminal convention present on this method'
+                ),
+              ],
+              {
+                methodId: term.method_id,
+                methodType: term.method_type,
+                terminalSharePct: terminalShare,
+              },
               null
             ),
             driverRef: 'TERMINAL_VALUE',
@@ -669,7 +987,17 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             'ADV-R05',
             [
               pointer('finance_valuation_terminal', 'g_pct', term.id, gPct, 'Terminal growth g'),
-              ...(snapshot.wacc ? [pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapshot.wacc.id, waccPct, 'Computed WACC')] : []),
+              ...(snapshot.wacc
+                ? [
+                    pointer(
+                      'finance_valuation_wacc_inputs',
+                      'wacc_computed_pct',
+                      snapshot.wacc.id,
+                      waccPct,
+                      'Computed WACC'
+                    ),
+                  ]
+                : []),
             ],
             { spreadPp: spread, thresholdPp: t.narrowGordonSpreadPp },
             'PP'
@@ -703,8 +1031,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
               'ADV-R06',
               [
                 pointer('finance_valuation_terminal', 'g_pct', term.id, gPct, 'Terminal growth g'),
-                pointer('finance_valuation_terminal', 'reinvestment_rate_pct', term.id, reinvest, 'Steady-state reinvestment rate'),
-                pointer('finance_valuation_terminal', 'roic_pct', term.id, roic, 'Steady-state ROIC'),
+                pointer(
+                  'finance_valuation_terminal',
+                  'reinvestment_rate_pct',
+                  term.id,
+                  reinvest,
+                  'Steady-state reinvestment rate'
+                ),
+                pointer(
+                  'finance_valuation_terminal',
+                  'roic_pct',
+                  term.id,
+                  roic,
+                  'Steady-state ROIC'
+                ),
               ],
               { impliedGPct: impliedG, gapPp: gap, tolerancePp: t.impliedGTolerancePp },
               'PP'
@@ -730,8 +1070,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             'ADV-R07',
             [
               pointer('finance_valuation_terminal', 'g_pct', term.id, gPct, 'Terminal growth g'),
-              pointer('finance_valuation_terminal', 'reinvestment_rate_pct', term.id, reinvest, 'Steady-state reinvestment rate (missing)'),
-              pointer('finance_valuation_terminal', 'roic_pct', term.id, roic, 'Steady-state ROIC (missing)'),
+              pointer(
+                'finance_valuation_terminal',
+                'reinvestment_rate_pct',
+                term.id,
+                reinvest,
+                'Steady-state reinvestment rate (missing)'
+              ),
+              pointer(
+                'finance_valuation_terminal',
+                'roic_pct',
+                term.id,
+                roic,
+                'Steady-state ROIC (missing)'
+              ),
             ],
             { reinvestmentPresent: reinvest !== null, roicPresent: roic !== null },
             null
@@ -755,16 +1107,28 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         narrative:
           `The recommendation basket is complete. ` +
           basket.contributions
-            .map((c) => `${c.methodType} at ${formatPct(c.weightPct, 1)}% weight contributes ${formatAmount(c.contribution)}`)
+            .map(
+              (c) =>
+                `${c.methodType} at ${formatPct(c.weightPct, 1)}% weight contributes ${formatAmount(c.contribution)}`
+            )
             .join('; ') +
           `. Weighted enterprise value = ${formatAmount(basket.weightedEnterpriseValue)}.`,
         evidenceRef: ev(
           'ADV-R08',
           basket.contributions.map((c) => {
             const row = snapshot.methods.find((m) => m.method_type === c.methodType)!;
-            return pointer('finance_valuation_methods', 'result_ev_decimal', row.id, c.resultEvDecimal, `${c.methodType} enterprise value`);
+            return pointer(
+              'finance_valuation_methods',
+              'result_ev_decimal',
+              row.id,
+              c.resultEvDecimal,
+              `${c.methodType} enterprise value`
+            );
           }),
-          { weightedEnterpriseValue: basket.weightedEnterpriseValue, basketSize: basket.contributions.length },
+          {
+            weightedEnterpriseValue: basket.weightedEnterpriseValue,
+            basketSize: basket.contributions.length,
+          },
           'CURRENCY'
         ),
         driverRef: 'RECOMMENDATION_BASKET',
@@ -786,7 +1150,13 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           'ADV-R09',
           basket.notReadyMethodTypes.map((mt) => {
             const row = snapshot.methods.find((m) => m.method_type === mt)!;
-            return pointer('finance_valuation_methods', 'readiness', row.id, row.readiness, `${mt} readiness`);
+            return pointer(
+              'finance_valuation_methods',
+              'readiness',
+              row.id,
+              row.readiness,
+              `${mt} readiness`
+            );
           }),
           { notReadyMethodTypes: basket.notReadyMethodTypes.join(',') },
           'COUNT'
@@ -832,7 +1202,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           `${formatAmount(max.value)}; the range is ${formatPct(dispersionPct, 1)}% of the ${formatAmount(mean)} mean.`,
         evidenceRef: ev(
           'ADV-R12',
-          values.map((v) => pointer('finance_valuation_methods', 'result_ev_decimal', v.row.id, v.value, `${v.row.method_type} enterprise value`)),
+          values.map((v) =>
+            pointer(
+              'finance_valuation_methods',
+              'result_ev_decimal',
+              v.row.id,
+              v.value,
+              `${v.row.method_type} enterprise value`
+            )
+          ),
           { minValue: min.value, maxValue: max.value, meanValue: mean, dispersionPct },
           'PCT'
         ),
@@ -856,10 +1234,26 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           evidenceRef: ev(
             'ADV-R11',
             [
-              pointer('finance_valuation_methods', 'result_ev_decimal', min.row.id, min.value, `${min.row.method_type} (low)`),
-              pointer('finance_valuation_methods', 'result_ev_decimal', max.row.id, max.value, `${max.row.method_type} (high)`),
+              pointer(
+                'finance_valuation_methods',
+                'result_ev_decimal',
+                min.row.id,
+                min.value,
+                `${min.row.method_type} (low)`
+              ),
+              pointer(
+                'finance_valuation_methods',
+                'result_ev_decimal',
+                max.row.id,
+                max.value,
+                `${max.row.method_type} (high)`
+              ),
             ],
-            { dispersionPct, thresholdPct: t.methodDispersionPct, absoluteGap: max.value - min.value },
+            {
+              dispersionPct,
+              thresholdPct: t.methodDispersionPct,
+              absoluteGap: max.value - min.value,
+            },
             'PCT'
           ),
           driverRef: 'METHOD_DISPERSION',
@@ -870,10 +1264,17 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
     }
   }
 
-  const marketMethods = snapshot.methods.filter((m) => m.method_type === 'TRADING_COMPS' || m.method_type === 'PRECEDENT_TRANSACTIONS');
-  const marketWithComps = marketMethods.filter((m) => (snapshot.usableCompsByMethodId[m.id] ?? 0) > 0);
+  const marketMethods = snapshot.methods.filter(
+    (m) => m.method_type === 'TRADING_COMPS' || m.method_type === 'PRECEDENT_TRANSACTIONS'
+  );
+  const marketWithComps = marketMethods.filter(
+    (m) => (snapshot.usableCompsByMethodId[m.id] ?? 0) > 0
+  );
   if (marketWithComps.length === 0) {
-    const reason = marketMethods.length === 0 ? 'no market method exists on this variant' : 'the market method has no usable peer rows';
+    const reason =
+      marketMethods.length === 0
+        ? 'no market method exists on this variant'
+        : 'the market method has no usable peer rows';
     out.push(
       finding({
         ruleId: 'ADV-R13',
@@ -885,8 +1286,22 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           `configured", which is NOT the same as a market value of zero.`,
         evidenceRef: ev(
           'ADV-R13',
-          marketMethods.map((m) => pointer('finance_valuation_methods', 'readiness', m.id, m.readiness, `${m.method_type} readiness`)),
-          { marketMethodCount: marketMethods.length, usableCompsTotal: marketMethods.reduce((s, m) => s + (snapshot.usableCompsByMethodId[m.id] ?? 0), 0) },
+          marketMethods.map((m) =>
+            pointer(
+              'finance_valuation_methods',
+              'readiness',
+              m.id,
+              m.readiness,
+              `${m.method_type} readiness`
+            )
+          ),
+          {
+            marketMethodCount: marketMethods.length,
+            usableCompsTotal: marketMethods.reduce(
+              (s, m) => s + (snapshot.usableCompsByMethodId[m.id] ?? 0),
+              0
+            ),
+          },
           'COUNT'
         ),
         driverRef: 'COMPS',
@@ -945,12 +1360,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
     const baseValue = baseCell ? num(baseCell.cell_value_decimal) : null;
 
     if (defined.length >= 2) {
-      const sortedCells = [...defined].sort((a, b) => num(a.cell_value_decimal)! - num(b.cell_value_decimal)!);
+      const sortedCells = [...defined].sort(
+        (a, b) => num(a.cell_value_decimal)! - num(b.cell_value_decimal)!
+      );
       const lo = sortedCells[0];
       const hi = sortedCells[sortedCells.length - 1];
       const loV = num(lo.cell_value_decimal)!;
       const hiV = num(hi.cell_value_decimal)!;
-      const bandPctOfBase = baseValue !== null && baseValue !== 0 ? ((hiV - loV) / Math.abs(baseValue)) * 100 : null;
+      const bandPctOfBase =
+        baseValue !== null && baseValue !== 0 ? ((hiV - loV) / Math.abs(baseValue)) * 100 : null;
 
       out.push(
         finding({
@@ -960,15 +1378,45 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           narrative:
             `Across ${defined.length} defined cells of the ${grid.row_axis_variable} × ${grid.column_axis_variable} grid, ` +
             `enterprise value ranges from ${formatAmount(loV)} to ${formatAmount(hiV)}` +
-            (bandPctOfBase !== null ? `, i.e. ${formatPct(bandPctOfBase, 1)}% of the ${formatAmount(baseValue!)} base cell.` : '.'),
+            (bandPctOfBase !== null
+              ? `, i.e. ${formatPct(bandPctOfBase, 1)}% of the ${formatAmount(baseValue!)} base cell.`
+              : '.'),
           evidenceRef: ev(
             'ADV-R15',
             [
-              pointer('finance_valuation_sensitivity_cells', 'cell_value_decimal', lo.id, loV, 'Lowest defined cell'),
-              pointer('finance_valuation_sensitivity_cells', 'cell_value_decimal', hi.id, hiV, 'Highest defined cell'),
-              ...(baseCell && baseValue !== null ? [pointer('finance_valuation_sensitivity_cells', 'cell_value_decimal', baseCell.id, baseValue, 'Base cell')] : []),
+              pointer(
+                'finance_valuation_sensitivity_cells',
+                'cell_value_decimal',
+                lo.id,
+                loV,
+                'Lowest defined cell'
+              ),
+              pointer(
+                'finance_valuation_sensitivity_cells',
+                'cell_value_decimal',
+                hi.id,
+                hiV,
+                'Highest defined cell'
+              ),
+              ...(baseCell && baseValue !== null
+                ? [
+                    pointer(
+                      'finance_valuation_sensitivity_cells',
+                      'cell_value_decimal',
+                      baseCell.id,
+                      baseValue,
+                      'Base cell'
+                    ),
+                  ]
+                : []),
             ],
-            { gridId: grid.id, definedCells: defined.length, bandPctOfBase, minValue: loV, maxValue: hiV },
+            {
+              gridId: grid.id,
+              definedCells: defined.length,
+              bandPctOfBase,
+              minValue: loV,
+              maxValue: hiV,
+            },
             bandPctOfBase !== null ? 'PCT' : 'CURRENCY'
           ),
           driverRef: 'SENSITIVITY',
@@ -990,8 +1438,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             evidenceRef: ev(
               'ADV-R16',
               [
-                pointer('finance_valuation_sensitivity_cells', 'cell_value_decimal', lo.id, loV, 'Lowest defined cell'),
-                pointer('finance_valuation_sensitivity_cells', 'cell_value_decimal', hi.id, hiV, 'Highest defined cell'),
+                pointer(
+                  'finance_valuation_sensitivity_cells',
+                  'cell_value_decimal',
+                  lo.id,
+                  loV,
+                  'Lowest defined cell'
+                ),
+                pointer(
+                  'finance_valuation_sensitivity_cells',
+                  'cell_value_decimal',
+                  hi.id,
+                  hiV,
+                  'Highest defined cell'
+                ),
               ],
               { bandPctOfBase, thresholdPct: t.sensitivityWideBandPct },
               'PCT'
@@ -1017,7 +1477,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             `misbehaving — in both cases the grid cannot be shown to a client as-is.`,
           evidenceRef: ev(
             'ADV-R17',
-            [pointer('finance_valuation_sensitivity_grids', 'grid_status', grid.id, grid.grid_status, 'Grid marked COMPLETE')],
+            [
+              pointer(
+                'finance_valuation_sensitivity_grids',
+                'grid_status',
+                grid.id,
+                grid.grid_status,
+                'Grid marked COMPLETE'
+              ),
+            ],
             { gridId: grid.id, violation },
             null
           ),
@@ -1040,7 +1508,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             `carries no information — is the axis range still the one you want to show?`,
           evidenceRef: ev(
             'ADV-R19',
-            [pointer('finance_valuation_sensitivity_grids', 'grid_label', grid.id, grid.grid_label, 'Grid with undefined cells')],
+            [
+              pointer(
+                'finance_valuation_sensitivity_grids',
+                'grid_label',
+                grid.id,
+                grid.grid_label,
+                'Grid with undefined cells'
+              ),
+            ],
             { undefinedCount, totalCells: grid.cells.length },
             'COUNT'
           ),
@@ -1062,8 +1538,12 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
     const targetDebt = num(snapshot.wacc.target_capital_structure_debt_pct);
     const targetEquity = num(snapshot.wacc.target_capital_structure_equity_pct);
     const currentDebt = num(snapshot.wacc.current_capital_structure_debt_pct);
-    const costOfEquity = riskFree !== null && erp !== null && betaRelevered !== null ? riskFree + betaRelevered * erp : null;
-    const costOfDebtAfterTax = costOfDebt !== null && taxRate !== null ? costOfDebt * (1 - taxRate / 100) : null;
+    const costOfEquity =
+      riskFree !== null && erp !== null && betaRelevered !== null
+        ? riskFree + betaRelevered * erp
+        : null;
+    const costOfDebtAfterTax =
+      costOfDebt !== null && taxRate !== null ? costOfDebt * (1 - taxRate / 100) : null;
 
     out.push(
       finding({
@@ -1072,16 +1552,48 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         title: `WACC = ${formatPct(waccPct)}%`,
         narrative:
           `Discount rate ${formatPct(waccPct)}%` +
-          (costOfEquity !== null ? `, built from a cost of equity of ${formatPct(costOfEquity)}% (risk-free ${formatPct(riskFree!)}% + relevered beta ${formatPct(betaRelevered!, 3)} × ERP ${formatPct(erp!)}%)` : '') +
-          (costOfDebtAfterTax !== null ? ` and an after-tax cost of debt of ${formatPct(costOfDebtAfterTax)}%` : '') +
-          (targetDebt !== null && targetEquity !== null ? `, weighted at ${formatPct(targetDebt, 1)}% debt / ${formatPct(targetEquity, 1)}% equity (target structure)` : '') +
+          (costOfEquity !== null
+            ? `, built from a cost of equity of ${formatPct(costOfEquity)}% (risk-free ${formatPct(riskFree!)}% + relevered beta ${formatPct(betaRelevered!, 3)} × ERP ${formatPct(erp!)}%)`
+            : '') +
+          (costOfDebtAfterTax !== null
+            ? ` and an after-tax cost of debt of ${formatPct(costOfDebtAfterTax)}%`
+            : '') +
+          (targetDebt !== null && targetEquity !== null
+            ? `, weighted at ${formatPct(targetDebt, 1)}% debt / ${formatPct(targetEquity, 1)}% equity (target structure)`
+            : '') +
           `.`,
         evidenceRef: ev(
           'ADV-R20',
           [
-            pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapshot.wacc.id, waccPct, 'Computed WACC'),
-            ...(betaRelevered !== null ? [pointer('finance_valuation_wacc_inputs', 'beta_relevered', snapshot.wacc.id, betaRelevered, 'Relevered beta')] : []),
-            ...(costOfDebt !== null ? [pointer('finance_valuation_wacc_inputs', 'cost_of_debt_pretax_pct', snapshot.wacc.id, costOfDebt, 'Pre-tax cost of debt')] : []),
+            pointer(
+              'finance_valuation_wacc_inputs',
+              'wacc_computed_pct',
+              snapshot.wacc.id,
+              waccPct,
+              'Computed WACC'
+            ),
+            ...(betaRelevered !== null
+              ? [
+                  pointer(
+                    'finance_valuation_wacc_inputs',
+                    'beta_relevered',
+                    snapshot.wacc.id,
+                    betaRelevered,
+                    'Relevered beta'
+                  ),
+                ]
+              : []),
+            ...(costOfDebt !== null
+              ? [
+                  pointer(
+                    'finance_valuation_wacc_inputs',
+                    'cost_of_debt_pretax_pct',
+                    snapshot.wacc.id,
+                    costOfDebt,
+                    'Pre-tax cost of debt'
+                  ),
+                ]
+              : []),
           ],
           { costOfEquityPct: costOfEquity, costOfDebtAfterTaxPct: costOfDebtAfterTax },
           'PCT'
@@ -1092,7 +1604,11 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
       })
     );
 
-    if (targetDebt !== null && currentDebt !== null && Math.abs(targetDebt - currentDebt) > t.capitalStructureDivergencePp) {
+    if (
+      targetDebt !== null &&
+      currentDebt !== null &&
+      Math.abs(targetDebt - currentDebt) > t.capitalStructureDivergencePp
+    ) {
       out.push(
         finding({
           ruleId: 'ADV-R22',
@@ -1105,8 +1621,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           evidenceRef: ev(
             'ADV-R22',
             [
-              pointer('finance_valuation_wacc_inputs', 'target_capital_structure_debt_pct', snapshot.wacc.id, targetDebt, 'Target debt weight'),
-              pointer('finance_valuation_wacc_inputs', 'current_capital_structure_debt_pct', snapshot.wacc.id, currentDebt, 'Current debt weight'),
+              pointer(
+                'finance_valuation_wacc_inputs',
+                'target_capital_structure_debt_pct',
+                snapshot.wacc.id,
+                targetDebt,
+                'Target debt weight'
+              ),
+              pointer(
+                'finance_valuation_wacc_inputs',
+                'current_capital_structure_debt_pct',
+                snapshot.wacc.id,
+                currentDebt,
+                'Current debt weight'
+              ),
             ],
             { divergencePp: targetDebt - currentDebt, thresholdPp: t.capitalStructureDivergencePp },
             'PP'
@@ -1131,8 +1659,20 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           evidenceRef: ev(
             'ADV-R23',
             [
-              pointer('finance_valuation_wacc_inputs', 'cost_of_debt_pretax_pct', snapshot.wacc.id, costOfDebt, 'Pre-tax cost of debt'),
-              pointer('finance_valuation_wacc_inputs', 'risk_free_rate_pct', snapshot.wacc.id, riskFree, 'Risk-free rate'),
+              pointer(
+                'finance_valuation_wacc_inputs',
+                'cost_of_debt_pretax_pct',
+                snapshot.wacc.id,
+                costOfDebt,
+                'Pre-tax cost of debt'
+              ),
+              pointer(
+                'finance_valuation_wacc_inputs',
+                'risk_free_rate_pct',
+                snapshot.wacc.id,
+                riskFree,
+                'Risk-free rate'
+              ),
             ],
             { impliedSpreadPp: costOfDebt - riskFree },
             'PP'
@@ -1155,7 +1695,17 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             : `finance_valuation_wacc_inputs.wacc_computed_pct is NULL — the inputs exist but WACC was never computed from them (deliberately NULL rather than a silent zero).`,
         evidenceRef: ev(
           'ADV-R21',
-          snapshot.wacc ? [pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapshot.wacc.id, null, 'Computed WACC (NULL)')] : [],
+          snapshot.wacc
+            ? [
+                pointer(
+                  'finance_valuation_wacc_inputs',
+                  'wacc_computed_pct',
+                  snapshot.wacc.id,
+                  null,
+                  'Computed WACC (NULL)'
+                ),
+              ]
+            : [],
           { waccInputsRowPresent: snapshot.wacc !== null },
           null
         ),
@@ -1183,14 +1733,40 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
         narrative:
           `The bridge as of ${snapshot.bridge.header.as_of_date} applies ${snapshot.bridge.components.length} ` +
           `component(s) worth ${formatAmount(netAdjustments)} net` +
-          (bridgeEv !== null && equity !== null ? `, taking enterprise value ${formatAmount(bridgeEv)} to equity value ${formatAmount(equity)}.` : '.'),
+          (bridgeEv !== null && equity !== null
+            ? `, taking enterprise value ${formatAmount(bridgeEv)} to equity value ${formatAmount(equity)}.`
+            : '.'),
         evidenceRef: ev(
           'ADV-R24',
           [
-            ...(bridgeEv !== null ? [pointer('finance_valuation_ev_equity_bridge', 'enterprise_value_decimal', snapshot.bridge.header.id, bridgeEv, 'Bridge enterprise value')] : []),
-            ...(equity !== null ? [pointer('finance_valuation_ev_equity_bridge', 'equity_value_decimal', snapshot.bridge.header.id, equity, 'Bridge equity value')] : []),
+            ...(bridgeEv !== null
+              ? [
+                  pointer(
+                    'finance_valuation_ev_equity_bridge',
+                    'enterprise_value_decimal',
+                    snapshot.bridge.header.id,
+                    bridgeEv,
+                    'Bridge enterprise value'
+                  ),
+                ]
+              : []),
+            ...(equity !== null
+              ? [
+                  pointer(
+                    'finance_valuation_ev_equity_bridge',
+                    'equity_value_decimal',
+                    snapshot.bridge.header.id,
+                    equity,
+                    'Bridge equity value'
+                  ),
+                ]
+              : []),
           ],
-          { netAdjustments, componentCount: snapshot.bridge.components.length, asOfDate: snapshot.bridge.header.as_of_date },
+          {
+            netAdjustments,
+            componentCount: snapshot.bridge.components.length,
+            asOfDate: snapshot.bridge.header.as_of_date,
+          },
           'CURRENCY'
         ),
         driverRef: 'EV_EQUITY_BRIDGE',
@@ -1210,7 +1786,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
             `which is a solvency statement, not a valuation nuance — it must be named explicitly rather than shown as a small number.`,
           evidenceRef: ev(
             'ADV-R26',
-            [pointer('finance_valuation_ev_equity_bridge', 'equity_value_decimal', snapshot.bridge.header.id, equity, 'Bridge equity value')],
+            [
+              pointer(
+                'finance_valuation_ev_equity_bridge',
+                'equity_value_decimal',
+                snapshot.bridge.header.id,
+                equity,
+                'Bridge equity value'
+              ),
+            ],
             { enterpriseValue: bridgeEv },
             'CURRENCY'
           ),
@@ -1235,7 +1819,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
               `value is then mostly a balance-sheet statement, and each debt-like item deserves the same scrutiny as the DCF itself.`,
             evidenceRef: ev(
               'ADV-R27',
-              [pointer('finance_valuation_ev_equity_bridge', 'enterprise_value_decimal', snapshot.bridge.header.id, bridgeEv, 'Bridge enterprise value')],
+              [
+                pointer(
+                  'finance_valuation_ev_equity_bridge',
+                  'enterprise_value_decimal',
+                  snapshot.bridge.header.id,
+                  bridgeEv,
+                  'Bridge enterprise value'
+                ),
+              ],
               { netAdjustments, dominancePct, thresholdPct: t.bridgeAdjustmentDominancePct },
               'PCT'
             ),
@@ -1276,7 +1868,15 @@ export function evaluateAdvisorRules(snapshot: ValuationAdvisorSnapshot): Adviso
           `they will be marked stale automatically when the compute snapshot changes.`,
         evidenceRef: ev(
           'ADV-R28',
-          [pointer('finance_business_versions', 'freshness', snapshot.businessVersionId, snapshot.freshness, 'Business version freshness')],
+          [
+            pointer(
+              'finance_business_versions',
+              'freshness',
+              snapshot.businessVersionId,
+              snapshot.freshness,
+              'Business version freshness'
+            ),
+          ],
           { freshness: snapshot.freshness },
           null
         ),
@@ -1333,7 +1933,11 @@ export async function evaluateEvidenceGrounding(
           if (row.v !== null) ok = false;
         } else if (typeof p.observedValue === 'number') {
           const actual = num(row.v);
-          if (actual === null || Math.abs(actual - p.observedValue) > 1e-9 * Math.max(1, Math.abs(p.observedValue))) ok = false;
+          if (
+            actual === null ||
+            Math.abs(actual - p.observedValue) > 1e-9 * Math.max(1, Math.abs(p.observedValue))
+          )
+            ok = false;
         } else if (String(row.v) !== p.observedValue) {
           ok = false;
         }
@@ -1349,7 +1953,14 @@ function evidenceDigest(f: AdvisorFinding): string {
   return (
     'sha256:' +
     createHash('sha256')
-      .update(JSON.stringify({ ruleId: f.ruleId, title: f.title, narrative: f.narrative, evidenceRef: f.evidenceRef }))
+      .update(
+        JSON.stringify({
+          ruleId: f.ruleId,
+          title: f.title,
+          narrative: f.narrative,
+          evidenceRef: f.evidenceRef,
+        })
+      )
       .digest('hex')
   );
 }
@@ -1403,7 +2014,14 @@ export async function generateValuationAdvisorOutput(
   params: GenerateValuationAdvisorOutputParams
 ): Promise<GenerateValuationAdvisorOutputResult> {
   const bv = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ business_version_id: string; organization_id: string; artifact_id: string; status: string; freshness: string; artifact_type: string }>(
+    tx.queryOne<{
+      business_version_id: string;
+      organization_id: string;
+      artifact_id: string;
+      status: string;
+      freshness: string;
+      artifact_type: string;
+    }>(
       `SELECT bv.business_version_id, bv.organization_id, bv.artifact_id, bv.status, bv.freshness, a.artifact_type
          FROM finance_business_versions bv
          JOIN finance_artifacts a ON a.artifact_id = bv.artifact_id
@@ -1412,13 +2030,25 @@ export async function generateValuationAdvisorOutput(
     )
   );
   if (!bv) {
-    return { ok: false, code: 'VARIANT_NOT_FOUND', message: `No finance_business_versions row for ${params.variantId}` };
+    return {
+      ok: false,
+      code: 'VARIANT_NOT_FOUND',
+      message: `No finance_business_versions row for ${params.variantId}`,
+    };
   }
   if (params.organizationId && params.organizationId !== bv.organization_id) {
-    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: `Variant ${params.variantId} does not belong to organization ${params.organizationId}` };
+    return {
+      ok: false,
+      code: 'ORGANIZATION_MISMATCH',
+      message: `Variant ${params.variantId} does not belong to organization ${params.organizationId}`,
+    };
   }
   if (bv.artifact_type !== 'VALUATION_CASE') {
-    return { ok: false, code: 'NOT_A_VALUATION_CASE', message: `Artifact type is ${bv.artifact_type}, not VALUATION_CASE — the Valuation Advisor has nothing to say about it` };
+    return {
+      ok: false,
+      code: 'NOT_A_VALUATION_CASE',
+      message: `Artifact type is ${bv.artifact_type}, not VALUATION_CASE — the Valuation Advisor has nothing to say about it`,
+    };
   }
   if (ADVISOR_FORBIDDEN_STATUSES.includes(bv.status)) {
     return {
@@ -1451,7 +2081,11 @@ export async function generateValuationAdvisorOutput(
       variantId: params.variantId,
       computeSnapshotId: null,
       snapshot,
-      findings: findings.map((f) => ({ ...f, id: '', hallucinationEvalStatus: 'NOT_EVALUATED' as const })),
+      findings: findings.map((f) => ({
+        ...f,
+        id: '',
+        hallucinationEvalStatus: 'NOT_EVALUATED' as const,
+      })),
       countsByKind: countByKind(findings),
     };
   }
@@ -1463,7 +2097,11 @@ export async function generateValuationAdvisorOutput(
     actorId: params.actorId,
   });
   if (!snap.ok) {
-    return { ok: false, code: 'SNAPSHOT_FAILED', message: `createComputeSnapshot failed (${snap.code}): ${snap.message}` };
+    return {
+      ok: false,
+      code: 'SNAPSHOT_FAILED',
+      message: `createComputeSnapshot failed (${snap.code}): ${snap.message}`,
+    };
   }
 
   const groundingStatuses = await evaluateEvidenceGrounding(findings);
@@ -1531,7 +2169,13 @@ export async function generateValuationAdvisorOutput(
 }
 
 function countByKind(findings: readonly AdvisorFinding[]): Record<AdvisorOutputKind, number> {
-  const counts: Record<AdvisorOutputKind, number> = { FACT: 0, HYPOTHESIS: 0, RISK: 0, QUESTION: 0, ACTION: 0 };
+  const counts: Record<AdvisorOutputKind, number> = {
+    FACT: 0,
+    HYPOTHESIS: 0,
+    RISK: 0,
+    QUESTION: 0,
+    ACTION: 0,
+  };
   for (const f of findings) counts[f.outputKind] += 1;
   return counts;
 }
@@ -1540,7 +2184,12 @@ function countByKind(findings: readonly AdvisorFinding[]): Record<AdvisorOutputK
 // 10. compareVariantsForAdvisor — variant compare is a base function of the Case (handoff 9)
 // =============================================================================================
 
-export type VariantComparisonMetricName = 'ENTERPRISE_VALUE' | 'EQUITY_VALUE' | 'WACC_PCT' | 'TERMINAL_SHARE_PCT' | 'TERMINAL_G_PCT';
+export type VariantComparisonMetricName =
+  | 'ENTERPRISE_VALUE'
+  | 'EQUITY_VALUE'
+  | 'WACC_PCT'
+  | 'TERMINAL_SHARE_PCT'
+  | 'TERMINAL_G_PCT';
 
 export interface VariantComparisonMetric {
   metric: VariantComparisonMetricName;
@@ -1578,8 +2227,18 @@ export type CompareVariantsResult =
       ok: true;
       caseId: string;
       organizationId: string;
-      variantA: { businessVersionId: string; name: string; snapshot: ValuationAdvisorSnapshot; enterpriseValue: HeadlineEnterpriseValue };
-      variantB: { businessVersionId: string; name: string; snapshot: ValuationAdvisorSnapshot; enterpriseValue: HeadlineEnterpriseValue };
+      variantA: {
+        businessVersionId: string;
+        name: string;
+        snapshot: ValuationAdvisorSnapshot;
+        enterpriseValue: HeadlineEnterpriseValue;
+      };
+      variantB: {
+        businessVersionId: string;
+        name: string;
+        snapshot: ValuationAdvisorSnapshot;
+        enterpriseValue: HeadlineEnterpriseValue;
+      };
       metrics: VariantComparisonMetric[];
       findings: PersistedAdvisorFinding[];
       computeSnapshotId: string | null;
@@ -1593,13 +2252,27 @@ export type CompareVariantsResult =
  * variants recorded in `finance_valuation_advisor_output_variants` (PRIMARY / COMPARED_AGAINST) —
  * the many-to-many bridge WP-D09 section 12.4 built for exactly this.
  */
-export async function compareVariantsForAdvisor(params: CompareVariantsParams): Promise<CompareVariantsResult> {
+export async function compareVariantsForAdvisor(
+  params: CompareVariantsParams
+): Promise<CompareVariantsResult> {
   if (params.variantIdA === params.variantIdB) {
-    return { ok: false, code: 'SAME_VARIANT', message: 'variantIdA and variantIdB are the same variant' };
+    return {
+      ok: false,
+      code: 'SAME_VARIANT',
+      message: 'variantIdA and variantIdB are the same variant',
+    };
   }
 
   const variantRows = await withPinnedPostgresTransaction((tx) =>
-    tx.queryAll<{ business_version_id: string; organization_id: string; case_id: string; name: string; artifact_id: string; status: string; freshness: string }>(
+    tx.queryAll<{
+      business_version_id: string;
+      organization_id: string;
+      case_id: string;
+      name: string;
+      artifact_id: string;
+      status: string;
+      freshness: string;
+    }>(
       `SELECT v.business_version_id, v.organization_id, v.case_id, v.name, bv.artifact_id, bv.status, bv.freshness
          FROM finance_valuation_variants v
          JOIN finance_business_versions bv ON bv.business_version_id = v.business_version_id
@@ -1611,7 +2284,11 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
   const rowA = variantRows.find((r) => r.business_version_id === params.variantIdA);
   const rowB = variantRows.find((r) => r.business_version_id === params.variantIdB);
   if (variantRows.length === 0) {
-    return { ok: false, code: 'CASE_NOT_FOUND', message: `No variants of case ${params.caseId} match the requested ids` };
+    return {
+      ok: false,
+      code: 'CASE_NOT_FOUND',
+      message: `No variants of case ${params.caseId} match the requested ids`,
+    };
   }
   if (!rowA || !rowB) {
     return {
@@ -1622,10 +2299,18 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
   }
   const organizationId = rowA.organization_id;
   if (rowB.organization_id !== organizationId) {
-    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: 'The two variants belong to different organizations' };
+    return {
+      ok: false,
+      code: 'ORGANIZATION_MISMATCH',
+      message: 'The two variants belong to different organizations',
+    };
   }
   if (params.organizationId && params.organizationId !== organizationId) {
-    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: `Case ${params.caseId} does not belong to organization ${params.organizationId}` };
+    return {
+      ok: false,
+      code: 'ORGANIZATION_MISMATCH',
+      message: `Case ${params.caseId} does not belong to organization ${params.organizationId}`,
+    };
   }
 
   const snapA = await loadSnapshotInternal(organizationId, rowA.business_version_id, rowA);
@@ -1655,7 +2340,10 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
     a,
     b,
     delta: a !== null && b !== null ? b - a : null,
-    deltaPct: unit === 'CURRENCY' && a !== null && b !== null && a !== 0 ? ((b - a) / Math.abs(a)) * 100 : null,
+    deltaPct:
+      unit === 'CURRENCY' && a !== null && b !== null && a !== 0
+        ? ((b - a) / Math.abs(a)) * 100
+        : null,
   });
 
   const metrics: VariantComparisonMetric[] = [
@@ -1673,7 +2361,12 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
     { businessVersionId: rowB.business_version_id, role: 'COMPARED_AGAINST' },
   ];
   const driverRef = `VARIANT_COMPARE:${rowB.business_version_id}`;
-  const cmpEv = (ruleId: string, pointers: AdvisorEvidencePointer[], derived: AdvisorEvidenceRef['derived'], impactUnit: AdvisorEvidenceRef['impactUnit']): AdvisorEvidenceRef => ({
+  const cmpEv = (
+    ruleId: string,
+    pointers: AdvisorEvidencePointer[],
+    derived: AdvisorEvidenceRef['derived'],
+    impactUnit: AdvisorEvidenceRef['impactUnit']
+  ): AdvisorEvidenceRef => ({
     ruleId,
     generator: 'RULE_ENGINE',
     rulesVersion: ADVISOR_RULES_VERSION,
@@ -1696,7 +2389,14 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         evidenceRef: cmpEv(
           'ADV-C01',
           [evA.pointer, evB.pointer].filter((p): p is AdvisorEvidencePointer => p !== null),
-          { evA: evMetric.a, evB: evMetric.b, delta: evMetric.delta, deltaPct: evMetric.deltaPct, sourceA: evA.source, sourceB: evB.source },
+          {
+            evA: evMetric.a,
+            evB: evMetric.b,
+            delta: evMetric.delta,
+            deltaPct: evMetric.deltaPct,
+            sourceA: evA.source,
+            sourceB: evB.source,
+          },
           'CURRENCY'
         ),
         driverRef,
@@ -1719,8 +2419,20 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         evidenceRef: cmpEv(
           'ADV-C02',
           [
-            pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapA.wacc!.id, waccMetric.a, `WACC of "${rowA.name}"`),
-            pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapB.wacc!.id, waccMetric.b, `WACC of "${rowB.name}"`),
+            pointer(
+              'finance_valuation_wacc_inputs',
+              'wacc_computed_pct',
+              snapA.wacc!.id,
+              waccMetric.a,
+              `WACC of "${rowA.name}"`
+            ),
+            pointer(
+              'finance_valuation_wacc_inputs',
+              'wacc_computed_pct',
+              snapB.wacc!.id,
+              waccMetric.b,
+              `WACC of "${rowB.name}"`
+            ),
           ],
           { waccA: waccMetric.a, waccB: waccMetric.b, deltaPp: waccMetric.delta },
           'PP'
@@ -1747,8 +2459,20 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         evidenceRef: cmpEv(
           'ADV-C03',
           [
-            pointer('finance_valuation_terminal', 'terminal_share_pct', termA!.id, shareMetric.a, `Terminal share of "${rowA.name}"`),
-            pointer('finance_valuation_terminal', 'terminal_share_pct', termB!.id, shareMetric.b, `Terminal share of "${rowB.name}"`),
+            pointer(
+              'finance_valuation_terminal',
+              'terminal_share_pct',
+              termA!.id,
+              shareMetric.a,
+              `Terminal share of "${rowA.name}"`
+            ),
+            pointer(
+              'finance_valuation_terminal',
+              'terminal_share_pct',
+              termB!.id,
+              shareMetric.b,
+              `Terminal share of "${rowB.name}"`
+            ),
           ],
           { shareA: shareMetric.a, shareB: shareMetric.b, deltaPp: shareMetric.delta },
           'PP'
@@ -1762,9 +2486,12 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
     );
   }
 
-  const materialGap = evMetric.deltaPct !== null && Math.abs(evMetric.deltaPct) > t.variantMaterialEvGapPct;
-  const waccExplains = waccMetric.delta !== null && Math.abs(waccMetric.delta) >= t.variantExplanatoryWaccGapPp;
-  const terminalSimilar = shareMetric.delta !== null && Math.abs(shareMetric.delta) < t.variantSimilarTerminalSharePp;
+  const materialGap =
+    evMetric.deltaPct !== null && Math.abs(evMetric.deltaPct) > t.variantMaterialEvGapPct;
+  const waccExplains =
+    waccMetric.delta !== null && Math.abs(waccMetric.delta) >= t.variantExplanatoryWaccGapPp;
+  const terminalSimilar =
+    shareMetric.delta !== null && Math.abs(shareMetric.delta) < t.variantSimilarTerminalSharePp;
 
   if (materialGap && waccExplains) {
     findings.push(
@@ -1780,15 +2507,32 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         evidenceRef: cmpEv(
           'ADV-C04',
           [
-            pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapA.wacc!.id, waccMetric.a!, `WACC of "${rowA.name}"`),
-            pointer('finance_valuation_wacc_inputs', 'wacc_computed_pct', snapB.wacc!.id, waccMetric.b!, `WACC of "${rowB.name}"`),
+            pointer(
+              'finance_valuation_wacc_inputs',
+              'wacc_computed_pct',
+              snapA.wacc!.id,
+              waccMetric.a!,
+              `WACC of "${rowA.name}"`
+            ),
+            pointer(
+              'finance_valuation_wacc_inputs',
+              'wacc_computed_pct',
+              snapB.wacc!.id,
+              waccMetric.b!,
+              `WACC of "${rowB.name}"`
+            ),
           ],
-          { evDeltaPct: evMetric.deltaPct, waccDeltaPp: waccMetric.delta, thresholdPct: t.variantMaterialEvGapPct },
+          {
+            evDeltaPct: evMetric.deltaPct,
+            waccDeltaPp: waccMetric.delta,
+            thresholdPct: t.variantMaterialEvGapPct,
+          },
           'PCT'
         ),
         driverRef,
         impactDecimal: evMetric.deltaPct,
-        confidence: Math.abs(waccMetric.delta!) >= 2 * t.variantExplanatoryWaccGapPp ? 'HIGH' : 'MEDIUM',
+        confidence:
+          Math.abs(waccMetric.delta!) >= 2 * t.variantExplanatoryWaccGapPp ? 'HIGH' : 'MEDIUM',
         isComparison: true,
         comparedVariants,
       })
@@ -1809,7 +2553,11 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         evidenceRef: cmpEv(
           'ADV-C05',
           [evA.pointer, evB.pointer].filter((p): p is AdvisorEvidencePointer => p !== null),
-          { evDeltaPct: evMetric.deltaPct, waccDeltaPp: waccMetric.delta, terminalShareDeltaPp: shareMetric.delta },
+          {
+            evDeltaPct: evMetric.deltaPct,
+            waccDeltaPp: waccMetric.delta,
+            terminalShareDeltaPp: shareMetric.delta,
+          },
           'PCT'
         ),
         driverRef,
@@ -1831,14 +2579,33 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
         narrative:
           `After the EV→Equity bridge, "${rowA.name}" leaves ${formatAmount(equityMetric.a)} to shareholders and ` +
           `"${rowB.name}" ${formatAmount(equityMetric.b)}` +
-          (equityMetric.deltaPct !== null ? ` — a ${formatPct(equityMetric.deltaPct, 1)}% difference.` : '.'),
+          (equityMetric.deltaPct !== null
+            ? ` — a ${formatPct(equityMetric.deltaPct, 1)}% difference.`
+            : '.'),
         evidenceRef: cmpEv(
           'ADV-C06',
           [
-            pointer('finance_valuation_ev_equity_bridge', 'equity_value_decimal', snapA.bridge!.header.id, equityMetric.a, `Equity value of "${rowA.name}"`),
-            pointer('finance_valuation_ev_equity_bridge', 'equity_value_decimal', snapB.bridge!.header.id, equityMetric.b, `Equity value of "${rowB.name}"`),
+            pointer(
+              'finance_valuation_ev_equity_bridge',
+              'equity_value_decimal',
+              snapA.bridge!.header.id,
+              equityMetric.a,
+              `Equity value of "${rowA.name}"`
+            ),
+            pointer(
+              'finance_valuation_ev_equity_bridge',
+              'equity_value_decimal',
+              snapB.bridge!.header.id,
+              equityMetric.b,
+              `Equity value of "${rowB.name}"`
+            ),
           ],
-          { equityA: equityMetric.a, equityB: equityMetric.b, delta: equityMetric.delta, deltaPct: equityMetric.deltaPct },
+          {
+            equityA: equityMetric.a,
+            equityB: equityMetric.b,
+            delta: equityMetric.delta,
+            deltaPct: equityMetric.deltaPct,
+          },
           'CURRENCY'
         ),
         driverRef,
@@ -1855,16 +2622,34 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
       ok: true,
       caseId: params.caseId,
       organizationId,
-      variantA: { businessVersionId: rowA.business_version_id, name: rowA.name, snapshot: snapA, enterpriseValue: evA },
-      variantB: { businessVersionId: rowB.business_version_id, name: rowB.name, snapshot: snapB, enterpriseValue: evB },
+      variantA: {
+        businessVersionId: rowA.business_version_id,
+        name: rowA.name,
+        snapshot: snapA,
+        enterpriseValue: evA,
+      },
+      variantB: {
+        businessVersionId: rowB.business_version_id,
+        name: rowB.name,
+        snapshot: snapB,
+        enterpriseValue: evB,
+      },
       metrics,
-      findings: findings.map((f) => ({ ...f, id: '', hallucinationEvalStatus: 'NOT_EVALUATED' as const })),
+      findings: findings.map((f) => ({
+        ...f,
+        id: '',
+        hallucinationEvalStatus: 'NOT_EVALUATED' as const,
+      })),
       computeSnapshotId: null,
     };
   }
 
   if (ADVISOR_FORBIDDEN_STATUSES.includes(rowA.status)) {
-    return { ok: false, code: 'INVALID_STATUS', message: `Cannot persist comparison findings: primary variant is ${rowA.status} (Advisor is pre-approval by definition)` };
+    return {
+      ok: false,
+      code: 'INVALID_STATUS',
+      message: `Cannot persist comparison findings: primary variant is ${rowA.status} (Advisor is pre-approval by definition)`,
+    };
   }
 
   const snap = await artifactVersionService.createComputeSnapshot({
@@ -1873,7 +2658,11 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
     actorId: params.actorId,
   });
   if (!snap.ok) {
-    return { ok: false, code: 'SNAPSHOT_FAILED', message: `createComputeSnapshot failed (${snap.code}): ${snap.message}` };
+    return {
+      ok: false,
+      code: 'SNAPSHOT_FAILED',
+      message: `createComputeSnapshot failed (${snap.code}): ${snap.message}`,
+    };
   }
 
   const groundingStatuses = await evaluateEvidenceGrounding(findings);
@@ -1946,8 +2735,18 @@ export async function compareVariantsForAdvisor(params: CompareVariantsParams): 
     ok: true,
     caseId: params.caseId,
     organizationId,
-    variantA: { businessVersionId: rowA.business_version_id, name: rowA.name, snapshot: snapA, enterpriseValue: evA },
-    variantB: { businessVersionId: rowB.business_version_id, name: rowB.name, snapshot: snapB, enterpriseValue: evB },
+    variantA: {
+      businessVersionId: rowA.business_version_id,
+      name: rowA.name,
+      snapshot: snapA,
+      enterpriseValue: evA,
+    },
+    variantB: {
+      businessVersionId: rowB.business_version_id,
+      name: rowB.name,
+      snapshot: snapB,
+      enterpriseValue: evB,
+    },
     metrics,
     findings: persisted,
     computeSnapshotId: snap.computeSnapshotId,
@@ -1978,7 +2777,10 @@ export interface StoredAdvisorOutputRow {
   ai_hallucination_eval_status: AdvisorHallucinationEvalStatus;
 }
 
-export async function listAdvisorOutputs(organizationId: string, businessVersionId: string): Promise<StoredAdvisorOutputRow[]> {
+export async function listAdvisorOutputs(
+  organizationId: string,
+  businessVersionId: string
+): Promise<StoredAdvisorOutputRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<StoredAdvisorOutputRow>(
       `SELECT id, business_version_id, compute_snapshot_id, output_kind, title, narrative, evidence_ref,

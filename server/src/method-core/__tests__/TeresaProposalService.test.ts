@@ -12,8 +12,14 @@
  *  commit against a `frozen` session -> refused (session_frozen).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type {
+  TeresaIntent,
+  TeresaProposedChange,
+  TeresaQualityVerdict,
+  TeresaStatement,
+} from '../contracts/index.js';
 import { createKernelTestDb, type KernelTestDbHandle } from './kernelTestDb.js';
-import type { TeresaIntent, TeresaProposedChange, TeresaQualityVerdict, TeresaStatement } from '../contracts/index.js';
 
 let testDb: KernelTestDbHandle;
 

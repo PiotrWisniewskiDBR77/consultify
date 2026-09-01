@@ -261,9 +261,9 @@ function buildReadout(
 function hasSourceFailure(ctx: ReportDataContext): boolean {
   return Boolean(
     ctx.tasksFailed ||
-      ctx.decisionsFailed ||
-      ctx.controlTowerFailed ||
-      (ctx.signalsUnavailable && ctx.signalsUnavailable.length > 0)
+    ctx.decisionsFailed ||
+    ctx.controlTowerFailed ||
+    (ctx.signalsUnavailable && ctx.signalsUnavailable.length > 0)
   );
 }
 

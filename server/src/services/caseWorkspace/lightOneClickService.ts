@@ -201,17 +201,21 @@
 
 import { createHash } from 'node:crypto';
 
-import { getCorrelationId } from '../../utils/RequestStore.js';
 import { queryOne, withPgTransaction } from '../../utils/queryHelpers.js';
+import { getCorrelationId } from '../../utils/RequestStore.js';
 import { captureSnapshot } from '../v8/contextSnapshotService.js';
-import * as caseCoreService from './caseCoreService.js';
 import type { CaseCore } from './caseCoreService.js';
+import * as caseCoreService from './caseCoreService.js';
+import type {
+  CanonicalGraph,
+  CasePlanVersion,
+  PlanValidationBlocker,
+} from './casePlanVersionService.js';
 import * as planSvc from './casePlanVersionService.js';
-import type { CanonicalGraph, CasePlanVersion, PlanValidationBlocker } from './casePlanVersionService.js';
 import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
-import { createNodeRun } from './nodeRunService.js';
 import type { NodeRun } from './nodeRunService.js';
+import { createNodeRun } from './nodeRunService.js';
 import { bindRunToPlanVersion } from './runBindingService.js';
 
 // ---------------------------------------------------------------------------
@@ -357,12 +361,20 @@ async function ensureLightPlanPublished(
         blockers: blocking,
       };
     }
-    draft = await planSvc.proposePlanVersion(draft.casePlanVersionId, { actorUserId }, draft.version);
+    draft = await planSvc.proposePlanVersion(
+      draft.casePlanVersionId,
+      { actorUserId },
+      draft.version
+    );
   }
 
   if (draft.status === 'IN_REVIEW') {
     try {
-      draft = await planSvc.publishPlanVersion(draft.casePlanVersionId, { actorUserId }, draft.version);
+      draft = await planSvc.publishPlanVersion(
+        draft.casePlanVersionId,
+        { actorUserId },
+        draft.version
+      );
     } catch (err) {
       // publishPlanVersion re-validates internally; a failure here for OUR
       // OWN deterministic minimal graph would be a real anomaly, but it must
@@ -447,7 +459,12 @@ async function ensureLightExecutionRun(
     consumerClass: 'execution',
     privacyMode: false,
     sourceContextRefs: [
-      { sourceId: caseCore.caseId, scopeType: 'organization', sourceKind: 'case', freshnessAt: null },
+      {
+        sourceId: caseCore.caseId,
+        scopeType: 'organization',
+        sourceKind: 'case',
+        freshnessAt: null,
+      },
     ],
   });
 
@@ -522,7 +539,9 @@ async function readCompletedReceipt(
 
   const raw = row.redacted_summary;
   const summary: CompletedSummary =
-    typeof raw === 'string' ? (JSON.parse(raw) as CompletedSummary) : ((raw ?? {}) as CompletedSummary);
+    typeof raw === 'string'
+      ? (JSON.parse(raw) as CompletedSummary)
+      : ((raw ?? {}) as CompletedSummary);
 
   const caseCore = await caseCoreService.getCase({ caseId }, actorUserId);
   if (!caseCore) throw new Error('light_one_click_case_not_found');
@@ -584,9 +603,10 @@ export async function startLightOneClick(input: {
       case_status: string;
       organization_id: string;
       project_id: string | null;
-    }>(`SELECT case_id, case_profile, case_status, organization_id, project_id FROM case_core WHERE case_id = ?`, [
-      caseId,
-    ]);
+    }>(
+      `SELECT case_id, case_profile, case_status, organization_id, project_id FROM case_core WHERE case_id = ?`,
+      [caseId]
+    );
     const caseRow = caseRowResult.rows[0];
     if (!caseRow) throw new Error('light_one_click_case_not_found');
 

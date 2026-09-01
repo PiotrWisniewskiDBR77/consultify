@@ -11,7 +11,9 @@ vi.mock('react-i18next', async (importOriginal) => {
       'sharedComponents.riskCanvas.addFirstRisk': 'Add first risk',
       'sharedComponents.riskCanvas.addRisk': 'Add Risk',
       'sharedComponents.riskCanvas.riskImpact': 'Risk & Impact',
-    })[key] || fallback || key;
+    })[key] ||
+    fallback ||
+    key;
   return {
     ...actual,
     useTranslation: () => ({ t: translate, i18n: { language: 'en' } }),

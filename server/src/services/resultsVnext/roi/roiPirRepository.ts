@@ -14,13 +14,15 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
-  toRoiPostInvestmentReview,
   type RoiPostInvestmentReview,
   type RoiPostInvestmentReviewRow,
+  toRoiPostInvestmentReview,
 } from './roiPirTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -32,7 +34,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -56,9 +62,15 @@ export async function listRoiPostInvestmentReviews(
        AND pir.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY pir.sequence_number DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiPostInvestmentReviewRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiPostInvestmentReviewRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiPostInvestmentReview);
 }
 
@@ -82,9 +94,15 @@ export async function getRoiPostInvestmentReview(
        AND pir.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND pir.pir_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, pirId];
-  const rows = await withReadClient((client) => queryRows<RoiPostInvestmentReviewRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiPostInvestmentReviewRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiPostInvestmentReview(row) : null;
 }

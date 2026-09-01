@@ -73,10 +73,7 @@ export function isNormativeSourceType(value: unknown): boolean {
  * Czy pakiet wolno przedstawić jako audyt zgodności z normą. Wymaga OBU osi:
  * właściwej natury źródła i potwierdzonej weryfikacji.
  */
-export function isComplianceGrade(
-  sourceType: unknown,
-  verification: unknown,
-): boolean {
+export function isComplianceGrade(sourceType: unknown, verification: unknown): boolean {
   return isNormativeSourceType(sourceType) && verification === 'VERIFIED';
 }
 
@@ -170,13 +167,7 @@ export interface FindingTaxonomyEntry {
   defaultSeverity?: FindingSeverity | null;
 }
 
-export const FINDING_SEVERITIES = [
-  'informational',
-  'low',
-  'medium',
-  'high',
-  'critical',
-] as const;
+export const FINDING_SEVERITIES = ['informational', 'low', 'medium', 'high', 'critical'] as const;
 export type FindingSeverity = (typeof FINDING_SEVERITIES)[number];
 
 export interface SeverityRule {

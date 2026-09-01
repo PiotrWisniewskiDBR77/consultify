@@ -275,12 +275,22 @@ export function computeKnownAnswerKpi(
     // Piąty stan (korekta koordynatora 2026-08-12): ROZŁĄCZNY z `NA` poniżej.
     // `NA` = "nie da się policzyć" (dane brakują/mianownik zero/ujemny).
     // `NOT_APPLICABLE` = "to pytanie w ogóle nie ma sensu dla tego podmiotu".
-    return { kpiCode: def.kpiCode, status: 'NOT_APPLICABLE', valueDecimal: null, reasonCode: 'NOT_APPLICABLE_STRUCTURAL' };
+    return {
+      kpiCode: def.kpiCode,
+      status: 'NOT_APPLICABLE',
+      valueDecimal: null,
+      reasonCode: 'NOT_APPLICABLE_STRUCTURAL',
+    };
   }
 
   const numerator = evaluateArithmeticExpression(def.numeratorExpression, valuesByLineCode);
   if (numerator === null) {
-    return { kpiCode: def.kpiCode, status: 'MISSING', valueDecimal: null, reasonCode: 'MISSING_INPUT' };
+    return {
+      kpiCode: def.kpiCode,
+      status: 'MISSING',
+      valueDecimal: null,
+      reasonCode: 'MISSING_INPUT',
+    };
   }
 
   if (def.denominatorExpression === null) {
@@ -294,40 +304,77 @@ export function computeKnownAnswerKpi(
 
   const denominator = evaluateArithmeticExpression(def.denominatorExpression, valuesByLineCode);
   if (denominator === null) {
-    return { kpiCode: def.kpiCode, status: 'MISSING', valueDecimal: null, reasonCode: 'MISSING_INPUT' };
+    return {
+      kpiCode: def.kpiCode,
+      status: 'MISSING',
+      valueDecimal: null,
+      reasonCode: 'MISSING_INPUT',
+    };
   }
   if (denominator.isZero()) {
     // Nie jest to "ujemny mianownik" (osobna reguła), ale ta sama zasada
     // produktu: nigdy nie pokazuj wyniku dzielenia przez zero jako liczby
     // (byłoby ±Infinity) — bezpieczny domyślny fail-closed do NA.
-    return { kpiCode: def.kpiCode, status: 'NA', valueDecimal: null, reasonCode: 'ZERO_DENOMINATOR' };
+    return {
+      kpiCode: def.kpiCode,
+      status: 'NA',
+      valueDecimal: null,
+      reasonCode: 'ZERO_DENOMINATOR',
+    };
   }
   if (denominator.isNegative()) {
     switch (def.negativeDenominatorPolicy) {
       case 'FORCE_NA':
-        return { kpiCode: def.kpiCode, status: 'NA', valueDecimal: null, reasonCode: 'NEGATIVE_DENOMINATOR' };
+        return {
+          kpiCode: def.kpiCode,
+          status: 'NA',
+          valueDecimal: null,
+          reasonCode: 'NEGATIVE_DENOMINATOR',
+        };
       case 'FLAG_ONLY': {
         const value = numerator.div(denominator);
-        return { kpiCode: def.kpiCode, status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: value.toString(), reasonCode: 'NEGATIVE_DENOMINATOR' };
+        return {
+          kpiCode: def.kpiCode,
+          status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+          valueDecimal: value.toString(),
+          reasonCode: 'NEGATIVE_DENOMINATOR',
+        };
       }
       case 'ALLOW_NEGATIVE_RATIO': {
         const value = numerator.div(denominator);
-        return { kpiCode: def.kpiCode, status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: value.toString(), reasonCode: null };
+        return {
+          kpiCode: def.kpiCode,
+          status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+          valueDecimal: value.toString(),
+          reasonCode: null,
+        };
       }
       default:
         // Nieznana wartość polityki (rozszerzenie kontraktu backendowego,
         // patrz komentarz przy `AnalysisNegativeDenominatorPolicyValues`) —
         // fail-closed jak FORCE_NA, NIGDY "policz mimo to" po cichu.
-        return { kpiCode: def.kpiCode, status: 'NA', valueDecimal: null, reasonCode: 'NEGATIVE_DENOMINATOR' };
+        return {
+          kpiCode: def.kpiCode,
+          status: 'NA',
+          valueDecimal: null,
+          reasonCode: 'NEGATIVE_DENOMINATOR',
+        };
     }
   }
 
   const value = numerator.div(denominator);
-  return { kpiCode: def.kpiCode, status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: value.toString(), reasonCode: null };
+  return {
+    kpiCode: def.kpiCode,
+    status: value.isZero() ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+    valueDecimal: value.toString(),
+    reasonCode: null,
+  };
 }
 
 /** Buduje mapę `lineCode -> Decimal|null` z `FinanceValue[]` — most między semantyką API (Pakiet C) i tym evaluatorem. `valueDecimal` (string pełnej precyzji) trafia PROSTO do `Decimal`, nigdy przez `Number()` (utrata precyzji IEEE-754 — dokładnie ten problem, który Decimal ma eliminować). */
-export function financeValuesToLineCodeMap(entries: readonly { lineCode: string; value: Pick<FinanceValue, 'status' | 'valueDecimal'> }[]): Record<string, MissingPropagatingNumber> {
+export function financeValuesToLineCodeMap(
+  entries: readonly { lineCode: string; value: Pick<FinanceValue, 'status' | 'valueDecimal'> }[]
+): Record<string, MissingPropagatingNumber> {
   const result: Record<string, MissingPropagatingNumber> = {};
   for (const entry of entries) {
     const { status, valueDecimal } = entry.value;

@@ -16,7 +16,12 @@
 export const OKR_REFLECTION_STATUSES = ['draft', 'finalized'] as const;
 export type OkrReflectionStatus = (typeof OKR_REFLECTION_STATUSES)[number];
 
-export const OKR_REFLECTION_DISPOSITIONS = ['complete', 'carry_forward', 'drop', 'redefine'] as const;
+export const OKR_REFLECTION_DISPOSITIONS = [
+  'complete',
+  'carry_forward',
+  'drop',
+  'redefine',
+] as const;
 export type OkrReflectionDisposition = (typeof OKR_REFLECTION_DISPOSITIONS)[number];
 
 /** Frozen pointer-plus-copy of one KeyResult's state at scoring time (D3) —
@@ -68,7 +73,8 @@ export interface OkrReflectionRow {
 }
 
 export const OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS = ['accepted', 'rejected'] as const;
-export type OkrReflectionTeresaDraftDispositionValue = (typeof OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS)[number];
+export type OkrReflectionTeresaDraftDispositionValue =
+  (typeof OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS)[number];
 
 export interface OkrReflection {
   reflectionId: string;

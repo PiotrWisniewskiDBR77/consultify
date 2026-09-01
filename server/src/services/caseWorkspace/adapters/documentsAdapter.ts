@@ -156,15 +156,6 @@
  * ============================================================================
  */
 
-import {
-  registerCapabilityBinding,
-  registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
-} from '../capabilityAdapterService.js';
-import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import * as caseCoreService from '../caseCoreService.js';
 import { queryOne } from '../../../utils/queryHelpers.js';
 import {
   getDocumentArtifact,
@@ -176,12 +167,21 @@ import type {
   DocumentSchema,
   DocumentTypeKey,
 } from '../../documentStudio/documentStudioTypes.js';
-import { createNativeDeck, type CreateNativeDeckParams } from '../../presentationGeneratorService.js';
+import { type DeckDocument, normalizeDeckDocument } from '../../presentationDeckDocumentService.js';
 import {
-  normalizeDeckDocument,
-  type DeckDocument,
-} from '../../presentationDeckDocumentService.js';
+  createNativeDeck,
+  type CreateNativeDeckParams,
+} from '../../presentationGeneratorService.js';
 import type { UnifiedReportJSON } from '../../report/pptx/types.js';
+import * as artifactLinkService from '../artifactLinkService.js';
+import {
+  type CapabilityExecutionEnvelope,
+  type InternalCommandBinding,
+  registerCapabilityBinding,
+  registerCapabilityWithAdapter,
+} from '../capabilityAdapterService.js';
+import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
+import * as caseCoreService from '../caseCoreService.js';
 import {
   attachArtifactLink,
   requireEnumInput,
@@ -217,7 +217,8 @@ function presentationDeepLink(deckId: string): string {
 function documentContentLength(schema: DocumentSchema): number {
   return schema.sections.reduce((sum, section) => {
     const sectionLen = section.blocks.reduce((blockSum, block) => {
-      const serialized = typeof block.content === 'string' ? block.content : JSON.stringify(block.content ?? '');
+      const serialized =
+        typeof block.content === 'string' ? block.content : JSON.stringify(block.content ?? '');
       return blockSum + serialized.replace(/[^\p{L}\p{N}]/gu, '').length;
     }, 0);
     return sum + sectionLen;
@@ -229,7 +230,8 @@ function deckCoverContentLength(deck: DeckDocument): number {
   const cover = deck.cards[0];
   if (!cover) return 0;
   return cover.blocks.reduce((sum, block) => {
-    const serialized = typeof block.content === 'string' ? block.content : JSON.stringify(block.content ?? '');
+    const serialized =
+      typeof block.content === 'string' ? block.content : JSON.stringify(block.content ?? '');
     return sum + serialized.replace(/[^\p{L}\p{N}]/gu, '').length;
   }, 0);
 }
@@ -276,11 +278,16 @@ export interface DocumentsAdapterDeps {
   materializeDocumentArtifact?: (
     params: Parameters<typeof materializeDocumentArtifact>[0]
   ) => Promise<DocumentRunResult>;
-  getDocumentArtifact?: (artifactId: string, organizationId: string) => Promise<DocumentSchema | null>;
+  getDocumentArtifact?: (
+    artifactId: string,
+    organizationId: string
+  ) => Promise<DocumentSchema | null>;
   linkArtifactToCase?: typeof artifactLinkService.linkArtifactToCase;
 }
 
-export function buildDocumentCreateBinding(deps: DocumentsAdapterDeps = {}): InternalCommandBinding {
+export function buildDocumentCreateBinding(
+  deps: DocumentsAdapterDeps = {}
+): InternalCommandBinding {
   const materialize = deps.materializeDocumentArtifact ?? materializeDocumentArtifact;
   const read = deps.getDocumentArtifact ?? getDocumentArtifact;
 
@@ -460,7 +467,10 @@ export interface PresentationAdapterDeps {
   linkArtifactToCase?: typeof artifactLinkService.linkArtifactToCase;
 }
 
-async function defaultReadDeckRow(deckId: string, organizationId: string): Promise<PresentationDeckRow | null> {
+async function defaultReadDeckRow(
+  deckId: string,
+  organizationId: string
+): Promise<PresentationDeckRow | null> {
   // No exported "getNativeDeck" exists anywhere in this codebase (see this
   // file's header) — every route in presentations.routes.ts that reads a
   // deck back does this SAME inline SELECT. Reusing that established shape
@@ -474,7 +484,9 @@ async function defaultReadDeckRow(deckId: string, organizationId: string): Promi
   );
 }
 
-export function buildPresentationCreateBinding(deps: PresentationAdapterDeps = {}): InternalCommandBinding {
+export function buildPresentationCreateBinding(
+  deps: PresentationAdapterDeps = {}
+): InternalCommandBinding {
   const create = deps.createNativeDeck ?? createNativeDeck;
   const readRow = deps.readDeckRow ?? defaultReadDeckRow;
   const getCase = deps.getCase ?? caseCoreService.getCase;
@@ -493,7 +505,11 @@ export function buildPresentationCreateBinding(deps: PresentationAdapterDeps = {
       const confidentiality =
         payload.confidentiality === undefined || payload.confidentiality === null
           ? 'confidential'
-          : requireEnumInput(payload.confidentiality, PRESENTATION_CONFIDENTIALITY, 'confidentiality');
+          : requireEnumInput(
+              payload.confidentiality,
+              PRESENTATION_CONFIDENTIALITY,
+              'confidentiality'
+            );
       const theme =
         payload.theme === undefined || payload.theme === null
           ? 'corporate'
@@ -627,7 +643,9 @@ export function registerPresentationCreateAdapterBinding(deps: PresentationAdapt
 }
 
 /** The registry row this capability registers as, per doc 05 §5's CapabilityDefinition. */
-export function presentationCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
+export function presentationCreateRegistrationInput(
+  createdByActorId: string
+): RegisterCapabilityInput {
   return {
     capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
     capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,

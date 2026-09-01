@@ -16,12 +16,12 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
 import type {
   AreaAssessment,
   MatrixAreaDef,
   MatrixLevelDef,
 } from '@/components/Reports/AreaMatrixTable';
+import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
 
 import type { AxisMatrixModel } from '../groupLabels';
 import type { FindingHighlight, PresentationDeckModel } from './buildPresentationDeck';
@@ -29,9 +29,11 @@ import { MissingNarrativeNote, PresentationSlideShell, StatChip } from './Presen
 
 function formatDate(iso: string, locale: string): string {
   try {
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
-      new Date(iso)
-    );
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -50,14 +52,20 @@ function formatPercent(ratio: number): string {
 // 1. Tytuł
 // ---------------------------------------------------------------------------
 
-export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string }> = ({ model, locale }) => (
+export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string }> = ({
+  model,
+  locale,
+}) => (
   <PresentationSlideShell
     kicker={model.methodPackId.toUpperCase()}
     title={model.narrative.clientName ?? model.scope}
     lede={model.narrative.clientName ? model.scope : undefined}
   >
     <div className="flex flex-wrap items-center gap-3">
-      <StatChip label="Pakiet metodyczny" value={`${model.methodPackId} v${model.methodPackVersion}`} />
+      <StatChip
+        label="Pakiet metodyczny"
+        value={`${model.methodPackId} v${model.methodPackVersion}`}
+      />
       <StatChip label="Data zamrożenia" value={formatDate(model.frozenAt, locale)} />
       <StatChip label="Wersja Outputu" value={`v${model.outputVersion}`} />
     </div>
@@ -92,7 +100,10 @@ export const PurposeSlide: React.FC<{ model: PresentationDeckModel }> = ({ model
 export const MethodSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
   <PresentationSlideShell kicker="Metoda" title="Jak oceniliśmy">
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <StatChip label="Pakiet metodyczny" value={`${model.methodPackId} v${model.methodPackVersion}`} />
+      <StatChip
+        label="Pakiet metodyczny"
+        value={`${model.methodPackId} v${model.methodPackVersion}`}
+      />
       <StatChip
         label="Wiarygodność (dowód zaakceptowany)"
         value={`${model.unknowns.unitsWithAcceptedEvidence} / ${model.unknowns.totalUnits} (${formatPercent(model.unknowns.completenessRatio)})`}
@@ -102,7 +113,9 @@ export const MethodSlide: React.FC<{ model: PresentationDeckModel }> = ({ model 
     <div className="mt-6 flex items-start gap-3">
       <Users size={20} className="mt-1 flex-shrink-0 text-c-text-muted" />
       {model.narrative.participants && model.narrative.participants.length > 0 ? (
-        <p className="text-base text-c-text-secondary">{model.narrative.participants.join(' · ')}</p>
+        <p className="text-base text-c-text-secondary">
+          {model.narrative.participants.join(' · ')}
+        </p>
       ) : (
         <MissingNarrativeNote label="Lista uczestników nie jest częścią zamrożonego Output — do uzupełnienia przez konsultanta." />
       )}
@@ -123,10 +136,13 @@ export const OverallResultSlide: React.FC<{ model: PresentationDeckModel }> = ({
   <PresentationSlideShell kicker="Wynik" title="Wynik ogólny">
     <div className="flex flex-col items-center justify-center gap-4 text-center">
       <Gauge size={40} className="text-c-text-muted" />
-      <p className="text-7xl font-bold text-c-text sm:text-8xl">{formatLevel(model.overallResult)}</p>
+      <p className="text-7xl font-bold text-c-text sm:text-8xl">
+        {formatLevel(model.overallResult)}
+      </p>
       <p className="max-w-md text-sm text-c-text-muted">
-        Średnia poziomów dojrzałości per wymiar (skala natywna pakietu {model.methodPackId}, reguła agregacji „
-        {model.aggregationRule || '—'}", wersja mapowania {model.aggregationMappingVersion || '—'}).
+        Średnia poziomów dojrzałości per wymiar (skala natywna pakietu {model.methodPackId}, reguła
+        agregacji „{model.aggregationRule || '—'}", wersja mapowania{' '}
+        {model.aggregationMappingVersion || '—'}).
       </p>
     </div>
   </PresentationSlideShell>
@@ -164,7 +180,12 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-c-surface-raised">
                 <div
                   className="h-full rounded-full bg-c-text-muted"
-                  style={{ width: d.currentLevel === null ? '0%' : `${Math.max(4, (d.currentLevel / maxLevel) * 100)}%` }}
+                  style={{
+                    width:
+                      d.currentLevel === null
+                        ? '0%'
+                        : `${Math.max(4, (d.currentLevel / maxLevel) * 100)}%`,
+                  }}
                 />
               </div>
               <span className="w-10 flex-shrink-0 text-right text-sm font-bold text-c-text">
@@ -222,7 +243,12 @@ export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string
 
   const levels: MatrixLevelDef[] = matrix.levels.map((l) => {
     const label = l.title ?? `Poziom ${l.level}`;
-    return { level: l.level, name: label, namePl: label, color: levelColor(l.level, matrix.levelCount) };
+    return {
+      level: l.level,
+      name: label,
+      namePl: label,
+      color: levelColor(l.level, matrix.levelCount),
+    };
   });
 
   // Wyłącznie obszary FAKTYCZNIE ocenione. Obszar bez pomiaru nie dostaje
@@ -303,18 +329,21 @@ export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string
 // 6/7 shared highlight list
 // ---------------------------------------------------------------------------
 
-const HighlightList: React.FC<{ items: readonly FindingHighlight[]; emptyLabel: string; limit?: number }> = ({
-  items,
-  emptyLabel,
-  limit = 6,
-}) => {
+const HighlightList: React.FC<{
+  items: readonly FindingHighlight[];
+  emptyLabel: string;
+  limit?: number;
+}> = ({ items, emptyLabel, limit = 6 }) => {
   if (items.length === 0) return <MissingNarrativeNote label={emptyLabel} />;
   const shown = items.slice(0, limit);
   const hidden = items.length - shown.length;
   return (
     <ul className="space-y-3">
       {shown.map((item) => (
-        <li key={item.findingId} className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+        <li
+          key={item.findingId}
+          className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3"
+        >
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-sm font-bold text-c-text">{item.unitName}</span>
             <span className="flex-shrink-0 text-xs font-semibold text-c-text-muted">
@@ -402,13 +431,18 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
           {breakdown ? (
             <>
               <StatChip label="Nie wiemy (dont_know)" value={String(breakdown.dontKnow)} />
-              <StatChip label="Wiemy, brak dokumentacji (no_evidence)" value={String(breakdown.noEvidence)} />
+              <StatChip
+                label="Wiemy, brak dokumentacji (no_evidence)"
+                value={String(breakdown.noEvidence)}
+              />
             </>
           ) : null}
         </div>
         <div className="flex-1">
           {model.unknowns.unknownUnits.length === 0 ? (
-            <p className="text-sm text-c-text-muted">Brak jednostek z nierozstrzygniętym poziomem bieżącym.</p>
+            <p className="text-sm text-c-text-muted">
+              Brak jednostek z nierozstrzygniętym poziomem bieżącym.
+            </p>
           ) : (
             <ul className="flex flex-wrap gap-2">
               {model.unknowns.unknownUnits.slice(0, 12).map((u) => (
@@ -420,7 +454,9 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
                 </li>
               ))}
               {model.unknowns.unknownUnits.length > 12 ? (
-                <li className="text-xs text-c-text-muted">+{model.unknowns.unknownUnits.length - 12} więcej</li>
+                <li className="text-xs text-c-text-muted">
+                  +{model.unknowns.unknownUnits.length - 12} więcej
+                </li>
               ) : null}
             </ul>
           )}
@@ -428,15 +464,15 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
       </div>
       {!breakdown ? (
         <p className="mt-6 text-xs text-c-text-muted">
-          Ten Output nie rozróżnia przyczyny braku dowodu — „nie wiemy" (dont_know) i „wiemy, ale nie
-          udokumentowaliśmy" (no_evidence) są tu jedną zagregowaną liczbą. To dwie różne rozmowy z zarządem;
-          rozstrzygnięcie wymaga wglądu poza ten zamrożony Output.
+          Ten Output nie rozróżnia przyczyny braku dowodu — „nie wiemy" (dont_know) i „wiemy, ale
+          nie udokumentowaliśmy" (no_evidence) są tu jedną zagregowaną liczbą. To dwie różne rozmowy
+          z zarządem; rozstrzygnięcie wymaga wglądu poza ten zamrożony Output.
         </p>
       ) : null}
       {model.draftFindingCount > 0 ? (
         <p className="mt-2 text-xs text-c-text-muted">
-          Dodatkowo {model.draftFindingCount} ustaleń w tym Output ma status roboczy (niezaakceptowany dowód) i nie
-          wchodzi w treść tej prezentacji.
+          Dodatkowo {model.draftFindingCount} ustaleń w tym Output ma status roboczy
+          (niezaakceptowany dowód) i nie wchodzi w treść tej prezentacji.
         </p>
       ) : null}
     </PresentationSlideShell>
@@ -457,14 +493,20 @@ export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mod
         ) : (
           <ol className="space-y-3">
             {model.recommendations.slice(0, 6).map((rec, idx) => (
-              <li key={rec} className="flex gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
-                <span className="flex-shrink-0 text-sm font-bold text-c-text-muted">{idx + 1}.</span>
+              <li
+                key={rec}
+                className="flex gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3"
+              >
+                <span className="flex-shrink-0 text-sm font-bold text-c-text-muted">
+                  {idx + 1}.
+                </span>
                 <span className="text-sm text-c-text">{rec}</span>
               </li>
             ))}
             {model.recommendations.length > 6 ? (
               <li className="flex items-center gap-2 text-xs text-c-text-muted">
-                <ListChecks size={14} />+{model.recommendations.length - 6} więcej rekomendacji w pełnym Output
+                <ListChecks size={14} />+{model.recommendations.length - 6} więcej rekomendacji w
+                pełnym Output
               </li>
             ) : null}
           </ol>

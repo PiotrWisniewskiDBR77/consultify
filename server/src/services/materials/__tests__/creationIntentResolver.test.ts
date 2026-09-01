@@ -172,7 +172,11 @@ describe('resolveDocumentTemplateForCreation — canonical Document Studio templ
     routeDb({ docStudio: docStudioRow({ provenance_status: 'unknown' }) });
     mockGetTemplate.mockReturnValue(registeredDocTemplate());
     await expectResolveError(
-      { kind: 'internal', canonicalTemplateId: 'dst-exec-memo-001', originRuntime: 'document_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'dst-exec-memo-001',
+        originRuntime: 'document_template',
+      },
       'TEMPLATE_FORBIDDEN'
     );
   });
@@ -441,9 +445,15 @@ describe('resolveDocumentTemplateForCreation — rejection paths', () => {
 
 describe('resolvePresentationTemplateForCreation — canonical presentation template', () => {
   it('quarantines an otherwise approved presentation template with unknown provenance', async () => {
-    routeDb({ presentationTemplate: presentationTemplateRow({ provenance_status: 'quarantined' }) });
+    routeDb({
+      presentationTemplate: presentationTemplateRow({ provenance_status: 'quarantined' }),
+    });
     await expectPresentationResolveError(
-      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_FORBIDDEN'
     );
   });

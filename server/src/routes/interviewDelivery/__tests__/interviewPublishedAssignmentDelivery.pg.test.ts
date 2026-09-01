@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { errorHandler } from '../../../middleware/errorHandler.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
@@ -326,7 +327,10 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
     const sentBack = await request(app)
       .post(`/api/interview/assignments/${assignmentId}/send-back`)
       .set(bearer(ownerToken))
-      .send({ reason: 'Add concrete evidence', missingItems: [{ key: 'evidence', label: 'Evidence' }] });
+      .send({
+        reason: 'Add concrete evidence',
+        missingItems: [{ key: 'evidence', label: 'Evidence' }],
+      });
     expect(sentBack.status).toBe(200);
     expect(sentBack.body).toMatchObject({
       status: 'in_progress',

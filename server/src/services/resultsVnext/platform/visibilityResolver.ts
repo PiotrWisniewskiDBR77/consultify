@@ -25,7 +25,6 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { hasEffectiveCapability, resolveEffectiveAccess } from '../../effectiveAccessService.js';
-
 import type { RvnResourceType } from './resourceTypes.js';
 
 export type RvnVisibilityAction = 'view' | 'contribute' | 'approve';
@@ -441,7 +440,9 @@ export class RoiGovernedVisibilityPolicyMismatchError extends Error {
 export class RoiVisibilityGovernanceActorNotAuthorizedError extends Error {
   code = 'ROI_VISIBILITY_GOVERNANCE_ACTOR_NOT_AUTHORIZED';
   constructor() {
-    super('Publishing the ROI governed visibility policy requires a same-tenant ACTIVE OWNER or ADMIN.');
+    super(
+      'Publishing the ROI governed visibility policy requires a same-tenant ACTIVE OWNER or ADMIN.'
+    );
     this.name = 'RoiVisibilityGovernanceActorNotAuthorizedError';
   }
 }
@@ -515,7 +516,10 @@ export async function hasActiveRoiFinanceAuthorityGrant(
   return result.rows[0]?.action === 'granted';
 }
 
-export type RoiGovernedVisibilityDenyReason = 'NO_GOVERNED_POLICY' | 'NOT_ACTIVE_MEMBER' | 'ORDINARY_MEMBER_DENIED';
+export type RoiGovernedVisibilityDenyReason =
+  | 'NO_GOVERNED_POLICY'
+  | 'NOT_ACTIVE_MEMBER'
+  | 'ORDINARY_MEMBER_DENIED';
 export type RoiGovernedVisibilityAllowReason = 'OWNER' | 'ADMIN' | 'FINANCE_AUTHORITY_GRANT';
 
 export interface ResolveRoiGovernedVisibilityResult {
@@ -699,7 +703,10 @@ export async function publishRoiGovernedVisibilityPolicy(
   // FAIL BEFORE MUTATION: a wrong, partial, or broadened/"superset" policy
   // is rejected here — before a client is even acquired, let alone a
   // transaction opened.
-  if (policyKey !== ROI_GOVERNED_VISIBILITY_POLICY.key || policyDigest !== ROI_GOVERNED_VISIBILITY_POLICY.digest) {
+  if (
+    policyKey !== ROI_GOVERNED_VISIBILITY_POLICY.key ||
+    policyDigest !== ROI_GOVERNED_VISIBILITY_POLICY.digest
+  ) {
     throw new RoiGovernedVisibilityPolicyMismatchError();
   }
   if (!idempotencyKey || !idempotencyKey.trim()) {
@@ -742,7 +749,8 @@ export async function publishRoiGovernedVisibilityPolicy(
     );
     if (existing.rowCount) {
       const row = existing.rows[0]!;
-      const exactReplay = row.idempotency_key === idempotencyKey && row.request_fingerprint === fingerprint;
+      const exactReplay =
+        row.idempotency_key === idempotencyKey && row.request_fingerprint === fingerprint;
       if (!exactReplay) {
         // Covers EVERY non-exact case, not just "different actor": a
         // different actor, the same actor reusing a fresh idempotencyKey

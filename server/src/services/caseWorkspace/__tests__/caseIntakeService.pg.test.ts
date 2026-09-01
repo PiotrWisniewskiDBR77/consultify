@@ -181,9 +181,15 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
     return userId;
   }
 
-  async function teardown(orgIds: string[], projectIds: string[], userIds: string[]): Promise<void> {
+  async function teardown(
+    orgIds: string[],
+    projectIds: string[],
+    userIds: string[]
+  ): Promise<void> {
     for (const projectId of projectIds) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of userIds) {
@@ -195,7 +201,9 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -205,7 +213,11 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
    * (CW-T-A) defaults to a real, distinct title — never derived from `goal`
    * by this helper, mirroring the product rule that goal is not a name
    * substitute. */
-  function draft(orgId: string, projectId: string, caseName = 'Analiza kosztow operacyjnych'): intake.WorkOrderDraftInput {
+  function draft(
+    orgId: string,
+    projectId: string,
+    caseName = 'Analiza kosztow operacyjnych'
+  ): intake.WorkOrderDraftInput {
     return {
       organizationId: orgId,
       projectId,
@@ -651,7 +663,7 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
   //    `intake_confirmation_key` (see caseIntakeService.ts's
   //    `computeIntakeConfirmationKey`).
   // -------------------------------------------------------------------------
-  it('a SECOND, different work order on a project that already has a Case creates a SECOND, independent Case with its own name — never returns the first order\'s Case (CW-T-A)', async () => {
+  it("a SECOND, different work order on a project that already has a Case creates a SECOND, independent Case with its own name — never returns the first order's Case (CW-T-A)", async () => {
     const { orgId, projectId } = await seedOrgAndProject('cardinality');
     const actorId = await seedMemberedUser(orgId, 'cardinality');
     try {

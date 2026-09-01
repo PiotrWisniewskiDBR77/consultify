@@ -49,10 +49,22 @@ const RoiCompareMetricEnum = z.enum(ROI_COMPARE_METRICS);
 // ==========================================
 
 export const RoiCaseIdParamsSchema = z.object({ caseId: z.string().uuid() });
-export const RoiForecastVersionParamsSchema = z.object({ caseId: z.string().uuid(), forecastVersionId: z.string().uuid() });
-export const RoiActualEntryParamsSchema = z.object({ caseId: z.string().uuid(), entryId: z.string().uuid() });
-export const RoiActualSnapshotParamsSchema = z.object({ caseId: z.string().uuid(), actualSnapshotId: z.string().uuid() });
-export const RoiVarianceParamsSchema = z.object({ caseId: z.string().uuid(), varianceId: z.string().uuid() });
+export const RoiForecastVersionParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  forecastVersionId: z.string().uuid(),
+});
+export const RoiActualEntryParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  entryId: z.string().uuid(),
+});
+export const RoiActualSnapshotParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  actualSnapshotId: z.string().uuid(),
+});
+export const RoiVarianceParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  varianceId: z.string().uuid(),
+});
 export const RoiVarianceCauseParamsSchema = z.object({
   caseId: z.string().uuid(),
   varianceId: z.string().uuid(),

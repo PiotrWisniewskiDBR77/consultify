@@ -8,8 +8,8 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import type { VerifyOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 import config from '../config/Config.js';
 import { get as dbGet } from '../utils/DbPromise.js';

@@ -43,8 +43,8 @@ export function isFinancialStatementManualVerificationEligible(
 ): boolean {
   return Boolean(
     value.canonicalLineId &&
-      !value.userVerified &&
-      (value.confidence < 0.85 || value.mappingTier === 'review_required')
+    !value.userVerified &&
+    (value.confidence < 0.85 || value.mappingTier === 'review_required')
   );
 }
 
@@ -263,8 +263,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
     isFinancialStatementManualVerificationEligible
   ).length;
   const suggestedExclusionCount = mappedValues.filter(
-    (value) =>
-      !value.canonicalLineId && value.suggestedExclusionReason && !value.isNonFinancial
+    (value) => !value.canonicalLineId && value.suggestedExclusionReason && !value.isNonFinancial
   ).length;
 
   return (
@@ -302,7 +301,8 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
               onClick={onExcludeAllSuggested}
               className="rounded-lg border border-slate-300 px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-50 dark:border-white/[0.12] dark:text-slate-200 dark:hover:bg-white/[0.05]"
             >
-              {t('finance.mappingEditor.excludeSuggested', 'Review and exclude suggested')} ({suggestedExclusionCount})
+              {t('finance.mappingEditor.excludeSuggested', 'Review and exclude suggested')} (
+              {suggestedExclusionCount})
             </button>
           )}
         </div>
@@ -466,7 +466,9 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                     return (
                       <input
                         type="checkbox"
-                        checked={hasCanonicalTarget && (systemVerified || Boolean(value.userVerified))}
+                        checked={
+                          hasCanonicalTarget && (systemVerified || Boolean(value.userVerified))
+                        }
                         disabled={systemVerified || !hasCanonicalTarget}
                         onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
                         className="h-4 w-4 rounded border-slate-300 accent-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-100"

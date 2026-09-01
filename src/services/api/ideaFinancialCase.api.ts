@@ -16,9 +16,12 @@
  * the READ side, where this program has been burned before (an early `return`
  * on a flag once turned a backend failure into a cheerful "you have no data").
  */
-import { apiGet, apiPut } from './baseClient';
+import type {
+  FinancialCaseInput,
+  FinancialCaseResult,
+} from '@/components/MyWork/table/financial/financialTypes';
 
-import type { FinancialCaseInput, FinancialCaseResult } from '@/components/MyWork/table/financial/financialTypes';
+import { apiGet, apiPut } from './baseClient';
 
 export interface IdeaFinancialCasePayload {
   input: FinancialCaseInput;

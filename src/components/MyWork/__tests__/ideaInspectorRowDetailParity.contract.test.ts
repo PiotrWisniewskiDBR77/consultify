@@ -19,7 +19,7 @@ describe('RowDetailPanel → IdeaElementInspector parity wiring (P0)', () => {
   it('IdeaTableTool: reports priority, semanticType, and activity in the selection meta (previously dropped)', () => {
     const source = read('IdeaTableTool.tsx');
     expect(source).toContain('priority:');
-    expect(source).toContain('typeof detailNode.data?.priority === \'number\'');
+    expect(source).toContain("typeof detailNode.data?.priority === 'number'");
     expect(source).toContain('semanticType:');
     expect(source).toContain('activity: Array.isArray(detailNode.data?.activity)');
   });
@@ -50,7 +50,9 @@ describe('RowDetailPanel → IdeaElementInspector parity wiring (P0)', () => {
 
   it('IdeaMapWorkspace: Table tool section columns are editable (not read-only text) unless the canvas is locked', () => {
     const source = read('IdeaMapWorkspace.tsx');
-    expect(source).toContain("nodeId && !canvasLocked ? (");
-    expect(source).toContain('void handleNodeDataChange(nodeId, { [col.key]: e.target.value } as any);');
+    expect(source).toContain('nodeId && !canvasLocked ? (');
+    expect(source).toContain(
+      'void handleNodeDataChange(nodeId, { [col.key]: e.target.value } as any);'
+    );
   });
 });

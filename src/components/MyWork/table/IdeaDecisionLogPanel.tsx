@@ -48,7 +48,6 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { useUserCan } from '@/hooks/useUserCan';
 
 import {
@@ -321,7 +320,9 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
                   : 'No decision yet for this idea — create the first entry.'}
               </p>
               <label>
-                <span className={LABEL_CLASS}>{isPl ? 'Pytanie decyzyjne' : 'Decision question'}</span>
+                <span className={LABEL_CLASS}>
+                  {isPl ? 'Pytanie decyzyjne' : 'Decision question'}
+                </span>
                 <textarea
                   className={TEXTAREA_CLASS}
                   rows={2}
@@ -357,21 +358,29 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
                   value={draftRequiredEvidence.join(', ')}
                   onChange={(e) =>
                     setDraftRequiredEvidence(
-                      e.target.value.split(',').map((v) => v.trim()).filter(Boolean)
+                      e.target.value
+                        .split(',')
+                        .map((v) => v.trim())
+                        .filter(Boolean)
                     )
                   }
                 />
               </label>
               <label>
                 <span className={LABEL_CLASS}>
-                  {isPl ? 'Dowody już dostarczone (po przecinku)' : 'Evidence already attached (comma-separated)'}
+                  {isPl
+                    ? 'Dowody już dostarczone (po przecinku)'
+                    : 'Evidence already attached (comma-separated)'}
                 </span>
                 <input
                   className={INPUT_CLASS}
                   value={draftEvidenceRefs.join(', ')}
                   onChange={(e) =>
                     setDraftEvidenceRefs(
-                      e.target.value.split(',').map((v) => v.trim()).filter(Boolean)
+                      e.target.value
+                        .split(',')
+                        .map((v) => v.trim())
+                        .filter(Boolean)
                     )
                   }
                 />
@@ -414,7 +423,10 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
                     {gate.blockers
                       .map((b) => {
                         if (b.type === 'missing-evidence') {
-                          return (isPl ? 'brak dowodów: ' : 'missing evidence: ') + b.missingKeys.join(', ');
+                          return (
+                            (isPl ? 'brak dowodów: ' : 'missing evidence: ') +
+                            b.missingKeys.join(', ')
+                          );
                         }
                         if (b.type === 'stale-financials') {
                           return (
@@ -439,7 +451,9 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
               {active.decision === 'pending' ? (
                 <div className="space-y-2">
                   <label>
-                    <span className={LABEL_CLASS}>{isPl ? 'Uzasadnienie (wymagane)' : 'Rationale (required)'}</span>
+                    <span className={LABEL_CLASS}>
+                      {isPl ? 'Uzasadnienie (wymagane)' : 'Rationale (required)'}
+                    </span>
                     <textarea
                       className={TEXTAREA_CLASS}
                       rows={2}
@@ -492,7 +506,9 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
 
               {log.length > 1 && (
                 <div className="pt-2 border-t border-c-border-subtle">
-                  <span className={LABEL_CLASS}>{isPl ? 'Historia wersji' : 'Version history'}</span>
+                  <span className={LABEL_CLASS}>
+                    {isPl ? 'Historia wersji' : 'Version history'}
+                  </span>
                   <div className="space-y-1">
                     {log
                       .filter((e) => e.id !== active.id)

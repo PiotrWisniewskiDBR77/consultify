@@ -1,4 +1,5 @@
 import { type NextFunction, type Response, Router } from 'express';
+
 import verifyAdmin from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';

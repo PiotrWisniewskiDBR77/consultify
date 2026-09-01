@@ -1,4 +1,4 @@
-import { summarize, type LatencyStats } from './stats.js';
+import { type LatencyStats, summarize } from './stats.js';
 
 export const NFR_PERF_THRESHOLDS = {
   apiP95Ms: 1500,

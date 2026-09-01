@@ -29,10 +29,10 @@ import {
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../../utils/DbPromise.js';
-import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
-import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import type {
   TemplateOriginRuntime,
   TemplateOriginSummaryFields,
@@ -1087,22 +1087,26 @@ async function getArtifactRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactRow | null> {
-  return (await dbGet<ArtifactRow>(
-    `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
-    [artifactId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRow>(
+      `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
+      [artifactId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunRow(
   runId: string,
   organizationId: string
 ): Promise<ArtifactRunRow | null> {
-  return (await dbGet<ArtifactRunRow>(
-    `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
-    [runId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRunRow>(
+      `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
+      [runId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunChildRows(
@@ -1186,7 +1190,11 @@ async function cleanupGhostOutputsByOrigin(params: {
  */
 export async function removeTemplateArtifactByOrigin(params: {
   organizationId: string;
-  originRuntime: 'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
+  originRuntime:
+    | 'report_template'
+    | 'presentation_template'
+    | 'sheet_template'
+    | 'document_template';
   originRecordId: string;
 }): Promise<boolean> {
   const result = await cleanupGhostOutputsByOrigin(params);
@@ -2898,8 +2906,9 @@ async function getArtifactListItemRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactListRow | null> {
-  return (await dbGet<ArtifactListRow>(
-    `SELECT a.*,
+  return (
+    (await dbGet<ArtifactListRow>(
+      `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
             r.title AS report_title,
@@ -2949,9 +2958,10 @@ async function getArtifactListItemRow(
       AND p.organization_id = a.organization_id
      WHERE a.organization_id = ?
        AND a.artifact_id = ?`,
-    [organizationId, artifactId],
-    { fallback: true }
-  )) ?? null;
+      [organizationId, artifactId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 /**

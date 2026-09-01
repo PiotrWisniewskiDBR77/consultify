@@ -9,6 +9,7 @@
  * Create/Edit pozostaje modalem (poza zakresem kanonu list — to edytor formularza).
  */
 
+import type { TFunction } from 'i18next';
 import {
   Blocks,
   Building2,
@@ -22,9 +23,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   StandardModuleBar,
@@ -187,18 +187,20 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
   );
 
   const CATEGORY_FILTER_OPTIONS = useMemo(
-    () => (Object.keys(CATEGORY_LABELS) as BlockCategory[]).map((v) => ({
-      value: v,
-      label: CATEGORY_LABELS[v],
-    })),
+    () =>
+      (Object.keys(CATEGORY_LABELS) as BlockCategory[]).map((v) => ({
+        value: v,
+        label: CATEGORY_LABELS[v],
+      })),
     [CATEGORY_LABELS]
   );
 
   const RENDER_FILTER_OPTIONS = useMemo(
-    () => (Object.keys(RENDER_LABELS) as BlockRenderKind[]).map((v) => ({
-      value: v,
-      label: RENDER_LABELS[v],
-    })),
+    () =>
+      (Object.keys(RENDER_LABELS) as BlockRenderKind[]).map((v) => ({
+        value: v,
+        label: RENDER_LABELS[v],
+      })),
     [RENDER_LABELS]
   );
 
@@ -458,7 +460,12 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           edit: () => openEdit(block),
         },
         destructive: block.isSystem
-          ? { note: t(`${NS}.rowMenu.systemCannotDeactivate`, 'System blocks cannot be deactivated') }
+          ? {
+              note: t(
+                `${NS}.rowMenu.systemCannotDeactivate`,
+                'System blocks cannot be deactivated'
+              ),
+            }
           : {
               label: t(`${NS}.rowMenu.deactivate`, 'Deactivate'),
               icon: Trash2,
@@ -504,7 +511,11 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       <StandardModuleBar
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        primaryCta={{ label: t(`${NS}.moduleBar.newBlock`, 'New Block'), icon: Plus, onClick: openCreate }}
+        primaryCta={{
+          label: t(`${NS}.moduleBar.newBlock`, 'New Block'),
+          icon: Plus,
+          onClick: openCreate,
+        }}
         chips={[
           { id: 'all', label: t(`${NS}.moduleBar.all`, 'All'), count: blocks.length },
           { id: 'app', label: getTypeLabel(t, true), count: appCount },
@@ -614,7 +625,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h3 className="font-semibold text-c-text">
-                {editing ? t(`${NS}.modal.editTitle`, 'Edit Block') : t(`${NS}.modal.newTitle`, 'New Block')}
+                {editing
+                  ? t(`${NS}.modal.editTitle`, 'Edit Block')
+                  : t(`${NS}.modal.newTitle`, 'New Block')}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -703,7 +716,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
                       className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                     >
                       <option value="business">{t(`${NS}.modal.styleBusiness`, 'Business')}</option>
-                      <option value="technical">{t(`${NS}.modal.styleTechnical`, 'Technical')}</option>
+                      <option value="technical">
+                        {t(`${NS}.modal.styleTechnical`, 'Technical')}
+                      </option>
                       <option value="general">{t(`${NS}.modal.styleGeneral`, 'General')}</option>
                     </select>
                   </div>
@@ -740,7 +755,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
                 disabled={!name.trim()}
                 className="px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:brightness-110 shadow-lg disabled:opacity-50 transition"
               >
-                {editing ? t(`${NS}.modal.saveChanges`, 'Save Changes') : t(`${NS}.modal.createBlock`, 'Create Block')}
+                {editing
+                  ? t(`${NS}.modal.saveChanges`, 'Save Changes')
+                  : t(`${NS}.modal.createBlock`, 'Create Block')}
               </button>
             </div>
           </div>

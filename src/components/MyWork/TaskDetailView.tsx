@@ -655,7 +655,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // so firing it unconditionally on every save produced a permanent red
   // toast on every task save, even when Risk & Alternatives was untouched.
   // Same "compare to a stored snapshot" pattern as `lastSavedSnapshot` above.
-  const riskAlternativesBaselineRef = useRef<string>(JSON.stringify({ risks: [], alternatives: [] }));
+  const riskAlternativesBaselineRef = useRef<string>(
+    JSON.stringify({ risks: [], alternatives: [] })
+  );
   const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
   const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
@@ -7177,7 +7179,14 @@ Return ONLY the final comment text.`;
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onLikeComment={handleLikeComment}
-              onGenerateAIComment={generateAIComment}
+              onGenerateAIComment={async () => {
+                try {
+                  await generateAIComment();
+                  return { ok: true } as const;
+                } catch (error) {
+                  return { ok: false, error } as const;
+                }
+              }}
               isGeneratingAI={isGeneratingAIComment}
               currentUserId="current-user"
               expanded={expandedSections.has('comments')}

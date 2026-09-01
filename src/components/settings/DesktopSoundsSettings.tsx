@@ -203,7 +203,10 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                 (enable/per-type) removed — see file header comment for why.
                 One honest notice replaces both, per "jedna notatka". */}
             <ReadOnlyState
-              title={t('settings.desktopSounds.plannedTitle', 'Planned — this channel will go live after rollout')}
+              title={t(
+                'settings.desktopSounds.plannedTitle',
+                'Planned — this channel will go live after rollout'
+              )}
               description={t(
                 'settings.desktopSounds.plannedDesc',
                 'Desktop pop-ups and sound alerts are not implemented yet.'

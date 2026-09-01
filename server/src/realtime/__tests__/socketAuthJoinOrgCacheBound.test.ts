@@ -46,9 +46,8 @@ vi.mock('../demoRealtimeGuard.js', () => ({
 }));
 
 const { validateJoinOrg } = await import('../socketAuth.js');
-const { __testing__, isOrganizationSuspended } = await import(
-  '../../services/organizationSuspensionGuard.js'
-);
+const { __testing__, isOrganizationSuspended } =
+  await import('../../services/organizationSuspensionGuard.js');
 
 /** Counts how often the ORGANIZATIONS table was consulted. */
 let orgStatusQueries = 0;

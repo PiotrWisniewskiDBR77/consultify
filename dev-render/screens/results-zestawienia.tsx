@@ -36,13 +36,20 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from '../../src/components/ResultsVNext';
 import {
-  getResultsDomainTabs,
+  ResultsVNextRegistryShell,
+  type ResultsVNextTableProps,
+} from '../../src/components/ResultsVNext';
+import {
   getResultsDomainPath,
+  getResultsDomainTabs,
   isResultsDomain,
 } from '../../src/components/ResultsVNext/resultsDomainNavigation';
-import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '../../src/components/standard';
+import type {
+  StandardPreviewProps,
+  StandardRowMenu,
+  TableColumn,
+} from '../../src/components/standard';
 import { StatusChip } from '../../src/components/ui/primitives';
 
 // ==========================================================================
@@ -165,7 +172,8 @@ function formatDatePl(value: string): string {
 function DistributionText({ d }: { d: ZestawienieRow['distribution'] }) {
   return (
     <span className="text-sm tabular-nums text-c-text">
-      Bezpieczne {d.safe} · Ostrzeżenie {d.warning} · Krytyczne {d.critical} · Brak danych {d.missing}
+      Bezpieczne {d.safe} · Ostrzeżenie {d.warning} · Krytyczne {d.critical} · Brak danych{' '}
+      {d.missing}
     </span>
   );
 }
@@ -203,7 +211,10 @@ function buildColumns(): TableColumn[] {
       render: (row: ZestawienieRow) => (
         <div className="flex flex-col gap-1">
           <span className="text-sm text-c-text-secondary">{row.period}</span>
-          <StatusChip label={PERIOD_STATUS_LABEL[row.periodStatus]} tone={PERIOD_STATUS_TONE[row.periodStatus]} />
+          <StatusChip
+            label={PERIOD_STATUS_LABEL[row.periodStatus]}
+            tone={PERIOD_STATUS_TONE[row.periodStatus]}
+          />
         </div>
       ),
     },
@@ -271,7 +282,10 @@ function buildPreview(row: ZestawienieRow, onClose: () => void): StandardPreview
     onOpenFull: () => {},
     meta: {
       pills: [
-        { label: PERIOD_STATUS_LABEL[row.periodStatus], tone: PERIOD_STATUS_TONE[row.periodStatus] },
+        {
+          label: PERIOD_STATUS_LABEL[row.periodStatus],
+          tone: PERIOD_STATUS_TONE[row.periodStatus],
+        },
         { label: row.period, tone: 'neutral' },
       ],
       trailing: (
@@ -290,7 +304,11 @@ function buildPreview(row: ZestawienieRow, onClose: () => void): StandardPreview
           label: 'Wskaźniki w zestawie',
           value: `${row.itemCount} ${pluralizeWskaznik(row.itemCount)}`,
         },
-        { id: 'distribution', label: 'Stan wskaźników', value: <DistributionText d={row.distribution} /> },
+        {
+          id: 'distribution',
+          label: 'Stan wskaźników',
+          value: <DistributionText d={row.distribution} />,
+        },
       ],
     },
     ai: {
@@ -341,7 +359,10 @@ const ResultsZestawieniaScreen: React.FC = () => {
     // dokładnie ten defekt, który ten prototyp ma wykryć, nie powielić.
     persistKey: 'results-vnext.kpi-zestawienia-registry',
     loading: state === 'loading',
-    error: state === 'error' ? 'Nie udało się wczytać rejestru zestawień — usługa zwróciła błąd 503.' : null,
+    error:
+      state === 'error'
+        ? 'Nie udało się wczytać rejestru zestawień — usługa zwróciła błąd 503.'
+        : null,
     onRetry: () => {},
     empty:
       state === 'empty'
@@ -379,8 +400,16 @@ const ResultsZestawieniaScreen: React.FC = () => {
           viewMode: 'table',
           chips: [
             { id: 'all', label: 'Wszystkie', count: ROWS.length },
-            { id: 'open', label: 'Otwarte', count: ROWS.filter((r) => r.periodStatus === 'open').length },
-            { id: 'closed', label: 'Zamknięte', count: ROWS.filter((r) => r.periodStatus === 'closed').length },
+            {
+              id: 'open',
+              label: 'Otwarte',
+              count: ROWS.filter((r) => r.periodStatus === 'open').length,
+            },
+            {
+              id: 'closed',
+              label: 'Zamknięte',
+              count: ROWS.filter((r) => r.periodStatus === 'closed').length,
+            },
           ],
           activeChip: filter,
           onChipChange: (id) => setFilter(id === 'open' || id === 'closed' ? id : 'all'),
@@ -391,7 +420,11 @@ const ResultsZestawieniaScreen: React.FC = () => {
           },
         }}
         table={table}
-        preview={state === 'ready' && selectedRow ? buildPreview(selectedRow, () => setSelectedId(null)) : null}
+        preview={
+          state === 'ready' && selectedRow
+            ? buildPreview(selectedRow, () => setSelectedId(null))
+            : null
+        }
         forbidden={null}
         onForbiddenBack={() => {}}
       />

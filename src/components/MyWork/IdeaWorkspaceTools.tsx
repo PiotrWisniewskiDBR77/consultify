@@ -64,6 +64,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
+import { isIdeaBusinessCaseEnabled } from '@/utils/ideaBusinessCaseSchemaFlag';
 import {
   IDEA_ELEMENT_DETAILS_SLOT_ID,
   isIdeaDetailsInPanelEnabled,
@@ -90,7 +91,6 @@ import {
   type IdeaStageV5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import {
   canAdvanceToStage,
   deriveCanvasSignals,
@@ -98,25 +98,25 @@ import {
   type MaturityAttestations,
   type MaturityStageId,
 } from './ideaMaturityModel';
+import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
+import { IdeaBusinessCaseSection } from './panel/IdeaBusinessCaseSection';
 import {
   IDEA_PANEL_6_LABELS_EN,
   IDEA_PANEL_6_LABELS_PL,
   IDEA_PANEL_AI_SLOT_ID,
   IDEA_PANEL_TOOL_SLOT_ID,
-  ideaPanel6ToolLabel,
   type IdeaPanel6SectionId,
+  ideaPanel6ToolLabel,
   normalizujDoSzesciu,
 } from './panel/ideaPanel6Sections';
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
-import { IdeaBusinessCaseSection } from './panel/IdeaBusinessCaseSection';
 import { IdeaPanelActivity } from './panel/IdeaPanelActivity';
 import { IdeaPanelComments } from './panel/IdeaPanelComments';
 import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
-import { isIdeaBusinessCaseEnabled } from '@/utils/ideaBusinessCaseSchemaFlag';
 import { ProcessFlowHealthScore } from './processflow/ProcessFlowHealthScore';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import { IdeaMaturityGate } from './shared/IdeaMaturityGate';
@@ -569,7 +569,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
    * jump is actually ALLOWED.
    */
   const maturityReport = useMemo(() => {
-    const canvasSignals = deriveCanvasSignals(graphNodes as Array<{ data?: Record<string, unknown> }>);
+    const canvasSignals = deriveCanvasSignals(
+      graphNodes as Array<{ data?: Record<string, unknown> }>
+    );
     return evaluateIdeaMaturity(
       {
         title,
@@ -1159,7 +1161,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                             const isActive = bucket === stageBucket;
                             // E08: mandatory criteria of every stage up to `bucket` must be
                             // met before a forward jump is allowed — see canAdvanceToStage.
-                            const gate = canAdvanceToStage(maturityReport, bucket as MaturityStageId);
+                            const gate = canAdvanceToStage(
+                              maturityReport,
+                              bucket as MaturityStageId
+                            );
                             const isBlocked = !isActive && !gate.allowed;
                             return (
                               <button
@@ -1167,7 +1172,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                                 onClick={() => attemptStageChange(bucket, representative)}
                                 title={
                                   isBlocked
-                                    ? (isPl ? 'Brakuje kryteriów — patrz "Model dojrzałości" poniżej.' : 'Missing criteria — see "Maturity model" below.')
+                                    ? isPl
+                                      ? 'Brakuje kryteriów — patrz "Model dojrzałości" poniżej.'
+                                      : 'Missing criteria — see "Maturity model" below.'
                                     : undefined
                                 }
                                 className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
@@ -1459,22 +1466,20 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
              * zaznaczenia elementu) — ten sam warunek co Problem/Status wyżej.
              * Za flagą `ff_ideaBusinessCase`, default OFF (CLAUDE.md #7).
              */}
-            {pokaz('overview') &&
-              (!szesc || !maZaznaczenie) &&
-              isIdeaBusinessCaseEnabled() && (
-                <Section
-                  title={isPl ? 'Karta biznesowa' : 'Business case'}
-                  icon={<LayoutDashboard size={12} />}
-                >
-                  <IdeaBusinessCaseSection
-                    ideaId={ideaId}
-                    tool={activeTool}
-                    selection={selection}
-                    graphNodes={graphNodes ?? []}
-                    isPolish={isPl}
-                  />
-                </Section>
-              )}
+            {pokaz('overview') && (!szesc || !maZaznaczenie) && isIdeaBusinessCaseEnabled() && (
+              <Section
+                title={isPl ? 'Karta biznesowa' : 'Business case'}
+                icon={<LayoutDashboard size={12} />}
+              >
+                <IdeaBusinessCaseSection
+                  ideaId={ideaId}
+                  tool={activeTool}
+                  selection={selection}
+                  graphNodes={graphNodes ?? []}
+                  isPolish={isPl}
+                />
+              </Section>
+            )}
 
             {/*
              * ── Przegląd · TOŻSAMOŚĆ ELEMENTU (układ 6 sekcji, kontekst elementu) ──

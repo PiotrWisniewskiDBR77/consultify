@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
+import { buildDeterministicInitiativeBudgetFromPrompt } from './deterministicInitiativeBudget.js';
 import {
   buildFromTemplateFlat,
   listWorkbookTemplates,
@@ -28,7 +29,6 @@ import {
 } from './WorkbookBuilder.js';
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
-import { buildDeterministicInitiativeBudgetFromPrompt } from './deterministicInitiativeBudget.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -738,17 +738,15 @@ class WorkbookGeneratorService {
     // projektować model od zera.
     // =====================================================================
     const deterministicSchema = buildDeterministicInitiativeBudgetFromPrompt(prompt);
-    const templateMatch = deterministicSchema ? null : await this.matchWorkbookTemplate(
-      userPrompt,
-      researchContext,
-      llmParams
-    ).catch((err) => {
-      logger.warn(
-        '[WorkbookGenerator] Template match failed, falling back to free-form generation',
-        err
-      );
-      return null;
-    });
+    const templateMatch = deterministicSchema
+      ? null
+      : await this.matchWorkbookTemplate(userPrompt, researchContext, llmParams).catch((err) => {
+          logger.warn(
+            '[WorkbookGenerator] Template match failed, falling back to free-form generation',
+            err
+          );
+          return null;
+        });
 
     let schema: WorkbookSchema;
     // Declared here (not inside the free-form branch below) so Phase 4's
@@ -762,7 +760,8 @@ class WorkbookGeneratorService {
         phase: 'deterministic_plan',
         status: 'ok',
         durationMs: 0,
-        detail: 'Built explicit 12-month initiative budget locally; skipped external PLAN/CONFIRM/GENERATE calls.',
+        detail:
+          'Built explicit 12-month initiative budget locally; skipped external PLAN/CONFIRM/GENERATE calls.',
       });
       schema = deterministicSchema;
     } else if (templateMatch) {
@@ -981,124 +980,129 @@ class WorkbookGeneratorService {
 
     if (deterministicSchema) {
       pipelineLog.push({
-        phase: 'review', status: 'skipped', durationMs: 0,
+        phase: 'review',
+        status: 'skipped',
+        durationMs: 0,
         detail: 'Deterministic schema uses the local quality gate; external LLM review skipped.',
       });
-    } else try {
-      const schemaJson = JSON.stringify(schema!, null, 2);
-      const reviewResponse = await this.callLLM(
-        REVIEW_SYSTEM_PROMPT,
-        `ORIGINAL USER REQUEST:\n${userPrompt}\n\nGENERATED WORKBOOK SCHEMA:\n${schemaJson}\n\nReview this schema for quality. Return your assessment as JSON.`,
-        llmParams,
-        6000,
-        'workbook_review'
-      );
+    } else
+      try {
+        const schemaJson = JSON.stringify(schema!, null, 2);
+        const reviewResponse = await this.callLLM(
+          REVIEW_SYSTEM_PROMPT,
+          `ORIGINAL USER REQUEST:\n${userPrompt}\n\nGENERATED WORKBOOK SCHEMA:\n${schemaJson}\n\nReview this schema for quality. Return your assessment as JSON.`,
+          llmParams,
+          6000,
+          'workbook_review'
+        );
 
-      const reviewResult = extractJsonFromResponse(reviewResponse);
-      if (reviewResult && typeof reviewResult === 'object') {
-        const rr = reviewResult as any;
-        qualityScore = typeof rr.overall_score === 'number' ? rr.overall_score : null;
-        const pass = rr.pass === true;
-        const issueCount = Array.isArray(rr.issues) ? rr.issues.length : 0;
-        const criticalIssues = Array.isArray(rr.issues)
-          ? rr.issues.filter((i: any) => i.severity === 'critical')
-          : [];
+        const reviewResult = extractJsonFromResponse(reviewResponse);
+        if (reviewResult && typeof reviewResult === 'object') {
+          const rr = reviewResult as any;
+          qualityScore = typeof rr.overall_score === 'number' ? rr.overall_score : null;
+          const pass = rr.pass === true;
+          const issueCount = Array.isArray(rr.issues) ? rr.issues.length : 0;
+          const criticalIssues = Array.isArray(rr.issues)
+            ? rr.issues.filter((i: any) => i.severity === 'critical')
+            : [];
 
-        if (!pass && rr.fixes_applied) {
-          // LLM provided a corrected schema — validate and use it
-          const fixedValidation = WorkbookSchemaValidator.safeParse(rr.fixes_applied);
-          if (fixedValidation.success) {
-            schema = fixedValidation.data;
-            pipelineLog.push({
-              phase: 'review',
-              status: 'warning',
-              durationMs: Date.now() - p4Start,
-              detail: `Score ${qualityScore?.toFixed(1)}/5 — FAILED review, applied ${issueCount} fixes (${criticalIssues.length} critical). Using corrected schema.`,
-            });
-            logger.info(
-              `[WorkbookGenerator] Phase 4 REVIEW: Applied fixes (score=${qualityScore}, ${issueCount} issues)`
+          if (!pass && rr.fixes_applied) {
+            // LLM provided a corrected schema — validate and use it
+            const fixedValidation = WorkbookSchemaValidator.safeParse(rr.fixes_applied);
+            if (fixedValidation.success) {
+              schema = fixedValidation.data;
+              pipelineLog.push({
+                phase: 'review',
+                status: 'warning',
+                durationMs: Date.now() - p4Start,
+                detail: `Score ${qualityScore?.toFixed(1)}/5 — FAILED review, applied ${issueCount} fixes (${criticalIssues.length} critical). Using corrected schema.`,
+              });
+              logger.info(
+                `[WorkbookGenerator] Phase 4 REVIEW: Applied fixes (score=${qualityScore}, ${issueCount} issues)`
+              );
+            } else {
+              pipelineLog.push({
+                phase: 'review',
+                status: 'warning',
+                durationMs: Date.now() - p4Start,
+                detail: `Score ${qualityScore?.toFixed(1)}/5 — fixes provided but invalid, using original schema. ${issueCount} issues found.`,
+              });
+              logger.warn(
+                `[WorkbookGenerator] Phase 4 REVIEW: Fixes invalid, using original schema`
+              );
+            }
+          } else if (!pass && criticalIssues.length > 0) {
+            // Critical issues but no fixes — try one more generation with the issues as feedback
+            logger.warn(
+              `[WorkbookGenerator] Phase 4 REVIEW: ${criticalIssues.length} critical issues, attempting regeneration`
             );
+            const issuesFeedback = criticalIssues
+              .map(
+                (i: any) =>
+                  `- [${i.category}] ${i.sheet || 'global'}: ${i.description} → Fix: ${i.suggested_fix || 'unknown'}`
+              )
+              .join('\n');
+
+            try {
+              const fixContent = await this.callLLM(
+                GENERATION_SYSTEM_PROMPT,
+                `${generationPrompt}\n\nQUALITY REVIEW found these CRITICAL issues in your previous output:\n${issuesFeedback}\n\nFix ALL critical issues and return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
+                llmParams,
+                16000,
+                'workbook_generate'
+              );
+              const fixParsed = extractJsonFromResponse(fixContent);
+              if (fixParsed) {
+                const fixValidated = WorkbookSchemaValidator.safeParse(fixParsed);
+                if (fixValidated.success) {
+                  schema = fixValidated.data;
+                  pipelineLog.push({
+                    phase: 'review',
+                    status: 'warning',
+                    durationMs: Date.now() - p4Start,
+                    detail: `Score ${qualityScore?.toFixed(1)}/5 — regenerated after ${criticalIssues.length} critical issues.`,
+                  });
+                }
+              }
+            } catch {
+              pipelineLog.push({
+                phase: 'review',
+                status: 'warning',
+                durationMs: Date.now() - p4Start,
+                detail: `Score ${qualityScore?.toFixed(1)}/5 — regeneration after review failed, using original.`,
+              });
+            }
           } else {
             pipelineLog.push({
               phase: 'review',
-              status: 'warning',
+              status: pass ? 'ok' : 'warning',
               durationMs: Date.now() - p4Start,
-              detail: `Score ${qualityScore?.toFixed(1)}/5 — fixes provided but invalid, using original schema. ${issueCount} issues found.`,
+              detail: `Score ${qualityScore?.toFixed(1)}/5 — ${pass ? 'PASSED' : 'marginal'} (${issueCount} issues, ${criticalIssues.length} critical)`,
             });
-            logger.warn(`[WorkbookGenerator] Phase 4 REVIEW: Fixes invalid, using original schema`);
-          }
-        } else if (!pass && criticalIssues.length > 0) {
-          // Critical issues but no fixes — try one more generation with the issues as feedback
-          logger.warn(
-            `[WorkbookGenerator] Phase 4 REVIEW: ${criticalIssues.length} critical issues, attempting regeneration`
-          );
-          const issuesFeedback = criticalIssues
-            .map(
-              (i: any) =>
-                `- [${i.category}] ${i.sheet || 'global'}: ${i.description} → Fix: ${i.suggested_fix || 'unknown'}`
-            )
-            .join('\n');
-
-          try {
-            const fixContent = await this.callLLM(
-              GENERATION_SYSTEM_PROMPT,
-              `${generationPrompt}\n\nQUALITY REVIEW found these CRITICAL issues in your previous output:\n${issuesFeedback}\n\nFix ALL critical issues and return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
-              llmParams,
-              16000,
-              'workbook_generate'
+            logger.info(
+              `[WorkbookGenerator] Phase 4 REVIEW: ${pass ? 'PASSED' : 'marginal'} (score=${qualityScore})`
             );
-            const fixParsed = extractJsonFromResponse(fixContent);
-            if (fixParsed) {
-              const fixValidated = WorkbookSchemaValidator.safeParse(fixParsed);
-              if (fixValidated.success) {
-                schema = fixValidated.data;
-                pipelineLog.push({
-                  phase: 'review',
-                  status: 'warning',
-                  durationMs: Date.now() - p4Start,
-                  detail: `Score ${qualityScore?.toFixed(1)}/5 — regenerated after ${criticalIssues.length} critical issues.`,
-                });
-              }
-            }
-          } catch {
-            pipelineLog.push({
-              phase: 'review',
-              status: 'warning',
-              durationMs: Date.now() - p4Start,
-              detail: `Score ${qualityScore?.toFixed(1)}/5 — regeneration after review failed, using original.`,
-            });
           }
         } else {
           pipelineLog.push({
             phase: 'review',
-            status: pass ? 'ok' : 'warning',
+            status: 'warning',
             durationMs: Date.now() - p4Start,
-            detail: `Score ${qualityScore?.toFixed(1)}/5 — ${pass ? 'PASSED' : 'marginal'} (${issueCount} issues, ${criticalIssues.length} critical)`,
+            detail: 'Could not parse review response',
           });
-          logger.info(
-            `[WorkbookGenerator] Phase 4 REVIEW: ${pass ? 'PASSED' : 'marginal'} (score=${qualityScore})`
-          );
         }
-      } else {
+      } catch (err) {
         pipelineLog.push({
           phase: 'review',
-          status: 'warning',
+          status: 'failed',
           durationMs: Date.now() - p4Start,
-          detail: 'Could not parse review response',
+          detail: String(err),
         });
+        logger.warn(
+          `[WorkbookGenerator] Phase 4 REVIEW: FAILED, proceeding with unreviewed schema`,
+          err
+        );
       }
-    } catch (err) {
-      pipelineLog.push({
-        phase: 'review',
-        status: 'failed',
-        durationMs: Date.now() - p4Start,
-        detail: String(err),
-      });
-      logger.warn(
-        `[WorkbookGenerator] Phase 4 REVIEW: FAILED, proceeding with unreviewed schema`,
-        err
-      );
-    }
 
     // =====================================================================
     // PHASE 5: BUILD — ExcelJS materializes the validated schema

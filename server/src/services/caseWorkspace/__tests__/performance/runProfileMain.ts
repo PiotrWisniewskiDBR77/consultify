@@ -36,11 +36,15 @@ async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (!runId || !outFile || !databaseUrl) {
-    console.error('[runProfileMain] missing required env: CW_PERF_RUN_ID, CW_PERF_OUT_FILE, DATABASE_URL');
+    console.error(
+      '[runProfileMain] missing required env: CW_PERF_RUN_ID, CW_PERF_OUT_FILE, DATABASE_URL'
+    );
     process.exit(2);
   }
   if (process.env.RUN_DB_TESTS !== '1' || process.env.MOCK_DB !== 'false') {
-    console.error('[runProfileMain] refusing to run against a possibly-mocked DB: RUN_DB_TESTS=1 and MOCK_DB=false are both required');
+    console.error(
+      '[runProfileMain] refusing to run against a possibly-mocked DB: RUN_DB_TESTS=1 and MOCK_DB=false are both required'
+    );
     process.exit(2);
   }
 

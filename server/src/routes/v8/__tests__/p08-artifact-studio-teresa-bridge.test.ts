@@ -41,16 +41,13 @@ vi.mock('../../../services/documentStudio/documentStudioService.js', () => ({
 }));
 
 vi.mock('../../../services/presentationTeresaBridgeService.js', () => ({
-  applyApprovedPresentationTeresaEdit: (...args: unknown[]) =>
-    mockApplyPresentationEdit(...args),
+  applyApprovedPresentationTeresaEdit: (...args: unknown[]) => mockApplyPresentationEdit(...args),
 }));
 
-const { createChatProposal, executeProposal } = await import(
-  '../../../services/v8/teresaCopilotService.js'
-);
-const { P08_HANDOFF_TARGET_MODULES, validateTargetPayload } = await import(
-  '../../../services/v8/teresaCopilotCanon.js'
-);
+const { createChatProposal, executeProposal } =
+  await import('../../../services/v8/teresaCopilotService.js');
+const { P08_HANDOFF_TARGET_MODULES, validateTargetPayload } =
+  await import('../../../services/v8/teresaCopilotCanon.js');
 
 const ORG = '00000000-0000-4000-8000-000000000d01';
 const USER = '00000000-0000-4000-8000-000000000d02';

@@ -43,7 +43,14 @@ interface AITableAssistantProps {
 }
 
 /** One durable terminal outcome for a submitted command. Exactly one applies per entry. */
-type AiCommandStatus = 'pending' | 'applied' | 'proposal' | 'unsupported' | 'validation' | 'transport' | 'cancelled';
+type AiCommandStatus =
+  | 'pending'
+  | 'applied'
+  | 'proposal'
+  | 'unsupported'
+  | 'validation'
+  | 'transport'
+  | 'cancelled';
 
 interface AiCommandEntry {
   id: string;
@@ -52,7 +59,11 @@ interface AiCommandEntry {
   message: string;
 }
 
-const RECOVERABLE: ReadonlySet<AiCommandStatus> = new Set(['unsupported', 'validation', 'transport']);
+const RECOVERABLE: ReadonlySet<AiCommandStatus> = new Set([
+  'unsupported',
+  'validation',
+  'transport',
+]);
 
 const EXAMPLE_COMMANDS = {
   en: [
@@ -131,7 +142,12 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
       const id = `ai-cmd-${Date.now()}-${entrySeq.current++}`;
       setHistory((prev) => [
         ...prev,
-        { id, command: trimmed, status: 'pending', message: t('myWorkTable.aiTableAssistant.statusPending') },
+        {
+          id,
+          command: trimmed,
+          status: 'pending',
+          message: t('myWorkTable.aiTableAssistant.statusPending'),
+        },
       ]);
       setLoading(true);
 
@@ -152,7 +168,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
           const operations = proposal?.operations || [];
           if (!proposal || operations.length === 0) {
-            upsertEntry(id, { status: 'validation', message: t('myWorkTable.aiTableAssistant.noChanges') });
+            upsertEntry(id, {
+              status: 'validation',
+              message: t('myWorkTable.aiTableAssistant.noChanges'),
+            });
             return;
           }
 
@@ -179,7 +198,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           setCommand('');
         } catch (err: any) {
           if (err?.name === 'AbortError') {
-            upsertEntry(id, { status: 'cancelled', message: t('myWorkTable.aiTableAssistant.cancelled') });
+            upsertEntry(id, {
+              status: 'cancelled',
+              message: t('myWorkTable.aiTableAssistant.cancelled'),
+            });
           } else {
             upsertEntry(id, {
               status: 'transport',
@@ -212,7 +234,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         const action = result?.action;
 
         if (!action) {
-          upsertEntry(id, { status: 'transport', message: t('myWorkTable.aiTableAssistant.transportError') });
+          upsertEntry(id, {
+            status: 'transport',
+            message: t('myWorkTable.aiTableAssistant.transportError'),
+          });
           return;
         }
 
@@ -224,12 +249,17 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             if (!columnExists(action.column)) {
               upsertEntry(id, {
                 status: 'validation',
-                message: t('myWorkTable.aiTableAssistant.columnNotFound', { column: String(action.column || '') }),
+                message: t('myWorkTable.aiTableAssistant.columnNotFound', {
+                  column: String(action.column || ''),
+                }),
               });
               break;
             }
             onSort({ key: action.column, direction: action.direction || 'asc' });
-            upsertEntry(id, { status: 'applied', message: t('myWorkTable.aiTableAssistant.sorted') });
+            upsertEntry(id, {
+              status: 'applied',
+              message: t('myWorkTable.aiTableAssistant.sorted'),
+            });
             setCommand('');
             break;
           }
@@ -237,7 +267,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             if (!columnExists(action.column)) {
               upsertEntry(id, {
                 status: 'validation',
-                message: t('myWorkTable.aiTableAssistant.columnNotFound', { column: String(action.column || '') }),
+                message: t('myWorkTable.aiTableAssistant.columnNotFound', {
+                  column: String(action.column || ''),
+                }),
               });
               break;
             }
@@ -252,7 +284,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
                 },
               ],
             });
-            upsertEntry(id, { status: 'applied', message: t('myWorkTable.aiTableAssistant.filterApplied') });
+            upsertEntry(id, {
+              status: 'applied',
+              message: t('myWorkTable.aiTableAssistant.filterApplied'),
+            });
             setCommand('');
             break;
           }
@@ -260,18 +295,26 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             if (action.column && !columnExists(action.column)) {
               upsertEntry(id, {
                 status: 'validation',
-                message: t('myWorkTable.aiTableAssistant.columnNotFound', { column: String(action.column || '') }),
+                message: t('myWorkTable.aiTableAssistant.columnNotFound', {
+                  column: String(action.column || ''),
+                }),
               });
               break;
             }
             onGroup(action.column || null);
-            upsertEntry(id, { status: 'applied', message: t('myWorkTable.aiTableAssistant.groupingApplied') });
+            upsertEntry(id, {
+              status: 'applied',
+              message: t('myWorkTable.aiTableAssistant.groupingApplied'),
+            });
             setCommand('');
             break;
           }
           case 'add_column': {
             if (!action.key && !action.header) {
-              upsertEntry(id, { status: 'validation', message: t('myWorkTable.aiTableAssistant.noChanges') });
+              upsertEntry(id, {
+                status: 'validation',
+                message: t('myWorkTable.aiTableAssistant.noChanges'),
+              });
               break;
             }
             onAddColumn({
@@ -282,13 +325,19 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
               width: 160,
               options: action.options,
             });
-            upsertEntry(id, { status: 'applied', message: t('myWorkTable.aiTableAssistant.columnAdded') });
+            upsertEntry(id, {
+              status: 'applied',
+              message: t('myWorkTable.aiTableAssistant.columnAdded'),
+            });
             setCommand('');
             break;
           }
           case 'add_rows': {
             if (!Array.isArray(action.rows) || action.rows.length === 0) {
-              upsertEntry(id, { status: 'validation', message: t('myWorkTable.aiTableAssistant.noRowsToAdd') });
+              upsertEntry(id, {
+                status: 'validation',
+                message: t('myWorkTable.aiTableAssistant.noRowsToAdd'),
+              });
               break;
             }
             const newRows: TableNode[] = action.rows.map((r: any, idx: number) => ({
@@ -329,7 +378,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         }
       } catch (err: any) {
         if (err?.name === 'AbortError') {
-          upsertEntry(id, { status: 'cancelled', message: t('myWorkTable.aiTableAssistant.cancelled') });
+          upsertEntry(id, {
+            status: 'cancelled',
+            message: t('myWorkTable.aiTableAssistant.cancelled'),
+          });
         } else {
           upsertEntry(id, {
             status: 'transport',
@@ -426,7 +478,11 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           />
           {loading ? (
             <>
-              <Loader2 size={16} className="animate-spin text-c-text-secondary" aria-hidden="true" />
+              <Loader2
+                size={16}
+                className="animate-spin text-c-text-secondary"
+                aria-hidden="true"
+              />
               <button
                 onClick={handleCancel}
                 type="button"
@@ -490,9 +546,17 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           >
             <div className="flex items-start gap-2">
               {lastEntry.status === 'pending' ? (
-                <Loader2 size={14} className="mt-0.5 animate-spin text-c-text-secondary flex-shrink-0" aria-hidden="true" />
+                <Loader2
+                  size={14}
+                  className="mt-0.5 animate-spin text-c-text-secondary flex-shrink-0"
+                  aria-hidden="true"
+                />
               ) : RECOVERABLE.has(lastEntry.status) ? (
-                <AlertTriangle size={14} className="mt-0.5 text-c-danger flex-shrink-0" aria-hidden="true" />
+                <AlertTriangle
+                  size={14}
+                  className="mt-0.5 text-c-danger flex-shrink-0"
+                  aria-hidden="true"
+                />
               ) : (
                 <CheckCircle2
                   size={14}
@@ -507,7 +571,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
                   {statusLabel[lastEntry.status]}
                 </p>
                 <p className="text-xs text-c-text mt-0.5 break-words">“{lastEntry.command}”</p>
-                <p className="text-xs text-c-text-secondary mt-0.5 leading-relaxed">{lastEntry.message}</p>
+                <p className="text-xs text-c-text-secondary mt-0.5 leading-relaxed">
+                  {lastEntry.message}
+                </p>
                 {(RECOVERABLE.has(lastEntry.status) || lastEntry.status === 'cancelled') && (
                   <div className="flex gap-2 mt-2">
                     {RECOVERABLE.has(lastEntry.status) && (
@@ -542,7 +608,11 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             </div>
             <ul className="space-y-1">
               {olderEntries.map((e) => (
-                <li key={e.id} className="text-[10px] text-c-text-secondary truncate" data-status={e.status}>
+                <li
+                  key={e.id}
+                  className="text-[10px] text-c-text-secondary truncate"
+                  data-status={e.status}
+                >
                   {statusLabel[e.status]} — “{e.command}”
                 </li>
               ))}

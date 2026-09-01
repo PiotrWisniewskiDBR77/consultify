@@ -28,13 +28,11 @@ router.use(
         .trim()
         .toUpperCase() !== 'ACTIVE'
     ) {
-      res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Active organization membership required',
-          code: 'ADMIN_MEMBERSHIP_REQUIRED',
-        });
+      res.status(403).json({
+        success: false,
+        error: 'Active organization membership required',
+        code: 'ADMIN_MEMBERSHIP_REQUIRED',
+      });
       return;
     }
     if (
@@ -44,13 +42,11 @@ router.use(
           .toUpperCase()
       )
     ) {
-      res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Tenant admin role required',
-          code: 'ADMIN_ACCESS_REQUIRED',
-        });
+      res.status(403).json({
+        success: false,
+        error: 'Tenant admin role required',
+        code: 'ADMIN_ACCESS_REQUIRED',
+      });
       return;
     }
     next();

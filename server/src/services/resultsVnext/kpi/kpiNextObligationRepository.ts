@@ -1,9 +1,10 @@
 /** Day 17 K.3 — read-only recorded-or-derived next KPI obligation. */
 import type { PoolClient, QueryResultRow } from 'pg';
+
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
 
 interface ObligationRow extends QueryResultRow {

@@ -37,12 +37,18 @@ import type {
 // g < WACC — mirrors `valuationTerminalService.assertGBelowWacc()` (line 36-45 at base SHA).
 // =============================================================================================
 
-export type GBelowWaccResult = { ok: true } | { ok: false; code: 'G_MUST_BE_LESS_THAN_WACC'; message: string };
+export type GBelowWaccResult =
+  | { ok: true }
+  | { ok: false; code: 'G_MUST_BE_LESS_THAN_WACC'; message: string };
 
 /** Terminal growth `g` must be strictly less than WACC — Gordon Growth is undefined/negative otherwise. */
 export function assertGBelowWacc(gPct: number, waccPct: number): GBelowWaccResult {
   if (!Number.isFinite(gPct) || !Number.isFinite(waccPct)) {
-    return { ok: false, code: 'G_MUST_BE_LESS_THAN_WACC', message: 'g_pct i WACC muszą być liczbami skończonymi.' };
+    return {
+      ok: false,
+      code: 'G_MUST_BE_LESS_THAN_WACC',
+      message: 'g_pct i WACC muszą być liczbami skończonymi.',
+    };
   }
   if (gPct >= waccPct) {
     return {
@@ -98,9 +104,14 @@ export function evaluateGConsistency(
 // wrong number" judgment as the EV→Equity bridge `as_of` alignment check.
 // =============================================================================================
 
-export type WaccConsistencyErrorCode = 'UNSUPPORTED_NOMINAL_REAL_CONVENTION' | 'UNSUPPORTED_PRE_POST_TAX_CONVENTION' | 'CURRENCY_MISMATCH';
+export type WaccConsistencyErrorCode =
+  | 'UNSUPPORTED_NOMINAL_REAL_CONVENTION'
+  | 'UNSUPPORTED_PRE_POST_TAX_CONVENTION'
+  | 'CURRENCY_MISMATCH';
 
-export type WaccConsistencyResult = { ok: true } | { ok: false; code: WaccConsistencyErrorCode; message: string };
+export type WaccConsistencyResult =
+  | { ok: true }
+  | { ok: false; code: WaccConsistencyErrorCode; message: string };
 
 export interface WaccConsistencyInput {
   nominalOrReal: 'NOMINAL' | 'REAL';
@@ -113,7 +124,10 @@ export interface WaccConsistencyInput {
  * layer, and FCFF = EBIT*(1-cash_tax_rate)+... is already after-tax by construction) — so WACC
  * must match on both axes, plus currency, before it may be used to discount that FCFF series.
  */
-export function assertWaccConsistency(wacc: WaccConsistencyInput, fcffCurrency: string): WaccConsistencyResult {
+export function assertWaccConsistency(
+  wacc: WaccConsistencyInput,
+  fcffCurrency: string
+): WaccConsistencyResult {
   if (wacc.nominalOrReal !== 'NOMINAL') {
     return {
       ok: false,
@@ -147,10 +161,13 @@ export function assertWaccConsistency(wacc: WaccConsistencyInput, fcffCurrency: 
 // =============================================================================================
 
 export function findSensitivityMonotonicityViolation(
-  cells: readonly Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'rowAxisValue' | 'columnAxisValue' | 'cellValueDecimal'>[]
+  cells: readonly Pick<
+    ValuationSensitivityCellDto,
+    'rowIndex' | 'colIndex' | 'rowAxisValue' | 'columnAxisValue' | 'cellValueDecimal'
+  >[]
 ): string | null {
-  const byRow = new Map<number, typeof cells[number][]>();
-  const byCol = new Map<number, typeof cells[number][]>();
+  const byRow = new Map<number, (typeof cells)[number][]>();
+  const byCol = new Map<number, (typeof cells)[number][]>();
   for (const cell of cells) {
     if (!byRow.has(cell.rowIndex)) byRow.set(cell.rowIndex, []);
     byRow.get(cell.rowIndex)!.push(cell);
@@ -190,7 +207,9 @@ export interface SensitivityGridIntegrityResult {
 }
 
 /** Combines the shape gate (exactly 25 cells / 1 base cell / full 5×5 coverage) with the monotonicity gate — both are required for a grid to be trustworthy, per the coordinator's WP-D05 correction. */
-export function assertSensitivityGridIntegrity(cells: readonly ValuationSensitivityCellDto[]): SensitivityGridIntegrityResult {
+export function assertSensitivityGridIntegrity(
+  cells: readonly ValuationSensitivityCellDto[]
+): SensitivityGridIntegrityResult {
   const shape = assertSensitivityGridShape(cells);
   const monotonicityViolation = shape.ok ? findSensitivityMonotonicityViolation(cells) : null;
   return { shape, monotonicityViolation, ok: shape.ok && monotonicityViolation === null };
@@ -219,7 +238,11 @@ export interface BasketWeightValidation {
 const WEIGHT_SUM_TOLERANCE = 1e-9;
 
 export function validateBasketWeights(
-  updates: readonly { methodId: string; isInRecommendationBasket: boolean; weightPct: number | null }[]
+  updates: readonly {
+    methodId: string;
+    isInRecommendationBasket: boolean;
+    weightPct: number | null;
+  }[]
 ): BasketWeightValidation {
   const issues: BasketWeightIssue[] = [];
   let basketSum = 0;
@@ -228,28 +251,48 @@ export function validateBasketWeights(
   for (const u of updates) {
     if (u.isInRecommendationBasket) {
       if (u.weightPct === null || u.weightPct === undefined) {
-        issues.push({ methodId: u.methodId, code: 'MISSING_WEIGHT', message: 'Metoda w koszyku wymaga dodatniej wagi.' });
+        issues.push({
+          methodId: u.methodId,
+          code: 'MISSING_WEIGHT',
+          message: 'Metoda w koszyku wymaga dodatniej wagi.',
+        });
         continue;
       }
       if (!Number.isFinite(u.weightPct) || u.weightPct <= 0) {
-        issues.push({ methodId: u.methodId, code: 'WEIGHT_NOT_POSITIVE', message: `Waga metody w koszyku musi być liczbą dodatnią, jest ${u.weightPct}.` });
+        issues.push({
+          methodId: u.methodId,
+          code: 'WEIGHT_NOT_POSITIVE',
+          message: `Waga metody w koszyku musi być liczbą dodatnią, jest ${u.weightPct}.`,
+        });
         continue;
       }
       basketSum += u.weightPct;
       basketCount += 1;
     } else if (u.weightPct !== null && u.weightPct !== undefined) {
-      issues.push({ methodId: u.methodId, code: 'WEIGHT_NOT_ALLOWED', message: 'Cross-check nie może mieć wagi (cross-checki są niewazone, DEC-FIN-005).' });
+      issues.push({
+        methodId: u.methodId,
+        code: 'WEIGHT_NOT_ALLOWED',
+        message: 'Cross-check nie może mieć wagi (cross-checki są niewazone, DEC-FIN-005).',
+      });
     }
   }
 
   const basketSumPct = basketCount > 0 ? basketSum : null;
-  const sumMatches100 = basketSumPct !== null && Math.abs(basketSumPct - 100) <= WEIGHT_SUM_TOLERANCE;
+  const sumMatches100 =
+    basketSumPct !== null && Math.abs(basketSumPct - 100) <= WEIGHT_SUM_TOLERANCE;
 
-  return { ok: issues.length === 0 && (basketSumPct === null || sumMatches100), issues, basketSumPct, sumMatches100 };
+  return {
+    ok: issues.length === 0 && (basketSumPct === null || sumMatches100),
+    issues,
+    basketSumPct,
+    sumMatches100,
+  };
 }
 
 /** Convenience: build basket-weight validation directly from the `/methods` response's `ValuationMethodDto[]` (decimal strings parsed, `null`-safe). */
-export function validateBasketWeightsFromMethods(methods: readonly ValuationMethodDto[]): BasketWeightValidation {
+export function validateBasketWeightsFromMethods(
+  methods: readonly ValuationMethodDto[]
+): BasketWeightValidation {
   return validateBasketWeights(
     methods.map((m) => ({
       methodId: m.methodId,
@@ -288,17 +331,36 @@ export function computeMethodResultRange(
   materialSpreadThresholdPct: number = DEFAULT_MATERIAL_DISAGREEMENT_SPREAD_PCT
 ): MethodResultRangeView {
   const methodResults = methods
-    .filter((m) => m.readiness === 'READY' && (m.result.status === 'PRESENT_ZERO' || m.result.status === 'PRESENT_NONZERO') && m.result.valueDecimal !== null)
+    .filter(
+      (m) =>
+        m.readiness === 'READY' &&
+        (m.result.status === 'PRESENT_ZERO' || m.result.status === 'PRESENT_NONZERO') &&
+        m.result.valueDecimal !== null
+    )
     .map((m) => ({ methodType: m.methodType, valueDecimal: Number(m.result.valueDecimal) }));
 
   if (methodResults.length === 0) {
-    return { readyCount: 0, min: null, max: null, spreadPct: null, hasMaterialDisagreement: false, methodResults: [] };
+    return {
+      readyCount: 0,
+      min: null,
+      max: null,
+      spreadPct: null,
+      hasMaterialDisagreement: false,
+      methodResults: [],
+    };
   }
   const values = methodResults.map((m) => m.valueDecimal);
   const min = Math.min(...values);
   const max = Math.max(...values);
   if (methodResults.length === 1) {
-    return { readyCount: 1, min, max, spreadPct: null, hasMaterialDisagreement: false, methodResults };
+    return {
+      readyCount: 1,
+      min,
+      max,
+      spreadPct: null,
+      hasMaterialDisagreement: false,
+      methodResults,
+    };
   }
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
@@ -328,29 +390,53 @@ export type SensitivityGridShapeErrorCode =
   | 'DUPLICATE_CELL_COORDINATE'
   | 'INCOMPLETE_ROW_OR_COLUMN_COVERAGE';
 
-export type SensitivityGridShapeResult = { ok: true } | { ok: false; code: SensitivityGridShapeErrorCode; message: string };
+export type SensitivityGridShapeResult =
+  | { ok: true }
+  | { ok: false; code: SensitivityGridShapeErrorCode; message: string };
 
-export function assertSensitivityGridShape(cells: readonly Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>[]): SensitivityGridShapeResult {
+export function assertSensitivityGridShape(
+  cells: readonly Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>[]
+): SensitivityGridShapeResult {
   if (cells.length !== 25) {
-    return { ok: false, code: 'WRONG_CELL_COUNT', message: `Siatka wrażliwości musi mieć dokładnie 25 komórek (5×5), jest ${cells.length}.` };
+    return {
+      ok: false,
+      code: 'WRONG_CELL_COUNT',
+      message: `Siatka wrażliwości musi mieć dokładnie 25 komórek (5×5), jest ${cells.length}.`,
+    };
   }
   const baseCells = cells.filter((c) => c.isBaseCell);
   if (baseCells.length !== 1) {
-    return { ok: false, code: 'WRONG_BASE_CELL_COUNT', message: `Siatka musi mieć dokładnie 1 komórkę bazową, jest ${baseCells.length}.` };
+    return {
+      ok: false,
+      code: 'WRONG_BASE_CELL_COUNT',
+      message: `Siatka musi mieć dokładnie 1 komórkę bazową, jest ${baseCells.length}.`,
+    };
   }
   const seen = new Set<string>();
   const rowIndices = new Set<number>();
   const colIndices = new Set<number>();
   for (const c of cells) {
     if (c.rowIndex < 1 || c.rowIndex > 5) {
-      return { ok: false, code: 'ROW_INDEX_OUT_OF_RANGE', message: `rowIndex poza zakresem 1..5: ${c.rowIndex}.` };
+      return {
+        ok: false,
+        code: 'ROW_INDEX_OUT_OF_RANGE',
+        message: `rowIndex poza zakresem 1..5: ${c.rowIndex}.`,
+      };
     }
     if (c.colIndex < 1 || c.colIndex > 5) {
-      return { ok: false, code: 'COL_INDEX_OUT_OF_RANGE', message: `colIndex poza zakresem 1..5: ${c.colIndex}.` };
+      return {
+        ok: false,
+        code: 'COL_INDEX_OUT_OF_RANGE',
+        message: `colIndex poza zakresem 1..5: ${c.colIndex}.`,
+      };
     }
     const key = `${c.rowIndex}:${c.colIndex}`;
     if (seen.has(key)) {
-      return { ok: false, code: 'DUPLICATE_CELL_COORDINATE', message: `Zduplikowana współrzędna komórki: (${c.rowIndex}, ${c.colIndex}).` };
+      return {
+        ok: false,
+        code: 'DUPLICATE_CELL_COORDINATE',
+        message: `Zduplikowana współrzędna komórki: (${c.rowIndex}, ${c.colIndex}).`,
+      };
     }
     seen.add(key);
     rowIndices.add(c.rowIndex);

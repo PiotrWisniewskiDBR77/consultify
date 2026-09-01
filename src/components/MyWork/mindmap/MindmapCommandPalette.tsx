@@ -314,7 +314,6 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
     }
   }, [open]);
 
-
   const filtered = useMemo(() => {
     if (!query.trim()) return COMMANDS;
     return COMMANDS.filter((cmd) => {

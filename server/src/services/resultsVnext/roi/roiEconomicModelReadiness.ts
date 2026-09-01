@@ -11,8 +11,11 @@
  */
 import type { PoolClient } from 'pg';
 
-import { isRoiCaseReadyForReviewEligible, type RoiCaseReadyForReviewCheck } from './roiCaseCommands.js';
 import { computeCurrentEconomicModelHash } from './roiCalculationRunCommands.js';
+import {
+  isRoiCaseReadyForReviewEligible,
+  type RoiCaseReadyForReviewCheck,
+} from './roiCaseCommands.js';
 import type { RoiCalculationRunRow } from './roiEconomicModelTypes.js';
 import type { RoiBaselineRow, RoiCaseRow } from './roiTypes.js';
 
@@ -36,7 +39,11 @@ export async function isRoiCaseReadyForReviewEligibleWithEconomicModel(
   if (!latestRun || latestRun.status !== 'completed') {
     return { eligible: false, reason: 'no_successful_calculation_run' };
   }
-  const currentHash = await computeCurrentEconomicModelHash(client, caseRow.case_id, caseRow.organization_id);
+  const currentHash = await computeCurrentEconomicModelHash(
+    client,
+    caseRow.case_id,
+    caseRow.organization_id
+  );
   if (latestRun.input_hash !== currentHash) {
     return { eligible: false, reason: 'calculation_run_stale' };
   }

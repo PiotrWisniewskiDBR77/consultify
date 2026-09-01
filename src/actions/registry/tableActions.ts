@@ -7,31 +7,9 @@
  * `src/actions/ideaActionRegistry.ts` + `docs/standards/idea-workspace/02_REJESTR_AKCJI.md`.
  */
 
-import type { ActionDef } from './types';
 import {
-  RUNTIME_AI_TABLE_ASSISTANT,
-  RUNTIME_AI_TABLE_CATEGORIZE,
-  RUNTIME_AI_TABLE_FRAMEWORK,
-  RUNTIME_TBL_COLUMN_DELETE,
-  RUNTIME_TBL_COLUMN_HIDE,
-  RUNTIME_TBL_COLUMN_RENAME,
-  RUNTIME_TBL_COLUMN_SORT,
-  RUNTIME_TBL_COPILOT,
-  RUNTIME_TBL_COPY_CLIPBOARD,
-  RUNTIME_TBL_CROSS_RELATIONS,
-  RUNTIME_TBL_EXPORT_CSV,
-  RUNTIME_TBL_EXPORT_PPTX,
-  RUNTIME_TBL_HEATMAP,
-  RUNTIME_TBL_PIPELINE,
-  RUNTIME_TBL_ROW_DELETE,
-  RUNTIME_TBL_ROW_DUPLICATE,
-  RUNTIME_TBL_ROW_EDIT,
-  RUNTIME_TBL_ROW_NOTE,
-  RUNTIME_TBL_SCORING,
-  RUNTIME_TBL_VIEW_DELETE_PLATFORM,
-  RUNTIME_TBL_VIEW_RENAME_PLATFORM,
-  RUNTIME_TBL_VOICE,
   runByTool,
+  runFinancialCaseSaveShapedCallback,
   runTableAutomationDeleteCallback,
   runTableAutomationRunNowCallback,
   runTableCellClearCallback,
@@ -46,7 +24,6 @@ import {
   runTableDistributionCreateCallback,
   runTableDistributionDeleteCallback,
   runTableDistributionExecuteCallback,
-  runFinancialCaseSaveShapedCallback,
   runTableFormDeleteCallback,
   runTableFormIntakeSaveAllowListCallback,
   runTableFormShareModeChangeCallback,
@@ -70,8 +47,31 @@ import {
   runTableToolbarOrKeyboardCallback,
   runTableToolbarUiOnlyCallback,
   runTableWebhookRelayDeleteCallback,
+  RUNTIME_AI_TABLE_ASSISTANT,
+  RUNTIME_AI_TABLE_CATEGORIZE,
+  RUNTIME_AI_TABLE_FRAMEWORK,
+  RUNTIME_TBL_COLUMN_DELETE,
+  RUNTIME_TBL_COLUMN_HIDE,
+  RUNTIME_TBL_COLUMN_RENAME,
+  RUNTIME_TBL_COLUMN_SORT,
+  RUNTIME_TBL_COPILOT,
+  RUNTIME_TBL_COPY_CLIPBOARD,
+  RUNTIME_TBL_CROSS_RELATIONS,
+  RUNTIME_TBL_EXPORT_CSV,
+  RUNTIME_TBL_EXPORT_PPTX,
+  RUNTIME_TBL_HEATMAP,
+  RUNTIME_TBL_PIPELINE,
+  RUNTIME_TBL_ROW_DELETE,
+  RUNTIME_TBL_ROW_DUPLICATE,
+  RUNTIME_TBL_ROW_EDIT,
+  RUNTIME_TBL_ROW_NOTE,
+  RUNTIME_TBL_SCORING,
+  RUNTIME_TBL_VIEW_DELETE_PLATFORM,
+  RUNTIME_TBL_VIEW_RENAME_PLATFORM,
+  RUNTIME_TBL_VOICE,
   runToolbarBusAction,
 } from './runtimeHelpers';
+import type { ActionDef } from './types';
 
 export const TABLE_ACTIONS: ActionDef[] = [
   {
@@ -115,7 +115,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     // BEZPOŚREDNIO (kontrakt komponentu kontrolowanego, testowany przez
     // `TableToolbar.moreToolsAndAi.test.tsx`-owy wzorzec asercji na propsach).
     surfaces: ['rail', 'panel', 'toolbar'],
-    handler: (ctx) => runToolbarBusAction('idea.ai.table_categorize', RUNTIME_AI_TABLE_CATEGORIZE, ctx),
+    handler: (ctx) =>
+      runToolbarBusAction('idea.ai.table_categorize', RUNTIME_AI_TABLE_CATEGORIZE, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
@@ -143,7 +144,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     // (More/Mobile menu) i odbiornikiem `tbl_framework` — zweryfikowane grepem
     // PRZED zmianą.
     surfaces: ['rail', 'panel', 'toolbar'],
-    handler: (ctx) => runToolbarBusAction('idea.ai.table_framework', RUNTIME_AI_TABLE_FRAMEWORK, ctx),
+    handler: (ctx) =>
+      runToolbarBusAction('idea.ai.table_framework', RUNTIME_AI_TABLE_FRAMEWORK, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
@@ -205,7 +207,10 @@ export const TABLE_ACTIONS: ActionDef[] = [
       parameters: {
         type: 'object',
         properties: {
-          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli do zaktualizowania.' },
+          viewId: {
+            type: 'string',
+            description: 'Id zapisanego widoku Tabeli do zaktualizowania.',
+          },
         },
         required: ['viewId'],
       },
@@ -720,7 +725,7 @@ export const TABLE_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'Ścieżka legacy (`usePlatform=false`): `_fieldChange(rowId, colKey, \'\')` → `handleFieldChange` (`useTableRows.ts:156-171`) → `nodesUndo.push(next)` — REALNE cofnięcie (Ctrl+Z). Ścieżka platform (`usePlatform=true`): `_fieldChange` → `platformIntegration.handleFieldChange` (`useTablePlatformIntegration.ts:392-412`) — async zapis na serwer, rewert lokalny TYLKO przy błędzie zapisu, nigdy na Ctrl+Z — BRAK stosu cofania. Klik człowieka w obu trybach idzie przez ten sam `_fieldChange`, więc ta asymetria dotyczy DZIŚ już istniejącego kliku, nie tylko tej nowej ścieżki Teresy — udokumentowane, nie naprawiane tym wpisem (wielu wywołujących `platformIntegration.handleFieldChange`, ryzykowne do cichej zmiany).',
+        "Ścieżka legacy (`usePlatform=false`): `_fieldChange(rowId, colKey, '')` → `handleFieldChange` (`useTableRows.ts:156-171`) → `nodesUndo.push(next)` — REALNE cofnięcie (Ctrl+Z). Ścieżka platform (`usePlatform=true`): `_fieldChange` → `platformIntegration.handleFieldChange` (`useTablePlatformIntegration.ts:392-412`) — async zapis na serwer, rewert lokalny TYLKO przy błędzie zapisu, nigdy na Ctrl+Z — BRAK stosu cofania. Klik człowieka w obu trybach idzie przez ten sam `_fieldChange`, więc ta asymetria dotyczy DZIŚ już istniejącego kliku, nie tylko tej nowej ścieżki Teresy — udokumentowane, nie naprawiane tym wpisem (wielu wywołujących `platformIntegration.handleFieldChange`, ryzykowne do cichej zmiany).",
     },
     teresa: {
       description:
@@ -754,7 +759,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
       description:
         'Przełącza Tabelę na wskazany zapisany widok (zakładka nad tabelą) — zmienia sortowanie/filtry/grupowanie/układ na te zapisane w widoku, bez zmiany danych. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi Tabeli (widok platformowy) — Teresa tego jeszcze nie wywoła (odbiornik wymagałby dopisania, poza zakresem tej zmiany).',
     },
-    source: 'src/components/MyWork/table/TableToolbar.tsx zakładka widoku onClick (~L429) → applyView(v)',
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx zakładka widoku onClick (~L429) → applyView(v)',
   },
   {
     id: 'idea.view.table_save_view',
@@ -821,7 +827,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     scope: 'current_view',
     tools: ['table'],
     surfaces: ['toolbar'],
-    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.view.table_platform_saved_view_update', ctx),
+    handler: (ctx) =>
+      runTableToolbarUiOnlyCallback('idea.view.table_platform_saved_view_update', ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -924,7 +931,7 @@ export const TABLE_ACTIONS: ActionDef[] = [
     // woła ją BEZPOŚREDNIO, bez `effective`/dual-path). W trybie platform
     // (jedynym, w którym ten przycisk w `TableToolbar.tsx` się renderuje)
     // wybranie szablonu robi `nodesUndo.push([...nodes, newNode])` na LEGACY
-        // `nodes` — nowy wiersz NIE POJAWIA SIĘ na ekranie (platform renderuje
+    // `nodes` — nowy wiersz NIE POJAWIA SIĘ na ekranie (platform renderuje
     // `platformIntegration.processedRows`), bez toastu błędu (cichy no-op z
     // perspektywy użytkownika, gorsze niż kłamliwy toast — brak JAKIEGOKOLWIEK
     // feedbacku). Ten wpis WIĄŻE przycisk-wyzwalacz (otwarcie pickera) z
@@ -1001,7 +1008,7 @@ export const TABLE_ACTIONS: ActionDef[] = [
     mutates: false,
     requiresPreview: false,
     teresa: {
-      description: 'Otwiera widok pipeline\'u Tabeli (etapy/lejek pomysłów).',
+      description: "Otwiera widok pipeline'u Tabeli (etapy/lejek pomysłów).",
     },
     runtime: RUNTIME_TBL_PIPELINE,
     source:
@@ -1018,7 +1025,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     mutates: false,
     requiresPreview: false,
     teresa: {
-      description: 'Otwiera AI Copilota Tabeli — czat pomocniczy przy pracy na wierszach/kolumnach.',
+      description:
+        'Otwiera AI Copilota Tabeli — czat pomocniczy przy pracy na wierszach/kolumnach.',
     },
     runtime: RUNTIME_TBL_COPILOT,
     source:
@@ -1259,9 +1267,15 @@ export const TABLE_ACTIONS: ActionDef[] = [
           sourceType: { type: 'string', description: '"table" albo "view".' },
           sourceId: { type: 'string', description: 'Id tabeli/widoku źródłowego.' },
           channel: { type: 'string', description: 'email|slack|teams|webhook.' },
-          channelConfig: { type: 'object', description: 'Konfiguracja kanału (np. adresy email, webhookUrl).' },
+          channelConfig: {
+            type: 'object',
+            description: 'Konfiguracja kanału (np. adresy email, webhookUrl).',
+          },
           format: { type: 'string', description: 'csv|xlsx|pdf|png|json.' },
-          schedule: { type: 'string', description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).' },
+          schedule: {
+            type: 'string',
+            description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).',
+          },
         },
         required: ['baseId', 'name', 'channel'],
       },
@@ -1275,7 +1289,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     scope: 'workspace',
     tools: ['table'],
     surfaces: ['panel'],
-    handler: (ctx) => runTableDistributionExecuteCallback('table.distribution_builder.execute', ctx),
+    handler: (ctx) =>
+      runTableDistributionExecuteCallback('table.distribution_builder.execute', ctx),
     mutates: true,
     requiresPreview: false,
     external: true,
@@ -1347,7 +1362,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         '`TablePlatformApi.deleteRecordTemplate` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
     },
     teresa: {
-      description: 'Trwale usuwa szablon rekordu (pre-wypełnione wartości pól do szybkiego dodawania wierszy).',
+      description:
+        'Trwale usuwa szablon rekordu (pre-wypełnione wartości pól do szybkiego dodawania wierszy).',
       parameters: {
         type: 'object',
         properties: {
@@ -1381,8 +1397,14 @@ export const TABLE_ACTIONS: ActionDef[] = [
       parameters: {
         type: 'object',
         properties: {
-          tableId: { type: 'string', description: 'Id tabeli — wymagane przy tworzeniu NOWEGO szablonu.' },
-          templateId: { type: 'string', description: 'Id istniejącego szablonu — wymagane przy edycji.' },
+          tableId: {
+            type: 'string',
+            description: 'Id tabeli — wymagane przy tworzeniu NOWEGO szablonu.',
+          },
+          templateId: {
+            type: 'string',
+            description: 'Id istniejącego szablonu — wymagane przy edycji.',
+          },
           name: { type: 'string', description: 'Nazwa szablonu.' },
           data: { type: 'object', description: 'Mapa id/nazwa pola → wartość domyślna.' },
         },
@@ -1437,7 +1459,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
     scope: 'workspace',
     tools: ['table'],
     surfaces: ['panel'],
-    handler: (ctx) => runFinancialCaseSaveShapedCallback('table.financial_case.save_and_close', ctx),
+    handler: (ctx) =>
+      runFinancialCaseSaveShapedCallback('table.financial_case.save_and_close', ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -1569,7 +1592,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         '`TablePlatformApi.deleteWebhookRelay` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
     },
     teresa: {
-      description: 'Trwale usuwa webhook relay (przekaźnik zdarzeń tabeli do Zapier/zewnętrznego URL).',
+      description:
+        'Trwale usuwa webhook relay (przekaźnik zdarzeń tabeli do Zapier/zewnętrznego URL).',
       parameters: {
         type: 'object',
         properties: {
@@ -1583,7 +1607,10 @@ export const TABLE_ACTIONS: ActionDef[] = [
   },
   {
     id: 'table.distribution.create',
-    label: { pl: 'Utwórz dystrybucję (Distribution Manager)', en: 'Create distribution (Distribution Manager)' },
+    label: {
+      pl: 'Utwórz dystrybucję (Distribution Manager)',
+      en: 'Create distribution (Distribution Manager)',
+    },
     icon: 'Plus',
     scope: 'workspace',
     tools: ['table'],
@@ -1607,9 +1634,15 @@ export const TABLE_ACTIONS: ActionDef[] = [
           sourceType: { type: 'string', description: '"table" albo "view".' },
           sourceId: { type: 'string', description: 'Id tabeli/widoku źródłowego.' },
           channel: { type: 'string', description: 'email|slack|teams|webhook.' },
-          channelConfig: { type: 'object', description: 'Konfiguracja kanału (np. adresy email, webhookUrl).' },
+          channelConfig: {
+            type: 'object',
+            description: 'Konfiguracja kanału (np. adresy email, webhookUrl).',
+          },
           format: { type: 'string', description: 'csv|json|xlsx|pdf|link.' },
-          schedule: { type: 'string', description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).' },
+          schedule: {
+            type: 'string',
+            description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).',
+          },
         },
         required: ['baseId', 'name', 'channel'],
       },
@@ -1634,7 +1667,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         '`TablePlatformApi.executeDistribution` faktycznie wysyła dane przez kanał (email/Slack/Teams/webhook) — nieodwoływalne po wysłaniu, ani dla kliku człowieka, ani dla Teresy.',
     },
     teresa: {
-      description: 'Wysyła dystrybucję (platformowy panel „Distribution Manager") natychmiast, poza harmonogramem.',
+      description:
+        'Wysyła dystrybucję (platformowy panel „Distribution Manager") natychmiast, poza harmonogramem.',
       parameters: {
         type: 'object',
         properties: {
@@ -1648,7 +1682,10 @@ export const TABLE_ACTIONS: ActionDef[] = [
   },
   {
     id: 'table.distribution.delete',
-    label: { pl: 'Usuń dystrybucję (Distribution Manager)', en: 'Delete distribution (Distribution Manager)' },
+    label: {
+      pl: 'Usuń dystrybucję (Distribution Manager)',
+      en: 'Delete distribution (Distribution Manager)',
+    },
     icon: 'Trash2',
     scope: 'workspace',
     tools: ['table'],
@@ -1787,7 +1824,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         '`TablePlatformApi.deleteView` (interfejsy są przechowywane jako widoki platformowe typu "interface") to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
     },
     teresa: {
-      description: 'Trwale usuwa interfejs (dashboard/widok szczegółów rekordu zbudowany w Interface Designer).',
+      description:
+        'Trwale usuwa interfejs (dashboard/widok szczegółów rekordu zbudowany w Interface Designer).',
       parameters: {
         type: 'object',
         properties: {
@@ -1816,13 +1854,17 @@ export const TABLE_ACTIONS: ActionDef[] = [
         'Tworzy NOWEGO współpracownika bazy (`TablePlatformApi.inviteCollaborator`, wysyła też zaproszenie e-mail) — cofnięcie = ręczne usunięcie dostępu przez `table.sharing.remove_collaborator`.',
     },
     teresa: {
-      description: 'Zaprasza osobę (po e-mailu) do współpracy nad bazą tabeli, z rolą (owner/editor/commenter/viewer).',
+      description:
+        'Zaprasza osobę (po e-mailu) do współpracy nad bazą tabeli, z rolą (owner/editor/commenter/viewer).',
       parameters: {
         type: 'object',
         properties: {
           baseId: { type: 'string', description: 'Id bazy (Idei) tabeli.' },
           email: { type: 'string', description: 'E-mail osoby zapraszanej.' },
-          role: { type: 'string', description: 'owner|editor|commenter|viewer (domyślnie editor).' },
+          role: {
+            type: 'string',
+            description: 'owner|editor|commenter|viewer (domyślnie editor).',
+          },
         },
         required: ['baseId', 'email'],
       },
@@ -1876,7 +1918,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         'Tworzy NOWĄ konfigurację synchronizacji (`TablePlatformApi.createTableSync`) — cofnięcie = ręczne usunięcie przez `table.sync.delete`. Sama konfiguracja nie synchronizuje jeszcze danych (to robi `table.sync.run_now`).',
     },
     teresa: {
-      description: 'Tworzy konfigurację synchronizacji danych między dwiema tabelami (mapowanie pól, tryb jedno/dwukierunkowy).',
+      description:
+        'Tworzy konfigurację synchronizacji danych między dwiema tabelami (mapowanie pól, tryb jedno/dwukierunkowy).',
       parameters: {
         type: 'object',
         properties: {
@@ -1940,7 +1983,8 @@ export const TABLE_ACTIONS: ActionDef[] = [
         '`TablePlatformApi.deleteTableSync` to trwałe serwerowe usunięcie konfiguracji — bez historii, ani dla kliku człowieka, ani dla Teresy.',
     },
     teresa: {
-      description: 'Trwale usuwa konfigurację synchronizacji (nie cofa już zsynchronizowanych danych).',
+      description:
+        'Trwale usuwa konfigurację synchronizacji (nie cofa już zsynchronizowanych danych).',
       parameters: {
         type: 'object',
         properties: {

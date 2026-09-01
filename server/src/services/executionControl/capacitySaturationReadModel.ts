@@ -6,7 +6,6 @@ import type {
   CapacityRange,
   KnowledgeState,
 } from '../../domain/initiatives-execution/capacityScenario.js';
-
 import { validateControlKpiPolicyParameters } from './controlKpiPolicySchema.js';
 
 type Thresholds = { normalUpper: number; saturatedUpper: number };

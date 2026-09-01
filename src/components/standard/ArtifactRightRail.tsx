@@ -80,7 +80,7 @@
  * to złamałoby zakaz masowego włączania (CLAUDE.md #9). Do osobnego kroku,
  * po akcepcie tej formuły.
  */
-import { Bot, LayoutGrid, Send, Sparkles, X, type LucideIcon } from 'lucide-react';
+import { Bot, LayoutGrid, type LucideIcon, Send, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -91,8 +91,8 @@ import {
 
 import {
   ARTIFACT_PANEL_SECTION_ORDER,
-  ArtifactRightPanel,
   type ArtifactPanelSectionId,
+  ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from './ArtifactRightPanel';
 
@@ -584,16 +584,7 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
     const typeMode = (typeModes ?? []).find((mode) => mode.id === currentId);
     if (typeMode) return <TypeModePanel mode={typeMode} />;
     return null;
-  }, [
-    ariaLabel,
-    artifact,
-    currentId,
-    isPolish,
-    normalizedSections,
-    t,
-    teresa,
-    typeModes,
-  ]);
+  }, [ariaLabel, artifact, currentId, isPolish, normalizedSections, t, teresa, typeModes]);
 
   const panelContent =
     panelBody === null ? null : (

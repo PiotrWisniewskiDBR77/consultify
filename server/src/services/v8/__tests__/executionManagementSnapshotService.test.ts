@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getExecutionManagementSnapshot } from '../executionManagementSnapshotService.js';
 import type { ExecutionManagementSnapshotQueryDeps } from '../executionManagementSnapshotService.js';
+import { getExecutionManagementSnapshot } from '../executionManagementSnapshotService.js';
 
 const ORG = 'org-1';
 const INITIATIVE = 'ini-1';

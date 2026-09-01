@@ -26,13 +26,13 @@
 import type { FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
 import type { BusinessVersionStatus, FinanceRole } from '../canonical/lifecycleService.js';
 import {
-  ENABLEMENT_ALWAYS,
-  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
-  WORKSPACE_BAR_NAME_MAX_CHARS,
   canRenameArtifact,
+  ENABLEMENT_ALWAYS,
+  type FinanceWorkspaceModuleId,
   resolveControlState,
   resolveViewNavigationPlacement,
-  type FinanceWorkspaceModuleId,
+  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
+  WORKSPACE_BAR_NAME_MAX_CHARS,
   type WorkspaceBarConfig,
   type WorkspaceBarContextField,
   type WorkspaceBarEnablement,
@@ -281,7 +281,9 @@ function standardMoreItems(moduleId: FinanceWorkspaceModuleId): WorkspaceBarMore
   ];
 }
 
-function standardFullscreenControl(moduleId: FinanceWorkspaceModuleId): WorkspaceBarFullscreenControl {
+function standardFullscreenControl(
+  moduleId: FinanceWorkspaceModuleId
+): WorkspaceBarFullscreenControl {
   return {
     kind: 'fullscreen',
     id: `finance.${moduleId}.fullscreen`,
@@ -335,14 +337,18 @@ export const statementsAdapter: FinanceModuleAdapter = {
   viewsMandate: {
     source: 'PROGRAM_DOC',
     exactCount: 3,
-    reference: 'FINANCE_COMPLETE_PROGRAM_CLAUDE_HANDOFF_2026-08-09.md section 5 (Statements — Grafika i UX)',
+    reference:
+      'FINANCE_COMPLETE_PROGRAM_CLAUDE_HANDOFF_2026-08-09.md section 5 (Statements — Grafika i UX)',
   },
   primaryCandidates: [
     {
       kind: 'primary',
       id: 'finance.statements.reconcile',
       label: { key: 'finance.statements.reconcile', pl: 'Uzgodnij' },
-      enablement: enablement({ roles: PREPARER_PLUS, requiresGates: ['statements.mappingComplete'] }),
+      enablement: enablement({
+        roles: PREPARER_PLUS,
+        requiresGates: ['statements.mappingComplete'],
+      }),
       mergesFreshness: true,
       keyboardCommandId: 'finance.compute',
     },
@@ -357,7 +363,10 @@ export const statementsAdapter: FinanceModuleAdapter = {
     },
   ],
   secondary: relatedSecondaryAction('statements'),
-  lifecycle: standardLifecycleControl('statements', ['statements.mappingComplete', 'statements.checksPassed']),
+  lifecycle: standardLifecycleControl('statements', [
+    'statements.mappingComplete',
+    'statements.checksPassed',
+  ]),
   more: {
     kind: 'more',
     id: 'finance.statements.more',
@@ -368,7 +377,10 @@ export const statementsAdapter: FinanceModuleAdapter = {
       // button is split into three named results.
       {
         id: 'finance.statements.reportSection.generateDraft',
-        label: { key: 'finance.statements.reportSection.generateDraft', pl: 'Generuj szkic sekcji raportu' },
+        label: {
+          key: 'finance.statements.reportSection.generateDraft',
+          pl: 'Generuj szkic sekcji raportu',
+        },
         group: 'report',
         enablement: enablement({ roles: PREPARER_PLUS }),
         destructive: false,
@@ -384,7 +396,10 @@ export const statementsAdapter: FinanceModuleAdapter = {
       },
       {
         id: 'finance.statements.reportSection.publish',
-        label: { key: 'finance.statements.reportSection.publish', pl: 'Opublikuj / dodaj do raportu' },
+        label: {
+          key: 'finance.statements.reportSection.publish',
+          pl: 'Opublikuj / dodaj do raportu',
+        },
         group: 'report',
         enablement: enablement({ roles: REVIEWER_PLUS }),
         destructive: false,
@@ -427,7 +442,10 @@ export const analysisAdapter: FinanceModuleAdapter = {
       kind: 'primary',
       id: 'finance.analysis.compute',
       label: { key: 'finance.analysis.compute', pl: 'Przelicz' },
-      enablement: enablement({ roles: PREPARER_PLUS, requiresGates: ['analysis.hasConfiguredKpis'] }),
+      enablement: enablement({
+        roles: PREPARER_PLUS,
+        requiresGates: ['analysis.hasConfiguredKpis'],
+      }),
       mergesFreshness: true,
       keyboardCommandId: 'finance.compute',
     },
@@ -442,7 +460,10 @@ export const analysisAdapter: FinanceModuleAdapter = {
     },
   ],
   secondary: relatedSecondaryAction('analysis'),
-  lifecycle: standardLifecycleControl('analysis', ['analysis.hasConfiguredKpis', 'analysis.computed']),
+  lifecycle: standardLifecycleControl('analysis', [
+    'analysis.hasConfiguredKpis',
+    'analysis.computed',
+  ]),
   more: {
     kind: 'more',
     id: 'finance.analysis.more',
@@ -573,7 +594,10 @@ export const predictionAdapter: FinanceModuleAdapter = {
       kind: 'primary',
       id: 'finance.prediction.compute',
       label: { key: 'finance.prediction.compute', pl: 'Przelicz' },
-      enablement: enablement({ roles: PREPARER_PLUS, requiresGates: ['prediction.preflightResolved'] }),
+      enablement: enablement({
+        roles: PREPARER_PLUS,
+        requiresGates: ['prediction.preflightResolved'],
+      }),
       mergesFreshness: true,
       keyboardCommandId: 'finance.compute',
     },
@@ -655,7 +679,10 @@ export const valuationAdapter: FinanceModuleAdapter = {
       kind: 'primary',
       id: 'finance.valuation.compute',
       label: { key: 'finance.valuation.compute', pl: 'Przelicz wycenę' },
-      enablement: enablement({ roles: PREPARER_PLUS, requiresGates: ['valuation.methodsConfigured'] }),
+      enablement: enablement({
+        roles: PREPARER_PLUS,
+        requiresGates: ['valuation.methodsConfigured'],
+      }),
       mergesFreshness: true,
       keyboardCommandId: 'finance.compute',
     },
@@ -709,7 +736,9 @@ export const valuationAdapter: FinanceModuleAdapter = {
   relatedDownstreamTypes: ['REPORT_EXPORT'],
 };
 
-export const FINANCE_MODULE_ADAPTERS: Readonly<Record<FinanceWorkspaceModuleId, FinanceModuleAdapter>> = {
+export const FINANCE_MODULE_ADAPTERS: Readonly<
+  Record<FinanceWorkspaceModuleId, FinanceModuleAdapter>
+> = {
   statements: statementsAdapter,
   analysis: analysisAdapter,
   baselineModel: baselineModelAdapter,
@@ -726,8 +755,12 @@ export const FINANCE_MODULE_ADAPTER_LIST: readonly FinanceModuleAdapter[] = [
 ];
 
 /** Quick lookup used by the Related panel when it must open a downstream artifact's workspace. */
-export function adapterForArtifactType(artifactType: FinanceArtifactType): FinanceModuleAdapter | null {
-  return FINANCE_MODULE_ADAPTER_LIST.find((adapter) => adapter.artifactType === artifactType) ?? null;
+export function adapterForArtifactType(
+  artifactType: FinanceArtifactType
+): FinanceModuleAdapter | null {
+  return (
+    FINANCE_MODULE_ADAPTER_LIST.find((adapter) => adapter.artifactType === artifactType) ?? null
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -838,10 +871,17 @@ export type ModuleAdapterValidationResult =
   | { ok: false; errors: ModuleAdapterValidationError[] };
 
 function isUnconditional(e: WorkspaceBarEnablement): boolean {
-  return e.statuses === 'any' && e.roles === 'any' && e.freshness === 'any' && e.requiresGates.length === 0;
+  return (
+    e.statuses === 'any' &&
+    e.roles === 'any' &&
+    e.freshness === 'any' &&
+    e.requiresGates.length === 0
+  );
 }
 
-export function validateModuleAdapter(adapter: FinanceModuleAdapter): ModuleAdapterValidationResult {
+export function validateModuleAdapter(
+  adapter: FinanceModuleAdapter
+): ModuleAdapterValidationResult {
   const errors: ModuleAdapterValidationError[] = [];
   const push = (code: ModuleAdapterValidationCode, message: string): void => {
     errors.push({ code, moduleId: adapter.moduleId, message });
@@ -859,7 +899,10 @@ export function validateModuleAdapter(adapter: FinanceModuleAdapter): ModuleAdap
     }
   }
 
-  if (adapter.viewsMandate.exactCount !== null && adapter.views.length !== adapter.viewsMandate.exactCount) {
+  if (
+    adapter.viewsMandate.exactCount !== null &&
+    adapter.views.length !== adapter.viewsMandate.exactCount
+  ) {
     push(
       'VIEW_COUNT_VIOLATES_MANDATE',
       `${adapter.moduleId} declares ${adapter.views.length} views but ${adapter.viewsMandate.source} ` +
@@ -879,7 +922,7 @@ export function validateModuleAdapter(adapter: FinanceModuleAdapter): ModuleAdap
   ) {
     push(
       'STEPPER_WITHOUT_SEPARATE_ROW',
-      'A stepper must live on its own compact row (handoff section 11), never inline in the bar.',
+      'A stepper must live on its own compact row (handoff section 11), never inline in the bar.'
     );
   }
 

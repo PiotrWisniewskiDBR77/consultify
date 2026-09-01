@@ -14,8 +14,9 @@
  * ścieżki renderu poza dodaniem gałęzi na samym początku funkcji).
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_STATEMENT_PACK_WORKSPACE_V2_FLAG_ID = 'financeStatementPackWorkspaceV2';
 

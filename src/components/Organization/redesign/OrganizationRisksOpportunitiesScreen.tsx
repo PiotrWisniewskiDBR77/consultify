@@ -31,17 +31,15 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import {
-  type OrgContextSyncHandle,
-  useOrgContextStoreSection,
-} from './useOrgContextStoreSection';
+import { type OrgContextSyncHandle, useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type RisksOpportunitiesSection = 'risks' | 'strengths';
 
-export const RISKS_OPPORTUNITIES_SECTIONS: Array<{ id: RisksOpportunitiesSection; label: string }> = [
-  { id: 'risks', label: 'Ryzyka' },
-  { id: 'strengths', label: 'Szanse' },
-];
+export const RISKS_OPPORTUNITIES_SECTIONS: Array<{ id: RisksOpportunitiesSection; label: string }> =
+  [
+    { id: 'risks', label: 'Ryzyka' },
+    { id: 'strengths', label: 'Szanse' },
+  ];
 
 const SEVERITY_OPTIONS = [
   { value: 'Critical', label: 'Krytyczna' },
@@ -77,14 +75,24 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
       onAdd: () =>
         updateSynthesisList('risks', [
           ...synthesis.risks,
-          { id: Math.random().toString(36).slice(2, 11), risk: '', why: '', severity: '', mitigation: '' },
+          {
+            id: Math.random().toString(36).slice(2, 11),
+            risk: '',
+            why: '',
+            severity: '',
+            mitigation: '',
+          },
         ]),
       onUpdate: (id: string, key: string, value: string) =>
         updateSynthesisList(
           'risks',
           synthesis.risks.map((item) => (item.id === id ? { ...item, [key]: value } : item))
         ),
-      onRemove: (id: string) => updateSynthesisList('risks', synthesis.risks.filter((item) => item.id !== id)),
+      onRemove: (id: string) =>
+        updateSynthesisList(
+          'risks',
+          synthesis.risks.filter((item) => item.id !== id)
+        ),
     }),
     [synthesis.risks, updateSynthesisList]
   );
@@ -102,7 +110,10 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
           synthesis.strengths.map((item) => (item.id === id ? { ...item, [key]: value } : item))
         ),
       onRemove: (id: string) =>
-        updateSynthesisList('strengths', synthesis.strengths.filter((item) => item.id !== id)),
+        updateSynthesisList(
+          'strengths',
+          synthesis.strengths.filter((item) => item.id !== id)
+        ),
     }),
     [synthesis.strengths, updateSynthesisList]
   );
@@ -167,9 +178,17 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
           <OrgRecordList
             columns={[
               { key: 'risk', label: 'Ryzyko / zagrożenie', placeholder: 'np. Opór kadry średniej' },
-              { key: 'why', label: 'Dlaczego (przyczyna)', placeholder: 'np. Obawa o redukcję etatów' },
+              {
+                key: 'why',
+                label: 'Dlaczego (przyczyna)',
+                placeholder: 'np. Obawa o redukcję etatów',
+              },
               { key: 'severity', label: 'Waga', type: 'select', options: SEVERITY_OPTIONS },
-              { key: 'mitigation', label: 'Strategia mitygacji', placeholder: 'np. Program zarządzania zmianą' },
+              {
+                key: 'mitigation',
+                label: 'Strategia mitygacji',
+                placeholder: 'np. Program zarządzania zmianą',
+              },
             ]}
             items={synthesis.risks as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={riskHandlers.onAdd}
@@ -189,9 +208,17 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
         >
           <OrgRecordList
             columns={[
-              { key: 'enabler', label: 'Mocna strona / szansa', placeholder: 'np. Silny zespół inżynierski' },
+              {
+                key: 'enabler',
+                label: 'Mocna strona / szansa',
+                placeholder: 'np. Silny zespół inżynierski',
+              },
               { key: 'seen', label: 'Dowód / gdzie widoczne', placeholder: 'np. Wyniki R&D' },
-              { key: 'leverage', label: 'Jak wykorzystać', placeholder: 'np. Jako pilotażowych liderów' },
+              {
+                key: 'leverage',
+                label: 'Jak wykorzystać',
+                placeholder: 'np. Jako pilotażowych liderów',
+              },
             ]}
             items={synthesis.strengths as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={strengthHandlers.onAdd}

@@ -16,11 +16,13 @@ import {
   SIRI_BAND_SCALE,
   SIRI_EVIDENCE_ITEM_TYPES,
   siriEvidenceMissingCount,
-  siriUnitHasHelpContent,
   type SiriUnitAssessmentState,
+  siriUnitHasHelpContent,
 } from '../siriWorkspaceView';
 
-function statesFrom(overrides: Record<string, Partial<SiriUnitAssessmentState>> = {}): Map<string, SiriUnitAssessmentState> {
+function statesFrom(
+  overrides: Record<string, Partial<SiriUnitAssessmentState>> = {}
+): Map<string, SiriUnitAssessmentState> {
   const map = new Map<string, SiriUnitAssessmentState>();
   for (const area of SIRI_PRIORITISATION_AREAS) {
     map.set(area.id, { ...emptySiriUnitState(area.id), ...overrides[area.id] });
@@ -43,9 +45,13 @@ describe('SIRI Workspace View — navigator (test 1)', () => {
     }
 
     // 16 dimensions are leaves, never presented as an assessable "8" level.
-    const leafIds = nodes.filter((n) => n.unitId.startsWith('block:') === false && n.unitId.startsWith('pillar:') === false);
+    const leafIds = nodes.filter(
+      (n) => n.unitId.startsWith('block:') === false && n.unitId.startsWith('pillar:') === false
+    );
     expect(leafIds).toHaveLength(16);
-    expect(new Set(leafIds.map((n) => n.unitId))).toEqual(new Set(SIRI_PRIORITISATION_AREAS.map((a) => a.id)));
+    expect(new Set(leafIds.map((n) => n.unitId))).toEqual(
+      new Set(SIRI_PRIORITISATION_AREAS.map((a) => a.id))
+    );
 
     // Every pillar node's parent is one of the 3 building block nodes.
     const pillarNodes = nodes.filter((n) => n.unitId.startsWith('pillar:'));
@@ -64,7 +70,9 @@ describe('SIRI Workspace View — matrix (test 2)', () => {
   it('produces exactly 16 rows, each with Bands 0..5', () => {
     const rows = buildSiriMatrixRows(statesFrom());
     expect(rows).toHaveLength(16);
-    expect(new Set(rows.map((r) => r.unitId))).toEqual(new Set(SIRI_PRIORITISATION_AREAS.map((a) => a.id)));
+    expect(new Set(rows.map((r) => r.unitId))).toEqual(
+      new Set(SIRI_PRIORITISATION_AREAS.map((a) => a.id))
+    );
     for (const row of rows) {
       expect(row.levels.map((l) => l.level)).toEqual([...SIRI_BAND_SCALE]);
     }
@@ -111,7 +119,11 @@ describe('SIRI Workspace View — rationale required (test 4)', () => {
 
   it('a Band CAN be proposed with a rationale and an open level', () => {
     const state: SiriUnitAssessmentState = emptySiriUnitState('strategy_governance');
-    const result = proposeSiriBand({ state, level: 0, rationale: 'Widoczna dokumentacja procesu.' });
+    const result = proposeSiriBand({
+      state,
+      level: 0,
+      rationale: 'Widoczna dokumentacja procesu.',
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.status).toBe('proposed');

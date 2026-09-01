@@ -172,9 +172,7 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
-          deps.navigate(
-            `/reports/builder?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}${params.templateId ? `&templateId=${params.templateId}` : ''}`
-          );
+          deps.navigate('/document-studio');
         }
         return { success: true };
       }
@@ -187,8 +185,11 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
+          const templateId = String(params.templateId || '').trim();
           deps.navigate(
-            `/presentations?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}`
+            templateId
+              ? `/prezentacje?templateArtifactId=${encodeURIComponent(templateId)}`
+              : '/prezentacje'
           );
         }
         return { success: true };
@@ -247,12 +248,18 @@ export async function handleChatAction(
         if (!templateId || assigneeUserIds.length === 0) {
           return { success: false, error: 'Template ID and at least one assignee are required' };
         }
-        const template = (await Api.get(`/interview/templates/${encodeURIComponent(templateId)}`)) as {
+        const template = (await Api.get(
+          `/interview/templates/${encodeURIComponent(templateId)}`
+        )) as {
           hasPublishedVersion?: boolean;
           version?: number;
         };
         const templateVersion = Number(params.templateVersion || template?.version || 0);
-        if (!template?.hasPublishedVersion || !Number.isInteger(templateVersion) || templateVersion < 1) {
+        if (
+          !template?.hasPublishedVersion ||
+          !Number.isInteger(templateVersion) ||
+          templateVersion < 1
+        ) {
           return { success: false, error: 'Publish this template before assigning it' };
         }
         const stableRequest = JSON.stringify({
@@ -287,7 +294,7 @@ export async function handleChatAction(
         if (deps.onOpenKpiDrawer) {
           deps.onOpenKpiDrawer(kpiId, params.initiativeId as string | undefined);
         } else {
-          deps.navigate(`/benefits?kpi=${encodeURIComponent(kpiId)}`);
+          deps.navigate(`/results/kpi/${encodeURIComponent(kpiId)}`);
         }
         return { success: true };
       }
@@ -338,7 +345,7 @@ export async function handleChatAction(
         const qs = new URLSearchParams({ tab: 'templates' });
         if (params.templateType) qs.set('type', String(params.templateType));
         if (params.category) qs.set('category', String(params.category));
-        deps.navigate(`/presentations?${qs.toString()}`);
+        deps.navigate(`/prezentacje?${qs.toString()}`);
         return { success: true };
       }
 

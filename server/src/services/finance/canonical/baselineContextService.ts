@@ -1,6 +1,6 @@
 import {
-  withPinnedPostgresTransaction,
   type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
 } from '../../../database/PostgresDatabase.js';
 import { canonicalPayloadHash } from './contentHash.js';
 
@@ -423,8 +423,15 @@ export async function configureBaselineWorkspaceContext(
     const periodById = new Map(periods.map((period) => [period.period_id, period]));
     const opening = periodById.get(input.openingBalanceSheetPeriodId)!;
     const forecast = input.forecastPeriodIds.map((id) => periodById.get(id)!);
-    if (opening.period_type !== 'MONTH' || forecast.some((period) => period.period_type !== 'MONTH')) {
-      throw new BaselineContextError('INVALID_CONTEXT_PERIOD', 400, 'All context periods must be monthly');
+    if (
+      opening.period_type !== 'MONTH' ||
+      forecast.some((period) => period.period_type !== 'MONTH')
+    ) {
+      throw new BaselineContextError(
+        'INVALID_CONTEXT_PERIOD',
+        400,
+        'All context periods must be monthly'
+      );
     }
     if (forecast.some((period) => period.fiscal_calendar_id !== opening.fiscal_calendar_id)) {
       throw new BaselineContextError(

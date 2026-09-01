@@ -1,6 +1,7 @@
-import express, { type Express } from 'express';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

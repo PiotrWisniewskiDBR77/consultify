@@ -1,5 +1,6 @@
 import { AlertTriangle, Database, HardDrive } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface UsageData {
   tokens: {
@@ -42,6 +43,7 @@ const getTextColor = (percentage: number): string => {
 };
 
 export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false }) => {
+  const { t } = useTranslation();
   // Default values to prevent undefined access
   const tokens = usage?.tokens || { used: 0, limit: 100000, remaining: 100000, percentage: 0 };
   const storage = usage?.storage || { usedGB: 0, limitGB: 5, percentage: 0 };
@@ -171,7 +173,9 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
       {/* Period Info */}
       {usage.periodEnd && (
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('billing.usage.resetsOn', 'Limit odnowi się {{date}}', { date: new Date(usage.periodEnd).toLocaleDateString('pl-PL') })}
+          {t('billing.usage.resetsOn', 'Limit odnowi się {{date}}', {
+            date: new Date(usage.periodEnd).toLocaleDateString('pl-PL'),
+          })}
         </p>
       )}
     </div>

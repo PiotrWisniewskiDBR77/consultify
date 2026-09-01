@@ -128,7 +128,17 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
   if (!otwarty) {
     const ile = zapis.uwagi.length;
     return (
+      /* data-dev-render-chrome: znacznik dla narzedzi zrzutowych toru GRAFIKA
+         (scripts/dev/grafika-zrzuty.mjs chowa selektorem
+         `[data-dev-render-chrome], .dev-render-chrome { display: none !important }`).
+         POWOD (2026-08-30): selektor istnial, ale ZADEN element panelu go nie mial,
+         wiec pigulki „Lista”/„Uwagi” zostawaly na kazdym zrzucie i przy wysokosci
+         900 px ZASLANIALY dolna linie tekstu produktu (dowod: ekran
+         results-vnext-teresa-okr-reflection — zdanie o powodzie odmowy z serwera).
+         Zrzut wygladal jak uciety produkt, a byl uciety harnessem. */
       <div
+        data-dev-render-chrome=""
+        className="dev-render-chrome"
         style={{
           position: 'fixed',
           right: 16,
@@ -149,7 +159,10 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
   }
 
   return (
+    /* Ten sam znacznik co wyzej — rozwiniety panel uwag tez jest harnessem. */
     <div
+      data-dev-render-chrome=""
+      className="dev-render-chrome"
       style={{
         position: 'fixed',
         right: 16,

@@ -96,7 +96,10 @@ suite('GOLDEN CASE B — approval refused, Case still closes as DECISION_COMPLET
         semanticGraph: minimalGraph(),
       });
       const planVersionId: string = draft.body.data.casePlanVersionId;
-      const proposedPlan = await asConsultant('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+      const proposedPlan = await asConsultant(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/propose`
+      ).send({
         expectedVersion: draft.body.data.version,
       });
       await asSponsor('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
@@ -302,9 +305,10 @@ suite('GOLDEN CASE B — approval refused, Case still closes as DECISION_COMPLET
       expect(rejectionEvent!.actor_user_id).toBe(sponsorId);
       expect(rejectionEvent!.case_id).toBe(caseId);
 
-      await control.query(`DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`, [
-        actionProposalId,
-      ]);
+      await control.query(
+        `DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`,
+        [actionProposalId]
+      );
       await control.query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId]);
     } finally {
       await fx.teardown();
@@ -359,14 +363,20 @@ suite('GOLDEN CASE B — approval refused, Case still closes as DECISION_COMPLET
         semanticGraph: minimalGraph(),
       });
       const planVersionId: string = draft.body.data.casePlanVersionId;
-      const proposedPlan = await asConsultant('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+      const proposedPlan = await asConsultant(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/propose`
+      ).send({
         expectedVersion: draft.body.data.version,
       });
       await asSponsor('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
         expectedVersion: proposedPlan.body.data.version,
       });
       const runId = await fx.seedExecutionRun(orgId, consultantId, 'golden-b-exp');
-      await asConsultant('post', `${BASE}/run-bindings`).send({ runId, casePlanVersionId: planVersionId });
+      await asConsultant('post', `${BASE}/run-bindings`).send({
+        runId,
+        casePlanVersionId: planVersionId,
+      });
 
       // A proposal whose review window closed an hour ago.
       const payloadDigest = `sha256:${'c'.repeat(64)}`;

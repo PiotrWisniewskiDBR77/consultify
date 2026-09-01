@@ -133,8 +133,14 @@ const VALID_JIRA_CONFIG = Object.freeze({
 });
 
 const GOVERNED_CONNECT_ROUTES = [
-  { label: 'POST /api/integrations/connect/:provider (canonical)', path: '/api/integrations/connect/jira' },
-  { label: 'POST /api/integrations/:provider/connect (alias)', path: '/api/integrations/jira/connect' },
+  {
+    label: 'POST /api/integrations/connect/:provider (canonical)',
+    path: '/api/integrations/connect/jira',
+  },
+  {
+    label: 'POST /api/integrations/:provider/connect (alias)',
+    path: '/api/integrations/jira/connect',
+  },
 ];
 
 describe('canonical integrations readback continuity', () => {
@@ -326,9 +332,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(401);
       expectNoWritesOccurred();
@@ -340,9 +344,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
@@ -356,9 +358,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(403);
       expectNoWritesOccurred();
@@ -371,9 +371,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(403);
       // Proves the guard actually consulted the membership table for the
@@ -393,9 +391,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(403);
       expectNoWritesOccurred();
@@ -406,9 +402,7 @@ describe('canonical integrations readback continuity', () => {
       app.use(express.json());
       app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
@@ -432,39 +426,37 @@ describe('canonical integrations readback continuity', () => {
   // they instead inspect the exact arguments the route hands to the mocked
   // DB-layer `dbRun` call — proving the value bound is the authenticated
   // actor id, never a body-supplied identity and never a synthetic fallback.
-  describe.each(GOVERNED_CONNECT_ROUTES)('connected_by audit identity binding — $label', ({ path }) => {
-    function findIntegrationInsertCall(): [string, unknown[]] {
-      const call = mockDbRun.mock.calls.find(
-        (args) => typeof args[0] === 'string' && args[0].includes('INSERT INTO integrations')
-      );
-      expect(call).toBeDefined();
-      return call as [string, unknown[]];
-    }
+  describe.each(GOVERNED_CONNECT_ROUTES)(
+    'connected_by audit identity binding — $label',
+    ({ path }) => {
+      function findIntegrationInsertCall(): [string, unknown[]] {
+        const call = mockDbRun.mock.calls.find(
+          (args) => typeof args[0] === 'string' && args[0].includes('INSERT INTO integrations')
+        );
+        expect(call).toBeDefined();
+        return call as [string, unknown[]];
+      }
 
-    it('binds the INSERT connected_by to the authenticated actor id, verified via the real mock call arguments', async () => {
-      const app = express();
-      app.use(express.json());
-      app.use('/api/integrations', integrationsRoutes);
+      it('binds the INSERT connected_by to the authenticated actor id, verified via the real mock call arguments', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+        const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
-      expect(res.status).toBe(201);
-      const [, params] = findIntegrationInsertCall();
-      // Positional: connected_by is bound as the final placeholder value
-      // (see the INSERT column list in integrations.routes.ts).
-      expect(params[params.length - 1]).toBe('user-1');
-    });
+        expect(res.status).toBe(201);
+        const [, params] = findIntegrationInsertCall();
+        // Positional: connected_by is bound as the final placeholder value
+        // (see the INSERT column list in integrations.routes.ts).
+        expect(params[params.length - 1]).toBe('user-1');
+      });
 
-    it('cannot be overridden by a spoofed identity in the request body', async () => {
-      const app = express();
-      app.use(express.json());
-      app.use('/api/integrations', integrationsRoutes);
+      it('cannot be overridden by a spoofed identity in the request body', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({
+        const res = await request(app).post(path).send({
           config: VALID_JIRA_CONFIG,
           connected_by: 'attacker-connected-by',
           connectedBy: 'attacker-connectedBy',
@@ -473,56 +465,55 @@ describe('canonical integrations readback continuity', () => {
           connected_by_id: 'attacker-connected-by-id',
         });
 
-      expect(res.status).toBe(201);
-      const [, params] = findIntegrationInsertCall();
-      expect(params[params.length - 1]).toBe('user-1');
+        expect(res.status).toBe(201);
+        const [, params] = findIntegrationInsertCall();
+        expect(params[params.length - 1]).toBe('user-1');
 
-      // None of the attacker-supplied identity values reached ANY database-
-      // layer call — not just that the "wrong" position was checked.
-      for (const [, callParams] of mockDbRun.mock.calls) {
-        expect(callParams).not.toContain('attacker-connected-by');
-        expect(callParams).not.toContain('attacker-connectedBy');
-        expect(callParams).not.toContain('attacker-actorId');
-        expect(callParams).not.toContain('attacker-userId');
-        expect(callParams).not.toContain('attacker-connected-by-id');
-      }
-    });
-
-    it('fails closed with zero writes and no synthetic "system" identity when req.user.id is absent', async () => {
-      // Simulates an authenticated request whose upstream identity signal
-      // (req.userId, consulted by the membership guard's fallback) is present
-      // — so it clears requireActiveAuditsMembership — but whose req.user.id
-      // (the field this route binds connected_by from) is absent. This is the
-      // regression guard for the removed `req.user?.id || 'system'` fallback:
-      // the route itself must refuse to synthesize an identity, independent
-      // of what any other layer accepts as "authenticated".
-      mockVerifyToken.mockImplementationOnce((req: any, _res: any, next: () => void) => {
-        req.user = { organizationId: 'org-1' };
-        req.userId = 'user-1';
-        next();
+        // None of the attacker-supplied identity values reached ANY database-
+        // layer call — not just that the "wrong" position was checked.
+        for (const [, callParams] of mockDbRun.mock.calls) {
+          expect(callParams).not.toContain('attacker-connected-by');
+          expect(callParams).not.toContain('attacker-connectedBy');
+          expect(callParams).not.toContain('attacker-actorId');
+          expect(callParams).not.toContain('attacker-userId');
+          expect(callParams).not.toContain('attacker-connected-by-id');
+        }
       });
-      const app = express();
-      app.use(express.json());
-      app.use('/api/integrations', integrationsRoutes);
 
-      const res = await request(app)
-        .post(path)
-        .send({ config: VALID_JIRA_CONFIG });
+      it('fails closed with zero writes and no synthetic "system" identity when req.user.id is absent', async () => {
+        // Simulates an authenticated request whose upstream identity signal
+        // (req.userId, consulted by the membership guard's fallback) is present
+        // — so it clears requireActiveAuditsMembership — but whose req.user.id
+        // (the field this route binds connected_by from) is absent. This is the
+        // regression guard for the removed `req.user?.id || 'system'` fallback:
+        // the route itself must refuse to synthesize an identity, independent
+        // of what any other layer accepts as "authenticated".
+        mockVerifyToken.mockImplementationOnce((req: any, _res: any, next: () => void) => {
+          req.user = { organizationId: 'org-1' };
+          req.userId = 'user-1';
+          next();
+        });
+        const app = express();
+        app.use(express.json());
+        app.use('/api/integrations', integrationsRoutes);
 
-      expect(res.status).toBeGreaterThanOrEqual(400);
-      expect(res.status).toBeLessThan(500);
-      expect(mockDbRun).not.toHaveBeenCalled();
-      expect(mockBuildGovernedExternalAuthSession).not.toHaveBeenCalled();
-      expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+        const res = await request(app).post(path).send({ config: VALID_JIRA_CONFIG });
 
-      // The literal string 'system' must never appear in any database-layer
-      // call argument — proof the removed fallback has no surviving effect.
-      for (const call of mockDbRun.mock.calls) {
-        expect(JSON.stringify(call)).not.toContain('system');
-      }
-      for (const call of mockSetConnectorAuthState.mock.calls) {
-        expect(JSON.stringify(call)).not.toContain('system');
-      }
-    });
-  });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).toBeLessThan(500);
+        expect(mockDbRun).not.toHaveBeenCalled();
+        expect(mockBuildGovernedExternalAuthSession).not.toHaveBeenCalled();
+        expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+
+        // The literal string 'system' must never appear in any database-layer
+        // call argument — proof the removed fallback has no surviving effect.
+        for (const call of mockDbRun.mock.calls) {
+          expect(JSON.stringify(call)).not.toContain('system');
+        }
+        for (const call of mockSetConnectorAuthState.mock.calls) {
+          expect(JSON.stringify(call)).not.toContain('system');
+        }
+      });
+    }
+  );
 });

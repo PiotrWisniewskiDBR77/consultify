@@ -24,7 +24,9 @@ const mockUpdateRoiFinanceReconciliationStatus = vi.fn();
 const mockRecordFinanceOwnerGrantEvent = vi.fn();
 const mockFlagEvidenceLinkFreshnessCheck = vi.fn();
 const mockPublishRoiGovernedVisibilityPolicy = vi.fn();
-const mockResolveRoiGovernedVisibility = vi.fn().mockResolvedValue({ allow: true, reason: 'OWNER' });
+const mockResolveRoiGovernedVisibility = vi
+  .fn()
+  .mockResolvedValue({ allow: true, reason: 'OWNER' });
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
@@ -58,44 +60,66 @@ vi.mock('../../../services/resultsVnext/roi/roiFinanceLinkRepository.js', () => 
   listRoiFinanceLinks: (...args: unknown[]) => mockListRoiFinanceLinks(...args),
   listRoiFinanceReconciliations: (...args: unknown[]) => mockListRoiFinanceReconciliations(...args),
 }));
-vi.mock('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js')>();
-  return {
-    ...actual,
-    openRoiFinanceReconciliation: (...args: unknown[]) => mockOpenRoiFinanceReconciliation(...args),
-    updateRoiFinanceReconciliationStatus: (...args: unknown[]) => mockUpdateRoiFinanceReconciliationStatus(...args),
-    recordFinanceOwnerGrantEvent: (...args: unknown[]) => mockRecordFinanceOwnerGrantEvent(...args),
-  };
-});
-vi.mock('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js')>();
-  return {
-    ...actual,
-    flagEvidenceLinkFreshnessCheck: (...args: unknown[]) => mockFlagEvidenceLinkFreshnessCheck(...args),
-  };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js')
+      >();
+    return {
+      ...actual,
+      openRoiFinanceReconciliation: (...args: unknown[]) =>
+        mockOpenRoiFinanceReconciliation(...args),
+      updateRoiFinanceReconciliationStatus: (...args: unknown[]) =>
+        mockUpdateRoiFinanceReconciliationStatus(...args),
+      recordFinanceOwnerGrantEvent: (...args: unknown[]) =>
+        mockRecordFinanceOwnerGrantEvent(...args),
+    };
+  }
+);
+vi.mock(
+  '../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js')
+      >();
+    return {
+      ...actual,
+      flagEvidenceLinkFreshnessCheck: (...args: unknown[]) =>
+        mockFlagEvidenceLinkFreshnessCheck(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/platform/visibilityResolver.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')
+    >();
   return {
     ...actual,
-    publishRoiGovernedVisibilityPolicy: (...args: unknown[]) => mockPublishRoiGovernedVisibilityPolicy(...args),
+    publishRoiGovernedVisibilityPolicy: (...args: unknown[]) =>
+      mockPublishRoiGovernedVisibilityPolicy(...args),
     resolveRoiGovernedVisibility: (...args: unknown[]) => mockResolveRoiGovernedVisibility(...args),
   };
 });
 
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 const {
   ROI_GOVERNED_VISIBILITY_POLICY,
   RoiGovernedVisibilityPolicyMismatchError,
   RoiVisibilityGovernanceActorNotAuthorizedError,
   RoiGovernedVisibilityPolicyCollisionError,
 } = await import('../../../services/resultsVnext/platform/visibilityResolver.js');
-const { RoiFinanceLinkNotFoundError, RoiFinanceReconciliationNotFoundError, RoiFinanceReconciliationValidationError } =
-  await import('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js');
-const { RoiBenefitEvidenceLinkValidationError } = await import(
-  '../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js'
-);
+const {
+  RoiFinanceLinkNotFoundError,
+  RoiFinanceReconciliationNotFoundError,
+  RoiFinanceReconciliationValidationError,
+} = await import('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js');
+const { RoiBenefitEvidenceLinkValidationError } =
+  await import('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 
@@ -200,21 +224,54 @@ beforeEach(() => {
 describe('POST /finance-owner-grants', () => {
   it('derives tenant and governor from auth and returns applied/replayed receipts', async () => {
     mockRecordFinanceOwnerGrantEvent
-      .mockResolvedValueOnce({ receiptId: 'receipt-1', grantVersion: 1, action: 'granted', outcome: 'applied' })
-      .mockResolvedValueOnce({ receiptId: 'receipt-1', grantVersion: 1, action: 'granted', outcome: 'replayed' });
+      .mockResolvedValueOnce({
+        receiptId: 'receipt-1',
+        grantVersion: 1,
+        action: 'granted',
+        outcome: 'applied',
+      })
+      .mockResolvedValueOnce({
+        receiptId: 'receipt-1',
+        grantVersion: 1,
+        action: 'granted',
+        outcome: 'replayed',
+      });
     const body = { userId: 'user-grantee', action: 'granted', idempotencyKey: 'grant-key-1' };
-    const first = await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send(body);
-    const replay = await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send(body);
+    const first = await request(createApp())
+      .post('/api/vnext/results/roi/finance-owner-grants')
+      .send(body);
+    const replay = await request(createApp())
+      .post('/api/vnext/results/roi/finance-owner-grants')
+      .send(body);
     expect(first.status).toBe(201);
     expect(replay.status).toBe(200);
-    expect(mockRecordFinanceOwnerGrantEvent).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      organizationId: 'org-1', actorUserId: 'user-actor', userId: 'user-grantee', action: 'granted', idempotencyKey: 'grant-key-1',
-    }));
+    expect(mockRecordFinanceOwnerGrantEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        organizationId: 'org-1',
+        actorUserId: 'user-actor',
+        userId: 'user-grantee',
+        action: 'granted',
+        idempotencyKey: 'grant-key-1',
+      })
+    );
   });
 
   it('rejects missing idempotency and unknown fields before the service', async () => {
-    expect((await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send({ userId: 'u', action: 'granted' })).status).toBe(400);
-    expect((await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send({ userId: 'u', action: 'granted', idempotencyKey: 'k', organizationId: 'foreign' })).status).toBe(400);
+    expect(
+      (
+        await request(createApp())
+          .post('/api/vnext/results/roi/finance-owner-grants')
+          .send({ userId: 'u', action: 'granted' })
+      ).status
+    ).toBe(400);
+    expect(
+      (
+        await request(createApp())
+          .post('/api/vnext/results/roi/finance-owner-grants')
+          .send({ userId: 'u', action: 'granted', idempotencyKey: 'k', organizationId: 'foreign' })
+      ).status
+    ).toBe(400);
     expect(mockRecordFinanceOwnerGrantEvent).not.toHaveBeenCalled();
   });
 });
@@ -226,7 +283,9 @@ describe('POST /finance-owner-grants', () => {
 describe('GET .../finance-links', () => {
   it('200s with the list', async () => {
     mockListRoiFinanceLinks.mockResolvedValue([financeLinkFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/finance-links`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/finance-links`
+    );
     expect(response.status).toBe(200);
     expect(response.body.financeLinks).toHaveLength(1);
     expect(mockListRoiFinanceLinks).toHaveBeenCalledWith(
@@ -294,12 +353,13 @@ describe('POST .../finance-links', () => {
     expect(mockCreateRoiFinanceLink).not.toHaveBeenCalled();
   });
 
-  it("maps RoiEconomicModelNotEditableError to 409 (case in a NON_EDITABLE_STATUSES status)", async () => {
+  it('maps RoiEconomicModelNotEditableError to 409 (case in a NON_EDITABLE_STATUSES status)', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
-    const { RoiEconomicModelNotEditableError } = await import(
-      '../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js'
+    const { RoiEconomicModelNotEditableError } =
+      await import('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js');
+    mockCreateRoiFinanceLink.mockRejectedValue(
+      new RoiEconomicModelNotEditableError(CASE_ID, 'approved')
     );
-    mockCreateRoiFinanceLink.mockRejectedValue(new RoiEconomicModelNotEditableError(CASE_ID, 'approved'));
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/finance-links`)
       .send({
@@ -333,7 +393,9 @@ describe('DELETE .../finance-links/:linkId', () => {
   });
 
   it('maps AtomicWriteConflictError to 409', async () => {
-    mockRemoveRoiFinanceLink.mockRejectedValue(new AtomicWriteConflictError('stale', 'STALE_VERSION'));
+    mockRemoveRoiFinanceLink.mockRejectedValue(
+      new AtomicWriteConflictError('stale', 'STALE_VERSION')
+    );
     const response = await request(createApp())
       .delete(`/api/vnext/results/roi/cases/${CASE_ID}/finance-links/${LINK_ID}`)
       .send({ expectedVersion: 1 });
@@ -348,7 +410,9 @@ describe('DELETE .../finance-links/:linkId', () => {
 describe('GET .../finance-reconciliations', () => {
   it('200s with the list', async () => {
     mockListRoiFinanceReconciliations.mockResolvedValue([reconciliationFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/finance-reconciliations`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/finance-reconciliations`
+    );
     expect(response.status).toBe(200);
     expect(response.body.financeReconciliations).toHaveLength(1);
   });
@@ -389,7 +453,9 @@ describe('POST .../finance-reconciliations', () => {
 
   it('maps RoiFinanceLinkNotFoundError to 404', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
-    mockOpenRoiFinanceReconciliation.mockRejectedValue(new RoiFinanceLinkNotFoundError(LINK_ID, CASE_ID));
+    mockOpenRoiFinanceReconciliation.mockRejectedValue(
+      new RoiFinanceLinkNotFoundError(LINK_ID, CASE_ID)
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/finance-reconciliations`)
       .send({
@@ -427,7 +493,12 @@ describe('PATCH .../finance-reconciliations/:reconciliationId', () => {
     expect(response.status).toBe(200);
     expect(response.body.financeReconciliation.status).toBe('investigating');
     expect(mockUpdateRoiFinanceReconciliationStatus).toHaveBeenCalledWith(
-      expect.objectContaining({ reconciliationId: RECONCILIATION_ID, caseId: CASE_ID, expectedVersion: 1, status: 'investigating' })
+      expect.objectContaining({
+        reconciliationId: RECONCILIATION_ID,
+        caseId: CASE_ID,
+        expectedVersion: 1,
+        status: 'investigating',
+      })
     );
   });
 
@@ -472,10 +543,15 @@ describe('POST .../kpi-evidence-links/:linkId/freshness-check', () => {
       outcome: 'applied',
       eventId: 'evt-5',
       resultingVersion: 2,
-      result: evidenceLinkFixture({ freshnessCheckedAt: '2026-08-01T00:00:00.000Z', rowVersion: 2 }),
+      result: evidenceLinkFixture({
+        freshnessCheckedAt: '2026-08-01T00:00:00.000Z',
+        rowVersion: 2,
+      }),
     });
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`
+      )
       .send({});
     expect(response.status).toBe(200);
     expect(response.body.link.freshnessCheckedAt).toBe('2026-08-01T00:00:00.000Z');
@@ -486,10 +562,14 @@ describe('POST .../kpi-evidence-links/:linkId/freshness-check', () => {
 
   it('maps RoiBenefitEvidenceLinkValidationError to 409', async () => {
     mockFlagEvidenceLinkFreshnessCheck.mockRejectedValue(
-      new RoiBenefitEvidenceLinkValidationError('not found', 'BENEFIT_EVIDENCE_LINK_NOT_FOUND', { linkId: LINK_ID })
+      new RoiBenefitEvidenceLinkValidationError('not found', 'BENEFIT_EVIDENCE_LINK_NOT_FOUND', {
+        linkId: LINK_ID,
+      })
     );
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`
+      )
       .send({});
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('BENEFIT_EVIDENCE_LINK_NOT_FOUND');
@@ -503,7 +583,9 @@ describe('POST .../kpi-evidence-links/:linkId/freshness-check', () => {
       result: evidenceLinkFixture(),
     });
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}/freshness-check`
+      )
       .send({ reason: 'Quarterly review acknowledgment' });
     expect(response.status).toBe(200);
     expect(mockFlagEvidenceLinkFreshnessCheck).toHaveBeenCalledWith(
@@ -520,7 +602,12 @@ describe('POST /visibility-policy', () => {
   it('derives org/actor from auth and always publishes the one pinned canonical policy (never client-supplied)', async () => {
     mockPublishRoiGovernedVisibilityPolicy.mockResolvedValueOnce({
       outcome: 'applied',
-      publication: { organizationId: 'org-1', publishedBy: 'user-actor', publishedAt: '2026-08-18T00:00:00.000Z', policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key },
+      publication: {
+        organizationId: 'org-1',
+        publishedBy: 'user-actor',
+        publishedAt: '2026-08-18T00:00:00.000Z',
+        policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+      },
     });
     const response = await request(createApp())
       .post('/api/vnext/results/roi/visibility-policy')
@@ -539,28 +626,47 @@ describe('POST /visibility-policy', () => {
   it('200s (not 201) on a replayed outcome', async () => {
     mockPublishRoiGovernedVisibilityPolicy.mockResolvedValueOnce({
       outcome: 'replayed',
-      publication: { organizationId: 'org-1', publishedBy: 'user-actor', publishedAt: '2026-08-18T00:00:00.000Z', policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key },
+      publication: {
+        organizationId: 'org-1',
+        publishedBy: 'user-actor',
+        publishedAt: '2026-08-18T00:00:00.000Z',
+        policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+      },
     });
-    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({});
     expect(response.status).toBe(200);
     expect(response.body.outcome).toBe('replayed');
   });
 
   it('maps RoiVisibilityGovernanceActorNotAuthorizedError to 403', async () => {
-    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiVisibilityGovernanceActorNotAuthorizedError());
-    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(
+      new RoiVisibilityGovernanceActorNotAuthorizedError()
+    );
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({});
     expect(response.status).toBe(403);
   });
 
   it('maps RoiGovernedVisibilityPolicyCollisionError to 409', async () => {
-    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiGovernedVisibilityPolicyCollisionError('org-1'));
-    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(
+      new RoiGovernedVisibilityPolicyCollisionError('org-1')
+    );
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({});
     expect(response.status).toBe(409);
   });
 
   it('maps RoiGovernedVisibilityPolicyMismatchError to 400 (defense in depth — the route never actually sends a mismatched policy)', async () => {
-    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiGovernedVisibilityPolicyMismatchError());
-    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(
+      new RoiGovernedVisibilityPolicyMismatchError()
+    );
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({});
     expect(response.status).toBe(400);
   });
 

@@ -44,21 +44,24 @@ import { randomUUID } from 'node:crypto';
 
 import type { PoolClient } from 'pg';
 
-import { toNullableNumber } from '../kpi/kpiTypes.js';
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import { toNullableNumber } from '../kpi/kpiTypes.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import {
-  toRoiActualEntry,
   type RoiActualEntry,
   type RoiActualEntryDataQualityStatus,
   type RoiActualEntryRow,
   type RoiActualEntryType,
+  toRoiActualEntry,
 } from './roiForecastActualTypes.js';
 import type { RoiCaseRow } from './roiTypes.js';
 
@@ -69,7 +72,11 @@ import type { RoiCaseRow } from './roiTypes.js';
 export class RoiActualEntryValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_ACTUAL_ENTRY_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_ACTUAL_ENTRY_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiActualEntryValidationError';
     this.code = code;
@@ -142,14 +149,20 @@ async function loadRoiCaseOwnerUserId(
  * ROI_TRACKING_ACTIVE_STATUSES specifically. Plain SELECT, no lock needed —
  * same convention `recordMeasurement` uses for its own KPI-status read
  * (append-only writes do not need to serialize against the parent). */
-async function requireCaseTrackable(client: PoolClient, caseId: string, organizationId: string): Promise<RoiCaseRow> {
+async function requireCaseTrackable(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string
+): Promise<RoiCaseRow> {
   const result = await client.query<RoiCaseRow>(
     `SELECT * FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
     [caseId, organizationId]
   );
   const row = result.rows[0];
   if (!row) {
-    throw new RoiActualEntryValidationError(`ROI case ${caseId} not found`, 'CASE_NOT_FOUND', { caseId });
+    throw new RoiActualEntryValidationError(`ROI case ${caseId} not found`, 'CASE_NOT_FOUND', {
+      caseId,
+    });
   }
   if (!ROI_TRACKING_ACTIVE_STATUSES.includes(row.status)) {
     throw new RoiActualEntryValidationError(
@@ -186,7 +199,9 @@ export interface RecordActualEntryInput {
   reason?: string | null;
 }
 
-export async function recordActualEntry(input: RecordActualEntryInput): Promise<AtomicCommandOutcome<RoiActualEntry>> {
+export async function recordActualEntry(
+  input: RecordActualEntryInput
+): Promise<AtomicCommandOutcome<RoiActualEntry>> {
   const {
     caseId,
     organizationId,
@@ -263,9 +278,13 @@ export async function recordActualEntry(input: RecordActualEntryInput): Promise<
       }
 
       if (amount !== null && !currency) {
-        throw new RoiActualEntryValidationError(`currency is required when amount is provided`, 'CURRENCY_REQUIRED', {
-          amount,
-        });
+        throw new RoiActualEntryValidationError(
+          `currency is required when amount is provided`,
+          'CURRENCY_REQUIRED',
+          {
+            amount,
+          }
+        );
       }
 
       const insertResult = await client.query<RoiActualEntryRow>(
@@ -399,16 +418,23 @@ async function insertSupersedingActualEntry(
     responsibleUserIds: [caseOwnerUserId],
   });
 
-  const amount = amountOverride !== undefined ? amountOverride : toNullableNumber(originalRow.amount);
+  const amount =
+    amountOverride !== undefined ? amountOverride : toNullableNumber(originalRow.amount);
   const currency = currencyOverride !== undefined ? currencyOverride : originalRow.currency;
   const resolvedDataQualityStatus = dataQualityStatus ?? originalRow.data_quality_status;
-  const verifiedBy = verifiedByOverride !== undefined ? verifiedByOverride : originalRow.verified_by;
-  const verifiedAt = verifiedAtOverride !== undefined ? verifiedAtOverride : originalRow.verified_at;
+  const verifiedBy =
+    verifiedByOverride !== undefined ? verifiedByOverride : originalRow.verified_by;
+  const verifiedAt =
+    verifiedAtOverride !== undefined ? verifiedAtOverride : originalRow.verified_at;
 
   if (amount !== null && !currency) {
-    throw new RoiActualEntryValidationError(`currency is required when amount is provided`, 'CURRENCY_REQUIRED', {
-      amount,
-    });
+    throw new RoiActualEntryValidationError(
+      `currency is required when amount is provided`,
+      'CURRENCY_REQUIRED',
+      {
+        amount,
+      }
+    );
   }
 
   const insertResult = await client.query<RoiActualEntryRow>(
@@ -659,9 +685,17 @@ export async function verifyActualEntry(
       // Decision D10, checked SECOND, still before any write — walks the
       // FULL correction chain back to the original recorder, not just the
       // immediately-prior row.
-      const originalRecorderId = await resolveOriginalActualEntryRecorder(client, organizationId, actualEntryId);
+      const originalRecorderId = await resolveOriginalActualEntryRecorder(
+        client,
+        organizationId,
+        actualEntryId
+      );
       if (originalRecorderId === verifierId) {
-        throw new RoiActualSelfVerificationDeniedError(actualEntryId, verifierId, originalRecorderId);
+        throw new RoiActualSelfVerificationDeniedError(
+          actualEntryId,
+          verifierId,
+          originalRecorderId
+        );
       }
 
       return insertSupersedingActualEntry(client, {

@@ -222,8 +222,14 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
     table: { icon: <List size={16} />, label: t('moduleHub.viewModes.table', 'Table') },
     kanban: { icon: <Kanban size={16} />, label: t('moduleHub.viewModes.kanban', 'Kanban') },
-    timeline: { icon: <Calendar size={16} />, label: t('moduleHub.viewModes.timeline', 'Timeline') },
-    calendar: { icon: <CalendarDays size={16} />, label: t('moduleHub.viewModes.calendar', 'Calendar') },
+    timeline: {
+      icon: <Calendar size={16} />,
+      label: t('moduleHub.viewModes.timeline', 'Timeline'),
+    },
+    calendar: {
+      icon: <CalendarDays size={16} />,
+      label: t('moduleHub.viewModes.calendar', 'Calendar'),
+    },
     matrix: { icon: <LayoutGrid size={16} />, label: t('moduleHub.viewModes.matrix', 'Matrix') },
     grid: { icon: <Grid3X3 size={16} />, label: t('moduleHub.viewModes.grid', 'Grid') },
   };

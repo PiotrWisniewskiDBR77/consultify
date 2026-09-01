@@ -42,7 +42,12 @@ import {
   type RunReconciliationParams,
 } from '../../../services/finance/canonical/statementReconciliationService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { financeV2Meta, mapOrgRoleToFinanceRole, readExpectedVersion, sendError } from './_shared.js';
+import {
+  financeV2Meta,
+  mapOrgRoleToFinanceRole,
+  readExpectedVersion,
+  sendError,
+} from './_shared.js';
 
 const router = Router();
 
@@ -68,7 +73,12 @@ router.post(
       return sendError(res, 400, 'INVALID_BODY', 'rawLines and rules must both be arrays');
     }
     if (typeof body.unit !== 'string' || typeof body.presentationCurrency !== 'string') {
-      return sendError(res, 400, 'INVALID_BODY', 'unit and presentationCurrency are required strings');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'unit and presentationCurrency are required strings'
+      );
     }
 
     const params: MapStatementLinesParams = {
@@ -88,7 +98,9 @@ router.post(
       data: {
         businessVersionId,
         rowCount: results.length,
-        mappedCount: results.filter((r) => r.bucket === 'MAPPED' || r.bucket === 'RECLASS' || r.bucket === 'ELIMINATION').length,
+        mappedCount: results.filter(
+          (r) => r.bucket === 'MAPPED' || r.bucket === 'RECLASS' || r.bucket === 'ELIMINATION'
+        ).length,
         unmappedCount: results.filter((r) => r.bucket === 'UNMAPPED').length,
         results,
       },
@@ -117,13 +129,26 @@ router.post(
       return sendError(res, 400, 'INVALID_BODY', 'sourceSystem is required');
     }
     if (!Array.isArray(body.mappingResults)) {
-      return sendError(res, 400, 'INVALID_BODY', 'mappingResults must be an array (the array `POST .../map` returned in `data.results`)');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'mappingResults must be an array (the array `POST .../map` returned in `data.results`)'
+      );
     }
 
     const attemptReadinessTransition = body.attemptReadinessTransition === true;
     const expectedVersion = attemptReadinessTransition ? readExpectedVersion(req) : undefined;
-    if (attemptReadinessTransition && (expectedVersion === undefined || Number.isNaN(expectedVersion))) {
-      return sendError(res, 400, 'EXPECTED_VERSION_REQUIRED', 'expectedVersion is required when attemptReadinessTransition=true');
+    if (
+      attemptReadinessTransition &&
+      (expectedVersion === undefined || Number.isNaN(expectedVersion))
+    ) {
+      return sendError(
+        res,
+        400,
+        'EXPECTED_VERSION_REQUIRED',
+        'expectedVersion is required when attemptReadinessTransition=true'
+      );
     }
 
     const params: RunReconciliationParams = {
@@ -132,13 +157,15 @@ router.post(
       businessVersionId,
       sourceSystem: body.sourceSystem,
       mappingResults: body.mappingResults,
-      materialityThresholdPct: typeof body.materialityThresholdPct === 'number' ? body.materialityThresholdPct : undefined,
+      materialityThresholdPct:
+        typeof body.materialityThresholdPct === 'number' ? body.materialityThresholdPct : undefined,
       createdBy: userId,
       attemptReadinessTransition,
       actorId: attemptReadinessTransition ? userId : undefined,
       role: attemptReadinessTransition ? mapOrgRoleToFinanceRole(userRole) : undefined,
       expectedVersion,
-      runPeriodJumpCheck: typeof body.runPeriodJumpCheck === 'boolean' ? body.runPeriodJumpCheck : undefined,
+      runPeriodJumpCheck:
+        typeof body.runPeriodJumpCheck === 'boolean' ? body.runPeriodJumpCheck : undefined,
     };
 
     const result = await runReconciliation(params);
@@ -178,11 +205,17 @@ router.get(
 
     const statementTypeRaw = req.query.statementType;
     const statementType =
-      typeof statementTypeRaw === 'string' && (VALID_STATEMENT_TYPES as readonly string[]).includes(statementTypeRaw)
+      typeof statementTypeRaw === 'string' &&
+      (VALID_STATEMENT_TYPES as readonly string[]).includes(statementTypeRaw)
         ? (statementTypeRaw as StatementType)
         : undefined;
     if (statementTypeRaw !== undefined && !statementType) {
-      return sendError(res, 400, 'INVALID_QUERY', `statementType must be one of ${VALID_STATEMENT_TYPES.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_QUERY',
+        `statementType must be one of ${VALID_STATEMENT_TYPES.join(', ')}`
+      );
     }
 
     const lines = await listStatementLines(organizationId, businessVersionId, {

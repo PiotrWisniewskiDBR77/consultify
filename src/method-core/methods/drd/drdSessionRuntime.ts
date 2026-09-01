@@ -31,7 +31,6 @@
 import {
   canTransition,
   METHOD_PROCESS_ROLES,
-  TRANSITION_AUTHORITY,
   type MethodActorKind,
   type MethodEvent,
   type MethodEventType,
@@ -45,22 +44,23 @@ import {
   type TeresaProposedChange,
   type TeresaQualityVerdict,
   type TeresaStatement,
+  TRANSITION_AUTHORITY,
   type TransitionResult,
 } from '@/method-core/contracts';
 import {
+  type AssessmentOutput,
+  buildReportSnapshot,
   createAssessmentOutput,
   createInitiativeProposalDraft,
   deepFreeze,
-  groupFindingsForInitiativeDrafts,
-  buildReportSnapshot,
-  markRecordSuperseded,
-  wrapAsCurrent,
-  type AssessmentOutput,
   type DeliverableRecord,
   type EvidenceLocator,
   type Finding,
+  groupFindingsForInitiativeDrafts,
   type InitiativeProposalDraft,
+  markRecordSuperseded,
   type ReportSnapshot,
+  wrapAsCurrent,
 } from '@/method-core/outputs';
 
 import { compileDrdPack, DRD_METHOD_PACK_ID } from './compileDrdPack';
@@ -187,7 +187,13 @@ export interface RecordAnswerInput {
   readonly unitId: string;
   readonly level: number;
   readonly questionId: string;
-  readonly answerState: 'confirmed' | 'partial' | 'no' | 'dont_know' | 'no_evidence' | 'not_applicable';
+  readonly answerState:
+    | 'confirmed'
+    | 'partial'
+    | 'no'
+    | 'dont_know'
+    | 'no_evidence'
+    | 'not_applicable';
   readonly text?: string;
   readonly justification?: string;
   readonly actorUserId: string;
@@ -422,7 +428,10 @@ export class DrdSessionRuntime {
     if (!record) return { ok: false, refusal: { kind: 'preview_not_found' } };
     if (record.consumedAt) return { ok: false, refusal: { kind: 'preview_already_consumed' } };
     if (new Date(record.preview.expiresAt).getTime() <= Date.now()) {
-      return { ok: false, refusal: { kind: 'preview_expired', expiredAt: record.preview.expiresAt } };
+      return {
+        ok: false,
+        refusal: { kind: 'preview_expired', expiredAt: record.preview.expiresAt },
+      };
     }
     if (record.preview.quality.verdict === 'invalid') {
       return {
@@ -438,7 +447,8 @@ export class DrdSessionRuntime {
     record.consumedBy = request.actorUserId;
     this.write(state);
 
-    const eventType = request.decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
+    const eventType =
+      request.decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
     const event = this.appendEvent({
       type: eventType,
       unitId: record.preview.intent.unitId,
@@ -482,7 +492,10 @@ export class DrdSessionRuntime {
       const actorRoles = state.roles[actorUserId] ?? [];
       const authorized = requiredRoles.some((role) => actorRoles.includes(role));
       if (!authorized) {
-        return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
+        return {
+          ok: false,
+          refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] },
+        };
       }
     }
 
@@ -494,7 +507,12 @@ export class DrdSessionRuntime {
       return { ok: true };
     }
 
-    state.session = { ...state.session, state: to, updatedAt: nowIso(), version: state.session.version + 1 };
+    state.session = {
+      ...state.session,
+      state: to,
+      updatedAt: nowIso(),
+      version: state.session.version + 1,
+    };
     this.write(state);
 
     if (to === 'frozen') {
@@ -533,11 +551,16 @@ export class DrdSessionRuntime {
         b.answerEventIds.push(event.id);
       }
       if (event.type === 'EVIDENCE_ATTACHED') {
-        const payload = event.payload as { evidenceId?: string; evidenceType?: string; strength?: string };
+        const payload = event.payload as {
+          evidenceId?: string;
+          evidenceType?: string;
+          strength?: string;
+        };
         if (payload?.evidenceId) {
           b.evidence.push({
             evidenceId: payload.evidenceId,
-            evidenceType: (payload.evidenceType as EvidenceLocator['evidenceType']) ?? 'observation',
+            evidenceType:
+              (payload.evidenceType as EvidenceLocator['evidenceType']) ?? 'observation',
             strength: (payload.strength as EvidenceLocator['strength']) ?? 'E1',
             locator: `method-event://${event.id}`,
           });
@@ -560,7 +583,10 @@ export class DrdSessionRuntime {
     for (const [unitId, acc] of units) {
       current[unitId] = acc.currentLevel;
       target[unitId] = acc.targetLevel;
-      gap[unitId] = acc.currentLevel !== null && acc.targetLevel !== null ? acc.targetLevel - acc.currentLevel : null;
+      gap[unitId] =
+        acc.currentLevel !== null && acc.targetLevel !== null
+          ? acc.targetLevel - acc.currentLevel
+          : null;
       if (acc.evidence.length === 0) continue;
       findings.push({
         id: genId(),
@@ -591,7 +617,10 @@ export class DrdSessionRuntime {
             : `Stabilizacja jednostki ${unitId}.`,
         kpiProposal: null,
         confidence: 'medium',
-        priorityRationale: gap[unitId] !== null ? `Sortowanie wg wielkości luki (${gap[unitId]}).` : 'Brak wyliczonej luki.',
+        priorityRationale:
+          gap[unitId] !== null
+            ? `Sortowanie wg wielkości luki (${gap[unitId]}).`
+            : 'Brak wyliczonej luki.',
         sourceLocators: [...acc.answerEventIds, ...acc.evidence.map((e) => e.locator)],
       });
     }
@@ -604,13 +633,21 @@ export class DrdSessionRuntime {
       id: genId(),
       organizationId: state.session.organizationId,
       module: state.session.module,
-      methodology: { methodPackId: state.session.methodPackId, version: state.session.methodPackVersion },
+      methodology: {
+        methodPackId: state.session.methodPackId,
+        version: state.session.methodPackVersion,
+      },
       scope: `Sesja ${state.session.id} — ${state.session.methodPackId}@${state.session.methodPackVersion} (vertical slice demo).`,
       snapshotId: `local-snapshot:${state.session.id}:${nowIso()}`,
       current,
       target,
       gap,
-      aggregation: { byGroup: {}, mappingVersion: 'event-derived-v1', rule: 'client mirror of EventDerivedOutputBridge — per-axis grouping not computed here.', excluded: {} },
+      aggregation: {
+        byGroup: {},
+        mappingVersion: 'event-derived-v1',
+        rule: 'client mirror of EventDerivedOutputBridge — per-axis grouping not computed here.',
+        excluded: {},
+      },
       visualModel: { kind: 'matrix', dataRef: current },
       evidenceCompleteness: {
         totalUnits,
@@ -653,7 +690,11 @@ export class DrdSessionRuntime {
       actorKind: 'system',
       actorUserId: null,
       idempotencyKey: `output-created:${output.id}`,
-      payload: { outputId: output.id, outputVersion: output.version, contentHash: output.contentHash },
+      payload: {
+        outputId: output.id,
+        outputVersion: output.version,
+        contentHash: output.contentHash,
+      },
     });
 
     return output;
@@ -690,7 +731,11 @@ export class DrdSessionRuntime {
     });
     const state = this.read();
     state.reports = [
-      ...state.reports.map((r) => (r.status === 'current' ? markRecordSuperseded(r, 'source_updated', record.content.id, nowIso()) : r)),
+      ...state.reports.map((r) =>
+        r.status === 'current'
+          ? markRecordSuperseded(r, 'source_updated', record.content.id, nowIso())
+          : r
+      ),
       wrapAsCurrent(report),
     ];
     this.write(state);
@@ -699,7 +744,11 @@ export class DrdSessionRuntime {
       actorKind: 'human',
       actorUserId: input.actorUserId,
       idempotencyKey: `report:${report.id}`,
-      payload: { reportId: report.id, outputId: record.content.id, outputVersion: record.content.version },
+      payload: {
+        reportId: report.id,
+        outputId: record.content.id,
+        outputVersion: record.content.version,
+      },
     });
     return report;
   }

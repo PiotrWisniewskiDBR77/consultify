@@ -92,4 +92,3 @@ describe('ProjectMembersModal shared-context governance', () => {
     expect(screen.queryByText('No context changes recorded.')).not.toBeInTheDocument();
   });
 });
-

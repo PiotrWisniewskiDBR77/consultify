@@ -245,10 +245,7 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                       value: 'High',
                     },
                     {
-                      label: t(
-                        'organization.challenges.declared.severityOptions.Medium',
-                        'Medium'
-                      ),
+                      label: t('organization.challenges.declared.severityOptions.Medium', 'Medium'),
                       value: 'Medium',
                     },
                     {
@@ -287,7 +284,9 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
               />
             </div>
             <div className="col-span-1 md:col-span-2 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/20 text-sm text-blue-800 dark:text-blue-200">
-              <strong>{t('organization.challenges.rootcause.diagnosticLabel', 'Diagnostic Questions:')}</strong>{' '}
+              <strong>
+                {t('organization.challenges.rootcause.diagnosticLabel', 'Diagnostic Questions:')}
+              </strong>{' '}
               {t(
                 'organization.challenges.rootcause.diagnosticBody',
                 'These answers help AI identify hidden root causes behind the declared challenges.'
@@ -418,7 +417,10 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                         <button
                           onClick={() => removeBlocker(blocker.id)}
                           className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
-                          title={t('organization.challenges.blockers.removeTitle', 'Remove Blocker')}
+                          title={t(
+                            'organization.challenges.blockers.removeTitle',
+                            'Remove Blocker'
+                          )}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -473,9 +475,13 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                           {blocker.status === 'detected' && (
                             <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-500/20 rounded text-[10px] font-bold text-primary-600 dark:text-primary-400">
                               <Cpu size={10} />
-                              {t('organization.challenges.blockers.aiDetected', 'AI Detected ({{confidence}})', {
-                                confidence: blocker.confidence,
-                              })}
+                              {t(
+                                'organization.challenges.blockers.aiDetected',
+                                'AI Detected ({{confidence}})',
+                                {
+                                  confidence: blocker.confidence,
+                                }
+                              )}
                             </div>
                           )}
                         </div>

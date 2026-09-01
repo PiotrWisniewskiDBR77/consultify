@@ -59,23 +59,26 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
-import { computeStateHash, KPI_EVENT_SOURCE, KpiNoActiveVisibilityPolicyError } from './kpiDefinitionCommands.js';
 import {
-  toKpiScorecard,
-  toKpiScorecardItem,
-  toKpiScorecardReviewSnapshot,
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
+import {
+  computeStateHash,
+  KPI_EVENT_SOURCE,
+  KpiNoActiveVisibilityPolicyError,
+} from './kpiDefinitionCommands.js';
+import {
   type KpiScorecard,
   type KpiScorecardItem,
   type KpiScorecardItemRole,
@@ -88,6 +91,9 @@ import {
   type KpiScorecardScopeType,
   type ScorecardSnapshotItemFact,
   type ScorecardStatusCounts,
+  toKpiScorecard,
+  toKpiScorecardItem,
+  toKpiScorecardReviewSnapshot,
 } from './kpiScorecardTypes.js';
 
 export const KPI_SCORECARD_EVENT_SOURCE = 'resultsVnext.kpiScorecard';
@@ -253,7 +259,16 @@ export async function createScorecard(
            (organization_id, name, description, scope_type, scope_id, owner_user_id, review_frequency, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [organizationId, name, description, scopeType, scopeId, ownerUserId ?? createdBy, reviewFrequency, createdBy]
+        [
+          organizationId,
+          name,
+          description,
+          scopeType,
+          scopeId,
+          ownerUserId ?? createdBy,
+          reviewFrequency,
+          createdBy,
+        ]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[createScorecard] insert into rvn_kpi_scorecards returned no row');
@@ -431,14 +446,16 @@ export async function addScorecardItem(
         [scorecardId, kpiId, organizationId, role, sortOrder, displayConfig, actorUserId]
       );
       const itemRow = itemInsert.rows[0];
-      if (!itemRow) throw new Error('[addScorecardItem] insert into rvn_kpi_scorecard_items returned no row');
+      if (!itemRow)
+        throw new Error('[addScorecardItem] insert into rvn_kpi_scorecard_items returned no row');
 
       const scorecardUpdate = await client.query<KpiScorecardRow>(
         `UPDATE rvn_kpi_scorecards SET row_version = $1, updated_at = now() WHERE scorecard_id = $2 RETURNING *`,
         [nextVersion, scorecardId]
       );
       const updatedScorecard = scorecardUpdate.rows[0];
-      if (!updatedScorecard) throw new Error(`[addScorecardItem] scorecard update returned no row for ${scorecardId}`);
+      if (!updatedScorecard)
+        throw new Error(`[addScorecardItem] scorecard update returned no row for ${scorecardId}`);
 
       return { scorecard: toKpiScorecard(updatedScorecard), item: toKpiScorecardItem(itemRow) };
     },
@@ -539,7 +556,9 @@ export async function removeScorecardItem(
       );
       const updatedScorecard = scorecardUpdate.rows[0];
       if (!updatedScorecard)
-        throw new Error(`[removeScorecardItem] scorecard update returned no row for ${scorecardId}`);
+        throw new Error(
+          `[removeScorecardItem] scorecard update returned no row for ${scorecardId}`
+        );
 
       return { scorecard: toKpiScorecard(updatedScorecard), removedItemId: itemId };
     },
@@ -655,7 +674,9 @@ export async function reorderScorecardItems(
       );
       const updatedScorecard = scorecardUpdate.rows[0];
       if (!updatedScorecard)
-        throw new Error(`[reorderScorecardItems] scorecard update returned no row for ${scorecardId}`);
+        throw new Error(
+          `[reorderScorecardItems] scorecard update returned no row for ${scorecardId}`
+        );
 
       return { scorecard: toKpiScorecard(updatedScorecard), items: updatedItems };
     },
@@ -771,7 +792,8 @@ async function runScorecardLifecycleTransition(
         [spec.toStatus, nextVersion, scorecardId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[${spec.eventType}] update returned no row for ${scorecardId}`);
+      if (!updatedRow)
+        throw new Error(`[${spec.eventType}] update returned no row for ${scorecardId}`);
       return toKpiScorecard(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -804,7 +826,9 @@ async function runScorecardLifecycleTransition(
   });
 }
 
-export function activateScorecard(input: BaseScorecardCommandInput): Promise<AtomicCommandOutcome<KpiScorecard>> {
+export function activateScorecard(
+  input: BaseScorecardCommandInput
+): Promise<AtomicCommandOutcome<KpiScorecard>> {
   return runScorecardLifecycleTransition(
     {
       eventType: 'scorecard.activated',
@@ -817,7 +841,9 @@ export function activateScorecard(input: BaseScorecardCommandInput): Promise<Ato
   );
 }
 
-export function suspendScorecard(input: BaseScorecardCommandInput): Promise<AtomicCommandOutcome<KpiScorecard>> {
+export function suspendScorecard(
+  input: BaseScorecardCommandInput
+): Promise<AtomicCommandOutcome<KpiScorecard>> {
   return runScorecardLifecycleTransition(
     {
       eventType: 'scorecard.suspended',
@@ -830,7 +856,9 @@ export function suspendScorecard(input: BaseScorecardCommandInput): Promise<Atom
   );
 }
 
-export function archiveScorecard(input: BaseScorecardCommandInput): Promise<AtomicCommandOutcome<KpiScorecard>> {
+export function archiveScorecard(
+  input: BaseScorecardCommandInput
+): Promise<AtomicCommandOutcome<KpiScorecard>> {
   return runScorecardLifecycleTransition(
     {
       eventType: 'scorecard.archived',
@@ -899,9 +927,13 @@ export async function createReviewSnapshot(
       );
       const scorecardRow = scorecardResult.rows[0];
       if (!scorecardRow) {
-        throw new KpiScorecardValidationError(`Scorecard ${scorecardId} not found`, 'SCORECARD_NOT_FOUND', {
-          scorecardId,
-        });
+        throw new KpiScorecardValidationError(
+          `Scorecard ${scorecardId} not found`,
+          'SCORECARD_NOT_FOUND',
+          {
+            scorecardId,
+          }
+        );
       }
 
       assertCommandCapability({
@@ -1146,7 +1178,12 @@ export async function publishReviewSnapshot(
         data_quality_status: string | null;
         period_start: string | null;
         period_end: string | null;
-      }>(wrapped.sql, [...wrapped.values, scorecardId, organizationId, currentRow.review_period_end]);
+      }>(wrapped.sql, [
+        ...wrapped.values,
+        scorecardId,
+        organizationId,
+        currentRow.review_period_end,
+      ]);
 
       const items: ScorecardSnapshotItemFact[] = itemsResult.rows.map((row) => ({
         kpiId: row.kpi_id,
@@ -1194,13 +1231,23 @@ export async function publishReviewSnapshot(
             SET status = 'published', snapshot_payload = $1, content_hash = $2,
                 published_by = $3, published_at = $4, row_version = $5, updated_at = now()
           WHERE snapshot_id = $6 RETURNING *`,
-        [JSON.stringify(snapshotPayload), contentHash, publishedBy, publishedAt, nextVersion, snapshotId]
+        [
+          JSON.stringify(snapshotPayload),
+          contentHash,
+          publishedBy,
+          publishedAt,
+          nextVersion,
+          snapshotId,
+        ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[publishReviewSnapshot] update returned no row for ${snapshotId}`);
+      if (!updatedRow)
+        throw new Error(`[publishReviewSnapshot] update returned no row for ${snapshotId}`);
 
       // Step 5: record which measurements the frozen payload used.
-      const measurementIds = items.map((i) => i.measurementId).filter((id): id is string => id !== null);
+      const measurementIds = items
+        .map((i) => i.measurementId)
+        .filter((id): id is string => id !== null);
       if (measurementIds.length > 0) {
         await client.query(
           `INSERT INTO rvn_kpi_scorecard_review_snapshot_measurements (snapshot_id, measurement_id)

@@ -10,7 +10,14 @@
  * exclusively to okr_vnext_sets (OKR-E002), not this epic.
  */
 
-export const OKR_CYCLE_STATUSES = ['planned', 'drafting', 'active', 'review', 'closed', 'cancelled'] as const;
+export const OKR_CYCLE_STATUSES = [
+  'planned',
+  'drafting',
+  'active',
+  'review',
+  'closed',
+  'cancelled',
+] as const;
 export type OkrCycleStatus = (typeof OKR_CYCLE_STATUSES)[number];
 
 // ==========================================

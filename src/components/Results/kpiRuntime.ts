@@ -2,12 +2,12 @@ import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
 import { mapResultsKpis, type ResultsKPI, type ResultsTrackedInitiative } from './kpiDomain';
+import { isResultsOwnerReviewModeEnabled } from './resultsOwnerReviewMode';
 import {
   createResultsShowcaseInitiatives,
   createResultsShowcaseKpis,
   shouldUseResultsShowcaseData,
 } from './resultsShowcaseData';
-import { isResultsOwnerReviewModeEnabled } from './resultsOwnerReviewMode';
 
 export interface KpiCatalogRuntimeResult {
   initiatives: ResultsTrackedInitiative[];

@@ -30,17 +30,17 @@
  * collapses "does not exist" and "cross-tenant" into the identical 404, so
  * this page cannot and must not claim to know which one it was, D06/D07).
  */
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Blocks } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { EmptyState } from '@/components/shared/states';
 import { ROUTES } from '@/routes/routeConfig';
 
+import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
-import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { getRoiCase, type RoiCaseListItem } from './roiApi';
 import { RoiCaseFullTool } from './RoiCaseFullTool';
 
@@ -95,7 +95,10 @@ export const RoiCaseToolPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-roi-tool-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-roi-tool-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
@@ -116,15 +119,23 @@ export const RoiCaseToolPage: React.FC = () => {
 
   if (loading || (!roiCase && !loadError)) {
     return (
-      <div className="h-full flex items-center justify-center" data-testid="results-vnext-roi-tool-loading">
-        <div className="text-sm text-c-text-muted">{t('Ładowanie sprawy ROI…', 'Loading ROI case…')}</div>
+      <div
+        className="h-full flex items-center justify-center"
+        data-testid="results-vnext-roi-tool-loading"
+      >
+        <div className="text-sm text-c-text-muted">
+          {t('Ładowanie sprawy ROI…', 'Loading ROI case…')}
+        </div>
       </div>
     );
   }
 
   if (loadError || !roiCase) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-roi-tool-error">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-roi-tool-error"
+      >
         <EmptyState
           variant="error"
           icon={AlertTriangle}

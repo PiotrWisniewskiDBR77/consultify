@@ -111,16 +111,25 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
       expect(draft.status).toBe(201);
       const planVersionId: string = draft.body.data.casePlanVersionId;
 
-      const validation = await asConsultant('get', `${BASE}/plan-versions/${planVersionId}/validate`);
+      const validation = await asConsultant(
+        'get',
+        `${BASE}/plan-versions/${planVersionId}/validate`
+      );
       expect(validation.status).toBe(200);
       expect(validation.body.data.valid).toBe(true);
 
-      const proposedPlan = await asConsultant('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+      const proposedPlan = await asConsultant(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/propose`
+      ).send({
         expectedVersion: draft.body.data.version,
       });
       expect(proposedPlan.status).toBe(200);
 
-      const publishedPlan = await asSponsor('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
+      const publishedPlan = await asSponsor(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/publish`
+      ).send({
         expectedVersion: proposedPlan.body.data.version,
       });
       expect(publishedPlan.status).toBe(200);
@@ -137,7 +146,10 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
       expect(binding.body.data.graphDigest).toBe(publishedPlan.body.data.graphDigest);
 
       const nodeRunId = `noderun-${randomUUID()}`;
-      const acceptance = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+      const acceptance = await asConsultant(
+        'post',
+        `${BASE}/runs/${runId}/node-result-acceptances`
+      ).send({
         nodeRunId,
         nodeType: 'CAPABILITY',
         nodeCompletionState: 'COMPLETED',
@@ -186,7 +198,10 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
       };
 
       // GOV-022: the proposer cannot approve their own proposal.
-      const selfApproval = await asConsultant('post', `${BASE}/proposals/${actionProposalId}/decision`)
+      const selfApproval = await asConsultant(
+        'post',
+        `${BASE}/proposals/${actionProposalId}/decision`
+      )
         .set('Idempotency-Key', `golden-a-self-${randomUUID()}`)
         .send(decisionBody);
       expect(selfApproval.status).toBe(403);
@@ -247,7 +262,10 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
       expect(pinned.body.data.artifactRevision).toBe('rev-2');
       expect(pinned.body.data.revisionPinHistory.length).toBeGreaterThanOrEqual(1);
 
-      const measurement = await asConsultant('post', `${BASE}/cases/${caseId}/value-measurements`).send({
+      const measurement = await asConsultant(
+        'post',
+        `${BASE}/cases/${caseId}/value-measurements`
+      ).send({
         metricKey: 'close_cycle_days',
         metricName: 'Month-end close cycle (days)',
         baselineValue: 9,
@@ -380,7 +398,12 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
       // leave a fact behind.
       expect(types.filter((t) => t === 'approval.approved').length).toBe(1);
       expect(
-        containsInOrder(types, ['case.created', 'case.plan.published', 'approval.approved', 'case.closed'])
+        containsInOrder(types, [
+          'case.created',
+          'case.plan.published',
+          'approval.approved',
+          'case.closed',
+        ])
       ).toBe(true);
 
       // (c) Tenancy and identity are stamped on every event — no orphan facts.
@@ -421,11 +444,16 @@ suite('GOLDEN CASE A — Case → Plan → Run → approval → Results, on real
 
       // -- cleanup of rows the fixture teardown does not own -------------------
       await control.query(`DELETE FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId]);
-      await control.query(`DELETE FROM case_workspace_value_measurements WHERE case_id = $1`, [caseId]);
-      await control.query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [caseId]);
-      await control.query(`DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`, [
-        actionProposalId,
+      await control.query(`DELETE FROM case_workspace_value_measurements WHERE case_id = $1`, [
+        caseId,
       ]);
+      await control.query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [
+        caseId,
+      ]);
+      await control.query(
+        `DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`,
+        [actionProposalId]
+      );
       // case_workspace_history_events is append-only at the DATABASE level
       // (migration 20260810f). Test teardown must not try to DELETE from it —
       // the guarantee is worth more than tidy rows in a disposable database.

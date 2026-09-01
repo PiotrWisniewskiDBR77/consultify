@@ -20,9 +20,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { RoiCaseListItem } from './roiApi';
 import type { RoiCardModeProps } from './RoiCaseCardSections';
-import { getRoiCaseCompareView, listRoiApprovalSnapshots, type RoiApprovalSnapshot, type RoiCompareView } from './roiCaseFullToolApi';
+import {
+  getRoiCaseCompareView,
+  listRoiApprovalSnapshots,
+  type RoiApprovalSnapshot,
+  type RoiCompareView,
+} from './roiCaseFullToolApi';
 import {
   buildRoiApprovalSnapshotColumns,
   buildRoiApprovalSnapshotPreview,
@@ -34,7 +40,6 @@ import {
   withRoiFullToolId,
 } from './roiCaseFullToolPresenters';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type DecisionTab = 'approval-snapshots' | 'compare';
 
@@ -50,14 +55,26 @@ export interface RoiCaseDecisionWorkspaceProps {
   cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> = ({
+  roiCase,
+  isPolish,
+  onBack,
+  phase,
+  onPhaseChange,
+  cardMode,
+}) => {
   const [localTab, setLocalTab] = useState<DecisionTab>('approval-snapshots');
   const tab = (cardMode ? cardMode.activeTab : localTab) as DecisionTab;
-  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as DecisionTab));
+  const setTab = (id: string) =>
+    cardMode ? cardMode.onTabChange(id) : setLocalTab(id as DecisionTab);
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const chipsBar = cardMode
     ? {}
-    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+    : {
+        chips: phaseChips,
+        activeChip: phase,
+        onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase),
+      };
 
   const [snapshots, setSnapshots] = useState<RoiApprovalSnapshot[] | null>(null);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
@@ -102,19 +119,32 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
   const tabs: StandardModuleTab[] = cardMode
     ? cardMode.tabs
     : [
-        { id: 'approval-snapshots', label: isPolish ? 'Migawki zatwierdzenia' : 'Approval snapshots' },
+        {
+          id: 'approval-snapshots',
+          label: isPolish ? 'Migawki zatwierdzenia' : 'Approval snapshots',
+        },
         { id: 'compare', label: isPolish ? 'Porównanie' : 'Compare' },
       ];
 
   if (tab === 'compare') {
-    const rows: TableRow[] = compare === undefined ? [] : buildRoiCaseViewsRows(compare, null).filter((r) => r.id === 'compare').map((r) => withRoiFullToolId(r, 'id'));
+    const rows: TableRow[] =
+      compare === undefined
+        ? []
+        : buildRoiCaseViewsRows(compare, null)
+            .filter((r) => r.id === 'compare')
+            .map((r) => withRoiFullToolId(r, 'id'));
     const selected = compareSelected ? (rows[0] as any) : null;
     return (
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-          showTabCounts: false, viewModes: ['table'], viewMode: 'table',
+          breadcrumbs,
+          tabs,
+          activeTab: tab,
+          onTabChange: setTab,
+          showTabCounts: false,
+          viewModes: ['table'],
+          viewMode: 'table',
           ...chipsBar,
         }}
         table={{
@@ -126,9 +156,14 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
           onRetry: loadCompare,
           selectedRowId: compareSelected ? 'compare' : null,
           onRowClick: () => setCompareSelected(true),
-          rowMenu: (row) => buildRoiCaseViewsRowMenu(row as any, isPolish, () => setCompareSelected(true)),
+          rowMenu: (row) =>
+            buildRoiCaseViewsRowMenu(row as any, isPolish, () => setCompareSelected(true)),
         }}
-        preview={selected ? buildRoiCaseViewsPreview(selected, isPolish, () => setCompareSelected(false)) : null}
+        preview={
+          selected
+            ? buildRoiCaseViewsPreview(selected, isPolish, () => setCompareSelected(false))
+            : null
+        }
       />
     );
   }
@@ -139,8 +174,13 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
     <ResultsVNextRegistryShell
       domain="roi"
       moduleBar={{
-        breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-        showTabCounts: false, viewModes: ['table'], viewMode: 'table',
+        breadcrumbs,
+        tabs,
+        activeTab: tab,
+        onTabChange: setTab,
+        showTabCounts: false,
+        viewModes: ['table'],
+        viewMode: 'table',
         ...chipsBar,
       }}
       table={{
@@ -161,10 +201,17 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
             : undefined,
         selectedRowId: selectedSnapshotId,
         onRowClick: (row) => setSelectedSnapshotId(String(row.snapshotId)),
-        rowMenu: (row) => buildRoiApprovalSnapshotRowMenu(row as unknown as RoiApprovalSnapshot, isPolish, (r) => setSelectedSnapshotId(r.snapshotId)),
+        rowMenu: (row) =>
+          buildRoiApprovalSnapshotRowMenu(row as unknown as RoiApprovalSnapshot, isPolish, (r) =>
+            setSelectedSnapshotId(r.snapshotId)
+          ),
         defaultSort: { columnId: 'approvedAt', direction: 'desc' },
       }}
-      preview={selected ? buildRoiApprovalSnapshotPreview(selected, isPolish, () => setSelectedSnapshotId(null)) : null}
+      preview={
+        selected
+          ? buildRoiApprovalSnapshotPreview(selected, isPolish, () => setSelectedSnapshotId(null))
+          : null
+      }
     />
   );
 };

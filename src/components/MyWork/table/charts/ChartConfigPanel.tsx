@@ -88,7 +88,9 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
           onChange={(e) => update('xFieldId', e.target.value)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
-          <option value="">{t('myWorkTable.chartConfigPanel.selectField', 'Select field...')}</option>
+          <option value="">
+            {t('myWorkTable.chartConfigPanel.selectField', 'Select field...')}
+          </option>
           {fields.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
@@ -109,7 +111,9 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
           onChange={(e) => update('yFieldId', e.target.value || undefined)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
-          <option value="">{t('myWorkTable.chartConfigPanel.noneCountOnly', 'None (count only)')}</option>
+          <option value="">
+            {t('myWorkTable.chartConfigPanel.noneCountOnly', 'None (count only)')}
+          </option>
           {numericFields.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}

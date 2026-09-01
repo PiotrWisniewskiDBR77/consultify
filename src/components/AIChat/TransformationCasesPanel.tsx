@@ -37,6 +37,7 @@ import {
   type TransformationPlanStepDto,
 } from '@/services/api/v8/transformation-cases';
 import { useAppStore } from '@/store/useAppStore';
+
 import { ProjectTeamCard } from './ProjectTeamCard';
 
 type FinalOutputPublicationState = FinalOutputPublicationProposalDto & {

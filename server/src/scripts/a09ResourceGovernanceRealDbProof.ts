@@ -99,10 +99,7 @@ async function main(): Promise<void> {
     `SELECT status, COUNT(*)::int AS count FROM v8_agent_resource_reservations
      WHERE project_id='project-concurrency' GROUP BY status`
   );
-  assert.equal(
-    concurrentRows.rows.find((row) => row.status === 'settled')?.count,
-    2
-  );
+  assert.equal(concurrentRows.rows.find((row) => row.status === 'settled')?.count, 2);
   assert.equal(concurrentRows.rows.find((row) => row.status === 'denied')?.count, 18);
 
   let budgetCallbacks = 0;

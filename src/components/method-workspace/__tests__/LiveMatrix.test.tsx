@@ -24,7 +24,11 @@ function ControlledMatrix() {
       selection={selection}
       onSelect={setSelection}
       onCloseSideSheet={() => setSelection(null)}
-      renderSideSheet={(sel) => <p>Pytania dla {sel.unitId} / poziom {sel.level}</p>}
+      renderSideSheet={(sel) => (
+        <p>
+          Pytania dla {sel.unitId} / poziom {sel.level}
+        </p>
+      )}
       methodName="DRD"
     />
   );
@@ -122,7 +126,16 @@ describe('LiveMatrix — an unassessed area never looks like a blocker or an evi
 
   it('an untouched, not-yet-reached cell gets a calm neutral border — no dashed/amber, no danger, regardless of the unit-level evidenceState', () => {
     const row = rowWith([
-      { ...cellBase, level: 1, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: false },
+      {
+        ...cellBase,
+        level: 1,
+        achieved: false,
+        target: false,
+        answerState: 'unresolved',
+        evidenceState: 'missing',
+        reviewRequired: false,
+        blocker: false,
+      },
     ]);
     render(
       <LiveMatrix
@@ -144,7 +157,16 @@ describe('LiveMatrix — an unassessed area never looks like a blocker or an evi
 
   it('a REAL blocker (the current frontier, work has started) is visually distinct from an untouched cell — border-c-danger', () => {
     const row = rowWith([
-      { ...cellBase, level: 1, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: true },
+      {
+        ...cellBase,
+        level: 1,
+        achieved: false,
+        target: false,
+        answerState: 'unresolved',
+        evidenceState: 'missing',
+        reviewRequired: false,
+        blocker: true,
+      },
     ]);
     render(
       <LiveMatrix
@@ -163,7 +185,16 @@ describe('LiveMatrix — an unassessed area never looks like a blocker or an evi
 
   it('a genuinely engaged evidence gap (achieved level, no evidence attached) is distinct from both the untouched cell and the blocker — dashed amber', () => {
     const row = rowWith([
-      { ...cellBase, level: 1, achieved: true, target: false, answerState: 'confirmed', evidenceState: 'missing', reviewRequired: false, blocker: false },
+      {
+        ...cellBase,
+        level: 1,
+        achieved: true,
+        target: false,
+        answerState: 'confirmed',
+        evidenceState: 'missing',
+        reviewRequired: false,
+        blocker: false,
+      },
     ]);
     render(
       <LiveMatrix
@@ -184,7 +215,16 @@ describe('LiveMatrix — an unassessed area never looks like a blocker or an evi
 
   it('the accessible name of an untouched cell never claims "brak dowodu" — it says it is simply not assessed yet', () => {
     const row = rowWith([
-      { ...cellBase, level: 3, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: false },
+      {
+        ...cellBase,
+        level: 3,
+        achieved: false,
+        target: false,
+        answerState: 'unresolved',
+        evidenceState: 'missing',
+        reviewRequired: false,
+        blocker: false,
+      },
     ]);
     render(
       <LiveMatrix

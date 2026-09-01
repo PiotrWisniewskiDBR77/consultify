@@ -53,7 +53,10 @@ interface FinanceErrorBoundaryState {
   errorMessage: string | null;
 }
 
-export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryProps, FinanceErrorBoundaryState> {
+export class FinanceErrorBoundary extends React.Component<
+  FinanceErrorBoundaryProps,
+  FinanceErrorBoundaryState
+> {
   constructor(props: FinanceErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, correlationId: null, errorMessage: null };
@@ -72,7 +75,13 @@ export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryPr
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // eslint-disable-next-line no-console
-    console.error('[FinanceErrorBoundary]', this.props.documentLabel, this.state.correlationId, error, errorInfo);
+    console.error(
+      '[FinanceErrorBoundary]',
+      this.props.documentLabel,
+      this.state.correlationId,
+      error,
+      errorInfo
+    );
   }
 
   private handleRetry = (): void => {
@@ -95,10 +104,12 @@ export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryPr
         className="flex min-h-[240px] flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-c-border-subtle bg-c-surface px-6 py-10 text-center"
       >
         <div className="max-w-md space-y-2">
-          <p className="text-sm font-semibold text-c-text">Nie udało się wyświetlić: {documentLabel}</p>
+          <p className="text-sm font-semibold text-c-text">
+            Nie udało się wyświetlić: {documentLabel}
+          </p>
           <p className="text-xs text-c-text-muted">
-            Wystąpił nieoczekiwany błąd w tym dokumencie. Reszta obszaru roboczego (lista, pasek, inne dokumenty)
-            działa dalej — Twój wybrany artefakt i niezapisane zmiany są zachowane.
+            Wystąpił nieoczekiwany błąd w tym dokumencie. Reszta obszaru roboczego (lista, pasek,
+            inne dokumenty) działa dalej — Twój wybrany artefakt i niezapisane zmiany są zachowane.
           </p>
           {errorMessage && (
             <p className="text-xs text-c-text-muted">
@@ -106,7 +117,10 @@ export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryPr
             </p>
           )}
           {correlationId && (
-            <p className="text-xs text-c-text-muted" data-testid="finance-error-boundary-correlation-id">
+            <p
+              className="text-xs text-c-text-muted"
+              data-testid="finance-error-boundary-correlation-id"
+            >
               ID zgłoszenia: <span className="font-mono select-all">{correlationId}</span>
             </p>
           )}

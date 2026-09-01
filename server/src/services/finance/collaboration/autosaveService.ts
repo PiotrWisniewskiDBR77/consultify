@@ -28,8 +28,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { canonicalPayloadHash } from '../canonical/contentHash.js';
 import type { FinanceUnsavedOperationStackEntry } from '../../../types/finance/WorkspaceState.js';
+import { canonicalPayloadHash } from '../canonical/contentHash.js';
 
 // ---------------------------------------------------------------------------
 // Sync/Saved/Conflict — explicit enum returned to the frontend (task brief,
@@ -42,7 +42,11 @@ import type { FinanceUnsavedOperationStackEntry } from '../../../types/finance/W
 export const AutosaveStateValues = ['SYNCING', 'SAVED', 'CONFLICT'] as const;
 export type AutosaveState = (typeof AutosaveStateValues)[number];
 
-export const CheckpointSourceValues = ['AUTOSAVE', 'EXPLICIT_SAVE', 'CRASH_RECOVERY_RESTORE'] as const;
+export const CheckpointSourceValues = [
+  'AUTOSAVE',
+  'EXPLICIT_SAVE',
+  'CRASH_RECOVERY_RESTORE',
+] as const;
 export type CheckpointSource = (typeof CheckpointSourceValues)[number];
 
 // ---------------------------------------------------------------------------
@@ -105,14 +109,21 @@ export type CheckpointResult =
     }
   | { ok: false; state: 'SYNCING'; code: 'NOT_FOUND'; message: string };
 
-export async function checkpointOperationStack(params: CheckpointOperationStackParams): Promise<CheckpointResult> {
+export async function checkpointOperationStack(
+  params: CheckpointOperationStackParams
+): Promise<CheckpointResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<WorkingRevisionCheckpointRow>(
       `SELECT * FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true FOR UPDATE`,
       [params.artifactId, params.organizationId]
     );
     if (!current) {
-      return { ok: false, state: 'SYNCING', code: 'NOT_FOUND', message: 'No current working revision for this artifact' };
+      return {
+        ok: false,
+        state: 'SYNCING',
+        code: 'NOT_FOUND',
+        message: 'No current working revision for this artifact',
+      };
     }
 
     if (current.working_revision_id !== params.expectedWorkingRevisionId) {
@@ -138,9 +149,10 @@ export async function checkpointOperationStack(params: CheckpointOperationStackP
     // Demote-then-INSERT, same ordering `reopenVersion()` uses (partial
     // unique index `uq_finance_wr_one_current` requires exactly this order
     // within one transaction/connection).
-    await tx.queryRun(`UPDATE finance_working_revisions SET is_current = false WHERE artifact_id = ? AND is_current = true`, [
-      params.artifactId,
-    ]);
+    await tx.queryRun(
+      `UPDATE finance_working_revisions SET is_current = false WHERE artifact_id = ? AND is_current = true`,
+      [params.artifactId]
+    );
 
     const inserted = await tx.queryOne<WorkingRevisionCheckpointRow>(
       `INSERT INTO finance_working_revisions (
@@ -199,11 +211,27 @@ export async function peekAutosaveState(params: {
   organizationId: string;
   artifactId: string;
   expectedWorkingRevisionId: string | null;
-}): Promise<{ state: AutosaveState; currentWorkingRevisionId: string | null; currentRevisionSeq: number | null }> {
+}): Promise<{
+  state: AutosaveState;
+  currentWorkingRevisionId: string | null;
+  currentRevisionSeq: number | null;
+}> {
   const current = await getCurrentWorkingRevision(params);
-  if (!current) return { state: 'SYNCING', currentWorkingRevisionId: null, currentRevisionSeq: null };
-  if (!params.expectedWorkingRevisionId || current.working_revision_id === params.expectedWorkingRevisionId) {
-    return { state: 'SAVED', currentWorkingRevisionId: current.working_revision_id, currentRevisionSeq: Number(current.revision_seq) };
+  if (!current)
+    return { state: 'SYNCING', currentWorkingRevisionId: null, currentRevisionSeq: null };
+  if (
+    !params.expectedWorkingRevisionId ||
+    current.working_revision_id === params.expectedWorkingRevisionId
+  ) {
+    return {
+      state: 'SAVED',
+      currentWorkingRevisionId: current.working_revision_id,
+      currentRevisionSeq: Number(current.revision_seq),
+    };
   }
-  return { state: 'CONFLICT', currentWorkingRevisionId: current.working_revision_id, currentRevisionSeq: Number(current.revision_seq) };
+  return {
+    state: 'CONFLICT',
+    currentWorkingRevisionId: current.working_revision_id,
+    currentRevisionSeq: Number(current.revision_seq),
+  };
 }

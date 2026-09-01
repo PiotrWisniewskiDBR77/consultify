@@ -21,17 +21,23 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import * as artifactLinkService from '../../artifactLinkService.js';
 import {
-  KPI_CREATE_CAPABILITY_ID,
-  KPI_CREATE_CAPABILITY_VERSION,
   buildKpiCreateBinding,
   getKpiReadback,
-  kpiCreateRegistrationInput,
+  KPI_CREATE_CAPABILITY_ID,
+  KPI_CREATE_CAPABILITY_VERSION,
   type KpiAdapterDeps,
+  kpiCreateRegistrationInput,
 } from '../../adapters/kpiAdapter.js';
-import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
+import * as artifactLinkService from '../../artifactLinkService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import {
+  buildEnvelope,
+  seedCaseFixture,
+  seedMember,
+  seedMemberedUser,
+  teardownCaseFixture,
+} from './_fixtures.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -165,13 +171,19 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [KPI_TEST_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+        KPI_TEST_CAPABILITY_ID,
+      ])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
       .catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId])
+      .catch(() => undefined);
     await control?.end().catch(() => undefined);
   }, 60_000);
 
@@ -180,9 +192,10 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
   });
 
   async function kpiCountForOrg(orgId: string): Promise<number> {
-    const result = await control.query(`SELECT count(*)::int AS n FROM initiative_kpis WHERE organization_id = $1`, [
-      orgId,
-    ]);
+    const result = await control.query(
+      `SELECT count(*)::int AS n FROM initiative_kpis WHERE organization_id = $1`,
+      [orgId]
+    );
     return Number(result.rows[0]?.n ?? 0);
   }
 
@@ -283,8 +296,12 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       await control
         .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId])
+        .catch(() => undefined);
       await teardownCaseFixture(control, fixture);
     }
   }, 90_000);
@@ -452,7 +469,9 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
           fixture.actorId,
         ])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId])
+        .catch(() => undefined);
       await teardownCaseFixture(control, fixture);
     }
   }, 90_000);

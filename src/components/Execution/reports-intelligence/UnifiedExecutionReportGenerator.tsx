@@ -93,7 +93,8 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
   // Polish pass item 10: a bare "INCOMPLETE" forces the user to hunt across
   // nine fields for the one they missed. List which ones, by their own label.
   const missingFieldLabels = [
-    !selectedDefinition && t('execution.reports.intelligence.generator.definition', 'Published definition'),
+    !selectedDefinition &&
+      t('execution.reports.intelligence.generator.definition', 'Published definition'),
     !form.reportRunId && t('execution.reports.intelligence.generator.runId', 'Report run ID'),
     !form.purpose && t('execution.reports.intelligence.generator.purpose', 'Purpose'),
     !form.audience && t('execution.reports.intelligence.generator.audience', 'Audience'),

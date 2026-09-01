@@ -31,4 +31,3 @@ describe('Menu3Chip selection semantics', () => {
     expect(screen.getByRole('button', { name: 'Clear' })).not.toHaveAttribute('aria-pressed');
   });
 });
-

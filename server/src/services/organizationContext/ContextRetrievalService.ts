@@ -287,7 +287,7 @@ async function tryRagSearch(input: {
         confidence:
           typeof chunk?.metadata?.confidence === 'number'
             ? Number(chunk.metadata.confidence)
-              : null,
+            : null,
         relevance: Number(chunk?.hybridScore ?? chunk?.score ?? chunk?.similarity ?? 0),
       };
     });

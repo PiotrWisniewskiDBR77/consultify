@@ -28,21 +28,16 @@
  * network is reachable — `refresh()` always re-asks the server.
  */
 
-import type {
-  MethodEvent,
-  MethodEventType,
-  MethodProcessRole,
-  MethodSession,
-  MethodSessionState,
-  TeresaPreview,
-} from '@/method-core/contracts';
-
 import {
   appendEvent,
   createInitiativeDraft,
+  type CreateInitiativeDraftRequest,
   createReport,
+  type CreateReportRequest,
   createSession as apiCreateSession,
+  type CreateSessionRequest,
   freeze as apiFreeze,
+  type FreezeResponse,
   getOutput,
   getSession,
   isOfflineError,
@@ -52,19 +47,23 @@ import {
   listOutputs,
   listReports,
   MethodCoreApiError,
+  type MethodOutputSummary,
   newIdempotencyKey,
   teresaCommit,
-  teresaPreview,
-  transition as apiTransition,
-  type CreateInitiativeDraftRequest,
-  type CreateReportRequest,
-  type CreateSessionRequest,
-  type FreezeResponse,
-  type MethodOutputSummary,
   type TeresaCommitOutcome,
   type TeresaCommitRequestInput,
+  teresaPreview,
   type TeresaPreviewRequest,
+  transition as apiTransition,
 } from '@/method-core/api/methodCoreApi';
+import type {
+  MethodEvent,
+  MethodEventType,
+  MethodProcessRole,
+  MethodSession,
+  MethodSessionState,
+  TeresaPreview,
+} from '@/method-core/contracts';
 
 export type DrdHttpRuntimeStatus =
   | 'loading'
@@ -196,7 +195,10 @@ export class DrdHttpSessionRuntime {
     } catch {
       // Ignore a corrupt cache entry — refresh() below is the real source.
     }
-    this.state = { ...this.state, pendingWriteCount: readPending(this.storage, this.sessionId).length };
+    this.state = {
+      ...this.state,
+      pendingWriteCount: readPending(this.storage, this.sessionId).length,
+    };
   }
 
   /** Always re-asks the server. This is the ONLY method that resolves
@@ -212,7 +214,11 @@ export class DrdHttpSessionRuntime {
       let reports = this.state.reports;
       let initiatives = this.state.initiatives;
       if (session.state === 'frozen' || session.state === 'closed') {
-        const listed = await listOutputs({ sessionId: this.sessionId, status: 'current', limit: 100 });
+        const listed = await listOutputs({
+          sessionId: this.sessionId,
+          status: 'current',
+          limit: 100,
+        });
         const latest = [...listed.outputs]
           .filter((candidate) => candidate.sessionId === this.sessionId)
           .sort((a, b) => (b.outputVersion ?? -1) - (a.outputVersion ?? -1))[0];
@@ -245,7 +251,17 @@ export class DrdHttpSessionRuntime {
         reports = [];
         initiatives = [];
       }
-      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, output, reports, initiatives });
+      this.setState({
+        status: 'ready',
+        session,
+        roles,
+        events,
+        error: null,
+        serverVersion: null,
+        output,
+        reports,
+        initiatives,
+      });
     } catch (err) {
       this.handleFailure(err);
     }
@@ -258,7 +274,11 @@ export class DrdHttpSessionRuntime {
     }
     if (isVersionConflict(err)) {
       const currentVersion = (err as MethodCoreApiError).body.currentVersion as number;
-      this.setState({ status: 'conflict', serverVersion: currentVersion, error: 'Sesja zmieniła się na serwerze.' });
+      this.setState({
+        status: 'conflict',
+        serverVersion: currentVersion,
+        error: 'Sesja zmieniła się na serwerze.',
+      });
       return;
     }
     const message = err instanceof Error ? err.message : 'Nieznany błąd';
@@ -291,13 +311,21 @@ export class DrdHttpSessionRuntime {
   // flow because a local draft could look persisted. Existing queue helpers
   // remain only so an old browser can explicitly discard/reconcile residue.
 
-  private async runWrite(_kind: PendingWrite['kind'], _idempotencyKey: string, _payload: unknown, exec: () => Promise<void>): Promise<void> {
+  private async runWrite(
+    _kind: PendingWrite['kind'],
+    _idempotencyKey: string,
+    _payload: unknown,
+    exec: () => Promise<void>
+  ): Promise<void> {
     try {
       await exec();
       await this.refresh();
     } catch (err) {
       if (isOfflineError(err)) {
-        this.setState({ status: 'offline', error: 'Brak połączenia — zmiana nie została zapisana.' });
+        this.setState({
+          status: 'offline',
+          error: 'Brak połączenia — zmiana nie została zapisana.',
+        });
         throw err;
       }
       this.handleFailure(err);
@@ -316,9 +344,22 @@ export class DrdHttpSessionRuntime {
   }): Promise<void> {
     const idemKey = `answer:${input.questionId}:${input.draft ? 'draft' : 'confirmed'}:${newIdempotencyKey()}`;
     const type: MethodEventType = input.draft ? 'ANSWER_DRAFTED' : 'ANSWER_CONFIRMED';
-    const payload = { questionId: input.questionId, answerState: input.answerState, text: input.text, justification: input.justification };
-    await this.runWrite('event', idemKey, { type, unitId: input.unitId, level: input.level, payload }, () =>
-      appendEvent(this.sessionId, { type, unitId: input.unitId, level: input.level, actorKind: 'human', payload }, idemKey).then(() => undefined)
+    const payload = {
+      questionId: input.questionId,
+      answerState: input.answerState,
+      text: input.text,
+      justification: input.justification,
+    };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type, unitId: input.unitId, level: input.level, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          { type, unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          idemKey
+        ).then(() => undefined)
     );
   }
 
@@ -344,21 +385,46 @@ export class DrdHttpSessionRuntime {
       () =>
         appendEvent(
           this.sessionId,
-          { type: 'EVIDENCE_ATTACHED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          {
+            type: 'EVIDENCE_ATTACHED',
+            unitId: input.unitId,
+            level: input.level,
+            actorKind: 'human',
+            payload,
+          },
           idemKey
         ).then(() => undefined)
     );
   }
 
-  async recordTargetDecision(input: { unitId: string; level: number; rationale: string }): Promise<void> {
+  async recordTargetDecision(input: {
+    unitId: string;
+    level: number;
+    rationale: string;
+  }): Promise<void> {
     const idemKey = `target-decision:${input.unitId}:${input.level}:${newIdempotencyKey()}`;
-    const payload = { decisionId: newIdempotencyKey(), subject: 'target_level' as const, decidedValue: input.level, rationale: input.rationale };
-    await this.runWrite('event', idemKey, { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, payload }, () =>
-      appendEvent(
-        this.sessionId,
-        { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
-        idemKey
-      ).then(() => undefined)
+    const payload = {
+      decisionId: newIdempotencyKey(),
+      subject: 'target_level' as const,
+      decidedValue: input.level,
+      rationale: input.rationale,
+    };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          {
+            type: 'DECISION_APPROVED',
+            unitId: input.unitId,
+            level: input.level,
+            actorKind: 'human',
+            payload,
+          },
+          idemKey
+        ).then(() => undefined)
     );
   }
 
@@ -391,7 +457,13 @@ export class DrdHttpSessionRuntime {
         // Best-effort — a reload losing the pointer is a documented gap,
         // not a correctness bug (never fabricates content either way).
       }
-      this.setState({ status: 'ready', session: res.session, error: null, serverVersion: null, output: res.output });
+      this.setState({
+        status: 'ready',
+        session: res.session,
+        error: null,
+        serverVersion: null,
+        output: res.output,
+      });
       return res;
     } catch (err) {
       this.handleFailure(err);
@@ -408,7 +480,9 @@ export class DrdHttpSessionRuntime {
 
   async generateReport(input: CreateReportRequest): Promise<unknown> {
     if (!this.state.output) {
-      throw new Error('drd-http-runtime: cannot generate a Report Snapshot without a loaded Output');
+      throw new Error(
+        'drd-http-runtime: cannot generate a Report Snapshot without a loaded Output'
+      );
     }
     const report = await createReport(this.state.output.id, input);
     this.setState({ reports: [...this.state.reports, report] });
@@ -417,7 +491,9 @@ export class DrdHttpSessionRuntime {
 
   async generateInitiativeDraft(input: CreateInitiativeDraftRequest): Promise<unknown> {
     if (!this.state.output) {
-      throw new Error('drd-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output');
+      throw new Error(
+        'drd-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output'
+      );
     }
     const draft = await createInitiativeDraft(this.state.output.id, input);
     this.setState({ initiatives: [...this.state.initiatives, draft] });
@@ -456,8 +532,23 @@ export class DrdHttpSessionRuntime {
     for (const item of pending) {
       try {
         if (item.kind === 'event') {
-          const p = item.payload as { type: MethodEventType; unitId?: string; level?: number; payload: unknown };
-          await appendEvent(this.sessionId, { type: p.type, unitId: p.unitId, level: p.level, actorKind: 'human', payload: p.payload }, item.idempotencyKey);
+          const p = item.payload as {
+            type: MethodEventType;
+            unitId?: string;
+            level?: number;
+            payload: unknown;
+          };
+          await appendEvent(
+            this.sessionId,
+            {
+              type: p.type,
+              unitId: p.unitId,
+              level: p.level,
+              actorKind: 'human',
+              payload: p.payload,
+            },
+            item.idempotencyKey
+          );
         } else {
           const p = item.payload as { type: MethodSessionState };
           await apiTransition(this.sessionId, { to: p.type }, item.idempotencyKey);

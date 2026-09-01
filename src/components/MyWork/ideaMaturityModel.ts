@@ -172,8 +172,7 @@ export const IDEA_MATURITY_GATES: Record<MaturityStageId, MaturityCriterion[]> =
         en: 'Title is set and the description/body says more than a few words.',
         pl: 'Tytuł jest ustawiony, a opis/treść to więcej niż kilka słów.',
       },
-      evaluate: (i) =>
-        nonTrivial(i.title, 3) && (nonTrivial(i.body) || nonTrivial(i.seedText)),
+      evaluate: (i) => nonTrivial(i.title, 3) && (nonTrivial(i.body) || nonTrivial(i.seedText)),
     },
     {
       id: 'spark_source',
@@ -398,8 +397,7 @@ export function evaluateIdeaMaturity(
   const nextIdx = computedIdx + 1;
   const nextStage = nextIdx < MATURITY_STAGE_ORDER.length ? MATURITY_STAGE_ORDER[nextIdx] : null;
   const blockersForNext = nextStage
-    ? (stages.find((s) => s.id === nextStage)?.criteria.filter((c) => c.mandatory && !c.met) ??
-      [])
+    ? (stages.find((s) => s.id === nextStage)?.criteria.filter((c) => c.mandatory && !c.met) ?? [])
     : [];
 
   return { stages, storedBucket, computedBucket, overclaimed, nextStage, blockersForNext };

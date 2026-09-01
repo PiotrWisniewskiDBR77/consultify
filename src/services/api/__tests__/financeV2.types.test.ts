@@ -10,13 +10,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   describeFinanceV2Error,
+  type FinanceValue,
   financeValueDisplayReasonLabel,
   financeValueStatusLabel,
   financeValueToArithmeticOperand,
   formatFinanceValueForDisplay,
   isMissingFinanceValue,
   isPresentFinanceValue,
-  type FinanceValue,
 } from '../financeV2.types';
 
 function value(status: FinanceValue['status'], valueDecimal: string | null): FinanceValue {
@@ -62,7 +62,9 @@ describe('financeV2.types — MISSING ≠ 0 (twarda zasada produktu)', () => {
   });
 
   it('PRESENT_NONZERO → parsuje dokładny string dziesiętny', () => {
-    expect(financeValueToArithmeticOperand(value('PRESENT_NONZERO', '1234.56'))).toBeCloseTo(1234.56);
+    expect(financeValueToArithmeticOperand(value('PRESENT_NONZERO', '1234.56'))).toBeCloseTo(
+      1234.56
+    );
   });
 
   it('isPresentFinanceValue/isMissingFinanceValue rozróżniają wszystkie 5 statusów', () => {
@@ -101,7 +103,9 @@ describe('financeV2.types — formatFinanceValueForDisplay (UI nigdy nie rysuje 
   });
 
   it('wartość ujemna renderuje się poprawnie (nie gubi znaku)', () => {
-    const display = formatFinanceValueForDisplay(value('PRESENT_NONZERO', '-125000.5'), (n) => n.toString());
+    const display = formatFinanceValueForDisplay(value('PRESENT_NONZERO', '-125000.5'), (n) =>
+      n.toString()
+    );
     expect(display.text).toBe('-125000.5');
     expect(display.text.startsWith('-')).toBe(true);
   });
@@ -109,7 +113,13 @@ describe('financeV2.types — formatFinanceValueForDisplay (UI nigdy nie rysuje 
 
 describe('financeV2.types — financeValueStatusLabel (Pakiet D fix: raw enum "PRESENT_NONZERO" no longer leaks to the UI as a label)', () => {
   it('covers all five FinanceValueStatus values with a non-empty human label', () => {
-    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const statuses: FinanceValue['status'][] = [
+      'PRESENT_ZERO',
+      'PRESENT_NONZERO',
+      'MISSING',
+      'NA',
+      'NOT_APPLICABLE',
+    ];
     for (const status of statuses) {
       const label = financeValueStatusLabel(status);
       expect(typeof label).toBe('string');
@@ -118,7 +128,13 @@ describe('financeV2.types — financeValueStatusLabel (Pakiet D fix: raw enum "P
   });
 
   it('NEGATIVE CONTROL — all five labels are pairwise distinct (never two different statuses collapsing onto one shared word)', () => {
-    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const statuses: FinanceValue['status'][] = [
+      'PRESENT_ZERO',
+      'PRESENT_NONZERO',
+      'MISSING',
+      'NA',
+      'NOT_APPLICABLE',
+    ];
     const labels = statuses.map((s) => financeValueStatusLabel(s));
     expect(new Set(labels).size).toBe(statuses.length);
   });
@@ -134,11 +150,15 @@ describe('financeV2.types — financeValueStatusLabel (Pakiet D fix: raw enum "P
   it('MISSING/NA/NOT_APPLICABLE status labels are distinct from their own financeValueDisplayReasonLabel — status and reason render as two separate rows in SourceEvidencePanel and must never show identical text', () => {
     expect(financeValueStatusLabel('MISSING')).not.toBe(financeValueDisplayReasonLabel('MISSING'));
     expect(financeValueStatusLabel('NA')).not.toBe(financeValueDisplayReasonLabel('NA'));
-    expect(financeValueStatusLabel('NOT_APPLICABLE')).not.toBe(financeValueDisplayReasonLabel('NOT_APPLICABLE'));
+    expect(financeValueStatusLabel('NOT_APPLICABLE')).not.toBe(
+      financeValueDisplayReasonLabel('NOT_APPLICABLE')
+    );
   });
 
   it('PRESENT_ZERO and PRESENT_NONZERO labels are distinct from each other — a true zero must read differently from "has a value"', () => {
-    expect(financeValueStatusLabel('PRESENT_ZERO')).not.toBe(financeValueStatusLabel('PRESENT_NONZERO'));
+    expect(financeValueStatusLabel('PRESENT_ZERO')).not.toBe(
+      financeValueStatusLabel('PRESENT_NONZERO')
+    );
   });
 });
 

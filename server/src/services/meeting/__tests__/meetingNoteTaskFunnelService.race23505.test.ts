@@ -83,7 +83,10 @@ function buildMockQuery() {
       return state.otherWriterCommitted
         ? {
             rows: [
-              { source_type: EXISTING_TASK_ROW.source_type, source_id: EXISTING_TASK_ROW.source_id },
+              {
+                source_type: EXISTING_TASK_ROW.source_type,
+                source_id: EXISTING_TASK_ROW.source_id,
+              },
             ],
             rowCount: 1,
           }

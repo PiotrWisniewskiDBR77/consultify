@@ -94,7 +94,12 @@ const docs = [
   },
 ];
 
-const safe = { id: 'project-1', name: 'AGD Nord', type: 'project' as const, projectId: 'project-1' };
+const safe = {
+  id: 'project-1',
+  name: 'AGD Nord',
+  type: 'project' as const,
+  projectId: 'project-1',
+};
 
 describe('VaultDocumentsView bulk bar — per-item receipts (MYW-CV-REC-003)', () => {
   beforeEach(() => {
@@ -160,7 +165,9 @@ describe('VaultDocumentsView bulk bar — per-item receipts (MYW-CV-REC-003)', (
 
     const panel = await screen.findByTestId('vault-bulk-receipts');
     fireEvent.click(screen.getByLabelText('Zamknij'));
-    await waitFor(() => expect(screen.queryByTestId('vault-bulk-receipts')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('vault-bulk-receipts')).not.toBeInTheDocument()
+    );
     expect(panel).toBeTruthy();
   });
 });

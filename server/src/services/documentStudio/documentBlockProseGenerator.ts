@@ -14,10 +14,9 @@
  *     ANY failure path (AI freeze / `FEATURE_UNAVAILABLE`, empty
  *     response, invalid JSON, schema-violating response) it returns the
  *     deterministic schema UNCHANGED. No throw ever escapes.
- *   - It only REWRITES the text/items of existing prose blocks. It never
- *     adds, removes, or reorders blocks or sections, never changes block
- *     types, and never touches structured blocks (tables, charts, KPI
- *     strips, images, citations, footnotes).
+ *   - It rewrites the text/items of existing prose blocks. A multi-paragraph
+ *     response for a paragraph target is materialized as ordered paragraph
+ *     blocks so grounding remains granular. Structured blocks are untouched.
  *   - Generation is grounded: the prompt carries the document intake,
  *     audience, register, language and the available source-pack titles,
  *     and instructs the model to flag any claim that goes beyond the
@@ -28,10 +27,11 @@ import { generateChatResponse } from '../aiService.js';
 import { enforceBlockGrounding } from './documentBlockContentGenerator.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
-  documentSourceRefEvidenceText,
+  type DocumentBlock,
   type DocumentIntake,
   type DocumentSchema,
   type DocumentSourceRef,
+  documentSourceRefEvidenceText,
 } from './documentStudioTypes.js';
 
 /** Block types whose prose we enrich. Structured blocks are left alone. */
@@ -60,7 +60,7 @@ const PROSE_BATCH_SIZE = 2;
 /** Górny cap tokenów na jedną partię (bloki tabelaryczne bywają kosztowne). */
 const MAX_TOKENS_PER_BATCH = 4096;
 /** Budżet tokenów na blok w partii (tabele GFM potrzebują zapasu). */
-const TOKENS_PER_BLOCK = 700;
+const TOKENS_PER_BLOCK = 1200;
 /** Próby na jedną partię — jedno ponowienie łapie sporadyczny wolny/nieudany call. */
 const MAX_BATCH_ATTEMPTS = 2;
 /**
@@ -179,7 +179,7 @@ function buildSystemPrompt(schema: DocumentSchema): string {
     // Polish znacznika (naprawa 2026-07-22): w praktyce ten sam znacznik potrafił
     // powtórzyć się w kolejnych zdaniach akapitu przy tej samej wartości.
     'Within a single paragraph, mark the same or a closely related assumed value only once — write the following sentences in confident prose without repeating the marker, and do not mark a value that is derived directly from an assumption already marked earlier in the paragraph.',
-    'For "text" blocks return a single tight paragraph. For "items" blocks return 2-5 crisp bullet points.',
+    'For "text" blocks return 4-6 substantial paragraphs separated by a blank line; aim for 350-450 words per text block. Give each paragraph one clear job: context, diagnosis, implications, recommendation, or next step. For "items" blocks return 2-5 crisp bullet points.',
     // N-9: tabelaryczne sekcje muszą dostać tabelę, nie samą prozę. Renderer
     // oddaje "text" verbatim, więc tabela GFM w polu "text" trafia do edytora.
     'TABLES: When a section is inherently tabular — scenario comparisons with costs/ROI, risk maps/matrices, quarterly roadmaps or schedules, KPI summaries, vendor/option comparisons, milestones — the "text" field MUST contain a valid GFM Markdown table (a header row like "| Col | Col |", a separator row "|---|---|", then data rows), optionally preceded by one short framing sentence. Use literal newlines inside the JSON string (\\n). Never wrap the table in code fences. Use prose for non-tabular sections.',
@@ -227,6 +227,17 @@ function buildUserPrompt(
   ].join('\n');
 }
 
+/**
+ * N-9 predicate: does this block payload carry a GFM table row? A paragraph
+ * that does must NEVER be flagged `isAssumption`, because
+ * `documentSchemaRenderer` appends the inline `_[Assumption]_` suffix straight
+ * after the final `| … |` row, which breaks the row's table membership in
+ * `marked` and renders the table as broken text.
+ */
+function carriesGfmTable(content: Record<string, unknown>): boolean {
+  return typeof content.text === 'string' && /^\s*\|.*\|\s*$/m.test(content.text);
+}
+
 function safeParseJson(raw: string): LlmBlockProseResponse | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -236,6 +247,13 @@ function safeParseJson(raw: string): LlmBlockProseResponse | null {
     .trim();
   try {
     const parsed = JSON.parse(fenceStripped);
+    // FIX-195 (1): the model answers the "fill these blocks" prompt with a BARE
+    // ARRAY at least as often as with `{ "blocks": [...] }` — measured on the
+    // real provider by the day-195 acceptance (3/3 runs returned an array, the
+    // `isRecord` guard rejected all three and the document silently degraded to
+    // `llm_prose_fallback`, i.e. ZERO model prose). Both shapes are the same
+    // payload; wrap the array so the caller's `parsed.blocks` contract holds.
+    if (Array.isArray(parsed)) return { blocks: parsed } as LlmBlockProseResponse;
     return isRecord(parsed) ? (parsed as LlmBlockProseResponse) : null;
   } catch {
     return null;
@@ -385,32 +403,67 @@ export async function generateBlockProse(
     .filter(Boolean)
     .join(' — ');
   for (const section of next.sections) {
+    const materializedBlocks: DocumentBlock[] = [];
     for (const block of section.blocks) {
       const payload = generated.get(block.blockId);
-      if (!payload) continue;
+      if (!payload) {
+        materializedBlocks.push(block);
+        continue;
+      }
       const content = isRecord(block.content) ? { ...block.content } : {};
       if (payload.items) {
         content.items = payload.items;
       } else if (payload.text !== undefined) {
         content.text = payload.text;
       }
+      const paragraphs =
+        block.type === 'paragraph' && typeof content.text === 'string'
+          ? content.text
+              .split(/\r?\n\s*\r?\n+/)
+              .map((paragraph) => paragraph.trim())
+              .filter(Boolean)
+          : [];
+      if (paragraphs.length > 1) {
+        paragraphs.forEach((paragraph, index) => {
+          const guarded = enforceBlockGrounding({ ...content, text: paragraph }, groundingSource);
+          materializedBlocks.push({
+            ...block,
+            blockId: index === 0 ? block.blockId : `${block.blockId}-paragraph-${index + 1}`,
+            content: guarded.content,
+            // FIX-195 (4): N-9 must hold on THIS branch too. The split branch
+            // was added by the granularity work and dropped the table guard,
+            // so a model answer of "framing paragraph \n\n GFM table" put the
+            // inline "_[Assumption]_" suffix right after the final "| … |" row
+            // and broke the table. `carriesGfmTable` is evaluated per
+            // materialized paragraph, unconditionally — same rule as below.
+            isAssumption: carriesGfmTable(guarded.content)
+              ? false
+              : guarded.changed || sourceRefs.length === 0,
+          });
+        });
+        continue;
+      }
       const guarded = enforceBlockGrounding(content, groundingSource);
       block.content = guarded.content;
       // The block is now grounded in (or explicitly flagged against) the
       // source pack, so it is no longer a bare structural assumption.
       block.isAssumption = guarded.changed || sourceRefs.length === 0;
-      // N-9: a paragraph carrying a GFM table must NOT get the inline
-      // "_[Assumption]_" suffix from the renderer — appended after the final
-      // "| … |" row it breaks the row's table membership in marked. Concrete
-      // table content is not a bare assumption, so clear the flag.
-      if (
-        !guarded.changed &&
-        typeof guarded.content.text === 'string' &&
-        /^\s*\|.*\|\s*$/m.test(guarded.content.text)
-      ) {
-        block.isAssumption = sourceRefs.length === 0;
+      // N-9: a paragraph carrying a GFM table must NEVER get the inline
+      // "_[Assumption]_" suffix from the renderer (documentSchemaRenderer.ts
+      // appends it right after the final "| … |" row), because that breaks
+      // the row's table membership in marked and the table renders broken.
+      // This must hold unconditionally — including when guarded.changed is
+      // true (e.g. R1 introduces a number not present in the source pack) —
+      // since D-8 now PRESERVES unsupported-number sentences instead of
+      // replacing them, so `changed` no longer implies the text was blanked.
+      // Simpler than relocating the marker to a paragraph above the table:
+      // just never let a table block carry the assumption flag.
+      if (carriesGfmTable(guarded.content)) {
+        block.isAssumption = false;
       }
+      materializedBlocks.push(block);
     }
+    section.blocks = materializedBlocks;
   }
   return next;
 }

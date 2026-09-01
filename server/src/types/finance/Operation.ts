@@ -30,10 +30,13 @@
 
 import { z } from 'zod';
 
-import type { BusinessVersionStatus, FinanceRole } from '../../services/finance/canonical/lifecycleService.js';
-import { CellRefSchema, cellRefKey, type CellRef } from './CellRef.js';
-import { FinanceArtifactTypeSchema, type FinanceArtifactType } from './ArtifactRef.js';
-import { FinanceValueObjectSchema, type FinanceValue } from './financeValueSemantics.js';
+import type {
+  BusinessVersionStatus,
+  FinanceRole,
+} from '../../services/finance/canonical/lifecycleService.js';
+import { type FinanceArtifactType, FinanceArtifactTypeSchema } from './ArtifactRef.js';
+import { type CellRef, cellRefKey, CellRefSchema } from './CellRef.js';
+import { type FinanceValue, FinanceValueObjectSchema } from './financeValueSemantics.js';
 
 // ---------------------------------------------------------------------------
 // FinanceValueInput — what a caller SUPPLIES to a mutation. A strict subset
@@ -59,14 +62,29 @@ export const FinanceValueInputSchema = z
     adjustmentReason: FinanceValueObjectSchema.shape.adjustmentReason.optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.status === 'PRESENT_NONZERO' && (value.valueDecimal === null || value.valueDecimal === '0')) {
-      ctx.addIssue({ code: 'custom', message: 'PRESENT_NONZERO requires a non-null, non-zero valueDecimal', path: ['valueDecimal'] });
+    if (
+      value.status === 'PRESENT_NONZERO' &&
+      (value.valueDecimal === null || value.valueDecimal === '0')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'PRESENT_NONZERO requires a non-null, non-zero valueDecimal',
+        path: ['valueDecimal'],
+      });
     }
     if (value.status === 'PRESENT_ZERO' && value.valueDecimal !== '0') {
-      ctx.addIssue({ code: 'custom', message: 'PRESENT_ZERO requires valueDecimal === "0"', path: ['valueDecimal'] });
+      ctx.addIssue({
+        code: 'custom',
+        message: 'PRESENT_ZERO requires valueDecimal === "0"',
+        path: ['valueDecimal'],
+      });
     }
     if (['MISSING', 'NA', 'NOT_APPLICABLE'].includes(value.status) && value.valueDecimal !== null) {
-      ctx.addIssue({ code: 'custom', message: `${value.status} requires valueDecimal to be null`, path: ['valueDecimal'] });
+      ctx.addIssue({
+        code: 'custom',
+        message: `${value.status} requires valueDecimal to be null`,
+        path: ['valueDecimal'],
+      });
     }
   });
 export type FinanceValueInput = z.infer<typeof FinanceValueInputSchema>;

@@ -1,5 +1,5 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ActivityLogCanvas } from '../ActivityLogCanvas';
@@ -8,14 +8,15 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) =>
       fallback ??
-      ({
+      {
         'sharedComponents.activityLogCanvas.title': 'Activity log',
         'sharedComponents.activityLogCanvas.noEntries': 'No entries',
         'sharedComponents.activityLogCanvas.from': 'From',
         'sharedComponents.activityLogCanvas.to': 'To',
         'sharedComponents.activityLogCanvas.unknownDate': 'Unknown date',
         'sharedComponents.activityLogCanvas.systemActor': 'System',
-      }[key] ?? key),
+      }[key] ??
+      key,
     i18n: { language: 'en' },
   }),
 }));
@@ -103,4 +104,3 @@ describe('ActivityLogCanvas compact list', () => {
     expect(screen.queryByText(/Invalid Date/)).not.toBeInTheDocument();
   });
 });
-

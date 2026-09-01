@@ -104,13 +104,13 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
 
   return (
     <div
-        ref={containerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="idea-funnel-analytics-view-heading"
-        tabIndex={-1}
-        className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col outline-none"
-      >
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="idea-funnel-analytics-view-heading"
+      tabIndex={-1}
+      className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
+    >
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
@@ -120,7 +120,10 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
           <ChevronLeft size={16} />
         </button>
         <BarChart3 size={16} className="text-c-warning" />
-        <h2 className="text-sm font-bold text-c-text dark:text-c-text" id="idea-funnel-analytics-view-heading">
+        <h2
+          className="text-sm font-bold text-c-text dark:text-c-text"
+          id="idea-funnel-analytics-view-heading"
+        >
           {t('ideas.mindmap.ideaFunnel', 'Idea Funnel')}
         </h2>
         <span className="text-[10px] text-c-text-secondary ml-auto">

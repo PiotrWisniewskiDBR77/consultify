@@ -45,7 +45,10 @@ export const portfolioPriorityPack: ToolPack = {
     { source: 'src/config/portfolio/portfolioOrgImport.ts', verifiableInRepo: true },
     { source: 'src/config/portfolio/conclusionPrompts.ts', verifiableInRepo: true },
     { source: 'src/config/portfolio/index.ts', verifiableInRepo: true },
-    { source: 'src/store/useToolStore.ts (PORTFOLIO_PRIORITY_STEPS, PortfolioItem)', verifiableInRepo: true },
+    {
+      source: 'src/store/useToolStore.ts (PORTFOLIO_PRIORITY_STEPS, PortfolioItem)',
+      verifiableInRepo: true,
+    },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
   ],
 
@@ -110,7 +113,8 @@ export const portfolioPriorityPack: ToolPack = {
         pl: 'Zdefiniować zakres portfolio, ramę decyzji, ograniczenia i sygnał sukcesu.',
         en: 'Define the portfolio scope, decision frame, constraints, and success signal.',
       },
-      whatGoodLooksLike: 'Jasny zakres portfela (które elementy w nim są) i budżet/limit zdolności.',
+      whatGoodLooksLike:
+        'Jasny zakres portfela (które elementy w nim są) i budżet/limit zdolności.',
       evidenceToAskFor: 'Zakres, limit budżetu, kryterium sukcesu portfela.',
       completionCriterion: 'Zakres i budżet zaakceptowane przez właściciela portfela.',
     },
@@ -121,7 +125,8 @@ export const portfolioPriorityPack: ToolPack = {
         pl: 'Zebrać dowody portfolio, ograniczenia, sygnały wyników i kontekst sponsora.',
         en: 'Capture portfolio evidence, constraints, performance signals, and sponsor context.',
       },
-      whatGoodLooksLike: 'Sygnały przypisane do konkretnych elementów, nie ogólne „mamy dużo pomysłów".',
+      whatGoodLooksLike:
+        'Sygnały przypisane do konkretnych elementów, nie ogólne „mamy dużo pomysłów".',
       evidenceToAskFor: 'Źródło każdej oceny wartości/wykonalności lub jawne założenie.',
       completionCriterion: 'Wystarczające sygnały, by ocenić co najmniej jeden element portfela.',
     },
@@ -144,9 +149,11 @@ export const portfolioPriorityPack: ToolPack = {
         pl: 'Syntezować trade-offy, top bety i rekomendowane przesunięcia zasobów.',
         en: 'Synthesize trade-offs, portfolio bets, and recommended resource moves.',
       },
-      whatGoodLooksLike: 'Kolejność finansowania respektuje zależności twarde i limit budżetu, odłożone elementy nazwane wprost.',
+      whatGoodLooksLike:
+        'Kolejność finansowania respektuje zależności twarde i limit budżetu, odłożone elementy nazwane wprost.',
       evidenceToAskFor: 'Które elementy blokują inne (zależność twarda) i jaki jest limit budżetu.',
-      completionCriterion: 'Sekwencja finansowania (funded/deferred/blocked/cycles) policzona przez silnik.',
+      completionCriterion:
+        'Sekwencja finansowania (funded/deferred/blocked/cycles) policzona przez silnik.',
     },
     {
       id: 'outputs',
@@ -155,9 +162,11 @@ export const portfolioPriorityPack: ToolPack = {
         pl: 'Przygotować final source summary oraz dalsze działania portfolio.',
         en: 'Prepare the final source summary and downstream portfolio actions.',
       },
-      whatGoodLooksLike: 'Każdy ruch nazywa decyzję finansowania (invest/maintain/test/harvest/stop) z trade-offem.',
+      whatGoodLooksLike:
+        'Każdy ruch nazywa decyzję finansowania (invest/maintain/test/harvest/stop) z trade-offem.',
       evidenceToAskFor: 'Co odkładamy, finansując ten element, i jakim kosztem alternatywnym.',
-      completionCriterion: 'Każdy ruch przechodzi validatePortfolioMove (rationale zakotwiczone w elementIds + trade-off + odrzucona alternatywa).',
+      completionCriterion:
+        'Każdy ruch przechodzi validatePortfolioMove (rationale zakotwiczone w elementIds + trade-off + odrzucona alternatywa).',
     },
   ],
 
@@ -170,14 +179,15 @@ export const portfolioPriorityPack: ToolPack = {
         en: 'What is the real budget/capacity cap for this portfolio, and what falls within its scope?',
       },
       answerType: 'text',
-      challengeRule: 'Bez limitu budżetu silnik nie może odróżnić "finansujemy" od "odkładamy" — odrzuć portfel bez podanego capu lub jawnej decyzji "bez limitu".',
+      challengeRule:
+        'Bez limitu budżetu silnik nie może odróżnić "finansujemy" od "odkładamy" — odrzuć portfel bez podanego capu lub jawnej decyzji "bez limitu".',
     },
     {
       id: 'portfolio-input-source',
       phaseId: 'input',
       prompt: {
         pl: 'Skąd pochodzi ocena wartości tego elementu — dana rynkowa, deklaracja sponsora, czy założenie?',
-        en: 'Where does this element\'s value score come from — market data, sponsor declaration, or assumption?',
+        en: "Where does this element's value score come from — market data, sponsor declaration, or assumption?",
       },
       answerType: 'evidence',
       challengeRule:
@@ -293,15 +303,18 @@ export const portfolioPriorityPack: ToolPack = {
    * Flaga bazy license='free' jest flagą PRODUKTOWĄ, nie dowodem prawnym.
    */
   rights: {
-    methodologyName: 'Macierz wzrost/udział, wdrożona jako macierz wartość×wykonalność (quick-win/big-bet/fill-in/money-pit)',
+    methodologyName:
+      'Macierz wzrost/udział, wdrożona jako macierz wartość×wykonalność (quick-win/big-bet/fill-in/money-pit)',
     commonlyAttributedTo: 'Boston Consulting Group (Bruce D. Henderson), ok. 1968-1970',
     sourceUsed: 'src/config/portfolio/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'RYZYKO PODWYŻSZONE — BCG jest działającą, konkurencyjną firmą doradczą, nie źródłem historycznym. Użycie „BCG" w powierzchni klienckiej wymaga przeglądu przed publikacją.',
+    trademarkNote:
+      'RYZYKO PODWYŻSZONE — BCG jest działającą, konkurencyjną firmą doradczą, nie źródłem historycznym. Użycie „BCG" w powierzchni klienckiej wymaga przeglądu przed publikacją.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'WYSOKIE — najwyższe w grupie strategicznej. Uwaga: w kodzie współistnieją DWA schematy klasyfikacji (legacy star/cash-cow/question-mark/dog vs silnikowy quick-win/big-bet/fill-in/money-pit).',
+    uncertainty:
+      'WYSOKIE — najwyższe w grupie strategicznej. Uwaga: w kodzie współistnieją DWA schematy klasyfikacji (legacy star/cash-cow/question-mark/dog vs silnikowy quick-win/big-bet/fill-in/money-pit).',
   },
 };

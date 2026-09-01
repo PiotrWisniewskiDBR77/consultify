@@ -25,7 +25,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -108,9 +110,21 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
            cash_tax_rate_pct, currency, nominal_or_real, pre_or_post_tax, wacc_computed_pct, created_by
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PLN', 'NOMINAL', 'POST_TAX', ?, ?)`,
         [
-          randomUUID(), orgId, bvId, spec.wacc.riskFree, spec.wacc.erp, spec.wacc.betaUnlevered, spec.wacc.betaRelevered,
-          spec.wacc.targetDebt, 100 - spec.wacc.targetDebt, spec.wacc.currentDebt, 100 - spec.wacc.currentDebt,
-          spec.wacc.costOfDebtPretax, spec.wacc.cashTax, spec.wacc.waccComputed, preparerId,
+          randomUUID(),
+          orgId,
+          bvId,
+          spec.wacc.riskFree,
+          spec.wacc.erp,
+          spec.wacc.betaUnlevered,
+          spec.wacc.betaRelevered,
+          spec.wacc.targetDebt,
+          100 - spec.wacc.targetDebt,
+          spec.wacc.currentDebt,
+          100 - spec.wacc.currentDebt,
+          spec.wacc.costOfDebtPretax,
+          spec.wacc.cashTax,
+          spec.wacc.waccComputed,
+          preparerId,
         ]
       );
 
@@ -171,8 +185,15 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
            terminal_value_decimal, terminal_share_pct, is_primary, created_by
          ) VALUES (?, ?, ?, 'GORDON_GROWTH', ?, ?, ?, ?, ?, true, ?)`,
         [
-          randomUUID(), orgId, dcfId, spec.terminal.gPct, spec.terminal.reinvestmentRatePct, spec.terminal.roicPct,
-          spec.terminal.terminalValue, spec.terminal.terminalSharePct, preparerId,
+          randomUUID(),
+          orgId,
+          dcfId,
+          spec.terminal.gPct,
+          spec.terminal.reinvestmentRatePct,
+          spec.terminal.roicPct,
+          spec.terminal.terminalValue,
+          spec.terminal.terminalSharePct,
+          preparerId,
         ]
       );
 
@@ -220,18 +241,31 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
                  cell_value_decimal, is_base_cell, created_by
                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
-                randomUUID(), orgId, gridId, r, c,
-                spec.terminal.gPct + (r - 3) * 0.25, spec.wacc.waccComputed + (c - 3) * 0.5,
-                value, r === 3 && c === 3, preparerId,
+                randomUUID(),
+                orgId,
+                gridId,
+                r,
+                c,
+                spec.terminal.gPct + (r - 3) * 0.25,
+                spec.wacc.waccComputed + (c - 3) * 0.5,
+                value,
+                r === 3 && c === 3,
+                preparerId,
               ]
             );
           }
         }
-        await tx.queryRun(`UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`, [gridId]);
+        await tx.queryRun(
+          `UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`,
+          [gridId]
+        );
       }
 
       if (spec.freshness === 'CURRENT') {
-        await tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]);
+        await tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        );
       }
       return null;
     });
@@ -248,14 +282,30 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
   const BASE_SPEC: VariantSpec = {
     name: 'Base case',
     freshness: 'CURRENT',
-    wacc: { riskFree: 4, erp: 5.5, betaUnlevered: 0.9, betaRelevered: 1.1, targetDebt: 30, currentDebt: 10, costOfDebtPretax: 6, cashTax: 19, waccComputed: 9.5 },
+    wacc: {
+      riskFree: 4,
+      erp: 5.5,
+      betaUnlevered: 0.9,
+      betaRelevered: 1.1,
+      targetDebt: 30,
+      currentDebt: 10,
+      costOfDebtPretax: 6,
+      cashTax: 19,
+      waccComputed: 9.5,
+    },
     dcfEv: 1_000_000,
     dcfWeightPct: 60,
     compsEv: 1_100_000,
     compsWeightPct: 40,
     compsPeerCount: 3,
     assetBasedEv: null,
-    terminal: { gPct: 2.5, terminalValue: 600_000, terminalSharePct: 60, reinvestmentRatePct: 25, roicPct: 10 },
+    terminal: {
+      gPct: 2.5,
+      terminalValue: 600_000,
+      terminalSharePct: 60,
+      reinvestmentRatePct: 25,
+      roicPct: 10,
+    },
     bridge: { enterpriseValue: 1_000_000, debt: 200_000, cash: 50_000 },
     sensitivityBaseEv: 1_000_000,
   };
@@ -264,22 +314,42 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
   const DOWNSIDE_SPEC: VariantSpec = {
     name: 'Downside',
     freshness: 'NEVER_COMPUTED',
-    wacc: { riskFree: 4, erp: 7, betaUnlevered: 1.3, betaRelevered: 1.7, targetDebt: 30, currentDebt: 10, costOfDebtPretax: 3.5, cashTax: 19, waccComputed: 13 },
+    wacc: {
+      riskFree: 4,
+      erp: 7,
+      betaUnlevered: 1.3,
+      betaRelevered: 1.7,
+      targetDebt: 30,
+      currentDebt: 10,
+      costOfDebtPretax: 3.5,
+      cashTax: 19,
+      waccComputed: 13,
+    },
     dcfEv: 600_000,
     dcfWeightPct: 100,
     compsEv: null,
     compsWeightPct: null,
     compsPeerCount: 0,
     assetBasedEv: 1_000_000,
-    terminal: { gPct: 11.5, terminalValue: 520_000, terminalSharePct: 86.7, reinvestmentRatePct: null, roicPct: null },
+    terminal: {
+      gPct: 11.5,
+      terminalValue: 520_000,
+      terminalSharePct: 86.7,
+      reinvestmentRatePct: null,
+      roicPct: null,
+    },
     bridge: { enterpriseValue: 600_000, debt: 650_000, cash: 20_000 },
     sensitivityBaseEv: null,
   };
 
   let base: BuiltVariant;
   let downside: BuiltVariant;
-  let baseResult: Awaited<ReturnType<typeof import('../valuationAdvisorService.js').generateValuationAdvisorOutput>>;
-  let downsideResult: Awaited<ReturnType<typeof import('../valuationAdvisorService.js').generateValuationAdvisorOutput>>;
+  let baseResult: Awaited<
+    ReturnType<typeof import('../valuationAdvisorService.js').generateValuationAdvisorOutput>
+  >;
+  let downsideResult: Awaited<
+    ReturnType<typeof import('../valuationAdvisorService.js').generateValuationAdvisorOutput>
+  >;
 
   beforeAll(async () => {
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
@@ -287,19 +357,31 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     advisor = await import('../valuationAdvisorService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 Valuation Advisor Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 Valuation Advisor Test Org',
+      ])
     );
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO finance_valuation_cases (case_id, organization_id, name, created_by) VALUES (?, ?, ?, ?)`, [
-        caseId, orgId, 'Advisor generator test case', preparerId,
-      ])
+      tx.queryRun(
+        `INSERT INTO finance_valuation_cases (case_id, organization_id, name, created_by) VALUES (?, ?, ?, ?)`,
+        [caseId, orgId, 'Advisor generator test case', preparerId]
+      )
     );
 
     base = await buildVariant(BASE_SPEC);
     downside = await buildVariant(DOWNSIDE_SPEC);
 
-    baseResult = await advisor.generateValuationAdvisorOutput({ variantId: base.businessVersionId, actorId: preparerId, organizationId: orgId });
-    downsideResult = await advisor.generateValuationAdvisorOutput({ variantId: downside.businessVersionId, actorId: preparerId, organizationId: orgId });
+    baseResult = await advisor.generateValuationAdvisorOutput({
+      variantId: base.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
+    downsideResult = await advisor.generateValuationAdvisorOutput({
+      variantId: downside.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
   }, 120_000);
 
   // -------------------------------------------------------------------------------------------
@@ -318,7 +400,10 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     expect(stored.every((r) => r.is_frozen === false && r.is_stale === false)).toBe(true);
 
     const bv = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ status: string }>(`SELECT status FROM finance_business_versions WHERE business_version_id = ?`, [base.businessVersionId])
+      tx.queryOne<{ status: string }>(
+        `SELECT status FROM finance_business_versions WHERE business_version_id = ?`,
+        [base.businessVersionId]
+      )
     );
     expect(bv?.status).toBe('DRAFT');
   });
@@ -363,8 +448,25 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     if (!baseResult.ok) throw new Error('unreachable');
     const fired = new Set(baseResult.findings.map((f) => f.ruleId));
     // Healthy: terminal share 60%, complete basket, 9.5% dispersion, full bridge, monotonic grid.
-    expect([...fired].sort()).toEqual(['ADV-R01', 'ADV-R08', 'ADV-R12', 'ADV-R15', 'ADV-R20', 'ADV-R22', 'ADV-R24']);
-    for (const notFired of ['ADV-R02', 'ADV-R03', 'ADV-R05', 'ADV-R11', 'ADV-R13', 'ADV-R18', 'ADV-R26', 'ADV-R28']) {
+    expect([...fired].sort()).toEqual([
+      'ADV-R01',
+      'ADV-R08',
+      'ADV-R12',
+      'ADV-R15',
+      'ADV-R20',
+      'ADV-R22',
+      'ADV-R24',
+    ]);
+    for (const notFired of [
+      'ADV-R02',
+      'ADV-R03',
+      'ADV-R05',
+      'ADV-R11',
+      'ADV-R13',
+      'ADV-R18',
+      'ADV-R26',
+      'ADV-R28',
+    ]) {
       expect(fired.has(notFired)).toBe(false);
     }
   });
@@ -409,7 +511,14 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
 
   it('records rule-engine provenance rather than inventing an LLM provider, and costs nothing', async () => {
     const rows = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ ai_provider: string; ai_model: string; ai_prompt_version: string; ai_estimated_cost_decimal: string | null; ai_no_training_commitment: boolean; ai_evidence_digest: string }>(
+      tx.queryAll<{
+        ai_provider: string;
+        ai_model: string;
+        ai_prompt_version: string;
+        ai_estimated_cost_decimal: string | null;
+        ai_no_training_commitment: boolean;
+        ai_evidence_digest: string;
+      }>(
         `SELECT ai_provider, ai_model, ai_prompt_version, ai_estimated_cost_decimal, ai_no_training_commitment, ai_evidence_digest
            FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`,
         [base.businessVersionId]
@@ -456,7 +565,12 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
       evidenceRef: { ...real.evidenceRef, pointers: [{ ...realPointer, column: 'created_by' }] },
     };
 
-    const statuses = await advisor.evaluateEvidenceGrounding([real, nonExistentRow, wrongValue, forbiddenColumn]);
+    const statuses = await advisor.evaluateEvidenceGrounding([
+      real,
+      nonExistentRow,
+      wrongValue,
+      forbiddenColumn,
+    ]);
     expect(statuses).toEqual(['PASSED', 'FLAGGED', 'FLAGGED', 'FLAGGED']);
   });
 
@@ -467,7 +581,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
   it('re-running replaces its own findings instead of accumulating duplicates, and reuses the same snapshot', async () => {
     if (!baseResult.ok) throw new Error('unreachable');
     const before = await advisor.listAdvisorOutputs(orgId, base.businessVersionId);
-    const again = await advisor.generateValuationAdvisorOutput({ variantId: base.businessVersionId, actorId: preparerId, organizationId: orgId });
+    const again = await advisor.generateValuationAdvisorOutput({
+      variantId: base.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(again.ok).toBe(true);
     if (!again.ok) throw new Error('unreachable');
     expect(again.computeSnapshotId).toBe(baseResult.computeSnapshotId); // createComputeSnapshot() reuse
@@ -486,30 +604,60 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
              FROM finance_valuation_methods WHERE business_version_id = ? ORDER BY method_type`,
           [base.businessVersionId]
         );
-        const wacc = await tx.queryOne(`SELECT wacc_computed_pct, beta_relevered FROM finance_valuation_wacc_inputs WHERE business_version_id = ?`, [base.businessVersionId]);
-        const bridge = await tx.queryOne(`SELECT enterprise_value_decimal, equity_value_decimal FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`, [base.businessVersionId]);
+        const wacc = await tx.queryOne(
+          `SELECT wacc_computed_pct, beta_relevered FROM finance_valuation_wacc_inputs WHERE business_version_id = ?`,
+          [base.businessVersionId]
+        );
+        const bridge = await tx.queryOne(
+          `SELECT enterprise_value_decimal, equity_value_decimal FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`,
+          [base.businessVersionId]
+        );
         return JSON.stringify({ methods, wacc, bridge });
       });
 
     const before = await fingerprint();
-    await advisor.generateValuationAdvisorOutput({ variantId: base.businessVersionId, actorId: preparerId, organizationId: orgId });
+    await advisor.generateValuationAdvisorOutput({
+      variantId: base.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(await fingerprint()).toBe(before);
   });
 
   it('refuses to advise on an artifact that is not a VALUATION_CASE, and on a variant with nothing computed', async () => {
-    const analysis = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: preparerId });
-    const wrongType = await advisor.generateValuationAdvisorOutput({ variantId: analysis.businessVersion.business_version_id, actorId: preparerId, organizationId: orgId });
+    const analysis = await artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: preparerId,
+    });
+    const wrongType = await advisor.generateValuationAdvisorOutput({
+      variantId: analysis.businessVersion.business_version_id,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(wrongType.ok).toBe(false);
     if (wrongType.ok) throw new Error('unreachable');
     expect(wrongType.code).toBe('NOT_A_VALUATION_CASE');
 
-    const emptyCase = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: preparerId });
-    const nothing = await advisor.generateValuationAdvisorOutput({ variantId: emptyCase.businessVersion.business_version_id, actorId: preparerId, organizationId: orgId });
+    const emptyCase = await artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: preparerId,
+    });
+    const nothing = await advisor.generateValuationAdvisorOutput({
+      variantId: emptyCase.businessVersion.business_version_id,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(nothing.ok).toBe(false);
     if (nothing.ok) throw new Error('unreachable');
     expect(nothing.code).toBe('NOTHING_COMPUTED');
 
-    const wrongOrg = await advisor.generateValuationAdvisorOutput({ variantId: base.businessVersionId, actorId: preparerId, organizationId: `org-other-${randomUUID()}` });
+    const wrongOrg = await advisor.generateValuationAdvisorOutput({
+      variantId: base.businessVersionId,
+      actorId: preparerId,
+      organizationId: `org-other-${randomUUID()}`,
+    });
     expect(wrongOrg.ok).toBe(false);
     if (wrongOrg.ok) throw new Error('unreachable');
     expect(wrongOrg.code).toBe('ORGANIZATION_MISMATCH');
@@ -531,7 +679,12 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     if (!cmp.ok) throw new Error('unreachable');
 
     const byMetric = new Map(cmp.metrics.map((m) => [m.metric, m]));
-    expect(byMetric.get('ENTERPRISE_VALUE')).toMatchObject({ a: 1_000_000, b: 600_000, delta: -400_000, deltaPct: -40 });
+    expect(byMetric.get('ENTERPRISE_VALUE')).toMatchObject({
+      a: 1_000_000,
+      b: 600_000,
+      delta: -400_000,
+      deltaPct: -40,
+    });
     expect(byMetric.get('EQUITY_VALUE')).toMatchObject({ a: 850_000, b: -30_000 });
     expect(byMetric.get('WACC_PCT')).toMatchObject({ a: 9.5, b: 13, delta: 3.5 });
     expect(byMetric.get('TERMINAL_SHARE_PCT')?.delta).toBeCloseTo(26.7, 9);
@@ -552,17 +705,33 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     // Re-home it under a different case so it is a real "not in this case" situation.
     const otherCaseId = randomUUID();
     await withPinnedPostgresTransaction(async (tx) => {
-      await tx.queryRun(`INSERT INTO finance_valuation_cases (case_id, organization_id, name, created_by) VALUES (?, ?, ?, ?)`, [otherCaseId, orgId, 'Other case', preparerId]);
-      await tx.queryRun(`UPDATE finance_valuation_variants SET case_id = ? WHERE business_version_id = ?`, [otherCaseId, foreign.businessVersionId]);
+      await tx.queryRun(
+        `INSERT INTO finance_valuation_cases (case_id, organization_id, name, created_by) VALUES (?, ?, ?, ?)`,
+        [otherCaseId, orgId, 'Other case', preparerId]
+      );
+      await tx.queryRun(
+        `UPDATE finance_valuation_variants SET case_id = ? WHERE business_version_id = ?`,
+        [otherCaseId, foreign.businessVersionId]
+      );
       return null;
     });
 
-    const notInCase = await advisor.compareVariantsForAdvisor({ caseId, variantIdA: base.businessVersionId, variantIdB: foreign.businessVersionId, actorId: preparerId });
+    const notInCase = await advisor.compareVariantsForAdvisor({
+      caseId,
+      variantIdA: base.businessVersionId,
+      variantIdB: foreign.businessVersionId,
+      actorId: preparerId,
+    });
     expect(notInCase.ok).toBe(false);
     if (notInCase.ok) throw new Error('unreachable');
     expect(notInCase.code).toBe('VARIANT_NOT_IN_CASE');
 
-    const same = await advisor.compareVariantsForAdvisor({ caseId, variantIdA: base.businessVersionId, variantIdB: base.businessVersionId, actorId: preparerId });
+    const same = await advisor.compareVariantsForAdvisor({
+      caseId,
+      variantIdA: base.businessVersionId,
+      variantIdB: base.businessVersionId,
+      actorId: preparerId,
+    });
     expect(same.ok).toBe(false);
     if (same.ok) throw new Error('unreachable');
     expect(same.code).toBe('SAME_VARIANT');
@@ -586,7 +755,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     expect(comparisonRows.length).toBe(cmp.findings.length);
 
     const bridgeRows = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ advisor_output_id: string; compared_business_version_id: string; role: string }>(
+      tx.queryAll<{
+        advisor_output_id: string;
+        compared_business_version_id: string;
+        role: string;
+      }>(
         `SELECT advisor_output_id, compared_business_version_id, role
            FROM finance_valuation_advisor_output_variants
           WHERE advisor_output_id = ANY(?) ORDER BY role`,
@@ -594,16 +767,28 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
       )
     );
     expect(bridgeRows.length).toBe(comparisonRows.length * 2);
-    expect(new Set(bridgeRows.map((r) => r.role))).toEqual(new Set(['PRIMARY', 'COMPARED_AGAINST']));
-    expect(new Set(bridgeRows.filter((r) => r.role === 'PRIMARY').map((r) => r.compared_business_version_id))).toEqual(new Set([downside.businessVersionId]));
+    expect(new Set(bridgeRows.map((r) => r.role))).toEqual(
+      new Set(['PRIMARY', 'COMPARED_AGAINST'])
+    );
+    expect(
+      new Set(
+        bridgeRows.filter((r) => r.role === 'PRIMARY').map((r) => r.compared_business_version_id)
+      )
+    ).toEqual(new Set([downside.businessVersionId]));
 
     // Re-persisting the same pair replaces, never duplicates.
     const again = await advisor.compareVariantsForAdvisor({
-      caseId, variantIdA: downside.businessVersionId, variantIdB: base.businessVersionId,
-      actorId: preparerId, organizationId: orgId, persist: true,
+      caseId,
+      variantIdA: downside.businessVersionId,
+      variantIdB: base.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+      persist: true,
     });
     expect(again.ok).toBe(true);
-    const storedAgain = (await advisor.listAdvisorOutputs(orgId, downside.businessVersionId)).filter((r) => r.is_comparison);
+    const storedAgain = (
+      await advisor.listAdvisorOutputs(orgId, downside.businessVersionId)
+    ).filter((r) => r.is_comparison);
     expect(storedAgain.length).toBe(comparisonRows.length);
   });
 
@@ -613,7 +798,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
 
   it('freezes the generated findings on approval and refuses to generate new ones afterwards', async () => {
     const variant = await buildVariant({ ...BASE_SPEC, name: 'Approval subject' });
-    const generated = await advisor.generateValuationAdvisorOutput({ variantId: variant.businessVersionId, actorId: preparerId, organizationId: orgId });
+    const generated = await advisor.generateValuationAdvisorOutput({
+      variantId: variant.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(generated.ok).toBe(true);
     if (!generated.ok) throw new Error('unreachable');
     expect(generated.findings.length).toBeGreaterThan(0);
@@ -623,20 +812,32 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
 
     let version = variant.version;
     const submitted = await artifactVersionService.transition({
-      organizationId: orgId, businessVersionId: variant.businessVersionId, action: 'submit_for_review',
-      actorId: preparerId, role: 'preparer', expectedVersion: version,
+      organizationId: orgId,
+      businessVersionId: variant.businessVersionId,
+      action: 'submit_for_review',
+      actorId: preparerId,
+      role: 'preparer',
+      expectedVersion: version,
     });
     if (!submitted.ok) throw new Error(`submit failed: ${JSON.stringify(submitted)}`);
     version = submitted.businessVersion.version;
     const started = await artifactVersionService.transition({
-      organizationId: orgId, businessVersionId: variant.businessVersionId, action: 'start_review',
-      actorId: approverId, role: 'approver', expectedVersion: version,
+      organizationId: orgId,
+      businessVersionId: variant.businessVersionId,
+      action: 'start_review',
+      actorId: approverId,
+      role: 'approver',
+      expectedVersion: version,
     });
     if (!started.ok) throw new Error(`start_review failed: ${JSON.stringify(started)}`);
     version = started.businessVersion.version;
 
     const approved = await artifactVersionService.approveVersion({
-      organizationId: orgId, businessVersionId: variant.businessVersionId, actorId: approverId, role: 'approver', expectedVersion: version,
+      organizationId: orgId,
+      businessVersionId: variant.businessVersionId,
+      actorId: approverId,
+      role: 'approver',
+      expectedVersion: version,
     });
     expect(approved.ok).toBe(true);
     if (!approved.ok) throw new Error('unreachable');
@@ -649,7 +850,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     // freeze ran before stale-marking (trigger name ordering), so nothing is stale.
     expect(afterApproval.every((r) => r.is_stale === false)).toBe(true);
 
-    const afterwards = await advisor.generateValuationAdvisorOutput({ variantId: variant.businessVersionId, actorId: preparerId, organizationId: orgId });
+    const afterwards = await advisor.generateValuationAdvisorOutput({
+      variantId: variant.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(afterwards.ok).toBe(false);
     if (afterwards.ok) throw new Error('unreachable');
     expect(afterwards.code).toBe('INVALID_STATUS');
@@ -658,7 +863,10 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     // And the frozen rows are physically immutable — the DB trigger, not just the service.
     await expect(
       withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_valuation_advisor_outputs SET title = 'tampered' WHERE id = ?`, [afterApproval[0].id])
+        tx.queryRun(
+          `UPDATE finance_valuation_advisor_outputs SET title = 'tampered' WHERE id = ?`,
+          [afterApproval[0].id]
+        )
       )
     ).rejects.toThrow(/frozen/i);
   }, 120_000);
@@ -674,7 +882,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
    * wide (R16), non-monotonic (R17) and partly undefined (R19).
    */
   it('fires the structural-gap rules: no WACC, no basket, no bridge, bad g, wide/non-monotonic/partial grid', async () => {
-    const created = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: preparerId });
+    const created = await artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: preparerId,
+    });
     const bvId = created.businessVersion.business_version_id;
     const dcfId = randomUUID();
     const gridId = randomUUID();
@@ -719,15 +931,33 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
                id, organization_id, grid_id, row_index, col_index, row_axis_value, column_axis_value,
                cell_value_decimal, is_base_cell, created_by
              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [randomUUID(), orgId, gridId, r, c, 8 + (r - 3) * 0.25, 10 + (c - 3) * 0.5, r === 3 && c === 3 ? 500_000 : value, r === 3 && c === 3, preparerId]
+            [
+              randomUUID(),
+              orgId,
+              gridId,
+              r,
+              c,
+              8 + (r - 3) * 0.25,
+              10 + (c - 3) * 0.5,
+              r === 3 && c === 3 ? 500_000 : value,
+              r === 3 && c === 3,
+              preparerId,
+            ]
           );
         }
       }
-      await tx.queryRun(`UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`, [gridId]);
+      await tx.queryRun(
+        `UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`,
+        [gridId]
+      );
       return null;
     });
 
-    const result = await advisor.generateValuationAdvisorOutput({ variantId: bvId, actorId: preparerId, organizationId: orgId });
+    const result = await advisor.generateValuationAdvisorOutput({
+      variantId: bvId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('unreachable');
     const fired = new Set(result.findings.map((f) => f.ruleId));
@@ -743,11 +973,17 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     expect(fired.has('ADV-R19')).toBe(true); // 3 undefined cells
     expect(result.findings.find((f) => f.ruleId === 'ADV-R19')?.impactDecimal).toBe(3);
     expect(result.findings.find((f) => f.ruleId === 'ADV-R06')?.impactDecimal).toBeCloseTo(3, 9);
-    expect(result.findings.every((f) => f.evidenceRef.rulesVersion === advisor.ADVISOR_RULES_VERSION)).toBe(true);
+    expect(
+      result.findings.every((f) => f.evidenceRef.rulesVersion === advisor.ADVISOR_RULES_VERSION)
+    ).toBe(true);
   }, 120_000);
 
   it('fires ADV-R09 when a basket member is not READY (weights still sum to 100)', async () => {
-    const created = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: preparerId });
+    const created = await artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: preparerId,
+    });
     const bvId = created.businessVersion.business_version_id;
 
     await withPinnedPostgresTransaction(async (tx) => {
@@ -774,7 +1010,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
       return null;
     });
 
-    const result = await advisor.generateValuationAdvisorOutput({ variantId: bvId, actorId: preparerId, organizationId: orgId });
+    const result = await advisor.generateValuationAdvisorOutput({
+      variantId: bvId,
+      actorId: preparerId,
+      organizationId: orgId,
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('unreachable');
     const r09 = result.findings.find((f) => f.ruleId === 'ADV-R09');
@@ -796,7 +1036,11 @@ describe.skipIf(!REAL_PG)('Valuation Advisor generator — real PostgreSQL', () 
     });
 
     const cmp = await advisor.compareVariantsForAdvisor({
-      caseId, variantIdA: base.businessVersionId, variantIdB: twin.businessVersionId, actorId: preparerId, organizationId: orgId,
+      caseId,
+      variantIdA: base.businessVersionId,
+      variantIdB: twin.businessVersionId,
+      actorId: preparerId,
+      organizationId: orgId,
       persist: true, // so the catalogue-coverage guard below sees ADV-C05 in the database too
     });
     expect(cmp.ok).toBe(true);

@@ -14,9 +14,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { approveAction, proposeAction, reportImplementation } from '../correctiveActionService.js';
-import { acceptResidualRisk, closeFinding, createFinding, reviewFinding, updateFinding } from '../findingService.js';
-import { performVerification, planVerification } from '../verificationService.js';
+import {
+  acceptResidualRisk,
+  closeFinding,
+  createFinding,
+  reviewFinding,
+  updateFinding,
+} from '../findingService.js';
 import type { AuditActor } from '../types.js';
+import { performVerification, planVerification } from '../verificationService.js';
 import {
   actorFor,
   addMember,
@@ -66,9 +72,9 @@ describe('segregationOfDuties — U4', () => {
     // Recenzja przez osobę trzecią (autor nie może recenzować własnego ustalenia).
     await reviewFinding(fx.organizationId, thirdParty, finding.id, { decision: 'confirm' });
 
-    await expect(closeFinding(fx.organizationId, owner, finding.id, { note: 'Zamykam sam siebie' })).rejects.toThrow(
-      /Właściciel ustalenia nie może go sam zamknąć/,
-    );
+    await expect(
+      closeFinding(fx.organizationId, owner, finding.id, { note: 'Zamykam sam siebie' })
+    ).rejects.toThrow(/Właściciel ustalenia nie może go sam zamknąć/);
 
     // Kontrola pozytywna: inna osoba z rolą lead_auditor zamyka bez przeszkód.
     const closed = await closeFinding(fx.organizationId, thirdParty, finding.id, {
@@ -98,15 +104,20 @@ describe('segregationOfDuties — U4', () => {
       objectiveEvidence: [],
     });
 
-    await expect(reviewFinding(fx.organizationId, author, finding.id, { decision: 'confirm' })).rejects.toThrow(
-      /Autor ustalenia nie może być jego recenzentem/,
-    );
+    await expect(
+      reviewFinding(fx.organizationId, author, finding.id, { decision: 'confirm' })
+    ).rejects.toThrow(/Autor ustalenia nie może być jego recenzentem/);
 
     const otherReviewerId = uid('user');
     await addMember(fx.organizationId, fx.programId, otherReviewerId, 'reviewer');
-    const confirmed = await reviewFinding(fx.organizationId, actorFor(fx.organizationId, otherReviewerId), finding.id, {
-      decision: 'confirm',
-    });
+    const confirmed = await reviewFinding(
+      fx.organizationId,
+      actorFor(fx.organizationId, otherReviewerId),
+      finding.id,
+      {
+        decision: 'confirm',
+      }
+    );
     expect(confirmed.status).toBe('confirmed');
   });
 
@@ -154,8 +165,10 @@ describe('segregationOfDuties — U4', () => {
       performVerification(fx.organizationId, executor, verification.id, {
         result: 'effective',
         evidenceId: fx.evidenceId,
-      }),
-    ).rejects.toThrow(/Weryfikację skuteczności musi wykonać osoba inna niż właściciel lub wykonawca działania/);
+      })
+    ).rejects.toThrow(
+      /Weryfikację skuteczności musi wykonać osoba inna niż właściciel lub wykonawca działania/
+    );
 
     const independent = await performVerification(fx.organizationId, lead, verification.id, {
       result: 'effective',
@@ -186,7 +199,9 @@ describe('segregationOfDuties — U4', () => {
     const outsider = actorFor(fx.organizationId, uid('outsider'));
 
     await expect(
-      updateFinding(fx.organizationId, outsider, finding.id, { recommendation: 'Nieautoryzowana zmiana' }),
+      updateFinding(fx.organizationId, outsider, finding.id, {
+        recommendation: 'Nieautoryzowana zmiana',
+      })
     ).rejects.toThrow(/wymaga roli audytowej/);
 
     await expect(
@@ -196,7 +211,7 @@ describe('segregationOfDuties — U4', () => {
         statement: 'Próba utworzenia bez roli',
         classification: 'observation',
         objectiveEvidence: [],
-      }),
+      })
     ).rejects.toThrow(/wymaga roli audytowej/);
   });
 
@@ -226,14 +241,19 @@ describe('segregationOfDuties — U4', () => {
 
     // lead_auditor nie jest w domyślnej liście ról uprawnionych do akceptacji ryzyka.
     await expect(
-      acceptResidualRisk(fx.organizationId, lead, finding.id, { note: 'Próba akceptacji bez roli' }),
+      acceptResidualRisk(fx.organizationId, lead, finding.id, { note: 'Próba akceptacji bez roli' })
     ).rejects.toThrow(/Akceptacja ryzyka rezydualnego wymaga roli/);
 
     const ownerId = uid('user');
     await addMember(fx.organizationId, fx.programId, ownerId, 'program_owner');
-    const accepted = await acceptResidualRisk(fx.organizationId, actorFor(fx.organizationId, ownerId), finding.id, {
-      note: 'Program owner akceptuje ryzyko rezydualne',
-    });
+    const accepted = await acceptResidualRisk(
+      fx.organizationId,
+      actorFor(fx.organizationId, ownerId),
+      finding.id,
+      {
+        note: 'Program owner akceptuje ryzyko rezydualne',
+      }
+    );
     expect(accepted.status).toBe('risk_accepted');
   });
 
@@ -303,9 +323,11 @@ describe('segregationOfDuties — U4', () => {
       note: 'Zrobione (deklaracja wykonawcy)',
     });
 
-    await expect(closeFinding(fx.organizationId, lead, finding.id, { note: 'Próba zamknięcia bez weryfikacji' })).rejects.toThrow(
-      /brakuje weryfikacji skuteczności/,
-    );
+    await expect(
+      closeFinding(fx.organizationId, lead, finding.id, {
+        note: 'Próba zamknięcia bez weryfikacji',
+      })
+    ).rejects.toThrow(/brakuje weryfikacji skuteczności/);
 
     const verification = await planVerification(fx.organizationId, lead, {
       findingId: finding.id,

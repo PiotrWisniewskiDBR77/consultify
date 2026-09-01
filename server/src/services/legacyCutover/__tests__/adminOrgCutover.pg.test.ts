@@ -9,14 +9,15 @@
  * recording tenant-scoped, idempotent telemetry for each of them.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { ADMIN_ORG_CUTOVER } from '../registry/adminOrg.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -76,8 +77,18 @@ describe.skipIf(!REAL_PG)('ADMIN_ORG legacy-cutover guard (fresh real PostgreSQL
     // Mounted exactly as Gateway.ts does (two consecutive app.use calls at the
     // same base path), with the guard composed in front of each, matching how
     // the router-local path rules resolve regardless of which mount fires.
-    app.use('/api/admin', authenticate, createLegacyCutoverGuard(ADMIN_ORG_CUTOVER), adminBulkRouter);
-    app.use('/api/admin', authenticate, createLegacyCutoverGuard(ADMIN_ORG_CUTOVER), adminP32Router);
+    app.use(
+      '/api/admin',
+      authenticate,
+      createLegacyCutoverGuard(ADMIN_ORG_CUTOVER),
+      adminBulkRouter
+    );
+    app.use(
+      '/api/admin',
+      authenticate,
+      createLegacyCutoverGuard(ADMIN_ORG_CUTOVER),
+      adminP32Router
+    );
     app.use((err: any, _req: any, res: any, _next: any) =>
       res.status(500).json({ error: String(err?.message || err) })
     );
@@ -85,7 +96,10 @@ describe.skipIf(!REAL_PG)('ADMIN_ORG legacy-cutover guard (fresh real PostgreSQL
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);

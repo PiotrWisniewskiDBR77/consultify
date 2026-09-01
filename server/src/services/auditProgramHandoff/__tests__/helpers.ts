@@ -31,7 +31,7 @@ export function requireRealPg(): void {
     throw new Error(
       'tests/auditProgramHandoff/** requires REAL Postgres: run with ' +
         'DATABASE_URL=postgresql://... DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false ' +
-        '(never NODE_ENV=test alone — that substitutes a mock DB and the evidence would be worthless)',
+        '(never NODE_ENV=test alone — that substitutes a mock DB and the evidence would be worthless)'
     );
   }
 }
@@ -51,7 +51,11 @@ export function actorFor(organizationId: string, userId: string, platformRole?: 
 }
 
 /** Inserts a real `organizations` row — required FK target for `initiatives`. */
-export async function insertOrganization(pool: Pool, organizationId: string, name?: string): Promise<void> {
+export async function insertOrganization(
+  pool: Pool,
+  organizationId: string,
+  name?: string
+): Promise<void> {
   await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
     organizationId,
     name ?? `Test org ${organizationId}`,
@@ -77,13 +81,13 @@ export async function makeProgram(
   pool: Pool,
   organizationId: string,
   createdBy: string,
-  name = 'Program testowy — closure evidence',
+  name = 'Program testowy — closure evidence'
 ): Promise<string> {
   const programId = uid('prog');
   await pool.query(
     `INSERT INTO audit_programs (id, organization_id, name, status, created_by, lifecycle_state)
      VALUES ($1,$2,$3,'active',$4,'fieldwork')`,
-    [programId, organizationId, name, createdBy],
+    [programId, organizationId, name, createdBy]
   );
   return programId;
 }
@@ -93,13 +97,13 @@ export async function addMember(
   organizationId: string,
   programId: string,
   userId: string,
-  role: string,
+  role: string
 ): Promise<void> {
   await pool.query(
     `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role, independence_declared)
      VALUES ($1,$2,$3,$4,$5, TRUE)
      ON CONFLICT (program_id, user_id, member_role) DO NOTHING`,
-    [uid('apm'), programId, organizationId, userId, role],
+    [uid('apm'), programId, organizationId, userId, role]
   );
 }
 
@@ -107,7 +111,7 @@ export async function insertCriterion(
   pool: Pool,
   organizationId: string,
   programId: string,
-  opts: { refCode?: string; title?: string; requirementText?: string } = {},
+  opts: { refCode?: string; title?: string; requirementText?: string } = {}
 ): Promise<string> {
   const criterionId = uid('crit');
   await pool.query(
@@ -120,7 +124,7 @@ export async function insertCriterion(
       opts.refCode ?? 'A.1',
       opts.title ?? 'Kryterium testowe — closure evidence',
       opts.requirementText ?? 'Wymaganie testowe — closure evidence',
-    ],
+    ]
   );
   return criterionId;
 }
@@ -130,13 +134,13 @@ export async function insertEvidence(
   organizationId: string,
   programId: string,
   criterionId: string,
-  title = 'Dowód testowy — closure evidence',
+  title = 'Dowód testowy — closure evidence'
 ): Promise<string> {
   const evidenceId = uid('ev');
   await pool.query(
     `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title)
      VALUES ($1,$2,$3,$4,'document',$5)`,
-    [evidenceId, programId, organizationId, criterionId, title],
+    [evidenceId, programId, organizationId, criterionId, title]
   );
   return evidenceId;
 }
@@ -146,7 +150,7 @@ export async function insertFinding(
   organizationId: string,
   programId: string,
   status: string,
-  extra: Partial<Record<string, unknown>> = {},
+  extra: Partial<Record<string, unknown>> = {}
 ): Promise<string> {
   const id = uid('find');
   await pool.query(
@@ -164,7 +168,7 @@ export async function insertFinding(
       (extra.rootCause as string) ?? null,
       (extra.rootCauseConfirmed as boolean) ?? false,
       (extra.criterionId as string) ?? null,
-    ],
+    ]
   );
   return id;
 }
@@ -173,13 +177,12 @@ export async function insertFinding(
 export async function cleanupOrg(pool: Pool, organizationId: string): Promise<void> {
   const initiativeRows = await pool.query<{ id: string }>(
     `SELECT id FROM initiatives WHERE organization_id = $1`,
-    [organizationId],
+    [organizationId]
   );
   if (initiativeRows.rows.length > 0) {
-    await pool.query(
-      `DELETE FROM initiatives WHERE id = ANY($1)`,
-      [initiativeRows.rows.map((r) => r.id)],
-    );
+    await pool.query(`DELETE FROM initiatives WHERE id = ANY($1)`, [
+      initiativeRows.rows.map((r) => r.id),
+    ]);
   }
   for (const table of [
     'audit_ai_proposals',

@@ -26,15 +26,21 @@
  *   npx tsx server/src/services/caseWorkspace/__tests__/performance/orchestrate.ts
  */
 
-import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createFreshDatabase, dropDatabase, runMigrations, verifySchemaPresent, withDatabase } from './lib/dbLifecycle.js';
-import { percentile, round2 } from './lib/stats.js';
+import {
+  createFreshDatabase,
+  dropDatabase,
+  runMigrations,
+  verifySchemaPresent,
+  withDatabase,
+} from './lib/dbLifecycle.js';
 import type { ProfileResult } from './lib/runProfile.js';
+import { percentile, round2 } from './lib/stats.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../../../../../../');
@@ -94,7 +100,15 @@ async function runOneProfile(
   runIndex: number,
   outDir: string,
   extraEnv: Record<string, string>
-): Promise<{ runId: string; dbName: string; ok: boolean; resultPath: string; migration: unknown; spawnLog: RunSpawnResult; schemaCheck: unknown }> {
+): Promise<{
+  runId: string;
+  dbName: string;
+  ok: boolean;
+  resultPath: string;
+  migration: unknown;
+  spawnLog: RunSpawnResult;
+  schemaCheck: unknown;
+}> {
   const runId = `r${runIndex}_${Date.now()}_${randomUUID().slice(0, 8)}`;
   const dbName = `cwperfprofile_${runId}`;
   const dbUrl = withDatabase(adminDatabaseUrl, dbName);
@@ -106,17 +120,25 @@ async function runOneProfile(
   try {
     const migration = await runMigrations(REPO_ROOT, dbUrl);
     if (!migration.ok) {
-      throw new Error(`migration failed (exit ${migration.exitCode}):\n${migration.stderr.slice(-4000)}`);
+      throw new Error(
+        `migration failed (exit ${migration.exitCode}):\n${migration.stderr.slice(-4000)}`
+      );
     }
     const schemaCheck = await verifySchemaPresent(dbUrl);
     if (!schemaCheck.ok) {
-      throw new Error(`post-migration schema check failed, missing tables: ${schemaCheck.missing.join(', ')}`);
+      throw new Error(
+        `post-migration schema check failed, missing tables: ${schemaCheck.missing.join(', ')}`
+      );
     }
 
-    console.log(`[orchestrate] run ${runIndex}: migrated + schema verified, spawning profile workload`);
+    console.log(
+      `[orchestrate] run ${runIndex}: migrated + schema verified, spawning profile workload`
+    );
     const spawnLog = await runChildProfile(dbUrl, runId, resultPath, extraEnv);
     if (!spawnLog.ok) {
-      console.error(`[orchestrate] run ${runIndex} profile process exited ${spawnLog.exitCode}\nSTDERR:\n${spawnLog.stderr.slice(-4000)}`);
+      console.error(
+        `[orchestrate] run ${runIndex} profile process exited ${spawnLog.exitCode}\nSTDERR:\n${spawnLog.stderr.slice(-4000)}`
+      );
     }
     return { runId, dbName, ok: spawnLog.ok, resultPath, migration, spawnLog, schemaCheck };
   } finally {
@@ -158,7 +180,9 @@ function compareDeterminism(runs: ProfileResult[]): Record<string, unknown> {
 async function main(): Promise<void> {
   const adminDatabaseUrl = process.env.CW_PERF_ADMIN_DATABASE_URL;
   if (!adminDatabaseUrl) {
-    console.error('[orchestrate] CW_PERF_ADMIN_DATABASE_URL is required (an already-reachable postgres database to issue CREATE/DROP DATABASE from)');
+    console.error(
+      '[orchestrate] CW_PERF_ADMIN_DATABASE_URL is required (an already-reachable postgres database to issue CREATE/DROP DATABASE from)'
+    );
     process.exit(2);
   }
 
@@ -213,7 +237,10 @@ async function main(): Promise<void> {
       spawnExitCode: s.spawnLog.exitCode,
       spawnStderrTail: s.spawnLog.ok ? null : s.spawnLog.stderr.slice(-4000),
     })),
-    determinism: okResults.length >= 2 ? compareDeterminism(okResults) : 'EVIDENCE_MISSING: fewer than 2 successful runs to compare',
+    determinism:
+      okResults.length >= 2
+        ? compareDeterminism(okResults)
+        : 'EVIDENCE_MISSING: fewer than 2 successful runs to compare',
   };
 
   fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf8');

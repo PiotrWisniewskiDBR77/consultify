@@ -32,25 +32,27 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
   EVENT_INSERT_SQL,
   executeAtomicCommand,
   executeAtomicCreate,
   resolveConsumerGroups,
-  type AtomicCommandOutcome,
-  type AtomicEventInput,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
-import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
-import type { OkrProgramPolicySnapshot } from './okrProgramTypes.js';
 import {
-  toOkrObjective,
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
+import {
   type OkrObjective,
   type OkrObjectiveAmbitionType,
   type OkrObjectiveConfidence,
   type OkrObjectiveRow,
   type OkrObjectiveStatus,
+  toOkrObjective,
 } from './okrObjectiveTypes.js';
+import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
+import type { OkrProgramPolicySnapshot } from './okrProgramTypes.js';
 import {
   calculateObjectiveConfidenceRollup,
   calculateObjectiveProgressRollup,
@@ -81,7 +83,9 @@ export class OkrObjectiveSetNotEditableError extends Error {
   code = 'SET_NOT_EDITABLE';
   details: Record<string, unknown>;
   constructor(setId: string, status: string) {
-    super(`OKR Set ${setId} is "${status}" — Objective/KeyResult content may not be edited from this status`);
+    super(
+      `OKR Set ${setId} is "${status}" — Objective/KeyResult content may not be edited from this status`
+    );
     this.name = 'OkrObjectiveSetNotEditableError';
     this.details = { setId, status };
   }
@@ -157,7 +161,10 @@ export async function resolveOkrCyclePinnedPolicySnapshot(
   setId: string,
   organizationId: string
 ): Promise<OkrCyclePinnedPolicy> {
-  const result = await client.query<{ policy_version_id: string; snapshot: OkrProgramPolicySnapshot }>(
+  const result = await client.query<{
+    policy_version_id: string;
+    snapshot: OkrProgramPolicySnapshot;
+  }>(
     `SELECT ppv.policy_version_id, ppv.snapshot
        FROM okr_vnext_sets s
        JOIN okr_vnext_cycles c ON c.cycle_id = s.cycle_id
@@ -167,7 +174,9 @@ export async function resolveOkrCyclePinnedPolicySnapshot(
   );
   const row = result.rows[0];
   if (!row) {
-    throw new Error(`[resolveOkrCyclePinnedPolicySnapshot] no pinned policy version found for set ${setId}`);
+    throw new Error(
+      `[resolveOkrCyclePinnedPolicySnapshot] no pinned policy version found for set ${setId}`
+    );
   }
   return { policyVersionId: row.policy_version_id, snapshot: row.snapshot };
 }
@@ -182,31 +191,37 @@ export async function resolveOkrCyclePinnedPolicySnapshot(
  * which always rides along a KR create/update/cancel's own primary event
  * rather than being its own top-level command.
  */
-export async function insertManualOkrEvent(client: PoolClient, eventInput: AtomicEventInput): Promise<string | undefined> {
-  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-    eventInput.schemaVersion,
-    eventInput.eventType,
-    eventInput.aggregateType,
-    eventInput.aggregateId,
-    eventInput.organizationId,
-    eventInput.actorUserId,
-    eventInput.actorEffectiveRole,
-    eventInput.commandId,
-    eventInput.correlationId,
-    eventInput.causationId,
-    eventInput.occurredAt,
-    eventInput.policyVersion,
-    eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-    eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-    eventInput.stateHash,
-    eventInput.reason,
-    JSON.stringify(eventInput.evidenceRefs ?? []),
-    eventInput.source,
-    eventInput.idempotencyKey,
-    eventInput.expectedVersion,
-    eventInput.resultingVersion,
-    JSON.stringify(eventInput.payload ?? {}),
-  ]);
+export async function insertManualOkrEvent(
+  client: PoolClient,
+  eventInput: AtomicEventInput
+): Promise<string | undefined> {
+  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+    EVENT_INSERT_SQL,
+    [
+      eventInput.schemaVersion,
+      eventInput.eventType,
+      eventInput.aggregateType,
+      eventInput.aggregateId,
+      eventInput.organizationId,
+      eventInput.actorUserId,
+      eventInput.actorEffectiveRole,
+      eventInput.commandId,
+      eventInput.correlationId,
+      eventInput.causationId,
+      eventInput.occurredAt,
+      eventInput.policyVersion,
+      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+      eventInput.stateHash,
+      eventInput.reason,
+      JSON.stringify(eventInput.evidenceRefs ?? []),
+      eventInput.source,
+      eventInput.idempotencyKey,
+      eventInput.expectedVersion,
+      eventInput.resultingVersion,
+      JSON.stringify(eventInput.payload ?? {}),
+    ]
+  );
   const inserted = eventResult.rows[0];
   if (!inserted) return undefined;
   const consumerGroups = resolveConsumerGroups(eventInput.eventType);
@@ -324,9 +339,14 @@ export async function recomputeObjectiveRollup(
       ? {
           confidence: currentObjectiveRow.confidence,
           confidenceNumericValue: numOrNull(currentObjectiveRow.confidence_numeric_value),
-          reason: currentObjectiveRow.confidence_calc_reason ?? 'owner_selected: no value set by Objective Owner yet',
+          reason:
+            currentObjectiveRow.confidence_calc_reason ??
+            'owner_selected: no value set by Objective Owner yet',
         }
-      : calculateObjectiveConfidenceRollup({ keyResultConfidences, confidenceModel: snapshot.objectiveConfidenceModel });
+      : calculateObjectiveConfidenceRollup({
+          keyResultConfidences,
+          confidenceModel: snapshot.objectiveConfidenceModel,
+        });
 
   const nextVersion = currentObjectiveRow.row_version + 1;
   const updateResult = await client.query<OkrObjectiveRow>(
@@ -343,7 +363,9 @@ export async function recomputeObjectiveRollup(
       progressResult.reason,
       confidenceResult.confidence,
       confidenceResult.confidenceNumericValue,
-      snapshot.objectiveConfidenceModel === 'owner_selected' ? currentObjectiveRow.confidence_calc_policy_version_id : policyVersionId,
+      snapshot.objectiveConfidenceModel === 'owner_selected'
+        ? currentObjectiveRow.confidence_calc_policy_version_id
+        : policyVersionId,
       confidenceResult.reason,
       nextVersion,
       actorUserId,
@@ -415,7 +437,9 @@ export interface CreateObjectiveInput {
  * COMMAND layer when the Cycle's pinned policy has
  * `committedVsAspirationalEnabled=false`.
  */
-export async function createObjective(input: CreateObjectiveInput): Promise<AtomicCommandOutcome<OkrObjective>> {
+export async function createObjective(
+  input: CreateObjectiveInput
+): Promise<AtomicCommandOutcome<OkrObjective>> {
   const {
     setId,
     organizationId,
@@ -436,7 +460,12 @@ export async function createObjective(input: CreateObjectiveInput): Promise<Atom
   return executeAtomicCreate<OkrObjective>({
     organizationId,
     applyMutation: async (client) => {
-      const setRow = await assertSetEditableForUpdate(client, setId, organizationId, 'createObjective');
+      const setRow = await assertSetEditableForUpdate(
+        client,
+        setId,
+        organizationId,
+        'createObjective'
+      );
 
       // RN-G5: no Objective row exists yet to carry its own responsible
       // person, so this CREATE is authorized off the parent Set's own
@@ -455,7 +484,11 @@ export async function createObjective(input: CreateObjectiveInput): Promise<Atom
       });
 
       if (ambitionType !== 'standard') {
-        const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
+        const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(
+          client,
+          setId,
+          organizationId
+        );
         if (!snapshot.committedVsAspirationalEnabled) {
           throw new OkrObjectiveValidationError(
             `Objective ambition_type "${ambitionType}" is disabled by this Program's committed_vs_aspirational_enabled policy`,
@@ -477,7 +510,17 @@ export async function createObjective(input: CreateObjectiveInput): Promise<Atom
            (set_id, organization_id, owner_user_id, title, description, rationale, ambition_type, sort_order, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
-        [setId, organizationId, ownerUserId, title, description, rationale, ambitionType, sortOrder, createdBy]
+        [
+          setId,
+          organizationId,
+          ownerUserId,
+          title,
+          description,
+          rationale,
+          ambitionType,
+          sortOrder,
+          createdBy,
+        ]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[createObjective] insert returned no row');
@@ -553,7 +596,9 @@ export interface UpdateObjectiveInput {
   access: CommandAccessContext;
 }
 
-export async function updateObjective(input: UpdateObjectiveInput): Promise<AtomicCommandOutcome<OkrObjective>> {
+export async function updateObjective(
+  input: UpdateObjectiveInput
+): Promise<AtomicCommandOutcome<OkrObjective>> {
   const {
     objectiveId,
     organizationId,
@@ -591,7 +636,12 @@ export async function updateObjective(input: UpdateObjectiveInput): Promise<Atom
         responsibleUserIds: [currentRow.owner_user_id],
       });
 
-      await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'updateObjective');
+      await assertSetEditableForUpdate(
+        client,
+        currentRow.set_id,
+        organizationId,
+        'updateObjective'
+      );
       const { snapshot, policyVersionId } = await resolveOkrCyclePinnedPolicySnapshot(
         client,
         currentRow.set_id,
@@ -623,7 +673,8 @@ export async function updateObjective(input: UpdateObjectiveInput): Promise<Atom
         }
         confidenceUpdate = {
           confidence: confidence ?? null,
-          confidenceNumericValue: confidenceNumericValue === undefined ? null : String(confidenceNumericValue),
+          confidenceNumericValue:
+            confidenceNumericValue === undefined ? null : String(confidenceNumericValue),
           calcPolicyVersionId: policyVersionId,
           calcReason: 'owner_selected: Objective Owner value set via updateObjective',
         };
@@ -663,7 +714,8 @@ export async function updateObjective(input: UpdateObjectiveInput): Promise<Atom
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[updateObjective] update returned no row for ${objectiveId}`);
+      if (!updatedRow)
+        throw new Error(`[updateObjective] update returned no row for ${objectiveId}`);
       return toOkrObjective(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -731,7 +783,9 @@ export interface CancelObjectiveInput {
  * exists to unwind (plan §3.2) — if a cascade is ever wanted it must be an
  * explicit, separately-named command, never an invisible side effect here.
  */
-export async function cancelObjective(input: CancelObjectiveInput): Promise<AtomicCommandOutcome<OkrObjective>> {
+export async function cancelObjective(
+  input: CancelObjectiveInput
+): Promise<AtomicCommandOutcome<OkrObjective>> {
   const {
     objectiveId,
     organizationId,
@@ -761,7 +815,12 @@ export async function cancelObjective(input: CancelObjectiveInput): Promise<Atom
         responsibleUserIds: [currentRow.owner_user_id],
       });
 
-      await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'cancelObjective');
+      await assertSetEditableForUpdate(
+        client,
+        currentRow.set_id,
+        organizationId,
+        'cancelObjective'
+      );
       if (!OKR_OBJECTIVE_CANCEL_FROM_STATUSES.includes(currentRow.status)) {
         throw new OkrObjectiveValidationError(
           `Objective ${objectiveId} is "${currentRow.status}" — cannot cancel from there`,
@@ -779,7 +838,8 @@ export async function cancelObjective(input: CancelObjectiveInput): Promise<Atom
         [nextVersion, actorUserId, objectiveId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[cancelObjective] update returned no row for ${objectiveId}`);
+      if (!updatedRow)
+        throw new Error(`[cancelObjective] update returned no row for ${objectiveId}`);
       // Deliberately NO update/query against okr_vnext_key_results here —
       // no cascade (§-IO item 8).
       return toOkrObjective(updatedRow);
@@ -824,7 +884,12 @@ export interface KeyResultCoverageCheck {
   reason?: string;
   details?: {
     totalObjectives: number;
-    objectivesBelowMinimum: Array<{ objectiveId: string; title: string; krCount: number; required: number }>;
+    objectivesBelowMinimum: Array<{
+      objectiveId: string;
+      title: string;
+      krCount: number;
+      required: number;
+    }>;
   };
 }
 
@@ -857,12 +922,21 @@ export async function hasSufficientKeyResultCoverage(
   );
 
   if (result.rows.length === 0) {
-    return { eligible: false, reason: 'no_objectives', details: { totalObjectives: 0, objectivesBelowMinimum: [] } };
+    return {
+      eligible: false,
+      reason: 'no_objectives',
+      details: { totalObjectives: 0, objectivesBelowMinimum: [] },
+    };
   }
 
   const objectivesBelowMinimum = result.rows
     .filter((row) => Number(row.kr_count) < krMinRequired)
-    .map((row) => ({ objectiveId: row.objective_id, title: row.title, krCount: Number(row.kr_count), required: krMinRequired }));
+    .map((row) => ({
+      objectiveId: row.objective_id,
+      title: row.title,
+      krCount: Number(row.kr_count),
+      required: krMinRequired,
+    }));
 
   if (objectivesBelowMinimum.length > 0) {
     return {

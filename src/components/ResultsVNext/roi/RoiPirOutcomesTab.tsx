@@ -28,8 +28,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
-import type { RoiCardModeProps } from './RoiCaseCardSections';
 import { listOrgRoiPirOutcomes, type RoiOrgPirOutcomeCaseRow } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import { buildRoiPirOutcomesColumns, buildRoiPirOutcomesPreview } from './roiPirOutcomesPresenters';
 
 function withId(row: RoiOrgPirOutcomeCaseRow): TableRow {
@@ -57,7 +57,11 @@ export interface RoiPirOutcomesTabProps {
   cardMode?: RoiCardModeProps;
 }
 
-export const RoiPirOutcomesTab: React.FC<RoiPirOutcomesTabProps> = ({ isPolish, onlyCaseId, cardMode }) => {
+export const RoiPirOutcomesTab: React.FC<RoiPirOutcomesTabProps> = ({
+  isPolish,
+  onlyCaseId,
+  cardMode,
+}) => {
   const [rows, setRows] = useState<RoiOrgPirOutcomeCaseRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +81,9 @@ export const RoiPirOutcomesTab: React.FC<RoiPirOutcomesTabProps> = ({ isPolish, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const visibleRows = onlyCaseId ? (rows ?? []).filter((r) => r.caseId === onlyCaseId) : (rows ?? []);
+  const visibleRows = onlyCaseId
+    ? (rows ?? []).filter((r) => r.caseId === onlyCaseId)
+    : (rows ?? []);
   const tableRows: TableRow[] = visibleRows.map(withId);
   const selectedRow = visibleRows.find((r) => r.caseId === selectedCaseId) ?? null;
 
@@ -86,7 +92,9 @@ export const RoiPirOutcomesTab: React.FC<RoiPirOutcomesTabProps> = ({ isPolish, 
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          tabs: cardMode ? cardMode.tabs : [{ id: 'pir-outcomes', label: isPolish ? 'Wyniki PIR' : 'PIR outcomes' }],
+          tabs: cardMode
+            ? cardMode.tabs
+            : [{ id: 'pir-outcomes', label: isPolish ? 'Wyniki PIR' : 'PIR outcomes' }],
           activeTab: cardMode ? cardMode.activeTab : 'pir-outcomes',
           onTabChange: cardMode ? cardMode.onTabChange : () => undefined,
           showTabCounts: false,
@@ -124,7 +132,9 @@ export const RoiPirOutcomesTab: React.FC<RoiPirOutcomesTabProps> = ({ isPolish, 
           defaultSort: { columnId: 'finalizedAt', direction: 'desc' },
         }}
         preview={
-          selectedRow ? buildRoiPirOutcomesPreview(selectedRow, isPolish, () => setSelectedCaseId(null)) : null
+          selectedRow
+            ? buildRoiPirOutcomesPreview(selectedRow, isPolish, () => setSelectedCaseId(null))
+            : null
         }
       />
     </div>

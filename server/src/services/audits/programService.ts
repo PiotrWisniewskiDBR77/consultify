@@ -36,14 +36,16 @@
  */
 
 import { createHash } from 'crypto';
+import type { PoolClient } from 'pg';
 
+import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import {
-  AuditDomainError,
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
@@ -51,9 +53,9 @@ import {
   toIso,
   toNum,
 } from './auditsDb.js';
-import { assertCapability, requireCapability, resolveProgramAccess } from './permissions.js';
-import { assertGate, assertTransitionAllowed, evaluateGate, nextStates } from './lifecycle.js';
 import type { LifecycleGateFacts } from './lifecycle.js';
+import { assertGate, assertTransitionAllowed, evaluateGate, nextStates } from './lifecycle.js';
+import { assertCapability, requireCapability, resolveProgramAccess } from './permissions.js';
 import type {
   AuditActor,
   AuditLifecycleState,
@@ -61,8 +63,6 @@ import type {
   AuditRole,
   ExpectedEvidenceSpec,
 } from './types.js';
-import type { PoolClient } from 'pg';
-import { acquirePgClient } from '../../database/PostgresDatabase.js';
 
 // ---------------------------------------------------------------------------
 // Typy lokalne — `audit_programs` nie ma własnego interfejsu w types.ts

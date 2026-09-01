@@ -30,6 +30,8 @@ export type DrdGroundingProvider = (
 
 export interface BuildDrdGroundingProviderOptions {
   organizationId?: string;
+  /** FIX-2 (dyżur 210): requesting user, threaded to searchKnowledgeBase for owner-aware access. */
+  userId?: string;
   language: 'pl' | 'en';
   /** Chunks per axis query (evidence, not a corpus dump — keep small). */
   maxChunksPerAxis?: number;
@@ -53,7 +55,7 @@ interface SearchKnowledgeBaseFn {
       packType?: string;
       language?: string;
     },
-    context?: { organizationId?: string }
+    context?: { organizationId?: string; userId?: string }
   ): Promise<{ results: SearchKnowledgeBaseResult[]; totalFound: number }>;
 }
 
@@ -72,7 +74,7 @@ function formatCitation(r: SearchKnowledgeBaseResult): string {
 export function buildDrdGroundingProvider(
   options: BuildDrdGroundingProviderOptions
 ): DrdGroundingProvider {
-  const { organizationId, language, maxChunksPerAxis = 3, logger } = options;
+  const { organizationId, userId, language, maxChunksPerAxis = 3, logger } = options;
   const cache = new Map<number, Promise<ConclusionEvidenceRef[]>>();
 
   return (axisId: number, axisName: string): Promise<ConclusionEvidenceRef[]> => {
@@ -99,7 +101,11 @@ export function buildDrdGroundingProvider(
             toolSlug: 'drd',
             packType: 'methodology',
           },
-          { organizationId }
+          // FIX-2 (dyżur 210): thread the requesting user for an owner-aware
+          // access filter. Query is tool_slug='drd'/pack_type='methodology'
+          // book grounding — global tool_pack content today, so no practical
+          // effect yet, kept honest for a future narrower caller.
+          { organizationId, userId }
         );
 
         return results

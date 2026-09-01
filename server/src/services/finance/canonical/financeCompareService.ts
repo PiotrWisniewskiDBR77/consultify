@@ -71,26 +71,29 @@
  * against the default on the caller's behalf.
  */
 
-import { withPinnedPostgresTransaction, type PinnedTransactionClient } from '../../../database/PostgresDatabase.js';
+import {
+  type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
+} from '../../../database/PostgresDatabase.js';
 import type { ArtifactRef } from '../../../types/finance/ArtifactRef.js';
 import {
+  type CellRef,
   cellRefKey,
+  type FinanceAccumulationBasis,
   financeAnalysisKpiValuesCellRef,
   financeBaselineOutputsCellRef,
+  type FinanceConsolidationScope,
   financePredictionOutputsEffectiveCellRef,
   financeStmtLinesCellRef,
-  financeValuationMethodsCellRef,
-  type CellRef,
-  type FinanceAccumulationBasis,
-  type FinanceConsolidationScope,
   type FinanceTableName,
+  financeValuationMethodsCellRef,
   type FinanceValuationMethodType,
 } from '../../../types/finance/CellRef.js';
 import {
   FINANCE_UNIT_MULTIPLIER,
-  toArithmeticOperand,
   type FinanceUnit,
   type FinanceValueStatus,
+  toArithmeticOperand,
 } from '../../../types/finance/financeValueSemantics.js';
 import type { BusinessVersionRow } from './artifactVersionService.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
@@ -180,7 +183,12 @@ export interface CompareCellPoint {
   presentationCurrency: string | null;
 }
 
-export type CompareDiffKind = 'BOTH_PRESENT' | 'MISSING_IN_A' | 'MISSING_IN_B' | 'MISSING_IN_BOTH' | 'CURRENCY_MISMATCH';
+export type CompareDiffKind =
+  | 'BOTH_PRESENT'
+  | 'MISSING_IN_A'
+  | 'MISSING_IN_B'
+  | 'MISSING_IN_BOTH'
+  | 'CURRENCY_MISMATCH';
 
 export interface CompareRow {
   matchKey: string;
@@ -240,7 +248,9 @@ export type CompareErrorCode =
   | 'VERSION_ARTIFACT_MISMATCH'
   | 'ENTITY_CODE_NOT_FOUND';
 
-export type CompareValuesResult = { ok: true; result: CompareResult } | { ok: false; code: CompareErrorCode; message: string };
+export type CompareValuesResult =
+  | { ok: true; result: CompareResult }
+  | { ok: false; code: CompareErrorCode; message: string };
 
 // ---------------------------------------------------------------------------
 // Full-unit value conversion (mirrors valuationFcffService.ts's toFullUnitValue,
@@ -248,7 +258,12 @@ export type CompareValuesResult = { ok: true; result: CompareResult } | { ok: fa
 // bundle at all, its result_ev_decimal is already a full-currency figure).
 // ---------------------------------------------------------------------------
 
-export function toFullUnitValue(status: FinanceValueStatus, valueDecimal: string | null, unit: FinanceUnit | null, multiplier: string | null): number | null {
+export function toFullUnitValue(
+  status: FinanceValueStatus,
+  valueDecimal: string | null,
+  unit: FinanceUnit | null,
+  multiplier: string | null
+): number | null {
   const operand = toArithmeticOperand({ status, valueDecimal: valueDecimal });
   if (operand === null) return null;
   const unitMultiplier = unit ? FINANCE_UNIT_MULTIPLIER[unit] : 1;
@@ -303,7 +318,10 @@ export interface LoadedCell {
   presentationCurrency: string | null;
 }
 
-function toPoint(cell: LoadedCell | undefined, businessVersionIdIfAbsent: string): CompareCellPoint {
+function toPoint(
+  cell: LoadedCell | undefined,
+  businessVersionIdIfAbsent: string
+): CompareCellPoint {
   if (!cell) {
     return {
       presence: 'NO_ROW',
@@ -357,7 +375,13 @@ interface RawRow {
 }
 
 /** Appends `AND col = ?` / `AND col = ANY(?)` clauses for the filters present on `filter`. Mutates `clauses`/`args`. */
-function pushFilter(clauses: string[], args: unknown[], column: string, single: string | undefined, many: readonly string[] | undefined): void {
+function pushFilter(
+  clauses: string[],
+  args: unknown[],
+  column: string,
+  single: string | undefined,
+  many: readonly string[] | undefined
+): void {
   if (many && many.length > 0) {
     clauses.push(`${column} = ANY(?)`);
     args.push([...many]);
@@ -367,7 +391,12 @@ function pushFilter(clauses: string[], args: unknown[], column: string, single: 
   }
 }
 
-async function loadStmtLines(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter): Promise<LoadedCell[]> {
+async function loadStmtLines(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  filter: CompareCellFilter
+): Promise<LoadedCell[]> {
   const clauses = ['t.business_version_id = ?'];
   const args: unknown[] = [businessVersionId];
   pushFilter(clauses, args, 't.entity_id', filter.entityId, filter.entityIds);
@@ -420,7 +449,12 @@ async function loadStmtLines(tx: PinnedTransactionClient, organizationId: string
   });
 }
 
-async function loadKpiValues(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter): Promise<LoadedCell[]> {
+async function loadKpiValues(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  filter: CompareCellFilter
+): Promise<LoadedCell[]> {
   const clauses = ['t.business_version_id = ?'];
   const args: unknown[] = [businessVersionId];
   pushFilter(clauses, args, 't.entity_id', filter.entityId, filter.entityIds);
@@ -444,7 +478,11 @@ async function loadKpiValues(tx: PinnedTransactionClient, organizationId: string
     });
     return {
       cellRef,
-      dimensions: { entityId: r.entity_code!, kpiCatalogId: r.kpi_catalog_id!, periodId: r.period_id! },
+      dimensions: {
+        entityId: r.entity_code!,
+        kpiCatalogId: r.kpi_catalog_id!,
+        periodId: r.period_id!,
+      },
       businessVersionId,
       valueStatus: r.value_status,
       fullUnitValue: toFullUnitValue(r.value_status, r.value_decimal, r.unit, r.multiplier),
@@ -457,7 +495,12 @@ async function loadKpiValues(tx: PinnedTransactionClient, organizationId: string
   });
 }
 
-async function loadBaselineOutputs(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter): Promise<LoadedCell[]> {
+async function loadBaselineOutputs(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  filter: CompareCellFilter
+): Promise<LoadedCell[]> {
   const clauses = ['t.business_version_id = ?'];
   const args: unknown[] = [businessVersionId];
   pushFilter(clauses, args, 't.entity_id', filter.entityId, filter.entityIds);
@@ -505,7 +548,12 @@ async function loadBaselineOutputs(tx: PinnedTransactionClient, organizationId: 
 }
 
 /** `finance_prediction_outputs_effective` — VIEW, no `organization_id` column (WP-D07 ADR section 8.3); the caller's `loadCellsForSource` already validated org ownership of `businessVersionId` via `finance_business_versions` before this is ever called. */
-async function loadPredictionOutputsEffective(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter): Promise<LoadedCell[]> {
+async function loadPredictionOutputsEffective(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  filter: CompareCellFilter
+): Promise<LoadedCell[]> {
   const clauses = ['t.business_version_id = ?'];
   const args: unknown[] = [businessVersionId];
   pushFilter(clauses, args, 't.entity_id', filter.entityId, filter.entityIds);
@@ -552,17 +600,30 @@ async function loadPredictionOutputsEffective(tx: PinnedTransactionClient, organ
   });
 }
 
-async function loadValuationMethods(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter): Promise<LoadedCell[]> {
+async function loadValuationMethods(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  filter: CompareCellFilter
+): Promise<LoadedCell[]> {
   const clauses = ['business_version_id = ?'];
   const args: unknown[] = [businessVersionId];
   pushFilter(clauses, args, 'method_type', filter.methodType, filter.methodTypes);
-  const rows = await tx.queryAll<{ method_type: FinanceValuationMethodType; result_value_status: FinanceValueStatus; result_ev_decimal: string | null }>(
+  const rows = await tx.queryAll<{
+    method_type: FinanceValuationMethodType;
+    result_value_status: FinanceValueStatus;
+    result_ev_decimal: string | null;
+  }>(
     `SELECT method_type, result_value_status, result_ev_decimal
        FROM finance_valuation_methods WHERE ${clauses.join(' AND ')}`,
     args
   );
   return rows.map((r) => {
-    const cellRef = financeValuationMethodsCellRef({ organizationId, businessVersionId, methodType: r.method_type });
+    const cellRef = financeValuationMethodsCellRef({
+      organizationId,
+      businessVersionId,
+      methodType: r.method_type,
+    });
     return {
       cellRef,
       dimensions: { methodType: r.method_type },
@@ -578,7 +639,17 @@ async function loadValuationMethods(tx: PinnedTransactionClient, organizationId:
   });
 }
 
-const LOADERS: Readonly<Record<FinanceTableName, (tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, filter: CompareCellFilter) => Promise<LoadedCell[]>>> = {
+const LOADERS: Readonly<
+  Record<
+    FinanceTableName,
+    (
+      tx: PinnedTransactionClient,
+      organizationId: string,
+      businessVersionId: string,
+      filter: CompareCellFilter
+    ) => Promise<LoadedCell[]>
+  >
+> = {
   finance_stmt_lines: loadStmtLines,
   finance_analysis_kpi_values: loadKpiValues,
   finance_baseline_outputs: loadBaselineOutputs,
@@ -601,28 +672,70 @@ interface ResolvedSource {
   label: string;
 }
 
-type ResolveSourceResult = { ok: true; resolved: ResolvedSource } | { ok: false; code: CompareErrorCode; message: string };
+type ResolveSourceResult =
+  | { ok: true; resolved: ResolvedSource }
+  | { ok: false; code: CompareErrorCode; message: string };
 
-async function resolveSource(tx: PinnedTransactionClient, organizationId: string, source: CompareSource): Promise<ResolveSourceResult> {
+async function resolveSource(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  source: CompareSource
+): Promise<ResolveSourceResult> {
   const { artifactRef } = source;
   if (artifactRef.organizationId !== organizationId) {
-    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: `sourceA/B artifactRef.organizationId (${artifactRef.organizationId}) does not match compareValues params.organizationId (${organizationId})` };
+    return {
+      ok: false,
+      code: 'ORGANIZATION_MISMATCH',
+      message: `sourceA/B artifactRef.organizationId (${artifactRef.organizationId}) does not match compareValues params.organizationId (${organizationId})`,
+    };
   }
-  const businessVersion = await getBusinessVersionViaTx(tx, organizationId, artifactRef.businessVersionId);
+  const businessVersion = await getBusinessVersionViaTx(
+    tx,
+    organizationId,
+    artifactRef.businessVersionId
+  );
   if (!businessVersion) {
-    return { ok: false, code: 'ARTIFACT_NOT_FOUND', message: `No finance_business_versions row for business_version_id=${artifactRef.businessVersionId} in organization ${organizationId}` };
+    return {
+      ok: false,
+      code: 'ARTIFACT_NOT_FOUND',
+      message: `No finance_business_versions row for business_version_id=${artifactRef.businessVersionId} in organization ${organizationId}`,
+    };
   }
   const table = ARTIFACT_TYPE_TABLE[artifactRef.artifactType];
   if (!table) {
-    return { ok: false, code: 'UNSUPPORTED_ARTIFACT_TYPE', message: `artifactType=${artifactRef.artifactType} has no comparable value table (REPORT_EXPORT is a frozen output, not a live grid)` };
+    return {
+      ok: false,
+      code: 'UNSUPPORTED_ARTIFACT_TYPE',
+      message: `artifactType=${artifactRef.artifactType} has no comparable value table (REPORT_EXPORT is a frozen output, not a live grid)`,
+    };
   }
-  const cells = await LOADERS[table](tx, organizationId, artifactRef.businessVersionId, source.cellSelector);
-  return { ok: true, resolved: { businessVersion, table, cells, label: source.label ?? artifactRef.businessVersionId } };
+  const cells = await LOADERS[table](
+    tx,
+    organizationId,
+    artifactRef.businessVersionId,
+    source.cellSelector
+  );
+  return {
+    ok: true,
+    resolved: {
+      businessVersion,
+      table,
+      cells,
+      label: source.label ?? artifactRef.businessVersionId,
+    },
+  };
 }
 
 /** Reads one `finance_business_versions` row on the CALLER's already-open `tx` (never opens its own `withPinnedPostgresTransaction`) — `compareVersions` below also calls this directly on its own short-lived transaction before `compareValues` opens its (separate) one for the actual cell diff. */
-async function getBusinessVersionViaTx(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string): Promise<BusinessVersionRow | null> {
-  return tx.queryOne<BusinessVersionRow>(`SELECT * FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`, [businessVersionId, organizationId]);
+async function getBusinessVersionViaTx(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string
+): Promise<BusinessVersionRow | null> {
+  return tx.queryOne<BusinessVersionRow>(
+    `SELECT * FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
+    [businessVersionId, organizationId]
+  );
 }
 
 /**
@@ -632,7 +745,12 @@ async function getBusinessVersionViaTx(tx: PinnedTransactionClient, organization
  * filter shared across both sides would silently filter one (or both) sides to zero rows, since
  * `finance_stmt_entities` is copy-on-write per business_version_id (see `RawRow.entity_code` doc).
  */
-async function resolveEntityIdByCode(tx: PinnedTransactionClient, organizationId: string, businessVersionId: string, entityCode: string): Promise<string | null> {
+async function resolveEntityIdByCode(
+  tx: PinnedTransactionClient,
+  organizationId: string,
+  businessVersionId: string,
+  entityCode: string
+): Promise<string | null> {
   const row = await tx.queryOne<{ id: string }>(
     `SELECT id FROM finance_stmt_entities WHERE organization_id = ? AND business_version_id = ? AND entity_code = ?`,
     [organizationId, businessVersionId, entityCode]
@@ -644,14 +762,22 @@ async function resolveEntityIdByCode(tx: PinnedTransactionClient, organizationId
 // Match-key building
 // ---------------------------------------------------------------------------
 
-export function buildMatchKey(dimensions: Partial<Record<CompareDimensionName, string>>, ignore: readonly CompareDimensionName[]): string {
+export function buildMatchKey(
+  dimensions: Partial<Record<CompareDimensionName, string>>,
+  ignore: readonly CompareDimensionName[]
+): string {
   const ignoreSet = new Set(ignore);
-  const entries = Object.entries(dimensions).filter(([k]) => !ignoreSet.has(k as CompareDimensionName));
+  const entries = Object.entries(dimensions).filter(
+    ([k]) => !ignoreSet.has(k as CompareDimensionName)
+  );
   entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return entries.map(([k, v]) => `${k}=${v}`).join('&');
 }
 
-export function dimensionsForDisplay(dimensions: Partial<Record<CompareDimensionName, string>>, ignore: readonly CompareDimensionName[]): Record<string, string> {
+export function dimensionsForDisplay(
+  dimensions: Partial<Record<CompareDimensionName, string>>,
+  ignore: readonly CompareDimensionName[]
+): Record<string, string> {
   const ignoreSet = new Set(ignore);
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(dimensions)) {
@@ -664,12 +790,20 @@ export function dimensionsForDisplay(dimensions: Partial<Record<CompareDimension
 // Diff a matched pair
 // ---------------------------------------------------------------------------
 
-export function diffPair(a: LoadedCell | undefined, b: LoadedCell | undefined, materialityThresholdPct: number): Pick<CompareRow, 'diffKind' | 'absoluteDiff' | 'pctDiff' | 'materialityFlag' | 'note'> {
+export function diffPair(
+  a: LoadedCell | undefined,
+  b: LoadedCell | undefined,
+  materialityThresholdPct: number
+): Pick<CompareRow, 'diffKind' | 'absoluteDiff' | 'pctDiff' | 'materialityFlag' | 'note'> {
   const aPresent = a?.valueStatus === 'PRESENT_ZERO' || a?.valueStatus === 'PRESENT_NONZERO';
   const bPresent = b?.valueStatus === 'PRESENT_ZERO' || b?.valueStatus === 'PRESENT_NONZERO';
 
   if (aPresent && bPresent) {
-    if (a!.presentationCurrency && b!.presentationCurrency && a!.presentationCurrency !== b!.presentationCurrency) {
+    if (
+      a!.presentationCurrency &&
+      b!.presentationCurrency &&
+      a!.presentationCurrency !== b!.presentationCurrency
+    ) {
       return {
         diffKind: 'CURRENCY_MISMATCH',
         absoluteDiff: null,
@@ -682,27 +816,53 @@ export function diffPair(a: LoadedCell | undefined, b: LoadedCell | undefined, m
     const vb = b!.fullUnitValue!;
     const absoluteDiff = vb - va;
     const pctDiff = va === 0 ? null : absoluteDiff / Math.abs(va);
-    const materialityFlag = pctDiff !== null ? Math.abs(pctDiff) > materialityThresholdPct : absoluteDiff !== 0;
-    const note = pctDiff === null && absoluteDiff !== 0 ? "Base value (side A) is 0 — percentage change is undefined; flagged material by absolute-change-from-zero, per DEC-FIN-009's 'never silently treat an unmeasurable change as immaterial'." : null;
+    const materialityFlag =
+      pctDiff !== null ? Math.abs(pctDiff) > materialityThresholdPct : absoluteDiff !== 0;
+    const note =
+      pctDiff === null && absoluteDiff !== 0
+        ? "Base value (side A) is 0 — percentage change is undefined; flagged material by absolute-change-from-zero, per DEC-FIN-009's 'never silently treat an unmeasurable change as immaterial'."
+        : null;
     return { diffKind: 'BOTH_PRESENT', absoluteDiff, pctDiff, materialityFlag, note };
   }
 
   if (!aPresent && !bPresent) {
-    return { diffKind: 'MISSING_IN_BOTH', absoluteDiff: null, pctDiff: null, materialityFlag: false, note: 'Neither side has a present value — diff is undefined, not 0.' };
+    return {
+      diffKind: 'MISSING_IN_BOTH',
+      absoluteDiff: null,
+      pctDiff: null,
+      materialityFlag: false,
+      note: 'Neither side has a present value — diff is undefined, not 0.',
+    };
   }
   if (!aPresent) {
-    return { diffKind: 'MISSING_IN_A', absoluteDiff: null, pctDiff: null, materialityFlag: false, note: `Side A is ${a ? a.valueStatus : 'absent (no row)'} — diff withheld, never a false 0.` };
+    return {
+      diffKind: 'MISSING_IN_A',
+      absoluteDiff: null,
+      pctDiff: null,
+      materialityFlag: false,
+      note: `Side A is ${a ? a.valueStatus : 'absent (no row)'} — diff withheld, never a false 0.`,
+    };
   }
-  return { diffKind: 'MISSING_IN_B', absoluteDiff: null, pctDiff: null, materialityFlag: false, note: `Side B is ${b ? b.valueStatus : 'absent (no row)'} — diff withheld, never a false 0.` };
+  return {
+    diffKind: 'MISSING_IN_B',
+    absoluteDiff: null,
+    pctDiff: null,
+    materialityFlag: false,
+    note: `Side B is ${b ? b.valueStatus : 'absent (no row)'} — diff withheld, never a false 0.`,
+  };
 }
 
 // ---------------------------------------------------------------------------
 // compareValues — the generic primitive
 // ---------------------------------------------------------------------------
 
-export async function compareValues(params: CompareValuesParams, comparisonType: CompareComparisonType = 'GENERIC'): Promise<CompareValuesResult> {
+export async function compareValues(
+  params: CompareValuesParams,
+  comparisonType: CompareComparisonType = 'GENERIC'
+): Promise<CompareValuesResult> {
   const ignoreDimensions = params.ignoreDimensions ?? [];
-  const materialityThresholdPct = params.materialityThresholdPct ?? PROVISIONAL_MATERIALITY_THRESHOLD_PCT;
+  const materialityThresholdPct =
+    params.materialityThresholdPct ?? PROVISIONAL_MATERIALITY_THRESHOLD_PCT;
 
   return withPinnedPostgresTransaction(async (tx) => {
     const resolvedA = await resolveSource(tx, params.organizationId, params.sourceA);
@@ -737,7 +897,15 @@ export async function compareValues(params: CompareValuesParams, comparisonType:
 
     const allKeys = new Set<string>([...mapA.keys(), ...mapB.keys()]);
     const rows: CompareRow[] = [];
-    const summary: CompareSummary = { totalRows: 0, bothPresent: 0, missingInA: 0, missingInB: 0, missingInBoth: 0, currencyMismatch: 0, materialCount: 0 };
+    const summary: CompareSummary = {
+      totalRows: 0,
+      bothPresent: 0,
+      missingInA: 0,
+      missingInB: 0,
+      missingInBoth: 0,
+      currencyMismatch: 0,
+      materialCount: 0,
+    };
 
     for (const key of allKeys) {
       const a = mapA.get(key);
@@ -781,14 +949,24 @@ export async function compareValues(params: CompareValuesParams, comparisonType:
     // Deterministic order for display/export (dimensions sorted alphabetically inside the key already; sort rows by key too).
     rows.sort((x, y) => (x.matchKey < y.matchKey ? -1 : x.matchKey > y.matchKey ? 1 : 0));
 
-    const filteredRows = params.onlyMaterial ? rows.filter((r) => r.materialityFlag || r.diffKind !== 'BOTH_PRESENT') : rows;
+    const filteredRows = params.onlyMaterial
+      ? rows.filter((r) => r.materialityFlag || r.diffKind !== 'BOTH_PRESENT')
+      : rows;
 
     const result: CompareResult = {
       comparisonType,
       organizationId: params.organizationId,
       generatedAt: new Date().toISOString(),
-      sourceA: { artifactType: params.sourceA.artifactRef.artifactType, businessVersionId: params.sourceA.artifactRef.businessVersionId, label: resolvedA.resolved.label },
-      sourceB: { artifactType: params.sourceB.artifactRef.artifactType, businessVersionId: params.sourceB.artifactRef.businessVersionId, label: resolvedB.resolved.label },
+      sourceA: {
+        artifactType: params.sourceA.artifactRef.artifactType,
+        businessVersionId: params.sourceA.artifactRef.businessVersionId,
+        label: resolvedA.resolved.label,
+      },
+      sourceB: {
+        artifactType: params.sourceB.artifactRef.artifactType,
+        businessVersionId: params.sourceB.artifactRef.businessVersionId,
+        label: resolvedB.resolved.label,
+      },
       ignoreDimensions,
       materialityThresholdPct,
       onlyMaterial: params.onlyMaterial ?? false,
@@ -831,8 +1009,16 @@ export async function comparePeriods(params: ComparePeriodsParams): Promise<Comp
   return compareValues(
     {
       organizationId: params.organizationId,
-      sourceA: { artifactRef: params.artifactRef, cellSelector: { ...baseSelector, periodId: params.periodIdA }, label: params.labelA ?? `period:${params.periodIdA}` },
-      sourceB: { artifactRef: params.artifactRef, cellSelector: { ...baseSelector, periodId: params.periodIdB }, label: params.labelB ?? `period:${params.periodIdB}` },
+      sourceA: {
+        artifactRef: params.artifactRef,
+        cellSelector: { ...baseSelector, periodId: params.periodIdA },
+        label: params.labelA ?? `period:${params.periodIdA}`,
+      },
+      sourceB: {
+        artifactRef: params.artifactRef,
+        cellSelector: { ...baseSelector, periodId: params.periodIdB },
+        label: params.labelB ?? `period:${params.periodIdB}`,
+      },
       ignoreDimensions: ['periodId'],
       materialityThresholdPct: params.materialityThresholdPct,
       onlyMaterial: params.onlyMaterial,
@@ -860,19 +1046,36 @@ export interface CompareVersionsParams {
 }
 
 /** Two business_versions of the SAME artifact_id — reuses `finance_business_versions.parent_version_id` lineage (task point 2: "reużyj lineage/parent_version_id") to confirm they are actually related versions before diffing, and to label the relationship in the result rather than silently diffing two unrelated versions that merely share an artifact_id by coincidence-proof (they can't, artifact_id is the FK, but the parent/child direction is still worth surfacing). */
-export async function compareVersions(params: CompareVersionsParams): Promise<CompareValuesResult & { relationship?: string }> {
+export async function compareVersions(
+  params: CompareVersionsParams
+): Promise<CompareValuesResult & { relationship?: string }> {
   const resolved = await withPinnedPostgresTransaction(async (tx) => {
     const [a, b] = await Promise.all([
       getBusinessVersionViaTx(tx, params.organizationId, params.businessVersionIdA),
       getBusinessVersionViaTx(tx, params.organizationId, params.businessVersionIdB),
     ]);
-    if (!a || !b) return { ok: false as const, code: 'ARTIFACT_NOT_FOUND' as const, message: `businessVersionIdA and/or businessVersionIdB not found in organization ${params.organizationId}` };
+    if (!a || !b)
+      return {
+        ok: false as const,
+        code: 'ARTIFACT_NOT_FOUND' as const,
+        message: `businessVersionIdA and/or businessVersionIdB not found in organization ${params.organizationId}`,
+      };
     let entityIdA: string | undefined;
     let entityIdB: string | undefined;
     if (params.entityCode) {
       const [idA, idB] = await Promise.all([
-        resolveEntityIdByCode(tx, params.organizationId, params.businessVersionIdA, params.entityCode),
-        resolveEntityIdByCode(tx, params.organizationId, params.businessVersionIdB, params.entityCode),
+        resolveEntityIdByCode(
+          tx,
+          params.organizationId,
+          params.businessVersionIdA,
+          params.entityCode
+        ),
+        resolveEntityIdByCode(
+          tx,
+          params.organizationId,
+          params.businessVersionIdB,
+          params.entityCode
+        ),
       ]);
       if (!idA || !idB) {
         return {
@@ -889,17 +1092,38 @@ export async function compareVersions(params: CompareVersionsParams): Promise<Co
   if (!resolved.ok) return resolved;
   const { a, b, entityIdA, entityIdB } = resolved;
 
-  if (a.artifact_id !== params.artifactId || b.artifact_id !== params.artifactId || a.artifact_id !== b.artifact_id) {
+  if (
+    a.artifact_id !== params.artifactId ||
+    b.artifact_id !== params.artifactId ||
+    a.artifact_id !== b.artifact_id
+  ) {
     return {
       ok: false,
       code: 'VERSION_ARTIFACT_MISMATCH',
       message: `compareVersions requires both business_version_id to belong to artifact_id=${params.artifactId}; got A.artifact_id=${a.artifact_id}, B.artifact_id=${b.artifact_id}`,
     };
   }
-  const relationship = b.parent_version_id === a.business_version_id ? 'B_IS_DIRECT_CHILD_OF_A' : a.parent_version_id === b.business_version_id ? 'A_IS_DIRECT_CHILD_OF_B' : 'SAME_ARTIFACT_NOT_DIRECT_PARENT_CHILD';
+  const relationship =
+    b.parent_version_id === a.business_version_id
+      ? 'B_IS_DIRECT_CHILD_OF_A'
+      : a.parent_version_id === b.business_version_id
+        ? 'A_IS_DIRECT_CHILD_OF_B'
+        : 'SAME_ARTIFACT_NOT_DIRECT_PARENT_CHILD';
 
-  const artifactRefA: ArtifactRef = { organizationId: params.organizationId, artifactId: params.artifactId, businessVersionId: params.businessVersionIdA, artifactType: params.artifactType, naturalKey: null } as ArtifactRef;
-  const artifactRefB: ArtifactRef = { organizationId: params.organizationId, artifactId: params.artifactId, businessVersionId: params.businessVersionIdB, artifactType: params.artifactType, naturalKey: null } as ArtifactRef;
+  const artifactRefA: ArtifactRef = {
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    businessVersionId: params.businessVersionIdA,
+    artifactType: params.artifactType,
+    naturalKey: null,
+  } as ArtifactRef;
+  const artifactRefB: ArtifactRef = {
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    businessVersionId: params.businessVersionIdB,
+    artifactType: params.artifactType,
+    naturalKey: null,
+  } as ArtifactRef;
 
   const baseSelector: Omit<CompareCellFilter, 'entityId'> = {
     canonicalLineIds: params.canonicalLineIds,
@@ -910,8 +1134,16 @@ export async function compareVersions(params: CompareVersionsParams): Promise<Co
   const result = await compareValues(
     {
       organizationId: params.organizationId,
-      sourceA: { artifactRef: artifactRefA, cellSelector: { ...baseSelector, entityId: entityIdA }, label: params.labelA ?? `v${a.version_no} (${a.version_kind})` },
-      sourceB: { artifactRef: artifactRefB, cellSelector: { ...baseSelector, entityId: entityIdB }, label: params.labelB ?? `v${b.version_no} (${b.version_kind})` },
+      sourceA: {
+        artifactRef: artifactRefA,
+        cellSelector: { ...baseSelector, entityId: entityIdA },
+        label: params.labelA ?? `v${a.version_no} (${a.version_kind})`,
+      },
+      sourceB: {
+        artifactRef: artifactRefB,
+        cellSelector: { ...baseSelector, entityId: entityIdB },
+        label: params.labelB ?? `v${b.version_no} (${b.version_kind})`,
+      },
       ignoreDimensions: [],
       materialityThresholdPct: params.materialityThresholdPct,
       onlyMaterial: params.onlyMaterial,
@@ -947,8 +1179,16 @@ export async function compareEntities(params: CompareEntitiesParams): Promise<Co
   return compareValues(
     {
       organizationId: params.organizationId,
-      sourceA: { artifactRef: params.artifactRef, cellSelector: { ...baseSelector, entityId: params.entityIdA }, label: params.labelA ?? `entity:${params.entityIdA}` },
-      sourceB: { artifactRef: params.artifactRef, cellSelector: { ...baseSelector, entityId: params.entityIdB }, label: params.labelB ?? `entity:${params.entityIdB}` },
+      sourceA: {
+        artifactRef: params.artifactRef,
+        cellSelector: { ...baseSelector, entityId: params.entityIdA },
+        label: params.labelA ?? `entity:${params.entityIdA}`,
+      },
+      sourceB: {
+        artifactRef: params.artifactRef,
+        cellSelector: { ...baseSelector, entityId: params.entityIdB },
+        label: params.labelB ?? `entity:${params.entityIdB}`,
+      },
       ignoreDimensions: ['entityId'],
       materialityThresholdPct: params.materialityThresholdPct,
       onlyMaterial: params.onlyMaterial,
@@ -972,17 +1212,35 @@ export interface CompareScenariosParams {
 }
 
 /** Base vs Upside/Downside — each scenario is its own PREDICTION_SCENARIO artifact/business_version_id (WP-D07), read through `finance_prediction_outputs_effective` so a `STANDARD_BASE` scenario transparently compares against the Baseline Model passthrough (WP-D07 ADR section 8.3) exactly like any other scenario would. */
-export async function compareScenarios(params: CompareScenariosParams): Promise<CompareValuesResult> {
+export async function compareScenarios(
+  params: CompareScenariosParams
+): Promise<CompareValuesResult> {
   const artifactRefFor = (businessVersionId: string): ArtifactRef =>
-    ({ organizationId: params.organizationId, artifactId: businessVersionId, businessVersionId, artifactType: 'PREDICTION_SCENARIO', naturalKey: null }) as ArtifactRef;
+    ({
+      organizationId: params.organizationId,
+      artifactId: businessVersionId,
+      businessVersionId,
+      artifactType: 'PREDICTION_SCENARIO',
+      naturalKey: null,
+    }) as ArtifactRef;
 
   let entityIdBase: string | undefined;
   let entityIdOther: string | undefined;
   if (params.entityCode) {
     const resolved = await withPinnedPostgresTransaction(async (tx) => {
       const [idBase, idOther] = await Promise.all([
-        resolveEntityIdByCode(tx, params.organizationId, params.businessVersionIdBase, params.entityCode!),
-        resolveEntityIdByCode(tx, params.organizationId, params.businessVersionIdOther, params.entityCode!),
+        resolveEntityIdByCode(
+          tx,
+          params.organizationId,
+          params.businessVersionIdBase,
+          params.entityCode!
+        ),
+        resolveEntityIdByCode(
+          tx,
+          params.organizationId,
+          params.businessVersionIdOther,
+          params.entityCode!
+        ),
       ]);
       return { idBase, idOther };
     });
@@ -1002,12 +1260,20 @@ export async function compareScenarios(params: CompareScenariosParams): Promise<
       organizationId: params.organizationId,
       sourceA: {
         artifactRef: artifactRefFor(params.businessVersionIdBase),
-        cellSelector: { entityId: entityIdBase, canonicalLineIds: params.canonicalLineIds, consolidationScope: params.consolidationScope },
+        cellSelector: {
+          entityId: entityIdBase,
+          canonicalLineIds: params.canonicalLineIds,
+          consolidationScope: params.consolidationScope,
+        },
         label: params.labelBase ?? 'Base',
       },
       sourceB: {
         artifactRef: artifactRefFor(params.businessVersionIdOther),
-        cellSelector: { entityId: entityIdOther, canonicalLineIds: params.canonicalLineIds, consolidationScope: params.consolidationScope },
+        cellSelector: {
+          entityId: entityIdOther,
+          canonicalLineIds: params.canonicalLineIds,
+          consolidationScope: params.consolidationScope,
+        },
         label: params.labelOther ?? 'Other scenario',
       },
       ignoreDimensions: [],
@@ -1029,13 +1295,29 @@ export interface CompareValuationMethodsParams {
 }
 
 /** DCF vs comps (or any two methods) within the SAME variant — `ignoreDimensions: ['methodType']` collapses each side's single row to one shared match key, since method_type is the very axis that legitimately differs here. */
-export async function compareValuationMethods(params: CompareValuationMethodsParams): Promise<CompareValuesResult> {
-  const artifactRef: ArtifactRef = { organizationId: params.organizationId, artifactId: params.businessVersionId, businessVersionId: params.businessVersionId, artifactType: 'VALUATION_CASE', naturalKey: null } as ArtifactRef;
+export async function compareValuationMethods(
+  params: CompareValuationMethodsParams
+): Promise<CompareValuesResult> {
+  const artifactRef: ArtifactRef = {
+    organizationId: params.organizationId,
+    artifactId: params.businessVersionId,
+    businessVersionId: params.businessVersionId,
+    artifactType: 'VALUATION_CASE',
+    naturalKey: null,
+  } as ArtifactRef;
   return compareValues(
     {
       organizationId: params.organizationId,
-      sourceA: { artifactRef, cellSelector: { methodType: params.methodTypeA }, label: params.labelA ?? params.methodTypeA },
-      sourceB: { artifactRef, cellSelector: { methodType: params.methodTypeB }, label: params.labelB ?? params.methodTypeB },
+      sourceA: {
+        artifactRef,
+        cellSelector: { methodType: params.methodTypeA },
+        label: params.labelA ?? params.methodTypeA,
+      },
+      sourceB: {
+        artifactRef,
+        cellSelector: { methodType: params.methodTypeB },
+        label: params.labelB ?? params.methodTypeB,
+      },
       ignoreDimensions: ['methodType'],
       materialityThresholdPct: params.materialityThresholdPct,
     },
@@ -1059,11 +1341,23 @@ export interface CompareActualVsForecastParams {
 }
 
 /** Actual (Statement Pack) vs Forecast (Baseline Model or Prediction Scenario) — the addendum's "actual/forecast" Compare axis (section 3 point 5), not separately named in the task's own ZAKRES list but free to expose since `compareValues` already supports cross-table sources. */
-export async function compareActualVsForecast(params: CompareActualVsForecastParams): Promise<CompareValuesResult> {
+export async function compareActualVsForecast(
+  params: CompareActualVsForecastParams
+): Promise<CompareValuesResult> {
   const resolved = await withPinnedPostgresTransaction(async (tx) => {
     const [entityIdActual, entityIdForecast] = await Promise.all([
-      resolveEntityIdByCode(tx, params.organizationId, params.actualArtifactRef.businessVersionId, params.entityCode),
-      resolveEntityIdByCode(tx, params.organizationId, params.forecastArtifactRef.businessVersionId, params.entityCode),
+      resolveEntityIdByCode(
+        tx,
+        params.organizationId,
+        params.actualArtifactRef.businessVersionId,
+        params.entityCode
+      ),
+      resolveEntityIdByCode(
+        tx,
+        params.organizationId,
+        params.forecastArtifactRef.businessVersionId,
+        params.entityCode
+      ),
     ]);
     return { entityIdActual, entityIdForecast };
   });
@@ -1080,12 +1374,23 @@ export async function compareActualVsForecast(params: CompareActualVsForecastPar
       organizationId: params.organizationId,
       sourceA: {
         artifactRef: params.actualArtifactRef,
-        cellSelector: { entityId: resolved.entityIdActual, periodIds: params.periodIds, canonicalLineIds: params.canonicalLineIds, consolidationScope: params.consolidationScope, accumulationBasis: params.accumulationBasis },
+        cellSelector: {
+          entityId: resolved.entityIdActual,
+          periodIds: params.periodIds,
+          canonicalLineIds: params.canonicalLineIds,
+          consolidationScope: params.consolidationScope,
+          accumulationBasis: params.accumulationBasis,
+        },
         label: 'Actual',
       },
       sourceB: {
         artifactRef: params.forecastArtifactRef,
-        cellSelector: { entityId: resolved.entityIdForecast, periodIds: params.periodIds, canonicalLineIds: params.canonicalLineIds, consolidationScope: params.consolidationScope },
+        cellSelector: {
+          entityId: resolved.entityIdForecast,
+          periodIds: params.periodIds,
+          canonicalLineIds: params.canonicalLineIds,
+          consolidationScope: params.consolidationScope,
+        },
         label: 'Forecast',
       },
       ignoreDimensions: ['accumulationBasis'],

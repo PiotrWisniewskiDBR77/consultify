@@ -110,7 +110,8 @@ export const painExplorerPack: ToolPack = {
         pl: 'Zdefiniować proces, interesariuszy i powierzchnię bólu.',
         en: 'Define the process, stakeholders, and pain surface.',
       },
-      whatGoodLooksLike: 'Nazwany proces, lista interesariuszy dotkniętych bólem i horyzont decyzji.',
+      whatGoodLooksLike:
+        'Nazwany proces, lista interesariuszy dotkniętych bólem i horyzont decyzji.',
       evidenceToAskFor: 'Który proces boli, kogo dotyka i jak długo trwa problem.',
       completionCriterion: 'Powierzchnia bólu zaakceptowana przez właściciela procesu.',
     },
@@ -121,9 +122,12 @@ export const painExplorerPack: ToolPack = {
         pl: 'Zebrać zaobserwowane problemy i ich objawy.',
         en: 'Capture the observed problems and their symptoms.',
       },
-      whatGoodLooksLike: 'Każdy ból podany dokładnie tak, jak opisałaby go osoba, która go odczuwa, z co najmniej jednym niezależnym źródłem.',
-      evidenceToAskFor: 'Czy więcej niż jedna niezależna osoba/źródło zgłosiła ten sam ból (painExplorerQuestionBank.ts: pain-surface).',
-      completionCriterion: 'Co najmniej jeden ból ma potwierdzenie z drugiego, niezależnego źródła (pętla pain-qualify-force nie blokuje dalej).',
+      whatGoodLooksLike:
+        'Każdy ból podany dokładnie tak, jak opisałaby go osoba, która go odczuwa, z co najmniej jednym niezależnym źródłem.',
+      evidenceToAskFor:
+        'Czy więcej niż jedna niezależna osoba/źródło zgłosiła ten sam ból (painExplorerQuestionBank.ts: pain-surface).',
+      completionCriterion:
+        'Co najmniej jeden ból ma potwierdzenie z drugiego, niezależnego źródła (pętla pain-qualify-force nie blokuje dalej).',
     },
     {
       id: 'hypotheses',
@@ -132,7 +136,8 @@ export const painExplorerPack: ToolPack = {
         pl: 'Sformułować hipotezy przyczyn źródłowych do walidacji.',
         en: 'Frame root-cause hypotheses to validate.',
       },
-      whatGoodLooksLike: 'Każda hipoteza rozróżnia, czy ból jest usuwalnym rootem, czy downstreamowym objawem (PainNature: root/symptom).',
+      whatGoodLooksLike:
+        'Każda hipoteza rozróżnia, czy ból jest usuwalnym rootem, czy downstreamowym objawem (PainNature: root/symptom).',
       evidenceToAskFor: 'Co się stanie z bólem, jeśli naprawicie tylko objaw, a nie źródło.',
       completionCriterion: 'Co najmniej jeden ból ma jawnie oznaczoną naturę (root/symptom).',
     },
@@ -143,9 +148,12 @@ export const painExplorerPack: ToolPack = {
         pl: 'Wypisać dowody potrzebne do potwierdzenia każdej hipotezy.',
         en: 'List the evidence still needed to confirm each hypothesis.',
       },
-      whatGoodLooksLike: 'Koszt bólu (minuty × wystąpienia × zasięg) jest zmierzony, nie zgadywany, zwłaszcza dla bólu o najwyższym koszcie.',
-      evidenceToAskFor: 'Skąd wiadomo, że minuty/wystąpienia są policzone, a nie oszacowane "na oko".',
-      completionCriterion: 'Najdroższy ból (topPainMinutes) ma zmierzony koszt (painSynthesisEngine.ts: detectPainGaps — unmeasured-top-pain = brak).',
+      whatGoodLooksLike:
+        'Koszt bólu (minuty × wystąpienia × zasięg) jest zmierzony, nie zgadywany, zwłaszcza dla bólu o najwyższym koszcie.',
+      evidenceToAskFor:
+        'Skąd wiadomo, że minuty/wystąpienia są policzone, a nie oszacowane "na oko".',
+      completionCriterion:
+        'Najdroższy ból (topPainMinutes) ma zmierzony koszt (painSynthesisEngine.ts: detectPainGaps — unmeasured-top-pain = brak).',
     },
     {
       id: 'summary',
@@ -154,9 +162,12 @@ export const painExplorerPack: ToolPack = {
         pl: 'Podsumować bóle i wygenerować inicjatywy.',
         en: 'Summarize pains and generate initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch ma rationale, trade-off i odrzucony wariant, a sekwencja kończy się diagnozą przyczyny źródłowej.',
-      evidenceToAskFor: 'Co świadomie odraczamy (leczenie objawu) i pod jakim warunkiem to akceptujemy.',
-      completionCriterion: 'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
+      whatGoodLooksLike:
+        'Każdy ruch ma rationale, trade-off i odrzucony wariant, a sekwencja kończy się diagnozą przyczyny źródłowej.',
+      evidenceToAskFor:
+        'Co świadomie odraczamy (leczenie objawu) i pod jakim warunkiem to akceptujemy.',
+      completionCriterion:
+        'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
     },
   ],
 
@@ -303,7 +314,8 @@ export const painExplorerPack: ToolPack = {
    */
   rights: {
     methodologyName: 'Odkrywanie problemów i przyczyn źródłowych (detect/qualify/measure/diagnose)',
-    commonlyAttributedTo: 'Linia 5-Why / Lean problem solving (generyczna, bez jednego właściciela)',
+    commonlyAttributedTo:
+      'Linia 5-Why / Lean problem solving (generyczna, bez jednego właściciela)',
     sourceUsed: 'src/config/painexplorer/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
@@ -311,6 +323,7 @@ export const painExplorerPack: ToolPack = {
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'Prawdopodobny potomek generycznej analizy przyczyn źródłowych; brak jawnego cytowania w repo.',
+    uncertainty:
+      'Prawdopodobny potomek generycznej analizy przyczyn źródłowych; brak jawnego cytowania w repo.',
   },
 };

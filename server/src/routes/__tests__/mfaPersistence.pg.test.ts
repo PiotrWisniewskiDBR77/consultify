@@ -20,10 +20,10 @@
 import crypto from 'node:crypto';
 import { randomUUID } from 'node:crypto';
 
+import bcrypt from 'bcryptjs';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import bcrypt from 'bcryptjs';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB =
@@ -316,7 +316,9 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
       .post('/api/mfa/verify-setup')
       .send({ token: totp(setup.body.secret) });
     await request(app).post('/api/mfa/verify').send({ token: '000000' });
-    await request(app).post('/api/mfa/verify').send({ token: totp(setup.body.secret) });
+    await request(app)
+      .post('/api/mfa/verify')
+      .send({ token: totp(setup.body.secret) });
     await request(app)
       .post('/api/mfa/regenerate-backup-codes')
       .send({ token: totp(setup.body.secret) });
@@ -344,7 +346,9 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
         'security.mfa.disable',
       ])
     );
-    expect(audit.rows.some((auditRow) => JSON.parse(auditRow.details).success === false)).toBe(true);
+    expect(audit.rows.some((auditRow) => JSON.parse(auditRow.details).success === false)).toBe(
+      true
+    );
     const serialized = JSON.stringify(audit.rows);
     expect(serialized).not.toContain(setup.body.secret);
     expect(serialized).not.toContain('correct-password');

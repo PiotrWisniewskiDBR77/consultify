@@ -125,8 +125,9 @@ vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => appStoreState,
 }));
 
-import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
 import { resetInitiativeBridgeFlagCache } from '@/utils/initiativeBridgeFlag';
+
+import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
 
 const renderHub = () =>
   render(
@@ -173,19 +174,24 @@ describe('InitiativesHub smoke', () => {
     const prompt = vi.spyOn(window, 'prompt');
     prompt.mockReturnValueOnce('classic-initiative-1').mockReturnValueOnce('candidate-1');
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: 'APPLIED' }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ status: 'APPLIED' }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     renderHub();
     fireEvent.click(await screen.findByText('Adopt classic initiative'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, request] = fetchMock.mock.calls[0];
+    // `vi.fn()` bez sygnatury ma `calls: []`, wiec destrukturyzacja pozycji 0/1
+    // nie ma z czego brac typow. Rzutowanie na ksztalt wywolania fetch.
+    const [url, request] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/initiatives/runtime-v1/adoptions/accepted-classic');
-    expect(JSON.parse(String((request as RequestInit).body))).toMatchObject({
+    expect(JSON.parse(String(request.body))).toMatchObject({
       candidateId: 'candidate-1',
       initiativeId: 'classic-initiative-1',
       projectId: 'proj-1',

@@ -17,7 +17,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { solvePeriod, type CircularityPeriodInputs } from '../baselineCircularitySolver.js';
+import { type CircularityPeriodInputs, solvePeriod } from '../baselineCircularitySolver.js';
 
 const BASE: CircularityPeriodInputs = {
   priorCash: 11_000_000,
@@ -79,7 +79,7 @@ describe('solvePeriod — real circularity via a contractual mandatory cash-swee
   const SWEEP_INPUTS_JAN: CircularityPeriodInputs = {
     ...BASE,
     mandatoryContractualCashSweepModeled: true,
-    sweepPct: 0.10,
+    sweepPct: 0.1,
     sweepThreshold: 0,
   };
 
@@ -158,7 +158,13 @@ describe('solvePeriod — fail-closed on non-convergence', () => {
   });
 
   it('maxIterations=1 fails closed for a genuinely circular (multi-iteration) configuration instead of silently accepting iteration 1 as final', () => {
-    const result = solvePeriod({ ...BASE, mandatoryContractualCashSweepModeled: true, sweepPct: 0.10, maxIterations: 1, toleranceCurrency: 0.0001 });
+    const result = solvePeriod({
+      ...BASE,
+      mandatoryContractualCashSweepModeled: true,
+      sweepPct: 0.1,
+      maxIterations: 1,
+      toleranceCurrency: 0.0001,
+    });
     expect(result.converged).toBe(false);
     expect(result.iterationsUsed).toBe(1);
   });

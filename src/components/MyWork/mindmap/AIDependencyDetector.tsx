@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 export interface DetectedDependency {
@@ -189,7 +188,10 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Network size={16} className="text-c-text-secondary" />
-              <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-dependency-detector-modal-heading">
+              <h3
+                className="text-sm font-bold text-c-text dark:text-c-text"
+                id="a-i-dependency-detector-modal-heading"
+              >
                 {t('ideas.mindmap.aiDependencyDetection', 'AI: Dependency Detection')}
               </h3>
             </div>

@@ -9,7 +9,8 @@ vi.mock('../auditsMethodApi', async () => {
 });
 
 import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
-import { generateReport, listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
+
+import { type AuditOutputSummary, generateReport, listOutputs } from '../auditsMethodApi';
 import { AuditOutputsTab } from '../tabs/AuditOutputsTab';
 
 const output: AuditOutputSummary = {

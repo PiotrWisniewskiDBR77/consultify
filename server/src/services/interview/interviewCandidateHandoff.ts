@@ -87,16 +87,16 @@
  * to the winning candidate instead of failing the handoff or creating a
  * duplicate.
  */
-import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'node:crypto';
+
+import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
-  createCandidateFromSource,
   type CandidateDb,
+  createCandidateFromSource,
 } from '../initiative/initiativeCandidateService.js';
-
 import { canonicalStatusToken } from './interviewStatusNormalization.js';
 
 export type InterviewCandidateSourceType = 'interview_submission' | 'interview_insight_finding';

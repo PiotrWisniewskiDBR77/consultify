@@ -41,13 +41,13 @@ import {
   type WizardStep as SharedWizardStep,
   WizardStepper,
 } from '@/components/shared/WizardModal';
-import { isInterviewCreatorShellEnabled } from '@/utils/interviewCreatorShellFlag';
 import { Button } from '@/components/ui/primitives';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
 import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
+import { isInterviewCreatorShellEnabled } from '@/utils/interviewCreatorShellFlag';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../../types';
 

@@ -17,14 +17,15 @@
  * which is exactly what the `authenticate` middleware below relies on.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { MEETINGS_CUTOVER } from '../registry/meetings.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -75,7 +76,12 @@ describe.skipIf(!REAL_PG)('MEETINGS legacy-cutover guard (fresh real PostgreSQL)
     const meetingRouter = (await import('../../../routes/meeting.routes.js')).default;
     app = express();
     app.use(express.json());
-    app.use('/api/meeting', authenticate, createLegacyCutoverGuard(MEETINGS_CUTOVER), meetingRouter);
+    app.use(
+      '/api/meeting',
+      authenticate,
+      createLegacyCutoverGuard(MEETINGS_CUTOVER),
+      meetingRouter
+    );
     app.use((err: any, _req: any, res: any, _next: any) =>
       res.status(500).json({ error: String(err?.message || err) })
     );
@@ -92,10 +98,16 @@ describe.skipIf(!REAL_PG)('MEETINGS legacy-cutover guard (fresh real PostgreSQL)
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
-    await pool.query(`DELETE FROM meeting_follow_ups WHERE meeting_id IN (
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
+    await pool.query(
+      `DELETE FROM meeting_follow_ups WHERE meeting_id IN (
       SELECT id FROM meetings WHERE organization_id = ANY($1)
-    )`, [[orgA, orgB]]);
+    )`,
+      [[orgA, orgB]]
+    );
     await pool.query(`DELETE FROM meetings WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],

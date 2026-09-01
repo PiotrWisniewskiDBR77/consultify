@@ -2,15 +2,15 @@ import DRD_STRUCTURE from '../../data/drdStructure.js';
 import { methodOutputService } from '../../method-core/outputs/index.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import {
-  AssessmentSkipReasonError,
-  assessmentSkipReasonService,
-  type AssessmentSkipReason,
-} from './assessmentSkipReasonService.js';
-import {
   composeAreaNarrative,
   composeChapterAggregateNarrative,
   composeProgramAggregateNarrative,
 } from './assessmentNarrativeComposer.js';
+import {
+  type AssessmentSkipReason,
+  AssessmentSkipReasonError,
+  assessmentSkipReasonService,
+} from './assessmentSkipReasonService.js';
 
 const AREA_MICROSTRUCTURE = [
   'stan_faktyczny',

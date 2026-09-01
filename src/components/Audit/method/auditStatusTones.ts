@@ -299,7 +299,10 @@ export function findingSeverityTone(severity: AuditFindingSeverity | null): Stat
   return FINDING_SEVERITY_TONE[severity] ?? 'neutral';
 }
 
-export function findingSeverityLabel(severity: AuditFindingSeverity | null, isPolish = false): string {
+export function findingSeverityLabel(
+  severity: AuditFindingSeverity | null,
+  isPolish = false
+): string {
   if (!severity) return isPolish ? 'Nieokreślona' : 'Unspecified';
   const entry = FINDING_SEVERITY_LABEL[severity];
   if (!entry) return severity;

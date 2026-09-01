@@ -34,13 +34,13 @@ import type { NextFunction, Request, Response } from 'express';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
-  resolveCanonicalIdentity,
   type CanonicalIdentityStatus,
+  resolveCanonicalIdentity,
 } from './canonicalIdentityBridge.js';
 import {
   completeLegacyCutoverIntent,
-  registerLegacyCutoverIntent,
   type LegacyIntentTerminalResult,
+  registerLegacyCutoverIntent,
 } from './legacyCutoverIntentService.js';
 
 export type LegacyWriterState =

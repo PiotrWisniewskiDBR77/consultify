@@ -75,11 +75,12 @@ router.get(
         taskCompletionPct: taskCompletionRate,
       });
       const healthScore = executionHealth.score ?? 0;
-      const riskLevel = executionHealth.rag === 'GREEN'
-        ? 'low'
-        : executionHealth.rag === 'AMBER'
-          ? 'medium'
-          : 'high';
+      const riskLevel =
+        executionHealth.rag === 'GREEN'
+          ? 'low'
+          : executionHealth.rag === 'AMBER'
+            ? 'medium'
+            : 'high';
 
       return res.json({
         success: true,

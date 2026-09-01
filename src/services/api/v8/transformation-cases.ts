@@ -1,7 +1,11 @@
 import { v8Get, v8Patch, v8Post } from './client';
 
 export type TransformationCapabilityStatus =
-  'REAL' | 'PARTIAL' | 'PROPOSAL_ONLY' | 'NOT_CONNECTED' | 'NOT_IMPLEMENTED';
+  | 'REAL'
+  | 'PARTIAL'
+  | 'PROPOSAL_ONLY'
+  | 'NOT_CONNECTED'
+  | 'NOT_IMPLEMENTED';
 
 export interface TransformationPlanStepDto {
   stepId: string;
@@ -16,7 +20,11 @@ export interface TransformationPlanStepDto {
   dependsOn: string[];
   approvalClass: 'none' | 'policy_approvable' | 'requires_human_approval';
   riskClass:
-    'read_only' | 'safe_additive' | 'safe_update' | 'sensitive_update' | 'governance_transition';
+    | 'read_only'
+    | 'safe_additive'
+    | 'safe_update'
+    | 'sensitive_update'
+    | 'governance_transition';
   executionMode: 'foreground' | 'background' | 'scheduled' | 'human_activity';
   estimatedEffort: string;
   blockerReason: string | null;

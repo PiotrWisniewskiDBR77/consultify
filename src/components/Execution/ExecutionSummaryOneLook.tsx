@@ -345,9 +345,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
           // linie przy jeszcze węższym viewport/dark-mode reflow), nie jako
           // główny mechanizm.
           return (
-            <span
-              className={`block line-clamp-2 leading-tight text-sm font-medium ${band.text}`}
-            >
+            <span className={`block line-clamp-2 leading-tight text-sm font-medium ${band.text}`}>
               {label}
             </span>
           );

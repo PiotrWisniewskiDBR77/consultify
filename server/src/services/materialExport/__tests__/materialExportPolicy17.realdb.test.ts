@@ -1,14 +1,15 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+
 import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { resolvePresentationTemplateForCreation } from '../../materials/creationIntent.js';
 import {
   MATERIAL_EXPORT_POLICY_VERSION,
   requireApprovedExportEngine,
 } from '../materialExportPolicyService.js';
-import { resolvePresentationTemplateForCreation } from '../../materials/creationIntent.js';
 
 describe('MAT-POL-001 approved engine lock', () => {
   it('binds the four approved in-process engines to the installed lock versions and MIT', () => {

@@ -31,26 +31,29 @@
  * is out of this package's scope.
  */
 
-import { CellRefSchema } from '../../../types/finance/CellRef.js';
 import type { CellRef } from '../../../types/finance/CellRef.js';
+import { CellRefSchema } from '../../../types/finance/CellRef.js';
+import type {
+  ApplyOperationsBatchRequest,
+  FinanceValueInput,
+} from '../../../types/finance/Operation.js';
 import { FinanceValueInputSchema } from '../../../types/finance/Operation.js';
-import type { ApplyOperationsBatchRequest, FinanceValueInput } from '../../../types/finance/Operation.js';
 import {
-  type EngineError,
-  type EngineMutationContext,
   checkCapability,
+  type EngineError,
   engineError,
+  type EngineMutationContext,
   resolveIdGenerator,
   resolveNow,
 } from './engineContext.js';
 import {
-  MAX_CELLS_PER_OPERATION,
   chunkArray,
-  iterateRect,
-  isRectInBounds,
-  rectCellCount,
   type GridAddressResolver,
   type GridRect,
+  isRectInBounds,
+  iterateRect,
+  MAX_CELLS_PER_OPERATION,
+  rectCellCount,
 } from './gridCoordinates.js';
 
 export type FillDirection = 'DOWN' | 'RIGHT';
@@ -79,8 +82,13 @@ export interface FillEngineSuccess {
 
 export type FillEngineResult = FillEngineSuccess | EngineError;
 
-function isNumericPresent(value: FinanceValueInput): value is FinanceValueInput & { valueDecimal: string } {
-  return (value.status === 'PRESENT_NONZERO' || value.status === 'PRESENT_ZERO') && value.valueDecimal !== null;
+function isNumericPresent(
+  value: FinanceValueInput
+): value is FinanceValueInput & { valueDecimal: string } {
+  return (
+    (value.status === 'PRESENT_NONZERO' || value.status === 'PRESENT_ZERO') &&
+    value.valueDecimal !== null
+  );
 }
 
 /** Detects a constant-step arithmetic series along a 1-D sequence of source values. Returns the step, or `null` if fewer than 2 numeric values or the step is not constant (within a relative float epsilon — these are decimal strings from a UI copy, not guaranteed exact binary floats). */
@@ -91,34 +99,52 @@ function detectConstantStep(values: readonly FinanceValueInput[]): number | null
   const step = nums[1]! - nums[0]!;
   const EPSILON = 1e-9;
   for (let i = 2; i < nums.length; i++) {
-    if (Math.abs(nums[i]! - nums[i - 1]! - step) > EPSILON * Math.max(1, Math.abs(step))) return null;
+    if (Math.abs(nums[i]! - nums[i - 1]! - step) > EPSILON * Math.max(1, Math.abs(step)))
+      return null;
   }
   return step;
 }
 
 function withNewDecimal(source: FinanceValueInput, decimal: number): FinanceValueInput {
-  return { ...source, status: decimal === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: String(decimal) };
+  return {
+    ...source,
+    status: decimal === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+    valueDecimal: String(decimal),
+  };
 }
 
 function isAdjacentAligned(direction: FillDirection, source: GridRect, target: GridRect): boolean {
   if (direction === 'DOWN') {
-    return target.left === source.left && target.right === source.right && target.top === source.bottom + 1;
+    return (
+      target.left === source.left &&
+      target.right === source.right &&
+      target.top === source.bottom + 1
+    );
   }
-  return target.top === source.top && target.bottom === source.bottom && target.left === source.right + 1;
+  return (
+    target.top === source.top && target.bottom === source.bottom && target.left === source.right + 1
+  );
 }
 
 export function buildFillOperations(params: BuildFillOperationsParams): FillEngineResult {
   const capabilityError = checkCapability(params);
   if (capabilityError) return capabilityError;
 
-  if (rectCellCount(params.sourceRect) === 0 || params.source.length === 0 || params.source[0]!.length === 0) {
+  if (
+    rectCellCount(params.sourceRect) === 0 ||
+    params.source.length === 0 ||
+    params.source[0]!.length === 0
+  ) {
     return engineError('EMPTY_INPUT', 'Fill source is empty.');
   }
   if (rectCellCount(params.targetRect) === 0) {
     return engineError('EMPTY_INPUT', 'Fill target range is empty.');
   }
   if (!isRectInBounds(params.targetRect, params.resolver)) {
-    return engineError('OUT_OF_BOUNDS', `Fill target rect exceeds grid bounds (${params.resolver.rowCount}x${params.resolver.colCount}).`);
+    return engineError(
+      'OUT_OF_BOUNDS',
+      `Fill target rect exceeds grid bounds (${params.resolver.rowCount}x${params.resolver.colCount}).`
+    );
   }
   if (!isAdjacentAligned(params.direction, params.sourceRect, params.targetRect)) {
     return engineError(
@@ -135,13 +161,19 @@ export function buildFillOperations(params: BuildFillOperationsParams): FillEngi
     for (let c = 0; c < sourceWidth; c++) {
       const cell = params.source[r]?.[c];
       if (!cell) {
-        parseIssues.push({ path: [`source[${r}][${c}]`], message: 'source rect is ragged (missing cell)' });
+        parseIssues.push({
+          path: [`source[${r}][${c}]`],
+          message: 'source rect is ragged (missing cell)',
+        });
         continue;
       }
       const parsed = FinanceValueInputSchema.safeParse(cell.value);
       if (!parsed.success) {
         for (const issue of parsed.error.issues) {
-          parseIssues.push({ path: [`source[${r}][${c}]`, ...issue.path.map(String)], message: issue.message });
+          parseIssues.push({
+            path: [`source[${r}][${c}]`, ...issue.path.map(String)],
+            message: issue.message,
+          });
         }
         continue;
       }
@@ -149,7 +181,11 @@ export function buildFillOperations(params: BuildFillOperationsParams): FillEngi
     }
   }
   if (parseIssues.length > 0) {
-    return engineError('VALIDATION_FAILED', `${parseIssues.length} fill source cell(s) failed validation.`, parseIssues);
+    return engineError(
+      'VALIDATION_FAILED',
+      `${parseIssues.length} fill source cell(s) failed validation.`,
+      parseIssues
+    );
   }
 
   // 1-D series detection only when the source pattern is a single cell deep
@@ -166,7 +202,9 @@ export function buildFillOperations(params: BuildFillOperationsParams): FillEngi
   if (step !== null) {
     strategy = 'NUMERIC_SERIES';
     const lastSourceNumber = Number(flatSource[flatSource.length - 1]!.valueDecimal);
-    resolvedValues = targetCoords.map((_, i) => withNewDecimal(flatSource[flatSource.length - 1]!, lastSourceNumber + step * (i + 1)));
+    resolvedValues = targetCoords.map((_, i) =>
+      withNewDecimal(flatSource[flatSource.length - 1]!, lastSourceNumber + step * (i + 1))
+    );
   } else if (distinctValues.size === 1) {
     strategy = 'TILE_UNIFORM';
     resolvedValues = targetCoords.map(() => flatSource[0]!);
@@ -181,7 +219,10 @@ export function buildFillOperations(params: BuildFillOperationsParams): FillEngi
   for (const coord of targetCoords) {
     const parsedRef = CellRefSchema.safeParse(params.resolver.cellRefAt(coord));
     if (!parsedRef.success) {
-      return engineError('VALIDATION_FAILED', `resolver.cellRefAt returned an invalid CellRef for coordinate ${JSON.stringify(coord)}.`);
+      return engineError(
+        'VALIDATION_FAILED',
+        `resolver.cellRefAt returned an invalid CellRef for coordinate ${JSON.stringify(coord)}.`
+      );
     }
     targetRefs.push(parsedRef.data);
   }

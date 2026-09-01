@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { AppView } from '../../../../types';
 import { APP_VIEW_TO_ROUTE, ROUTES } from '../../../../routes/routeConfig';
+import { AppView } from '../../../../types';
 import { getMenuStructure } from '../menuConfig';
 
 const identityT = (key: string, fallback?: string) => fallback ?? key;

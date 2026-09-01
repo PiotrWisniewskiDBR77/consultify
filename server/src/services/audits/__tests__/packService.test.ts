@@ -14,6 +14,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { auditGet, auditRun, newId } from '../auditsDb.js';
 import { createSource, updateSource, verifySource } from '../normSourceService.js';
+import { DEMO_PACK_KEY, seedDemoAuditPack } from '../packSeed.js';
+import type { ReplaceCriterionInput } from '../packService.js';
 import {
   approveByExpert,
   comparePackVersions,
@@ -28,9 +30,7 @@ import {
   updatePack,
   validatePackById,
 } from '../packService.js';
-import { DEMO_PACK_KEY, seedDemoAuditPack } from '../packSeed.js';
 import type { AuditActor } from '../types.js';
-import type { ReplaceCriterionInput } from '../packService.js';
 
 const ORG_A = `org-test-u2-ps-a-${newId('run')}`;
 const ORG_B = `org-test-u2-ps-b-${newId('run')}`;
@@ -136,7 +136,10 @@ describe('packService', () => {
     expect(withCriteria.criteria).toHaveLength(1);
     expect(withCriteria.criteria[0].nodeKind).toBe('domain');
     expect(withCriteria.criteria[0].children).toHaveLength(2);
-    expect(withCriteria.criteria[0].children.map((c) => c.title)).toEqual(['Kryterium 1', 'Kryterium 2']);
+    expect(withCriteria.criteria[0].children.map((c) => c.title)).toEqual([
+      'Kryterium 1',
+      'Kryterium 2',
+    ]);
 
     // Podmiana całości: drugie wywołanie usuwa poprzednie wiersze.
     await replaceCriteria(actorA, pack.id, [leaf({ id: 'only', title: 'Jedyne kryterium' })]);
@@ -179,8 +182,18 @@ describe('packService', () => {
       objectives: 'Cele',
       requiredRoles: ['lead_auditor'],
       findingTaxonomy: [
-        { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
-        { key: 'nonconforming', label: 'Niezgodne', nonConforming: true, requiresCorrectiveAction: true },
+        {
+          key: 'conforming',
+          label: 'Zgodne',
+          nonConforming: false,
+          requiresCorrectiveAction: false,
+        },
+        {
+          key: 'nonconforming',
+          label: 'Niezgodne',
+          nonConforming: true,
+          requiresCorrectiveAction: true,
+        },
       ],
     });
     cleanupPackIds.push(pack.id);
@@ -234,7 +247,9 @@ describe('packService', () => {
     expect(v2Criteria.map((c) => c.title).sort()).toEqual(['Kryterium A', 'Kryterium B']);
 
     // Edycja kryteriów nowej wersji nie może dotknąć wersji 1.
-    await replaceCriteria(actorA, v2.id, [leaf({ id: 'c', refCode: 'A.1', title: 'Kryterium A zmienione' })]);
+    await replaceCriteria(actorA, v2.id, [
+      leaf({ id: 'c', refCode: 'A.1', title: 'Kryterium A zmienione' }),
+    ]);
     const v1CriteriaAfter = await getCriteriaFlat(pack.id);
     expect(v1CriteriaAfter.map((c) => c.title).sort()).toEqual(['Kryterium A', 'Kryterium B']);
   });
@@ -279,14 +294,14 @@ describe('packService', () => {
 
     const countRow = await auditGet<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM audit_packs WHERE organization_id = $1 AND pack_key = $2`,
-      [actorA.organizationId, DEMO_PACK_KEY],
+      [actorA.organizationId, DEMO_PACK_KEY]
     );
     expect(Number(countRow?.count ?? 0)).toBe(1);
 
     // Sprzątamy też źródło demonstracyjne utworzone przez seed.
     const packRow = await auditGet<{ source_id: string | null }>(
       `SELECT source_id FROM audit_packs WHERE id = $1`,
-      [first.id],
+      [first.id]
     );
     if (packRow?.source_id) cleanupSourceIds.push(packRow.source_id);
   });

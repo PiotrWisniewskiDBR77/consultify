@@ -8,15 +8,23 @@
  * write into the SAME `answerText`/`answerState` — there is no separate save
  * path per channel (A5 spec, cross-cutting requirement).
  */
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Paperclip,
+  SkipForward,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
-import type { InterviewFocusQuestion } from './types';
 import { AnswerStateControl } from './AnswerStateControl';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
+import { type DrdSkipReasonCode, SKIP_REASON_OPTIONS } from './skipReasonCodes';
+import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
+import type { InterviewFocusQuestion } from './types';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
-import { SKIP_REASON_OPTIONS, type DrdSkipReasonCode } from './skipReasonCodes';
 
 export interface InterviewFocusPanelProps {
   /** Breadcrumb context — axis/pillar, area/dimension, level under consideration. */
@@ -27,7 +35,11 @@ export interface InterviewFocusPanelProps {
   questionTotal: number;
   resolutionData: ResolutionCardData;
   onAnswerChange: (questionId: string, text: string) => void;
-  onAnswerStateChange: (questionId: string, state: InterviewFocusQuestion['answerState'], justification?: string) => void;
+  onAnswerStateChange: (
+    questionId: string,
+    state: InterviewFocusQuestion['answerState'],
+    justification?: string
+  ) => void;
   onResolutionAction: (questionId: string, action: ResolutionAction) => void;
   onEvidenceDrop: (questionId: string, files: FileList) => void;
   onBack: () => void;
@@ -102,7 +114,9 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           {breadcrumb.map((crumb, i) => (
             <React.Fragment key={crumb}>
               {i > 0 && <span aria-hidden="true">/</span>}
-              <span className={i === breadcrumb.length - 1 ? 'text-c-text font-medium' : ''}>{crumb}</span>
+              <span className={i === breadcrumb.length - 1 ? 'text-c-text font-medium' : ''}>
+                {crumb}
+              </span>
             </React.Fragment>
           ))}
         </nav>
@@ -113,7 +127,10 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
 
       {questions.length > 1 && (
         <div className="-mt-2 flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted">
-          <span>Ta jednostka ma {questions.length} krótkie kroki. Na ekranie pozostaje otwarty tylko bieżący krok.</span>
+          <span>
+            Ta jednostka ma {questions.length} krótkie kroki. Na ekranie pozostaje otwarty tylko
+            bieżący krok.
+          </span>
           <span className="shrink-0 font-medium text-c-text-secondary">
             Krok {activeSequenceIndex + 1}/{questions.length}
           </span>
@@ -133,7 +150,9 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               className="flex w-full items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               aria-label={`Otwórz krok ${sequenceIndex + 1}: ${q.question.canonicalWording}`}
             >
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-success/10 text-c-success' : 'bg-c-surface-raised text-c-text-muted'}`}>
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-success/10 text-c-success' : 'bg-c-surface-raised text-c-text-muted'}`}
+              >
                 {answered ? <Check size={14} /> : sequenceIndex + 1}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary">
@@ -145,144 +164,162 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
         }
 
         return (
-        <div key={q.question.questionId} className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-c-text">{q.question.canonicalWording}</h2>
-            {q.question.intent && (
-              <p className="text-xs text-c-text-muted mt-1">{q.question.intent}</p>
-            )}
-          </div>
-
-          <QuestionHelpDisclosure
-            question={q.question}
-            help={null}
-            onAskTeresa={(topic) => onAskTeresa(q.question.questionId, topic)}
-          />
-
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-c-text-secondary" htmlFor={`answer-${q.question.questionId}`}>
-              Twoja odpowiedź
-            </label>
-            <div className="flex items-start gap-2">
-              <textarea
-                id={`answer-${q.question.questionId}`}
-                value={q.answerText}
-                disabled={readOnly}
-                onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
-                rows={3}
-                className="flex-1 rounded-lg border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                placeholder="Opisz sytuację własnymi słowami…"
-              />
-              <VoiceAnswerChannel
-                disabled={readOnly}
-                onTranscript={(text, isFinal) => {
-                  if (isFinal) onAnswerChange(q.question.questionId, `${q.answerText} ${text}`.trim());
-                }}
-              />
-            </div>
-          </div>
-
-          <AnswerStateControl
-            disabled={readOnly}
-            value={q.answerState}
-            onChange={(state, justification) => onAnswerStateChange(q.question.questionId, state, justification)}
-            resolutionData={{ ...resolutionData, questionId: q.question.questionId }}
-            onResolutionAction={(action) => onResolutionAction(q.question.questionId, action)}
-          />
-
-          {/* Evidence drop zone */}
           <div
-            data-testid="evidence-drop-zone"
-            onDragOver={(e) => {
-              if (readOnly) return;
-              e.preventDefault();
-              setDragActive(q.question.questionId);
-            }}
-            onDragLeave={() => setDragActive(null)}
-            onDrop={(e) => {
-              if (readOnly) return;
-              e.preventDefault();
-              setDragActive(null);
-              if (e.dataTransfer.files.length > 0) onEvidenceDrop(q.question.questionId, e.dataTransfer.files);
-            }}
-            className={`flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-xs transition-colors ${
-              dragActive === q.question.questionId
-                ? 'border-c-info bg-c-info/5'
-                : 'border-c-border-subtle bg-c-surface-raised'
-            }`}
+            key={q.question.questionId}
+            className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4"
           >
-            <span className="flex items-center gap-1.5 text-c-text-secondary">
-              <Paperclip size={13} />
-              Przeciągnij dowód lub{' '}
-              <label className={readOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer underline underline-offset-2 hover:text-c-text'}>
-                wybierz plik
-                <input
-                  type="file"
+            <div>
+              <h2 className="text-base font-semibold text-c-text">{q.question.canonicalWording}</h2>
+              {q.question.intent && (
+                <p className="text-xs text-c-text-muted mt-1">{q.question.intent}</p>
+              )}
+            </div>
+
+            <QuestionHelpDisclosure
+              question={q.question}
+              help={null}
+              onAskTeresa={(topic) => onAskTeresa(q.question.questionId, topic)}
+            />
+
+            <div className="space-y-2">
+              <label
+                className="text-xs font-medium text-c-text-secondary"
+                htmlFor={`answer-${q.question.questionId}`}
+              >
+                Twoja odpowiedź
+              </label>
+              <div className="flex items-start gap-2">
+                <textarea
+                  id={`answer-${q.question.questionId}`}
+                  value={q.answerText}
                   disabled={readOnly}
-                  className="sr-only"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      onEvidenceDrop(q.question.questionId, e.target.files);
-                    }
+                  onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
+                  rows={3}
+                  className="flex-1 rounded-lg border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  placeholder="Opisz sytuację własnymi słowami…"
+                />
+                <VoiceAnswerChannel
+                  disabled={readOnly}
+                  onTranscript={(text, isFinal) => {
+                    if (isFinal)
+                      onAnswerChange(q.question.questionId, `${q.answerText} ${text}`.trim());
                   }}
                 />
-              </label>
-            </span>
-            <span className="flex flex-wrap items-center gap-1.5">
-              <span
-                // Kanon TOOL_SESSION_WORKSPACE_STANDARD §7: czerwień WYŁĄCZNIE dla
-                // blockera. `weak` i `missing` to ostrzeżenia (amber) — brak dowodu
-                // nie jest błędem użytkownika. Czerwień zostaje tylko dla
-                // `conflicting`, bo sprzeczne dowody blokują freeze do rozstrzygnięcia
-                // (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md §6, rozbieżność).
-                className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
-                  q.evidenceState === 'complete'
-                    ? 'bg-c-success/10 text-c-success'
-                    : q.evidenceState === 'conflicting'
-                      ? 'bg-c-danger/10 text-c-danger'
-                      : 'bg-c-warning/10 text-c-warning'
-                }`}
-              >
-                {EVIDENCE_LABEL[q.evidenceState]}
-                {q.evidenceCount > 0 ? ` (${q.evidenceCount})` : ''}
+              </div>
+            </div>
+
+            <AnswerStateControl
+              disabled={readOnly}
+              value={q.answerState}
+              onChange={(state, justification) =>
+                onAnswerStateChange(q.question.questionId, state, justification)
+              }
+              resolutionData={{ ...resolutionData, questionId: q.question.questionId }}
+              onResolutionAction={(action) => onResolutionAction(q.question.questionId, action)}
+            />
+
+            {/* Evidence drop zone */}
+            <div
+              data-testid="evidence-drop-zone"
+              onDragOver={(e) => {
+                if (readOnly) return;
+                e.preventDefault();
+                setDragActive(q.question.questionId);
+              }}
+              onDragLeave={() => setDragActive(null)}
+              onDrop={(e) => {
+                if (readOnly) return;
+                e.preventDefault();
+                setDragActive(null);
+                if (e.dataTransfer.files.length > 0)
+                  onEvidenceDrop(q.question.questionId, e.dataTransfer.files);
+              }}
+              className={`flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-xs transition-colors ${
+                dragActive === q.question.questionId
+                  ? 'border-c-info bg-c-info/5'
+                  : 'border-c-border-subtle bg-c-surface-raised'
+              }`}
+            >
+              <span className="flex items-center gap-1.5 text-c-text-secondary">
+                <Paperclip size={13} />
+                Przeciągnij dowód lub{' '}
+                <label
+                  className={
+                    readOnly
+                      ? 'cursor-not-allowed opacity-50'
+                      : 'cursor-pointer underline underline-offset-2 hover:text-c-text'
+                  }
+                >
+                  wybierz plik
+                  <input
+                    type="file"
+                    disabled={readOnly}
+                    className="sr-only"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        onEvidenceDrop(q.question.questionId, e.target.files);
+                      }
+                    }}
+                  />
+                </label>
               </span>
-              {/* Siła dowodu (E0-E4) jest TRZECIĄ, niezależną osią — nie ta sama
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span
+                  // Kanon TOOL_SESSION_WORKSPACE_STANDARD §7: czerwień WYŁĄCZNIE dla
+                  // blockera. `weak` i `missing` to ostrzeżenia (amber) — brak dowodu
+                  // nie jest błędem użytkownika. Czerwień zostaje tylko dla
+                  // `conflicting`, bo sprzeczne dowody blokują freeze do rozstrzygnięcia
+                  // (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md §6, rozbieżność).
+                  className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
+                    q.evidenceState === 'complete'
+                      ? 'bg-c-success/10 text-c-success'
+                      : q.evidenceState === 'conflicting'
+                        ? 'bg-c-danger/10 text-c-danger'
+                        : 'bg-c-warning/10 text-c-warning'
+                  }`}
+                >
+                  {EVIDENCE_LABEL[q.evidenceState]}
+                  {q.evidenceCount > 0 ? ` (${q.evidenceCount})` : ''}
+                </span>
+                {/* Siła dowodu (E0-E4) jest TRZECIĄ, niezależną osią — nie ta sama
                   rzeczy co rollup evidenceState powyżej ani poziom/zatwierdzenie.
                   Neutralny token: siła dowodu opisuje jakość źródła, nie jest
                   sama w sobie ostrzeżeniem. */}
-              {q.evidenceStrength && (
-                <span
-                  data-testid="evidence-strength-badge"
-                  title="Siła dowodu E0–E4 (E0 deklaracja … E4 wynik potwierdzony) — niezależna od poziomu i od statusu zatwierdzenia."
-                  className="shrink-0 rounded-full border border-c-border px-2 py-0.5 font-medium text-c-text-secondary"
-                >
-                  Siła dowodu: {q.evidenceStrength}
-                </span>
-              )}
-            </span>
-          </div>
-
-          {questions.length > 1 && (
-            <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle pt-3">
-              <button
-                type="button"
-                disabled={sequenceIndex === 0}
-                onClick={() => setActiveSequenceIndex((value) => Math.max(0, value - 1))}
-                className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Poprzedni krok
-              </button>
-              <button
-                type="button"
-                disabled={sequenceIndex === questions.length - 1}
-                onClick={() => setActiveSequenceIndex((value) => Math.min(questions.length - 1, value + 1))}
-                className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Następny krok
-              </button>
+                {q.evidenceStrength && (
+                  <span
+                    data-testid="evidence-strength-badge"
+                    title="Siła dowodu E0–E4 (E0 deklaracja … E4 wynik potwierdzony) — niezależna od poziomu i od statusu zatwierdzenia."
+                    className="shrink-0 rounded-full border border-c-border px-2 py-0.5 font-medium text-c-text-secondary"
+                  >
+                    Siła dowodu: {q.evidenceStrength}
+                  </span>
+                )}
+              </span>
             </div>
-          )}
-        </div>
+
+            {questions.length > 1 && (
+              <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle pt-3">
+                <button
+                  type="button"
+                  disabled={sequenceIndex === 0}
+                  onClick={() => setActiveSequenceIndex((value) => Math.max(0, value - 1))}
+                  className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Poprzedni krok
+                </button>
+                <button
+                  type="button"
+                  disabled={sequenceIndex === questions.length - 1}
+                  onClick={() =>
+                    setActiveSequenceIndex((value) => Math.min(questions.length - 1, value + 1))
+                  }
+                  className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Następny krok
+                </button>
+              </div>
+            )}
+          </div>
         );
       })}
 

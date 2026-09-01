@@ -24,10 +24,10 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/proposalApprovalService.js';
 import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
-import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 import type { CaseWorkspaceActor } from './_shared/handler.js';
+import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
+import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
 
@@ -218,10 +218,16 @@ router.post(
     }
     const { expectedVersion, ...decisionInput } = body;
     const result = await executeGovernedCaseAction({
-      actor, actionId: 'case.proposal.decide', targetId: params.actionProposalId,
+      actor,
+      actionId: 'case.proposal.decide',
+      targetId: params.actionProposalId,
       operation: async () => {
         await requireCaseAccessForProposal(actor, params.actionProposalId);
-        return svc.recordApprovalDecision(params.actionProposalId, { ...decisionInput, idempotencyKey, decidedByActorId: actor.actorUserId }, expectedVersion);
+        return svc.recordApprovalDecision(
+          params.actionProposalId,
+          { ...decisionInput, idempotencyKey, decidedByActorId: actor.actorUserId },
+          expectedVersion
+        );
       },
     });
     res.status(200).json({ data: result });
@@ -235,10 +241,16 @@ router.post(
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(expectedVersionBody, req.body);
     const updated = await executeGovernedCaseAction({
-      actor, actionId: 'case.proposal.execute', targetId: params.actionProposalId,
+      actor,
+      actionId: 'case.proposal.execute',
+      targetId: params.actionProposalId,
       operation: async () => {
         await requireCaseAccessForProposal(actor, params.actionProposalId);
-        return svc.transitionProposalToExecuting(params.actionProposalId, { actorUserId: actor.actorUserId }, body.expectedVersion);
+        return svc.transitionProposalToExecuting(
+          params.actionProposalId,
+          { actorUserId: actor.actorUserId },
+          body.expectedVersion
+        );
       },
     });
     res.status(200).json({ data: updated });
@@ -326,10 +338,17 @@ router.post(
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(revokeBody, req.body);
     const updated = await executeGovernedCaseAction({
-      actor, actionId: 'case.proposal.revoke', targetId: params.actionProposalId,
+      actor,
+      actionId: 'case.proposal.revoke',
+      targetId: params.actionProposalId,
       operation: async () => {
         await requireCaseAccessForProposal(actor, params.actionProposalId);
-        return svc.revokeApprovedProposal(params.actionProposalId, { actorUserId: actor.actorUserId }, body.reason, body.expectedVersion);
+        return svc.revokeApprovedProposal(
+          params.actionProposalId,
+          { actorUserId: actor.actorUserId },
+          body.reason,
+          body.expectedVersion
+        );
       },
     });
     res.status(200).json({ data: updated });

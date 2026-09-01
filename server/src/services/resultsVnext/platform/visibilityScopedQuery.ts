@@ -91,7 +91,6 @@
  * organization_id = ?`.
  */
 import { hasEffectiveCapability, resolveEffectiveAccess } from '../../effectiveAccessService.js';
-
 import { RVN_RESOURCE_TYPES, type RvnResourceType } from './resourceTypes.js';
 // AMD-FLOW-ROI-VISIBILITY-002, Variant B — the governed ROI predicate.
 // visibilityResolver.ts does NOT import this file (no cycle): this file
@@ -191,7 +190,9 @@ export async function buildVisibilityScopedCte(
   // other resourceType simply means the branch below is never pushed for
   // them, same as if this code did not exist.
   const roiGovernedAllow =
-    resourceType === 'roi_case' ? (await resolveRoiGovernedVisibility({ userId, organizationId })).allow : false;
+    resourceType === 'roi_case'
+      ? (await resolveRoiGovernedVisibility({ userId, organizationId })).allow
+      : false;
 
   const values: unknown[] = [organizationId, resourceType, userId];
 

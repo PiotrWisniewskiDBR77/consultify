@@ -26,10 +26,20 @@ vi.mock('../../CalendarV2/duplicateCalendarEvent', () => ({
   duplicateCalendarEventFourWeeks: (...args: unknown[]) => duplicate(...args),
 }));
 vi.mock('@/components/ui/primitives/Button', () => ({
-  Button: ({ children, loading, ...props }: any) => <button disabled={loading} {...props}>{children}</button>,
+  Button: ({ children, loading, ...props }: any) => (
+    <button disabled={loading} {...props}>
+      {children}
+    </button>
+  ),
 }));
 vi.mock('@/components/ui/primitives/Modal', () => ({
-  Modal: ({ open, children, footer }: any) => open ? <div>{children}{footer}</div> : null,
+  Modal: ({ open, children, footer }: any) =>
+    open ? (
+      <div>
+        {children}
+        {footer}
+      </div>
+    ) : null,
 }));
 
 import { CalendarCreateEventModal } from '../CalendarCreateEventModal';

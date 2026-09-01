@@ -52,8 +52,22 @@ describe('useBaselineCompute — happy path (luka odziedziczona, punkt 7)', () =
       jobStatus: 'succeeded',
       periodsComputed: 2,
       monthlyResults: [
-        { periodId: 'per-2026-01', converged: true, iterationsUsed: 3, cash: 42000, netIncome: 1500, qualityFlag: null },
-        { periodId: 'per-2026-02', converged: true, iterationsUsed: 2, cash: 45500, netIncome: 1800, qualityFlag: null },
+        {
+          periodId: 'per-2026-01',
+          converged: true,
+          iterationsUsed: 3,
+          cash: 42000,
+          netIncome: 1500,
+          qualityFlag: null,
+        },
+        {
+          periodId: 'per-2026-02',
+          converged: true,
+          iterationsUsed: 2,
+          cash: 45500,
+          netIncome: 1800,
+          qualityFlag: null,
+        },
       ],
     });
 
@@ -72,7 +86,10 @@ describe('useBaselineCompute — happy path (luka odziedziczona, punkt 7)', () =
     expect(result.current.result?.monthlyResults.every((r) => r.qualityFlag === null)).toBe(true);
     expect(result.current.lastComputedAt).not.toBeNull();
     expect(result.current.errorDetail).toBeNull();
-    expect(mockedComputeBaseline).toHaveBeenCalledWith({ businessVersionId: 'bv-1', ...RUN_PARAMS });
+    expect(mockedComputeBaseline).toHaveBeenCalledWith({
+      businessVersionId: 'bv-1',
+      ...RUN_PARAMS,
+    });
   });
 });
 
@@ -83,8 +100,22 @@ describe('useBaselineCompute — TEST ANTY-PLUG (DEC-FIN-002, punkt 5)', () => {
       jobStatus: 'succeeded',
       periodsComputed: 2,
       monthlyResults: [
-        { periodId: 'per-2026-01', converged: true, iterationsUsed: 5, cash: -180000, netIncome: -22000, qualityFlag: 'FUNDING_GAP' },
-        { periodId: 'per-2026-02', converged: true, iterationsUsed: 4, cash: -210000, netIncome: -30000, qualityFlag: 'FUNDING_GAP' },
+        {
+          periodId: 'per-2026-01',
+          converged: true,
+          iterationsUsed: 5,
+          cash: -180000,
+          netIncome: -22000,
+          qualityFlag: 'FUNDING_GAP',
+        },
+        {
+          periodId: 'per-2026-02',
+          converged: true,
+          iterationsUsed: 4,
+          cash: -210000,
+          netIncome: -30000,
+          qualityFlag: 'FUNDING_GAP',
+        },
       ],
     });
 
@@ -126,7 +157,16 @@ describe('useBaselineCompute — TEST ANTY-PLUG (DEC-FIN-002, punkt 5)', () => {
       jobId: 'job-plugged',
       jobStatus: 'succeeded',
       periodsComputed: 1,
-      monthlyResults: [{ periodId: 'per-2026-01', converged: true, iterationsUsed: 1, cash: 0, netIncome: 100, qualityFlag: null }],
+      monthlyResults: [
+        {
+          periodId: 'per-2026-01',
+          converged: true,
+          iterationsUsed: 1,
+          cash: 0,
+          netIncome: 100,
+          qualityFlag: null,
+        },
+      ],
     });
     const { result } = renderHook(() => useBaselineCompute('bv-1'));
     await act(async () => {
@@ -154,9 +194,32 @@ describe('useBaselineCompute — markStale i odzysk po błędzie', () => {
   });
 
   it('błąd compute + odzysk przez GET outputs (wszystkie okresy FORECAST już policzone) → succeeded z wasRecovered=true', async () => {
-    mockedComputeBaseline.mockRejectedValueOnce(Object.assign(new Error('Request timed out'), { code: 'REQUEST_TIMEOUT' }));
+    mockedComputeBaseline.mockRejectedValueOnce(
+      Object.assign(new Error('Request timed out'), { code: 'REQUEST_TIMEOUT' })
+    );
     mockedListBaselineOutputs.mockResolvedValueOnce([
-      { outputId: 'o-1', statementType: 'P&L', canonicalLineId: 'l-1', lineCode: 'REVENUE', entityId: 'ent-1', periodId: 'per-2026-01', periodLabel: '01/2026', consolidationScope: 'CONSOLIDATED', value: { status: 'PRESENT_NONZERO', valueDecimal: '1000', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }, valueKind: 'FORECAST', drivingScheduleType: null, createdBy: 'u-1', createdAt: '2026-01-01' },
+      {
+        outputId: 'o-1',
+        statementType: 'P&L',
+        canonicalLineId: 'l-1',
+        lineCode: 'REVENUE',
+        entityId: 'ent-1',
+        periodId: 'per-2026-01',
+        periodLabel: '01/2026',
+        consolidationScope: 'CONSOLIDATED',
+        value: {
+          status: 'PRESENT_NONZERO',
+          valueDecimal: '1000',
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+          unit: 'UNITS',
+          multiplier: '1',
+        },
+        valueKind: 'FORECAST',
+        drivingScheduleType: null,
+        createdBy: 'u-1',
+        createdAt: '2026-01-01',
+      },
     ]);
     const { result } = renderHook(() => useBaselineCompute('bv-1'));
     let outcome: { ok: boolean; recovered?: true } | undefined;

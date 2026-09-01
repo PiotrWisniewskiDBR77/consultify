@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { evaluateSignalRules, type SignalRunResult } from '../services/signals/signalEvaluator.js';
 import { deterministicSignalRules } from '../services/signals/rules/index.js';
+import { evaluateSignalRules, type SignalRunResult } from '../services/signals/signalEvaluator.js';
 import logger from '../utils/Logger.js';
 import { queryAll } from '../utils/queryHelpers.js';
 

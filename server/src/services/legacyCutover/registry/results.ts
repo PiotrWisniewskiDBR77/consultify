@@ -243,8 +243,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       successor: '/api/vnext/results/kpi/recovery-cards/:cardId/actions/:actionId',
       legacyTable: 'kpi_recovery_actions',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[4] || ''),
-      reason:
-        'Retired after the mounted caller moved to canonical action CAS updates.',
+      reason: 'Retired after the mounted caller moved to canonical action CAS updates.',
     },
     {
       writerId: 'RESULTS-W29',
@@ -264,8 +263,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'disabled',
       successor: '/api/vnext/results/kpi/recovery-cards/:cardId/checkpoints',
       legacyTable: 'kpi_recovery_checkpoints',
-      reason:
-        'Retired after the mounted caller moved to canonical idempotent checkpoint creation.',
+      reason: 'Retired after the mounted caller moved to canonical idempotent checkpoint creation.',
     },
     {
       writerId: 'RESULTS-W31',

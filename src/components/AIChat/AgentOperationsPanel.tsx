@@ -7,7 +7,10 @@ import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 type RecoveryAction =
-  'retry_failed_branch' | 'recover_expired_lease' | 'cancel_graph' | 'expire_stale_review';
+  | 'retry_failed_branch'
+  | 'recover_expired_lease'
+  | 'cancel_graph'
+  | 'expire_stale_review';
 interface OperationalSnapshot {
   correlationId: string;
   run: { state: string; goal: string };

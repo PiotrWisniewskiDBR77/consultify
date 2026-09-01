@@ -7,6 +7,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '../data/drdStructure.js';
 import {
   EvidenceSchema,
   GapAnalysisSchema,
@@ -15,7 +16,6 @@ import {
   ROIEstimateSchema,
   validateOrFallback,
 } from '../utils/AISchemaValidator.js';
-import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '../data/drdStructure.js';
 import logger from '../utils/Logger.js';
 
 // AI THINKING_PARTNER Mode Configuration

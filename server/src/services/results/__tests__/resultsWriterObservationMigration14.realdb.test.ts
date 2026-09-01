@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -123,7 +123,7 @@ suite.sequential('Results14 observability migration — exact late-safe contract
     );
     await expectFailBeforeMutation(
       'wrong_type',
-      `CREATE TABLE results_writer_observations(observation_id text primary key,organization_id text,actor_user_id text,writer_family integer,operation text,endpoint text,correlation_id text,created_at timestamptz); INSERT INTO results_writer_observations VALUES('obs-1','org-a','actor',1,'create','\/x','corr-1',now())`,
+      `CREATE TABLE results_writer_observations(observation_id text primary key,organization_id text,actor_user_id text,writer_family integer,operation text,endpoint text,correlation_id text,created_at timestamptz); INSERT INTO results_writer_observations VALUES('obs-1','org-a','actor',1,'create','/x','corr-1',now())`,
       /wrong column type/
     );
     await expectFailBeforeMutation(

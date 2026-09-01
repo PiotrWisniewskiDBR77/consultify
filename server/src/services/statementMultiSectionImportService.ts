@@ -42,16 +42,14 @@ function normalizeTypes(values: unknown): ImportableStatementType[] {
   if (!Array.isArray(values)) return [];
   const selected = new Set(
     values
-    .map((value) =>
-      String(value || '')
-        .trim()
-        .toUpperCase()
-    )
+      .map((value) =>
+        String(value || '')
+          .trim()
+          .toUpperCase()
+      )
       // Defense in depth for callers mounted behind the global JSON sanitizer.
       // This is a closed enum alias, not general entity decoding.
-      .map((value) =>
-        value === 'PL' || value === 'P&L' || value === 'P&AMP;L' ? 'P&L' : value
-      )
+      .map((value) => (value === 'PL' || value === 'P&L' || value === 'P&AMP;L' ? 'P&L' : value))
       .filter((value): value is ImportableStatementType => ['P&L', 'BS', 'CF'].includes(value))
   );
   // Caller/detector order must never decide which section reuses the primary
@@ -242,15 +240,19 @@ async function stageSelectedStatementSectionsTx(params: {
           statementId,
         ]);
       }
-      await updateStatementMetadata(statementId, {
-        statementType,
-        periodLabel: period.label || undefined,
-        currency: params.currency || params.statement.currency,
-        scaling: params.scaling || params.statement.scaling,
-        documentClass: params.statement.document_class || 'mixed_report',
-        extractionStrategy: 'deterministic_multi_section_staged',
-        templateFamily: params.statement.template_family,
-      }, { strictSchema: true });
+      await updateStatementMetadata(
+        statementId,
+        {
+          statementType,
+          periodLabel: period.label || undefined,
+          currency: params.currency || params.statement.currency,
+          scaling: params.scaling || params.statement.scaling,
+          documentClass: params.statement.document_class || 'mixed_report',
+          extractionStrategy: 'deterministic_multi_section_staged',
+          templateFamily: params.statement.template_family,
+        },
+        { strictSchema: true }
+      );
       await dbRun(
         `UPDATE financial_statements
          SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end),

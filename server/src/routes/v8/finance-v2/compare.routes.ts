@@ -30,15 +30,19 @@ import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import {
   compareActualVsForecast,
   compareEntities,
+  type CompareErrorCode,
   comparePeriods,
+  type CompareResult,
   compareScenarios,
   compareValuationMethods,
-  compareVersions,
-  type CompareErrorCode,
-  type CompareResult,
   type CompareValuesResult,
+  compareVersions,
 } from '../../../services/finance/canonical/financeCompareService.js';
-import { FinanceArtifactTypeValues, parseArtifactRef, type FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
+import {
+  type FinanceArtifactType,
+  FinanceArtifactTypeValues,
+  parseArtifactRef,
+} from '../../../types/finance/ArtifactRef.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -60,12 +64,17 @@ function httpStatusForCompareError(code: CompareErrorCode): number {
   }
 }
 
-function respondCompare(res: Response, result: (CompareValuesResult & { relationship?: string }) | CompareValuesResult) {
+function respondCompare(
+  res: Response,
+  result: (CompareValuesResult & { relationship?: string }) | CompareValuesResult
+) {
   if (!result.ok) {
     return sendError(res, httpStatusForCompareError(result.code), result.code, result.message);
   }
   const relationship = (result as { relationship?: string }).relationship;
-  const data: CompareResult & { relationship?: string } = relationship ? { ...result.result, relationship } : result.result;
+  const data: CompareResult & { relationship?: string } = relationship
+    ? { ...result.result, relationship }
+    : result.result;
   return res.status(200).json({ data, meta: financeV2Meta() });
 }
 
@@ -96,7 +105,12 @@ router.post(
     const body = req.body ?? {};
     const parsedRef = parseArtifactRef(body.artifactRef);
     if (!parsedRef.ok) return sendError(res, 400, 'INVALID_ARTIFACT_REF', parsedRef.message);
-    if (typeof body.periodIdA !== 'string' || typeof body.periodIdB !== 'string' || !body.periodIdA || !body.periodIdB) {
+    if (
+      typeof body.periodIdA !== 'string' ||
+      typeof body.periodIdB !== 'string' ||
+      !body.periodIdA ||
+      !body.periodIdB
+    ) {
       return sendError(res, 400, 'INVALID_BODY', 'periodIdA and periodIdB are required strings');
     }
 
@@ -129,13 +143,28 @@ router.post(
     const { organizationId } = getV8Context(req);
     const body = req.body ?? {};
     if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.artifactType)) {
-      return sendError(res, 400, 'INVALID_BODY', `artifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `artifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`
+      );
     }
     if (typeof body.artifactId !== 'string' || !body.artifactId) {
       return sendError(res, 400, 'INVALID_BODY', 'artifactId is required');
     }
-    if (typeof body.businessVersionIdA !== 'string' || typeof body.businessVersionIdB !== 'string' || !body.businessVersionIdA || !body.businessVersionIdB) {
-      return sendError(res, 400, 'INVALID_BODY', 'businessVersionIdA and businessVersionIdB are required strings');
+    if (
+      typeof body.businessVersionIdA !== 'string' ||
+      typeof body.businessVersionIdB !== 'string' ||
+      !body.businessVersionIdA ||
+      !body.businessVersionIdB
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'businessVersionIdA and businessVersionIdB are required strings'
+      );
     }
 
     const result = await compareVersions({
@@ -172,7 +201,12 @@ router.post(
     if (typeof body.periodId !== 'string' || !body.periodId) {
       return sendError(res, 400, 'INVALID_BODY', 'periodId is required');
     }
-    if (typeof body.entityIdA !== 'string' || typeof body.entityIdB !== 'string' || !body.entityIdA || !body.entityIdB) {
+    if (
+      typeof body.entityIdA !== 'string' ||
+      typeof body.entityIdB !== 'string' ||
+      !body.entityIdA ||
+      !body.entityIdB
+    ) {
       return sendError(res, 400, 'INVALID_BODY', 'entityIdA and entityIdB are required strings');
     }
 
@@ -209,7 +243,12 @@ router.post(
       !body.businessVersionIdBase ||
       !body.businessVersionIdOther
     ) {
-      return sendError(res, 400, 'INVALID_BODY', 'businessVersionIdBase and businessVersionIdOther are required strings');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'businessVersionIdBase and businessVersionIdOther are required strings'
+      );
     }
 
     const result = await compareScenarios({
@@ -240,8 +279,18 @@ router.post(
     if (typeof body.businessVersionId !== 'string' || !body.businessVersionId) {
       return sendError(res, 400, 'INVALID_BODY', 'businessVersionId is required');
     }
-    if (typeof body.methodTypeA !== 'string' || typeof body.methodTypeB !== 'string' || !body.methodTypeA || !body.methodTypeB) {
-      return sendError(res, 400, 'INVALID_BODY', 'methodTypeA and methodTypeB are required strings');
+    if (
+      typeof body.methodTypeA !== 'string' ||
+      typeof body.methodTypeB !== 'string' ||
+      !body.methodTypeA ||
+      !body.methodTypeB
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'methodTypeA and methodTypeB are required strings'
+      );
     }
 
     const result = await compareValuationMethods({
@@ -267,9 +316,21 @@ router.post(
     const { organizationId } = getV8Context(req);
     const body = req.body ?? {};
     const parsedActual = parseArtifactRef(body.actualArtifactRef);
-    if (!parsedActual.ok) return sendError(res, 400, 'INVALID_ARTIFACT_REF', `actualArtifactRef: ${parsedActual.message}`);
+    if (!parsedActual.ok)
+      return sendError(
+        res,
+        400,
+        'INVALID_ARTIFACT_REF',
+        `actualArtifactRef: ${parsedActual.message}`
+      );
     const parsedForecast = parseArtifactRef(body.forecastArtifactRef);
-    if (!parsedForecast.ok) return sendError(res, 400, 'INVALID_ARTIFACT_REF', `forecastArtifactRef: ${parsedForecast.message}`);
+    if (!parsedForecast.ok)
+      return sendError(
+        res,
+        400,
+        'INVALID_ARTIFACT_REF',
+        `forecastArtifactRef: ${parsedForecast.message}`
+      );
     if (typeof body.entityCode !== 'string' || !body.entityCode) {
       return sendError(res, 400, 'INVALID_BODY', 'entityCode is required');
     }

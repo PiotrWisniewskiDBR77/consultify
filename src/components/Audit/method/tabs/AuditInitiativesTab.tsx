@@ -17,21 +17,27 @@
 import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
-import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
+import {
+  StandardPreview,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
+import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 import {
   AUDIT_PROPOSAL_STATUSES,
+  type AuditProposalSummary,
   deferProposal,
   dismissProposal,
   listProposals,
   registerProposal,
-  type AuditProposalSummary,
 } from '../auditsMethodApi';
+import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 
 export interface AuditInitiativesTabProps {
   isPolish: boolean;
@@ -70,7 +76,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     listProposals()
       .then((result) => setItems(result.items))
       .catch((e: any) =>
-        setError(e?.message || (isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Failed to load Proposal Drafts'))
+        setError(
+          e?.message ||
+            (isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Failed to load Proposal Drafts')
+        )
       )
       .finally(() => setLoading(false));
   }, [isPolish]);
@@ -85,7 +94,11 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       setTransitionError(null);
       try {
         const updated =
-          action === 'register' ? await registerProposal(id) : action === 'dismiss' ? await dismissProposal(id) : await deferProposal(id);
+          action === 'register'
+            ? await registerProposal(id)
+            : action === 'dismiss'
+              ? await dismissProposal(id)
+              : await deferProposal(id);
         if (updated) {
           setItems((prev) => prev.map((p) => (p.id === id ? updated : p)));
         } else {
@@ -94,7 +107,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       } catch (e: any) {
         setTransitionError(
           e?.message ||
-            (isPolish ? 'Nie udało się zmienić statusu Proposal Draftu' : 'Failed to change the Proposal Draft status')
+            (isPolish
+              ? 'Nie udało się zmienić statusu Proposal Draftu'
+              : 'Failed to change the Proposal Draft status')
         );
       } finally {
         setTransitioning(null);
@@ -121,7 +136,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       label: isPolish ? 'Ustalenia źródłowe' : 'Source findings',
       width: '160px',
       render: (row: AuditProposalSummary) => (
-        <span className="text-xs text-c-text-muted tabular-nums">{row.sourceFindingIds.length}</span>
+        <span className="text-xs text-c-text-muted tabular-nums">
+          {row.sourceFindingIds.length}
+        </span>
       ),
     },
     {
@@ -150,7 +167,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
         label: proposalStatusLabel(value, isPolish),
       })),
       render: (row: AuditProposalSummary) => (
-        <StatusChip label={proposalStatusLabel(row.status, isPolish)} tone={proposalStatusTone(row.status)} />
+        <StatusChip
+          label={proposalStatusLabel(row.status, isPolish)}
+          tone={proposalStatusTone(row.status)}
+        />
       ),
     },
     {
@@ -159,7 +179,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       width: '140px',
       sortable: true,
       render: (row: AuditProposalSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -257,7 +279,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     return (
       <div className="p-4">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Could not load Proposal Drafts'}
+          title={
+            isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Could not load Proposal Drafts'
+          }
           description={error}
           onRetry={load}
         />

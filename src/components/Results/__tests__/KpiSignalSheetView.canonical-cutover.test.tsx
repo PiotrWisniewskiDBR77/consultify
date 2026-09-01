@@ -61,14 +61,12 @@ describe('KpiSignalSheetView canonical cutover', () => {
     recordKpiMeasurement.mockImplementation(async (kpiId: string) => {
       if (kpiId === 'canonical-b' && bAttempts++ === 0) throw new Error('transport failed');
       return {
-        measurementId:
-          kpiId === 'canonical-a' ? `measurement-a-${++aAttempts}` : 'measurement-b',
+        measurementId: kpiId === 'canonical-a' ? `measurement-a-${++aAttempts}` : 'measurement-b',
       };
     });
     listKpiMeasurements.mockImplementation(async (kpiId: string) => [
       {
-        measurementId:
-          kpiId === 'canonical-a' ? `measurement-a-${aAttempts}` : 'measurement-b',
+        measurementId: kpiId === 'canonical-a' ? `measurement-a-${aAttempts}` : 'measurement-b',
       },
     ]);
 
@@ -88,9 +86,7 @@ describe('KpiSignalSheetView canonical cutover', () => {
     expect(recordKpiMeasurement.mock.calls[2][1].idempotencyKey).toBe(failedKey);
 
     await waitFor(() =>
-      expect(
-        screen.getAllByRole('button', { name: 'Record another measurement' })
-      ).toHaveLength(2)
+      expect(screen.getAllByRole('button', { name: 'Record another measurement' })).toHaveLength(2)
     );
     const newMeasurementButtons = screen.getAllByRole('button', {
       name: 'Record another measurement',
@@ -101,8 +97,6 @@ describe('KpiSignalSheetView canonical cutover', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(recordKpiMeasurement).toHaveBeenCalledTimes(4));
     expect(recordKpiMeasurement.mock.calls[3][1].idempotencyKey).not.toBe(firstKey);
-    expect(recordKpiMeasurement.mock.calls[3][1].definitionVersionId).toBe(
-      'version-canonical-a'
-    );
+    expect(recordKpiMeasurement.mock.calls[3][1].definitionVersionId).toBe('version-canonical-a');
   });
 });

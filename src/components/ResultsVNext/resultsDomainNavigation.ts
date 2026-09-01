@@ -1,8 +1,8 @@
 import type { StandardModuleTab } from '@/components/standard';
 import { ROUTES } from '@/routes/routeConfig';
 
-import type { ResultsVNextDomain } from './types';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import type { ResultsVNextDomain } from './types';
 
 export const RESULTS_DOMAIN_TABS: StandardModuleTab[] = [
   { id: 'kpi', label: 'KPI' },

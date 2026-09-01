@@ -28,11 +28,10 @@
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-
-import { getRoiCase } from './roiRepository.js';
-import type { RoiCompareSlot } from './roiCompareRepository.js';
 import type { RoiApprovalSnapshotRow } from './roiApprovalSnapshotTypes.js';
+import type { RoiCompareSlot } from './roiCompareRepository.js';
 import type { RoiActualSnapshotRow } from './roiForecastActualTypes.js';
+import { getRoiCase } from './roiRepository.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -85,7 +84,8 @@ export async function getRoiCaseBenefitsRealizationView(
       const row = result.rows[0];
       if (row) {
         hasApprovedSnapshot = true;
-        approvedFinancialBenefits = row.snapshot_payload.decisionCalculationRun.totalFinancialBenefits;
+        approvedFinancialBenefits =
+          row.snapshot_payload.decisionCalculationRun.totalFinancialBenefits;
       }
     }
 
@@ -102,7 +102,9 @@ export async function getRoiCaseBenefitsRealizationView(
         hasActualSnapshot = true;
         asOfActualSnapshotId = row.actual_snapshot_id;
         actualFinancialBenefits =
-          row.total_actual_financial_benefits === null ? null : Number(row.total_actual_financial_benefits);
+          row.total_actual_financial_benefits === null
+            ? null
+            : Number(row.total_actual_financial_benefits);
       }
     }
 

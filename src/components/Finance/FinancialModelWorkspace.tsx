@@ -36,7 +36,10 @@ import { useNavigate } from 'react-router-dom';
 import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 
 import Api from '../../services/api';
-import { approveFinanceModel, resolveLegacyFinanceArtifact } from '../../services/api/financeV2.api';
+import {
+  approveFinanceModel,
+  resolveLegacyFinanceArtifact,
+} from '../../services/api/financeV2.api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -984,12 +987,8 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
                   {selectedModel.currency} ·{' '}
-                  {t(
-                    `finance.model.${selectedModel.granularity}`,
-                    selectedModel.granularity
-                  )}{' '}
-                  · {selectedModel.horizon_months}{' '}
-                  {t('finance.model.months', 'months')}
+                  {t(`finance.model.${selectedModel.granularity}`, selectedModel.granularity)} ·{' '}
+                  {selectedModel.horizon_months} {t('finance.model.months', 'months')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1236,12 +1235,20 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         ['Przychody (REVENUE)', baselineAssumptions.revenue, 'baseline.revenue'],
-                        ['Koszt własny sprzedaży (COGS)', baselineAssumptions.cogs, 'baseline.cogs'],
+                        [
+                          'Koszt własny sprzedaży (COGS)',
+                          baselineAssumptions.cogs,
+                          'baseline.cogs',
+                        ],
                         ['Koszty operacyjne (OPEX)', baselineAssumptions.opex, 'baseline.opex'],
                         ['Amortyzacja', baselineAssumptions.depreciation, 'baseline.depreciation'],
                         ['Koszty odsetkowe', baselineAssumptions.interest, 'baseline.interest'],
                         ['Podatek dochodowy', baselineAssumptions.tax, 'baseline.tax'],
-                        ['Nakłady inwestycyjne (CAPEX)', baselineAssumptions.capex, 'baseline.capex'],
+                        [
+                          'Nakłady inwestycyjne (CAPEX)',
+                          baselineAssumptions.capex,
+                          'baseline.capex',
+                        ],
                       ].map(([label, value, driverKey]) => (
                         <div
                           key={String(label)}
@@ -1621,9 +1628,15 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               }
                               className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
                             >
-                              <option value="operating">{t('finance.model.cfOperating', 'Operacyjne')}</option>
-                              <option value="investing">{t('finance.model.cfInvesting', 'Inwestycyjne')}</option>
-                              <option value="financing">{t('finance.model.cfFinancing', 'Finansowe')}</option>
+                              <option value="operating">
+                                {t('finance.model.cfOperating', 'Operacyjne')}
+                              </option>
+                              <option value="investing">
+                                {t('finance.model.cfInvesting', 'Inwestycyjne')}
+                              </option>
+                              <option value="financing">
+                                {t('finance.model.cfFinancing', 'Finansowe')}
+                              </option>
                               <option value="none">{t('finance.model.cfNone', 'Brak')}</option>
                             </select>
                           </div>

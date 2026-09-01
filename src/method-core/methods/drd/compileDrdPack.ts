@@ -30,9 +30,7 @@
  * discrepancy (see `discrepancies` in the report), not a silent choice.
  */
 
-import { DRD_STRUCTURE, type DRDArea, type DRDAxis, type DRDLevel } from '@/services/drdStructure';
 import { getDRDAxisWhyHint, getDRDKnowledge } from '@/services/assessmentKnowledge';
-
 // Raw override maps are imported ONLY to measure coverage (`key in map`) —
 // never to copy their string content. The public barrel (`getDRDKnowledge`)
 // is the sole source of actual question/evidence/technology text, per the
@@ -42,6 +40,7 @@ import { getDRDAxisWhyHint, getDRDKnowledge } from '@/services/assessmentKnowled
 import { DRD_OVERRIDES_AXIS_1_2 } from '@/services/assessmentKnowledge/drdKnowledgeOverridesAxis1And2';
 import { DRD_OVERRIDES_AXIS_3_4 } from '@/services/assessmentKnowledge/drdKnowledgeOverridesAxis3And4';
 import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from '@/services/assessmentKnowledge/drdKnowledgeOverridesAxis5To7';
+import { DRD_STRUCTURE, type DRDArea, type DRDAxis, type DRDLevel } from '@/services/drdStructure';
 
 import type {
   MethodCompileReport,
@@ -326,7 +325,8 @@ export function compileDrdPack(): DrdCompileResult {
     },
     {
       sourceId: 'drd-methodology-v1',
-      title: 'DRD methodology grounding per axis (Digital Pathfinder) — cited for provenance, NOT extracted into pack content',
+      title:
+        'DRD methodology grounding per axis (Digital Pathfinder) — cited for provenance, NOT extracted into pack content',
       locator: 'knowledge/tool-kb/drd/methodology/v1/',
       retrievedAt: RETRIEVED_AT,
       usageRight: 'restricted',
@@ -476,7 +476,8 @@ function buildScoringFixtures(): ScoringFixture[] {
     },
     {
       fixtureId: 'drd-progression-prerequisite-skipped-rejected-v1',
-      description: '1A: only level 3 confirmed (1,2 never confirmed) → prerequisite skip is rejected.',
+      description:
+        '1A: only level 3 confirmed (1,2 never confirmed) → prerequisite skip is rejected.',
       kind: 'invalid',
       input: { unitId: '1A', confirmedLevels: [3], evidenceByLevel: {} },
       expected: { currentLevel: null, blockedAtLevel: 1, openLevels: [1], aboveGapLevels: [3] },

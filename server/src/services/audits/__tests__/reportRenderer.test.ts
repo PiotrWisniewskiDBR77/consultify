@@ -111,7 +111,13 @@ function basePayload(overrides: Partial<AuditOutputPayload> = {}): AuditOutputPa
       objectives: 'Potwierdzić zgodność zarządzania dostępem z polityką wewnętrzną',
     },
     team: [
-      { id: 'mem_1', userId: 'lead_1', role: 'lead_auditor', independenceDeclared: true, assignedAt: '2026-07-01T00:00:00.000Z' },
+      {
+        id: 'mem_1',
+        userId: 'lead_1',
+        role: 'lead_auditor',
+        independenceDeclared: true,
+        assignedAt: '2026-07-01T00:00:00.000Z',
+      },
     ],
     evidence: [evidence()],
     criteriaWork: [criterion()],
@@ -126,7 +132,13 @@ function basePayload(overrides: Partial<AuditOutputPayload> = {}): AuditOutputPa
     managementResponses: [],
     correctiveActionPlan: [action()],
     residualRisk: [
-      { findingId: 'find_1', residualRisk: 'Możliwy nieautoryzowany dostęp', acceptedBy: null, acceptedAt: null, note: null },
+      {
+        findingId: 'find_1',
+        residualRisk: 'Możliwy nieautoryzowany dostęp',
+        acceptedBy: null,
+        acceptedAt: null,
+        note: null,
+      },
     ],
     verificationPlan: [
       {
@@ -140,7 +152,9 @@ function basePayload(overrides: Partial<AuditOutputPayload> = {}): AuditOutputPa
         result: null,
       },
     ],
-    approvalTrail: [{ who: 'lead_1', when: '2026-08-05T00:00:00.000Z', what: 'Przegląd ustalenia find_1' }],
+    approvalTrail: [
+      { who: 'lead_1', when: '2026-08-05T00:00:00.000Z', what: 'Przegląd ustalenia find_1' },
+    ],
     provenance: { builtAt: '2026-08-13T09:00:00.000Z', builtBy: 'lead_1', sourceTables: {} },
     ...overrides,
   };
@@ -194,7 +208,10 @@ describe('reportRenderer — renderAuditReport', () => {
 
   it('ustalenia grupują się po istotności', () => {
     const output = basePayload({
-      findings: [finding({ id: 'find_1', severity: 'critical' }), finding({ id: 'find_2', severity: 'low' })],
+      findings: [
+        finding({ id: 'find_1', severity: 'critical' }),
+        finding({ id: 'find_2', severity: 'low' }),
+      ],
     });
     const doc = renderAuditReport(output, { generatedAt: '2026-08-13T12:00:00.000Z' });
     const bySeverity = doc.sections.find((s) => s.id === 'findings_by_severity')!;
@@ -208,7 +225,10 @@ describe('reportRenderer — renderAuditReport', () => {
 
   it('ustalenia grupują się po obszarze/procesie (tytule kryterium)', () => {
     const output = basePayload({
-      criteriaWork: [criterion({ id: 'crit_1', title: 'Kontrola dostępu' }), criterion({ id: 'crit_2', title: 'Backup' })],
+      criteriaWork: [
+        criterion({ id: 'crit_1', title: 'Kontrola dostępu' }),
+        criterion({ id: 'crit_2', title: 'Backup' }),
+      ],
       findings: [
         finding({ id: 'find_1', criterionId: 'crit_1' }),
         finding({ id: 'find_2', criterionId: 'crit_2', objectiveEvidence: [] }),
@@ -223,7 +243,9 @@ describe('reportRenderer — renderAuditReport', () => {
   });
 
   it('ustalenie bez przypisanego kryterium trafia do jawnej grupy „Bez przypisanego obszaru"', () => {
-    const output = basePayload({ findings: [finding({ criterionId: null, objectiveEvidence: [] })] });
+    const output = basePayload({
+      findings: [finding({ criterionId: null, objectiveEvidence: [] })],
+    });
     const doc = renderAuditReport(output, { generatedAt: '2026-08-13T12:00:00.000Z' });
     const byArea = doc.sections.find((s) => s.id === 'findings_by_area')!;
     const groups = byArea.content as Array<{ key: string }>;
@@ -282,10 +304,14 @@ describe('reportRenderer — renderRemediationProgressReport', () => {
   it('poprawnie liczy opóźnienia względem asOfDate — tylko przeterminowane i niedokończone są „delayed"', () => {
     const output = basePayload();
     const doc = renderRemediationProgressReport(output, baseActions, verifications, '2026-06-01');
-    const summary = doc.sections.find((s) => s.id === 'progress_summary')!.content as Record<string, unknown>;
+    const summary = doc.sections.find((s) => s.id === 'progress_summary')!.content as Record<
+      string,
+      unknown
+    >;
     expect(summary.delayedCount).toBe(1);
 
-    const delayedGroup = doc.sections.find((s) => s.id === 'delayed_rejected_reopened')!.content as {
+    const delayedGroup = doc.sections.find((s) => s.id === 'delayed_rejected_reopened')!
+      .content as {
       delayed: Array<{ id: string }>;
     };
     expect(delayedGroup.delayed.map((a) => a.id)).toEqual(['act_due_past']);
@@ -294,7 +320,10 @@ describe('reportRenderer — renderRemediationProgressReport', () => {
   it('przy wcześniejszym asOfDate (przed żadnym terminem) nic nie jest jeszcze opóźnione', () => {
     const output = basePayload();
     const doc = renderRemediationProgressReport(output, baseActions, verifications, '2025-06-01');
-    const summary = doc.sections.find((s) => s.id === 'progress_summary')!.content as Record<string, unknown>;
+    const summary = doc.sections.find((s) => s.id === 'progress_summary')!.content as Record<
+      string,
+      unknown
+    >;
     expect(summary.delayedCount).toBe(0);
   });
 
@@ -323,7 +352,9 @@ describe('reportRenderer — renderPresentationView', () => {
       ],
     });
     const doc = renderPresentationView(output);
-    const critical = doc.sections.find((s) => s.id === 'critical_findings')!.content as Array<{ id: string }>;
+    const critical = doc.sections.find((s) => s.id === 'critical_findings')!.content as Array<{
+      id: string;
+    }>;
     expect(critical.map((f) => f.id).sort()).toEqual(['find_crit_1', 'find_crit_2']);
   });
 

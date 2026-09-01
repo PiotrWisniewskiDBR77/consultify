@@ -301,7 +301,10 @@ afterAll(async () => {
       [ORG_A, ORG_B]
     );
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
     await c.query(`DELETE FROM users WHERE id IN ($1,$2)`, [ACTOR, ACTOR_B]).catch(() => undefined);
     await c
       .query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B])
@@ -712,36 +715,98 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const answers = {
       items: [
-        { id: 'i1', text: 'Confirmed delivery strength', quadrant: 'strengths', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
-        { id: 'i2', text: 'Confirmed regional demand', quadrant: 'opportunities', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
+        {
+          id: 'i1',
+          text: 'Confirmed delivery strength',
+          quadrant: 'strengths',
+          impact: 'high',
+          proposalStatus: 'accepted',
+          evidenceStatus: 'confirmed',
+        },
+        {
+          id: 'i2',
+          text: 'Confirmed regional demand',
+          quadrant: 'opportunities',
+          impact: 'high',
+          proposalStatus: 'accepted',
+          evidenceStatus: 'confirmed',
+        },
       ],
-      tensions: [{ id: 't1', title: 'Strength meets demand', type: 'attack', linkedItemIds: ['i1', 'i2'], linkedCorrelationIds: [], insight: 'A bounded pilot tests the thesis.' }],
-      recommendedMoves: [{
-        id: 'm1', title: 'Launch bounded pilot', category: 'quick-win',
-        rationale: 'Both source items are evidence-confirmed.', linkedTensionIds: ['t1'], linkedItemIds: ['i1', 'i2'],
-        expectedImpact: 'high', estimatedEffort: 'medium', firstStep: 'Select one customer', ownerRole: 'Sales Director',
-        tradeoff: { chosen: 'Direct pilot', deferred: 'Full rollout', cost: 'One quarter capacity' },
-        rejectedAlternative: { option: 'Immediate partner rollout', reason: 'Insufficient first-party evidence' },
-      }],
+      tensions: [
+        {
+          id: 't1',
+          title: 'Strength meets demand',
+          type: 'attack',
+          linkedItemIds: ['i1', 'i2'],
+          linkedCorrelationIds: [],
+          insight: 'A bounded pilot tests the thesis.',
+        },
+      ],
+      recommendedMoves: [
+        {
+          id: 'm1',
+          title: 'Launch bounded pilot',
+          category: 'quick-win',
+          rationale: 'Both source items are evidence-confirmed.',
+          linkedTensionIds: ['t1'],
+          linkedItemIds: ['i1', 'i2'],
+          expectedImpact: 'high',
+          estimatedEffort: 'medium',
+          firstStep: 'Select one customer',
+          ownerRole: 'Sales Director',
+          tradeoff: {
+            chosen: 'Direct pilot',
+            deferred: 'Full rollout',
+            cost: 'One quarter capacity',
+          },
+          rejectedAlternative: {
+            option: 'Immediate partner rollout',
+            reason: 'Insufficient first-party evidence',
+          },
+        },
+      ],
     };
-    const saved = await request(app).put(`/api/tools/${sessionId}`).set(as(ORG_A)).send({
-      answers, contextSnapshot: { mission: 'Validate regional growth safely' },
-      completionPercent: 100, confidenceAvg: 4.5, missingItems: [], expectedVersion: 1,
-    });
+    const saved = await request(app)
+      .put(`/api/tools/${sessionId}`)
+      .set(as(ORG_A))
+      .send({
+        answers,
+        contextSnapshot: { mission: 'Validate regional growth safely' },
+        completionPercent: 100,
+        confidenceAvg: 4.5,
+        missingItems: [],
+        expectedVersion: 1,
+      });
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
     expect(saved.body.version).toBe(2);
 
-    const review = await request(app).post(`/api/tools/${sessionId}/request-review`).set(as(ORG_A)).send({});
+    const review = await request(app)
+      .post(`/api/tools/${sessionId}/request-review`)
+      .set(as(ORG_A))
+      .send({});
     expect(review.status, JSON.stringify(review.body)).toBe(200);
     expect(review.body.status).toBe('REVIEW');
-    const approved = await request(app).post(`/api/tools/${sessionId}/approve`).set(as(ORG_A)).send({});
+    const approved = await request(app)
+      .post(`/api/tools/${sessionId}/approve`)
+      .set(as(ORG_A))
+      .send({});
     expect(approved.status, JSON.stringify(approved.body)).toBe(200);
     expect(approved.body.status).toBe('APPROVED');
 
-    const body = { outputType: 'idea', title: `${P}mounted promoted idea`, description: 'Frozen SWOT lineage' };
-    const promoted = await request(app).post(`/api/tools/${sessionId}/promote`).set(as(ORG_A)).send(body);
+    const body = {
+      outputType: 'idea',
+      title: `${P}mounted promoted idea`,
+      description: 'Frozen SWOT lineage',
+    };
+    const promoted = await request(app)
+      .post(`/api/tools/${sessionId}/promote`)
+      .set(as(ORG_A))
+      .send(body);
     expect(promoted.status, JSON.stringify(promoted.body)).toBe(200);
-    const replay = await request(app).post(`/api/tools/${sessionId}/promote`).set(as(ORG_A)).send(body);
+    const replay = await request(app)
+      .post(`/api/tools/${sessionId}/promote`)
+      .set(as(ORG_A))
+      .send(body);
     expect(replay.status, JSON.stringify(replay.body)).toBe(200);
     expect(replay.body.id).toBe(promoted.body.id);
     expect(replay.body.deduplicated).toBe(true);
@@ -762,15 +827,23 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     expect(forgedAuthority.status).toBe(400);
 
     const concurrentHandoffs = await Promise.all([
-      request(app).post(`/api/tools/${sessionId}/swot-candidates`).set(as(ORG_A)).send({ id: 'm1' }),
-      request(app).post(`/api/tools/${sessionId}/swot-candidates`).set(as(ORG_A)).send({ id: 'm1' }),
+      request(app)
+        .post(`/api/tools/${sessionId}/swot-candidates`)
+        .set(as(ORG_A))
+        .send({ id: 'm1' }),
+      request(app)
+        .post(`/api/tools/${sessionId}/swot-candidates`)
+        .set(as(ORG_A))
+        .send({ id: 'm1' }),
     ]);
     expect(concurrentHandoffs.map((response) => response.status).sort()).toEqual([200, 201]);
     const handoff = concurrentHandoffs.find((response) => response.status === 201)!;
     expect(concurrentHandoffs[0].body.receipt).toEqual(concurrentHandoffs[1].body.receipt);
     expect(handoff.body.candidate.title).toBe('Launch bounded pilot');
     expect(handoff.body.receipt).toMatchObject({
-      recommendationId: 'm1', sourceRevision: 2, toolOutputVersion: 1,
+      recommendationId: 'm1',
+      sourceRevision: 2,
+      toolOutputVersion: 1,
     });
 
     const handoffReplay = await request(app)
@@ -795,10 +868,9 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     const receiptGuardDb = await db();
     try {
       await expect(
-        receiptGuardDb.query(
-          `UPDATE swot_candidate_handoffs SET source_revision=99 WHERE id=$1`,
-          [handoff.body.receipt.receiptId]
-        )
+        receiptGuardDb.query(`UPDATE swot_candidate_handoffs SET source_revision=99 WHERE id=$1`, [
+          handoff.body.receipt.receiptId,
+        ])
       ).rejects.toMatchObject({ code: '55000' });
       await expect(
         receiptGuardDb.query(`DELETE FROM swot_candidate_handoffs WHERE id=$1`, [
@@ -811,8 +883,15 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
              (id,organization_id,tool_session_id,recommendation_id,candidate_id,created_by,
               tool_output_id,tool_output_version,tool_output_content_hash,source_revision)
            VALUES ($1,$2,$3,'partial-lineage',$4,$5,$6,NULL,$7,2)`,
-          [uid('partial'), ORG_A, sessionId, handoff.body.candidate.id, ACTOR,
-            handoff.body.receipt.toolOutputId, handoff.body.receipt.toolOutputContentHash]
+          [
+            uid('partial'),
+            ORG_A,
+            sessionId,
+            handoff.body.candidate.id,
+            ACTOR,
+            handoff.body.receipt.toolOutputId,
+            handoff.body.receipt.toolOutputContentHash,
+          ]
         )
       ).rejects.toMatchObject({ code: '23514' });
 
@@ -835,8 +914,12 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
         .set(as(ORG_A));
       expect(historicalRead.status, JSON.stringify(historicalRead.body)).toBe(200);
       expect(historicalRead.body.receipts[0]).toMatchObject({
-        recommendationId: 'm1', lineageState: 'HISTORICAL_UNRESOLVED',
-        toolOutputId: null, toolOutputVersion: null, toolOutputContentHash: null, sourceRevision: null,
+        recommendationId: 'm1',
+        lineageState: 'HISTORICAL_UNRESOLVED',
+        toolOutputId: null,
+        toolOutputVersion: null,
+        toolOutputContentHash: null,
+        sourceRevision: null,
       });
       const historicalReplay = await request(app)
         .post(`/api/tools/${historicalSessionId}/swot-candidates`)
@@ -869,27 +952,40 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     const independent = new Client({ connectionString: DATABASE_URL });
     await independent.connect();
     try {
-      const output = (await independent.query(
-        `SELECT id,status,payload_json,content_hash FROM tool_outputs WHERE tool_session_id=$1`, [sessionId]
-      )).rows[0];
-      const receipt = (await independent.query(
-        `SELECT initiative_id,source_revision,output_type,idempotency_key
-           FROM tool_initiative_links WHERE tool_session_id=$1 AND batch_id='promote-idea'`, [sessionId]
-      )).rows[0];
+      const output = (
+        await independent.query(
+          `SELECT id,status,payload_json,content_hash FROM tool_outputs WHERE tool_session_id=$1`,
+          [sessionId]
+        )
+      ).rows[0];
+      const receipt = (
+        await independent.query(
+          `SELECT initiative_id,source_revision,output_type,idempotency_key
+           FROM tool_initiative_links WHERE tool_session_id=$1 AND batch_id='promote-idea'`,
+          [sessionId]
+        )
+      ).rows[0];
       expect(output.status).toBe('approved');
       expect(output.payload_json.conclusions.length).toBeGreaterThan(0);
-      const candidateReceipt = (await independent.query(
-        `SELECT tool_output_id,tool_output_version,tool_output_content_hash,source_revision
+      const candidateReceipt = (
+        await independent.query(
+          `SELECT tool_output_id,tool_output_version,tool_output_content_hash,source_revision
            FROM swot_candidate_handoffs WHERE organization_id=$1 AND tool_session_id=$2 AND recommendation_id='m1'`,
-        [ORG_A, sessionId]
-      )).rows[0];
+          [ORG_A, sessionId]
+        )
+      ).rows[0];
       expect(candidateReceipt).toMatchObject({
         tool_output_id: output.id,
         tool_output_version: 1,
         tool_output_content_hash: output.content_hash,
         source_revision: 2,
       });
-      expect(receipt).toMatchObject({ initiative_id: promoted.body.id, source_revision: 2, output_type: 'idea', idempotency_key: 'promote-idea' });
+      expect(receipt).toMatchObject({
+        initiative_id: promoted.body.id,
+        source_revision: 2,
+        output_type: 'idea',
+        idempotency_key: 'promote-idea',
+      });
     } finally {
       await independent.end();
     }

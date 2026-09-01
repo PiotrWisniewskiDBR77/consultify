@@ -36,7 +36,8 @@ export const riskUncertaintyPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (RISK_UNCERTAINTY_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Klasyczne rozróżnienie Knighta (risk vs. uncertainty) — brak noty licencyjnej w repo',
+      source:
+        'Klasyczne rozróżnienie Knighta (risk vs. uncertainty) — brak noty licencyjnej w repo',
       verifiableInRepo: false,
       note: 'Metoda z domeny publicznej ekonomii decyzji; brak potwierdzonego źródła licencyjnego w repo (L10).',
     },
@@ -141,7 +142,8 @@ export const riskUncertaintyPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Ranking ekspozycji i kruchości policzony przez silnik, z rozróżnieniem known-unknown / unknown-unknown.',
-      evidenceToAskFor: 'Która pozycja to prawdziwe ryzyko, a która głęboka niepewność, i dlaczego.',
+      evidenceToAskFor:
+        'Która pozycja to prawdziwe ryzyko, a która głęboka niepewność, i dlaczego.',
       completionCriterion: 'Macierz 2×2 zbudowana z zaakceptowanych ryzyk (buildRiskMatrix).',
     },
     {
@@ -154,7 +156,8 @@ export const riskUncertaintyPack: ToolPack = {
       whatGoodLooksLike:
         'Każdy ruch ma rationale, trade-off i odrzucony wariant; ryzyka gotowe do RAID mają readiness="ready-for-initiative".',
       evidenceToAskFor: 'Co świadomie odkładamy, waliduj ąc/łagodząc w tej kolejności.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 i sekwencja zaczyna się od najbardziej kruchego założenia.',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 i sekwencja zaczyna się od najbardziej kruchego założenia.',
     },
   ],
 
@@ -297,8 +300,10 @@ export const riskUncertaintyPack: ToolPack = {
    */
   rights: {
     methodologyName: 'Macierz prawdopodobieństwo×wpływ + rozróżnienie ryzyka i niepewności',
-    commonlyAttributedTo: 'Frank Knight (ryzyko vs niepewność); macierz P×I to generyczna praktyka zarządzania ryzykiem',
-    sourceUsed: 'src/config/riskuncertainty/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    commonlyAttributedTo:
+      'Frank Knight (ryzyko vs niepewność); macierz P×I to generyczna praktyka zarządzania ryzykiem',
+    sourceUsed:
+      'src/config/riskuncertainty/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: 'Brak znanego znaku towarowego; koncepcja z domeny publicznej.',

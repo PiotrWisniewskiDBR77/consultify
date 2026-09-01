@@ -98,11 +98,12 @@ export function useIdeaConfidentialityGate({
   const [confidentiality, setConfidentiality] = useState<IdeaConfidentialityLevel>('standard');
   const [confidentialitySupported, setConfidentialitySupported] = useState(false);
   const [confidentialitySaving, setConfidentialitySaving] = useState(false);
-  const { dialog: confidentialityDowngradeDialog, confirm: confirmDowngrade } =
-    useConfirmDialog();
+  const { dialog: confidentialityDowngradeDialog, confirm: confirmDowngrade } = useConfirmDialog();
 
   const hydrateFromIdea = useCallback(
-    (idea: { confidentiality?: unknown; confidentialitySupported?: unknown } | null | undefined) => {
+    (
+      idea: { confidentiality?: unknown; confidentialitySupported?: unknown } | null | undefined
+    ) => {
       setConfidentiality(normalizeLevel(idea?.confidentiality));
       setConfidentialitySupported(Boolean(idea?.confidentialitySupported));
     },

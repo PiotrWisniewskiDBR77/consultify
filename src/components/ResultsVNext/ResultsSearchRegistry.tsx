@@ -6,15 +6,15 @@ import { useNavigate } from 'react-router-dom';
 import type { TableColumn } from '@/components/standard';
 import { Input } from '@/components/ui/primitives';
 
+import { OKR_SET_STATUS_LABELS } from './okr/okrRegistryMappers';
 import {
   getResultsDomainPath,
   getResultsDomainTabs,
   isResultsDomain,
 } from './resultsDomainNavigation';
+import { type ResultsSearchHit, searchResults } from './resultsSearchApi';
 import { ResultsVNextRegistryShell } from './ResultsVNextRegistryShell';
-import { searchResults, type ResultsSearchHit } from './resultsSearchApi';
 import { ROI_STATUS_LABELS } from './roi/roiRegistryMappers';
-import { OKR_SET_STATUS_LABELS } from './okr/okrRegistryMappers';
 
 const KIND_LABEL: Record<ResultsSearchHit['kind'], string> = {
   kpi: 'KPI',
@@ -233,7 +233,11 @@ export const ResultsSearchRegistry: React.FC = () => {
                 propertyLabel: isPolish ? 'Właściwość' : 'Property',
                 valueLabel: isPolish ? 'Wartość' : 'Value',
                 properties: [
-                  { id: 'status', label: 'Status', value: searchHitStatusLabel(selected, isPolish) },
+                  {
+                    id: 'status',
+                    label: 'Status',
+                    value: searchHitStatusLabel(selected, isPolish),
+                  },
                   {
                     id: 'matched',
                     label: isPolish ? 'Dopasowane pole' : 'Matched field',

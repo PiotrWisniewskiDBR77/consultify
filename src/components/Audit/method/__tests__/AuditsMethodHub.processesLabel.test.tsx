@@ -18,7 +18,8 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
       if (typeof fallback === 'string') return fallback;
-      if (fallback && typeof fallback === 'object' && fallback.defaultValue) return fallback.defaultValue;
+      if (fallback && typeof fallback === 'object' && fallback.defaultValue)
+        return fallback.defaultValue;
       return key;
     },
     i18n: { language: 'pl' },
@@ -28,7 +29,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-hot-toast', () => {
   const fn = vi.fn();
-  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 'toast-id') }) };
+  return {
+    default: Object.assign(fn, {
+      success: vi.fn(),
+      error: vi.fn(),
+      loading: vi.fn(() => 'toast-id'),
+    }),
+  };
 });
 
 vi.mock('../auditsMethodApi', async () => {
@@ -58,7 +65,9 @@ describe('AuditsMethodHub — Sesje/Sessions label follows account language', ()
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'Sesje', selected: true })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Sesje', selected: true })).toBeInTheDocument()
+    );
     // English label must NOT leak into a Polish account.
     expect(screen.queryByRole('tab', { name: 'Sessions' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();

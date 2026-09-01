@@ -93,9 +93,8 @@ describe.skipIf(!REAL_PG)(
       candidateService = await import('../initiativeCandidateService.js');
       submitMod = await import('../../../domain/initiatives-execution/submitSourceProposal.js');
       registerMod = await import('../../../domain/initiatives-execution/registerInitiative.js');
-      uowMod = await import(
-        '../../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js'
-      );
+      uowMod =
+        await import('../../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js');
       unitOfWork = new uowMod.PostgresMaterialCommandUnitOfWork(pool);
       void queryHelpers; // imported for side-effect parity with the app's real DB layer
     }, 30000);
@@ -128,9 +127,7 @@ describe.skipIf(!REAL_PG)(
             createdOrgIds,
           ]);
           await pool.query(`DELETE FROM audit_events WHERE org_id = ANY($1)`, [createdOrgIds]);
-          await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [
-            createdOrgIds,
-          ]);
+          await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [createdOrgIds]);
           await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [createdOrgIds]);
         }
         await pool.end();
@@ -275,13 +272,14 @@ describe.skipIf(!REAL_PG)(
     }
 
     async function countInitiatives(orgId: string): Promise<number> {
-      const res = await pool.query(`SELECT count(*)::int AS n FROM initiatives WHERE organization_id = $1`, [
-        orgId,
-      ]);
+      const res = await pool.query(
+        `SELECT count(*)::int AS n FROM initiatives WHERE organization_id = $1`,
+        [orgId]
+      );
       return res.rows[0].n;
     }
 
-    it('FIXED: B-then-A no longer double-materializes — A adopts B\'s receipt instead of minting a second DRAFT', async () => {
+    it("FIXED: B-then-A no longer double-materializes — A adopts B's receipt instead of minting a second DRAFT", async () => {
       const orgId = freshOrg();
       await seedOrg(orgId);
       const proposalId = `claude_b_cand_${randomUUID()}`;
@@ -438,8 +436,16 @@ describe.skipIf(!REAL_PG)(
       });
 
       const [r1, r2] = await Promise.all([
-        candidateService.acceptCandidate(undefined, candidateId, { orgId, userId: actorId, fill: false }),
-        candidateService.acceptCandidate(undefined, candidateId, { orgId, userId: actorId, fill: false }),
+        candidateService.acceptCandidate(undefined, candidateId, {
+          orgId,
+          userId: actorId,
+          fill: false,
+        }),
+        candidateService.acceptCandidate(undefined, candidateId, {
+          orgId,
+          userId: actorId,
+          fill: false,
+        }),
       ]);
 
       expect(r1?.receiptPersisted).toBe(true);

@@ -31,10 +31,10 @@ export async function seedOrgProjectActor(pool: Pool, label: string): Promise<Or
   const projectId = `cwperf-project-${label}-${suffix}`;
   const userId = `cwperf-user-${label}-${suffix}`;
 
-  await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-    orgId,
-    `CW perf profile org (${label})`,
-  ]);
+  await pool.query(
+    `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+    [orgId, `CW perf profile org (${label})`]
+  );
   await pool.query(
     `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
     [projectId, orgId, `CW perf profile project (${label})`]

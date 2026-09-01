@@ -26,13 +26,17 @@ function realRow(overrides: Partial<{ current_database: string; current_schema: 
 describe('assertRealDatabase', () => {
   describe('isRealDatabaseTestModeRequested — env gate', () => {
     it('true only when BOTH RUN_DB_TESTS=1 and MOCK_DB=false', () => {
-      expect(isRealDatabaseTestModeRequested({ RUN_DB_TESTS: '1', MOCK_DB: 'false' } as any)).toBe(true);
+      expect(isRealDatabaseTestModeRequested({ RUN_DB_TESTS: '1', MOCK_DB: 'false' } as any)).toBe(
+        true
+      );
     });
     it('false when RUN_DB_TESTS is missing', () => {
       expect(isRealDatabaseTestModeRequested({ MOCK_DB: 'false' } as any)).toBe(false);
     });
     it('false when MOCK_DB=true (the exact regression this helper guards)', () => {
-      expect(isRealDatabaseTestModeRequested({ RUN_DB_TESTS: '1', MOCK_DB: 'true' } as any)).toBe(false);
+      expect(isRealDatabaseTestModeRequested({ RUN_DB_TESTS: '1', MOCK_DB: 'true' } as any)).toBe(
+        false
+      );
     });
     it('false when MOCK_DB is unset entirely', () => {
       expect(isRealDatabaseTestModeRequested({ RUN_DB_TESTS: '1' } as any)).toBe(false);
@@ -58,7 +62,9 @@ describe('assertRealDatabase', () => {
     });
 
     it('env gate satisfied but the connection throws (unreachable host) => rejects, does not swallow', async () => {
-      const runner: SqlRunner = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:1'));
+      const runner: SqlRunner = vi
+        .fn()
+        .mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:1'));
       await expect(
         assertRealDatabase(runner, { RUN_DB_TESTS: '1', MOCK_DB: 'false' } as any)
       ).rejects.toThrow(/Could not execute a real round-trip query/);
@@ -81,8 +87,13 @@ describe('assertRealDatabase', () => {
 
   describe('assertRealDatabase — positive path', () => {
     it('resolves with current_database/current_schema when the gate AND the query both succeed', async () => {
-      const runner: SqlRunner = vi.fn().mockResolvedValue(realRow({ current_database: 'consultify_asm_s4' }));
-      const proof = await assertRealDatabase(runner, { RUN_DB_TESTS: '1', MOCK_DB: 'false' } as any);
+      const runner: SqlRunner = vi
+        .fn()
+        .mockResolvedValue(realRow({ current_database: 'consultify_asm_s4' }));
+      const proof = await assertRealDatabase(runner, {
+        RUN_DB_TESTS: '1',
+        MOCK_DB: 'false',
+      } as any);
       expect(proof).toEqual({ currentDatabase: 'consultify_asm_s4', currentSchema: 'public' });
       expect(runner).toHaveBeenCalledWith(expect.stringContaining('current_database()'));
     });

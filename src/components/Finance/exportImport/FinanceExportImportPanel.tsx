@@ -26,10 +26,10 @@ import {
 } from '@/services/api/financeV2.api';
 import {
   describeFinanceV2Error,
-  financeUnitLabel,
   type FinanceExcelManifestDto,
   type FinanceImportPreviewDto,
   type FinanceImportRawRow,
+  financeUnitLabel,
 } from '@/services/api/financeV2.types';
 
 export interface FinanceExportImportPanelProps {
@@ -235,7 +235,8 @@ export function FinanceExportImportPanel({
         {exportState.kind === 'exported' ? (
           <p className="text-[11px] text-c-text-secondary" data-testid="export-manifest-summary">
             Wersja v{exportState.manifest.businessVersionNo} · jednostka{' '}
-            {financeUnitLabel(exportState.manifest.defaultUnit)} · źródło {exportState.manifest.source}
+            {financeUnitLabel(exportState.manifest.defaultUnit)} · źródło{' '}
+            {exportState.manifest.source}
           </p>
         ) : null}
         {exportState.kind === 'error' ? (

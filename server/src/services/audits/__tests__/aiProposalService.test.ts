@@ -15,23 +15,20 @@
  */
 
 import { randomUUID } from 'crypto';
-
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import * as aiProposalService from '../aiProposalService.js';
 import { auditGet, auditRun } from '../auditsDb.js';
 import type { AuditActor } from '../types.js';
-import * as aiProposalService from '../aiProposalService.js';
 
 const REACHABLE =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  !!process.env.DATABASE_URL;
+  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && !!process.env.DATABASE_URL;
 
 if (!REACHABLE) {
   // eslint-disable-next-line no-console
   console.warn(
     '[aiProposalService.test SKIPPED — clean skip, not a failure] needs NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>'
   );
 }
 
@@ -49,7 +46,7 @@ async function seedProgram(organizationId: string, programId: string): Promise<v
   await auditRun(
     `INSERT INTO audit_programs (id, organization_id, name, status, lifecycle_state, created_by)
      VALUES ($1,$2,'U6 test program','active','fieldwork','seed')`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
 }
 
@@ -57,12 +54,12 @@ async function addMember(
   organizationId: string,
   programId: string,
   userId: string,
-  role: string,
+  role: string
 ): Promise<void> {
   await auditRun(
     `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role)
      VALUES ($1,$2,$3,$4,$5)`,
-    [uid('apm'), programId, organizationId, userId, role],
+    [uid('apm'), programId, organizationId, userId, role]
   );
 }
 
@@ -79,7 +76,7 @@ async function seedCriterion(
     testResult: string | null;
     auditorConclusion: string | null;
     conformityStatus: string;
-  }> = {},
+  }> = {}
 ): Promise<void> {
   await auditRun(
     `INSERT INTO audit_program_criteria
@@ -92,15 +89,22 @@ async function seedCriterion(
       organizationId,
       overrides.refCode ?? 'A.1',
       overrides.title ?? 'Polityka bezpieczeństwa jest udokumentowana',
-      overrides.requirementText ?? 'Organizacja musi posiadać udokumentowaną politykę bezpieczeństwa.',
+      overrides.requirementText ??
+        'Organizacja musi posiadać udokumentowaną politykę bezpieczeństwa.',
       overrides.auditQuestion ?? 'Czy polityka bezpieczeństwa istnieje i jest zatwierdzona?',
-      JSON.stringify(overrides.expectedEvidence ?? [
-        { kind: 'document', description: 'Zatwierdzony dokument polityki bezpieczeństwa', mandatory: true },
-      ]),
+      JSON.stringify(
+        overrides.expectedEvidence ?? [
+          {
+            kind: 'document',
+            description: 'Zatwierdzony dokument polityki bezpieczeństwa',
+            mandatory: true,
+          },
+        ]
+      ),
       overrides.testResult ?? null,
       overrides.auditorConclusion ?? null,
       overrides.conformityStatus ?? 'not_tested',
-    ],
+    ]
   );
 }
 
@@ -108,13 +112,13 @@ async function seedEvidence(
   organizationId: string,
   programId: string,
   criterionId: string,
-  title: string,
+  title: string
 ): Promise<string> {
   const id = uid('aev');
   await auditRun(
     `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title)
      VALUES ($1,$2,$3,$4,'document',$5)`,
-    [id, programId, organizationId, criterionId, title],
+    [id, programId, organizationId, criterionId, title]
   );
   return id;
 }
@@ -123,14 +127,14 @@ async function seedFinding(
   organizationId: string,
   programId: string,
   criterionId: string | null,
-  status = 'draft',
+  status = 'draft'
 ): Promise<string> {
   const id = uid('apf');
   await auditRun(
     `INSERT INTO audit_program_findings
        (id, program_id, organization_id, criterion_id, statement, classification, status)
      VALUES ($1,$2,$3,$4,'Wstępne ustalenie testowe','nonconforming',$5)`,
-    [id, programId, organizationId, criterionId, status],
+    [id, programId, organizationId, criterionId, status]
   );
   return id;
 }
@@ -173,7 +177,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
 
     // commit przed decyzją człowieka musi się nie udać.
     await expect(aiProposalService.commit(organizationId, actor, created.id)).rejects.toThrow(
-      /zaakceptowan/i,
+      /zaakceptowan/i
     );
 
     const decided = await aiProposalService.decide(organizationId, actor, created.id, {
@@ -187,14 +191,14 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
 
     const criterionRow = await auditGet<{ auditor_note: string | null }>(
       `SELECT auditor_note FROM audit_program_criteria WHERE organization_id=$1 AND id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
     expect(criterionRow?.auditor_note).toContain('[Teresa]');
     expect(criterionRow?.auditor_note).toContain('Polityka bezpieczeństwa');
 
     // Powtórny commit tej samej propozycji musi się nie udać.
     await expect(aiProposalService.commit(organizationId, actor, created.id)).rejects.toThrow(
-      /już wykonana/i,
+      /już wykonana/i
     );
   });
 
@@ -223,13 +227,13 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
 
     const requestRow = await auditGet<{ id: string; criterion_id: string; status: string }>(
       `SELECT id, criterion_id, status FROM audit_evidence_requests WHERE organization_id=$1 AND criterion_id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
     expect(requestRow?.status).toBe('open');
 
     const criterionRow = await auditGet<{ work_status: string }>(
       `SELECT work_status FROM audit_program_criteria WHERE organization_id=$1 AND id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
     expect(criterionRow?.work_status).toBe('evidence_requested');
   });
@@ -254,7 +258,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
         targetId: criterionId,
         intent: 'draft_finding',
         context: {},
-      }),
+      })
     ).rejects.toThrow(/wykonanego testu/i);
 
     await auditRun(
@@ -262,9 +266,14 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
           SET test_result='fail', auditor_conclusion='Brak zatwierdzonego dokumentu polityki w repozytorium',
               conformity_status='nonconforming'
         WHERE organization_id=$1 AND id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
-    const evidenceId = await seedEvidence(organizationId, programId, criterionId, 'Zrzut repozytorium dokumentów');
+    const evidenceId = await seedEvidence(
+      organizationId,
+      programId,
+      criterionId,
+      'Zrzut repozytorium dokumentów'
+    );
 
     const created = await aiProposalService.createIntent(organizationId, actor, {
       programId,
@@ -287,9 +296,13 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     await aiProposalService.decide(organizationId, actor, created.id, { decision: 'accept' });
     await aiProposalService.commit(organizationId, actor, created.id);
 
-    const findingRow = await auditGet<{ ai_proposed: boolean; ai_rationale: string | null; status: string }>(
+    const findingRow = await auditGet<{
+      ai_proposed: boolean;
+      ai_rationale: string | null;
+      status: string;
+    }>(
       `SELECT ai_proposed, ai_rationale, status FROM audit_program_findings WHERE organization_id=$1 AND criterion_id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
     expect(findingRow?.ai_proposed).toBe(true);
     expect(findingRow?.ai_rationale).toBeTruthy();
@@ -308,7 +321,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     const findingId = await seedFinding(organizationId, programId, null);
     await auditRun(
       `UPDATE audit_program_findings SET gap_text='Brak zatwierdzonej polityki bezpieczeństwa' WHERE id=$1`,
-      [findingId],
+      [findingId]
     );
 
     const actor = actorFor(organizationId, auditor);
@@ -329,7 +342,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
 
     const rows = await auditGet<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM audit_corrective_actions WHERE organization_id=$1 AND finding_id=$2 AND status='proposed'`,
-      [organizationId, findingId],
+      [organizationId, findingId]
     );
     expect(Number(rows?.count)).toBe(options.length);
   });
@@ -344,14 +357,14 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     const findingId = await seedFinding(organizationId, programId, null, 'confirmed');
     await auditRun(
       `UPDATE audit_program_findings SET statement='Brak zatwierdzonej polityki bezpieczeństwa', severity='high', reference_code='F-1' WHERE id=$1`,
-      [findingId],
+      [findingId]
     );
 
     const reportId = uid('arep');
     await auditRun(
       `INSERT INTO audit_reports (id, program_id, organization_id, title, status, payload)
        VALUES ($1,$2,$3,'Raport testowy','draft','{}'::jsonb)`,
-      [reportId, programId, organizationId],
+      [reportId, programId, organizationId]
     );
 
     const actor = actorFor(organizationId, auditor);
@@ -369,9 +382,10 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
 
     const reportRow = await auditGet<{ payload: unknown }>(
       `SELECT payload FROM audit_reports WHERE organization_id=$1 AND id=$2`,
-      [organizationId, reportId],
+      [organizationId, reportId]
     );
-    const payload = typeof reportRow?.payload === 'string' ? JSON.parse(reportRow.payload) : reportRow?.payload;
+    const payload =
+      typeof reportRow?.payload === 'string' ? JSON.parse(reportRow.payload) : reportRow?.payload;
     expect(payload?.sections?.findings_summary?.content).toContain('F-1');
     expect(payload?.sections?.findings_summary?.aiProposed).toBe(true);
   });
@@ -383,7 +397,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     await auditRun(
       `INSERT INTO audit_programs (id, organization_id, name, status, lifecycle_state, planned_start, planned_end, created_by)
        VALUES ($1,$2,'U6 gaps program','active','fieldwork','2026-01-01','2026-06-30','seed')`,
-      [programId, organizationId],
+      [programId, organizationId]
     );
 
     const criterionNoEvidence = uid('crit');
@@ -394,7 +408,7 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     await auditRun(
       `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title, period_to)
        VALUES ($1,$2,$3,$4,'document','Dowód sprzed okresu audytu','2024-01-01')`,
-      [uid('aev'), programId, organizationId, criterionOutdated],
+      [uid('aev'), programId, organizationId, criterionOutdated]
     );
 
     const criterionContradicting = uid('crit');
@@ -402,20 +416,26 @@ describeDb('aiProposalService — Intent → Preview → Confirmation → Commit
     await auditRun(
       `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title, supports_conformity)
        VALUES ($1,$2,$3,$4,'document','Dowód A — potwierdza',TRUE)`,
-      [uid('aev'), programId, organizationId, criterionContradicting],
+      [uid('aev'), programId, organizationId, criterionContradicting]
     );
     await auditRun(
       `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title, supports_conformity)
        VALUES ($1,$2,$3,$4,'document','Dowód B — przeczy',FALSE)`,
-      [uid('aev'), programId, organizationId, criterionContradicting],
+      [uid('aev'), programId, organizationId, criterionContradicting]
     );
 
     const result = await aiProposalService.detectEvidenceGaps(organizationId, programId);
     const proposal = result.proposal as any;
 
-    expect(proposal.criteriaWithoutEvidence.some((c: any) => c.id === criterionNoEvidence)).toBe(true);
-    expect(proposal.outdatedEvidence.some((e: any) => e.criterion_id === criterionOutdated)).toBe(true);
-    expect(proposal.contradictingEvidence.some((c: any) => c.criterionId === criterionContradicting)).toBe(true);
+    expect(proposal.criteriaWithoutEvidence.some((c: any) => c.id === criterionNoEvidence)).toBe(
+      true
+    );
+    expect(proposal.outdatedEvidence.some((e: any) => e.criterion_id === criterionOutdated)).toBe(
+      true
+    );
+    expect(
+      proposal.contradictingEvidence.some((c: any) => c.criterionId === criterionContradicting)
+    ).toBe(true);
     expect(result.sources.length).toBeGreaterThan(0);
   });
 

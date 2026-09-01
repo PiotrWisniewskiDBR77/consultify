@@ -76,7 +76,10 @@ describe('Dyżur 129 — fixture Finansów ma zmapowaną tożsamość wyceny', {
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
-    console.log('DAY129_LEGACY_COMPUTE', JSON.stringify({ status: response.status, body: response.body }));
+    console.log(
+      'DAY129_LEGACY_COMPUTE',
+      JSON.stringify({ status: response.status, body: response.body })
+    );
     expect(response.status).toBe(410);
     expect(response.body).toMatchObject({
       code: 'FINANCE_LEGACY_WRITER_DISABLED',

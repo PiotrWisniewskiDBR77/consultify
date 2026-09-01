@@ -14,10 +14,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  isCanvasKeyboardScope,
-  resolveMindMapGrammarAction,
-} from '../mindmapKeyboardScope';
+import { isCanvasKeyboardScope, resolveMindMapGrammarAction } from '../mindmapKeyboardScope';
 
 function makeContainer() {
   const container = document.createElement('div');
@@ -64,9 +61,7 @@ describe('isCanvasKeyboardScope (F-K1, Mind Map instance)', () => {
     const somewhereElse = document.createElement('button');
     document.body.appendChild(somewhereElse);
     somewhereElse.focus();
-    expect(
-      isCanvasKeyboardScope(container, somewhereElse, document.activeElement)
-    ).toBe(false);
+    expect(isCanvasKeyboardScope(container, somewhereElse, document.activeElement)).toBe(false);
   });
 
   it('is OUT of scope when the container has not mounted yet (null)', () => {

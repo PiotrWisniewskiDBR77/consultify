@@ -9,8 +9,7 @@ import { Router } from 'express';
 
 import * as proposalService from '../../services/audits/proposalService.js';
 import type { ProposalStatus } from '../../services/audits/types.js';
-
-import { auditActor, assertActor, route } from './context.js';
+import { assertActor, auditActor, route } from './context.js';
 
 const router = Router();
 
@@ -20,10 +19,14 @@ router.get(
     const actor = auditActor(req);
     assertActor(actor);
     const programId = typeof req.query.programId === 'string' ? req.query.programId : undefined;
-    const status = typeof req.query.status === 'string' ? (req.query.status as ProposalStatus) : undefined;
-    const proposals = await proposalService.listProposals(actor.organizationId, { programId, status });
+    const status =
+      typeof req.query.status === 'string' ? (req.query.status as ProposalStatus) : undefined;
+    const proposals = await proposalService.listProposals(actor.organizationId, {
+      programId,
+      status,
+    });
     res.json({ success: true, data: proposals });
-  }),
+  })
 );
 
 router.get(
@@ -33,11 +36,15 @@ router.get(
     assertActor(actor);
     const proposal = await proposalService.getProposal(actor.organizationId, req.params.id);
     if (!proposal) {
-      res.status(404).json({ success: false, error: 'Propozycja nie została znaleziona', code: 'AUDIT_NOT_FOUND' });
+      res.status(404).json({
+        success: false,
+        error: 'Propozycja nie została znaleziona',
+        code: 'AUDIT_NOT_FOUND',
+      });
       return;
     }
     res.json({ success: true, data: proposal });
-  }),
+  })
 );
 
 router.get(
@@ -47,7 +54,7 @@ router.get(
     assertActor(actor);
     const overlap = await proposalService.checkOverlap(actor.organizationId, req.params.id);
     res.json({ success: true, data: overlap });
-  }),
+  })
 );
 
 router.post(
@@ -72,10 +79,10 @@ router.post(
         findingIds: body.findingIds.map(String),
         splitBy: body.splitBy === 'criterion' ? 'criterion' : 'none',
         title: typeof body.title === 'string' ? body.title : undefined,
-      },
+      }
     );
     res.status(201).json({ success: true, data: proposals });
-  }),
+  })
 );
 
 router.patch(
@@ -83,9 +90,14 @@ router.patch(
   route('PATCH /proposals/:id', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const proposal = await proposalService.updateProposal(actor.organizationId, actor, req.params.id, req.body || {});
+    const proposal = await proposalService.updateProposal(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.body || {}
+    );
     res.json({ success: true, data: proposal });
-  }),
+  })
 );
 
 router.post(
@@ -94,14 +106,23 @@ router.post(
     const actor = auditActor(req);
     assertActor(actor);
     const programId =
-      typeof req.query.programId === 'string' ? req.query.programId : String((req.body || {}).programId || '');
+      typeof req.query.programId === 'string'
+        ? req.query.programId
+        : String((req.body || {}).programId || '');
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+      res.status(400).json({
+        success: false,
+        error: 'programId jest wymagany',
+        code: 'AUDIT_PROGRAM_ID_REQUIRED',
+      });
       return;
     }
-    const suggestions = await proposalService.suggestSystemicProposals(actor.organizationId, programId);
+    const suggestions = await proposalService.suggestSystemicProposals(
+      actor.organizationId,
+      programId
+    );
     res.json({ success: true, data: suggestions });
-  }),
+  })
 );
 
 router.post(
@@ -109,9 +130,13 @@ router.post(
   route('POST /proposals/:id/register', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const proposal = await proposalService.registerAsInitiative(actor.organizationId, actor, req.params.id);
+    const proposal = await proposalService.registerAsInitiative(
+      actor.organizationId,
+      actor,
+      req.params.id
+    );
     res.json({ success: true, data: proposal });
-  }),
+  })
 );
 
 router.post(
@@ -120,9 +145,14 @@ router.post(
     const actor = auditActor(req);
     assertActor(actor);
     const reason = typeof (req.body || {}).reason === 'string' ? req.body.reason : null;
-    const proposal = await proposalService.dismissProposal(actor.organizationId, actor, req.params.id, reason);
+    const proposal = await proposalService.dismissProposal(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      reason
+    );
     res.json({ success: true, data: proposal });
-  }),
+  })
 );
 
 router.post(
@@ -131,9 +161,14 @@ router.post(
     const actor = auditActor(req);
     assertActor(actor);
     const reason = typeof (req.body || {}).reason === 'string' ? req.body.reason : null;
-    const proposal = await proposalService.deferProposal(actor.organizationId, actor, req.params.id, reason);
+    const proposal = await proposalService.deferProposal(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      reason
+    );
     res.json({ success: true, data: proposal });
-  }),
+  })
 );
 
 export default router;

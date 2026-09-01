@@ -43,14 +43,14 @@ import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import {
   appendComputedEvent,
-  computeCompositeScore,
   type CompositeScoreResult,
+  computeCompositeScore,
   createInitialWeightVersion,
   currentWeightVersion,
   defaultWeightSet,
   reviseWeights,
-  SCORING_DIMENSIONS,
   type ScoreHistory,
+  SCORING_DIMENSIONS,
   type ScoringWeightHistory,
 } from './ideaScoringGovernance';
 import type { ColumnDef, TableNode } from './tableTypes';
@@ -237,7 +237,9 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
 
   const handleReset = useCallback(() => {
     if (canonMode) {
-      setWeightHistory((prev) => reviseWeights(prev, defaultWeightSet(), { note: 'Reset to defaults' }));
+      setWeightHistory((prev) =>
+        reviseWeights(prev, defaultWeightSet(), { note: 'Reset to defaults' })
+      );
       return;
     }
     setWeights(

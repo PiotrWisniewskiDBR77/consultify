@@ -82,7 +82,12 @@ let RoiGovernedVisibilityPolicyCollisionError: VisibilityResolverModule['RoiGove
 let client: Client;
 let reachable = false;
 
-async function insertUserAndMembership(userId: string, organizationId: string, role: string, status = 'ACTIVE'): Promise<void> {
+async function insertUserAndMembership(
+  userId: string,
+  organizationId: string,
+  role: string,
+  status = 'ACTIVE'
+): Promise<void> {
   await client.query(
     `INSERT INTO users (id, email, organization_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
     [userId, `${userId}@roi-gov20.local`, organizationId]
@@ -99,7 +104,9 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
   beforeAll(async () => {
     if (!DB_CONFIGURED) {
       // eslint-disable-next-line no-console
-      console.error('[skip] No Postgres configured — roiGovernedVisibility20 realdb tests did NOT run. This run is not evidence.');
+      console.error(
+        '[skip] No Postgres configured — roiGovernedVisibility20 realdb tests did NOT run. This run is not evidence.'
+      );
       return;
     }
 
@@ -118,16 +125,16 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
     }
     reachable = true;
 
-    const mod: VisibilityResolverModule = await import(
-      '../../../../services/resultsVnext/platform/visibilityResolver.js'
-    );
+    const mod: VisibilityResolverModule =
+      await import('../../../../services/resultsVnext/platform/visibilityResolver.js');
     publishRoiGovernedVisibilityPolicy = mod.publishRoiGovernedVisibilityPolicy;
     resolveRoiGovernedVisibility = mod.resolveRoiGovernedVisibility;
     hasActiveRoiFinanceAuthorityGrant = mod.hasActiveRoiFinanceAuthorityGrant;
     ROI_GOVERNED_VISIBILITY_POLICY = mod.ROI_GOVERNED_VISIBILITY_POLICY;
     ROI_FINANCE_AUTHORITY_CAPABILITY = mod.ROI_FINANCE_AUTHORITY_CAPABILITY;
     RoiGovernedVisibilityPolicyMismatchError = mod.RoiGovernedVisibilityPolicyMismatchError;
-    RoiVisibilityGovernanceActorNotAuthorizedError = mod.RoiVisibilityGovernanceActorNotAuthorizedError;
+    RoiVisibilityGovernanceActorNotAuthorizedError =
+      mod.RoiVisibilityGovernanceActorNotAuthorizedError;
     RoiGovernedVisibilityPolicyCollisionError = mod.RoiGovernedVisibilityPolicyCollisionError;
 
     await client.query(
@@ -160,7 +167,9 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
     await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
       [ORG_ID, FOREIGN_ORG_ID],
     ]);
-    await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [[ORG_ID, FOREIGN_ORG_ID]]);
+    await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [
+      [ORG_ID, FOREIGN_ORG_ID],
+    ]);
 
     // NOT deleted, on purpose: rvn_roi_visibility_governance and
     // rvn_finance_reconciliation_grant_events rows for ORG_ID — both
@@ -217,23 +226,37 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
       timeoutMs
     );
 
-  itDB('migration is idempotent on repeat application (repeat 0: no error, no duplicate side effects)', async () => {
-    const fs = await import('node:fs');
-    const path = await import('node:path');
-    const sql = fs.readFileSync(
-      path.resolve(process.cwd(), 'server/migrations/20261020_roi_governed_visibility_policy.sql'),
-      'utf8'
-    );
-    await client.query(sql);
-    await client.query(sql);
-    const table = await client.query<{ tbl: string }>(`SELECT to_regclass('rvn_roi_visibility_governance') AS tbl`);
-    expect(table.rows[0].tbl).toBe('rvn_roi_visibility_governance');
-  });
+  itDB(
+    'migration is idempotent on repeat application (repeat 0: no error, no duplicate side effects)',
+    async () => {
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const sql = fs.readFileSync(
+        path.resolve(
+          process.cwd(),
+          'server/migrations/20261020_roi_governed_visibility_policy.sql'
+        ),
+        'utf8'
+      );
+      await client.query(sql);
+      await client.query(sql);
+      const table = await client.query<{ tbl: string }>(
+        `SELECT to_regclass('rvn_roi_visibility_governance') AS tbl`
+      );
+      expect(table.rows[0].tbl).toBe('rvn_roi_visibility_governance');
+    }
+  );
 
-  itDB('resolves DENY with NO_GOVERNED_POLICY before any org has published — never falls back to a default', async () => {
-    const result = await resolveRoiGovernedVisibility({ userId: USER_OWNER, organizationId: ORG_ID });
-    expect(result).toEqual({ allow: false, reason: 'NO_GOVERNED_POLICY' });
-  });
+  itDB(
+    'resolves DENY with NO_GOVERNED_POLICY before any org has published — never falls back to a default',
+    async () => {
+      const result = await resolveRoiGovernedVisibility({
+        userId: USER_OWNER,
+        organizationId: ORG_ID,
+      });
+      expect(result).toEqual({ allow: false, reason: 'NO_GOVERNED_POLICY' });
+    }
+  );
 
   itDB('FAILS BEFORE MUTATION on a wrong policyKey — zero rows written', async () => {
     await expect(
@@ -245,7 +268,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
         idempotencyKey: `gov20-wrong-key-${randomUUID()}`,
       })
     ).rejects.toBeInstanceOf(RoiGovernedVisibilityPolicyMismatchError);
-    const rows = await client.query(`SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+    const rows = await client.query(
+      `SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+      [ORG_ID]
+    );
     expect(rows.rowCount).toBe(0);
   });
 
@@ -259,7 +285,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
         idempotencyKey: `gov20-wrong-digest-${randomUUID()}`,
       })
     ).rejects.toBeInstanceOf(RoiGovernedVisibilityPolicyMismatchError);
-    const rows = await client.query(`SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+    const rows = await client.query(
+      `SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+      [ORG_ID]
+    );
     expect(rows.rowCount).toBe(0);
   });
 
@@ -273,38 +302,53 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
         idempotencyKey: `gov20-member-attempt-${randomUUID()}`,
       })
     ).rejects.toBeInstanceOf(RoiVisibilityGovernanceActorNotAuthorizedError);
-    const rows = await client.query(`SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+    const rows = await client.query(
+      `SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+      [ORG_ID]
+    );
     expect(rows.rowCount).toBe(0);
   });
 
-  itDB('denies a revoked (non-ACTIVE) former ADMIN attempting to publish — zero rows written', async () => {
-    await expect(
-      publishRoiGovernedVisibilityPolicy({
-        organizationId: ORG_ID,
-        actorUserId: USER_REVOKED,
-        policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
-        policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
-        idempotencyKey: `gov20-revoked-attempt-${randomUUID()}`,
-      })
-    ).rejects.toBeInstanceOf(RoiVisibilityGovernanceActorNotAuthorizedError);
-    const rows = await client.query(`SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
-    expect(rows.rowCount).toBe(0);
-  });
+  itDB(
+    'denies a revoked (non-ACTIVE) former ADMIN attempting to publish — zero rows written',
+    async () => {
+      await expect(
+        publishRoiGovernedVisibilityPolicy({
+          organizationId: ORG_ID,
+          actorUserId: USER_REVOKED,
+          policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+          policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+          idempotencyKey: `gov20-revoked-attempt-${randomUUID()}`,
+        })
+      ).rejects.toBeInstanceOf(RoiVisibilityGovernanceActorNotAuthorizedError);
+      const rows = await client.query(
+        `SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+        [ORG_ID]
+      );
+      expect(rows.rowCount).toBe(0);
+    }
+  );
 
-  itDB('denies an ADMIN of a DIFFERENT org attempting to publish for this org (foreign tenant) — zero rows written', async () => {
-    await insertUserAndMembership(`${USER_ADMIN}-foreign`, FOREIGN_ORG_ID, 'ADMIN');
-    await expect(
-      publishRoiGovernedVisibilityPolicy({
-        organizationId: ORG_ID,
-        actorUserId: `${USER_ADMIN}-foreign`,
-        policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
-        policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
-        idempotencyKey: `gov20-foreign-attempt-${randomUUID()}`,
-      })
-    ).rejects.toBeInstanceOf(RoiVisibilityGovernanceActorNotAuthorizedError);
-    const rows = await client.query(`SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
-    expect(rows.rowCount).toBe(0);
-  });
+  itDB(
+    'denies an ADMIN of a DIFFERENT org attempting to publish for this org (foreign tenant) — zero rows written',
+    async () => {
+      await insertUserAndMembership(`${USER_ADMIN}-foreign`, FOREIGN_ORG_ID, 'ADMIN');
+      await expect(
+        publishRoiGovernedVisibilityPolicy({
+          organizationId: ORG_ID,
+          actorUserId: `${USER_ADMIN}-foreign`,
+          policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+          policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+          idempotencyKey: `gov20-foreign-attempt-${randomUUID()}`,
+        })
+      ).rejects.toBeInstanceOf(RoiVisibilityGovernanceActorNotAuthorizedError);
+      const rows = await client.query(
+        `SELECT 1 FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+        [ORG_ID]
+      );
+      expect(rows.rowCount).toBe(0);
+    }
+  );
 
   itDB(
     '8-way concurrency, SAME actor AND SAME idempotency key (a true client retry storm): exactly one applied, ' +
@@ -335,7 +379,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
       const replayed = results.filter((r) => r.outcome === 'replayed');
       expect(applied.length).toBe(1);
       expect(replayed.length).toBe(7);
-      const rows = await client.query(`SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+      const rows = await client.query(
+        `SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+        [ORG_ID]
+      );
       expect(rows.rows[0].c).toBe('1');
     }
   );
@@ -355,7 +402,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
           idempotencyKey: `gov20-owner-fresh-key-${randomUUID()}`,
         })
       ).rejects.toBeInstanceOf(RoiGovernedVisibilityPolicyCollisionError);
-      const rows = await client.query(`SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+      const rows = await client.query(
+        `SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+        [ORG_ID]
+      );
       expect(rows.rows[0].c).toBe('1');
     }
   );
@@ -379,72 +429,117 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
       const results = await Promise.all(attempts);
       expect(results.every((r) => r.ok === false)).toBe(true);
       for (const r of results) {
-        if (!r.ok) expect((r as { err: unknown }).err).toBeInstanceOf(RoiGovernedVisibilityPolicyCollisionError);
+        if (!r.ok)
+          expect((r as { err: unknown }).err).toBeInstanceOf(
+            RoiGovernedVisibilityPolicyCollisionError
+          );
       }
-      const rows = await client.query(`SELECT count(*)::text AS c, min(published_by) AS pub FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+      const rows = await client.query(
+        `SELECT count(*)::text AS c, min(published_by) AS pub FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+        [ORG_ID]
+      );
       expect(rows.rows[0].c).toBe('1');
       expect(rows.rows[0].pub).toBe(USER_OWNER);
     }
   );
 
-  itDB('append-only trigger rejects a direct UPDATE and a direct DELETE on the published row', async () => {
-    await expect(
-      client.query(`UPDATE rvn_roi_visibility_governance SET published_by = 'tampered' WHERE organization_id = $1`, [ORG_ID])
-    ).rejects.toThrow(/append-only/);
-    await expect(
-      client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID])
-    ).rejects.toThrow(/append-only/);
-  });
-
-  itDB('cold readback: a BRAND NEW pg.Client (never touched by any write above) sees the published row', async () => {
-    const cold = new Client(buildClientConfig() as ClientConfig);
-    await cold.connect();
-    try {
-      const row = await cold.query<{ organization_id: string; published_by: string; policy_key: string }>(
-        `SELECT organization_id, published_by, policy_key FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
-        [ORG_ID]
-      );
-      expect(row.rows[0]).toEqual({
-        organization_id: ORG_ID,
-        published_by: USER_OWNER,
-        policy_key: ROI_GOVERNED_VISIBILITY_POLICY.key,
-      });
-    } finally {
-      await cold.end();
+  itDB(
+    'append-only trigger rejects a direct UPDATE and a direct DELETE on the published row',
+    async () => {
+      await expect(
+        client.query(
+          `UPDATE rvn_roi_visibility_governance SET published_by = 'tampered' WHERE organization_id = $1`,
+          [ORG_ID]
+        )
+      ).rejects.toThrow(/append-only/);
+      await expect(
+        client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [
+          ORG_ID,
+        ])
+      ).rejects.toThrow(/append-only/);
     }
-  });
+  );
 
-  itDB('resolver ALLOWs the publishing OWNER and a same-tenant ACTIVE ADMIN, once the policy is published', async () => {
-    const owner = await resolveRoiGovernedVisibility({ userId: USER_OWNER, organizationId: ORG_ID });
-    expect(owner).toEqual({ allow: true, reason: 'OWNER' });
-    const admin = await resolveRoiGovernedVisibility({ userId: USER_ADMIN, organizationId: ORG_ID });
-    expect(admin).toEqual({ allow: true, reason: 'ADMIN' });
-  });
+  itDB(
+    'cold readback: a BRAND NEW pg.Client (never touched by any write above) sees the published row',
+    async () => {
+      const cold = new Client(buildClientConfig() as ClientConfig);
+      await cold.connect();
+      try {
+        const row = await cold.query<{
+          organization_id: string;
+          published_by: string;
+          policy_key: string;
+        }>(
+          `SELECT organization_id, published_by, policy_key FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+          [ORG_ID]
+        );
+        expect(row.rows[0]).toEqual({
+          organization_id: ORG_ID,
+          published_by: USER_OWNER,
+          policy_key: ROI_GOVERNED_VISIBILITY_POLICY.key,
+        });
+      } finally {
+        await cold.end();
+      }
+    }
+  );
+
+  itDB(
+    'resolver ALLOWs the publishing OWNER and a same-tenant ACTIVE ADMIN, once the policy is published',
+    async () => {
+      const owner = await resolveRoiGovernedVisibility({
+        userId: USER_OWNER,
+        organizationId: ORG_ID,
+      });
+      expect(owner).toEqual({ allow: true, reason: 'OWNER' });
+      const admin = await resolveRoiGovernedVisibility({
+        userId: USER_ADMIN,
+        organizationId: ORG_ID,
+      });
+      expect(admin).toEqual({ allow: true, reason: 'ADMIN' });
+    }
+  );
 
   itDB('resolver DENIES an ordinary member with no Finance-authority grant', async () => {
-    const result = await resolveRoiGovernedVisibility({ userId: USER_MEMBER, organizationId: ORG_ID });
+    const result = await resolveRoiGovernedVisibility({
+      userId: USER_MEMBER,
+      organizationId: ORG_ID,
+    });
     expect(result).toEqual({ allow: false, reason: 'ORDINARY_MEMBER_DENIED' });
   });
 
   itDB('resolver DENIES a revoked (non-ACTIVE) member', async () => {
-    const result = await resolveRoiGovernedVisibility({ userId: USER_REVOKED, organizationId: ORG_ID });
-    expect(result).toEqual({ allow: false, reason: 'NOT_ACTIVE_MEMBER' });
-  });
-
-  itDB('resolver DENIES a foreign-tenant caller with no membership row in this org — zero existence leakage', async () => {
-    const foreignAdminId = `${USER_ADMIN}-foreign`;
-    const result = await resolveRoiGovernedVisibility({ userId: foreignAdminId, organizationId: ORG_ID });
+    const result = await resolveRoiGovernedVisibility({
+      userId: USER_REVOKED,
+      organizationId: ORG_ID,
+    });
     expect(result).toEqual({ allow: false, reason: 'NOT_ACTIVE_MEMBER' });
   });
 
   itDB(
+    'resolver DENIES a foreign-tenant caller with no membership row in this org — zero existence leakage',
+    async () => {
+      const foreignAdminId = `${USER_ADMIN}-foreign`;
+      const result = await resolveRoiGovernedVisibility({
+        userId: foreignAdminId,
+        organizationId: ORG_ID,
+      });
+      expect(result).toEqual({ allow: false, reason: 'NOT_ACTIVE_MEMBER' });
+    }
+  );
+
+  itDB(
     'resolver DENIES a token with NO organization_members row at all for this org — the SUPERADMIN-without-' +
       'membership equivalent at THIS gate. Both are true at once, on purpose: this gate denies USER_GHOST here; ' +
-      "owner decision 15A (effectiveAccessService.ts) separately and UNCHANGED still grants a real SUPERADMIN " +
-      'token org-level OWNER + \'*\' globally, everywhere hasEffectiveCapability/resolveEffectiveAccess ARE ' +
+      'owner decision 15A (effectiveAccessService.ts) separately and UNCHANGED still grants a real SUPERADMIN ' +
+      "token org-level OWNER + '*' globally, everywhere hasEffectiveCapability/resolveEffectiveAccess ARE " +
       'consulted — this gate simply never consults them (structural proof below).',
     async () => {
-      const result = await resolveRoiGovernedVisibility({ userId: USER_GHOST, organizationId: ORG_ID });
+      const result = await resolveRoiGovernedVisibility({
+        userId: USER_GHOST,
+        organizationId: ORG_ID,
+      });
       expect(result).toEqual({ allow: false, reason: 'NOT_ACTIVE_MEMBER' });
     }
   );
@@ -452,20 +547,26 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
   itDB(
     'resolver DENIES on the foreign organization entirely — that org never published a governed policy of its own',
     async () => {
-      const result = await resolveRoiGovernedVisibility({ userId: `${USER_ADMIN}-foreign`, organizationId: FOREIGN_ORG_ID });
+      const result = await resolveRoiGovernedVisibility({
+        userId: `${USER_ADMIN}-foreign`,
+        organizationId: FOREIGN_ORG_ID,
+      });
       expect(result).toEqual({ allow: false, reason: 'NO_GOVERNED_POLICY' });
     }
   );
 
   itDB(
     'structural guard: the AMD-FLOW-ROI-VISIBILITY-002 section of visibilityResolver.ts never references ' +
-      "hasEffectiveCapability, resolveEffectiveAccess, or effectiveAccessService.js — a durable regression guard " +
+      'hasEffectiveCapability, resolveEffectiveAccess, or effectiveAccessService.js — a durable regression guard ' +
       "against ever reintroducing the '*' wildcard into this narrower gate",
     async () => {
       const fs = await import('node:fs');
       const path = await import('node:path');
       const source = fs.readFileSync(
-        path.resolve(process.cwd(), 'server/src/services/resultsVnext/platform/visibilityResolver.ts'),
+        path.resolve(
+          process.cwd(),
+          'server/src/services/resultsVnext/platform/visibilityResolver.ts'
+        ),
         'utf8'
       );
       const marker = '// AMD-FLOW-ROI-VISIBILITY-002 — governed ROI visibility policy';
@@ -488,9 +589,12 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
 
   itDB(
     'Finance-authority grant (rvn_finance_reconciliation_grant_events, REUSED UNMODIFIED — no new capability, no ' +
-      "ALTER): granting allows the ordinary member; revoking denies on the VERY NEXT resolve call, no caching",
+      'ALTER): granting allows the ordinary member; revoking denies on the VERY NEXT resolve call, no caching',
     async () => {
-      const before = await resolveRoiGovernedVisibility({ userId: USER_MEMBER, organizationId: ORG_ID });
+      const before = await resolveRoiGovernedVisibility({
+        userId: USER_MEMBER,
+        organizationId: ORG_ID,
+      });
       expect(before).toEqual({ allow: false, reason: 'ORDINARY_MEMBER_DENIED' });
 
       await client.query(
@@ -503,7 +607,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
       const directCheck = await hasActiveRoiFinanceAuthorityGrant(client, ORG_ID, USER_MEMBER);
       expect(directCheck).toBe(true);
 
-      const afterGrant = await resolveRoiGovernedVisibility({ userId: USER_MEMBER, organizationId: ORG_ID });
+      const afterGrant = await resolveRoiGovernedVisibility({
+        userId: USER_MEMBER,
+        organizationId: ORG_ID,
+      });
       expect(afterGrant).toEqual({ allow: true, reason: 'FINANCE_AUTHORITY_GRANT' });
 
       await client.query(
@@ -513,7 +620,10 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
                  'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
         [ORG_ID, USER_MEMBER, ROI_FINANCE_AUTHORITY_CAPABILITY, USER_OWNER]
       );
-      const afterRevoke = await resolveRoiGovernedVisibility({ userId: USER_MEMBER, organizationId: ORG_ID });
+      const afterRevoke = await resolveRoiGovernedVisibility({
+        userId: USER_MEMBER,
+        organizationId: ORG_ID,
+      });
       expect(afterRevoke).toEqual({ allow: false, reason: 'ORDINARY_MEMBER_DENIED' });
     }
   );

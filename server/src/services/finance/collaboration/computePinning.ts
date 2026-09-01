@@ -39,7 +39,12 @@ export interface EnqueueComputeForCurrentRevisionParams {
 }
 
 export type EnqueueComputeForCurrentRevisionResult =
-  | { ok: true; job: computeJobService.ComputeJobRow; wasExisting: boolean; pinnedContentSemanticHash: string }
+  | {
+      ok: true;
+      job: computeJobService.ComputeJobRow;
+      wasExisting: boolean;
+      pinnedContentSemanticHash: string;
+    }
   | { ok: false; code: 'NOT_FOUND' | 'NO_CONTENT_HASH'; message: string };
 
 /**
@@ -102,13 +107,21 @@ export async function enqueueComputeForCurrentRevision(
   params: EnqueueComputeForCurrentRevisionParams
 ): Promise<EnqueueComputeForCurrentRevisionResult> {
   const current = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ content_semantic_hash: string | null; compute_run_id: string | null; revision_seq: string | number }>(
+    tx.queryOne<{
+      content_semantic_hash: string | null;
+      compute_run_id: string | null;
+      revision_seq: string | number;
+    }>(
       `SELECT content_semantic_hash, compute_run_id, revision_seq FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
       [params.artifactId, params.organizationId]
     )
   );
   if (!current) {
-    return { ok: false, code: 'NOT_FOUND', message: 'No current working revision for this artifact' };
+    return {
+      ok: false,
+      code: 'NOT_FOUND',
+      message: 'No current working revision for this artifact',
+    };
   }
   // BIGINT `revision_seq` comes back from `pg` as a string — `Number(...)` here, not a
   // direct comparison (same pattern as `canonicalServices.pg.test.ts`'s own comment on this).
@@ -117,7 +130,8 @@ export async function enqueueComputeForCurrentRevision(
     return {
       ok: false,
       code: 'NO_CONTENT_HASH',
-      message: 'Current working revision has no content_semantic_hash yet (never checkpointed or computed) — nothing to pin compute to',
+      message:
+        'Current working revision has no content_semantic_hash yet (never checkpointed or computed) — nothing to pin compute to',
     };
   }
 

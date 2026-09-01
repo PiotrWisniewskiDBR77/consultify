@@ -35,20 +35,17 @@ import { AlertTriangle, Gauge, History, LineChart, ListChecks, Sparkles } from '
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { NModeShell } from '../../src/components/shared/NModeLayout/NModeShell';
+import type { NModeSection } from '../../src/components/shared/NModeLayout/types';
+import { SaveStateIndicator, type SaveStatus } from '../../src/components/shared/states/SaveState';
+import { TeresaUnavailableNotice } from '../../src/components/shared/states/TeresaState';
 import { ArtifactBreadcrumb } from '../../src/components/standard/ArtifactBreadcrumb';
+import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '../../src/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
-import { NModeShell } from '../../src/components/shared/NModeLayout/NModeShell';
-import type { NModeSection } from '../../src/components/shared/NModeLayout/types';
-import {
-  SaveStateIndicator,
-  type SaveStatus,
-} from '../../src/components/shared/states/SaveState';
-import { TeresaUnavailableNotice } from '../../src/components/shared/states/TeresaState';
 
 const params = new URLSearchParams(window.location.search);
 const saveParam = (params.get('save') || 'idle') as SaveStatus;

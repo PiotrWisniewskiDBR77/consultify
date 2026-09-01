@@ -68,7 +68,10 @@ export const WatchersSection: React.FC<InitiativeSectionProps> = ({
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <Eye size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {t('initiatives.noWatchersForThisInitiativeYet2', 'Brak obserwatorów dla tej inicjatywy.')}
+            {t(
+              'initiatives.noWatchersForThisInitiativeYet2',
+              'Brak obserwatorów dla tej inicjatywy.'
+            )}
           </p>
         </div>
       ) : (

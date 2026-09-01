@@ -22,8 +22,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { financeValueStatusLabel } from '@/services/api/financeV2.types';
 import type { FinanceValue, ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
+import { financeValueStatusLabel } from '@/services/api/financeV2.types';
 
 import type { StatementTableCell } from '../deriveStatementTable';
 import { SourceEvidencePanel } from '../SourceEvidencePanel';
@@ -60,7 +60,14 @@ function cell(overrides: Partial<StatementTableCell> = {}): StatementTableCell {
 
 describe('SourceEvidencePanel — empty state', () => {
   it('shows the honest empty state when no cell is selected', () => {
-    render(<SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={null} emptyLabel="Wybierz komórkę." />);
+    render(
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={null}
+        emptyLabel="Wybierz komórkę."
+      />
+    );
     expect(screen.getByTestId('source-evidence-panel-empty')).toHaveTextContent('Wybierz komórkę.');
   });
 });
@@ -75,10 +82,15 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_ZERO'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('PRESENT_ZERO')
+    );
     // Nigdy surowy token enuma jako treść widoczna — tylko jako atrybut strukturalny.
     expect(screen.getByTestId('source-evidence-status')).not.toHaveTextContent('PRESENT_ZERO');
-    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'PRESENT_ZERO');
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute(
+      'data-value-status',
+      'PRESENT_ZERO'
+    );
     // Wartość jest w <dl> jako pierwszy Row "Wartość" — sprawdzamy globalnie brak "—" w tej wartości.
     expect(screen.queryByText('—', { selector: '.tabular-nums' })).not.toBeInTheDocument();
     expect(screen.getByText('0', { selector: '.tabular-nums' })).toBeInTheDocument();
@@ -93,8 +105,13 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('MISSING'));
-    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'MISSING');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('MISSING')
+    );
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute(
+      'data-value-status',
+      'MISSING'
+    );
     expect(screen.getByText('Brak danych (luka źródłowa)')).toBeInTheDocument();
     expect(screen.queryByText('0', { selector: '.tabular-nums' })).not.toBeInTheDocument();
     expect(screen.getByTestId('source-evidence-ref-missing')).toBeInTheDocument();
@@ -109,7 +126,9 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('NA'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('NA')
+    );
     expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'NA');
     expect(screen.getByText('Analityk oznaczył: nie dotyczy')).toBeInTheDocument();
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
@@ -127,9 +146,16 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('NOT_APPLICABLE'));
-    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'NOT_APPLICABLE');
-    expect(screen.getByText('Pole strukturalnie nie istnieje dla tej linii/branży')).toBeInTheDocument();
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('NOT_APPLICABLE')
+    );
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute(
+      'data-value-status',
+      'NOT_APPLICABLE'
+    );
+    expect(
+      screen.getByText('Pole strukturalnie nie istnieje dla tej linii/branży')
+    ).toBeInTheDocument();
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
     expect(screen.queryByText('Analityk oznaczył: nie dotyczy')).not.toBeInTheDocument();
   });
@@ -143,8 +169,13 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_NONZERO'));
-    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'PRESENT_NONZERO');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('PRESENT_NONZERO')
+    );
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute(
+      'data-value-status',
+      'PRESENT_NONZERO'
+    );
     expect(screen.getByText('1 000 000', { selector: '.tabular-nums' })).toBeInTheDocument();
   });
 
@@ -159,7 +190,9 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
       />
     );
     expect(screen.getByText('0', { selector: '.tabular-nums' })).toBeInTheDocument();
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_ZERO'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('PRESENT_ZERO')
+    );
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
 
     rerender(
@@ -171,14 +204,22 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
       />
     );
     expect(screen.queryByText('0', { selector: '.tabular-nums' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('MISSING'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(
+      financeValueStatusLabel('MISSING')
+    );
     expect(screen.getByText('Brak danych (luka źródłowa)')).toBeInTheDocument();
   });
 
   // KONTROLA NEGATYWNA (etykiety statusu): wszystkie pięć etykiet statusu są WZAJEMNIE różne —
   // gdyby dwie się pokrywały, ten sam string renderowałby się dla dwóch różnych przyczyn.
   it('NEGATIVE CONTROL — all five status labels are pairwise distinct (never two states sharing one label)', () => {
-    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const statuses: FinanceValue['status'][] = [
+      'PRESENT_ZERO',
+      'PRESENT_NONZERO',
+      'MISSING',
+      'NA',
+      'NOT_APPLICABLE',
+    ];
     const labels = statuses.map((s) => financeValueStatusLabel(s));
     expect(new Set(labels).size).toBe(statuses.length);
   });
@@ -188,13 +229,21 @@ describe('SourceEvidencePanel — mapping trail (chain proof, step 2)', () => {
   const baseCell = cell({ value: value() });
 
   it('omits the mapping section entirely when mappingRow is undefined (not yet looked up — no reconciliation run selected)', () => {
-    render(<SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" />);
+    render(
+      <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" />
+    );
     expect(screen.queryByTestId('source-evidence-mapping')).not.toBeInTheDocument();
   });
 
   it('shows an honest "no match" when mappingRow is null (looked up, nothing found)', () => {
     render(
-      <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" mappingRow={null} />
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={baseCell}
+        emptyLabel="—"
+        mappingRow={null}
+      />
     );
     expect(screen.getByTestId('source-evidence-mapping-missing')).toBeInTheDocument();
   });
@@ -224,7 +273,9 @@ describe('SourceEvidencePanel — mapping trail (chain proof, step 2)', () => {
       />
     );
     expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Zmapowane');
-    expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent('trial_balance.csv');
+    expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent(
+      'trial_balance.csv'
+    );
   });
 
   // KONTROLA NEGATYWNA: zmiana bucketu w mocku MUSI zmienić DOM.
@@ -244,11 +295,23 @@ describe('SourceEvidencePanel — mapping trail (chain proof, step 2)', () => {
       sourceRowRef: null,
     });
     const { rerender } = render(
-      <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" mappingRow={mkRow('MAPPED')} />
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={baseCell}
+        emptyLabel="—"
+        mappingRow={mkRow('MAPPED')}
+      />
     );
     expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Zmapowane');
     rerender(
-      <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" mappingRow={mkRow('DUPLICATE')} />
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={baseCell}
+        emptyLabel="—"
+        mappingRow={mkRow('DUPLICATE')}
+      />
     );
     expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Duplikat');
   });

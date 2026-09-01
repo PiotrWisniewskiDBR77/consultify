@@ -30,7 +30,11 @@ import React, { useState } from 'react';
 import { PreviewPaneAside } from '../../src/components/shared/PreviewPane';
 import { StandardModuleBar } from '../../src/components/standard/StandardModuleBar';
 import { StandardPreview } from '../../src/components/standard/StandardPreview';
-import { StandardTable, type TableColumn, type TableRow } from '../../src/components/standard/StandardTable';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '../../src/components/standard/StandardTable';
 
 const COLUMNS: TableColumn[] = [
   {
@@ -112,10 +116,14 @@ export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }>
         className="flex items-center gap-2 border-b border-c-border-subtle bg-c-info/5 px-4 py-2 text-xs text-c-text-secondary"
       >
         <FolderKanban size={13} className="text-c-info" />
-        Flaga <code className="rounded bg-c-surface-raised px-1 py-0.5">drdMethodWorkspaceSliceV1</code> = ON — PODWÓJNE
-        kliknięcie wiersza DRD (albo „Otwórz proces") otwiera <code className="rounded bg-c-surface-raised px-1 py-0.5">MethodWorkspaceShell</code>{' '}
-        zamiast starego edytora, pod tym samym URL <code className="rounded bg-c-surface-raised px-1 py-0.5">/assessment/drd/:id</code>.
-        Pojedyncze kliknięcie — jak w realnym AssessmentHub — tylko otwiera podgląd z prawej, NIE nawiguje.
+        Flaga{' '}
+        <code className="rounded bg-c-surface-raised px-1 py-0.5">drdMethodWorkspaceSliceV1</code> =
+        ON — PODWÓJNE kliknięcie wiersza DRD (albo „Otwórz proces") otwiera{' '}
+        <code className="rounded bg-c-surface-raised px-1 py-0.5">MethodWorkspaceShell</code>{' '}
+        zamiast starego edytora, pod tym samym URL{' '}
+        <code className="rounded bg-c-surface-raised px-1 py-0.5">/assessment/drd/:id</code>.
+        Pojedyncze kliknięcie — jak w realnym AssessmentHub — tylko otwiera podgląd z prawej, NIE
+        nawiguje.
       </div>
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-w-0 flex-1 overflow-auto p-4">

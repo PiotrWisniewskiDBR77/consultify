@@ -156,7 +156,12 @@ describe.sequential('finance-planning.routes.ts — zero-writer lock-in (real Po
     app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
-      req.v8Context = { organizationId: org, userId: noMembershipUser, userRole: 'ADMIN', isSuperAdmin: false };
+      req.v8Context = {
+        organizationId: org,
+        userId: noMembershipUser,
+        userRole: 'ADMIN',
+        isSuperAdmin: false,
+      };
       next();
     });
     // Direct v8Context stub (not the full verifyToken chain) — same reasoning
@@ -237,7 +242,7 @@ describe.sequential('finance-planning.routes.ts — zero-writer lock-in (real Po
     expect(res.body?.data).toBeDefined();
   });
 
-  it('exercising this file\'s handlers writes ZERO rows to financial_models / financial_analyses / value_baselines', async () => {
+  it("exercising this file's handlers writes ZERO rows to financial_models / financial_analyses / value_baselines", async () => {
     const countRows = async () => {
       const result = await pool.query<{ n: string }>(
         `SELECT
@@ -257,7 +262,10 @@ describe.sequential('finance-planning.routes.ts — zero-writer lock-in (real Po
     await request(app)
       .post('/api/v8/finance-planning/rolling-forecast/reforecast')
       .set(bearer(revokedUser, org))
-      .send({ plan: [{ period: '2026-02', value: 10 }], actuals: [{ period: '2026-02', value: 11 }] });
+      .send({
+        plan: [{ period: '2026-02', value: 10 }],
+        actuals: [{ period: '2026-02', value: 11 }],
+      });
     const after = await countRows();
 
     expect(after, 'this writer-free cluster must never persist a business row').toBe(before);

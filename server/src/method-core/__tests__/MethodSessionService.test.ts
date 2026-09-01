@@ -12,14 +12,15 @@
  *     refused with `pack_not_released`.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createKernelTestDb, type KernelTestDbHandle } from './kernelTestDb.js';
+
 import {
-  METHOD_SESSION_STATES,
-  TRANSITION_AUTHORITY,
   canTransition,
+  METHOD_SESSION_STATES,
   type MethodSessionState,
+  TRANSITION_AUTHORITY,
 } from '../contracts/index.js';
 import type { PackReadinessLookup } from '../MethodSessionService.js';
+import { createKernelTestDb, type KernelTestDbHandle } from './kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
 
@@ -152,7 +153,9 @@ describe('MethodSessionService', () => {
       });
 
       if (legal) {
-        expect(result.ok, `expected ${from} -> ${to} to succeed: ${JSON.stringify(result)}`).toBe(true);
+        expect(result.ok, `expected ${from} -> ${to} to succeed: ${JSON.stringify(result)}`).toBe(
+          true
+        );
       } else {
         expect(result.ok, `expected ${from} -> ${to} to be refused`).toBe(false);
         if (!result.ok) {

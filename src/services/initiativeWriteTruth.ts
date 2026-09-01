@@ -5,7 +5,6 @@ import {
   type V8PlanningHistoryEvent,
   type V8PlanningStatusHistoryEntry,
 } from '@/services/api/v8/planning';
-import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import {
   amendRegisteredInitiative,
   cancelRegisteredInitiative,
@@ -13,6 +12,7 @@ import {
   registerSourceProposal,
   submitSourceProposal,
 } from '@/services/initiatives-execution/runtimeApi';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 
 export interface InitiativeWriteTruthBundle {
   initiative: any | null;
@@ -150,7 +150,11 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   const projectId = String(payload.projectId || '').trim();
   const initiativeOwnerId = String(payload.initiativeOwnerId || payload.ownerId || '').trim();
   const problem = String(
-    payload.problem || payload.problemStatement || payload.summary || payload.description || payload.title
+    payload.problem ||
+      payload.problemStatement ||
+      payload.summary ||
+      payload.description ||
+      payload.title
   ).trim();
   if (!projectId || !initiativeOwnerId) {
     throw new Error('Canonical initiative creation requires projectId and initiativeOwnerId');
@@ -163,9 +167,10 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   const sourceType = requestedSourceType || 'MANUAL_HUB';
   const sourceId = requestedSourceId || stableCommandId('manual-hub', creationRequestId);
   const requestedSourceVersion = Number(payload.sourceVersion || 1);
-  const sourceVersion = Number.isInteger(requestedSourceVersion) && requestedSourceVersion > 0
-    ? requestedSourceVersion
-    : 1;
+  const sourceVersion =
+    Number.isInteger(requestedSourceVersion) && requestedSourceVersion > 0
+      ? requestedSourceVersion
+      : 1;
   const evidenceRefs = Array.from(
     new Set(
       (Array.isArray(payload.evidenceRefs) ? payload.evidenceRefs : [])
@@ -175,7 +180,9 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   );
   const capturedAt = new Date().toISOString();
   const proposedOutcome = String(payload.proposedOutcome || '').trim() || null;
-  const requestedPriority = String(payload.priority || 'MEDIUM').trim().toUpperCase();
+  const requestedPriority = String(payload.priority || 'MEDIUM')
+    .trim()
+    .toUpperCase();
   const priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = [
     'CRITICAL',
     'HIGH',
@@ -194,7 +201,9 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
     sourceVersion,
     provenance: {
       system: 'consultify.initiatives-hub',
-      recordType: requestedSourceType ? 'source-backed-initiative-proposal' : 'manual-initiative-proposal',
+      recordType: requestedSourceType
+        ? 'source-backed-initiative-proposal'
+        : 'manual-initiative-proposal',
       capturedAt,
       evidenceRefs: Array.from(
         new Set([...evidenceRefs, `consultify://initiatives/source-proposals/${proposalId}`])
@@ -289,15 +298,25 @@ export async function quickUpdateInitiativeWriteTruth(
     ...(typeof updates.title === 'string' ? { title: updates.title } : {}),
     ...(typeof updates.summary === 'string' ? { proposedOutcome: updates.summary } : {}),
     ...(typeof updates.description === 'string' ? { problem: updates.description } : {}),
-    ...(typeof updates.ownerExecutionId === 'string' ? { initiativeOwnerId: updates.ownerExecutionId } : {}),
+    ...(typeof updates.ownerExecutionId === 'string'
+      ? { initiativeOwnerId: updates.ownerExecutionId }
+      : {}),
   });
   bumpInitiativeRefresh();
   const initiative = await readRegisteredInitiative(initiativeId);
   return { initiative: initiative.initiative, gateReadiness: null, statusHistory: [], history: [] };
 }
 
-export async function cancelInitiativeWriteTruth(initiativeId: string, expectedVersion: number, reason: string) {
-  await cancelRegisteredInitiative(initiativeId, { expectedVersion, clientRequestId: newCommandId('cancel'), reason });
+export async function cancelInitiativeWriteTruth(
+  initiativeId: string,
+  expectedVersion: number,
+  reason: string
+) {
+  await cancelRegisteredInitiative(initiativeId, {
+    expectedVersion,
+    clientRequestId: newCommandId('cancel'),
+    reason,
+  });
   bumpInitiativeRefresh();
   return readRegisteredInitiative(initiativeId);
 }

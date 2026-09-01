@@ -23,17 +23,24 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
-  AtomicWriteAggregateNotFoundError,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  AtomicWriteAggregateNotFoundError,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
+import {
+  type OkrCycle,
+  type OkrCycleRow,
+  type OkrCycleStatus,
+  toOkrCycle,
+} from './okrCycleTypes.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import type { OkrProgramRow } from './okrProgramTypes.js';
-import { toOkrCycle, type OkrCycle, type OkrCycleRow, type OkrCycleStatus } from './okrCycleTypes.js';
 
 export const OKR_CYCLE_RESOURCE_TYPE = 'okr_cycle';
 
@@ -61,7 +68,9 @@ export const OKR_CYCLE_CAPABILITIES = {
 export class OkrCycleProgramNotActiveError extends Error {
   code = 'PROGRAM_NOT_ACTIVE';
   constructor(programId: string, actualStatus: string) {
-    super(`OKR Program ${programId} is not active (status: ${actualStatus}) — cannot open a new Cycle`);
+    super(
+      `OKR Program ${programId} is not active (status: ${actualStatus}) — cannot open a new Cycle`
+    );
     this.name = 'OkrCycleProgramNotActiveError';
   }
 }
@@ -95,7 +104,9 @@ export class OkrCycleHasOpenSetsError extends Error {
   code = 'CYCLE_HAS_OPEN_SETS';
   details: Record<string, unknown>;
   constructor(cycleId: string, openSetIds: string[]) {
-    super(`OKR Cycle ${cycleId} cannot close: ${openSetIds.length} Set(s) are not closed/cancelled/not_required`);
+    super(
+      `OKR Cycle ${cycleId} cannot close: ${openSetIds.length} Set(s) are not closed/cancelled/not_required`
+    );
     this.name = 'OkrCycleHasOpenSetsError';
     this.details = { cycleId, openSetIds };
   }
@@ -159,10 +170,14 @@ function assertCycleTimestampOrdering(input: CreateOkrCycleInput): void {
   const start = Date.parse(input.startDate);
   const end = Date.parse(input.endDate);
   if (start > end) {
-    throw new OkrCycleValidationError('startDate must be on or before endDate', 'INVALID_CYCLE_DATES', {
-      startDate: input.startDate,
-      endDate: input.endDate,
-    });
+    throw new OkrCycleValidationError(
+      'startDate must be on or before endDate',
+      'INVALID_CYCLE_DATES',
+      {
+        startDate: input.startDate,
+        endDate: input.endDate,
+      }
+    );
   }
 
   const draftOpenAt = Date.parse(input.draftOpenAt);
@@ -186,7 +201,10 @@ function assertCycleTimestampOrdering(input: CreateOkrCycleInput): void {
       throw new OkrCycleValidationError(
         `${earlierName} must be on or before ${laterName}`,
         'INVALID_CYCLE_DATES',
-        { [earlierName]: (input as unknown as Record<string, string>)[earlierName], [laterName]: (input as unknown as Record<string, string>)[laterName] }
+        {
+          [earlierName]: (input as unknown as Record<string, string>)[earlierName],
+          [laterName]: (input as unknown as Record<string, string>)[laterName],
+        }
       );
     }
   }

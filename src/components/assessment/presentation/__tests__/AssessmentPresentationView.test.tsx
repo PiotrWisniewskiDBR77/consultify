@@ -30,8 +30,18 @@ function makeRaw(overrides: Partial<RawAssessmentOutputRecord> = {}): RawAssessm
     current: { 'u-1': 2 },
     target: { 'u-1': 4 },
     gap: { 'u-1': 2 },
-    aggregation: { byGroup: { d1: 2 }, mappingVersion: '1.0.0', rule: 'weighted-mean', excluded: {} },
-    evidenceCompleteness: { totalUnits: 1, unitsWithAcceptedEvidence: 1, unitsMissingEvidence: 0, completenessRatio: 1 },
+    aggregation: {
+      byGroup: { d1: 2 },
+      mappingVersion: '1.0.0',
+      rule: 'weighted-mean',
+      excluded: {},
+    },
+    evidenceCompleteness: {
+      totalUnits: 1,
+      unitsWithAcceptedEvidence: 1,
+      unitsMissingEvidence: 0,
+      completenessRatio: 1,
+    },
     limitations: ['Only self-reported evidence.'],
     findings: [],
     contentHash: 'sha256-x',
@@ -43,14 +53,22 @@ function makeRaw(overrides: Partial<RawAssessmentOutputRecord> = {}): RawAssessm
 
 describe('AssessmentPresentationView', () => {
   it('renders the honest "no Output" state when outputId is null — never sample data', () => {
-    render(<AssessmentPresentationView outputId={null} fetchOutput={async () => ({ output: makeRaw() })} />);
+    render(
+      <AssessmentPresentationView
+        outputId={null}
+        fetchOutput={async () => ({ output: makeRaw() })}
+      />
+    );
     expect(screen.getByText(/Brak zamrożonego Outputu/i)).toBeInTheDocument();
     expect(screen.queryByTestId('presentation-deck')).not.toBeInTheDocument();
   });
 
   it('renders the deck once a well-shaped Output resolves', async () => {
     render(
-      <AssessmentPresentationView outputId="output-1" fetchOutput={async () => ({ output: makeRaw() })} />
+      <AssessmentPresentationView
+        outputId="output-1"
+        fetchOutput={async () => ({ output: makeRaw() })}
+      />
     );
     await waitFor(() => expect(screen.getByTestId('presentation-deck')).toBeInTheDocument());
   });
@@ -83,9 +101,13 @@ describe('AssessmentPresentationView', () => {
     render(
       <AssessmentPresentationView
         outputId="output-1"
-        fetchOutput={async () => ({ output: { unexpected: true } as unknown as RawAssessmentOutputRecord })}
+        fetchOutput={async () => ({
+          output: { unexpected: true } as unknown as RawAssessmentOutputRecord,
+        })}
       />
     );
-    await waitFor(() => expect(screen.getByText(/nie ma oczekiwanego kształtu/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/nie ma oczekiwanego kształtu/i)).toBeInTheDocument()
+    );
   });
 });

@@ -39,15 +39,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { EmptyState } from '@/components/shared/states';
 import {
+  type StandardCounterChip,
   StandardModuleBar,
+  type StandardModuleTab,
   StandardPreview,
   StandardTable,
-  type StandardCounterChip,
-  type StandardModuleTab,
 } from '@/components/standard';
-import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { ROUTES } from '@/routes/routeConfig';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
@@ -62,13 +62,13 @@ import {
   type OrganizationOkrTeamHealthDto,
 } from './attentionApi';
 import {
+  type AttentionSourceDomain,
   bucketCount,
   buildAttentionRowPreview,
   buildKpiAttentionBuckets,
   buildOkrAttentionBuckets,
   extractKpiBucketRows,
   extractOkrBucketRows,
-  type AttentionSourceDomain,
 } from './attentionPresenters';
 
 type SourceTab = AttentionSourceDomain;
@@ -78,7 +78,8 @@ export const ResultsAttentionPage: React.FC = () => {
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
 
-  const enabled = isResultsVNextFlagEnabled('kpiRegistry') && isResultsVNextFlagEnabled('okrRegistry');
+  const enabled =
+    isResultsVNextFlagEnabled('kpiRegistry') && isResultsVNextFlagEnabled('okrRegistry');
 
   // 2026-08-26 night-fixes-a P0 (NIGHT_SWEEP_A_REPORT_20260826.md #4): every
   // `*UserId` field in the KPI/OKR attention read-models is a raw id — this
@@ -196,7 +197,10 @@ export const ResultsAttentionPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-attention-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-attention-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
@@ -233,8 +237,14 @@ export const ResultsAttentionPage: React.FC = () => {
       ? extractKpiBucketRows(activeBucketId, kpiDto)
       : extractOkrBucketRows(activeBucketId, okrDto, teamHealthDto);
 
-  const loading = source === 'kpi' ? kpiLoading : okrLoading || (activeBucketId === 'teamHealthSets' && teamHealthLoading);
-  const error = source === 'kpi' ? kpiError : okrError || (activeBucketId === 'teamHealthSets' ? teamHealthError : null);
+  const loading =
+    source === 'kpi'
+      ? kpiLoading
+      : okrLoading || (activeBucketId === 'teamHealthSets' && teamHealthLoading);
+  const error =
+    source === 'kpi'
+      ? kpiError
+      : okrError || (activeBucketId === 'teamHealthSets' ? teamHealthError : null);
   const retry = source === 'kpi' ? loadKpi : loadOkr;
 
   const selectedRow = rows.find((r) => r.id === selectedRowId) ?? null;
@@ -268,7 +278,9 @@ export const ResultsAttentionPage: React.FC = () => {
               empty={
                 !loading && !error && rows.length === 0
                   ? {
-                      title: isPolish ? 'Brak pozycji wymagających uwagi' : 'Nothing needs attention',
+                      title: isPolish
+                        ? 'Brak pozycji wymagających uwagi'
+                        : 'Nothing needs attention',
                       description: isPolish
                         ? 'Ten zbiornik jest obecnie pusty — dobra wiadomość.'
                         : 'This bucket is currently empty — good news.',

@@ -33,7 +33,10 @@ export type GordonTerminalResult =
   | { ok: false; code: TerminalErrorCode; message: string };
 
 /** Mirrors `finance_valuation_terminal_check_g_below_wacc()` (WP-D09b migration file 2, section 3) — checked BEFORE any DB write is attempted. */
-export function assertGBelowWacc(gPct: number, waccPct: number): { ok: true } | { ok: false; code: 'G_MUST_BE_LESS_THAN_WACC'; message: string } {
+export function assertGBelowWacc(
+  gPct: number,
+  waccPct: number
+): { ok: true } | { ok: false; code: 'G_MUST_BE_LESS_THAN_WACC'; message: string } {
   if (gPct >= waccPct) {
     return {
       ok: false,
@@ -50,7 +53,11 @@ export function assertGBelowWacc(gPct: number, waccPct: number): { ok: true } | 
  * already normalized to — this function does no unit/multiplier handling of its own, by design (it
  * operates purely on already-normalized scalars).
  */
-export function computeGordonTerminalValue(params: { fcffTerminalYear: number; gPct: number; waccPct: number }): GordonTerminalResult {
+export function computeGordonTerminalValue(params: {
+  fcffTerminalYear: number;
+  gPct: number;
+  waccPct: number;
+}): GordonTerminalResult {
   const gate = assertGBelowWacc(params.gPct, params.waccPct);
   if (!gate.ok) return gate;
   const g = params.gPct / 100;
@@ -63,18 +70,30 @@ export function computeGordonTerminalValue(params: { fcffTerminalYear: number; g
 // Exit multiple (cross-check convention)
 // ---------------------------------------------------------------------------
 
-export type ExitMultipleResult = { ok: true; terminalValue: number } | { ok: false; code: 'INVALID_EXIT_MULTIPLE_INPUT'; message: string };
+export type ExitMultipleResult =
+  | { ok: true; terminalValue: number }
+  | { ok: false; code: 'INVALID_EXIT_MULTIPLE_INPUT'; message: string };
 
 /** `TV = terminalMetricValue * exitMultiple` (e.g. terminal-year EBITDA * EV/EBITDA multiple). */
-export function computeExitMultipleTerminalValue(params: { terminalMetricValue: number; exitMultiple: number }): ExitMultipleResult {
+export function computeExitMultipleTerminalValue(params: {
+  terminalMetricValue: number;
+  exitMultiple: number;
+}): ExitMultipleResult {
   if (params.exitMultiple <= 0) {
-    return { ok: false, code: 'INVALID_EXIT_MULTIPLE_INPUT', message: `exit_multiple_value must be > 0, got ${params.exitMultiple}` };
+    return {
+      ok: false,
+      code: 'INVALID_EXIT_MULTIPLE_INPUT',
+      message: `exit_multiple_value must be > 0, got ${params.exitMultiple}`,
+    };
   }
   return { ok: true, terminalValue: params.terminalMetricValue * params.exitMultiple };
 }
 
 /** `terminal_share_pct = PV(terminal value) / Enterprise Value` — the "high terminal share" flag input (handoff section 9). */
-export function computeTerminalSharePct(presentValueOfTerminal: number, enterpriseValue: number): number | null {
+export function computeTerminalSharePct(
+  presentValueOfTerminal: number,
+  enterpriseValue: number
+): number | null {
   if (enterpriseValue === 0) return null;
   return (presentValueOfTerminal / enterpriseValue) * 100;
 }
@@ -119,15 +138,21 @@ export interface TerminalRowInput {
  * `trg_finance_valuation_terminal_check_g_below_wacc` trigger is still the final, authoritative gate
  * on every INSERT regardless of what this service already checked.
  */
-export async function writeTerminalRow(input: TerminalRowInput & {tx?:any}): Promise<{ id: string }> {
+export async function writeTerminalRow(
+  input: TerminalRowInput & { tx?: any }
+): Promise<{ id: string }> {
   if (input.convention === 'GORDON_GROWTH' && (input.gPct === null || input.gPct === undefined)) {
     throw new Error('writeTerminalRow: GORDON_GROWTH convention requires gPct');
   }
-  if (input.convention === 'EXIT_MULTIPLE' && (input.exitMultipleValue === null || input.exitMultipleValue === undefined)) {
+  if (
+    input.convention === 'EXIT_MULTIPLE' &&
+    (input.exitMultipleValue === null || input.exitMultipleValue === undefined)
+  ) {
     throw new Error('writeTerminalRow: EXIT_MULTIPLE convention requires exitMultipleValue');
   }
   const id = uuidv4();
-  const write=(tx:any)=>tx.queryRun(
+  const write = (tx: any) =>
+    tx.queryRun(
       `INSERT INTO finance_valuation_terminal (
          id, organization_id, method_id, convention, g_pct, exit_multiple_value,
          reinvestment_rate_pct, roic_pct, terminal_value_decimal, terminal_share_pct, is_primary,
@@ -145,8 +170,8 @@ export async function writeTerminalRow(input: TerminalRowInput & {tx?:any}): Pro
         input.organizationId,
         input.methodId,
         input.convention,
-        input.convention === 'GORDON_GROWTH' ? input.gPct ?? null : null,
-        input.convention === 'EXIT_MULTIPLE' ? input.exitMultipleValue ?? null : null,
+        input.convention === 'GORDON_GROWTH' ? (input.gPct ?? null) : null,
+        input.convention === 'EXIT_MULTIPLE' ? (input.exitMultipleValue ?? null) : null,
         input.reinvestmentRatePct ?? null,
         input.roicPct ?? null,
         input.terminalValueDecimal,
@@ -158,7 +183,8 @@ export async function writeTerminalRow(input: TerminalRowInput & {tx?:any}): Pro
         input.sourceWorkingRevisionVersion ?? null,
       ]
     );
-  if(input.tx)await write(input.tx);else await withPinnedPostgresTransaction(write);
+  if (input.tx) await write(input.tx);
+  else await withPinnedPostgresTransaction(write);
   return { id };
 }
 
@@ -182,7 +208,10 @@ export interface TerminalRow {
 }
 
 /** Up to two rows per method (one `GORDON_GROWTH`, one `EXIT_MULTIPLE` cross-check — `UNIQUE(method_id, convention)`). */
-export async function listTerminalRows(organizationId: string, methodId: string): Promise<TerminalRow[]> {
+export async function listTerminalRows(
+  organizationId: string,
+  methodId: string
+): Promise<TerminalRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<TerminalRow>(
       `SELECT t.* FROM finance_valuation_terminal t

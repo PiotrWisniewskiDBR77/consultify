@@ -76,9 +76,7 @@ describe('SWOTInputExplorationPhase AI fill', () => {
   it('persists an applied proposal comment across a remount', async () => {
     const view = render(<Harness />);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'discoveryToolsTools.common.comment' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'discoveryToolsTools.common.comment' }));
     fireEvent.change(screen.getAllByRole('textbox').at(-1)!, {
       target: { value: 'Focus on premium customer concentration' },
     });

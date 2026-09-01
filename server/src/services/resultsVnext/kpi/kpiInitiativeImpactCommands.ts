@@ -43,22 +43,21 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import {
-  toInitiativeKpiImpact,
   type InitiativeKpiImpact,
   type InitiativeKpiImpactDirection,
   type InitiativeKpiImpactRow,
+  toInitiativeKpiImpact,
 } from './kpiInitiativeImpactTypes.js';
 
 // ==========================================

@@ -16,7 +16,6 @@
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
-import { genId, nowIso, parseJson, runOrThrow } from './db.js';
 import type {
   TeresaCommitRequest,
   TeresaCommitResult,
@@ -26,6 +25,7 @@ import type {
   TeresaQualityVerdict,
   TeresaStatement,
 } from './contracts/index.js';
+import { genId, nowIso, parseJson, runOrThrow } from './db.js';
 
 interface MethodTeresaPreviewRow {
   id: string;
@@ -165,7 +165,9 @@ export class TeresaProposalService {
       { fallback: false }
     );
     if (!result.success) {
-      throw new Error(`method-core: preview consume UPDATE failed: ${result.error ?? 'unknown error'}`);
+      throw new Error(
+        `method-core: preview consume UPDATE failed: ${result.error ?? 'unknown error'}`
+      );
     }
     if (!result.changes) {
       // Lost a concurrent race to consume the same preview.

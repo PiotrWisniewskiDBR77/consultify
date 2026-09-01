@@ -70,7 +70,8 @@ interface Handler {
  * files follows (verified by hand against all 74 before pinning this test).
  */
 function extractHandlers(source: string): Handler[] {
-  const re = /^router\.(get|post|put|patch|delete)\(\s*\n\s*'([^']+)',\s*\n([\s\S]*?)asyncHandler/gm;
+  const re =
+    /^router\.(get|post|put|patch|delete)\(\s*\n\s*'([^']+)',\s*\n([\s\S]*?)asyncHandler/gm;
   const handlers: Handler[] = [];
   let match: RegExpExecArray | null;
   while ((match = re.exec(source))) {
@@ -90,7 +91,11 @@ function readSource(file: string): string {
   return fs.readFileSync(file, 'utf8');
 }
 
-function classify(handlers: Handler[]): { read: number; calculator: number; businessWrite: number } {
+function classify(handlers: Handler[]): {
+  read: number;
+  calculator: number;
+  businessWrite: number;
+} {
   let read = 0;
   let calculator = 0;
   let businessWrite = 0;
@@ -145,27 +150,44 @@ describe('V8 Finance mutation-surface inventory (static, no DB)', () => {
   };
 
   it('finance-intelligence.routes.ts: exactly 13 handlers = 2 READ + 11 CALCULATOR + 0 BUSINESS-WRITE', () => {
-    expect(handlers.intelligence.length, 'finance-intelligence.routes.ts handler count drifted from the pinned denominator of 13').toBe(13);
+    expect(
+      handlers.intelligence.length,
+      'finance-intelligence.routes.ts handler count drifted from the pinned denominator of 13'
+    ).toBe(13);
     expect(classify(handlers.intelligence)).toEqual({ read: 2, calculator: 11, businessWrite: 0 });
   });
 
   it('finance-planning.routes.ts: exactly 17 handlers = 0 READ + 17 CALCULATOR + 0 BUSINESS-WRITE', () => {
-    expect(handlers.planning.length, 'finance-planning.routes.ts handler count drifted from the pinned denominator of 17').toBe(17);
+    expect(
+      handlers.planning.length,
+      'finance-planning.routes.ts handler count drifted from the pinned denominator of 17'
+    ).toBe(17);
     expect(classify(handlers.planning)).toEqual({ read: 0, calculator: 17, businessWrite: 0 });
   });
 
   it('finance-valuation.routes.ts: exactly 19 handlers = 0 READ + 19 CALCULATOR + 0 BUSINESS-WRITE', () => {
-    expect(handlers.valuation.length, 'finance-valuation.routes.ts handler count drifted from the pinned denominator of 19').toBe(19);
+    expect(
+      handlers.valuation.length,
+      'finance-valuation.routes.ts handler count drifted from the pinned denominator of 19'
+    ).toBe(19);
     expect(classify(handlers.valuation)).toEqual({ read: 0, calculator: 19, businessWrite: 0 });
   });
 
   it('finance-value.routes.ts: exactly 25 handlers = 9 READ + 11 CALCULATOR + 5 BUSINESS-WRITE', () => {
-    expect(handlers.value.length, 'finance-value.routes.ts handler count drifted from the pinned denominator of 25').toBe(25);
+    expect(
+      handlers.value.length,
+      'finance-value.routes.ts handler count drifted from the pinned denominator of 25'
+    ).toBe(25);
     expect(classify(handlers.value)).toEqual({ read: 9, calculator: 11, businessWrite: 5 });
   });
 
   it('TOTAL across all four V8 finance route files is exactly 74 handlers = 11 READ + 58 CALCULATOR + 5 BUSINESS-WRITE', () => {
-    const all = [...handlers.intelligence, ...handlers.planning, ...handlers.valuation, ...handlers.value];
+    const all = [
+      ...handlers.intelligence,
+      ...handlers.planning,
+      ...handlers.valuation,
+      ...handlers.value,
+    ];
     expect(
       all.length,
       'Total V8 finance handler count drifted from the pinned denominator of 74. A handler was ' +
@@ -193,47 +215,69 @@ describe('V8 Finance mutation-surface inventory (static, no DB)', () => {
   });
 
   it('no file in this quartet has grown a PUT/PATCH/DELETE handler (none exist today; a future one must update this inventory)', () => {
-    const all = [...handlers.intelligence, ...handlers.planning, ...handlers.valuation, ...handlers.value];
-    const disallowed = all.filter((h) => h.method === 'put' || h.method === 'patch' || h.method === 'delete');
-    expect(disallowed, `unexpected PUT/PATCH/DELETE handlers found: ${JSON.stringify(disallowed)}`).toEqual([]);
+    const all = [
+      ...handlers.intelligence,
+      ...handlers.planning,
+      ...handlers.valuation,
+      ...handlers.value,
+    ];
+    const disallowed = all.filter(
+      (h) => h.method === 'put' || h.method === 'patch' || h.method === 'delete'
+    );
+    expect(
+      disallowed,
+      `unexpected PUT/PATCH/DELETE handlers found: ${JSON.stringify(disallowed)}`
+    ).toEqual([]);
   });
 
   it.each([
     ['finance-intelligence.routes.ts', 'intelligence'] as const,
     ['finance-planning.routes.ts', 'planning'] as const,
     ['finance-valuation.routes.ts', 'valuation'] as const,
-  ])('%s: zero write primitives reachable from its handlers (no dbRun/DbPromise.run, no known writer import)', (_label, key) => {
-    const source = sources[key];
+  ])(
+    '%s: zero write primitives reachable from its handlers (no dbRun/DbPromise.run, no known writer import)',
+    (_label, key) => {
+      const source = sources[key];
 
-    // Structural check: these 3 files must never import the app's DB-write
-    // wrapper at all — every read they need (getAnalysisRatios, listAnalyses,
-    // getStatementPackDetail, loadPackValueMaps) comes through service-layer
-    // functions, not a direct DbPromise handle.
-    expect(source, `${key} must not import DbPromise directly`).not.toMatch(/from ['"].*utils\/DbPromise\.js['"]/);
-    expect(source, `${key} must not call dbRun(...)`).not.toMatch(/\bdbRun\(/);
-    expect(source, `${key} must not call DbPromise\\.run(...)`).not.toMatch(/DbPromise\.run\(/);
-    expect(source, `${key} must not contain a raw INSERT/UPDATE/DELETE statement`).not.toMatch(
-      /\b(INSERT INTO|DELETE FROM)\b/
-    );
-    // UPDATE alone is too common a word to bare-match safely (e.g. prose in
-    // comments); scope it to the SQL shape actually used elsewhere in this
-    // codebase's writers.
-    expect(source, `${key} must not contain a raw UPDATE ... SET statement`).not.toMatch(/UPDATE\s+\w+\s+SET\b/);
+      // Structural check: these 3 files must never import the app's DB-write
+      // wrapper at all — every read they need (getAnalysisRatios, listAnalyses,
+      // getStatementPackDetail, loadPackValueMaps) comes through service-layer
+      // functions, not a direct DbPromise handle.
+      expect(source, `${key} must not import DbPromise directly`).not.toMatch(
+        /from ['"].*utils\/DbPromise\.js['"]/
+      );
+      expect(source, `${key} must not call dbRun(...)`).not.toMatch(/\bdbRun\(/);
+      expect(source, `${key} must not call DbPromise\\.run(...)`).not.toMatch(/DbPromise\.run\(/);
+      expect(source, `${key} must not contain a raw INSERT/UPDATE/DELETE statement`).not.toMatch(
+        /\b(INSERT INTO|DELETE FROM)\b/
+      );
+      // UPDATE alone is too common a word to bare-match safely (e.g. prose in
+      // comments); scope it to the SQL shape actually used elsewhere in this
+      // codebase's writers.
+      expect(source, `${key} must not contain a raw UPDATE ... SET statement`).not.toMatch(
+        /UPDATE\s+\w+\s+SET\b/
+      );
 
-    // Explicit known-writer-symbol check, per the mandate: list the writer
-    // names and assert none of them appear as an imported/called identifier.
-    for (const writer of KNOWN_WRITER_SYMBOLS) {
-      const re = new RegExp(`\\b${writer}\\b`);
-      expect(source, `${key} must not reference the known writer symbol "${writer}"`).not.toMatch(re);
+      // Explicit known-writer-symbol check, per the mandate: list the writer
+      // names and assert none of them appear as an imported/called identifier.
+      for (const writer of KNOWN_WRITER_SYMBOLS) {
+        const re = new RegExp(`\\b${writer}\\b`);
+        expect(source, `${key} must not reference the known writer symbol "${writer}"`).not.toMatch(
+          re
+        );
+      }
     }
-  });
+  );
 
   it('finance-intelligence.routes.ts imports ONLY the confirmed read-side names from the two writer-capable services', () => {
     const source = sources.intelligence;
     const financialAnalysisImport = source.match(
       /import\s*{([^}]*)}\s*from\s*['"]\.\.\/\.\.\/services\/financialAnalysisService\.js['"]/
     );
-    expect(financialAnalysisImport, 'expected an import from financialAnalysisService.js').not.toBeNull();
+    expect(
+      financialAnalysisImport,
+      'expected an import from financialAnalysisService.js'
+    ).not.toBeNull();
     const analysisNames = (financialAnalysisImport?.[1] ?? '')
       .split(',')
       .map((s) => s.trim())

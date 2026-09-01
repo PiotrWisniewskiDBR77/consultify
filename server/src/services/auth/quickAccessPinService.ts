@@ -73,9 +73,7 @@ function hostOf(url: unknown): string {
  *  - `APP_ENV` / `RAILWAY_ENVIRONMENT_NAME` set to production;
  *  - `FRONTEND_URL` pointing at the public production domain.
  */
-export function isProductionRuntimeForQuickAccess(
-  env: NodeJS.ProcessEnv = process.env
-): boolean {
+export function isProductionRuntimeForQuickAccess(env: NodeJS.ProcessEnv = process.env): boolean {
   if (isVerifiedProductionRuntime(env)) return true;
   if (normalizeLower(env.APP_ENV) === 'production') return true;
   if (normalizeLower(env.RAILWAY_ENVIRONMENT_NAME) === 'production') return true;

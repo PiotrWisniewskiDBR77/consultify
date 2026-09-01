@@ -23,15 +23,19 @@ export const taskBlockedStaleRule: SignalRule = {
           AND updated_at < ?`,
       [ctx.organizationId, new Date(ctx.now.getTime() - 432_000_000).toISOString()]
     );
-    return rows.map((row) => ({
-      subjectId: row.id,
-      projectId: row.project_id,
-      observedValue: Math.floor(
+    return rows.map((row) => {
+      const observedValue = Math.floor(
         (ctx.now.getTime() - new Date(row.updated_at).getTime()) / 86_400_000
-      ),
-      observedAt: ctx.now.toISOString(),
-      data: { assigneeId: row.assignee_id },
-    }));
+      );
+      return {
+        subjectId: row.id,
+        projectId: row.project_id,
+        observedValue,
+        observedAt: ctx.now.toISOString(),
+        data: { assigneeId: row.assignee_id },
+        bodyParams: { value: observedValue },
+      };
+    });
   },
   dedupeKey: (hit) => `exec.task.blocked_stale:${hit.subjectId}`,
   evidence: (hit) => [

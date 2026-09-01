@@ -5,14 +5,6 @@ import { closedBetaModuleGate } from '../middleware/betaGate.middleware.js';
 import { meetingIntelligenceService } from '../services/ai/meetingIntelligenceService.js';
 import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import {
-  decideMeetingNote,
-  findMeetingNoteReplay,
-  listMeetingNotesForMeeting,
-  MeetingBoundaryError,
-  proposeMeetingNote,
-  retryMeetingNoteMaterialization,
-} from '../services/meetingBoundary/meetingBoundaryService.js';
-import {
   addMeetingAttachment,
   deleteMeetingAttachment,
   listMeetingAttachments,
@@ -34,20 +26,28 @@ import {
   type MeetingOccurrenceScope,
 } from '../services/meeting/meetingOccurrenceService.js';
 import {
+  decideMeetingNote,
+  findMeetingNoteReplay,
+  listMeetingNotesForMeeting,
+  MeetingBoundaryError,
+  proposeMeetingNote,
+  retryMeetingNoteMaterialization,
+} from '../services/meetingBoundary/meetingBoundaryService.js';
+import {
+  createMeeting,
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
-  createMeeting,
+  deleteMeeting,
   deleteMeetingDecisionRecord,
   deleteMeetingFollowUpRecord,
-  deleteMeeting,
   ensureMeetingTables,
   getMeeting,
   listMeetingDecisionRecords,
   listMeetingFollowUpRecords,
   listMeetings,
+  updateMeeting,
   updateMeetingDecisionRecord,
   updateMeetingFollowUpRecord,
-  updateMeeting,
   updateMeetingStatus,
 } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -92,13 +92,14 @@ function statusForSpineErrorCode(code: string): number {
   switch (code) {
     case 'NOT_FOUND':
       return 404;
+    // FIX-4 (day19-fixes P2, 2026-08-26): RETRY_NOT_ALLOWED = materialization
+    // retry precondition failure (rejected/pending proposal, or a materialized
+    // one with no failed attempt on record) — a conflict with current state,
+    // not a server error. Komentarz stoi NAD grupa, nie miedzy case'ami:
+    // miedzy pustymi case'ami eslint czyta go jako przelot (no-fallthrough).
     case 'INVALID_STATE_TRANSITION':
     case 'NOT_APPROVED':
     case 'IDEMPOTENCY_CONFLICT':
-    // FIX-4 (day19-fixes P2, 2026-08-26): materialization retry precondition
-    // failure (rejected/pending proposal, or a materialized one with no
-    // failed attempt on record) — a conflict with current state, not a
-    // server error.
     case 'RETRY_NOT_ALLOWED':
       return 409;
     case 'NOT_A_HUMAN_ACTOR':

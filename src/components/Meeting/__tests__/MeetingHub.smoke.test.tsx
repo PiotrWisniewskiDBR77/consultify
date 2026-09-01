@@ -167,9 +167,7 @@ describe('MeetingHub (smoke)', () => {
     const kebab = aiBlock.querySelector('.lucide-ellipsis-vertical')?.closest('button');
     expect(kebab).toBeTruthy();
     fireEvent.click(kebab as HTMLElement);
-    expect(
-      await screen.findByText('sharedComponents.previewAIHintStrip.regenerate')
-    ).toBeTruthy();
+    expect(await screen.findByText('sharedComponents.previewAIHintStrip.regenerate')).toBeTruthy();
     expect(screen.queryByText('meeting.noOperatorBrief')).toBeNull();
   });
 
@@ -301,10 +299,21 @@ describe('MeetingHub (smoke)', () => {
 
   it('shows the durable rejection reason after cold proposal reload', async () => {
     getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
-    listNotesMock.mockResolvedValue({ notes: [{
-      id: 'note-rejected', source: 'heuristic', summary: 'Rejected minutes', keyPoints: [], decisions: [], actionItems: [],
-      status: 'rejected', proposalId: 'proposal-rejected', decisionReason: 'Readiness evidence is absent',
-    }] });
+    listNotesMock.mockResolvedValue({
+      notes: [
+        {
+          id: 'note-rejected',
+          source: 'heuristic',
+          summary: 'Rejected minutes',
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          status: 'rejected',
+          proposalId: 'proposal-rejected',
+          decisionReason: 'Readiness evidence is absent',
+        },
+      ],
+    });
     render(<MeetingHub />);
     fireEvent.click(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));

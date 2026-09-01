@@ -257,7 +257,9 @@ describe('Document QA — Language QA category', () => {
     const language = runDocumentQa(schema).categories.find(
       (category) => category.category === 'language'
     );
-    expect(language?.findings.filter((finding) => (finding.code ?? '').includes('density'))).toEqual([]);
+    expect(
+      language?.findings.filter((finding) => (finding.code ?? '').includes('density'))
+    ).toEqual([]);
     expect(language?.blocking).toBe(false);
   });
 
@@ -280,6 +282,16 @@ describe('Document QA — Language QA category', () => {
               'b-2',
               'The following section presents the findings from the discovery interviews with the executive team and the recommended next steps for the board to review.'
             ),
+            // D-11: a second leak. The blocking verdict used to be reached by
+            // two incidental per-block density findings (each block of this
+            // fixture is under the 30-word standard floor on its own, though
+            // the section is not). With the floor moved to the section, the
+            // English leak has to carry the verdict on its own merit — which
+            // is what this test is actually about.
+            makeParagraph(
+              'b-3',
+              'The board is therefore asked to approve the recommended sequencing and to confirm the owners for each of the three workstreams before the next review.'
+            ),
           ],
           sourceRefs: [],
         },
@@ -291,6 +303,9 @@ describe('Document QA — Language QA category', () => {
     const mismatch = lang.findings.find((f) => f.code === 'language_mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch?.blockId).toBe('b-2');
+    expect(lang.findings.filter((f) => f.code === 'language_mismatch')).toHaveLength(2);
+    // The verdict rests on the leaks alone — no density finding is involved.
+    expect(lang.findings.filter((f) => (f.code ?? '').includes('density'))).toEqual([]);
     expect(lang.score).toBeLessThan(100);
     expect(lang.blocking).toBe(true);
   });
@@ -327,23 +342,33 @@ describe('Document QA — Language QA category', () => {
     );
   });
 
-  it('flags per-block density under the floor and over the ceiling', () => {
+  // D-11 (owner decision, 2026-08-31): the density unit is the SECTION, not
+  // the block. The fixture is therefore two sections — one thin, one
+  // overweight — instead of two blocks inside one section. The assertion is
+  // unchanged in substance: the floor and the ceiling both still fire.
+  it('flags per-section density under the floor and over the ceiling', () => {
     const schema = makeSchema({
       density: 'standard', // 30..120 words target
       sections: [
         {
-          sectionId: 'sec-1',
+          sectionId: 'sec-thin',
           orderIndex: 0,
           level: 1,
           title: 'Summary',
+          // 5 + 6 words → 11 for the whole section → under the 30 floor.
           blocks: [
-            // 5 words → under floor.
             makeParagraph('b-stub', 'Stub paragraph with five words.'),
-            // ~150 words → over ceiling.
-            makeParagraph('b-bloat', new Array(150).fill('word').join(' ')),
-            // ~60 words → in range.
-            makeParagraph('b-ok', new Array(60).fill('analysis').join(' ')),
+            makeParagraph('b-stub-2', 'Second stub paragraph with six words.'),
           ],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-bloat',
+          orderIndex: 1,
+          level: 1,
+          title: 'Detail',
+          // 150 words → over the 120 ceiling.
+          blocks: [makeParagraph('b-bloat', new Array(150).fill('word').join(' '))],
           sourceRefs: [],
         },
       ],
@@ -354,8 +379,70 @@ describe('Document QA — Language QA category', () => {
     const codes = lang.findings.map((f) => f.code);
     expect(codes).toContain('density_under');
     expect(codes).toContain('density_over');
+    // The finding names the section, not a block.
+    const under = lang.findings.find((f) => f.code === 'density_under');
+    expect(under?.sectionId).toBe('sec-thin');
+    expect(under?.blockId).toBeUndefined();
+    expect(under?.message).toContain('section "Summary"');
   });
 
+  // D-11. The conflict this decision settles: granular prose (one model answer
+  // materialized as several paragraph blocks) used to trip the per-block floor
+  // even when the section as a whole was well over it.
+  it('D-11: a comprehensive section of 4 × 50 words passes, 2 × 20 words does not', () => {
+    const words = (n: number) => new Array(n).fill('analiza').join(' ');
+    const dense = runDocumentQa(
+      makeSchema({
+        density: 'comprehensive', // 100..400 target → per-section floor 100
+        sections: [
+          {
+            sectionId: 'sec-1',
+            orderIndex: 0,
+            level: 1,
+            title: 'Diagnoza',
+            blocks: [
+              makeParagraph('d-1', words(50)),
+              makeParagraph('d-2', words(50)),
+              makeParagraph('d-3', words(50)),
+              makeParagraph('d-4', words(50)),
+            ],
+            sourceRefs: [],
+          },
+        ],
+      })
+    );
+    const denseLang = dense.categories.find((c) => c.category === 'language');
+    if (!denseLang) throw new Error('expected language category');
+    // 4 × 50 = 200 words in the section → inside [100, 400]: no density
+    // finding at all, and the category is not blocking.
+    expect(denseLang.findings.map((f) => f.code)).not.toContain('density_under');
+    expect(denseLang.findings.map((f) => f.code)).not.toContain('document_density_under');
+    expect(denseLang.blocking).toBe(false);
+
+    const thin = runDocumentQa(
+      makeSchema({
+        density: 'comprehensive',
+        sections: [
+          {
+            sectionId: 'sec-1',
+            orderIndex: 0,
+            level: 1,
+            title: 'Diagnoza',
+            blocks: [makeParagraph('t-1', words(20)), makeParagraph('t-2', words(20))],
+            sourceRefs: [],
+          },
+        ],
+      })
+    );
+    const thinLang = thin.categories.find((c) => c.category === 'language');
+    if (!thinLang) throw new Error('expected language category');
+    // 2 × 20 = 40 words in the section → below the 100 floor.
+    expect(thinLang.findings.map((f) => f.code)).toContain('density_under');
+  });
+
+  // D-11: the document-level average is now words per SECTION (denominator =
+  // sections with prose), so the fixture is thinned to stay under the
+  // 0.7 × 60 = 42-word alarm line for its single section.
   it('flags document-level average density when persistently off', () => {
     const schema = makeSchema({
       density: 'detailed', // 60..220 target → floor 60.
@@ -366,10 +453,10 @@ describe('Document QA — Language QA category', () => {
           level: 1,
           title: 'Summary',
           blocks: [
-            makeParagraph('b-1', new Array(10).fill('thin').join(' ')),
-            makeParagraph('b-2', new Array(12).fill('thin').join(' ')),
-            makeParagraph('b-3', new Array(15).fill('thin').join(' ')),
-            makeParagraph('b-4', new Array(11).fill('thin').join(' ')),
+            makeParagraph('b-1', new Array(8).fill('thin').join(' ')),
+            makeParagraph('b-2', new Array(9).fill('thin').join(' ')),
+            makeParagraph('b-3', new Array(10).fill('thin').join(' ')),
+            makeParagraph('b-4', new Array(8).fill('thin').join(' ')),
           ],
           sourceRefs: [],
         },

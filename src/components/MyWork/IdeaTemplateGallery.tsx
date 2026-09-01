@@ -20,8 +20,6 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
-
 // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d: this is the
 // ONE call site in this file that imports the registry (mirrors the registry's
 // own deliberate exception importing `findIdeaTemplate` FROM this file, see
@@ -31,12 +29,13 @@ import { Api } from '@/services/api';
 // (button onClick / registry action handler), never read at module-eval time,
 // so ESM live-bindings resolve correctly regardless of which side loads first.
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { Api } from '@/services/api';
 
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
 // #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii). Import
 // value; moduł importuje z tego pliku wyłącznie TYP (erased) → brak cyklu runtime.
 import { CONSULTING_TEMPLATES } from './ideaConsultingTemplates';
-import { EMPTY_SELECTION, type CanvasToolType } from './ideaSelectionTypes';
+import { type CanvasToolType, EMPTY_SELECTION } from './ideaSelectionTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 
 // ── Template types ───────────────────────────────────────────────────────────

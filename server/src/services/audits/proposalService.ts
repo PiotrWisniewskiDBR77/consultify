@@ -11,14 +11,13 @@
  */
 
 import { createInitiative } from '../initiative/createInitiativeService.js';
-
 import {
-  AuditDomainError,
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
@@ -26,7 +25,12 @@ import {
   toIso,
 } from './auditsDb.js';
 import { requireCapability } from './permissions.js';
-import type { AuditActor, AuditInitiativeProposal, FindingStatus, ProposalStatus } from './types.js';
+import type {
+  AuditActor,
+  AuditInitiativeProposal,
+  FindingStatus,
+  ProposalStatus,
+} from './types.js';
 
 type Row = Record<string, unknown>;
 
@@ -109,8 +113,13 @@ function highestSeverityToPriority(severities: string[]): string {
 }
 
 function buildProposalTitle(findings: Row[]): string {
-  const first = String(findings[0]?.statement || findings[0]?.reference_code || 'ustalenie audytu').trim();
-  const prefix = findings.length > 1 ? `Działanie naprawcze (${findings.length} ustaleń): ` : 'Działanie naprawcze: ';
+  const first = String(
+    findings[0]?.statement || findings[0]?.reference_code || 'ustalenie audytu'
+  ).trim();
+  const prefix =
+    findings.length > 1
+      ? `Działanie naprawcze (${findings.length} ustaleń): `
+      : 'Działanie naprawcze: ';
   return `${prefix}${first}`.slice(0, 200);
 }
 
@@ -134,7 +143,9 @@ function extractKeywords(text: string): string[] {
   return Array.from(new Set(words));
 }
 
-function normalizeInitiativePriority(priority: string | null): 'critical' | 'high' | 'medium' | 'low' {
+function normalizeInitiativePriority(
+  priority: string | null
+): 'critical' | 'high' | 'medium' | 'low' {
   const v = String(priority || '').toLowerCase();
   if (v === 'critical' || v === 'high' || v === 'medium' || v === 'low') return v;
   return 'medium';
@@ -145,15 +156,19 @@ async function insertProposalDraft(
   actor: AuditActor,
   programId: string,
   findings: Row[],
-  titleOverride?: string,
+  titleOverride?: string
 ): Promise<AuditInitiativeProposal> {
   const title = (titleOverride || '').trim() || buildProposalTitle(findings);
   const problemStatement = findings
     .map((f) => String(f.statement || ''))
     .filter(Boolean)
     .join('\n\n');
-  const rootCauses = Array.from(new Set(findings.map((f) => String(f.root_cause || '').trim()).filter(Boolean)));
-  const severities = findings.map((f) => (f.severity as string) || null).filter(Boolean) as string[];
+  const rootCauses = Array.from(
+    new Set(findings.map((f) => String(f.root_cause || '').trim()).filter(Boolean))
+  );
+  const severities = findings
+    .map((f) => (f.severity as string) || null)
+    .filter(Boolean) as string[];
   const priority = highestSeverityToPriority(severities);
   const sourceFindingIds = findings.map((f) => String(f.id));
 
@@ -174,7 +189,7 @@ async function insertProposalDraft(
       JSON.stringify([]),
       JSON.stringify(sourceFindingIds),
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -189,7 +204,12 @@ async function insertProposalDraft(
   });
 
   const created = await getProposal(orgId, id);
-  if (!created) throw new AuditDomainError('Propozycja nie została poprawnie zapisana', 500, 'AUDIT_PROPOSAL_WRITE_FAILED');
+  if (!created)
+    throw new AuditDomainError(
+      'Propozycja nie została poprawnie zapisana',
+      500,
+      'AUDIT_PROPOSAL_WRITE_FAILED'
+    );
   return created;
 }
 
@@ -212,31 +232,37 @@ export async function draftProposalsFromFindings(
   orgId: string,
   actor: AuditActor,
   programId: string,
-  input: DraftProposalsInput,
+  input: DraftProposalsInput
 ): Promise<AuditInitiativeProposal[]> {
   await requireCapability(actor, programId, 'proposal.draft');
 
   const ids = Array.from(new Set((input.findingIds || []).filter(Boolean)));
   if (ids.length === 0) {
-    throw new AuditDomainError('Wskaż co najmniej jedno ustalenie', 400, 'AUDIT_PROPOSAL_NO_FINDINGS');
+    throw new AuditDomainError(
+      'Wskaż co najmniej jedno ustalenie',
+      400,
+      'AUDIT_PROPOSAL_NO_FINDINGS'
+    );
   }
 
   const placeholders = ids.map((_, i) => `$${i + 3}`).join(', ');
   const rows = await auditAll<Row>(
     `SELECT * FROM audit_program_findings
       WHERE organization_id = $1 AND program_id = $2 AND id IN (${placeholders})`,
-    [orgId, programId, ...ids],
+    [orgId, programId, ...ids]
   );
 
   // NIGDY automatycznie z każdej niezgodności: filtrujemy do statusów
   // confirmed+ i tylko wśród JAWNIE wskazanych ustaleń — funkcja nie skanuje
   // programu w poszukiwaniu kandydatów sama z siebie.
-  const eligible = rows.filter((r) => ELIGIBLE_FINDING_STATUSES.includes(String(r.status) as FindingStatus));
+  const eligible = rows.filter((r) =>
+    ELIGIBLE_FINDING_STATUSES.includes(String(r.status) as FindingStatus)
+  );
   if (eligible.length === 0) {
     throw new AuditDomainError(
       'Żadne ze wskazanych ustaleń nie ma statusu confirmed lub późniejszego — draft propozycji wymaga potwierdzonego ustalenia',
       409,
-      'AUDIT_PROPOSAL_NO_ELIGIBLE_FINDINGS',
+      'AUDIT_PROPOSAL_NO_ELIGIBLE_FINDINGS'
     );
   }
 
@@ -260,17 +286,20 @@ export interface SuggestedProposal {
 }
 
 /** Zwraca TREŚĆ propozycji pogrupowanych wg potwierdzonej przyczyny źródłowej — nie zapisuje niczego. */
-export async function suggestSystemicProposals(orgId: string, programId: string): Promise<SuggestedProposal[]> {
-  const rows = await auditAll<Row>(`SELECT * FROM audit_program_findings WHERE organization_id=$1 AND program_id=$2`, [
-    orgId,
-    programId,
-  ]);
+export async function suggestSystemicProposals(
+  orgId: string,
+  programId: string
+): Promise<SuggestedProposal[]> {
+  const rows = await auditAll<Row>(
+    `SELECT * FROM audit_program_findings WHERE organization_id=$1 AND program_id=$2`,
+    [orgId, programId]
+  );
 
   const eligible = rows.filter(
     (r) =>
       ELIGIBLE_FINDING_STATUSES.includes(String(r.status) as FindingStatus) &&
       toBool(r.root_cause_confirmed) &&
-      String(r.root_cause || '').trim(),
+      String(r.root_cause || '').trim()
   );
 
   const groups = new Map<string, Row[]>();
@@ -284,7 +313,9 @@ export async function suggestSystemicProposals(orgId: string, programId: string)
   for (const findings of groups.values()) {
     if (findings.length === 0) continue;
     const cause = String(findings[0].root_cause).trim();
-    const severities = findings.map((f) => (f.severity as string) || null).filter(Boolean) as string[];
+    const severities = findings
+      .map((f) => (f.severity as string) || null)
+      .filter(Boolean) as string[];
     suggestions.push({
       suggestedTitle: `Działanie systemowe: ${cause}`.slice(0, 200),
       problemStatement: findings
@@ -318,7 +349,7 @@ export async function updateProposal(
   orgId: string,
   actor: AuditActor,
   id: string,
-  patch: UpdateProposalInput,
+  patch: UpdateProposalInput
 ): Promise<AuditInitiativeProposal> {
   const proposal = await getProposal(orgId, id);
   if (!proposal) throw new AuditNotFoundError('Propozycja');
@@ -343,7 +374,8 @@ export async function updateProposal(
   if (patch.proposedOwnerId !== undefined) setIf('proposed_owner_id', patch.proposedOwnerId);
   if (patch.timeframe !== undefined) setIf('timeframe', patch.timeframe);
   if (patch.dependencies !== undefined) setIf('dependencies', patch.dependencies);
-  if (patch.successMeasures !== undefined) setIf('success_measures', JSON.stringify(patch.successMeasures));
+  if (patch.successMeasures !== undefined)
+    setIf('success_measures', JSON.stringify(patch.successMeasures));
   if (patch.verificationLink !== undefined) setIf('verification_link', patch.verificationLink);
   if (patch.confidence !== undefined) setIf('confidence', patch.confidence);
 
@@ -353,7 +385,7 @@ export async function updateProposal(
   params.push(orgId, id);
   await auditRun(
     `UPDATE audit_initiative_proposals SET ${sets.join(', ')} WHERE organization_id = $${params.length - 1} AND id = $${params.length}`,
-    params,
+    params
   );
 
   const updated = await getProposal(orgId, id);
@@ -363,7 +395,7 @@ export async function updateProposal(
 
 export async function listProposals(
   orgId: string,
-  filters: { programId?: string; status?: ProposalStatus } = {},
+  filters: { programId?: string; status?: ProposalStatus } = {}
 ): Promise<AuditInitiativeProposal[]> {
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM audit_initiative_proposals WHERE organization_id = $1`;
@@ -376,14 +408,19 @@ export async function listProposals(
     sql += ` AND status = $${params.length}`;
   }
   const rows = await auditAll<Row>(sql, params);
-  return rows.map(mapProposalRow).sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+  return rows
+    .map(mapProposalRow)
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
 
-export async function getProposal(orgId: string, id: string): Promise<AuditInitiativeProposal | null> {
-  const row = await auditGet<Row>(`SELECT * FROM audit_initiative_proposals WHERE organization_id=$1 AND id=$2`, [
-    orgId,
-    id,
-  ]);
+export async function getProposal(
+  orgId: string,
+  id: string
+): Promise<AuditInitiativeProposal | null> {
+  const row = await auditGet<Row>(
+    `SELECT * FROM audit_initiative_proposals WHERE organization_id=$1 AND id=$2`,
+    [orgId, id]
+  );
   return row ? mapProposalRow(row) : null;
 }
 
@@ -391,7 +428,7 @@ export async function dismissProposal(
   orgId: string,
   actor: AuditActor,
   id: string,
-  reason?: string | null,
+  reason?: string | null
 ): Promise<AuditInitiativeProposal> {
   const proposal = await getProposal(orgId, id);
   if (!proposal) throw new AuditNotFoundError('Propozycja');
@@ -404,7 +441,7 @@ export async function dismissProposal(
   await auditRun(
     `UPDATE audit_initiative_proposals SET status='dismissed', feedback_note=$1, updated_at=NOW()
       WHERE organization_id=$2 AND id=$3`,
-    [reason ?? null, orgId, id],
+    [reason ?? null, orgId, id]
   );
 
   await recordAuditEvent({
@@ -426,7 +463,7 @@ export async function deferProposal(
   orgId: string,
   actor: AuditActor,
   id: string,
-  reason?: string | null,
+  reason?: string | null
 ): Promise<AuditInitiativeProposal> {
   const proposal = await getProposal(orgId, id);
   if (!proposal) throw new AuditNotFoundError('Propozycja');
@@ -439,7 +476,7 @@ export async function deferProposal(
   await auditRun(
     `UPDATE audit_initiative_proposals SET status='deferred', feedback_note=$1, updated_at=NOW()
       WHERE organization_id=$2 AND id=$3`,
-    [reason ?? null, orgId, id],
+    [reason ?? null, orgId, id]
   );
 
   await recordAuditEvent({
@@ -467,7 +504,7 @@ export async function deferProposal(
 export async function registerAsInitiative(
   orgId: string,
   actor: AuditActor,
-  id: string,
+  id: string
 ): Promise<AuditInitiativeProposal> {
   const proposal = await getProposal(orgId, id);
   if (!proposal) throw new AuditNotFoundError('Propozycja');
@@ -493,7 +530,7 @@ export async function registerAsInitiative(
         sourceId: proposal.id,
         successCriteria: proposal.successMeasures?.length ? proposal.successMeasures : undefined,
       },
-      { actor: { id: actor.userId } },
+      { actor: { id: actor.userId } }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -501,7 +538,7 @@ export async function registerAsInitiative(
       `Kanoniczny kreator inicjatyw odrzucił rejestrację propozycji „${proposal.title}" — ${message}. ` +
         'Rejestracja NIE została obejściona ręcznym zapisem; uzupełnij brakujące dane propozycji (np. tytuł/opis) i spróbuj ponownie.',
       422,
-      'AUDIT_PROPOSAL_REGISTER_FAILED',
+      'AUDIT_PROPOSAL_REGISTER_FAILED'
     );
   }
 
@@ -509,7 +546,7 @@ export async function registerAsInitiative(
     `UPDATE audit_initiative_proposals
         SET status='registered', registered_initiative_id=$1, registered_at=NOW(), updated_at=NOW()
       WHERE organization_id=$2 AND id=$3`,
-    [created.id, orgId, id],
+    [created.id, orgId, id]
   );
 
   await recordAuditEvent({
@@ -546,14 +583,16 @@ export async function checkOverlap(orgId: string, proposalId: string): Promise<O
   if (!proposal) throw new AuditNotFoundError('Propozycja');
 
   const keywords = extractKeywords(
-    `${proposal.title} ${proposal.problemStatement ?? ''} ${proposal.systemicCause ?? ''}`,
+    `${proposal.title} ${proposal.problemStatement ?? ''} ${proposal.systemicCause ?? ''}`
   );
   if (keywords.length === 0) return [];
 
-  const rows = await auditAll<{ id: string; title: string | null; name: string | null; status: string | null }>(
-    `SELECT id, title, name, status FROM initiatives WHERE organization_id = $1`,
-    [orgId],
-  );
+  const rows = await auditAll<{
+    id: string;
+    title: string | null;
+    name: string | null;
+    status: string | null;
+  }>(`SELECT id, title, name, status FROM initiatives WHERE organization_id = $1`, [orgId]);
 
   const candidates: OverlapCandidate[] = [];
   for (const row of rows) {

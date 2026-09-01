@@ -16,25 +16,28 @@
  * "Platform" territory, not something this lane may fix) rather than a
  * bespoke properties block — same "standard is code" rule as the list triad.
  */
-import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
 
-import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
-import type { OkrSetDto } from './okrApi';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import type { OkrSetDto } from './okrApi';
 import {
   formatOkrDate,
   formatOkrProgressPercent,
-  okrSetAttentionLabel,
-  okrSetConfidenceLabel,
   OKR_SET_ATTENTION_TONE,
   OKR_SET_CONFIDENCE_TONE,
+  OKR_SET_STATUS_TONE,
+  okrSetAttentionLabel,
+  okrSetConfidenceLabel,
   okrSetScopeLabel,
   okrSetStatusLabel,
-  OKR_SET_STATUS_TONE,
   parseOkrProgress,
   shortOkrId,
 } from './okrRegistryMappers';
@@ -43,8 +46,8 @@ import {
   approveOkrSet,
   cancelOkrSet,
   newOkrWorkspaceIdempotencyKey,
-  openOkrSetReview,
   OkrWorkspaceApiError,
+  openOkrSetReview,
   requestChangesOnOkrSet,
   submitOkrSetForApproval,
 } from './okrWorkspaceApi';
@@ -64,7 +67,14 @@ export interface OkrSetOverviewViewProps {
   onSetChanged: (set: OkrSetDto) => void;
 }
 
-type PendingAction = 'submit' | 'approve' | 'requestChanges' | 'activate' | 'openReview' | 'cancel' | null;
+type PendingAction =
+  | 'submit'
+  | 'approve'
+  | 'requestChanges'
+  | 'activate'
+  | 'openReview'
+  | 'cancel'
+  | null;
 
 const ACTION_BUTTON_BASE =
   'inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-sm font-medium transition-colors ' +
@@ -73,7 +83,12 @@ const PRIMARY_BUTTON = `${ACTION_BUTTON_BASE} border-c-border-strong bg-c-text t
 const GHOST_BUTTON = `${ACTION_BUTTON_BASE} border-c-border bg-transparent text-c-text hover:bg-c-surface-raised`;
 const DANGER_BUTTON = `${ACTION_BUTTON_BASE} border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200`;
 
-export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isPolish, currentUserId, onSetChanged }) => {
+export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({
+  set,
+  isPolish,
+  currentUserId,
+  onSetChanged,
+}) => {
   const [pending, setPending] = useState<PendingAction>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -100,10 +115,31 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
   const cancelGate = gateCancel(set);
 
   const rows: ArtifactPropertyRow[] = [
-    { id: 'status', label: isPolish ? 'Status' : 'Status', value: <StatusChip label={okrSetStatusLabel(set.status, isPolish)} tone={OKR_SET_STATUS_TONE[set.status]} /> },
-    { id: 'scope', label: isPolish ? 'Zasięg' : 'Scope', value: okrSetScopeLabel(set.scopeType, isPolish) },
-    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: <span className="font-mono">{shortOkrId(set.ownerUserId)}</span> },
-    { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: <span className="font-mono">{shortOkrId(set.reviewerUserId)}</span> },
+    {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      value: (
+        <StatusChip
+          label={okrSetStatusLabel(set.status, isPolish)}
+          tone={OKR_SET_STATUS_TONE[set.status]}
+        />
+      ),
+    },
+    {
+      id: 'scope',
+      label: isPolish ? 'Zasięg' : 'Scope',
+      value: okrSetScopeLabel(set.scopeType, isPolish),
+    },
+    {
+      id: 'owner',
+      label: isPolish ? 'Właściciel' : 'Owner',
+      value: <span className="font-mono">{shortOkrId(set.ownerUserId)}</span>,
+    },
+    {
+      id: 'reviewer',
+      label: isPolish ? 'Recenzent' : 'Reviewer',
+      value: <span className="font-mono">{shortOkrId(set.reviewerUserId)}</span>,
+    },
     {
       id: 'progress',
       label: isPolish ? 'Postęp ogólny' : 'Overall progress',
@@ -125,7 +161,10 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       id: 'confidence',
       label: isPolish ? 'Pewność ogólna' : 'Overall confidence',
       value: set.overallConfidence ? (
-        <StatusChip label={okrSetConfidenceLabel(set.overallConfidence, isPolish)} tone={OKR_SET_CONFIDENCE_TONE[set.overallConfidence]} />
+        <StatusChip
+          label={okrSetConfidenceLabel(set.overallConfidence, isPolish)}
+          tone={OKR_SET_CONFIDENCE_TONE[set.overallConfidence]}
+        />
       ) : (
         <span className="text-c-text-muted">—</span>
       ),
@@ -133,13 +172,38 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
     {
       id: 'attention',
       label: isPolish ? 'Uwaga' : 'Attention',
-      value: <StatusChip label={okrSetAttentionLabel(set.attentionState, isPolish)} tone={OKR_SET_ATTENTION_TONE[set.attentionState]} />,
+      value: (
+        <StatusChip
+          label={okrSetAttentionLabel(set.attentionState, isPolish)}
+          tone={OKR_SET_ATTENTION_TONE[set.attentionState]}
+        />
+      ),
     },
-    { id: 'lastCheckin', label: isPolish ? 'Ostatni check-in' : 'Last check-in', value: formatOkrDate(set.lastCheckinAt, isPolish) },
-    { id: 'nextCheckin', label: isPolish ? 'Następny check-in' : 'Next check-in due', value: formatOkrDate(set.nextCheckinDueAt, isPolish) },
-    { id: 'currentVersion', label: isPolish ? 'Wersja bieżąca' : 'Current version', value: set.currentVersion },
-    { id: 'approvedVersion', label: isPolish ? 'Wersja zaakceptowana' : 'Approved version', value: set.approvedVersion ?? '—' },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', value: formatOkrDate(set.updatedAt, isPolish) },
+    {
+      id: 'lastCheckin',
+      label: isPolish ? 'Ostatni check-in' : 'Last check-in',
+      value: formatOkrDate(set.lastCheckinAt, isPolish),
+    },
+    {
+      id: 'nextCheckin',
+      label: isPolish ? 'Następny check-in' : 'Next check-in due',
+      value: formatOkrDate(set.nextCheckinDueAt, isPolish),
+    },
+    {
+      id: 'currentVersion',
+      label: isPolish ? 'Wersja bieżąca' : 'Current version',
+      value: set.currentVersion,
+    },
+    {
+      id: 'approvedVersion',
+      label: isPolish ? 'Wersja zaakceptowana' : 'Approved version',
+      value: set.approvedVersion ?? '—',
+    },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      value: formatOkrDate(set.updatedAt, isPolish),
+    },
   ];
 
   if (set.changesRequestedReason) {
@@ -168,7 +232,10 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       onRun: () =>
         run(
           'submit',
-          submitOkrSetForApproval(set.setId, { expectedVersion: set.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
+          submitOkrSetForApproval(set.setId, {
+            expectedVersion: set.rowVersion,
+            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+          })
         ),
     },
     {
@@ -177,7 +244,13 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       gate: approveGate,
       variant: 'primary',
       onRun: () =>
-        run('approve', approveOkrSet(set.setId, { expectedVersion: set.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+        run(
+          'approve',
+          approveOkrSet(set.setId, {
+            expectedVersion: set.rowVersion,
+            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+          })
+        ),
     },
     {
       id: 'requestChanges',
@@ -208,7 +281,13 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       gate: activateGate,
       variant: 'primary',
       onRun: () =>
-        run('activate', activateOkrSet(set.setId, { expectedVersion: set.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+        run(
+          'activate',
+          activateOkrSet(set.setId, {
+            expectedVersion: set.rowVersion,
+            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+          })
+        ),
     },
     {
       id: 'openReview',
@@ -216,7 +295,13 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       gate: openReviewGate,
       variant: 'ghost',
       onRun: () =>
-        run('openReview', openOkrSetReview(set.setId, { expectedVersion: set.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+        run(
+          'openReview',
+          openOkrSetReview(set.setId, {
+            expectedVersion: set.rowVersion,
+            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+          })
+        ),
     },
     {
       id: 'cancel',
@@ -224,24 +309,43 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       gate: cancelGate,
       variant: 'danger',
       onRun: () =>
-        run('cancel', cancelOkrSet(set.setId, { expectedVersion: set.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+        run(
+          'cancel',
+          cancelOkrSet(set.setId, {
+            expectedVersion: set.rowVersion,
+            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+          })
+        ),
     },
   ];
 
   return (
     <div className="h-full overflow-auto px-4 py-4 space-y-4" data-testid="okr-set-overview">
       <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4">
-        <h3 className="text-sm font-semibold text-c-text mb-3">{isPolish ? 'Właściwości zestawu' : 'Set properties'}</h3>
-        <ArtifactPropertiesTable rows={rows} propertyLabel={isPolish ? 'Właściwość' : 'Property'} valueLabel={isPolish ? 'Wartość' : 'Value'} />
+        <h3 className="text-sm font-semibold text-c-text mb-3">
+          {isPolish ? 'Właściwości zestawu' : 'Set properties'}
+        </h3>
+        <ArtifactPropertiesTable
+          rows={rows}
+          propertyLabel={isPolish ? 'Właściwość' : 'Property'}
+          valueLabel={isPolish ? 'Wartość' : 'Value'}
+        />
       </div>
 
       <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4">
-        <h3 className="text-sm font-semibold text-c-text mb-3">{isPolish ? 'Cykl życia zestawu' : 'Set lifecycle'}</h3>
-        {requestChangesGate === null || actions.find((a) => a.id === 'requestChanges' && !a.gate) ? (
+        <h3 className="text-sm font-semibold text-c-text mb-3">
+          {isPolish ? 'Cykl życia zestawu' : 'Set lifecycle'}
+        </h3>
+        {requestChangesGate === null ||
+        actions.find((a) => a.id === 'requestChanges' && !a.gate) ? (
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={isPolish ? 'Powód żądania poprawek (wymagane dla "Żądaj poprawek")' : 'Change-request reason (required for "Request changes")'}
+            placeholder={
+              isPolish
+                ? 'Powód żądania poprawek (wymagane dla "Żądaj poprawek")'
+                : 'Change-request reason (required for "Request changes")'
+            }
             className="mb-3 w-full min-h-[60px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             data-testid="okr-overview-change-notes"
           />
@@ -249,7 +353,12 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
         <div className="flex flex-wrap gap-2">
           {actions.map((action) => {
             const disabled = !!action.gate || pending !== null;
-            const cls = action.variant === 'primary' ? PRIMARY_BUTTON : action.variant === 'danger' ? DANGER_BUTTON : GHOST_BUTTON;
+            const cls =
+              action.variant === 'primary'
+                ? PRIMARY_BUTTON
+                : action.variant === 'danger'
+                  ? DANGER_BUTTON
+                  : GHOST_BUTTON;
             const title = action.gate ? (isPolish ? action.gate.pl : action.gate.en) : undefined;
             return (
               <button
@@ -269,13 +378,20 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
         {actions
           .filter((a) => a.gate)
           .map((a) => (
-            <p key={`gate-${a.id}`} className="mt-2 text-[11px] text-c-text-muted flex items-center gap-1">
+            <p
+              key={`gate-${a.id}`}
+              className="mt-2 text-[11px] text-c-text-muted flex items-center gap-1"
+            >
               <AlertTriangle size={12} className="shrink-0" />
               {isPolish ? a.gate!.pl : a.gate!.en}
             </p>
           ))}
         {error ? (
-          <div role="alert" className="mt-3 flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="okr-overview-error">
+          <div
+            role="alert"
+            className="mt-3 flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            data-testid="okr-overview-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
             <span>{error}</span>
           </div>

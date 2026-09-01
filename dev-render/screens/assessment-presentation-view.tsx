@@ -27,18 +27,20 @@
  */
 import React from 'react';
 
-import { AssessmentPresentationView } from '../../src/components/assessment/presentation/AssessmentPresentationView';
-import { DRD_METHOD_PACK_VERSION } from '../../src/method-core/methods/drd/compileDrdPack';
 import type { PresentationFetchResult } from '../../src/components/assessment/presentation/AssessmentPresentationView';
+import { AssessmentPresentationView } from '../../src/components/assessment/presentation/AssessmentPresentationView';
 import type { RawAssessmentOutputRecord } from '../../src/components/assessment/presentation/rawOutputTypes';
 import { MethodCoreApiError } from '../../src/method-core/api/methodCoreApi';
+import { DRD_METHOD_PACK_VERSION } from '../../src/method-core/methods/drd/compileDrdPack';
 import { useAppStore } from '../../src/store/useAppStore';
 
 useAppStore.setState({
   theme: new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light',
 } as any);
 
-function finding(overrides: Partial<RawAssessmentOutputRecord['findings'][number]>): RawAssessmentOutputRecord['findings'][number] {
+function finding(
+  overrides: Partial<RawAssessmentOutputRecord['findings'][number]>
+): RawAssessmentOutputRecord['findings'][number] {
   return {
     id: `finding-${overrides.unitId}`,
     unitId: 'u-1',
@@ -46,7 +48,14 @@ function finding(overrides: Partial<RawAssessmentOutputRecord['findings'][number
     currentLevel: 2,
     targetLevel: 3,
     gap: 1,
-    supportingEvidence: [{ evidenceId: `ev-${overrides.unitId}`, evidenceType: 'document', strength: 'E2', locator: 'vault://doc' }],
+    supportingEvidence: [
+      {
+        evidenceId: `ev-${overrides.unitId}`,
+        evidenceType: 'document',
+        strength: 'E2',
+        locator: 'vault://doc',
+      },
+    ],
     contradictingEvidence: [],
     businessMeaning: '—',
     rootCauseHypothesis: null,
@@ -63,7 +72,16 @@ function finding(overrides: Partial<RawAssessmentOutputRecord['findings'][number
 }
 
 function buildOutput(variant: string): RawAssessmentOutputRecord {
-  const base: Omit<RawAssessmentOutputRecord, 'findings' | 'current' | 'target' | 'gap' | 'aggregation' | 'evidenceCompleteness' | 'limitations'> = {
+  const base: Omit<
+    RawAssessmentOutputRecord,
+    | 'findings'
+    | 'current'
+    | 'target'
+    | 'gap'
+    | 'aggregation'
+    | 'evidenceCompleteness'
+    | 'limitations'
+  > = {
     id: 'output-demo-drd-0001',
     organizationId: 'org-demo',
     sessionId: 'sess-demo-drd-0001',
@@ -92,7 +110,12 @@ function buildOutput(variant: string): RawAssessmentOutputRecord {
       target: {},
       gap: {},
       aggregation: { byGroup: {}, mappingVersion: '1.2.0', rule: 'weighted-mean', excluded: {} },
-      evidenceCompleteness: { totalUnits: 0, unitsWithAcceptedEvidence: 0, unitsMissingEvidence: 0, completenessRatio: 0 },
+      evidenceCompleteness: {
+        totalUnits: 0,
+        unitsWithAcceptedEvidence: 0,
+        unitsMissingEvidence: 0,
+        completenessRatio: 0,
+      },
       limitations: ['Sesja zamrożona bez żadnych ustaleń — dane wejściowe puste.'],
     };
   }
@@ -126,7 +149,8 @@ function buildOutput(variant: string): RawAssessmentOutputRecord {
       targetLevel: 3,
       gap: 2,
       businessMeaning: 'Kampanie marketingowe prowadzone ręcznie, bez wspólnego systemu.',
-      riskOrOpportunity: 'Brak wspólnego systemu marketing automation utrudnia pomiar ROI kampanii i eskaluje koszt operacyjny.',
+      riskOrOpportunity:
+        'Brak wspólnego systemu marketing automation utrudnia pomiar ROI kampanii i eskaluje koszt operacyjny.',
       recommendation: 'Wdróż jeden system marketing automation dla całej grupy.',
       confidence: 'high',
     }),
@@ -137,8 +161,10 @@ function buildOutput(variant: string): RawAssessmentOutputRecord {
       targetLevel: 4,
       gap: 2,
       businessMeaning: 'Oferta cyfrowa istnieje, ale bez cyklu rozwoju opartego na danych klienta.',
-      riskOrOpportunity: 'Konkurenci z krótszym cyklem iteracji przejmują udział w segmencie online.',
-      recommendation: 'Wprowadź kwartalny cykl rozwoju produktu cyfrowego oparty na telemetrii użycia.',
+      riskOrOpportunity:
+        'Konkurenci z krótszym cyklem iteracji przejmują udział w segmencie online.',
+      recommendation:
+        'Wprowadź kwartalny cykl rozwoju produktu cyfrowego oparty na telemetrii użycia.',
       confidence: 'medium',
     }),
     finding({
@@ -236,8 +262,13 @@ export function AssessmentPresentationViewScreen(): React.ReactElement {
           withNarrative
             ? {
                 clientName: 'Grupa Przemysłowa DBR77',
-                businessQuestion: 'Czy nasze procesy sprzedaży i marketingu są gotowe na skalowanie o 40% w 2027?',
-                participants: ['Piotr Wiśniewski (Owner)', 'Anna Kowalska (Approver)', 'Marek Nowak (Assessor)'],
+                businessQuestion:
+                  'Czy nasze procesy sprzedaży i marketingu są gotowe na skalowanie o 40% w 2027?',
+                participants: [
+                  'Piotr Wiśniewski (Owner)',
+                  'Anna Kowalska (Approver)',
+                  'Marek Nowak (Assessor)',
+                ],
               }
             : undefined
         }

@@ -19,16 +19,19 @@ import { toNullableNumber } from '../kpi/kpiTypes.js';
 // ENUMS (mirror the CHECK constraints in the migration)
 // ==========================================
 
-export const ROI_FINANCE_RECONCILIATION_STATUSES = ['open', 'investigating', 'resolved', 'accepted_divergence'] as const;
+export const ROI_FINANCE_RECONCILIATION_STATUSES = [
+  'open',
+  'investigating',
+  'resolved',
+  'accepted_divergence',
+] as const;
 export type RoiFinanceReconciliationStatus = (typeof ROI_FINANCE_RECONCILIATION_STATUSES)[number];
 
 /** Terminal statuses that fan `roi.finance_reconciliation_resolved` (D1) —
  * every other status transition (i.e. into 'investigating') fans the
  * lighter `roi.finance_reconciliation_status_updated` instead. */
-export const ROI_FINANCE_RECONCILIATION_TERMINAL_STATUSES: readonly RoiFinanceReconciliationStatus[] = [
-  'resolved',
-  'accepted_divergence',
-];
+export const ROI_FINANCE_RECONCILIATION_TERMINAL_STATUSES: readonly RoiFinanceReconciliationStatus[] =
+  ['resolved', 'accepted_divergence'];
 
 // ==========================================
 // rvn_roi_finance_links
@@ -174,7 +177,9 @@ export interface RoiFinanceReconciliation {
   rowVersion: number;
 }
 
-export function toRoiFinanceReconciliation(row: RoiFinanceReconciliationRow): RoiFinanceReconciliation {
+export function toRoiFinanceReconciliation(
+  row: RoiFinanceReconciliationRow
+): RoiFinanceReconciliation {
   return {
     reconciliationId: row.reconciliation_id,
     caseId: row.case_id,

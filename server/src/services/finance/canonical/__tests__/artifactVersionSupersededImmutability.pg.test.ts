@@ -78,7 +78,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
     svc = await import('../artifactVersionService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'APWAVE SUPERSEDED Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'APWAVE SUPERSEDED Test Org',
+      ])
     );
   });
 
@@ -89,7 +92,11 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
    * compare a real value rather than NULL-to-NULL, which would pass whether or
    * not the trigger works.
    */
-  async function makeApprovedVersion(): Promise<{ artifactId: string; bvId: string; version: number }> {
+  async function makeApprovedVersion(): Promise<{
+    artifactId: string;
+    bvId: string;
+    version: number;
+  }> {
     const created = await svc.createArtifact({
       organizationId: orgId,
       artifactType: 'HISTORICAL_ANALYSIS',
@@ -97,10 +104,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
     });
     const bvId = created.businessVersion.business_version_id;
     const stampRes = await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET content_semantic_hash = ? WHERE business_version_id = ?`, [
-        `sha256:${randomUUID()}`,
-        bvId,
-      ])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET content_semantic_hash = ? WHERE business_version_id = ?`,
+        [`sha256:${randomUUID()}`, bvId]
+      )
     );
     expect(stampRes.changes).toBe(1);
 
@@ -110,7 +117,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
 
     // freshness defaults to NEVER_COMPUTED on create; approve requires CURRENT.
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [bvId]
+      )
     );
 
     const approved = await svc.approveVersion({
@@ -124,7 +134,11 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
     if (!approved.ok) throw new Error(`approve failed: ${JSON.stringify(approved)}`);
     expect(approved.businessVersion.status).toBe('APPROVED');
 
-    return { artifactId: created.artifact.artifact_id, bvId, version: approved.businessVersion.version };
+    return {
+      artifactId: created.artifact.artifact_id,
+      bvId,
+      version: approved.businessVersion.version,
+    };
   }
 
   async function advance(
@@ -153,7 +167,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
    * SUPERSEDED (T9). No hand-crafted `UPDATE ... SET status = 'SUPERSEDED'`
    * anywhere, so what is under test is the state production actually produces.
    */
-  async function supersede(parentBvId: string, parentVersion: number): Promise<{ childBvId: string; childVersion: number }> {
+  async function supersede(
+    parentBvId: string,
+    parentVersion: number
+  ): Promise<{ childBvId: string; childVersion: number }> {
     const reopened = await svc.reopenVersion({
       organizationId: orgId,
       businessVersionId: parentBvId,
@@ -167,10 +184,19 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
 
     const childBvId = reopened.businessVersion.business_version_id;
     let childVersion = reopened.businessVersion.version;
-    childVersion = await advance(childBvId, 'submit_for_review', preparerId, 'preparer', childVersion);
+    childVersion = await advance(
+      childBvId,
+      'submit_for_review',
+      preparerId,
+      'preparer',
+      childVersion
+    );
     childVersion = await advance(childBvId, 'start_review', approverId, 'approver', childVersion);
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [childBvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [childBvId]
+      )
     );
 
     const approvedChild = await svc.approveVersion({
@@ -181,7 +207,8 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
       expectedVersion: childVersion,
     });
     expect(approvedChild.ok).toBe(true);
-    if (!approvedChild.ok) throw new Error(`approve child failed: ${JSON.stringify(approvedChild)}`);
+    if (!approvedChild.ok)
+      throw new Error(`approve child failed: ${JSON.stringify(approvedChild)}`);
 
     return { childBvId, childVersion: approvedChild.businessVersion.version };
   }
@@ -212,7 +239,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
   /** Raw single-column UPDATE, bypassing the services, to interrogate the trigger directly. */
   async function tamper(bvId: string, column: string, value: string) {
     return withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET ${column} = ? WHERE business_version_id = ?`, [value, bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET ${column} = ? WHERE business_version_id = ?`,
+        [value, bvId]
+      )
     );
   }
 
@@ -260,13 +290,19 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
   });
 
   describe('content of a SUPERSEDED version is frozen', () => {
-    it.each(['content_semantic_hash', 'compute_snapshot_id', 'source_working_revision_id'] as const)(
+    it.each([
+      'content_semantic_hash',
+      'compute_snapshot_id',
+      'source_working_revision_id',
+    ] as const)(
       'rejects rewriting %s on a SUPERSEDED version (with an FK-valid value, so only the trigger can reject)',
       async (column) => {
         const { bvId, before, donor } = await makeSupersededVersion();
 
         const donorValue =
-          column === 'content_semantic_hash' ? `sha256:TAMPERED-${randomUUID()}` : (donor[column] as string);
+          column === 'content_semantic_hash'
+            ? `sha256:TAMPERED-${randomUUID()}`
+            : (donor[column] as string);
         // The donor value must really differ, otherwise the trigger's
         // OLD-vs-NEW comparison would pass for the wrong reason.
         expect(donorValue).not.toBe(before[column]);
@@ -289,7 +325,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
 
         await expect(
           withPinnedPostgresTransaction((tx) =>
-            tx.queryRun(`UPDATE finance_business_versions SET status = ? WHERE business_version_id = ?`, [target, bvId])
+            tx.queryRun(
+              `UPDATE finance_business_versions SET status = ? WHERE business_version_id = ?`,
+              [target, bvId]
+            )
           )
         ).rejects.toThrow(/is SUPERSEDED \(terminal\); no further status transition is allowed/);
 
@@ -301,9 +340,9 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
       const { bvId, before, childBvId } = await makeSupersededVersion();
       expect(childBvId).toBeTruthy();
 
-      await expect(tamper(bvId, 'superseded_by_version_id', before.business_version_id)).rejects.toThrow(
-        /is SUPERSEDED; its contents are frozen/
-      );
+      await expect(
+        tamper(bvId, 'superseded_by_version_id', before.business_version_id)
+      ).rejects.toThrow(/is SUPERSEDED; its contents are frozen/);
 
       const after = await svc.getBusinessVersion(orgId, bvId);
       expect(after?.superseded_by_version_id).toBe(childBvId);
@@ -315,7 +354,9 @@ describe.skipIf(!REAL_PG)('Finance v3 — SUPERSEDED immutability (real PostgreS
       await expect(tamper(bvId, 'content_semantic_hash', 'TAMPERED-APPROVED')).rejects.toThrow(
         /is APPROVED; only status and its associated metadata columns may change/
       );
-      expect((await svc.getBusinessVersion(orgId, bvId))?.content_semantic_hash).not.toBe('TAMPERED-APPROVED');
+      expect((await svc.getBusinessVersion(orgId, bvId))?.content_semantic_hash).not.toBe(
+        'TAMPERED-APPROVED'
+      );
     });
   });
 

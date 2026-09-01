@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import routes from '../admin/ai-quality.routes.js';
 
 const dbRun = vi.fn();

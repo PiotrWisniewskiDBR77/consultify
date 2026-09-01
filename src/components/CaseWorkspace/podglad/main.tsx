@@ -43,6 +43,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import i18n from '../../../i18n';
 import { CaseWorkspaceHub } from '../CaseWorkspaceHub';
+import type { CasePlanVersion } from '../types';
 import {
   ARTIFACT_LINKS,
   CASES,
@@ -53,7 +54,6 @@ import {
   VALIDATIONS,
   WAITS,
 } from './daneProbne';
-import type { CasePlanVersion } from '../types';
 
 const params = new URLSearchParams(window.location.search);
 const startowaSciezka = params.get('sciezka') || '/zlecenia';
@@ -222,7 +222,8 @@ function BanerAtrapy() {
         letterSpacing: 0.3,
       }}
     >
-      ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy *.pg.test.ts na realnym PG.
+      ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy
+      *.pg.test.ts na realnym PG.
     </div>
   );
 }

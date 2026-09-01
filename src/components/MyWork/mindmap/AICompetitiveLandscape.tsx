@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 interface Competitor {
@@ -114,7 +113,10 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Globe size={16} className="text-c-info" />
-              <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-competitive-landscape-modal-heading">
+              <h3
+                className="text-sm font-bold text-c-text dark:text-c-text"
+                id="a-i-competitive-landscape-modal-heading"
+              >
                 {t('ideas.mindmap.aiCompetitiveLandscape', 'AI: Competitive Landscape')}
               </h3>
             </div>

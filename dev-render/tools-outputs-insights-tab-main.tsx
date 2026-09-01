@@ -19,7 +19,6 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
 import ToolsOutputsInsightsTabScreen from './screens/tools-outputs-insights-tab';
 
 const params = new URLSearchParams(window.location.search);

@@ -76,13 +76,13 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as caseCoreService from '../caseCoreService.js';
-import * as casePlanVersionService from '../casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from '../casePlanVersionService.js';
-import * as proposalApprovalService from '../proposalApprovalService.js';
+import * as casePlanVersionService from '../casePlanVersionService.js';
 import type {
   CreateActionProposalInput,
   RecordApprovalDecisionInput,
 } from '../proposalApprovalService.js';
+import * as proposalApprovalService from '../proposalApprovalService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -480,7 +480,8 @@ suite(
       }
     ): CaseWorkspaceEventOutboxDbRow {
       const row = rows[index];
-      if (!row) throw new Error(`expected an outbox row at index ${index}, got ${rows.length} rows`);
+      if (!row)
+        throw new Error(`expected an outbox row at index ${index}, got ${rows.length} rows`);
       expect(row.event_type).toBe(expected.eventType);
       expect(row.aggregate_type).toBe('ACTION_PROPOSAL');
       expect(row.aggregate_id).toBe(expected.aggregateId);
@@ -508,7 +509,9 @@ suite(
      * Scoped by a WHEN clause to one action_proposal_id so a concurrently
      * running suite on the same database is untouched.
      */
-    async function installCommitFailureTrigger(actionProposalId: string): Promise<() => Promise<void>> {
+    async function installCommitFailureTrigger(
+      actionProposalId: string
+    ): Promise<() => Promise<void>> {
       const suffix = randomUUID().replace(/-/g, '');
       const fnName = `cw_test_prop_rollback_${suffix}`;
       const triggerName = `cw_test_prop_rollback_trg_${suffix}`;
@@ -569,13 +572,17 @@ suite(
         await control
           .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
           .catch(() => undefined);
-        await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
+        await control
+          .query(`DELETE FROM projects WHERE id = $1`, [projectId])
+          .catch(() => undefined);
       }
       for (const userId of params.userIds ?? []) {
         await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
       }
       for (const orgId of params.orgIds) {
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+          .catch(() => undefined);
       }
     }
 
@@ -607,7 +614,10 @@ suite(
         expect(created.status).toBe('DRAFT');
         expect(created.version).toBe(1);
 
-        const fetched = await proposalApprovalService.getActionProposal(created.actionProposalId, actorId);
+        const fetched = await proposalApprovalService.getActionProposal(
+          created.actionProposalId,
+          actorId
+        );
         expect(fetched).not.toBeNull();
         expect(fetched?.actionProposalId).toBe(created.actionProposalId);
         expect(fetched?.payloadDigest).toBe('sha256:round-trip-payload');
@@ -639,7 +649,12 @@ suite(
         expect(rowsAfterConflict).toHaveLength(1);
         expect(rowsAfterConflict[0]?.payload_digest).toBe('sha256:round-trip-payload');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorId],
+        });
       }
     }, 30_000);
 
@@ -651,7 +666,12 @@ suite(
     //    governance bypass).
     // -------------------------------------------------------------------------
     it('rejects self-approval (APPROVE) with no DB decision row and unchanged status, but allows self-reject (REJECT) by the same actor', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('self-approval');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('self-approval');
       const runId = `run-t2-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -717,7 +737,12 @@ suite(
         expect(decisionsAfterSelfReject[0]?.decided_by_actor_id).toBe(actorA);
         expect(decisionsAfterSelfReject[0]?.decision).toBe('REJECT');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorA] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA],
+        });
       }
     }, 30_000);
 
@@ -727,7 +752,12 @@ suite(
     //    actor-B as the decider.
     // -------------------------------------------------------------------------
     it('a different actor (actor-B) approving actor-A proposal succeeds, transitions to APPROVED, and records actor-B on the decision row', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('cross-actor-approve');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('cross-actor-approve');
       const actorB = await seedMemberedUser(orgId, 'cross-actor-approve-B');
       const runId = `run-t3-${randomUUID()}`;
       try {
@@ -860,7 +890,12 @@ suite(
     //    unchanged.
     // -------------------------------------------------------------------------
     it('rejects recordApprovalDecision against a DRAFT proposal (never submitted for review) and leaves status unchanged', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('illegal-transition');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('illegal-transition');
       const actorB = await seedMemberedUser(orgId, 'illegal-transition-B');
       const runId = `run-t5-${randomUUID()}`;
       try {
@@ -997,7 +1032,12 @@ suite(
     //    enforcement (CW-RT-023, CW-RT-061, CW-00-020-INV11).
     // -------------------------------------------------------------------------
     it('transitionProposalToExecuting rejects with proposal_target_stale once the targeted plan version has been superseded', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('target-stale');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('target-stale');
       const actorB = await seedMemberedUser(orgId, 'target-stale-B');
       const actorExecutor = await seedMemberedUser(orgId, 'target-stale-executor');
       const runId = `run-t7-${randomUUID()}`;
@@ -1073,8 +1113,13 @@ suite(
     //    recordApprovalDecision (approve class): an actor with no membership
     //    in the Case's org is rejected with case_access_denied for both.
     // -------------------------------------------------------------------------
-    it('createActionProposal and recordApprovalDecision both reject an actor with no organization_members row for the Case\'s org', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('auth-no-membership');
+    it("createActionProposal and recordApprovalDecision both reject an actor with no organization_members row for the Case's org", async () => {
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('auth-no-membership');
       const noMembershipActor = await seedUser(orgId, 'auth-no-membership-outsider');
       const runId = `run-t8-${randomUUID()}`;
       try {
@@ -1144,7 +1189,12 @@ suite(
     //    both return null.
     // -------------------------------------------------------------------------
     it('getActionProposal returns null for both a nonexistent action_proposal_id and a real proposal the actor cannot access', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('auth-read-null');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('auth-read-null');
       const noMembershipActor = await seedUser(orgId, 'auth-read-null-outsider');
       const runId = `run-t9-${randomUUID()}`;
       try {
@@ -1164,7 +1214,10 @@ suite(
         expect(missing).toBeNull();
         expect(denied).toBeNull();
 
-        const allowed = await proposalApprovalService.getActionProposal(created.actionProposalId, actorA);
+        const allowed = await proposalApprovalService.getActionProposal(
+          created.actionProposalId,
+          actorA
+        );
         expect(allowed?.actionProposalId).toBe(created.actionProposalId);
       } finally {
         await teardown({
@@ -1193,7 +1246,12 @@ suite(
     //     Read-only calls interleaved at the end add nothing.
     // -------------------------------------------------------------------------
     it('emits exactly one correctly-identified outbox event per mutating command across the full DRAFT->AUDITED lifecycle, and none for reads', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-lifecycle');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('outbox-lifecycle');
       const actorB = await seedMemberedUser(orgId, 'outbox-lifecycle-B');
       const actorExecutor = await seedMemberedUser(orgId, 'outbox-lifecycle-exec');
       const runId = `run-t10-${randomUUID()}`;
@@ -1347,7 +1405,12 @@ suite(
     //     as empty as they leave the aggregate.
     // -------------------------------------------------------------------------
     it('emits no event for an idempotent replay and no event for a rejected command (self-approval, stale digest)', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-replay');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('outbox-replay');
       const actorB = await seedMemberedUser(orgId, 'outbox-replay-B');
       const runId = `run-t11-${randomUUID()}`;
       try {
@@ -1463,7 +1526,12 @@ suite(
     //       free-text reason must NOT appear anywhere in the event.
     // -------------------------------------------------------------------------
     it('emits approval.deferred for a status-neutral DEFER, and links proposal.retry_requested to the proposal.failed it retries without copying the reason text', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-defer-retry');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('outbox-defer-retry');
       const actorB = await seedMemberedUser(orgId, 'outbox-defer-retry-B');
       const runId = `run-t12-${randomUUID()}`;
       const secretReason = 'connector returned 500 for account holder jan.kowalski@example.test';
@@ -1594,7 +1662,12 @@ suite(
     //      rejects any second decision after that.
     // -------------------------------------------------------------------------
     it('emits approval.rejected for REJECT and approval.changes_requested for REQUEST_CHANGES, each exactly once, with full identity and the post-mutation version', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-reject-changes');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('outbox-reject-changes');
       const actorB = await seedMemberedUser(orgId, 'outbox-reject-changes-B');
       const runId = `run-t12b-${randomUUID()}`;
       try {
@@ -1710,7 +1783,9 @@ suite(
           [...rejectRows, ...changesRows].filter((r) => r.event_type === 'approval.rejected')
         ).toHaveLength(1);
         expect(
-          [...rejectRows, ...changesRows].filter((r) => r.event_type === 'approval.changes_requested')
+          [...rejectRows, ...changesRows].filter(
+            (r) => r.event_type === 'approval.changes_requested'
+          )
         ).toHaveLength(1);
       } finally {
         await teardown({
@@ -1731,7 +1806,12 @@ suite(
     //     not; that is the dual-write hole this test closes.
     // -------------------------------------------------------------------------
     it('rolls the outbox row back with the mutation when the transaction fails after both were written (revoke + commit-time failure)', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-rollback');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('outbox-rollback');
       const actorB = await seedMemberedUser(orgId, 'outbox-rollback-B');
       const runId = `run-t13-${randomUUID()}`;
       let dropTrigger: (() => Promise<void>) | null = null;
@@ -1848,7 +1928,12 @@ suite(
     //     failure mode that makes a refusal unprovable.
     // -------------------------------------------------------------------------
     it('refuses APPROVED -> EXECUTING for a material action approved only in chat, and for one approved without a configured step-up, and commits policy.denied for each', async () => {
-      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('autonomy-gate');
+      const {
+        orgId,
+        projectId,
+        caseId,
+        actorId: actorA,
+      } = await seedOrgProjectCase('autonomy-gate');
       const actorB = await seedMemberedUser(orgId, 'autonomy-gate-B');
       const runId = `run-t15-${randomUUID()}`;
       try {

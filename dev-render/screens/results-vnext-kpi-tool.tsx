@@ -36,8 +36,8 @@
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-import { KpiToolPage } from '../../src/components/ResultsVNext/kpiTool/KpiToolPage';
 import { KpiDeviationCaseSubview } from '../../src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview';
+import { KpiToolPage } from '../../src/components/ResultsVNext/kpiTool/KpiToolPage';
 import { ROUTES } from '../../src/routes/routeConfig';
 import { Api } from '../../src/services/api';
 import { OrganizationApi } from '../../src/services/api/organizations.api';
@@ -52,9 +52,27 @@ seedRealisticSession();
 // matching `seedRealisticSession()`'s currentUser) instead of a silent
 // "fetch fails, falls back to raw id".
 OrganizationApi.getOrganizationMembers = (async () => [
-  { userId: 'user-piotr-demo', email: 'piotr.wisniewski@dbr77.com', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
-  { userId: 'user-anna', email: 'anna.kowalska@dbr77.com', name: 'Anna Kowalska', role: 'member', status: 'active' },
-  { userId: 'user-marek', email: 'marek.nowak@dbr77.com', name: 'Marek Nowak', role: 'member', status: 'active' },
+  {
+    userId: 'user-piotr-demo',
+    email: 'piotr.wisniewski@dbr77.com',
+    name: 'Piotr Wiśniewski',
+    role: 'owner',
+    status: 'active',
+  },
+  {
+    userId: 'user-anna',
+    email: 'anna.kowalska@dbr77.com',
+    name: 'Anna Kowalska',
+    role: 'member',
+    status: 'active',
+  },
+  {
+    userId: 'user-marek',
+    email: 'marek.nowak@dbr77.com',
+    name: 'Marek Nowak',
+    role: 'member',
+    status: 'active',
+  },
 ]) as typeof OrganizationApi.getOrganizationMembers;
 
 const params = new URLSearchParams(window.location.search);
@@ -110,7 +128,8 @@ const DEFINITION_VERSION = {
   organizationId: 'org-dbr77-demo',
   versionNumber: 1,
   name: 'OEE linii pakowania',
-  description: 'Ogólna efektywność wyposażenia (OEE) linii pakowania — dostępność × wydajność × jakość.',
+  description:
+    'Ogólna efektywność wyposażenia (OEE) linii pakowania — dostępność × wydajność × jakość.',
   unit: '%',
   targetGeometry: 'threshold_min' as const,
   targetValue: 85,
@@ -157,6 +176,50 @@ const MEASUREMENT = {
   recordedAt: '2026-08-08T09:00:00Z',
 };
 
+// FIX-199 — section 7 (Karty wyników) and section 8 (Historia) had no stub
+// at all: any Api.get for either fell through to `realGet(url)`, which has
+// no backend to answer it in dev-render, so both sections rendered empty —
+// the exact gap odbiór 199 R3b flagged ("sekcje 7/8 nie na żadnym zrzucie").
+// Content below MIRRORS the real Wave 3 owner-review seed
+// (`server/scripts/seed-wave3-results-owner-review.ts`), verified live
+// against `consultify_w3_results_owner_fix199` (PG 6143) through the real
+// `ApiGateway`, not invented: the scorecard's name/description/scope/
+// reviewFrequency/lifecycleStatus are byte-identical to the seeded
+// `rvn_kpi_scorecards` row, and the history entry's `kind`/`summaryCode`
+// shape is byte-identical to the real event a live
+// `POST /:kpiId/measurements` call produced against that same seed
+// (`kind:'MEASUREMENT'`, `summaryCode:'KPI_MEASUREMENT_RECORDED'` —
+// `kpiHistoryRepository.ts` `kindFor`/`summaryCode` derivation, not a
+// guess).
+const SCORECARD = {
+  scorecardId: 'scorecard-1',
+  organizationId: 'org-dbr77-demo',
+  name: 'Karta realizacji operacyjnej',
+  description: 'Miesięczny przegląd terminowości i jakości dostaw',
+  scopeType: 'organization' as const,
+  scopeId: 'org-dbr77-demo',
+  ownerUserId: 'user-piotr-demo',
+  ownerName: null,
+  reviewFrequency: 'monthly' as const,
+  lifecycleStatus: 'active' as const,
+  rowVersion: 1,
+  createdBy: 'user-piotr-demo',
+  createdAt: '2026-08-21T08:00:00.000Z',
+  updatedAt: '2026-08-21T08:00:00.000Z',
+};
+
+const HISTORY_ENTRIES = [
+  {
+    entryId: 'evt-history-1',
+    occurredAt: MEASUREMENT.recordedAt,
+    kind: 'MEASUREMENT' as const,
+    summaryCode: 'KPI_MEASUREMENT_RECORDED',
+    actorUserId: MEASUREMENT.recordedBy,
+    sourceVersion: 1,
+    references: { measurementId: MEASUREMENT.measurementId },
+  },
+];
+
 const DEVIATION_CASE = {
   caseId: CASE_ID,
   organizationId: 'org-dbr77-demo',
@@ -172,22 +235,72 @@ const DEVIATION_CASE = {
   managerUserId: 'user-marek',
   detectedAt: '2026-08-08T09:05:00Z',
   responseDueAt: '2026-08-10T09:05:00Z',
-  rootCauseSummary: ['plan_required', 'plan_submitted', 'approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState)
+  rootCauseSummary: [
+    'plan_required',
+    'plan_submitted',
+    'approved',
+    'executing',
+    'recovery_observed',
+    'verification',
+    'closed',
+  ].includes(caseState)
     ? 'Awaria czujnika prędkości linii spowodowała błędne odczyty OEE.'
     : null,
-  rootCauseCategory: ['plan_required', 'plan_submitted', 'approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState)
+  rootCauseCategory: [
+    'plan_required',
+    'plan_submitted',
+    'approved',
+    'executing',
+    'recovery_observed',
+    'verification',
+    'closed',
+  ].includes(caseState)
     ? 'sprzet'
     : null,
   recurrenceFlag: false,
   expectedRecoveryDate: null,
   expectedRecoveryValue: null,
-  planSubmittedBy: ['plan_submitted', 'approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState) ? 'user-anna' : null,
-  planSubmittedAt: ['plan_submitted', 'approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState) ? '2026-08-09T10:00:00Z' : null,
-  planApprovedBy: ['approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState) ? 'user-marek' : null,
-  planApprovedAt: ['approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(caseState) ? '2026-08-09T14:00:00Z' : null,
-  recoveryObservedBy: ['recovery_observed', 'verification', 'closed'].includes(caseState) ? 'user-piotr-demo' : null,
-  recoveryObservedAt: ['recovery_observed', 'verification', 'closed'].includes(caseState) ? '2026-08-10T08:00:00Z' : null,
-  recoveryObservationMeasurementId: ['recovery_observed', 'verification', 'closed'].includes(caseState) ? MEASUREMENT.measurementId : null,
+  planSubmittedBy: [
+    'plan_submitted',
+    'approved',
+    'executing',
+    'recovery_observed',
+    'verification',
+    'closed',
+  ].includes(caseState)
+    ? 'user-anna'
+    : null,
+  planSubmittedAt: [
+    'plan_submitted',
+    'approved',
+    'executing',
+    'recovery_observed',
+    'verification',
+    'closed',
+  ].includes(caseState)
+    ? '2026-08-09T10:00:00Z'
+    : null,
+  planApprovedBy: ['approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(
+    caseState
+  )
+    ? 'user-marek'
+    : null,
+  planApprovedAt: ['approved', 'executing', 'recovery_observed', 'verification', 'closed'].includes(
+    caseState
+  )
+    ? '2026-08-09T14:00:00Z'
+    : null,
+  recoveryObservedBy: ['recovery_observed', 'verification', 'closed'].includes(caseState)
+    ? 'user-piotr-demo'
+    : null,
+  recoveryObservedAt: ['recovery_observed', 'verification', 'closed'].includes(caseState)
+    ? '2026-08-10T08:00:00Z'
+    : null,
+  recoveryObservationMeasurementId: ['recovery_observed', 'verification', 'closed'].includes(
+    caseState
+  )
+    ? MEASUREMENT.measurementId
+    : null,
   closedAt: caseState === 'closed' ? '2026-08-11T08:00:00Z' : null,
   closedBy: caseState === 'closed' ? 'user-anna' : null,
   closeEffectivenessVerificationId: caseState === 'closed' ? 'verif-1' : null,
@@ -247,6 +360,12 @@ Api.get = (async (url: string) => {
   if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/initiative-impacts`)) {
     return { impacts: INITIATIVE_IMPACTS };
   }
+  if (url.startsWith(`/vnext/results/kpi/scorecards/for-kpi/${KPI_ID}`)) {
+    return { scorecards: [SCORECARD] };
+  }
+  if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/history`)) {
+    return { entries: HISTORY_ENTRIES, nextCursor: null };
+  }
   if (url.startsWith('/vnext/results/kpi/deviation-cases/')) {
     const caseId = url.split('/vnext/results/kpi/deviation-cases/')[1]?.split('?')[0];
     if (caseId !== CASE_ID) {
@@ -280,7 +399,12 @@ Api.get = (async (url: string) => {
 }) as typeof Api.get;
 
 function bump(caseUpdate: Partial<typeof DEVIATION_CASE>) {
-  mutableCase = { ...mutableCase, ...caseUpdate, rowVersion: mutableCase.rowVersion + 1, updatedAt: new Date().toISOString() };
+  mutableCase = {
+    ...mutableCase,
+    ...caseUpdate,
+    rowVersion: mutableCase.rowVersion + 1,
+    updatedAt: new Date().toISOString(),
+  };
   return mutableCase;
 }
 
@@ -297,7 +421,13 @@ Api.post = (async (url: string, data: any) => {
     }
     return { outcome: 'applied', kpi: mutableKpi };
   }
-  if (url.endsWith('/acknowledge')) return { outcome: 'applied', eventId: 'evt-1', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'analysis_required' }) };
+  if (url.endsWith('/acknowledge'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-1',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({ status: 'analysis_required' }),
+    };
   if (url.endsWith('/corrective-actions')) {
     return {
       outcome: 'applied',
@@ -321,9 +451,39 @@ Api.post = (async (url: string, data: any) => {
       },
     };
   }
-  if (url.endsWith('/plan/submit')) return { outcome: 'applied', eventId: 'evt-3', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'plan_submitted', planSubmittedBy: 'user-anna', planSubmittedAt: new Date().toISOString() }) };
-  if (url.endsWith('/plan/approve')) return { outcome: 'applied', eventId: 'evt-4', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'approved', planApprovedBy: 'user-marek', planApprovedAt: new Date().toISOString() }) };
-  if (url.endsWith('/recovery-observation')) return { outcome: 'applied', eventId: 'evt-5', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'recovery_observed', recoveryObservedBy: 'user-piotr-demo', recoveryObservedAt: new Date().toISOString() }) };
+  if (url.endsWith('/plan/submit'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-3',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({
+        status: 'plan_submitted',
+        planSubmittedBy: 'user-anna',
+        planSubmittedAt: new Date().toISOString(),
+      }),
+    };
+  if (url.endsWith('/plan/approve'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-4',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({
+        status: 'approved',
+        planApprovedBy: 'user-marek',
+        planApprovedAt: new Date().toISOString(),
+      }),
+    };
+  if (url.endsWith('/recovery-observation'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-5',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({
+        status: 'recovery_observed',
+        recoveryObservedBy: 'user-piotr-demo',
+        recoveryObservedAt: new Date().toISOString(),
+      }),
+    };
   if (url.endsWith('/effectiveness-verifications')) {
     return {
       outcome: 'applied',
@@ -342,21 +502,70 @@ Api.post = (async (url: string, data: any) => {
       },
     };
   }
-  if (url.endsWith('/close')) return { outcome: 'applied', eventId: 'evt-7', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'closed', closedAt: new Date().toISOString(), closedBy: 'user-anna' }) };
-  if (url.endsWith('/escalate')) return { outcome: 'applied', eventId: 'evt-8', resultingVersion: mutableCase.rowVersion + 1, case: bump({ escalated: true, escalatedAt: new Date().toISOString(), escalatedReason: data?.escalatedReason ?? null }) };
-  if (url.endsWith('/deescalate')) return { outcome: 'applied', eventId: 'evt-9', resultingVersion: mutableCase.rowVersion + 1, case: bump({ escalated: false }) };
+  if (url.endsWith('/close'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-7',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({ status: 'closed', closedAt: new Date().toISOString(), closedBy: 'user-anna' }),
+    };
+  if (url.endsWith('/escalate'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-8',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({
+        escalated: true,
+        escalatedAt: new Date().toISOString(),
+        escalatedReason: data?.escalatedReason ?? null,
+      }),
+    };
+  if (url.endsWith('/deescalate'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-9',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({ escalated: false }),
+    };
   if (url.endsWith('/reopen')) {
-    const reopened = { ...mutableCase, caseId: 'case-1-reopened', status: 'open', reopenedFromCaseId: CASE_ID, rowVersion: 1, closedAt: null, closedBy: null };
+    const reopened = {
+      ...mutableCase,
+      caseId: 'case-1-reopened',
+      status: 'open',
+      reopenedFromCaseId: CASE_ID,
+      rowVersion: 1,
+      closedAt: null,
+      closedBy: null,
+    };
     return { outcome: 'applied', eventId: 'evt-10', resultingVersion: 1, case: reopened };
   }
   if (url === '/vnext/results/kpi/initiative-impacts') {
-    return { outcome: 'applied', eventId: 'evt-11', resultingVersion: 1, impact: { ...INITIATIVE_IMPACTS[0], impactId: 'impact-new', status: 'proposed' } };
+    return {
+      outcome: 'applied',
+      eventId: 'evt-11',
+      resultingVersion: 1,
+      impact: { ...INITIATIVE_IMPACTS[0], impactId: 'impact-new', status: 'proposed' },
+    };
   }
   if (url.match(/\/initiative-impacts\/[^/]+\/commit$/)) {
-    return { outcome: 'applied', eventId: 'evt-12', resultingVersion: 3, impact: { ...INITIATIVE_IMPACTS[0], status: 'committed' } };
+    return {
+      outcome: 'applied',
+      eventId: 'evt-12',
+      resultingVersion: 3,
+      impact: { ...INITIATIVE_IMPACTS[0], status: 'committed' },
+    };
   }
   if (url.match(/\/initiative-impacts\/[^/]+\/review$/)) {
-    return { outcome: 'applied', eventId: 'evt-13', resultingVersion: 3, impact: { ...INITIATIVE_IMPACTS[0], status: 'committed', reviewedAttributionValue: data?.reviewedAttributionValue ?? 9 } };
+    return {
+      outcome: 'applied',
+      eventId: 'evt-13',
+      resultingVersion: 3,
+      impact: {
+        ...INITIATIVE_IMPACTS[0],
+        status: 'committed',
+        reviewedAttributionValue: data?.reviewedAttributionValue ?? 9,
+      },
+    };
   }
   return realPost(url, data);
 }) as typeof Api.post;
@@ -384,7 +593,8 @@ Api.patch = (async (url: string, data: any) => {
       eventId: 'evt-patch',
       resultingVersion: 2,
       action: { actionId: 'action-1', status: data?.status ?? 'active', rowVersion: 2 },
-      caseAutoTransitionedToExecuting: data?.status === 'active' && mutableCase.status === 'approved',
+      caseAutoTransitionedToExecuting:
+        data?.status === 'active' && mutableCase.status === 'approved',
     };
   }
   return realPatch(url, data);
@@ -400,7 +610,14 @@ export default function ResultsVNextKpiToolScreen() {
     <MemoryRouter initialEntries={[initialPath]}>
       <div className="h-screen w-screen">
         <Routes>
-          <Route path={ROUTES.RESULTS_KPI.ROOT} element={<div data-testid="dev-render-back-to-registry" className="p-6 text-c-text">Powrót do rejestru KPI (dev-render marker)</div>} />
+          <Route
+            path={ROUTES.RESULTS_KPI.ROOT}
+            element={
+              <div data-testid="dev-render-back-to-registry" className="p-6 text-c-text">
+                Powrót do rejestru KPI (dev-render marker)
+              </div>
+            }
+          />
           <Route path={ROUTES.RESULTS_KPI.TOOL} element={<KpiToolPage />} />
           <Route path={ROUTES.RESULTS_KPI.DEVIATION_CASE} element={<KpiDeviationCaseSubview />} />
         </Routes>

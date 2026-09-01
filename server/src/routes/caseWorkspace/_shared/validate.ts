@@ -9,7 +9,7 @@
  * that wrapper exactly like a domain-service error.
  */
 
-import type { ZodType, z } from 'zod';
+import type { z, ZodType } from 'zod';
 
 import { AppError } from '../../../utils/ErrorHandler.js';
 
@@ -26,7 +26,12 @@ function formatIssues(error: z.ZodError): Record<string, unknown> {
 export function parseBody<T extends ZodType>(schema: T, body: unknown): z.infer<T> {
   const result = schema.safeParse(body ?? {});
   if (!result.success) {
-    throw new AppError('Request body failed validation.', 400, 'VALIDATION_ERROR', formatIssues(result.error));
+    throw new AppError(
+      'Request body failed validation.',
+      400,
+      'VALIDATION_ERROR',
+      formatIssues(result.error)
+    );
   }
   return result.data;
 }
@@ -34,7 +39,12 @@ export function parseBody<T extends ZodType>(schema: T, body: unknown): z.infer<
 export function parseQuery<T extends ZodType>(schema: T, query: unknown): z.infer<T> {
   const result = schema.safeParse(query ?? {});
   if (!result.success) {
-    throw new AppError('Query parameters failed validation.', 400, 'VALIDATION_ERROR', formatIssues(result.error));
+    throw new AppError(
+      'Query parameters failed validation.',
+      400,
+      'VALIDATION_ERROR',
+      formatIssues(result.error)
+    );
   }
   return result.data;
 }
@@ -42,7 +52,12 @@ export function parseQuery<T extends ZodType>(schema: T, query: unknown): z.infe
 export function parseParams<T extends ZodType>(schema: T, params: unknown): z.infer<T> {
   const result = schema.safeParse(params ?? {});
   if (!result.success) {
-    throw new AppError('Route parameters failed validation.', 400, 'VALIDATION_ERROR', formatIssues(result.error));
+    throw new AppError(
+      'Route parameters failed validation.',
+      400,
+      'VALIDATION_ERROR',
+      formatIssues(result.error)
+    );
   }
   return result.data;
 }

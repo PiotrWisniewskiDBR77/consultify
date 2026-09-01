@@ -284,7 +284,11 @@ export interface SourceArtifact {
   artifactId?: string;
   confidence?: number;
   readiness?:
-    'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
+    | 'ready'
+    | 'partial_ready'
+    | 'missing_sales_data'
+    | 'policy_blocked'
+    | 'insufficient_evidence';
   lineage?: {
     runtime?: string;
     recordId?: string;

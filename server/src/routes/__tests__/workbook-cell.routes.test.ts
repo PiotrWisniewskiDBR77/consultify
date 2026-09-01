@@ -528,11 +528,7 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
   it('recognizes an older replay key after a later successful command', async () => {
     const app = createApp();
     asUser(ORG);
-    const commandA = schemaCommandBody(
-      { type: 'deleteSheet', sheetIndex: 1 },
-      1,
-      'history-a'
-    );
+    const commandA = schemaCommandBody({ type: 'deleteSheet', sheetIndex: 1 }, 1, 'history-a');
     const commandB = schemaCommandBody({ type: 'addSheet', name: 'B' }, 2, 'history-b');
     await request(app).patch(`/api/workbook/${WB_ID}/schema-command`).send(commandA).expect(200);
     await request(app).patch(`/api/workbook/${WB_ID}/schema-command`).send(commandB).expect(200);

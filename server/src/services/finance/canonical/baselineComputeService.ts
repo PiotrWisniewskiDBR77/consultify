@@ -40,6 +40,7 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { type CircularityPeriodResult, solvePeriod } from './baselineCircularitySolver.js';
 import {
   computeCapexDepreciation,
   computeCogsOpex,
@@ -49,10 +50,9 @@ import {
   computeWcDsoDioDpo,
   lookupScheduledAmortization,
 } from './baselineScheduleEngine.js';
-import { solvePeriod, type CircularityPeriodResult } from './baselineCircularitySolver.js';
-import { canonicalPayloadHash } from './contentHash.js';
-import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
+import * as computeJobService from './computeJobService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import * as exceptionLedgerService from './exceptionLedgerService.js';
 
 // ---------------------------------------------------------------------------
@@ -109,31 +109,87 @@ export interface StmtLineCellRow {
 }
 
 export const CANONICAL_CODES = [
-  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
-  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
-  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
-  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
-  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
-  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+  'REVENUE',
+  'COGS',
+  'GROSS_MARGIN',
+  'OPEX',
+  'EBITDA',
+  'DEPRECIATION',
+  'EBIT',
+  'INTEREST_EXPENSE',
+  'TAX_EXPENSE',
+  'NET_INCOME',
+  'CASH',
+  'AR',
+  'INVENTORY',
+  'CURRENT_ASSETS',
+  'FIXED_ASSETS',
+  'TOTAL_ASSETS',
+  'AP',
+  'CURRENT_LIABILITIES',
+  'LONG_TERM_DEBT',
+  'TOTAL_LIABILITIES',
+  'EQUITY',
+  'TOTAL_LIABILITIES_EQUITY',
+  'RETAINED_EARNINGS',
+  'DIVIDENDS_DECLARED',
+  'WORKING_CAPITAL',
+  'CFO',
+  'CFI',
+  'CFF',
+  'NET_CHANGE_CASH',
+  'CAPEX',
+  'FCF',
 ] as const;
 export type CanonicalCode = (typeof CANONICAL_CODES)[number];
 
 export const STATEMENT_TYPE_OF: Record<CanonicalCode, 'P&L' | 'BS' | 'CF'> = {
-  REVENUE: 'P&L', COGS: 'P&L', GROSS_MARGIN: 'P&L', OPEX: 'P&L', EBITDA: 'P&L', DEPRECIATION: 'P&L',
-  EBIT: 'P&L', INTEREST_EXPENSE: 'P&L', TAX_EXPENSE: 'P&L', NET_INCOME: 'P&L',
-  CASH: 'BS', AR: 'BS', INVENTORY: 'BS', CURRENT_ASSETS: 'BS', FIXED_ASSETS: 'BS', TOTAL_ASSETS: 'BS',
-  AP: 'BS', CURRENT_LIABILITIES: 'BS', LONG_TERM_DEBT: 'BS', TOTAL_LIABILITIES: 'BS',
-  EQUITY: 'BS', TOTAL_LIABILITIES_EQUITY: 'BS', RETAINED_EARNINGS: 'BS', DIVIDENDS_DECLARED: 'BS', WORKING_CAPITAL: 'BS',
-  CFO: 'CF', CFI: 'CF', CFF: 'CF', NET_CHANGE_CASH: 'CF', CAPEX: 'CF', FCF: 'CF',
+  REVENUE: 'P&L',
+  COGS: 'P&L',
+  GROSS_MARGIN: 'P&L',
+  OPEX: 'P&L',
+  EBITDA: 'P&L',
+  DEPRECIATION: 'P&L',
+  EBIT: 'P&L',
+  INTEREST_EXPENSE: 'P&L',
+  TAX_EXPENSE: 'P&L',
+  NET_INCOME: 'P&L',
+  CASH: 'BS',
+  AR: 'BS',
+  INVENTORY: 'BS',
+  CURRENT_ASSETS: 'BS',
+  FIXED_ASSETS: 'BS',
+  TOTAL_ASSETS: 'BS',
+  AP: 'BS',
+  CURRENT_LIABILITIES: 'BS',
+  LONG_TERM_DEBT: 'BS',
+  TOTAL_LIABILITIES: 'BS',
+  EQUITY: 'BS',
+  TOTAL_LIABILITIES_EQUITY: 'BS',
+  RETAINED_EARNINGS: 'BS',
+  DIVIDENDS_DECLARED: 'BS',
+  WORKING_CAPITAL: 'BS',
+  CFO: 'CF',
+  CFI: 'CF',
+  CFF: 'CF',
+  NET_CHANGE_CASH: 'CF',
+  CAPEX: 'CF',
+  FCF: 'CF',
 };
 
 /** `driving_schedule_type` per canonical line — NULL for roll-up/solver lines not directly produced by one `schedule_type` (ADR section 4.4). */
 export const DRIVING_SCHEDULE_TYPE: Partial<Record<CanonicalCode, string>> = {
   REVENUE: 'revenue_pvm',
-  COGS: 'cogs_opex', OPEX: 'cogs_opex',
-  AR: 'wc_dso_dio_dpo', INVENTORY: 'wc_dso_dio_dpo', AP: 'wc_dso_dio_dpo',
-  CAPEX: 'capex_depreciation', DEPRECIATION: 'capex_depreciation', FIXED_ASSETS: 'capex_depreciation',
-  LONG_TERM_DEBT: 'debt_maturity', INTEREST_EXPENSE: 'debt_maturity',
+  COGS: 'cogs_opex',
+  OPEX: 'cogs_opex',
+  AR: 'wc_dso_dio_dpo',
+  INVENTORY: 'wc_dso_dio_dpo',
+  AP: 'wc_dso_dio_dpo',
+  CAPEX: 'capex_depreciation',
+  DEPRECIATION: 'capex_depreciation',
+  FIXED_ASSETS: 'capex_depreciation',
+  LONG_TERM_DEBT: 'debt_maturity',
+  INTEREST_EXPENSE: 'debt_maturity',
   TAX_EXPENSE: 'tax_nol',
   RETAINED_EARNINGS: 'equity_re',
 };
@@ -152,7 +208,10 @@ export const DRIVING_SCHEDULE_TYPE: Partial<Record<CanonicalCode, string>> = {
 // typed return shape (loadContext still eventually checks organizationId
 // against finance_baseline_models), but reading another org's row here was
 // unnecessary and un-scoped.
-async function resolveSourceStatementPackVersion(organizationId: string, businessVersionId: string): Promise<string | null> {
+async function resolveSourceStatementPackVersion(
+  organizationId: string,
+  businessVersionId: string
+): Promise<string | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_version_id: string }>(
       `SELECT source_version_id FROM finance_lineage_edges
@@ -195,11 +254,16 @@ export interface LoadedContext {
  * version first (via the scenario's own `MODEL_TO_SCENARIO` lineage edge, ADR WP-D07 section 2)
  * and passes it here — this function itself is completely unaware Prediction exists.
  */
-export async function loadContext(params: RunBaselineComputeParams): Promise<
+export async function loadContext(
+  params: RunBaselineComputeParams
+): Promise<
   | { ok: true; ctx: LoadedContext }
   | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'NO_BASELINE_MODEL_ROW'; message: string }
 > {
-  const sourceStatementPackVersionId = await resolveSourceStatementPackVersion(params.organizationId, params.businessVersionId);
+  const sourceStatementPackVersionId = await resolveSourceStatementPackVersion(
+    params.organizationId,
+    params.businessVersionId
+  );
   if (!sourceStatementPackVersionId) {
     return {
       ok: false,
@@ -214,13 +278,17 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
   // this function already returns for a genuinely nonexistent id — never a
   // raw Postgres error, and never another org's data.
   const model = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<BaselineModelRow>(`SELECT * FROM finance_baseline_models WHERE business_version_id = ? AND organization_id = ?`, [
-      params.businessVersionId,
-      params.organizationId,
-    ])
+    tx.queryOne<BaselineModelRow>(
+      `SELECT * FROM finance_baseline_models WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
+    )
   );
   if (!model) {
-    return { ok: false, code: 'NO_BASELINE_MODEL_ROW', message: `No finance_baseline_models row for ${params.businessVersionId}` };
+    return {
+      ok: false,
+      code: 'NO_BASELINE_MODEL_ROW',
+      message: `No finance_baseline_models row for ${params.businessVersionId}`,
+    };
   }
   const bv = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ artifact_id: string; source_working_revision_id: string | null }>(
@@ -229,57 +297,69 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
     )
   );
   if (!bv) {
-    return { ok: false, code: 'NO_BASELINE_MODEL_ROW', message: `No finance_business_versions row for ${params.businessVersionId}` };
+    return {
+      ok: false,
+      code: 'NO_BASELINE_MODEL_ROW',
+      message: `No finance_business_versions row for ${params.businessVersionId}`,
+    };
   }
 
-  const [lineRows, periodRows, historyLineRows, openingLineRows, scheduleRows, assumptionRows] = await Promise.all([
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string; line_code: string }>(`SELECT id, line_code FROM financial_statement_lines WHERE line_code = ANY(?)`, [
-        [...CANONICAL_CODES],
-      ])
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<PeriodMetaRow>(`SELECT period_id, fiscal_year, fiscal_month, period_start, period_end FROM finance_stmt_periods WHERE organization_id = ?`, [
-        params.organizationId,
-      ])
-    ),
-    // Revenue history — ALL REVENUE actuals for this entity from the source Statement Pack
-    // (needed for PRIOR_YEAR_SAME_PERIOD lookups across the whole forecast horizon).
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ period_id: string; value_decimal: string | null; value_status: string }>(
-        `SELECT sl.period_id, sl.value_decimal, sl.value_status
+  const [lineRows, periodRows, historyLineRows, openingLineRows, scheduleRows, assumptionRows] =
+    await Promise.all([
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string; line_code: string }>(
+          `SELECT id, line_code FROM financial_statement_lines WHERE line_code = ANY(?)`,
+          [[...CANONICAL_CODES]]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<PeriodMetaRow>(
+          `SELECT period_id, fiscal_year, fiscal_month, period_start, period_end FROM finance_stmt_periods WHERE organization_id = ?`,
+          [params.organizationId]
+        )
+      ),
+      // Revenue history — ALL REVENUE actuals for this entity from the source Statement Pack
+      // (needed for PRIOR_YEAR_SAME_PERIOD lookups across the whole forecast horizon).
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ period_id: string; value_decimal: string | null; value_status: string }>(
+          `SELECT sl.period_id, sl.value_decimal, sl.value_status
            FROM finance_stmt_lines sl
            JOIN financial_statement_lines fsl ON fsl.id = sl.canonical_line_id
           WHERE sl.business_version_id = ? AND sl.organization_id = ? AND sl.entity_id = ? AND fsl.line_code = 'REVENUE'
             AND sl.consolidation_scope = 'CONSOLIDATED'`,
-        [sourceStatementPackVersionId, params.organizationId, params.entityId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<StmtLineCellRow>(
-        `SELECT fsl.line_code AS canonical_line_id, sl.value_decimal, sl.value_status
+          [sourceStatementPackVersionId, params.organizationId, params.entityId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<StmtLineCellRow>(
+          `SELECT fsl.line_code AS canonical_line_id, sl.value_decimal, sl.value_status
            FROM finance_stmt_lines sl
            JOIN financial_statement_lines fsl ON fsl.id = sl.canonical_line_id
           WHERE sl.business_version_id = ? AND sl.organization_id = ? AND sl.entity_id = ? AND sl.period_id = ?
             AND sl.consolidation_scope = 'CONSOLIDATED'`,
-        [sourceStatementPackVersionId, params.organizationId, params.entityId, params.openingBalanceSheetPeriodId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<BaselineScheduleRow>(
-        `SELECT schedule_type, entity_id, schedule_item_code, payload FROM finance_baseline_schedules
+          [
+            sourceStatementPackVersionId,
+            params.organizationId,
+            params.entityId,
+            params.openingBalanceSheetPeriodId,
+          ]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<BaselineScheduleRow>(
+          `SELECT schedule_type, entity_id, schedule_item_code, payload FROM finance_baseline_schedules
           WHERE business_version_id = ? AND organization_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.organizationId, params.entityId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<BaselineAssumptionRow>(
-        `SELECT schedule_type, driver_code, entity_id, value_decimal, value_status FROM finance_baseline_assumptions
+          [params.businessVersionId, params.organizationId, params.entityId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<BaselineAssumptionRow>(
+          `SELECT schedule_type, driver_code, entity_id, value_decimal, value_status FROM finance_baseline_assumptions
           WHERE business_version_id = ? AND organization_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.organizationId, params.entityId]
-      )
-    ),
-  ]);
+          [params.businessVersionId, params.organizationId, params.entityId]
+        )
+      ),
+    ]);
 
   const lineIdByCode = new Map<CanonicalCode, string>();
   for (const r of lineRows) lineIdByCode.set(r.line_code as CanonicalCode, r.id);
@@ -293,7 +373,10 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
     const p = periodByCode.get(r.period_id);
     if (!p || p.fiscal_month === null) continue;
     if (r.value_status === 'MISSING' || r.value_decimal === null) continue;
-    revenueHistoryByFiscalYearMonth.set(`${p.fiscal_year}-${p.fiscal_month}`, Number(r.value_decimal));
+    revenueHistoryByFiscalYearMonth.set(
+      `${p.fiscal_year}-${p.fiscal_month}`,
+      Number(r.value_decimal)
+    );
   }
   void revenueLineId;
 
@@ -333,9 +416,14 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
   };
 }
 
-export function requireAssumption(ctx: LoadedContext, scheduleType: string, driverCode: string): number {
+export function requireAssumption(
+  ctx: LoadedContext,
+  scheduleType: string,
+  driverCode: string
+): number {
   const v = ctx.assumptions.get(`${scheduleType}::${driverCode}`);
-  if (v === undefined) throw new Error(`baselineComputeService: missing assumption ${scheduleType}::${driverCode}`);
+  if (v === undefined)
+    throw new Error(`baselineComputeService: missing assumption ${scheduleType}::${driverCode}`);
   return v;
 }
 
@@ -366,7 +454,12 @@ export interface PeriodComputeSummary {
 }
 
 export type RunBaselineComputeResult =
-  | { ok: true; job: ComputeJobRow; periodsComputed: number; monthlyResults: PeriodComputeSummary[] }
+  | {
+      ok: true;
+      job: ComputeJobRow;
+      periodsComputed: number;
+      monthlyResults: PeriodComputeSummary[];
+    }
   | {
       ok: false;
       code:
@@ -389,7 +482,9 @@ export type RunBaselineComputeResult =
       partialResults?: PeriodComputeSummary[];
     };
 
-export async function runBaselineCompute(params: RunBaselineComputeParams): Promise<RunBaselineComputeResult> {
+export async function runBaselineCompute(
+  params: RunBaselineComputeParams
+): Promise<RunBaselineComputeResult> {
   const loaded = await loadContext(params);
   if (!loaded.ok) return loaded;
   const ctx = loaded.ctx;
@@ -405,7 +500,11 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   const debtSchedules = ctx.schedulesByType.get('debt_maturity') ?? [];
   const debtSchedule = debtSchedules[0]; // P0: single facility per entity (documented scope boundary)
   if (!debtSchedule) {
-    return { ok: false, code: 'MISSING_DEBT_MATURITY_SCHEDULE', message: `No debt_maturity finance_baseline_schedules row for entity ${params.entityId}` };
+    return {
+      ok: false,
+      code: 'MISSING_DEBT_MATURITY_SCHEDULE',
+      message: `No debt_maturity finance_baseline_schedules row for entity ${params.entityId}`,
+    };
   }
   const debtPayload = debtSchedule.payload as {
     principal_opening: number;
@@ -423,7 +522,13 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   //     this module uses the more literal 'BASELINE_COMPUTE' per the WP-D06 brief's own instruction,
   //     documented divergence — see WP-D06 report). ---
   const inputRevisionHash = createHash('sha256')
-    .update(JSON.stringify({ businessVersionId: params.businessVersionId, entityId: params.entityId, forecastPeriodIds: params.forecastPeriodIds }))
+    .update(
+      JSON.stringify({
+        businessVersionId: params.businessVersionId,
+        entityId: params.entityId,
+        forecastPeriodIds: params.forecastPeriodIds,
+      })
+    )
     .digest('hex');
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -467,9 +572,10 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     // directly, the same pattern `runStandardBase()` in predictionComputeService.ts already
     // documents for its own passthrough case.
     const priorPeriods = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ n: string }>(`SELECT count(DISTINCT period_id)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`, [
-        params.businessVersionId,
-      ])
+      tx.queryOne<{ n: string }>(
+        `SELECT count(DISTINCT period_id)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`,
+        [params.businessVersionId]
+      )
     );
     return {
       ok: true,
@@ -498,12 +604,17 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
       for (let i = 0; i < params.forecastPeriodIds.length; i++) {
         const periodId = params.forecastPeriodIds[i];
         const period = ctx.periodByCode.get(periodId);
-        if (!period || period.fiscal_month === null) throw new Error(`baselineComputeService: period ${periodId} not found or not a MONTH period`);
+        if (!period || period.fiscal_month === null)
+          throw new Error(
+            `baselineComputeService: period ${periodId} not found or not a MONTH period`
+          );
 
         const priorYearKey = `${period.fiscal_year - 1}-${period.fiscal_month}`;
         const priorYearRevenue = ctx.revenueHistoryByFiscalYearMonth.get(priorYearKey);
         if (priorYearRevenue === undefined) {
-          throw new Error(`baselineComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey} (period ${periodId})`);
+          throw new Error(
+            `baselineComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey} (period ${periodId})`
+          );
         }
 
         const revenue = computeRevenuePvm({
@@ -532,10 +643,13 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
           dioDays: requireAssumption(ctx, 'wc_dso_dio_dpo', 'DIO_DAYS'),
           dpoDays: requireAssumption(ctx, 'wc_dso_dio_dpo', 'DPO_DAYS'),
         });
-        const deltaWorkingCapital = (ar - priorAr) + (inventory - priorInventory) - (ap - priorAp);
+        const deltaWorkingCapital = ar - priorAr + (inventory - priorInventory) - (ap - priorAp);
 
         const statutoryTaxRate = requireAssumption(ctx, 'tax_nol', 'STATUTORY_TAX_RATE_PCT');
-        const scheduledAmortization = lookupScheduledAmortization({ scheduledPrincipalByMonth: debtPayload.amortization_schedule }, i);
+        const scheduledAmortization = lookupScheduledAmortization(
+          { scheduledPrincipalByMonth: debtPayload.amortization_schedule },
+          i
+        );
 
         const solved: CircularityPeriodResult = solvePeriod({
           priorCash,
@@ -570,8 +684,15 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
                  (id, organization_id, business_version_id, compute_job_id, period_id, iterations_used, converged, final_residual_currency, tolerance_applied)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
-                uuidv4(), params.organizationId, params.businessVersionId, runningJob.id, periodId,
-                solved.iterationsUsed, solved.converged, solved.finalResidual, Number(ctx.model.circularity_tolerance_currency),
+                uuidv4(),
+                params.organizationId,
+                params.businessVersionId,
+                runningJob.id,
+                periodId,
+                solved.iterationsUsed,
+                solved.converged,
+                solved.finalResidual,
+                Number(ctx.model.circularity_tolerance_currency),
               ]
             )
           );
@@ -581,7 +702,12 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
             businessVersionId: params.businessVersionId,
             severity: 'SECURITY',
             blockingCategory: 'UNDEFINED_MATH',
-            sourceRef: { periodId, iterationsUsed: solved.iterationsUsed, residual: solved.finalResidual, entityId: params.entityId },
+            sourceRef: {
+              periodId,
+              iterationsUsed: solved.iterationsUsed,
+              residual: solved.finalResidual,
+              entityId: params.entityId,
+            },
             raisedBy: params.requestedByUserId,
             reasonCode: 'BASELINE_CIRCULARITY_NOT_CONVERGED',
           });
@@ -594,8 +720,15 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
              (id, organization_id, business_version_id, compute_job_id, period_id, iterations_used, converged, final_residual_currency, tolerance_applied)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            uuidv4(), params.organizationId, params.businessVersionId, runningJob.id, periodId,
-            solved.iterationsUsed, solved.converged, solved.finalResidual, Number(ctx.model.circularity_tolerance_currency),
+            uuidv4(),
+            params.organizationId,
+            params.businessVersionId,
+            runningJob.id,
+            periodId,
+            solved.iterationsUsed,
+            solved.converged,
+            solved.finalResidual,
+            Number(ctx.model.circularity_tolerance_currency),
           ]
         );
 
@@ -604,10 +737,16 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
         //     re-derivation from the solver's own pretaxIncome, not a second source of truth. ---
         const taxCheck = computeTaxNol({ pretaxIncome: solved.pretaxIncome, statutoryTaxRate });
         if (Math.abs(taxCheck.netIncome - solved.netIncome) > 1e-6) {
-          throw new Error(`baselineComputeService: internal inconsistency, solver NI ${solved.netIncome} != recomputed NI ${taxCheck.netIncome} for ${periodId}`);
+          throw new Error(
+            `baselineComputeService: internal inconsistency, solver NI ${solved.netIncome} != recomputed NI ${taxCheck.netIncome} for ${periodId}`
+          );
         }
 
-        const { closingRetainedEarnings } = computeEquityRe({ priorRetainedEarnings, netIncome: solved.netIncome, dividendsDeclared: 0 });
+        const { closingRetainedEarnings } = computeEquityRe({
+          priorRetainedEarnings,
+          netIncome: solved.netIncome,
+          dividendsDeclared: 0,
+        });
         const equity = otherEquityConst + closingRetainedEarnings;
         const currentAssets = solved.cash + ar + inventory;
         const totalAssets = currentAssets + closingFixedAssets;
@@ -628,17 +767,44 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
         }
 
         const values: Partial<Record<CanonicalCode, number>> = {
-          REVENUE: revenue, COGS: cogs, GROSS_MARGIN: grossMargin, OPEX: opex, EBITDA: ebitda, DEPRECIATION: depreciation, EBIT: ebit,
-          INTEREST_EXPENSE: solved.interestExpense, TAX_EXPENSE: solved.taxExpense, NET_INCOME: solved.netIncome,
-          CASH: solved.cash, AR: ar, INVENTORY: inventory, CURRENT_ASSETS: currentAssets, FIXED_ASSETS: closingFixedAssets, TOTAL_ASSETS: totalAssets,
-          AP: ap, CURRENT_LIABILITIES: currentLiabilities, LONG_TERM_DEBT: solved.debt, TOTAL_LIABILITIES: totalLiabilities,
-          EQUITY: equity, TOTAL_LIABILITIES_EQUITY: totalLiabilitiesEquity, RETAINED_EARNINGS: closingRetainedEarnings, WORKING_CAPITAL: workingCapital,
-          CFO: solved.cfo, CFI: solved.cfi, CFF: solved.cff, NET_CHANGE_CASH: solved.netChangeCash, CAPEX: capex, FCF: fcf,
+          REVENUE: revenue,
+          COGS: cogs,
+          GROSS_MARGIN: grossMargin,
+          OPEX: opex,
+          EBITDA: ebitda,
+          DEPRECIATION: depreciation,
+          EBIT: ebit,
+          INTEREST_EXPENSE: solved.interestExpense,
+          TAX_EXPENSE: solved.taxExpense,
+          NET_INCOME: solved.netIncome,
+          CASH: solved.cash,
+          AR: ar,
+          INVENTORY: inventory,
+          CURRENT_ASSETS: currentAssets,
+          FIXED_ASSETS: closingFixedAssets,
+          TOTAL_ASSETS: totalAssets,
+          AP: ap,
+          CURRENT_LIABILITIES: currentLiabilities,
+          LONG_TERM_DEBT: solved.debt,
+          TOTAL_LIABILITIES: totalLiabilities,
+          EQUITY: equity,
+          TOTAL_LIABILITIES_EQUITY: totalLiabilitiesEquity,
+          RETAINED_EARNINGS: closingRetainedEarnings,
+          WORKING_CAPITAL: workingCapital,
+          CFO: solved.cfo,
+          CFI: solved.cfi,
+          CFF: solved.cff,
+          NET_CHANGE_CASH: solved.netChangeCash,
+          CAPEX: capex,
+          FCF: fcf,
         };
 
         for (const code of CANONICAL_CODES) {
           const lineId = ctx.lineIdByCode.get(code);
-          if (!lineId) throw new Error(`baselineComputeService: canonical line ${code} not found in financial_statement_lines`);
+          if (!lineId)
+            throw new Error(
+              `baselineComputeService: canonical line ${code} not found in financial_statement_lines`
+            );
 
           const isDividends = code === 'DIVIDENDS_DECLARED';
           const value = isDividends ? null : values[code]!;
@@ -651,8 +817,19 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
                value_kind, driving_schedule_type, created_by
              ) VALUES (?, ?, ?, ?, ?, ?, ?, 'CONSOLIDATED', ?, ?, ?, ?, 'UNITS', 1, 'FORECAST', ?, ?)`,
             [
-              uuidv4(), params.organizationId, params.businessVersionId, STATEMENT_TYPE_OF[code], lineId, params.entityId, periodId,
-              valueStatus, value, 'PLN', 'PLN', DRIVING_SCHEDULE_TYPE[code] ?? null, params.requestedByUserId,
+              uuidv4(),
+              params.organizationId,
+              params.businessVersionId,
+              STATEMENT_TYPE_OF[code],
+              lineId,
+              params.entityId,
+              periodId,
+              valueStatus,
+              value,
+              'PLN',
+              'PLN',
+              DRIVING_SCHEDULE_TYPE[code] ?? null,
+              params.requestedByUserId,
             ]
           );
         }
@@ -676,7 +853,11 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
       }
     });
   } catch (error: any) {
-    await computeJobService.failJob({ jobId: runningJob.id, organizationId: params.organizationId, error: String(error?.message || error) });
+    await computeJobService.failJob({
+      jobId: runningJob.id,
+      organizationId: params.organizationId,
+      error: String(error?.message || error),
+    });
     if (error instanceof BaselineNonConvergenceError) {
       return {
         ok: false,
@@ -720,7 +901,9 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
       message: `baselineComputeService: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
+  const finalJob = completed.ok
+    ? completed.job
+    : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
   return { ok: true, job: finalJob, periodsComputed: monthlyResults.length, monthlyResults };
 }
 
@@ -741,19 +924,35 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
 
 /** `finance_baseline_assumptions.schedule_type` CHECK values (migration `20260809_finance_v3_d05_baseline_01_tables.sql`). */
 export const BASELINE_SCHEDULE_TYPES = [
-  'revenue_pvm', 'headcount', 'cogs_opex', 'wc_dso_dio_dpo',
-  'capex_depreciation', 'leases', 'debt_maturity', 'tax_nol', 'equity_re',
+  'revenue_pvm',
+  'headcount',
+  'cogs_opex',
+  'wc_dso_dio_dpo',
+  'capex_depreciation',
+  'leases',
+  'debt_maturity',
+  'tax_nol',
+  'equity_re',
 ] as const;
 export type BaselineScheduleType = (typeof BASELINE_SCHEDULE_TYPES)[number];
 
 /** `finance_baseline_assumptions.rule` CHECK values. */
 export const BASELINE_ASSUMPTION_RULES = [
-  'HISTORICAL_AVERAGE', 'GROWTH_RATE', 'FIXED_VALUE', 'LINKED_TO_ANALYSIS_KPI', 'FORMULA', 'MANUAL_OVERRIDE',
+  'HISTORICAL_AVERAGE',
+  'GROWTH_RATE',
+  'FIXED_VALUE',
+  'LINKED_TO_ANALYSIS_KPI',
+  'FORMULA',
+  'MANUAL_OVERRIDE',
 ] as const;
 export type BaselineAssumptionRule = (typeof BASELINE_ASSUMPTION_RULES)[number];
 
 /** `finance_baseline_assumptions.quality` CHECK values. Default 'ESTIMATED' at the DB layer. */
-export const BASELINE_ASSUMPTION_QUALITIES = ['CONFIRMED', 'ESTIMATED', 'DEGRADED_INSUFFICIENT_HISTORY'] as const;
+export const BASELINE_ASSUMPTION_QUALITIES = [
+  'CONFIRMED',
+  'ESTIMATED',
+  'DEGRADED_INSUFFICIENT_HISTORY',
+] as const;
 export type BaselineAssumptionQuality = (typeof BASELINE_ASSUMPTION_QUALITIES)[number];
 
 export interface BaselineAssumptionListRow {
@@ -836,7 +1035,9 @@ export interface UpsertAssumptionsBatchParams {
  * `statementMappingService.mapStatementLines`'s file header documents for
  * its own one-transaction batch write).
  */
-export async function upsertAssumptionsBatch(params: UpsertAssumptionsBatchParams): Promise<BaselineAssumptionListRow[]> {
+export async function upsertAssumptionsBatch(
+  params: UpsertAssumptionsBatchParams
+): Promise<BaselineAssumptionListRow[]> {
   return withPinnedPostgresTransaction(async (tx) => {
     const written: BaselineAssumptionListRow[] = [];
     for (const a of params.assumptions) {
@@ -951,7 +1152,10 @@ export async function listBaselineOutputs(
 }
 
 class BaselineNonConvergenceError extends Error {
-  constructor(public readonly periodId: string, public readonly partialResults: PeriodComputeSummary[]) {
+  constructor(
+    public readonly periodId: string,
+    public readonly partialResults: PeriodComputeSummary[]
+  ) {
     super(`baseline circularity solver did not converge for period ${periodId}`);
   }
 }

@@ -14,8 +14,9 @@
  * produkcyjnego ekranu.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_ANALYSIS_WORKSPACE_FLAG_ID = 'financeAnalysisWorkspaceV1';
 

@@ -41,27 +41,45 @@ function baseProps(overrides: Partial<React.ComponentProps<typeof InterviewFocus
 
 describe('InterviewFocusPanel — evidence tone never reads as critical for normal gaps', () => {
   it('evidenceState "missing" uses the warning token, never the danger token', () => {
-    render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'missing' })] })} />);
+    render(
+      <InterviewFocusPanel
+        {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'missing' })] })}
+      />
+    );
     const badge = screen.getByText('Brak dowodu').closest('span')!;
     expect(badge.className).toMatch(/text-c-warning/);
     expect(badge.className).not.toMatch(/text-c-danger/);
   });
 
   it('evidenceState "weak" uses the warning token, never the danger token', () => {
-    render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'weak' })] })} />);
+    render(
+      <InterviewFocusPanel
+        {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'weak' })] })}
+      />
+    );
     const badge = screen.getByText('Dowód słaby').closest('span')!;
     expect(badge.className).toMatch(/text-c-warning/);
     expect(badge.className).not.toMatch(/text-c-danger/);
   });
 
   it('evidenceState "conflicting" is the ONE legitimate danger case — contradicts and blocks freeze', () => {
-    render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'conflicting' })] })} />);
+    render(
+      <InterviewFocusPanel
+        {...baseProps({
+          questions: [makeInterviewFocusQuestion({ evidenceState: 'conflicting' })],
+        })}
+      />
+    );
     const badge = screen.getByText('Dowody sprzeczne').closest('span')!;
     expect(badge.className).toMatch(/text-c-danger/);
   });
 
   it('evidenceState "complete" uses the success token', () => {
-    render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'complete' })] })} />);
+    render(
+      <InterviewFocusPanel
+        {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'complete' })] })}
+      />
+    );
     const badge = screen.getByText('Dowód kompletny').closest('span')!;
     expect(badge.className).toMatch(/text-c-success/);
   });
@@ -72,7 +90,9 @@ describe('InterviewFocusPanel — three independent axes render as three distinc
     render(
       <InterviewFocusPanel
         {...baseProps({
-          questions: [makeInterviewFocusQuestion({ evidenceState: 'weak', evidenceStrength: 'E2' })],
+          questions: [
+            makeInterviewFocusQuestion({ evidenceState: 'weak', evidenceStrength: 'E2' }),
+          ],
         })}
       />
     );

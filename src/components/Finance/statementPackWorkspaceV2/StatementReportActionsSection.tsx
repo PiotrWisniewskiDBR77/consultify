@@ -23,7 +23,12 @@ import React from 'react';
 
 export type ReportDraftStageStatus = 'not_started' | 'in_progress' | 'ready' | 'failed';
 export type ReportOpenStageStatus = 'blocked' | 'available' | 'opened';
-export type ReportPublishStageStatus = 'blocked' | 'available' | 'in_progress' | 'published' | 'failed';
+export type ReportPublishStageStatus =
+  | 'blocked'
+  | 'available'
+  | 'in_progress'
+  | 'published'
+  | 'failed';
 
 export interface StatementReportActionsSectionProps {
   draftStatus: ReportDraftStageStatus;
@@ -56,9 +61,19 @@ const TONE_CLASSES: Record<StepDescriptor['tone'], string> = {
   pending: 'bg-c-surface-raised text-c-text-muted',
 };
 
-export function StatementReportActionsSection(props: StatementReportActionsSectionProps): React.ReactElement {
-  const { draftStatus, draftError, openStatus, publishStatus, publishError, onGenerateDraft, onOpenResult, onPublish } =
-    props;
+export function StatementReportActionsSection(
+  props: StatementReportActionsSectionProps
+): React.ReactElement {
+  const {
+    draftStatus,
+    draftError,
+    openStatus,
+    publishStatus,
+    publishError,
+    onGenerateDraft,
+    onOpenResult,
+    onPublish,
+  } = props;
 
   const steps: StepDescriptor[] = [
     {
@@ -69,7 +84,8 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
       tone: draftStatusTone(draftStatus),
       disabled: draftStatus === 'in_progress',
       disabledReason: draftStatus === 'in_progress' ? 'Generowanie w toku…' : null,
-      buttonLabel: draftStatus === 'ready' || draftStatus === 'failed' ? 'Generuj ponownie' : 'Generuj szkic',
+      buttonLabel:
+        draftStatus === 'ready' || draftStatus === 'failed' ? 'Generuj ponownie' : 'Generuj szkic',
       onClick: onGenerateDraft,
     },
     {
@@ -89,7 +105,8 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
       title: 'Opublikuj / Dołącz do raportu',
       statusText: publishStatusText(publishStatus, openStatus, publishError),
       tone: publishStatusTone(publishStatus),
-      disabled: openStatus !== 'opened' || publishStatus === 'in_progress' || publishStatus === 'published',
+      disabled:
+        openStatus !== 'opened' || publishStatus === 'in_progress' || publishStatus === 'published',
       disabledReason:
         openStatus !== 'opened'
           ? 'Najpierw otwórz wynik (krok 2).'
@@ -98,7 +115,10 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
             : publishStatus === 'published'
               ? 'Już opublikowano.'
               : null,
-      buttonLabel: publishStatus === 'failed' ? 'Spróbuj opublikować ponownie' : 'Opublikuj / Dołącz do raportu',
+      buttonLabel:
+        publishStatus === 'failed'
+          ? 'Spróbuj opublikować ponownie'
+          : 'Opublikuj / Dołącz do raportu',
       onClick: onPublish,
     },
   ];
@@ -106,7 +126,11 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
   return (
     <div className="divide-y divide-c-border-subtle" data-testid="statement-report-actions-section">
       {steps.map((step) => (
-        <div key={step.id} className="flex flex-col gap-1.5 px-3 py-2.5" data-testid={`statement-report-step-${step.id}`}>
+        <div
+          key={step.id}
+          className="flex flex-col gap-1.5 px-3 py-2.5"
+          data-testid={`statement-report-step-${step.id}`}
+        >
           <div className="flex items-center gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-c-surface-raised text-[10px] font-bold text-c-text-secondary">
               {step.index}
@@ -130,7 +154,10 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
               {step.buttonLabel}
             </button>
             {step.disabledReason && (
-              <span className="text-[10px] text-c-text-muted" data-testid={`statement-report-step-reason-${step.id}`}>
+              <span
+                className="text-[10px] text-c-text-muted"
+                data-testid={`statement-report-step-reason-${step.id}`}
+              >
                 {step.disabledReason}
               </span>
             )}
@@ -167,7 +194,10 @@ function draftStatusTone(status: ReportDraftStageStatus): StepDescriptor['tone']
   }
 }
 
-function openStatusText(status: ReportOpenStageStatus, draftStatus: ReportDraftStageStatus): string {
+function openStatusText(
+  status: ReportOpenStageStatus,
+  draftStatus: ReportDraftStageStatus
+): string {
   if (status === 'opened') return 'Otwarty';
   if (status === 'available') return 'Gotowy do otwarcia';
   return draftStatus === 'ready' ? 'Zablokowany' : 'Czeka na szkic';

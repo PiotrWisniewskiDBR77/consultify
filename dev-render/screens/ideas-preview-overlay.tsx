@@ -308,9 +308,7 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
                             </span>
                           ))}
                         </div>
-                        <span className="shrink-0">
-                          {formatListDate(idea.updatedAt)}
-                        </span>
+                        <span className="shrink-0">{formatListDate(idea.updatedAt)}</span>
                       </div>
                     </div>
                   );

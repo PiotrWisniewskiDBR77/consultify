@@ -37,7 +37,10 @@ describe('agent plan scheduler context gate', () => {
     process.env.ENABLE_AI_TASKS_WORKER = 'false';
     const { runAgentPlanScheduler } = await import('../agentPlanSchedulerJob.js');
     expect(await runAgentPlanScheduler(true)).toEqual({
-      plansDispatched: 0, waitStepsResumed: 0, contextBlocked: 0, errors: 0,
+      plansDispatched: 0,
+      waitStepsResumed: 0,
+      contextBlocked: 0,
+      errors: 0,
     });
     expect(planner.listScheduledPlansDue).not.toHaveBeenCalled();
     expect(dispatchAgentTask).not.toHaveBeenCalled();

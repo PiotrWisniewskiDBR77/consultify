@@ -162,8 +162,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
       toast.error(t('ideas.table.selectSourceAndTarget', 'Select source and target'));
       return;
     }
-    const resolvedFieldMapping =
-      Object.keys(fieldMapping).length > 0 ? fieldMapping : { '*': '*' };
+    const resolvedFieldMapping = Object.keys(fieldMapping).length > 0 ? fieldMapping : { '*': '*' };
     runSyncAction(
       'table.sync.create',
       async () => {

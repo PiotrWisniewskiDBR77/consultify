@@ -61,7 +61,9 @@ vi.mock('../../../services/resultsVnext/roi/roiCaseCommands.js', async (importOr
 
 vi.mock('../../../services/resultsVnext/roi/roiBaselineCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/roi/roiBaselineCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiBaselineCommands.js')
+    >();
   return {
     ...actual,
     captureOrUpdateBaseline: (...args: unknown[]) => mockCaptureOrUpdateBaseline(...args),
@@ -84,19 +86,27 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
 // everything else. publishRoiGovernedVisibilityPolicy is intentionally
 // left unmocked (falls through to the real, unused export) since no test
 // in this file calls POST /visibility-policy.
-const mockResolveRoiGovernedVisibility = vi.fn().mockResolvedValue({ allow: true, reason: 'OWNER' });
+const mockResolveRoiGovernedVisibility = vi
+  .fn()
+  .mockResolvedValue({ allow: true, reason: 'OWNER' });
 vi.mock('../../../services/resultsVnext/platform/visibilityResolver.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')
+    >();
   return {
     ...actual,
     resolveRoiGovernedVisibility: (...args: unknown[]) => mockResolveRoiGovernedVisibility(...args),
   };
 });
 
-const { RoiCaseNoActiveVisibilityPolicyError, RoiCaseNotReadyForReviewError, RoiCaseValidationError } =
-  await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
-const { RoiBaselineFrozenError } = await import('../../../services/resultsVnext/roi/roiBaselineCommands.js');
+const {
+  RoiCaseNoActiveVisibilityPolicyError,
+  RoiCaseNotReadyForReviewError,
+  RoiCaseValidationError,
+} = await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
+const { RoiBaselineFrozenError } =
+  await import('../../../services/resultsVnext/roi/roiBaselineCommands.js');
 const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
   await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
@@ -255,14 +265,20 @@ describe('POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> g
     expect(response.body.code).toBe('NOT_FOUND');
   });
 
-  it('AMD-FLOW-ROI-VISIBILITY-002: 404s GET when the governed gate denies — same NOT_FOUND shape as an ' +
-    'absent case, never a 403, and never calls the repository at all', async () => {
-    mockResolveRoiGovernedVisibility.mockResolvedValueOnce({ allow: false, reason: 'ORDINARY_MEMBER_DENIED' });
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}`);
-    expect(response.status).toBe(404);
-    expect(response.body.code).toBe('NOT_FOUND');
-    expect(mockGetRoiCase).not.toHaveBeenCalled();
-  });
+  it(
+    'AMD-FLOW-ROI-VISIBILITY-002: 404s GET when the governed gate denies — same NOT_FOUND shape as an ' +
+      'absent case, never a 403, and never calls the repository at all',
+    async () => {
+      mockResolveRoiGovernedVisibility.mockResolvedValueOnce({
+        allow: false,
+        reason: 'ORDINARY_MEMBER_DENIED',
+      });
+      const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}`);
+      expect(response.status).toBe(404);
+      expect(response.body.code).toBe('NOT_FOUND');
+      expect(mockGetRoiCase).not.toHaveBeenCalled();
+    }
+  );
 
   it('400s create when required fields are missing (Zod validation)', async () => {
     const response = await request(createApp())
@@ -273,9 +289,7 @@ describe('POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> g
   });
 
   it('maps RoiCaseNoActiveVisibilityPolicyError to 409', async () => {
-    mockCreateRoiCase.mockRejectedValue(
-      new RoiCaseNoActiveVisibilityPolicyError('org-1', 'roi')
-    );
+    mockCreateRoiCase.mockRejectedValue(new RoiCaseNoActiveVisibilityPolicyError('org-1', 'roi'));
     const response = await request(createApp()).post('/api/vnext/results/roi/cases').send({
       initiativeId: 'initiative-1',
       title: 'Case title',
@@ -309,14 +323,20 @@ describe('GET /api/vnext/results/roi/cases — listRoiCases', () => {
     });
   });
 
-  it('AMD-FLOW-ROI-VISIBILITY-002: returns an empty list, never a 403, when the governed gate denies — ' +
-    'and never calls the repository at all', async () => {
-    mockResolveRoiGovernedVisibility.mockResolvedValueOnce({ allow: false, reason: 'NO_GOVERNED_POLICY' });
-    const response = await request(createApp()).get('/api/vnext/results/roi/cases');
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ cases: [] });
-    expect(mockListRoiCases).not.toHaveBeenCalled();
-  });
+  it(
+    'AMD-FLOW-ROI-VISIBILITY-002: returns an empty list, never a 403, when the governed gate denies — ' +
+      'and never calls the repository at all',
+    async () => {
+      mockResolveRoiGovernedVisibility.mockResolvedValueOnce({
+        allow: false,
+        reason: 'NO_GOVERNED_POLICY',
+      });
+      const response = await request(createApp()).get('/api/vnext/results/roi/cases');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ cases: [] });
+      expect(mockListRoiCases).not.toHaveBeenCalled();
+    }
+  );
 
   // ==========================================
   // DEC-77 dozbrojenie / DEC-93 (§S.2, Z17 extension) — q passthrough.
@@ -354,9 +374,7 @@ describe('GET /api/vnext/results/roi/cases — listRoiCases', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ cases: [] });
-    expect(mockListRoiCases).toHaveBeenCalledWith(
-      expect.objectContaining({ q: 'nonexistent' })
-    );
+    expect(mockListRoiCases).toHaveBeenCalledWith(expect.objectContaining({ q: 'nonexistent' }));
   });
 
   it('a q shorter than 2 characters 400s (Zod ListRoiCasesQuerySchema) before the repository is ever called', async () => {
@@ -400,10 +418,14 @@ describe('PATCH /api/vnext/results/roi/cases/:caseId — updateRoiCaseDetails', 
   it('updates details and maps STALE_VERSION to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
     mockUpdateRoiCaseDetails.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 1,
+        }
+      )
     );
     const response = await request(createApp())
       .patch(`/api/vnext/results/roi/cases/${CASE_ID}`)
@@ -436,7 +458,11 @@ describe('POST /api/vnext/results/roi/cases/:caseId/archive — archiveRoiCase',
       outcome: 'applied',
       eventId: 'evt-2',
       resultingVersion: 2,
-      result: caseFixture({ archivedAt: '2026-02-01T00:00:00.000Z', archivedBy: 'user-1', rowVersion: 2 }),
+      result: caseFixture({
+        archivedAt: '2026-02-01T00:00:00.000Z',
+        archivedBy: 'user-1',
+        rowVersion: 2,
+      }),
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/archive`)
@@ -453,7 +479,11 @@ describe('POST /api/vnext/results/roi/cases/:caseId/archive — archiveRoiCase',
       outcome: 'applied',
       eventId: 'evt-3',
       resultingVersion: 2,
-      result: caseFixture({ archivedAt: '2026-02-01T00:00:00.000Z', archivedBy: 'user-1', rowVersion: 2 }),
+      result: caseFixture({
+        archivedAt: '2026-02-01T00:00:00.000Z',
+        archivedBy: 'user-1',
+        rowVersion: 2,
+      }),
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/archive`)
@@ -524,14 +554,18 @@ describe('POST .../transitions/start-modeling | ready-for-review', () => {
 describe('GET/PUT .../cases/:caseId/baseline', () => {
   it('GET returns the baseline', async () => {
     mockGetRoiBaseline.mockResolvedValue(baselineFixture());
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/baseline`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/baseline`
+    );
     expect(response.status).toBe(200);
     expect(response.body.baseline.baselineId).toBe(BASELINE_ID);
   });
 
   it('GET 404s when the baseline is not found/visible', async () => {
     mockGetRoiBaseline.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/baseline`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/baseline`
+    );
     expect(response.status).toBe(404);
   });
 
@@ -554,9 +588,7 @@ describe('GET/PUT .../cases/:caseId/baseline', () => {
 
   it('PUT maps RoiBaselineFrozenError to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
-    mockCaptureOrUpdateBaseline.mockRejectedValue(
-      new RoiBaselineFrozenError(CASE_ID, BASELINE_ID)
-    );
+    mockCaptureOrUpdateBaseline.mockRejectedValue(new RoiBaselineFrozenError(CASE_ID, BASELINE_ID));
     const response = await request(createApp())
       .put(`/api/vnext/results/roi/cases/${CASE_ID}/baseline`)
       .send({ expectedVersion: 1, currentMeasuredValue: 42 });

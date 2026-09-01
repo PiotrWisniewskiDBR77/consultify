@@ -92,22 +92,8 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import * as artifactLinkService from '../../artifactLinkService.js';
 import { getDocumentArtifact } from '../../../documentStudio/documentStudioService.js';
 import { createNativeDeck as realCreateNativeDeck } from '../../../presentationGeneratorService.js';
-import {
-  DOCUMENT_CREATE_CAPABILITY_ID,
-  DOCUMENT_CREATE_CAPABILITY_VERSION,
-  PRESENTATION_CREATE_CAPABILITY_ID,
-  PRESENTATION_CREATE_CAPABILITY_VERSION,
-  buildDocumentCreateBinding,
-  buildPresentationCreateBinding,
-  documentCreateRegistrationInput,
-  presentationCreateRegistrationInput,
-  type DocumentsAdapterDeps,
-  type PresentationAdapterDeps,
-} from '../documentsAdapter.js';
 import {
   buildEnvelope,
   seedCaseFixture,
@@ -115,6 +101,20 @@ import {
   seedMemberedUser,
   teardownCaseFixture,
 } from '../../__tests__/adapters/_fixtures.js';
+import * as artifactLinkService from '../../artifactLinkService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import {
+  buildDocumentCreateBinding,
+  buildPresentationCreateBinding,
+  DOCUMENT_CREATE_CAPABILITY_ID,
+  DOCUMENT_CREATE_CAPABILITY_VERSION,
+  documentCreateRegistrationInput,
+  type DocumentsAdapterDeps,
+  PRESENTATION_CREATE_CAPABILITY_ID,
+  PRESENTATION_CREATE_CAPABILITY_VERSION,
+  type PresentationAdapterDeps,
+  presentationCreateRegistrationInput,
+} from '../documentsAdapter.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -238,9 +238,10 @@ function resetPresentationTestBinding(deps: PresentationAdapterDeps = {}): void 
 let control: Pool;
 
 async function wave5CountForOrg(orgId: string): Promise<number> {
-  const result = await control.query(`SELECT count(*)::int AS n FROM wave5_artifacts WHERE organization_id = $1`, [
-    orgId,
-  ]);
+  const result = await control.query(
+    `SELECT count(*)::int AS n FROM wave5_artifacts WHERE organization_id = $1`,
+    [orgId]
+  );
   return Number(result.rows[0]?.n ?? 0);
 }
 
@@ -253,797 +254,854 @@ async function deckCountForOrg(orgId: string): Promise<number> {
 }
 
 async function cleanupDocumentsAndDecks(orgId: string): Promise<void> {
-  await control.query(`DELETE FROM wave5_artifact_versions WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM wave5_artifacts WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+  await control
+    .query(`DELETE FROM wave5_artifact_versions WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM wave5_artifacts WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
   await control
     .query(`DELETE FROM v8_artifact_origin_links WHERE organization_id = $1`, [orgId])
     .catch(() => undefined);
-  await control.query(`DELETE FROM v8_output_artifacts WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM presentation_cards WHERE deck_id IN (
+  await control
+    .query(`DELETE FROM v8_output_artifacts WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
+  await control
+    .query(
+      `DELETE FROM presentation_cards WHERE deck_id IN (
       SELECT id FROM presentation_decks WHERE organization_id = $1
-    )`, [orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM presentation_decks WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+    )`,
+      [orgId]
+    )
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM presentation_decks WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
 }
 
-suite('documentsAdapter — Documents + Presentation create capabilities, dispatched end-to-end through executeCapability', () => {
-  let registrarOrgId: string;
+suite(
+  'documentsAdapter — Documents + Presentation create capabilities, dispatched end-to-end through executeCapability',
+  () => {
+    let registrarOrgId: string;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-    registrarOrgId = `cwtest-adapter-registrar-docs-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-      registrarOrgId,
-      'Documents/Presentation adapter registrar org',
-    ]);
-    const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    // Private test ids (see the block above this describe) — NOT
-    // registerDocumentCreateCapability/registerPresentationCreateCapability,
-    // which hard-code the platform-global DOCUMENT_CREATE_CAPABILITY_ID /
-    // PRESENTATION_CREATE_CAPABILITY_ID. registerCapabilityWithAdapter is the
-    // same production registration primitive those two helpers call
-    // internally; only the capabilityId field of the input is overridden.
-    await capabilityAdapterService.registerCapabilityWithAdapter(
-      { ...documentCreateRegistrationInput(registrarActorId), capabilityId: DOCUMENT_TEST_CAPABILITY_ID },
-      buildDocumentCreateBinding(),
-      registrarOrgId
-    );
-    await capabilityAdapterService.registerCapabilityWithAdapter(
-      { ...presentationCreateRegistrationInput(registrarActorId), capabilityId: PRESENTATION_TEST_CAPABILITY_ID },
-      buildPresentationCreateBinding(),
-      registrarOrgId
-    );
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+      registrarOrgId = `cwtest-adapter-registrar-docs-${randomUUID()}`;
+      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+        registrarOrgId,
+        'Documents/Presentation adapter registrar org',
+      ]);
+      const registrarActorId = await seedMemberedUser(
+        control,
+        registrarOrgId,
+        'registrar',
+        'ADMIN'
+      );
+      // Private test ids (see the block above this describe) — NOT
+      // registerDocumentCreateCapability/registerPresentationCreateCapability,
+      // which hard-code the platform-global DOCUMENT_CREATE_CAPABILITY_ID /
+      // PRESENTATION_CREATE_CAPABILITY_ID. registerCapabilityWithAdapter is the
+      // same production registration primitive those two helpers call
+      // internally; only the capabilityId field of the input is overridden.
+      await capabilityAdapterService.registerCapabilityWithAdapter(
+        {
+          ...documentCreateRegistrationInput(registrarActorId),
+          capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+        },
+        buildDocumentCreateBinding(),
+        registrarOrgId
+      );
+      await capabilityAdapterService.registerCapabilityWithAdapter(
+        {
+          ...presentationCreateRegistrationInput(registrarActorId),
+          capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+        },
+        buildPresentationCreateBinding(),
+        registrarOrgId
+      );
+    }, 60_000);
 
-  afterAll(async () => {
-    for (const capabilityId of [DOCUMENT_TEST_CAPABILITY_ID, PRESENTATION_TEST_CAPABILITY_ID]) {
-      await control
-        .query(
-          `DELETE FROM case_workspace_capability_idempotency_keys
+    afterAll(async () => {
+      for (const capabilityId of [DOCUMENT_TEST_CAPABILITY_ID, PRESENTATION_TEST_CAPABILITY_ID]) {
+        await control
+          .query(
+            `DELETE FROM case_workspace_capability_idempotency_keys
             WHERE capability_registry_id IN (
               SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-          [capabilityId]
-        )
+            [capabilityId]
+          )
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [capabilityId])
+          .catch(() => undefined);
+      }
+      await control
+        .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
         .catch(() => undefined);
       await control
-        .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [capabilityId])
+        .query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId])
         .catch(() => undefined);
-    }
-    await control
-      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
-      .catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control?.end().catch(() => undefined);
-  }, 60_000);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control?.end().catch(() => undefined);
+    }, 60_000);
 
-  afterEach(() => {
-    // Reset to the real, production bindings (rebound at THIS file's private
-    // test ids — see the block above this describe) after any test that
-    // injected a custom one — never let a stubbed dependency leak into the
-    // next test.
-    resetDocumentTestBinding();
-    resetPresentationTestBinding();
-  });
+    afterEach(() => {
+      // Reset to the real, production bindings (rebound at THIS file's private
+      // test ids — see the block above this describe) after any test that
+      // injected a custom one — never let a stubbed dependency leak into the
+      // next test.
+      resetDocumentTestBinding();
+      resetPresentationTestBinding();
+    });
 
-  // =========================================================================
-  // DOCUMENTS
-  // =========================================================================
-  describe('case-workspace.documents.document.create', () => {
-    function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
-      return {
-        caseId,
-        title: 'Pilot expansion — Region B kickoff memo',
-        description:
-          'Region B pilot expansion approved for Q4. Scope covers three workstreams: pricing, ' +
-          'logistics and local hiring. Steering committee expects a go/no-go decision by the ' +
-          'end of the quarter based on the pilot store results.',
-        documentType: 'executive_memo',
-        // Documented finding: documentContentGenerator.enforceDocumentSchemaGrounding
-        // localizes/redacts any "obviously English"-looking string when the
-        // schema's own `language` is 'pl' (documentContentGenerator.ts's
-        // `obviousEnglish` regex + `localizePolishValue`) — a genuine
-        // language-CONSISTENCY guard, not a bug this adapter needs to defend
-        // against. This test's description is English, so the payload's
-        // language must agree with it for the content to survive un-redacted.
-        language: 'en',
-        ...overrides,
-      };
-    }
-
-    it('creates a real wave5_artifacts row with real content and a real ACTIVE artifact link, readback agrees', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-success');
-      try {
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-
-        expect(result.outcome).toBe('SUCCEEDED');
-        expect(result.errorCode).toBeNull();
-        const artifactId = result.output.artifactId as string;
-        expect(typeof artifactId).toBe('string');
-        expect(result.resultRef).toBe(`document:${artifactId}`);
-        expect(result.output.deepLink).toBe(`/wordy?artifactId=${artifactId}`);
-        expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
-
-        // Real row, read by the module's OWN service — not this suite's SELECT.
-        const schema = await getDocumentArtifact(artifactId, fixture.orgId);
-        expect(schema).not.toBeNull();
-        expect(schema?.title).toBe('Pilot expansion — Region B kickoff memo');
-        const serializedContent = JSON.stringify(schema?.sections ?? []);
-        // The REAL content this test supplied, not a placeholder.
-        expect(serializedContent).toContain('Region B pilot expansion');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
-
-        const links = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'document', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(links).toHaveLength(1);
-        expect(links[0].artifactId).toBe(artifactId);
-        expect(links[0].relation).toBe('OUTPUT');
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
+    // =========================================================================
+    // DOCUMENTS
+    // =========================================================================
+    describe('case-workspace.documents.document.create', () => {
+      function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
+        return {
+          caseId,
+          title: 'Pilot expansion — Region B kickoff memo',
+          description:
+            'Region B pilot expansion approved for Q4. Scope covers three workstreams: pricing, ' +
+            'logistics and local hiring. Steering committee expects a go/no-go decision by the ' +
+            'end of the quarter based on the pilot store results.',
+          documentType: 'executive_memo',
+          // Documented finding: documentContentGenerator.enforceDocumentSchemaGrounding
+          // localizes/redacts any "obviously English"-looking string when the
+          // schema's own `language` is 'pl' (documentContentGenerator.ts's
+          // `obviousEnglish` regex + `localizePolishValue`) — a genuine
+          // language-CONSISTENCY guard, not a bug this adapter needs to defend
+          // against. This test's description is English, so the payload's
+          // language must agree with it for the content to survive un-redacted.
+          language: 'en',
+          ...overrides,
+        };
       }
-    }, 90_000);
 
-    it('refuses a blank description and an actor with no case access, writing nothing', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-denial');
-      const strangerOrgId = `cwtest-adapter-stranger-docs-${randomUUID()}`;
-      let strangerActorId: string | null = null;
-      try {
-        const badInput = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId, { description: '   ' }),
-          })
-        );
-        expect(badInput.outcome).toBe('FAILED');
-        expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
+      it('creates a real wave5_artifacts row with real content and a real ACTIVE artifact link, readback agrees', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-success');
+        try {
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
 
-        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-          strangerOrgId,
-          'Documents adapter stranger org',
-        ]);
-        strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
+          expect(result.outcome).toBe('SUCCEEDED');
+          expect(result.errorCode).toBeNull();
+          const artifactId = result.output.artifactId as string;
+          expect(typeof artifactId).toBe('string');
+          expect(result.resultRef).toBe(`document:${artifactId}`);
+          expect(result.output.deepLink).toBe(`/wordy?artifactId=${artifactId}`);
+          expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
 
-        const noAccess = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: strangerOrgId,
-            actorId: strangerActorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(noAccess.outcome).toBe('FAILED');
-        expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
-        expect(await wave5CountForOrg(strangerOrgId)).toBe(0);
-      } finally {
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId]).catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId]).catch(() => undefined);
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          // Real row, read by the module's OWN service — not this suite's SELECT.
+          const schema = await getDocumentArtifact(artifactId, fixture.orgId);
+          expect(schema).not.toBeNull();
+          expect(schema?.title).toBe('Pilot expansion — Region B kickoff memo');
+          const serializedContent = JSON.stringify(schema?.sections ?? []);
+          // The REAL content this test supplied, not a placeholder.
+          expect(serializedContent).toContain('Region B pilot expansion');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
 
-    it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-retry');
-      try {
-        const key1 = `idem-${randomUUID()}`;
-        const first = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key1,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(first.outcome).toBe('SUCCEEDED');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
+          const links = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'document', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(links).toHaveLength(1);
+          expect(links[0].artifactId).toBe(artifactId);
+          expect(links[0].relation).toBe('OUTPUT');
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        const replay = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key1,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
+      it('refuses a blank description and an actor with no case access, writing nothing', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-denial');
+        const strangerOrgId = `cwtest-adapter-stranger-docs-${randomUUID()}`;
+        let strangerActorId: string | null = null;
+        try {
+          const badInput = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId, { description: '   ' }),
+            })
+          );
+          expect(badInput.outcome).toBe('FAILED');
+          expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
 
-        const key2 = `idem-${randomUUID()}`;
-        const rejected = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key2,
-            payload: validPayload(fixture.caseId, { description: '' }),
-          })
-        );
-        expect(rejected.outcome).toBe('FAILED');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
+          await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+            strangerOrgId,
+            'Documents adapter stranger org',
+          ]);
+          strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
 
-        const key3 = `idem-${randomUUID()}`;
-        const second = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key3,
-            payload: validPayload(fixture.caseId, { title: 'A second, distinct memo' }),
-          })
-        );
-        expect(second.outcome).toBe('SUCCEEDED');
-        expect(second.output.artifactId).not.toBe(first.output.artifactId);
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(2);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          const noAccess = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: strangerOrgId,
+              actorId: strangerActorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(noAccess.outcome).toBe('FAILED');
+          expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
+          expect(await wave5CountForOrg(strangerOrgId)).toBe(0);
+        } finally {
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-    it('still creates the document when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-partial');
-      try {
-        resetDocumentTestBinding({
-          linkArtifactToCase: async () => {
-            throw new Error('injected_link_failure');
-          },
-        });
+      it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-retry');
+        try {
+          const key1 = `idem-${randomUUID()}`;
+          const first = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key1,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(first.outcome).toBe('SUCCEEDED');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
 
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
+          const replay = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key1,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
 
-        expect(result.outcome).toBe('SUCCEEDED');
-        const artifactId = result.output.artifactId as string;
-        const artifactLink = result.output.artifactLink as { linked: boolean; error: string | null };
-        expect(artifactLink.linked).toBe(false);
-        expect(artifactLink.error).toBeTruthy();
-        expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
+          const key2 = `idem-${randomUUID()}`;
+          const rejected = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key2,
+              payload: validPayload(fixture.caseId, { description: '' }),
+            })
+          );
+          expect(rejected.outcome).toBe('FAILED');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(1);
 
-        const schema = await getDocumentArtifact(artifactId, fixture.orgId);
-        expect(schema).not.toBeNull();
+          const key3 = `idem-${randomUUID()}`;
+          const second = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key3,
+              payload: validPayload(fixture.caseId, { title: 'A second, distinct memo' }),
+            })
+          );
+          expect(second.outcome).toBe('SUCCEEDED');
+          expect(second.output.artifactId).not.toBe(first.output.artifactId);
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(2);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        const linksBefore = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'document', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksBefore).toHaveLength(0);
+      it('still creates the document when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-partial');
+        try {
+          resetDocumentTestBinding({
+            linkArtifactToCase: async () => {
+              throw new Error('injected_link_failure');
+            },
+          });
 
-        await artifactLinkService.linkArtifactToCase({
-          caseId: fixture.caseId,
-          artifactType: 'document',
-          artifactId,
-          relation: 'OUTPUT',
-          linkedByActorId: fixture.actorId,
-        });
-        const linksAfter = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'document', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksAfter).toHaveLength(1);
-        expect(linksAfter[0].artifactId).toBe(artifactId);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
 
-    it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-crosstenant');
-      const otherOrgId = `cwtest-adapter-other-docs-${randomUUID()}`;
-      try {
-        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-          otherOrgId,
-          'Documents adapter other org',
-        ]);
-        await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
+          expect(result.outcome).toBe('SUCCEEDED');
+          const artifactId = result.output.artifactId as string;
+          const artifactLink = result.output.artifactLink as {
+            linked: boolean;
+            error: string | null;
+          };
+          expect(artifactLink.linked).toBe(false);
+          expect(artifactLink.error).toBeTruthy();
+          expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
 
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: otherOrgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
+          const schema = await getDocumentArtifact(artifactId, fixture.orgId);
+          expect(schema).not.toBeNull();
 
-        expect(result.outcome).toBe('FAILED');
-        expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
-        expect(await wave5CountForOrg(otherOrgId)).toBe(0);
-      } finally {
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+          const linksBefore = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'document', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksBefore).toHaveLength(0);
+
+          await artifactLinkService.linkArtifactToCase({
+            caseId: fixture.caseId,
+            artifactType: 'document',
+            artifactId,
+            relation: 'OUTPUT',
+            linkedByActorId: fixture.actorId,
+          });
+          const linksAfter = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'document', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksAfter).toHaveLength(1);
+          expect(linksAfter[0].artifactId).toBe(artifactId);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
+
+      it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-crosstenant');
+        const otherOrgId = `cwtest-adapter-other-docs-${randomUUID()}`;
+        try {
+          await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
             otherOrgId,
-            fixture.actorId,
-          ])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId]).catch(() => undefined);
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
+            'Documents adapter other org',
+          ]);
+          await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
+
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: otherOrgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+
+          expect(result.outcome).toBe('FAILED');
+          expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
+          expect(await wave5CountForOrg(otherOrgId)).toBe(0);
+        } finally {
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+              otherOrgId,
+              fixture.actorId,
+            ])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId])
+            .catch(() => undefined);
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
+
+      it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-deeplink');
+        try {
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(result.outcome).toBe('SUCCEEDED');
+          const artifactId = result.output.artifactId as string;
+          expect(result.resultRef).toBe(`document:${artifactId}`);
+
+          const readback1 = await getDocumentArtifact(artifactId, fixture.orgId);
+          const readback2 = await getDocumentArtifact(artifactId, fixture.orgId);
+          expect(readback1?.artifactId).toBe(artifactId);
+          expect(readback2?.artifactId).toBe(artifactId);
+          expect(readback1?.title).toBe(readback2?.title);
+
+          const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'document', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'document', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksRead1).toHaveLength(1);
+          expect(linksRead2).toHaveLength(1);
+          expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
+
+      it('[negative control] surfaces a failure instead of a false success when the create step reports an artifactId nothing wrote', async () => {
+        const fixture = await seedCaseFixture(control, 'documents-negctrl');
+        try {
+          // documentStudioService.ts has no reachable CHECK/typed-column constraint
+          // a caller value can violate (see documentsAdapter.ts's header) — every
+          // wave5_artifacts column is untyped TEXT. So this simulates the exact
+          // failure SHAPE (a "successful" create pointing at an id nothing wrote)
+          // via dependency injection instead, proving THIS adapter's own second,
+          // independent readback (not documentStudioService.ts's internal one)
+          // actually gates the outcome.
+          resetDocumentTestBinding({
+            materializeDocumentArtifact: async () =>
+              ({
+                artifactId: `artifact-phantom-${randomUUID()}`,
+                schema: {} as any,
+              }) as any,
+          });
+
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
+              capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+
+          expect(result.outcome).toBe('FAILED');
+          expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
+          expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
+    });
+
+    // =========================================================================
+    // PRESENTATION
+    // =========================================================================
+    describe('case-workspace.presentation.deck.create', () => {
+      function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
+        return {
+          caseId,
+          title: 'Region B pilot — steering committee kickoff',
+          subtitle: 'Pricing, logistics and local hiring workstreams for the Q4 go/no-go decision',
+          language: 'pl',
+          confidentiality: 'confidential',
+          theme: 'corporate',
+          ...overrides,
+        };
       }
-    }, 90_000);
 
-    it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-deeplink');
-      try {
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(result.outcome).toBe('SUCCEEDED');
-        const artifactId = result.output.artifactId as string;
-        expect(result.resultRef).toBe(`document:${artifactId}`);
+      it('creates a real presentation_decks row with real content and a real ACTIVE artifact link, readback agrees', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-success');
+        try {
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
 
-        const readback1 = await getDocumentArtifact(artifactId, fixture.orgId);
-        const readback2 = await getDocumentArtifact(artifactId, fixture.orgId);
-        expect(readback1?.artifactId).toBe(artifactId);
-        expect(readback2?.artifactId).toBe(artifactId);
-        expect(readback1?.title).toBe(readback2?.title);
+          expect(result.outcome).toBe('SUCCEEDED');
+          expect(result.errorCode).toBeNull();
+          const deckId = result.output.deckId as string;
+          expect(typeof deckId).toBe('string');
+          expect(result.resultRef).toBe(`presentation:${deckId}`);
+          expect(result.output.deepLink).toBe(`/prezentacje?artifactId=${deckId}`);
+          expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
+          expect(result.output.status).toBe('ready');
 
-        const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'document', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'document', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksRead1).toHaveLength(1);
-        expect(linksRead2).toHaveLength(1);
-        expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          const row = await control.query(
+            `SELECT id, organization_id, title, status, deck_json FROM presentation_decks WHERE id = $1`,
+            [deckId]
+          );
+          expect(row.rows).toHaveLength(1);
+          expect(row.rows[0].organization_id).toBe(fixture.orgId);
+          expect(row.rows[0].title).toBe('Region B pilot — steering committee kickoff');
+          // The REAL subtitle text this test supplied, persisted into the
+          // cover card's paragraph block — not a placeholder, not merely a
+          // non-null deck_json.
+          expect(String(row.rows[0].deck_json)).toContain('Q4 go/no-go decision');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(1);
 
-    it('[negative control] surfaces a failure instead of a false success when the create step reports an artifactId nothing wrote', async () => {
-      const fixture = await seedCaseFixture(control, 'documents-negctrl');
-      try {
-        // documentStudioService.ts has no reachable CHECK/typed-column constraint
-        // a caller value can violate (see documentsAdapter.ts's header) — every
-        // wave5_artifacts column is untyped TEXT. So this simulates the exact
-        // failure SHAPE (a "successful" create pointing at an id nothing wrote)
-        // via dependency injection instead, proving THIS adapter's own second,
-        // independent readback (not documentStudioService.ts's internal one)
-        // actually gates the outcome.
-        resetDocumentTestBinding({
-          materializeDocumentArtifact: async () =>
-            ({
-              artifactId: `artifact-phantom-${randomUUID()}`,
-              schema: {} as any,
-            }) as any,
-        });
+          const links = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'presentation', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(links).toHaveLength(1);
+          expect(links[0].artifactId).toBe(deckId);
+          expect(links[0].relation).toBe('OUTPUT');
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
-            capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
+      it('refuses a blank title and an actor with no case access, writing nothing', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-denial');
+        const strangerOrgId = `cwtest-adapter-stranger-pres-${randomUUID()}`;
+        let strangerActorId: string | null = null;
+        try {
+          const badInput = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId, { title: '' }),
+            })
+          );
+          expect(badInput.outcome).toBe('FAILED');
+          expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(0);
 
-        expect(result.outcome).toBe('FAILED');
-        expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
-        expect(await wave5CountForOrg(fixture.orgId)).toBe(0);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
-  });
+          await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+            strangerOrgId,
+            'Presentation adapter stranger org',
+          ]);
+          strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
 
-  // =========================================================================
-  // PRESENTATION
-  // =========================================================================
-  describe('case-workspace.presentation.deck.create', () => {
-    function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
-      return {
-        caseId,
-        title: 'Region B pilot — steering committee kickoff',
-        subtitle: 'Pricing, logistics and local hiring workstreams for the Q4 go/no-go decision',
-        language: 'pl',
-        confidentiality: 'confidential',
-        theme: 'corporate',
-        ...overrides,
-      };
-    }
+          const noAccess = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: strangerOrgId,
+              actorId: strangerActorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(noAccess.outcome).toBe('FAILED');
+          expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(0);
+          expect(await deckCountForOrg(strangerOrgId)).toBe(0);
+        } finally {
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId])
+            .catch(() => undefined);
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-    it('creates a real presentation_decks row with real content and a real ACTIVE artifact link, readback agrees', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-success');
-      try {
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
+      it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-retry');
+        try {
+          const key1 = `idem-${randomUUID()}`;
+          const first = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key1,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(first.outcome).toBe('SUCCEEDED');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(1);
 
-        expect(result.outcome).toBe('SUCCEEDED');
-        expect(result.errorCode).toBeNull();
-        const deckId = result.output.deckId as string;
-        expect(typeof deckId).toBe('string');
-        expect(result.resultRef).toBe(`presentation:${deckId}`);
-        expect(result.output.deepLink).toBe(`/prezentacje?artifactId=${deckId}`);
-        expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
-        expect(result.output.status).toBe('ready');
+          const replay = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key1,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(1);
 
-        const row = await control.query(
-          `SELECT id, organization_id, title, status, deck_json FROM presentation_decks WHERE id = $1`,
-          [deckId]
-        );
-        expect(row.rows).toHaveLength(1);
-        expect(row.rows[0].organization_id).toBe(fixture.orgId);
-        expect(row.rows[0].title).toBe('Region B pilot — steering committee kickoff');
-        // The REAL subtitle text this test supplied, persisted into the
-        // cover card's paragraph block — not a placeholder, not merely a
-        // non-null deck_json.
-        expect(String(row.rows[0].deck_json)).toContain('Q4 go/no-go decision');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(1);
+          const key2 = `idem-${randomUUID()}`;
+          const rejected = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key2,
+              payload: validPayload(fixture.caseId, { title: '' }),
+            })
+          );
+          expect(rejected.outcome).toBe('FAILED');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(1);
 
-        const links = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'presentation', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(links).toHaveLength(1);
-        expect(links[0].artifactId).toBe(deckId);
-        expect(links[0].relation).toBe('OUTPUT');
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          const key3 = `idem-${randomUUID()}`;
+          const second = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              idempotencyKey: key3,
+              payload: validPayload(fixture.caseId, { title: 'A second, distinct deck' }),
+            })
+          );
+          expect(second.outcome).toBe('SUCCEEDED');
+          expect(second.output.deckId).not.toBe(first.output.deckId);
+          expect(await deckCountForOrg(fixture.orgId)).toBe(2);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-    it('refuses a blank title and an actor with no case access, writing nothing', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-denial');
-      const strangerOrgId = `cwtest-adapter-stranger-pres-${randomUUID()}`;
-      let strangerActorId: string | null = null;
-      try {
-        const badInput = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId, { title: '' }),
-          })
-        );
-        expect(badInput.outcome).toBe('FAILED');
-        expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(0);
+      it('still creates the deck when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-partial');
+        try {
+          resetPresentationTestBinding({
+            linkArtifactToCase: async () => {
+              throw new Error('injected_link_failure');
+            },
+          });
 
-        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-          strangerOrgId,
-          'Presentation adapter stranger org',
-        ]);
-        strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
 
-        const noAccess = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: strangerOrgId,
-            actorId: strangerActorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(noAccess.outcome).toBe('FAILED');
-        expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(0);
-        expect(await deckCountForOrg(strangerOrgId)).toBe(0);
-      } finally {
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId]).catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId]).catch(() => undefined);
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+          expect(result.outcome).toBe('SUCCEEDED');
+          const deckId = result.output.deckId as string;
+          const artifactLink = result.output.artifactLink as {
+            linked: boolean;
+            error: string | null;
+          };
+          expect(artifactLink.linked).toBe(false);
+          expect(artifactLink.error).toBeTruthy();
+          expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
 
-    it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-retry');
-      try {
-        const key1 = `idem-${randomUUID()}`;
-        const first = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key1,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(first.outcome).toBe('SUCCEEDED');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(1);
+          const row = await control.query(`SELECT id FROM presentation_decks WHERE id = $1`, [
+            deckId,
+          ]);
+          expect(row.rows).toHaveLength(1);
 
-        const replay = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key1,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(1);
+          const linksBefore = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'presentation', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksBefore).toHaveLength(0);
 
-        const key2 = `idem-${randomUUID()}`;
-        const rejected = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key2,
-            payload: validPayload(fixture.caseId, { title: '' }),
-          })
-        );
-        expect(rejected.outcome).toBe('FAILED');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(1);
+          await artifactLinkService.linkArtifactToCase({
+            caseId: fixture.caseId,
+            artifactType: 'presentation',
+            artifactId: deckId,
+            relation: 'OUTPUT',
+            linkedByActorId: fixture.actorId,
+          });
+          const linksAfter = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'presentation', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksAfter).toHaveLength(1);
+          expect(linksAfter[0].artifactId).toBe(deckId);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        const key3 = `idem-${randomUUID()}`;
-        const second = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            idempotencyKey: key3,
-            payload: validPayload(fixture.caseId, { title: 'A second, distinct deck' }),
-          })
-        );
-        expect(second.outcome).toBe('SUCCEEDED');
-        expect(second.output.deckId).not.toBe(first.output.deckId);
-        expect(await deckCountForOrg(fixture.orgId)).toBe(2);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
-
-    it('still creates the deck when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-partial');
-      try {
-        resetPresentationTestBinding({
-          linkArtifactToCase: async () => {
-            throw new Error('injected_link_failure');
-          },
-        });
-
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-
-        expect(result.outcome).toBe('SUCCEEDED');
-        const deckId = result.output.deckId as string;
-        const artifactLink = result.output.artifactLink as { linked: boolean; error: string | null };
-        expect(artifactLink.linked).toBe(false);
-        expect(artifactLink.error).toBeTruthy();
-        expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
-
-        const row = await control.query(`SELECT id FROM presentation_decks WHERE id = $1`, [deckId]);
-        expect(row.rows).toHaveLength(1);
-
-        const linksBefore = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'presentation', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksBefore).toHaveLength(0);
-
-        await artifactLinkService.linkArtifactToCase({
-          caseId: fixture.caseId,
-          artifactType: 'presentation',
-          artifactId: deckId,
-          relation: 'OUTPUT',
-          linkedByActorId: fixture.actorId,
-        });
-        const linksAfter = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'presentation', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksAfter).toHaveLength(1);
-        expect(linksAfter[0].artifactId).toBe(deckId);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
-
-    it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-crosstenant');
-      const otherOrgId = `cwtest-adapter-other-pres-${randomUUID()}`;
-      try {
-        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-          otherOrgId,
-          'Presentation adapter other org',
-        ]);
-        await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
-
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: otherOrgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-
-        expect(result.outcome).toBe('FAILED');
-        expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(0);
-        expect(await deckCountForOrg(otherOrgId)).toBe(0);
-      } finally {
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+      it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-crosstenant');
+        const otherOrgId = `cwtest-adapter-other-pres-${randomUUID()}`;
+        try {
+          await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
             otherOrgId,
-            fixture.actorId,
-          ])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId]).catch(() => undefined);
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+            'Presentation adapter other org',
+          ]);
+          await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
 
-    it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-deeplink');
-      try {
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
-        expect(result.outcome).toBe('SUCCEEDED');
-        const deckId = result.output.deckId as string;
-        expect(result.resultRef).toBe(`presentation:${deckId}`);
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: otherOrgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
 
-        const read1 = await control.query(`SELECT id, title FROM presentation_decks WHERE id = $1`, [deckId]);
-        const read2 = await control.query(`SELECT id, title FROM presentation_decks WHERE id = $1`, [deckId]);
-        expect(read1.rows[0].id).toBe(deckId);
-        expect(read2.rows[0].id).toBe(deckId);
-        expect(read1.rows[0].title).toBe(read2.rows[0].title);
+          expect(result.outcome).toBe('FAILED');
+          expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(0);
+          expect(await deckCountForOrg(otherOrgId)).toBe(0);
+        } finally {
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+              otherOrgId,
+              fixture.actorId,
+            ])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId])
+            .catch(() => undefined);
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'presentation', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
-          fixture.caseId,
-          { artifactType: 'presentation', linkStatus: 'ACTIVE' },
-          fixture.actorId
-        );
-        expect(linksRead1).toHaveLength(1);
-        expect(linksRead2).toHaveLength(1);
-        expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
+      it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-deeplink');
+        try {
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+          expect(result.outcome).toBe('SUCCEEDED');
+          const deckId = result.output.deckId as string;
+          expect(result.resultRef).toBe(`presentation:${deckId}`);
 
-    // =======================================================================
-    // BONUS negative control — a REAL Postgres CHECK-constraint violation.
-    // `presentation_decks.status` is `CHECK (status IN ('draft','generating',
-    // 'ready','exported','failed'))` (server/migrations/750_presentation_decks
-    // _00base.sql). Driving `createNativeDeck` with a `status` value outside
-    // that set makes the REAL `INSERT INTO presentation_decks` reject at the
-    // database level. `createNativeDeck`'s own `dbRun` call has NO
-    // `{fallback:false}` override and never inspects the write's returned
-    // `{success}` before proceeding — so with the platform's default
-    // `fallback:true`, that genuine failure is normally swallowed into
-    // `{success:false}` with no throw, and `createNativeDeck` would return a
-    // completely normal-looking result for a deck NOTHING wrote (see
-    // documentsAdapter.ts's header for the full analysis — this is a WORSE,
-    // less-defended instance of the same bug class financeAdapter.ts
-    // documents for `financialModelingService.createModel`). This test
-    // proves this adapter's own readback is the only thing standing between
-    // that silent failure and a lying SUCCEEDED.
-    //
-    // The invalid status is injected via `deps.createNativeDeck` (a thin
-    // wrapper around the REAL, imported `createNativeDeck`) rather than
-    // through the adapter's public payload, because this adapter deliberately
-    // does not expose `status` as caller input (Case-created decks are always
-    // 'ready' — a correct design choice, not a gap) — see documentsAdapter.ts.
-    // =======================================================================
-    it('[negative control] surfaces a failure instead of a false success when the real INSERT violates the status CHECK constraint', async () => {
-      const fixture = await seedCaseFixture(control, 'presentation-negctrl');
-      try {
-        resetPresentationTestBinding({
-          createNativeDeck: (params) =>
-            realCreateNativeDeck({
-              ...params,
-              // Not a member of presentation_decks' own CHECK (status IN (...)).
-              status: 'definitely_not_a_real_status' as unknown as 'ready',
-            }),
-        });
+          const read1 = await control.query(
+            `SELECT id, title FROM presentation_decks WHERE id = $1`,
+            [deckId]
+          );
+          const read2 = await control.query(
+            `SELECT id, title FROM presentation_decks WHERE id = $1`,
+            [deckId]
+          );
+          expect(read1.rows[0].id).toBe(deckId);
+          expect(read2.rows[0].id).toBe(deckId);
+          expect(read1.rows[0].title).toBe(read2.rows[0].title);
 
-        const result = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
-            capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: validPayload(fixture.caseId),
-          })
-        );
+          const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'presentation', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
+            fixture.caseId,
+            { artifactType: 'presentation', linkStatus: 'ACTIVE' },
+            fixture.actorId
+          );
+          expect(linksRead1).toHaveLength(1);
+          expect(linksRead2).toHaveLength(1);
+          expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
 
-        // MUST NOT be a lying SUCCEEDED — this is the whole point of the
-        // adapter's post-create re-read guard.
-        expect(result.outcome).toBe('FAILED');
-        expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
-        expect(await deckCountForOrg(fixture.orgId)).toBe(0);
-      } finally {
-        await cleanupDocumentsAndDecks(fixture.orgId);
-        await teardownCaseFixture(control, fixture);
-      }
-    }, 90_000);
-  });
-});
+      // =======================================================================
+      // BONUS negative control — a REAL Postgres CHECK-constraint violation.
+      // `presentation_decks.status` is `CHECK (status IN ('draft','generating',
+      // 'ready','exported','failed'))` (server/migrations/750_presentation_decks
+      // _00base.sql). Driving `createNativeDeck` with a `status` value outside
+      // that set makes the REAL `INSERT INTO presentation_decks` reject at the
+      // database level. `createNativeDeck`'s own `dbRun` call has NO
+      // `{fallback:false}` override and never inspects the write's returned
+      // `{success}` before proceeding — so with the platform's default
+      // `fallback:true`, that genuine failure is normally swallowed into
+      // `{success:false}` with no throw, and `createNativeDeck` would return a
+      // completely normal-looking result for a deck NOTHING wrote (see
+      // documentsAdapter.ts's header for the full analysis — this is a WORSE,
+      // less-defended instance of the same bug class financeAdapter.ts
+      // documents for `financialModelingService.createModel`). This test
+      // proves this adapter's own readback is the only thing standing between
+      // that silent failure and a lying SUCCEEDED.
+      //
+      // The invalid status is injected via `deps.createNativeDeck` (a thin
+      // wrapper around the REAL, imported `createNativeDeck`) rather than
+      // through the adapter's public payload, because this adapter deliberately
+      // does not expose `status` as caller input (Case-created decks are always
+      // 'ready' — a correct design choice, not a gap) — see documentsAdapter.ts.
+      // =======================================================================
+      it('[negative control] surfaces a failure instead of a false success when the real INSERT violates the status CHECK constraint', async () => {
+        const fixture = await seedCaseFixture(control, 'presentation-negctrl');
+        try {
+          resetPresentationTestBinding({
+            createNativeDeck: (params) =>
+              realCreateNativeDeck({
+                ...params,
+                // Not a member of presentation_decks' own CHECK (status IN (...)).
+                status: 'definitely_not_a_real_status' as unknown as 'ready',
+              }),
+          });
+
+          const result = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
+              capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: validPayload(fixture.caseId),
+            })
+          );
+
+          // MUST NOT be a lying SUCCEEDED — this is the whole point of the
+          // adapter's post-create re-read guard.
+          expect(result.outcome).toBe('FAILED');
+          expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
+          expect(await deckCountForOrg(fixture.orgId)).toBe(0);
+        } finally {
+          await cleanupDocumentsAndDecks(fixture.orgId);
+          await teardownCaseFixture(control, fixture);
+        }
+      }, 90_000);
+    });
+  }
+);

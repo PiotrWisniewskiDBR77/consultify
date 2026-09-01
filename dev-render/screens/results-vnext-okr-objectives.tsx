@@ -42,10 +42,13 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
-import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from '../../src/components/ResultsVNext/okr/okrObjectiveApi';
-import { OkrObjectivesView } from '../../src/components/ResultsVNext/okr/OkrObjectivesView';
-import { OkrKeyResultsView } from '../../src/components/ResultsVNext/okr/OkrKeyResultsView';
 import { OkrCheckInsView } from '../../src/components/ResultsVNext/okr/OkrCheckInsView';
+import { OkrKeyResultsView } from '../../src/components/ResultsVNext/okr/OkrKeyResultsView';
+import type {
+  OkrKeyResultDto,
+  OkrObjectiveWithKeyResultsDto,
+} from '../../src/components/ResultsVNext/okr/okrObjectiveApi';
+import { OkrObjectivesView } from '../../src/components/ResultsVNext/okr/OkrObjectivesView';
 import type { StandardBreadcrumb } from '../../src/components/standard';
 
 const MOCK_SET_ID = 'okr-set-5';
@@ -109,7 +112,8 @@ const MOCK_KEY_RESULTS: OkrKeyResultDto[] = [
     rangeMax: null,
     progress: '0.8333333333',
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'increase: (current_value - baseline_value) / (target_value - baseline_value)',
+    progressCalcReason:
+      'increase: (current_value - baseline_value) / (target_value - baseline_value)',
     outOfRangeDistance: null,
     confidence: 'high',
     confidenceNumericValue: null,
@@ -212,7 +216,8 @@ const MOCK_KEY_RESULTS: OkrKeyResultDto[] = [
     rangeMax: null,
     progress: '1.3',
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'increase: (current_value - baseline_value) / (target_value - baseline_value)',
+    progressCalcReason:
+      'increase: (current_value - baseline_value) / (target_value - baseline_value)',
     outOfRangeDistance: null,
     confidence: 'high',
     confidenceNumericValue: null,
@@ -253,7 +258,8 @@ const MOCK_OBJECTIVES: OkrObjectiveWithKeyResultsDto[] = [
     confidence: 'high',
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
-    confidenceCalcReason: 'lowest_kr: categorical confidence, worst of 2 key result(s) (high > medium > low, never averaged)',
+    confidenceCalcReason:
+      'lowest_kr: categorical confidence, worst of 2 key result(s) (high > medium > low, never averaged)',
     sortOrder: 0,
     rowVersion: 5,
     createdBy: 'user-anna-kowalska',
@@ -281,11 +287,13 @@ const MOCK_OBJECTIVES: OkrObjectiveWithKeyResultsDto[] = [
     status: 'at_risk',
     progress: null,
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'not_calculable: every key result under this objective is itself not_calculable',
+    progressCalcReason:
+      'not_calculable: every key result under this objective is itself not_calculable',
     confidence: null,
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
-    confidenceCalcReason: 'not_calculable: no key result under this objective has a confidence value set yet',
+    confidenceCalcReason:
+      'not_calculable: no key result under this objective has a confidence value set yet',
     sortOrder: 1,
     rowVersion: 3,
     createdBy: 'user-tomasz-nowak',
@@ -311,7 +319,8 @@ const MOCK_OBJECTIVES: OkrObjectiveWithKeyResultsDto[] = [
     confidence: 'high',
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
-    confidenceCalcReason: 'lowest_kr: categorical confidence, worst of 1 key result(s) (high > medium > low, never averaged)',
+    confidenceCalcReason:
+      'lowest_kr: categorical confidence, worst of 1 key result(s) (high > medium > low, never averaged)',
     sortOrder: 2,
     rowVersion: 7,
     createdBy: 'user-anna-kowalska',
@@ -333,7 +342,8 @@ const MOCK_OBJECTIVES: OkrObjectiveWithKeyResultsDto[] = [
     status: 'draft',
     progress: null,
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'rollup_model_none: objective_rollup_model is "none" — Objective progress is intentionally not rolled up',
+    progressCalcReason:
+      'rollup_model_none: objective_rollup_model is "none" — Objective progress is intentionally not rolled up',
     confidence: null,
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
@@ -425,11 +435,15 @@ const MOCK_CHECK_INS = [
 ];
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const params = new URLSearchParams(window.location.search);
-const initialLevel = (params.get('level') as 'objectives' | 'keyResults' | 'checkIns') || 'objectives';
+const initialLevel =
+  (params.get('level') as 'objectives' | 'keyResults' | 'checkIns') || 'objectives';
 const initialSetStatus = params.get('setStatus') || 'draft';
 const state = params.get('state') || 'ready';
 
@@ -443,28 +457,62 @@ if (!g.__OKR_OBJECTIVES_FETCH__) {
     try {
       if (!url.includes('/api/vnext/results/okr/')) return realFetch(input as RequestInfo, init);
       if (state === 'loading') return new Promise<Response>(() => {});
-      if (state === 'error') return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
+      if (state === 'error')
+        return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
       const empty = state === 'empty';
 
-      if (url.match(/\/sets\/[^/]+\/objectives$/) && method === 'GET') return jsonResponse({ objectives: empty ? [] : MOCK_OBJECTIVES });
+      if (url.match(/\/sets\/[^/]+\/objectives$/) && method === 'GET')
+        return jsonResponse({ objectives: empty ? [] : MOCK_OBJECTIVES });
       if (url.match(/\/objectives\/[^/]+$/) && method === 'GET') {
         const id = url.split('/objectives/')[1]?.split(/[?/]/)[0];
         const objective = MOCK_OBJECTIVES.find((o) => o.objectiveId === id);
-        return objective ? jsonResponse({ objective }) : jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, 404);
+        return objective
+          ? jsonResponse({ objective })
+          : jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, 404);
       }
-      if (url.match(/\/sets\/[^/]+\/objectives$/) && method === 'POST') return jsonResponse({ outcome: 'applied', objective: MOCK_OBJECTIVES[0] }, 201);
-      if (url.match(/\/objectives\/[^/]+$/) && method === 'PATCH') return jsonResponse({ outcome: 'applied', objective: MOCK_OBJECTIVES[0] });
-      if (url.match(/\/objectives\/[^/]+\/cancel$/) && method === 'POST') return jsonResponse({ outcome: 'applied', objective: { ...MOCK_OBJECTIVES[0], status: 'cancelled' } });
+      if (url.match(/\/sets\/[^/]+\/objectives$/) && method === 'POST')
+        return jsonResponse({ outcome: 'applied', objective: MOCK_OBJECTIVES[0] }, 201);
+      if (url.match(/\/objectives\/[^/]+$/) && method === 'PATCH')
+        return jsonResponse({ outcome: 'applied', objective: MOCK_OBJECTIVES[0] });
+      if (url.match(/\/objectives\/[^/]+\/cancel$/) && method === 'POST')
+        return jsonResponse({
+          outcome: 'applied',
+          objective: { ...MOCK_OBJECTIVES[0], status: 'cancelled' },
+        });
 
-      if (url.match(/\/objectives\/[^/]+\/key-results$/) && method === 'POST') return jsonResponse({ outcome: 'applied', keyResult: MOCK_KEY_RESULTS[0] }, 201);
-      if (url.match(/\/key-results\/[^/]+$/) && method === 'PATCH') return jsonResponse({ outcome: 'applied', keyResult: MOCK_KEY_RESULTS[0] });
-      if (url.match(/\/key-results\/[^/]+\/cancel$/) && method === 'POST') return jsonResponse({ outcome: 'applied', keyResult: { ...MOCK_KEY_RESULTS[0], status: 'cancelled' } });
+      if (url.match(/\/objectives\/[^/]+\/key-results$/) && method === 'POST')
+        return jsonResponse({ outcome: 'applied', keyResult: MOCK_KEY_RESULTS[0] }, 201);
+      if (url.match(/\/key-results\/[^/]+$/) && method === 'PATCH')
+        return jsonResponse({ outcome: 'applied', keyResult: MOCK_KEY_RESULTS[0] });
+      if (url.match(/\/key-results\/[^/]+\/cancel$/) && method === 'POST')
+        return jsonResponse({
+          outcome: 'applied',
+          keyResult: { ...MOCK_KEY_RESULTS[0], status: 'cancelled' },
+        });
 
-      if (url.match(/\/key-results\/[^/]+\/check-ins$/) && method === 'GET') return jsonResponse({ checkIns: empty ? [] : MOCK_CHECK_INS });
-      if (url.match(/\/key-results\/[^/]+\/check-ins$/) && method === 'POST') return jsonResponse({ outcome: 'applied', checkIn: MOCK_CHECK_INS[0] }, 201);
-      if (url.match(/\/check-ins\/[^/]+\/correct$/) && method === 'POST') return jsonResponse({ outcome: 'applied', checkIn: { ...MOCK_CHECK_INS[0], checkInId: 'checkin-3', correctionOfCheckInId: MOCK_CHECK_INS[0].checkInId } }, 201);
+      if (url.match(/\/key-results\/[^/]+\/check-ins$/) && method === 'GET')
+        return jsonResponse({ checkIns: empty ? [] : MOCK_CHECK_INS });
+      if (url.match(/\/key-results\/[^/]+\/check-ins$/) && method === 'POST')
+        return jsonResponse({ outcome: 'applied', checkIn: MOCK_CHECK_INS[0] }, 201);
+      if (url.match(/\/check-ins\/[^/]+\/correct$/) && method === 'POST')
+        return jsonResponse(
+          {
+            outcome: 'applied',
+            checkIn: {
+              ...MOCK_CHECK_INS[0],
+              checkInId: 'checkin-3',
+              correctionOfCheckInId: MOCK_CHECK_INS[0].checkInId,
+            },
+          },
+          201
+        );
       if (url.match(/\/key-results\/[^/]+\/suggested-next-check-in-value$/) && method === 'GET')
-        return jsonResponse({ suggestedValue: 11, basis: 'linear_trend', reason: 'linear_trend: average step 1 across 2 interval(s) of 3 prior check-in(s), projected from the most recent value 10' });
+        return jsonResponse({
+          suggestedValue: 11,
+          basis: 'linear_trend',
+          reason:
+            'linear_trend: average step 1 across 2 interval(s) of 3 prior check-in(s), projected from the most recent value 10',
+        });
     } catch {
       /* fall through to real fetch */
     }
@@ -492,7 +540,10 @@ const ResultsVNextOkrObjectivesScreen: React.FC = () => {
 
   const [drill, setDrill] = useState<Drill>(initialDrill);
 
-  const rootCrumb: StandardBreadcrumb = { label: setsLabel, onClick: () => setDrill({ level: 'objectives' }) };
+  const rootCrumb: StandardBreadcrumb = {
+    label: setsLabel,
+    onClick: () => setDrill({ level: 'objectives' }),
+  };
 
   let content: React.ReactElement;
   if (drill.level === 'objectives') {
@@ -510,8 +561,14 @@ const ResultsVNextOkrObjectivesScreen: React.FC = () => {
         set={set}
         objectiveId={drill.objective.objectiveId}
         isPolish={isPolish}
-        breadcrumbs={[rootCrumb, { label: set.title, onClick: () => setDrill({ level: 'objectives' }) }, { label: drill.objective.title }]}
-        onOpenCheckIns={(keyResult, objective) => setDrill({ level: 'checkIns', objective, keyResult })}
+        breadcrumbs={[
+          rootCrumb,
+          { label: set.title, onClick: () => setDrill({ level: 'objectives' }) },
+          { label: drill.objective.title },
+        ]}
+        onOpenCheckIns={(keyResult, objective) =>
+          setDrill({ level: 'checkIns', objective, keyResult })
+        }
       />
     );
   } else {
@@ -524,7 +581,10 @@ const ResultsVNextOkrObjectivesScreen: React.FC = () => {
         breadcrumbs={[
           rootCrumb,
           { label: set.title, onClick: () => setDrill({ level: 'objectives' }) },
-          { label: drill.objective.title, onClick: () => setDrill({ level: 'keyResults', objective: drill.objective }) },
+          {
+            label: drill.objective.title,
+            onClick: () => setDrill({ level: 'keyResults', objective: drill.objective }),
+          },
           { label: drill.keyResult.title },
         ]}
       />

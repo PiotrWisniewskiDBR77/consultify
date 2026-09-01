@@ -26,7 +26,9 @@ export const REPORT_RENDERER_VERSION = '1.0.0';
 
 export class OutputNotApprovedError extends Error {
   constructor(outputId: string, status: string) {
-    super(`Output ${outputId} ma status "${status}" — raport wolno renderować wyłącznie z zatwierdzonych.`);
+    super(
+      `Output ${outputId} ma status "${status}" — raport wolno renderować wyłącznie z zatwierdzonych.`
+    );
     this.name = 'OutputNotApprovedError';
   }
 }
@@ -58,7 +60,11 @@ function buildActionTitle(output: ToolOutput): string {
   return output.title;
 }
 
-function buildSection(output: ToolOutput, kind: ToolReportKind, maxConclusions: number): ReportSection {
+function buildSection(
+  output: ToolOutput,
+  kind: ToolReportKind,
+  maxConclusions: number
+): ReportSection {
   const blocks: ReportBlock[] = [];
 
   // Grafika sygnaturowa — to samo źródło danych co w sesji.
@@ -119,7 +125,10 @@ function buildSection(output: ToolOutput, kind: ToolReportKind, maxConclusions: 
  * Rzuca, gdy którykolwiek Output nie jest zatwierdzony — dokument klienta nie
  * powstaje z roboczej wersji.
  */
-export function renderToolReport(outputs: ToolOutput[], options: RenderOptions): ToolReportDocument {
+export function renderToolReport(
+  outputs: ToolOutput[],
+  options: RenderOptions
+): ToolReportDocument {
   if (outputs.length === 0) {
     throw new Error('Raport wymaga co najmniej jednego zatwierdzonego Outputu.');
   }

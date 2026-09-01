@@ -112,7 +112,12 @@ export const GovernedIdeaStageEnum = z.enum([
 ]);
 
 export const IdeaMaturityAttestationSchema = z.object({
-  criterionId: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_.:-]+$/),
+  criterionId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[a-zA-Z0-9_.:-]+$/),
   met: z.boolean(),
   note: z.string().trim().max(500).optional(),
 });

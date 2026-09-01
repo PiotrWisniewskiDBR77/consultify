@@ -53,13 +53,30 @@ const SESSION_ROW = {
 };
 
 const USERS = [
-  { id: 'u1', firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr@dbr77.com', name: 'Piotr Wiśniewski' },
-  { id: 'u2', firstName: 'Anna', lastName: 'Kowalska', email: 'anna@dbr77.com', name: 'Anna Kowalska' },
+  {
+    id: 'u1',
+    firstName: 'Piotr',
+    lastName: 'Wiśniewski',
+    email: 'piotr@dbr77.com',
+    name: 'Piotr Wiśniewski',
+  },
+  {
+    id: 'u2',
+    firstName: 'Anna',
+    lastName: 'Kowalska',
+    email: 'anna@dbr77.com',
+    name: 'Anna Kowalska',
+  },
 ];
 
 const KNOWN_TOOLS = [
   { id: 'known:dynamic-swot', slug: 'dynamic-swot', name: 'Dynamic SWOT', category: 'strategic' },
-  { id: 'known:market-forces', slug: 'market-forces', name: 'Market Forces', category: 'strategic' },
+  {
+    id: 'known:market-forces',
+    slug: 'market-forces',
+    name: 'Market Forces',
+    category: 'strategic',
+  },
   { id: 'known:value-chain', slug: 'value-chain', name: 'Value Chain', category: 'operational' },
 ];
 

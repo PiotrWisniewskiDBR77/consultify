@@ -53,25 +53,25 @@ import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndR
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { NewAuditModal } from './NewAuditModal';
+import {
+  AUDIT_LIFECYCLE_STATES,
+  AUDIT_VERIFICATION_STATES,
+  type AuditLifecycleState,
+  type AuditPackSummary,
+  type AuditProgramSummary,
+  type AuditVerificationState,
+  createProgram,
+  getProgram,
+  listPacks,
+  listPrograms,
+} from './auditsMethodApi';
 import {
   packVerificationLabel,
   packVerificationTone,
   programLifecycleLabel,
   programLifecycleTone,
 } from './auditStatusTones';
-import {
-  createProgram,
-  getProgram,
-  listPacks,
-  listPrograms,
-  AUDIT_VERIFICATION_STATES,
-  AUDIT_LIFECYCLE_STATES,
-  type AuditPackSummary,
-  type AuditProgramSummary,
-  type AuditVerificationState,
-  type AuditLifecycleState,
-} from './auditsMethodApi';
+import { NewAuditModal } from './NewAuditModal';
 import { AuditFindingsTab } from './tabs/AuditFindingsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';

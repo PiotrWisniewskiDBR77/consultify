@@ -45,9 +45,8 @@ export function findSpreadsheetMatches(
   options: SpreadsheetFindOptions
 ): SpreadsheetFindMatch[] {
   if (!query) return [];
-  const sheetIndexes = options.scope === 'sheet'
-    ? [options.activeSheetIndex]
-    : sheets.map((_, index) => index);
+  const sheetIndexes =
+    options.scope === 'sheet' ? [options.activeSheetIndex] : sheets.map((_, index) => index);
   const searchIn = options.searchIn ?? 'all';
   const matches: SpreadsheetFindMatch[] = [];
 
@@ -59,12 +58,18 @@ export function findSpreadsheetMatches(
         const cell = row.cells?.[column.key];
         if (!cell) return;
         const candidates: Array<{ source: 'value' | 'formula'; text: string }> = [];
-        if (searchIn !== 'formulas') candidates.push({ source: 'value', text: textForValue(cell.value) });
+        if (searchIn !== 'formulas')
+          candidates.push({ source: 'value', text: textForValue(cell.value) });
         if (searchIn !== 'values' && cell.formula) {
           candidates.push({ source: 'formula', text: `=${cell.formula.replace(/^=/, '')}` });
         }
         const hit = candidates.find((candidate) =>
-          matchesQuery(candidate.text, query, Boolean(options.matchCase), Boolean(options.wholeCell))
+          matchesQuery(
+            candidate.text,
+            query,
+            Boolean(options.matchCase),
+            Boolean(options.wholeCell)
+          )
         );
         if (hit) {
           matches.push({ sheetIndex, rowIndex, colIndex, columnKey: column.key, ...hit });

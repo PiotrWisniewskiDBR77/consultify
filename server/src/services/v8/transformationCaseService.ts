@@ -47,6 +47,7 @@ import type {
   ProposeMobilizationBlueprintParams,
   ProposeOpportunitySynthesisParams,
   ProposePortfolioDecisionParams,
+  ResolvePortfolioDecisionParams,
   ReviewDrdAssessmentProposalParams,
   ReviewFinanceKpiPackParams,
   ReviewInitialIdeasProposalParams,
@@ -54,7 +55,6 @@ import type {
   ReviewMobilizationBlueprintParams,
   ReviewOpportunitySynthesisParams,
   ReviewPortfolioDecisionParams,
-  ResolvePortfolioDecisionParams,
   ReviseTransformationCaseParams,
   SustainabilityCheckpoint,
   TransformationCase,
@@ -83,6 +83,7 @@ import {
   ProposeMobilizationBlueprintSchema,
   ProposeOpportunitySynthesisSchema,
   ProposePortfolioDecisionSchema,
+  ResolvePortfolioDecisionSchema,
   ReviewDrdAssessmentProposalSchema,
   ReviewFinanceKpiPackSchema,
   ReviewInitialIdeasProposalSchema,
@@ -90,7 +91,6 @@ import {
   ReviewMobilizationBlueprintSchema,
   ReviewOpportunitySynthesisSchema,
   ReviewPortfolioDecisionSchema,
-  ResolvePortfolioDecisionSchema,
   ReviseTransformationCaseSchema,
 } from '../../types/transformationCase.js';
 import {
@@ -99,11 +99,11 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
-import { retrieveAndRevalidateTransformationContext } from './agentContextProductionRetrievalAdapter.js';
 import {
   type AdapterExecutionResult,
   dispatchAgentAdapter,
 } from './agentAdapterOrchestratorService.js';
+import { retrieveAndRevalidateTransformationContext } from './agentContextProductionRetrievalAdapter.js';
 import {
   assertProposalExecutable,
   registerGovernedProposal,

@@ -3,8 +3,12 @@
  * `okrObjectiveMappers.ts`'s shape one level down.
  */
 import type { HonestValue } from '../types';
+import type {
+  OkrCheckInConfidence,
+  OkrCheckInStatus,
+  OkrSuggestNextCheckInBasis,
+} from './okrCheckInApi';
 import { formatOkrDate } from './okrRegistryMappers';
-import type { OkrCheckInConfidence, OkrCheckInStatus, OkrSuggestNextCheckInBasis } from './okrCheckInApi';
 
 export { formatOkrDate };
 
@@ -34,18 +38,29 @@ export const OKR_CHECKIN_STATUS_TONE: Record<OkrCheckInStatus, OkrCheckInStatusT
   cancelled: 'danger',
 };
 
-export const OKR_CHECKIN_CONFIDENCE_LABELS: Record<OkrCheckInConfidence, { pl: string; en: string }> = {
+export const OKR_CHECKIN_CONFIDENCE_LABELS: Record<
+  OkrCheckInConfidence,
+  { pl: string; en: string }
+> = {
   high: { pl: 'Wysoka', en: 'High' },
   medium: { pl: 'Średnia', en: 'Medium' },
   low: { pl: 'Niska', en: 'Low' },
   numeric: { pl: 'Liczbowa', en: 'Numeric' },
 };
 
-export function okrCheckInConfidenceLabel(confidence: OkrCheckInConfidence, isPolish: boolean): string {
-  return isPolish ? OKR_CHECKIN_CONFIDENCE_LABELS[confidence].pl : OKR_CHECKIN_CONFIDENCE_LABELS[confidence].en;
+export function okrCheckInConfidenceLabel(
+  confidence: OkrCheckInConfidence,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_CHECKIN_CONFIDENCE_LABELS[confidence].pl
+    : OKR_CHECKIN_CONFIDENCE_LABELS[confidence].en;
 }
 
-export const OKR_SUGGEST_BASIS_LABELS: Record<OkrSuggestNextCheckInBasis, { pl: string; en: string }> = {
+export const OKR_SUGGEST_BASIS_LABELS: Record<
+  OkrSuggestNextCheckInBasis,
+  { pl: string; en: string }
+> = {
   linear_trend: { pl: 'Trend liniowy', en: 'Linear trend' },
   no_history: { pl: 'Brak wystarczającej historii', en: 'Insufficient history' },
   // Declared for exhaustiveness — `suggestNextCheckInValue`'s real

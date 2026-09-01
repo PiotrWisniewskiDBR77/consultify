@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 import { withPgTransaction } from '../../database/PostgresDatabase.js';
 import {
+  type HandoffReceipt,
   HandoffSpineError,
   materializeProposal,
-  type HandoffReceipt,
   type TargetKind,
 } from '../artifactHandoff/handoffSpineService.js';
 

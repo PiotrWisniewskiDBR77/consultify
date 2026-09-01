@@ -35,21 +35,28 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
-
-import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES, RoiCaseValidationError } from './roiCaseCommands.js';
+import {
+  ROI_EVENT_SOURCE,
+  ROI_TRACKING_ACTIVE_STATUSES,
+  RoiCaseValidationError,
+} from './roiCaseCommands.js';
 
 // RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
 export const ROI_BENEFITS_REALIZATION_CAPABILITIES = {
   start: 'results.roi.benefits_realization.start',
   cancelCase: 'results.roi.case.cancel',
 } as const;
-import { toRoiCase, type RoiCase, type RoiCaseRow } from './roiTypes.js';
+import { type RoiCase, type RoiCaseRow, toRoiCase } from './roiTypes.js';
 
 // Design §2: obligation type created alongside startRoiCaseBenefitsRealization
 // (Decision D4) — mirrors ROI-E004's own TRACK_ROI_FORECAST_ACTUALS_OBLIGATION_TYPE
@@ -241,7 +248,9 @@ export interface CancelRoiCaseInput {
  * Decision D9: no obligation writes either — left untouched, same as every
  * other transition in this domain (filed as backlog).
  */
-export async function cancelRoiCase(input: CancelRoiCaseInput): Promise<AtomicCommandOutcome<RoiCase>> {
+export async function cancelRoiCase(
+  input: CancelRoiCaseInput
+): Promise<AtomicCommandOutcome<RoiCase>> {
   const {
     caseId,
     organizationId,

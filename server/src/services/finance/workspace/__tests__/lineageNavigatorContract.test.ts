@@ -14,12 +14,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { FinanceArtifactTypeValues } from '../../../../types/finance/ArtifactRef.js';
-import { stageRank } from '../../canonical/lineageService.js';
-import type { LineageEdgeRow } from '../../canonical/lineageService.js';
 import {
-  LINEAGE_FULL_GRAPH_VIEW,
-  LINEAGE_NAV_STACK_MAX_DEPTH,
-  LINEAGE_RELATED_DRAWER,
+  createEmptyWorkspaceState,
+  type FinanceWorkspaceState,
+} from '../../../../types/finance/WorkspaceState.js';
+import type { LineageEdgeRow } from '../../canonical/lineageService.js';
+import { stageRank } from '../../canonical/lineageService.js';
+import {
   allowedDownstreamCreations,
   applyWorkspaceRestorePoint,
   buildLineageTrail,
@@ -32,20 +33,22 @@ import {
   hasTenantAnomalies,
   isOrphaned,
   isTerminalVersionStatus,
+  LINEAGE_FULL_GRAPH_VIEW,
+  LINEAGE_NAV_STACK_MAX_DEPTH,
+  LINEAGE_RELATED_DRAWER,
+  type LineageMetadataResolver,
+  type LineageNavigationEntry,
+  type LineageNodeMetadata,
+  type LineageServicePort,
   lineageStageRank,
+  type LineageTrailNode,
   loadLineageNavigator,
   openRelatedDrawer,
   peekNavigation,
   popNavigation,
   pushNavigation,
-  type LineageMetadataResolver,
-  type LineageNavigationEntry,
-  type LineageNodeMetadata,
-  type LineageServicePort,
-  type LineageTrailNode,
 } from '../lineageNavigatorContract.js';
-import { createEmptyWorkspaceState, type FinanceWorkspaceState } from '../../../../types/finance/WorkspaceState.js';
-import { ORG, artifactRef } from './workspaceTestFixtures.js';
+import { artifactRef, ORG } from './workspaceTestFixtures.js';
 
 // ===========================================================================
 // AP-11 — lineage navigator
@@ -160,7 +163,9 @@ const NODES: Record<string, LineageNodeMetadata> = Object.fromEntries(
 const OTHER_ORG = 'org-intruder';
 
 /** A version that genuinely resolves — but belongs to somebody else. */
-function foreignNode(overrides: Partial<LineageNodeMetadata> & { versionId: string }): LineageNodeMetadata {
+function foreignNode(
+  overrides: Partial<LineageNodeMetadata> & { versionId: string }
+): LineageNodeMetadata {
   return {
     organizationId: OTHER_ORG,
     artifactId: 'foreign-artifact',
@@ -195,8 +200,13 @@ describe('AP-11 lineageNavigatorContract — stage order does not drift from lin
 });
 
 describe('AP-11 lineageNavigatorContract — compact trail', () => {
-  it('builds the register\'s example chain as STRUCTURED data, root -> focus', () => {
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+  it("builds the register's example chain as STRUCTURED data, root -> focus", () => {
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve,
+    });
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     expect(nodes.map((n) => n.displayName)).toEqual([
       'Statement pack v3',
@@ -215,7 +225,12 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
   });
 
   it('carries a stale badge per element instead of one badge for the whole chain', () => {
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve,
+    });
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     expect(nodes[0].staleBadge).toBeNull(); // Statement pack is CURRENT
     expect(nodes[3].staleBadge?.kind).toBe('SOURCE_CHANGED'); // Scenario is STALE_SOURCE
@@ -223,24 +238,33 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
   });
 
   it('picks a deterministic primary parent when a node has two (and flags the alternate)', () => {
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve,
+    });
     expect(trail.hasAlternatePaths).toBe(true); // bm4 has both sp3 and an2 as parents
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     // Nearest upstream stage wins: HISTORICAL_ANALYSIS (rank 1) over STATEMENT_PACK (rank 0).
     expect(nodes[1].metadata.versionId).toBe('an2');
     // Same input in a different order must give the same trail.
-    const shuffled = buildLineageTrail({ organizationId: ORG,
+    const shuffled = buildLineageTrail({
+      organizationId: ORG,
       focusVersionId: 'val1',
       ancestorEdges: [...ANCESTOR_EDGES].reverse(),
       resolve,
     });
-    expect(shuffled.items.filter((i) => i.kind === 'node').map((i) => (i as LineageTrailNode).displayName)).toEqual(
-      nodes.map((n) => n.displayName)
-    );
+    expect(
+      shuffled.items
+        .filter((i) => i.kind === 'node')
+        .map((i) => (i as LineageTrailNode).displayName)
+    ).toEqual(nodes.map((n) => n.displayName));
   });
 
   it('collapses the middle when the chain exceeds the compact budget', () => {
-    const trail = buildLineageTrail({ organizationId: ORG,
+    const trail = buildLineageTrail({
+      organizationId: ORG,
       focusVersionId: 'val1',
       ancestorEdges: ANCESTOR_EDGES,
       resolve,
@@ -255,12 +279,22 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
 
   it('reports an unresolvable version instead of silently dropping the chain', () => {
     const partial: LineageMetadataResolver = (id) => (id === 'bm4' ? undefined : NODES[id]);
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve: partial });
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve: partial,
+    });
     expect(trail.unresolvedVersionIds).toEqual(['bm4']);
   });
 
   it('terminates on a root with no ancestor edges at all', () => {
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'sp3', ancestorEdges: [], resolve });
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'sp3',
+      ancestorEdges: [],
+      resolve,
+    });
     expect(trail.items).toHaveLength(1);
     expect((trail.items[0] as LineageTrailNode).isFocus).toBe(true);
     expect(trail.hasAlternatePaths).toBe(false);
@@ -276,7 +310,8 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   ];
 
   it('separates direct parents, direct children and indirect descendants with counts', () => {
-    const panel = buildRelatedPanel({ organizationId: ORG,
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -296,7 +331,8 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   });
 
   it('offers "+ New" for every permitted downstream type with the exact source version preselected', () => {
-    const panel = buildRelatedPanel({ organizationId: ORG,
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -317,7 +353,8 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   });
 
   it('flags downstream staleness on a node that is itself current', () => {
-    const panel = buildRelatedPanel({ organizationId: ORG,
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -330,7 +367,8 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   it('flags an orphan: an Analysis with no STATEMENT_TO_ANALYSIS parent', () => {
     expect(isOrphaned('HISTORICAL_ANALYSIS', [])).toBe(true);
     expect(isOrphaned('STATEMENT_PACK', [])).toBe(false); // roots are never orphans
-    const panel = buildRelatedPanel({ organizationId: ORG,
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
       focusVersionId: 'an2',
       ancestorEdges: [],
       descendantEdges: [],
@@ -340,17 +378,35 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   });
 
   it('treats a management-adjusted variant edge as a sibling, not an ancestor', () => {
-    const variantEdge = edge('sc2', 'PREDICTION_SCENARIO', 'sc9', 'PREDICTION_SCENARIO', 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT');
+    const variantEdge = edge(
+      'sc2',
+      'PREDICTION_SCENARIO',
+      'sc9',
+      'PREDICTION_SCENARIO',
+      'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT'
+    );
     const withVariant = [...ANCESTOR_EDGES, variantEdge];
-    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: withVariant, resolve });
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: withVariant,
+      resolve,
+    });
     expect(trail.items.filter((i) => i.kind === 'node')).toHaveLength(5); // unchanged chain
-    const panel = buildRelatedPanel({ organizationId: ORG,
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
       focusVersionId: 'sc2',
       ancestorEdges: withVariant,
       descendantEdges: [],
       resolve: (id) =>
         id === 'sc9'
-          ? { ...NODES.sc2, versionId: 'sc9', versionLabel: 'v9', variantLabel: 'Bear', freshness: 'CURRENT' }
+          ? {
+              ...NODES.sc2,
+              versionId: 'sc9',
+              versionLabel: 'v9',
+              variantLabel: 'Bear',
+              freshness: 'CURRENT',
+            }
           : NODES[id],
     })!;
     expect(panel.siblings.map((s) => s.displayName)).toEqual(['Scenario Bear v9']);
@@ -358,7 +414,13 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
 
   it('returns null when the focus version itself cannot be resolved', () => {
     expect(
-      buildRelatedPanel({ organizationId: ORG, focusVersionId: 'ghost', ancestorEdges: [], descendantEdges: [], resolve })
+      buildRelatedPanel({
+        organizationId: ORG,
+        focusVersionId: 'ghost',
+        ancestorEdges: [],
+        descendantEdges: [],
+        resolve,
+      })
     ).toBeNull();
   });
 
@@ -392,7 +454,10 @@ describe('AP-11 lineageNavigatorContract — downstream topology and the auxilia
       'BASELINE_MODEL',
       'REPORT_EXPORT',
     ]);
-    expect(allowedDownstreamCreations('HISTORICAL_ANALYSIS', 'APPROVED')).toEqual(['BASELINE_MODEL', 'REPORT_EXPORT']);
+    expect(allowedDownstreamCreations('HISTORICAL_ANALYSIS', 'APPROVED')).toEqual([
+      'BASELINE_MODEL',
+      'REPORT_EXPORT',
+    ]);
     // Addendum section 6.1: Scenario is OPTIONAL — a Model may go straight to Valuation.
     expect(allowedDownstreamCreations('BASELINE_MODEL', 'APPROVED')).toEqual([
       'PREDICTION_SCENARIO',
@@ -433,8 +498,16 @@ describe('AP-11 lineageNavigatorContract — wraps lineageService through an inj
 
     expect(calls.sort()).toEqual(['ancestors:org-test:val1', 'descendants:org-test:val1']);
     expect(
-      model.trail.items.filter((i): i is LineageTrailNode => i.kind === 'node').map((n) => n.displayName)
-    ).toEqual(['Statement pack v3', 'Analysis v2', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
+      model.trail.items
+        .filter((i): i is LineageTrailNode => i.kind === 'node')
+        .map((n) => n.displayName)
+    ).toEqual([
+      'Statement pack v3',
+      'Analysis v2',
+      'Baseline model v4',
+      'Scenario Bull v2',
+      'Valuation v1',
+    ]);
     expect(model.related?.children[0]).toMatchObject({ artifactType: 'REPORT_EXPORT', count: 1 });
     expect(model.fullGraph.defaultVisible).toBe(false);
   });
@@ -463,7 +536,14 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
    * guard this edge, not bm4, is what the trail would show.
    */
   const INTRUDER_PARENT_EDGE = crossTenantEdge(
-    edge('bmX', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO', '2026-08-09T00:00:00.000Z')
+    edge(
+      'bmX',
+      'BASELINE_MODEL',
+      'sc2',
+      'PREDICTION_SCENARIO',
+      'MODEL_TO_SCENARIO',
+      '2026-08-09T00:00:00.000Z'
+    )
   );
   const POISONED_ANCESTORS: LineageEdgeRow[] = [...ANCESTOR_EDGES, INTRUDER_PARENT_EDGE];
   /** A resolver that happily describes the intruder — the caller has no org-awareness at all. */
@@ -496,19 +576,25 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
     expect(hasTenantAnomalies(trail.tenant)).toBe(true);
   });
 
-  it('POSITIVE CONTROL — a resolver returning another tenant\'s version is dropped, and is NOT reported as unresolved', () => {
+  it("POSITIVE CONTROL — a resolver returning another tenant's version is dropped, and is NOT reported as unresolved", () => {
     // Edges are clean here: the ONLY contamination is the resolver, which the
     // SQL layer cannot see at all.
     const trail = buildLineageTrail({
       organizationId: ORG,
       focusVersionId: 'val1',
       ancestorEdges: ANCESTOR_EDGES,
-      resolve: (versionId) => (versionId === 'an2' ? foreignNode({ versionId: 'an2' }) : NODES[versionId]),
+      resolve: (versionId) =>
+        versionId === 'an2' ? foreignNode({ versionId: 'an2' }) : NODES[versionId],
     });
     const names = trail.items
       .filter((i): i is LineageTrailNode => i.kind === 'node')
       .map((n) => n.displayName);
-    expect(names).toEqual(['Statement pack v3', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
+    expect(names).toEqual([
+      'Statement pack v3',
+      'Baseline model v4',
+      'Scenario Bull v2',
+      'Valuation v1',
+    ]);
     expect(trail.tenant.foreignVersionIds).toEqual(['an2']);
     // A tenant leak must not be mistaken for missing data.
     expect(trail.unresolvedVersionIds).toEqual([]);
@@ -548,7 +634,9 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
     // Copy before sorting: `foreignEdgeIds` is `readonly string[]`, so an
     // in-place `.sort()` is both a type error and a mutation of the contract's
     // own output.
-    expect([...panel.tenant.foreignEdgeIds].sort()).toEqual([foreignChild.id, foreignIndirect.id].sort());
+    expect([...panel.tenant.foreignEdgeIds].sort()).toEqual(
+      [foreignChild.id, foreignIndirect.id].sort()
+    );
     expect(panel.tenant.foreignVersionIds).toEqual(['sibX']);
   });
 
@@ -568,7 +656,9 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
     const result = computeDepths({
       edges: [
         edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
-        crossTenantEdge(edge('sc2', 'PREDICTION_SCENARIO', 'valX', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION')),
+        crossTenantEdge(
+          edge('sc2', 'PREDICTION_SCENARIO', 'valX', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION')
+        ),
       ],
       rootVersionId: 'bm4',
       direction: 'downstream',
@@ -587,7 +677,11 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
         return POISONED_ANCESTORS;
       },
       async getDescendants() {
-        return [crossTenantEdge(edge('val1', 'VALUATION_CASE', 'repX', 'REPORT_EXPORT', 'VERSION_TO_REPORT'))];
+        return [
+          crossTenantEdge(
+            edge('val1', 'VALUATION_CASE', 'repX', 'REPORT_EXPORT', 'VERSION_TO_REPORT')
+          ),
+        ];
       },
     };
     const model = await loadLineageNavigator({
@@ -595,11 +689,21 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
       organizationId: ORG,
       focusVersionId: 'val1',
       resolve: (versionId) =>
-        versionId === 'repX' ? foreignNode({ versionId, artifactType: 'REPORT_EXPORT' }) : poisonedResolve(versionId),
+        versionId === 'repX'
+          ? foreignNode({ versionId, artifactType: 'REPORT_EXPORT' })
+          : poisonedResolve(versionId),
     });
     expect(
-      model.trail.items.filter((i): i is LineageTrailNode => i.kind === 'node').map((n) => n.displayName)
-    ).toEqual(['Statement pack v3', 'Analysis v2', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
+      model.trail.items
+        .filter((i): i is LineageTrailNode => i.kind === 'node')
+        .map((n) => n.displayName)
+    ).toEqual([
+      'Statement pack v3',
+      'Analysis v2',
+      'Baseline model v4',
+      'Scenario Bull v2',
+      'Valuation v1',
+    ]);
     expect(model.related?.children).toEqual([]);
     expect(hasTenantAnomalies(model.trail.tenant)).toBe(true);
     expect(hasTenantAnomalies(model.related!.tenant)).toBe(true);
@@ -620,7 +724,9 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
       organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
-      descendantEdges: [edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO')],
+      descendantEdges: [
+        edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+      ],
       resolve,
     })!;
     expect(hasTenantAnomalies(panel.tenant)).toBe(false);
@@ -674,7 +780,13 @@ describe('AP-11 lineageNavigatorContract — terminal versions', () => {
   });
 
   it('NEGATIVE CONTROL — every live status still offers the full downstream set', () => {
-    for (const status of ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'APPROVED', 'NEEDS_CHANGES'] as const) {
+    for (const status of [
+      'DRAFT',
+      'READY_FOR_REVIEW',
+      'IN_REVIEW',
+      'APPROVED',
+      'NEEDS_CHANGES',
+    ] as const) {
       expect(isTerminalVersionStatus(status)).toBe(false);
       expect(allowedDownstreamCreations('BASELINE_MODEL', status)).toEqual([
         'PREDICTION_SCENARIO',
@@ -777,7 +889,9 @@ describe('AP-11 lineageNavigatorContract — terminal versions', () => {
   });
 
   it('NEGATIVE CONTROL — with no terminal relatives, hide mode changes nothing', () => {
-    const descendants = [edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO')];
+    const descendants = [
+      edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+    ];
     const hidden = buildRelatedPanel({
       organizationId: ORG,
       focusVersionId: 'bm4',
@@ -918,7 +1032,9 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
       descendantEdges: [],
       resolve,
     })!;
-    expect(panel.parents.map((g) => [g.artifactType, g.count])).toEqual([['PREDICTION_SCENARIO', 1]]);
+    expect(panel.parents.map((g) => [g.artifactType, g.count])).toEqual([
+      ['PREDICTION_SCENARIO', 1],
+    ]);
     const indirect = panel.indirectAncestors.flatMap((g) => g.entries);
     expect(indirect.map((e) => e.metadata.versionId).sort()).toEqual(['an2', 'bm4', 'sp3']);
     // Depths are real BFS distances, not a flat "2".
@@ -942,10 +1058,12 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
       descendantEdges: [],
       resolve,
     })!;
-    expect(panel.parents.flatMap((g) => g.entries).map((e) => e.metadata.versionId).sort()).toEqual([
-      'an2',
-      'sp3',
-    ]);
+    expect(
+      panel.parents
+        .flatMap((g) => g.entries)
+        .map((e) => e.metadata.versionId)
+        .sort()
+    ).toEqual(['an2', 'sp3']);
     expect(panel.indirectAncestors).toEqual([]);
   });
 
@@ -953,7 +1071,9 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
     const panel = buildRelatedPanel({
       organizationId: ORG,
       focusVersionId: 'an2',
-      ancestorEdges: [edge('sp3', 'STATEMENT_PACK', 'an2', 'HISTORICAL_ANALYSIS', 'STATEMENT_TO_ANALYSIS')],
+      ancestorEdges: [
+        edge('sp3', 'STATEMENT_PACK', 'an2', 'HISTORICAL_ANALYSIS', 'STATEMENT_TO_ANALYSIS'),
+      ],
       descendantEdges: [],
       resolve,
     })!;
@@ -970,9 +1090,12 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
       resolve: (id) => (id === 'sp3' ? { ...NODES.sp3, status: 'ARCHIVED' } : NODES[id]),
       terminalVisibility: 'hide',
     })!;
-    expect(panel.indirectAncestors.flatMap((g) => g.entries).map((e) => e.metadata.versionId).sort()).toEqual(
-      ['an2', 'bm4']
-    );
+    expect(
+      panel.indirectAncestors
+        .flatMap((g) => g.entries)
+        .map((e) => e.metadata.versionId)
+        .sort()
+    ).toEqual(['an2', 'bm4']);
     expect(panel.hiddenTerminalCount).toBe(1);
   });
 });
@@ -981,11 +1104,17 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
 // AP-11 — the Related drawer and coming BACK from a lineage jump.
 // ===========================================================================
 
-function workspaceStateFixture(overrides: Partial<FinanceWorkspaceState> = {}): FinanceWorkspaceState {
+function workspaceStateFixture(
+  overrides: Partial<FinanceWorkspaceState> = {}
+): FinanceWorkspaceState {
   const base = createEmptyWorkspaceState({
     organizationId: ORG,
     userId: 'user-1',
-    artifactRef: artifactRef({ artifactType: 'BASELINE_MODEL', artifactId: 'bm', businessVersionId: 'bm4' }),
+    artifactRef: artifactRef({
+      artifactType: 'BASELINE_MODEL',
+      artifactId: 'bm',
+      businessVersionId: 'bm4',
+    }),
     sourceWorkingRevisionId: 'wr-1',
     now: () => '2026-08-10T10:00:00.000Z',
   });
@@ -1057,7 +1186,9 @@ describe('AP-11 lineageNavigatorContract — restore point', () => {
     expect(Object.keys(restorePoint)).not.toContain('unsavedOperationStack');
     const live = workspaceStateFixture({ sourceWorkingRevisionId: 'wr-99' });
     const result = applyWorkspaceRestorePoint(live, restorePoint);
-    expect((result as { ok: true; state: FinanceWorkspaceState }).state.sourceWorkingRevisionId).toBe('wr-99');
+    expect(
+      (result as { ok: true; state: FinanceWorkspaceState }).state.sourceWorkingRevisionId
+    ).toBe('wr-99');
   });
 
   it('is decoupled from the live state — later edits do not mutate the snapshot', () => {
@@ -1072,7 +1203,11 @@ describe('AP-11 lineageNavigatorContract — restore point', () => {
   it('POSITIVE CONTROL — refuses a snapshot from another artifact or another tenant', () => {
     const restorePoint = captureWorkspaceRestorePoint(workedInState());
     const otherArtifact = workspaceStateFixture({
-      artifactRef: artifactRef({ artifactType: 'VALUATION_CASE', artifactId: 'val', businessVersionId: 'val1' }),
+      artifactRef: artifactRef({
+        artifactType: 'VALUATION_CASE',
+        artifactId: 'val',
+        businessVersionId: 'val1',
+      }),
     });
     expect(applyWorkspaceRestorePoint(otherArtifact, restorePoint)).toMatchObject({
       ok: false,
@@ -1134,7 +1269,9 @@ describe('AP-11 lineageNavigatorContract — navigation stack', () => {
 
   it('POSITIVE CONTROL — a stack refuses an entry from another tenant', () => {
     const foreignEntry: LineageNavigationEntry = {
-      restorePoint: captureWorkspaceRestorePoint(workspaceStateFixture({ organizationId: OTHER_ORG })),
+      restorePoint: captureWorkspaceRestorePoint(
+        workspaceStateFixture({ organizationId: OTHER_ORG })
+      ),
       via: 'trail',
       targetVersionId: 'bmX',
     };

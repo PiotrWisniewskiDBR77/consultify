@@ -19,28 +19,28 @@ import { CheckCircle2, FileText, Send } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
 import {
   approveReport,
   AUDIT_REPORT_STATUSES,
+  type AuditReportSummary,
   listReports,
   publishReport,
-  type AuditReportSummary,
 } from '../auditsMethodApi';
+import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
 
 export interface AuditReportsTabProps {
   isPolish: boolean;
@@ -75,6 +75,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [exportingFormat, setExportingFormat] = useState<'docx' | 'pdf' | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -134,6 +135,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     async (report: AuditReportSummary) => {
       if (exportingId) return;
       setExportingId(report.id);
+      setExportingFormat('docx');
       setExportError(null);
       try {
         const token = localStorage.getItem('token');
@@ -162,6 +164,53 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         );
       } finally {
         setExportingId(null);
+        setExportingFormat(null);
+      }
+    },
+    [exportingId, isPolish]
+  );
+
+  /**
+   * FIX-187: bliźniak `downloadReportDocx` — trasa `.pdf` jest strukturalnym
+   * bliźniakiem `.docx` (ten sam aktor/walidacja/kontekst/schemat, różnica
+   * tylko renderer+Content-Type), więc wzorzec pobierania jest identyczny.
+   * Kanoniczny slot na drugą pozycję kebaba: `details.extraActions`
+   * (patrz `StandardPreview.tsx` — pozycje PO standardowych Copy/Export/Pobierz).
+   */
+  const downloadReportPdf = useCallback(
+    async (report: AuditReportSummary) => {
+      if (exportingId) return;
+      setExportingId(report.id);
+      setExportingFormat('pdf');
+      setExportError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          `/api/audits/reports/${encodeURIComponent(report.id)}/export.pdf`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            payload.error ||
+              (isPolish ? 'Nie udało się pobrać PDF.' : 'Could not download the PDF.')
+          );
+        }
+        const blobUrl = URL.createObjectURL(await response.blob());
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `audit-report-${report.id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch (e: any) {
+        setExportError(
+          e?.message || (isPolish ? 'Nie udało się pobrać PDF.' : 'Could not download the PDF.')
+        );
+      } finally {
+        setExportingId(null);
+        setExportingFormat(null);
       }
     },
     [exportingId, isPolish]
@@ -416,7 +465,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           data-testid="audit-report-preview"
         >
           {exportError ? (
-            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+            <div
+              className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger"
+              role="alert"
+            >
               {exportError}
             </div>
           ) : null}
@@ -454,13 +506,34 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
               // flaga NIE jest tu włączana.
               onDownload: reportChainEnabled ? () => void downloadReportDocx(selected) : undefined,
               downloadLabel:
-                exportingId === selected.id
+                exportingId === selected.id && exportingFormat === 'docx'
                   ? isPolish
                     ? 'Pobieranie…'
                     : 'Downloading…'
                   : isPolish
                     ? 'Pobierz DOCX'
                     : 'Download DOCX',
+              // FIX-187: bliźniak powyższego slotu — druga pozycja kebaba,
+              // kanoniczny `extraActions` (patrz `StandardPreview.tsx`,
+              // renderowane PO standardowych Copy/Export/Pobierz), ta sama
+              // flaga, zero nowego kontraktu.
+              extraActions: reportChainEnabled
+                ? [
+                    {
+                      id: 'download-pdf',
+                      label:
+                        exportingId === selected.id && exportingFormat === 'pdf'
+                          ? isPolish
+                            ? 'Pobieranie…'
+                            : 'Downloading…'
+                          : isPolish
+                            ? 'Pobierz PDF'
+                            : 'Download PDF',
+                      onClick: () => void downloadReportPdf(selected),
+                      disabled: exportingId === selected.id && exportingFormat === 'pdf',
+                    },
+                  ]
+                : undefined,
             }}
           />
         </div>

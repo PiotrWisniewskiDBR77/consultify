@@ -11,17 +11,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canRenameArtifact,
   DEFAULT_WORKSPACE_BAR_METRICS,
   ENABLEMENT_ALWAYS,
-  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
-  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
-  WORKSPACE_BAR_NAME_MAX_CHARS,
-  canRenameArtifact,
   estimateWorkspaceBarLayout,
   mergeFreshnessIntoPrimaryLabel,
   resolveViewNavigationPlacement,
   validateWorkspaceBarConfig,
   validateWorkspaceName,
+  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
+  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
+  WORKSPACE_BAR_NAME_MAX_CHARS,
   type WorkspaceBarConfig,
 } from '../financeWorkspaceBar.contract';
 
@@ -30,7 +30,11 @@ function baseConfig(overrides: Partial<WorkspaceBarConfig> = {}): WorkspaceBarCo
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-1', artifactId: 'art-1' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-1',
+        artifactId: 'art-1',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
       name: {
         value: 'Model bazowy FY2026',
@@ -116,7 +120,9 @@ describe('financeWorkspaceBar.contract — kryterium 1280px / 60 znaków (addend
     expect(estimate.viewportPx).toBe(1280);
     expect(estimate.targetNameChars).toBe(60);
     expect(estimate.fits).toBe(true);
-    expect(estimate.nameAvailablePx).toBeGreaterThanOrEqual(DEFAULT_WORKSPACE_BAR_METRICS.minNamePx);
+    expect(estimate.nameAvailablePx).toBeGreaterThanOrEqual(
+      DEFAULT_WORKSPACE_BAR_METRICS.minNamePx
+    );
   });
 
   it('KONTROLA NEGATYWNA: dodanie 6. bezpośredniej kontrolki (extraDirectControls) zawęża dostępną przestrzeń na nazwę i configu NIE da się zwalidować', () => {
@@ -144,7 +150,10 @@ describe('financeWorkspaceBar.contract — kryterium 1280px / 60 znaków (addend
         ],
       },
     });
-    const after = estimateWorkspaceBarLayout(configOverstuffed, { viewportPx: 1280, nameChars: 60 });
+    const after = estimateWorkspaceBarLayout(configOverstuffed, {
+      viewportPx: 1280,
+      nameChars: 60,
+    });
 
     // Zrzut na budżet szerokości MUSI się zmienić po dodaniu kontrolki —
     // dowód, że estymator faktycznie liczy z configu, nie zwraca stałej.
@@ -174,14 +183,23 @@ describe('financeWorkspaceBar.contract — freshness scalone z CTA (addendum §7
   });
 
   it('STALE_SOURCE: „Nieaktualne · Przelicz” — KONTROLA NEGATYWNA zmiany freshness zmienia renderowany label', () => {
-    const currentLabel = mergeFreshnessIntoPrimaryLabel({ key: 'recalc', pl: 'Przelicz' }, 'CURRENT').pl;
-    const staleLabel = mergeFreshnessIntoPrimaryLabel({ key: 'recalc', pl: 'Przelicz' }, 'STALE_SOURCE').pl;
+    const currentLabel = mergeFreshnessIntoPrimaryLabel(
+      { key: 'recalc', pl: 'Przelicz' },
+      'CURRENT'
+    ).pl;
+    const staleLabel = mergeFreshnessIntoPrimaryLabel(
+      { key: 'recalc', pl: 'Przelicz' },
+      'STALE_SOURCE'
+    ).pl;
     expect(staleLabel).toBe('Nieaktualne · Przelicz');
     expect(staleLabel).not.toBe(currentLabel);
   });
 
   it('COMPUTE_FAILED: „Błąd przeliczenia · Przelicz”', () => {
-    const merged = mergeFreshnessIntoPrimaryLabel({ key: 'recalc', pl: 'Przelicz' }, 'COMPUTE_FAILED');
+    const merged = mergeFreshnessIntoPrimaryLabel(
+      { key: 'recalc', pl: 'Przelicz' },
+      'COMPUTE_FAILED'
+    );
     expect(merged.pl).toBe('Błąd przeliczenia · Przelicz');
   });
 });
@@ -199,7 +217,10 @@ describe('financeWorkspaceBar.contract — rename kontrolowany (OWN-FIN-011)', (
   });
 
   it('viewer rola → zablokowany (INSUFFICIENT_ROLE)', () => {
-    expect(canRenameArtifact('DRAFT', 'viewer')).toEqual({ editable: false, reason: 'INSUFFICIENT_ROLE' });
+    expect(canRenameArtifact('DRAFT', 'viewer')).toEqual({
+      editable: false,
+      reason: 'INSUFFICIENT_ROLE',
+    });
   });
 
   it('walidacja: pusta nazwa odrzucona, za długa nazwa odrzucona, znaki sterujące odrzucone', () => {
@@ -265,7 +286,9 @@ describe('financeWorkspaceBar.contract — destrukcyjne operacje wymagają potwi
     const validation = validateWorkspaceBarConfig(config);
     expect(validation.ok).toBe(false);
     if (!validation.ok) {
-      expect(validation.errors.some((e) => e.code === 'DESTRUCTIVE_WITHOUT_CONFIRMATION')).toBe(true);
+      expect(validation.errors.some((e) => e.code === 'DESTRUCTIVE_WITHOUT_CONFIRMATION')).toBe(
+        true
+      );
     }
   });
 });

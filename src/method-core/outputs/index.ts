@@ -3,6 +3,39 @@
  * Public surface. See types.ts for the canon references.
  */
 
+export {
+  createAssessmentOutput,
+  type CreateAssessmentOutputInput,
+  OutputValidationError,
+  recomputeOutputContentHash,
+} from './assessmentOutput';
+export {
+  computePortableContentHash,
+  roundForHash,
+  sortByStableKey,
+  sortStrings,
+  stableStringify,
+} from './contentHash';
+export { assertFindingIsValid, createFinding, FindingValidationError } from './finding';
+export { deepFreeze } from './freeze';
+export {
+  createInitiativeProposalDraft,
+  type CreateInitiativeProposalDraftInput,
+  groupFindingsForInitiativeDrafts,
+  InitiativeDraftValidationError,
+} from './initiativeDraft';
+export {
+  createPresentationSourceBlock,
+  type CreatePresentationSourceBlockInput,
+  PresentationSourceBlockError,
+} from './presentationSourceBlock';
+export {
+  buildPresentationView,
+  buildReportSnapshot,
+  type BuildReportSnapshotInput,
+  type PresentationView,
+} from './reportSnapshot';
+export { markRecordSuperseded, wrapAsCurrent } from './supersession';
 export type {
   AssessmentOutput,
   ContentApprovalState,
@@ -31,48 +64,3 @@ export type {
   UnitLevelMap,
   VisualModelRef,
 } from './types';
-
-export {
-  computePortableContentHash,
-  roundForHash,
-  sortByStableKey,
-  sortStrings,
-  stableStringify,
-} from './contentHash';
-
-export { deepFreeze } from './freeze';
-
-export {
-  createAssessmentOutput,
-  recomputeOutputContentHash,
-  OutputValidationError,
-  type CreateAssessmentOutputInput,
-} from './assessmentOutput';
-
-export {
-  assertFindingIsValid,
-  createFinding,
-  FindingValidationError,
-} from './finding';
-
-export {
-  buildPresentationView,
-  buildReportSnapshot,
-  type BuildReportSnapshotInput,
-  type PresentationView,
-} from './reportSnapshot';
-
-export {
-  createPresentationSourceBlock,
-  PresentationSourceBlockError,
-  type CreatePresentationSourceBlockInput,
-} from './presentationSourceBlock';
-
-export {
-  createInitiativeProposalDraft,
-  groupFindingsForInitiativeDrafts,
-  InitiativeDraftValidationError,
-  type CreateInitiativeProposalDraftInput,
-} from './initiativeDraft';
-
-export { markRecordSuperseded, wrapAsCurrent } from './supersession';

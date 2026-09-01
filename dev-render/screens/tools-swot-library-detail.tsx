@@ -89,7 +89,12 @@ const SESSIONS = [
 ];
 
 const params = new URLSearchParams(window.location.search);
-const fixtureState = params.get('state') === 'error' ? 'error' : params.get('state') === 'loading' ? 'loading' : 'ready';
+const fixtureState =
+  params.get('state') === 'error'
+    ? 'error'
+    : params.get('state') === 'loading'
+      ? 'loading'
+      : 'ready';
 
 // Patch the Api singleton directly — same fixture-per-call philosophy as the
 // stateful fetch stub in tool-outputs-panel.tsx, but at method level because
@@ -103,17 +108,17 @@ const fixtureState = params.get('state') === 'error' ? 'error' : params.get('sta
   if (fixtureState === 'error') return { items: [], total: 0, limit: 100, offset: 0 };
   return { items: SESSIONS, total: SESSIONS.length, limit: 100, offset: 0 };
 };
-(Api as any).createToolSession = async () => ({ id: 'sess-demo-new', toolType: TOOL_TYPE, name: 'Nowa sesja' });
+(Api as any).createToolSession = async () => ({
+  id: 'sess-demo-new',
+  toolType: TOOL_TYPE,
+  name: 'Nowa sesja',
+});
 
 export default function ToolsSwotLibraryDetailScreen() {
   return (
     <HelpProvider>
       <div className="min-h-screen bg-c-bg">
-        <KnownToolDetailView
-          toolType={TOOL_TYPE}
-          onClose={() => {}}
-          onSessionCreated={() => {}}
-        />
+        <KnownToolDetailView toolType={TOOL_TYPE} onClose={() => {}} onSessionCreated={() => {}} />
       </div>
     </HelpProvider>
   );

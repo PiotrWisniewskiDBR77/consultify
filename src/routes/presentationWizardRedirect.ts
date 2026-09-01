@@ -8,7 +8,7 @@
  *
  * `PresentationWizard` was orphaned from navigation (zero UI links) and lived
  * only off deep links built by artifactNavigation.ts / chatActionHandler.ts /
- * useActionHandler.ts / server `artifacts.routes.ts` (openPath for
+ * useChatActions.ts / server `artifacts.routes.ts` (openPath for
  * `presentation_template`) — all four were repointed at the canonical
  * destinations (Teresa `/prezentacje` for generation, the Template Architect
  * for edit/clone). This route stays as a redirect for old bookmarks instead

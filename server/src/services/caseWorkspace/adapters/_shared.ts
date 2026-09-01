@@ -44,14 +44,14 @@
  * to this program's own internal seams too.
  */
 
+import type { ArtifactLinkRelation } from '../artifactLinkService.js';
+import * as artifactLinkService from '../artifactLinkService.js';
 import {
-  CapabilityHandlerError,
   type CapabilityExecutionEnvelope,
+  CapabilityHandlerError,
 } from '../capabilityAdapterService.js';
 import * as caseCoreService from '../caseCoreService.js';
 import { CaseWorkspaceAuthError } from '../caseWorkspaceAuthContext.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import type { ArtifactLinkRelation } from '../artifactLinkService.js';
 
 // ---------------------------------------------------------------------------
 // Case resolution + cross-tenant guard
@@ -140,7 +140,11 @@ export async function resolveCaseContext(
     );
   }
 
-  return { caseId: caseView.caseId, organizationId: caseView.organizationId, projectId: caseView.projectId };
+  return {
+    caseId: caseView.caseId,
+    organizationId: caseView.organizationId,
+    projectId: caseView.projectId,
+  };
 }
 
 // ---------------------------------------------------------------------------

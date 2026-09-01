@@ -54,13 +54,11 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
         isSuperAdmin: false,
       });
 
-      const res = await request(app)
-        .post(`${BASE}/cases`)
-        .send({
-          projectId: f.projectId,
-          caseProfile: 'LIGHT',
-          contractedClosureType: 'DECISION_COMPLETED',
-        });
+      const res = await request(app).post(`${BASE}/cases`).send({
+        projectId: f.projectId,
+        caseProfile: 'LIGHT',
+        contractedClosureType: 'DECISION_COMPLETED',
+      });
 
       expect(res.status).toBe(201);
       // Envelope, per the spec: { data: CaseCore }.
@@ -102,14 +100,12 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
         isSuperAdmin: false,
       });
 
-      const res = await request(app)
-        .post(`${BASE}/cases`)
-        .send({
-          projectId: f.projectId,
-          contractedClosureType: 'DELIVERY_COMPLETED',
-          organizationId: attacker,
-          createdByActorId: 'someone-else',
-        });
+      const res = await request(app).post(`${BASE}/cases`).send({
+        projectId: f.projectId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        organizationId: attacker,
+        createdByActorId: 'someone-else',
+      });
 
       expect(res.status).toBe(201);
       const row = await control.query(
@@ -193,7 +189,10 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
       expect(illegal.status).toBe(409);
       expect(illegal.body.error.code).toBe('CASE_STATUS_TRANSITION_NOT_ALLOWED');
 
-      const afterIllegal = await control.query(`SELECT case_status FROM case_core WHERE case_id = $1`, [caseId]);
+      const afterIllegal = await control.query(
+        `SELECT case_status FROM case_core WHERE case_id = $1`,
+        [caseId]
+      );
       expect(afterIllegal.rows[0].case_status).toBe('ACTIVE');
     } finally {
       await fx.teardown();
@@ -255,13 +254,11 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
         userRole: 'MEMBER',
         isSuperAdmin: false,
       });
-      const created = await request(app)
-        .post(`${BASE}/cases`)
-        .send({
-          projectId: f.projectId,
-          contractedClosureType: 'DELIVERY_COMPLETED',
-          governanceTier: 'LIGHTWEIGHT',
-        });
+      const created = await request(app).post(`${BASE}/cases`).send({
+        projectId: f.projectId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        governanceTier: 'LIGHTWEIGHT',
+      });
       const caseId = created.body.data.caseId;
 
       const raised = await request(app)
@@ -389,7 +386,9 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
       // Layout is written through a SEPARATE endpoint, by design.
       const put = await request(app)
         .put(`${BASE}/plan-versions/${planId}/view-state/EXPERT`)
-        .send({ viewState: { nodes: { start: { x: 40, y: 120 }, end: { x: 380, y: 120 } }, zoom: 1.25 } });
+        .send({
+          viewState: { nodes: { start: { x: 40, y: 120 }, end: { x: 380, y: 120 } }, zoom: 1.25 },
+        });
       expect(put.status).toBe(200);
       expect(put.body.data.viewType).toBe('EXPERT');
 
@@ -410,7 +409,9 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
       expect(row.rows[0].graph_digest).toBe(digestBefore);
       expect(Number(row.rows[0].version)).toBe(versionBefore);
 
-      await control.query(`DELETE FROM case_plan_view_state WHERE case_plan_version_id = $1`, [planId]);
+      await control.query(`DELETE FROM case_plan_view_state WHERE case_plan_version_id = $1`, [
+        planId,
+      ]);
     } finally {
       await fx.teardown();
     }

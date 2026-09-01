@@ -62,7 +62,15 @@
 // Types — mirrors WP-D03 ADR section 5.2's FormulaNode JSON schema verbatim.
 // ---------------------------------------------------------------------------
 
-export type UnitType = 'MONETARY' | 'RATIO' | 'PERCENT' | 'MULTIPLE' | 'DAYS' | 'COUNT' | 'MONETARY_PER_DAY' | 'DIMENSIONLESS';
+export type UnitType =
+  | 'MONETARY'
+  | 'RATIO'
+  | 'PERCENT'
+  | 'MULTIPLE'
+  | 'DAYS'
+  | 'COUNT'
+  | 'MONETARY_PER_DAY'
+  | 'DIMENSIONLESS';
 
 export type OperatorKind = 'add' | 'subtract' | 'multiply' | 'divide' | 'ratio';
 
@@ -100,7 +108,11 @@ export type FormulaNode = OperatorNode | OperandNode;
 export type NegativeDenominatorPolicy = 'SHOW_WITH_FLAG' | 'FORCE_NA' | null;
 
 /** `finance_analysis_kpi_values.quality_flag` DB CHECK values — this module NEVER produces a value outside this set (see file header: task-level prose mentions "MISSING_INPUT" as an example, but that is not a DB-valid quality_flag; a missing input surfaces as `status='MISSING'` instead, per WP-D01's own value_status doctrine — see `kpiComputeService.ts` report discussion). */
-export type QualityFlag = 'DIVISION_BY_ZERO' | 'NEGATIVE_DENOMINATOR' | 'INSUFFICIENT_HISTORY' | 'ESTIMATED_ANNUALIZED';
+export type QualityFlag =
+  | 'DIVISION_BY_ZERO'
+  | 'NEGATIVE_DENOMINATOR'
+  | 'INSUFFICIENT_HISTORY'
+  | 'ESTIMATED_ANNUALIZED';
 
 /**
  * `finance_analysis_kpi_values.value_status` DB CHECK values this module can produce.
@@ -123,7 +135,12 @@ export type QualityFlag = 'DIVISION_BY_ZERO' | 'NEGATIVE_DENOMINATOR' | 'INSUFFI
  * new `NA` branches below, so that CHECK is simply never exercised by this evaluator anymore, not
  * violated).
  */
-export type EvalValueStatus = 'PRESENT_NONZERO' | 'PRESENT_ZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
+export type EvalValueStatus =
+  | 'PRESENT_NONZERO'
+  | 'PRESENT_ZERO'
+  | 'MISSING'
+  | 'NA'
+  | 'NOT_APPLICABLE';
 
 export interface EvaluationResult {
   status: EvalValueStatus;
@@ -182,7 +199,12 @@ interface InternalResult extends EvaluationResult {
   denominator?: EvaluationResult;
 }
 
-const MISSING: EvaluationResult = { status: 'MISSING', value: null, qualityFlag: null, detail: null };
+const MISSING: EvaluationResult = {
+  status: 'MISSING',
+  value: null,
+  qualityFlag: null,
+  detail: null,
+};
 
 function isUnusable(r: EvaluationResult): boolean {
   return r.status === 'MISSING' || r.status === 'NA' || r.status === 'NOT_APPLICABLE';
@@ -200,15 +222,30 @@ function isUnusable(r: EvaluationResult): boolean {
 function propagateUnusable(left: EvaluationResult, right: EvaluationResult): EvaluationResult {
   if (left.status === 'MISSING' || right.status === 'MISSING') {
     const detail = left.status === 'MISSING' ? left.detail : right.detail;
-    return { status: 'MISSING', value: null, qualityFlag: null, detail: detail ?? 'an operand is MISSING' };
+    return {
+      status: 'MISSING',
+      value: null,
+      qualityFlag: null,
+      detail: detail ?? 'an operand is MISSING',
+    };
   }
   if (left.status === 'NA' || right.status === 'NA') {
     const na = left.status === 'NA' ? left : right;
-    return { status: 'NA', value: null, qualityFlag: na.qualityFlag, detail: na.detail ?? 'an operand is NA (cannot be computed)' };
+    return {
+      status: 'NA',
+      value: null,
+      qualityFlag: na.qualityFlag,
+      detail: na.detail ?? 'an operand is NA (cannot be computed)',
+    };
   }
   // Both/either NOT_APPLICABLE.
   const flagged = left.status === 'NOT_APPLICABLE' ? left : right;
-  return { status: 'NOT_APPLICABLE', value: null, qualityFlag: flagged.qualityFlag, detail: flagged.detail };
+  return {
+    status: 'NOT_APPLICABLE',
+    value: null,
+    qualityFlag: flagged.qualityFlag,
+    detail: flagged.detail,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -228,15 +265,26 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
           // previous_period_id). ADR 6.4: "quality_flag='INSUFFICIENT_HISTORY', nie cichy
           // fallback na wartość punktową." Modeled as NOT_APPLICABLE (a real DB-valid
           // value_status) carrying that quality_flag, not MISSING (which carries none).
-          return { status: 'NOT_APPLICABLE', value: null, qualityFlag: 'INSUFFICIENT_HISTORY', detail: resolved.detail };
+          return {
+            status: 'NOT_APPLICABLE',
+            value: null,
+            qualityFlag: 'INSUFFICIENT_HISTORY',
+            detail: resolved.detail,
+          };
         }
         // WRONG_PERIOD_TYPE_FOR_LTM / UNSUPPORTED_PERIOD_TYPE_FOR_YOY / ENTITY_NOT_FOUND /
         // CANONICAL_LINE_NOT_FOUND: configuration/readiness problems, not DB-valid quality
         // flags (see module header + `QualityFlag` type comment) — surfaces as MISSING with a
         // diagnostic `detail` string instead of inventing a non-schema enum value.
-        return { status: 'MISSING', value: null, qualityFlag: null, detail: `${resolved.reason}: ${resolved.detail}` };
+        return {
+          status: 'MISSING',
+          value: null,
+          qualityFlag: null,
+          detail: `${resolved.reason}: ${resolved.detail}`,
+        };
       }
-      if (resolved.status === 'MISSING') return { ...MISSING, detail: 'source finance_stmt_lines cell is value_status=MISSING' };
+      if (resolved.status === 'MISSING')
+        return { ...MISSING, detail: 'source finance_stmt_lines cell is value_status=MISSING' };
       return { status: resolved.status, value: resolved.value, qualityFlag: null, detail: null };
     }
 
@@ -244,17 +292,37 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
       if ('valueRef' in node) {
         if (node.valueRef === 'DAYS_IN_PERIOD') {
           const days = ctx.dynamicConstants.daysInPeriod();
-          return { status: days === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', value: days, qualityFlag: null, detail: null };
+          return {
+            status: days === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+            value: days,
+            qualityFlag: null,
+            detail: null,
+          };
         }
         // ANNUALIZATION_FACTOR
         const factor = ctx.dynamicConstants.annualizationFactor();
         if (factor === null) {
-          return { status: 'MISSING', value: null, qualityFlag: null, detail: 'ANNUALIZATION_FACTOR unsupported for this period granularity' };
+          return {
+            status: 'MISSING',
+            value: null,
+            qualityFlag: null,
+            detail: 'ANNUALIZATION_FACTOR unsupported for this period granularity',
+          };
         }
-        return { status: factor === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', value: factor, qualityFlag: null, detail: null };
+        return {
+          status: factor === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+          value: factor,
+          qualityFlag: null,
+          detail: null,
+        };
       }
       // Plain authored literal — always present by construction (compile-time constant).
-      return { status: node.value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', value: node.value, qualityFlag: null, detail: null };
+      return {
+        status: node.value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+        value: node.value,
+        qualityFlag: null,
+        detail: null,
+      };
     }
 
     // formula_ref
@@ -318,7 +386,8 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
       // `REVENUE/DAYS_IN_PERIOD`) or NOT_APPLICABLE denominator (e.g. INSUFFICIENT_HISTORY)
       // propagate as-is via propagateUnusable — the nested reason code survives in `detail`
       // ("cannot compute" infects the whole tree, exactly like MISSING already did).
-      if (right.status === 'NA' || right.status === 'NOT_APPLICABLE') return { ...propagateUnusable(left, right), denominator: right };
+      if (right.status === 'NA' || right.status === 'NOT_APPLICABLE')
+        return { ...propagateUnusable(left, right), denominator: right };
       const denomValue = right.value as number;
       if (denomValue === 0) {
         const dbz: InternalResult = {
@@ -345,7 +414,12 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
 }
 
 function numeric(value: number): InternalResult {
-  return { status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', value, qualityFlag: null, detail: null };
+  return {
+    status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+    value,
+    qualityFlag: null,
+    detail: null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -360,14 +434,20 @@ export async function evaluateFormula(
 ): Promise<EvaluationResult> {
   const result = await evaluateNode(formulaAst, ctx);
 
-  const rootIsDivisionShaped = formulaAst.node === 'operator' && (formulaAst.op === 'divide' || formulaAst.op === 'ratio');
+  const rootIsDivisionShaped =
+    formulaAst.node === 'operator' && (formulaAst.op === 'divide' || formulaAst.op === 'ratio');
 
   if (rootIsDivisionShaped && negativeDenominatorPolicy && result.denominator) {
     // DIVISION_BY_ZERO/missing-denominator (now NA, P1 fix) already takes precedence (0 is not
     // negative, so there is no overlap to arbitrate) and any already-unusable (MISSING/NA/
     // NOT_APPLICABLE) result is left exactly as-is.
     const denom = result.denominator;
-    if (denom.status !== 'MISSING' && denom.status !== 'NA' && denom.status !== 'NOT_APPLICABLE' && (denom.value as number) < 0) {
+    if (
+      denom.status !== 'MISSING' &&
+      denom.status !== 'NA' &&
+      denom.status !== 'NOT_APPLICABLE' &&
+      (denom.value as number) < 0
+    ) {
       if (negativeDenominatorPolicy === 'FORCE_NA') {
         // ADR 6.5: "value_status='NOT_APPLICABLE', quality_flag pozostaje NULL (to nie jest błąd
         // obliczeniowy, to jest polityczna decyzja)."

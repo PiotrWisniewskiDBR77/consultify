@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DYNAMIC_SWOT_QUESTION_BANK,
-  validateSwotQuestionBank,
   type SwotQuadrant,
+  validateSwotQuestionBank,
 } from '@/config/swot/dynamicSwotQuestionBank';
+
 import { dynamicSwotPack } from '../packs/dynamicSwot.pack';
 
 /**

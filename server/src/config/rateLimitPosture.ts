@@ -152,8 +152,7 @@ export function resolveRateLimitStartupConfig(
 
   if (posture === 'single-replica') {
     if (disableRateLimitRequested) {
-      const message =
-        `${RATE_LIMIT_DISABLE_ENV}=true disables EVERY rate limiter, including the public demo signup brake`;
+      const message = `${RATE_LIMIT_DISABLE_ENV}=true disables EVERY rate limiter, including the public demo signup brake`;
       if (postureInferred) {
         // Behaviour-preserving: `DISABLE_RATE_LIMIT` is a long-standing local
         // development convenience read unconditionally by index.ts. Refusing to

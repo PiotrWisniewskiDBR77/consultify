@@ -45,17 +45,17 @@
  */
 
 import type {
-  EvidenceEventPayload,
-  EvidenceStrength,
-  MethodQuestion,
-} from '@/method-core/contracts';
-import { EVIDENCE_STRENGTHS } from '@/method-core/contracts';
-import type {
   MatrixCellState,
   MatrixRow,
   MethodEvidenceState,
   MethodNavigatorNode,
 } from '@/components/method-workspace/types';
+import type {
+  EvidenceEventPayload,
+  EvidenceStrength,
+  MethodQuestion,
+} from '@/method-core/contracts';
+import { EVIDENCE_STRENGTHS } from '@/method-core/contracts';
 import {
   SIRI_BUILDING_BLOCKS,
   SIRI_DIMENSIONS,
@@ -184,7 +184,9 @@ export function buildSiriNavigatorNodes(
 // Live Matrix — 16 rows x Bands 0..5
 // ---------------------------------------------------------------------------
 
-export function buildSiriMatrixRows(states: ReadonlyMap<string, SiriUnitAssessmentState>): MatrixRow[] {
+export function buildSiriMatrixRows(
+  states: ReadonlyMap<string, SiriUnitAssessmentState>
+): MatrixRow[] {
   return SIRI_PRIORITISATION_AREAS.map((area) => {
     const state = states.get(area.id) ?? emptySiriUnitState(area.id);
     const resolved = siriAdapter.resolveOpenLevels({
@@ -421,9 +423,9 @@ export function confirmSiriBand(input: SiriBandConfirmInput): SiriBandConfirmRes
       blockedAtLevel: leapfrog.blockedAtLevel,
     };
   }
-  const nextConfirmedLevels = Array.from(new Set([...input.state.confirmedLevels, input.level])).sort(
-    (a, b) => a - b
-  );
+  const nextConfirmedLevels = Array.from(
+    new Set([...input.state.confirmedLevels, input.level])
+  ).sort((a, b) => a - b);
   return {
     ok: true,
     unitId: input.state.unitId,

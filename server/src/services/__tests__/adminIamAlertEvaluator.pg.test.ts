@@ -151,21 +151,21 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Client, Pool } from 'pg';
 import type { PoolClient } from 'pg';
+import { Client, Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import {
+  ADMIN_IAM_ALERT_RUNBOOK_ID,
+  ADMIN_IAM_ALERT_THRESHOLDS,
+  evaluateAdminIamQueueAlerts,
+} from '../adminIamAlertEvaluator.js';
 import {
   claimAdminIamJob,
   completeAdminIamJob,
   enqueueAdminIamJob,
   failAdminIamJob,
 } from '../adminIamOperationsService.js';
-import {
-  ADMIN_IAM_ALERT_RUNBOOK_ID,
-  ADMIN_IAM_ALERT_THRESHOLDS,
-  evaluateAdminIamQueueAlerts,
-} from '../adminIamAlertEvaluator.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
@@ -213,11 +213,15 @@ function parseDatabaseNameFromUrl(url: string): string {
  */
 async function assertDisposableDatabase(client: Client | PoolClient): Promise<string> {
   if (process.env[DISPOSABLE_DB_ENABLE_ENV] !== '1') {
-    throw new UnsafeCleanupTargetError(`${DISPOSABLE_DB_ENABLE_ENV}=1 is required before this suite may run`);
+    throw new UnsafeCleanupTargetError(
+      `${DISPOSABLE_DB_ENABLE_ENV}=1 is required before this suite may run`
+    );
   }
   const prefix = String(process.env[DISPOSABLE_DB_PREFIX_ENV] ?? '').trim();
   if (!prefix) {
-    throw new UnsafeCleanupTargetError(`${DISPOSABLE_DB_PREFIX_ENV} is required (disposable database name prefix)`);
+    throw new UnsafeCleanupTargetError(
+      `${DISPOSABLE_DB_PREFIX_ENV} is required (disposable database name prefix)`
+    );
   }
   const result = await client.query<{ db: string }>('SELECT current_database() AS db');
   const liveDatabase = String(result.rows[0]?.db ?? '');
@@ -317,7 +321,9 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     // H2: session-level advisory lock, held for the whole suite so a
     // concurrent run against the same disposable database cannot interleave
     // with this one's writes/cleanup.
-    await lockClient.query('SELECT pg_advisory_lock(hashtext($1))', [ADM_IAM_ALERT_HARNESS_LOCK_KEY]);
+    await lockClient.query('SELECT pg_advisory_lock(hashtext($1))', [
+      ADM_IAM_ALERT_HARNESS_LOCK_KEY,
+    ]);
 
     db = new Client({ connectionString: DATABASE_URL });
     await db.connect();
@@ -360,14 +366,20 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       // explicit BEGIN...COMMIT on the SAME retained lockClient.
       await lockClient.query('BEGIN');
       try {
-        await lockClient.query(`DELETE FROM admin_iam_job_events WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-        await lockClient.query(`DELETE FROM admin_iam_jobs WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-        await lockClient.query(`DELETE FROM operational_alert_delivery_outbox WHERE organization_id = ANY($1)`, [
+        await lockClient.query(`DELETE FROM admin_iam_job_events WHERE organization_id = ANY($1)`, [
           ALL_ORGS,
         ]);
-        await lockClient.query(`DELETE FROM operational_alert_tenant_states WHERE organization_id = ANY($1)`, [
+        await lockClient.query(`DELETE FROM admin_iam_jobs WHERE organization_id = ANY($1)`, [
           ALL_ORGS,
         ]);
+        await lockClient.query(
+          `DELETE FROM operational_alert_delivery_outbox WHERE organization_id = ANY($1)`,
+          [ALL_ORGS]
+        );
+        await lockClient.query(
+          `DELETE FROM operational_alert_tenant_states WHERE organization_id = ANY($1)`,
+          [ALL_ORGS]
+        );
 
         // H4: exact named trigger, never DISABLE TRIGGER ALL. Test DB only:
         // disable the immutable guard solely to remove this suite's own
@@ -377,7 +389,9 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
         await lockClient.query(
           `ALTER TABLE operational_alert_signals DISABLE TRIGGER ${OPERATIONAL_ALERT_SIGNALS_TRIGGER}`
         );
-        await lockClient.query(`DELETE FROM operational_alert_signals WHERE organization_id = $1`, [orgGuardProbe]);
+        await lockClient.query(`DELETE FROM operational_alert_signals WHERE organization_id = $1`, [
+          orgGuardProbe,
+        ]);
         await lockClient.query(
           `ALTER TABLE operational_alert_signals ENABLE TRIGGER ${OPERATIONAL_ALERT_SIGNALS_TRIGGER}`
         );
@@ -412,7 +426,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
             `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1)`,
             [ALL_ORGS]
           );
-          expect(Number(inTxnResidue.rows[0].count), `in-transaction (pre-COMMIT) residue in ${table}`).toBe(0);
+          expect(
+            Number(inTxnResidue.rows[0].count),
+            `in-transaction (pre-COMMIT) residue in ${table}`
+          ).toBe(0);
         }
         const inTxnSignalsResidue = await lockClient.query<{ count: number }>(
           `SELECT COUNT(*)::int AS count FROM operational_alert_signals WHERE organization_id = $1`,
@@ -446,17 +463,24 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
         `SELECT COUNT(*)::int AS count FROM operational_alert_signals WHERE organization_id = $1`,
         [orgGuardProbe]
       );
-      expect(Number(signalsResidue.rows[0].count), 'postcommit residue in operational_alert_signals').toBe(0);
+      expect(
+        Number(signalsResidue.rows[0].count),
+        'postcommit residue in operational_alert_signals'
+      ).toBe(0);
 
       // H2: explicit release, then H6 proves zero advisory locks remain
       // held by this backend.
-      await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [ADM_IAM_ALERT_HARNESS_LOCK_KEY]);
+      await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [
+        ADM_IAM_ALERT_HARNESS_LOCK_KEY,
+      ]);
       lockReleased = true;
 
       const locks = await lockClient.query<{ count: number }>(
         `SELECT COUNT(*)::int AS count FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
       );
-      expect(Number(locks.rows[0].count), 'advisory locks held by this backend after release').toBe(0);
+      expect(Number(locks.rows[0].count), 'advisory locks held by this backend after release').toBe(
+        0
+      );
     } finally {
       // H5: nested finally — ALWAYS unlock, release, close, no matter what
       // failed above. pg_advisory_unlock on an already-released (or
@@ -482,14 +506,24 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: { source: 'scim' },
       maxAttempts: 3,
     });
-    const claimed = await claimAdminIamJob({ organizationId: orgStale, workerId: `${prefix}-worker-stale` });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgStale,
+      workerId: `${prefix}-worker-stale`,
+    });
     expect(claimed?.id).toBe(job.id);
 
     // The claim query only reclaims rows still 'queued' — a stale 'running'
     // lease will not self-heal (runbook). Backdate directly; never sleep.
-    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [T_PAST_LEASE, job.id]);
+    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [
+      T_PAST_LEASE,
+      job.id,
+    ]);
 
-    const evaluated = await evaluateAdminIamQueueAlerts({ organizationId: orgStale, evaluatorId, now: T_DETECT });
+    const evaluated = await evaluateAdminIamQueueAlerts({
+      organizationId: orgStale,
+      evaluatorId,
+      now: T_DETECT,
+    });
     const stale = evaluated.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE');
     expect(stale).toBeTruthy();
     expect(stale?.status).toBe('ACTIVE');
@@ -506,12 +540,26 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: { source: 'scim' },
       maxAttempts: 3,
     });
-    const claimed = await claimAdminIamJob({ organizationId: orgReplay, workerId: `${prefix}-worker-replay` });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgReplay,
+      workerId: `${prefix}-worker-replay`,
+    });
     expect(claimed?.id).toBe(job.id);
-    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [T_PAST_LEASE, job.id]);
+    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [
+      T_PAST_LEASE,
+      job.id,
+    ]);
 
-    const first = await evaluateAdminIamQueueAlerts({ organizationId: orgReplay, evaluatorId, now: T_DETECT });
-    const second = await evaluateAdminIamQueueAlerts({ organizationId: orgReplay, evaluatorId, now: T_DETECT });
+    const first = await evaluateAdminIamQueueAlerts({
+      organizationId: orgReplay,
+      evaluatorId,
+      now: T_DETECT,
+    });
+    const second = await evaluateAdminIamQueueAlerts({
+      organizationId: orgReplay,
+      evaluatorId,
+      now: T_DETECT,
+    });
 
     const firstStale = first.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE');
     const secondStale = second.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE');
@@ -535,7 +583,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: { source: 'scim' },
       maxAttempts: 1,
     });
-    const claimed = await claimAdminIamJob({ organizationId: orgFailed, workerId: `${prefix}-worker-failed` });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgFailed,
+      workerId: `${prefix}-worker-failed`,
+    });
     expect(claimed?.id).toBe(job.id);
     const failed = await failAdminIamJob({
       organizationId: orgFailed,
@@ -546,7 +597,11 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     });
     expect(failed.status).toBe('failed');
 
-    const evaluated = await evaluateAdminIamQueueAlerts({ organizationId: orgFailed, evaluatorId, now: T_DETECT });
+    const evaluated = await evaluateAdminIamQueueAlerts({
+      organizationId: orgFailed,
+      evaluatorId,
+      now: T_DETECT,
+    });
     const failedState = evaluated.find((row) => row.kind === 'ADMIN_IAM_JOB_FAILED');
     expect(failedState?.status).toBe('ACTIVE');
     expect(failedState?.latestValue).toBeGreaterThanOrEqual(1);
@@ -568,7 +623,9 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
 
     const runbookPath = path.resolve(process.cwd(), 'docs/runbooks', `${docId}.md`);
     const runbookText = fs.readFileSync(runbookPath, 'utf8');
-    const headingSlugs = [...runbookText.matchAll(/^#{1,6}\s+(.+)$/gm)].map(([, heading]) => slugifyHeading(heading));
+    const headingSlugs = [...runbookText.matchAll(/^#{1,6}\s+(.+)$/gm)].map(([, heading]) =>
+      slugifyHeading(heading)
+    );
     expect(headingSlugs).toContain(anchor);
   });
 
@@ -583,7 +640,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: { note: PAYLOAD_MARKER },
       maxAttempts: 1,
     });
-    const claimed = await claimAdminIamJob({ organizationId: orgLeakCheck, workerId: `${prefix}-worker-leak` });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgLeakCheck,
+      workerId: `${prefix}-worker-leak`,
+    });
     expect(claimed?.id).toBe(job.id);
     const leaseTokenUsed = claimed!.leaseToken!;
     const failed = await failAdminIamJob({
@@ -595,7 +655,11 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     });
     expect(failed.status).toBe('failed');
 
-    const evaluated = await evaluateAdminIamQueueAlerts({ organizationId: orgLeakCheck, evaluatorId, now: T_DETECT });
+    const evaluated = await evaluateAdminIamQueueAlerts({
+      organizationId: orgLeakCheck,
+      evaluatorId,
+      now: T_DETECT,
+    });
     expect(evaluated.find((row) => row.kind === 'ADMIN_IAM_JOB_FAILED')?.status).toBe('ACTIVE');
 
     const outboxRow = (
@@ -630,7 +694,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       workerId: `${prefix}-worker-stale-recovery-claim`,
     });
     expect(claimed?.id).toBe(job.id);
-    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [T_PAST_LEASE, job.id]);
+    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [
+      T_PAST_LEASE,
+      job.id,
+    ]);
 
     const detected = await evaluateAdminIamQueueAlerts({
       organizationId: orgStaleRecovery,
@@ -673,7 +740,7 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     expect(transitions.rows.map((row) => row.transition)).toEqual(['DETECTED', 'RECOVERED']);
   });
 
-  it("recovers ADMIN_IAM_JOB_FAILED after CONTROLLED TEST-ONLY ARCHIVAL of the terminal row (no supported remediation path exists: the runbook forbids a manual succeeded flip, and no service function moves a job out of terminal failed), transitions DETECTED,RECOVERED", async () => {
+  it('recovers ADMIN_IAM_JOB_FAILED after CONTROLLED TEST-ONLY ARCHIVAL of the terminal row (no supported remediation path exists: the runbook forbids a manual succeeded flip, and no service function moves a job out of terminal failed), transitions DETECTED,RECOVERED', async () => {
     // Self-seeded (org `orgFailedRecovery`, not `orgFailed`) rather than
     // reusing the job the ADMIN_IAM_JOB_FAILED-firing test created, so this
     // test does not depend on that other test having run first or having
@@ -776,9 +843,15 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: {},
       maxAttempts: 3,
     });
-    const staleClaimB = await claimAdminIamJob({ organizationId: orgIsoB, workerId: `${prefix}-worker-iso-b-stale` });
+    const staleClaimB = await claimAdminIamJob({
+      organizationId: orgIsoB,
+      workerId: `${prefix}-worker-iso-b-stale`,
+    });
     expect(staleClaimB?.id).toBe(staleJobB.id);
-    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [T_PAST_LEASE, staleJobB.id]);
+    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [
+      T_PAST_LEASE,
+      staleJobB.id,
+    ]);
 
     const failedJobB = await enqueueAdminIamJob({
       organizationId: orgIsoB,
@@ -788,7 +861,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: {},
       maxAttempts: 1,
     });
-    const failedClaimB = await claimAdminIamJob({ organizationId: orgIsoB, workerId: `${prefix}-worker-iso-b-failed` });
+    const failedClaimB = await claimAdminIamJob({
+      organizationId: orgIsoB,
+      workerId: `${prefix}-worker-iso-b-failed`,
+    });
     expect(failedClaimB?.id).toBe(failedJobB.id);
     await failAdminIamJob({
       organizationId: orgIsoB,
@@ -799,7 +875,11 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     });
 
     // Direction 1: orgA was never touched — must show nothing active.
-    const evalA = await evaluateAdminIamQueueAlerts({ organizationId: orgIsoA, evaluatorId, now: T_DETECT });
+    const evalA = await evaluateAdminIamQueueAlerts({
+      organizationId: orgIsoA,
+      evaluatorId,
+      now: T_DETECT,
+    });
     expect(evalA.filter((row) => row.status === 'ACTIVE')).toHaveLength(0);
     const activeStatesA = await db.query(
       `SELECT kind FROM operational_alert_tenant_states WHERE organization_id=$1 AND status='ACTIVE'`,
@@ -808,7 +888,11 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     expect(activeStatesA.rows).toHaveLength(0);
 
     // Direction 2: orgB, evaluated on its own, must fire both kinds.
-    const evalB = await evaluateAdminIamQueueAlerts({ organizationId: orgIsoB, evaluatorId, now: T_DETECT });
+    const evalB = await evaluateAdminIamQueueAlerts({
+      organizationId: orgIsoB,
+      evaluatorId,
+      now: T_DETECT,
+    });
     expect(evalB.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE')?.status).toBe('ACTIVE');
     expect(evalB.find((row) => row.kind === 'ADMIN_IAM_JOB_FAILED')?.status).toBe('ACTIVE');
   });
@@ -822,7 +906,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: {},
       maxAttempts: 3,
     });
-    const claimed = await claimAdminIamJob({ organizationId: orgHealthy, workerId: `${prefix}-worker-healthy` });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgHealthy,
+      workerId: `${prefix}-worker-healthy`,
+    });
     expect(claimed?.id).toBe(job.id);
     const completed = await completeAdminIamJob({
       organizationId: orgHealthy,
@@ -832,7 +919,11 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     });
     expect(completed.status).toBe('succeeded');
 
-    const evaluated = await evaluateAdminIamQueueAlerts({ organizationId: orgHealthy, evaluatorId, now: T_DETECT });
+    const evaluated = await evaluateAdminIamQueueAlerts({
+      organizationId: orgHealthy,
+      evaluatorId,
+      now: T_DETECT,
+    });
     expect(evaluated.filter((row) => row.status === 'ACTIVE')).toHaveLength(0);
   });
 
@@ -862,7 +953,10 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       ]
     );
     await expect(
-      db.query(`UPDATE operational_alert_signals SET observed_value = 2 WHERE organization_id = $1`, [orgGuardProbe])
+      db.query(
+        `UPDATE operational_alert_signals SET observed_value = 2 WHERE organization_id = $1`,
+        [orgGuardProbe]
+      )
     ).rejects.toThrow(/OPS_ALERT_APPEND_ONLY/);
   });
 });

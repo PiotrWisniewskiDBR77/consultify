@@ -1,5 +1,8 @@
+export type {
+  AssessmentPresentationViewProps,
+  PresentationFetchResult,
+} from './AssessmentPresentationView';
 export { AssessmentPresentationView } from './AssessmentPresentationView';
-export type { AssessmentPresentationViewProps, PresentationFetchResult } from './AssessmentPresentationView';
 export {
   buildPresentationDeck,
   type DimensionProfileEntry,
@@ -10,7 +13,11 @@ export {
   type UnknownsModel,
   type UnknownUnitEntry,
 } from './buildPresentationDeck';
-export { extractUnknownReasonBreakdown, isPlausibleRawOutput, toAssessmentOutput } from './outputAdapter';
+export {
+  extractUnknownReasonBreakdown,
+  isPlausibleRawOutput,
+  toAssessmentOutput,
+} from './outputAdapter';
 export { PresentationDeck, type PresentationDeckProps } from './PresentationDeck';
 export type {
   RawAssessmentOutputRecord,

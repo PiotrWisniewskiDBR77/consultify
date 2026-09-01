@@ -495,9 +495,7 @@ describe('stale-regen download path — renderable projection', () => {
     (legacyBase.slides[0] as any).intent = 'title';
     cover.intent = 'title';
     const legacyRenderable = deckDocumentToRenderableUnifiedJson(deck, legacyBase);
-    expect((legacyRenderable.slides[0] as any).content.title).toBe(
-      'Board Transformation Update'
-    );
+    expect((legacyRenderable.slides[0] as any).content.title).toBe('Board Transformation Update');
   });
 
   it('cards with a changed intent fall back to the renderable flattened shape', () => {

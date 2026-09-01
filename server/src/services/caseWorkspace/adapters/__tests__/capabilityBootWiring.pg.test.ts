@@ -77,21 +77,21 @@ import { randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import type { InternalCommandBinding } from '../../capabilityAdapterService.js';
-import { CaseWorkspaceAuthError } from '../../caseWorkspaceAuthContext.js';
 import { getDecision } from '../../../decisionService.js';
-import {
-  DECISION_CREATE_CAPABILITY_ID,
-  DECISION_CREATE_CAPABILITY_VERSION,
-} from '../decisionAdapter.js';
-import { registerBuiltinCapabilityAdapters } from '../index.js';
 import {
   buildEnvelope,
   seedCaseFixture,
   seedMemberedUser,
   teardownCaseFixture,
 } from '../../__tests__/adapters/_fixtures.js';
+import type { InternalCommandBinding } from '../../capabilityAdapterService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import { CaseWorkspaceAuthError } from '../../caseWorkspaceAuthContext.js';
+import {
+  DECISION_CREATE_CAPABILITY_ID,
+  DECISION_CREATE_CAPABILITY_VERSION,
+} from '../decisionAdapter.js';
+import { registerBuiltinCapabilityAdapters } from '../index.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -160,452 +160,480 @@ const suite = REACHABLE ? describe.sequential : describe.skip;
 // function) and are NOT wrapped — they never touch the real ids.
 const BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY = 8_420_081_200;
 
-suite('capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across repeated real process boots', () => {
-  let control: Pool;
+suite(
+  'capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across repeated real process boots',
+  () => {
+    let control: Pool;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+    }, 60_000);
 
-  afterAll(async () => {
-    await control?.end().catch(() => undefined);
-  }, 60_000);
+    afterAll(async () => {
+      await control?.end().catch(() => undefined);
+    }, 60_000);
 
-  // Acquire on a DEDICATED connection (not the shared `control` pool) —
-  // `pg_advisory_lock` is session-scoped, so the same physical connection
-  // must issue both the lock and the unlock. Blocks until
-  // capabilityBootstrap.pg.test.ts's matching holder (if any) releases.
-  async function acquireBuiltinCapabilityCrossFileLock(): Promise<PoolClient> {
-    const lockClient = await control.connect();
-    await lockClient.query('SELECT pg_advisory_lock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY]);
-    return lockClient;
-  }
+    // Acquire on a DEDICATED connection (not the shared `control` pool) —
+    // `pg_advisory_lock` is session-scoped, so the same physical connection
+    // must issue both the lock and the unlock. Blocks until
+    // capabilityBootstrap.pg.test.ts's matching holder (if any) releases.
+    async function acquireBuiltinCapabilityCrossFileLock(): Promise<PoolClient> {
+      const lockClient = await control.connect();
+      await lockClient.query('SELECT pg_advisory_lock($1)', [
+        BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY,
+      ]);
+      return lockClient;
+    }
 
-  async function releaseBuiltinCapabilityCrossFileLock(lockClient: PoolClient): Promise<void> {
-    await lockClient
-      .query('SELECT pg_advisory_unlock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY])
-      .catch(() => undefined);
-    lockClient.release();
-  }
+    async function releaseBuiltinCapabilityCrossFileLock(lockClient: PoolClient): Promise<void> {
+      await lockClient
+        .query('SELECT pg_advisory_unlock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY])
+        .catch(() => undefined);
+      lockClient.release();
+    }
 
-  async function deleteDecisionCapabilityRegistryState(): Promise<void> {
-    await control
-      .query(
-        `DELETE FROM case_workspace_capability_idempotency_keys
+    async function deleteDecisionCapabilityRegistryState(): Promise<void> {
+      await control
+        .query(
+          `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [DECISION_CREATE_CAPABILITY_ID]
-      )
-      .catch(() => undefined);
-    await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
-        DECISION_CREATE_CAPABILITY_ID,
-      ])
-      .catch(() => undefined);
-  }
+          [DECISION_CREATE_CAPABILITY_ID]
+        )
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+          DECISION_CREATE_CAPABILITY_ID,
+        ])
+        .catch(() => undefined);
+    }
 
-  async function decisionCapabilityRowCount(): Promise<number> {
-    const result = await control.query(
-      `SELECT count(*)::int AS n FROM case_workspace_capabilities
+    async function decisionCapabilityRowCount(): Promise<number> {
+      const result = await control.query(
+        `SELECT count(*)::int AS n FROM case_workspace_capabilities
         WHERE capability_id = $1 AND capability_version = $2`,
-      [DECISION_CREATE_CAPABILITY_ID, DECISION_CREATE_CAPABILITY_VERSION]
-    );
-    return Number(result.rows[0]?.n ?? 0);
-  }
+        [DECISION_CREATE_CAPABILITY_ID, DECISION_CREATE_CAPABILITY_VERSION]
+      );
+      return Number(result.rows[0]?.n ?? 0);
+    }
 
-  // ===========================================================================
-  // 1. Two boots against the same database — proofs 1, 2, 3.
-  // ===========================================================================
-  it(
-    'boot 1 registers rows+bindings and dispatches; boot 2 against the SAME database ' +
-      're-registers without throwing, does not duplicate the row, and still dispatches',
-    async () => {
-      // Cross-file serialization against capabilityBootstrap.pg.test.ts —
-      // see the BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY block above this
-      // describe for why an id-swap isn't the applicable fix here.
-      const lockClient = await acquireBuiltinCapabilityCrossFileLock();
-      const registrarSuffix = randomUUID();
-      const registrarOrgId = `cwtest-boot-wiring-registrar-${registrarSuffix}`;
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        registrarOrgId,
-        'Boot wiring registrar org',
-      ]);
-      const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-
-      // Defensive pre-cleanup: a previous crashed run of this same file could
-      // have left the shared, platform-global Decision row behind.
-      await deleteDecisionCapabilityRegistryState();
-
-      const fixture = await seedCaseFixture(control, 'boot-wiring');
-
-      try {
-        // Start from a genuinely cold in-memory state — the same starting
-        // point a freshly-spawned Node process has.
-        capabilityAdapterService.clearCapabilityBindings();
-
-        // ---- BOOT 1 -----------------------------------------------------
-        await registerBuiltinCapabilityAdapters({
-          createdByActorId: registrarActorId,
-          callerOrganizationId: registrarOrgId,
-        });
-
-        expect(await decisionCapabilityRowCount()).toBe(1);
-
-        const firstResult = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DECISION_CREATE_CAPABILITY_ID,
-            capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: {
-              caseId: fixture.caseId,
-              title: 'Boot 1: go/no-go on pilot expansion',
-              type: 'GO_NO_GO',
-              decisionMakerId: fixture.actorId,
-            },
-          })
+    // ===========================================================================
+    // 1. Two boots against the same database — proofs 1, 2, 3.
+    // ===========================================================================
+    it(
+      'boot 1 registers rows+bindings and dispatches; boot 2 against the SAME database ' +
+        're-registers without throwing, does not duplicate the row, and still dispatches',
+      async () => {
+        // Cross-file serialization against capabilityBootstrap.pg.test.ts —
+        // see the BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY block above this
+        // describe for why an id-swap isn't the applicable fix here.
+        const lockClient = await acquireBuiltinCapabilityCrossFileLock();
+        const registrarSuffix = randomUUID();
+        const registrarOrgId = `cwtest-boot-wiring-registrar-${registrarSuffix}`;
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          registrarOrgId,
+          'Boot wiring registrar org',
+        ]);
+        const registrarActorId = await seedMemberedUser(
+          control,
+          registrarOrgId,
+          'registrar',
+          'ADMIN'
         );
-        expect(firstResult.outcome).toBe('SUCCEEDED');
-        expect(firstResult.errorCode).toBeNull();
-        const firstDecisionId = firstResult.output.decisionId as string;
-        expect(typeof firstDecisionId).toBe('string');
-        const firstDecision = await getDecision(firstDecisionId);
-        expect(firstDecision?.title).toBe('Boot 1: go/no-go on pilot expansion');
 
-        // ---- Simulate a real process restart -----------------------------
-        // The registry ROW just written above persists in Postgres exactly
-        // like it would across a real restart; the binding does NOT — a
-        // fresh process starts with an empty in-memory map, which is exactly
-        // what clearCapabilityBindings() reproduces here.
-        capabilityAdapterService.clearCapabilityBindings();
-
-        // Sanity: with the binding wiped and nothing re-registered yet, the
-        // capability is NOT reachable — this is what proves the wipe above
-        // actually took effect, and it is exactly the state a booted-but-
-        // not-yet-wired production process is in today.
-        const betweenBoots = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DECISION_CREATE_CAPABILITY_ID,
-            capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: {
-              caseId: fixture.caseId,
-              title: 'Should not be reachable between boots',
-              type: 'GO_NO_GO',
-              decisionMakerId: fixture.actorId,
-            },
-          })
-        );
-        expect(betweenBoots.outcome).toBe('FAILED');
-        expect(betweenBoots.errorCode).toBe('CAPABILITY_UNAVAILABLE');
-
-        // ---- BOOT 2, same database, same registrar identity -------------
-        // Pre-fix, this line is exactly what threw `capability_already_registered`
-        // and aborted registerBuiltinCapabilityAdapters's sequential await
-        // chain after the very first of the seven capabilities.
-        await registerBuiltinCapabilityAdapters({
-          createdByActorId: registrarActorId,
-          callerOrganizationId: registrarOrgId,
-        });
-
-        // No duplicate physical row — the idempotent replay path read back
-        // the existing one instead of inserting a second.
-        expect(await decisionCapabilityRowCount()).toBe(1);
-
-        // Reachable again, dispatching through the binding BOOT 2 itself
-        // re-established (not a stale reference surviving from boot 1 — that
-        // reference was destroyed by clearCapabilityBindings() above).
-        const secondResult = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
-            capabilityId: DECISION_CREATE_CAPABILITY_ID,
-            capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
-            orgId: fixture.orgId,
-            actorId: fixture.actorId,
-            payload: {
-              caseId: fixture.caseId,
-              title: 'Boot 2: go/no-go on pilot expansion',
-              type: 'GO_NO_GO',
-              decisionMakerId: fixture.actorId,
-            },
-          })
-        );
-        expect(secondResult.outcome).toBe('SUCCEEDED');
-        expect(secondResult.errorCode).toBeNull();
-        const secondDecisionId = secondResult.output.decisionId as string;
-        expect(typeof secondDecisionId).toBe('string');
-        expect(secondDecisionId).not.toBe(firstDecisionId);
-        const secondDecision = await getDecision(secondDecisionId);
-        expect(secondDecision?.title).toBe('Boot 2: go/no-go on pilot expansion');
-      } finally {
-        await teardownCaseFixture(control, fixture);
+        // Defensive pre-cleanup: a previous crashed run of this same file could
+        // have left the shared, platform-global Decision row behind.
         await deleteDecisionCapabilityRegistryState();
-        await control
-          .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [registrarOrgId])
-          .catch(() => undefined);
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
-        capabilityAdapterService.clearCapabilityBindings();
-        await releaseBuiltinCapabilityCrossFileLock(lockClient);
-      }
-    },
-    // Raised from 90_000: this test drives TWO full
-    // registerBuiltinCapabilityAdapters calls (8 capability registrations
-    // each, sequential DB transactions) plus two live decision dispatches.
-    // Under the observed shared-Postgres contention (a bare
-    // information_schema probe took 3.4-3.9s in earlier runs; the whole test
-    // measured 117s once), 90s produced a false RED (`Test timed out in
-    // 90000ms`) with no assertion failure — contention, not a defect.
-    240_000
-  );
 
-  // ===========================================================================
-  // 2. ADMIN authorization still fires — proof 5.
-  // ===========================================================================
-  it(
-    'a non-admin actor is still refused row creation for a brand-new capability, ' +
-      'and the capability stays unreachable afterwards',
-    async () => {
-      const suffix = randomUUID();
-      const orgId = `cwtest-boot-wiring-nonadmin-${suffix}`;
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        orgId,
-        'Boot wiring non-admin org',
-      ]);
-      // Deliberately MEMBER, not ADMIN — registerCapability requires ADMIN.
-      const memberActorId = await seedMemberedUser(control, orgId, 'member', 'MEMBER');
-      const capabilityId = `cwtest-boot-wiring-admin-check-${suffix}`;
-      const capabilityVersion = '1.0.0';
+        const fixture = await seedCaseFixture(control, 'boot-wiring');
 
-      const binding: InternalCommandBinding = {
-        kind: 'INTERNAL',
-        async handler() {
-          return { output: { ok: true } };
-        },
-      };
-
-      try {
-        let caught: unknown = null;
         try {
-          await capabilityAdapterService.registerCapabilityWithAdapter(
-            {
+          // Start from a genuinely cold in-memory state — the same starting
+          // point a freshly-spawned Node process has.
+          capabilityAdapterService.clearCapabilityBindings();
+
+          // ---- BOOT 1 -----------------------------------------------------
+          await registerBuiltinCapabilityAdapters({
+            createdByActorId: registrarActorId,
+            callerOrganizationId: registrarOrgId,
+          });
+
+          expect(await decisionCapabilityRowCount()).toBe(1);
+
+          const firstResult = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DECISION_CREATE_CAPABILITY_ID,
+              capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: {
+                caseId: fixture.caseId,
+                title: 'Boot 1: go/no-go on pilot expansion',
+                type: 'GO_NO_GO',
+                decisionMakerId: fixture.actorId,
+              },
+            })
+          );
+          expect(firstResult.outcome).toBe('SUCCEEDED');
+          expect(firstResult.errorCode).toBeNull();
+          const firstDecisionId = firstResult.output.decisionId as string;
+          expect(typeof firstDecisionId).toBe('string');
+          const firstDecision = await getDecision(firstDecisionId);
+          expect(firstDecision?.title).toBe('Boot 1: go/no-go on pilot expansion');
+
+          // ---- Simulate a real process restart -----------------------------
+          // The registry ROW just written above persists in Postgres exactly
+          // like it would across a real restart; the binding does NOT — a
+          // fresh process starts with an empty in-memory map, which is exactly
+          // what clearCapabilityBindings() reproduces here.
+          capabilityAdapterService.clearCapabilityBindings();
+
+          // Sanity: with the binding wiped and nothing re-registered yet, the
+          // capability is NOT reachable — this is what proves the wipe above
+          // actually took effect, and it is exactly the state a booted-but-
+          // not-yet-wired production process is in today.
+          const betweenBoots = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DECISION_CREATE_CAPABILITY_ID,
+              capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: {
+                caseId: fixture.caseId,
+                title: 'Should not be reachable between boots',
+                type: 'GO_NO_GO',
+                decisionMakerId: fixture.actorId,
+              },
+            })
+          );
+          expect(betweenBoots.outcome).toBe('FAILED');
+          expect(betweenBoots.errorCode).toBe('CAPABILITY_UNAVAILABLE');
+
+          // ---- BOOT 2, same database, same registrar identity -------------
+          // Pre-fix, this line is exactly what threw `capability_already_registered`
+          // and aborted registerBuiltinCapabilityAdapters's sequential await
+          // chain after the very first of the seven capabilities.
+          await registerBuiltinCapabilityAdapters({
+            createdByActorId: registrarActorId,
+            callerOrganizationId: registrarOrgId,
+          });
+
+          // No duplicate physical row — the idempotent replay path read back
+          // the existing one instead of inserting a second.
+          expect(await decisionCapabilityRowCount()).toBe(1);
+
+          // Reachable again, dispatching through the binding BOOT 2 itself
+          // re-established (not a stale reference surviving from boot 1 — that
+          // reference was destroyed by clearCapabilityBindings() above).
+          const secondResult = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
+              capabilityId: DECISION_CREATE_CAPABILITY_ID,
+              capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
+              orgId: fixture.orgId,
+              actorId: fixture.actorId,
+              payload: {
+                caseId: fixture.caseId,
+                title: 'Boot 2: go/no-go on pilot expansion',
+                type: 'GO_NO_GO',
+                decisionMakerId: fixture.actorId,
+              },
+            })
+          );
+          expect(secondResult.outcome).toBe('SUCCEEDED');
+          expect(secondResult.errorCode).toBeNull();
+          const secondDecisionId = secondResult.output.decisionId as string;
+          expect(typeof secondDecisionId).toBe('string');
+          expect(secondDecisionId).not.toBe(firstDecisionId);
+          const secondDecision = await getDecision(secondDecisionId);
+          expect(secondDecision?.title).toBe('Boot 2: go/no-go on pilot expansion');
+        } finally {
+          await teardownCaseFixture(control, fixture);
+          await deleteDecisionCapabilityRegistryState();
+          await control
+            .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [
+              registrarOrgId,
+            ])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId])
+            .catch(() => undefined);
+          capabilityAdapterService.clearCapabilityBindings();
+          await releaseBuiltinCapabilityCrossFileLock(lockClient);
+        }
+      },
+      // Raised from 90_000: this test drives TWO full
+      // registerBuiltinCapabilityAdapters calls (8 capability registrations
+      // each, sequential DB transactions) plus two live decision dispatches.
+      // Under the observed shared-Postgres contention (a bare
+      // information_schema probe took 3.4-3.9s in earlier runs; the whole test
+      // measured 117s once), 90s produced a false RED (`Test timed out in
+      // 90000ms`) with no assertion failure — contention, not a defect.
+      240_000
+    );
+
+    // ===========================================================================
+    // 2. ADMIN authorization still fires — proof 5.
+    // ===========================================================================
+    it(
+      'a non-admin actor is still refused row creation for a brand-new capability, ' +
+        'and the capability stays unreachable afterwards',
+      async () => {
+        const suffix = randomUUID();
+        const orgId = `cwtest-boot-wiring-nonadmin-${suffix}`;
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          orgId,
+          'Boot wiring non-admin org',
+        ]);
+        // Deliberately MEMBER, not ADMIN — registerCapability requires ADMIN.
+        const memberActorId = await seedMemberedUser(control, orgId, 'member', 'MEMBER');
+        const capabilityId = `cwtest-boot-wiring-admin-check-${suffix}`;
+        const capabilityVersion = '1.0.0';
+
+        const binding: InternalCommandBinding = {
+          kind: 'INTERNAL',
+          async handler() {
+            return { output: { ok: true } };
+          },
+        };
+
+        try {
+          let caught: unknown = null;
+          try {
+            await capabilityAdapterService.registerCapabilityWithAdapter(
+              {
+                capabilityId,
+                capabilityVersion,
+                ownerModule: 'case-workspace',
+                providerType: 'INTERNAL',
+                operation: 'testOperation',
+                owningCommandRef: 'command:test',
+                inputSchemaRef: 'schema:test-input@1',
+                outputSchemaRef: 'schema:test-output@1',
+                operationClass: 'MUTATE',
+                effectClass: 'SAFE_ADDITIVE',
+                dataClassification: 'INTERNAL',
+                idempotencyStrategy: 'CLIENT_KEY',
+                reversibility: 'REVERSIBLE',
+                approvalRecommendation: 'auto_executable',
+                timeoutDefaults: { defaultMs: 5_000 },
+                lifecycle: 'ACTIVE',
+                health: 'HEALTHY',
+                createdByActorId: memberActorId,
+              },
+              binding,
+              orgId
+            );
+          } catch (error) {
+            caught = error;
+          }
+
+          // The ADMIN gate fired: a distinct, typed refusal — not a silent
+          // no-op and not any generic Error.
+          expect(caught).toBeInstanceOf(CaseWorkspaceAuthError);
+          expect((caught as CaseWorkspaceAuthError).code).toBe('insufficient_org_role');
+
+          // No row was created for this never-before-seen capability id.
+          const rowCount = await control.query(
+            `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
+            [capabilityId]
+          );
+          expect(Number(rowCount.rows[0]?.n ?? 0)).toBe(0);
+
+          // And — because this packet's fix binds BEFORE attempting the row —
+          // the capability is still not reachable: bind-first grants no
+          // reachability on its own, the registry row is what gates execution.
+          const execResult = await capabilityAdapterService.executeCapability(
+            buildEnvelope({
               capabilityId,
               capabilityVersion,
-              ownerModule: 'case-workspace',
-              providerType: 'INTERNAL',
-              operation: 'testOperation',
-              owningCommandRef: 'command:test',
-              inputSchemaRef: 'schema:test-input@1',
-              outputSchemaRef: 'schema:test-output@1',
-              operationClass: 'MUTATE',
-              effectClass: 'SAFE_ADDITIVE',
-              dataClassification: 'INTERNAL',
-              idempotencyStrategy: 'CLIENT_KEY',
-              reversibility: 'REVERSIBLE',
-              approvalRecommendation: 'auto_executable',
-              timeoutDefaults: { defaultMs: 5_000 },
-              lifecycle: 'ACTIVE',
-              health: 'HEALTHY',
-              createdByActorId: memberActorId,
-            },
+              orgId,
+              actorId: memberActorId,
+              payload: {},
+            })
+          );
+          expect(execResult.outcome).toBe('FAILED');
+          expect(execResult.errorCode).toBe('CAPABILITY_NOT_FOUND');
+        } finally {
+          await control
+            .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+              capabilityId,
+            ])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+            .catch(() => undefined);
+          capabilityAdapterService.clearCapabilityBindings();
+        }
+      },
+      120_000
+    );
+
+    // ===========================================================================
+    // 3. Minimal-footprint re-confirmation of proofs 1-3, isolated from the
+    //    7-capability aggregate and the Decision module's own DB writes.
+    //
+    //    Test 1 above proves the REAL production entry point
+    //    (registerBuiltinCapabilityAdapters, all 7 capabilities, a real
+    //    Decision dispatch) end-to-end, and is the authoritative proof. This
+    //    test exercises exactly the same fixed logic in
+    //    capabilityAdapterService.registerCapabilityWithAdapter directly,
+    //    against a single synthetic capability with a trivial in-process
+    //    handler and no case/project fixture — added because, under the heavy
+    //    shared-Postgres contention this environment showed while proving this
+    //    packet (a bare information_schema probe took 3.4-8.8s; test 1's full
+    //    16-transaction, 2-dispatch flow took 240s+ and hit its own timeout
+    //    more than once), a much smaller flow is far more likely to complete
+    //    inside any bounded window and still isolates the exact fix.
+    // ===========================================================================
+    it(
+      'registerCapabilityWithAdapter called twice for the SAME capability (two boots) does ' +
+        'not throw the second time, does not duplicate the row, and stays executable',
+      async () => {
+        const suffix = randomUUID();
+        const orgId = `cwtest-boot-wiring-min-${suffix}`;
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          orgId,
+          'Boot wiring minimal org',
+        ]);
+        const adminId = await seedMemberedUser(control, orgId, 'admin', 'ADMIN');
+        const capabilityId = `cwtest-boot-wiring-min-cap-${suffix}`;
+        const capabilityVersion = '1.0.0';
+
+        const registrationInput = {
+          capabilityId,
+          capabilityVersion,
+          ownerModule: 'case-workspace',
+          providerType: 'INTERNAL' as const,
+          operation: 'testOperation',
+          owningCommandRef: 'command:test',
+          inputSchemaRef: 'schema:test-input@1',
+          outputSchemaRef: 'schema:test-output@1',
+          operationClass: 'MUTATE' as const,
+          effectClass: 'SAFE_ADDITIVE' as const,
+          dataClassification: 'INTERNAL',
+          idempotencyStrategy: 'CLIENT_KEY',
+          reversibility: 'REVERSIBLE',
+          approvalRecommendation: 'auto_executable' as const,
+          timeoutDefaults: { defaultMs: 5_000 },
+          lifecycle: 'ACTIVE' as const,
+          health: 'HEALTHY' as const,
+          createdByActorId: adminId,
+        };
+        const binding: InternalCommandBinding = {
+          kind: 'INTERNAL',
+          async handler(payload) {
+            return { output: { ok: true, seen: payload } };
+          },
+        };
+
+        try {
+          capabilityAdapterService.clearCapabilityBindings();
+
+          // ---- BOOT 1 -------------------------------------------------------
+          const first = await capabilityAdapterService.registerCapabilityWithAdapter(
+            registrationInput,
             binding,
             orgId
           );
-        } catch (error) {
-          caught = error;
-        }
+          expect(first.capabilityId).toBe(capabilityId);
 
-        // The ADMIN gate fired: a distinct, typed refusal — not a silent
-        // no-op and not any generic Error.
-        expect(caught).toBeInstanceOf(CaseWorkspaceAuthError);
-        expect((caught as CaseWorkspaceAuthError).code).toBe('insufficient_org_role');
+          const rowCountAfterFirst = await control.query(
+            `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
+            [capabilityId]
+          );
+          expect(Number(rowCountAfterFirst.rows[0]?.n ?? 0)).toBe(1);
 
-        // No row was created for this never-before-seen capability id.
-        const rowCount = await control.query(
-          `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
-          [capabilityId]
-        );
-        expect(Number(rowCount.rows[0]?.n ?? 0)).toBe(0);
-
-        // And — because this packet's fix binds BEFORE attempting the row —
-        // the capability is still not reachable: bind-first grants no
-        // reachability on its own, the registry row is what gates execution.
-        const execResult = await capabilityAdapterService.executeCapability(
-          buildEnvelope({
+          const firstExec = await capabilityAdapterService.executeCapability({
             capabilityId,
             capabilityVersion,
-            orgId,
-            actorId: memberActorId,
-            payload: {},
-          })
-        );
-        expect(execResult.outcome).toBe('FAILED');
-        expect(execResult.errorCode).toBe('CAPABILITY_NOT_FOUND');
-      } finally {
-        await control
-          .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [capabilityId])
-          .catch(() => undefined);
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
-        capabilityAdapterService.clearCapabilityBindings();
-      }
-    },
-    120_000
-  );
+            organizationId: orgId,
+            actor: { type: 'HUMAN', actorId: adminId },
+            idempotencyKey: `idem-${randomUUID()}`,
+            payload: { boot: 1 },
+          });
+          expect(firstExec.outcome).toBe('SUCCEEDED');
 
-  // ===========================================================================
-  // 3. Minimal-footprint re-confirmation of proofs 1-3, isolated from the
-  //    7-capability aggregate and the Decision module's own DB writes.
-  //
-  //    Test 1 above proves the REAL production entry point
-  //    (registerBuiltinCapabilityAdapters, all 7 capabilities, a real
-  //    Decision dispatch) end-to-end, and is the authoritative proof. This
-  //    test exercises exactly the same fixed logic in
-  //    capabilityAdapterService.registerCapabilityWithAdapter directly,
-  //    against a single synthetic capability with a trivial in-process
-  //    handler and no case/project fixture — added because, under the heavy
-  //    shared-Postgres contention this environment showed while proving this
-  //    packet (a bare information_schema probe took 3.4-8.8s; test 1's full
-  //    16-transaction, 2-dispatch flow took 240s+ and hit its own timeout
-  //    more than once), a much smaller flow is far more likely to complete
-  //    inside any bounded window and still isolates the exact fix.
-  // ===========================================================================
-  it(
-    'registerCapabilityWithAdapter called twice for the SAME capability (two boots) does ' +
-      'not throw the second time, does not duplicate the row, and stays executable',
-    async () => {
-      const suffix = randomUUID();
-      const orgId = `cwtest-boot-wiring-min-${suffix}`;
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        orgId,
-        'Boot wiring minimal org',
-      ]);
-      const adminId = await seedMemberedUser(control, orgId, 'admin', 'ADMIN');
-      const capabilityId = `cwtest-boot-wiring-min-cap-${suffix}`;
-      const capabilityVersion = '1.0.0';
+          // ---- Simulate a real process restart -------------------------------
+          capabilityAdapterService.clearCapabilityBindings();
 
-      const registrationInput = {
-        capabilityId,
-        capabilityVersion,
-        ownerModule: 'case-workspace',
-        providerType: 'INTERNAL' as const,
-        operation: 'testOperation',
-        owningCommandRef: 'command:test',
-        inputSchemaRef: 'schema:test-input@1',
-        outputSchemaRef: 'schema:test-output@1',
-        operationClass: 'MUTATE' as const,
-        effectClass: 'SAFE_ADDITIVE' as const,
-        dataClassification: 'INTERNAL',
-        idempotencyStrategy: 'CLIENT_KEY',
-        reversibility: 'REVERSIBLE',
-        approvalRecommendation: 'auto_executable' as const,
-        timeoutDefaults: { defaultMs: 5_000 },
-        lifecycle: 'ACTIVE' as const,
-        health: 'HEALTHY' as const,
-        createdByActorId: adminId,
-      };
-      const binding: InternalCommandBinding = {
-        kind: 'INTERNAL',
-        async handler(payload) {
-          return { output: { ok: true, seen: payload } };
-        },
-      };
+          const betweenBoots = await capabilityAdapterService.executeCapability({
+            capabilityId,
+            capabilityVersion,
+            organizationId: orgId,
+            actor: { type: 'HUMAN', actorId: adminId },
+            idempotencyKey: `idem-${randomUUID()}`,
+            payload: { boot: 'between' },
+          });
+          expect(betweenBoots.outcome).toBe('FAILED');
+          expect(betweenBoots.errorCode).toBe('CAPABILITY_UNAVAILABLE');
 
-      try {
-        capabilityAdapterService.clearCapabilityBindings();
+          // ---- BOOT 2, same database, same identity --------------------------
+          // Pre-fix, this line throws `capability_already_registered` and the
+          // binding above is never set for this "boot".
+          const second = await capabilityAdapterService.registerCapabilityWithAdapter(
+            registrationInput,
+            binding,
+            orgId
+          );
+          expect(second.capabilityId).toBe(capabilityId);
 
-        // ---- BOOT 1 -------------------------------------------------------
-        const first = await capabilityAdapterService.registerCapabilityWithAdapter(
-          registrationInput,
-          binding,
-          orgId
-        );
-        expect(first.capabilityId).toBe(capabilityId);
+          const rowCountAfterSecond = await control.query(
+            `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
+            [capabilityId]
+          );
+          expect(Number(rowCountAfterSecond.rows[0]?.n ?? 0)).toBe(1);
 
-        const rowCountAfterFirst = await control.query(
-          `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
-          [capabilityId]
-        );
-        expect(Number(rowCountAfterFirst.rows[0]?.n ?? 0)).toBe(1);
-
-        const firstExec = await capabilityAdapterService.executeCapability({
-          capabilityId,
-          capabilityVersion,
-          organizationId: orgId,
-          actor: { type: 'HUMAN', actorId: adminId },
-          idempotencyKey: `idem-${randomUUID()}`,
-          payload: { boot: 1 },
-        });
-        expect(firstExec.outcome).toBe('SUCCEEDED');
-
-        // ---- Simulate a real process restart -------------------------------
-        capabilityAdapterService.clearCapabilityBindings();
-
-        const betweenBoots = await capabilityAdapterService.executeCapability({
-          capabilityId,
-          capabilityVersion,
-          organizationId: orgId,
-          actor: { type: 'HUMAN', actorId: adminId },
-          idempotencyKey: `idem-${randomUUID()}`,
-          payload: { boot: 'between' },
-        });
-        expect(betweenBoots.outcome).toBe('FAILED');
-        expect(betweenBoots.errorCode).toBe('CAPABILITY_UNAVAILABLE');
-
-        // ---- BOOT 2, same database, same identity --------------------------
-        // Pre-fix, this line throws `capability_already_registered` and the
-        // binding above is never set for this "boot".
-        const second = await capabilityAdapterService.registerCapabilityWithAdapter(
-          registrationInput,
-          binding,
-          orgId
-        );
-        expect(second.capabilityId).toBe(capabilityId);
-
-        const rowCountAfterSecond = await control.query(
-          `SELECT count(*)::int AS n FROM case_workspace_capabilities WHERE capability_id = $1`,
-          [capabilityId]
-        );
-        expect(Number(rowCountAfterSecond.rows[0]?.n ?? 0)).toBe(1);
-
-        const secondExec = await capabilityAdapterService.executeCapability({
-          capabilityId,
-          capabilityVersion,
-          organizationId: orgId,
-          actor: { type: 'HUMAN', actorId: adminId },
-          idempotencyKey: `idem-${randomUUID()}`,
-          payload: { boot: 2 },
-        });
-        expect(secondExec.outcome).toBe('SUCCEEDED');
-      } finally {
-        await control
-          .query(
-            `DELETE FROM case_workspace_capability_idempotency_keys
+          const secondExec = await capabilityAdapterService.executeCapability({
+            capabilityId,
+            capabilityVersion,
+            organizationId: orgId,
+            actor: { type: 'HUMAN', actorId: adminId },
+            idempotencyKey: `idem-${randomUUID()}`,
+            payload: { boot: 2 },
+          });
+          expect(secondExec.outcome).toBe('SUCCEEDED');
+        } finally {
+          await control
+            .query(
+              `DELETE FROM case_workspace_capability_idempotency_keys
               WHERE capability_registry_id IN (
                 SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-            [capabilityId]
-          )
-          .catch(() => undefined);
-        await control
-          .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [capabilityId])
-          .catch(() => undefined);
-        await control
-          .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
-          .catch(() => undefined);
-        await control
-          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
-          .catch(() => undefined);
-        await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
-        capabilityAdapterService.clearCapabilityBindings();
-      }
-    },
-    60_000
-  );
-});
+              [capabilityId]
+            )
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+              capabilityId,
+            ])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          await control
+            .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+            .catch(() => undefined);
+          capabilityAdapterService.clearCapabilityBindings();
+        }
+      },
+      60_000
+    );
+  }
+);

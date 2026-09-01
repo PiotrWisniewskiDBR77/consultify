@@ -38,7 +38,13 @@ vi.mock('@/components/ui/primitives/Button', () => ({
   ),
 }));
 vi.mock('@/components/ui/primitives/Modal', () => ({
-  Modal: ({ open, children, footer }: any) => (open ? <div>{children}{footer}</div> : null),
+  Modal: ({ open, children, footer }: any) =>
+    open ? (
+      <div>
+        {children}
+        {footer}
+      </div>
+    ) : null,
 }));
 
 import { CalendarCreateEventModal } from '../CalendarCreateEventModal';

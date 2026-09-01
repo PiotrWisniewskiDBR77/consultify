@@ -21,12 +21,12 @@
  * citing the specific approval, mirroring `resultsFeatureFlags.ts`.
  */
 
-import { isPublicProductionHost } from '@/utils/publicProduction';
-import {
-  isDemoAcceptanceProfileEnabled,
-  type DemoAcceptanceProfileSource,
-} from '@/utils/demoAcceptanceProfile';
 import { isResultsOwnerReviewModeEnabled } from '@/components/Results/resultsOwnerReviewMode';
+import {
+  type DemoAcceptanceProfileSource,
+  isDemoAcceptanceProfileEnabled,
+} from '@/utils/demoAcceptanceProfile';
+import { isPublicProductionHost } from '@/utils/publicProduction';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 

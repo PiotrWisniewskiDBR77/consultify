@@ -11,7 +11,12 @@ export type {
 } from './federatedActionManifest.types.js';
 
 const REQUIRED_FOR_MUTATION: Array<keyof FederatedActionEntry> = [
-  'mountedMutationId', 'idempotency', 'receipt', 'auditEvent', 'uiExecutor', 'teresaExecutor',
+  'mountedMutationId',
+  'idempotency',
+  'receipt',
+  'auditEvent',
+  'uiExecutor',
+  'teresaExecutor',
 ];
 
 export function validateFederatedActionManifest(
@@ -22,17 +27,21 @@ export function validateFederatedActionManifest(
   const seen = new Set<string>();
   const covered = new Set(entries.map((entry) => entry.mountedMutationId).filter(Boolean));
   for (const entry of entries) {
-    if (seen.has(entry.actionId)) findings.push({ code: 'DUPLICATE_ACTION_ID', actionId: entry.actionId });
+    if (seen.has(entry.actionId))
+      findings.push({ code: 'DUPLICATE_ACTION_ID', actionId: entry.actionId });
     seen.add(entry.actionId);
     if (entry.mvpDisposition === 'SUPPORTED' && entry.effect !== 'READ') {
       for (const field of REQUIRED_FOR_MUTATION) {
-        if (!entry[field]) findings.push({ code: 'MISSING_FIELD', actionId: entry.actionId, field });
+        if (!entry[field])
+          findings.push({ code: 'MISSING_FIELD', actionId: entry.actionId, field });
       }
-      if (!entry.compensation.trim()) findings.push({ code: 'MISSING_FIELD', actionId: entry.actionId, field: 'compensation' });
+      if (!entry.compensation.trim())
+        findings.push({ code: 'MISSING_FIELD', actionId: entry.actionId, field: 'compensation' });
     }
   }
   for (const mutationId of mountedMutationIds) {
-    if (!covered.has(mutationId)) findings.push({ code: 'MISSING_MOUNTED_MUTATION', actionId: mutationId });
+    if (!covered.has(mutationId))
+      findings.push({ code: 'MISSING_MOUNTED_MUTATION', actionId: mutationId });
   }
   return findings;
 }

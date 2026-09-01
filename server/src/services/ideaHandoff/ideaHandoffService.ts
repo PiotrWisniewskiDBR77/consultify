@@ -47,32 +47,29 @@ import {
   approveProposal,
   canonicalSourceHash,
   createProposal,
+  type HandoffProposal,
+  type HandoffReceipt,
   HandoffSpineError,
   materializeProposal,
   rejectProposal,
-  type HandoffProposal,
-  type HandoffReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
 import {
   getDocumentArtifact,
   materializeDocumentArtifact,
 } from '../documentStudio/documentStudioService.js';
 import {
-  createNativeDeck,
-  withPresentationOwnerClient,
-} from '../presentationGeneratorService.js';
+  type GovernedConsumerBinding,
+  type GovernedSnapshotRef,
+  recordGovernedConsumerBinding,
+  validateGovernedSnapshotRef,
+} from '../organizationContext/governedSnapshotConsumerBindingService.js';
+import { createNativeDeck, withPresentationOwnerClient } from '../presentationGeneratorService.js';
 import type { UnifiedReportJSON } from '../report/pptx/types.js';
 import {
   createCanonicalWorkbook,
   withWorkbookOwnerClient,
 } from '../workbook/workbookCreationService.js';
 import type { WorkbookSchema } from '../workbook/WorkbookSchema.js';
-import {
-  recordGovernedConsumerBinding,
-  validateGovernedSnapshotRef,
-  type GovernedConsumerBinding,
-  type GovernedSnapshotRef,
-} from '../organizationContext/governedSnapshotConsumerBindingService.js';
 
 export { HandoffSpineError } from '../artifactHandoff/handoffSpineService.js';
 
@@ -386,7 +383,10 @@ export async function materializeIdeaArtifact(
       return replay;
     }
     if (proposal.state !== 'approved') {
-      throw new HandoffSpineError('proposal must be approved before materialization', 'NOT_APPROVED');
+      throw new HandoffSpineError(
+        'proposal must be approved before materialization',
+        'NOT_APPROVED'
+      );
     }
 
     const payload = parseJsonField(proposal.payload_json, {}) as IdeaArtifactPayload;
@@ -409,7 +409,8 @@ export async function materializeIdeaArtifact(
         useLlm: false,
       });
       const reopened = await getDocumentArtifact(created.artifactId, input.organizationId);
-      if (!reopened) throw new IdeaHandoffError('Document owner readback failed', 'OWNER_READBACK_FAILED');
+      if (!reopened)
+        throw new IdeaHandoffError('Document owner readback failed', 'OWNER_READBACK_FAILED');
       outputPayload = { targetRecordId: created.artifactId, schema: reopened };
     } else if (proposal.target_kind === 'presentation') {
       const unifiedJson: UnifiedReportJSON = {
@@ -503,13 +504,16 @@ export async function materializeIdeaArtifact(
       throw new IdeaHandoffError('Injected failure after owner creation', 'INJECTED_FAILURE');
     }
 
-    return materializeProposal({
-      organizationId: input.organizationId,
-      proposalId: input.proposalId,
-      targetRecordId,
-      materializedBy: input.materializedBy,
-      outputPayload,
-    }, client.query.bind(client));
+    return materializeProposal(
+      {
+        organizationId: input.organizationId,
+        proposalId: input.proposalId,
+        targetRecordId,
+        materializedBy: input.materializedBy,
+        outputPayload,
+      },
+      client.query.bind(client)
+    );
   });
 }
 

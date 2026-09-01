@@ -7,35 +7,35 @@
  * `okrAdminApi.ts`), so every transition button below is real, gated 1:1 to
  * the server's own `fromStatuses` per named spec — never guessed.
  */
-import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Blocks } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { TableColumn, TableRow } from '@/components/standard';
 import { EmptyState } from '@/components/shared/states';
+import type { TableColumn, TableRow } from '@/components/standard';
 import { Modal, StatusChip } from '@/components/ui/primitives';
 
-import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   activateOkrCycle,
   cancelOkrCycle,
   closeOkrCycle,
   createOkrCycle,
+  type CreateOkrCycleInput,
   listOkrCycles,
   listOkrPrograms,
   newOkrAdminIdempotencyKey,
-  openDraftingOkrCycle,
-  openReviewOkrCycle,
   OkrAdminApiError,
-  type CreateOkrCycleInput,
   type OkrCycleDto,
   type OkrCycleStatus,
   type OkrCycleTransitionInput,
   type OkrProgramDto,
+  openDraftingOkrCycle,
+  openReviewOkrCycle,
 } from './okrAdminApi';
 import { formatOkrWorkspaceDate } from './okrWorkspaceMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 const CYCLE_STATUS_TONE: Record<OkrCycleStatus, 'neutral' | 'success' | 'warning' | 'danger'> = {
   planned: 'neutral',
@@ -54,7 +54,10 @@ const CYCLE_STATUS_LABEL: Record<OkrCycleStatus, { pl: string; en: string }> = {
   cancelled: { pl: 'Anulowany', en: 'Cancelled' },
 };
 // Gate table — 1:1 with okrCycleCommands.ts L442-487's named specs.
-const CYCLE_GATE_FROM: Record<'openDrafting' | 'activate' | 'openReview' | 'close' | 'cancel', OkrCycleStatus[]> = {
+const CYCLE_GATE_FROM: Record<
+  'openDrafting' | 'activate' | 'openReview' | 'close' | 'cancel',
+  OkrCycleStatus[]
+> = {
   openDrafting: ['planned'],
   activate: ['drafting'],
   openReview: ['active'],
@@ -106,7 +109,8 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
     listOkrPrograms()
       .then((rows) => {
         setPrograms(rows);
-        if (rows.length > 0) setForm((prev) => ({ ...prev, programId: prev.programId || rows[0].programId }));
+        if (rows.length > 0)
+          setForm((prev) => ({ ...prev, programId: prev.programId || rows[0].programId }));
       })
       .catch(() => undefined);
   }, [load]);
@@ -121,32 +125,95 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
       .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
-  const transitionInput = (c: OkrCycleDto): OkrCycleTransitionInput => ({ expectedVersion: c.rowVersion, idempotencyKey: newOkrAdminIdempotencyKey() });
+  const transitionInput = (c: OkrCycleDto): OkrCycleTransitionInput => ({
+    expectedVersion: c.rowVersion,
+    idempotencyKey: newOkrAdminIdempotencyKey(),
+  });
 
   const columns: TableColumn[] = [
-    { id: 'name', label: isPolish ? 'Nazwa' : 'Name', width: '220px', sortable: true, render: (r: OkrCycleDto) => <span className="text-sm font-medium text-c-text">{r.name}</span> },
+    {
+      id: 'name',
+      label: isPolish ? 'Nazwa' : 'Name',
+      width: '220px',
+      sortable: true,
+      render: (r: OkrCycleDto) => <span className="text-sm font-medium text-c-text">{r.name}</span>,
+    },
     {
       id: 'status',
       label: 'Status',
       width: '140px',
       filterable: true,
-      filterOptions: (['planned', 'drafting', 'active', 'review', 'closed', 'cancelled'] as const).map((s) => ({
+      filterOptions: (
+        ['planned', 'drafting', 'active', 'review', 'closed', 'cancelled'] as const
+      ).map((s) => ({
         value: s,
         label: isPolish ? CYCLE_STATUS_LABEL[s].pl : CYCLE_STATUS_LABEL[s].en,
       })),
-      render: (r: OkrCycleDto) => <StatusChip label={isPolish ? CYCLE_STATUS_LABEL[r.status].pl : CYCLE_STATUS_LABEL[r.status].en} tone={CYCLE_STATUS_TONE[r.status]} />,
+      render: (r: OkrCycleDto) => (
+        <StatusChip
+          label={isPolish ? CYCLE_STATUS_LABEL[r.status].pl : CYCLE_STATUS_LABEL[r.status].en}
+          tone={CYCLE_STATUS_TONE[r.status]}
+        />
+      ),
     },
-    { id: 'startDate', label: isPolish ? 'Start' : 'Start', width: '130px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.startDate, isPolish)}</span> },
-    { id: 'endDate', label: isPolish ? 'Koniec' : 'End', width: '130px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.endDate, isPolish)}</span> },
-    { id: 'closeAt', label: isPolish ? 'Zamknięcie' : 'Close at', width: '150px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.closeAt, isPolish)}</span> },
+    {
+      id: 'startDate',
+      label: isPolish ? 'Start' : 'Start',
+      width: '130px',
+      render: (r: OkrCycleDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrWorkspaceDate(r.startDate, isPolish)}
+        </span>
+      ),
+    },
+    {
+      id: 'endDate',
+      label: isPolish ? 'Koniec' : 'End',
+      width: '130px',
+      render: (r: OkrCycleDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrWorkspaceDate(r.endDate, isPolish)}
+        </span>
+      ),
+    },
+    {
+      id: 'closeAt',
+      label: isPolish ? 'Zamknięcie' : 'Close at',
+      width: '150px',
+      render: (r: OkrCycleDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrWorkspaceDate(r.closeAt, isPolish)}
+        </span>
+      ),
+    },
   ];
 
   const buildTransitions = (c: OkrCycleDto) => {
     const items: { id: string; label: string; allowed: boolean; onClick: () => void }[] = [
-      { id: 'openDrafting', label: isPolish ? 'Otwórz szkicowanie' : 'Open drafting', allowed: CYCLE_GATE_FROM.openDrafting.includes(c.status), onClick: () => respond(() => openDraftingOkrCycle(c.cycleId, transitionInput(c))) },
-      { id: 'activate', label: isPolish ? 'Aktywuj' : 'Activate', allowed: CYCLE_GATE_FROM.activate.includes(c.status), onClick: () => respond(() => activateOkrCycle(c.cycleId, transitionInput(c))) },
-      { id: 'openReview', label: isPolish ? 'Otwórz przegląd' : 'Open review', allowed: CYCLE_GATE_FROM.openReview.includes(c.status), onClick: () => respond(() => openReviewOkrCycle(c.cycleId, transitionInput(c))) },
-      { id: 'close', label: isPolish ? 'Zamknij' : 'Close', allowed: CYCLE_GATE_FROM.close.includes(c.status), onClick: () => respond(() => closeOkrCycle(c.cycleId, transitionInput(c))) },
+      {
+        id: 'openDrafting',
+        label: isPolish ? 'Otwórz szkicowanie' : 'Open drafting',
+        allowed: CYCLE_GATE_FROM.openDrafting.includes(c.status),
+        onClick: () => respond(() => openDraftingOkrCycle(c.cycleId, transitionInput(c))),
+      },
+      {
+        id: 'activate',
+        label: isPolish ? 'Aktywuj' : 'Activate',
+        allowed: CYCLE_GATE_FROM.activate.includes(c.status),
+        onClick: () => respond(() => activateOkrCycle(c.cycleId, transitionInput(c))),
+      },
+      {
+        id: 'openReview',
+        label: isPolish ? 'Otwórz przegląd' : 'Open review',
+        allowed: CYCLE_GATE_FROM.openReview.includes(c.status),
+        onClick: () => respond(() => openReviewOkrCycle(c.cycleId, transitionInput(c))),
+      },
+      {
+        id: 'close',
+        label: isPolish ? 'Zamknij' : 'Close',
+        allowed: CYCLE_GATE_FROM.close.includes(c.status),
+        onClick: () => respond(() => closeOkrCycle(c.cycleId, transitionInput(c))),
+      },
     ];
     return items;
   };
@@ -156,8 +223,27 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
       <ResultsVNextRegistryShell
         domain="okr"
         moduleBar={{
-          breadcrumbs: [{ label: isPolish ? 'Wyniki' : 'Results' }, { label: 'OKR' }, { label: isPolish ? 'Cykle' : 'Cycles' }],
-          breadcrumbCta: { label: isPolish ? 'Nowy cykl' : 'New cycle', onClick: () => { setForm((prev) => ({ ...EMPTY_CREATE, programId: prev.programId })); setFormError(null); setFormOpen(true); }, testId: 'okr-cycle-create-cta', locked: programs.length === 0, lockedReason: programs.length === 0 ? (isPolish ? 'Utwórz najpierw Program OKR.' : 'Create an OKR Program first.') : undefined },
+          breadcrumbs: [
+            { label: isPolish ? 'Wyniki' : 'Results' },
+            { label: 'OKR' },
+            { label: isPolish ? 'Cykle' : 'Cycles' },
+          ],
+          breadcrumbCta: {
+            label: isPolish ? 'Nowy cykl' : 'New cycle',
+            onClick: () => {
+              setForm((prev) => ({ ...EMPTY_CREATE, programId: prev.programId }));
+              setFormError(null);
+              setFormOpen(true);
+            },
+            testId: 'okr-cycle-create-cta',
+            locked: programs.length === 0,
+            lockedReason:
+              programs.length === 0
+                ? isPolish
+                  ? 'Utwórz najpierw Program OKR.'
+                  : 'Create an OKR Program first.'
+                : undefined,
+          },
         }}
         table={{
           columns,
@@ -170,21 +256,49 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
           onRowClick: (row) => setSelectedId(String(row.cycleId)),
           empty:
             !loading && !error && rows.length === 0
-              ? { title: isPolish ? 'Brak cykli OKR' : 'No OKR cycles', description: isPolish ? 'Utwórz pierwszy cykl w ramach programu.' : 'Create the first cycle under a program.' }
+              ? {
+                  title: isPolish ? 'Brak cykli OKR' : 'No OKR cycles',
+                  description: isPolish
+                    ? 'Utwórz pierwszy cykl w ramach programu.'
+                    : 'Create the first cycle under a program.',
+                }
               : undefined,
           rowMenu: (row) => {
             const c = row as unknown as OkrCycleDto;
             const transitions = buildTransitions(c).filter((t) => t.allowed);
             const canCancel = CYCLE_GATE_FROM.cancel.includes(c.status);
             return {
-              primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => setSelectedId(c.cycleId) }],
+              primary: [
+                {
+                  id: 'open',
+                  label: isPolish ? 'Otwórz' : 'Open',
+                  onClick: () => setSelectedId(c.cycleId),
+                },
+              ],
               universalHandlers: { preview: () => setSelectedId(c.cycleId) },
               statusTransitions: transitions.length
                 ? transitions.map((t) => ({ id: t.id, label: t.label, onClick: t.onClick }))
-                : [{ id: 'none', label: isPolish ? 'Brak dostępnych przejść' : 'No transitions available', disabled: true, note: isPolish ? `Status "${c.status}" nie ma dalszego przejścia poza anulowaniem.` : `Status "${c.status}" has no forward transition besides cancel.` }],
+                : [
+                    {
+                      id: 'none',
+                      label: isPolish ? 'Brak dostępnych przejść' : 'No transitions available',
+                      disabled: true,
+                      note: isPolish
+                        ? `Status "${c.status}" nie ma dalszego przejścia poza anulowaniem.`
+                        : `Status "${c.status}" has no forward transition besides cancel.`,
+                    },
+                  ],
               destructive: canCancel
-                ? { label: isPolish ? 'Anuluj cykl' : 'Cancel cycle', onClick: () => respond(() => cancelOkrCycle(c.cycleId, transitionInput(c))) }
-                : { label: isPolish ? 'Anuluj cykl' : 'Cancel cycle', note: isPolish ? 'Cykl jest już zamknięty/anulowany.' : 'Cycle is already closed/cancelled.' },
+                ? {
+                    label: isPolish ? 'Anuluj cykl' : 'Cancel cycle',
+                    onClick: () => respond(() => cancelOkrCycle(c.cycleId, transitionInput(c))),
+                  }
+                : {
+                    label: isPolish ? 'Anuluj cykl' : 'Cancel cycle',
+                    note: isPolish
+                      ? 'Cykl jest już zamknięty/anulowany.'
+                      : 'Cycle is already closed/cancelled.',
+                  },
             };
           },
         }}
@@ -193,20 +307,66 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
             ? {
                 title: selected.name,
                 onClose: () => setSelectedId(null),
-                meta: { pills: [{ label: isPolish ? CYCLE_STATUS_LABEL[selected.status].pl : CYCLE_STATUS_LABEL[selected.status].en, tone: CYCLE_STATUS_TONE[selected.status] }] },
+                meta: {
+                  pills: [
+                    {
+                      label: isPolish
+                        ? CYCLE_STATUS_LABEL[selected.status].pl
+                        : CYCLE_STATUS_LABEL[selected.status].en,
+                      tone: CYCLE_STATUS_TONE[selected.status],
+                    },
+                  ],
+                },
                 details: {
                   propertyLabel: isPolish ? 'Właściwość' : 'Property',
                   valueLabel: isPolish ? 'Wartość' : 'Value',
                   properties: [
-                    { id: 'programId', label: isPolish ? 'Program' : 'Program', value: selected.programId, mono: true },
-                    { id: 'startDate', label: isPolish ? 'Start' : 'Start', value: formatOkrWorkspaceDate(selected.startDate, isPolish) },
-                    { id: 'endDate', label: isPolish ? 'Koniec' : 'End', value: formatOkrWorkspaceDate(selected.endDate, isPolish) },
-                    { id: 'draftOpenAt', label: isPolish ? 'Otwarcie szkicu' : 'Draft opens', value: formatOkrWorkspaceDate(selected.draftOpenAt, isPolish) },
-                    { id: 'submissionDueAt', label: isPolish ? 'Termin złożenia' : 'Submission due', value: formatOkrWorkspaceDate(selected.submissionDueAt, isPolish) },
-                    { id: 'activeStartAt', label: isPolish ? 'Start aktywności' : 'Active start', value: formatOkrWorkspaceDate(selected.activeStartAt, isPolish) },
-                    { id: 'reviewOpenAt', label: isPolish ? 'Otwarcie przeglądu' : 'Review opens', value: formatOkrWorkspaceDate(selected.reviewOpenAt, isPolish) },
-                    { id: 'reflectionDueAt', label: isPolish ? 'Termin refleksji' : 'Reflection due', value: formatOkrWorkspaceDate(selected.reflectionDueAt, isPolish) },
-                    { id: 'closeAt', label: isPolish ? 'Zamknięcie' : 'Close at', value: formatOkrWorkspaceDate(selected.closeAt, isPolish) },
+                    {
+                      id: 'programId',
+                      label: isPolish ? 'Program' : 'Program',
+                      value: selected.programId,
+                      mono: true,
+                    },
+                    {
+                      id: 'startDate',
+                      label: isPolish ? 'Start' : 'Start',
+                      value: formatOkrWorkspaceDate(selected.startDate, isPolish),
+                    },
+                    {
+                      id: 'endDate',
+                      label: isPolish ? 'Koniec' : 'End',
+                      value: formatOkrWorkspaceDate(selected.endDate, isPolish),
+                    },
+                    {
+                      id: 'draftOpenAt',
+                      label: isPolish ? 'Otwarcie szkicu' : 'Draft opens',
+                      value: formatOkrWorkspaceDate(selected.draftOpenAt, isPolish),
+                    },
+                    {
+                      id: 'submissionDueAt',
+                      label: isPolish ? 'Termin złożenia' : 'Submission due',
+                      value: formatOkrWorkspaceDate(selected.submissionDueAt, isPolish),
+                    },
+                    {
+                      id: 'activeStartAt',
+                      label: isPolish ? 'Start aktywności' : 'Active start',
+                      value: formatOkrWorkspaceDate(selected.activeStartAt, isPolish),
+                    },
+                    {
+                      id: 'reviewOpenAt',
+                      label: isPolish ? 'Otwarcie przeglądu' : 'Review opens',
+                      value: formatOkrWorkspaceDate(selected.reviewOpenAt, isPolish),
+                    },
+                    {
+                      id: 'reflectionDueAt',
+                      label: isPolish ? 'Termin refleksji' : 'Reflection due',
+                      value: formatOkrWorkspaceDate(selected.reflectionDueAt, isPolish),
+                    },
+                    {
+                      id: 'closeAt',
+                      label: isPolish ? 'Zamknięcie' : 'Close at',
+                      value: formatOkrWorkspaceDate(selected.closeAt, isPolish),
+                    },
                   ],
                 },
                 relations: [],
@@ -224,12 +384,30 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
         preventEscapeClose={busy}
         footer={
           <>
-            <button type="button" onClick={() => setFormOpen(false)} disabled={busy} className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
+            <button
+              type="button"
+              onClick={() => setFormOpen(false)}
+              disabled={busy}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
               {isPolish ? 'Wstecz' : 'Back'}
             </button>
             <button
               type="button"
-              disabled={busy || !form.name.trim() || !form.programId || !form.startDate || !form.endDate || !form.draftOpenAt || !form.submissionDueAt || !form.activeStartAt || !form.finalUpdateDueAt || !form.reviewOpenAt || !form.reflectionDueAt || !form.closeAt}
+              disabled={
+                busy ||
+                !form.name.trim() ||
+                !form.programId ||
+                !form.startDate ||
+                !form.endDate ||
+                !form.draftOpenAt ||
+                !form.submissionDueAt ||
+                !form.activeStartAt ||
+                !form.finalUpdateDueAt ||
+                !form.reviewOpenAt ||
+                !form.reflectionDueAt ||
+                !form.closeAt
+              }
               onClick={() => {
                 setBusy(true);
                 setFormError(null);
@@ -251,7 +429,10 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
       >
         <div className="space-y-3 max-h-[60vh] overflow-auto pr-1">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-cycle-program">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-cycle-program"
+            >
               {isPolish ? 'Program' : 'Program'}
             </label>
             <select
@@ -268,7 +449,10 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-cycle-name">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-cycle-name"
+            >
               {isPolish ? 'Nazwa' : 'Name'}
             </label>
             <input
@@ -294,7 +478,9 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
               ] as const
             ).map(([field, label]) => (
               <div key={field}>
-                <label className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">{label}</label>
+                <label className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">
+                  {label}
+                </label>
                 <input
                   type="datetime-local"
                   value={form[field]}
@@ -306,7 +492,10 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
             ))}
           </div>
           {formError ? (
-            <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            >
               <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
               <span>{formError}</span>
             </div>
@@ -324,12 +513,19 @@ export const OkrCyclesPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-okr-cycles-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-okr-cycles-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
           title={isPolish ? 'Cykle OKR — jeszcze nie włączone' : 'OKR Cycles — not yet enabled'}
-          description={isPolish ? 'Ta powierzchnia jest w budowie. Wróć później albo poproś administratora o dostęp za flagą.' : 'This surface is still being built. Check back later, or ask an administrator for flag access.'}
+          description={
+            isPolish
+              ? 'Ta powierzchnia jest w budowie. Wróć później albo poproś administratora o dostęp za flagą.'
+              : 'This surface is still being built. Check back later, or ask an administrator for flag access.'
+          }
           compact
         />
       </div>

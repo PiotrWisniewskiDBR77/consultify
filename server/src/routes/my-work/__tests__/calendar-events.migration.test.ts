@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 // FIX-5 (Day 3 acceptance): process.cwd() ties this test to whatever directory the

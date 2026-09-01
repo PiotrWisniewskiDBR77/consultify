@@ -52,6 +52,7 @@
  * Bez store/API/logowania — statyczne mocki. Motyw/lang sterowane globalnie
  * przez harness (`?theme=`, `?lang=`), patrz dev-render/main.tsx.
  */
+import type { LucideIcon } from 'lucide-react';
 import {
   AlarmClock,
   Archive,
@@ -73,7 +74,6 @@ import {
   Wand2,
   Wrench,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -81,12 +81,12 @@ import {
   type RightRailToolDescriptor,
 } from '../../src/components/shared/ExecutiveModuleShell/RightRail';
 import {
+  type ActionButton,
+  type ActivityEvent,
   PreviewActionBar,
   PreviewActivityStrip,
   PreviewRelations,
   PreviewStructuredList,
-  type ActionButton,
-  type ActivityEvent,
   type RelationItem,
 } from '../../src/components/shared/PreviewPane';
 import {
@@ -135,7 +135,7 @@ interface ObjectData {
   resultsEmptyNote: string;
   comments: CommentSpec[];
   history: ActivityEvent[];
-  teresaCommands: { label: string; icon: LucideIcon; }[];
+  teresaCommands: { label: string; icon: LucideIcon }[];
   teresaMessages: TeresaMessage[];
   centrumParagraphs: string[];
 }
@@ -189,9 +189,7 @@ const NOTATKA: ObjectData = {
   evidenceAssumptions: [
     'Teresa założyła, że „migracja" odnosi się do danych klienta w CRM, nie w ERP — do potwierdzenia przez właściciela.',
   ],
-  results: [
-    { id: 'r1', label: 'Zdefiniować standard MDM', icon: ClipboardList, type: 'task' },
-  ],
+  results: [{ id: 'r1', label: 'Zdefiniować standard MDM', icon: ClipboardList, type: 'task' }],
   resultsEmptyNote: 'Decyzje i dokumenty: jeszcze nic nie powstało z tej notatki.',
   comments: [
     {
@@ -208,9 +206,24 @@ const NOTATKA: ObjectData = {
     },
   ],
   history: [
-    { id: 'h1', description: 'Anna Kowalska utworzyła notatkę.', timestamp: '2026-08-24T14:12:00Z', userName: 'Anna Kowalska' },
-    { id: 'h2', description: 'Teresa wygenerowała podsumowanie z rozmowy (typ: AI).', timestamp: '2026-08-24T14:13:00Z', userName: 'Teresa' },
-    { id: 'h3', description: 'Anna Kowalska edytowała sekcję „Otwarte pytania".', timestamp: '2026-08-25T09:02:00Z', userName: 'Anna Kowalska' },
+    {
+      id: 'h1',
+      description: 'Anna Kowalska utworzyła notatkę.',
+      timestamp: '2026-08-24T14:12:00Z',
+      userName: 'Anna Kowalska',
+    },
+    {
+      id: 'h2',
+      description: 'Teresa wygenerowała podsumowanie z rozmowy (typ: AI).',
+      timestamp: '2026-08-24T14:13:00Z',
+      userName: 'Teresa',
+    },
+    {
+      id: 'h3',
+      description: 'Anna Kowalska edytowała sekcję „Otwarte pytania".',
+      timestamp: '2026-08-25T09:02:00Z',
+      userName: 'Anna Kowalska',
+    },
   ],
   teresaCommands: [
     { label: 'Uzupełnij puste', icon: Wand2 },
@@ -298,9 +311,24 @@ const IDEA: ObjectData = {
     },
   ],
   history: [
-    { id: 'h1', description: 'Piotr W. utworzył mapę.', timestamp: '2026-08-20T10:00:00Z', userName: 'Piotr W.' },
-    { id: 'h2', description: 'Teresa zaproponowała gałąź „bariery regulacyjne DE" (typ: AI).', timestamp: '2026-08-22T12:30:00Z', userName: 'Teresa' },
-    { id: 'h3', description: 'Piotr W. dodał węzeł „ryzyka".', timestamp: '2026-08-25T11:40:00Z', userName: 'Piotr W.' },
+    {
+      id: 'h1',
+      description: 'Piotr W. utworzył mapę.',
+      timestamp: '2026-08-20T10:00:00Z',
+      userName: 'Piotr W.',
+    },
+    {
+      id: 'h2',
+      description: 'Teresa zaproponowała gałąź „bariery regulacyjne DE" (typ: AI).',
+      timestamp: '2026-08-22T12:30:00Z',
+      userName: 'Teresa',
+    },
+    {
+      id: 'h3',
+      description: 'Piotr W. dodał węzeł „ryzyka".',
+      timestamp: '2026-08-25T11:40:00Z',
+      userName: 'Piotr W.',
+    },
   ],
   teresaCommands: [
     { label: 'Uzupełnij puste', icon: Wand2 },
@@ -665,7 +693,8 @@ export function PrawyPasJednaFormulaScreen({
         <span className="text-sm font-semibold text-c-text">Prawy pas — jedna formuła</span>
         <span className="text-c-text-muted">·</span>
         <span className="text-xs text-c-text-muted">
-          {objectType === 'notatka' ? 'Notatka' : 'Idea'} · tryb: {railMode === 'artefakt' ? 'Artefakt' : 'Teresa'}
+          {objectType === 'notatka' ? 'Notatka' : 'Idea'} · tryb:{' '}
+          {railMode === 'artefakt' ? 'Artefakt' : 'Teresa'}
         </span>
         {interactive ? (
           <div className="ml-auto flex items-center gap-2">

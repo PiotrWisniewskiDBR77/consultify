@@ -39,13 +39,22 @@ export type RoiEvidenceLinkDisputeStatus = (typeof ROI_EVIDENCE_LINK_DISPUTE_STA
 export const ROI_SCENARIO_TYPES = ['downside', 'upside', 'custom'] as const;
 export type RoiScenarioType = (typeof ROI_SCENARIO_TYPES)[number];
 
-export const ROI_SCENARIO_OVERRIDE_TARGET_TYPES = ['assumption', 'cost_line', 'benefit_line'] as const;
+export const ROI_SCENARIO_OVERRIDE_TARGET_TYPES = [
+  'assumption',
+  'cost_line',
+  'benefit_line',
+] as const;
 export type RoiScenarioOverrideTargetType = (typeof ROI_SCENARIO_OVERRIDE_TARGET_TYPES)[number];
 
 export const ROI_CALCULATION_RUN_STATUSES = ['completed', 'failed'] as const;
 export type RoiCalculationRunStatus = (typeof ROI_CALCULATION_RUN_STATUSES)[number];
 
-export const ROI_IRR_STATUSES = ['computed', 'not_applicable', 'no_sign_change', 'not_required_by_policy'] as const;
+export const ROI_IRR_STATUSES = [
+  'computed',
+  'not_applicable',
+  'no_sign_change',
+  'not_required_by_policy',
+] as const;
 export type RoiIrrStatus = (typeof ROI_IRR_STATUSES)[number];
 
 // ==========================================

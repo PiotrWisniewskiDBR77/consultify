@@ -207,10 +207,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      if (
-        previousActiveElement.current &&
-        !document.contains(previousActiveElement.current)
-      ) {
+      if (previousActiveElement.current && !document.contains(previousActiveElement.current)) {
         const fallback = document.activeElement;
         if (fallback instanceof HTMLElement && fallback !== document.body) {
           previousActiveElement.current = fallback;

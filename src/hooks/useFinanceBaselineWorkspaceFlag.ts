@@ -15,8 +15,9 @@
  * partiami (CLAUDE.md „zakaz masowego włączania").
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_BASELINE_WORKSPACE_FLAG_ID = 'financeBaselineWorkspaceV1';
 

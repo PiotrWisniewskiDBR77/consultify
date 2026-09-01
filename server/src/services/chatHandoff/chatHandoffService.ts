@@ -79,24 +79,24 @@
  *     exactly the ungated foreign-write pattern this spine exists to close.
  */
 
-import type { Citation } from '../ai/citationExtractor.js';
-import { citationExtractor } from '../ai/citationExtractor.js';
 import { withPgTransaction } from '../../database/PostgresDatabase.js';
 import logger from '../../utils/Logger.js';
+import type { Citation } from '../ai/citationExtractor.js';
+import { citationExtractor } from '../ai/citationExtractor.js';
 import {
   approveProposal as spineApproveProposal,
   createProposal as spineCreateProposal,
+  type HandoffProposal,
   HandoffSpineError,
   isTargetKind,
   rejectProposal as spineRejectProposal,
-  type HandoffProposal,
   type TargetKind,
 } from '../artifactHandoff/handoffSpineService.js';
 import {
-  recordGovernedConsumerBinding,
-  validateGovernedSnapshotRef,
   type GovernedConsumerBinding,
   type GovernedSnapshotRef,
+  recordGovernedConsumerBinding,
+  validateGovernedSnapshotRef,
 } from '../organizationContext/governedSnapshotConsumerBindingService.js';
 
 // ---------------------------------------------------------------------------
@@ -286,12 +286,15 @@ export async function createChatProposal(
   try {
     source = await provider.resolve({ organizationId, conversationId, messageId });
   } catch (err) {
-    logger.error('[chatHandoff] message source provider failed — failing closed, no proposal created', {
-      organizationId,
-      conversationId,
-      messageId,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[chatHandoff] message source provider failed — failing closed, no proposal created',
+      {
+        organizationId,
+        conversationId,
+        messageId,
+        error: err instanceof Error ? err.message : String(err),
+      }
+    );
     throw new ChatHandoffError(
       `chat message source is unavailable: ${err instanceof Error ? err.message : String(err)}`,
       'PROVIDER_UNAVAILABLE',
@@ -336,9 +339,7 @@ export async function createChatProposal(
     requestedTargetKind: input.targetKind,
     commandSchemaVersion: input.commandSchemaVersion ?? 'v1',
     targetCommand: input.targetCommand ?? null,
-    ...(input.governedSnapshotRef
-      ? { governedSnapshotRef: input.governedSnapshotRef }
-      : {}),
+    ...(input.governedSnapshotRef ? { governedSnapshotRef: input.governedSnapshotRef } : {}),
   };
 
   try {
@@ -351,7 +352,11 @@ export async function createChatProposal(
       createdBy: userId,
       idempotencyKey: input.idempotencyKey ?? null,
     });
-    return { proposal: result.proposal, replayed: result.replayed, citations: extraction.citations };
+    return {
+      proposal: result.proposal,
+      replayed: result.replayed,
+      citations: extraction.citations,
+    };
   } catch (err) {
     throw translateSpineError(err);
   }
@@ -503,7 +508,9 @@ export interface DecideChatProposalInput {
   reason?: string | null;
 }
 
-export async function approveChatProposal(input: DecideChatProposalInput): Promise<HandoffProposal> {
+export async function approveChatProposal(
+  input: DecideChatProposalInput
+): Promise<HandoffProposal> {
   const organizationId = requireNonEmpty(input.organizationId, 'organizationId');
   const proposalId = requireNonEmpty(input.proposalId, 'proposalId');
   const row = await fetchChatProposalRow(organizationId, proposalId);

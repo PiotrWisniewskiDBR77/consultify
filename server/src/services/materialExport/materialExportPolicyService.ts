@@ -11,10 +11,34 @@ export interface ApprovedExportEngine {
 }
 
 const APPROVED_ENGINES: Readonly<Record<string, ApprovedExportEngine>> = Object.freeze({
-  'native:docx': Object.freeze({ providerKey: 'native:docx', packageName: 'docx', version: '9.5.1', license: 'MIT', outputSemantics: 'document' }),
-  'native:pptxgenjs': Object.freeze({ providerKey: 'native:pptxgenjs', packageName: 'pptxgenjs', version: '4.0.1', license: 'MIT', outputSemantics: 'presentation' }),
-  'native:exceljs': Object.freeze({ providerKey: 'native:exceljs', packageName: 'exceljs', version: '4.4.0', license: 'MIT', outputSemantics: 'workbook' }),
-  'native:pdfkit': Object.freeze({ providerKey: 'native:pdfkit', packageName: 'pdfkit', version: '0.17.2', license: 'MIT', outputSemantics: 'text_summary' }),
+  'native:docx': Object.freeze({
+    providerKey: 'native:docx',
+    packageName: 'docx',
+    version: '9.5.1',
+    license: 'MIT',
+    outputSemantics: 'document',
+  }),
+  'native:pptxgenjs': Object.freeze({
+    providerKey: 'native:pptxgenjs',
+    packageName: 'pptxgenjs',
+    version: '4.0.1',
+    license: 'MIT',
+    outputSemantics: 'presentation',
+  }),
+  'native:exceljs': Object.freeze({
+    providerKey: 'native:exceljs',
+    packageName: 'exceljs',
+    version: '4.4.0',
+    license: 'MIT',
+    outputSemantics: 'workbook',
+  }),
+  'native:pdfkit': Object.freeze({
+    providerKey: 'native:pdfkit',
+    packageName: 'pdfkit',
+    version: '0.17.2',
+    license: 'MIT',
+    outputSemantics: 'text_summary',
+  }),
 });
 
 export function requireApprovedExportEngine(providerKey: string): ApprovedExportEngine {
@@ -24,5 +48,9 @@ export function requireApprovedExportEngine(providerKey: string): ApprovedExport
 }
 
 export function isApprovedTemplateProvenance(value: unknown): boolean {
-  return String(value || '').trim().toLowerCase() === 'approved';
+  return (
+    String(value || '')
+      .trim()
+      .toLowerCase() === 'approved'
+  );
 }

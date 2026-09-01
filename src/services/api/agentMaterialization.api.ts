@@ -24,38 +24,84 @@ export interface AgentMaterializationProposal {
 }
 
 export async function getAgentMaterializationSource(planId: string) {
-  const response = await fetch(`${API_URL}/my-work/agent-materialization/source/${encodeURIComponent(planId)}`, {
-    headers: getHeaders(),
-  });
-  return handleResponse<{ sourceVersion: number; sourceHash: string }>(response, 'Failed to load plan identity');
+  const response = await fetch(
+    `${API_URL}/my-work/agent-materialization/source/${encodeURIComponent(planId)}`,
+    {
+      headers: getHeaders(),
+    }
+  );
+  return handleResponse<{ sourceVersion: number; sourceHash: string }>(
+    response,
+    'Failed to load plan identity'
+  );
 }
 
 export async function listAgentMaterializationProposals(sourcePlanId?: string) {
   const query = sourcePlanId ? `?sourcePlanId=${encodeURIComponent(sourcePlanId)}` : '';
-  const response = await fetch(`${API_URL}/my-work/agent-materialization/proposals${query}`, { headers: getHeaders() });
-  return handleResponse<{ proposals: AgentMaterializationProposal[]; canReview: boolean }>(response, 'Failed to load proposals');
+  const response = await fetch(`${API_URL}/my-work/agent-materialization/proposals${query}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<{ proposals: AgentMaterializationProposal[]; canReview: boolean }>(
+    response,
+    'Failed to load proposals'
+  );
 }
 
 export async function createAgentMaterializationProposal(input: {
-  sourcePlanId: string; sourceVersion: number; sourceHash: string; targetKind: AgentMaterializationTarget;
-  content: { title: string; description?: string; body?: string }; idempotencyKey: string; expiresAt: string;
+  sourcePlanId: string;
+  sourceVersion: number;
+  sourceHash: string;
+  targetKind: AgentMaterializationTarget;
+  content: { title: string; description?: string; body?: string };
+  idempotencyKey: string;
+  expiresAt: string;
 }) {
   const response = await fetch(`${API_URL}/my-work/agent-materialization/proposals`, {
-    method: 'POST', headers: getHeaders(), body: JSON.stringify(input),
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(input),
   });
-  return handleResponse<{ proposal: AgentMaterializationProposal; replayed: boolean }>(response, 'Failed to create proposal');
+  return handleResponse<{ proposal: AgentMaterializationProposal; replayed: boolean }>(
+    response,
+    'Failed to create proposal'
+  );
 }
 
-export async function decideAgentMaterializationProposal(proposal: AgentMaterializationProposal, decision: 'APPROVE' | 'REJECT') {
-  const response = await fetch(`${API_URL}/my-work/agent-materialization/proposals/${encodeURIComponent(proposal.proposal_id)}/decision`, {
-    method: 'POST', headers: getHeaders(), body: JSON.stringify({ decision, expectedStateVersion: proposal.state_version, sourceHash: proposal.source_hash }),
-  });
-  return handleResponse<{ proposal: AgentMaterializationProposal }>(response, 'Failed to decide proposal');
+export async function decideAgentMaterializationProposal(
+  proposal: AgentMaterializationProposal,
+  decision: 'APPROVE' | 'REJECT'
+) {
+  const response = await fetch(
+    `${API_URL}/my-work/agent-materialization/proposals/${encodeURIComponent(proposal.proposal_id)}/decision`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        decision,
+        expectedStateVersion: proposal.state_version,
+        sourceHash: proposal.source_hash,
+      }),
+    }
+  );
+  return handleResponse<{ proposal: AgentMaterializationProposal }>(
+    response,
+    'Failed to decide proposal'
+  );
 }
 
-export async function materializeAgentMaterializationProposal(proposal: AgentMaterializationProposal) {
-  const response = await fetch(`${API_URL}/my-work/agent-materialization/proposals/${encodeURIComponent(proposal.proposal_id)}/materialize`, {
-    method: 'POST', headers: getHeaders(), body: JSON.stringify({ expectedStateVersion: proposal.state_version }),
-  });
-  return handleResponse<{ receipt: { status: string; target_id?: string; output_digest?: string }; replayed: boolean }>(response, 'Failed to materialize proposal');
+export async function materializeAgentMaterializationProposal(
+  proposal: AgentMaterializationProposal
+) {
+  const response = await fetch(
+    `${API_URL}/my-work/agent-materialization/proposals/${encodeURIComponent(proposal.proposal_id)}/materialize`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ expectedStateVersion: proposal.state_version }),
+    }
+  );
+  return handleResponse<{
+    receipt: { status: string; target_id?: string; output_digest?: string };
+    replayed: boolean;
+  }>(response, 'Failed to materialize proposal');
 }

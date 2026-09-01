@@ -10,9 +10,13 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-
-import { toOkrProgram, type OkrProgram, type OkrProgramRow } from './okrProgramTypes.js';
-import { toOkrCycle, type OkrCycle, type OkrCycleRow, type OkrCycleStatus } from './okrCycleTypes.js';
+import {
+  type OkrCycle,
+  type OkrCycleRow,
+  type OkrCycleStatus,
+  toOkrCycle,
+} from './okrCycleTypes.js';
+import { type OkrProgram, type OkrProgramRow, toOkrProgram } from './okrProgramTypes.js';
 
 /** Same pinned-client-per-call shape as `roiRepository.ts`'s
  * `withReadClient` — no BEGIN/COMMIT needed for a read. */

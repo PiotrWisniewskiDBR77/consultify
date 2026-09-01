@@ -78,7 +78,12 @@ export const PREDICTION_SCHEDULE_TYPES = [
 ] as const;
 export type PredictionScheduleType = (typeof PREDICTION_SCHEDULE_TYPES)[number];
 
-export type DraftValueStatus = 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
+export type DraftValueStatus =
+  | 'PRESENT_ZERO'
+  | 'PRESENT_NONZERO'
+  | 'MISSING'
+  | 'NA'
+  | 'NOT_APPLICABLE';
 
 /** Tryb B — `finance_prediction_driver_overrides`, plik _01_tables.sql linie 74-117. */
 export interface DraftDriverOverride {
@@ -150,7 +155,11 @@ export const FINANCING_KINDS = [
 ] as const;
 export type FinancingKind = (typeof FINANCING_KINDS)[number];
 
-const FINANCING_HORIZON_WIDE_KINDS: readonly FinancingKind[] = ['SURPLUS_ALLOCATION_POLICY', 'COVENANT_DEFINITION', 'MIN_CASH_POLICY'];
+const FINANCING_HORIZON_WIDE_KINDS: readonly FinancingKind[] = [
+  'SURPLUS_ALLOCATION_POLICY',
+  'COVENANT_DEFINITION',
+  'MIN_CASH_POLICY',
+];
 
 /** `finance_prediction_financing`, linie 232-267 — TYLKO tutaj żyje finansowanie (nigdy w Baseline). */
 export interface DraftFinancingEvent {
@@ -163,13 +172,21 @@ export interface DraftFinancingEvent {
   rationale: string | null;
 }
 
-export function validateFinancingPeriodShape(event: Pick<DraftFinancingEvent, 'financingKind' | 'periodId'>): { ok: true } | { ok: false; message: string } {
+export function validateFinancingPeriodShape(
+  event: Pick<DraftFinancingEvent, 'financingKind' | 'periodId'>
+): { ok: true } | { ok: false; message: string } {
   const isHorizonWide = FINANCING_HORIZON_WIDE_KINDS.includes(event.financingKind);
   if (isHorizonWide && event.periodId !== null) {
-    return { ok: false, message: `${event.financingKind} jest polityką horyzont-szeroką — periodId musi być null` };
+    return {
+      ok: false,
+      message: `${event.financingKind} jest polityką horyzont-szeroką — periodId musi być null`,
+    };
   }
   if (!isHorizonWide && event.periodId === null) {
-    return { ok: false, message: `${event.financingKind} jest zdarzeniem punktowym — periodId jest wymagany` };
+    return {
+      ok: false,
+      message: `${event.financingKind} jest zdarzeniem punktowym — periodId jest wymagany`,
+    };
   }
   return { ok: true };
 }
@@ -188,7 +205,11 @@ export interface ScenarioDraft {
   lastComputeAt: string | null;
 }
 
-export function createEmptyScenarioDraft(params: { name: string; scenarioMode?: ScenarioMode; nowIso?: string }): ScenarioDraft {
+export function createEmptyScenarioDraft(params: {
+  name: string;
+  scenarioMode?: ScenarioMode;
+  nowIso?: string;
+}): ScenarioDraft {
   const now = params.nowIso ?? new Date().toISOString();
   return {
     businessVersionId: null,
@@ -213,15 +234,22 @@ export function createEmptyScenarioDraft(params: { name: string; scenarioMode?: 
 // STANDARD_BASE zamiast czystego passthrough, ten test go złapie.
 // ---------------------------------------------------------------------------
 
-export function isBaseModeStructurallyPassthrough(draft: Pick<ScenarioDraft, 'scenarioMode' | 'driverOverrides' | 'impacts' | 'financing'>): boolean {
+export function isBaseModeStructurallyPassthrough(
+  draft: Pick<ScenarioDraft, 'scenarioMode' | 'driverOverrides' | 'impacts' | 'financing'>
+): boolean {
   if (draft.scenarioMode !== 'STANDARD_BASE') return false;
-  return draft.driverOverrides.length === 0 && draft.impacts.length === 0 && draft.financing.length === 0;
+  return (
+    draft.driverOverrides.length === 0 && draft.impacts.length === 0 && draft.financing.length === 0
+  );
 }
 
 export type CanonicalValueMap = Readonly<Record<string, number>>; // key: `${lineCode}::${periodId}`
 
 /** Deep-equal porównanie dwóch map wartości kanonicznych — używane do potwierdzenia Base==Baseline bit-for-bit na warstwie prezentacji. */
-export function assertBaseEqualsBaseline(baseValues: CanonicalValueMap, baselineValues: CanonicalValueMap): { equal: true } | { equal: false; diffKeys: string[] } {
+export function assertBaseEqualsBaseline(
+  baseValues: CanonicalValueMap,
+  baselineValues: CanonicalValueMap
+): { equal: true } | { equal: false; diffKeys: string[] } {
   const keys = new Set([...Object.keys(baseValues), ...Object.keys(baselineValues)]);
   const diffKeys: string[] = [];
   for (const k of keys) {
@@ -238,13 +266,22 @@ export function assertBaseEqualsBaseline(baseValues: CanonicalValueMap, baseline
 // wspólny pakiet, zamiana na import będzie mechaniczna.
 // ---------------------------------------------------------------------------
 
-export function impactChainEffectiveFraction(monthsSinceStart: number, rampMonths: number | null, durationMonths: number | null, decayPctPerPeriod: number | null): number {
+export function impactChainEffectiveFraction(
+  monthsSinceStart: number,
+  rampMonths: number | null,
+  durationMonths: number | null,
+  decayPctPerPeriod: number | null
+): number {
   if (monthsSinceStart < 0) return 0;
   let fraction = 1;
   if (rampMonths && rampMonths > 0) {
     fraction = Math.min(1, (monthsSinceStart + 1) / rampMonths);
   }
-  if (durationMonths !== null && durationMonths !== undefined && monthsSinceStart >= durationMonths) {
+  if (
+    durationMonths !== null &&
+    durationMonths !== undefined &&
+    monthsSinceStart >= durationMonths
+  ) {
     const periodsBeyond = monthsSinceStart - durationMonths + 1;
     if (decayPctPerPeriod && decayPctPerPeriod > 0) {
       fraction *= Math.max(0, 1 - decayPctPerPeriod * periodsBeyond);
@@ -297,11 +334,21 @@ function overlapGroupKey(entityId: string, lineCode: string, periodId: string): 
   return `${entityId}::${lineCode}::${periodId}`;
 }
 
-export function detectClientSideOverlaps(draft: Pick<ScenarioDraft, 'driverOverrides' | 'impacts' | 'initiatives' | 'financing'>): ClientOverlapFinding[] {
+export function detectClientSideOverlaps(
+  draft: Pick<ScenarioDraft, 'driverOverrides' | 'impacts' | 'initiatives' | 'financing'>
+): ClientOverlapFinding[] {
   const initiativeById = new Map(draft.initiatives.map((i) => [i.id, i]));
-  const bySources = new Map<string, { entityId: string; lineCode: string; periodId: string; sources: OverlapSourceRef[] }>();
+  const bySources = new Map<
+    string,
+    { entityId: string; lineCode: string; periodId: string; sources: OverlapSourceRef[] }
+  >();
 
-  const push = (entityId: string, lineCode: string, periodId: string | null, source: OverlapSourceRef) => {
+  const push = (
+    entityId: string,
+    lineCode: string,
+    periodId: string | null,
+    source: OverlapSourceRef
+  ) => {
     if (periodId === null) return; // serwer też wyklucza źródła bez rozwiązywalnego okresu (linia 92 komentarz SQL)
     const key = overlapGroupKey(entityId, lineCode, periodId);
     const bucket = bySources.get(key) ?? { entityId, lineCode, periodId, sources: [] };
@@ -312,14 +359,22 @@ export function detectClientSideOverlaps(draft: Pick<ScenarioDraft, 'driverOverr
   for (const o of draft.driverOverrides) {
     if (o.valueDecimal === null) continue;
     const delta = o.valueDecimal - (o.baselineValueDecimal ?? 0);
-    push(o.entityId, o.canonicalLineCode, o.periodId, { sourceType: 'DRIVER_OVERRIDE', sourceId: o.id, estimatedDelta: delta });
+    push(o.entityId, o.canonicalLineCode, o.periodId, {
+      sourceType: 'DRIVER_OVERRIDE',
+      sourceId: o.id,
+      estimatedDelta: delta,
+    });
   }
 
   for (const impact of draft.impacts) {
     const initiative = initiativeById.get(impact.initiativeId);
     const periodId = impact.startPeriodId ?? initiative?.defaultStartPeriodId ?? null;
     const delta = (impact.sign === 'NEGATIVE' ? -1 : 1) * impact.amountDecimal;
-    push(impact.entityId, impact.statementLineCode, periodId, { sourceType: 'INITIATIVE_IMPACT', sourceId: impact.id, estimatedDelta: delta });
+    push(impact.entityId, impact.statementLineCode, periodId, {
+      sourceType: 'INITIATIVE_IMPACT',
+      sourceId: impact.id,
+      estimatedDelta: delta,
+    });
   }
 
   for (const f of draft.financing) {
@@ -327,7 +382,11 @@ export function detectClientSideOverlaps(draft: Pick<ScenarioDraft, 'driverOverr
     if (!lines) continue; // polityki horyzont-szerokie — wykluczone, jak w serwerze (komentarz SQL linie 35-38)
     const delta = f.payload.amount ?? f.payload.principal ?? 0;
     for (const lineCode of lines) {
-      push(f.entityId, lineCode, f.periodId, { sourceType: 'FINANCING', sourceId: f.id, estimatedDelta: delta });
+      push(f.entityId, lineCode, f.periodId, {
+        sourceType: 'FINANCING',
+        sourceId: f.id,
+        estimatedDelta: delta,
+      });
     }
   }
 
@@ -339,7 +398,9 @@ export function detectClientSideOverlaps(draft: Pick<ScenarioDraft, 'driverOverr
   for (const key of sortedKeys) {
     const bucket = bySources.get(key)!;
     if (bucket.sources.length <= 1) continue;
-    const sortedSources = [...bucket.sources].sort((a, b) => (a.sourceId < b.sourceId ? -1 : a.sourceId > b.sourceId ? 1 : 0));
+    const sortedSources = [...bucket.sources].sort((a, b) =>
+      a.sourceId < b.sourceId ? -1 : a.sourceId > b.sourceId ? 1 : 0
+    );
     const naiveCombinedDelta = sortedSources.reduce((sum, s) => sum + s.estimatedDelta, 0);
     findings.push({
       entityId: bucket.entityId,
@@ -388,7 +449,11 @@ export function resolveDriverValue(
     // dla dokładnie tego rozróżnienia (SourceEvidencePanel.tsx używa jej identycznie).
     message: `Brak wartości dla ${o.driverCode} w okresie ${o.periodId} (${financeValueStatusLabel(o.valueStatus)})`,
     requiresExplicitAcceptance: true,
-    proposedResolutions: ['UZUPEŁNIJ_RĘCZNIE', 'UŻYJ_WARTOŚCI_BASELINE', 'AKCEPTUJ_BRAK_I_KONTYNUUJ'],
+    proposedResolutions: [
+      'UZUPEŁNIJ_RĘCZNIE',
+      'UŻYJ_WARTOŚCI_BASELINE',
+      'AKCEPTUJ_BRAK_I_KONTYNUUJ',
+    ],
   };
 }
 
@@ -420,7 +485,13 @@ export class MathUndefinedError extends Error {
 // provisional.
 // ---------------------------------------------------------------------------
 
-export const EXCEPTION_LEVELS = ['INFO', 'WARNING', 'MATERIAL', 'CRITICAL_DATA', 'SECURITY_OR_UNDEFINED_MATH'] as const;
+export const EXCEPTION_LEVELS = [
+  'INFO',
+  'WARNING',
+  'MATERIAL',
+  'CRITICAL_DATA',
+  'SECURITY_OR_UNDEFINED_MATH',
+] as const;
 export type ExceptionLevel = (typeof EXCEPTION_LEVELS)[number];
 
 export type MaterialStatus = 'clean' | 'conditional' | 'provisional';
@@ -447,7 +518,12 @@ export interface WarningException extends ExceptionLedgerEntryBase {
 /** Poziom 3 — ocena wpływu + maker-checker. `resolution: null` = jeszcze nierozstrzygnięty. */
 export interface MaterialException extends ExceptionLedgerEntryBase {
   level: 'MATERIAL';
-  resolution: { preparedBy: string; approvedBy: string; impactAssessment: string; resolvedAt: string } | null;
+  resolution: {
+    preparedBy: string;
+    approvedBy: string;
+    impactAssessment: string;
+    resolvedAt: string;
+  } | null;
 }
 
 /** Poziom 4 — compute/export DOZWOLONE bez żadnej akcji; `acknowledgement` jest audytowe (kto/kiedy/dlaczego), NIE bramką. */
@@ -462,7 +538,12 @@ export interface SecurityOrUndefinedMathException extends ExceptionLedgerEntryBa
   blockingCategory: 'SECURITY' | 'TENANT_BOUNDARY' | 'UNDEFINED_MATH';
 }
 
-export type ExceptionLedgerEntry = InfoException | WarningException | MaterialException | CriticalDataException | SecurityOrUndefinedMathException;
+export type ExceptionLedgerEntry =
+  | InfoException
+  | WarningException
+  | MaterialException
+  | CriticalDataException
+  | SecurityOrUndefinedMathException;
 
 /**
  * Poziom 2 — akceptacja Z UZASADNIENIEM. Puste/białoznakowe uzasadnienie jest ODRZUCONE (zwraca
@@ -474,9 +555,23 @@ export function acceptWarningException(
 ): { ok: true; entry: WarningException } | { ok: false; message: string } {
   const justification = params.justification.trim();
   if (justification.length === 0) {
-    return { ok: false, message: 'Uzasadnienie jest WYMAGANE do akceptacji wyjątku poziomu Warning (DEC-FIN-009 poziom 2) — nie jest opcjonalne.' };
+    return {
+      ok: false,
+      message:
+        'Uzasadnienie jest WYMAGANE do akceptacji wyjątku poziomu Warning (DEC-FIN-009 poziom 2) — nie jest opcjonalne.',
+    };
   }
-  return { ok: true, entry: { ...entry, acceptance: { acceptedBy: params.acceptedBy, justification, acceptedAt: params.nowIso ?? new Date().toISOString() } } };
+  return {
+    ok: true,
+    entry: {
+      ...entry,
+      acceptance: {
+        acceptedBy: params.acceptedBy,
+        justification,
+        acceptedAt: params.nowIso ?? new Date().toISOString(),
+      },
+    },
+  };
 }
 
 /**
@@ -489,12 +584,30 @@ export function resolveMaterialException(
 ): { ok: true; entry: MaterialException } | { ok: false; message: string } {
   const impactAssessment = params.impactAssessment.trim();
   if (impactAssessment.length === 0) {
-    return { ok: false, message: 'Ocena wpływu jest wymagana dla wyjątku Material (DEC-FIN-009 poziom 3).' };
+    return {
+      ok: false,
+      message: 'Ocena wpływu jest wymagana dla wyjątku Material (DEC-FIN-009 poziom 3).',
+    };
   }
   if (params.preparedBy === params.approvedBy) {
-    return { ok: false, message: 'Maker-checker: przygotowujący i zatwierdzający muszą być DWIEMA różnymi osobami (DEC-FIN-009 poziom 3).' };
+    return {
+      ok: false,
+      message:
+        'Maker-checker: przygotowujący i zatwierdzający muszą być DWIEMA różnymi osobami (DEC-FIN-009 poziom 3).',
+    };
   }
-  return { ok: true, entry: { ...entry, resolution: { preparedBy: params.preparedBy, approvedBy: params.approvedBy, impactAssessment, resolvedAt: params.nowIso ?? new Date().toISOString() } } };
+  return {
+    ok: true,
+    entry: {
+      ...entry,
+      resolution: {
+        preparedBy: params.preparedBy,
+        approvedBy: params.approvedBy,
+        impactAssessment,
+        resolvedAt: params.nowIso ?? new Date().toISOString(),
+      },
+    },
+  };
 }
 
 /**
@@ -508,9 +621,23 @@ export function acknowledgeCriticalDataException(
 ): { ok: true; entry: CriticalDataException } | { ok: false; message: string } {
   const justification = params.justification.trim();
   if (justification.length === 0) {
-    return { ok: false, message: 'Uzasadnienie jest wymagane do potwierdzenia wyjątku Critical Data (DEC-FIN-009 poziom 4).' };
+    return {
+      ok: false,
+      message:
+        'Uzasadnienie jest wymagane do potwierdzenia wyjątku Critical Data (DEC-FIN-009 poziom 4).',
+    };
   }
-  return { ok: true, entry: { ...entry, acknowledgement: { acknowledgedBy: params.acknowledgedBy, justification, acknowledgedAt: params.nowIso ?? new Date().toISOString() } } };
+  return {
+    ok: true,
+    entry: {
+      ...entry,
+      acknowledgement: {
+        acknowledgedBy: params.acknowledgedBy,
+        justification,
+        acknowledgedAt: params.nowIso ?? new Date().toISOString(),
+      },
+    },
+  };
 }
 
 export interface ComputeGateResult {
@@ -525,14 +652,22 @@ export interface ComputeGateResult {
  * TYLKO poziom 5 (`SECURITY_OR_UNDEFINED_MATH`) ustawia `allowed:false`. To jest test na
  * "poziom 4 przechodzi i jest provisional, nie zablokowany" z brifu koordynatora.
  */
-export function evaluateExceptionLedgerForCompute(ledger: readonly ExceptionLedgerEntry[]): ComputeGateResult {
-  const blockedBy = ledger.filter((e): e is SecurityOrUndefinedMathException => e.level === 'SECURITY_OR_UNDEFINED_MATH');
+export function evaluateExceptionLedgerForCompute(
+  ledger: readonly ExceptionLedgerEntry[]
+): ComputeGateResult {
+  const blockedBy = ledger.filter(
+    (e): e is SecurityOrUndefinedMathException => e.level === 'SECURITY_OR_UNDEFINED_MATH'
+  );
   if (blockedBy.length > 0) {
     return { allowed: false, blockedBy, materialStatus: 'provisional' };
   }
   const hasCriticalData = ledger.some((e) => e.level === 'CRITICAL_DATA');
   const hasMaterialOrWarning = ledger.some((e) => e.level === 'MATERIAL' || e.level === 'WARNING');
-  const materialStatus: MaterialStatus = hasCriticalData ? 'provisional' : hasMaterialOrWarning ? 'conditional' : 'clean';
+  const materialStatus: MaterialStatus = hasCriticalData
+    ? 'provisional'
+    : hasMaterialOrWarning
+      ? 'conditional'
+      : 'clean';
   return { allowed: true, blockedBy: [], materialStatus };
 }
 
@@ -562,14 +697,23 @@ export interface MaterialProvenance {
   approver: string | null;
 }
 
-export function buildMaterialProvenance(params: { ledger: readonly ExceptionLedgerEntry[]; author: string }): MaterialProvenance {
+export function buildMaterialProvenance(params: {
+  ledger: readonly ExceptionLedgerEntry[];
+  author: string;
+}): MaterialProvenance {
   const gate = evaluateExceptionLedgerForCompute(params.ledger);
   const materialResolutions = params.ledger
     .filter((e): e is MaterialException => e.level === 'MATERIAL')
     .map((e) => e.resolution)
     .filter((r): r is NonNullable<MaterialException['resolution']> => r !== null);
-  const impactSummary = materialResolutions.length > 0 ? materialResolutions.map((r) => r.impactAssessment).join('; ') : null;
-  const approver = materialResolutions.length > 0 ? materialResolutions[materialResolutions.length - 1].approvedBy : null;
+  const impactSummary =
+    materialResolutions.length > 0
+      ? materialResolutions.map((r) => r.impactAssessment).join('; ')
+      : null;
+  const approver =
+    materialResolutions.length > 0
+      ? materialResolutions[materialResolutions.length - 1].approvedBy
+      : null;
   return {
     status: gate.materialStatus,
     qualitySummary: describeMaterialStatus(gate.materialStatus),
@@ -586,7 +730,14 @@ export function driverMissingValueToWarningException(
   resolution: Extract<AssumptionResolution, { kind: 'exception' }>,
   nowIso: string = new Date().toISOString()
 ): WarningException {
-  return { id, level: 'WARNING', reasonCode: resolution.reasonCode, message: resolution.message, createdAt: nowIso, acceptance: null };
+  return {
+    id,
+    level: 'WARNING',
+    reasonCode: resolution.reasonCode,
+    message: resolution.message,
+    createdAt: nowIso,
+    acceptance: null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -609,12 +760,22 @@ export interface ToleranceThresholds {
   analyticsMaterialityTolerance: number;
 }
 
-export function validateToleranceHierarchy(t: ToleranceThresholds): { ok: true } | { ok: false; message: string } {
+export function validateToleranceHierarchy(
+  t: ToleranceThresholds
+): { ok: true } | { ok: false; message: string } {
   if (!(t.sourceToCanonicalTolerance <= t.technicalEquationTolerance)) {
-    return { ok: false, message: 'source→canonical tolerance musi być BARDZIEJ restrykcyjny (<=) niż technicalEquationTolerance.' };
+    return {
+      ok: false,
+      message:
+        'source→canonical tolerance musi być BARDZIEJ restrykcyjny (<=) niż technicalEquationTolerance.',
+    };
   }
   if (!(t.technicalEquationTolerance <= t.analyticsMaterialityTolerance)) {
-    return { ok: false, message: 'analyticsMaterialityTolerance musi być najluźniejszym z trzech progów (>= technicalEquationTolerance).' };
+    return {
+      ok: false,
+      message:
+        'analyticsMaterialityTolerance musi być najluźniejszym z trzech progów (>= technicalEquationTolerance).',
+    };
   }
   return { ok: true };
 }
@@ -630,8 +791,14 @@ export function checkBalanceSheetTie(
 }
 
 /** Wykrywa antywzorzec kanonu: użycie progu materialności analitycznej tam, gdzie należał się próg techniczny. */
-export function isAnalyticsMaterialityMisusedForBalanceCheck(usedTolerance: number, thresholds: ToleranceThresholds): boolean {
-  return usedTolerance === thresholds.analyticsMaterialityTolerance && thresholds.analyticsMaterialityTolerance > thresholds.technicalEquationTolerance;
+export function isAnalyticsMaterialityMisusedForBalanceCheck(
+  usedTolerance: number,
+  thresholds: ToleranceThresholds
+): boolean {
+  return (
+    usedTolerance === thresholds.analyticsMaterialityTolerance &&
+    thresholds.analyticsMaterialityTolerance > thresholds.technicalEquationTolerance
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -648,18 +815,37 @@ export interface ScenarioComparisonCell {
   percentDelta: number | null;
 }
 
-export function computeScenarioComparisonCell(lineCode: string, periodId: string, scenarioValue: number | null, baselineValue: number | null): ScenarioComparisonCell {
-  const absoluteDelta = scenarioValue === null || baselineValue === null ? null : scenarioValue - baselineValue;
-  const percentDelta = absoluteDelta === null || baselineValue === null || baselineValue === 0 ? null : absoluteDelta / Math.abs(baselineValue);
+export function computeScenarioComparisonCell(
+  lineCode: string,
+  periodId: string,
+  scenarioValue: number | null,
+  baselineValue: number | null
+): ScenarioComparisonCell {
+  const absoluteDelta =
+    scenarioValue === null || baselineValue === null ? null : scenarioValue - baselineValue;
+  const percentDelta =
+    absoluteDelta === null || baselineValue === null || baselineValue === 0
+      ? null
+      : absoluteDelta / Math.abs(baselineValue);
   return { lineCode, periodId, scenarioValue, baselineValue, absoluteDelta, percentDelta };
 }
 
-export function computeScenarioComparison(scenarioValues: CanonicalValueMap, baselineValues: CanonicalValueMap): ScenarioComparisonCell[] {
+export function computeScenarioComparison(
+  scenarioValues: CanonicalValueMap,
+  baselineValues: CanonicalValueMap
+): ScenarioComparisonCell[] {
   const keys = new Set([...Object.keys(scenarioValues), ...Object.keys(baselineValues)]);
   const cells: ScenarioComparisonCell[] = [];
   for (const key of [...keys].sort()) {
     const [lineCode, periodId] = key.split('::');
-    cells.push(computeScenarioComparisonCell(lineCode, periodId, scenarioValues[key] ?? null, baselineValues[key] ?? null));
+    cells.push(
+      computeScenarioComparisonCell(
+        lineCode,
+        periodId,
+        scenarioValues[key] ?? null,
+        baselineValues[key] ?? null
+      )
+    );
   }
   return cells;
 }
@@ -671,8 +857,15 @@ export interface LiquidityHeadroom {
   liquidityHeadroom: number | null;
 }
 
-export function computeLiquidityHeadroom(cash: number, minCashPolicy: number | null): LiquidityHeadroom {
-  return { cash, minCashPolicy, liquidityHeadroom: minCashPolicy === null ? null : cash - minCashPolicy };
+export function computeLiquidityHeadroom(
+  cash: number,
+  minCashPolicy: number | null
+): LiquidityHeadroom {
+  return {
+    cash,
+    minCashPolicy,
+    liquidityHeadroom: minCashPolicy === null ? null : cash - minCashPolicy,
+  };
 }
 
 export interface CovenantHeadroomInput {
@@ -695,7 +888,9 @@ export interface CovenantHeadroomResult {
  */
 export function computeCovenantHeadroom(input: CovenantHeadroomInput): CovenantHeadroomResult {
   if (input.ebitda === 0) {
-    throw new MathUndefinedError(`Net Debt/EBITDA niezdefiniowane: EBITDA=0 (dzielenie przez zero). Wymagana twarda blokada (DEC-FIN-009 wyjątek c).`);
+    throw new MathUndefinedError(
+      `Net Debt/EBITDA niezdefiniowane: EBITDA=0 (dzielenie przez zero). Wymagana twarda blokada (DEC-FIN-009 wyjątek c).`
+    );
   }
   const netDebtToEbitda = input.netDebt / input.ebitda;
   return {
@@ -711,7 +906,9 @@ export function computeCovenantHeadroom(input: CovenantHeadroomInput): CovenantH
 
 export type ResultFreshness = 'NEVER_COMPUTED' | 'CURRENT' | 'STALE';
 
-export function resolveResultFreshness(draft: Pick<ScenarioDraft, 'lastAssumptionChangeAt' | 'lastComputeAt'>): ResultFreshness {
+export function resolveResultFreshness(
+  draft: Pick<ScenarioDraft, 'lastAssumptionChangeAt' | 'lastComputeAt'>
+): ResultFreshness {
   if (draft.lastComputeAt === null) return 'NEVER_COMPUTED';
   return draft.lastAssumptionChangeAt > draft.lastComputeAt ? 'STALE' : 'CURRENT';
 }
@@ -720,7 +917,10 @@ export function resolveResultFreshness(draft: Pick<ScenarioDraft, 'lastAssumptio
  * Znakuje draft jako mający nową zmianę założeń — CELOWO nie czyści `lastComputeAt` ani żadnych
  * wyników; caller (UI) musi trzymać ostatnie wyniki obok flagi `stale`, nigdy ich nie usuwać.
  */
-export function markAssumptionChanged(draft: ScenarioDraft, nowIso: string = new Date().toISOString()): ScenarioDraft {
+export function markAssumptionChanged(
+  draft: ScenarioDraft,
+  nowIso: string = new Date().toISOString()
+): ScenarioDraft {
   return { ...draft, lastAssumptionChangeAt: nowIso };
 }
 
@@ -762,7 +962,9 @@ export function computeFacilityUtilization(
   events: readonly Pick<DraftFinancingEvent, 'id' | 'financingKind' | 'payload' | 'periodId'>[],
   limit: FacilityLimit
 ): FacilityUtilizationPoint[] {
-  const relevant = events.filter((e) => e.financingKind === 'FACILITY_DRAWDOWN' || e.financingKind === 'DISCRETIONARY_REPAYMENT');
+  const relevant = events.filter(
+    (e) => e.financingKind === 'FACILITY_DRAWDOWN' || e.financingKind === 'DISCRETIONARY_REPAYMENT'
+  );
   const sorted = [...relevant].sort((a, b) => {
     const periodCompare = (a.periodId ?? '').localeCompare(b.periodId ?? '');
     if (periodCompare !== 0) return periodCompare;
@@ -777,7 +979,8 @@ export function computeFacilityUtilization(
   for (const e of sorted) {
     const opening = balance;
     const amount = e.payload.amount ?? e.payload.principal ?? 0;
-    balance = e.financingKind === 'FACILITY_DRAWDOWN' ? balance + amount : Math.max(0, balance - amount);
+    balance =
+      e.financingKind === 'FACILITY_DRAWDOWN' ? balance + amount : Math.max(0, balance - amount);
     points.push({
       eventId: e.id,
       periodId: e.periodId,
@@ -824,12 +1027,22 @@ export interface ReconciliationResult {
  * `technicalEquationTolerance` (trójstopniowy kanon tolerancji powyżej; NIGDY materiality — to
  * dowód techniczny, nie ocena analityczna istotności).
  */
-export function reconcileStatementsAndSchedules(input: ReconciliationInput, thresholds: Pick<ToleranceThresholds, 'technicalEquationTolerance'>): ReconciliationResult {
+export function reconcileStatementsAndSchedules(
+  input: ReconciliationInput,
+  thresholds: Pick<ToleranceThresholds, 'technicalEquationTolerance'>
+): ReconciliationResult {
   const cashDiff = Math.abs(input.cfClosingCash - input.bsCash);
   const debtDiff = Math.abs(input.debtScheduleClosingBalance - input.bsLongTermDebt);
   const cashTies = cashDiff <= thresholds.technicalEquationTolerance;
   const debtTies = debtDiff <= thresholds.technicalEquationTolerance;
-  return { periodId: input.periodId, cashTies, cashDiff, debtTies, debtDiff, reconciled: cashTies && debtTies };
+  return {
+    periodId: input.periodId,
+    cashTies,
+    cashDiff,
+    debtTies,
+    debtDiff,
+    reconciled: cashTies && debtTies,
+  };
 }
 
 // --- "reverse stress i break-even" — odwrotność zwykłego compute ---------------------------------
@@ -861,9 +1074,11 @@ export function solveBreakEvenDriver(params: BreakEvenSearchParams): BreakEvenSe
   let hi = params.upperBound;
   let fLo = params.evaluate(lo) - params.targetValue;
   let fHi = params.evaluate(hi) - params.targetValue;
-  if (Math.abs(fLo) <= tol) return { ok: true, driverValue: lo, achievedValue: fLo + params.targetValue, iterations: 0 };
-  if (Math.abs(fHi) <= tol) return { ok: true, driverValue: hi, achievedValue: fHi + params.targetValue, iterations: 0 };
-  if ((fLo > 0) === (fHi > 0)) {
+  if (Math.abs(fLo) <= tol)
+    return { ok: true, driverValue: lo, achievedValue: fLo + params.targetValue, iterations: 0 };
+  if (Math.abs(fHi) <= tol)
+    return { ok: true, driverValue: hi, achievedValue: fHi + params.targetValue, iterations: 0 };
+  if (fLo > 0 === fHi > 0) {
     return {
       ok: false,
       reason: 'NOT_BRACKETED',
@@ -873,8 +1088,14 @@ export function solveBreakEvenDriver(params: BreakEvenSearchParams): BreakEvenSe
   for (let i = 0; i < maxIter; i++) {
     const mid = (lo + hi) / 2;
     const fMid = params.evaluate(mid) - params.targetValue;
-    if (Math.abs(fMid) <= tol) return { ok: true, driverValue: mid, achievedValue: fMid + params.targetValue, iterations: i + 1 };
-    if ((fMid > 0) === (fLo > 0)) {
+    if (Math.abs(fMid) <= tol)
+      return {
+        ok: true,
+        driverValue: mid,
+        achievedValue: fMid + params.targetValue,
+        iterations: i + 1,
+      };
+    if (fMid > 0 === fLo > 0) {
       lo = mid;
       fLo = fMid;
     } else {
@@ -882,7 +1103,11 @@ export function solveBreakEvenDriver(params: BreakEvenSearchParams): BreakEvenSe
       fHi = fMid;
     }
   }
-  return { ok: false, reason: 'MAX_ITERATIONS_EXCEEDED', message: `Bisekcja nie zbiegła w ${maxIter} iteracjach (tolerancja ${tol}).` };
+  return {
+    ok: false,
+    reason: 'MAX_ITERATIONS_EXCEEDED',
+    message: `Bisekcja nie zbiegła w ${maxIter} iteracjach (tolerancja ${tol}).`,
+  };
 }
 
 // --- EXACT COLD REOPEN — zamknij, otwórz na zimno, wyniki identyczne co do wartości --------------
@@ -898,7 +1123,11 @@ export function solveBreakEvenDriver(params: BreakEvenSearchParams): BreakEvenSe
 function sortDeepForFingerprint(value: unknown): unknown {
   if (Array.isArray(value)) {
     const mapped = value.map(sortDeepForFingerprint);
-    const allHaveId = mapped.length > 0 && mapped.every((v) => typeof v === 'object' && v !== null && 'id' in (v as Record<string, unknown>));
+    const allHaveId =
+      mapped.length > 0 &&
+      mapped.every(
+        (v) => typeof v === 'object' && v !== null && 'id' in (v as Record<string, unknown>)
+      );
     if (!allHaveId) return mapped;
     return [...mapped].sort((a, b) => {
       const ai = (a as Record<string, unknown>).id as string;
@@ -928,7 +1157,9 @@ export function canonicalScenarioDraftFingerprint(draft: ScenarioDraft): string 
  * serwer ma WŁASNY, niezależny dowód tej samej własności dla swojej warstwy (`contentSemanticHash`
  * + trzy funkcje sortujące wymienione wyżej, live-tested w istniejących testach determinizmu PKG-A).
  */
-export function verifyExactColdReopen(draft: ScenarioDraft): { ok: true; fingerprint: string } | { ok: false; before: string; after: string } {
+export function verifyExactColdReopen(
+  draft: ScenarioDraft
+): { ok: true; fingerprint: string } | { ok: false; before: string; after: string } {
   const before = canonicalScenarioDraftFingerprint(draft);
   const reopened = JSON.parse(JSON.stringify(draft)) as ScenarioDraft;
   const after = canonicalScenarioDraftFingerprint(reopened);
@@ -937,7 +1168,13 @@ export function verifyExactColdReopen(draft: ScenarioDraft): { ok: true; fingerp
 
 // --- Zależności scenariuszowe: cena/wolumen/moce/inflacja/FX/stopy/podatek ------------------------
 
-export type ScenarioDependencyKind = 'PRICE_VOLUME' | 'CAPACITY' | 'INFLATION' | 'FX' | 'INTEREST_RATES' | 'TAX';
+export type ScenarioDependencyKind =
+  | 'PRICE_VOLUME'
+  | 'CAPACITY'
+  | 'INFLATION'
+  | 'FX'
+  | 'INTEREST_RATES'
+  | 'TAX';
 
 export interface ScenarioDependencyCoverage {
   covered: boolean;
@@ -951,7 +1188,9 @@ export interface ScenarioDependencyCoverage {
  * nie egzekwująca — brakujące pozycje (`INFLATION`/`FX`/twarda walidacja `CAPACITY`) wymagają zmiany
  * schematu serwera i są zaraportowane jako EVIDENCE_MISSING, nie cicho pominięte.
  */
-export const SCENARIO_DEPENDENCY_COVERAGE: Readonly<Record<ScenarioDependencyKind, ScenarioDependencyCoverage>> = {
+export const SCENARIO_DEPENDENCY_COVERAGE: Readonly<
+  Record<ScenarioDependencyKind, ScenarioDependencyCoverage>
+> = {
   PRICE_VOLUME: {
     covered: true,
     via: 'revenue_pvm (REVENUE_GROWTH_YOY) + impact_chain PERCENT_OF_BASE/ABSOLUTE_AMOUNT na REVENUE',
@@ -962,8 +1201,20 @@ export const SCENARIO_DEPENDENCY_COVERAGE: Readonly<Record<ScenarioDependencyKin
     via: 'impact_chain.capacity_constraint_ref (JSONB)',
     note: 'Pole istnieje w schemacie (ADR sekcja 15 pkt 3), ale NIE jest trigger-walidowane — miękkie ograniczenie bez twardej weryfikacji.',
   },
-  INFLATION: { covered: false, via: null, note: 'Brak osobnego schedule_type/driver_code dla inflacji w 9-wartościowym enumie serwera — zmiana enumu jest poza allowlistą server/** tego pakietu.' },
-  FX: { covered: false, via: null, note: 'Jedna native_currency/presentation_currency na komórkę — brak modelu wielowalutowego/FX w schemacie.' },
-  INTEREST_RATES: { covered: true, via: 'debt_maturity (contractual_rate, CASH_INTEREST_RATE_ANNUAL_PCT) + finance_prediction_financing.payload.rate', note: null },
+  INFLATION: {
+    covered: false,
+    via: null,
+    note: 'Brak osobnego schedule_type/driver_code dla inflacji w 9-wartościowym enumie serwera — zmiana enumu jest poza allowlistą server/** tego pakietu.',
+  },
+  FX: {
+    covered: false,
+    via: null,
+    note: 'Jedna native_currency/presentation_currency na komórkę — brak modelu wielowalutowego/FX w schemacie.',
+  },
+  INTEREST_RATES: {
+    covered: true,
+    via: 'debt_maturity (contractual_rate, CASH_INTEREST_RATE_ANNUAL_PCT) + finance_prediction_financing.payload.rate',
+    note: null,
+  },
   TAX: { covered: true, via: 'tax_nol (STATUTORY_TAX_RATE_PCT)', note: null },
 };

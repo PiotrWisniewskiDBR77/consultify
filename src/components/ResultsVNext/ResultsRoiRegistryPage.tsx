@@ -29,7 +29,10 @@ export const ResultsRoiRegistryPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-roi-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-roi-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}

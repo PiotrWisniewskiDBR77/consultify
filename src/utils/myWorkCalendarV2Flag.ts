@@ -21,7 +21,9 @@ export const isMyWorkCalendarV2Enabled = () => {
       ? parse(window.localStorage.getItem(STORAGE))
       : null;
   const env = parse((import.meta as unknown as { env?: Record<string, string> }).env?.[ENV]);
-  return (cached = query ?? local ?? env ?? false);
+  // D-6: owner requested My Work Calendar V2 ON now — default flips ON.
+  // query/localStorage/env still allow an explicit opt-out.
+  return (cached = query ?? local ?? env ?? true);
 };
 export const resetMyWorkCalendarV2FlagCache = () => {
   cached = null;

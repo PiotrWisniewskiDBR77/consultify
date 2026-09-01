@@ -48,33 +48,30 @@ const ALLOWED_TRANSITIONS: Record<AuditLifecycleState, AuditLifecycleState[]> = 
 const BACKWARD_TRANSITIONS = new Set<string>(
   Object.entries(ALLOWED_TRANSITIONS).flatMap(([from, targets]) =>
     targets
-      .filter((to) => LIFECYCLE_ORDER.indexOf(to) < LIFECYCLE_ORDER.indexOf(from as AuditLifecycleState))
-      .map((to) => `${from}->${to}`),
-  ),
+      .filter(
+        (to) => LIFECYCLE_ORDER.indexOf(to) < LIFECYCLE_ORDER.indexOf(from as AuditLifecycleState)
+      )
+      .map((to) => `${from}->${to}`)
+  )
 );
 
-export function isBackwardTransition(
-  from: AuditLifecycleState,
-  to: AuditLifecycleState,
-): boolean {
+export function isBackwardTransition(from: AuditLifecycleState, to: AuditLifecycleState): boolean {
   return BACKWARD_TRANSITIONS.has(`${from}->${to}`);
 }
 
 export function assertTransitionAllowed(
   from: AuditLifecycleState,
   to: AuditLifecycleState,
-  reason?: string | null,
+  reason?: string | null
 ): void {
   const allowed = ALLOWED_TRANSITIONS[from] ?? [];
   if (!allowed.includes(to)) {
     throw new AuditStateError(
-      `Przejście ${from} → ${to} jest niedozwolone. Dozwolone: ${allowed.join(', ') || 'brak'}`,
+      `Przejście ${from} → ${to} jest niedozwolone. Dozwolone: ${allowed.join(', ') || 'brak'}`
     );
   }
   if (isBackwardTransition(from, to) && !String(reason || '').trim()) {
-    throw new AuditStateError(
-      `Cofnięcie audytu z ${from} do ${to} wymaga podania powodu`,
-    );
+    throw new AuditStateError(`Cofnięcie audytu z ${from} do ${to} wymaga podania powodu`);
   }
 }
 
@@ -119,10 +116,7 @@ export interface GateResult {
  * UI pokazuje je jako „co jeszcze zostało do zrobienia", a serwis zamienia na
  * błąd dopiero przy próbie przejścia.
  */
-export function evaluateGate(
-  target: AuditLifecycleState,
-  facts: LifecycleGateFacts,
-): GateResult {
+export function evaluateGate(target: AuditLifecycleState, facts: LifecycleGateFacts): GateResult {
   const blockers: string[] = [];
 
   switch (target) {
@@ -146,16 +140,14 @@ export function evaluateGate(
 
     case 'management_response':
       if (facts.unreviewedFindings > 0) {
-        blockers.push(
-          `${facts.unreviewedFindings} ustaleń nie przeszło jeszcze przeglądu`,
-        );
+        blockers.push(`${facts.unreviewedFindings} ustaleń nie przeszło jeszcze przeglądu`);
       }
       break;
 
     case 'approval':
       if (facts.findingsWithoutResponse > 0) {
         blockers.push(
-          `${facts.findingsWithoutResponse} ustaleń nie ma odpowiedzi właściciela obszaru`,
+          `${facts.findingsWithoutResponse} ustaleń nie ma odpowiedzi właściciela obszaru`
         );
       }
       break;
@@ -163,7 +155,7 @@ export function evaluateGate(
     case 'remediation':
       if (facts.findingsWithoutApprovedAction > 0) {
         blockers.push(
-          `${facts.findingsWithoutApprovedAction} niezgodności nie ma zatwierdzonego działania korygującego`,
+          `${facts.findingsWithoutApprovedAction} niezgodności nie ma zatwierdzonego działania korygującego`
         );
       }
       break;
@@ -175,7 +167,7 @@ export function evaluateGate(
     case 'closure':
       if (facts.actionsWithoutEffectivenessVerification > 0) {
         blockers.push(
-          `${facts.actionsWithoutEffectivenessVerification} działań nie ma weryfikacji skuteczności`,
+          `${facts.actionsWithoutEffectivenessVerification} działań nie ma weryfikacji skuteczności`
         );
       }
       break;
@@ -183,7 +175,7 @@ export function evaluateGate(
     case 'closed':
       if (facts.unresolvedFindings > 0) {
         blockers.push(
-          `${facts.unresolvedFindings} ustaleń pozostaje nierozstrzygniętych — zamknij je lub jawnie zaakceptuj ryzyko rezydualne`,
+          `${facts.unresolvedFindings} ustaleń pozostaje nierozstrzygniętych — zamknij je lub jawnie zaakceptuj ryzyko rezydualne`
         );
       }
       break;
@@ -199,7 +191,7 @@ export function assertGate(target: AuditLifecycleState, facts: LifecycleGateFact
   const result = evaluateGate(target, facts);
   if (!result.ok) {
     throw new AuditStateError(
-      `Nie można przejść do etapu „${target}": ${result.blockers.join('; ')}`,
+      `Nie można przejść do etapu „${target}": ${result.blockers.join('; ')}`
     );
   }
 }

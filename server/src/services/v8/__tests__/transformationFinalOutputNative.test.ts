@@ -19,9 +19,7 @@ const facts: TransformationFinalOutputFacts = {
   mandate: 'Skrócić czas akceptacji.',
   lifecycleStage: 'final_outputs',
   ideas: [{ title: 'Skrócić kolejkę', body: 'Hipoteza automatyzacji przekazań' }],
-  interviewInsights: [
-    { title: 'Wąskie gardło', content: 'Ręczne przekazanie wydłuża akceptację' },
-  ],
+  interviewInsights: [{ title: 'Wąskie gardło', content: 'Ręczne przekazanie wydłuża akceptację' }],
   drd: {
     name: 'DRD czasu akceptacji',
     status: 'APPROVED',

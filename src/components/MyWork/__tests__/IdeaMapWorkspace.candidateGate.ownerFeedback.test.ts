@@ -17,10 +17,7 @@ import { describe, expect, it } from 'vitest';
 // component too large/stateful to mount wholesale in a unit test) — the
 // active (`melsCanvasEnabled`, always-true) render path must no longer gate
 // the candidate fetch or the floating candidate panel to Process Flow only.
-const source = fs.readFileSync(
-  path.resolve(__dirname, '../IdeaMapWorkspace.tsx'),
-  'utf8'
-);
+const source = fs.readFileSync(path.resolve(__dirname, '../IdeaMapWorkspace.tsx'), 'utf8');
 
 describe('MYW-IDEAS-010 candidate→initiative path is no longer tool-gated', () => {
   it('does not gate the candidate-fetch effect to activeTool !== process_flow', () => {
@@ -28,7 +25,9 @@ describe('MYW-IDEAS-010 candidate→initiative path is no longer tool-gated', ()
   });
 
   it('fetches the candidate whenever the idea has a real id, regardless of active tool', () => {
-    expect(source).toContain('useEffect(() => {\n    if (!realId) {\n      setCandidateHandoff(null);');
+    expect(source).toContain(
+      'useEffect(() => {\n    if (!realId) {\n      setCandidateHandoff(null);'
+    );
   });
 
   it('does not gate the floating candidate panel (mels/active render path) to activeTool === process_flow', () => {
@@ -46,6 +45,8 @@ describe('MYW-IDEAS-010 candidate→initiative path is no longer tool-gated', ()
   });
 
   it('shows the candidate panel for any real idea in the active render path', () => {
-    expect(source).toContain('{Boolean(realId) && (\n          <div className="absolute bottom-4 right-4');
+    expect(source).toContain(
+      '{Boolean(realId) && (\n          <div className="absolute bottom-4 right-4'
+    );
   });
 });

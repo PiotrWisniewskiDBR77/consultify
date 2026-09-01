@@ -65,14 +65,10 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
 import {
-  toKpiScorecard,
-  toKpiScorecardItem,
-  toKpiScorecardReviewSnapshot,
   type KpiScorecard,
   type KpiScorecardItem,
   type KpiScorecardItemRow,
@@ -82,6 +78,9 @@ import {
   type KpiScorecardRow,
   type ScorecardSnapshotItemFact,
   type ScorecardStatusCounts,
+  toKpiScorecard,
+  toKpiScorecardItem,
+  toKpiScorecardReviewSnapshot,
 } from './kpiScorecardTypes.js';
 
 /** Same pinned-client-per-call shape as `kpiDeviationRepository.ts`'s
@@ -178,7 +177,11 @@ export interface ListScorecardsParams {
 
 export async function listScorecards(params: ListScorecardsParams): Promise<KpiScorecard[]> {
   const { userId, organizationId, lifecycleStatus, ownerUserId, limit = 100, offset = 0 } = params;
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi_scorecard' });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: 'kpi_scorecard',
+  });
   const values: unknown[] = [...cte.values];
   const filters: string[] = [];
   if (lifecycleStatus) {
@@ -202,7 +205,9 @@ export async function listScorecards(params: ListScorecardsParams): Promise<KpiS
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE sc.organization_id = $1 ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
      ORDER BY sc.updated_at DESC LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`;
-  const rows = await withReadClient((c) => queryRows<KpiScorecardRow>(c, `${cte.sql}\n${baseQuerySql}`, values));
+  const rows = await withReadClient((c) =>
+    queryRows<KpiScorecardRow>(c, `${cte.sql}\n${baseQuerySql}`, values)
+  );
   return rows.map(toKpiScorecard);
 }
 
@@ -218,7 +223,9 @@ export interface ListScorecardItemsParams {
   scorecardId: string;
 }
 
-export async function listScorecardItems(params: ListScorecardItemsParams): Promise<KpiScorecardItem[]> {
+export async function listScorecardItems(
+  params: ListScorecardItemsParams
+): Promise<KpiScorecardItem[]> {
   const { userId, organizationId, scorecardId } = params;
   const baseQuerySql = `
     SELECT si.*,
@@ -234,7 +241,11 @@ export async function listScorecardItems(params: ListScorecardItemsParams): Prom
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
      WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY si.sort_order ASC`;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
   const values = [...wrapped.values, scorecardId];
   const rows = await withReadClient((c) => queryRows<KpiScorecardItemRow>(c, wrapped.sql, values));
   return rows.map(toKpiScorecardItem);
@@ -278,7 +289,11 @@ export async function getScorecardStatusDistribution(
          ORDER BY m.period_end DESC, m.recorded_at DESC LIMIT 1
       ) latest ON true
      WHERE si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND si.organization_id = $1`;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
   const values = [...wrapped.values, scorecardId, asOfTimestamp];
   const rows = await withReadClient((c) =>
     queryRows<{
@@ -331,7 +346,9 @@ export async function getPublishedSnapshot(
     resourceType: 'kpi_scorecard',
   });
   const values = [...wrapped.values, scorecardId];
-  const rows = await withReadClient((c) => queryRows<KpiScorecardReviewSnapshotRow>(c, wrapped.sql, values));
+  const rows = await withReadClient((c) =>
+    queryRows<KpiScorecardReviewSnapshotRow>(c, wrapped.sql, values)
+  );
   const row = rows[0];
   if (!row) return null;
   if (!row.snapshot_payload) return toKpiScorecardReviewSnapshot(row);
@@ -345,7 +362,9 @@ export async function getPublishedSnapshot(
   // separately never to change) is never touched. Shared with
   // `listReviewSnapshots` below via `resolveVisibleKpiIdSet`/
   // `redactSnapshotPayloadForReader` — ONE mechanism, not two.
-  const visibleKpiIds = await withReadClient((c) => resolveVisibleKpiIdSet(c, { userId, organizationId }));
+  const visibleKpiIds = await withReadClient((c) =>
+    resolveVisibleKpiIdSet(c, { userId, organizationId })
+  );
   return toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds));
 }
 
@@ -414,7 +433,9 @@ export async function listReviewSnapshots(
     resourceType: 'kpi_scorecard',
   });
   const values = [...wrapped.values, ...trailingValues];
-  const rows = await withReadClient((c) => queryRows<KpiScorecardReviewSnapshotRow>(c, wrapped.sql, values));
+  const rows = await withReadClient((c) =>
+    queryRows<KpiScorecardReviewSnapshotRow>(c, wrapped.sql, values)
+  );
   if (rows.length === 0) return [];
 
   // Only pay for the extra visibility-CTE round trip when at least one row
@@ -423,6 +444,10 @@ export async function listReviewSnapshots(
   const hasAnyPayload = rows.some((r) => r.snapshot_payload !== null);
   if (!hasAnyPayload) return rows.map(toKpiScorecardReviewSnapshot);
 
-  const visibleKpiIds = await withReadClient((c) => resolveVisibleKpiIdSet(c, { userId, organizationId }));
-  return rows.map((row) => toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds)));
+  const visibleKpiIds = await withReadClient((c) =>
+    resolveVisibleKpiIdSet(c, { userId, organizationId })
+  );
+  return rows.map((row) =>
+    toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds))
+  );
 }

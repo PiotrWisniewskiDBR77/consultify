@@ -22,6 +22,7 @@
  * przewidziany, `FinanceWorkspaceModuleId` linia 309).
  */
 
+import type { BusinessVersionStatus, FinanceRole } from '../../../services/api/financeV2.types';
 import {
   canRenameArtifact,
   ENABLEMENT_ALWAYS,
@@ -29,7 +30,6 @@ import {
   type WorkspaceBarEnablement,
   type WorkspaceBarLifecycleTransition,
 } from '../shared/financeWorkspaceBar.contract';
-import type { BusinessVersionStatus, FinanceRole } from '../../../services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
 // Stan kompletności KPI — jedyny sygnał, którego brakowało w istniejącym
@@ -77,10 +77,18 @@ export function resolveAnalysisPrimaryCta(
     // Kontrola negatywna obowiązkowa (brief): to jest jedyna gałąź dla
     // pustego draftu — nie istnieje ścieżka, którą pusty draft dotrze do
     // 'submit_for_review'/'reopen_or_new_version' z tej funkcji.
-    return { id: 'configure_kpis', labelPl: 'Skonfiguruj wskaźniki', navigatesToKpiSelection: true };
+    return {
+      id: 'configure_kpis',
+      labelPl: 'Skonfiguruj wskaźniki',
+      navigatesToKpiSelection: true,
+    };
   }
   if (status === 'APPROVED' || status === 'SUPERSEDED') {
-    return { id: 'reopen_or_new_version', labelPl: 'Otwórz ponownie', navigatesToKpiSelection: false };
+    return {
+      id: 'reopen_or_new_version',
+      labelPl: 'Otwórz ponownie',
+      navigatesToKpiSelection: false,
+    };
   }
   if (status === 'IN_REVIEW') {
     return { id: 'view_review', labelPl: 'Zobacz w przeglądzie', navigatesToKpiSelection: false };
@@ -92,7 +100,11 @@ export function resolveAnalysisPrimaryCta(
       navigatesToKpiSelection: false,
     };
   }
-  return { id: 'submit_for_review', labelPl: 'Przekaż do przeglądu', navigatesToKpiSelection: false };
+  return {
+    id: 'submit_for_review',
+    labelPl: 'Przekaż do przeglądu',
+    navigatesToKpiSelection: false,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -108,7 +120,9 @@ export type AnalysisApprovalGateResult =
   | { ok: true }
   | { ok: false; code: 'NO_KPIS_SELECTED' | 'NOT_IN_REVIEW'; messagePl: string };
 
-export function canSubmitAnalysisForReview(completeness: AnalysisCompleteness): AnalysisApprovalGateResult {
+export function canSubmitAnalysisForReview(
+  completeness: AnalysisCompleteness
+): AnalysisApprovalGateResult {
   if (isAnalysisEmpty(completeness)) {
     return {
       ok: false,
@@ -158,11 +172,21 @@ export const ANALYSIS_HAS_KPIS_GATE = 'analysis.hasConfiguredKpis';
 export const ANALYSIS_APPROVER_ROLES: readonly FinanceRole[] = ['approver', 'finance_admin'];
 
 function requireKpisGate(): WorkspaceBarEnablement {
-  return { statuses: 'any', roles: 'any', freshness: 'any', requiresGates: [ANALYSIS_HAS_KPIS_GATE] };
+  return {
+    statuses: 'any',
+    roles: 'any',
+    freshness: 'any',
+    requiresGates: [ANALYSIS_HAS_KPIS_GATE],
+  };
 }
 
 function requireKpisAndApproverRole(): WorkspaceBarEnablement {
-  return { statuses: 'any', roles: ANALYSIS_APPROVER_ROLES, freshness: 'any', requiresGates: [ANALYSIS_HAS_KPIS_GATE] };
+  return {
+    statuses: 'any',
+    roles: ANALYSIS_APPROVER_ROLES,
+    freshness: 'any',
+    requiresGates: [ANALYSIS_HAS_KPIS_GATE],
+  };
 }
 
 export function buildAnalysisLifecycleTransitions(
@@ -349,14 +373,22 @@ export function buildAnalysisWorkspaceBarConfig(
   completeness: AnalysisCompleteness
 ): WorkspaceBarConfig {
   const rename = canRenameArtifact(input.status, input.role);
-  const cta = resolveAnalysisPrimaryCta(input.status, completeness, input.freshness === 'STALE_SOURCE' || input.freshness === 'STALE_ASSUMPTIONS');
+  const cta = resolveAnalysisPrimaryCta(
+    input.status,
+    completeness,
+    input.freshness === 'STALE_SOURCE' || input.freshness === 'STALE_ASSUMPTIONS'
+  );
   const transitions = buildAnalysisLifecycleTransitions(input.status, completeness, input.role);
 
   return {
     moduleId: 'analysis',
     artifactType: 'HISTORICAL_ANALYSIS',
     identity: {
-      artifactRef: { artifactType: 'HISTORICAL_ANALYSIS', businessVersionId: input.businessVersionId, artifactId: input.artifactId },
+      artifactRef: {
+        artifactType: 'HISTORICAL_ANALYSIS',
+        businessVersionId: input.businessVersionId,
+        artifactId: input.artifactId,
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
       name: {
         value: input.name,
@@ -406,10 +438,38 @@ export function buildAnalysisWorkspaceBarConfig(
         label: { key: 'more', pl: 'Więcej' },
         enablement: ENABLEMENT_ALWAYS,
         items: [
-          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.export', label: { key: 'export', pl: 'Eksportuj' }, group: 'report', enablement: requireKpisGate(), destructive: false, requiresConfirmation: false },
-          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
+          {
+            id: 'more.duplicate',
+            label: { key: 'duplicate', pl: 'Duplikuj' },
+            group: 'document',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: false,
+            requiresConfirmation: false,
+          },
+          {
+            id: 'more.export',
+            label: { key: 'export', pl: 'Eksportuj' },
+            group: 'report',
+            enablement: requireKpisGate(),
+            destructive: false,
+            requiresConfirmation: false,
+          },
+          {
+            id: 'more.history',
+            label: { key: 'history', pl: 'Historia wersji' },
+            group: 'navigation',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: false,
+            requiresConfirmation: false,
+          },
+          {
+            id: 'more.archive',
+            label: { key: 'archive', pl: 'Archiwizuj' },
+            group: 'danger',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: true,
+            requiresConfirmation: true,
+          },
         ],
       },
       fullscreen: {

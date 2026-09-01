@@ -45,8 +45,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { EmptyState, LoadingState } from '@/components/shared/states';
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardPreview,
@@ -93,9 +93,9 @@ import { formatListDate } from '@/utils/listDateFormat';
 // mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
 import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
 import {
-  resolveFinanceWorkspace,
   type FinanceResolveErrorReason,
   type FinanceResolveInput,
+  resolveFinanceWorkspace,
 } from '../Finance/shared/financeWorkspaceResolver';
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
@@ -124,14 +124,13 @@ import {
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
-import { isFinanceOwnerSampleDataEnabled } from './financeOwnerSampleData';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
-import { FinanceValuePanelsSurface } from './FinanceValuePanelsSurface';
-import { FinanceSampleDataBanner } from './FinanceSampleDataBanner';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
+import { isFinanceOwnerSampleDataEnabled } from './financeOwnerSampleData';
 import { useFinancePreview } from './FinancePreviewPanel';
+import { FinanceSampleDataBanner } from './FinanceSampleDataBanner';
 import {
   type FinanceAnalysisRow,
   type FinanceKind,
@@ -146,6 +145,7 @@ import {
   statusToItemStatus,
   statusToProgress,
 } from './financeTypes';
+import { FinanceValuePanelsSurface } from './FinanceValuePanelsSurface';
 import { useFinanceData } from './hooks/useFinanceData';
 import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';

@@ -54,7 +54,10 @@ const CONTENT_JSON = {
   type: 'doc',
   content: [
     heading(1, 'Warsztat 3: migracja danych'),
-    { type: 'paragraph', content: [{ type: 'text', text: 'Ustalenia z sesji z zespołem klienta.' }] },
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: 'Ustalenia z sesji z zespołem klienta.' }],
+    },
     heading(2, 'Ustalenia'),
     heading(3, 'Klucz klienta (MDM)'),
     heading(3, 'Dane historyczne sprzed 2024'),

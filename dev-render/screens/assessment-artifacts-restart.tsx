@@ -233,14 +233,16 @@ function AutoDriver(): React.ReactElement {
 
       if (wantedSelect) {
         await new Promise((r) => setTimeout(r, 200));
-        const firstRow = rootRef.current.querySelector<HTMLElement>('[data-row-id], tbody tr, [role="row"]');
+        const firstRow = rootRef.current.querySelector<HTMLElement>(
+          '[data-row-id], tbody tr, [role="row"]'
+        );
         firstRow?.click();
         await new Promise((r) => setTimeout(r, 250));
       }
 
       if (wantedLineage) {
-        const lineageBtn = [...rootRef.current.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
-          /view lineage/i.test(b.textContent || '')
+        const lineageBtn = [...rootRef.current.querySelectorAll<HTMLButtonElement>('button')].find(
+          (b) => /view lineage/i.test(b.textContent || '')
         );
         lineageBtn?.click();
       }

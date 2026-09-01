@@ -133,10 +133,7 @@ const InspectorSection: React.FC<{
 };
 
 /** Quiet field row: 104px muted label + value/control. No box, no default border. */
-const FieldRow: React.FC<{ label: string; children: React.ReactNode }> = ({
-  label,
-  children,
-}) => (
+const FieldRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="flex items-start gap-3 py-1">
     <span className="w-[104px] shrink-0 pt-px text-xs leading-relaxed text-c-text-muted">
       {label}
@@ -235,10 +232,14 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       case 'attachment':
         return t('myWork.ideaInspector.activity.addedAttachment', 'dodał(a) załącznik');
       case 'status_change':
-        return t('myWork.ideaInspector.activity.changedStatus', 'zmienił(a) stan: {{oldValue}} → {{newValue}}', {
-          oldValue: item.oldValue,
-          newValue: item.newValue,
-        });
+        return t(
+          'myWork.ideaInspector.activity.changedStatus',
+          'zmienił(a) stan: {{oldValue}} → {{newValue}}',
+          {
+            oldValue: item.oldValue,
+            newValue: item.newValue,
+          }
+        );
       case 'ai_suggestion':
         return t('myWork.ideaInspector.activity.aiSuggested', 'AI zasugerowało');
       default:
@@ -569,22 +570,20 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
                 {t('myWork.ideaInspector.noActivity', 'Brak aktywności')}
               </p>
             ) : (
-              [...(activity ?? [])]
-                .reverse()
-                .map((item) => (
-                  <div key={item.id} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-c-border-strong" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[12.5px] leading-relaxed text-c-text-secondary">
-                        <strong className="font-semibold text-c-text">{item.author}</strong>{' '}
-                        {activityLabel(item)}
-                      </p>
-                      <span className="text-[10.5px] text-c-text-muted">
-                        {formatActivityTime(item.createdAt)}
-                      </span>
-                    </div>
+              [...(activity ?? [])].reverse().map((item) => (
+                <div key={item.id} className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-c-border-strong" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] leading-relaxed text-c-text-secondary">
+                      <strong className="font-semibold text-c-text">{item.author}</strong>{' '}
+                      {activityLabel(item)}
+                    </p>
+                    <span className="text-[10.5px] text-c-text-muted">
+                      {formatActivityTime(item.createdAt)}
+                    </span>
                   </div>
-                ))
+                </div>
+              ))
             )}
           </div>
 

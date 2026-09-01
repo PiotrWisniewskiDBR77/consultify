@@ -20,8 +20,8 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/states';
 
-import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import { ResultsOkrHub } from './okr/ResultsOkrHub';
+import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 
 export const ResultsOkrRegistryPage: React.FC = () => {
   const { i18n } = useTranslation();
@@ -31,7 +31,10 @@ export const ResultsOkrRegistryPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-okr-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-okr-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}

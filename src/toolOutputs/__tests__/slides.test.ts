@@ -17,12 +17,36 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
     title: 'SWOT — wejście na rynek DACH',
     status: 'draft',
     items: [
-      { id: 'i1', label: 'Silny zespół wdrożeniowy', bucket: 'strengths', evidenceKind: 'fact', impact: 'high' },
-      { id: 'i2', label: 'Rosnący popyt w DACH', bucket: 'opportunities', evidenceKind: 'observation', impact: 'medium' },
+      {
+        id: 'i1',
+        label: 'Silny zespół wdrożeniowy',
+        bucket: 'strengths',
+        evidenceKind: 'fact',
+        impact: 'high',
+      },
+      {
+        id: 'i2',
+        label: 'Rosnący popyt w DACH',
+        bucket: 'opportunities',
+        evidenceKind: 'observation',
+        impact: 'medium',
+      },
     ],
     tensions: [
-      { id: 't1', posture: 'attack', title: 'Zespół × popyt', sourceItemIds: ['i1', 'i2'], priority: 5 },
-      { id: 't2', posture: 'defend', title: 'Zespół × presja cenowa', sourceItemIds: ['i1', 'i2'], priority: 3 },
+      {
+        id: 't1',
+        posture: 'attack',
+        title: 'Zespół × popyt',
+        sourceItemIds: ['i1', 'i2'],
+        priority: 5,
+      },
+      {
+        id: 't2',
+        posture: 'defend',
+        title: 'Zespół × presja cenowa',
+        sourceItemIds: ['i1', 'i2'],
+        priority: 3,
+      },
     ],
     conclusions: [
       {
@@ -31,7 +55,11 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
         k2Meaning: 'Przewaga wdrożeniowa jest niewykorzystana, a okno rynkowe się zamyka.',
         k3Actions: ['Uruchomić pilota w DACH', 'Zatrudnić dwóch wdrożeniowców'],
         k4Effect: 'Pierwszy klient referencyjny w 6 miesięcy.',
-        tradeoff: { chosen: 'Pilot w DACH', rejected: 'Rozwój produktu', why: 'Okno rynkowe zamyka się szybciej niż dług produktowy rośnie.' },
+        tradeoff: {
+          chosen: 'Pilot w DACH',
+          rejected: 'Rozwój produktu',
+          why: 'Okno rynkowe zamyka się szybciej niż dług produktowy rośnie.',
+        },
         sourceTensionIds: ['t1'],
       },
       {
@@ -40,7 +68,11 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
         k2Meaning: 'Ekspozycja na presję cenową rośnie razem z długością wdrożenia.',
         k3Actions: ['Zmierzyć czas pięciu ostatnich wdrożeń'],
         k4Effect: 'Skrócenie ścieżki wdrożenia o 30% w dwa kwartały.',
-        tradeoff: { chosen: 'Standaryzacja wdrożenia', rejected: 'Nowe funkcje produktu', why: 'Ryzyko cenowe jest pilniejsze niż roadmapa.' },
+        tradeoff: {
+          chosen: 'Standaryzacja wdrożenia',
+          rejected: 'Nowe funkcje produktu',
+          why: 'Ryzyko cenowe jest pilniejsze niż roadmapa.',
+        },
         sourceTensionIds: ['t2'],
       },
     ],
@@ -76,7 +108,11 @@ describe('deriveSlides — determinizm', () => {
 describe('deriveSlides — mapowanie sekcja → slajd', () => {
   it('każda sekcja daje ciąg slajdów ze swoim sectionId, w kolejności sekcji', () => {
     const a = approvedOutput();
-    const b = approve(submitForReview(makeOutput({ id: 'out-9', title: 'Drugi output' })), 'user-1', 'now');
+    const b = approve(
+      submitForReview(makeOutput({ id: 'out-9', title: 'Drugi output' })),
+      'user-1',
+      'now'
+    );
     const doc = renderToolReport([a, b], { ...baseOpts, kind: 'report' });
 
     const slides = deriveSlides(doc);
@@ -160,7 +196,12 @@ describe('deriveSlides — treść: nic nie jest wymyślone ani zgubione', () =>
       'user-1',
       'now'
     );
-    const doc = renderToolReport([emptyOut], { id: 'rep-empty', organizationId: 'org-1', title: 'X', kind: 'report' });
+    const doc = renderToolReport([emptyOut], {
+      id: 'rep-empty',
+      organizationId: 'org-1',
+      title: 'X',
+      kind: 'report',
+    });
     const slides = deriveSlides(doc);
     // signature-visual is always pushed by renderReport regardless of items —
     // so this section still has a lead block. Assert nothing is silently dropped instead.
@@ -174,7 +215,12 @@ describe('deriveSlides — Presentation vs Report: NIE zmienia znaczenia', () =>
   it('konkluzje w slajdach prezentacji są bajt-identyczne z konkluzjami w slajdach raportu', () => {
     const out = approvedOutput();
     const reportDoc = renderToolReport([out], { ...baseOpts, kind: 'report' });
-    const deckDoc = renderToolReport([out], { id: 'deck-1', organizationId: 'org-1', title: 'Deck', kind: 'presentation' });
+    const deckDoc = renderToolReport([out], {
+      id: 'deck-1',
+      organizationId: 'org-1',
+      title: 'Deck',
+      kind: 'presentation',
+    });
 
     const reportConclusions = deriveSlides(reportDoc)
       .flatMap((s) => s.blocks)
@@ -196,7 +242,12 @@ describe('deriveSlides — Presentation vs Report: NIE zmienia znaczenia', () =>
   it('prezentacja pomija evidence-list jako osobny slajd (skrót gęstości), raport go ma', () => {
     const out = approvedOutput();
     const reportDoc = renderToolReport([out], { ...baseOpts, kind: 'report' });
-    const deckDoc = renderToolReport([out], { id: 'deck-2', organizationId: 'org-1', title: 'Deck', kind: 'presentation' });
+    const deckDoc = renderToolReport([out], {
+      id: 'deck-2',
+      organizationId: 'org-1',
+      title: 'Deck',
+      kind: 'presentation',
+    });
 
     const hasEvidenceSlide = (doc: ToolReportDocument) =>
       deriveSlides(doc).some((s) => s.blocks.some((b) => b.kind === 'evidence-list'));

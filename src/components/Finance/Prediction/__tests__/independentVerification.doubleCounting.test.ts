@@ -18,7 +18,9 @@ import {
   type DraftInitiative,
 } from '../predictionScenarioModel';
 
-function makeInitiative(overrides: Partial<DraftInitiative> & Pick<DraftInitiative, 'id' | 'initiativeCode' | 'name'>): DraftInitiative {
+function makeInitiative(
+  overrides: Partial<DraftInitiative> & Pick<DraftInitiative, 'id' | 'initiativeCode' | 'name'>
+): DraftInitiative {
   return {
     description: null,
     source: null,
@@ -33,7 +35,9 @@ function makeInitiative(overrides: Partial<DraftInitiative> & Pick<DraftInitiati
   };
 }
 
-function makeImpact(overrides: Partial<DraftImpact> & Pick<DraftImpact, 'id' | 'initiativeId' | 'amountDecimal'>): DraftImpact {
+function makeImpact(
+  overrides: Partial<DraftImpact> & Pick<DraftImpact, 'id' | 'initiativeId' | 'amountDecimal'>
+): DraftImpact {
   return {
     assumptionLabel: 'test',
     driverScheduleType: null,
@@ -58,17 +62,36 @@ function makeImpact(overrides: Partial<DraftImpact> & Pick<DraftImpact, 'id' | '
 
 describe('NIEZALEŻNA WERYFIKACJA — double counting: dwie inicjatywy, ta sama linia kosztowa', () => {
   it('★ dwie NIEPOWIĄZANE inicjatywy uderzające w COGS tej samej jednostki/okresu SĄ wykryte jako nakładanie, nie sumowane po cichu', () => {
-    const draft = createEmptyScenarioDraft({ name: 'Weryfikacja double counting', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
+    const draft = createEmptyScenarioDraft({
+      name: 'Weryfikacja double counting',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
 
-    const initiativeA = makeInitiative({ id: 'init-warehouse-lean', initiativeCode: 'INIT-01', name: 'Redukcja kosztów magazynu (lean)' });
-    const initiativeB = makeInitiative({ id: 'init-procurement-auto', initiativeCode: 'INIT-02', name: 'Program automatyzacji zakupów' });
+    const initiativeA = makeInitiative({
+      id: 'init-warehouse-lean',
+      initiativeCode: 'INIT-01',
+      name: 'Redukcja kosztów magazynu (lean)',
+    });
+    const initiativeB = makeInitiative({
+      id: 'init-procurement-auto',
+      initiativeCode: 'INIT-02',
+      name: 'Program automatyzacji zakupów',
+    });
     draft.initiatives.push(initiativeA, initiativeB);
 
     // Obie inicjatywy niezależnie obniżają COGS tej samej jednostki w tym samym kwartale — realny
     // scenariusz "dwa zespoły policzyły ten sam efekt dwa razy", to jest dokładnie to, co
     // finance_prediction_detect_overlaps() na serwerze (i jej klientowy podgląd tutaj) ma łapać.
-    const impactA = makeImpact({ id: 'impact-a', initiativeId: 'init-warehouse-lean', amountDecimal: 150000 });
-    const impactB = makeImpact({ id: 'impact-b', initiativeId: 'init-procurement-auto', amountDecimal: 90000 });
+    const impactA = makeImpact({
+      id: 'impact-a',
+      initiativeId: 'init-warehouse-lean',
+      amountDecimal: 150000,
+    });
+    const impactB = makeImpact({
+      id: 'impact-b',
+      initiativeId: 'init-procurement-auto',
+      amountDecimal: 90000,
+    });
     draft.impacts.push(impactA, impactB);
 
     const findings = detectClientSideOverlaps(draft);
@@ -89,23 +112,49 @@ describe('NIEZALEŻNA WERYFIKACJA — double counting: dwie inicjatywy, ta sama 
   });
 
   it('KONTROLA NEGATYWNA: dwie inicjatywy na RÓŻNYCH liniach kosztowych tej samej jednostki/okresu NIE są flagowane', () => {
-    const draft = createEmptyScenarioDraft({ name: 'Kontrola negatywna — różne linie', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
+    const draft = createEmptyScenarioDraft({
+      name: 'Kontrola negatywna — różne linie',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
     draft.initiatives.push(
       makeInitiative({ id: 'init-a', initiativeCode: 'INIT-A', name: 'A' }),
       makeInitiative({ id: 'init-b', initiativeCode: 'INIT-B', name: 'B' })
     );
     draft.impacts.push(
-      makeImpact({ id: 'impact-a', initiativeId: 'init-a', amountDecimal: 100, statementLineCode: 'COGS' }),
-      makeImpact({ id: 'impact-b', initiativeId: 'init-b', amountDecimal: 100, statementLineCode: 'OPEX' })
+      makeImpact({
+        id: 'impact-a',
+        initiativeId: 'init-a',
+        amountDecimal: 100,
+        statementLineCode: 'COGS',
+      }),
+      makeImpact({
+        id: 'impact-b',
+        initiativeId: 'init-b',
+        amountDecimal: 100,
+        statementLineCode: 'OPEX',
+      })
     );
     expect(detectClientSideOverlaps(draft)).toHaveLength(0);
   });
 
   it('KONTROLA NEGATYWNA: dwie inicjatywy na tej samej linii ale RÓŻNYCH okresach (start periods) NIE są flagowane', () => {
-    const draft = createEmptyScenarioDraft({ name: 'Kontrola negatywna — różne okresy', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
+    const draft = createEmptyScenarioDraft({
+      name: 'Kontrola negatywna — różne okresy',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
     draft.initiatives.push(
-      makeInitiative({ id: 'init-a', initiativeCode: 'INIT-A', name: 'A', defaultStartPeriodId: '2026-Q1' }),
-      makeInitiative({ id: 'init-b', initiativeCode: 'INIT-B', name: 'B', defaultStartPeriodId: '2026-Q3' })
+      makeInitiative({
+        id: 'init-a',
+        initiativeCode: 'INIT-A',
+        name: 'A',
+        defaultStartPeriodId: '2026-Q1',
+      }),
+      makeInitiative({
+        id: 'init-b',
+        initiativeCode: 'INIT-B',
+        name: 'B',
+        defaultStartPeriodId: '2026-Q3',
+      })
     );
     draft.impacts.push(
       makeImpact({ id: 'impact-a', initiativeId: 'init-a', amountDecimal: 100 }),
@@ -115,7 +164,10 @@ describe('NIEZALEŻNA WERYFIKACJA — double counting: dwie inicjatywy, ta sama 
   });
 
   it('★ trzecia niezależna inicjatywa na TĘ SAMĄ linię/okres podnosi sourceCount do 3 (nie tworzy drugiego findingu ani nie gubi żadnego źródła)', () => {
-    const draft = createEmptyScenarioDraft({ name: 'Trzy źródła', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
+    const draft = createEmptyScenarioDraft({
+      name: 'Trzy źródła',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
     draft.initiatives.push(
       makeInitiative({ id: 'init-a', initiativeCode: 'A', name: 'A' }),
       makeInitiative({ id: 'init-b', initiativeCode: 'B', name: 'B' }),
@@ -129,6 +181,10 @@ describe('NIEZALEŻNA WERYFIKACJA — double counting: dwie inicjatywy, ta sama 
     const findings = detectClientSideOverlaps(draft);
     expect(findings).toHaveLength(1);
     expect(findings[0].sourceCount).toBe(3);
-    expect(findings[0].sources.map((s) => s.sourceId).sort()).toEqual(['impact-a', 'impact-b', 'impact-c']);
+    expect(findings[0].sources.map((s) => s.sourceId).sort()).toEqual([
+      'impact-a',
+      'impact-b',
+      'impact-c',
+    ]);
   });
 });

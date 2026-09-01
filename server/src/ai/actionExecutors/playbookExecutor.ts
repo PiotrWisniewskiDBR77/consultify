@@ -41,7 +41,12 @@ export const PlaybookExecutor = {
     metadata: Record<string, unknown> = {}
   ): Promise<ExecutionResult> {
     const playbookId = payload.playbook_id || `playbook-${Date.now()}`;
-    await assertLegacyNoncanonicalExecution({ entrypoint: 'playbook_executor', organizationId: String(metadata.organizationId ?? ''), entityId: playbookId, payloads: [payload, metadata] });
+    await assertLegacyNoncanonicalExecution({
+      entrypoint: 'playbook_executor',
+      organizationId: String(metadata.organizationId ?? ''),
+      entityId: playbookId,
+      payloads: [payload, metadata],
+    });
     const steps = (payload.steps || []) as PlaybookStep[];
     const context = { ...(payload.context || {}), projectId: payload.project_id };
 

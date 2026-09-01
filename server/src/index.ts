@@ -8,12 +8,13 @@
 
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
-import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
-import type { SqlMigrationStatus } from './startup/databaseReadiness.js';
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
+import type { SqlMigrationStatus } from './startup/databaseReadiness.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

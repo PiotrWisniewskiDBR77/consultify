@@ -47,7 +47,9 @@ vi.mock('../../workspaceApi', async () => {
 });
 
 vi.mock('../../../auditsMethodApi', async () => {
-  const actual = await vi.importActual<typeof import('../../../auditsMethodApi')>('../../../auditsMethodApi');
+  const actual = await vi.importActual<typeof import('../../../auditsMethodApi')>(
+    '../../../auditsMethodApi'
+  );
   return {
     ...actual,
     getProgram: vi.fn(),
@@ -60,13 +62,20 @@ vi.mock('../../../auditsMethodApi', async () => {
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 vi.mock('react-hot-toast', () => ({
-  default: { success: (...args: unknown[]) => mockToastSuccess(...args), error: (...args: unknown[]) => mockToastError(...args) },
+  default: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
-import { CriterionWorkspaceV2 } from '../CriterionWorkspaceV2';
 import * as auditsMethodApi from '../../../auditsMethodApi';
+import type {
+  CriterionDetail,
+  WorkspaceCriterion,
+  WorkspaceProgramMember,
+} from '../../workspaceApi';
 import * as workspaceApi from '../../workspaceApi';
-import type { CriterionDetail, WorkspaceCriterion, WorkspaceProgramMember } from '../../workspaceApi';
+import { CriterionWorkspaceV2 } from '../CriterionWorkspaceV2';
 
 const mockedGetCriterion = vi.mocked(workspaceApi.getCriterion);
 const mockedGetProgramMembers = vi.mocked(workspaceApi.getProgramMembers);
@@ -118,7 +127,10 @@ function baseDetail(overrides: Partial<WorkspaceCriterion> = {}): CriterionDetai
   return { criterion: baseCriterion(overrides), evidence: [], evidenceRequests: [], findings: [] };
 }
 
-function membersWithRole(userId: string, memberRole: WorkspaceProgramMember['memberRole']): WorkspaceProgramMember[] {
+function membersWithRole(
+  userId: string,
+  memberRole: WorkspaceProgramMember['memberRole']
+): WorkspaceProgramMember[] {
   return [{ userId, name: 'Piotr Wiśniewski', memberRole }];
 }
 
@@ -126,7 +138,10 @@ function renderV2() {
   return render(
     <MemoryRouter initialEntries={['/audit-programs/prog-1/criteria/crit-1']}>
       <Routes>
-        <Route path="/audit-programs/:programId/criteria/:criterionId" element={<CriterionWorkspaceV2 />} />
+        <Route
+          path="/audit-programs/:programId/criteria/:criterionId"
+          element={<CriterionWorkspaceV2 />}
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -229,7 +244,10 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
     const originalClipboard = navigator.clipboard;
 
     afterEach(() => {
-      Object.defineProperty(navigator, 'clipboard', { value: originalClipboard, configurable: true });
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
     });
 
     it('flag OFF (localStorage override): no toast on success (pre-flip behavior still reachable)', async () => {
@@ -298,8 +316,12 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'auditee'));
       renderV2();
       await waitFor(() => expect(mockedGetCriterion).toHaveBeenCalled());
-      expect(await screen.findByText('możesz odpowiadać jako strona audytowana')).toBeInTheDocument();
-      expect(screen.getByText('nie możesz odpowiadać w imieniu strony audytowanej')).toBeInTheDocument();
+      expect(
+        await screen.findByText('możesz odpowiadać jako strona audytowana')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('nie możesz odpowiadać w imieniu strony audytowanej')
+      ).toBeInTheDocument();
     });
 
     it('flag ON: a real auditee no longer sees the contradictory "you cannot respond" row', async () => {
@@ -308,8 +330,12 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'auditee'));
       renderV2();
       await waitFor(() => expect(mockedGetCriterion).toHaveBeenCalled());
-      expect(await screen.findByText('możesz odpowiadać jako strona audytowana')).toBeInTheDocument();
-      expect(screen.queryByText('nie możesz odpowiadać w imieniu strony audytowanej')).not.toBeInTheDocument();
+      expect(
+        await screen.findByText('możesz odpowiadać jako strona audytowana')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('nie możesz odpowiadać w imieniu strony audytowanej')
+      ).not.toBeInTheDocument();
       // auditee has no verification.perform capability either — the
       // "cannot verify your own action" caveat is irrelevant noise for them.
       expect(
@@ -323,8 +349,12 @@ describe('CriterionWorkspaceV2 — expert panel gap pack point fixes (ff_auditsS
       mockedGetProgramMembers.mockResolvedValue(membersWithRole('user-1', 'lead_auditor'));
       renderV2();
       await waitFor(() => expect(mockedGetCriterion).toHaveBeenCalled());
-      expect(await screen.findByText('nie możesz odpowiadać w imieniu strony audytowanej')).toBeInTheDocument();
-      expect(screen.getByText('nie możesz zweryfikować skuteczności własnego działania korygującego')).toBeInTheDocument();
+      expect(
+        await screen.findByText('nie możesz odpowiadać w imieniu strony audytowanej')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('nie możesz zweryfikować skuteczności własnego działania korygującego')
+      ).toBeInTheDocument();
     });
   });
 });

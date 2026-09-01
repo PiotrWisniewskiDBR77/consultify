@@ -22,15 +22,19 @@ export const decisionPendingStaleRule: SignalRule = {
           AND created_at < ?`,
       [ctx.organizationId, new Date(ctx.now.getTime() - 432_000_000).toISOString()]
     );
-    return rows.map((row) => ({
-      subjectId: row.id,
-      projectId: row.project_id,
-      observedValue: Math.floor(
+    return rows.map((row) => {
+      const observedValue = Math.floor(
         (ctx.now.getTime() - new Date(row.created_at).getTime()) / 86_400_000
-      ),
-      observedAt: ctx.now.toISOString(),
-      data: {},
-    }));
+      );
+      return {
+        subjectId: row.id,
+        projectId: row.project_id,
+        observedValue,
+        observedAt: ctx.now.toISOString(),
+        data: {},
+        bodyParams: { value: observedValue },
+      };
+    });
   },
   dedupeKey: (hit) => `dec.pending_stale:${hit.subjectId}`,
   evidence: (hit) => [

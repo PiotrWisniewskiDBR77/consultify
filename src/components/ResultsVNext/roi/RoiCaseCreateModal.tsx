@@ -42,8 +42,8 @@
 import { AlertTriangle, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type { RoiCaseGranularity } from './roiApi';
 
@@ -101,7 +101,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -176,7 +177,15 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
 
   const handleSubmit = () => {
     setTouched(true);
-    if (!initiativeId || !title.trim() || !currentUserId || !currency || !analysisStart || !analysisEnd) return;
+    if (
+      !initiativeId ||
+      !title.trim() ||
+      !currentUserId ||
+      !currency ||
+      !analysisStart ||
+      !analysisEnd
+    )
+      return;
     onSubmit({
       initiativeId,
       title: title.trim(),
@@ -216,7 +225,15 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Plus size={16} />
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Utwórz sprawę' : 'Create case'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Utwórz sprawę'
+                  : 'Create case'}
+            </span>
           </button>
         </>
       }
@@ -279,7 +296,9 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={isPolish ? 'np. Automatyzacja linii pakowania' : 'e.g. Packaging line automation'}
+            placeholder={
+              isPolish ? 'np. Automatyzacja linii pakowania' : 'e.g. Packaging line automation'
+            }
             className={FIELD_CLASS}
             data-testid="roi-create-title"
             aria-invalid={titleError || undefined}
@@ -383,7 +402,9 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
             id="roi-create-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={isPolish ? 'Kontekst utworzenia sprawy…' : 'Context for creating this case…'}
+            placeholder={
+              isPolish ? 'Kontekst utworzenia sprawy…' : 'Context for creating this case…'
+            }
             className={TEXTAREA_CLASS}
             data-testid="roi-create-reason"
           />

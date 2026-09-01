@@ -49,20 +49,20 @@ import {
   deriveRunOrForecastNpv,
   forecastVersionIrrReason,
   forecastVersionNpvReason,
+  ROI_DATA_QUALITY_TONE,
+  ROI_FINANCE_RECONCILIATION_STATUS_TONE,
+  ROI_VARIANCE_STATUS_TONE,
   roiActualEntryTypeLabel,
   roiCompareMetricLabel,
   roiDataQualityStatusLabel,
-  ROI_DATA_QUALITY_TONE,
   roiEvidenceLinkPurposeLabel,
   roiFinanceReconciliationStatusLabel,
-  ROI_FINANCE_RECONCILIATION_STATUS_TONE,
   roiPirOutcomeLabel,
   roiPirStatusLabel,
   roiScenarioOverrideTargetTypeLabel,
   roiScenarioTypeLabel,
   roiVarianceComparisonTypeLabel,
   roiVarianceStatusLabel,
-  ROI_VARIANCE_STATUS_TONE,
 } from './roiCaseFullToolMappers';
 import {
   formatRoiCurrency,
@@ -1327,14 +1327,22 @@ export function buildRoiActualSnapshotPreview(
           id: 'npv',
           label: isPolish ? 'Rzeczywiste NPV' : 'Actual NPV',
           value: (
-            <HonestValueCell isPolish={isPolish} value={s.actualNpv} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell
+              isPolish={isPolish}
+              value={s.actualNpv}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
           ),
         },
         {
           id: 'coverage',
           label: isPolish ? 'Pokrycie okresów' : 'Period coverage',
           value: (
-            <HonestValueCell isPolish={isPolish} value={s.coveragePct} format={(v) => formatRoiPercent(v, isPolish)} />
+            <HonestValueCell
+              isPolish={isPolish}
+              value={s.coveragePct}
+              format={(v) => formatRoiPercent(v, isPolish)}
+            />
           ),
         },
         {
@@ -2050,14 +2058,22 @@ export function buildRoiFinanceReconciliationPreview(
           id: 'roiValue',
           label: isPolish ? 'Wartość ROI' : 'ROI value',
           value: (
-            <HonestValueCell isPolish={isPolish} value={r.roiValue} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell
+              isPolish={isPolish}
+              value={r.roiValue}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
           ),
         },
         {
           id: 'financeValue',
           label: isPolish ? 'Wartość Finance' : 'Finance value',
           value: (
-            <HonestValueCell isPolish={isPolish} value={r.financeValue} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell
+              isPolish={isPolish}
+              value={r.financeValue}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
           ),
         },
         {

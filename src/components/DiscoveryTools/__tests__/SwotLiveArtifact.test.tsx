@@ -217,7 +217,9 @@ describe('SwotLiveArtifact — conflict highlighting', () => {
     expect(model.tensions[0].conflict).toBe(false);
 
     render(<SwotLiveArtifact items={items} />);
-    expect(screen.queryByTestId(`swot-conflict-badge-${model.tensions[0].id}`)).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId(`swot-conflict-badge-${model.tensions[0].id}`)
+    ).not.toBeInTheDocument();
   });
 });
 

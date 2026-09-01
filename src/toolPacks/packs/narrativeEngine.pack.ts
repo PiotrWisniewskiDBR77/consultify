@@ -31,7 +31,8 @@ export const narrativeEnginePack: ToolPack = {
     { source: 'src/store/useToolStore.ts (NARRATIVE_ENGINE_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Piramida Minto (SCQA, MECE) — Barbara Minto, "The Pyramid Principle" — brak noty licencyjnej w repo',
+      source:
+        'Piramida Minto (SCQA, MECE) — Barbara Minto, "The Pyramid Principle" — brak noty licencyjnej w repo',
       verifiableInRepo: false,
       note: 'Metoda jest własnością intelektualną Minto/McKinsey & Co.; brak potwierdzonego źródła licencyjnego w repo (L10).',
     },
@@ -60,7 +61,7 @@ export const narrativeEnginePack: ToolPack = {
     },
     inputsRequired: {
       pl: 'Audytorium, kluczowe fakty/dowody, wersja robocza tezy głównej oraz osoba znająca kontekst sytuacyjny odbiorcy.',
-      en: 'The audience, key facts/evidence, a draft governing thought, and someone who knows the recipient\'s situational context.',
+      en: "The audience, key facts/evidence, a draft governing thought, and someone who knows the recipient's situational context.",
     },
     roles: {
       pl: 'Autor narracji (konsultant/lider), recenzent dowodowy, sponsor przekazu (kto go podpisuje).',
@@ -122,7 +123,8 @@ export const narrativeEnginePack: ToolPack = {
       whatGoodLooksLike:
         'Co najmniej dwa aktywne filary, każdy z proofPoints, message i implication (staircase fakt→interpretacja→so-what), MECE.',
       evidenceToAskFor: 'Czy dwa filary nie argumentują tego samego punktu (nakładanie się).',
-      completionCriterion: 'Piramida filarów przechodzi validatePyramidMece bez nakładania i bez filaru-worka.',
+      completionCriterion:
+        'Piramida filarów przechodzi validatePyramidMece bez nakładania i bez filaru-worka.',
     },
     {
       id: 'insights',
@@ -131,9 +133,11 @@ export const narrativeEnginePack: ToolPack = {
         pl: 'Ułożyć filary w łuk narracyjny i zdecydować o ruchach przekazu.',
         en: 'Weave pillars into a storyline arc and decide delivery moves.',
       },
-      whatGoodLooksLike: 'Łańcuch SCQA spójny (Sytuacja→Komplikacja→Pytanie→Odpowiedź), Odpowiedź faktycznie rozstrzyga Pytanie.',
+      whatGoodLooksLike:
+        'Łańcuch SCQA spójny (Sytuacja→Komplikacja→Pytanie→Odpowiedź), Odpowiedź faktycznie rozstrzyga Pytanie.',
       evidenceToAskFor: 'Czy Komplikacja wnosi coś nowego, czy tylko powtarza Sytuację.',
-      completionCriterion: 'validateScqa zwraca zero problemów krytycznych (missing-*, question-not-linked, answer-not-linked).',
+      completionCriterion:
+        'validateScqa zwraca zero problemów krytycznych (missing-*, question-not-linked, answer-not-linked).',
     },
     {
       id: 'outputs',
@@ -142,7 +146,8 @@ export const narrativeEnginePack: ToolPack = {
         pl: 'Przygotować sekwencję ruchów dostarczenia z trade-offem.',
         en: 'Prepare the final source summary and generate downstream outputs and initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch (open/build/prove/cta/reframe) ma rationale, trade-off i odrzucony wariant.',
+      whatGoodLooksLike:
+        'Każdy ruch (open/build/prove/cta/reframe) ma rationale, trade-off i odrzucony wariant.',
       evidenceToAskFor: 'Co świadomie pomijamy w przekazie, wybierając tę sekwencję filarów.',
       completionCriterion: 'Każdy ruch spełnia bramkę W2 i teza główna jest falsyfikowalna.',
     },
@@ -157,7 +162,8 @@ export const narrativeEnginePack: ToolPack = {
         en: 'Who is the audience, and what real question should this narrative answer?',
       },
       answerType: 'text',
-      challengeRule: 'Odrzuć „szerokie grono interesariuszy" bez nazwanego decydenta i jego konkretnego pytania.',
+      challengeRule:
+        'Odrzuć „szerokie grono interesariuszy" bez nazwanego decydenta i jego konkretnego pytania.',
     },
     {
       id: 'narrative-input-evidence',
@@ -274,13 +280,16 @@ export const narrativeEnginePack: ToolPack = {
   rights: {
     methodologyName: 'Zasada Piramidy Minto (SCQA, MECE)',
     commonlyAttributedTo: 'Barbara Minto (McKinsey & Co.), „The Pyramid Principle"',
-    sourceUsed: 'src/config/narrativeengine/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    sourceUsed:
+      'src/config/narrativeengine/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'RYZYKO NAJWYŻSZE W CAŁYM ROSTERZE — SCQA/MECE/„Pyramid Principle" to nazwana, komercyjnie publikowana własność Minto; MECE silnie kojarzone z McKinsey. Dodatkowo docs/standards/CONCLUSION_LAYER_STANDARD.md wymienia Minto i McKinsey wprost.',
+    trademarkNote:
+      'RYZYKO NAJWYŻSZE W CAŁYM ROSTERZE — SCQA/MECE/„Pyramid Principle" to nazwana, komercyjnie publikowana własność Minto; MECE silnie kojarzone z McKinsey. Dodatkowo docs/standards/CONCLUSION_LAYER_STANDARD.md wymienia Minto i McKinsey wprost.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'WYSOKIE — jedyne narzędzie, którego metoda źródłowa jest konkretną, komercyjnie wydaną książką, a nie wiedzą generyczną. Pierwsze do przeglądu prawnego.',
+    uncertainty:
+      'WYSOKIE — jedyne narzędzie, którego metoda źródłowa jest konkretną, komercyjnie wydaną książką, a nie wiedzą generyczną. Pierwsze do przeglądu prawnego.',
   },
 };

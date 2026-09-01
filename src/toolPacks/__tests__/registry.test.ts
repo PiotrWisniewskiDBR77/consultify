@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { DEDICATED_TOOL_TYPES } from '@/components/DiscoveryTools/dedicatedToolTypes';
+
+import { getToolPack, TOOL_PACKS } from '../registry';
 import { validateAll } from '../validator';
-import { TOOL_PACKS, getToolPack } from '../registry';
 
 /**
  * Test kontraktowy registry ↔ roster.
@@ -33,7 +34,13 @@ describe('rejestr Tool Packów', () => {
     const { results } = validateAll(TOOL_PACKS);
     const invalid = results.filter((r) => !r.valid);
     const detail = invalid
-      .map((r) => `${r.toolType}: ${r.issues.filter((i) => i.severity === 'error').map((i) => i.field).join(', ')}`)
+      .map(
+        (r) =>
+          `${r.toolType}: ${r.issues
+            .filter((i) => i.severity === 'error')
+            .map((i) => i.field)
+            .join(', ')}`
+      )
       .join(' | ');
     expect(invalid, detail).toHaveLength(0);
   });

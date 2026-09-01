@@ -76,11 +76,11 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { AdminAIControlCenterPanel } from '../../src/components/Admin/AdminAIControlCenterPanel';
 import { AdminAiIncidentsPanel } from '../../src/components/Admin/AdminAiIncidentsPanel';
 import { AdminAiQualityPanel } from '../../src/components/Admin/AdminAiQualityPanel';
-import { PersonasPanel } from '../../src/components/Admin/AI/PersonasPanel';
-import { AdminAIControlCenterPanel } from '../../src/components/Admin/AdminAIControlCenterPanel';
 import { AdminConfigurationVersionsPanel } from '../../src/components/Admin/AdminConfigurationVersionsPanel';
+import { PersonasPanel } from '../../src/components/Admin/AI/PersonasPanel';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
@@ -434,7 +434,13 @@ const AVAILABLE_MODELS = {
       },
     ],
     STANDARD: [
-      { id: 'm2', name: 'GPT-4o', provider: 'openai', model_id: 'gpt-4o', health_status: 'healthy' },
+      {
+        id: 'm2',
+        name: 'GPT-4o',
+        provider: 'openai',
+        model_id: 'gpt-4o',
+        health_status: 'healthy',
+      },
     ],
     PREMIUM: [
       {
@@ -638,16 +644,25 @@ if (!g.__ADMIN_AI_FETCH__) {
         if (method === 'POST') return jsonResponse({ success: true });
         return jsonResponse(AI_QUALITY_PATTERNS);
       }
-      if (url.includes('/admin/ai-quality/analytics/contexts')) return jsonResponse(AI_QUALITY_CONTEXTS);
-      if (url.includes('/admin/ai-quality/analytics/formats')) return jsonResponse(AI_QUALITY_FORMATS);
-      if (url.includes('/admin/ai-quality/analytics/issues')) return jsonResponse(AI_QUALITY_ISSUES);
+      if (url.includes('/admin/ai-quality/analytics/contexts'))
+        return jsonResponse(AI_QUALITY_CONTEXTS);
+      if (url.includes('/admin/ai-quality/analytics/formats'))
+        return jsonResponse(AI_QUALITY_FORMATS);
+      if (url.includes('/admin/ai-quality/analytics/issues'))
+        return jsonResponse(AI_QUALITY_ISSUES);
       if (url.includes('/llm/incidents')) return jsonResponse(LLM_INCIDENTS);
-      if (url.includes('/ai-operations/analytics/llm-observatory')) return jsonResponse(LLM_OBSERVATORY);
+      if (url.includes('/ai-operations/analytics/llm-observatory'))
+        return jsonResponse(LLM_OBSERVATORY);
       if (url.includes('/prompt-os/runtime/summary')) return jsonResponse(V8_RUNTIME_SUMMARY);
-      if (url.includes('/prompt-os/bundles') && !url.includes('/eval-gates') && !url.includes('/canary'))
+      if (
+        url.includes('/prompt-os/bundles') &&
+        !url.includes('/eval-gates') &&
+        !url.includes('/canary')
+      )
         return jsonResponse(V8_BUNDLES);
       if (url.includes('/llm/providers')) return jsonResponse(LLM_PROVIDERS);
-      if (url.includes('/llm/status/refresh')) return jsonResponse({ success: true, summary: LLM_STATUS.summary });
+      if (url.includes('/llm/status/refresh'))
+        return jsonResponse({ success: true, summary: LLM_STATUS.summary });
       if (url.includes('/llm/status/test/')) return jsonResponse({ success: true });
       if (url.includes('/llm/status')) return jsonResponse(LLM_STATUS);
       if (url.includes('/available-models')) return jsonResponse(AVAILABLE_MODELS);
@@ -699,7 +714,14 @@ function renderAiScreen(adminScreen: AdminAiScreenId): React.ReactElement {
       'ai-operations': 'ai-health',
       'ai-audit': 'audit-compliance',
     } as const
-  )[adminScreen as 'models-providers' | 'ai-limits-budgets' | 'data-privacy' | 'ai-operations' | 'ai-audit'];
+  )[
+    adminScreen as
+      | 'models-providers'
+      | 'ai-limits-budgets'
+      | 'data-privacy'
+      | 'ai-operations'
+      | 'ai-audit'
+  ];
   return <AdminAIControlCenterPanel initialAiModuleTab={tab} />;
 }
 
@@ -707,12 +729,12 @@ function renderAiScreen(adminScreen: AdminAiScreenId): React.ReactElement {
 // pill-tabs AdminAIControlCenterPanel + TabLayout AIModule) NIE istnieją w
 // realnym routingu — AdminSettingsModule ZAWSZE montuje pełną powłoę dla tych
 // pięciu ekranów. Zostawiamy `renderAiScreen` 1:1 z produktem (żadnego skrótu).
-export default function AdminAiScreen(props: {
-  adminScreen: AdminAiScreenId;
-}): React.ReactElement {
+export default function AdminAiScreen(props: { adminScreen: AdminAiScreenId }): React.ReactElement {
   // `&ekran=` w URL nadpisuje prop domyślny — pozwala odpalić dowolny
   // z 10 ekranów spod jednego wpisu w main.tsx.
-  const requested = new URLSearchParams(window.location.search).get('ekran') as AdminAiScreenId | null;
+  const requested = new URLSearchParams(window.location.search).get(
+    'ekran'
+  ) as AdminAiScreenId | null;
   const adminScreen = requested || props.adminScreen;
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>

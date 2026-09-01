@@ -111,11 +111,7 @@ export function titleFromPrimaryHeadingUpdate(
   const isHeadingLike = (block: HeadingLikeBlock) =>
     block.type === 'heading' || block.type === 'title';
   const primaryHeading = blocks.find(isHeadingLike);
-  if (
-    !isHeadingLike(updatedBlock) ||
-    !primaryHeading ||
-    primaryHeading.block_id !== blockId
-  ) {
+  if (!isHeadingLike(updatedBlock) || !primaryHeading || primaryHeading.block_id !== blockId) {
     return undefined;
   }
 

@@ -119,7 +119,11 @@ export function resolvePeriodOffset(
 ): ResolvedPeriodPlan {
   const current = lookup(currentPeriodId);
   if (!current) {
-    return { ok: false, reason: 'INSUFFICIENT_HISTORY', detail: `unknown period_id ${currentPeriodId}` };
+    return {
+      ok: false,
+      reason: 'INSUFFICIENT_HISTORY',
+      detail: `unknown period_id ${currentPeriodId}`,
+    };
   }
 
   switch (offset) {
@@ -244,7 +248,8 @@ export function daysInPeriod(period: PeriodMeta): number {
     throw new Error(`daysInPeriod: unparseable period_start/period_end for ${period.periodId}`);
   }
   const days = Math.round((end - start) / 86_400_000) + 1;
-  if (days <= 0) throw new Error(`daysInPeriod: non-positive day count (${days}) for ${period.periodId}`);
+  if (days <= 0)
+    throw new Error(`daysInPeriod: non-positive day count (${days}) for ${period.periodId}`);
   return days;
 }
 

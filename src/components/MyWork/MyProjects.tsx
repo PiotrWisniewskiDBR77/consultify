@@ -44,9 +44,9 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeholders.api';
-import { ROUTES } from '@/routes/routeConfig';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
@@ -531,7 +531,8 @@ export const MyProjects: React.FC = () => {
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.created_at || row.createdAt || ''),
-        render: (row: TableRow) => formatDate((row.created_at || row.createdAt) as string | undefined),
+        render: (row: TableRow) =>
+          formatDate((row.created_at || row.createdAt) as string | undefined),
       },
     ],
     [t, isPolish, programNameById]

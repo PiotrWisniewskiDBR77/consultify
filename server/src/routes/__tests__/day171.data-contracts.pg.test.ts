@@ -9,10 +9,10 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { formatAnalysisKpiValueForDisplay } from '../../../../src/services/api/financeV2.types.js';
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import { loadValuationCurrency } from '../../services/finance/canonical/valuationAdvisorService.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const NO_RETRY = { retry: 0 } as const;
 
@@ -35,7 +35,9 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
 
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
     await sql.connect();
-    const target = await sql.query('SELECT current_database() AS database, inet_server_port() AS port');
+    const target = await sql.query(
+      'SELECT current_database() AS database, inet_server_port() AS port'
+    );
     // Portable: this must pass against ANY local Postgres, not just a database literally
     // named "cx171" — pinning the database name here breaks the test on every other
     // developer's / worker's fixture database. We still prove a REAL server connection
@@ -64,7 +66,14 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
     );
 
     authorization = `Bearer ${jwt.sign(
-      { id: userId, userId, email: `day171_${suffix}@example.test`, organizationId, organization_id: organizationId, role: 'ADMIN' },
+      {
+        id: userId,
+        userId,
+        email: `day171_${suffix}@example.test`,
+        organizationId,
+        organization_id: organizationId,
+        role: 'ADMIN',
+      },
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '1h' }
     )}`;
@@ -185,7 +194,14 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
         [randomUUID(), orgId, uid]
       );
       const orgAuthorization = `Bearer ${jwt.sign(
-        { id: uid, userId: uid, email, organizationId: orgId, organization_id: orgId, role: 'ADMIN' },
+        {
+          id: uid,
+          userId: uid,
+          email,
+          organizationId: orgId,
+          organization_id: orgId,
+          role: 'ADMIN',
+        },
         config.JWT_SECRET,
         { algorithm: 'HS256', expiresIn: '1h' }
       )}`;
@@ -214,7 +230,9 @@ describe('Day 171 data contracts on real ApiGateway and PostgreSQL', NO_RETRY, (
     expect(withCurrencyResponse.body.data.currency).toBe('EUR');
 
     const withoutCurrency = await seedOrgWithMember('val-nocur');
-    const bvWithoutCurrency = await makeValuationBusinessVersionId(withoutCurrency.orgAuthorization);
+    const bvWithoutCurrency = await makeValuationBusinessVersionId(
+      withoutCurrency.orgAuthorization
+    );
     const withoutCurrencyResponse = await request(app)
       .get(`/api/v8/finance-v2/valuation/variants/${bvWithoutCurrency}/results`)
       .set('Authorization', withoutCurrency.orgAuthorization);

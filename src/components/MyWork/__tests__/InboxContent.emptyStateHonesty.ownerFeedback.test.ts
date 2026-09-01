@@ -23,7 +23,7 @@ describe('Inbox empty state no longer claims an unverifiable success (MYW-PHOTO-
     expect(source).toContain('loading ? (');
     expect(source).toContain('loadError ? (');
     expect(source).toContain('<ErrorState message={loadError} retry={() => void fetchInbox()} />');
-    expect(source).toContain("variant=\"filter\"");
+    expect(source).toContain('variant="filter"');
   });
 
   it('uses the real i18n keys for the truly-empty inbox copy, not a hardcoded string', () => {

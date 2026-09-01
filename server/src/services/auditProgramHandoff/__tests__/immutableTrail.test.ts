@@ -62,7 +62,7 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
     const before = await pool.query(
       `SELECT id, entity_type, entity_id, event_type, actor_id, summary, payload, occurred_at
          FROM audit_domain_events WHERE organization_id=$1 AND entity_type='probe' AND entity_id='probe-1'`,
-      [orgId],
+      [orgId]
     );
     expect(before.rows).toHaveLength(1);
     const snapshot = before.rows[0];
@@ -83,7 +83,7 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
     const after = await pool.query(
       `SELECT id, entity_type, entity_id, event_type, actor_id, summary, payload, occurred_at
          FROM audit_domain_events WHERE organization_id=$1 AND entity_type='probe' AND entity_id='probe-1'`,
-      [orgId],
+      [orgId]
     );
     expect(after.rows).toHaveLength(1);
     expect(after.rows[0]).toEqual(snapshot);
@@ -101,18 +101,22 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
     });
 
     await expect(
-      pool.query(`UPDATE audit_domain_events SET summary='tampered' WHERE organization_id=$1 AND entity_id='probe-mutate'`, [
-        orgId,
-      ]),
+      pool.query(
+        `UPDATE audit_domain_events SET summary='tampered' WHERE organization_id=$1 AND entity_id='probe-mutate'`,
+        [orgId]
+      )
     ).rejects.toThrow(/append-only/);
 
     await expect(
-      pool.query(`DELETE FROM audit_domain_events WHERE organization_id=$1 AND entity_id='probe-mutate'`, [orgId]),
+      pool.query(
+        `DELETE FROM audit_domain_events WHERE organization_id=$1 AND entity_id='probe-mutate'`,
+        [orgId]
+      )
     ).rejects.toThrow(/append-only/);
 
     const preserved = await pool.query(
       `SELECT summary FROM audit_domain_events WHERE organization_id=$1 AND entity_id='probe-mutate'`,
-      [orgId],
+      [orgId]
     );
     expect(preserved.rows).toHaveLength(1);
     expect(preserved.rows[0].summary).toBe('Immutable row protected by the database trigger');
@@ -146,7 +150,7 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
 
     const rows = await pool.query(
       `SELECT summary FROM audit_domain_events WHERE organization_id=$1 AND program_id=$2 AND idempotency_key=$3`,
-      [orgId, programId, idempotencyKey],
+      [orgId, programId, idempotencyKey]
     );
     expect(rows.rows).toHaveLength(1);
     expect(rows.rows[0].summary).toBe('First attempt');

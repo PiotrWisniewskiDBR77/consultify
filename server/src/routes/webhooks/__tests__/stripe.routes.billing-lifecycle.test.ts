@@ -55,28 +55,31 @@ describe('notifyOrgAdmins (N2)', () => {
     ['subscription_canceled', 'Subscription Canceled'],
     ['invoice_paid', 'Payment Successful'],
     ['invoice_finalized', 'Invoice Ready'],
-  ])('sends %s through the notification engine for every org admin/superadmin', async (type, title) => {
-    mockDbAll.mockResolvedValue([{ id: 'admin-1' }, { id: 'admin-2' }]);
+  ])(
+    'sends %s through the notification engine for every org admin/superadmin',
+    async (type, title) => {
+      mockDbAll.mockResolvedValue([{ id: 'admin-1' }, { id: 'admin-2' }]);
 
-    await notifyOrgAdmins('org-1', type, title, 'message body');
+      await notifyOrgAdmins('org-1', type, title, 'message body');
 
-    expect(mockDbAll).toHaveBeenCalledWith(expect.stringContaining('FROM users'), [
-      'org-1',
-      'ADMIN',
-      'SUPERADMIN',
-    ]);
-    expect(mockSend).toHaveBeenCalledTimes(2);
-    expect(mockSend).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'admin-1',
-        organizationId: 'org-1',
-        type,
-        title,
-        body: 'message body',
-      })
-    );
-    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ userId: 'admin-2', type }));
-  });
+      expect(mockDbAll).toHaveBeenCalledWith(expect.stringContaining('FROM users'), [
+        'org-1',
+        'ADMIN',
+        'SUPERADMIN',
+      ]);
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockSend).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'admin-1',
+          organizationId: 'org-1',
+          type,
+          title,
+          body: 'message body',
+        })
+      );
+      expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ userId: 'admin-2', type }));
+    }
+  );
 
   it('does not pass explicit channels — relies on the registry default_channels for the type', async () => {
     mockDbAll.mockResolvedValue([{ id: 'admin-1' }]);

@@ -342,12 +342,14 @@ const MOCK_TASK_DEPENDENCIES = {
     {
       id: 'dep-1',
       taskId: 'task-dbr77-demo-0',
-      taskTitle: 'Zamknięcie wywiadów klienckich dla 4 projektów (Termika, NordFarm, Bielmar, Kolej Wschodnia)',
+      taskTitle:
+        'Zamknięcie wywiadów klienckich dla 4 projektów (Termika, NordFarm, Bielmar, Kolej Wschodnia)',
       taskStatus: 'done',
       taskPriority: 'high',
       dependencyType: 'FS',
       lagDays: 0,
-      notes: 'Mapa AS-IS potrzebuje kompletnych notatek z wywiadów jako wsadu — nie da się liczyć lead time bez zamkniętych rozmów.',
+      notes:
+        'Mapa AS-IS potrzebuje kompletnych notatek z wywiadów jako wsadu — nie da się liczyć lead time bez zamkniętych rozmów.',
       direction: 'predecessor',
     },
   ],

@@ -120,13 +120,20 @@ async function deckRowsForOrg(orgId: string): Promise<any[]> {
 
 async function cleanupOrg(orgId: string): Promise<void> {
   await control
-    .query(`DELETE FROM presentation_cards WHERE deck_id IN (SELECT id FROM presentation_decks WHERE organization_id = $1)`, [
-      orgId,
-    ])
+    .query(
+      `DELETE FROM presentation_cards WHERE deck_id IN (SELECT id FROM presentation_decks WHERE organization_id = $1)`,
+      [orgId]
+    )
     .catch(() => undefined);
-  await control.query(`DELETE FROM presentation_decks WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+  await control
+    .query(`DELETE FROM presentation_decks WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+    .catch(() => undefined);
   await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
 }
 
@@ -174,83 +181,76 @@ suite('presentationGeneratorService.createNativeDeck — real Postgres persist h
     }
   });
 
-  it(
-    '[negative control] surfaces a failure instead of a false success when the real INSERT violates the status CHECK constraint',
-    async () => {
-      const orgId = await seedOrg('negctrl');
-      const marker = randomUUID();
-      const nowIso = new Date().toISOString();
+  it('[negative control] surfaces a failure instead of a false success when the real INSERT violates the status CHECK constraint', async () => {
+    const orgId = await seedOrg('negctrl');
+    const marker = randomUUID();
+    const nowIso = new Date().toISOString();
 
-      let thrown: unknown = null;
-      try {
-        await createNativeDeck({
-          organizationId: orgId,
-          title: `E6 negative control ${marker}`,
-          unifiedJson: buildUnifiedJson(marker),
-          sourceType: 'test',
-          sourceId: 'e6-negctrl',
-          createdBy: 'e6-test-actor',
-          createdAt: nowIso,
-          // Not a member of presentation_decks' own
-          // CHECK (status IN ('draft','generating','ready','exported','failed')).
-          status: 'definitely_not_a_real_status' as unknown as 'ready',
-          registerArtifact: false,
-        });
-      } catch (error) {
-        thrown = error;
-      }
-
-      // MUST throw — a phantom success (no throw, but zero rows) is exactly
-      // the pre-fix defect this test exists to catch.
-      expect(thrown).not.toBeNull();
-
-      const rows = await deckRowsForOrg(orgId);
-      expect(rows).toHaveLength(0);
-    },
-    90_000
-  );
-
-  it(
-    '[happy path] persists a real row whose DATABASE content (not the in-memory return value) contains the real deck text',
-    async () => {
-      const orgId = await seedOrg('happy');
-      const marker = randomUUID();
-      const nowIso = new Date().toISOString();
-
-      const result = await createNativeDeck({
+    let thrown: unknown = null;
+    try {
+      await createNativeDeck({
         organizationId: orgId,
-        title: `E6 happy path deck ${marker}`,
+        title: `E6 negative control ${marker}`,
         unifiedJson: buildUnifiedJson(marker),
         sourceType: 'test',
-        sourceId: 'e6-happy',
+        sourceId: 'e6-negctrl',
         createdBy: 'e6-test-actor',
         createdAt: nowIso,
-        status: 'ready',
+        // Not a member of presentation_decks' own
+        // CHECK (status IN ('draft','generating','ready','exported','failed')).
+        status: 'definitely_not_a_real_status' as unknown as 'ready',
         registerArtifact: false,
       });
+    } catch (error) {
+      thrown = error;
+    }
 
-      expect(result.deckId).toBeTruthy();
-      expect(result.slideCount).toBe(1);
-      expect(result.registryArtifactId).toBeNull();
+    // MUST throw — a phantom success (no throw, but zero rows) is exactly
+    // the pre-fix defect this test exists to catch.
+    expect(thrown).not.toBeNull();
 
-      const rows = await deckRowsForOrg(orgId);
-      expect(rows).toHaveLength(1);
-      const row = rows[0];
-      expect(row.id).toBe(result.deckId);
-      expect(row.status).toBe('ready');
-      expect(row.slide_count).toBe(1);
+    const rows = await deckRowsForOrg(orgId);
+    expect(rows).toHaveLength(0);
+  }, 90_000);
 
-      // Real content, read back from the database — not merely a row/id
-      // existing. This subsystem has a documented history of decks marked
-      // ready while containing zero bytes of content.
-      const deckJsonText = typeof row.deck_json === 'string' ? row.deck_json : JSON.stringify(row.deck_json);
-      const unifiedJsonText =
-        typeof row.unified_json === 'string' ? row.unified_json : JSON.stringify(row.unified_json);
+  it('[happy path] persists a real row whose DATABASE content (not the in-memory return value) contains the real deck text', async () => {
+    const orgId = await seedOrg('happy');
+    const marker = randomUUID();
+    const nowIso = new Date().toISOString();
 
-      expect(deckJsonText).toContain(`E6 Persist Proof Title ${marker}`);
-      expect(deckJsonText).toContain(`E6 distinctive subtitle marker ${marker}`);
-      expect(unifiedJsonText).toContain(`E6 cover key message ${marker}`);
-    },
-    90_000
-  );
+    const result = await createNativeDeck({
+      organizationId: orgId,
+      title: `E6 happy path deck ${marker}`,
+      unifiedJson: buildUnifiedJson(marker),
+      sourceType: 'test',
+      sourceId: 'e6-happy',
+      createdBy: 'e6-test-actor',
+      createdAt: nowIso,
+      status: 'ready',
+      registerArtifact: false,
+    });
+
+    expect(result.deckId).toBeTruthy();
+    expect(result.slideCount).toBe(1);
+    expect(result.registryArtifactId).toBeNull();
+
+    const rows = await deckRowsForOrg(orgId);
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    expect(row.id).toBe(result.deckId);
+    expect(row.status).toBe('ready');
+    expect(row.slide_count).toBe(1);
+
+    // Real content, read back from the database — not merely a row/id
+    // existing. This subsystem has a documented history of decks marked
+    // ready while containing zero bytes of content.
+    const deckJsonText =
+      typeof row.deck_json === 'string' ? row.deck_json : JSON.stringify(row.deck_json);
+    const unifiedJsonText =
+      typeof row.unified_json === 'string' ? row.unified_json : JSON.stringify(row.unified_json);
+
+    expect(deckJsonText).toContain(`E6 Persist Proof Title ${marker}`);
+    expect(deckJsonText).toContain(`E6 distinctive subtitle marker ${marker}`);
+    expect(unifiedJsonText).toContain(`E6 cover key message ${marker}`);
+  }, 90_000);
 });

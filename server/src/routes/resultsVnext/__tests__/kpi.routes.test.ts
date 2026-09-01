@@ -126,7 +126,8 @@ vi.mock('../../../services/resultsVnext/kpi/kpiMeasurementCommands.js', async (i
 
 vi.mock('../../../services/resultsVnext/kpi/kpiRepository.js', () => ({
   getKpi: (...args: unknown[]) => mockGetKpi(...args),
-  getKpiCurrentDefinitionVersion: (...args: unknown[]) => mockGetKpiCurrentDefinitionVersion(...args),
+  getKpiCurrentDefinitionVersion: (...args: unknown[]) =>
+    mockGetKpiCurrentDefinitionVersion(...args),
   listKpis: (...args: unknown[]) => mockListKpis(...args),
   listMeasurements: (...args: unknown[]) => mockListMeasurements(...args),
 }));
@@ -421,7 +422,11 @@ function trendVersionFixture(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function trendMeasurementFixture(value: number, day: number, overrides: Record<string, unknown> = {}) {
+function trendMeasurementFixture(
+  value: number,
+  day: number,
+  overrides: Record<string, unknown> = {}
+) {
   return {
     measurementId: `m-${day}`,
     kpiId: KPI_ID,
@@ -521,9 +526,7 @@ describe('GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundar
   });
 
   it('400s (Zod) on a malformed kpiId (KpiIdParamsSchema requires a UUID)', async () => {
-    const response = await request(createApp()).get(
-      `/api/vnext/results/kpi/not-a-uuid/trend`
-    );
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/not-a-uuid/trend`);
 
     expect(response.status).toBe(400);
     expect(mockGetKpiCurrentDefinitionVersion).not.toHaveBeenCalled();

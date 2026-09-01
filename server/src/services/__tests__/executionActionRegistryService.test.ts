@@ -7,7 +7,11 @@ vi.mock('../../utils/DbPromise.js', () => ({
   run: (...args: unknown[]) => mockRun(...args),
 }));
 vi.mock('../../utils/queryHelpers.js', () => ({
-  withPgTransaction: async (fn: (client: { query: (sql: string, params?: unknown[]) => Promise<unknown> }) => Promise<unknown>) =>
+  withPgTransaction: async (
+    fn: (client: {
+      query: (sql: string, params?: unknown[]) => Promise<unknown>;
+    }) => Promise<unknown>
+  ) =>
     fn({
       query: async (sql: string, params: unknown[] = []) => {
         if (/^\s*SELECT/i.test(sql)) {
@@ -27,9 +31,15 @@ import {
 } from '../executionActionRegistryService.js';
 
 const IMPLEMENTED_ACTIONS = [
-  'case.close', 'case.cancel', 'case.wait.cancel', 'case.run.cancel',
-  'case.artifact.unlink', 'case.proposal.decide', 'case.proposal.execute',
-  'case.proposal.revoke', 'execution.budget.delete',
+  'case.close',
+  'case.cancel',
+  'case.wait.cancel',
+  'case.run.cancel',
+  'case.artifact.unlink',
+  'case.proposal.decide',
+  'case.proposal.execute',
+  'case.proposal.revoke',
+  'execution.budget.delete',
 ] as const;
 
 describe('execution action registry runtime truth', () => {
@@ -77,56 +87,105 @@ describe('execution action registry runtime truth', () => {
 
   it.each(IMPLEMENTED_ACTIONS)('governs and audits success for %s', async (actionId) => {
     mockGet.mockResolvedValue({
-      action_id: actionId, target_type: 'target', destructive: true,
-      minimum_role: 'ADMIN', runtime_state: 'IMPLEMENTED', audit_required: true,
+      action_id: actionId,
+      target_type: 'target',
+      destructive: true,
+      minimum_role: 'ADMIN',
+      runtime_state: 'IMPLEMENTED',
+      audit_required: true,
     });
     mockRun.mockResolvedValue({ changes: 1 });
     const operation = vi.fn().mockResolvedValue({ id: 'target-a' });
-    await expect(executeGovernedExecutionAction({
-      organizationId: 'org-a', actionId, targetId: 'target-a', actorId: 'actor-a',
-      membershipRole: 'ADMIN', operation,
-    })).resolves.toEqual({ id: 'target-a' });
+    await expect(
+      executeGovernedExecutionAction({
+        organizationId: 'org-a',
+        actionId,
+        targetId: 'target-a',
+        actorId: 'actor-a',
+        membershipRole: 'ADMIN',
+        operation,
+      })
+    ).resolves.toEqual({ id: 'target-a' });
     expect(operation).toHaveBeenCalledOnce();
-    expect(mockRun).toHaveBeenCalledWith(expect.stringContaining('execution_action_audit'),
-      ['org-a', actionId, 'target-a', 'actor-a', 'SUCCEEDED', null, null], { fallback: false });
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.stringContaining('execution_action_audit'),
+      ['org-a', actionId, 'target-a', 'actor-a', 'SUCCEEDED', null, null],
+      { fallback: false }
+    );
   });
 
   it('enforces policy drift and audits denial before mutation', async () => {
     mockGet.mockResolvedValue({
-      action_id: 'case.close', target_type: 'case', destructive: true,
-      minimum_role: 'OWNER', runtime_state: 'IMPLEMENTED', audit_required: true,
+      action_id: 'case.close',
+      target_type: 'case',
+      destructive: true,
+      minimum_role: 'OWNER',
+      runtime_state: 'IMPLEMENTED',
+      audit_required: true,
     });
     mockRun.mockResolvedValue({ changes: 1 });
     const operation = vi.fn();
-    await expect(executeGovernedExecutionAction({
-      organizationId: 'org-a', actionId: 'case.close', targetId: 'case-a', actorId: 'actor-a',
-      membershipRole: 'ADMIN', operation,
-    })).rejects.toThrow('insufficient_org_role');
+    await expect(
+      executeGovernedExecutionAction({
+        organizationId: 'org-a',
+        actionId: 'case.close',
+        targetId: 'case-a',
+        actorId: 'actor-a',
+        membershipRole: 'ADMIN',
+        operation,
+      })
+    ).rejects.toThrow('insufficient_org_role');
     expect(operation).not.toHaveBeenCalled();
-    expect(mockRun).toHaveBeenCalledWith(expect.any(String),
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.any(String),
       ['org-a', 'case.close', 'case-a', 'actor-a', 'DENIED', 'insufficient_org_role', null],
-      { fallback: false });
+      { fallback: false }
+    );
   });
 
   it('audits conflict and not-found terminal outcomes', async () => {
-    mockGet.mockResolvedValue({ action_id: 'case.cancel', target_type: 'case', destructive: true,
-      minimum_role: 'ADMIN', runtime_state: 'IMPLEMENTED', audit_required: true });
+    mockGet.mockResolvedValue({
+      action_id: 'case.cancel',
+      target_type: 'case',
+      destructive: true,
+      minimum_role: 'ADMIN',
+      runtime_state: 'IMPLEMENTED',
+      audit_required: true,
+    });
     mockRun.mockResolvedValue({ changes: 1 });
-    await expect(executeGovernedExecutionAction({
-      organizationId: 'org-a', actionId: 'case.cancel', targetId: 'case-a', actorId: 'actor-a',
-      membershipRole: 'ADMIN', operation: async () => { throw new Error('case_version_conflict'); },
-    })).rejects.toThrow('case_version_conflict');
-    expect(mockRun).toHaveBeenLastCalledWith(expect.any(String),
+    await expect(
+      executeGovernedExecutionAction({
+        organizationId: 'org-a',
+        actionId: 'case.cancel',
+        targetId: 'case-a',
+        actorId: 'actor-a',
+        membershipRole: 'ADMIN',
+        operation: async () => {
+          throw new Error('case_version_conflict');
+        },
+      })
+    ).rejects.toThrow('case_version_conflict');
+    expect(mockRun).toHaveBeenLastCalledWith(
+      expect.any(String),
       ['org-a', 'case.cancel', 'case-a', 'actor-a', 'CONFLICT', 'case_version_conflict', null],
-      { fallback: false });
+      { fallback: false }
+    );
 
     mockRun.mockClear();
-    await expect(executeGovernedExecutionAction({
-      organizationId: 'org-a', actionId: 'case.cancel', targetId: 'missing', actorId: 'actor-a',
-      membershipRole: 'ADMIN', operation: async () => false,
-    })).resolves.toBe(false);
-    expect(mockRun).toHaveBeenLastCalledWith(expect.any(String),
+    await expect(
+      executeGovernedExecutionAction({
+        organizationId: 'org-a',
+        actionId: 'case.cancel',
+        targetId: 'missing',
+        actorId: 'actor-a',
+        membershipRole: 'ADMIN',
+        operation: async () => false,
+      })
+    ).resolves.toBe(false);
+    expect(mockRun).toHaveBeenLastCalledWith(
+      expect.any(String),
       ['org-a', 'case.cancel', 'missing', 'actor-a', 'NOT_FOUND', 'action_target_not_found', null],
-      { fallback: false });
+      { fallback: false }
+    );
   });
 });

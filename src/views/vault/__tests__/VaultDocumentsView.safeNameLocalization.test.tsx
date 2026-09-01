@@ -57,9 +57,7 @@ describe('VaultDocumentsView safe-name localization (PL)', () => {
 
     await waitFor(() => expect(hubBarSlotMock).toHaveBeenCalled());
     const lastCall = hubBarSlotMock.mock.calls[hubBarSlotMock.mock.calls.length - 1][0];
-    expect(lastCall.openItems).toEqual([
-      expect.objectContaining({ id: 'user', name: 'Mój sejf' }),
-    ]);
+    expect(lastCall.openItems).toEqual([expect.objectContaining({ id: 'user', name: 'Mój sejf' })]);
     expect(lastCall.openItems[0].name).not.toBe('My safe');
   });
 

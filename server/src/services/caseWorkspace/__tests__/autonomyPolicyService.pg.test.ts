@@ -42,14 +42,14 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import * as caseCoreService from '../caseCoreService.js';
-import * as autonomyPolicyService from '../autonomyPolicyService.js';
+import { withPgTransaction } from '../../../utils/queryHelpers.js';
 import type {
   ActionDescriptor,
   AutonomyPolicy,
   ExplicitControlEvidence,
 } from '../autonomyPolicyService.js';
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import * as autonomyPolicyService from '../autonomyPolicyService.js';
+import * as caseCoreService from '../caseCoreService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -151,9 +151,9 @@ describe('classifyActionClass — the A0-A4 predicate (08 §3.2)', () => {
     expect(
       classOf({ intent: 'EXECUTE', effectClass: 'SAFE_UPDATE', reversibility: 'mostly, probably' })
     ).toBe('A3');
-    expect(classOf({ intent: 'EXECUTE', effectClass: 'SAFE_UPDATE', dataClass: 'RESTRICTED' })).toBe(
-      'A3'
-    );
+    expect(
+      classOf({ intent: 'EXECUTE', effectClass: 'SAFE_UPDATE', dataClass: 'RESTRICTED' })
+    ).toBe('A3');
     expect(classOf({ intent: 'EXECUTE', effectClass: 'SAFE_UPDATE', dataClass: 'UNKNOWN' })).toBe(
       'A3'
     );
@@ -191,7 +191,11 @@ describe('classifyActionClass — the A0-A4 predicate (08 §3.2)', () => {
     expect(
       autonomyPolicyService.requiredControlFor('A2', 'ASK_EACH_ACTION').planPolicyPathOpen
     ).toBe(false);
-    for (const level of ['ASK_EACH_ACTION', 'ASK_MATERIAL_ACTIONS', 'EXECUTE_APPROVED_PLAN'] as const) {
+    for (const level of [
+      'ASK_EACH_ACTION',
+      'ASK_MATERIAL_ACTIONS',
+      'EXECUTE_APPROVED_PLAN',
+    ] as const) {
       expect(autonomyPolicyService.requiredControlFor('A3', level).requiredControl).toBe(
         'EXPLICIT_CONTROL_WITH_STEP_UP'
       );
@@ -275,7 +279,9 @@ suite('autonomyPolicyService — resolution + enforcement against a real Postgre
     await control
       .query(`DELETE FROM organization_ai_policy WHERE organization_id = $1`, [orgId])
       .catch(() => undefined);
-    await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+      .catch(() => undefined);
     await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
@@ -499,9 +505,11 @@ suite('autonomyPolicyService — resolution + enforcement against a real Postgre
       for (const junk of ['FULL_AUTO', '', null, 42, { nested: true }]) {
         await setOrgCeiling(orgId, junk);
         const malformed = await autonomyPolicyService.evaluateAutonomy(request);
-        expect({ junk, source: malformed.organizationCeilingSource, allowed: malformed.allowed }).toEqual(
-          { junk, source: 'UNCONFIGURED_FAIL_CLOSED_DEFAULT', allowed: false }
-        );
+        expect({
+          junk,
+          source: malformed.organizationCeilingSource,
+          allowed: malformed.allowed,
+        }).toEqual({ junk, source: 'UNCONFIGURED_FAIL_CLOSED_DEFAULT', allowed: false });
       }
 
       // (c) an unresolvable Case (wrong tenant / nonexistent) denies A2 and A3
@@ -609,7 +617,7 @@ suite('autonomyPolicyService — resolution + enforcement against a real Postgre
   //    level enforced is the level true at mutation time — not a level cached
   //    from before the transaction opened.
   // -------------------------------------------------------------------------
-  it('resolves the policy on the caller transaction, seeing that transaction\'s own uncommitted ceiling', async () => {
+  it("resolves the policy on the caller transaction, seeing that transaction's own uncommitted ceiling", async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('tx-read');
     try {
       await setOrgCeiling(orgId, 'EXECUTE_APPROVED_PLAN');

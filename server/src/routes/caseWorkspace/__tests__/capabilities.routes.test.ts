@@ -15,9 +15,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return {
     ...actual,
     requireOrgMember: (...args: unknown[]) => mockRequireOrgMember(...args),
@@ -35,8 +35,8 @@ vi.mock('../../../services/caseWorkspace/capabilityRegistryService.js', () => ({
   recordIdempotencyKeyCheck: (...args: unknown[]) => mockRecordIdempotencyKeyCheck(...args),
 }));
 
-import capabilitiesRoutes from '../capabilities.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import capabilitiesRoutes from '../capabilities.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -69,9 +69,24 @@ function createApp(): Express {
 describe('caseWorkspace capabilities routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireOrgMember.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
-    mockRequireOrgRole.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireOrgMember.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireOrgRole.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a register-capability body missing required fields with 400', async () => {
@@ -82,7 +97,9 @@ describe('caseWorkspace capabilities routes', () => {
 
   it('gates capability registration behind ADMIN org-role (platform-global registry mutation)', async () => {
     mockRegisterCapability.mockResolvedValue({ capabilityRegistryId: 'cwcap-1' });
-    const res = await request(createApp()).post('/api/v8/case-workspace/capabilities').send(VALID_CAPABILITY);
+    const res = await request(createApp())
+      .post('/api/v8/case-workspace/capabilities')
+      .send(VALID_CAPABILITY);
     expect(res.status).toBe(201);
     expect(mockRequireOrgRole).toHaveBeenCalledWith(USER, ORG, 'ADMIN');
   });
@@ -95,15 +112,22 @@ describe('caseWorkspace capabilities routes', () => {
   });
 
   it('maps insufficient_org_role to 403 for a non-admin actor attempting to register', async () => {
-    const { CaseWorkspaceAuthError } = await import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
-    mockRequireOrgRole.mockRejectedValue(new CaseWorkspaceAuthError('insufficient_org_role', 'not enough role'));
-    const res = await request(createApp()).post('/api/v8/case-workspace/capabilities').send(VALID_CAPABILITY);
+    const { CaseWorkspaceAuthError } =
+      await import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
+    mockRequireOrgRole.mockRejectedValue(
+      new CaseWorkspaceAuthError('insufficient_org_role', 'not enough role')
+    );
+    const res = await request(createApp())
+      .post('/api/v8/case-workspace/capabilities')
+      .send(VALID_CAPABILITY);
     expect(res.status).toBe(403);
   });
 
   it('maps capability_already_registered to 409', async () => {
     mockRegisterCapability.mockRejectedValue(new Error('capability_already_registered'));
-    const res = await request(createApp()).post('/api/v8/case-workspace/capabilities').send(VALID_CAPABILITY);
+    const res = await request(createApp())
+      .post('/api/v8/case-workspace/capabilities')
+      .send(VALID_CAPABILITY);
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('CAPABILITY_ALREADY_REGISTERED');
   });
@@ -125,7 +149,10 @@ describe('caseWorkspace capabilities routes', () => {
   });
 
   it('threads the Idempotency-Key header into recordIdempotencyKeyCheck', async () => {
-    mockRecordIdempotencyKeyCheck.mockResolvedValue({ isDuplicate: false, recordedAt: '2026-01-01T00:00:00.000Z' });
+    mockRecordIdempotencyKeyCheck.mockResolvedValue({
+      isDuplicate: false,
+      recordedAt: '2026-01-01T00:00:00.000Z',
+    });
     const res = await request(createApp())
       .post('/api/v8/case-workspace/capabilities/by-id/cwcap-1/idempotency-check')
       .set('Idempotency-Key', 'idem-key-1')

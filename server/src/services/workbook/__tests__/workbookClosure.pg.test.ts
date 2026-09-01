@@ -31,9 +31,10 @@
  * cascade off it (deliberately no FK — see the migration's ordering-trap
  * note) — then asserts zero rows remain for this suite's ids.
  */
-import express from 'express';
 import { createHash } from 'node:crypto';
+
 import ExcelJS from 'exceljs';
+import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
@@ -246,9 +247,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .send({})
       .expect(200);
 
-    const afterRevoke = await request(app).get(
-      `/api/workbook/shared/${reShare.body.shareToken}`
-    );
+    const afterRevoke = await request(app).get(`/api/workbook/shared/${reShare.body.shareToken}`);
     expect(afterRevoke.status).toBe(404);
 
     // Idempotent revoke — retry still 200, real DB state genuinely NULL.
@@ -559,10 +558,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .get(`/api/workbook/${id}/download`)
       .set(authHeaders(ORG_B, USER_B))
       .expect(404);
-    await request(app)
-      .get(`/api/workbook/${id}/download`)
-      .set('x-test-unauth', '1')
-      .expect(401);
+    await request(app).get(`/api/workbook/${id}/download`).set('x-test-unauth', '1').expect(401);
     const afterNegatives = await pool.query(
       `SELECT count(*)::int AS n FROM artifact_export_receipts WHERE source_record_id=$1`,
       [id]

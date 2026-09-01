@@ -23,28 +23,28 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { canonicalPayloadHash } from './contentHash.js';
-import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
+import * as computeJobService from './computeJobService.js';
+import { canonicalPayloadHash } from './contentHash.js';
+import { computeEquityValue, writeBridge } from './valuationBridgeService.js';
+import { discountCashFlows, type DiscountCashFlowsResult } from './valuationDiscountService.js';
 import {
   computeFcffSeries,
   type FcffYearInput,
   type FcffYearResult,
 } from './valuationFcffService.js';
+import { loadCanonicalDirectValuationAssumptions } from './valuationLegacySuccessorService.js';
+import {
+  computeExitMultipleTerminalValue,
+  computeGordonTerminalValue,
+  writeTerminalRow,
+} from './valuationTerminalService.js';
 import {
   computeWacc,
   loadWaccInputs,
   persistComputedWacc,
   type WaccBreakdown,
 } from './valuationWaccService.js';
-import { loadCanonicalDirectValuationAssumptions } from './valuationLegacySuccessorService.js';
-import { discountCashFlows, type DiscountCashFlowsResult } from './valuationDiscountService.js';
-import {
-  computeExitMultipleTerminalValue,
-  computeGordonTerminalValue,
-  writeTerminalRow,
-} from './valuationTerminalService.js';
-import { computeEquityValue, writeBridge } from './valuationBridgeService.js';
 
 // ---------------------------------------------------------------------------
 // finance_valuation_methods — find-or-create, result read/write

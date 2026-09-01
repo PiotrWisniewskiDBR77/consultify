@@ -46,9 +46,6 @@
  * primary, always-available path; Teresa's pipeline is an alternative, not
  * a replacement, and stays fully optional per-case.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -61,37 +58,44 @@ import {
   ShieldAlert,
   Sparkles,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
+import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { StatusChip } from '@/components/ui/primitives';
-import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
-import { useTranslation } from 'react-i18next';
-import { useAppStore } from '@/store/useAppStore';
-import { ROUTES } from '@/routes/routeConfig';
-
 import { EmptyState } from '@/components/shared/states';
-import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
-import type { ResultsVNextForbiddenDetail } from '../types';
-import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
-import { listKpiMeasurements, type KpiMeasurementDto } from '../kpiApi';
-import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
 import {
-  buildKpiRcaHandoffContext,
-  buildKpiRcaSuggestion,
-  buildKpiRcaTargetPayload,
-  kpiRcaConsequencePreview,
-} from './kpiTeresaRcaDraft';
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
+import { StatusChip } from '@/components/ui/primitives';
+import { ROUTES } from '@/routes/routeConfig';
+import { useAppStore } from '@/store/useAppStore';
+
+import { type KpiMeasurementDto, listKpiMeasurements } from '../kpiApi';
+import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
+import type { ResultsVNextForbiddenDetail } from '../types';
 import {
   acknowledgeDeviationCase,
   addCorrectiveAction,
   approvePlan,
   closeDeviationCase,
+  type CorrectiveActionDto,
   deescalateDeviationCase,
+  type DeviationCaseDto,
   deviationErrorDetail,
+  type EffectivenessVerificationDto,
+  type EffectivenessVerificationStatus,
   escalateDeviationCase,
   getDeviationCase,
   recordRecoveryObservation,
@@ -100,20 +104,22 @@ import {
   submitPlan,
   submitRootCause,
   updateCorrectiveAction,
-  type CorrectiveActionDto,
-  type DeviationCaseDto,
-  type EffectivenessVerificationDto,
-  type EffectivenessVerificationStatus,
 } from './kpiDeviationApi';
 import {
-  correctiveActionStatusLabel,
+  buildKpiRcaHandoffContext,
+  buildKpiRcaSuggestion,
+  buildKpiRcaTargetPayload,
+  kpiRcaConsequencePreview,
+} from './kpiTeresaRcaDraft';
+import {
   CORRECTIVE_ACTION_STATUS_TONE,
-  deviationCaseStatusLabel,
-  deviationSeverityLabel,
+  correctiveActionStatusLabel,
   DEVIATION_CASE_STATUS_TONE,
   DEVIATION_SEVERITY_TONE,
-  effectivenessVerificationStatusLabel,
+  deviationCaseStatusLabel,
+  deviationSeverityLabel,
   EFFECTIVENESS_VERIFICATION_STATUS_TONE,
+  effectivenessVerificationStatusLabel,
   escalatedOverlayLabel,
 } from './kpiToolMappers';
 
@@ -125,7 +131,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -267,7 +274,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
 
   const [verificationStart, setVerificationStart] = useState('');
   const [verificationEnd, setVerificationEnd] = useState('');
-  const [verificationOutcome, setVerificationOutcome] = useState<EffectivenessVerificationStatus>('effective');
+  const [verificationOutcome, setVerificationOutcome] =
+    useState<EffectivenessVerificationStatus>('effective');
   const [verificationRationale, setVerificationRationale] = useState('');
   const [verificationMeasurementIds, setVerificationMeasurementIds] = useState<string[]>([]);
 
@@ -313,7 +321,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="kpi-deviation-case-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="kpi-deviation-case-disabled"
+      >
         <EmptyState
           variant="new"
           icon={ShieldAlert}
@@ -332,14 +343,21 @@ export const KpiDeviationCaseSubview: React.FC = () => {
     return (
       <ResultsVNextForbiddenState
         forbidden={forbidden}
-        onBack={() => navigate(kpiId ? ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId) : ROUTES.RESULTS_KPI.ROOT)}
+        onBack={() =>
+          navigate(
+            kpiId ? ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId) : ROUTES.RESULTS_KPI.ROOT
+          )
+        }
       />
     );
   }
 
   if (loading || (!kase && !loadError)) {
     return (
-      <div className="h-full flex items-center justify-center" data-testid="kpi-deviation-case-loading">
+      <div
+        className="h-full flex items-center justify-center"
+        data-testid="kpi-deviation-case-loading"
+      >
         <div className="text-sm text-c-text-muted">{t('Ładowanie sprawy…', 'Loading case…')}</div>
       </div>
     );
@@ -347,7 +365,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
 
   if (loadError || !kase) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="kpi-deviation-case-error">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="kpi-deviation-case-error"
+      >
         <EmptyState
           variant="error"
           icon={AlertTriangle}
@@ -360,7 +381,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
     );
   }
 
-  const backToKpiTool = () => navigate(kpiId ? ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId) : ROUTES.RESULTS_KPI.ROOT);
+  const backToKpiTool = () =>
+    navigate(kpiId ? ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId) : ROUTES.RESULTS_KPI.ROOT);
 
   const isOpen = kase.status === 'open';
   const isAnalysis = kase.status === 'analysis_required';
@@ -398,12 +420,29 @@ export const KpiDeviationCaseSubview: React.FC = () => {
 
   const propertyRows: ArtifactPropertyRow[] = [
     { id: 'kpiId', label: t('KPI', 'KPI'), value: shortId(kase.kpiId) },
-    { id: 'severity', label: t('Dotkliwość', 'Severity'), value: deviationSeverityLabel(kase.severity, isPolish) },
+    {
+      id: 'severity',
+      label: t('Dotkliwość', 'Severity'),
+      value: deviationSeverityLabel(kase.severity, isPolish),
+    },
     { id: 'owner', label: t('Właściciel', 'Owner'), value: shortId(kase.ownerUserId) },
     { id: 'manager', label: t('Manager', 'Manager'), value: shortId(kase.managerUserId) },
-    { id: 'detected', label: t('Wykryto', 'Detected'), value: formatDateTime(kase.detectedAt, isPolish) },
-    { id: 'due', label: t('Termin reakcji', 'Response due'), value: formatDateTime(kase.responseDueAt, isPolish) },
-    { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kase.rowVersion), mono: true },
+    {
+      id: 'detected',
+      label: t('Wykryto', 'Detected'),
+      value: formatDateTime(kase.detectedAt, isPolish),
+    },
+    {
+      id: 'due',
+      label: t('Termin reakcji', 'Response due'),
+      value: formatDateTime(kase.responseDueAt, isPolish),
+    },
+    {
+      id: 'rowVersion',
+      label: t('Wersja (CAS)', 'Version (CAS)'),
+      value: String(kase.rowVersion),
+      mono: true,
+    },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
@@ -436,7 +475,9 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                             escalatedReason: escalateReason.trim() || null,
                           }),
                     (res) => setKase(res.case),
-                    kase.escalated ? t('Eskalacja cofnięta', 'De-escalated') : t('Sprawa eskalowana', 'Escalated')
+                    kase.escalated
+                      ? t('Eskalacja cofnięta', 'De-escalated')
+                      : t('Sprawa eskalowana', 'Escalated')
                   )
                 }
               >
@@ -452,7 +493,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               onClick={() =>
                 run(
                   () => reopenDeviationCase(kase.caseId, {}),
-                  (res) => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId ?? '')}/deviation-cases/${res.case.caseId}`),
+                  (res) =>
+                    navigate(
+                      `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId ?? '')}/deviation-cases/${res.case.caseId}`
+                    ),
                   t('Sprawa wznowiona', 'Case reopened')
                 )
               }
@@ -509,8 +553,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
     component: (
       <div className="space-y-4 pb-8">
         <div className="flex items-center gap-2 flex-wrap">
-          <StatusChip label={deviationCaseStatusLabel(kase.status, isPolish)} tone={DEVIATION_CASE_STATUS_TONE[kase.status]} />
-          <StatusChip label={deviationSeverityLabel(kase.severity, isPolish)} tone={DEVIATION_SEVERITY_TONE[kase.severity]} />
+          <StatusChip
+            label={deviationCaseStatusLabel(kase.status, isPolish)}
+            tone={DEVIATION_CASE_STATUS_TONE[kase.status]}
+          />
+          <StatusChip
+            label={deviationSeverityLabel(kase.severity, isPolish)}
+            tone={DEVIATION_SEVERITY_TONE[kase.severity]}
+          />
           {kase.escalated ? (
             <StatusChip label={escalatedOverlayLabel(isPolish)} tone="danger" />
           ) : null}
@@ -528,7 +578,12 @@ export const KpiDeviationCaseSubview: React.FC = () => {
         ) : null}
 
         {/* Phase 1 — detection + acknowledge */}
-        <PhaseCard index={1} title={t('Wykrycie i potwierdzenie', 'Detection & acknowledgement')} current={isOpen} done={!isOpen}>
+        <PhaseCard
+          index={1}
+          title={t('Wykrycie i potwierdzenie', 'Detection & acknowledgement')}
+          current={isOpen}
+          done={!isOpen}
+        >
           <p className="text-xs text-c-text-muted mb-3">
             {t(
               `Pomiar wywołujący: ${shortId(kase.triggerMeasurementId)} · wykryto ${formatDateTime(kase.detectedAt, isPolish)}`,
@@ -538,7 +593,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           <button
             type="button"
             disabled={busy || !isOpen}
-            title={!isOpen ? t('Dostępne tylko w stanie „Otwarta"', 'Only available while "Open"') : undefined}
+            title={
+              !isOpen
+                ? t('Dostępne tylko w stanie „Otwarta"', 'Only available while "Open"')
+                : undefined
+            }
             className={PRIMARY_BUTTON_CLASS}
             onClick={() =>
               run(
@@ -573,7 +632,9 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           ) : (
             <div className="space-y-3">
               <div>
-                <label className={LABEL_CLASS}>{t('Podsumowanie przyczyny', 'Root cause summary')}</label>
+                <label className={LABEL_CLASS}>
+                  {t('Podsumowanie przyczyny', 'Root cause summary')}
+                </label>
                 <textarea
                   value={rootCauseSummary}
                   onChange={(e) => setRootCauseSummary(e.target.value)}
@@ -594,7 +655,9 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>{t('Oczekiwana data odbudowy', 'Expected recovery date')}</label>
+                  <label className={LABEL_CLASS}>
+                    {t('Oczekiwana data odbudowy', 'Expected recovery date')}
+                  </label>
                   <input
                     type="date"
                     value={expectedRecoveryDate}
@@ -616,8 +679,17 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               </label>
               <button
                 type="button"
-                disabled={busy || !isAnalysis || !rootCauseSummary.trim() || !rootCauseCategory.trim()}
-                title={!isAnalysis ? t('Dostępne tylko w stanie „Wymaga analizy"', 'Only available while "Analysis required"') : undefined}
+                disabled={
+                  busy || !isAnalysis || !rootCauseSummary.trim() || !rootCauseCategory.trim()
+                }
+                title={
+                  !isAnalysis
+                    ? t(
+                        'Dostępne tylko w stanie „Wymaga analizy"',
+                        'Only available while "Analysis required"'
+                      )
+                    : undefined
+                }
                 className={PRIMARY_BUTTON_CLASS}
                 data-testid="kpi-deviation-submit-root-cause"
                 onClick={() =>
@@ -629,7 +701,9 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                         rootCauseCategory: rootCauseCategory.trim(),
                         recurrenceFlag,
                         expectedRecoveryDate: expectedRecoveryDate || null,
-                        expectedRecoveryValue: expectedRecoveryValue ? Number(expectedRecoveryValue) : null,
+                        expectedRecoveryValue: expectedRecoveryValue
+                          ? Number(expectedRecoveryValue)
+                          : null,
                       }),
                     (res) => setKase(res.case),
                     t('Analiza zapisana, przejście do planu', 'Analysis saved, moved to plan')
@@ -640,13 +714,18 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               </button>
               <button
                 type="button"
-                disabled={busy || !isAnalysis || !rootCauseSummary.trim() || !rootCauseCategory.trim()}
+                disabled={
+                  busy || !isAnalysis || !rootCauseSummary.trim() || !rootCauseCategory.trim()
+                }
                 title={
                   !isAnalysis
-                    ? t('Dostępne tylko w stanie „Wymaga analizy"', 'Only available while "Analysis required"')
+                    ? t(
+                        'Dostępne tylko w stanie „Wymaga analizy"',
+                        'Only available while "Analysis required"'
+                      )
                     : t(
                         'Wyślij DOKŁADNIE ten tekst przez zarządzaną ścieżkę Teresy (propozycja → zatwierdzenie → wykonanie → audyt)',
-                        'Route EXACTLY this text through Teresa\'s governed pipeline (propose → approve → execute → audit)'
+                        "Route EXACTLY this text through Teresa's governed pipeline (propose → approve → execute → audit)"
                       )
                 }
                 className={`${GHOST_BUTTON_CLASS} ml-2`}
@@ -657,7 +736,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                 }}
               >
                 <Sparkles size={14} />
-                {t('Poproś Teresę o zapis przez pipeline', 'Ask Teresa to route this through her pipeline')}
+                {t(
+                  'Poproś Teresę o zapis przez pipeline',
+                  'Ask Teresa to route this through her pipeline'
+                )}
               </button>
             </div>
           )}
@@ -685,9 +767,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                 <li key={a.actionId} className="rounded-lg border border-c-border-subtle p-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-c-text">{a.title}</span>
-                    <StatusChip label={correctiveActionStatusLabel(a.status, isPolish)} tone={CORRECTIVE_ACTION_STATUS_TONE[a.status]} />
+                    <StatusChip
+                      label={correctiveActionStatusLabel(a.status, isPolish)}
+                      tone={CORRECTIVE_ACTION_STATUS_TONE[a.status]}
+                    />
                   </div>
-                  {(isApproved || isExecuting) && a.status !== 'completed' && a.status !== 'cancelled' ? (
+                  {(isApproved || isExecuting) &&
+                  a.status !== 'completed' &&
+                  a.status !== 'cancelled' ? (
                     <div className="mt-2 flex items-center gap-2">
                       <select
                         className={`${FIELD_CLASS} h-7 text-xs w-auto`}
@@ -696,20 +783,28 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                         onChange={(e) => {
                           const nextStatus = e.target.value as CorrectiveActionDto['status'];
                           void run(
-                            () => updateCorrectiveAction(kase.caseId, a.actionId, { expectedVersion: a.rowVersion, status: nextStatus }),
+                            () =>
+                              updateCorrectiveAction(kase.caseId, a.actionId, {
+                                expectedVersion: a.rowVersion,
+                                status: nextStatus,
+                              }),
                             (res) => {
-                              setCorrectiveActions((prev) => prev.map((x) => (x.actionId === a.actionId ? res.action : x)));
+                              setCorrectiveActions((prev) =>
+                                prev.map((x) => (x.actionId === a.actionId ? res.action : x))
+                              );
                               if (res.caseAutoTransitionedToExecuting) void loadCase();
                             },
                             t('Działanie zaktualizowane', 'Action updated')
                           );
                         }}
                       >
-                        {(['planned', 'active', 'blocked', 'completed', 'cancelled'] as const).map((s) => (
-                          <option key={s} value={s}>
-                            {correctiveActionStatusLabel(s, isPolish)}
-                          </option>
-                        ))}
+                        {(['planned', 'active', 'blocked', 'completed', 'cancelled'] as const).map(
+                          (s) => (
+                            <option key={s} value={s}>
+                              {correctiveActionStatusLabel(s, isPolish)}
+                            </option>
+                          )
+                        )}
                       </select>
                     </div>
                   ) : null}
@@ -753,7 +848,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <button
               type="button"
               disabled={busy || !isPlanRequired || !actionTitle.trim() || !actionOwner.trim()}
-              title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
+              title={
+                !isPlanRequired
+                  ? t(
+                      'Dostępne tylko w stanie „Wymaga planu"',
+                      'Only available while "Plan required"'
+                    )
+                  : undefined
+              }
               className={GHOST_BUTTON_CLASS}
               data-testid="kpi-deviation-add-action"
               onClick={() =>
@@ -781,7 +883,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <button
               type="button"
               disabled={busy || !isPlanRequired}
-              title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
+              title={
+                !isPlanRequired
+                  ? t(
+                      'Dostępne tylko w stanie „Wymaga planu"',
+                      'Only available while "Plan required"'
+                    )
+                  : undefined
+              }
               className={PRIMARY_BUTTON_CLASS}
               data-testid="kpi-deviation-submit-plan"
               onClick={() =>
@@ -819,7 +928,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           <button
             type="button"
             disabled={busy || !isPlanSubmitted}
-            title={!isPlanSubmitted ? t('Dostępne tylko w stanie „Plan złożony"', 'Only available while "Plan submitted"') : undefined}
+            title={
+              !isPlanSubmitted
+                ? t(
+                    'Dostępne tylko w stanie „Plan złożony"',
+                    'Only available while "Plan submitted"'
+                  )
+                : undefined
+            }
             className={PRIMARY_BUTTON_CLASS}
             data-testid="kpi-deviation-approve-plan"
             onClick={() =>
@@ -865,7 +981,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <button
               type="button"
               disabled={busy || !isExecuting || !recoveryMeasurementId}
-              title={!isExecuting ? t('Dostępne tylko w stanie „W realizacji"', 'Only available while "Executing"') : undefined}
+              title={
+                !isExecuting
+                  ? t('Dostępne tylko w stanie „W realizacji"', 'Only available while "Executing"')
+                  : undefined
+              }
               className={GHOST_BUTTON_CLASS}
               onClick={() =>
                 run(
@@ -938,7 +1058,9 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             </div>
             <select
               value={verificationOutcome}
-              onChange={(e) => setVerificationOutcome(e.target.value as EffectivenessVerificationStatus)}
+              onChange={(e) =>
+                setVerificationOutcome(e.target.value as EffectivenessVerificationStatus)
+              }
               disabled={!isExecuting && !isRecoveryObserved}
               className={FIELD_CLASS}
               data-testid="kpi-deviation-verification-outcome"
@@ -957,10 +1079,15 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               className={TEXTAREA_CLASS}
             />
             <div className="space-y-1">
-              <span className="text-[11px] text-c-text-muted">{t('Powiązane pomiary (opcjonalnie)', 'Related measurements (optional)')}</span>
+              <span className="text-[11px] text-c-text-muted">
+                {t('Powiązane pomiary (opcjonalnie)', 'Related measurements (optional)')}
+              </span>
               <div className="flex flex-wrap gap-2">
                 {measurementOptions.map((m) => (
-                  <label key={m.id} className="flex items-center gap-1 text-[11px] text-c-text-secondary">
+                  <label
+                    key={m.id}
+                    className="flex items-center gap-1 text-[11px] text-c-text-secondary"
+                  >
                     <input
                       type="checkbox"
                       checked={verificationMeasurementIds.includes(m.id)}
@@ -979,10 +1106,18 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             </div>
             <button
               type="button"
-              disabled={busy || (!isExecuting && !isRecoveryObserved) || !verificationStart || !verificationEnd}
+              disabled={
+                busy ||
+                (!isExecuting && !isRecoveryObserved) ||
+                !verificationStart ||
+                !verificationEnd
+              }
               title={
                 !isExecuting && !isRecoveryObserved
-                  ? t('Dostępne w stanie „W realizacji" lub „Odbudowa zaobserwowana"', 'Only available while "Executing" or "Recovery observed"')
+                  ? t(
+                      'Dostępne w stanie „W realizacji" lub „Odbudowa zaobserwowana"',
+                      'Only available while "Executing" or "Recovery observed"'
+                    )
                   : undefined
               }
               className={PRIMARY_BUTTON_CLASS}
@@ -1012,7 +1147,12 @@ export const KpiDeviationCaseSubview: React.FC = () => {
         </PhaseCard>
 
         {/* Phase 7 — close / reopen */}
-        <PhaseCard index={7} title={t('Zamknięcie sprawy', 'Case closure')} current={isVerification} done={isClosed}>
+        <PhaseCard
+          index={7}
+          title={t('Zamknięcie sprawy', 'Case closure')}
+          current={isVerification}
+          done={isClosed}
+        >
           {isClosed ? (
             <p className="text-xs text-c-text-secondary">
               {t(
@@ -1031,7 +1171,14 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               <button
                 type="button"
                 disabled={busy || !isVerification}
-                title={!isVerification ? t('Dostępne tylko w stanie „Weryfikacja skuteczności"', 'Only available while "Effectiveness verification"') : undefined}
+                title={
+                  !isVerification
+                    ? t(
+                        'Dostępne tylko w stanie „Weryfikacja skuteczności"',
+                        'Only available while "Effectiveness verification"'
+                      )
+                    : undefined
+                }
                 className={PRIMARY_BUTTON_CLASS}
                 data-testid="kpi-deviation-close-case"
                 onClick={() =>
@@ -1061,7 +1208,12 @@ export const KpiDeviationCaseSubview: React.FC = () => {
         presentationMode="n"
         onPresentationModeChange={() => {}}
         showModeSwitcher={false}
-        rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel sprawy', 'Case panel')} />}
+        rightPanel={
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            ariaLabel={t('Panel sprawy', 'Case panel')}
+          />
+        }
       />
       {askTeresaRca && kase
         ? (() => {
@@ -1077,11 +1229,16 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                 open={askTeresaRca}
                 onClose={() => setAskTeresaRca(false)}
                 isPolish={isPolish}
-                title={t('Poproś Teresę o zapis analizy przyczyny', 'Ask Teresa to record the root cause analysis')}
+                title={t(
+                  'Poproś Teresę o zapis analizy przyczyny',
+                  'Ask Teresa to record the root cause analysis'
+                )}
                 targetModule="kpi"
                 sessionId={sessionId}
                 idempotencyKey={askTeresaRcaKey}
-                buildHandoffContext={() => buildKpiRcaHandoffContext({ kase, suggestion, sessionId })}
+                buildHandoffContext={() =>
+                  buildKpiRcaHandoffContext({ kase, suggestion, sessionId })
+                }
                 buildTargetPayload={() => buildKpiRcaTargetPayload({ kase, form, suggestion })}
                 renderProposedChange={() => (
                   <div className="space-y-2" data-testid="teresa-kpi-rca-draft-text">

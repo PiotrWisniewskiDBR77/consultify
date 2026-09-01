@@ -264,57 +264,169 @@ interface MockKpiDefinitionVersion {
 
 const MOCK_KPI_VERSIONS: Record<string, MockKpiDefinitionVersion> = {
   'ver-1': {
-    definitionVersionId: 'ver-1', kpiId: 'kpi-1', organizationId: 'org-dbr77-demo', versionNumber: 1,
-    name: 'OEE linii pakowania', description: 'Całkowita efektywność wyposażenia dla linii L3.', unit: '%',
-    targetGeometry: 'threshold_min', targetValue: 85, targetMin: null, targetMax: null,
-    warningLow: 75, warningHigh: null, criticalLow: 60, criticalHigh: null, binarySuccessValue: null, formulaText: null,
-    approvalStatus: 'approved', effectiveFrom: '2026-06-01T08:00:00Z', effectiveTo: null,
-    createdBy: 'user-piotr-demo', createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-01T09:00:00Z',
-    submittedBy: 'user-piotr-demo', submittedAt: '2026-06-01T08:30:00Z',
-    approvedBy: 'user-anna', approvedAt: '2026-06-01T09:00:00Z',
-    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+    definitionVersionId: 'ver-1',
+    kpiId: 'kpi-1',
+    organizationId: 'org-dbr77-demo',
+    versionNumber: 1,
+    name: 'OEE linii pakowania',
+    description: 'Całkowita efektywność wyposażenia dla linii L3.',
+    unit: '%',
+    targetGeometry: 'threshold_min',
+    targetValue: 85,
+    targetMin: null,
+    targetMax: null,
+    warningLow: 75,
+    warningHigh: null,
+    criticalLow: 60,
+    criticalHigh: null,
+    binarySuccessValue: null,
+    formulaText: null,
+    approvalStatus: 'approved',
+    effectiveFrom: '2026-06-01T08:00:00Z',
+    effectiveTo: null,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-06-01T08:00:00Z',
+    updatedAt: '2026-06-01T09:00:00Z',
+    submittedBy: 'user-piotr-demo',
+    submittedAt: '2026-06-01T08:30:00Z',
+    approvedBy: 'user-anna',
+    approvedAt: '2026-06-01T09:00:00Z',
+    rejectedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    rowVersion: 3,
   },
   'ver-2': {
-    definitionVersionId: 'ver-2', kpiId: 'kpi-2', organizationId: 'org-dbr77-demo', versionNumber: 1,
-    name: 'Pokrycie audytów dostawców', description: null, unit: '%',
-    targetGeometry: 'threshold_min', targetValue: 90, targetMin: null, targetMax: null,
-    warningLow: 75, warningHigh: null, criticalLow: null, criticalHigh: null, binarySuccessValue: null, formulaText: null,
-    approvalStatus: 'draft', effectiveFrom: null, effectiveTo: null,
-    createdBy: 'user-anna', createdAt: '2026-08-01T08:00:00Z', updatedAt: '2026-08-01T08:00:00Z',
-    submittedBy: null, submittedAt: null, approvedBy: null, approvedAt: null,
-    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+    definitionVersionId: 'ver-2',
+    kpiId: 'kpi-2',
+    organizationId: 'org-dbr77-demo',
+    versionNumber: 1,
+    name: 'Pokrycie audytów dostawców',
+    description: null,
+    unit: '%',
+    targetGeometry: 'threshold_min',
+    targetValue: 90,
+    targetMin: null,
+    targetMax: null,
+    warningLow: 75,
+    warningHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    binarySuccessValue: null,
+    formulaText: null,
+    approvalStatus: 'draft',
+    effectiveFrom: null,
+    effectiveTo: null,
+    createdBy: 'user-anna',
+    createdAt: '2026-08-01T08:00:00Z',
+    updatedAt: '2026-08-01T08:00:00Z',
+    submittedBy: null,
+    submittedAt: null,
+    approvedBy: null,
+    approvedAt: null,
+    rejectedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    rowVersion: 1,
   },
   'ver-3': {
-    definitionVersionId: 'ver-3', kpiId: 'kpi-3', organizationId: 'org-dbr77-demo', versionNumber: 1,
-    name: 'Redukcja kosztów pracy', description: null, unit: 'PLN',
-    targetGeometry: 'threshold_max', targetValue: 500000, targetMin: null, targetMax: null,
-    warningLow: null, warningHigh: 550000, criticalLow: null, criticalHigh: 600000, binarySuccessValue: null, formulaText: null,
-    approvalStatus: 'approved', effectiveFrom: '2026-05-12T08:00:00Z', effectiveTo: null,
-    createdBy: 'user-marek', createdAt: '2026-05-12T08:00:00Z', updatedAt: '2026-05-12T09:00:00Z',
-    submittedBy: 'user-marek', submittedAt: '2026-05-12T08:30:00Z',
-    approvedBy: 'user-piotr-demo', approvedAt: '2026-05-12T09:00:00Z',
-    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+    definitionVersionId: 'ver-3',
+    kpiId: 'kpi-3',
+    organizationId: 'org-dbr77-demo',
+    versionNumber: 1,
+    name: 'Redukcja kosztów pracy',
+    description: null,
+    unit: 'PLN',
+    targetGeometry: 'threshold_max',
+    targetValue: 500000,
+    targetMin: null,
+    targetMax: null,
+    warningLow: null,
+    warningHigh: 550000,
+    criticalLow: null,
+    criticalHigh: 600000,
+    binarySuccessValue: null,
+    formulaText: null,
+    approvalStatus: 'approved',
+    effectiveFrom: '2026-05-12T08:00:00Z',
+    effectiveTo: null,
+    createdBy: 'user-marek',
+    createdAt: '2026-05-12T08:00:00Z',
+    updatedAt: '2026-05-12T09:00:00Z',
+    submittedBy: 'user-marek',
+    submittedAt: '2026-05-12T08:30:00Z',
+    approvedBy: 'user-piotr-demo',
+    approvedAt: '2026-05-12T09:00:00Z',
+    rejectedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    rowVersion: 3,
   },
   'ver-4': {
-    definitionVersionId: 'ver-4', kpiId: 'kpi-4', organizationId: 'org-dbr77-demo', versionNumber: 1,
-    name: 'Cykl zamknięcia miesiąca', description: null, unit: 'dni',
-    targetGeometry: 'threshold_max', targetValue: 5, targetMin: null, targetMax: null,
-    warningLow: null, warningHigh: 7, criticalLow: null, criticalHigh: 10, binarySuccessValue: null, formulaText: null,
-    approvalStatus: 'approved', effectiveFrom: '2026-01-10T08:00:00Z', effectiveTo: null,
-    createdBy: 'user-piotr-demo', createdAt: '2026-01-10T08:00:00Z', updatedAt: '2026-01-10T09:00:00Z',
-    submittedBy: 'user-piotr-demo', submittedAt: '2026-01-10T08:30:00Z',
-    approvedBy: 'user-anna', approvedAt: '2026-01-10T09:00:00Z',
-    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+    definitionVersionId: 'ver-4',
+    kpiId: 'kpi-4',
+    organizationId: 'org-dbr77-demo',
+    versionNumber: 1,
+    name: 'Cykl zamknięcia miesiąca',
+    description: null,
+    unit: 'dni',
+    targetGeometry: 'threshold_max',
+    targetValue: 5,
+    targetMin: null,
+    targetMax: null,
+    warningLow: null,
+    warningHigh: 7,
+    criticalLow: null,
+    criticalHigh: 10,
+    binarySuccessValue: null,
+    formulaText: null,
+    approvalStatus: 'approved',
+    effectiveFrom: '2026-01-10T08:00:00Z',
+    effectiveTo: null,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-01-10T08:00:00Z',
+    updatedAt: '2026-01-10T09:00:00Z',
+    submittedBy: 'user-piotr-demo',
+    submittedAt: '2026-01-10T08:30:00Z',
+    approvedBy: 'user-anna',
+    approvedAt: '2026-01-10T09:00:00Z',
+    rejectedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    rowVersion: 3,
   },
   'ver-5': {
-    definitionVersionId: 'ver-5', kpiId: 'kpi-5', organizationId: 'org-dbr77-demo', versionNumber: 1,
-    name: 'Zgłoszenia do zatwierdzenia', description: null, unit: 'szt.',
-    targetGeometry: 'exact', targetValue: 0, targetMin: null, targetMax: null,
-    warningLow: 0, warningHigh: 2, criticalLow: null, criticalHigh: 5, binarySuccessValue: null, formulaText: null,
-    approvalStatus: 'submitted', effectiveFrom: null, effectiveTo: null,
-    createdBy: 'user-anna', createdAt: '2026-08-06T08:00:00Z', updatedAt: '2026-08-06T08:00:00Z',
-    submittedBy: 'user-anna', submittedAt: '2026-08-06T08:00:00Z',
-    approvedBy: null, approvedAt: null, rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+    definitionVersionId: 'ver-5',
+    kpiId: 'kpi-5',
+    organizationId: 'org-dbr77-demo',
+    versionNumber: 1,
+    name: 'Zgłoszenia do zatwierdzenia',
+    description: null,
+    unit: 'szt.',
+    targetGeometry: 'exact',
+    targetValue: 0,
+    targetMin: null,
+    targetMax: null,
+    warningLow: 0,
+    warningHigh: 2,
+    criticalLow: null,
+    criticalHigh: 5,
+    binarySuccessValue: null,
+    formulaText: null,
+    approvalStatus: 'submitted',
+    effectiveFrom: null,
+    effectiveTo: null,
+    createdBy: 'user-anna',
+    createdAt: '2026-08-06T08:00:00Z',
+    updatedAt: '2026-08-06T08:00:00Z',
+    submittedBy: 'user-anna',
+    submittedAt: '2026-08-06T08:00:00Z',
+    approvedBy: null,
+    approvedAt: null,
+    rejectedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    rowVersion: 1,
   },
 };
 
@@ -439,7 +551,8 @@ const MOCK_MEASUREMENTS: Record<string, MockMeasurement[]> = {
       performanceStatus: 'critical',
       dataQualityStatus: 'disputed',
       correctionOfMeasurementId: 'meas-1d',
-      correctionReason: 'Zero wygląda jak błąd integracji ERP, nie realny wynik — do wyjaśnienia z IT.',
+      correctionReason:
+        'Zero wygląda jak błąd integracji ERP, nie realny wynik — do wyjaśnienia z IT.',
       source: 'connector-erp',
       evidenceRefs: [],
       notes: null,
@@ -517,12 +630,14 @@ Api.get = (async (url: string) => {
       throw err;
     }
     if (measState === 'loading') return new Promise(() => {}); // never resolves
-    const includeSuperseded = new URLSearchParams(queryPart ?? '').get('includeSuperseded') === 'true';
+    const includeSuperseded =
+      new URLSearchParams(queryPart ?? '').get('includeSuperseded') === 'true';
     const all = measState === 'empty' ? [] : (MOCK_MEASUREMENTS[kpiId ?? ''] ?? []);
     const rows = includeSuperseded ? all : filterCurrent(all);
     // Mirrors the real repository's ORDER BY period_start DESC, recorded_at DESC.
     const sorted = [...rows].sort(
-      (a, b) => b.periodStart.localeCompare(a.periodStart) || b.recordedAt.localeCompare(a.recordedAt)
+      (a, b) =>
+        b.periodStart.localeCompare(a.periodStart) || b.recordedAt.localeCompare(a.recordedAt)
     );
     return { measurements: sorted };
   }
@@ -662,7 +777,13 @@ Api.post = (async (url: string, data: any) => {
     MOCK_KPIS.unshift(kpi);
     MOCK_KPI_VERSIONS[versionId] = version;
     MOCK_MEASUREMENTS[kpiId] = [];
-    return { outcome: 'applied', eventId: `evt-${kpiId}`, resultingVersion: 1, kpi, definitionVersion: versionToDto(version) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${kpiId}`,
+      resultingVersion: 1,
+      kpi,
+      definitionVersion: versionToDto(version),
+    };
   }
 
   // RN-G5 — POST /vnext/results/kpi/:kpiId/submit (submitKpiDefinition).
@@ -670,22 +791,32 @@ Api.post = (async (url: string, data: any) => {
   if (submitMatch) {
     const [, kpiId] = submitMatch;
     const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
-    const version = kpi?.currentDefinitionVersionId ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId] : undefined;
+    const version = kpi?.currentDefinitionVersionId
+      ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId]
+      : undefined;
     if (!kpi || !version) {
       const err: any = new Error('KPI not found');
       err.status = 404;
       throw err;
     }
     if (version.approvalStatus !== 'draft') {
-      const err: any = new Error(`Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be submitted`);
+      const err: any = new Error(
+        `Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be submitted`
+      );
       err.status = 409;
       err.data = { code: 'NOT_A_DRAFT' };
       throw err;
     }
     if (data.expectedVersion !== version.rowVersion) {
-      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      const err: any = new Error(
+        `Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`
+      );
       err.status = 409;
-      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      err.data = {
+        code: 'VERSION_CONFLICT',
+        currentVersion: version.rowVersion,
+        expectedVersion: data.expectedVersion,
+      };
       throw err;
     }
     version.approvalStatus = 'submitted';
@@ -695,13 +826,20 @@ Api.post = (async (url: string, data: any) => {
     version.updatedAt = version.submittedAt;
     if (kpi.status === 'draft') kpi.status = 'pending_approval';
     kpi.updatedAt = version.updatedAt;
-    return { outcome: 'applied', eventId: `evt-${version.definitionVersionId}-submit`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${version.definitionVersionId}-submit`,
+      resultingVersion: version.rowVersion,
+      definitionVersion: versionToDto(version),
+    };
   }
 
   // RN-G5 — POST .../definition-versions/:versionId/approve — self-approval
   // denial FIRST, before the state-transition check, mirroring
   // `approveDefinitionVersion`'s own doc comment.
-  const approveMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/approve$/);
+  const approveMatch = url.match(
+    /\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/approve$/
+  );
   if (approveMatch) {
     const [, kpiId, versionId] = approveMatch;
     const version = MOCK_KPI_VERSIONS[versionId];
@@ -712,27 +850,49 @@ Api.post = (async (url: string, data: any) => {
     }
     const actor = currentActorId();
     if (version.submittedBy === actor) {
-      const err: any = new Error(`User ${actor} may not approve definition version ${versionId}: matches its own submitted_by`);
+      const err: any = new Error(
+        `User ${actor} may not approve definition version ${versionId}: matches its own submitted_by`
+      );
       err.status = 403;
-      err.data = { code: 'SELF_APPROVAL_DENIED', definitionVersionId: versionId, approverId: actor, reasonField: 'submitted_by' };
+      err.data = {
+        code: 'SELF_APPROVAL_DENIED',
+        definitionVersionId: versionId,
+        approverId: actor,
+        reasonField: 'submitted_by',
+      };
       throw err;
     }
     if (version.createdBy === actor) {
-      const err: any = new Error(`User ${actor} may not approve definition version ${versionId}: matches its own created_by`);
+      const err: any = new Error(
+        `User ${actor} may not approve definition version ${versionId}: matches its own created_by`
+      );
       err.status = 403;
-      err.data = { code: 'SELF_APPROVAL_DENIED', definitionVersionId: versionId, approverId: actor, reasonField: 'created_by' };
+      err.data = {
+        code: 'SELF_APPROVAL_DENIED',
+        definitionVersionId: versionId,
+        approverId: actor,
+        reasonField: 'created_by',
+      };
       throw err;
     }
     if (version.approvalStatus !== 'submitted') {
-      const err: any = new Error(`Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be approved`);
+      const err: any = new Error(
+        `Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be approved`
+      );
       err.status = 409;
       err.data = { code: 'NOT_SUBMITTED' };
       throw err;
     }
     if (data.expectedVersion !== version.rowVersion) {
-      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      const err: any = new Error(
+        `Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`
+      );
       err.status = 409;
-      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      err.data = {
+        code: 'VERSION_CONFLICT',
+        currentVersion: version.rowVersion,
+        expectedVersion: data.expectedVersion,
+      };
       throw err;
     }
     version.approvalStatus = 'approved';
@@ -741,7 +901,12 @@ Api.post = (async (url: string, data: any) => {
     version.effectiveFrom = version.effectiveFrom ?? version.approvedAt;
     version.rowVersion += 1;
     version.updatedAt = version.approvedAt;
-    return { outcome: 'applied', eventId: `evt-${versionId}-approve`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${versionId}-approve`,
+      resultingVersion: version.rowVersion,
+      definitionVersion: versionToDto(version),
+    };
   }
 
   // RN_G6_P0A (2026-08-12) — POST .../definition-versions/:versionId/revise
@@ -751,7 +916,9 @@ Api.post = (async (url: string, data: any) => {
   // mutated, and a NEW version (versionNumber = MAX + 1 for this kpiId) is
   // created as 'draft' — same "fresh mock id, push into MOCK_KPI_VERSIONS,
   // re-point currentDefinitionVersionId" shape the create mock above uses.
-  const reviseMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/revise$/);
+  const reviseMatch = url.match(
+    /\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/revise$/
+  );
   if (reviseMatch) {
     const [, kpiId, versionId] = reviseMatch;
     const source = MOCK_KPI_VERSIONS[versionId];
@@ -762,27 +929,39 @@ Api.post = (async (url: string, data: any) => {
       throw err;
     }
     if (source.approvalStatus === 'approved') {
-      const err: any = new Error(`Definition version ${versionId} is "approved" — amending an approved definition is a separate flow, out of scope for reviseDefinition`);
+      const err: any = new Error(
+        `Definition version ${versionId} is "approved" — amending an approved definition is a separate flow, out of scope for reviseDefinition`
+      );
       err.status = 409;
       err.data = { code: 'CANNOT_REVISE_APPROVED' };
       throw err;
     }
     if (source.approvalStatus === 'draft') {
-      const err: any = new Error(`Definition version ${versionId} is already "draft" — nothing to revise, use editDraft instead`);
+      const err: any = new Error(
+        `Definition version ${versionId} is already "draft" — nothing to revise, use editDraft instead`
+      );
       err.status = 409;
       err.data = { code: 'CANNOT_REVISE_DRAFT' };
       throw err;
     }
     if (source.approvalStatus === 'submitted') {
-      const err: any = new Error(`Definition version ${versionId} is "submitted" — awaiting a reviewer decision before it can be revised`);
+      const err: any = new Error(
+        `Definition version ${versionId} is "submitted" — awaiting a reviewer decision before it can be revised`
+      );
       err.status = 409;
       err.data = { code: 'CANNOT_REVISE_SUBMITTED' };
       throw err;
     }
     if (data.expectedVersion !== source.rowVersion) {
-      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${source.rowVersion}`);
+      const err: any = new Error(
+        `Version conflict: expected ${data.expectedVersion}, current ${source.rowVersion}`
+      );
       err.status = 409;
-      err.data = { code: 'STALE_VERSION', currentVersion: source.rowVersion, expectedVersion: data.expectedVersion };
+      err.data = {
+        code: 'STALE_VERSION',
+        currentVersion: source.rowVersion,
+        expectedVersion: data.expectedVersion,
+      };
       throw err;
     }
     const newVersionId = nextMockVersionId();
@@ -815,11 +994,18 @@ Api.post = (async (url: string, data: any) => {
     MOCK_KPI_VERSIONS[newVersionId] = revised;
     kpi.currentDefinitionVersionId = newVersionId;
     kpi.updatedAt = now;
-    return { outcome: 'applied', eventId: `evt-${newVersionId}-revise`, resultingVersion: revised.rowVersion, definitionVersion: versionToDto(revised) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${newVersionId}-revise`,
+      resultingVersion: revised.rowVersion,
+      definitionVersion: versionToDto(revised),
+    };
   }
 
   // RN-G5 — POST .../definition-versions/:versionId/reject.
-  const rejectMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/reject$/);
+  const rejectMatch = url.match(
+    /\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/reject$/
+  );
   if (rejectMatch) {
     const [, kpiId, versionId] = rejectMatch;
     const version = MOCK_KPI_VERSIONS[versionId];
@@ -830,15 +1016,23 @@ Api.post = (async (url: string, data: any) => {
       throw err;
     }
     if (version.approvalStatus !== 'submitted') {
-      const err: any = new Error(`Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be rejected`);
+      const err: any = new Error(
+        `Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be rejected`
+      );
       err.status = 409;
       err.data = { code: 'NOT_SUBMITTED' };
       throw err;
     }
     if (data.expectedVersion !== version.rowVersion) {
-      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      const err: any = new Error(
+        `Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`
+      );
       err.status = 409;
-      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      err.data = {
+        code: 'VERSION_CONFLICT',
+        currentVersion: version.rowVersion,
+        expectedVersion: data.expectedVersion,
+      };
       throw err;
     }
     version.approvalStatus = 'rejected';
@@ -849,7 +1043,12 @@ Api.post = (async (url: string, data: any) => {
     version.updatedAt = version.rejectedAt;
     if (kpi.status === 'pending_approval') kpi.status = 'draft';
     kpi.updatedAt = version.updatedAt;
-    return { outcome: 'applied', eventId: `evt-${versionId}-reject`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${versionId}-reject`,
+      resultingVersion: version.rowVersion,
+      definitionVersion: versionToDto(version),
+    };
   }
 
   const lifecycleMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/(activate|suspend|archive)$/);
@@ -857,7 +1056,8 @@ Api.post = (async (url: string, data: any) => {
     const [, kpiId, action] = lifecycleMatch;
     const target = MOCK_KPIS.find((k) => k.kpiId === kpiId);
     if (target) {
-      target.status = action === 'activate' ? 'active' : action === 'suspend' ? 'suspended' : 'archived';
+      target.status =
+        action === 'activate' ? 'active' : action === 'suspend' ? 'suspended' : 'archived';
       target.rowVersion += 1;
       target.updatedAt = new Date().toISOString();
     }
@@ -878,7 +1078,9 @@ Api.post = (async (url: string, data: any) => {
       throw err;
     }
     if (!kpi.currentDefinitionVersionId) {
-      const err: any = new Error(`KPI ${kpiId} has no current definition version to measure against`);
+      const err: any = new Error(
+        `KPI ${kpiId} has no current definition version to measure against`
+      );
       err.status = 409;
       err.data = { code: 'NO_CURRENT_VERSION' };
       throw err;
@@ -906,7 +1108,12 @@ Api.post = (async (url: string, data: any) => {
       recordedAt: new Date().toISOString(),
     };
     list.push(created);
-    return { outcome: 'applied', eventId: `evt-${created.measurementId}`, resultingVersion: 1, measurement: created };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${created.measurementId}`,
+      resultingVersion: 1,
+      measurement: created,
+    };
   }
 
   const supersedeMatch = url.match(
@@ -917,7 +1124,9 @@ Api.post = (async (url: string, data: any) => {
     const list = MOCK_MEASUREMENTS[kpiId] ?? [];
     const original = list.find((m) => m.measurementId === measurementId);
     if (!original) {
-      const err: any = new Error(`Measurement ${measurementId} not found in organization org-dbr77-demo`);
+      const err: any = new Error(
+        `Measurement ${measurementId} not found in organization org-dbr77-demo`
+      );
       err.status = 404;
       err.data = { code: 'MEASUREMENT_NOT_FOUND' };
       throw err;
@@ -929,8 +1138,18 @@ Api.post = (async (url: string, data: any) => {
       recordedBy: 'user-piotr-demo',
       recordedAt: new Date().toISOString(),
       actualValue: kind === 'corrections' ? (data.actualValue ?? null) : original.actualValue,
-      correctionReason: kind === 'corrections' ? data.correctionReason : kind === 'dispute' ? data.disputeReason : (data.notes ?? null),
-      dataQualityStatus: kind === 'verify' ? 'verified' : kind === 'dispute' ? 'disputed' : original.dataQualityStatus,
+      correctionReason:
+        kind === 'corrections'
+          ? data.correctionReason
+          : kind === 'dispute'
+            ? data.disputeReason
+            : (data.notes ?? null),
+      dataQualityStatus:
+        kind === 'verify'
+          ? 'verified'
+          : kind === 'dispute'
+            ? 'disputed'
+            : original.dataQualityStatus,
     };
     list.push(superseding);
     return {
@@ -955,22 +1174,32 @@ Api.put = (async (url: string, data: any) => {
   if (draftMatch) {
     const [, kpiId] = draftMatch;
     const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
-    const version = kpi?.currentDefinitionVersionId ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId] : undefined;
+    const version = kpi?.currentDefinitionVersionId
+      ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId]
+      : undefined;
     if (!kpi || !version) {
       const err: any = new Error('KPI not found');
       err.status = 404;
       throw err;
     }
     if (version.approvalStatus !== 'draft') {
-      const err: any = new Error(`Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be edited`);
+      const err: any = new Error(
+        `Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be edited`
+      );
       err.status = 409;
       err.data = { code: 'NOT_A_DRAFT' };
       throw err;
     }
     if (data.expectedVersion !== version.rowVersion) {
-      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      const err: any = new Error(
+        `Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`
+      );
       err.status = 409;
-      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      err.data = {
+        code: 'VERSION_CONFLICT',
+        currentVersion: version.rowVersion,
+        expectedVersion: data.expectedVersion,
+      };
       throw err;
     }
     if (data.name !== undefined) version.name = data.name;
@@ -988,7 +1217,12 @@ Api.put = (async (url: string, data: any) => {
     if (data.formulaText !== undefined) version.formulaText = data.formulaText;
     version.rowVersion += 1;
     version.updatedAt = new Date().toISOString();
-    return { outcome: 'applied', eventId: `evt-${version.definitionVersionId}-edit`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${version.definitionVersionId}-edit`,
+      resultingVersion: version.rowVersion,
+      definitionVersion: versionToDto(version),
+    };
   }
   return realPut(url, data);
 }) as typeof Api.put;

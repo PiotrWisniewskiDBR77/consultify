@@ -3,8 +3,8 @@ import crypto from 'node:crypto';
 import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 import { EncryptionService } from './encryption/EncryptionService.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 
 export type PartnerPayoutMethod = 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
 

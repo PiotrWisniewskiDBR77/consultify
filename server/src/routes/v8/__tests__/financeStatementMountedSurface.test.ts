@@ -101,9 +101,7 @@ describe('mounted Finance Statement surface before the global V8 gate', () => {
         verifyToken: (_req, res) => res.status(401).json({ code: 'UNAUTHENTICATED' }),
       })
     );
-    await request(app)
-      .get('/api/v8/finance/statements')
-      .expect(401, { code: 'UNAUTHENTICATED' });
+    await request(app).get('/api/v8/finance/statements').expect(401, { code: 'UNAUTHENTICATED' });
   });
 
   it('uses the real Finance membership/editor wall before handlers while V8 gates are disabled', async () => {

@@ -166,7 +166,11 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
             sourceTitle,
             budgetConfig
           )
-        : await createOutputFromSession(session.id, targetType as ConversionTargetType, sourceTitle);
+        : await createOutputFromSession(
+            session.id,
+            targetType as ConversionTargetType,
+            sourceTitle
+          );
       if (result.success) {
         if (sourceType === 'notebook') {
           await Api.appendNotebookConvertedOutput(sourceId, {

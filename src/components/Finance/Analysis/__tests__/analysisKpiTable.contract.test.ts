@@ -8,12 +8,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  financeValueDisplayReasonLabel,
-  formatFinanceValueForDisplay,
   type AnalysisKpiValueDto,
+  financeValueDisplayReasonLabel,
   type FinanceValueStatus,
+  formatFinanceValueForDisplay,
 } from '../../../../services/api/financeV2.types';
 import {
+  type AnalysisKpiTableRowInput,
   buildAnalysisKpiColumns,
   computeYoyDelta,
   formatBenchmarkText,
@@ -21,14 +22,26 @@ import {
   groupAnalysisKpiValuesByKpi,
   selectExportColumns,
   toAnalysisKpiTableRow,
-  type AnalysisKpiTableRowInput,
 } from '../analysisKpiTable.contract';
 
-function value(status: AnalysisKpiValueDto['value']['status'], valueDecimal: string | null): AnalysisKpiValueDto['value'] {
-  return { status, valueDecimal, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' };
+function value(
+  status: AnalysisKpiValueDto['value']['status'],
+  valueDecimal: string | null
+): AnalysisKpiValueDto['value'] {
+  return {
+    status,
+    valueDecimal,
+    nativeCurrency: 'PLN',
+    presentationCurrency: 'PLN',
+    unit: 'UNITS',
+    multiplier: '1',
+  };
 }
 
-function kpiValue(overrides: Partial<AnalysisKpiValueDto> & Pick<AnalysisKpiValueDto, 'kpiValueId' | 'periodId' | 'value'>): AnalysisKpiValueDto {
+function kpiValue(
+  overrides: Partial<AnalysisKpiValueDto> &
+    Pick<AnalysisKpiValueDto, 'kpiValueId' | 'periodId' | 'value'>
+): AnalysisKpiValueDto {
   return {
     kpiCatalogId: 'cat-1',
     kpiCode: 'GROSS_MARGIN_PCT',
@@ -50,8 +63,16 @@ function kpiValue(overrides: Partial<AnalysisKpiValueDto> & Pick<AnalysisKpiValu
 
 describe('reużyte z Pakietu C — formatFinanceValueForDisplay/financeValueDisplayReasonLabel rozróżniają WSZYSTKIE PIĘĆ stanów (korekta koordynatora 2026-08-12: PRESENT_ZERO·PRESENT_NONZERO·MISSING·NA·NOT_APPLICABLE, nie trzy)', () => {
   it('dwa stany OBECNE renderują liczbę (0 dla PRESENT_ZERO, prawdziwą wartość dla PRESENT_NONZERO) — nigdy glif braku', () => {
-    expect(formatFinanceValueForDisplay(value('PRESENT_ZERO', '0'))).toEqual({ text: '0', isMissingLikeGlyph: false, status: 'PRESENT_ZERO' });
-    expect(formatFinanceValueForDisplay(value('PRESENT_NONZERO', '42'))).toEqual({ text: '42', isMissingLikeGlyph: false, status: 'PRESENT_NONZERO' });
+    expect(formatFinanceValueForDisplay(value('PRESENT_ZERO', '0'))).toEqual({
+      text: '0',
+      isMissingLikeGlyph: false,
+      status: 'PRESENT_ZERO',
+    });
+    expect(formatFinanceValueForDisplay(value('PRESENT_NONZERO', '42'))).toEqual({
+      text: '42',
+      isMissingLikeGlyph: false,
+      status: 'PRESENT_NONZERO',
+    });
   });
 
   it('trzy stany BRAKU dzielą ten sam glif „—" (celowo, brief: rozróżnienie jest zadaniem etykiety obok, nie glifu), ale KAŻDY niesie WŁASNY status i WŁASNY, różny tekst powodu', () => {
@@ -59,9 +80,15 @@ describe('reużyte z Pakietu C — formatFinanceValueForDisplay/financeValueDisp
     const na = formatFinanceValueForDisplay(value('NA', null));
     const notApplicable = formatFinanceValueForDisplay(value('NOT_APPLICABLE', null));
     expect([missing.text, na.text, notApplicable.text]).toEqual(['—', '—', '—']);
-    expect([missing.status, na.status, notApplicable.status]).toEqual(['MISSING', 'NA', 'NOT_APPLICABLE']);
+    expect([missing.status, na.status, notApplicable.status]).toEqual([
+      'MISSING',
+      'NA',
+      'NOT_APPLICABLE',
+    ]);
 
-    const reasons = [missing, na, notApplicable].map((d) => financeValueDisplayReasonLabel(d.status));
+    const reasons = [missing, na, notApplicable].map((d) =>
+      financeValueDisplayReasonLabel(d.status)
+    );
     // KONTROLA NEGATYWNA: trzy RÓŻNE teksty powodu — gdyby dwa się pokrywały, użytkownik nie
     // odróżniłby "brak danych źródłowych" od "nie dotyczy tego podmiotu" mimo identycznego glifu.
     expect(new Set(reasons).size).toBe(3);
@@ -69,10 +96,18 @@ describe('reużyte z Pakietu C — formatFinanceValueForDisplay/financeValueDisp
   });
 
   it('dowód wyczerpania: dokładnie 5 statusów zdefiniowanych w typie, każdy przetestowany powyżej', () => {
-    const allStatuses: FinanceValueStatus[] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const allStatuses: FinanceValueStatus[] = [
+      'PRESENT_ZERO',
+      'PRESENT_NONZERO',
+      'MISSING',
+      'NA',
+      'NOT_APPLICABLE',
+    ];
     expect(allStatuses).toHaveLength(5);
     for (const status of allStatuses) {
-      const display = formatFinanceValueForDisplay(value(status, status.startsWith('PRESENT') ? '1' : null));
+      const display = formatFinanceValueForDisplay(
+        value(status, status.startsWith('PRESENT') ? '1' : null)
+      );
       expect(display.status).toBe(status);
     }
   });
@@ -80,7 +115,10 @@ describe('reużyte z Pakietu C — formatFinanceValueForDisplay/financeValueDisp
 
 describe('computeYoyDelta', () => {
   it('oba obecne: 120 vs 100 ⇒ +20 / +20%', () => {
-    const result = computeYoyDelta(value('PRESENT_NONZERO', '120'), value('PRESENT_NONZERO', '100'));
+    const result = computeYoyDelta(
+      value('PRESENT_NONZERO', '120'),
+      value('PRESENT_NONZERO', '100')
+    );
     expect(result.status).toBe('COMPUTED');
     expect(result.absoluteDelta).toBe(20);
     expect(result.percentDelta).toBeCloseTo(20, 10);
@@ -122,7 +160,10 @@ describe('computeYoyDelta', () => {
     expect(floatArtifact).toBe(0.30000000000000004);
     expect(floatArtifact).not.toBe(0.3);
 
-    const result = computeYoyDelta(value('PRESENT_NONZERO', '0.2'), value('PRESENT_NONZERO', '-0.1'));
+    const result = computeYoyDelta(
+      value('PRESENT_NONZERO', '0.2'),
+      value('PRESENT_NONZERO', '-0.1')
+    );
     expect(result.status).toBe('COMPUTED');
     expect(result.absoluteDelta).toBe(0.3);
     expect(result.absoluteDelta).not.toBe(0.30000000000000004);
@@ -143,9 +184,21 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
 
   it('scala trzy okresy tego samego KPI w JEDNĄ grupę z 3 kolumnami okresów wypełnionymi', () => {
     const values: AnalysisKpiValueDto[] = [
-      kpiValue({ kpiValueId: 'kv-2024', periodId: 'p-2024', value: value('PRESENT_NONZERO', '0.30') }),
-      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
-      kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.40') }),
+      kpiValue({
+        kpiValueId: 'kv-2024',
+        periodId: 'p-2024',
+        value: value('PRESENT_NONZERO', '0.30'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-2025',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '0.35'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-2026',
+        periodId: 'p-2026',
+        value: value('PRESENT_NONZERO', '0.40'),
+      }),
     ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
     expect(groups).toHaveLength(1);
@@ -158,9 +211,21 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
   it('"bieżąca" wartość i priorPeriodValue to najnowszy okres Z DANYMI i ten bezpośrednio przed nim, NIE ostatni element tablicy wejściowej', () => {
     // Celowo w kolejności NIE-chronologicznej (dowód, że grupowanie sortuje wg periodColumnIdsChronological, nie wg kolejności sieci)
     const values: AnalysisKpiValueDto[] = [
-      kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.40') }),
-      kpiValue({ kpiValueId: 'kv-2024', periodId: 'p-2024', value: value('PRESENT_NONZERO', '0.30') }),
-      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
+      kpiValue({
+        kpiValueId: 'kv-2026',
+        periodId: 'p-2026',
+        value: value('PRESENT_NONZERO', '0.40'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-2024',
+        periodId: 'p-2024',
+        value: value('PRESENT_NONZERO', '0.30'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-2025',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '0.35'),
+      }),
     ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
     expect(groups[0].latestValue.kpiValueId).toBe('kv-2026');
@@ -169,7 +234,11 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
 
   it('KONTROLA NEGATYWNA: okres bez wiersza compute ⇒ `undefined` w periodValuesByColumnId, RÓŻNE od MISSING (który JEST wierszem)', () => {
     const values: AnalysisKpiValueDto[] = [
-      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
+      kpiValue({
+        kpiValueId: 'kv-2025',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '0.35'),
+      }),
     ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
     expect(groups[0].periodValuesByColumnId['p-2024']).toBeUndefined();
@@ -179,8 +248,18 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
 
   it('dwa różne KPI ⇒ dwie grupy, POSORTOWANE po kpiCode (determinizm, niezależnie od kolejności wejścia)', () => {
     const values: AnalysisKpiValueDto[] = [
-      kpiValue({ kpiValueId: 'kv-b', kpiCode: 'NET_MARGIN_PCT', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.1') }),
-      kpiValue({ kpiValueId: 'kv-a', kpiCode: 'GROSS_MARGIN_PCT', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.4') }),
+      kpiValue({
+        kpiValueId: 'kv-b',
+        kpiCode: 'NET_MARGIN_PCT',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '0.1'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-a',
+        kpiCode: 'GROSS_MARGIN_PCT',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '0.4'),
+      }),
     ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
     expect(groups.map((g) => g.kpiCode)).toEqual(['GROSS_MARGIN_PCT', 'NET_MARGIN_PCT']);
@@ -188,9 +267,24 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
 
   it('kolejność wejścia odwrócona daje IDENTYCZNĄ kolejność grup wyjściowych (dowód determinizmu grupowania)', () => {
     const forward: AnalysisKpiValueDto[] = [
-      kpiValue({ kpiValueId: 'kv-a', kpiCode: 'A_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '1') }),
-      kpiValue({ kpiValueId: 'kv-b', kpiCode: 'B_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '2') }),
-      kpiValue({ kpiValueId: 'kv-c', kpiCode: 'C_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '3') }),
+      kpiValue({
+        kpiValueId: 'kv-a',
+        kpiCode: 'A_KPI',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '1'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-b',
+        kpiCode: 'B_KPI',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '2'),
+      }),
+      kpiValue({
+        kpiValueId: 'kv-c',
+        kpiCode: 'C_KPI',
+        periodId: 'p-2025',
+        value: value('PRESENT_NONZERO', '3'),
+      }),
     ];
     const reversed = [...forward].reverse();
     const groupsForward = groupAnalysisKpiValuesByKpi(forward, periods).map((g) => g.kpiCode);
@@ -202,15 +296,29 @@ describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', 
 describe('toAnalysisKpiTableRow', () => {
   const periods = ['p-2025', 'p-2026'];
   const baseValues: AnalysisKpiValueDto[] = [
-    kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35'), interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
-    kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.4'), interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
+    kpiValue({
+      kpiValueId: 'kv-2025',
+      periodId: 'p-2025',
+      value: value('PRESENT_NONZERO', '0.35'),
+      interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.',
+    }),
+    kpiValue({
+      kpiValueId: 'kv-2026',
+      periodId: 'p-2026',
+      value: value('PRESENT_NONZERO', '0.4'),
+      interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.',
+    }),
   ];
 
   it('spłaszcza grupę do TableRow z id=kpiCode, poprawnym formatowaniem wartości i WYPEŁNIONYMI kolumnami okresów', () => {
     const groups = groupAnalysisKpiValuesByKpi(baseValues, periods);
     const input: AnalysisKpiTableRowInput = {
       group: groups[0],
-      formulaInfo: { formulaDisplay: '(Przychody − COGS) / Przychody', interpretationGeneral: 'Wyższa = lepiej', downstreamUses: ['Model bazowy'] },
+      formulaInfo: {
+        formulaDisplay: '(Przychody − COGS) / Przychody',
+        interpretationGeneral: 'Wyższa = lepiej',
+        downstreamUses: ['Model bazowy'],
+      },
       includedInReport: true,
       markedAsModelInput: false,
     };
@@ -225,7 +333,9 @@ describe('toAnalysisKpiTableRow', () => {
   });
 
   it('KONTROLA NEGATYWNA: KPI MISSING ⇒ wiersz ma valueIsMissingLike=true i valueDisplay="—", NIGDY "0"', () => {
-    const values: AnalysisKpiValueDto[] = [kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('MISSING', null) })];
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('MISSING', null) }),
+    ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
     const input: AnalysisKpiTableRowInput = {
       group: groups[0],
@@ -241,9 +351,20 @@ describe('toAnalysisKpiTableRow', () => {
   });
 
   it('KONTROLA NEGATYWNA: okres bez wiersza compute (undefined) ⇒ komórka okresu "—", ODRÓŻNIONA (__periodCellIsMissingLike) od realnego formatowania liczby', () => {
-    const values: AnalysisKpiValueDto[] = [kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.4') })];
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({
+        kpiValueId: 'kv-2026',
+        periodId: 'p-2026',
+        value: value('PRESENT_NONZERO', '0.4'),
+      }),
+    ];
     const groups = groupAnalysisKpiValuesByKpi(values, periods);
-    const row = toAnalysisKpiTableRow({ group: groups[0], formulaInfo: null, includedInReport: true, markedAsModelInput: false });
+    const row = toAnalysisKpiTableRow({
+      group: groups[0],
+      formulaInfo: null,
+      includedInReport: true,
+      markedAsModelInput: false,
+    });
     expect(row['period.p-2025']).toBe('—');
     expect((row.__periodCellIsMissingLike as Record<string, boolean>)['period.p-2025']).toBe(true);
     expect(row['period.p-2026']).toBe('0,4');
@@ -253,7 +374,10 @@ describe('toAnalysisKpiTableRow', () => {
 
 describe('buildAnalysisKpiColumns', () => {
   it('zawiera katalog pól z brifu (nazwa/kategoria/wzór/interpretacja/r-r/benchmark/jakość/downstream) — nie sztywny ubogi zestaw', () => {
-    const columns = buildAnalysisKpiColumns([{ id: 'p1', label: '2025' }, { id: 'p2', label: '2026P' }]);
+    const columns = buildAnalysisKpiColumns([
+      { id: 'p1', label: '2025' },
+      { id: 'p2', label: '2026P' },
+    ]);
     const ids = columns.map((c) => c.id);
     expect(ids).toEqual(
       expect.arrayContaining([
@@ -296,18 +420,38 @@ describe('formatYoyDeltaText / formatBenchmarkText — komórki NIE-string bezpi
   it('formatYoyDeltaText: COMPUTED renderuje procent ze znakiem, MISSING_*/undefined renderują "—" (nigdy surowy obiekt)', () => {
     // Polski separator dziesiętny (przecinek) — NAPRAWIONE (powtórka 08-31),
     // patrz komentarz przy formatPlPercent1 w analysisKpiTable.contract.ts.
-    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20,0%');
-    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12,3%');
-    expect(formatYoyDeltaText({ status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null })).toBe('—');
-    expect(formatYoyDeltaText({ status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null })).toBe('—');
-    expect(formatYoyDeltaText({ status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: 50, percentDelta: null })).toContain('nieokreślony');
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe(
+      '+20,0%'
+    );
+    expect(
+      formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })
+    ).toBe('-12,3%');
+    expect(
+      formatYoyDeltaText({ status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null })
+    ).toBe('—');
+    expect(
+      formatYoyDeltaText({ status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null })
+    ).toBe('—');
+    expect(
+      formatYoyDeltaText({
+        status: 'PRIOR_ZERO_PCT_UNDEFINED',
+        absoluteDelta: 50,
+        percentDelta: null,
+      })
+    ).toContain('nieokreślony');
   });
 
   it('formatBenchmarkText: null ⇒ "—"; obecny benchmark ⇒ tekst czytelny dla człowieka', () => {
     expect(formatBenchmarkText(null)).toBe('—');
-    expect(formatBenchmarkText({ rangeLow: '0.3', rangeHigh: '0.5', source: 'Damodaran', asOf: '2026-01-01', industryCode: 'SAAS' })).toBe(
-      '0.3–0.5 (SAAS) · Damodaran'
-    );
+    expect(
+      formatBenchmarkText({
+        rangeLow: '0.3',
+        rangeHigh: '0.5',
+        source: 'Damodaran',
+        asOf: '2026-01-01',
+        industryCode: 'SAAS',
+      })
+    ).toBe('0.3–0.5 (SAAS) · Damodaran');
   });
 });
 
@@ -319,7 +463,10 @@ describe('selectExportColumns — OWN-FIN-014: eksport = wybrany zestaw, nie wid
 
   it('jawna selekcja różna od widocznych kolumn ⇒ eksport używa selekcji, NIE widocznych (dowód rozdzielenia)', () => {
     const visibleColumns = ['kpiName', 'category', 'yoyDelta', 'benchmark', 'qualityFlag'];
-    const explicitSelection = { columnIds: ['kpiName', 'formulaDisplay'], selectedAtIso: '2026-08-11T00:00:00Z' };
+    const explicitSelection = {
+      columnIds: ['kpiName', 'formulaDisplay'],
+      selectedAtIso: '2026-08-11T00:00:00Z',
+    };
     const result = selectExportColumns(visibleColumns, explicitSelection);
     expect(result.ok).toBe(true);
     if (result.ok) {

@@ -70,7 +70,11 @@ const DRD_AXIS_LEVEL_COUNT: Record<string, number> = Object.fromEntries(
 
 const DRD_AXES = [
   { id: 'processes', name: 'Digital Processes', maxLevel: DRD_AXIS_LEVEL_COUNT.processes },
-  { id: 'digitalProducts', name: 'Digital Products', maxLevel: DRD_AXIS_LEVEL_COUNT.digitalProducts },
+  {
+    id: 'digitalProducts',
+    name: 'Digital Products',
+    maxLevel: DRD_AXIS_LEVEL_COUNT.digitalProducts,
+  },
   { id: 'businessModels', name: 'Business Models', maxLevel: DRD_AXIS_LEVEL_COUNT.businessModels },
   { id: 'dataManagement', name: 'Data Management', maxLevel: DRD_AXIS_LEVEL_COUNT.dataManagement },
   { id: 'culture', name: 'Culture', maxLevel: DRD_AXIS_LEVEL_COUNT.culture },

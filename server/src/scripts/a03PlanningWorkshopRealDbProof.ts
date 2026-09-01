@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+
 import { Pool } from 'pg';
+
 import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -84,14 +86,62 @@ async function main(): Promise<void> {
     await import('../services/v8/transformationCaseService.js');
   const initial = compileT01TransformationPlan();
   for (const step of initial) {
-    await pool.query(`INSERT INTO transformation_plan_steps
+    await pool.query(
+      `INSERT INTO transformation_plan_steps
       (step_id,plan_id,transformation_case_id,organization_id,step_index,lifecycle_stage,business_purpose,module_target,capability_status,inputs_json,outputs_json,owner_role,depends_on_json,approval_class,risk_class,execution_mode,estimated_effort,status,blocker_reason,created_at)
       VALUES ($1,'plan-a03-v1','case-a03','org-a03',$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11,$12,$13,$14,'proposed',$15,'2026-08-07T20:00:00Z')`,
-      [step.stepId,step.stepIndex,step.lifecycleStage,step.businessPurpose,step.moduleTarget,step.capabilityStatus,JSON.stringify(step.inputs),JSON.stringify(step.outputs),step.ownerRole,JSON.stringify(step.dependsOn),step.approvalClass,step.riskClass,step.executionMode,step.estimatedEffort,step.blockerReason]);
+      [
+        step.stepId,
+        step.stepIndex,
+        step.lifecycleStage,
+        step.businessPurpose,
+        step.moduleTarget,
+        step.capabilityStatus,
+        JSON.stringify(step.inputs),
+        JSON.stringify(step.outputs),
+        step.ownerRole,
+        JSON.stringify(step.dependsOn),
+        step.approvalClass,
+        step.riskClass,
+        step.executionMode,
+        step.estimatedEffort,
+        step.blockerReason,
+      ]
+    );
   }
-  const draft = initial.map(({ stepId, stepIndex: _index, status: _status, ...step }) => ({...step,sourceStepId:stepId}));
-  draft[0]={...draft[0],businessPurpose:'Confirm mandate and measurable outcomes.',moduleTarget:'Chat / Agent Hub',inputs:['mandate','scope'],outputs:['reviewed plan'],ownerRole:'Transformation Sponsor',approvalClass:'policy_approvable',riskClass:'read_only',executionMode:'foreground',estimatedEffort:'2 h'};
-  const custom={...draft[0],sourceStepId:undefined,lifecycleStage:'custom_change_readiness',businessPurpose:'Assess change readiness.',moduleTarget:'Agent',capabilityStatus:'PROPOSAL_ONLY' as const,inputs:['stakeholder map'],outputs:['readiness notes'],ownerRole:'Change Lead',dependsOn:['discovery'],approvalClass:'requires_human_approval' as const,riskClass:'safe_additive' as const,executionMode:'human_activity' as const,estimatedEffort:'4 h',blockerReason:'No verified runtime capability binding.'};
+  const draft = initial.map(({ stepId, stepIndex: _index, status: _status, ...step }) => ({
+    ...step,
+    sourceStepId: stepId,
+  }));
+  draft[0] = {
+    ...draft[0],
+    businessPurpose: 'Confirm mandate and measurable outcomes.',
+    moduleTarget: 'Chat / Agent Hub',
+    inputs: ['mandate', 'scope'],
+    outputs: ['reviewed plan'],
+    ownerRole: 'Transformation Sponsor',
+    approvalClass: 'policy_approvable',
+    riskClass: 'read_only',
+    executionMode: 'foreground',
+    estimatedEffort: '2 h',
+  };
+  const custom = {
+    ...draft[0],
+    sourceStepId: undefined,
+    lifecycleStage: 'custom_change_readiness',
+    businessPurpose: 'Assess change readiness.',
+    moduleTarget: 'Agent',
+    capabilityStatus: 'PROPOSAL_ONLY' as const,
+    inputs: ['stakeholder map'],
+    outputs: ['readiness notes'],
+    ownerRole: 'Change Lead',
+    dependsOn: ['discovery'],
+    approvalClass: 'requires_human_approval' as const,
+    riskClass: 'safe_additive' as const,
+    executionMode: 'human_activity' as const,
+    estimatedEffort: '4 h',
+    blockerReason: 'No verified runtime capability binding.',
+  };
   const reordered = [draft[0], draft[2], draft[1], ...draft.slice(3), custom];
   const reviseInput = {
     transformationCaseId: 'case-a03',
@@ -101,33 +151,114 @@ async function main(): Promise<void> {
     steps: reordered,
     correlationId: 'proof-a03',
   };
-  const concurrent=await Promise.allSettled([reviseTransformationCase(reviseInput),reviseTransformationCase(reviseInput)]);
-  assert.equal(concurrent.filter(result=>result.status==='fulfilled').length,1);
-  assert.equal(concurrent.filter(result=>result.status==='rejected' && /VERSION_CONFLICT|version/i.test(String(result.reason))).length,1);
-  const revised=(concurrent.find(result=>result.status==='fulfilled') as PromiseFulfilledResult<Awaited<ReturnType<typeof reviseTransformationCase>>>).value;
+  const concurrent = await Promise.allSettled([
+    reviseTransformationCase(reviseInput),
+    reviseTransformationCase(reviseInput),
+  ]);
+  assert.equal(concurrent.filter((result) => result.status === 'fulfilled').length, 1);
+  assert.equal(
+    concurrent.filter(
+      (result) =>
+        result.status === 'rejected' && /VERSION_CONFLICT|version/i.test(String(result.reason))
+    ).length,
+    1
+  );
+  const revised = (
+    concurrent.find((result) => result.status === 'fulfilled') as PromiseFulfilledResult<
+      Awaited<ReturnType<typeof reviseTransformationCase>>
+    >
+  ).value;
   assert.equal(revised.version, 2);
   assert.deepEqual(
     revised.activePlan?.steps.map((step) => step.lifecycleStage),
     reordered.map((step) => step.lifecycleStage)
   );
   assert.equal(revised.activePlan?.status, 'pending_review');
-  assert.equal(revised.activePlan?.steps[0].businessPurpose,'Confirm mandate and measurable outcomes.');
-  assert.equal(revised.activePlan?.steps.at(-1)?.capabilityStatus,'PROPOSAL_ONLY');
-  const revisedDraft=(revised.activePlan?.steps ?? []).map(({stepId,stepIndex:_index,status:_status,...step})=>({...step,sourceStepId:stepId}));
-  const beforeRejected=await pool.query(`SELECT (SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM transformation_case_audit_events) audits,(SELECT version FROM transformation_cases WHERE transformation_case_id='case-a03') version`);
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,expectedVersion:2,steps:revisedDraft.map((step,index)=>index===0?{...step,capabilityStatus:'REAL' as const}:step)}),/CAPABILITY_TRUTH|server-owned/);
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,expectedVersion:2,steps:revisedDraft.map((step,index)=>index===0?{...step,lifecycleStage:'custom_forged'}:step)}),/CAPABILITY_TRUTH|server-owned/);
-  const cyclic=revisedDraft.map(step=>({...step}));cyclic[0]={...cyclic[0],dependsOn:[cyclic[1].lifecycleStage]};cyclic[1]={...cyclic[1],dependsOn:[cyclic[0].lifecycleStage]};
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,expectedVersion:2,steps:cyclic}),/cycle/i);
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,organizationId:'org-foreign',expectedVersion:2}),/NOT_FOUND|not found/i);
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,actorUserId:'',expectedVersion:2}),/ACTOR_REQUIRED|actor/i);
-  await pool.query(`CREATE OR REPLACE FUNCTION fail_a03_step_insert() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.business_purpose='FORCE_ROLLBACK' THEN RAISE EXCEPTION 'forced_a03_step_failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER fail_a03_step_insert_trigger BEFORE INSERT ON transformation_plan_steps FOR EACH ROW EXECUTE FUNCTION fail_a03_step_insert()`);
-  await assert.rejects(()=>reviseTransformationCase({...reviseInput,expectedVersion:2,steps:revisedDraft.map((step,index)=>index===0?{...step,businessPurpose:'FORCE_ROLLBACK'}:step)}),/forced_a03_step_failure/);
-  await pool.query(`DROP TRIGGER fail_a03_step_insert_trigger ON transformation_plan_steps; DROP FUNCTION fail_a03_step_insert()`);
-  const afterRejected=await pool.query(`SELECT (SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM transformation_case_audit_events) audits,(SELECT version FROM transformation_cases WHERE transformation_case_id='case-a03') version`);
-  assert.deepEqual(afterRejected.rows[0],beforeRejected.rows[0]);
-  const removed=await reviseTransformationCase({...reviseInput,expectedVersion:2,steps:revisedDraft.filter(step=>step.lifecycleStage!=='custom_change_readiness'),correlationId:'proof-a03-remove'});
-  assert.equal(removed.version,3);assert.equal(removed.activePlan?.steps.some(step=>step.lifecycleStage==='custom_change_readiness'),false);
+  assert.equal(
+    revised.activePlan?.steps[0].businessPurpose,
+    'Confirm mandate and measurable outcomes.'
+  );
+  assert.equal(revised.activePlan?.steps.at(-1)?.capabilityStatus, 'PROPOSAL_ONLY');
+  const revisedDraft = (revised.activePlan?.steps ?? []).map(
+    ({ stepId, stepIndex: _index, status: _status, ...step }) => ({ ...step, sourceStepId: stepId })
+  );
+  const beforeRejected = await pool.query(
+    `SELECT (SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM transformation_case_audit_events) audits,(SELECT version FROM transformation_cases WHERE transformation_case_id='case-a03') version`
+  );
+  await assert.rejects(
+    () =>
+      reviseTransformationCase({
+        ...reviseInput,
+        expectedVersion: 2,
+        steps: revisedDraft.map((step, index) =>
+          index === 0 ? { ...step, capabilityStatus: 'REAL' as const } : step
+        ),
+      }),
+    /CAPABILITY_TRUTH|server-owned/
+  );
+  await assert.rejects(
+    () =>
+      reviseTransformationCase({
+        ...reviseInput,
+        expectedVersion: 2,
+        steps: revisedDraft.map((step, index) =>
+          index === 0 ? { ...step, lifecycleStage: 'custom_forged' } : step
+        ),
+      }),
+    /CAPABILITY_TRUTH|server-owned/
+  );
+  const cyclic = revisedDraft.map((step) => ({ ...step }));
+  cyclic[0] = { ...cyclic[0], dependsOn: [cyclic[1].lifecycleStage] };
+  cyclic[1] = { ...cyclic[1], dependsOn: [cyclic[0].lifecycleStage] };
+  await assert.rejects(
+    () => reviseTransformationCase({ ...reviseInput, expectedVersion: 2, steps: cyclic }),
+    /cycle/i
+  );
+  await assert.rejects(
+    () =>
+      reviseTransformationCase({
+        ...reviseInput,
+        organizationId: 'org-foreign',
+        expectedVersion: 2,
+      }),
+    /NOT_FOUND|not found/i
+  );
+  await assert.rejects(
+    () => reviseTransformationCase({ ...reviseInput, actorUserId: '', expectedVersion: 2 }),
+    /ACTOR_REQUIRED|actor/i
+  );
+  await pool.query(
+    `CREATE OR REPLACE FUNCTION fail_a03_step_insert() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.business_purpose='FORCE_ROLLBACK' THEN RAISE EXCEPTION 'forced_a03_step_failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER fail_a03_step_insert_trigger BEFORE INSERT ON transformation_plan_steps FOR EACH ROW EXECUTE FUNCTION fail_a03_step_insert()`
+  );
+  await assert.rejects(
+    () =>
+      reviseTransformationCase({
+        ...reviseInput,
+        expectedVersion: 2,
+        steps: revisedDraft.map((step, index) =>
+          index === 0 ? { ...step, businessPurpose: 'FORCE_ROLLBACK' } : step
+        ),
+      }),
+    /forced_a03_step_failure/
+  );
+  await pool.query(
+    `DROP TRIGGER fail_a03_step_insert_trigger ON transformation_plan_steps; DROP FUNCTION fail_a03_step_insert()`
+  );
+  const afterRejected = await pool.query(
+    `SELECT (SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM transformation_case_audit_events) audits,(SELECT version FROM transformation_cases WHERE transformation_case_id='case-a03') version`
+  );
+  assert.deepEqual(afterRejected.rows[0], beforeRejected.rows[0]);
+  const removed = await reviseTransformationCase({
+    ...reviseInput,
+    expectedVersion: 2,
+    steps: revisedDraft.filter((step) => step.lifecycleStage !== 'custom_change_readiness'),
+    correlationId: 'proof-a03-remove',
+  });
+  assert.equal(removed.version, 3);
+  assert.equal(
+    removed.activePlan?.steps.some((step) => step.lifecycleStage === 'custom_change_readiness'),
+    false
+  );
   const ledger = await pool.query(
     `SELECT plan_version FROM v8_execution_runs WHERE run_id='run-a03'`
   );
@@ -135,7 +266,10 @@ async function main(): Promise<void> {
     `SELECT event_type, plan_version FROM transformation_case_audit_events`
   );
   assert.equal(ledger.rows[0].plan_version, 3);
-  assert.deepEqual(audit.rows.map(row=>row.plan_version),[2,3]);
+  assert.deepEqual(
+    audit.rows.map((row) => row.plan_version),
+    [2, 3]
+  );
   console.log(
     JSON.stringify({
       proof: 'A03_REALDB_GREEN',

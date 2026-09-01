@@ -72,10 +72,22 @@ export type SWOTCardStatus = 'accepted' | 'proposed';
 export type ProposalStatus = 'ai-proposed' | 'accepted' | 'rejected' | 'rethinking';
 export type SessionGenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
 export type CanonicalToolSessionStatus =
-  'DRAFT' | 'IN_PROGRESS' | 'REVIEW' | 'FINALIZED' | 'FAILED' | 'APPROVED' | 'GENERATED';
+  | 'DRAFT'
+  | 'IN_PROGRESS'
+  | 'REVIEW'
+  | 'FINALIZED'
+  | 'FAILED'
+  | 'APPROVED'
+  | 'GENERATED';
 
 export type ProposalCardType =
-  'signal' | 'item' | 'tension' | 'move' | 'correlation' | 'output-candidate' | 'conclusion';
+  | 'signal'
+  | 'item'
+  | 'tension'
+  | 'move'
+  | 'correlation'
+  | 'output-candidate'
+  | 'conclusion';
 export type SWOTOutputReadiness =
   | 'ready-for-initiative'
   | 'ready-for-presentation'
@@ -135,7 +147,10 @@ export interface SWOTDecomposition {
 export type SWOTItemEvidenceStatus = 'confirmed' | 'declared' | 'missing';
 
 export type SWOTStrengthClassification =
-  'core-competency' | 'niche-strength' | 'claimed-strength' | 'table-stakes';
+  | 'core-competency'
+  | 'niche-strength'
+  | 'claimed-strength'
+  | 'table-stakes';
 
 export interface SWOTItem {
   id: string;
@@ -263,7 +278,11 @@ export interface SWOTData {
 
 // Porter's Forces types
 export type PorterForceId =
-  'rivalry' | 'newEntrants' | 'substitutes' | 'buyerPower' | 'supplierPower';
+  | 'rivalry'
+  | 'newEntrants'
+  | 'substitutes'
+  | 'buyerPower'
+  | 'supplierPower';
 
 /** K1/K2/K3 staircase for a single Porter force (see config/porter/porterInsightStaircase). */
 export interface PorterForceStaircaseData {
@@ -473,7 +492,11 @@ export interface ValueLever {
   activityIds: ValueActivityId[];
   insight: string;
   leverType:
-    'cost-reduction' | 'value-enhancement' | 'linkage-optimization' | 'outsource' | 'integrate';
+    | 'cost-reduction'
+    | 'value-enhancement'
+    | 'linkage-optimization'
+    | 'outsource'
+    | 'integrate';
   marginImpact: 'high' | 'medium' | 'low';
   urgency: 'high' | 'medium' | 'low';
   recommendation: string;
@@ -937,7 +960,10 @@ export interface NarrativeEngineData {
 
 // Growth Paths (Ansoff) types
 export type GrowthQuadrantId =
-  'marketPenetration' | 'marketDevelopment' | 'productDevelopment' | 'diversification';
+  | 'marketPenetration'
+  | 'marketDevelopment'
+  | 'productDevelopment'
+  | 'diversification';
 
 export interface GrowthPathItem {
   id: string;

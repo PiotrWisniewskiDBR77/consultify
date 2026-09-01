@@ -9,7 +9,12 @@
  *     supporting evidence it is not.
  */
 import { describe, expect, it } from 'vitest';
-import { createAssessmentOutput, OutputValidationError, recomputeOutputContentHash } from '../assessmentOutput';
+
+import {
+  createAssessmentOutput,
+  OutputValidationError,
+  recomputeOutputContentHash,
+} from '../assessmentOutput';
 import { assertFindingIsValid, createFinding, FindingValidationError } from '../finding';
 import { makeEvidence, makeFinding, makeOutput, makeOutputInput } from './testFixtures';
 
@@ -112,7 +117,9 @@ describe('AssessmentOutput — deterministic content hash (test 3)', () => {
     const hashes = new Set<string>();
     for (let i = 0; i < 10; i++) {
       const finding = makeFinding({ id: 'finding-shared', supportingEvidence: orders[i % 2] });
-      const output = createAssessmentOutput(makeOutputInput({ id: `run-${i}`, findings: [finding] }));
+      const output = createAssessmentOutput(
+        makeOutputInput({ id: `run-${i}`, findings: [finding] })
+      );
       hashes.add(output.contentHash);
     }
     expect(hashes.size).toBe(1);
@@ -139,9 +146,7 @@ describe('AssessmentOutput — validation gate (test 4)', () => {
 
   it('rejects an Output with no methodology version', () => {
     expect(() =>
-      createAssessmentOutput(
-        makeOutputInput({ methodology: { methodPackId: 'drd', version: '' } })
-      )
+      createAssessmentOutput(makeOutputInput({ methodology: { methodPackId: 'drd', version: '' } }))
     ).toThrow(OutputValidationError);
   });
 
@@ -166,7 +171,10 @@ describe('AssessmentOutput — validation gate (test 4)', () => {
 
 describe('Finding — supporting vs contradicting evidence rule (test 9)', () => {
   it('allows a finding with supporting evidence and NO contradicting evidence', () => {
-    const finding = makeFinding({ supportingEvidence: [makeEvidence()], contradictingEvidence: [] });
+    const finding = makeFinding({
+      supportingEvidence: [makeEvidence()],
+      contradictingEvidence: [],
+    });
     expect(() => assertFindingIsValid(finding)).not.toThrow();
     expect(() => createFinding(finding)).not.toThrow();
   });

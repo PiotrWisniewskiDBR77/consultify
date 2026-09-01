@@ -71,14 +71,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   canonicalize,
+  type ChainIds,
+  type ChildReaderResult,
   digest,
   readBaselinePayload,
   readChainPayload,
   readComputeActivityWitness,
-  readValuationPayload,
-  type ChainIds,
-  type ChildReaderResult,
   type ReaderMode,
+  readValuationPayload,
   type Tx,
 } from './coldReopenReader.js';
 
@@ -132,7 +132,10 @@ function expectRealComputeIdentity(payload: {
   workingRevisions: Array<{ content_semantic_hash: unknown; compute_run_id: unknown }>;
   computeSnapshots: Array<{ content_semantic_hash: unknown; compute_run_id: unknown }>;
 }) {
-  for (const value of [payload.businessVersion.content_semantic_hash, payload.businessVersion.compute_run_id]) {
+  for (const value of [
+    payload.businessVersion.content_semantic_hash,
+    payload.businessVersion.compute_run_id,
+  ]) {
     expect(value).not.toBeNull();
     expect(value).not.toBe('');
   }
@@ -218,10 +221,15 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     waitedMs: number;
     witnessPid: number;
   }> {
-    const witness = new PgClient({ connectionString: CONNECTION_STRING, application_name: 'w10-cold-witness' });
+    const witness = new PgClient({
+      connectionString: CONNECTION_STRING,
+      application_name: 'w10-cold-witness',
+    });
     await witness.connect();
     try {
-      const witnessPidRow = await witness.query<{ pid: string }>('SELECT pg_backend_pid()::text AS pid');
+      const witnessPidRow = await witness.query<{ pid: string }>(
+        'SELECT pg_backend_pid()::text AS pid'
+      );
       const witnessPid = Number(witnessPidRow.rows[0].pid);
 
       const alive = async (): Promise<number[]> => {
@@ -259,7 +267,14 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const t0 = Date.now();
     const { stdout } = await execFileAsync(
       'npx',
-      ['tsx', READER_PATH, `--mode=${mode}`, `--org=${orgId}`, `--ids=${JSON.stringify(ids)}`, `--out=${outPath}`],
+      [
+        'tsx',
+        READER_PATH,
+        `--mode=${mode}`,
+        `--org=${orgId}`,
+        `--ids=${JSON.stringify(ids)}`,
+        `--out=${outPath}`,
+      ],
       {
         cwd: REPO_ROOT,
         maxBuffer: 64 * 1024 * 1024,
@@ -275,7 +290,10 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     );
     const wallMs = Date.now() - t0;
     const m = /__COLD_REOPEN_RESULT_AT__([\s\S]*?)__END__/.exec(stdout);
-    if (!m) throw new Error(`child reader produced no result marker. stdout was:\n${stdout.slice(-4000)}`);
+    if (!m)
+      throw new Error(
+        `child reader produced no result marker. stdout was:\n${stdout.slice(-4000)}`
+      );
     const parsed = JSON.parse(fs.readFileSync(m[1], 'utf8')) as ChildReaderResult;
     fs.rmSync(m[1], { force: true });
     return { ...parsed, wallMs };
@@ -333,14 +351,20 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const oracle = JSON.parse(fs.readFileSync(ORACLE_PATH, 'utf8'));
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'GoldCo (W10 cold reopen)'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'GoldCo (W10 cold reopen)',
+      ])
     );
     const manifest = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ engine_manifest_id: string }>(
         `SELECT engine_manifest_id FROM finance_engine_manifests WHERE engine_name = 'LEGACY_UNKNOWN' LIMIT 1`
       )
     );
-    if (!manifest) throw new Error('finance_engine_manifests LEGACY_UNKNOWN sentinel missing — migration b01 not applied?');
+    if (!manifest)
+      throw new Error(
+        'finance_engine_manifests LEGACY_UNKNOWN sentinel missing — migration b01 not applied?'
+      );
     engineManifestId = manifest.engine_manifest_id;
 
     // --- calendar + periods -------------------------------------------------
@@ -359,10 +383,15 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
           `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, fiscal_month, period_start, period_end, label, previous_period_id, created_by)
            VALUES (?, ?, 'MONTH', ?, ?, ?, ?, ?, ?, ?) RETURNING period_id`,
           [
-            orgId, calendarId, fy, m,
+            orgId,
+            calendarId,
+            fy,
+            m,
             `${fy}-${String(m).padStart(2, '0')}-01`,
             `${fy}-${String(m).padStart(2, '0')}-${String(monthDays[m - 1]).padStart(2, '0')}`,
-            `${fy}-M${String(m).padStart(2, '0')}`, prev, preparerId,
+            `${fy}-M${String(m).padStart(2, '0')}`,
+            prev,
+            preparerId,
           ]
         )
       );
@@ -370,24 +399,49 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     };
     const monthPeriods2025: string[] = [];
     let prev: string | null = null;
-    for (let m = 1; m <= 12; m++) { prev = await makeMonth(2025, m, prev); monthPeriods2025.push(prev); }
+    for (let m = 1; m <= 12; m++) {
+      prev = await makeMonth(2025, m, prev);
+      monthPeriods2025.push(prev);
+    }
     monthPeriods2026 = [];
-    for (let m = 1; m <= 12; m++) { prev = await makeMonth(2026, m, prev); monthPeriods2026.push(prev); }
+    for (let m = 1; m <= 12; m++) {
+      prev = await makeMonth(2026, m, prev);
+      monthPeriods2026.push(prev);
+    }
     const openingBsPeriodId = monthPeriods2025[11];
 
     // --- PHASE 1: Statement Pack (FY2025 monthly P&L + December closing BS/CF)
     const PL_MAP: Record<string, string> = {
-      revenue: 'REVENUE', cogs: 'COGS', grossMargin: 'GROSS_MARGIN', opex: 'OPEX', ebitda: 'EBITDA',
-      depreciation: 'DEPRECIATION', ebit: 'EBIT', interest: 'INTEREST_EXPENSE', taxExpense: 'TAX_EXPENSE', netIncome: 'NET_INCOME',
+      revenue: 'REVENUE',
+      cogs: 'COGS',
+      grossMargin: 'GROSS_MARGIN',
+      opex: 'OPEX',
+      ebitda: 'EBITDA',
+      depreciation: 'DEPRECIATION',
+      ebit: 'EBIT',
+      interest: 'INTEREST_EXPENSE',
+      taxExpense: 'TAX_EXPENSE',
+      netIncome: 'NET_INCOME',
     };
     const BS_MAP: Record<string, string> = {
-      cash: 'CASH', ar: 'AR', inventory: 'INVENTORY', currentAssets: 'CURRENT_ASSETS', fixedAssets: 'FIXED_ASSETS',
-      totalAssets: 'TOTAL_ASSETS', ap: 'AP', currentLiabilities: 'CURRENT_LIABILITIES', longTermDebt: 'LONG_TERM_DEBT',
-      totalLiabilities: 'TOTAL_LIABILITIES', totalEquity: 'EQUITY', totalLiabilitiesEquity: 'TOTAL_LIABILITIES_EQUITY',
+      cash: 'CASH',
+      ar: 'AR',
+      inventory: 'INVENTORY',
+      currentAssets: 'CURRENT_ASSETS',
+      fixedAssets: 'FIXED_ASSETS',
+      totalAssets: 'TOTAL_ASSETS',
+      ap: 'AP',
+      currentLiabilities: 'CURRENT_LIABILITIES',
+      longTermDebt: 'LONG_TERM_DEBT',
+      totalLiabilities: 'TOTAL_LIABILITIES',
+      totalEquity: 'EQUITY',
+      totalLiabilitiesEquity: 'TOTAL_LIABILITIES_EQUITY',
     };
 
     const pack = await artifactVersionService.createArtifact({
-      organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: preparerId,
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: preparerId,
     });
     ids.statement = pack.businessVersion.business_version_id;
     const entityRow = await withPinnedPostgresTransaction((tx) =>
@@ -405,49 +459,117 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       const periodId = monthPeriods2025[m.month - 1];
       for (const [field, code] of Object.entries(PL_MAP)) {
         const label = `PARENT:M${m.month}:${field}`;
-        rawLines.push({ lineItem: label, periodId, entityCode: 'PARENT', currency: 'PLN', value: m[field], sourceRef: { month: m.month, field } });
+        rawLines.push({
+          lineItem: label,
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: m[field],
+          sourceRef: { month: m.month, field },
+        });
         rules.push({ sourceLabel: label, statementType: 'P&L', lineCode: code });
       }
-      rawLines.push({ lineItem: `PARENT:M${m.month}:cash`, periodId, entityCode: 'PARENT', currency: 'PLN', value: m.cash, sourceRef: { month: m.month, field: 'cash' } });
+      rawLines.push({
+        lineItem: `PARENT:M${m.month}:cash`,
+        periodId,
+        entityCode: 'PARENT',
+        currency: 'PLN',
+        value: m.cash,
+        sourceRef: { month: m.month, field: 'cash' },
+      });
       rules.push({ sourceLabel: `PARENT:M${m.month}:cash`, statementType: 'BS', lineCode: 'CASH' });
-      rawLines.push({ lineItem: `PARENT:M${m.month}:netChangeCash`, periodId, entityCode: 'PARENT', currency: 'PLN', value: m.netChangeCash, sourceRef: { month: m.month, field: 'netChangeCash' } });
-      rules.push({ sourceLabel: `PARENT:M${m.month}:netChangeCash`, statementType: 'CF', lineCode: 'NET_CHANGE_CASH' });
+      rawLines.push({
+        lineItem: `PARENT:M${m.month}:netChangeCash`,
+        periodId,
+        entityCode: 'PARENT',
+        currency: 'PLN',
+        value: m.netChangeCash,
+        sourceRef: { month: m.month, field: 'netChangeCash' },
+      });
+      rules.push({
+        sourceLabel: `PARENT:M${m.month}:netChangeCash`,
+        statementType: 'CF',
+        lineCode: 'NET_CHANGE_CASH',
+      });
     }
     for (const [field, code] of Object.entries(BS_MAP)) {
       if (field === 'cash') continue;
       const label = `PARENT:DEC2025:${field}`;
-      rawLines.push({ lineItem: label, periodId: openingBsPeriodId, entityCode: 'PARENT', currency: 'PLN', value: oracle.parent.FY2025.bs[field], sourceRef: { field } });
+      rawLines.push({
+        lineItem: label,
+        periodId: openingBsPeriodId,
+        entityCode: 'PARENT',
+        currency: 'PLN',
+        value: oracle.parent.FY2025.bs[field],
+        sourceRef: { field },
+      });
       rules.push({ sourceLabel: label, statementType: 'BS', lineCode: code });
     }
     for (const [label, code, value, st] of [
-      ['PARENT:DEC2025:retainedEarnings', 'RETAINED_EARNINGS', oracle.parent.FY2025.closingRE, 'BS'],
-      ['PARENT:DEC2025:dividendsDeclared', 'DIVIDENDS_DECLARED', oracle.parent.FY2025.dividendsDeclared, 'BS'],
+      [
+        'PARENT:DEC2025:retainedEarnings',
+        'RETAINED_EARNINGS',
+        oracle.parent.FY2025.closingRE,
+        'BS',
+      ],
+      [
+        'PARENT:DEC2025:dividendsDeclared',
+        'DIVIDENDS_DECLARED',
+        oracle.parent.FY2025.dividendsDeclared,
+        'BS',
+      ],
       ['PARENT:DEC2025:cfo', 'CFO', oracle.parent.FY2025.cfo, 'CF'],
       ['PARENT:DEC2025:cfi', 'CFI', oracle.parent.FY2025.cfi, 'CF'],
       ['PARENT:DEC2025:cff', 'CFF', oracle.parent.FY2025.cff, 'CF'],
     ] as const) {
-      rawLines.push({ lineItem: label, periodId: openingBsPeriodId, entityCode: 'PARENT', currency: 'PLN', value, sourceRef: {} });
+      rawLines.push({
+        lineItem: label,
+        periodId: openingBsPeriodId,
+        entityCode: 'PARENT',
+        currency: 'PLN',
+        value,
+        sourceRef: {},
+      });
       rules.push({ sourceLabel: label, statementType: st, lineCode: code });
     }
 
     const mapped = await statementMappingService.mapStatementLines({
-      organizationId: orgId, businessVersionId: ids.statement!, unit: 'UNITS', presentationCurrency: 'PLN',
-      createdBy: preparerId, rawLines, rules,
+      organizationId: orgId,
+      businessVersionId: ids.statement!,
+      unit: 'UNITS',
+      presentationCurrency: 'PLN',
+      createdBy: preparerId,
+      rawLines,
+      rules,
     });
     const recon = await statementReconciliationService.runReconciliation({
-      organizationId: orgId, artifactId: pack.artifact.artifact_id, businessVersionId: ids.statement!,
-      sourceSystem: 'w10:cold_reopen', mappingResults: mapped, createdBy: preparerId,
-      attemptReadinessTransition: true, actorId: preparerId, role: 'preparer',
+      organizationId: orgId,
+      artifactId: pack.artifact.artifact_id,
+      businessVersionId: ids.statement!,
+      sourceSystem: 'w10:cold_reopen',
+      mappingResults: mapped,
+      createdBy: preparerId,
+      attemptReadinessTransition: true,
+      actorId: preparerId,
+      role: 'preparer',
       expectedVersion: pack.businessVersion.version,
     });
     if (!recon.readiness.transitionResult?.ok) {
-      throw new Error(`Statement pack readiness failed: ${JSON.stringify(recon.readiness.checks.filter((c: any) => !c.passed))}`);
+      throw new Error(
+        `Statement pack readiness failed: ${JSON.stringify(recon.readiness.checks.filter((c: any) => !c.passed))}`
+      );
     }
-    await approveChain(ids.statement!, recon.readiness.businessVersion.version, /* alreadyReady */ true);
+    await approveChain(
+      ids.statement!,
+      recon.readiness.businessVersion.version,
+      /* alreadyReady */ true
+    );
 
     // --- PHASE 2: Analysis --------------------------------------------------
     const analysis = await artifactVersionService.createArtifact({
-      organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: preparerId,
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: preparerId,
     });
     ids.analysis = analysis.businessVersion.business_version_id;
     await withPinnedPostgresTransaction((tx) =>
@@ -460,14 +582,21 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       )
     );
     const e1 = await lineageService.insertEdge({
-      organizationId: orgId, sourceVersionId: ids.statement!, sourceArtifactType: 'STATEMENT_PACK',
-      targetVersionId: ids.analysis!, targetArtifactType: 'HISTORICAL_ANALYSIS',
-      edgeType: 'STATEMENT_TO_ANALYSIS', transformationKind: 'MANUAL_LINK', authorId: preparerId,
+      organizationId: orgId,
+      sourceVersionId: ids.statement!,
+      sourceArtifactType: 'STATEMENT_PACK',
+      targetVersionId: ids.analysis!,
+      targetArtifactType: 'HISTORICAL_ANALYSIS',
+      edgeType: 'STATEMENT_TO_ANALYSIS',
+      transformationKind: 'MANUAL_LINK',
+      authorId: preparerId,
     });
     if (!e1.ok) throw new Error(`STATEMENT_TO_ANALYSIS edge failed: ${JSON.stringify(e1)}`);
 
     const catalog = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE' ORDER BY kpi_code`)
+      tx.queryAll<{ id: string }>(
+        `SELECT id FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE' ORDER BY kpi_code`
+      )
     );
     for (const row of catalog) {
       await withPinnedPostgresTransaction((tx) =>
@@ -479,24 +608,46 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       );
     }
     const kpis = await kpiComputeService.computeAnalysisKpis({
-      organizationId: orgId, businessVersionId: ids.analysis!, requestedByUserId: preparerId,
+      organizationId: orgId,
+      businessVersionId: ids.analysis!,
+      requestedByUserId: preparerId,
     });
     if (!kpis.ok) throw new Error(`computeAnalysisKpis failed: ${JSON.stringify(kpis)}`);
     await approveChain(ids.analysis!, analysis.businessVersion.version);
 
     // --- PHASE 3: Baseline Model -------------------------------------------
     const baseline = await artifactVersionService.createArtifact({
-      organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: preparerId,
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: preparerId,
     });
     ids.baseline = baseline.businessVersion.business_version_id;
     for (const edge of [
-      { source: ids.statement!, sourceType: 'STATEMENT_PACK' as const, edgeType: 'STATEMENT_TO_MODEL' as const, kind: 'COMPUTE' as const, hash: undefined },
-      { source: ids.analysis!, sourceType: 'HISTORICAL_ANALYSIS' as const, edgeType: 'ANALYSIS_TO_MODEL' as const, kind: 'MANUAL_LINK' as const, hash: 'sha256:w10-analysis-to-model' },
+      {
+        source: ids.statement!,
+        sourceType: 'STATEMENT_PACK' as const,
+        edgeType: 'STATEMENT_TO_MODEL' as const,
+        kind: 'COMPUTE' as const,
+        hash: undefined,
+      },
+      {
+        source: ids.analysis!,
+        sourceType: 'HISTORICAL_ANALYSIS' as const,
+        edgeType: 'ANALYSIS_TO_MODEL' as const,
+        kind: 'MANUAL_LINK' as const,
+        hash: 'sha256:w10-analysis-to-model',
+      },
     ]) {
       const res = await lineageService.insertEdge({
-        organizationId: orgId, sourceVersionId: edge.source, sourceArtifactType: edge.sourceType,
-        targetVersionId: ids.baseline!, targetArtifactType: 'BASELINE_MODEL', edgeType: edge.edgeType,
-        transformationKind: edge.kind, authorId: preparerId, assumptionSnapshotHash: edge.hash,
+        organizationId: orgId,
+        sourceVersionId: edge.source,
+        sourceArtifactType: edge.sourceType,
+        targetVersionId: ids.baseline!,
+        targetArtifactType: 'BASELINE_MODEL',
+        edgeType: edge.edgeType,
+        transformationKind: edge.kind,
+        authorId: preparerId,
+        assumptionSnapshotHash: edge.hash,
       });
       if (!res.ok) throw new Error(`${edge.edgeType} edge failed: ${JSON.stringify(res)}`);
     }
@@ -512,24 +663,54 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     );
 
     const fy = oracle.parent.FY2025;
-    const makeAssumption = (scheduleType: string, driverCode: string, value: number, unit: string) =>
+    const makeAssumption = (
+      scheduleType: string,
+      driverCode: string,
+      value: number,
+      unit: string
+    ) =>
       withPinnedPostgresTransaction((tx) =>
         tx.queryRun(
           `INSERT INTO finance_baseline_assumptions (
              organization_id, business_version_id, schedule_type, driver_code, entity_id, period_id, rule,
              value_status, value_decimal, unit, quality, created_by
            ) VALUES (?, ?, ?, ?, ?, ?, 'HISTORICAL_AVERAGE', 'PRESENT_NONZERO', ?, ?, 'ESTIMATED', ?)`,
-          [orgId, ids.baseline, scheduleType, driverCode, entityId, monthPeriods2026[0], value, unit, preparerId]
+          [
+            orgId,
+            ids.baseline,
+            scheduleType,
+            driverCode,
+            entityId,
+            monthPeriods2026[0],
+            value,
+            unit,
+            preparerId,
+          ]
         )
       );
     await makeAssumption('revenue_pvm', 'REVENUE_GROWTH_YOY', 0.05, 'PCT');
     await makeAssumption('cogs_opex', 'COGS_PCT_OF_REVENUE', fy.pl.cogs / fy.pl.revenue, 'PCT');
     await makeAssumption('cogs_opex', 'OPEX_PCT_OF_REVENUE', fy.pl.opex / fy.pl.revenue, 'PCT');
     await makeAssumption('wc_dso_dio_dpo', 'DSO_DAYS', (fy.bs.ar / fy.pl.revenue) * 365, 'DAYS');
-    await makeAssumption('wc_dso_dio_dpo', 'DIO_DAYS', (fy.bs.inventory / fy.pl.cogs) * 365, 'DAYS');
+    await makeAssumption(
+      'wc_dso_dio_dpo',
+      'DIO_DAYS',
+      (fy.bs.inventory / fy.pl.cogs) * 365,
+      'DAYS'
+    );
     await makeAssumption('wc_dso_dio_dpo', 'DPO_DAYS', (fy.bs.ap / fy.pl.cogs) * 365, 'DAYS');
-    await makeAssumption('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', 9_000_000 / fy.pl.revenue, 'PCT');
-    await makeAssumption('capex_depreciation', 'USEFUL_LIFE_MONTHS', (12 * fy.bs.fixedAssets) / 7_000_000, 'MONTHS');
+    await makeAssumption(
+      'capex_depreciation',
+      'CAPEX_PCT_OF_REVENUE',
+      9_000_000 / fy.pl.revenue,
+      'PCT'
+    );
+    await makeAssumption(
+      'capex_depreciation',
+      'USEFUL_LIFE_MONTHS',
+      (12 * fy.bs.fixedAssets) / 7_000_000,
+      'MONTHS'
+    );
     await makeAssumption('tax_nol', 'STATUTORY_TAX_RATE_PCT', 0.19, 'PCT');
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
@@ -538,11 +719,16 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
            effective_from_period_id, payload, created_by
          ) VALUES (?, ?, 'debt_maturity', ?, 'FACILITY-1', ?, ?, ?)`,
         [
-          orgId, ids.baseline, entityId, monthPeriods2026[0],
+          orgId,
+          ids.baseline,
+          entityId,
+          monthPeriods2026[0],
           JSON.stringify({
-            principal_opening: 40_500_000, contractual_rate: 0.048,
+            principal_opening: 40_500_000,
+            contractual_rate: 0.048,
             amortization_schedule: Array.from({ length: 12 }, () => 675_000),
-            mandatory_sweep_pct: 0.1, mandatory_sweep_threshold: 0,
+            mandatory_sweep_pct: 0.1,
+            mandatory_sweep_threshold: 0,
           }),
           preparerId,
         ]
@@ -550,11 +736,16 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     );
 
     const baselineRun = await baselineComputeService.runBaselineCompute({
-      organizationId: orgId, businessVersionId: ids.baseline!, requestedByUserId: preparerId,
-      engineManifestId, entityId, forecastPeriodIds: monthPeriods2026,
+      organizationId: orgId,
+      businessVersionId: ids.baseline!,
+      requestedByUserId: preparerId,
+      engineManifestId,
+      entityId,
+      forecastPeriodIds: monthPeriods2026,
       openingBalanceSheetPeriodId: openingBsPeriodId,
     });
-    if (!baselineRun.ok) throw new Error(`runBaselineCompute failed: ${JSON.stringify(baselineRun)}`);
+    if (!baselineRun.ok)
+      throw new Error(`runBaselineCompute failed: ${JSON.stringify(baselineRun)}`);
 
     /**
      * FY2027/FY2028 simple continuation (+3%/yr off the FY2026 roll-up) — the
@@ -606,16 +797,33 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       return Number(row!.value_decimal);
     };
     const fy2026 = {
-      EBIT: await annualSum('EBIT'), DEPRECIATION: await annualSum('DEPRECIATION'),
-      CAPEX: await annualSum('CAPEX'), REVENUE: await annualSum('REVENUE'),
-      NET_INCOME: await annualSum('NET_INCOME'), WORKING_CAPITAL: await closing('WORKING_CAPITAL'),
+      EBIT: await annualSum('EBIT'),
+      DEPRECIATION: await annualSum('DEPRECIATION'),
+      CAPEX: await annualSum('CAPEX'),
+      REVENUE: await annualSum('REVENUE'),
+      NET_INCOME: await annualSum('NET_INCOME'),
+      WORKING_CAPITAL: await closing('WORKING_CAPITAL'),
     };
-    const makeFy = async (fiscalYear: number, start: string, end: string, previousPeriodId: string | null) => {
+    const makeFy = async (
+      fiscalYear: number,
+      start: string,
+      end: string,
+      previousPeriodId: string | null
+    ) => {
       const row = await withPinnedPostgresTransaction((tx) =>
         tx.queryOne<{ period_id: string }>(
           `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, previous_period_id, created_by)
            VALUES (?, ?, 'FY', ?, ?, ?, ?, ?, ?) RETURNING period_id`,
-          [orgId, calendarId, fiscalYear, start, end, `FY${fiscalYear}`, previousPeriodId, preparerId]
+          [
+            orgId,
+            calendarId,
+            fiscalYear,
+            start,
+            end,
+            `FY${fiscalYear}`,
+            previousPeriodId,
+            preparerId,
+          ]
         )
       );
       return row!.period_id;
@@ -623,14 +831,21 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     periodFY2027 = await makeFy(2027, '2027-01-01', '2027-12-31', null);
     periodFY2028 = await makeFy(2028, '2028-01-01', '2028-12-31', periodFY2027);
     const grow = (base: typeof fy2026, g: number) => ({
-      EBIT: base.EBIT * (1 + g), DEPRECIATION: base.DEPRECIATION * (1 + g), CAPEX: base.CAPEX * (1 + g),
-      REVENUE: base.REVENUE * (1 + g), NET_INCOME: base.NET_INCOME * (1 + g), WORKING_CAPITAL: base.WORKING_CAPITAL * (1 + g),
+      EBIT: base.EBIT * (1 + g),
+      DEPRECIATION: base.DEPRECIATION * (1 + g),
+      CAPEX: base.CAPEX * (1 + g),
+      REVENUE: base.REVENUE * (1 + g),
+      NET_INCOME: base.NET_INCOME * (1 + g),
+      WORKING_CAPITAL: base.WORKING_CAPITAL * (1 + g),
     });
     const writeContinuation = async (periodId: string, values: typeof fy2026) => {
       for (const [code, value] of Object.entries(values)) {
         const statementType =
           code === 'REVENUE' || code === 'EBIT' || code === 'DEPRECIATION' || code === 'NET_INCOME'
-            ? 'P&L' : code === 'CAPEX' ? 'CF' : 'BS';
+            ? 'P&L'
+            : code === 'CAPEX'
+              ? 'CF'
+              : 'BS';
         await withPinnedPostgresTransaction((tx) =>
           tx.queryRun(
             `INSERT INTO finance_baseline_outputs (
@@ -640,7 +855,17 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
              ) VALUES (?, ?, ?, ?, ?, ?, ?, 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 1, 'FORECAST', ?)
              ON CONFLICT (business_version_id, entity_id, canonical_line_id, period_id, consolidation_scope)
              DO UPDATE SET value_decimal = EXCLUDED.value_decimal`,
-            [randomUUID(), orgId, ids.baseline, statementType, lineIdByCode.get(code), entityId, periodId, value, preparerId]
+            [
+              randomUUID(),
+              orgId,
+              ids.baseline,
+              statementType,
+              lineIdByCode.get(code),
+              entityId,
+              periodId,
+              value,
+              preparerId,
+            ]
           )
         );
       }
@@ -653,7 +878,9 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
 
     // --- PHASE 4: Prediction (Base scenario) --------------------------------
     const prediction = await artifactVersionService.createArtifact({
-      organizationId: orgId, artifactType: 'PREDICTION_SCENARIO', createdBy: preparerId,
+      organizationId: orgId,
+      artifactType: 'PREDICTION_SCENARIO',
+      createdBy: preparerId,
     });
     ids.prediction = prediction.businessVersion.business_version_id;
     await withPinnedPostgresTransaction((tx) =>
@@ -664,22 +891,35 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       )
     );
     const e4 = await lineageService.insertEdge({
-      organizationId: orgId, sourceVersionId: ids.baseline!, sourceArtifactType: 'BASELINE_MODEL',
-      targetVersionId: ids.prediction!, targetArtifactType: 'PREDICTION_SCENARIO',
-      edgeType: 'MODEL_TO_SCENARIO', transformationKind: 'MANUAL_LINK', authorId: preparerId,
+      organizationId: orgId,
+      sourceVersionId: ids.baseline!,
+      sourceArtifactType: 'BASELINE_MODEL',
+      targetVersionId: ids.prediction!,
+      targetArtifactType: 'PREDICTION_SCENARIO',
+      edgeType: 'MODEL_TO_SCENARIO',
+      transformationKind: 'MANUAL_LINK',
+      authorId: preparerId,
       assumptionSnapshotHash: 'sha256:w10-model-to-scenario-base',
     });
     if (!e4.ok) throw new Error(`MODEL_TO_SCENARIO edge failed: ${JSON.stringify(e4)}`);
     await predictionPreflightService.runPreflight({
-      organizationId: orgId, businessVersionId: ids.prediction!, runBy: preparerId,
-      entityId, openingBalanceSheetPeriodId: openingBsPeriodId,
-    });
-    const predictionRun = await predictionComputeService.runPredictionCompute({
-      organizationId: orgId, businessVersionId: ids.prediction!, requestedByUserId: preparerId,
-      engineManifestId, entityId, forecastPeriodIds: monthPeriods2026,
+      organizationId: orgId,
+      businessVersionId: ids.prediction!,
+      runBy: preparerId,
+      entityId,
       openingBalanceSheetPeriodId: openingBsPeriodId,
     });
-    if (!predictionRun.ok) throw new Error(`runPredictionCompute failed: ${JSON.stringify(predictionRun)}`);
+    const predictionRun = await predictionComputeService.runPredictionCompute({
+      organizationId: orgId,
+      businessVersionId: ids.prediction!,
+      requestedByUserId: preparerId,
+      engineManifestId,
+      entityId,
+      forecastPeriodIds: monthPeriods2026,
+      openingBalanceSheetPeriodId: openingBsPeriodId,
+    });
+    if (!predictionRun.ok)
+      throw new Error(`runPredictionCompute failed: ${JSON.stringify(predictionRun)}`);
     await approveChain(ids.prediction!, prediction.businessVersion.version);
 
     // --- PHASE 5: Valuation (DCF + 5x5 sensitivity + bridge + Advisor) ------
@@ -691,7 +931,9 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       )
     );
     const valuation = await artifactVersionService.createArtifact({
-      organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: preparerId,
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: preparerId,
     });
     ids.valuation = valuation.businessVersion.business_version_id;
     await withPinnedPostgresTransaction((tx) =>
@@ -702,9 +944,14 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       )
     );
     const e5 = await lineageService.insertEdge({
-      organizationId: orgId, sourceVersionId: ids.baseline!, sourceArtifactType: 'BASELINE_MODEL',
-      targetVersionId: ids.valuation!, targetArtifactType: 'VALUATION_CASE',
-      edgeType: 'MODEL_TO_VALUATION', transformationKind: 'MANUAL_LINK', authorId: preparerId,
+      organizationId: orgId,
+      sourceVersionId: ids.baseline!,
+      sourceArtifactType: 'BASELINE_MODEL',
+      targetVersionId: ids.valuation!,
+      targetArtifactType: 'VALUATION_CASE',
+      edgeType: 'MODEL_TO_VALUATION',
+      transformationKind: 'MANUAL_LINK',
+      authorId: preparerId,
       assumptionSnapshotHash: 'sha256:w10-model-to-valuation-baseline',
     });
     if (!e5.ok) throw new Error(`MODEL_TO_VALUATION edge failed: ${JSON.stringify(e5)}`);
@@ -721,8 +968,11 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     );
 
     const dcf = await valuationComputeService.runDcfFcffValuation({
-      organizationId: orgId, valuationBusinessVersionId: ids.valuation!, entityId,
-      requestedByUserId: preparerId, engineManifestId,
+      organizationId: orgId,
+      valuationBusinessVersionId: ids.valuation!,
+      entityId,
+      requestedByUserId: preparerId,
+      engineManifestId,
       projectionYears: [
         { fiscalYear: 2026, periodIds: monthPeriods2026 },
         { fiscalYear: 2027, periodIds: [periodFY2027] },
@@ -740,11 +990,19 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     // Unwrap it explicitly — reading `.id` off the union silently yielded
     // `undefined` and pushed a NULL method_id straight into writeSensitivityGrid.
     const dcfMethodResult = await valuationComputeService.findOrCreateMethod({
-      organizationId: orgId, businessVersionId: ids.valuation!, methodType: 'DCF_FCFF', createdBy: preparerId,
+      organizationId: orgId,
+      businessVersionId: ids.valuation!,
+      methodType: 'DCF_FCFF',
+      createdBy: preparerId,
     });
-    if (!dcfMethodResult.ok) throw new Error(`findOrCreateMethod failed: ${JSON.stringify(dcfMethodResult)}`);
+    if (!dcfMethodResult.ok)
+      throw new Error(`findOrCreateMethod failed: ${JSON.stringify(dcfMethodResult)}`);
     const dcfMethod = dcfMethodResult.method;
-    await valuationComputeService.setMethodBasket({ methodId: dcfMethod.id, isInRecommendationBasket: true, weightPct: 100 });
+    await valuationComputeService.setMethodBasket({
+      methodId: dcfMethod.id,
+      isInRecommendationBasket: true,
+      weightPct: 100,
+    });
 
     const baseWacc = dcf.wacc.waccPct;
     const grid = valuationSensitivityService.buildWaccByTerminalGGrid({
@@ -754,25 +1012,51 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       },
       years: dcf.fcffYears.map((y: any) => ({ fiscalYear: y.fiscalYear, fcff: y.fcff! })),
       fcffTerminalYear: dcf.fcffYears[dcf.fcffYears.length - 1].fcff!,
-      baseWaccPct: baseWacc, baseGPct: 2.5,
+      baseWaccPct: baseWacc,
+      baseGPct: 2.5,
     });
     if (!grid.ok) throw new Error(`sensitivity grid failed: ${JSON.stringify(grid)}`);
     await valuationSensitivityService.writeSensitivityGrid({
-      organizationId: orgId, methodId: dcfMethod.id, gridLabel: 'WACC x Terminal g (base case)',
-      rowAxisVariable: 'terminal_g_pct', columnAxisVariable: 'wacc_pct', cells: grid.cells, createdBy: preparerId,
+      organizationId: orgId,
+      methodId: dcfMethod.id,
+      gridLabel: 'WACC x Terminal g (base case)',
+      rowAxisVariable: 'terminal_g_pct',
+      columnAxisVariable: 'wacc_pct',
+      cells: grid.cells,
+      createdBy: preparerId,
     });
 
     const asOfDate = '2025-12-31';
     const bridgeComponents = [
-      { sequenceOrder: 1, componentKind: 'DEBT' as const, sign: 'SUBTRACT_FROM_EV' as const, amountDecimal: 40_500_000, asOfDate, rationale: 'FY2025 closing LONG_TERM_DEBT' },
-      { sequenceOrder: 2, componentKind: 'CASH' as const, sign: 'ADD_TO_EV' as const, amountDecimal: 11_000_000, asOfDate, rationale: 'FY2025 closing CASH' },
+      {
+        sequenceOrder: 1,
+        componentKind: 'DEBT' as const,
+        sign: 'SUBTRACT_FROM_EV' as const,
+        amountDecimal: 40_500_000,
+        asOfDate,
+        rationale: 'FY2025 closing LONG_TERM_DEBT',
+      },
+      {
+        sequenceOrder: 2,
+        componentKind: 'CASH' as const,
+        sign: 'ADD_TO_EV' as const,
+        amountDecimal: 11_000_000,
+        asOfDate,
+        rationale: 'FY2025 closing CASH',
+      },
     ];
-    const eq = valuationBridgeService.computeEquityValue(dcf.enterpriseValue, bridgeComponents as any);
+    const eq = valuationBridgeService.computeEquityValue(
+      dcf.enterpriseValue,
+      bridgeComponents as any
+    );
     const bridge = await valuationBridgeService.writeBridge({
-      organizationId: orgId, businessVersionId: ids.valuation!, asOfDate,
+      organizationId: orgId,
+      businessVersionId: ids.valuation!,
+      asOfDate,
       enterpriseValueDecimal: dcf.enterpriseValue,
       equityValueDecimal: eq.ok ? eq.equityValueDecimal : 0,
-      components: bridgeComponents, createdBy: preparerId,
+      components: bridgeComponents,
+      createdBy: preparerId,
     });
     if (!bridge.ok) throw new Error(`writeBridge failed: ${JSON.stringify(bridge)}`);
 
@@ -780,12 +1064,29 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     // (WP-D09b + the IF-19 fix); `createComputeSnapshot()` is the production
     // path that makes that sequencing possible.
     const preSnap = await artifactVersionService.createComputeSnapshot({
-      organizationId: orgId, businessVersionId: ids.valuation!, actorId: preparerId,
+      organizationId: orgId,
+      businessVersionId: ids.valuation!,
+      actorId: preparerId,
     });
     if (!preSnap.ok) throw new Error(`createComputeSnapshot failed: ${JSON.stringify(preSnap)}`);
     for (const o of [
-      { kind: 'FACT', title: 'WACC and Enterprise Value', narrative: `Baseline WACC ${baseWacc.toFixed(2)}%, EV PLN ${dcf.enterpriseValue.toFixed(0)}.`, driver: 'DCF_FCFF', impact: dcf.enterpriseValue, confidence: 'HIGH' },
-      { kind: 'RISK', title: 'FY2026 funding gap', narrative: 'Negative December 2026 cash position driven by the mandatory debt-sweep clause.', driver: 'CASH', impact: null, confidence: 'HIGH' },
+      {
+        kind: 'FACT',
+        title: 'WACC and Enterprise Value',
+        narrative: `Baseline WACC ${baseWacc.toFixed(2)}%, EV PLN ${dcf.enterpriseValue.toFixed(0)}.`,
+        driver: 'DCF_FCFF',
+        impact: dcf.enterpriseValue,
+        confidence: 'HIGH',
+      },
+      {
+        kind: 'RISK',
+        title: 'FY2026 funding gap',
+        narrative:
+          'Negative December 2026 cash position driven by the mandatory debt-sweep clause.',
+        driver: 'CASH',
+        impact: null,
+        confidence: 'HIGH',
+      },
     ] as const) {
       await withPinnedPostgresTransaction((tx) =>
         tx.queryRun(
@@ -795,9 +1096,18 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
              ai_provider, ai_model, ai_prompt_version, ai_no_training_commitment, ai_evidence_digest, created_by
            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MANUAL_PROGRAMMATIC', 'coldReopen.pg.test.ts', 'v1', true, ?, ?)`,
           [
-            orgId, ids.valuation, preSnap.computeSnapshotId, o.kind, o.title, o.narrative,
+            orgId,
+            ids.valuation,
+            preSnap.computeSnapshotId,
+            o.kind,
+            o.title,
+            o.narrative,
             JSON.stringify({ source: 'coldReopen.pg.test.ts', method: 'DCF_FCFF' }),
-            o.driver, o.impact, o.confidence, `sha256:w10-advisor-${o.kind.toLowerCase()}`, preparerId,
+            o.driver,
+            o.impact,
+            o.confidence,
+            `sha256:w10-advisor-${o.kind.toLowerCase()}`,
+            preparerId,
           ]
         )
       );
@@ -812,30 +1122,57 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
    * DISTINCT users so the HIGH_RISK maker-checker rule (approver != preparer AND
    * approver != reviewer) is satisfied for every artifact type.
    */
-  async function approveChain(businessVersionId: string, startVersion: number, alreadyReady = false): Promise<void> {
+  async function approveChain(
+    businessVersionId: string,
+    startVersion: number,
+    alreadyReady = false
+  ): Promise<void> {
     let version = startVersion;
     if (!alreadyReady) {
       const submitted = await artifactVersionService.transition({
-        organizationId: orgId, businessVersionId, action: 'submit_for_review',
-        actorId: preparerId, role: 'preparer', expectedVersion: version,
+        organizationId: orgId,
+        businessVersionId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: version,
       });
-      if (!submitted.ok) throw new Error(`submit_for_review failed for ${businessVersionId}: ${JSON.stringify(submitted)}`);
+      if (!submitted.ok)
+        throw new Error(
+          `submit_for_review failed for ${businessVersionId}: ${JSON.stringify(submitted)}`
+        );
       version = submitted.businessVersion.version;
     }
     const started = await artifactVersionService.transition({
-      organizationId: orgId, businessVersionId, action: 'start_review',
-      actorId: reviewerId, role: 'reviewer', expectedVersion: version,
+      organizationId: orgId,
+      businessVersionId,
+      action: 'start_review',
+      actorId: reviewerId,
+      role: 'reviewer',
+      expectedVersion: version,
     });
-    if (!started.ok) throw new Error(`start_review failed for ${businessVersionId}: ${JSON.stringify(started)}`);
+    if (!started.ok)
+      throw new Error(`start_review failed for ${businessVersionId}: ${JSON.stringify(started)}`);
     version = started.businessVersion.version;
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [businessVersionId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [businessVersionId]
+      )
     );
     const approved = await artifactVersionService.approveVersion({
-      organizationId: orgId, businessVersionId, actorId: approverId, role: 'approver',
-      expectedVersion: version, editorUserIds: [preparerId], reviewStartedBy: reviewerId,
+      organizationId: orgId,
+      businessVersionId,
+      actorId: approverId,
+      role: 'approver',
+      expectedVersion: version,
+      editorUserIds: [preparerId],
+      reviewStartedBy: reviewerId,
     });
-    if (!approved.ok) throw new Error(`approveVersion failed for ${businessVersionId}: ${JSON.stringify(approved)}`);
+    if (!approved.ok)
+      throw new Error(
+        `approveVersion failed for ${businessVersionId}: ${JSON.stringify(approved)}`
+      );
   }
 
   afterAll(async () => {
@@ -863,7 +1200,10 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
 
   it('FC-05.8 — an APPROVED Baseline Model cold-reopens bit-identically (values, snapshot, semantic hash, freshness), with no recompute', async () => {
     const bv = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<any>(`SELECT status, freshness, compute_snapshot_id, content_semantic_hash FROM finance_business_versions WHERE business_version_id = ?`, [ids.baseline])
+      tx.queryOne<any>(
+        `SELECT status, freshness, compute_snapshot_id, content_semantic_hash FROM finance_business_versions WHERE business_version_id = ?`,
+        [ids.baseline]
+      )
     );
     expect(bv.status).toBe('APPROVED');
     expect(bv.compute_snapshot_id).toBeTruthy();
@@ -877,7 +1217,9 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const hotStart = Date.now();
     const hot = await hotRead('baseline');
     const hotMs = Date.now() - hotStart;
-    const hotWitness = await withPinnedPostgresTransaction((tx) => readComputeActivityWitness(tx as Tx, orgId));
+    const hotWitness = await withPinnedPostgresTransaction((tx) =>
+      readComputeActivityWitness(tx as Tx, orgId)
+    );
     // Sanity: the fixture really did compute a full monthly grid, so the
     // comparison below is not comparing two empty payloads.
     expect((hot as any).outputCount).toBeGreaterThan(100);
@@ -901,13 +1243,24 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expectRealComputeIdentity(JSON.parse(child.canonical));
 
     evidence.fc05_8 = {
-      hotMs, hotDigest: digest(hot), coldDigest: child.digest,
-      coldReadMs: child.readMs, coldProcessMs: child.processMs, coldWallMs: child.wallMs,
-      writerPids, coldBackendPids: child.backendPids, witnessPid: proof.witnessPid,
-      pidsAliveBeforeClose: proof.beforeClose, pidsAliveAfterClose: proof.afterClose,
-      poolDrainMs: proof.waitedMs, childPid: child.pid,
-      outputCount: (hot as any).outputCount, witness: hotWitness,
-      snapshotId: bv.compute_snapshot_id, semanticHash: bv.content_semantic_hash, freshness: bv.freshness,
+      hotMs,
+      hotDigest: digest(hot),
+      coldDigest: child.digest,
+      coldReadMs: child.readMs,
+      coldProcessMs: child.processMs,
+      coldWallMs: child.wallMs,
+      writerPids,
+      coldBackendPids: child.backendPids,
+      witnessPid: proof.witnessPid,
+      pidsAliveBeforeClose: proof.beforeClose,
+      pidsAliveAfterClose: proof.afterClose,
+      poolDrainMs: proof.waitedMs,
+      childPid: child.pid,
+      outputCount: (hot as any).outputCount,
+      witness: hotWitness,
+      snapshotId: bv.compute_snapshot_id,
+      semanticHash: bv.content_semantic_hash,
+      freshness: bv.freshness,
     };
   }, 180_000);
 
@@ -919,11 +1272,17 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const hotStart = Date.now();
     const hot: any = await hotRead('valuation');
     const hotMs = Date.now() - hotStart;
-    const hotWitness = await withPinnedPostgresTransaction((tx) => readComputeActivityWitness(tx as Tx, orgId));
+    const hotWitness = await withPinnedPostgresTransaction((tx) =>
+      readComputeActivityWitness(tx as Tx, orgId)
+    );
 
     expect(hot.businessVersion.status).toBe('APPROVED');
     expect(hot.sensitivityCellCount).toBe(25);
-    expect(hot.methods.some((m: any) => m.method_type === 'DCF_FCFF' && m.is_in_recommendation_basket === true)).toBe(true);
+    expect(
+      hot.methods.some(
+        (m: any) => m.method_type === 'DCF_FCFF' && m.is_in_recommendation_basket === true
+      )
+    ).toBe(true);
     expect(hot.advisorOutputs.length).toBeGreaterThan(0);
     expect(hot.advisorOutputs.every((a: any) => a.is_frozen === true)).toBe(true);
     // W10-D01 fix verification (hot side) — see FC-05.8's identical call for the full rationale.
@@ -942,24 +1301,40 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     // report can quote them rather than only quoting a hash.
     const cold = JSON.parse(child.canonical);
     expect(cold.sensitivityCells).toHaveLength(25);
-    expect(cold.advisorOutputs.every((a: any) => a.is_frozen === true && a.is_stale === false)).toBe(true);
+    expect(
+      cold.advisorOutputs.every((a: any) => a.is_frozen === true && a.is_stale === false)
+    ).toBe(true);
     expect(cold.bridge.enterprise_value_decimal).toBe(hot.bridge.enterprise_value_decimal);
     // W10-D01 fix verification (cold side, independently).
     expectRealComputeIdentity(cold);
 
     evidence.fc07_9 = {
-      hotMs, hotDigest: digest(hot), coldDigest: child.digest,
-      coldReadMs: child.readMs, coldProcessMs: child.processMs, coldWallMs: child.wallMs,
-      writerPids, coldBackendPids: child.backendPids,
-      pidsAliveBeforeClose: proof.beforeClose, pidsAliveAfterClose: proof.afterClose,
+      hotMs,
+      hotDigest: digest(hot),
+      coldDigest: child.digest,
+      coldReadMs: child.readMs,
+      coldProcessMs: child.processMs,
+      coldWallMs: child.wallMs,
+      writerPids,
+      coldBackendPids: child.backendPids,
+      pidsAliveBeforeClose: proof.beforeClose,
+      pidsAliveAfterClose: proof.afterClose,
       poolDrainMs: proof.waitedMs,
       enterpriseValueComputed: dcfEnterpriseValue,
       enterpriseValuePersisted: cold.bridge.enterprise_value_decimal,
       equityValuePersisted: cold.bridge.equity_value_decimal,
       waccComputedPct: cold.waccInputs?.wacc_computed_pct,
       sensitivityCells: cold.sensitivityCells.length,
-      methodWeights: cold.methods.map((m: any) => ({ method_type: m.method_type, weight_pct: m.weight_pct, basket: m.is_in_recommendation_basket })),
-      advisorFrozen: cold.advisorOutputs.map((a: any) => ({ kind: a.output_kind, is_frozen: a.is_frozen, is_stale: a.is_stale })),
+      methodWeights: cold.methods.map((m: any) => ({
+        method_type: m.method_type,
+        weight_pct: m.weight_pct,
+        basket: m.is_in_recommendation_basket,
+      })),
+      advisorFrozen: cold.advisorOutputs.map((a: any) => ({
+        kind: a.output_kind,
+        is_frozen: a.is_frozen,
+        is_stale: a.is_stale,
+      })),
       witness: hotWitness,
     };
   }, 180_000);
@@ -972,7 +1347,9 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const hotStart = Date.now();
     const hot: any = await hotRead('chain');
     const hotMs = Date.now() - hotStart;
-    const hotWitness = await withPinnedPostgresTransaction((tx) => readComputeActivityWitness(tx as Tx, orgId));
+    const hotWitness = await withPinnedPostgresTransaction((tx) =>
+      readComputeActivityWitness(tx as Tx, orgId)
+    );
 
     for (const stage of ['statement', 'analysis', 'baseline', 'prediction', 'valuation'] as const) {
       expect(hot[stage].businessVersion.status).toBe('APPROVED');
@@ -1036,13 +1413,21 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expect(reasonlessStale).toEqual([]);
 
     evidence.fc12_4 = {
-      hotMs, hotDigest: digest(hot), coldDigest: child.digest,
-      coldReadMs: child.readMs, coldProcessMs: child.processMs, coldWallMs: child.wallMs,
-      writerPids, coldBackendPids: child.backendPids,
-      pidsAliveBeforeClose: proof.beforeClose, pidsAliveAfterClose: proof.afterClose,
+      hotMs,
+      hotDigest: digest(hot),
+      coldDigest: child.digest,
+      coldReadMs: child.readMs,
+      coldProcessMs: child.processMs,
+      coldWallMs: child.wallMs,
+      writerPids,
+      coldBackendPids: child.backendPids,
+      pidsAliveBeforeClose: proof.beforeClose,
+      pidsAliveAfterClose: proof.afterClose,
       poolDrainMs: proof.waitedMs,
       lineageEdgeCount: cold.lineageEdgeCount,
-      lineageEdges: cold.lineageAncestors.map((e: any) => `${e.source_artifact_type} -[${e.edge_type}]-> ${e.target_artifact_type}`),
+      lineageEdges: cold.lineageAncestors.map(
+        (e: any) => `${e.source_artifact_type} -[${e.edge_type}]-> ${e.target_artifact_type}`
+      ),
       freshness: cold.freshness,
       stageRowCounts: {
         statementLines: cold.statement.lineCount,
@@ -1087,10 +1472,17 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const mutateWithTriggersOff = async (id: string, valueSql: string, params: unknown[]) =>
       withPinnedPostgresTransaction(async (tx) => {
         await tx.queryRun(`SET LOCAL session_replication_role = replica`);
-        return tx.queryRun(`UPDATE finance_baseline_outputs SET value_decimal = ${valueSql} WHERE id = ?`, [...params, id]);
+        return tx.queryRun(
+          `UPDATE finance_baseline_outputs SET value_decimal = ${valueSql} WHERE id = ?`,
+          [...params, id]
+        );
       });
 
-    const corrupted = await mutateWithTriggersOff(negativeControlRow.id, `value_decimal + 0.01`, []);
+    const corrupted = await mutateWithTriggersOff(
+      negativeControlRow.id,
+      `value_decimal + 0.01`,
+      []
+    );
     expect(corrupted.changes).toBe(1);
 
     const during = await coldRead('baseline');
@@ -1098,7 +1490,9 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     const diff = firstDifference(before.canonical, during.canonical);
     expect(diff).not.toBe('(identical)');
 
-    const restored = await mutateWithTriggersOff(negativeControlRow.id, `?::numeric`, [negativeControlRow.original]);
+    const restored = await mutateWithTriggersOff(negativeControlRow.id, `?::numeric`, [
+      negativeControlRow.original,
+    ]);
     expect(restored.changes).toBe(1);
 
     const after = await coldRead('baseline');

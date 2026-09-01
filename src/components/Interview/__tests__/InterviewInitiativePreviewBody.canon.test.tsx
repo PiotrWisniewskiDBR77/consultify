@@ -22,9 +22,10 @@
  *    exact-sha-0050bad8-2026-08-25/interview/EVIDENCE_INDEX.md).
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
 import fs from 'node:fs';
 import path from 'node:path';
+
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -104,9 +105,7 @@ describe('InterviewInitiativePreviewBody — canon §7.3 (DEC-2026-08-25-53)', (
       />
     );
 
-    expect(
-      screen.queryByText('interview.hub.draftStaysInInterviewUntil')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('interview.hub.draftStaysInInterviewUntil')).not.toBeInTheDocument();
     // No source insight → no "Insight" badge.
     expect(screen.queryByText('Insight')).not.toBeInTheDocument();
   });

@@ -174,7 +174,14 @@ suite('migration19 template_provenance_approval_receipts — exact late-safe con
   };
 
   const validProvenanceJson = () =>
-    JSON.stringify({ source: 's', licenseBasis: 'l', authority: 'a', actor: 'ac', version: 'v', evidence: 'e' });
+    JSON.stringify({
+      source: 's',
+      licenseBasis: 'l',
+      authority: 'a',
+      actor: 'ac',
+      version: 'v',
+      evidence: 'e',
+    });
 
   const insertRow = (
     schema: string,
@@ -298,7 +305,9 @@ suite('migration19 template_provenance_approval_receipts — exact late-safe con
       expect(first.triggers).toHaveLength(1);
       expect(first.triggers[0]).toMatchObject({ tgname: TRIGGER_NAME, tgenabled: 'O' });
       expect(String(first.triggers[0]?.definition)).toContain(GUARD_FN);
-      expect(first.guardFunctionSrc).toContain('template provenance approval receipts are immutable');
+      expect(first.guardFunctionSrc).toContain(
+        'template provenance approval receipts are immutable'
+      );
 
       // Seed a real, non-empty row through the ACTUAL ledger (not a synthetic
       // fixture row inserted straight into a mock) before re-applying.
@@ -365,22 +374,22 @@ suite('migration19 template_provenance_approval_receipts — exact late-safe con
       `ALTER TABLE __SCHEMA__.${RECEIPTS_TABLE} DROP CONSTRAINT uq_template_provenance_receipt_target`,
       /incompatible target uniqueness/,
     ],
-  ])('rejects a late-apply table missing its %s, before mutating a non-empty table', async (_label, sql, matcher) => {
-    await expectRejectAfterBreak(sql, matcher);
-  });
+  ])(
+    'rejects a late-apply table missing its %s, before mutating a non-empty table',
+    async (_label, sql, matcher) => {
+      await expectRejectAfterBreak(sql, matcher);
+    }
+  );
 
-  it(
-    'rejects a late-apply table whose FK relaxes ON DELETE RESTRICT to CASCADE, before mutation',
-    async () => {
-      await expectRejectAfterBreak(
-        `ALTER TABLE __SCHEMA__.${RECEIPTS_TABLE}
+  it('rejects a late-apply table whose FK relaxes ON DELETE RESTRICT to CASCADE, before mutation', async () => {
+    await expectRejectAfterBreak(
+      `ALTER TABLE __SCHEMA__.${RECEIPTS_TABLE}
            DROP CONSTRAINT template_provenance_approval_receipts_organization_id_fkey,
            ADD CONSTRAINT template_provenance_approval_receipts_organization_id_fkey
              FOREIGN KEY (organization_id) REFERENCES __SCHEMA__.organizations(id) ON DELETE CASCADE`,
-        /incompatible foreign keys/
-      );
-    }
-  );
+      /incompatible foreign keys/
+    );
+  });
 
   // OR-TRUE escape hatches and supersets: the preflight compares CANONICAL
   // SEMANTICS (via a throwaway twin, same technique as
@@ -425,51 +434,57 @@ suite('migration19 template_provenance_approval_receipts — exact late-safe con
              AND nullif(btrim(provenance_json->>'actor'), '') IS NOT NULL
              AND nullif(btrim(provenance_json->>'version'), '') IS NOT NULL)`,
     ],
-  ])('rejects the %s CHECK weakened to a superset/escape-hatch, before mutation', async (_label, name, sql) => {
-    await expectRejectAfterBreak(sql, new RegExp(`ck_template_provenance_receipt_${name}`));
-  });
+  ])(
+    'rejects the %s CHECK weakened to a superset/escape-hatch, before mutation',
+    async (_label, name, sql) => {
+      await expectRejectAfterBreak(sql, new RegExp(`ck_template_provenance_receipt_${name}`));
+    }
+  );
 
   it.each([
-    ['type (provenance_version widened to varchar)', `ALTER COLUMN provenance_version TYPE VARCHAR(64)`],
+    [
+      'type (provenance_version widened to varchar)',
+      `ALTER COLUMN provenance_version TYPE VARCHAR(64)`,
+    ],
     ['nullability (approved_by made nullable)', `ALTER COLUMN approved_by DROP NOT NULL`],
-    ['default (created_at defaults to now() instead of CURRENT_TIMESTAMP)', `ALTER COLUMN created_at SET DEFAULT now()`],
-  ])('rejects a late-apply table with wrong column %s, before mutation', async (_label, alterClause) => {
-    await expectRejectAfterBreak(`ALTER TABLE __SCHEMA__.${RECEIPTS_TABLE} ${alterClause}`, /incompatible columns/);
+    [
+      'default (created_at defaults to now() instead of CURRENT_TIMESTAMP)',
+      `ALTER COLUMN created_at SET DEFAULT now()`,
+    ],
+  ])(
+    'rejects a late-apply table with wrong column %s, before mutation',
+    async (_label, alterClause) => {
+      await expectRejectAfterBreak(
+        `ALTER TABLE __SCHEMA__.${RECEIPTS_TABLE} ${alterClause}`,
+        /incompatible columns/
+      );
+    }
+  );
+
+  it('rejects a late-apply table whose guard function+trigger were both dropped, before mutation', async () => {
+    // DROP FUNCTION ... CASCADE necessarily also removes the trigger (a
+    // trigger cannot reference a function that no longer exists) — this
+    // exercises the function-missing branch, which fires FIRST (see next
+    // test's comment on evaluation order).
+    await expectRejectAfterBreak(
+      `DROP FUNCTION __SCHEMA__.${GUARD_FN}() CASCADE`,
+      new RegExp(`${GUARD_FN} has incompatible definition`)
+    );
   });
 
-  it(
-    'rejects a late-apply table whose guard function+trigger were both dropped, before mutation',
-    async () => {
-      // DROP FUNCTION ... CASCADE necessarily also removes the trigger (a
-      // trigger cannot reference a function that no longer exists) — this
-      // exercises the function-missing branch, which fires FIRST (see next
-      // test's comment on evaluation order).
-      await expectRejectAfterBreak(
-        `DROP FUNCTION __SCHEMA__.${GUARD_FN}() CASCADE`,
-        new RegExp(`${GUARD_FN} has incompatible definition`)
-      );
-    }
-  );
+  it('rejects a late-apply table whose trigger alone was dropped, guard function intact, before mutation', async () => {
+    await expectRejectAfterBreak(
+      `DROP TRIGGER ${TRIGGER_NAME} ON __SCHEMA__.${RECEIPTS_TABLE}`,
+      /incompatible immutability trigger/
+    );
+  });
 
-  it(
-    'rejects a late-apply table whose trigger alone was dropped, guard function intact, before mutation',
-    async () => {
-      await expectRejectAfterBreak(
-        `DROP TRIGGER ${TRIGGER_NAME} ON __SCHEMA__.${RECEIPTS_TABLE}`,
-        /incompatible immutability trigger/
-      );
-    }
-  );
-
-  it(
-    'rejects a late-apply table whose guard function was replaced with a no-op body, before mutation',
-    async () => {
-      await expectRejectAfterBreak(
-        `CREATE OR REPLACE FUNCTION __SCHEMA__.${GUARD_FN}() RETURNS TRIGGER LANGUAGE plpgsql AS $guard$ BEGIN RETURN NULL; END; $guard$`,
-        new RegExp(`${GUARD_FN} has incompatible definition`)
-      );
-    }
-  );
+  it('rejects a late-apply table whose guard function was replaced with a no-op body, before mutation', async () => {
+    await expectRejectAfterBreak(
+      `CREATE OR REPLACE FUNCTION __SCHEMA__.${GUARD_FN}() RETURNS TRIGGER LANGUAGE plpgsql AS $guard$ BEGIN RETURN NULL; END; $guard$`,
+      new RegExp(`${GUARD_FN} has incompatible definition`)
+    );
+  });
 
   it(
     'rejects a canonically-wired trigger narrowed to UPDATE-only (missing DELETE) even with an intact ' +

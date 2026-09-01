@@ -17,8 +17,8 @@ import {
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
-import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
@@ -725,7 +725,7 @@ const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
  * (Harvard/wdrozenie-100/_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md,
  * "DO SCALENIA" #1). `PresentationWizard` był osierocony z nawigacji (zero
  * linków w UI) i żył tylko z deep-linków tworzonych przez
- * artifactNavigation.ts / chatActionHandler.ts / useActionHandler.ts /
+ * artifactNavigation.ts / chatActionHandler.ts / useChatActions.ts /
  * server `artifacts.routes.ts` (openPath dla `presentation_template`) — te
  * cztery miejsca zostały przepięte na kanoniczne cele (Teresa /prezentacje
  * dla generacji, Architekt szablonów dla edycji/klonu). Ta trasa zostaje

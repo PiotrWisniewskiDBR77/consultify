@@ -817,46 +817,46 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                     containerRef.current?.focus();
                   };
                   return (
-                  <th
-                    key={`${col.key}-${ci}`}
-                    tabIndex={0}
-                    title={`Kliknij, aby zaznaczyć całą kolumnę ${col.header || col.key}`}
-                    data-selected={columnSelected ? 'true' : undefined}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
+                    <th
+                      key={`${col.key}-${ci}`}
+                      tabIndex={0}
+                      title={`Kliknij, aby zaznaczyć całą kolumnę ${col.header || col.key}`}
+                      data-selected={columnSelected ? 'true' : undefined}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          selectColumn();
+                        }
+                      }}
+                      onClick={() => {
                         selectColumn();
-                      }
-                    }}
-                    onClick={() => {
-                      selectColumn();
-                    }}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      const candidate: Selection = {
-                        rowIndex: 0,
-                        colIndex: ci,
-                        endRowIndex: Math.max((activeRaw.rows?.length ?? 1) - 1, 0),
-                        endColIndex: ci,
-                        kind: 'column',
-                      };
-                      setSelected(candidate);
-                      const described = describeSelection(candidate);
-                      if (described)
-                        onSelectionContextMenu?.({
-                          x: event.clientX,
-                          y: event.clientY,
-                          selection: described,
-                        });
-                    }}
-                    className={`cursor-pointer select-none px-3 py-2 text-left font-medium border-b border-c-border-subtle whitespace-nowrap transition-colors hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
-                      columnSelected
-                        ? 'bg-c-surface text-c-text shadow-[inset_0_-2px_0_0_var(--c-focus-solid)]'
-                        : 'text-c-text-secondary'
-                    }`}
-                  >
-                    {col.header || col.key}
-                  </th>
+                      }}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        const candidate: Selection = {
+                          rowIndex: 0,
+                          colIndex: ci,
+                          endRowIndex: Math.max((activeRaw.rows?.length ?? 1) - 1, 0),
+                          endColIndex: ci,
+                          kind: 'column',
+                        };
+                        setSelected(candidate);
+                        const described = describeSelection(candidate);
+                        if (described)
+                          onSelectionContextMenu?.({
+                            x: event.clientX,
+                            y: event.clientY,
+                            selection: described,
+                          });
+                      }}
+                      className={`cursor-pointer select-none px-3 py-2 text-left font-medium border-b border-c-border-subtle whitespace-nowrap transition-colors hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
+                        columnSelected
+                          ? 'bg-c-surface text-c-text shadow-[inset_0_-2px_0_0_var(--c-focus-solid)]'
+                          : 'text-c-text-secondary'
+                      }`}
+                    >
+                      {col.header || col.key}
+                    </th>
                   );
                 })}
               </tr>
@@ -870,7 +870,8 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                     title={`Kliknij, aby zaznaczyć cały wiersz ${excelRowForDataRowIndex(ri)}`}
                     data-selected={
                       selected?.kind === 'row' &&
-                      ri >= Math.min(selected.rowIndex, selected.endRowIndex ?? selected.rowIndex) &&
+                      ri >=
+                        Math.min(selected.rowIndex, selected.endRowIndex ?? selected.rowIndex) &&
                       ri <= Math.max(selected.rowIndex, selected.endRowIndex ?? selected.rowIndex)
                         ? 'true'
                         : undefined

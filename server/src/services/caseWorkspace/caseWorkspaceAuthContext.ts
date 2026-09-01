@@ -132,7 +132,7 @@
  *      weakens the fail-closed default.
  */
 
-import { queryOne, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, queryOne } from '../../utils/queryHelpers.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -267,7 +267,8 @@ function mapMembershipRow(row: OrganizationMemberRow): OrgMembership {
     // back as a native Date, not a string, despite OrganizationMemberRow's
     // declared shape — normalize to an ISO string to actually satisfy the
     // documented `OrgMembership.createdAt: string` contract.
-    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
   };
 }
 

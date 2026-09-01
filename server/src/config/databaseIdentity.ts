@@ -143,9 +143,7 @@ export function databaseIdentitiesMatch(
 ): boolean {
   if (!a || !b) return false;
   return (
-    a.host === b.host &&
-    a.port === b.port &&
-    a.database.toLowerCase() === b.database.toLowerCase()
+    a.host === b.host && a.port === b.port && a.database.toLowerCase() === b.database.toLowerCase()
   );
 }
 

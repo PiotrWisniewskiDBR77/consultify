@@ -19,17 +19,23 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import * as artifactLinkService from '../../artifactLinkService.js';
 import {
-  INITIATIVE_CREATE_CAPABILITY_ID,
-  INITIATIVE_CREATE_CAPABILITY_VERSION,
   buildInitiativeCreateBinding,
   getInitiativeReadback,
-  initiativeCreateRegistrationInput,
+  INITIATIVE_CREATE_CAPABILITY_ID,
+  INITIATIVE_CREATE_CAPABILITY_VERSION,
   type InitiativeAdapterDeps,
+  initiativeCreateRegistrationInput,
 } from '../../adapters/initiativeAdapter.js';
-import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
+import * as artifactLinkService from '../../artifactLinkService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import {
+  buildEnvelope,
+  seedCaseFixture,
+  seedMember,
+  seedMemberedUser,
+  teardownCaseFixture,
+} from './_fixtures.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -116,374 +122,401 @@ const suite = REACHABLE ? describe.sequential : describe.skip;
 const INITIATIVE_ADAPTER_PG_TEST_RUN_ID = randomUUID();
 const INITIATIVE_TEST_CAPABILITY_ID = `${INITIATIVE_CREATE_CAPABILITY_ID}.pgtest.${INITIATIVE_ADAPTER_PG_TEST_RUN_ID}`;
 
-suite('initiativeAdapter — Initiative capability, dispatched end-to-end through executeCapability', () => {
-  let control: Pool;
-  let registrarOrgId: string;
+suite(
+  'initiativeAdapter — Initiative capability, dispatched end-to-end through executeCapability',
+  () => {
+    let control: Pool;
+    let registrarOrgId: string;
 
-  function resetInitiativeTestBinding(deps: InitiativeAdapterDeps = {}): void {
-    capabilityAdapterService.registerCapabilityBinding(
-      INITIATIVE_TEST_CAPABILITY_ID,
-      INITIATIVE_CREATE_CAPABILITY_VERSION,
-      buildInitiativeCreateBinding(deps)
-    );
-  }
+    function resetInitiativeTestBinding(deps: InitiativeAdapterDeps = {}): void {
+      capabilityAdapterService.registerCapabilityBinding(
+        INITIATIVE_TEST_CAPABILITY_ID,
+        INITIATIVE_CREATE_CAPABILITY_VERSION,
+        buildInitiativeCreateBinding(deps)
+      );
+    }
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-    registrarOrgId = `cwtest-adapter-registrar-initiative-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-      registrarOrgId,
-      'Initiative adapter registrar org',
-    ]);
-    const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    // Private test id (see the block above this describe) — NOT
-    // registerInitiativeCreateCapability, which hard-codes the
-    // platform-global INITIATIVE_CREATE_CAPABILITY_ID.
-    // registerCapabilityWithAdapter is the same production registration
-    // primitive that helper calls internally; only the capabilityId field of
-    // the input is overridden.
-    await capabilityAdapterService.registerCapabilityWithAdapter(
-      { ...initiativeCreateRegistrationInput(registrarActorId), capabilityId: INITIATIVE_TEST_CAPABILITY_ID },
-      buildInitiativeCreateBinding(),
-      registrarOrgId
-    );
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+      registrarOrgId = `cwtest-adapter-registrar-initiative-${randomUUID()}`;
+      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+        registrarOrgId,
+        'Initiative adapter registrar org',
+      ]);
+      const registrarActorId = await seedMemberedUser(
+        control,
+        registrarOrgId,
+        'registrar',
+        'ADMIN'
+      );
+      // Private test id (see the block above this describe) — NOT
+      // registerInitiativeCreateCapability, which hard-codes the
+      // platform-global INITIATIVE_CREATE_CAPABILITY_ID.
+      // registerCapabilityWithAdapter is the same production registration
+      // primitive that helper calls internally; only the capabilityId field of
+      // the input is overridden.
+      await capabilityAdapterService.registerCapabilityWithAdapter(
+        {
+          ...initiativeCreateRegistrationInput(registrarActorId),
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+        },
+        buildInitiativeCreateBinding(),
+        registrarOrgId
+      );
+    }, 60_000);
 
-  afterAll(async () => {
-    await control
-      .query(
-        `DELETE FROM case_workspace_capability_idempotency_keys
+    afterAll(async () => {
+      await control
+        .query(
+          `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [INITIATIVE_TEST_CAPABILITY_ID]
-      )
-      .catch(() => undefined);
-    await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [INITIATIVE_TEST_CAPABILITY_ID])
-      .catch(() => undefined);
-    await control
-      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
-      .catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control?.end().catch(() => undefined);
-  }, 60_000);
-
-  afterEach(() => {
-    resetInitiativeTestBinding();
-  });
-
-  async function initiativeCountForOrg(orgId: string): Promise<number> {
-    const result = await control.query(`SELECT count(*)::int AS n FROM initiatives WHERE organization_id = $1`, [
-      orgId,
-    ]);
-    return Number(result.rows[0]?.n ?? 0);
-  }
-
-  function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
-    return {
-      caseId,
-      title: 'Pilot rollout to region B',
-      summary: 'Expand the region-A pilot footprint to region B.',
-      axis: 'GROWTH',
-      ...overrides,
-    };
-  }
-
-  // =========================================================================
-  // 1. Success
-  // =========================================================================
-  it('creates a real Initiative row and a real ACTIVE artifact link, readback agrees', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-success');
-    try {
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-
-      expect(result.outcome).toBe('SUCCEEDED');
-      expect(result.errorCode).toBeNull();
-      const initiativeId = result.output.initiativeId as string;
-      expect(typeof initiativeId).toBe('string');
-      expect(result.resultRef).toBe(`initiative:${initiativeId}`);
-      expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
-
-      const initiative = await getInitiativeReadback(initiativeId, fixture.orgId);
-      expect(initiative?.title).toBe('Pilot rollout to region B');
-      expect(initiative?.organization_id).toBe(fixture.orgId);
-
-      const links = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'initiative', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(links).toHaveLength(1);
-      expect(links[0].artifactId).toBe(initiativeId);
-      expect(links[0].relation).toBe('OUTPUT');
-    } finally {
-      await teardownCaseFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 2. Denial
-  // =========================================================================
-  it('refuses invalid input and an actor with no case access, writing nothing', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-denial');
-    const strangerOrgId = `cwtest-adapter-stranger-initiative-${randomUUID()}`;
-    let strangerActorId: string | null = null;
-    try {
-      const badInput = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId, { title: '' }),
-        })
-      );
-      expect(badInput.outcome).toBe('FAILED');
-      expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
-
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        strangerOrgId,
-        'Initiative adapter stranger org',
-      ]);
-      strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
-
-      const noAccess = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: strangerOrgId,
-          actorId: strangerActorId,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(noAccess.outcome).toBe('FAILED');
-      expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
-      expect(await initiativeCountForOrg(strangerOrgId)).toBe(0);
-    } finally {
-      await control
-        .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+          [INITIATIVE_TEST_CAPABILITY_ID]
+        )
         .catch(() => undefined);
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId]).catch(() => undefined);
-      await teardownCaseFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 3. Retry
-  // =========================================================================
-  it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-retry');
-    try {
-      const key1 = `idem-${randomUUID()}`;
-      const first = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key1,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(first.outcome).toBe('SUCCEEDED');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
-
-      const replay = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key1,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
-
-      const key2 = `idem-${randomUUID()}`;
-      const rejected = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key2,
-          payload: validPayload(fixture.caseId, { title: '' }),
-        })
-      );
-      expect(rejected.outcome).toBe('FAILED');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
-
-      const key3 = `idem-${randomUUID()}`;
-      const second = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key3,
-          payload: validPayload(fixture.caseId, { title: 'A second, distinct initiative' }),
-        })
-      );
-      expect(second.outcome).toBe('SUCCEEDED');
-      expect(second.output.initiativeId).not.toBe(first.output.initiativeId);
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(2);
-    } finally {
-      await teardownCaseFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 4. Partial failure
-  // =========================================================================
-  it('still creates the Initiative when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-partial');
-    try {
-      resetInitiativeTestBinding({
-        linkArtifactToCase: async () => {
-          throw new Error('injected_link_failure');
-        },
-      });
-
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-
-      expect(result.outcome).toBe('SUCCEEDED');
-      const initiativeId = result.output.initiativeId as string;
-      const artifactLink = result.output.artifactLink as { linked: boolean; error: string | null };
-      expect(artifactLink.linked).toBe(false);
-      expect(artifactLink.error).toBeTruthy();
-      expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
-
-      const initiative = await getInitiativeReadback(initiativeId, fixture.orgId);
-      expect(initiative).not.toBeNull();
-
-      const linksBefore = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'initiative', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksBefore).toHaveLength(0);
-
-      await artifactLinkService.linkArtifactToCase({
-        caseId: fixture.caseId,
-        artifactType: 'initiative',
-        artifactId: initiativeId,
-        relation: 'OUTPUT',
-        linkedByActorId: fixture.actorId,
-      });
-      const linksAfter = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'initiative', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksAfter).toHaveLength(1);
-      expect(linksAfter[0].artifactId).toBe(initiativeId);
-    } finally {
-      await teardownCaseFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 5. Cross-tenant
-  // =========================================================================
-  it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-crosstenant');
-    const otherOrgId = `cwtest-adapter-other-initiative-${randomUUID()}`;
-    try {
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        otherOrgId,
-        'Initiative adapter other org',
-      ]);
-      await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
-
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: otherOrgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-
-      expect(result.outcome).toBe('FAILED');
-      expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-      expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
-      expect(await initiativeCountForOrg(otherOrgId)).toBe(0);
-    } finally {
       await control
-        .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
-          otherOrgId,
-          fixture.actorId,
+        .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+          INITIATIVE_TEST_CAPABILITY_ID,
         ])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId]).catch(() => undefined);
-      await teardownCaseFixture(control, fixture);
+      await control
+        .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control?.end().catch(() => undefined);
+    }, 60_000);
+
+    afterEach(() => {
+      resetInitiativeTestBinding();
+    });
+
+    async function initiativeCountForOrg(orgId: string): Promise<number> {
+      const result = await control.query(
+        `SELECT count(*)::int AS n FROM initiatives WHERE organization_id = $1`,
+        [orgId]
+      );
+      return Number(result.rows[0]?.n ?? 0);
     }
-  }, 90_000);
 
-  // =========================================================================
-  // 6. Stable deep link
-  // =========================================================================
-  it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
-    const fixture = await seedCaseFixture(control, 'initiative-deeplink');
-    try {
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
-          capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(result.outcome).toBe('SUCCEEDED');
-      const initiativeId = result.output.initiativeId as string;
-      expect(result.resultRef).toBe(`initiative:${initiativeId}`);
-
-      const readback1 = await getInitiativeReadback(initiativeId, fixture.orgId);
-      const readback2 = await getInitiativeReadback(initiativeId, fixture.orgId);
-      expect(readback1?.id).toBe(initiativeId);
-      expect(readback2?.id).toBe(initiativeId);
-      expect(readback1?.title).toBe(readback2?.title);
-
-      const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'initiative', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'initiative', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksRead1).toHaveLength(1);
-      expect(linksRead2).toHaveLength(1);
-      expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
-      expect(linksRead1[0].artifactId).toBe(initiativeId);
-    } finally {
-      await teardownCaseFixture(control, fixture);
+    function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
+      return {
+        caseId,
+        title: 'Pilot rollout to region B',
+        summary: 'Expand the region-A pilot footprint to region B.',
+        axis: 'GROWTH',
+        ...overrides,
+      };
     }
-  }, 90_000);
-});
+
+    // =========================================================================
+    // 1. Success
+    // =========================================================================
+    it('creates a real Initiative row and a real ACTIVE artifact link, readback agrees', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-success');
+      try {
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('SUCCEEDED');
+        expect(result.errorCode).toBeNull();
+        const initiativeId = result.output.initiativeId as string;
+        expect(typeof initiativeId).toBe('string');
+        expect(result.resultRef).toBe(`initiative:${initiativeId}`);
+        expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
+
+        const initiative = await getInitiativeReadback(initiativeId, fixture.orgId);
+        expect(initiative?.title).toBe('Pilot rollout to region B');
+        expect(initiative?.organization_id).toBe(fixture.orgId);
+
+        const links = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'initiative', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(links).toHaveLength(1);
+        expect(links[0].artifactId).toBe(initiativeId);
+        expect(links[0].relation).toBe('OUTPUT');
+      } finally {
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 2. Denial
+    // =========================================================================
+    it('refuses invalid input and an actor with no case access, writing nothing', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-denial');
+      const strangerOrgId = `cwtest-adapter-stranger-initiative-${randomUUID()}`;
+      let strangerActorId: string | null = null;
+      try {
+        const badInput = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId, { title: '' }),
+          })
+        );
+        expect(badInput.outcome).toBe('FAILED');
+        expect(badInput.errorCode).toBe('CAPABILITY_INPUT_INVALID');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
+
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          strangerOrgId,
+          'Initiative adapter stranger org',
+        ]);
+        strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger');
+
+        const noAccess = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: strangerOrgId,
+            actorId: strangerActorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(noAccess.outcome).toBe('FAILED');
+        expect(noAccess.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
+        expect(await initiativeCountForOrg(strangerOrgId)).toBe(0);
+      } finally {
+        await control
+          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 3. Retry
+    // =========================================================================
+    it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-retry');
+      try {
+        const key1 = `idem-${randomUUID()}`;
+        const first = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key1,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(first.outcome).toBe('SUCCEEDED');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
+
+        const replay = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key1,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
+
+        const key2 = `idem-${randomUUID()}`;
+        const rejected = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key2,
+            payload: validPayload(fixture.caseId, { title: '' }),
+          })
+        );
+        expect(rejected.outcome).toBe('FAILED');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(1);
+
+        const key3 = `idem-${randomUUID()}`;
+        const second = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key3,
+            payload: validPayload(fixture.caseId, { title: 'A second, distinct initiative' }),
+          })
+        );
+        expect(second.outcome).toBe('SUCCEEDED');
+        expect(second.output.initiativeId).not.toBe(first.output.initiativeId);
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(2);
+      } finally {
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 4. Partial failure
+    // =========================================================================
+    it('still creates the Initiative when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-partial');
+      try {
+        resetInitiativeTestBinding({
+          linkArtifactToCase: async () => {
+            throw new Error('injected_link_failure');
+          },
+        });
+
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('SUCCEEDED');
+        const initiativeId = result.output.initiativeId as string;
+        const artifactLink = result.output.artifactLink as {
+          linked: boolean;
+          error: string | null;
+        };
+        expect(artifactLink.linked).toBe(false);
+        expect(artifactLink.error).toBeTruthy();
+        expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
+
+        const initiative = await getInitiativeReadback(initiativeId, fixture.orgId);
+        expect(initiative).not.toBeNull();
+
+        const linksBefore = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'initiative', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksBefore).toHaveLength(0);
+
+        await artifactLinkService.linkArtifactToCase({
+          caseId: fixture.caseId,
+          artifactType: 'initiative',
+          artifactId: initiativeId,
+          relation: 'OUTPUT',
+          linkedByActorId: fixture.actorId,
+        });
+        const linksAfter = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'initiative', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksAfter).toHaveLength(1);
+        expect(linksAfter[0].artifactId).toBe(initiativeId);
+      } finally {
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 5. Cross-tenant
+    // =========================================================================
+    it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-crosstenant');
+      const otherOrgId = `cwtest-adapter-other-initiative-${randomUUID()}`;
+      try {
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          otherOrgId,
+          'Initiative adapter other org',
+        ]);
+        await seedMember(control, otherOrgId, fixture.actorId, 'MEMBER');
+
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: otherOrgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('FAILED');
+        expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+        expect(await initiativeCountForOrg(fixture.orgId)).toBe(0);
+        expect(await initiativeCountForOrg(otherOrgId)).toBe(0);
+      } finally {
+        await control
+          .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+            otherOrgId,
+            fixture.actorId,
+          ])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId])
+          .catch(() => undefined);
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 6. Stable deep link
+    // =========================================================================
+    it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
+      const fixture = await seedCaseFixture(control, 'initiative-deeplink');
+      try {
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
+            capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(result.outcome).toBe('SUCCEEDED');
+        const initiativeId = result.output.initiativeId as string;
+        expect(result.resultRef).toBe(`initiative:${initiativeId}`);
+
+        const readback1 = await getInitiativeReadback(initiativeId, fixture.orgId);
+        const readback2 = await getInitiativeReadback(initiativeId, fixture.orgId);
+        expect(readback1?.id).toBe(initiativeId);
+        expect(readback2?.id).toBe(initiativeId);
+        expect(readback1?.title).toBe(readback2?.title);
+
+        const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'initiative', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'initiative', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksRead1).toHaveLength(1);
+        expect(linksRead2).toHaveLength(1);
+        expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
+        expect(linksRead1[0].artifactId).toBe(initiativeId);
+      } finally {
+        await teardownCaseFixture(control, fixture);
+      }
+    }, 90_000);
+  }
+);

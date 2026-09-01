@@ -56,7 +56,9 @@ export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
               <div className="absolute bottom-full left-0 mb-0.5 hidden group-hover/chip:block z-50 pointer-events-none">
                 <div className="px-2 py-1 rounded bg-c-surface text-c-text text-[9px] shadow-lg whitespace-nowrap">
                   <span className="font-medium">{ref.artifact_type}</span>: {ref.artifact_name}
-                  <div className="text-c-text-secondary text-[8px] mt-0.5">Kliknij, aby przejść</div>
+                  <div className="text-c-text-secondary text-[8px] mt-0.5">
+                    Kliknij, aby przejść
+                  </div>
                 </div>
               </div>
             </div>

@@ -99,7 +99,10 @@ function stableStringify(value: unknown): string {
   if (value && typeof value === 'object') {
     const keys = Object.keys(value as Record<string, unknown>).sort();
     return `{${keys
-      .map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`)
+      .map(
+        (key) =>
+          `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`
+      )
       .join(',')}}`;
   }
   return JSON.stringify(value);
@@ -184,7 +187,10 @@ export function useOrgContextSync(isAuthenticated: boolean): SyncResult {
       if (!readbackResponse.ok)
         throw new Error(`Organization context readback failed (${readbackResponse.status})`);
       const readback = (await readbackResponse.json()) as ContextEnvelope;
-      if (readback.version !== receipt.version || stableContext(readback) !== stableContext(intended))
+      if (
+        readback.version !== receipt.version ||
+        stableContext(readback) !== stableContext(intended)
+      )
         throw new Error('Organization context readback did not match the persisted write');
       setPersistedVersion(receipt.version);
       setIsUnsynced(false);

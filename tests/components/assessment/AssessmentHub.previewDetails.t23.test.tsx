@@ -148,7 +148,7 @@ describe('T23-PREVIEW-P25 Reports preview Details', () => {
 
   it('wires prose Details into the reports preview, drops Property/Value, and keeps the imported-reports guard + row actions intact', () => {
     const source = readFileSync(
-      join(process.cwd(), 'src/components/Assessment/AssessmentHub.tsx'),
+      join(process.cwd(), 'src/components/assessment/AssessmentHub.tsx'),
       'utf8'
     );
     // Anchor past the render-switch comment (same landmark T21's guard test

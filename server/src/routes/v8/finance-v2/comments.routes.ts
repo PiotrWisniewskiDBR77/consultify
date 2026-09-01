@@ -34,6 +34,8 @@ import { getBusinessVersion } from '../../../services/finance/canonical/artifact
 import {
   assignComment,
   createComment,
+  type FinanceCommentAssignmentRow,
+  type FinanceCommentRow,
   getComment,
   getCurrentAssignment,
   hasUnresolvedBlockingComments,
@@ -43,20 +45,18 @@ import {
   listMentioning,
   reopenComment,
   resolveComment,
-  type FinanceCommentAssignmentRow,
-  type FinanceCommentRow,
 } from '../../../services/finance/canonical/commentService.js';
 import {
   addChecklistItem,
   allRequiredItemsChecked,
   checkItem,
+  type FinanceReviewChecklistItemRow,
   getChangedCellsForStatementPack,
   listChecklistItems,
   setChecklistItemRequired,
   uncheckItem,
-  type FinanceReviewChecklistItemRow,
 } from '../../../services/finance/canonical/reviewChecklistService.js';
-import { CellRefSchema, type CellRef } from '../../../types/finance/CellRef.js';
+import { type CellRef, CellRefSchema } from '../../../types/finance/CellRef.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -137,14 +137,24 @@ router.post(
       return sendError(res, 404, 'NOT_FOUND', 'Business version not found');
     }
     if (businessVersion.artifact_id !== body.artifactId) {
-      return sendError(res, 400, 'ARTIFACT_MISMATCH', 'businessVersionId does not belong to artifactId');
+      return sendError(
+        res,
+        400,
+        'ARTIFACT_MISMATCH',
+        'businessVersionId does not belong to artifactId'
+      );
     }
 
     let anchor: CellRef | null = null;
     if (body.anchor !== undefined && body.anchor !== null) {
       const parsedAnchor = CellRefSchema.safeParse(body.anchor);
       if (!parsedAnchor.success) {
-        return sendError(res, 400, 'INVALID_ANCHOR', `anchor is not a valid CellRef: ${parsedAnchor.error.message}`);
+        return sendError(
+          res,
+          400,
+          'INVALID_ANCHOR',
+          `anchor is not a valid CellRef: ${parsedAnchor.error.message}`
+        );
       }
       anchor = parsedAnchor.data;
     }
@@ -156,7 +166,9 @@ router.post(
       anchor,
       authorId: userId,
       body: typeof body.body === 'string' ? body.body : '',
-      mentions: Array.isArray(body.mentions) ? body.mentions.filter((m: unknown) => typeof m === 'string') : undefined,
+      mentions: Array.isArray(body.mentions)
+        ? body.mentions.filter((m: unknown) => typeof m === 'string')
+        : undefined,
       isBlocking: typeof body.isBlocking === 'boolean' ? body.isBlocking : undefined,
     });
     if (!result.ok) {
@@ -208,7 +220,9 @@ router.post(
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
-    return res.status(201).json({ data: toCommentAssignmentDto(result.assignment), meta: financeV2Meta() });
+    return res
+      .status(201)
+      .json({ data: toCommentAssignmentDto(result.assignment), meta: financeV2Meta() });
   })
 );
 
@@ -216,8 +230,14 @@ router.get(
   '/comments/:commentId/assignment',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const assignment = await getCurrentAssignment(organizationId, String(req.params.commentId || ''));
-    return res.status(200).json({ data: assignment ? toCommentAssignmentDto(assignment) : null, meta: financeV2Meta() });
+    const assignment = await getCurrentAssignment(
+      organizationId,
+      String(req.params.commentId || '')
+    );
+    return res.status(200).json({
+      data: assignment ? toCommentAssignmentDto(assignment) : null,
+      meta: financeV2Meta(),
+    });
   })
 );
 
@@ -242,9 +262,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const artifactId = typeof req.query.artifactId === 'string' ? req.query.artifactId : undefined;
-    const businessVersionId = typeof req.query.businessVersionId === 'string' ? req.query.businessVersionId : undefined;
+    const businessVersionId =
+      typeof req.query.businessVersionId === 'string' ? req.query.businessVersionId : undefined;
     if ((!artifactId && !businessVersionId) || (artifactId && businessVersionId)) {
-      return sendError(res, 400, 'INVALID_QUERY', 'Exactly one of artifactId or businessVersionId is required');
+      return sendError(
+        res,
+        400,
+        'INVALID_QUERY',
+        'Exactly one of artifactId or businessVersionId is required'
+      );
     }
     const opts = {
       unresolvedOnly: req.query.unresolvedOnly === 'true',
@@ -267,7 +293,12 @@ router.post(
     }
     const parsedCellRef = CellRefSchema.safeParse(body.cellRef);
     if (!parsedCellRef.success) {
-      return sendError(res, 400, 'INVALID_CELL_REF', `cellRef is not valid: ${parsedCellRef.error.message}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_CELL_REF',
+        `cellRef is not valid: ${parsedCellRef.error.message}`
+      );
     }
     const comments = await listByCell(organizationId, body.businessVersionId, parsedCellRef.data);
     return res.status(200).json({ data: comments.map(toCommentDto), meta: financeV2Meta() });
@@ -288,8 +319,13 @@ router.get(
   '/versions/:businessVersionId/has-unresolved-blocking-comments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const hasBlocking = await hasUnresolvedBlockingComments(organizationId, String(req.params.businessVersionId || ''));
-    return res.status(200).json({ data: { hasUnresolvedBlockingComments: hasBlocking }, meta: financeV2Meta() });
+    const hasBlocking = await hasUnresolvedBlockingComments(
+      organizationId,
+      String(req.params.businessVersionId || '')
+    );
+    return res
+      .status(200)
+      .json({ data: { hasUnresolvedBlockingComments: hasBlocking }, meta: financeV2Meta() });
   })
 );
 
@@ -356,7 +392,11 @@ router.post(
     if (typeof body.required !== 'boolean') {
       return sendError(res, 400, 'INVALID_BODY', 'required must be a boolean');
     }
-    const result = await setChecklistItemRequired(organizationId, String(req.params.itemId || ''), body.required);
+    const result = await setChecklistItemRequired(
+      organizationId,
+      String(req.params.itemId || ''),
+      body.required
+    );
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
@@ -368,7 +408,10 @@ router.get(
   '/review-checklist/:businessVersionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const items = await listChecklistItems(organizationId, String(req.params.businessVersionId || ''));
+    const items = await listChecklistItems(
+      organizationId,
+      String(req.params.businessVersionId || '')
+    );
     return res.status(200).json({ data: items.map(toChecklistItemDto), meta: financeV2Meta() });
   })
 );
@@ -377,8 +420,13 @@ router.get(
   '/review-checklist/:businessVersionId/all-required-checked',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const allChecked = await allRequiredItemsChecked(organizationId, String(req.params.businessVersionId || ''));
-    return res.status(200).json({ data: { allRequiredChecked: allChecked }, meta: financeV2Meta() });
+    const allChecked = await allRequiredItemsChecked(
+      organizationId,
+      String(req.params.businessVersionId || '')
+    );
+    return res
+      .status(200)
+      .json({ data: { allRequiredChecked: allChecked }, meta: financeV2Meta() });
   })
 );
 
@@ -387,10 +435,16 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const previousApprovedBusinessVersionId =
-      typeof req.query.previousApprovedBusinessVersionId === 'string' ? req.query.previousApprovedBusinessVersionId : undefined;
-    const result = await getChangedCellsForStatementPack(organizationId, String(req.params.businessVersionId || ''), {
-      previousApprovedBusinessVersionId,
-    });
+      typeof req.query.previousApprovedBusinessVersionId === 'string'
+        ? req.query.previousApprovedBusinessVersionId
+        : undefined;
+    const result = await getChangedCellsForStatementPack(
+      organizationId,
+      String(req.params.businessVersionId || ''),
+      {
+        previousApprovedBusinessVersionId,
+      }
+    );
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }

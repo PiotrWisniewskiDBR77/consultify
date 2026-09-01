@@ -51,9 +51,8 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
 });
 
 const { DrdHttpMethodWorkspaceScreen } = await import('../DrdHttpMethodWorkspaceScreen');
-const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } = await import(
-  '@/method-core/methods/drd/compileDrdPack'
-);
+const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } =
+  await import('@/method-core/methods/drd/compileDrdPack');
 
 function makeMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -118,7 +117,12 @@ describe('DEC-148 — Report tab present and Matrix tab still reachable (default
             content: null,
             minWords: 180,
             maxWords: 260,
-            decisionLine: { direction: null, priority: null, horizon: null, successCondition: null },
+            decisionLine: {
+              direction: null,
+              priority: null,
+              horizon: null,
+              successCondition: null,
+            },
           },
         },
       ],
@@ -134,7 +138,9 @@ describe('DEC-148 — Report tab present and Matrix tab still reachable (default
     hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
     hoisted.listEvents.mockResolvedValue([]);
 
-    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+    render(
+      <DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />
+    );
 
     const shell = await screen.findByTestId('method-workspace-shell');
     const tablist = within(shell).getByRole('tablist', { name: 'Tryb widoku' });
@@ -153,9 +159,7 @@ describe('DEC-148 — Report tab present and Matrix tab still reachable (default
     // (default ON) instead of the legacy inline fallback.
     fireEvent.click(reportTab);
     expect(reportTab).toHaveAttribute('aria-selected', 'true');
-    await waitFor(() =>
-      expect(screen.getByTestId('method-report-workspace')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId('method-report-workspace')).toBeInTheDocument());
     await waitFor(() =>
       expect(hoisted.getAssessmentReportContract).toHaveBeenCalledWith('sess-http-1')
     );

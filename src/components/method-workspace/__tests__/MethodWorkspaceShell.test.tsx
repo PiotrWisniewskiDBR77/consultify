@@ -83,7 +83,11 @@ function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'matrix' 
         selection,
         onSelect: setSelection,
         onCloseSideSheet: () => setSelection(null),
-        renderSideSheet: (sel) => <p data-testid="shell-side-sheet-content">Wybrano {sel.unitId}/{sel.level}</p>,
+        renderSideSheet: (sel) => (
+          <p data-testid="shell-side-sheet-content">
+            Wybrano {sel.unitId}/{sel.level}
+          </p>
+        ),
       }}
       reportContent={<p data-testid="report-content">Raport z tej samej sesji</p>}
     />
@@ -104,7 +108,9 @@ describe('MethodWorkspaceShell — view modes share one state', () => {
     // Same cell semantics as asserted directly on LiveMatrix — proves the shell
     // passes the identical rows/levels through, not a second copy.
     expect(
-      screen.getByLabelText('DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete')
+      screen.getByLabelText(
+        'DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete'
+      )
     ).toBeInTheDocument();
   });
 

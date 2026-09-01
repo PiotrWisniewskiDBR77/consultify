@@ -9,7 +9,10 @@ import {
   HandoffSpineError,
   recordExportReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
-import { MATERIAL_EXPORT_POLICY_VERSION, requireApprovedExportEngine } from './materialExportPolicyService.js';
+import {
+  MATERIAL_EXPORT_POLICY_VERSION,
+  requireApprovedExportEngine,
+} from './materialExportPolicyService.js';
 
 export type GovernedMaterialKind = Extract<ExportArtifactKind, 'document' | 'workbook'>;
 

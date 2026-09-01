@@ -7,22 +7,22 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { allowedDownstreamCreations } from '../lineageNavigatorContract.js';
 import {
-  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
+  buildWorkspaceBarConfig,
+  FINANCE_MODULE_ADAPTER_LIST,
+  FINANCE_MODULE_ADAPTERS,
+  type FinanceModuleAdapter,
+  resolvePrimaryAction,
+  validateModuleAdapter,
+} from '../moduleAdapters.js';
+import {
   countDirectRightControls,
   mergeFreshnessIntoPrimaryLabel,
   resolveViewNavigationPlacement,
   validateWorkspaceBarConfig,
+  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
 } from '../workspaceBarContract.js';
-import {
-  FINANCE_MODULE_ADAPTERS,
-  FINANCE_MODULE_ADAPTER_LIST,
-  buildWorkspaceBarConfig,
-  resolvePrimaryAction,
-  validateModuleAdapter,
-  type FinanceModuleAdapter,
-} from '../moduleAdapters.js';
-import { allowedDownstreamCreations } from '../lineageNavigatorContract.js';
 import {
   allGatesSatisfied,
   artifactRef,
@@ -71,7 +71,11 @@ describe('AP-10 moduleAdapters — all five adapters are valid', () => {
         versionLabel: 'v1',
         hasUncommittedWorkingRevision: false,
         activeViewId: adapter.views[0].id,
-        context: evaluationContext({ status: 'DRAFT', role: 'preparer', freshness: 'NEVER_COMPUTED' }),
+        context: evaluationContext({
+          status: 'DRAFT',
+          role: 'preparer',
+          freshness: 'NEVER_COMPUTED',
+        }),
       });
       const result = validateWorkspaceBarConfig(config);
       expect(result.ok, JSON.stringify(result, null, 2)).toBe(true);
@@ -135,7 +139,9 @@ describe('AP-10 moduleAdapters — owner-mandated view counts (regression)', () 
     expect(resolveViewNavigationPlacement(2)).toBe('in-bar');
     expect(resolveViewNavigationPlacement(7)).toBe('separate-row');
     expect(configFor(FINANCE_MODULE_ADAPTERS.prediction).viewNavigation.placement).toBe('in-bar');
-    expect(configFor(FINANCE_MODULE_ADAPTERS.valuation).viewNavigation.placement).toBe('separate-row');
+    expect(configFor(FINANCE_MODULE_ADAPTERS.valuation).viewNavigation.placement).toBe(
+      'separate-row'
+    );
   });
 });
 
@@ -153,9 +159,9 @@ describe('AP-10 moduleAdapters — primary action resolution', () => {
     const ctx = evaluationContext({ gates: allGatesSatisfied(), freshness: 'STALE_ASSUMPTIONS' });
     const primary = resolvePrimaryAction(FINANCE_MODULE_ADAPTERS.analysis, ctx);
     expect(primary.id).toBe('finance.analysis.compute');
-    expect(mergeFreshnessIntoPrimaryLabel(primary.label, ctx.freshness, primary.mergesFreshness).pl).toBe(
-      'Nieaktualne · Przelicz'
-    );
+    expect(
+      mergeFreshnessIntoPrimaryLabel(primary.label, ctx.freshness, primary.mergesFreshness).pl
+    ).toBe('Nieaktualne · Przelicz');
   });
 
   it('Prediction falls back to preflight until conflicts are resolved (DEC-FIN-004)', () => {

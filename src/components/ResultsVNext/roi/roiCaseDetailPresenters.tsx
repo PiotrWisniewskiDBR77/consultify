@@ -21,6 +21,7 @@ import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
 import { LifecycleLockBadge } from '../LifecycleLockBadge';
+import type { RoiCaseStatus } from './roiApi';
 import type {
   RoiAssumption,
   RoiBaseline,
@@ -37,8 +38,12 @@ import {
   roiTaxTreatmentLabel,
   roiTimingTypeLabel,
 } from './roiCaseDetailMappers';
-import { formatRoiCurrency, formatRoiDate, formatRoiNumber, getRoiCaseLockInfo } from './roiRegistryMappers';
-import type { RoiCaseStatus } from './roiApi';
+import {
+  formatRoiCurrency,
+  formatRoiDate,
+  formatRoiNumber,
+  getRoiCaseLockInfo,
+} from './roiRegistryMappers';
 
 function propertyLabels(isPolish: boolean): { propertyLabel: string; valueLabel: string } {
   return {
@@ -129,7 +134,11 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
       render: (row: RoiSettingsRowVm) => {
         if (row.kind === 'baseline') {
           if (!row.baseline) {
-            return <span className="text-sm text-c-text-muted">{isPolish ? 'Brak rekordu' : 'No record'}</span>;
+            return (
+              <span className="text-sm text-c-text-muted">
+                {isPolish ? 'Brak rekordu' : 'No record'}
+              </span>
+            );
           }
           return (
             <span className="text-sm text-c-text-secondary">
@@ -141,7 +150,11 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
           );
         }
         if (!row.policy) {
-          return <span className="text-sm text-c-text-muted">{isPolish ? 'Brak rekordu' : 'No record'}</span>;
+          return (
+            <span className="text-sm text-c-text-muted">
+              {isPolish ? 'Brak rekordu' : 'No record'}
+            </span>
+          );
         }
         return (
           <span className="text-sm text-c-text-secondary">
@@ -164,7 +177,12 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
       width: '120px',
       render: (row: RoiSettingsRowVm) => (
         <span className="text-sm text-c-text-secondary">
-          {roiConfidenceLabel(row.kind === 'baseline' ? (row.baseline?.confidence ?? null) : (row.policy?.confidence ?? null), isPolish)}
+          {roiConfidenceLabel(
+            row.kind === 'baseline'
+              ? (row.baseline?.confidence ?? null)
+              : (row.policy?.confidence ?? null),
+            isPolish
+          )}
         </span>
       ),
     },
@@ -174,7 +192,11 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
       width: '130px',
       render: (row: RoiSettingsRowVm) => {
         const value = row.kind === 'baseline' ? row.baseline?.updatedAt : row.policy?.updatedAt;
-        return <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(value ?? null, isPolish)}</span>;
+        return (
+          <span className="text-sm text-c-text-muted tabular-nums">
+            {formatRoiDate(value ?? null, isPolish)}
+          </span>
+        );
       },
     },
   ];
@@ -191,7 +213,9 @@ export function buildRoiSettingsRowMenu(
   const missing = row.kind === 'baseline' ? !row.baseline : !row.policy;
   const missingNote = isPolish ? 'Brak rekordu ustawień do edycji.' : 'No settings record to edit.';
   return {
-    primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => handlers.onPreview(row) }],
+    primary: [
+      { id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => handlers.onPreview(row) },
+    ],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
       edit: lock || missing ? undefined : () => handlers.onEdit(row),
@@ -225,20 +249,93 @@ export function buildRoiSettingsPreview(
         valueLabel,
         properties: b
           ? [
-              { id: 'method', label: isPolish ? 'Metoda projekcji BAU' : 'BAU projection method', value: roiBaselineProjectionMethodLabel(b.bauProjectionMethod, isPolish) },
-              { id: 'currentValue', label: isPolish ? 'Bieżąca wartość zmierzona' : 'Current measured value', value: <HonestValueCell isPolish={isPolish} value={b.currentMeasuredValue} format={(v) => `${formatRoiNumber(v, isPolish)}${b.currentMeasuredUnit ? ` ${b.currentMeasuredUnit}` : ''}`} /> },
-              { id: 'asOf', label: isPolish ? 'Stan na dzień' : 'Measured as of', value: formatRoiDate(b.currentMeasuredAsOf, isPolish) },
-              { id: 'periodStart', label: isPolish ? 'Początek okresu baseline' : 'Baseline period start', value: formatRoiDate(b.baselinePeriodStart, isPolish) },
-              { id: 'periodEnd', label: isPolish ? 'Koniec okresu baseline' : 'Baseline period end', value: formatRoiDate(b.baselinePeriodEnd, isPolish) },
-              { id: 'growthRate', label: isPolish ? 'Stopa wzrostu BAU' : 'BAU growth rate', value: <HonestValueCell isPolish={isPolish} value={b.bauGrowthRatePct} format={(v) => `${v}%`} /> },
-              { id: 'referenceValue', label: isPolish ? 'Wartość referencyjna BAU' : 'BAU reference value', value: <HonestValueCell isPolish={isPolish} value={b.bauReferenceValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
-              { id: 'notes', label: isPolish ? 'Notatki porównawcze' : 'Comparison notes', value: b.interventionComparisonNotes ?? '—' },
+              {
+                id: 'method',
+                label: isPolish ? 'Metoda projekcji BAU' : 'BAU projection method',
+                value: roiBaselineProjectionMethodLabel(b.bauProjectionMethod, isPolish),
+              },
+              {
+                id: 'currentValue',
+                label: isPolish ? 'Bieżąca wartość zmierzona' : 'Current measured value',
+                value: (
+                  <HonestValueCell
+                    isPolish={isPolish}
+                    value={b.currentMeasuredValue}
+                    format={(v) =>
+                      `${formatRoiNumber(v, isPolish)}${b.currentMeasuredUnit ? ` ${b.currentMeasuredUnit}` : ''}`
+                    }
+                  />
+                ),
+              },
+              {
+                id: 'asOf',
+                label: isPolish ? 'Stan na dzień' : 'Measured as of',
+                value: formatRoiDate(b.currentMeasuredAsOf, isPolish),
+              },
+              {
+                id: 'periodStart',
+                label: isPolish ? 'Początek okresu baseline' : 'Baseline period start',
+                value: formatRoiDate(b.baselinePeriodStart, isPolish),
+              },
+              {
+                id: 'periodEnd',
+                label: isPolish ? 'Koniec okresu baseline' : 'Baseline period end',
+                value: formatRoiDate(b.baselinePeriodEnd, isPolish),
+              },
+              {
+                id: 'growthRate',
+                label: isPolish ? 'Stopa wzrostu BAU' : 'BAU growth rate',
+                value: (
+                  <HonestValueCell
+                    isPolish={isPolish}
+                    value={b.bauGrowthRatePct}
+                    format={(v) => `${v}%`}
+                  />
+                ),
+              },
+              {
+                id: 'referenceValue',
+                label: isPolish ? 'Wartość referencyjna BAU' : 'BAU reference value',
+                value: (
+                  <HonestValueCell
+                    isPolish={isPolish}
+                    value={b.bauReferenceValue}
+                    format={(v) => formatRoiNumber(v, isPolish)}
+                  />
+                ),
+              },
+              {
+                id: 'notes',
+                label: isPolish ? 'Notatki porównawcze' : 'Comparison notes',
+                value: b.interventionComparisonNotes ?? '—',
+              },
               { id: 'source', label: isPolish ? 'Źródło' : 'Source', value: b.source ?? '—' },
-              { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(b.confidence, isPolish) },
-              { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: b.ownerUserId ?? '—', mono: true },
-              { id: 'frozen', label: isPolish ? 'Zamrożone' : 'Frozen', value: b.frozenAt ? formatRoiDate(b.frozenAt, isPolish) : (isPolish ? 'Nie' : 'No') },
+              {
+                id: 'confidence',
+                label: isPolish ? 'Pewność' : 'Confidence',
+                value: roiConfidenceLabel(b.confidence, isPolish),
+              },
+              {
+                id: 'owner',
+                label: isPolish ? 'Właściciel' : 'Owner',
+                value: b.ownerUserId ?? '—',
+                mono: true,
+              },
+              {
+                id: 'frozen',
+                label: isPolish ? 'Zamrożone' : 'Frozen',
+                value: b.frozenAt ? formatRoiDate(b.frozenAt, isPolish) : isPolish ? 'Nie' : 'No',
+              },
             ]
-          : [{ id: 'missing', label: isPolish ? 'Rekord' : 'Record', value: isPolish ? 'Brak rekordu baseline dla tej sprawy.' : 'No baseline record for this case.' }],
+          : [
+              {
+                id: 'missing',
+                label: isPolish ? 'Rekord' : 'Record',
+                value: isPolish
+                  ? 'Brak rekordu baseline dla tej sprawy.'
+                  : 'No baseline record for this case.',
+              },
+            ],
       },
       ai: aiComingSoon(isPolish ? ['Podsumuj baseline'] : ['Summarize baseline'], isPolish),
       relations: [],
@@ -260,17 +357,73 @@ export function buildRoiSettingsPreview(
       valueLabel,
       properties: p
         ? [
-            { id: 'discountRate', label: isPolish ? 'Stopa dyskonta' : 'Discount rate', value: <HonestValueCell isPolish={isPolish} value={p.discountRatePct} format={(v) => `${v}%`} /> },
-            { id: 'taxTreatment', label: isPolish ? 'Traktowanie podatkowe' : 'Tax treatment', value: roiTaxTreatmentLabel(p.taxTreatment, isPolish) },
-            { id: 'inflationRate', label: isPolish ? 'Stopa inflacji' : 'Inflation rate', value: <HonestValueCell isPolish={isPolish} value={p.inflationRatePct} format={(v) => `${v}%`} /> },
-            { id: 'roundingPolicy', label: isPolish ? 'Polityka zaokrągleń' : 'Rounding policy', value: roiRoundingPolicyLabel(p.roundingPolicy, isPolish) },
-            { id: 'requiredMetrics', label: isPolish ? 'Wymagane metryki' : 'Required metrics', value: p.requiredMetrics && p.requiredMetrics.length > 0 ? p.requiredMetrics.join(', ') : '—' },
+            {
+              id: 'discountRate',
+              label: isPolish ? 'Stopa dyskonta' : 'Discount rate',
+              value: (
+                <HonestValueCell
+                  isPolish={isPolish}
+                  value={p.discountRatePct}
+                  format={(v) => `${v}%`}
+                />
+              ),
+            },
+            {
+              id: 'taxTreatment',
+              label: isPolish ? 'Traktowanie podatkowe' : 'Tax treatment',
+              value: roiTaxTreatmentLabel(p.taxTreatment, isPolish),
+            },
+            {
+              id: 'inflationRate',
+              label: isPolish ? 'Stopa inflacji' : 'Inflation rate',
+              value: (
+                <HonestValueCell
+                  isPolish={isPolish}
+                  value={p.inflationRatePct}
+                  format={(v) => `${v}%`}
+                />
+              ),
+            },
+            {
+              id: 'roundingPolicy',
+              label: isPolish ? 'Polityka zaokrągleń' : 'Rounding policy',
+              value: roiRoundingPolicyLabel(p.roundingPolicy, isPolish),
+            },
+            {
+              id: 'requiredMetrics',
+              label: isPolish ? 'Wymagane metryki' : 'Required metrics',
+              value:
+                p.requiredMetrics && p.requiredMetrics.length > 0
+                  ? p.requiredMetrics.join(', ')
+                  : '—',
+            },
             { id: 'notes', label: isPolish ? 'Notatki' : 'Notes', value: p.notes ?? '—' },
-            { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(p.confidence, isPolish) },
-            { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: p.ownerUserId ?? '—', mono: true },
-            { id: 'frozen', label: isPolish ? 'Zamrożone' : 'Frozen', value: p.frozenAt ? formatRoiDate(p.frozenAt, isPolish) : (isPolish ? 'Nie' : 'No') },
+            {
+              id: 'confidence',
+              label: isPolish ? 'Pewność' : 'Confidence',
+              value: roiConfidenceLabel(p.confidence, isPolish),
+            },
+            {
+              id: 'owner',
+              label: isPolish ? 'Właściciel' : 'Owner',
+              value: p.ownerUserId ?? '—',
+              mono: true,
+            },
+            {
+              id: 'frozen',
+              label: isPolish ? 'Zamrożone' : 'Frozen',
+              value: p.frozenAt ? formatRoiDate(p.frozenAt, isPolish) : isPolish ? 'Nie' : 'No',
+            },
           ]
-        : [{ id: 'missing', label: isPolish ? 'Rekord' : 'Record', value: isPolish ? 'Brak rekordu polityki kalkulacji dla tej sprawy.' : 'No calculation policy record for this case.' }],
+        : [
+            {
+              id: 'missing',
+              label: isPolish ? 'Rekord' : 'Record',
+              value: isPolish
+                ? 'Brak rekordu polityki kalkulacji dla tej sprawy.'
+                : 'No calculation policy record for this case.',
+            },
+          ],
     },
     ai: aiComingSoon(isPolish ? ['Podsumuj politykę'] : ['Summarize policy'], isPolish),
     relations: [],
@@ -283,15 +436,41 @@ export function buildRoiSettingsPreview(
 
 export function buildRoiAssumptionColumns(isPolish: boolean): TableColumn[] {
   return [
-    { id: 'category', label: isPolish ? 'Kategoria' : 'Category', width: '160px', filterable: true, render: (row: RoiAssumption) => <span className="text-sm text-c-text-secondary">{row.category}</span> },
-    { id: 'label', label: isPolish ? 'Założenie' : 'Assumption', width: '260px', sortable: true, render: (row: RoiAssumption) => <span className="text-sm font-medium text-c-text">{row.label}</span> },
+    {
+      id: 'category',
+      label: isPolish ? 'Kategoria' : 'Category',
+      width: '160px',
+      filterable: true,
+      render: (row: RoiAssumption) => (
+        <span className="text-sm text-c-text-secondary">{row.category}</span>
+      ),
+    },
+    {
+      id: 'label',
+      label: isPolish ? 'Założenie' : 'Assumption',
+      width: '260px',
+      sortable: true,
+      render: (row: RoiAssumption) => (
+        <span className="text-sm font-medium text-c-text">{row.label}</span>
+      ),
+    },
     {
       id: 'baseValue',
       label: isPolish ? 'Wartość bazowa' : 'Base value',
       width: '140px',
       align: 'right',
       render: (row: RoiAssumption) => (
-        <HonestValueCell isPolish={isPolish} value={row.baseValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}{row.unit ? ` ${row.unit}` : ''}</span>} />
+        <HonestValueCell
+          isPolish={isPolish}
+          value={row.baseValue}
+          align="right"
+          format={(v) => (
+            <span className="tabular-nums">
+              {formatRoiNumber(v, isPolish)}
+              {row.unit ? ` ${row.unit}` : ''}
+            </span>
+          )}
+        />
       ),
     },
     {
@@ -299,21 +478,59 @@ export function buildRoiAssumptionColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Pesymistyczna' : 'Downside',
       width: '130px',
       align: 'right',
-      render: (row: RoiAssumption) => <HonestValueCell isPolish={isPolish} value={row.downsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
+      render: (row: RoiAssumption) => (
+        <HonestValueCell
+          isPolish={isPolish}
+          value={row.downsideValue}
+          align="right"
+          format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>}
+        />
+      ),
     },
     {
       id: 'upsideValue',
       label: isPolish ? 'Optymistyczna' : 'Upside',
       width: '130px',
       align: 'right',
-      render: (row: RoiAssumption) => <HonestValueCell isPolish={isPolish} value={row.upsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
+      render: (row: RoiAssumption) => (
+        <HonestValueCell
+          isPolish={isPolish}
+          value={row.upsideValue}
+          align="right"
+          format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>}
+        />
+      ),
     },
-    { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', width: '110px', render: (row: RoiAssumption) => <span className="text-sm text-c-text-secondary">{roiConfidenceLabel(row.confidence, isPolish)}</span> },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiAssumption) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    {
+      id: 'confidence',
+      label: isPolish ? 'Pewność' : 'Confidence',
+      width: '110px',
+      render: (row: RoiAssumption) => (
+        <span className="text-sm text-c-text-secondary">
+          {roiConfidenceLabel(row.confidence, isPolish)}
+        </span>
+      ),
+    },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      width: '130px',
+      sortable: true,
+      render: (row: RoiAssumption) => (
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatRoiDate(row.updatedAt, isPolish)}
+        </span>
+      ),
+    },
   ];
 }
 
-export function buildRoiAssumptionPreview(row: RoiAssumption, caseStatus: RoiCaseStatus, isPolish: boolean, onClose: () => void): StandardPreviewProps {
+export function buildRoiAssumptionPreview(
+  row: RoiAssumption,
+  caseStatus: RoiCaseStatus,
+  isPolish: boolean,
+  onClose: () => void
+): StandardPreviewProps {
   const { headerExtra, recommendation } = lockedPreviewChrome(caseStatus, isPolish);
   const { propertyLabel, valueLabel } = propertyLabels(isPolish);
   return {
@@ -326,15 +543,62 @@ export function buildRoiAssumptionPreview(row: RoiAssumption, caseStatus: RoiCas
       propertyLabel,
       valueLabel,
       properties: [
-        { id: 'base', label: isPolish ? 'Wartość bazowa' : 'Base value', value: <HonestValueCell isPolish={isPolish} value={row.baseValue} format={(v) => `${formatRoiNumber(v, isPolish)}${row.unit ? ` ${row.unit}` : ''}`} /> },
-        { id: 'downside', label: isPolish ? 'Pesymistyczna' : 'Downside', value: <HonestValueCell isPolish={isPolish} value={row.downsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
-        { id: 'upside', label: isPolish ? 'Optymistyczna' : 'Upside', value: <HonestValueCell isPolish={isPolish} value={row.upsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
-        { id: 'sensitivity', label: isPolish ? 'Ranga wrażliwości' : 'Sensitivity rank', value: row.sensitivityRank ?? '—' },
-        { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(row.confidence, isPolish) },
-        { id: 'evidence', label: isPolish ? 'Dowód' : 'Evidence ref', value: row.evidenceRef ?? '—' },
+        {
+          id: 'base',
+          label: isPolish ? 'Wartość bazowa' : 'Base value',
+          value: (
+            <HonestValueCell
+              isPolish={isPolish}
+              value={row.baseValue}
+              format={(v) => `${formatRoiNumber(v, isPolish)}${row.unit ? ` ${row.unit}` : ''}`}
+            />
+          ),
+        },
+        {
+          id: 'downside',
+          label: isPolish ? 'Pesymistyczna' : 'Downside',
+          value: (
+            <HonestValueCell
+              isPolish={isPolish}
+              value={row.downsideValue}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
+          ),
+        },
+        {
+          id: 'upside',
+          label: isPolish ? 'Optymistyczna' : 'Upside',
+          value: (
+            <HonestValueCell
+              isPolish={isPolish}
+              value={row.upsideValue}
+              format={(v) => formatRoiNumber(v, isPolish)}
+            />
+          ),
+        },
+        {
+          id: 'sensitivity',
+          label: isPolish ? 'Ranga wrażliwości' : 'Sensitivity rank',
+          value: row.sensitivityRank ?? '—',
+        },
+        {
+          id: 'confidence',
+          label: isPolish ? 'Pewność' : 'Confidence',
+          value: roiConfidenceLabel(row.confidence, isPolish),
+        },
+        {
+          id: 'evidence',
+          label: isPolish ? 'Dowód' : 'Evidence ref',
+          value: row.evidenceRef ?? '—',
+        },
         { id: 'source', label: isPolish ? 'Źródło' : 'Source', value: row.source ?? '—' },
         { id: 'notes', label: isPolish ? 'Notatki' : 'Notes', value: row.notes ?? '—' },
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: row.ownerUserId ?? '—',
+          mono: true,
+        },
       ],
     },
     ai: aiComingSoon(isPolish ? ['Podsumuj założenie'] : ['Summarize assumption'], isPolish),
@@ -348,47 +612,126 @@ export function buildRoiAssumptionPreview(row: RoiAssumption, caseStatus: RoiCas
 
 export function buildRoiCostLineColumns(isPolish: boolean): TableColumn[] {
   return [
-    { id: 'category', label: isPolish ? 'Kategoria' : 'Category', width: '160px', filterable: true, render: (row: RoiCostLine) => <span className="text-sm text-c-text-secondary">{row.category}</span> },
-    { id: 'label', label: isPolish ? 'Pozycja kosztowa' : 'Cost line', width: '260px', sortable: true, render: (row: RoiCostLine) => <span className="text-sm font-medium text-c-text">{row.label}</span> },
+    {
+      id: 'category',
+      label: isPolish ? 'Kategoria' : 'Category',
+      width: '160px',
+      filterable: true,
+      render: (row: RoiCostLine) => (
+        <span className="text-sm text-c-text-secondary">{row.category}</span>
+      ),
+    },
+    {
+      id: 'label',
+      label: isPolish ? 'Pozycja kosztowa' : 'Cost line',
+      width: '260px',
+      sortable: true,
+      render: (row: RoiCostLine) => (
+        <span className="text-sm font-medium text-c-text">{row.label}</span>
+      ),
+    },
     {
       id: 'amount',
       label: isPolish ? 'Kwota' : 'Amount',
       width: '150px',
       align: 'right',
       sortable: true,
-      render: (row: RoiCostLine) => <span className="tabular-nums text-sm text-c-text">{formatRoiCurrency(row.amount, row.currency, isPolish)}</span>,
+      render: (row: RoiCostLine) => (
+        <span className="tabular-nums text-sm text-c-text">
+          {formatRoiCurrency(row.amount, row.currency, isPolish)}
+        </span>
+      ),
     },
     {
       id: 'timing',
       label: isPolish ? 'Harmonogram' : 'Timing',
       width: '220px',
-      render: (row: RoiCostLine) => <span className="text-sm text-c-text-secondary">{describeRoiLineTiming(row, isPolish, formatRoiDate)}</span>,
+      render: (row: RoiCostLine) => (
+        <span className="text-sm text-c-text-secondary">
+          {describeRoiLineTiming(row, isPolish, formatRoiDate)}
+        </span>
+      ),
     },
-    { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', width: '110px', render: (row: RoiCostLine) => <span className="text-sm text-c-text-secondary">{roiConfidenceLabel(row.confidence, isPolish)}</span> },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiCostLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    {
+      id: 'confidence',
+      label: isPolish ? 'Pewność' : 'Confidence',
+      width: '110px',
+      render: (row: RoiCostLine) => (
+        <span className="text-sm text-c-text-secondary">
+          {roiConfidenceLabel(row.confidence, isPolish)}
+        </span>
+      ),
+    },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      width: '130px',
+      sortable: true,
+      render: (row: RoiCostLine) => (
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatRoiDate(row.updatedAt, isPolish)}
+        </span>
+      ),
+    },
   ];
 }
 
-export function buildRoiCostLinePreview(row: RoiCostLine, caseStatus: RoiCaseStatus, isPolish: boolean, onClose: () => void): StandardPreviewProps {
+export function buildRoiCostLinePreview(
+  row: RoiCostLine,
+  caseStatus: RoiCaseStatus,
+  isPolish: boolean,
+  onClose: () => void
+): StandardPreviewProps {
   const { headerExtra, recommendation } = lockedPreviewChrome(caseStatus, isPolish);
   const { propertyLabel, valueLabel } = propertyLabels(isPolish);
   return {
     title: row.label,
     onClose,
     headerExtra,
-    meta: { pills: [{ label: row.category, tone: 'neutral' }, { label: formatRoiCurrency(row.amount, row.currency, isPolish), tone: 'info' }], recommendation },
+    meta: {
+      pills: [
+        { label: row.category, tone: 'neutral' },
+        { label: formatRoiCurrency(row.amount, row.currency, isPolish), tone: 'info' },
+      ],
+      recommendation,
+    },
     details: {
       showWordCount: false,
       propertyLabel,
       valueLabel,
       properties: [
-        { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
-        { id: 'timing', label: isPolish ? 'Harmonogram' : 'Timing', value: describeRoiLineTiming(row, isPolish, formatRoiDate) },
-        { id: 'recurrenceStart', label: isPolish ? 'Początek cykliczności' : 'Recurrence start', value: formatRoiDate(row.recurrenceStartDate, isPolish) },
-        { id: 'recurrenceEnd', label: isPolish ? 'Koniec cykliczności' : 'Recurrence end', value: formatRoiDate(row.recurrenceEndDate, isPolish) },
-        { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(row.confidence, isPolish) },
+        {
+          id: 'description',
+          label: isPolish ? 'Opis' : 'Description',
+          value: row.description ?? '—',
+        },
+        {
+          id: 'timing',
+          label: isPolish ? 'Harmonogram' : 'Timing',
+          value: describeRoiLineTiming(row, isPolish, formatRoiDate),
+        },
+        {
+          id: 'recurrenceStart',
+          label: isPolish ? 'Początek cykliczności' : 'Recurrence start',
+          value: formatRoiDate(row.recurrenceStartDate, isPolish),
+        },
+        {
+          id: 'recurrenceEnd',
+          label: isPolish ? 'Koniec cykliczności' : 'Recurrence end',
+          value: formatRoiDate(row.recurrenceEndDate, isPolish),
+        },
+        {
+          id: 'confidence',
+          label: isPolish ? 'Pewność' : 'Confidence',
+          value: roiConfidenceLabel(row.confidence, isPolish),
+        },
         { id: 'source', label: isPolish ? 'Źródło' : 'Source', value: row.source ?? '—' },
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: row.ownerUserId ?? '—',
+          mono: true,
+        },
       ],
     },
     ai: aiComingSoon(isPolish ? ['Podsumuj koszt'] : ['Summarize cost line'], isPolish),
@@ -402,14 +745,33 @@ export function buildRoiCostLinePreview(row: RoiCostLine, caseStatus: RoiCaseSta
 
 export function buildRoiBenefitLineColumns(isPolish: boolean): TableColumn[] {
   return [
-    { id: 'category', label: isPolish ? 'Kategoria' : 'Category', width: '150px', filterable: true, render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-secondary">{row.category}</span> },
-    { id: 'label', label: isPolish ? 'Pozycja korzyści' : 'Benefit line', width: '240px', sortable: true, render: (row: RoiBenefitLine) => <span className="text-sm font-medium text-c-text">{row.label}</span> },
+    {
+      id: 'category',
+      label: isPolish ? 'Kategoria' : 'Category',
+      width: '150px',
+      filterable: true,
+      render: (row: RoiBenefitLine) => (
+        <span className="text-sm text-c-text-secondary">{row.category}</span>
+      ),
+    },
+    {
+      id: 'label',
+      label: isPolish ? 'Pozycja korzyści' : 'Benefit line',
+      width: '240px',
+      sortable: true,
+      render: (row: RoiBenefitLine) => (
+        <span className="text-sm font-medium text-c-text">{row.label}</span>
+      ),
+    },
     {
       id: 'isFinancial',
       label: isPolish ? 'Finansowa' : 'Financial',
       width: '100px',
       render: (row: RoiBenefitLine) => (
-        <StatusChip label={row.isFinancial ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No')} tone={row.isFinancial ? 'success' : 'neutral'} />
+        <StatusChip
+          label={row.isFinancial ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No'}
+          tone={row.isFinancial ? 'success' : 'neutral'}
+        />
       ),
     },
     {
@@ -423,7 +785,11 @@ export function buildRoiBenefitLineColumns(isPolish: boolean): TableColumn[] {
           isPolish={isPolish}
           value={row.amount}
           align="right"
-          format={(v) => <span className="tabular-nums">{formatRoiCurrency(v, row.currency ?? 'USD', isPolish)}</span>}
+          format={(v) => (
+            <span className="tabular-nums">
+              {formatRoiCurrency(v, row.currency ?? 'USD', isPolish)}
+            </span>
+          )}
         />
       ),
     },
@@ -431,13 +797,32 @@ export function buildRoiBenefitLineColumns(isPolish: boolean): TableColumn[] {
       id: 'timing',
       label: isPolish ? 'Harmonogram' : 'Timing',
       width: '200px',
-      render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-secondary">{describeRoiLineTiming(row, isPolish, formatRoiDate)}</span>,
+      render: (row: RoiBenefitLine) => (
+        <span className="text-sm text-c-text-secondary">
+          {describeRoiLineTiming(row, isPolish, formatRoiDate)}
+        </span>
+      ),
     },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      width: '130px',
+      sortable: true,
+      render: (row: RoiBenefitLine) => (
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatRoiDate(row.updatedAt, isPolish)}
+        </span>
+      ),
+    },
   ];
 }
 
-export function buildRoiBenefitLinePreview(row: RoiBenefitLine, caseStatus: RoiCaseStatus, isPolish: boolean, onClose: () => void): StandardPreviewProps {
+export function buildRoiBenefitLinePreview(
+  row: RoiBenefitLine,
+  caseStatus: RoiCaseStatus,
+  isPolish: boolean,
+  onClose: () => void
+): StandardPreviewProps {
   const { headerExtra, recommendation } = lockedPreviewChrome(caseStatus, isPolish);
   const { propertyLabel, valueLabel } = propertyLabels(isPolish);
   return {
@@ -447,7 +832,16 @@ export function buildRoiBenefitLinePreview(row: RoiBenefitLine, caseStatus: RoiC
     meta: {
       pills: [
         { label: row.category, tone: 'neutral' },
-        { label: row.isFinancial ? (isPolish ? 'Finansowa' : 'Financial') : (isPolish ? 'Niefinansowa' : 'Non-financial'), tone: row.isFinancial ? 'success' : 'neutral' },
+        {
+          label: row.isFinancial
+            ? isPolish
+              ? 'Finansowa'
+              : 'Financial'
+            : isPolish
+              ? 'Niefinansowa'
+              : 'Non-financial',
+          tone: row.isFinancial ? 'success' : 'neutral',
+        },
       ],
       recommendation,
     },
@@ -456,15 +850,54 @@ export function buildRoiBenefitLinePreview(row: RoiBenefitLine, caseStatus: RoiC
       propertyLabel,
       valueLabel,
       properties: [
-        { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
-        { id: 'amount', label: isPolish ? 'Kwota' : 'Amount', value: <HonestValueCell isPolish={isPolish} value={row.amount} format={(v) => formatRoiCurrency(v, row.currency ?? 'USD', isPolish)} /> },
-        { id: 'timing', label: isPolish ? 'Harmonogram' : 'Timing', value: describeRoiLineTiming(row, isPolish, formatRoiDate) },
-        { id: 'ramp', label: isPolish ? 'Okresy narastania' : 'Ramp periods', value: row.rampPeriods ?? '—' },
-        { id: 'doubleCounting', label: isPolish ? 'Grupa podwójnego liczenia' : 'Double-counting group', value: row.doubleCountingGroup ?? '—' },
-        { id: 'doubleCountingNote', label: isPolish ? 'Rozstrzygnięcie podwójnego liczenia' : 'Double-counting resolution', value: row.doubleCountingResolutionNote ?? '—' },
-        { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(row.confidence, isPolish) },
+        {
+          id: 'description',
+          label: isPolish ? 'Opis' : 'Description',
+          value: row.description ?? '—',
+        },
+        {
+          id: 'amount',
+          label: isPolish ? 'Kwota' : 'Amount',
+          value: (
+            <HonestValueCell
+              isPolish={isPolish}
+              value={row.amount}
+              format={(v) => formatRoiCurrency(v, row.currency ?? 'USD', isPolish)}
+            />
+          ),
+        },
+        {
+          id: 'timing',
+          label: isPolish ? 'Harmonogram' : 'Timing',
+          value: describeRoiLineTiming(row, isPolish, formatRoiDate),
+        },
+        {
+          id: 'ramp',
+          label: isPolish ? 'Okresy narastania' : 'Ramp periods',
+          value: row.rampPeriods ?? '—',
+        },
+        {
+          id: 'doubleCounting',
+          label: isPolish ? 'Grupa podwójnego liczenia' : 'Double-counting group',
+          value: row.doubleCountingGroup ?? '—',
+        },
+        {
+          id: 'doubleCountingNote',
+          label: isPolish ? 'Rozstrzygnięcie podwójnego liczenia' : 'Double-counting resolution',
+          value: row.doubleCountingResolutionNote ?? '—',
+        },
+        {
+          id: 'confidence',
+          label: isPolish ? 'Pewność' : 'Confidence',
+          value: roiConfidenceLabel(row.confidence, isPolish),
+        },
         { id: 'source', label: isPolish ? 'Źródło' : 'Source', value: row.source ?? '—' },
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: row.ownerUserId ?? '—',
+          mono: true,
+        },
       ],
     },
     ai: aiComingSoon(isPolish ? ['Podsumuj korzyść'] : ['Summarize benefit line'], isPolish),

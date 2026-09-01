@@ -8,8 +8,8 @@
  *   - Cross-tenant template id is rejected.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../wave5ArtifactRuntimeService.js', () => {
   let nextId = 1;
@@ -27,13 +27,13 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => {
   };
 });
 
+import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
+import { runDocumentQa } from '../documentQaService.js';
 import {
   DocumentManualStructureMismatchError,
   materializeDocumentArtifact,
   updateDocumentManualContent,
 } from '../documentStudioService.js';
-import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
-import { runDocumentQa } from '../documentQaService.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 import {
   __resetTemplateRegistryForTests,

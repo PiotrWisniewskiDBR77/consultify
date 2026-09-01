@@ -49,19 +49,20 @@
  * (RN_G1_PLATFORM_DESIGN.md §B's fail-closed default), same convention
  * `../ResultsKpiRegistryPage.tsx`'s own `?kpiId=` deep link already uses.
  */
+import { Blocks, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { Blocks, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/states';
 import type { StandardCounterChip, StandardModuleTab } from '@/components/standard';
-import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/routes/routeConfig';
+import { useAppStore } from '@/store/useAppStore';
 
-import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import {
   activateKpiScorecard,
@@ -71,19 +72,29 @@ import {
   getKpiScorecard,
   getKpiScorecardStatusDistribution,
   httpErrorCode,
-  listKpiScorecardItems,
-  listKpiScorecardReviewSnapshots,
-  publishKpiScorecardReviewSnapshot,
-  removeKpiScorecardItem,
-  reorderKpiScorecardItems,
-  suspendKpiScorecard,
   type KpiScorecardDto,
   type KpiScorecardItemDto,
   type KpiScorecardItemRole,
   type KpiScorecardReviewSnapshotDto,
   type KpiScorecardSnapshotStatus,
+  listKpiScorecardItems,
+  listKpiScorecardReviewSnapshots,
+  publishKpiScorecardReviewSnapshot,
+  removeKpiScorecardItem,
+  reorderKpiScorecardItems,
   type ScorecardStatusDistributionDto,
+  suspendKpiScorecard,
 } from './kpiScorecardApi';
+import {
+  type AddKpiScorecardItemFormValues,
+  AddKpiScorecardItemModal,
+  RemoveKpiScorecardItemDialog,
+} from './KpiScorecardItemDialogs';
+import {
+  formatKpiScorecardDate,
+  kpiScorecardItemRoleLabel,
+  kpiScorecardSnapshotStatusLabel,
+} from './kpiScorecardMappers';
 import {
   buildKpiScorecardItemColumns,
   buildKpiScorecardItemPreview,
@@ -94,20 +105,9 @@ import {
   buildKpiScorecardSnapshotRowMenu,
 } from './kpiScorecardPresenters';
 import {
-  formatKpiScorecardDate,
-  kpiScorecardItemRoleLabel,
-  kpiScorecardSnapshotStatusLabel,
-} from './kpiScorecardMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
-import {
-  AddKpiScorecardItemModal,
-  RemoveKpiScorecardItemDialog,
-  type AddKpiScorecardItemFormValues,
-} from './KpiScorecardItemDialogs';
-import {
+  type CreateKpiScorecardReviewSnapshotFormValues,
   CreateKpiScorecardReviewSnapshotModal,
   PublishKpiScorecardReviewSnapshotDialog,
-  type CreateKpiScorecardReviewSnapshotFormValues,
 } from './KpiScorecardSnapshotDialogs';
 
 type DetailTab = 'items' | 'snapshots';
@@ -133,9 +133,9 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   const [scorecardLoading, setScorecardLoading] = useState(false);
   const [scorecardError, setScorecardError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
-  const [distribution, setDistribution] = useState<ScorecardStatusDistributionDto | 'loading' | undefined>(
-    undefined
-  );
+  const [distribution, setDistribution] = useState<
+    ScorecardStatusDistributionDto | 'loading' | undefined
+  >(undefined);
   const [pending, setPending] = useState<PendingAction>(null);
 
   const [tab, setTab] = useState<DetailTab>('items');
@@ -149,7 +149,9 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   const [snapshots, setSnapshots] = useState<KpiScorecardReviewSnapshotDto[] | null>(null);
   const [snapshotsLoading, setSnapshotsLoading] = useState(false);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
-  const [snapshotStatusChip, setSnapshotStatusChip] = useState<'all' | KpiScorecardSnapshotStatus>('all');
+  const [snapshotStatusChip, setSnapshotStatusChip] = useState<'all' | KpiScorecardSnapshotStatus>(
+    'all'
+  );
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
 
   const loadScorecard = useCallback(async () => {
@@ -213,7 +215,11 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       setPending(action);
       try {
         const runner =
-          action === 'activate' ? activateKpiScorecard : action === 'suspend' ? suspendKpiScorecard : archiveKpiScorecard;
+          action === 'activate'
+            ? activateKpiScorecard
+            : action === 'suspend'
+              ? suspendKpiScorecard
+              : archiveKpiScorecard;
         await runner({ scorecardId: row.scorecardId, expectedVersion: row.rowVersion });
         await loadScorecard();
       } catch (err) {
@@ -420,17 +426,25 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   }, [snapshots, snapshotStatusChip]);
 
   const selectedItem = filteredItems.find((i) => i.itemId === selectedItemId) ?? null;
-  const selectedSnapshot = filteredSnapshots.find((s) => s.snapshotId === selectedSnapshotId) ?? null;
+  const selectedSnapshot =
+    filteredSnapshots.find((s) => s.snapshotId === selectedSnapshotId) ?? null;
 
   if (!enabled) {
     // Byte-for-byte the same honest-empty shape as
     // `../ResultsRoiRegistryPage.tsx`'s disabled fallback (task requirement).
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-scorecard-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-kpi-scorecard-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
-          title={isPolish ? 'Karty wyników KPI — jeszcze nie włączone' : 'KPI scorecards — not yet enabled'}
+          title={
+            isPolish
+              ? 'Karty wyników KPI — jeszcze nie włączone'
+              : 'KPI scorecards — not yet enabled'
+          }
           description={
             isPolish
               ? 'Ten rejestr jest w budowie. Wróć później albo poproś administratora o dostęp za flagą.'
@@ -454,7 +468,12 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
         <ResultsVNextRegistryShell
           domain="kpi"
-          moduleBar={{ tabs, activeTab: tab, onTabChange: (id) => setTab(id as DetailTab), showTabCounts: false }}
+          moduleBar={{
+            tabs,
+            activeTab: tab,
+            onTabChange: (id) => setTab(id as DetailTab),
+            showTabCounts: false,
+          }}
           table={{
             columns: [],
             data: [],
@@ -476,8 +495,18 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
         <ResultsVNextRegistryShell
           domain="kpi"
-          moduleBar={{ tabs, activeTab: tab, onTabChange: (id) => setTab(id as DetailTab), showTabCounts: false }}
-          table={{ columns: [], data: [], persistKey: 'results-vnext.kpi-scorecards.detail', loading: scorecardLoading || true }}
+          moduleBar={{
+            tabs,
+            activeTab: tab,
+            onTabChange: (id) => setTab(id as DetailTab),
+            showTabCounts: false,
+          }}
+          table={{
+            columns: [],
+            data: [],
+            persistKey: 'results-vnext.kpi-scorecards.detail',
+            loading: scorecardLoading || true,
+          }}
           preview={null}
         />
       </div>
@@ -573,7 +602,10 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
                   }
                 : undefined,
             emptyMessage:
-              !snapshotsLoading && !snapshotsError && (snapshots?.length ?? 0) > 0 && rows.length === 0
+              !snapshotsLoading &&
+              !snapshotsError &&
+              (snapshots?.length ?? 0) > 0 &&
+              rows.length === 0
                 ? isPolish
                   ? 'Brak migawek pasujących do filtra.'
                   : 'No snapshot matches this filter.'
@@ -581,11 +613,15 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             selectedRowId: selectedSnapshotId,
             onRowClick: (row) => setSelectedSnapshotId(String(row.snapshotId)),
             rowMenu: (row) =>
-              buildKpiScorecardSnapshotRowMenu(row as unknown as KpiScorecardReviewSnapshotDto, isPolish, {
-                onPreview: (r) => setSelectedSnapshotId(r.snapshotId),
-                onPublish: (r) => setPublishTarget(r),
-                busy: publishBusy,
-              }),
+              buildKpiScorecardSnapshotRowMenu(
+                row as unknown as KpiScorecardReviewSnapshotDto,
+                isPolish,
+                {
+                  onPreview: (r) => setSelectedSnapshotId(r.snapshotId),
+                  onPublish: (r) => setPublishTarget(r),
+                  busy: publishBusy,
+                }
+              ),
             defaultSort: { columnId: 'createdAt', direction: 'desc' },
           }}
           preview={
@@ -708,7 +744,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
               onMoveUp: (r) => void moveItem(r, 'up'),
               onMoveDown: (r) => void moveItem(r, 'down'),
               onRemove: (r) => setRemoveItemTarget(r),
-              isFirst: fullSortedItems[0]?.itemId === (row as unknown as KpiScorecardItemDto).itemId,
+              isFirst:
+                fullSortedItems[0]?.itemId === (row as unknown as KpiScorecardItemDto).itemId,
               isLast:
                 fullSortedItems[fullSortedItems.length - 1]?.itemId ===
                 (row as unknown as KpiScorecardItemDto).itemId,

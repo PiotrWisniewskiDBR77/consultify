@@ -4,9 +4,9 @@ import { Pool } from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import type { SignalQuery, SignalRule } from '../../../types/workSignals.js';
-import { evaluateSignalRules } from '../signalEvaluator.js';
 import { budgetOverspendRule } from '../rules/finance/budgetOverspend.js';
 import { kpiThresholdBreachedRule } from '../rules/results/kpiThresholdBreached.js';
+import { evaluateSignalRules } from '../signalEvaluator.js';
 
 const connectionString = process.env.DATABASE_URL;
 const describePg = connectionString ? describe : describe.skip;

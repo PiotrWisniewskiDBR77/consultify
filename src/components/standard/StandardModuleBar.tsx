@@ -324,7 +324,8 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
           </span>
           {bulk!.onSelectAll ? (
             <Menu3Chip onClick={bulk!.onSelectAll}>
-              {bulk!.selectAllLabel ?? t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')}
+              {bulk!.selectAllLabel ??
+                t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')}
             </Menu3Chip>
           ) : null}
           {bulk!.onClear ? (

@@ -8,8 +8,7 @@ import { Router } from 'express';
 
 import * as evidenceService from '../../services/audits/evidenceService.js';
 import type { EvidenceKind, EvidenceRequestStatus } from '../../services/audits/types.js';
-
-import { auditActor, assertActor, route } from './context.js';
+import { assertActor, auditActor, route } from './context.js';
 
 const router = Router();
 
@@ -33,7 +32,7 @@ router.get(
       requestedFromUserId: asString(req.query.requestedFromUserId),
     });
     res.json({ success: true, data: requests });
-  }),
+  })
 );
 
 router.post(
@@ -52,7 +51,7 @@ router.post(
       dueDate: (body.dueDate as string) ?? null,
     });
     res.status(201).json({ success: true, data: request });
-  }),
+  })
 );
 
 router.patch(
@@ -65,10 +64,10 @@ router.patch(
       actor.organizationId,
       actor,
       req.params.id,
-      body.status as EvidenceRequestStatus,
+      body.status as EvidenceRequestStatus
     );
     res.json({ success: true, data: request });
-  }),
+  })
 );
 
 router.post(
@@ -78,7 +77,7 @@ router.post(
     assertActor(actor);
     const request = await evidenceService.cancelRequest(actor.organizationId, actor, req.params.id);
     res.json({ success: true, data: request });
-  }),
+  })
 );
 
 router.get(
@@ -88,14 +87,16 @@ router.get(
     assertActor(actor);
     const programId = asString(req.query.programId);
     if (!programId) {
-      res
-        .status(400)
-        .json({ success: false, error: 'Parametr programId jest wymagany', code: 'AUDIT_PROGRAM_ID_REQUIRED' });
+      res.status(400).json({
+        success: false,
+        error: 'Parametr programId jest wymagany',
+        code: 'AUDIT_PROGRAM_ID_REQUIRED',
+      });
       return;
     }
     const gaps = await evidenceService.getEvidenceGaps(actor.organizationId, programId);
     res.json({ success: true, data: gaps });
-  }),
+  })
 );
 
 router.get(
@@ -111,7 +112,7 @@ router.get(
       accepted: accepted === undefined ? undefined : accepted === 'true',
     });
     res.json({ success: true, data: evidence });
-  }),
+  })
 );
 
 router.post(
@@ -136,7 +137,7 @@ router.post(
       periodTo: (body.periodTo as string) ?? null,
     });
     res.status(201).json({ success: true, data: evidence });
-  }),
+  })
 );
 
 router.post(
@@ -145,17 +146,23 @@ router.post(
     const actor = auditActor(req);
     assertActor(actor);
     const body = asRecord(req.body);
-    const evidence = await evidenceService.reviewEvidence(actor.organizationId, actor, req.params.id, {
-      sufficiency: (body.sufficiency as 'sufficient' | 'insufficient' | 'unknown') ?? null,
-      reliability: (body.reliability as 'reliable' | 'questionable' | 'unknown') ?? null,
-      currencyStatus: (body.currencyStatus as 'current' | 'outdated' | 'unknown') ?? null,
-      supportsConformity: body.supportsConformity === undefined ? undefined : Boolean(body.supportsConformity),
-      accepted: body.accepted === undefined ? undefined : Boolean(body.accepted),
-      reviewNote: (body.reviewNote as string) ?? null,
-      rejectionReason: (body.rejectionReason as string) ?? null,
-    });
+    const evidence = await evidenceService.reviewEvidence(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      {
+        sufficiency: (body.sufficiency as 'sufficient' | 'insufficient' | 'unknown') ?? null,
+        reliability: (body.reliability as 'reliable' | 'questionable' | 'unknown') ?? null,
+        currencyStatus: (body.currencyStatus as 'current' | 'outdated' | 'unknown') ?? null,
+        supportsConformity:
+          body.supportsConformity === undefined ? undefined : Boolean(body.supportsConformity),
+        accepted: body.accepted === undefined ? undefined : Boolean(body.accepted),
+        reviewNote: (body.reviewNote as string) ?? null,
+        rejectionReason: (body.rejectionReason as string) ?? null,
+      }
+    );
     res.json({ success: true, data: evidence });
-  }),
+  })
 );
 
 export default router;

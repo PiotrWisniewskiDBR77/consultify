@@ -33,20 +33,17 @@ import { type WebSocket, WebSocketServer } from 'ws';
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { evaluateRealtimeAccess, trackRealtimeConnection } from '../realtime/demoRealtimeGuard.js';
 import {
   isWsOrgContextFresh,
   resolveWsOrgContext,
   type WsOrgContext,
 } from '../realtime/wsOrgContext.js';
-import logger from '../utils/Logger.js';
 import {
   isOrganizationSuspended,
   writeOrgSuspendedUpgradeRefusal,
 } from '../services/organizationSuspensionGuard.js';
-import {
-  evaluateRealtimeAccess,
-  trackRealtimeConnection,
-} from '../realtime/demoRealtimeGuard.js';
+import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -378,9 +375,7 @@ export function attachNotebookCollabWs(server: HttpServer): void {
         // client-supplied id — so the refusal names its reason.
         // -------------------------------------------------------------------
         if (
-          await isOrganizationSuspended(orgCtx.organizationId, (sql, params) =>
-            db.get(sql, params)
-          )
+          await isOrganizationSuspended(orgCtx.organizationId, (sql, params) => db.get(sql, params))
         ) {
           logger.info('[NotebookCollabWs] WS upgrade refused: organization suspended', {
             userId,

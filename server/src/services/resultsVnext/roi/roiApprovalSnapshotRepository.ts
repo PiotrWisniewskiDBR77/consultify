@@ -25,17 +25,16 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
-import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
-  toRoiApprovalSnapshot,
-  toRoiApprovalSnapshotSummary,
   type RoiApprovalSnapshotRow,
   type RoiApprovalSnapshotSummary,
+  toRoiApprovalSnapshot,
+  toRoiApprovalSnapshotSummary,
 } from './roiApprovalSnapshotTypes.js';
+import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import type { RoiBenefitEvidenceLink } from './roiEconomicModelTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -47,7 +46,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -86,7 +89,9 @@ export async function listRoiApprovalSnapshots(
     resourceType: ROI_RESOURCE_TYPE,
   });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiApprovalSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiApprovalSnapshotRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiApprovalSnapshotSummary);
 }
 
@@ -149,7 +154,9 @@ export async function getRoiApprovalSnapshot(
     resourceType: ROI_RESOURCE_TYPE,
   });
   const values = [...wrapped.values, caseId, snapshotId];
-  const rows = await withReadClient((client) => queryRows<RoiApprovalSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiApprovalSnapshotRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   if (!row) return null;
 
@@ -188,12 +195,16 @@ export async function getRoiApprovalSnapshot(
   const kpiRows = await withReadClient((client) =>
     queryRows<{ kpi_id: string; kpi_code: string; status: string }>(client, kpiQuerySql, kpiValues)
   );
-  const kpiDetailsById = new Map(kpiRows.map((k) => [k.kpi_id, { kpiId: k.kpi_id, kpiCode: k.kpi_code, status: k.status }]));
+  const kpiDetailsById = new Map(
+    kpiRows.map((k) => [k.kpi_id, { kpiId: k.kpi_id, kpiCode: k.kpi_code, status: k.status }])
+  );
 
-  const benefitEvidenceLinks: RoiApprovalSnapshotBenefitEvidenceLinkDetail[] = links.map((link) => ({
-    ...link,
-    kpiDetails: kpiDetailsById.get(link.kpiId) ?? null,
-  }));
+  const benefitEvidenceLinks: RoiApprovalSnapshotBenefitEvidenceLinkDetail[] = links.map(
+    (link) => ({
+      ...link,
+      kpiDetails: kpiDetailsById.get(link.kpiId) ?? null,
+    })
+  );
 
   return {
     snapshotId: snapshot.snapshotId,

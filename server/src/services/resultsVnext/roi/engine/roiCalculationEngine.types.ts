@@ -17,7 +17,11 @@ export type RoiEngineRoundingPolicy = 'half_up_2dp' | 'half_even_2dp' | 'none';
 export type RoiEngineTimingType = 'one_time' | 'recurring';
 export type RoiEngineRecurrenceCadence = 'monthly' | 'quarterly' | 'annual';
 export type RoiEngineScenarioType = 'downside' | 'upside' | 'custom';
-export type RoiEngineIrrStatus = 'computed' | 'not_applicable' | 'no_sign_change' | 'not_required_by_policy';
+export type RoiEngineIrrStatus =
+  | 'computed'
+  | 'not_applicable'
+  | 'no_sign_change'
+  | 'not_required_by_policy';
 export type RoiEngineScenarioOverrideTargetType = 'assumption' | 'cost_line' | 'benefit_line';
 
 export interface RoiEngineAssumption {

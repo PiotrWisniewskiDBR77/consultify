@@ -10,76 +10,69 @@
  */
 
 export type {
-  MethodEvent,
-  MethodEventType,
-  MethodActorKind,
   AnswerEventPayload,
+  DecisionEventPayload,
   EvidenceEventPayload,
   EvidenceStrength,
-  DecisionEventPayload,
+  MethodActorKind,
+  MethodEvent,
+  MethodEventType,
   TeresaProposalEventPayload,
 } from './events.js';
-export { METHOD_EVENT_TYPES, EVIDENCE_STRENGTHS, isMethodEventType } from './events.js';
-
+export { EVIDENCE_STRENGTHS, isMethodEventType, METHOD_EVENT_TYPES } from './events.js';
 export type {
+  AdapterCapability,
+  AggregationInput,
+  AggregationResult,
+  MethodAdapter,
+  MethodCompileReport,
+  MethodCompileResult,
+  MethodLevel,
+  MethodPack,
+  MethodPackManifest,
+  MethodPackReadiness,
+  MethodQuestion,
+  MethodSourceRef,
+  MethodUnit,
+  PrioritisationInput,
+  PrioritisationResult,
+  ProgressionInput,
+  ProgressionResult,
+  ScoringFixture,
+  ScoringInput,
+  ScoringResult,
+} from './methodPack.js';
+export { canStartSession, METHOD_PACK_READINESS } from './methodPack.js';
+export type {
+  MethodProcessRole,
+  MethodReadiness,
+  MethodSaveState,
   MethodSession,
   MethodSessionState,
-  MethodProcessRole,
-  MethodSaveState,
-  MethodReadiness,
   MethodTransitionRequest,
   TransitionRefusal,
   TransitionResult,
 } from './session.js';
 export {
+  canTransition,
+  METHOD_PROCESS_ROLES,
   METHOD_SESSION_STATES,
   METHOD_SESSION_TRANSITIONS,
-  METHOD_PROCESS_ROLES,
   TRANSITION_AUTHORITY,
-  canTransition,
 } from './session.js';
-
 export type {
-  MethodPack,
-  MethodPackManifest,
-  MethodPackReadiness,
-  MethodUnit,
-  MethodLevel,
-  MethodQuestion,
-  MethodSourceRef,
-  ScoringFixture,
-  MethodAdapter,
-  AdapterCapability,
-  MethodCompileReport,
-  MethodCompileResult,
-  ProgressionInput,
-  ProgressionResult,
-  ScoringInput,
-  ScoringResult,
-  AggregationInput,
-  AggregationResult,
-  PrioritisationInput,
-  PrioritisationResult,
-} from './methodPack.js';
-export { METHOD_PACK_READINESS, canStartSession } from './methodPack.js';
-
-export type {
-  TeresaCapabilityId,
   TeresaCapabilityDefinition,
+  TeresaCapabilityId,
+  TeresaCommitRefusal,
+  TeresaCommitRequest,
+  TeresaCommitResult,
+  TeresaForbiddenEffect,
   TeresaIntent,
   TeresaPreview,
   TeresaProposedChange,
+  TeresaQualityCheck,
+  TeresaQualityVerdict,
   TeresaStatement,
   TeresaStatementKind,
-  TeresaQualityVerdict,
-  TeresaQualityCheck,
-  TeresaForbiddenEffect,
-  TeresaCommitRequest,
-  TeresaCommitResult,
-  TeresaCommitRefusal,
 } from './teresa.js';
-export {
-  TERESA_CAPABILITIES,
-  TERESA_FORBIDDEN_EFFECTS,
-  TERESA_QUALITY_CHECKS,
-} from './teresa.js';
+export { TERESA_CAPABILITIES, TERESA_FORBIDDEN_EFFECTS, TERESA_QUALITY_CHECKS } from './teresa.js';

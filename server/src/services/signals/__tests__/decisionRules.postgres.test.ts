@@ -4,9 +4,9 @@ import { Pool } from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import type { SignalQuery, SignalRule } from '../../../types/workSignals.js';
-import { evaluateSignalRules } from '../signalEvaluator.js';
 import { decisionBlockingDependentsRule } from '../rules/decision/blockingDependents.js';
 import { decisionPendingStaleRule } from '../rules/decision/pendingStale.js';
+import { evaluateSignalRules } from '../signalEvaluator.js';
 
 const connectionString = process.env.DATABASE_URL;
 const describePg = connectionString ? describe : describe.skip;
@@ -50,13 +50,26 @@ const seedDecision = async (params: {
   }
 };
 
-const cases: Array<{ name: string; rule: SignalRule; blocking: boolean; stale: boolean }> = [
-  { name: 'dec.pending_stale', rule: decisionPendingStaleRule, blocking: false, stale: true },
+const cases: Array<{
+  name: string;
+  rule: SignalRule;
+  blocking: boolean;
+  stale: boolean;
+  expectedBodyParams: { value: number };
+}> = [
+  {
+    name: 'dec.pending_stale',
+    rule: decisionPendingStaleRule,
+    blocking: false,
+    stale: true,
+    expectedBodyParams: { value: 8 },
+  },
   {
     name: 'dec.blocking_dependents',
     rule: decisionBlockingDependentsRule,
     blocking: true,
     stale: false,
+    expectedBodyParams: { value: 1 },
   },
 ];
 
@@ -73,6 +86,7 @@ describePg('two DECISION rules on real tenant data', () => {
         await seedDecision({ org, id, stale: fixture.stale, blocking: fixture.blocking });
         const hits = await fixture.rule.evaluate({ organizationId: org, db, now });
         expect(hits).toHaveLength(1);
+        expect(hits[0].bodyParams).toEqual(fixture.expectedBodyParams);
         expect(fixture.rule.evidence(hits[0]).length).toBeGreaterThan(0);
         expect(fixture.rule.action(hits[0]).route).toContain(id);
         expect(fixture.rule.audience(hits[0])).toEqual({ userId: null, role: 'PROJECT_MANAGER' });

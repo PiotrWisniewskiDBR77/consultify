@@ -31,8 +31,8 @@ import {
   selectCanonicalMapRow,
   selectReadableMapRow,
 } from '../realtime/ideaMapAccess.js';
-import auditEventsService from '../services/AuditEventsService.js';
 import { canonicalSourceHash } from '../services/artifactHandoff/handoffSpineService.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import {
   getIdeaConfidentiality,
   IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE,
@@ -52,6 +52,7 @@ import { createInitiative as funnelCreateInitiative } from '../services/initiati
 import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import { createPersonalTask } from '../services/personalTask/createPersonalTaskService.js';
 import { createNativeDeck } from '../services/presentationGeneratorService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -73,8 +74,8 @@ import {
   normalizeGraphForStorage,
   validateAndNormalizeGraph,
 } from '../validators/ideaWorkspaceGraph.validators.js';
-import calendarRouter from './my-work/calendar.routes.js';
 import agentMaterializationRouter from './my-work/agent-materialization.routes.js';
+import calendarRouter from './my-work/calendar.routes.js';
 import decisionsRouter from './my-work/decisions.routes.js';
 import focusRouter from './my-work/focus.routes.js';
 import homeRouter from './my-work/home.routes.js';
@@ -1287,19 +1288,8 @@ router.post(
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
 
-    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
-    // input-sanitization middleware escaped on this request body string, before
-    // storing tasks.title — mirrors the tool_sessions.name fix.
-    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
-    if (!title) {
-      res.status(400).json({ error: 'title is required' });
-      return;
-    }
-
     const description =
       typeof req.body?.description === 'string' ? req.body.description : undefined;
-    const status = String(req.body?.status || 'todo').trim() || 'todo';
-    const priority = String(req.body?.priority || 'medium').trim() || 'medium';
     const dueDate = req.body?.dueDate ? String(req.body.dueDate).trim() : undefined;
     const tags = parseTagsArray(req.body?.tags);
     const sourceTypeRaw = req.body?.sourceType ?? req.body?.source_type;
@@ -1322,89 +1312,50 @@ router.post(
         ? idempotencyKeyRaw.trim()
         : null;
 
-    if (idempotencyKey) {
-      const existing = await queryHelpers.queryOne<any>(
-        `
-        SELECT
-          t.id, t.title, t.description, t.status, t.priority,
-          t.due_date as "dueDate", t.tags,
-          t.created_at as "createdAt", t.updated_at as "updatedAt",
-          t.completed_at as "completedAt"
-        FROM tasks t
-        WHERE t.organization_id = ? AND t.idempotency_key = ?
-        LIMIT 1
-        `,
-        [orgId, idempotencyKey]
-      );
-      if (existing) {
-        res
-          .status(200)
-          .json({ ...existing, tags: parseTagsArray(existing?.tags), idempotent: true });
+    // FIX-207b (ODBIOR_207.md follow-up, decyzja właściciela): ta trasa jest
+    // teraz cienką HTTP-otoczką nad `createPersonalTask` (jedno źródło
+    // prawdy dla INSERT INTO tasks, dzielone z zatwierdzoną propozycją
+    // `create_task` z czatu Teresy — aiActionExecutor.ts). Walidacja/parsing
+    // req.body i audyt AI-apply zostają tu (HTTP-specyficzne); sam zapis
+    // przeniesiony do server/src/services/personalTask/createPersonalTaskService.ts.
+    let created;
+    try {
+      created = await createPersonalTask({
+        organizationId: orgId,
+        userId,
+        title: String(req.body?.title || ''),
+        description,
+        status: req.body?.status,
+        priority: req.body?.priority,
+        dueDate,
+        tags,
+        sourceType,
+        sourceId,
+        idempotencyKey,
+      });
+    } catch (err: any) {
+      if (err?.message === 'title is required') {
+        res.status(400).json({ error: 'title is required' });
         return;
       }
+      throw err;
     }
 
-    const id = uuidv4();
-    const cols = await getTableColumns('tasks');
-
-    const insertCols: string[] = ['id'];
-    const insertVals: string[] = ['?'];
-    const insertParams: any[] = [id];
-
-    const add = (col: string, val: any) => {
-      if (!cols.has(col)) return;
-      insertCols.push(col);
-      insertVals.push('?');
-      insertParams.push(val);
-    };
-
-    add('organization_id', orgId);
-    add('title', title);
-    add('description', description ?? null);
-    add('status', status);
-    add('priority', priority);
-    add('assignee_id', userId);
-    add('reporter_id', userId);
-    if (dueDate) add('due_date', dueDate);
-    add('tags', JSON.stringify(tags));
-    add('task_type', 'personal');
-    if (sourceType && sourceId) {
-      add('source_type', sourceType);
-      add('source_id', sourceId);
-    }
-    if (idempotencyKey) add('idempotency_key', idempotencyKey);
-
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-    } catch (insertErr: any) {
-      // Race guard: two concurrent retries can both pass the pre-insert SELECT
-      // above. A unique-violation on (organization_id, idempotency_key) means the
-      // other request won; re-read and return its row instead of a 500.
-      if (idempotencyKey && insertErr?.code === '23505') {
-        const winning = await queryHelpers.queryOne<any>(
-          `
-          SELECT
-            t.id, t.title, t.description, t.status, t.priority,
-            t.due_date as "dueDate", t.tags,
-            t.created_at as "createdAt", t.updated_at as "updatedAt",
-            t.completed_at as "completedAt"
-          FROM tasks t
-          WHERE t.organization_id = ? AND t.idempotency_key = ?
-          LIMIT 1
-          `,
-          [orgId, idempotencyKey]
-        );
-        if (winning) {
-          res
-            .status(200)
-            .json({ ...winning, tags: parseTagsArray(winning?.tags), idempotent: true });
-          return;
-        }
-      }
-      throw insertErr;
+    if (created.idempotent) {
+      res.status(200).json({
+        id: created.id,
+        title: created.title,
+        description: created.description,
+        status: created.status,
+        priority: created.priority,
+        dueDate: created.dueDate,
+        tags: created.tags,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+        completedAt: created.completedAt,
+        idempotent: true,
+      });
+      return;
     }
 
     // V4-NOTE-06: Audit when task created from AI-extracted actions (insert-as-blocks apply)
@@ -1416,9 +1367,9 @@ router.post(
           actorType: 'USER',
           action: 'NOTE_AI_APPLY',
           resourceType: 'task',
-          resourceId: id,
+          resourceId: created.id,
           organizationId: orgId,
-          after: { title, sourceType, sourceId },
+          after: { title: created.title, sourceType, sourceId },
           metadata: { fromAI: true, source: 'extract-actions' },
         });
       } catch (_e) {
@@ -1426,30 +1377,20 @@ router.post(
       }
     }
 
-    const row = await queryHelpers.queryOne<any>(
-      `
-      SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date as "dueDate",
-        t.tags,
-        t.created_at as "createdAt",
-        t.updated_at as "updatedAt",
-        t.completed_at as "completedAt",
-        ${cols.has('source_type') ? 't.source_type' : 'NULL'} as "sourceType",
-        ${cols.has('source_id') ? 't.source_id' : 'NULL'} as "sourceId"
-      FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
-        AND lower(coalesce(t.task_type,'')) = 'personal'
-      LIMIT 1
-    `,
-      [id, orgId, userId]
-    );
-
-    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.status(201).json({
+      id: created.id,
+      title: created.title,
+      description: created.description,
+      status: created.status,
+      priority: created.priority,
+      dueDate: created.dueDate,
+      tags: created.tags,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+      completedAt: created.completedAt,
+      sourceType: created.sourceType,
+      sourceId: created.sourceId,
+    });
   })
 );
 
@@ -4719,9 +4660,15 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     try {
-      res.json(await previewIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
+      res.json(
+        await previewIdeaProcessFlowCandidate({
+          organizationId: identity.orgId,
+          ideaId: String(req.params.id),
+        })
+      );
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError)
+        return res.status(error.status).json({ code: error.code, error: error.message });
       throw error;
     }
   })
@@ -4734,9 +4681,15 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     try {
-      res.json(await readIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
+      res.json(
+        await readIdeaProcessFlowCandidate({
+          organizationId: identity.orgId,
+          ideaId: String(req.params.id),
+        })
+      );
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError)
+        return res.status(error.status).json({ code: error.code, error: error.message });
       throw error;
     }
   })
@@ -4751,8 +4704,16 @@ router.post(
     if (!identity) return;
     const mapVersion = req.body?.mapVersion;
     const projectionHash = req.body?.projectionHash;
-    if (!Number.isInteger(mapVersion) || mapVersion <= 0 || typeof projectionHash !== 'string' || !/^[0-9a-f]{64}$/.test(projectionHash)) {
-      return res.status(400).json({ code: 'INVALID_PROCESS_FLOW_SNAPSHOT', error: 'mapVersion must be a positive integer and projectionHash a lowercase sha256' });
+    if (
+      !Number.isInteger(mapVersion) ||
+      mapVersion <= 0 ||
+      typeof projectionHash !== 'string' ||
+      !/^[0-9a-f]{64}$/.test(projectionHash)
+    ) {
+      return res.status(400).json({
+        code: 'INVALID_PROCESS_FLOW_SNAPSHOT',
+        error: 'mapVersion must be a positive integer and projectionHash a lowercase sha256',
+      });
     }
     try {
       const result = await approveIdeaProcessFlowCandidate({
@@ -4764,7 +4725,8 @@ router.post(
       });
       res.status(result.created ? 201 : 200).json(result);
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError)
+        return res.status(error.status).json({ code: error.code, error: error.message });
       throw error;
     }
   })
@@ -7103,14 +7065,19 @@ router.post(
 
     const idempotencyKey = String(req.get('Idempotency-Key') || '').trim();
     if (!idempotencyKey) {
-      return res.status(428).json({ error: 'Idempotency-Key is required', code: 'IDEMPOTENCY_KEY_REQUIRED' });
+      return res
+        .status(428)
+        .json({ error: 'Idempotency-Key is required', code: 'IDEMPOTENCY_KEY_REQUIRED' });
     }
 
     return queryHelpers.withPgTransaction(async () => {
-    await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))`, [orgId, idempotencyKey]);
+      await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))`, [
+        orgId,
+        idempotencyKey,
+      ]);
 
-    const idea = await queryHelpers.queryOne<any>(
-      `
+      const idea = await queryHelpers.queryOne<any>(
+        `
       SELECT
         id,
         title,
@@ -7130,427 +7097,535 @@ router.post(
       WHERE id = ? AND user_id = ? AND organization_id = ?
       LIMIT 1
     `,
-      [ideaId, userId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+        [ideaId, userId, orgId]
+      );
+      if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
-    const conversionSourceHash = canonicalSourceHash({
-      source: {
-        id: idea.id,
-        title: idea.title,
-        body: idea.body,
-        tags: idea.tags,
-        seedText: idea.seedText,
-        aiExpansion: idea.aiExpansion,
-        summaryData: idea.summaryData,
-        potential: idea.potential,
-        complexity: idea.complexity,
-        area: idea.area,
-        priority: idea.priority,
-      },
-      target,
-      options,
-      nodeIds,
-    });
-    const existingConversion = await queryHelpers.queryOne<{
-      source_content_hash: string | null;
-      response_json: string | null;
-    }>(
-      `SELECT source_content_hash, response_json FROM my_idea_conversions
+      const conversionSourceHash = canonicalSourceHash({
+        source: {
+          id: idea.id,
+          title: idea.title,
+          body: idea.body,
+          tags: idea.tags,
+          seedText: idea.seedText,
+          aiExpansion: idea.aiExpansion,
+          summaryData: idea.summaryData,
+          potential: idea.potential,
+          complexity: idea.complexity,
+          area: idea.area,
+          priority: idea.priority,
+        },
+        target,
+        options,
+        nodeIds,
+      });
+      const existingConversion = await queryHelpers.queryOne<{
+        source_content_hash: string | null;
+        response_json: string | null;
+      }>(
+        `SELECT source_content_hash, response_json FROM my_idea_conversions
         WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
-      [orgId, idempotencyKey]
-    );
-    if (existingConversion) {
-      if (existingConversion.source_content_hash !== conversionSourceHash) {
-        return res.status(409).json({ error: 'Idempotency key collision', code: 'IDEMPOTENCY_COLLISION' });
-      }
-      return res.json({ ...(JSON.parse(existingConversion.response_json || '{}')), replayed: true });
-    }
-
-    const tags = parseTagsArray(idea?.tags);
-    // F15 (data-integrity): idea.title may already carry entities escaped by the
-    // global sanitizer on a prior save. Decode once here — this value feeds
-    // initiatives.name/decisions.title/tasks.title/reports.title below.
-    const safeTitle = decodeHtmlEntities(String(idea?.title || 'Idea').trim()) || 'Idea';
-    const safeBody = String(idea?.body || '').trim();
-    const safeExpansion = String(idea?.aiExpansion || '').trim();
-
-    let summary: any = null;
-    try {
-      summary = idea?.summaryData
-        ? typeof idea.summaryData === 'string'
-          ? JSON.parse(idea.summaryData)
-          : idea.summaryData
-        : null;
-    } catch {
-      summary = null;
-    }
-    const nextSteps: string[] = Array.isArray(summary?.nextSteps)
-      ? summary.nextSteps.map((s: any) => String(s || '').trim()).filter(Boolean)
-      : [];
-
-    const activeTool = typeof options?.activeTool === 'string' ? options.activeTool : null;
-    let processFlowReadback = '';
-    if (activeTool === 'process_flow') {
-      try {
-        const mapRow = await queryHelpers.queryOne<{ nodes_json: string | null }>(
-          `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-          [ideaId, userId, orgId]
-        );
-        if (mapRow?.nodes_json) {
-          const nodes: Array<{ data?: { label?: string } }> = JSON.parse(String(mapRow.nodes_json));
-          const labels = nodes.map((n) => (n.data?.label ?? '').trim()).filter(Boolean);
-          if (labels.length > 0) processFlowReadback = labels.join(' → ');
+        [orgId, idempotencyKey]
+      );
+      if (existingConversion) {
+        if (existingConversion.source_content_hash !== conversionSourceHash) {
+          return res
+            .status(409)
+            .json({ error: 'Idempotency key collision', code: 'IDEMPOTENCY_COLLISION' });
         }
-      } catch {
-        /* best-effort: blob unavailable */
-      }
-    }
-
-    // P0-1 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md, model docelowy:
-    // 10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §2.3): backend dziś NIE dostaje jawnego
-    // zakresu konwersji z FE (żadne z trzech wejść — Menu 1 / prawy panel / menu
-    // kontekstowe — nie wysyła `options.scope`, patrz IdeaMapWorkspace.tsx:2045-2052).
-    // Naprawa: akceptujemy `options.scope` jeśli kiedyś zacznie być wysyłany
-    // ('workspace' = cała Idea), a przy jego braku wnioskujemy best-effort z obecności
-    // `nodeIds` — dokładnie ten sam sygnał, którego dziś używa FE do rozróżnienia
-    // "konwertuj całość" (Menu 1 bez zaznaczenia, nodeIds puste) od "konwertuj
-    // zaznaczenie/węzeł/gałąź" (nodeIds niepuste). To NIE jest doskonałe (np. Table
-    // bulk-convert bywa niespójny ze `selection.ids` — patrz audyt §4.5), ale jest
-    // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
-    const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
-    const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
-    // E11 (2026-08-10): when the caller sends a real `options.scope` (now wired
-    // from IdeaMapWorkspace.handleConvert's preview gate + convertSingleNode/
-    // convertBranch), record it verbatim (single_item / single_item_cascade /
-    // selected_items / …) instead of collapsing every non-workspace conversion
-    // into the single bucket 'selection' — the column is an open TEXT list
-    // (no CHECK, see 20260723_idea_conversion_history.sql), so finer values
-    // need no migration. Legacy callers that still omit `scope` keep the old
-    // 'selection' fallback — behavior for them is unchanged.
-    const conversionScope = isWholeIdeaScope ? 'workspace' : explicitScope || 'selection';
-
-    const promote = async (
-      promotedTo: string,
-      promotedEntityId: string | null,
-      response: Record<string, unknown>
-    ) => {
-      response.replayed = false;
-      // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
-      // `promoted_to`, które nadpisywało się bezwarunkowo niezależnie od zakresu
-      // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
-      // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
-      try {
-        // E11 (2026-08-10): fill in the two fields the §9 lineage shape
-        // ({conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
-        // createdBy,mappingVersion,sourceLink}) was still missing —
-        // `source_link_json` (column existed, unused since the P0-1 migration)
-        // and `mapping_version` (new additive column, feature-detected exactly
-        // like `maturity_gates_json` above — see 20260810_idea_conversion_
-        // mapping_version.sql, NOT applied by this task, DB SAFETY).
-        const conversionCols = await getTableColumns('my_idea_conversions');
-        const hasMappingVersion = conversionCols.has('mapping_version');
-        const sourceLink = JSON.stringify({
-          type: 'idea',
-          id: ideaId,
-          containerType: 'idea_workspace',
-          containerId: ideaId,
+        return res.json({
+          ...JSON.parse(existingConversion.response_json || '{}'),
+          replayed: true,
         });
-        const insertCols = [
-          'id',
-          'idea_id',
-          'organization_id',
-          'target',
-          'entity_id',
-          'scope',
-          'node_ids_json',
-          'source_link_json',
-          'created_by',
-          'idempotency_key',
-          'source_content_hash',
-          'response_json',
-        ];
-        const insertVals: any[] = [
-          uuidv4(),
-          ideaId,
-          orgId,
-          promotedTo,
-          promotedEntityId,
-          conversionScope,
-          JSON.stringify(nodeIds),
-          sourceLink,
-          userId,
-          idempotencyKey,
-          conversionSourceHash,
-          JSON.stringify(response),
-        ];
-        if (hasMappingVersion) {
-          insertCols.push('mapping_version');
-          insertVals.push(CONVERSION_MAPPING_VERSION);
-        }
-        await queryHelpers.queryRun(
-          `INSERT INTO my_idea_conversions (${insertCols.join(', ')})
-           VALUES (${insertCols.map(() => '?').join(', ')})`,
-          insertVals
-        );
-      } catch (err: any) {
-        throw new Error(`idea_conversion_receipt_failed: ${err?.message || String(err)}`);
       }
 
-      // `promoted_to`/`promoted_entity_id`/`stage` Idei zostają dla zgodności wstecznej,
-      // ale zmieniają się TYLKO przy konwersji CAŁEJ Idei (scope='workspace'). Konwersja
-      // fragmentu (zaznaczenie/węzeł/gałąź) dostaje wyłącznie wpis w historii powyżej —
-      // status i etap całej Idei zostają nietknięte.
-      if (isWholeIdeaScope) {
-        await queryHelpers.queryRun(
-          `UPDATE my_ideas
+      const tags = parseTagsArray(idea?.tags);
+      // F15 (data-integrity): idea.title may already carry entities escaped by the
+      // global sanitizer on a prior save. Decode once here — this value feeds
+      // initiatives.name/decisions.title/tasks.title/reports.title below.
+      const safeTitle = decodeHtmlEntities(String(idea?.title || 'Idea').trim()) || 'Idea';
+      const safeBody = String(idea?.body || '').trim();
+      const safeExpansion = String(idea?.aiExpansion || '').trim();
+
+      let summary: any = null;
+      try {
+        summary = idea?.summaryData
+          ? typeof idea.summaryData === 'string'
+            ? JSON.parse(idea.summaryData)
+            : idea.summaryData
+          : null;
+      } catch {
+        summary = null;
+      }
+      const nextSteps: string[] = Array.isArray(summary?.nextSteps)
+        ? summary.nextSteps.map((s: any) => String(s || '').trim()).filter(Boolean)
+        : [];
+
+      const activeTool = typeof options?.activeTool === 'string' ? options.activeTool : null;
+      let processFlowReadback = '';
+      if (activeTool === 'process_flow') {
+        try {
+          const mapRow = await queryHelpers.queryOne<{ nodes_json: string | null }>(
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+            [ideaId, userId, orgId]
+          );
+          if (mapRow?.nodes_json) {
+            const nodes: Array<{ data?: { label?: string } }> = JSON.parse(
+              String(mapRow.nodes_json)
+            );
+            const labels = nodes.map((n) => (n.data?.label ?? '').trim()).filter(Boolean);
+            if (labels.length > 0) processFlowReadback = labels.join(' → ');
+          }
+        } catch {
+          /* best-effort: blob unavailable */
+        }
+      }
+
+      // P0-1 (docs/standards/idea-workspace/12_BACKLOG_I_ODBIOR.md, model docelowy:
+      // 10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §2.3): backend dziś NIE dostaje jawnego
+      // zakresu konwersji z FE (żadne z trzech wejść — Menu 1 / prawy panel / menu
+      // kontekstowe — nie wysyła `options.scope`, patrz IdeaMapWorkspace.tsx:2045-2052).
+      // Naprawa: akceptujemy `options.scope` jeśli kiedyś zacznie być wysyłany
+      // ('workspace' = cała Idea), a przy jego braku wnioskujemy best-effort z obecności
+      // `nodeIds` — dokładnie ten sam sygnał, którego dziś używa FE do rozróżnienia
+      // "konwertuj całość" (Menu 1 bez zaznaczenia, nodeIds puste) od "konwertuj
+      // zaznaczenie/węzeł/gałąź" (nodeIds niepuste). To NIE jest doskonałe (np. Table
+      // bulk-convert bywa niespójny ze `selection.ids` — patrz audyt §4.5), ale jest
+      // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
+      const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
+      const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
+      // E11 (2026-08-10): when the caller sends a real `options.scope` (now wired
+      // from IdeaMapWorkspace.handleConvert's preview gate + convertSingleNode/
+      // convertBranch), record it verbatim (single_item / single_item_cascade /
+      // selected_items / …) instead of collapsing every non-workspace conversion
+      // into the single bucket 'selection' — the column is an open TEXT list
+      // (no CHECK, see 20260723_idea_conversion_history.sql), so finer values
+      // need no migration. Legacy callers that still omit `scope` keep the old
+      // 'selection' fallback — behavior for them is unchanged.
+      const conversionScope = isWholeIdeaScope ? 'workspace' : explicitScope || 'selection';
+
+      const promote = async (
+        promotedTo: string,
+        promotedEntityId: string | null,
+        response: Record<string, unknown>
+      ) => {
+        response.replayed = false;
+        // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
+        // `promoted_to`, które nadpisywało się bezwarunkowo niezależnie od zakresu
+        // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
+        // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
+        try {
+          // E11 (2026-08-10): fill in the two fields the §9 lineage shape
+          // ({conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
+          // createdBy,mappingVersion,sourceLink}) was still missing —
+          // `source_link_json` (column existed, unused since the P0-1 migration)
+          // and `mapping_version` (new additive column, feature-detected exactly
+          // like `maturity_gates_json` above — see 20260810_idea_conversion_
+          // mapping_version.sql, NOT applied by this task, DB SAFETY).
+          const conversionCols = await getTableColumns('my_idea_conversions');
+          const hasMappingVersion = conversionCols.has('mapping_version');
+          const sourceLink = JSON.stringify({
+            type: 'idea',
+            id: ideaId,
+            containerType: 'idea_workspace',
+            containerId: ideaId,
+          });
+          const insertCols = [
+            'id',
+            'idea_id',
+            'organization_id',
+            'target',
+            'entity_id',
+            'scope',
+            'node_ids_json',
+            'source_link_json',
+            'created_by',
+            'idempotency_key',
+            'source_content_hash',
+            'response_json',
+          ];
+          const insertVals: any[] = [
+            uuidv4(),
+            ideaId,
+            orgId,
+            promotedTo,
+            promotedEntityId,
+            conversionScope,
+            JSON.stringify(nodeIds),
+            sourceLink,
+            userId,
+            idempotencyKey,
+            conversionSourceHash,
+            JSON.stringify(response),
+          ];
+          if (hasMappingVersion) {
+            insertCols.push('mapping_version');
+            insertVals.push(CONVERSION_MAPPING_VERSION);
+          }
+          await queryHelpers.queryRun(
+            `INSERT INTO my_idea_conversions (${insertCols.join(', ')})
+           VALUES (${insertCols.map(() => '?').join(', ')})`,
+            insertVals
+          );
+        } catch (err: any) {
+          throw new Error(`idea_conversion_receipt_failed: ${err?.message || String(err)}`);
+        }
+
+        // `promoted_to`/`promoted_entity_id`/`stage` Idei zostają dla zgodności wstecznej,
+        // ale zmieniają się TYLKO przy konwersji CAŁEJ Idei (scope='workspace'). Konwersja
+        // fragmentu (zaznaczenie/węzeł/gałąź) dostaje wyłącznie wpis w historii powyżej —
+        // status i etap całej Idei zostają nietknięte.
+        if (isWholeIdeaScope) {
+          await queryHelpers.queryRun(
+            `UPDATE my_ideas
            SET promoted_to = ?, promoted_entity_id = ?, stage = 'promoted', updated_at = CURRENT_TIMESTAMP
            WHERE id = ? AND user_id = ? AND organization_id = ?`,
-          [promotedTo, promotedEntityId, ideaId, userId, orgId]
-        );
-      }
-    };
-
-    // ----- Convert: Initiative -----
-    if (target === 'initiative') {
-      if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
-      const cols = await getTableColumns('initiatives');
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'idea',
-        sourceId: ideaId,
-        title: safeTitle,
-        summary: safeExpansion || safeBody,
-      });
-      // V3-A01: Traceability guard — abort if MYWORK ToolSession materialization failed
-      if (!toolSessionId) {
-        return res
-          .status(500)
-          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
-      }
-
-      // V51-15: When nodeIds provided, enrich summary with selected node labels
-      // P14 integration: prepend process flow readback when converting from PF
-      let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
-      if (processFlowReadback) {
-        initSummary = `## Process Flow\n${processFlowReadback}\n\n${initSummary || ''}`.slice(
-          0,
-          5000
-        );
-      }
-      if (nodeIds.length > 0) {
-        try {
-          const mapRow = await queryHelpers.queryOne<any>(
-            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-            [ideaId, userId, orgId]
+            [promotedTo, promotedEntityId, ideaId, userId, orgId]
           );
-          const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
-          const nodeIdSet = new Set(nodeIds);
-          const selectedLabels = allNodes
-            .filter((n: any) => nodeIdSet.has(String(n?.id)))
-            .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
-            .filter(Boolean);
-          if (selectedLabels.length > 0) {
-            initSummary =
-              `Selected elements: ${selectedLabels.join(', ')}\n\n${initSummary || ''}`.slice(
-                0,
-                5000
-              );
-          }
-        } catch {
-          /* best-effort */
         }
-      }
-      const initArea = idea?.area ? String(idea.area).slice(0, 120) : null;
+      };
 
-      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
-      let initiativeId: string;
-      if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
-        const __r = await funnelCreateInitiative(
+      // ----- Convert: Initiative -----
+      if (target === 'initiative') {
+        if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
+        const cols = await getTableColumns('initiatives');
+        const toolSessionId = await createMyWorkToolSession({
+          userId,
           orgId,
-          {
-            title: safeTitle.slice(0, 255),
-            summary: initSummary,
-            area: initArea,
-            ownerExecutionId: userId,
-            ownerBusinessId: userId,
-            sourceType: 'tool',
-            sourceId: toolSessionId,
-          },
-          { validate: false, actor: { id: userId } }
-        );
-        initiativeId = __r.id;
-        // Funnel does not set `sponsor_id` — post-create UPDATE for the extra column.
-        if (cols.has('sponsor_id')) {
-          try {
-            await queryHelpers.queryRun(
-              `UPDATE initiatives SET sponsor_id = ? WHERE id = ? AND organization_id = ?`,
-              [userId, initiativeId, orgId]
-            );
-          } catch {
-            /* sponsor_id column may be absent on some schemas */
-          }
+          sourceType: 'idea',
+          sourceId: ideaId,
+          title: safeTitle,
+          summary: safeExpansion || safeBody,
+        });
+        // V3-A01: Traceability guard — abort if MYWORK ToolSession materialization failed
+        if (!toolSessionId) {
+          return res
+            .status(500)
+            .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
         }
-        // H1.5 — idea provenance back-reference. source_type/source_id carry the
-        // tool-session lineage (V3-A01 traceability), so the direct "where from"
-        // label lives in `created_from` — the same origin idiom the assessment
-        // path uses (created_from='assessment') and InitiativeController's source
-        // filter already recognises. The idea id itself stays reachable via the
-        // link-graph edge (below) + my_ideas.promoted_entity_id.
-        if (cols.has('created_from')) {
-          try {
-            await queryHelpers.queryRun(
-              `UPDATE initiatives SET created_from = 'idea' WHERE id = ? AND organization_id = ?`,
-              [initiativeId, orgId]
-            );
-          } catch {
-            /* created_from column may be absent on some schemas */
-          }
-        }
-      } else {
-        initiativeId = uuidv4();
-        const insertCols: string[] = ['id'];
-        const insertVals: string[] = ['?'];
-        const insertParams: any[] = [initiativeId];
 
-        const add = (col: string, val: any) => {
-          if (!cols.has(col)) return;
-          insertCols.push(col);
-          insertVals.push('?');
-          insertParams.push(val);
-        };
-
-        add('organization_id', orgId);
-        add('name', safeTitle.slice(0, 255));
-        add('summary', initSummary);
-        add('area', initArea);
-        add('owner_execution_id', userId);
-        add('owner_business_id', userId);
-        add('sponsor_id', userId);
-        add('source_type', 'tool');
-        add('source_id', toolSessionId);
-        // H1.5 — idea provenance back-reference (see funnel branch above).
-        add('created_from', 'idea');
-
-        await queryHelpers.queryRun(
-          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-          insertParams
-        );
-      }
-
-      await promote('initiative', initiativeId, {
-        promotedTo: 'initiative', promotedEntityId: initiativeId,
-        created: { initiativeId }, sourceSessionId: toolSessionId, sourceNodeIds: nodeIds,
-      });
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'initiative',
-        sourceId: initiativeId,
-        targetType: 'idea',
-        targetId: ideaId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-        nodeId: nodeIds[0] || null,
-      });
-
-      return res.json({
-        replayed: false,
-        promotedTo: 'initiative',
-        promotedEntityId: initiativeId,
-        created: { initiativeId },
-        sourceSessionId: toolSessionId,
-        sourceNodeIds: nodeIds,
-      });
-    }
-
-    // ----- Convert: Task set -----
-    if (target === 'task_set') {
-      if (!(await requireTables(res, ['tasks', 'tool_sessions']))) return;
-      const cols = await getTableColumns('tasks');
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'idea',
-        sourceId: ideaId,
-        title: safeTitle,
-        summary: safeExpansion || safeBody,
-      });
-
-      // V51-15: When nodeIds provided, use selected nodes' labels as task titles
-      let steps: string[];
-      if (nodeIds.length > 0) {
-        try {
-          const mapRow = await queryHelpers.queryOne<any>(
-            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-            [ideaId, userId, orgId]
+        // V51-15: When nodeIds provided, enrich summary with selected node labels
+        // P14 integration: prepend process flow readback when converting from PF
+        let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
+        if (processFlowReadback) {
+          initSummary = `## Process Flow\n${processFlowReadback}\n\n${initSummary || ''}`.slice(
+            0,
+            5000
           );
-          const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
-          const nodeIdSet = new Set(nodeIds);
-          const selectedLabels = allNodes
-            .filter((n: any) => nodeIdSet.has(String(n?.id)))
-            .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
-            .filter(Boolean);
-          steps = selectedLabels.length > 0 ? selectedLabels.slice(0, 20) : [safeTitle];
-        } catch {
-          steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
         }
-      } else {
-        steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
-      }
-      const taskIds: string[] = [];
+        if (nodeIds.length > 0) {
+          try {
+            const mapRow = await queryHelpers.queryOne<any>(
+              `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+              [ideaId, userId, orgId]
+            );
+            const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
+            const nodeIdSet = new Set(nodeIds);
+            const selectedLabels = allNodes
+              .filter((n: any) => nodeIdSet.has(String(n?.id)))
+              .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+              .filter(Boolean);
+            if (selectedLabels.length > 0) {
+              initSummary =
+                `Selected elements: ${selectedLabels.join(', ')}\n\n${initSummary || ''}`.slice(
+                  0,
+                  5000
+                );
+            }
+          } catch {
+            /* best-effort */
+          }
+        }
+        const initArea = idea?.area ? String(idea.area).slice(0, 120) : null;
 
-      const baseTags = Array.from(new Set([`idea:${ideaId}`, ...tags].filter(Boolean)));
+        // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+        let initiativeId: string;
+        if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
+          const __r = await funnelCreateInitiative(
+            orgId,
+            {
+              title: safeTitle.slice(0, 255),
+              summary: initSummary,
+              area: initArea,
+              ownerExecutionId: userId,
+              ownerBusinessId: userId,
+              sourceType: 'tool',
+              sourceId: toolSessionId,
+            },
+            { validate: false, actor: { id: userId } }
+          );
+          initiativeId = __r.id;
+          // Funnel does not set `sponsor_id` — post-create UPDATE for the extra column.
+          if (cols.has('sponsor_id')) {
+            try {
+              await queryHelpers.queryRun(
+                `UPDATE initiatives SET sponsor_id = ? WHERE id = ? AND organization_id = ?`,
+                [userId, initiativeId, orgId]
+              );
+            } catch {
+              /* sponsor_id column may be absent on some schemas */
+            }
+          }
+          // H1.5 — idea provenance back-reference. source_type/source_id carry the
+          // tool-session lineage (V3-A01 traceability), so the direct "where from"
+          // label lives in `created_from` — the same origin idiom the assessment
+          // path uses (created_from='assessment') and InitiativeController's source
+          // filter already recognises. The idea id itself stays reachable via the
+          // link-graph edge (below) + my_ideas.promoted_entity_id.
+          if (cols.has('created_from')) {
+            try {
+              await queryHelpers.queryRun(
+                `UPDATE initiatives SET created_from = 'idea' WHERE id = ? AND organization_id = ?`,
+                [initiativeId, orgId]
+              );
+            } catch {
+              /* created_from column may be absent on some schemas */
+            }
+          }
+        } else {
+          initiativeId = uuidv4();
+          const insertCols: string[] = ['id'];
+          const insertVals: string[] = ['?'];
+          const insertParams: any[] = [initiativeId];
 
-      for (const step of steps) {
-        const taskId = uuidv4();
-        taskIds.push(taskId);
+          const add = (col: string, val: any) => {
+            if (!cols.has(col)) return;
+            insertCols.push(col);
+            insertVals.push('?');
+            insertParams.push(val);
+          };
 
-        const insertCols: string[] = ['id'];
-        const insertVals: string[] = ['?'];
-        const insertParams: any[] = [taskId];
-        const add = (col: string, val: any) => {
-          if (!cols.has(col)) return;
-          insertCols.push(col);
-          insertVals.push('?');
-          insertParams.push(val);
-        };
+          add('organization_id', orgId);
+          add('name', safeTitle.slice(0, 255));
+          add('summary', initSummary);
+          add('area', initArea);
+          add('owner_execution_id', userId);
+          add('owner_business_id', userId);
+          add('sponsor_id', userId);
+          add('source_type', 'tool');
+          add('source_id', toolSessionId);
+          // H1.5 — idea provenance back-reference (see funnel branch above).
+          add('created_from', 'idea');
 
-        add('organization_id', orgId);
-        add('title', String(step).slice(0, 255) || safeTitle.slice(0, 255));
-        add(
-          'description',
-          [
-            `Origin idea: ${safeTitle}`,
-            safeBody ? `\n${safeBody}` : null,
-            safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n')
-            .slice(0, 9000)
-        );
-        add('status', 'todo');
-        add('priority', 'medium');
-        add('assignee_id', userId);
-        add('reporter_id', userId);
-        add('tags', JSON.stringify(baseTags));
-        add('task_type', 'personal');
-        add('source_type', 'idea');
-        add('source_id', ideaId);
+          await queryHelpers.queryRun(
+            `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+            insertParams
+          );
+        }
 
-        await queryHelpers.queryRun(
-          `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-          insertParams
-        );
+        await promote('initiative', initiativeId, {
+          promotedTo: 'initiative',
+          promotedEntityId: initiativeId,
+          created: { initiativeId },
+          sourceSessionId: toolSessionId,
+          sourceNodeIds: nodeIds,
+        });
 
         await linkGraphAddEdge({
           orgId,
           userId,
-          sourceType: 'task',
-          sourceId: taskId,
+          sourceType: 'initiative',
+          sourceId: initiativeId,
+          targetType: 'idea',
+          targetId: ideaId,
+          relation: 'ref',
+          containerType: 'mywork_convert',
+          containerId: toolSessionId,
+          nodeId: nodeIds[0] || null,
+        });
+
+        return res.json({
+          replayed: false,
+          promotedTo: 'initiative',
+          promotedEntityId: initiativeId,
+          created: { initiativeId },
+          sourceSessionId: toolSessionId,
+          sourceNodeIds: nodeIds,
+        });
+      }
+
+      // ----- Convert: Task set -----
+      if (target === 'task_set') {
+        if (!(await requireTables(res, ['tasks', 'tool_sessions']))) return;
+        const cols = await getTableColumns('tasks');
+        const toolSessionId = await createMyWorkToolSession({
+          userId,
+          orgId,
+          sourceType: 'idea',
+          sourceId: ideaId,
+          title: safeTitle,
+          summary: safeExpansion || safeBody,
+        });
+
+        // V51-15: When nodeIds provided, use selected nodes' labels as task titles
+        let steps: string[];
+        if (nodeIds.length > 0) {
+          try {
+            const mapRow = await queryHelpers.queryOne<any>(
+              `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+              [ideaId, userId, orgId]
+            );
+            const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
+            const nodeIdSet = new Set(nodeIds);
+            const selectedLabels = allNodes
+              .filter((n: any) => nodeIdSet.has(String(n?.id)))
+              .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+              .filter(Boolean);
+            steps = selectedLabels.length > 0 ? selectedLabels.slice(0, 20) : [safeTitle];
+          } catch {
+            steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
+          }
+        } else {
+          steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
+        }
+        const taskIds: string[] = [];
+
+        const baseTags = Array.from(new Set([`idea:${ideaId}`, ...tags].filter(Boolean)));
+
+        for (const step of steps) {
+          const taskId = uuidv4();
+          taskIds.push(taskId);
+
+          const insertCols: string[] = ['id'];
+          const insertVals: string[] = ['?'];
+          const insertParams: any[] = [taskId];
+          const add = (col: string, val: any) => {
+            if (!cols.has(col)) return;
+            insertCols.push(col);
+            insertVals.push('?');
+            insertParams.push(val);
+          };
+
+          add('organization_id', orgId);
+          add('title', String(step).slice(0, 255) || safeTitle.slice(0, 255));
+          add(
+            'description',
+            [
+              `Origin idea: ${safeTitle}`,
+              safeBody ? `\n${safeBody}` : null,
+              safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n')
+              .slice(0, 9000)
+          );
+          add('status', 'todo');
+          add('priority', 'medium');
+          add('assignee_id', userId);
+          add('reporter_id', userId);
+          add('tags', JSON.stringify(baseTags));
+          add('task_type', 'personal');
+          add('source_type', 'idea');
+          add('source_id', ideaId);
+
+          await queryHelpers.queryRun(
+            `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+            insertParams
+          );
+
+          await linkGraphAddEdge({
+            orgId,
+            userId,
+            sourceType: 'task',
+            sourceId: taskId,
+            targetType: 'idea',
+            targetId: ideaId,
+            relation: 'ref',
+            containerType: 'mywork_convert',
+            containerId: toolSessionId,
+          });
+          await linkGraphAddEdge({
+            orgId,
+            userId,
+            sourceType: 'task',
+            sourceId: taskId,
+            targetType: 'tool_session',
+            targetId: toolSessionId,
+            relation: 'ref',
+            containerType: 'mywork_convert',
+            containerId: toolSessionId,
+          });
+        }
+
+        await promote('task_set', JSON.stringify(taskIds), {
+          promotedTo: 'task_set',
+          promotedEntityId: JSON.stringify(taskIds),
+          created: { taskIds },
+          sourceSessionId: toolSessionId,
+        });
+
+        return res.json({
+          replayed: false,
+          promotedTo: 'task_set',
+          promotedEntityId: JSON.stringify(taskIds),
+          created: { taskIds },
+          sourceSessionId: toolSessionId,
+        });
+      }
+
+      // ----- Convert: Decision -----
+      if (target === 'decision') {
+        if (!(await requireTables(res, ['decisions', 'tool_sessions']))) return;
+        const cols = await getTableColumns('decisions');
+        const toolSessionId = await createMyWorkToolSession({
+          userId,
+          orgId,
+          sourceType: 'idea',
+          sourceId: ideaId,
+          title: safeTitle,
+          summary: safeExpansion || safeBody,
+        });
+
+        const decisionId = uuidv4();
+        const insertCols: string[] = ['id'];
+        const insertVals: string[] = ['?'];
+        const insertParams: any[] = [decisionId];
+
+        const add = (col: string, val: any) => {
+          if (!cols.has(col)) return;
+          insertCols.push(col);
+          insertVals.push('?');
+          insertParams.push(val);
+        };
+
+        add('organization_id', orgId);
+        add('title', safeTitle.slice(0, 255));
+        add(
+          'description',
+          [
+            safeBody ? `Idea:\n${safeBody}` : null,
+            safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+            summary?.verdict ? `\nSummary:\n${String(summary.verdict)}` : null,
+            nextSteps.length ? `\nNext steps:\n- ${nextSteps.join('\n- ')}` : null,
+          ]
+            .filter(Boolean)
+            .join('\n')
+            .slice(0, 12000)
+        );
+        add('type', 'general');
+        add('decision_maker_id', userId);
+        add('created_by', userId);
+        add('status', 'pending');
+        add('source_type', 'idea');
+        add('source_id', ideaId);
+
+        await queryHelpers.queryRun(
+          `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+
+        await promote('decision', decisionId, {
+          promotedTo: 'decision',
+          promotedEntityId: decisionId,
+          created: { decisionId },
+          sourceSessionId: toolSessionId,
+        });
+
+        await linkGraphAddEdge({
+          orgId,
+          userId,
+          sourceType: 'decision',
+          sourceId: decisionId,
           targetType: 'idea',
           targetId: ideaId,
           relation: 'ref',
@@ -7560,418 +7635,344 @@ router.post(
         await linkGraphAddEdge({
           orgId,
           userId,
-          sourceType: 'task',
-          sourceId: taskId,
+          sourceType: 'decision',
+          sourceId: decisionId,
           targetType: 'tool_session',
           targetId: toolSessionId,
           relation: 'ref',
           containerType: 'mywork_convert',
           containerId: toolSessionId,
         });
+
+        return res.json({
+          replayed: false,
+          promotedTo: 'decision',
+          promotedEntityId: decisionId,
+          created: { decisionId },
+          sourceSessionId: toolSessionId,
+        });
       }
 
-      await promote('task_set', JSON.stringify(taskIds), {
-        promotedTo: 'task_set', promotedEntityId: JSON.stringify(taskIds),
-        created: { taskIds }, sourceSessionId: toolSessionId,
-      });
+      // ----- Convert: Report -----
+      if (target === 'report') {
+        const reportsTbl = await getTableColumns('reports');
+        if (!reportsTbl || reportsTbl.size === 0) {
+          return res.status(501).json({ error: 'Reports table not available' });
+        }
+        const toolSessionId = await createMyWorkToolSession({
+          userId,
+          orgId,
+          sourceType: 'idea',
+          sourceId: ideaId,
+          title: safeTitle,
+          summary: safeExpansion || safeBody,
+        });
 
-      return res.json({
-        replayed: false,
-        promotedTo: 'task_set',
-        promotedEntityId: JSON.stringify(taskIds),
-        created: { taskIds },
-        sourceSessionId: toolSessionId,
-      });
-    }
-
-    // ----- Convert: Decision -----
-    if (target === 'decision') {
-      if (!(await requireTables(res, ['decisions', 'tool_sessions']))) return;
-      const cols = await getTableColumns('decisions');
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'idea',
-        sourceId: ideaId,
-        title: safeTitle,
-        summary: safeExpansion || safeBody,
-      });
-
-      const decisionId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [decisionId];
-
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('title', safeTitle.slice(0, 255));
-      add(
-        'description',
-        [
-          safeBody ? `Idea:\n${safeBody}` : null,
-          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-          summary?.verdict ? `\nSummary:\n${String(summary.verdict)}` : null,
-          nextSteps.length ? `\nNext steps:\n- ${nextSteps.join('\n- ')}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n')
-          .slice(0, 12000)
-      );
-      add('type', 'general');
-      add('decision_maker_id', userId);
-      add('created_by', userId);
-      add('status', 'pending');
-      add('source_type', 'idea');
-      add('source_id', ideaId);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-
-      await promote('decision', decisionId, {
-        promotedTo: 'decision', promotedEntityId: decisionId,
-        created: { decisionId }, sourceSessionId: toolSessionId,
-      });
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'decision',
-        sourceId: decisionId,
-        targetType: 'idea',
-        targetId: ideaId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'decision',
-        sourceId: decisionId,
-        targetType: 'tool_session',
-        targetId: toolSessionId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-
-      return res.json({
-        replayed: false,
-        promotedTo: 'decision',
-        promotedEntityId: decisionId,
-        created: { decisionId },
-        sourceSessionId: toolSessionId,
-      });
-    }
-
-    // ----- Convert: Report -----
-    if (target === 'report') {
-      const reportsTbl = await getTableColumns('reports');
-      if (!reportsTbl || reportsTbl.size === 0) {
-        return res.status(501).json({ error: 'Reports table not available' });
-      }
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'idea',
-        sourceId: ideaId,
-        title: safeTitle,
-        summary: safeExpansion || safeBody,
-      });
-
-      const reportId = uuidv4();
-      const now = new Date().toISOString();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [reportId];
-      const add = (col: string, val: any) => {
-        if (!reportsTbl.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('user_id', userId);
-      add('created_by', userId);
-      add('title', safeTitle.slice(0, 255));
-      add(
-        'description',
-        [
-          processFlowReadback ? `## Process Flow\n${processFlowReadback}` : null,
-          safeBody ? `Idea:\n${safeBody}` : null,
-          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n')
-          .slice(0, 12000)
-      );
-      add('status', 'draft');
-      add('source_type', 'idea');
-      add('source_id', ideaId);
-      add('tags', JSON.stringify(tags));
-      add('created_at', now);
-      add('updated_at', now);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO reports (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-
-      await promote('report', reportId, {
-        promotedTo: 'report', promotedEntityId: reportId, outputId: reportId,
-        created: { reportId }, sourceSessionId: toolSessionId,
-      });
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'report',
-        sourceId: reportId,
-        targetType: 'idea',
-        targetId: ideaId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-
-      return res.json({
-        replayed: false,
-        promotedTo: 'report',
-        promotedEntityId: reportId,
-        outputId: reportId,
-        created: { reportId },
-        sourceSessionId: toolSessionId,
-      });
-    }
-
-    // ----- Convert: Presentation -----
-    if (target === 'presentation') {
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'idea',
-        sourceId: ideaId,
-        title: safeTitle,
-        summary: safeExpansion || safeBody,
-      });
-
-      const presId = uuidv4();
-      const now = new Date().toISOString();
-      await createNativeDeck({
-        organizationId: orgId,
-        deckId: presId,
-        title: safeTitle.slice(0, 255),
-        unifiedJson: {
-          meta: {
-            client: orgId,
-            project: safeTitle,
-            date: now.slice(0, 10),
-            author: userId,
-            confidentiality: 'internal',
-            language: typeof options?.language === 'string' && options.language.startsWith('en') ? 'en' : 'pl',
-          },
-          slides: [{
-            intent: 'cover',
-            key_message: safeTitle,
-            content: {
-              type: 'cover', title: safeTitle,
-              subtitle: safeBody || safeExpansion || undefined,
-              organization: orgId, date: now.slice(0, 10), confidentiality: 'internal',
-            },
-          }],
-        },
-        sourceType: 'idea',
-        sourceId: ideaId,
-        createdBy: userId,
-        createdAt: now,
-        status: 'draft',
-        registerArtifact: false,
-      });
-
-      await promote('presentation', presId, {
-        promotedTo: 'presentation', promotedEntityId: presId, outputId: presId,
-        created: { presentationId: presId }, sourceSessionId: toolSessionId,
-      });
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'presentation',
-        sourceId: presId,
-        targetType: 'idea',
-        targetId: ideaId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-
-      return res.json({
-        replayed: false,
-        promotedTo: 'presentation',
-        promotedEntityId: presId,
-        outputId: presId,
-        created: { presentationId: presId },
-        sourceSessionId: toolSessionId,
-      });
-    }
-
-    // ----- Convert: Team chat -----
-    if (target === 'team_chat') {
-      if (!(await requireTables(res, ['chat_projects', 'conversations', 'conversation_messages'])))
-        return;
-
-      const chatProjectIdOpt =
-        typeof options?.chatProjectId === 'string' ? options.chatProjectId : null;
-      let chatProjectId: string | null = chatProjectIdOpt;
-
-      if (!chatProjectId) {
-        const existingTeamProject = await queryHelpers.queryOne<any>(
-          `SELECT id FROM chat_projects WHERE organization_id = ? AND scope = 'team' ORDER BY updated_at DESC LIMIT 1`,
-          [orgId]
-        );
-        chatProjectId = existingTeamProject?.id ? String(existingTeamProject.id) : null;
-      }
-
-      if (!chatProjectId) {
-        const cpCols = await getTableColumns('chat_projects');
-        const newProjectId = uuidv4();
+        const reportId = uuidv4();
         const now = new Date().toISOString();
-
         const insertCols: string[] = ['id'];
         const insertVals: string[] = ['?'];
-        const insertParams: any[] = [newProjectId];
+        const insertParams: any[] = [reportId];
         const add = (col: string, val: any) => {
-          if (!cpCols.has(col)) return;
+          if (!reportsTbl.has(col)) return;
           insertCols.push(col);
           insertVals.push('?');
           insertParams.push(val);
         };
 
-        add('user_id', userId);
         add('organization_id', orgId);
-        add('name', 'Team Ideas');
-        add('description', 'Ideas shared for team discussion');
-        add('color', '#8b5cf6');
-        add('icon', 'sparkles');
-        add('scope', 'team');
+        add('user_id', userId);
+        add('created_by', userId);
+        add('title', safeTitle.slice(0, 255));
+        add(
+          'description',
+          [
+            processFlowReadback ? `## Process Flow\n${processFlowReadback}` : null,
+            safeBody ? `Idea:\n${safeBody}` : null,
+            safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+          ]
+            .filter(Boolean)
+            .join('\n')
+            .slice(0, 12000)
+        );
+        add('status', 'draft');
+        add('source_type', 'idea');
+        add('source_id', ideaId);
+        add('tags', JSON.stringify(tags));
         add('created_at', now);
         add('updated_at', now);
 
         await queryHelpers.queryRun(
-          `INSERT INTO chat_projects (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          `INSERT INTO reports (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
           insertParams
         );
-        chatProjectId = newProjectId;
+
+        await promote('report', reportId, {
+          promotedTo: 'report',
+          promotedEntityId: reportId,
+          outputId: reportId,
+          created: { reportId },
+          sourceSessionId: toolSessionId,
+        });
+
+        await linkGraphAddEdge({
+          orgId,
+          userId,
+          sourceType: 'report',
+          sourceId: reportId,
+          targetType: 'idea',
+          targetId: ideaId,
+          relation: 'ref',
+          containerType: 'mywork_convert',
+          containerId: toolSessionId,
+        });
+
+        return res.json({
+          replayed: false,
+          promotedTo: 'report',
+          promotedEntityId: reportId,
+          outputId: reportId,
+          created: { reportId },
+          sourceSessionId: toolSessionId,
+        });
       }
 
-      const convCols = await getTableColumns('conversations');
-      const conversationId = uuidv4();
-      const now = new Date().toISOString();
+      // ----- Convert: Presentation -----
+      if (target === 'presentation') {
+        const toolSessionId = await createMyWorkToolSession({
+          userId,
+          orgId,
+          sourceType: 'idea',
+          sourceId: ideaId,
+          title: safeTitle,
+          summary: safeExpansion || safeBody,
+        });
 
-      const convInsertCols: string[] = ['id'];
-      const convInsertVals: string[] = ['?'];
-      const convInsertParams: any[] = [conversationId];
-      const addConv = (col: string, val: any) => {
-        if (!convCols.has(col)) return;
-        convInsertCols.push(col);
-        convInsertVals.push('?');
-        convInsertParams.push(val);
-      };
+        const presId = uuidv4();
+        const now = new Date().toISOString();
+        await createNativeDeck({
+          organizationId: orgId,
+          deckId: presId,
+          title: safeTitle.slice(0, 255),
+          unifiedJson: {
+            meta: {
+              client: orgId,
+              project: safeTitle,
+              date: now.slice(0, 10),
+              author: userId,
+              confidentiality: 'internal',
+              language:
+                typeof options?.language === 'string' && options.language.startsWith('en')
+                  ? 'en'
+                  : 'pl',
+            },
+            slides: [
+              {
+                intent: 'cover',
+                key_message: safeTitle,
+                content: {
+                  type: 'cover',
+                  title: safeTitle,
+                  subtitle: safeBody || safeExpansion || undefined,
+                  organization: orgId,
+                  date: now.slice(0, 10),
+                  confidentiality: 'internal',
+                },
+              },
+            ],
+          },
+          sourceType: 'idea',
+          sourceId: ideaId,
+          createdBy: userId,
+          createdAt: now,
+          status: 'draft',
+          registerArtifact: false,
+        });
 
-      addConv('user_id', userId);
-      addConv('organization_id', orgId);
-      addConv('chat_project_id', chatProjectId);
-      addConv('created_by', userId);
-      addConv('title', safeTitle.slice(0, 255));
-      addConv('title_source', 'user');
-      addConv('tags', JSON.stringify(['idea', 'my_work']));
-      addConv('pmo_context', JSON.stringify({ ideaId }));
-      addConv('language', typeof options?.language === 'string' ? String(options.language) : 'en');
-      addConv('created_at', now);
-      addConv('updated_at', now);
+        await promote('presentation', presId, {
+          promotedTo: 'presentation',
+          promotedEntityId: presId,
+          outputId: presId,
+          created: { presentationId: presId },
+          sourceSessionId: toolSessionId,
+        });
 
-      await queryHelpers.queryRun(
-        `INSERT INTO conversations (${convInsertCols.join(', ')}) VALUES (${convInsertVals.join(', ')})`,
-        convInsertParams
-      );
+        await linkGraphAddEdge({
+          orgId,
+          userId,
+          sourceType: 'presentation',
+          sourceId: presId,
+          targetType: 'idea',
+          targetId: ideaId,
+          relation: 'ref',
+          containerType: 'mywork_convert',
+          containerId: toolSessionId,
+        });
 
-      const msgCols = await getTableColumns('conversation_messages');
-      const messageId = uuidv4();
+        return res.json({
+          replayed: false,
+          promotedTo: 'presentation',
+          promotedEntityId: presId,
+          outputId: presId,
+          created: { presentationId: presId },
+          sourceSessionId: toolSessionId,
+        });
+      }
 
-      const content = [
-        `Idea: ${safeTitle}`,
-        safeBody ? `\n${safeBody}` : null,
-        safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-        summary?.verdict ? `\nAI verdict:\n${String(summary.verdict)}` : null,
-        nextSteps.length ? `\nNext steps:\n- ${nextSteps.join('\n- ')}` : null,
-      ]
-        .filter(Boolean)
-        .join('\n')
-        .slice(0, 12000);
+      // ----- Convert: Team chat -----
+      if (target === 'team_chat') {
+        if (
+          !(await requireTables(res, ['chat_projects', 'conversations', 'conversation_messages']))
+        )
+          return;
 
-      const msgInsertCols: string[] = ['id'];
-      const msgInsertVals: string[] = ['?'];
-      const msgInsertParams: any[] = [messageId];
-      const addMsg = (col: string, val: any) => {
-        if (!msgCols.has(col)) return;
-        msgInsertCols.push(col);
-        msgInsertVals.push('?');
-        msgInsertParams.push(val);
-      };
+        const chatProjectIdOpt =
+          typeof options?.chatProjectId === 'string' ? options.chatProjectId : null;
+        let chatProjectId: string | null = chatProjectIdOpt;
 
-      addMsg('conversation_id', conversationId);
-      addMsg('role', 'user');
-      addMsg('content', content || `Idea: ${safeTitle}`);
-      addMsg('message_type', 'text');
-      addMsg('metadata', JSON.stringify({ origin: 'my_ideas', ideaId }));
-      addMsg('author_user_id', userId);
-      addMsg('created_at', now);
+        if (!chatProjectId) {
+          const existingTeamProject = await queryHelpers.queryOne<any>(
+            `SELECT id FROM chat_projects WHERE organization_id = ? AND scope = 'team' ORDER BY updated_at DESC LIMIT 1`,
+            [orgId]
+          );
+          chatProjectId = existingTeamProject?.id ? String(existingTeamProject.id) : null;
+        }
 
-      await queryHelpers.queryRun(
-        `INSERT INTO conversation_messages (${msgInsertCols.join(', ')}) VALUES (${msgInsertVals.join(', ')})`,
-        msgInsertParams
-      );
+        if (!chatProjectId) {
+          const cpCols = await getTableColumns('chat_projects');
+          const newProjectId = uuidv4();
+          const now = new Date().toISOString();
 
-      // Best-effort metadata update for list previews (if columns exist)
-      const setParts: string[] = [];
-      const setParams: any[] = [];
-      const setIf = (col: string, val: any) => {
-        if (!convCols.has(col)) return;
-        setParts.push(`${col} = ?`);
-        setParams.push(val);
-      };
-      setIf('message_count', 1);
-      setIf('last_message_preview', String(content || '').slice(0, 200));
-      setIf('last_message_at', now);
-      setIf('updated_at', now);
-      if (setParts.length) {
-        await queryHelpers.queryRun(
-          `UPDATE conversations SET ${setParts.join(', ')} WHERE id = ?`,
-          [...setParams, conversationId]
+          const insertCols: string[] = ['id'];
+          const insertVals: string[] = ['?'];
+          const insertParams: any[] = [newProjectId];
+          const add = (col: string, val: any) => {
+            if (!cpCols.has(col)) return;
+            insertCols.push(col);
+            insertVals.push('?');
+            insertParams.push(val);
+          };
+
+          add('user_id', userId);
+          add('organization_id', orgId);
+          add('name', 'Team Ideas');
+          add('description', 'Ideas shared for team discussion');
+          add('color', '#8b5cf6');
+          add('icon', 'sparkles');
+          add('scope', 'team');
+          add('created_at', now);
+          add('updated_at', now);
+
+          await queryHelpers.queryRun(
+            `INSERT INTO chat_projects (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+            insertParams
+          );
+          chatProjectId = newProjectId;
+        }
+
+        const convCols = await getTableColumns('conversations');
+        const conversationId = uuidv4();
+        const now = new Date().toISOString();
+
+        const convInsertCols: string[] = ['id'];
+        const convInsertVals: string[] = ['?'];
+        const convInsertParams: any[] = [conversationId];
+        const addConv = (col: string, val: any) => {
+          if (!convCols.has(col)) return;
+          convInsertCols.push(col);
+          convInsertVals.push('?');
+          convInsertParams.push(val);
+        };
+
+        addConv('user_id', userId);
+        addConv('organization_id', orgId);
+        addConv('chat_project_id', chatProjectId);
+        addConv('created_by', userId);
+        addConv('title', safeTitle.slice(0, 255));
+        addConv('title_source', 'user');
+        addConv('tags', JSON.stringify(['idea', 'my_work']));
+        addConv('pmo_context', JSON.stringify({ ideaId }));
+        addConv(
+          'language',
+          typeof options?.language === 'string' ? String(options.language) : 'en'
         );
+        addConv('created_at', now);
+        addConv('updated_at', now);
+
+        await queryHelpers.queryRun(
+          `INSERT INTO conversations (${convInsertCols.join(', ')}) VALUES (${convInsertVals.join(', ')})`,
+          convInsertParams
+        );
+
+        const msgCols = await getTableColumns('conversation_messages');
+        const messageId = uuidv4();
+
+        const content = [
+          `Idea: ${safeTitle}`,
+          safeBody ? `\n${safeBody}` : null,
+          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+          summary?.verdict ? `\nAI verdict:\n${String(summary.verdict)}` : null,
+          nextSteps.length ? `\nNext steps:\n- ${nextSteps.join('\n- ')}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n')
+          .slice(0, 12000);
+
+        const msgInsertCols: string[] = ['id'];
+        const msgInsertVals: string[] = ['?'];
+        const msgInsertParams: any[] = [messageId];
+        const addMsg = (col: string, val: any) => {
+          if (!msgCols.has(col)) return;
+          msgInsertCols.push(col);
+          msgInsertVals.push('?');
+          msgInsertParams.push(val);
+        };
+
+        addMsg('conversation_id', conversationId);
+        addMsg('role', 'user');
+        addMsg('content', content || `Idea: ${safeTitle}`);
+        addMsg('message_type', 'text');
+        addMsg('metadata', JSON.stringify({ origin: 'my_ideas', ideaId }));
+        addMsg('author_user_id', userId);
+        addMsg('created_at', now);
+
+        await queryHelpers.queryRun(
+          `INSERT INTO conversation_messages (${msgInsertCols.join(', ')}) VALUES (${msgInsertVals.join(', ')})`,
+          msgInsertParams
+        );
+
+        // Best-effort metadata update for list previews (if columns exist)
+        const setParts: string[] = [];
+        const setParams: any[] = [];
+        const setIf = (col: string, val: any) => {
+          if (!convCols.has(col)) return;
+          setParts.push(`${col} = ?`);
+          setParams.push(val);
+        };
+        setIf('message_count', 1);
+        setIf('last_message_preview', String(content || '').slice(0, 200));
+        setIf('last_message_at', now);
+        setIf('updated_at', now);
+        if (setParts.length) {
+          await queryHelpers.queryRun(
+            `UPDATE conversations SET ${setParts.join(', ')} WHERE id = ?`,
+            [...setParams, conversationId]
+          );
+        }
+
+        await promote('team_chat', conversationId, {
+          promotedTo: 'team_chat',
+          promotedEntityId: conversationId,
+          created: { conversationId, chatProjectId },
+        });
+
+        return res.json({
+          replayed: false,
+          promotedTo: 'team_chat',
+          promotedEntityId: conversationId,
+          created: { conversationId, chatProjectId },
+        });
       }
-
-      await promote('team_chat', conversationId, {
-        promotedTo: 'team_chat', promotedEntityId: conversationId,
-        created: { conversationId, chatProjectId },
-      });
-
-      return res.json({
-        replayed: false,
-        promotedTo: 'team_chat',
-        promotedEntityId: conversationId,
-        created: { conversationId, chatProjectId },
-      });
-    }
     });
   })
 );

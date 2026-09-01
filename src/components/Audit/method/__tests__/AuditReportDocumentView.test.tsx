@@ -42,14 +42,14 @@ vi.mock('@/services/api', async () => {
 import { AuditReportDocumentView } from '../AuditReportDocumentView';
 import {
   approveReport,
+  type AuditCriterionSummary,
+  type AuditReportDocument,
+  type AuditReportSummary,
   getProgram,
   getReport,
   getReportPresentation,
   listEvidence,
   listProgramCriteria,
-  type AuditCriterionSummary,
-  type AuditReportDocument,
-  type AuditReportSummary,
 } from '../auditsMethodApi';
 
 const mockedGetReport = vi.mocked(getReport);
@@ -82,16 +82,40 @@ const fullPayload: AuditReportDocument = {
   reportKind: 'audit_report',
   generatedAt: '2026-08-20T00:00:00Z',
   sections: [
-    { id: 'executive_summary', title: 'Streszczenie zarządcze', kind: 'text', content: 'Audit found 1 nonconformity in supplier qualification.' },
+    {
+      id: 'executive_summary',
+      title: 'Streszczenie zarządcze',
+      kind: 'text',
+      content: 'Audit found 1 nonconformity in supplier qualification.',
+    },
     {
       id: 'scope',
       title: 'Zakres i cele',
       kind: 'keyValue',
-      content: { scopeText: 'Purchasing process Q3 2026', scopeJson: null, objectives: 'Verify supplier qualification controls' },
+      content: {
+        scopeText: 'Purchasing process Q3 2026',
+        scopeJson: null,
+        objectives: 'Verify supplier qualification controls',
+      },
     },
-    { id: 'methodology', title: 'Metodyka', kind: 'text', content: 'Sample-based testing against the QMS procedure.' },
-    { id: 'limitations', title: 'Ograniczenia', kind: 'list', content: ['No significant scope limitations identified.'] },
-    { id: 'overall_conclusion', title: 'Wniosek ogólny', kind: 'text', content: 'One nonconformity identified.' },
+    {
+      id: 'methodology',
+      title: 'Metodyka',
+      kind: 'text',
+      content: 'Sample-based testing against the QMS procedure.',
+    },
+    {
+      id: 'limitations',
+      title: 'Ograniczenia',
+      kind: 'list',
+      content: ['No significant scope limitations identified.'],
+    },
+    {
+      id: 'overall_conclusion',
+      title: 'Wniosek ogólny',
+      kind: 'text',
+      content: 'One nonconformity identified.',
+    },
     {
       id: 'findings_by_severity',
       title: 'Ustalenia wg istotności',
@@ -120,11 +144,26 @@ const fullPayload: AuditReportDocument = {
       ],
     },
     { id: 'findings_by_area', title: 'Ustalenia wg obszaru/procesu', kind: 'group', content: [] },
-    { id: 'objective_evidence_references', title: 'Odniesienia do obiektywnych dowodów', kind: 'table', content: [] },
+    {
+      id: 'objective_evidence_references',
+      title: 'Odniesienia do obiektywnych dowodów',
+      kind: 'table',
+      content: [],
+    },
     { id: 'systemic_conclusions', title: 'Wnioski systemowe', kind: 'list', content: [] },
-    { id: 'corrective_action_plan', title: 'Plan działań korygujących', kind: 'table', content: [] },
+    {
+      id: 'corrective_action_plan',
+      title: 'Plan działań korygujących',
+      kind: 'table',
+      content: [],
+    },
     { id: 'verification_plan', title: 'Plan weryfikacji', kind: 'table', content: [] },
-    { id: 'appendices', title: 'Załączniki', kind: 'group', content: { team: [], evidenceRegister: [] } },
+    {
+      id: 'appendices',
+      title: 'Załączniki',
+      kind: 'group',
+      content: { team: [], evidenceRegister: [] },
+    },
     { id: 'traceability_matrix', title: 'Macierz traceability', kind: 'table', content: [] },
   ],
 };
@@ -203,8 +242,12 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
 
     render(<AuditReportDocumentView reportId="rep-1" />);
 
-    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
-    expect(screen.getByText(/Audit found 1 nonconformity in supplier qualification/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0)
+    );
+    expect(
+      screen.getByText(/Audit found 1 nonconformity in supplier qualification/)
+    ).toBeInTheDocument();
     expect(mockedGetReportPresentation).not.toHaveBeenCalled();
   });
 
@@ -212,7 +255,9 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     stubReads();
     mockedGetReport.mockResolvedValue(report);
     render(<AuditReportDocumentView reportId="rep-1" />);
-    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0)
+    );
 
     fireEvent.click(await screen.findByText('Ustalenia wg istotności'));
     await waitFor(() => expect(screen.getByText(/ZAK-8.4.1/)).toBeInTheDocument());
@@ -223,7 +268,9 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     stubReads();
     mockedGetReport.mockResolvedValue(report);
     render(<AuditReportDocumentView reportId="rep-1" />);
-    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0)
+    );
 
     fireEvent.click(await screen.findByText('Zakres i cele'));
     await waitFor(() => expect(screen.getByText('Purchasing process Q3 2026')).toBeInTheDocument());
@@ -235,7 +282,9 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     mockedGetReport.mockResolvedValue(report);
     mockedGetReportPresentation.mockResolvedValue(presentation);
     render(<AuditReportDocumentView reportId="rep-1" />);
-    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0)
+    );
 
     expect(screen.getByText('Raport audytu')).toBeInTheDocument();
     expect(screen.queryByText('Widok prezentacyjny')).not.toBeInTheDocument();
@@ -247,10 +296,14 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     const kebabTrigger = document.querySelector('button[aria-haspopup="menu"]');
     expect(kebabTrigger).toBeTruthy();
     fireEvent.click(kebabTrigger!);
-    fireEvent.click(await screen.findByRole('menuitem', { name: /widok dla zarządu|executive view/i }));
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: /widok dla zarządu|executive view/i })
+    );
 
     await waitFor(() => expect(mockedGetReportPresentation).toHaveBeenCalledWith('rep-1'));
-    await waitFor(() => expect(screen.getByText('Audit found 1 nonconformity.')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Audit found 1 nonconformity.')).toBeInTheDocument()
+    );
     expect(screen.getByText('Widok prezentacyjny')).toBeInTheDocument();
     expect(screen.queryByText('Raport audytu')).not.toBeInTheDocument();
 
@@ -271,7 +324,9 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
     mockedGetReport.mockResolvedValue(report);
     mockedApproveReport.mockResolvedValue({ ...report, status: 'approved' });
     render(<AuditReportDocumentView reportId="rep-1" />);
-    await waitFor(() => expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Metalpol Q3 Audit Report').length).toBeGreaterThan(0)
+    );
 
     const approveButtons = screen.getAllByRole('button', { name: /Zatwierdź|Approve/i });
     fireEvent.click(approveButtons[0]);
@@ -282,6 +337,8 @@ describe('AuditReportDocumentView — R1: full report is the default document', 
   it('shows an error state with retry when the report or its payload cannot be loaded (e.g. 404 / missing payload)', async () => {
     mockedGetReport.mockResolvedValue(null);
     render(<AuditReportDocumentView reportId="missing" />);
-    await waitFor(() => expect(screen.getByText(/Nie udało się wczytać raportu/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Nie udało się wczytać raportu/i)).toBeInTheDocument()
+    );
   });
 });

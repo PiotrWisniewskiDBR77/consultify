@@ -24,13 +24,10 @@
  * `recordRoiPirTeresaDraftDisposition` disposition step) is what keeps this
  * honest — nothing here can silently become the record of truth.
  */
+import type { TeresaEvidenceBreakdownValue } from '../teresa/TeresaEvidenceBreakdown';
+import type { ResultsRoiHandoffContext, TeresaHandoffContext } from '../teresa/teresaHandoffTypes';
 import type { RoiCaseListItem } from './roiApi';
 import type { RoiPostInvestmentReview } from './roiCaseFullToolApi';
-import type {
-  ResultsRoiHandoffContext,
-  TeresaHandoffContext,
-} from '../teresa/teresaHandoffTypes';
-import type { TeresaEvidenceBreakdownValue } from '../teresa/TeresaEvidenceBreakdown';
 
 export interface RoiTeresaPirLessonsDraftSuggestion {
   draftLessonsText: string;
@@ -60,7 +57,9 @@ export function buildRoiPirLessonsDraftSuggestion(params: {
 
   if (pir.outcome) {
     facts.push(
-      isPolish ? `Wynik zapisany przez człowieka: ${pir.outcome}.` : `Human-recorded outcome: ${pir.outcome}.`
+      isPolish
+        ? `Wynik zapisany przez człowieka: ${pir.outcome}.`
+        : `Human-recorded outcome: ${pir.outcome}.`
     );
   } else {
     missing.push(
@@ -125,7 +124,11 @@ export function buildRoiPirLessonsDraftHandoffContext(params: {
     org_context_ref: organizationId,
     runtime_binding: { session_id: sessionId, conversation_id: sessionId },
     bounded_context_pack: [
-      { ref: `roi_case:${roiCase.caseId}`, type: 'roi_case', deeplink: `/results/roi/${roiCase.caseId}` },
+      {
+        ref: `roi_case:${roiCase.caseId}`,
+        type: 'roi_case',
+        deeplink: `/results/roi/${roiCase.caseId}`,
+      },
       { ref: `roi_pir:${pir.pirId}`, type: 'roi_pir', deeplink: null },
     ],
     constraints: [
@@ -139,7 +142,11 @@ export function buildRoiPirLessonsDraftHandoffContext(params: {
       what_would_change_next_action: [],
     },
     evidence_pointers: suggestion.evidencePointers,
-    proposed_next_action: { target_module: 'roi', handoff_intent: 'append', requires_approval: true },
+    proposed_next_action: {
+      target_module: 'roi',
+      handoff_intent: 'append',
+      requires_approval: true,
+    },
     audit_stub: { actor: 'teresa', timestamp: new Date().toISOString() },
   };
 }
@@ -166,12 +173,15 @@ export function buildRoiPirLessonsDraftTargetPayload(params: {
   };
 }
 
-export function roiPirTeresaConsequencePreview(pir: RoiPostInvestmentReview, isPolish: boolean): string {
+export function roiPirTeresaConsequencePreview(
+  pir: RoiPostInvestmentReview,
+  isPolish: boolean
+): string {
   return isPolish
     ? `Po wykonaniu zapisane zostaną WYŁĄCZNIE dwie kolumny PIR #${pir.sequenceNumber}: ` +
-      'teresa_draft_lessons_payload i teresa_draft_generated_at. Pole „Wnioski" (lessons_learned) ' +
-      'NIE zmieni się automatycznie — wymaga Twojej osobnej decyzji w oknie „Decyzja o szkicu Teresy".'
+        'teresa_draft_lessons_payload i teresa_draft_generated_at. Pole „Wnioski" (lessons_learned) ' +
+        'NIE zmieni się automatycznie — wymaga Twojej osobnej decyzji w oknie „Decyzja o szkicu Teresy".'
     : `On execute, ONLY two columns of PIR #${pir.sequenceNumber} will be written: ` +
-      'teresa_draft_lessons_payload and teresa_draft_generated_at. The "Lessons learned" field ' +
-      'will NOT change automatically — it needs your separate decision in "Teresa draft decision".';
+        'teresa_draft_lessons_payload and teresa_draft_generated_at. The "Lessons learned" field ' +
+        'will NOT change automatically — it needs your separate decision in "Teresa draft decision".';
 }

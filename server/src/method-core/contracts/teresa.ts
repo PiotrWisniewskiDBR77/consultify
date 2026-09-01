@@ -135,7 +135,13 @@ export interface TeresaPreview {
 }
 
 export interface TeresaProposedChange {
-  readonly target: 'answer' | 'note' | 'evidence_request' | 'score_proposal' | 'finding' | 'initiative_draft';
+  readonly target:
+    | 'answer'
+    | 'note'
+    | 'evidence_request'
+    | 'score_proposal'
+    | 'finding'
+    | 'initiative_draft';
   readonly targetId: string | null;
   readonly before: unknown;
   readonly after: unknown;

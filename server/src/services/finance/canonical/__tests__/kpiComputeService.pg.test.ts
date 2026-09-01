@@ -55,7 +55,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -76,11 +78,19 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
   let catalogIdByCode: Map<string, string>;
 
   async function makeStatementPack() {
-    return artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: preparerId });
+    return artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: preparerId,
+    });
   }
 
   async function makeAnalysis() {
-    return artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: preparerId });
+    return artifactVersionService.createArtifact({
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: preparerId,
+    });
   }
 
   async function makeEntity(businessVersionId: string, entityCode: string) {
@@ -106,11 +116,22 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
    *  standalone-only Statement Pack Version like this one — there is no "group" to consolidate,
    *  but the schema's `consolidation_scope` still has to say `'CONSOLIDATED'` for the P0 formulas
    *  to find the cell at all, so every row below is written with that scope. */
-  async function writeLine(businessVersionId: string, entityId: string, periodId: string, lineCode: string, statementType: 'P&L' | 'BS' | 'CF', value: number) {
+  async function writeLine(
+    businessVersionId: string,
+    entityId: string,
+    periodId: string,
+    lineCode: string,
+    statementType: 'P&L' | 'BS' | 'CF',
+    value: number
+  ) {
     const line = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`,
+        [lineCode]
+      )
     );
-    if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+    if (!line)
+      throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (
@@ -127,11 +148,21 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
    *  `value_status='PRESENT_NONZERO'`, which the `chk_finance_stmt_lines_value_shape` CHECK
    *  rejects for `value=0`) — needed by the P1-fix NA-reachability suite below, which writes
    *  BOTH a real zero denominator (-> NA) and a real zero numerator (-> PRESENT_ZERO). */
-  async function writeZeroLine(businessVersionId: string, entityId: string, periodId: string, lineCode: string, statementType: 'P&L' | 'BS' | 'CF') {
+  async function writeZeroLine(
+    businessVersionId: string,
+    entityId: string,
+    periodId: string,
+    lineCode: string,
+    statementType: 'P&L' | 'BS' | 'CF'
+  ) {
     const line = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`,
+        [lineCode]
+      )
     );
-    if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+    if (!line)
+      throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (
@@ -150,7 +181,12 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     lineageService = await import('../lineageService.js');
     kpiComputeService = await import('../kpiComputeService.js');
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 D04 Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 D04 Test Org',
+      ])
+    );
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -252,7 +288,14 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       });
       expect(edge.ok).toBe(true);
 
-      const kpiCodes = ['CURRENT_RATIO', 'GROSS_MARGIN_PCT', 'DEBT_TO_EQUITY', 'DSO', 'OPERATING_CASH_FLOW_MARGIN', 'ROE'];
+      const kpiCodes = [
+        'CURRENT_RATIO',
+        'GROSS_MARGIN_PCT',
+        'DEBT_TO_EQUITY',
+        'DSO',
+        'OPERATING_CASH_FLOW_MARGIN',
+        'ROE',
+      ];
       for (const code of kpiCodes) {
         const catalogId = catalogIdByCode.get(code);
         if (!catalogId) throw new Error(`catalog row not found for ${code}`);
@@ -280,7 +323,7 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
         CURRENT_RATIO: 56_500_000 / 17_500_000,
         GROSS_MARGIN_PCT: 64_000_000 / 182_000_000,
         DEBT_TO_EQUITY: 40_500_000 / 100_000_000,
-        DSO: ((26_000_000 + 24_000_000) / 2) * 365 / 182_000_000,
+        DSO: (((26_000_000 + 24_000_000) / 2) * 365) / 182_000_000,
         OPERATING_CASH_FLOW_MARGIN: 15_000_000 / 182_000_000,
         ROE: 17_010_000 / ((100_000_000 + 89_500_000) / 2),
       };
@@ -512,7 +555,10 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
         );
         expect(row?.value_status, `${code} DB value_status`).toBe('PRESENT_NONZERO');
         expect(row?.quality_flag, `${code} DB quality_flag`).toBeNull();
-        expect(Number(row?.value_decimal), `${code} DB value_decimal`).toBeCloseTo(EXPECTED[code], 6);
+        expect(Number(row?.value_decimal), `${code} DB value_decimal`).toBeCloseTo(
+          EXPECTED[code],
+          6
+        );
       }
 
       // RC-09 — DEBT_TO_EBITDA (LONG_TERM_DEBT / EBITDA[LTM_SUM_4Q]) is structurally unavailable
@@ -542,7 +588,11 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
 
       const debtToEbitdaCatalogId = catalogIdByCode.get('DEBT_TO_EBITDA')!;
       const debtToEbitdaRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ value_status: string; value_decimal: string | null; quality_flag: string | null }>(
+        tx.queryOne<{
+          value_status: string;
+          value_decimal: string | null;
+          quality_flag: string | null;
+        }>(
           `SELECT value_status, value_decimal, quality_flag FROM finance_analysis_kpi_values
             WHERE business_version_id = ? AND kpi_catalog_id = ?`,
           [analysisBvId, debtToEbitdaCatalogId]
@@ -690,20 +740,40 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       // `canonicalServices.pg.test.ts` already exercises for HISTORICAL_ANALYSIS artifacts.
       let packVersion = pack.businessVersion.version;
       const submitted = await artifactVersionService.transition({
-        organizationId: orgId, businessVersionId: packBvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: packVersion,
+        organizationId: orgId,
+        businessVersionId: packBvId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: packVersion,
       });
       if (!submitted.ok) throw new Error(`submit_for_review failed: ${submitted.message}`);
       packVersion = submitted.businessVersion.version;
       const started = await artifactVersionService.transition({
-        organizationId: orgId, businessVersionId: packBvId, action: 'start_review', actorId: preparerId, role: 'finance_admin', expectedVersion: packVersion,
+        organizationId: orgId,
+        businessVersionId: packBvId,
+        action: 'start_review',
+        actorId: preparerId,
+        role: 'finance_admin',
+        expectedVersion: packVersion,
       });
       if (!started.ok) throw new Error(`start_review failed: ${started.message}`);
       packVersion = started.businessVersion.version;
-      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [packBvId]));
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [packBvId]
+        )
+      );
       // STATEMENT_PACK defaults to MATERIAL risk tier (lifecycleService.defaultRiskTierForArtifactType)
       // -> self-approval (approver === submitted_by/editor) is forbidden, hence a distinct approverId.
       const approved = await artifactVersionService.approveVersion({
-        organizationId: orgId, businessVersionId: packBvId, actorId: approverId, role: 'approver', expectedVersion: packVersion, idempotencyKey: `idem-${packBvId}`,
+        organizationId: orgId,
+        businessVersionId: packBvId,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: packVersion,
+        idempotencyKey: `idem-${packBvId}`,
       });
       if (!approved.ok) throw new Error(`approveVersion failed: ${approved.code}`);
 
@@ -718,9 +788,14 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
         )
       );
       const edge = await lineageService.insertEdge({
-        organizationId: orgId, sourceVersionId: packBvId, sourceArtifactType: 'STATEMENT_PACK',
-        targetVersionId: analysisBvId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS',
-        transformationKind: 'MANUAL_LINK', authorId: preparerId,
+        organizationId: orgId,
+        sourceVersionId: packBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: preparerId,
       });
       expect(edge.ok).toBe(true);
 
@@ -754,7 +829,10 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       expect(computed.readiness.businessVersion?.status).toBe('READY_FOR_REVIEW');
 
       const bvRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ status: string }>(`SELECT status FROM finance_business_versions WHERE business_version_id = ?`, [analysisBvId])
+        tx.queryOne<{ status: string }>(
+          `SELECT status FROM finance_business_versions WHERE business_version_id = ?`,
+          [analysisBvId]
+        )
       );
       expect(bvRow?.status).toBe('READY_FOR_REVIEW');
     });
@@ -800,8 +878,8 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     } as const;
     const DAYS_FY2024 = 366; // leap year
     const COGS_PER_DAY = 913_065 / DAYS_FY2024;
-    const EXPECTED_DIO = ((APATOR.inventoryFy2024 + APATOR.inventoryFy2023) / 2) / COGS_PER_DAY;
-    const EXPECTED_DPO = ((APATOR.apFy2024 + APATOR.apFy2023) / 2) / COGS_PER_DAY;
+    const EXPECTED_DIO = (APATOR.inventoryFy2024 + APATOR.inventoryFy2023) / 2 / COGS_PER_DAY;
+    const EXPECTED_DPO = (APATOR.apFy2024 + APATOR.apFy2023) / 2 / COGS_PER_DAY;
 
     let apatorCalendarId = '';
     let apatorFy2023 = '';
@@ -819,9 +897,13 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       signConvention: 'NATURAL' | 'CONTRA'
     ) {
       const line = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+        tx.queryOne<{ id: string }>(
+          `SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`,
+          [lineCode]
+        )
       );
-      if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+      if (!line)
+        throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
       await withPinnedPostgresTransaction((tx) =>
         tx.queryRun(
           `INSERT INTO finance_stmt_lines (
@@ -829,7 +911,17 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
              accumulation_basis, consolidation_scope, value_status, value_decimal, native_currency,
              presentation_currency, unit, sign_convention, accounting_policy, created_by
            ) VALUES (?, ?, ?, ?, ?, ?, 'FULL_YEAR', 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'THOUSANDS', ?, 'IFRS', ?)`,
-          [orgId, businessVersionId, statementType, line.id, entityId, periodId, value, signConvention, preparerId]
+          [
+            orgId,
+            businessVersionId,
+            statementType,
+            line.id,
+            entityId,
+            periodId,
+            value,
+            signConvention,
+            preparerId,
+          ]
         )
       );
     }
@@ -873,11 +965,51 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       const packBvId = pack.businessVersion.business_version_id;
       const entityId = await makeEntity(packBvId, 'GRUPA-APATOR');
 
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'COGS', 'P&L', APATOR.cogsFy2024AsFiled, 'CONTRA');
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'INVENTORY', 'BS', APATOR.inventoryFy2024, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2023, 'INVENTORY', 'BS', APATOR.inventoryFy2023, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'AP', 'BS', APATOR.apFy2024, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2023, 'AP', 'BS', APATOR.apFy2023, 'NATURAL');
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'COGS',
+        'P&L',
+        APATOR.cogsFy2024AsFiled,
+        'CONTRA'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'INVENTORY',
+        'BS',
+        APATOR.inventoryFy2024,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2023,
+        'INVENTORY',
+        'BS',
+        APATOR.inventoryFy2023,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'AP',
+        'BS',
+        APATOR.apFy2024,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2023,
+        'AP',
+        'BS',
+        APATOR.apFy2023,
+        'NATURAL'
+      );
 
       // The value really is stored negative — the fix must NOT be "rewrite the pack".
       const storedCogs = await withPinnedPostgresTransaction((tx) =>
@@ -903,9 +1035,14 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
         )
       );
       const edge = await lineageService.insertEdge({
-        organizationId: orgId, sourceVersionId: packBvId, sourceArtifactType: 'STATEMENT_PACK',
-        targetVersionId: analysisBvId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS',
-        transformationKind: 'MANUAL_LINK', authorId: preparerId,
+        organizationId: orgId,
+        sourceVersionId: packBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: preparerId,
       });
       expect(edge.ok).toBe(true);
 
@@ -951,11 +1088,51 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
 
       // What the analyst had to do by hand pre-fix: physically flip the sign. Must land on the
       // exact same numbers as the as-filed CONTRA pack above — the fix changes reach, not results.
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'COGS', 'P&L', -APATOR.cogsFy2024AsFiled, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'INVENTORY', 'BS', APATOR.inventoryFy2024, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2023, 'INVENTORY', 'BS', APATOR.inventoryFy2023, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2024, 'AP', 'BS', APATOR.apFy2024, 'NATURAL');
-      await writeApatorLine(packBvId, entityId, apatorFy2023, 'AP', 'BS', APATOR.apFy2023, 'NATURAL');
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'COGS',
+        'P&L',
+        -APATOR.cogsFy2024AsFiled,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'INVENTORY',
+        'BS',
+        APATOR.inventoryFy2024,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2023,
+        'INVENTORY',
+        'BS',
+        APATOR.inventoryFy2023,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2024,
+        'AP',
+        'BS',
+        APATOR.apFy2024,
+        'NATURAL'
+      );
+      await writeApatorLine(
+        packBvId,
+        entityId,
+        apatorFy2023,
+        'AP',
+        'BS',
+        APATOR.apFy2023,
+        'NATURAL'
+      );
 
       const analysis = await makeAnalysis();
       const analysisBvId = analysis.businessVersion.business_version_id;
@@ -968,9 +1145,14 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
         )
       );
       const edge = await lineageService.insertEdge({
-        organizationId: orgId, sourceVersionId: packBvId, sourceArtifactType: 'STATEMENT_PACK',
-        targetVersionId: analysisBvId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS',
-        transformationKind: 'MANUAL_LINK', authorId: preparerId,
+        organizationId: orgId,
+        sourceVersionId: packBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: preparerId,
       });
       expect(edge.ok).toBe(true);
 
@@ -1010,7 +1192,9 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
    * `formulaAstEvaluator.test.ts`).
    */
   describe('P1 fix — NA is reachable end-to-end (missing/zero denominator), distinguishable from a real computed PRESENT_ZERO', () => {
-    async function makeCurrentRatioAnalysis(entitySuffix: string): Promise<{ packBvId: string; analysisBvId: string; entityId: string }> {
+    async function makeCurrentRatioAnalysis(
+      entitySuffix: string
+    ): Promise<{ packBvId: string; analysisBvId: string; entityId: string }> {
       const pack = await makeStatementPack();
       const packBvId = pack.businessVersion.business_version_id;
       const entityId = await makeEntity(packBvId, `NA-${entitySuffix}`);
@@ -1049,7 +1233,12 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
 
     async function readKpiRow(analysisBvId: string) {
       return withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ value_status: string; value_decimal: string | null; quality_flag: string | null; interpretation_text: string | null }>(
+        tx.queryOne<{
+          value_status: string;
+          value_decimal: string | null;
+          quality_flag: string | null;
+          interpretation_text: string | null;
+        }>(
           `SELECT value_status, value_decimal, quality_flag, interpretation_text FROM finance_analysis_kpi_values
             WHERE business_version_id = ? AND kpi_catalog_id = ?`,
           [analysisBvId, catalogIdByCode.get('CURRENT_RATIO')!]
@@ -1058,12 +1247,18 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     }
 
     it('CURRENT_LIABILITIES cell absent (MISSING denominator) -> value_status=NA with a DENOMINATOR_MISSING reason code, never MISSING and never a fabricated number', async () => {
-      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`den-missing-${randomUUID().slice(0, 8)}`);
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(
+        `den-missing-${randomUUID().slice(0, 8)}`
+      );
       await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS', 56_500_000);
       // CURRENT_LIABILITIES intentionally NEVER written — the denominator cell is absent, not
       // just zero.
 
-      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
       expect(computed.ok).toBe(true);
       if (!computed.ok) throw new Error('unreachable');
       const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');
@@ -1081,11 +1276,17 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     });
 
     it('CURRENT_LIABILITIES=0 (zero denominator) -> value_status=NA with a DIVISION_BY_ZERO reason code, never a silent zero and never NOT_APPLICABLE (the pre-fix behavior)', async () => {
-      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`div-zero-${randomUUID().slice(0, 8)}`);
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(
+        `div-zero-${randomUUID().slice(0, 8)}`
+      );
       await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS', 56_500_000);
       await writeZeroLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_LIABILITIES', 'BS');
 
-      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
       expect(computed.ok).toBe(true);
       if (!computed.ok) throw new Error('unreachable');
       const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');
@@ -1102,11 +1303,17 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     });
 
     it('a REAL computed zero (CURRENT_ASSETS=0, healthy nonzero CURRENT_LIABILITIES) -> value_status=PRESENT_ZERO, value_decimal=0 — reliably distinguishable from the NA-by-zero-denominator case above', async () => {
-      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`present-zero-${randomUUID().slice(0, 8)}`);
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(
+        `present-zero-${randomUUID().slice(0, 8)}`
+      );
       await writeZeroLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS');
       await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_LIABILITIES', 'BS', 17_500_000);
 
-      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
       expect(computed.ok).toBe(true);
       if (!computed.ok) throw new Error('unreachable');
       const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');

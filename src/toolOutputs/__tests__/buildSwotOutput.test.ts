@@ -16,7 +16,9 @@ function item(over: Partial<SWOTItem> & Pick<SWOTItem, 'id' | 'quadrant'>): SWOT
   } as SWOTItem;
 }
 
-function tension(over: Partial<SWOTTension> & Pick<SWOTTension, 'id' | 'linkedItemIds'>): SWOTTension {
+function tension(
+  over: Partial<SWOTTension> & Pick<SWOTTension, 'id' | 'linkedItemIds'>
+): SWOTTension {
   return {
     title: `napięcie ${over.id}`,
     type: 'attack',
@@ -39,8 +41,15 @@ function validMove(over: Partial<SWOTMove> = {}): SWOTMove {
     estimatedEffort: 'medium',
     firstStep: 'Wybrać klienta pilotażowego',
     ownerRole: 'Dyrektor sprzedaży',
-    tradeoff: { chosen: 'Pilot w DACH', deferred: 'Rozwój produktu', cost: 'Dług produktowy rośnie o kwartał' },
-    rejectedAlternative: { option: 'Wejście przez partnera', reason: 'Utrata kontroli nad wdrożeniem' },
+    tradeoff: {
+      chosen: 'Pilot w DACH',
+      deferred: 'Rozwój produktu',
+      cost: 'Dług produktowy rośnie o kwartał',
+    },
+    rejectedAlternative: {
+      option: 'Wejście przez partnera',
+      reason: 'Utrata kontroli nad wdrożeniem',
+    },
     ...over,
   } as SWOTMove;
 }
@@ -55,7 +64,10 @@ const BASE = {
 };
 
 describe('buildSwotOutput — most sesja → Output', () => {
-  const items = [item({ id: 'i1', quadrant: 'strengths' }), item({ id: 'i2', quadrant: 'opportunities' })];
+  const items = [
+    item({ id: 'i1', quadrant: 'strengths' }),
+    item({ id: 'i2', quadrant: 'opportunities' }),
+  ];
   const tensions = [tension({ id: 't1', linkedItemIds: ['i1', 'i2'] })];
 
   it('buduje Output ze stanu sesji', () => {
@@ -70,14 +82,22 @@ describe('buildSwotOutput — most sesja → Output', () => {
   // Reguła silnika, nie nasza: do syntezy wchodzą tylko pozycje zaakceptowane.
   it('POMIJA pozycje niezaakceptowane', () => {
     // 'ai-proposed' = propozycja Teresy jeszcze niezatwierdzona przez człowieka
-    const withPending = [...items, item({ id: 'i3', quadrant: 'threats', proposalStatus: 'ai-proposed' })];
+    const withPending = [
+      ...items,
+      item({ id: 'i3', quadrant: 'threats', proposalStatus: 'ai-proposed' }),
+    ];
     const { output } = buildSwotOutput({ ...BASE, items: withPending, tensions, moves: [] });
     expect(output.items.map((i) => i.id)).toEqual(['i1', 'i2']);
   });
 
   it('ODRZUCA napięcie oparte na pozycji niezaakceptowanej', () => {
     const t = [tension({ id: 't9', linkedItemIds: ['i1', 'brak'] })];
-    const { output, droppedTensionIds } = buildSwotOutput({ ...BASE, items, tensions: t, moves: [] });
+    const { output, droppedTensionIds } = buildSwotOutput({
+      ...BASE,
+      items,
+      tensions: t,
+      moves: [],
+    });
     expect(output.tensions).toHaveLength(0);
     expect(droppedTensionIds).toEqual(['t9']);
   });
@@ -152,7 +172,11 @@ describe('buildSwotOutput — most sesja → Output', () => {
   it('mapuje status dowodu na typ evidence', () => {
     const mixed = [
       item({ id: 'i1', quadrant: 'strengths', evidenceStatus: 'confirmed' }),
-      item({ id: 'i2', quadrant: 'opportunities', evidenceStatus: 'declared-unconfirmed' as never }),
+      item({
+        id: 'i2',
+        quadrant: 'opportunities',
+        evidenceStatus: 'declared-unconfirmed' as never,
+      }),
       item({ id: 'i4', quadrant: 'threats', evidenceStatus: undefined }),
     ];
     const { output } = buildSwotOutput({ ...BASE, items: mixed, tensions: [], moves: [] });
@@ -172,9 +196,19 @@ describe('buildSwotOutput — most sesja → Output', () => {
       // User explicitly chose "hypothesis" even though evidenceStatus says
       // confirmed (e.g. a linked signal exists, but the CLAIM itself is
       // still speculative) — the explicit choice must win.
-      item({ id: 'i1', quadrant: 'strengths', evidenceStatus: 'confirmed', evidenceType: 'hypothesis' }),
+      item({
+        id: 'i1',
+        quadrant: 'strengths',
+        evidenceStatus: 'confirmed',
+        evidenceType: 'hypothesis',
+      }),
       // User explicitly chose "fact" with no evidenceStatus stamp at all.
-      item({ id: 'i2', quadrant: 'opportunities', evidenceStatus: undefined, evidenceType: 'fact' }),
+      item({
+        id: 'i2',
+        quadrant: 'opportunities',
+        evidenceStatus: undefined,
+        evidenceType: 'fact',
+      }),
       // No evidenceType at all -> legacy fallback still applies.
       item({ id: 'i3', quadrant: 'threats', evidenceStatus: 'declared' }),
     ];
@@ -185,14 +219,18 @@ describe('buildSwotOutput — most sesja → Output', () => {
   });
 
   it('jest deterministyczny — ten sam stan sesji daje ten sam hash', () => {
-    const run = () => buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] }).output.contentHash;
+    const run = () =>
+      buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] }).output.contentHash;
     expect(new Set([run(), run(), run(), run(), run()]).size).toBe(1);
   });
 });
 
 describe('pełna ścieżka Session → Output → Report → Initiative', () => {
   it('przechodzi end-to-end na realnych regułach silnika', () => {
-    const items = [item({ id: 'i1', quadrant: 'strengths' }), item({ id: 'i2', quadrant: 'opportunities' })];
+    const items = [
+      item({ id: 'i1', quadrant: 'strengths' }),
+      item({ id: 'i2', quadrant: 'opportunities' }),
+    ];
     const tensions = [tension({ id: 't1', linkedItemIds: ['i1', 'i2'] })];
 
     // 1. Sesja → Output

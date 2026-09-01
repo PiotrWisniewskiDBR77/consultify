@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createRealT } from '@/test-utils/realTranslations';
 
 function mockI18n(lang: 'en' | 'pl') {
@@ -42,21 +43,26 @@ vi.mock('@/services/api/v8/planning', () => ({
 }));
 vi.mock('@/services/api', () => ({
   Api: {
-    get: vi.fn(async () => ({})), post: vi.fn(async () => ({})),
-    patch: vi.fn(async () => ({})), delete: vi.fn(async () => ({})),
-    getUsers: vi.fn(async () => []), getProjects: vi.fn(async () => []),
+    get: vi.fn(async () => ({})),
+    post: vi.fn(async () => ({})),
+    patch: vi.fn(async () => ({})),
+    delete: vi.fn(async () => ({})),
+    getUsers: vi.fn(async () => []),
+    getProjects: vi.fn(async () => []),
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
   shouldAllowDemoData: () => false,
 }));
 vi.mock('@/hooks/useOpenChatWithContext', () => ({ useOpenChatWithContext: () => vi.fn() }));
 vi.mock('../Wizard/InitiativeWizardModal', () => ({
-  InitiativeWizardModal: ({ isOpen }: { isOpen: boolean }) => isOpen
-    ? React.createElement('div', {
-        role: 'dialog', 'aria-label': 'Canonical initiative wizard',
-        'data-testid': 'initiative-wizard-modal',
-      })
-    : null,
+  InitiativeWizardModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen
+      ? React.createElement('div', {
+          role: 'dialog',
+          'aria-label': 'Canonical initiative wizard',
+          'data-testid': 'initiative-wizard-modal',
+        })
+      : null,
 }));
 vi.mock('@/store/useConversationStore', () => ({
   useConversationStore: (selector: (state: typeof conversationStoreState) => unknown) =>
@@ -73,7 +79,11 @@ async function mount(lang: 'en' | 'pl', route = '/initiatives') {
   vi.resetModules();
   mockI18n(lang);
   Hub = await import('../InitiativesHub');
-  return render(<MemoryRouter initialEntries={[route]}><Hub.InitiativesHub /></MemoryRouter>);
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <Hub.InitiativesHub />
+    </MemoryRouter>
+  );
 }
 beforeEach(() => {
   getPortfolio.mockReset();
@@ -82,21 +92,22 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('InitiativesHub canonical creation entry points', () => {
-  it.each([['en', 'New initiative'], ['pl', 'Nowa inicjatywa']] as const)(
-    'routes both visible %s CTAs to the canonical wizard', async (lang, label) => {
-      await mount(lang);
-      const triggers = await waitFor(() => {
-        const found = screen.getAllByRole('button', { name: label });
-        expect(found.length).toBeGreaterThanOrEqual(2);
-        return found;
-      });
-      fireEvent.click(triggers[triggers.length - 1]);
-      expect(await screen.findByTestId('initiative-wizard-modal')).toBeInTheDocument();
-      expect(screen.getByRole('dialog')).toHaveAccessibleName('Canonical initiative wizard');
-      expect(screen.queryByText('Create new initiative')).not.toBeInTheDocument();
-      expect(screen.queryByText('Utwórz nową inicjatywę')).not.toBeInTheDocument();
-    }
-  );
+  it.each([
+    ['en', 'New initiative'],
+    ['pl', 'Nowa inicjatywa'],
+  ] as const)('routes both visible %s CTAs to the canonical wizard', async (lang, label) => {
+    await mount(lang);
+    const triggers = await waitFor(() => {
+      const found = screen.getAllByRole('button', { name: label });
+      expect(found.length).toBeGreaterThanOrEqual(2);
+      return found;
+    });
+    fireEvent.click(triggers[triggers.length - 1]);
+    expect(await screen.findByTestId('initiative-wizard-modal')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Canonical initiative wizard');
+    expect(screen.queryByText('Create new initiative')).not.toBeInTheDocument();
+    expect(screen.queryByText('Utwórz nową inicjatywę')).not.toBeInTheDocument();
+  });
   it('routes ?new=1 to the canonical wizard', async () => {
     await mount('en', '/initiatives?new=1');
     expect(await screen.findByTestId('initiative-wizard-modal')).toBeInTheDocument();

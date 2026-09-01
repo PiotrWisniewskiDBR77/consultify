@@ -16,7 +16,10 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildAssumptionSetSemanticHash, sortOverlapSourcesById } from '../predictionPreflightService.js';
+import {
+  buildAssumptionSetSemanticHash,
+  sortOverlapSourcesById,
+} from '../predictionPreflightService.js';
 
 /** Deterministic pseudo-shuffle, no Math.random() dependency — same technique as kpiHashOrderDeterminism.test.ts. */
 function shuffled<T>(arr: readonly T[]): T[] {
@@ -34,15 +37,50 @@ function shuffled<T>(arr: readonly T[]): T[] {
 
 function makeDriverOverrides() {
   return [
-    { id: 'do-3', schedule_type: 'revenue_pvm', driver_code: 'REVENUE_GROWTH_YOY', entity_id: 'ent-1', period_id: 'per-2026-03', value_decimal: '0.05' },
-    { id: 'do-1', schedule_type: 'cogs_opex', driver_code: 'COGS_PCT_OF_REVENUE', entity_id: 'ent-1', period_id: 'per-2026-01', value_decimal: '0.42' },
-    { id: 'do-2', schedule_type: 'capex_depreciation', driver_code: 'CAPEX_PCT_OF_REVENUE', entity_id: 'ent-1', period_id: 'per-2026-02', value_decimal: '0.08' },
+    {
+      id: 'do-3',
+      schedule_type: 'revenue_pvm',
+      driver_code: 'REVENUE_GROWTH_YOY',
+      entity_id: 'ent-1',
+      period_id: 'per-2026-03',
+      value_decimal: '0.05',
+    },
+    {
+      id: 'do-1',
+      schedule_type: 'cogs_opex',
+      driver_code: 'COGS_PCT_OF_REVENUE',
+      entity_id: 'ent-1',
+      period_id: 'per-2026-01',
+      value_decimal: '0.42',
+    },
+    {
+      id: 'do-2',
+      schedule_type: 'capex_depreciation',
+      driver_code: 'CAPEX_PCT_OF_REVENUE',
+      entity_id: 'ent-1',
+      period_id: 'per-2026-02',
+      value_decimal: '0.08',
+    },
   ];
 }
 function makeImpactChain() {
   return [
-    { id: 'ic-2', statement_line_id: 'line-cogs', amount_kind: 'ABSOLUTE_AMOUNT' as const, amount_decimal: '5000', sign: 'NEGATIVE' as const, start_period_id: 'per-2026-02' },
-    { id: 'ic-1', statement_line_id: 'line-revenue', amount_kind: 'ABSOLUTE_AMOUNT' as const, amount_decimal: '10000', sign: 'POSITIVE' as const, start_period_id: 'per-2026-01' },
+    {
+      id: 'ic-2',
+      statement_line_id: 'line-cogs',
+      amount_kind: 'ABSOLUTE_AMOUNT' as const,
+      amount_decimal: '5000',
+      sign: 'NEGATIVE' as const,
+      start_period_id: 'per-2026-02',
+    },
+    {
+      id: 'ic-1',
+      statement_line_id: 'line-revenue',
+      amount_kind: 'ABSOLUTE_AMOUNT' as const,
+      amount_decimal: '10000',
+      sign: 'POSITIVE' as const,
+      start_period_id: 'per-2026-01',
+    },
   ];
 }
 
@@ -55,8 +93,12 @@ describe('predictionPreflightService.buildAssumptionSetSemanticHash — order-in
     expect(driverB.map((r) => r.id)).not.toEqual(driverA.map((r) => r.id)); // fixture sanity
     expect(impactB.map((r) => r.id)).not.toEqual(impactA.map((r) => r.id));
 
-    const legacyHashA = createHash('sha256').update(JSON.stringify({ driverOverrides: driverA, impactChain: impactA })).digest('hex');
-    const legacyHashB = createHash('sha256').update(JSON.stringify({ driverOverrides: driverB, impactChain: impactB })).digest('hex');
+    const legacyHashA = createHash('sha256')
+      .update(JSON.stringify({ driverOverrides: driverA, impactChain: impactA }))
+      .digest('hex');
+    const legacyHashB = createHash('sha256')
+      .update(JSON.stringify({ driverOverrides: driverB, impactChain: impactB }))
+      .digest('hex');
     // RED if buildAssumptionSetSemanticHash's sort were removed and the raw SQL-order arrays were
     // hashed directly, as the code did before this fix.
     expect(legacyHashA).not.toBe(legacyHashB);
@@ -67,7 +109,10 @@ describe('predictionPreflightService.buildAssumptionSetSemanticHash — order-in
     const impactA = makeImpactChain();
     const hashA = buildAssumptionSetSemanticHash(driverA, impactA);
     const hashB = buildAssumptionSetSemanticHash(shuffled(driverA), shuffled(impactA));
-    const hashC = buildAssumptionSetSemanticHash(shuffled(shuffled(driverA)), shuffled(shuffled(impactA)));
+    const hashC = buildAssumptionSetSemanticHash(
+      shuffled(shuffled(driverA)),
+      shuffled(shuffled(impactA))
+    );
     expect(hashB).toBe(hashA);
     expect(hashC).toBe(hashA);
   });
@@ -86,7 +131,9 @@ describe('predictionPreflightService.buildAssumptionSetSemanticHash — order-in
     const driverA = makeDriverOverrides();
     const impactA = makeImpactChain();
     const hashA = buildAssumptionSetSemanticHash(driverA, impactA);
-    const driverChanged = driverA.map((r) => (r.id === 'do-1' ? { ...r, value_decimal: '0.99' } : r));
+    const driverChanged = driverA.map((r) =>
+      r.id === 'do-1' ? { ...r, value_decimal: '0.99' } : r
+    );
     const hashChanged = buildAssumptionSetSemanticHash(driverChanged, impactA);
     expect(hashChanged).not.toBe(hashA);
   });
@@ -133,7 +180,15 @@ describe('predictionPreflightService.sortOverlapSourcesById — order-independen
     const a = sortOverlapSourcesById(SOURCES);
     const b = sortOverlapSourcesById(shuffled(SOURCES));
     const c = sortOverlapSourcesById(shuffled(shuffled(SOURCES)));
-    expect(a.map((s) => s.source_id)).toEqual(['src-1', 'src-2', 'src-3', 'src-4', 'src-5', 'src-6', 'src-7']);
+    expect(a.map((s) => s.source_id)).toEqual([
+      'src-1',
+      'src-2',
+      'src-3',
+      'src-4',
+      'src-5',
+      'src-6',
+      'src-7',
+    ]);
     expect(b.map((s) => s.source_id)).toEqual(a.map((s) => s.source_id));
     expect(c.map((s) => s.source_id)).toEqual(a.map((s) => s.source_id));
 

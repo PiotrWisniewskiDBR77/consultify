@@ -50,13 +50,13 @@ import {
 import {
   approveChatProposal,
   ChatHandoffError,
+  type ChatMessageSource,
+  type ChatMessageSourceProvider,
   createChatProposal,
   getChatProposal,
   listChatProposalsForConversation,
   pgChatMessageSourceProvider,
   rejectChatProposal,
-  type ChatMessageSource,
-  type ChatMessageSourceProvider,
 } from '../chatHandoffService.js';
 
 function requireLocalDatabaseUrl(): string {
@@ -143,14 +143,18 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(
       `DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'chat'`,
       [`${PREFIX}%`]
     );
     // Any non-'chat' proposals this suite created directly via the spine
     // (boundary-proof fixture) also carry the prefix — clean those too.
-    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(`DELETE FROM conversation_messages WHERE id LIKE $1`, [`${PREFIX}%`]);
     await pool.query(`DELETE FROM conversations WHERE id LIKE $1`, [`${PREFIX}%`]);
     await pool.query(`DELETE FROM users WHERE id LIKE $1`, [`${PREFIX}%`]);
@@ -243,9 +247,10 @@ describe('createChatProposal — happy path (fixed provider)', () => {
       sourceProvider: fixedProvider(source),
     });
 
-    const cold = await pool.query(`SELECT payload_json FROM artifact_handoff_proposals WHERE proposal_id = $1`, [
-      created.proposal.proposalId,
-    ]);
+    const cold = await pool.query(
+      `SELECT payload_json FROM artifact_handoff_proposals WHERE proposal_id = $1`,
+      [created.proposal.proposalId]
+    );
     const payload = JSON.parse(cold.rows[0].payload_json);
     expect(Array.isArray(payload.citations)).toBe(true);
     expect(payload.citations.length).toBe(created.citations.length);
@@ -337,8 +342,16 @@ describe('approveChatProposal / rejectChatProposal', () => {
     });
 
     const [a1, a2] = await Promise.all([
-      approveChatProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_A }),
-      approveChatProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_B }),
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_A,
+      }),
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      }),
     ]);
     expect(a1.state).toBe('approved');
     expect(a1.decidedBy).toBe(a2.decidedBy);
@@ -381,10 +394,18 @@ describe('approveChatProposal / rejectChatProposal', () => {
     });
 
     await expect(
-      approveChatProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: 'system' })
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: 'system',
+      })
     ).rejects.toMatchObject({ code: 'NOT_A_HUMAN_ACTOR' });
     await expect(
-      approveChatProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: '' })
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: '',
+      })
     ).rejects.toBeInstanceOf(ChatHandoffError);
 
     const row = await getChatProposal(ORG_A, created.proposal.proposalId);
@@ -411,7 +432,11 @@ describe('approveChatProposal / rejectChatProposal', () => {
     expect(rejected.state).toBe('rejected');
 
     await expect(
-      approveChatProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_B })
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      })
     ).rejects.toMatchObject({ code: 'INVALID_STATE_TRANSITION' });
   });
 });
@@ -428,12 +453,22 @@ describe('tenant isolation', () => {
       sourceProvider: fixedProvider(source),
     });
 
-    await expect(getChatProposal(ORG_B, created.proposal.proposalId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(getChatProposal(ORG_B, created.proposal.proposalId)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
     await expect(
-      approveChatProposal({ organizationId: ORG_B, proposalId: created.proposal.proposalId, decidedBy: USER_B })
+      approveChatProposal({
+        organizationId: ORG_B,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     await expect(
-      rejectChatProposal({ organizationId: ORG_B, proposalId: created.proposal.proposalId, decidedBy: USER_B })
+      rejectChatProposal({
+        organizationId: ORG_B,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
     const stillPending = await getChatProposal(ORG_A, created.proposal.proposalId);
@@ -452,9 +487,15 @@ describe('producer-kind boundary', () => {
       createdBy: USER_A,
     });
 
-    await expect(getChatProposal(ORG_A, nonChat.proposal.proposalId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(getChatProposal(ORG_A, nonChat.proposal.proposalId)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
     await expect(
-      approveChatProposal({ organizationId: ORG_A, proposalId: nonChat.proposal.proposalId, decidedBy: USER_A })
+      approveChatProposal({
+        organizationId: ORG_A,
+        proposalId: nonChat.proposal.proposalId,
+        decidedBy: USER_A,
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
@@ -468,7 +509,9 @@ describe('listChatProposalsForConversation', () => {
       conversationId,
       messageId: `${PREFIX}msg-list-1`,
       targetKind: 'document',
-      sourceProvider: fixedProvider(makeSource({ messageId: `${PREFIX}msg-list-1`, conversationId })),
+      sourceProvider: fixedProvider(
+        makeSource({ messageId: `${PREFIX}msg-list-1`, conversationId })
+      ),
     });
     const second = await createChatProposal({
       organizationId: ORG_A,
@@ -476,7 +519,9 @@ describe('listChatProposalsForConversation', () => {
       conversationId,
       messageId: `${PREFIX}msg-list-2`,
       targetKind: 'presentation',
-      sourceProvider: fixedProvider(makeSource({ messageId: `${PREFIX}msg-list-2`, conversationId })),
+      sourceProvider: fixedProvider(
+        makeSource({ messageId: `${PREFIX}msg-list-2`, conversationId })
+      ),
     });
     // Different conversation, same org — must not leak into the list below.
     await createChatProposal({
@@ -515,12 +560,10 @@ describe('real pgChatMessageSourceProvider — actual SQL join against real fixt
       ORG_A,
       `${USER_A}@example.test`,
     ]);
-    await pool.query(`INSERT INTO conversations (id, user_id, organization_id, title) VALUES ($1, $2, $3, $4)`, [
-      conversationId,
-      USER_A,
-      ORG_A,
-      `${PREFIX}conversation`,
-    ]);
+    await pool.query(
+      `INSERT INTO conversations (id, user_id, organization_id, title) VALUES ($1, $2, $3, $4)`,
+      [conversationId, USER_A, ORG_A, `${PREFIX}conversation`]
+    );
     await pool.query(
       `INSERT INTO conversation_messages (id, conversation_id, role, content) VALUES ($1, $2, 'ai', $3)`,
       [messageId, conversationId, messageContent]

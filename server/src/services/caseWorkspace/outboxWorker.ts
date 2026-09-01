@@ -66,19 +66,19 @@
  */
 
 import logger from '../../utils/Logger.js';
-import { durableOperationalAlertsEnabled } from '../operationalAlertSignalDeliveryService.js';
 import { enqueueOperationalAlertRepairIntent } from '../operationalAlertRepairService.js';
+import { durableOperationalAlertsEnabled } from '../operationalAlertSignalDeliveryService.js';
+import {
+  type InboxReconciliationSweepResult,
+  runInboxReconciliationSweep,
+} from './eventInboxService.js';
 import {
   countDeadLetterEvents,
   dispatchPendingEvents,
+  type DispatchPendingEventsResult,
   getOutboxBacklog,
   listDeadLetterEvents,
-  type DispatchPendingEventsResult,
 } from './eventOutboxService.js';
-import {
-  runInboxReconciliationSweep,
-  type InboxReconciliationSweepResult,
-} from './eventInboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -220,7 +220,9 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let loopRunning = false;
 let tickInFlight: Promise<void> | null = null;
 let missedDurableAlertSignals = 0;
-export function getMissedCaseWorkspaceDurableAlertSignals(): number { return missedDurableAlertSignals; }
+export function getMissedCaseWorkspaceDurableAlertSignals(): number {
+  return missedDurableAlertSignals;
+}
 let backoffMultiplier = 1;
 let tickDurationHistory: number[] = [];
 let metrics: OutboxWorkerMetricsSnapshot = freshMetrics();
@@ -339,13 +341,43 @@ async function runTickBody(
       sourceType: 'case_workspace_event_outbox',
       sourceId: `tick:${bucket}`,
     };
-    try { await Promise.all([
-      enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:age`, kind: 'OUTBOX_OLDEST_AGE', outcome: 'SAMPLE', observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000 }),
-      ...(result.delivered > 0 ? [enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:success`, kind: 'WRITE_FAILURE_RATE', outcome: 'SUCCESS', observedValue: result.delivered })] : []),
-      ...(result.failed > 0 ? [enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:failure`, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', observedValue: result.failed })] : []),
-    ]); } catch (error) {
+    try {
+      await Promise.all([
+        enqueueOperationalAlertRepairIntent({
+          ...base,
+          sourceTerminalId: `tick:${bucket}:age`,
+          kind: 'OUTBOX_OLDEST_AGE',
+          outcome: 'SAMPLE',
+          observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000,
+        }),
+        ...(result.delivered > 0
+          ? [
+              enqueueOperationalAlertRepairIntent({
+                ...base,
+                sourceTerminalId: `tick:${bucket}:success`,
+                kind: 'WRITE_FAILURE_RATE',
+                outcome: 'SUCCESS',
+                observedValue: result.delivered,
+              }),
+            ]
+          : []),
+        ...(result.failed > 0
+          ? [
+              enqueueOperationalAlertRepairIntent({
+                ...base,
+                sourceTerminalId: `tick:${bucket}:failure`,
+                kind: 'WRITE_FAILURE_RATE',
+                outcome: 'FAILURE',
+                observedValue: result.failed,
+              }),
+            ]
+          : []),
+      ]);
+    } catch (error) {
       missedDurableAlertSignals++;
-      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; repair-intent enqueue missed; terminal-source reconstruction remains available: ${error instanceof Error ? error.message : String(error)}`);
+      logger.warn(
+        `[CaseWorkspaceOutboxWorker] primary tick outcome preserved; repair-intent enqueue missed; terminal-source reconstruction remains available: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -569,8 +601,14 @@ export function startCaseWorkspaceOutboxWorker(options: OutboxWorkerOptions = {}
   if (loopRunning) return;
 
   const intervalMs = Math.max(500, options.intervalMs ?? 5_000);
-  const maxIntervalMs = Math.max(intervalMs, options.maxIntervalMs ?? intervalMs * MAX_BACKOFF_MULTIPLIER);
-  const tickTimeoutMs = Math.max(intervalMs, options.tickTimeoutMs ?? Math.max(intervalMs * 6, 30_000));
+  const maxIntervalMs = Math.max(
+    intervalMs,
+    options.maxIntervalMs ?? intervalMs * MAX_BACKOFF_MULTIPLIER
+  );
+  const tickTimeoutMs = Math.max(
+    intervalMs,
+    options.tickTimeoutMs ?? Math.max(intervalMs * 6, 30_000)
+  );
   const reconciliationEveryNTicks = Math.max(1, options.reconciliationEveryNTicks ?? 12);
   let reconciliationCountdown = reconciliationEveryNTicks;
 
@@ -621,15 +659,15 @@ export function startCaseWorkspaceOutboxWorker(options: OutboxWorkerOptions = {}
             // Same cadence, the inbox half of the event spine (§8 "Failed
             // outbox/inbox delivery has retry, dead-letter and
             // reconciliation" — the inbox clause, not just the outbox one).
-            runCaseWorkspaceInboxReconciliationSweep({ organizationId: options.organizationId }).catch(
-              (error: unknown) => {
-                logger.warn(
-                  `[CaseWorkspaceOutboxWorker] inbox reconciliation sweep failed (non-fatal): ${
-                    error instanceof Error ? error.message : String(error)
-                  }`
-                );
-              }
-            );
+            runCaseWorkspaceInboxReconciliationSweep({
+              organizationId: options.organizationId,
+            }).catch((error: unknown) => {
+              logger.warn(
+                `[CaseWorkspaceOutboxWorker] inbox reconciliation sweep failed (non-fatal): ${
+                  error instanceof Error ? error.message : String(error)
+                }`
+              );
+            });
           }
         }
 

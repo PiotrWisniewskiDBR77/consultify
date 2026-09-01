@@ -21,16 +21,27 @@
  * `status === 'published'` client-side, picking the newest version. Do not
  * ask the backend for a new endpoint here — one already exists.
  */
-import { AlertTriangle, BookOpen, Clock3, Library as LibraryIcon, PlayCircle, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  BookOpen,
+  Clock3,
+  Library as LibraryIcon,
+  PlayCircle,
+  RefreshCw,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
-import { StandardPreview, type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
+import {
+  StandardPreview,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+} from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
-import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
 import {
   createSession as createMethodCoreSession,
   getSession as getMethodCoreSession,
@@ -41,6 +52,7 @@ import {
   DRD_METHOD_PACK_ID,
   DRD_METHOD_PACK_VERSION,
 } from '@/method-core/methods/drd/compileDrdPack';
+import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
 
 type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -100,7 +112,10 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       en: 'Knowledge available; execution coming soon',
     },
     whatYouGet: [
-      { pl: 'Widok procesu, technologii i organizacji', en: 'Process, technology and organization view' },
+      {
+        pl: 'Widok procesu, technologii i organizacji',
+        en: 'Process, technology and organization view',
+      },
       { pl: 'Skala dojrzałości Przemysłu 4.0', en: 'Industry 4.0 maturity scale' },
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
@@ -160,7 +175,10 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       en: 'Knowledge available; execution coming soon',
     },
     whatYouGet: [
-      { pl: 'Ścieżka Zmierz → Optymalizuj → Automatyzuj', en: 'Measure → Optimize → Automate path' },
+      {
+        pl: 'Ścieżka Zmierz → Optymalizuj → Automatyzuj',
+        en: 'Measure → Optimize → Automate path',
+      },
       { pl: 'Perspektywa dojrzałości Lean', en: 'Lean maturity perspective' },
       { pl: 'Kontekst szans automatyzacji i AI', en: 'Automation and AI opportunity context' },
     ],
@@ -413,13 +431,13 @@ export const AssessmentLibraryTab: React.FC = () => {
           },
           ...(canStartRow(methodology)
             ? [
-              {
-                id: 'start',
-                label: isPolish ? 'Uruchom' : 'Start',
-                icon: PlayCircle,
-                onClick: () => void handleStart(methodology),
-              },
-            ]
+                {
+                  id: 'start',
+                  label: isPolish ? 'Uruchom' : 'Start',
+                  icon: PlayCircle,
+                  onClick: () => void handleStart(methodology),
+                },
+              ]
             : []),
         ],
         universalHandlers: { preview: () => setSelectedId(methodology.id) },
@@ -431,46 +449,50 @@ export const AssessmentLibraryTab: React.FC = () => {
   return (
     <div className="flex h-full min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto p-4">
-      {startError && (
-        <div
-          role="alert"
-          className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
-        >
-          <div className="flex min-w-0 items-start gap-2">
-            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-            <span>{startError}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
-            }
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+        {startError && (
+          <div
+            role="alert"
+            className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
           >
-            <RefreshCw size={13} />
-            {isPolish ? 'Ponów' : 'Retry'}
-          </button>
-        </div>
-      )}
-      <StandardTable
-        columns={columns}
-        data={data}
-        loading={false}
-        rowMenu={rowMenu}
-        selectedRowId={selectedId}
-        onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
-        rowDescription={(row: any) =>
-          isPolish ? (row as MethodologyRow).description.pl : (row as MethodologyRow).description.en
-        }
-        persistKey="assessment.hub.library"
-        empty={{
-          icon: LibraryIcon,
-          title: isPolish ? 'Brak dostępnych metodyk oceny' : 'No assessment frameworks available',
-          description: isPolish
-            ? 'Nie udało się wczytać katalogu metodyk.'
-            : 'The methodology catalog could not be loaded.',
-        }}
-      />
+            <div className="flex min-w-0 items-start gap-2">
+              <AlertTriangle className="mt-0.5 shrink-0" size={16} />
+              <span>{startError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
+              }
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+            >
+              <RefreshCw size={13} />
+              {isPolish ? 'Ponów' : 'Retry'}
+            </button>
+          </div>
+        )}
+        <StandardTable
+          columns={columns}
+          data={data}
+          loading={false}
+          rowMenu={rowMenu}
+          selectedRowId={selectedId}
+          onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
+          rowDescription={(row: any) =>
+            isPolish
+              ? (row as MethodologyRow).description.pl
+              : (row as MethodologyRow).description.en
+          }
+          persistKey="assessment.hub.library"
+          empty={{
+            icon: LibraryIcon,
+            title: isPolish
+              ? 'Brak dostępnych metodyk oceny'
+              : 'No assessment frameworks available',
+            description: isPolish
+              ? 'Katalog metodyk nie zawiera obecnie żadnych pozycji.'
+              : 'The methodology catalog currently has no entries.',
+          }}
+        />
       </div>
       {selectedId ? (
         <PreviewPaneAside>
@@ -486,8 +508,12 @@ export const AssessmentLibraryTab: React.FC = () => {
                     { label: item.id, tone: 'neutral' },
                     {
                       label: item.supported
-                        ? isPolish ? 'Dostępna' : 'Available'
-                        : isPolish ? 'Planowane' : 'Planned',
+                        ? isPolish
+                          ? 'Dostępna'
+                          : 'Available'
+                        : isPolish
+                          ? 'Planowane'
+                          : 'Planned',
                       tone: item.supported ? 'success' : 'neutral',
                     },
                   ],
@@ -511,21 +537,29 @@ export const AssessmentLibraryTab: React.FC = () => {
                     {
                       id: 'commercial',
                       label: isPolish ? 'Warunki komercyjne' : 'Commercial terms',
-                      value: isPolish ? 'Nie skonfigurowano w katalogu' : 'Not configured in catalog',
+                      value: isPolish
+                        ? 'Nie skonfigurowano w katalogu'
+                        : 'Not configured in catalog',
                     },
                   ],
                   propertyLabel: isPolish ? 'Właściwość' : 'Property',
                   valueLabel: isPolish ? 'Wartość' : 'Value',
                 }}
-                actions={item.supported ? {
-                  informational: [{
-                    id: 'start',
-                    variant: 'neutral',
-                    label: isPolish ? 'Uruchom assessment' : 'Start assessment',
-                    icon: PlayCircle,
-                    onClick: () => void handleStart(item),
-                  }],
-                } : undefined}
+                actions={
+                  item.supported
+                    ? {
+                        informational: [
+                          {
+                            id: 'start',
+                            variant: 'neutral',
+                            label: isPolish ? 'Uruchom assessment' : 'Start assessment',
+                            icon: PlayCircle,
+                            onClick: () => void handleStart(item),
+                          },
+                        ],
+                      }
+                    : undefined
+                }
               />
             );
           })()}

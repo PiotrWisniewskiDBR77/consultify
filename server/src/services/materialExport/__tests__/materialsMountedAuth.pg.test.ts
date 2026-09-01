@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';

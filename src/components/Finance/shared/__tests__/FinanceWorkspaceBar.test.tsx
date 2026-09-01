@@ -16,8 +16,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig, type WorkspaceBarEvaluationContext } from '../financeWorkspaceBar.contract';
 import { FinanceWorkspaceBar } from '../FinanceWorkspaceBar';
+import {
+  ENABLEMENT_ALWAYS,
+  type WorkspaceBarConfig,
+  type WorkspaceBarEvaluationContext,
+} from '../financeWorkspaceBar.contract';
 
 function makeConfig(
   overrides: Partial<Omit<WorkspaceBarConfig['identity'], 'name'>> & {
@@ -29,7 +33,11 @@ function makeConfig(
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-1', artifactId: 'art-1' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-1',
+        artifactId: 'art-1',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
       name: {
         value: 'Model bazowy FY2026',
@@ -101,28 +109,59 @@ function noopHandlers() {
 describe('FinanceWorkspaceBar — render realny i kontrola negatywna', () => {
   it('renderuje nazwę i status z configu', () => {
     render(
-      <FinanceWorkspaceBar config={makeConfig()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />
+      <FinanceWorkspaceBar
+        config={makeConfig()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
     );
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Model bazowy FY2026');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Model bazowy FY2026'
+    );
   });
 
   it('KONTROLA NEGATYWNA: zmiana nazwy/statusu w propsach zmienia wyrenderowany DOM', () => {
     const { rerender } = render(
-      <FinanceWorkspaceBar config={makeConfig()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />
+      <FinanceWorkspaceBar
+        config={makeConfig()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
     );
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Model bazowy FY2026');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Model bazowy FY2026'
+    );
 
-    const changedConfig = makeConfig({ name: { value: 'KONTROLA NEGATYWNA — zmieniona nazwa' }, status: 'APPROVED' });
+    const changedConfig = makeConfig({
+      name: { value: 'KONTROLA NEGATYWNA — zmieniona nazwa' },
+      status: 'APPROVED',
+    });
     rerender(
-      <FinanceWorkspaceBar config={changedConfig} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />
+      <FinanceWorkspaceBar
+        config={changedConfig}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
     );
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('KONTROLA NEGATYWNA — zmieniona nazwa');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'KONTROLA NEGATYWNA — zmieniona nazwa'
+    );
     expect(screen.getByText('Zatwierdzone')).toBeInTheDocument();
   });
 
   it('freshness STALE_SOURCE scala się z CTA: „Nieaktualne · Przelicz”', () => {
     const config = makeConfig({ freshness: 'STALE_SOURCE' });
-    render(<FinanceWorkspaceBar config={config} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={config}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     expect(screen.getByTestId('finance-workspace-bar-primary')).toHaveTextContent('Nieaktualne');
     expect(screen.getByTestId('finance-workspace-bar-primary')).toHaveTextContent('Przelicz');
   });
@@ -130,21 +169,44 @@ describe('FinanceWorkspaceBar — render realny i kontrola negatywna', () => {
   it('DŁUGA NAZWA (60 znaków) przy renderze — bez rzucania wyjątku, nazwa jest w DOM (obcinana wizualnie przez `truncate`, nie przez layout)', () => {
     const longName = 'N'.repeat(60);
     const config = makeConfig({ name: { value: longName } });
-    render(<FinanceWorkspaceBar config={config} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={config}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(longName);
   });
 
   it('fullscreen jest zawsze ostatnią bezpośrednią kontrolką po prawej', () => {
-    render(<FinanceWorkspaceBar config={makeConfig()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfig()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     const fullscreen = screen.getByTestId('finance-workspace-bar-fullscreen');
     const primary = screen.getByTestId('finance-workspace-bar-primary');
     // fullscreen występuje PO primary w kolejności DOM (porównanie pozycji węzłów).
-    expect(primary.compareDocumentPosition(fullscreen) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      primary.compareDocumentPosition(fullscreen) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it('rename: klik w nazwę → edycja → Enter → onCommitRename wywołany ze znormalizowaną wartością', async () => {
     const handlers = noopHandlers();
-    render(<FinanceWorkspaceBar config={makeConfig()} evaluationContext={evaluationContext} contextValues={{}} {...handlers} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfig()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...handlers}
+      />
+    );
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-name'));
     const input = await screen.findByDisplayValue('Model bazowy FY2026');
@@ -155,17 +217,47 @@ describe('FinanceWorkspaceBar — render realny i kontrola negatywna', () => {
   });
 
   it('rename zablokowany (editable=false) — klik w nazwę NIE otwiera edycji', () => {
-    const config = makeConfig({ name: { value: 'Zatwierdzony model', editable: false, editableBlockedReason: 'STATUS_IMMUTABLE' } });
-    render(<FinanceWorkspaceBar config={config} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    const config = makeConfig({
+      name: {
+        value: 'Zatwierdzony model',
+        editable: false,
+        editableBlockedReason: 'STATUS_IMMUTABLE',
+      },
+    });
+    render(
+      <FinanceWorkspaceBar
+        config={config}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     fireEvent.click(screen.getByTestId('finance-workspace-bar-name'));
     expect(screen.queryByDisplayValue('Zatwierdzony model')).not.toBeInTheDocument();
   });
 
   it('primary wyłączony gdy resolveControlState zwraca available:false (rola bez uprawnień)', () => {
-    const restrictedCtx: WorkspaceBarEvaluationContext = { status: 'DRAFT', role: 'viewer', freshness: 'CURRENT', gates: {} };
+    const restrictedCtx: WorkspaceBarEvaluationContext = {
+      status: 'DRAFT',
+      role: 'viewer',
+      freshness: 'CURRENT',
+      gates: {},
+    };
     const config = makeConfig();
-    config.actions.primary.enablement = { statuses: 'any', roles: ['preparer', 'finance_admin'], freshness: 'any', requiresGates: [] };
-    render(<FinanceWorkspaceBar config={config} evaluationContext={restrictedCtx} contextValues={{}} {...noopHandlers()} />);
+    config.actions.primary.enablement = {
+      statuses: 'any',
+      roles: ['preparer', 'finance_admin'],
+      freshness: 'any',
+      requiresGates: [],
+    };
+    render(
+      <FinanceWorkspaceBar
+        config={config}
+        evaluationContext={restrictedCtx}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     expect(screen.getByTestId('finance-workspace-bar-primary')).toBeDisabled();
   });
 });

@@ -68,19 +68,34 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
-
-import { toOkrCheckIn, type OkrCheckIn, type OkrCheckInConfidence, type OkrCheckInRow, type OkrCheckInStatus } from './okrCheckInTypes.js';
+import {
+  type OkrCheckIn,
+  type OkrCheckInConfidence,
+  type OkrCheckInRow,
+  type OkrCheckInStatus,
+  toOkrCheckIn,
+} from './okrCheckInTypes.js';
 import { OkrKeyResultNotFoundError } from './okrKeyResultCommands.js';
-import { toOkrKeyResult, type OkrKeyResult, type OkrKeyResultRow } from './okrKeyResultTypes.js';
-import { recomputeObjectiveRollup, resolveOkrCyclePinnedPolicySnapshot } from './okrObjectiveCommands.js';
+import { type OkrKeyResult, type OkrKeyResultRow, toOkrKeyResult } from './okrKeyResultTypes.js';
+import {
+  recomputeObjectiveRollup,
+  resolveOkrCyclePinnedPolicySnapshot,
+} from './okrObjectiveCommands.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import type { OkrProgramPolicySnapshot } from './okrProgramTypes.js';
 import { calculateKeyResultProgress } from './okrProgressEngine.js';
 import { computeSetRollup, type ComputeSetRollupObjectiveInput } from './okrSetRollupCalculator.js';
-import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
+import { type OkrSet, type OkrSetRow, toOkrSet } from './okrSetTypes.js';
 
 // ==========================================
 // CONSTANTS
@@ -173,7 +188,11 @@ function numOrNull(value: string | null): number | null {
   return value === null ? null : Number(value);
 }
 
-async function loadKeyResultForUpdate(client: PoolClient, keyResultId: string, organizationId: string): Promise<OkrKeyResultRow> {
+async function loadKeyResultForUpdate(
+  client: PoolClient,
+  keyResultId: string,
+  organizationId: string
+): Promise<OkrKeyResultRow> {
   const result = await client.query<OkrKeyResultRow>(
     `SELECT * FROM okr_vnext_key_results WHERE key_result_id = $1 AND organization_id = $2 FOR UPDATE`,
     [keyResultId, organizationId]
@@ -183,7 +202,11 @@ async function loadKeyResultForUpdate(client: PoolClient, keyResultId: string, o
   return row;
 }
 
-async function loadSetForUpdate(client: PoolClient, setId: string, organizationId: string): Promise<OkrSetRow> {
+async function loadSetForUpdate(
+  client: PoolClient,
+  setId: string,
+  organizationId: string
+): Promise<OkrSetRow> {
   const result = await client.query<OkrSetRow>(
     `SELECT * FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
     [setId, organizationId]
@@ -202,7 +225,11 @@ async function loadSetCheckInFacts(
   client: PoolClient,
   setId: string,
   organizationId: string
-): Promise<{ anyKeyResultStale: boolean; lastCheckinAt: string | null; nextCheckinDueAt: string | null }> {
+): Promise<{
+  anyKeyResultStale: boolean;
+  lastCheckinAt: string | null;
+  nextCheckinDueAt: string | null;
+}> {
   const staleResult = await client.query<{ any_stale: boolean }>(
     `SELECT EXISTS (
        SELECT 1
@@ -291,7 +318,11 @@ export async function applySetRollupUpdate(
   updatedBy: string,
   policy: Pick<OkrProgramPolicySnapshot, 'objectiveRollupModel' | 'objectiveConfidenceModel'>
 ): Promise<OkrSet> {
-  const objectives = await loadNonCancelledObjectivesForRollup(client, setRow.set_id, organizationId);
+  const objectives = await loadNonCancelledObjectivesForRollup(
+    client,
+    setRow.set_id,
+    organizationId
+  );
   const facts = await loadSetCheckInFacts(client, setRow.set_id, organizationId);
   const rollup = computeSetRollup({
     objectives,
@@ -329,7 +360,8 @@ export async function applySetRollupUpdate(
     ]
   );
   const updatedRow = updateResult.rows[0];
-  if (!updatedRow) throw new Error(`[applySetRollupUpdate] update returned no row for ${setRow.set_id}`);
+  if (!updatedRow)
+    throw new Error(`[applySetRollupUpdate] update returned no row for ${setRow.set_id}`);
   return toOkrSet(updatedRow);
 }
 
@@ -378,14 +410,21 @@ function assertConfidenceMatchesProgramModel(
       { confidenceModel, confidence }
     );
   }
-  if (confidence === 'numeric' && (confidenceNumericValue === undefined || confidenceNumericValue === null)) {
+  if (
+    confidence === 'numeric' &&
+    (confidenceNumericValue === undefined || confidenceNumericValue === null)
+  ) {
     throw new OkrCheckInValidationError(
       'confidenceNumericValue is required when confidence="numeric"',
       'CONFIDENCE_NUMERIC_VALUE_REQUIRED',
       {}
     );
   }
-  if (confidence !== 'numeric' && confidenceNumericValue !== undefined && confidenceNumericValue !== null) {
+  if (
+    confidence !== 'numeric' &&
+    confidenceNumericValue !== undefined &&
+    confidenceNumericValue !== null
+  ) {
     throw new OkrCheckInValidationError(
       `confidenceNumericValue must be omitted when confidence="${confidence}" (only valid alongside confidence="numeric")`,
       'CONFIDENCE_NUMERIC_VALUE_NOT_ALLOWED',
@@ -400,7 +439,10 @@ function assertConfidenceMatchesProgramModel(
  * require an invented progress-to-status threshold band, so
  * `system_suggested_status` stays `null` for them.
  */
-function suggestStatusFromBinaryProgress(direction: string, progress: number | null): OkrCheckInStatus | null {
+function suggestStatusFromBinaryProgress(
+  direction: string,
+  progress: number | null
+): OkrCheckInStatus | null {
   if (direction !== 'binary' || progress === null) return null;
   if (progress === 1) return 'achieved';
   if (progress === 0) return 'not_achieved';
@@ -441,7 +483,9 @@ export interface RecordCheckInResult {
   set: OkrSet;
 }
 
-export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCommandOutcome<RecordCheckInResult>> {
+export async function recordCheckIn(
+  input: RecordCheckInInput
+): Promise<AtomicCommandOutcome<RecordCheckInResult>> {
   const {
     keyResultId,
     organizationId,
@@ -492,8 +536,16 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
         );
       }
 
-      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, krRow.set_id, organizationId);
-      assertConfidenceMatchesProgramModel(snapshot.confidenceModel, confidence, confidenceNumericValue);
+      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(
+        client,
+        krRow.set_id,
+        organizationId
+      );
+      assertConfidenceMatchesProgramModel(
+        snapshot.confidenceModel,
+        confidence,
+        confidenceNumericValue
+      );
 
       const previousValue = numOrNull(krRow.current_value);
       const effectiveCurrentValue = newValue !== null ? newValue : previousValue;
@@ -506,7 +558,10 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
         rangeMin: numOrNull(krRow.range_min),
         rangeMax: numOrNull(krRow.range_max),
       });
-      const systemSuggestedStatus = suggestStatusFromBinaryProgress(krRow.direction, progressCalc.progress);
+      const systemSuggestedStatus = suggestStatusFromBinaryProgress(
+        krRow.direction,
+        progressCalc.progress
+      );
 
       // D2/D3/D4: SAVEPOINT-wrapped INSERT so a caught 23505 on
       // ux_okr_vnext_checkins_kr_occurrence_original can ROLLBACK TO
@@ -551,7 +606,8 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
           ]
         );
         const inserted = insertResult.rows[0];
-        if (!inserted) throw new Error('[recordCheckIn] insert into okr_vnext_checkins returned no row');
+        if (!inserted)
+          throw new Error('[recordCheckIn] insert into okr_vnext_checkins returned no row');
         checkInRow = inserted;
         await client.query('RELEASE SAVEPOINT okr_checkin_record');
       } catch (err: unknown) {
@@ -568,7 +624,11 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
               `[recordCheckIn] 23505 on ux_okr_vnext_checkins_kr_occurrence_original but no winning row found for (${keyResultId}, ${cadenceOccurrenceId})`
             );
           }
-          throw new OkrCheckInAlreadyExistsForOccurrenceError(keyResultId, cadenceOccurrenceId, existing.checkin_id);
+          throw new OkrCheckInAlreadyExistsForOccurrenceError(
+            keyResultId,
+            cadenceOccurrenceId,
+            existing.checkin_id
+          );
         }
         throw err;
       }
@@ -579,7 +639,10 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
       // this check-in explicitly provided one (`undefined` = leave the
       // KR's existing owner-declared value untouched).
       const nextKrConfidence = confidence !== undefined ? confidence : krRow.confidence;
-      const nextKrConfidenceNumeric = confidence !== undefined ? (confidenceNumericValue ?? null) : numOrNull(krRow.confidence_numeric_value);
+      const nextKrConfidenceNumeric =
+        confidence !== undefined
+          ? (confidenceNumericValue ?? null)
+          : numOrNull(krRow.confidence_numeric_value);
       const krUpdateResult = await client.query<OkrKeyResultRow>(
         `UPDATE okr_vnext_key_results
             SET current_value = $1, progress = $2, progress_calc_policy_version_id = $3,
@@ -601,7 +664,8 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
         ]
       );
       const updatedKrRow = krUpdateResult.rows[0];
-      if (!updatedKrRow) throw new Error(`[recordCheckIn] update returned no row for key result ${keyResultId}`);
+      if (!updatedKrRow)
+        throw new Error(`[recordCheckIn] update returned no row for key result ${keyResultId}`);
       const keyResult = toOkrKeyResult(updatedKrRow);
 
       // D6/E003 reuse: recomputes the parent Objective's own rollup from
@@ -723,7 +787,9 @@ export interface CorrectCheckInResult {
  * correction to an already-checked-in window does not reopen it (design
  * §7.2, explicit).
  */
-export async function correctCheckIn(input: CorrectCheckInInput): Promise<AtomicCommandOutcome<CorrectCheckInResult>> {
+export async function correctCheckIn(
+  input: CorrectCheckInInput
+): Promise<AtomicCommandOutcome<CorrectCheckInResult>> {
   const {
     checkInId,
     organizationId,
@@ -760,11 +826,22 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
       });
 
       const setRow = await loadSetForUpdate(client, krRow.set_id, organizationId);
-      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, krRow.set_id, organizationId);
+      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(
+        client,
+        krRow.set_id,
+        organizationId
+      );
 
       const mergedConfidence = confidence !== undefined ? confidence : originalRow.confidence;
-      const mergedConfidenceNumeric = confidence !== undefined ? (confidenceNumericValue ?? null) : numOrNull(originalRow.confidence_numeric_value);
-      assertConfidenceMatchesProgramModel(snapshot.confidenceModel, mergedConfidence, mergedConfidenceNumeric);
+      const mergedConfidenceNumeric =
+        confidence !== undefined
+          ? (confidenceNumericValue ?? null)
+          : numOrNull(originalRow.confidence_numeric_value);
+      assertConfidenceMatchesProgramModel(
+        snapshot.confidenceModel,
+        mergedConfidence,
+        mergedConfidenceNumeric
+      );
 
       const mergedNewValue = newValue !== undefined ? newValue : numOrNull(originalRow.new_value);
       const previousValue = numOrNull(krRow.current_value);
@@ -778,8 +855,12 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
         rangeMin: numOrNull(krRow.range_min),
         rangeMax: numOrNull(krRow.range_max),
       });
-      const systemSuggestedStatus = suggestStatusFromBinaryProgress(krRow.direction, progressCalc.progress);
-      const mergedOwnerDeclaredStatus = ownerDeclaredStatus !== undefined ? ownerDeclaredStatus : originalRow.owner_declared_status;
+      const systemSuggestedStatus = suggestStatusFromBinaryProgress(
+        krRow.direction,
+        progressCalc.progress
+      );
+      const mergedOwnerDeclaredStatus =
+        ownerDeclaredStatus !== undefined ? ownerDeclaredStatus : originalRow.owner_declared_status;
 
       const insertResult = await client.query<OkrCheckInRow>(
         `INSERT INTO okr_vnext_checkins
@@ -816,10 +897,14 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
         ]
       );
       const supersedingRow = insertResult.rows[0];
-      if (!supersedingRow) throw new Error('[correctCheckIn] insert into okr_vnext_checkins returned no row');
+      if (!supersedingRow)
+        throw new Error('[correctCheckIn] insert into okr_vnext_checkins returned no row');
 
       const nextKrConfidence = confidence !== undefined ? confidence : krRow.confidence;
-      const nextKrConfidenceNumeric = confidence !== undefined ? (confidenceNumericValue ?? null) : numOrNull(krRow.confidence_numeric_value);
+      const nextKrConfidenceNumeric =
+        confidence !== undefined
+          ? (confidenceNumericValue ?? null)
+          : numOrNull(krRow.confidence_numeric_value);
       const krUpdateResult = await client.query<OkrKeyResultRow>(
         `UPDATE okr_vnext_key_results
             SET current_value = $1, progress = $2, progress_calc_policy_version_id = $3,
@@ -841,7 +926,10 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
         ]
       );
       const updatedKrRow = krUpdateResult.rows[0];
-      if (!updatedKrRow) throw new Error(`[correctCheckIn] update returned no row for key result ${originalRow.key_result_id}`);
+      if (!updatedKrRow)
+        throw new Error(
+          `[correctCheckIn] update returned no row for key result ${originalRow.key_result_id}`
+        );
       const keyResult = toOkrKeyResult(updatedKrRow);
 
       await recomputeObjectiveRollup(client, {
@@ -877,7 +965,12 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
         });
       }
 
-      return { original: toOkrCheckIn(originalRow), superseding: toOkrCheckIn(supersedingRow), keyResult, set };
+      return {
+        original: toOkrCheckIn(originalRow),
+        superseding: toOkrCheckIn(supersedingRow),
+        keyResult,
+        set,
+      };
     },
     buildEvent: ({ result }) => {
       const afterState = { checkIn: result.superseding };
@@ -904,7 +997,11 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: 1,
-        payload: { checkInId: result.superseding.checkInId, correctionOfCheckInId: checkInId, keyResultId: result.original.keyResultId },
+        payload: {
+          checkInId: result.superseding.checkInId,
+          correctionOfCheckInId: checkInId,
+          keyResultId: result.original.keyResultId,
+        },
       } satisfies AtomicEventInput;
     },
   });

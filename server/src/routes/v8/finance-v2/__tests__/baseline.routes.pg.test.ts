@@ -447,8 +447,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
             start: `2026-${String(m).padStart(2, '0')}-01`,
             end: monthEnd(2026, m),
             label: `${m}/2026`,
-            previousPeriodId:
-              happyForecastPeriodIds.at(-1) ?? happyOpeningPeriodId,
+            previousPeriodId: happyForecastPeriodIds.at(-1) ?? happyOpeningPeriodId,
           })
         );
       }
@@ -509,8 +508,17 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
              (?, ?, ?, 'HISTORICAL_ANALYSIS', ?, 'BASELINE_MODEL',
               'ANALYSIS_TO_MODEL', 'COMPUTE', ?, ?)`,
           [
-            randomUUID(), orgId, stmtBvId, analysisBvId, userId,
-            randomUUID(), orgId, analysisBvId, bvId2, 'a'.repeat(64), userId,
+            randomUUID(),
+            orgId,
+            stmtBvId,
+            analysisBvId,
+            userId,
+            randomUUID(),
+            orgId,
+            analysisBvId,
+            bvId2,
+            'a'.repeat(64),
+            userId,
           ]
         );
       });
@@ -651,8 +659,17 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
              (?, ?, ?, 'HISTORICAL_ANALYSIS', ?, 'BASELINE_MODEL',
               'ANALYSIS_TO_MODEL', 'COMPUTE', ?, ?)`,
           [
-            randomUUID(), orgId, approvedStatementBvId, emptyBaselineBvId, userId,
-            randomUUID(), orgId, approvedAnalysisBvId, emptyBaselineBvId, 'b'.repeat(64), userId,
+            randomUUID(),
+            orgId,
+            approvedStatementBvId,
+            emptyBaselineBvId,
+            userId,
+            randomUUID(),
+            orgId,
+            approvedAnalysisBvId,
+            emptyBaselineBvId,
+            'b'.repeat(64),
+            userId,
           ]
         );
       });
@@ -791,9 +808,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
         );
         await tx.queryRun(`SET LOCAL session_replication_role = origin`);
       });
-      const staleAnalysis = await request(app).get(
-        `/api/v8/finance-v2/baseline/${bvId2}/context`
-      );
+      const staleAnalysis = await request(app).get(`/api/v8/finance-v2/baseline/${bvId2}/context`);
       expect(staleAnalysis.status).toBe(409);
       expect(staleAnalysis.body.code).toBe('BASELINE_CONTEXT_SOURCE_STALE');
       await withPinnedPostgresTransaction(async (tx) => {

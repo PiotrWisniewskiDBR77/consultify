@@ -9,10 +9,13 @@ const mockCreateWait = vi.fn();
 const mockGetWait = vi.fn();
 const mockResolveWait = vi.fn();
 const mockListWaitsForCase = vi.fn();
-const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) =>
+  input.operation()
+);
 
 vi.mock('../../../services/executionActionRegistryService.js', () => ({
-  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+  executeGovernedExecutionAction: (...args: unknown[]) =>
+    mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
 }));
 
 vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
@@ -40,8 +43,8 @@ vi.mock('../../../services/caseWorkspace/waitSubscriptionService.js', () => ({
   listWaitsForCase: (...args: unknown[]) => mockListWaitsForCase(...args),
 }));
 
-import waitSubscriptionsRoutes from '../waitSubscriptions.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import waitSubscriptionsRoutes from '../waitSubscriptions.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';

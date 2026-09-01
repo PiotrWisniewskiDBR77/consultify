@@ -17,7 +17,11 @@ const initiatives = [
 
 const periods = [
   { periodId: 'NOW · Wrz–Paź', start: '2026-09-01T00:00:00.000Z', end: '2026-10-01T00:00:00.000Z' },
-  { periodId: 'NEXT · Lis–Gru', start: '2026-10-01T00:00:00.000Z', end: '2026-12-01T00:00:00.000Z' },
+  {
+    periodId: 'NEXT · Lis–Gru',
+    start: '2026-10-01T00:00:00.000Z',
+    end: '2026-12-01T00:00:00.000Z',
+  },
   { periodId: 'LATER · Q1', start: '2026-12-01T00:00:00.000Z', end: '2027-03-01T00:00:00.000Z' },
 ];
 
@@ -78,10 +82,7 @@ const scenario = {
   publishedAt: '2026-08-25T09:00:00.000Z',
 };
 
-const history = [
-  { ...scenario, scenarioVersion: 1, status: 'SUPERSEDED' as const },
-  scenario,
-];
+const history = [{ ...scenario, scenarioVersion: 1, status: 'SUPERSEDED' as const }, scenario];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {

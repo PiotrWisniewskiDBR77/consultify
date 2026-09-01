@@ -54,9 +54,7 @@ describe('MindmapCommandPalette — a11y dialog contract', () => {
   it('returns focus to the trigger after Escape', async () => {
     render(
       <Trigger>
-        {(open, close) =>
-          open && <MindmapCommandPalette open onClose={close} onAction={vi.fn()} />
-        }
+        {(open, close) => open && <MindmapCommandPalette open onClose={close} onAction={vi.fn()} />}
       </Trigger>
     );
     const trigger = screen.getByRole('button', { name: 'Open trigger' });

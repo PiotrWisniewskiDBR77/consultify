@@ -40,12 +40,16 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
-  VISIBILITY_CTE_PARAM_COUNT,
   buildVisibilityScopedCte,
+  VISIBILITY_CTE_PARAM_COUNT,
   wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
-import { toOkrAlignment, type OkrAlignment, type OkrAlignmentRow, type OkrAlignmentStatus } from './okrAlignmentTypes.js';
+import {
+  type OkrAlignment,
+  type OkrAlignmentRow,
+  type OkrAlignmentStatus,
+  toOkrAlignment,
+} from './okrAlignmentTypes.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -57,7 +61,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -107,7 +115,10 @@ export async function listAlignmentsForObjective(
   const { userId, organizationId, objectiveId, direction, status } = params;
   const anchorColumn = direction === 'outgoing' ? 'a.source_objective_id' : 'a.target_objective_id';
 
-  const filters: string[] = [`a.organization_id = $1`, `${anchorColumn} = $${VISIBILITY_CTE_PARAM_COUNT + 1}`];
+  const filters: string[] = [
+    `a.organization_id = $1`,
+    `${anchorColumn} = $${VISIBILITY_CTE_PARAM_COUNT + 1}`,
+  ];
   const extraValues: unknown[] = [objectiveId];
   if (status) {
     extraValues.push(status);
@@ -121,7 +132,11 @@ export async function listAlignmentsForObjective(
      WHERE ${filters.join(' AND ')}
      ORDER BY a.proposed_at ASC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, ...extraValues];
 
   return withReadClient(async (client) => {
@@ -163,7 +178,12 @@ const DEFAULT_ALIGNMENT_TREE_MAX_DEPTH = 6;
 export async function getAlignmentTreeUnderObjective(
   params: GetAlignmentTreeUnderObjectiveParams
 ): Promise<OkrAlignmentTreeNode[]> {
-  const { userId, organizationId, rootObjectiveId, maxDepth = DEFAULT_ALIGNMENT_TREE_MAX_DEPTH } = params;
+  const {
+    userId,
+    organizationId,
+    rootObjectiveId,
+    maxDepth = DEFAULT_ALIGNMENT_TREE_MAX_DEPTH,
+  } = params;
   const boundedMaxDepth = Math.max(1, Math.min(maxDepth, 50));
 
   // `alignment_tree` self-references, so the WHOLE statement must be
@@ -174,7 +194,11 @@ export async function getAlignmentTreeUnderObjective(
   // splice the remainder in as one more comma-separated CTE definition"),
   // this builds the CTE text directly and assembles `WITH RECURSIVE
   // <visibility-cte>, alignment_tree AS (...)` by hand.
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const visibilityCteBody = cte.sql.replace(/^WITH\s+/, '');
 
   const rootObjectiveParamIndex = VISIBILITY_CTE_PARAM_COUNT + 1;

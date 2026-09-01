@@ -61,7 +61,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
     svc = await import('../artifactVersionService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'APWAVE T10/T11 Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'APWAVE T10/T11 Test Org',
+      ])
     );
   });
 
@@ -73,7 +76,11 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
    * HISTORICAL_ANALYSIS is the LOW-risk-tier type, which keeps the SoD gate
    * out of the way of what we are measuring.
    */
-  async function makeApprovedVersion(): Promise<{ artifactId: string; bvId: string; version: number }> {
+  async function makeApprovedVersion(): Promise<{
+    artifactId: string;
+    bvId: string;
+    version: number;
+  }> {
     const created = await svc.createArtifact({
       organizationId: orgId,
       artifactType: 'HISTORICAL_ANALYSIS',
@@ -108,7 +115,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
 
     // freshness defaults to NEVER_COMPUTED on create; approve requires CURRENT.
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [bvId]
+      )
     );
 
     const approved = await svc.approveVersion({
@@ -130,9 +140,16 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
   }
 
   /** Raw single-column UPDATE, bypassing the services, to interrogate the trigger directly. */
-  async function tamper(bvId: string, column: 'content_semantic_hash' | 'compute_snapshot_id', value: string) {
+  async function tamper(
+    bvId: string,
+    column: 'content_semantic_hash' | 'compute_snapshot_id',
+    value: string
+  ) {
     return withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET ${column} = ? WHERE business_version_id = ?`, [value, bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET ${column} = ? WHERE business_version_id = ?`,
+        [value, bvId]
+      )
     );
   }
 
@@ -237,7 +254,9 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
       await expect(tamper(bvId, 'content_semantic_hash', 'TAMPERED')).rejects.toThrow(
         /is APPROVED; only status and its associated metadata columns may change/
       );
-      expect((await svc.getBusinessVersion(orgId, bvId))?.content_semantic_hash).not.toBe('TAMPERED');
+      expect((await svc.getBusinessVersion(orgId, bvId))?.content_semantic_hash).not.toBe(
+        'TAMPERED'
+      );
     });
 
     it.each([
@@ -288,7 +307,10 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
 
       await expect(
         withPinnedPostgresTransaction((tx) =>
-          tx.queryRun(`UPDATE finance_business_versions SET status = 'APPROVED' WHERE business_version_id = ?`, [bvId])
+          tx.queryRun(
+            `UPDATE finance_business_versions SET status = 'APPROVED' WHERE business_version_id = ?`,
+            [bvId]
+          )
         )
       ).rejects.toThrow(/is ARCHIVED \(terminal\); no further status transition is allowed/);
 
@@ -350,7 +372,9 @@ describe.skipIf(!REAL_PG)('Finance v3 — T10/T11 terminal transitions (real Pos
         rejected.map((r) => String((r as PromiseRejectedResult).reason?.message ?? r))
       ).toEqual([]);
 
-      const results = settled.map((s) => (s as PromiseFulfilledResult<Awaited<ReturnType<typeof call>>>).value);
+      const results = settled.map(
+        (s) => (s as PromiseFulfilledResult<Awaited<ReturnType<typeof call>>>).value
+      );
       const winners = results.filter((r) => r.ok);
       const losers = results.filter((r) => !r.ok);
 

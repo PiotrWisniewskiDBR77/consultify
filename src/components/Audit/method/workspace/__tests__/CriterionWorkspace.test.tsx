@@ -56,8 +56,8 @@ vi.mock('../workspaceApi', async () => {
 });
 
 import { CriterionWorkspace } from '../CriterionWorkspace';
-import * as workspaceApi from '../workspaceApi';
 import type { CriterionDetail, WorkspaceCriterion, WorkspaceProgramMember } from '../workspaceApi';
+import * as workspaceApi from '../workspaceApi';
 
 const mockedGetCriterion = vi.mocked(workspaceApi.getCriterion);
 const mockedGetProgramMembers = vi.mocked(workspaceApi.getProgramMembers);
@@ -101,7 +101,10 @@ function baseCriterion(overrides: Partial<WorkspaceCriterion> = {}): WorkspaceCr
   };
 }
 
-function baseDetail(overrides: Partial<WorkspaceCriterion> = {}, evidence: CriterionDetail['evidence'] = []): CriterionDetail {
+function baseDetail(
+  overrides: Partial<WorkspaceCriterion> = {},
+  evidence: CriterionDetail['evidence'] = []
+): CriterionDetail {
   return {
     criterion: baseCriterion(overrides),
     evidence,
@@ -110,7 +113,10 @@ function baseDetail(overrides: Partial<WorkspaceCriterion> = {}, evidence: Crite
   };
 }
 
-function membersWithRole(userId: string, memberRole: WorkspaceProgramMember['memberRole']): WorkspaceProgramMember[] {
+function membersWithRole(
+  userId: string,
+  memberRole: WorkspaceProgramMember['memberRole']
+): WorkspaceProgramMember[] {
   return [{ userId, name: 'Test User', memberRole }];
 }
 
@@ -118,7 +124,10 @@ function renderWorkspace() {
   return render(
     <MemoryRouter initialEntries={['/audit-programs/method/prog-1/criteria/crit-1']}>
       <Routes>
-        <Route path="/audit-programs/method/:programId/criteria/:criterionId" element={<CriterionWorkspace />} />
+        <Route
+          path="/audit-programs/method/:programId/criteria/:criterionId"
+          element={<CriterionWorkspace />}
+        />
       </Routes>
     </MemoryRouter>
   );

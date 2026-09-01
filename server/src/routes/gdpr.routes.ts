@@ -16,12 +16,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { collectUserData, materializeUserDataExport } from '../services/gdprService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
-import { collectUserData, materializeUserDataExport } from '../services/gdprService.js';
 
 // Apply rate limiting
 const router = Router();

@@ -249,9 +249,8 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
 // `INITIATIVE_LIFECYCLE_GATE_DOMAINS` REAL (the route's Zod schema and its
 // `instanceof` error mapping must be genuine), override only the writer.
 vi.mock('../initiativeLifecycleGateDecisionService.js', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('../initiativeLifecycleGateDecisionService.js')
-  >();
+  const actual =
+    await importOriginal<typeof import('../initiativeLifecycleGateDecisionService.js')>();
   return {
     ...actual,
     recordInitiativeLifecycleGateDecision: (...a: unknown[]) => mockRecordDecision(...a),
@@ -265,9 +264,7 @@ vi.mock('../initiativeLifecycleGateDecisionService.js', async (importOriginal) =
 // fail-closed allowlist logic. Only the "handler's own catch" test below
 // overrides it to reject directly.
 vi.mock('../initiativeGovernanceGuard.js', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('../initiativeGovernanceGuard.js')
-  >();
+  const actual = await importOriginal<typeof import('../initiativeGovernanceGuard.js')>();
   return {
     ...actual,
     evaluateInitiativeGateAccess: (...a: unknown[]) => mockEvaluateGateAccess(...a),
@@ -297,9 +294,9 @@ beforeAll(() => {
 beforeEach(async () => {
   // Default: delegate to the REAL evaluateInitiativeGateAccess so the actual
   // fail-closed allowlist logic runs unless a specific test overrides it.
-  const actualGuard = await vi.importActual<
-    typeof import('../initiativeGovernanceGuard.js')
-  >('../initiativeGovernanceGuard.js');
+  const actualGuard = await vi.importActual<typeof import('../initiativeGovernanceGuard.js')>(
+    '../initiativeGovernanceGuard.js'
+  );
   mockEvaluateGateAccess.mockImplementation(actualGuard.evaluateInitiativeGateAccess);
   mockResolveAccessContext.mockResolvedValue({ effectiveRoles: ['PMO'] });
   currentUserRole = 'admin';
@@ -372,7 +369,11 @@ describe('two-phase early governed lifecycle routes', () => {
       });
     expect(res.status).toBe(201);
     expect(mockProposeEarly).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: ORG, proposerUserId: UID, reviewerUserId: 'distinct-reviewer' })
+      expect.objectContaining({
+        organizationId: ORG,
+        proposerUserId: UID,
+        reviewerUserId: 'distinct-reviewer',
+      })
     );
   });
 
@@ -401,7 +402,11 @@ describe('two-phase early governed lifecycle routes', () => {
       .send({ proposalVersionId: 'pv-early-1', reason: 'Distinct reviewer approved through A05' });
     expect(res.status).toBe(201);
     expect(mockExecuteEarly).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: ORG, initiativeId: INITIATIVE_ID, reviewerUserId: UID })
+      expect.objectContaining({
+        organizationId: ORG,
+        initiativeId: INITIATIVE_ID,
+        reviewerUserId: UID,
+      })
     );
   });
 });
@@ -522,9 +527,11 @@ describe('POST /:id/lifecycle-gate-decisions — fail-closed governance gate', (
     expect(mockRecordDecision).not.toHaveBeenCalled();
   });
 
-  it('denies with 403 (not 500) when the access context cannot be resolved — the GUARD\'s own fail-closed catch', async () => {
+  it("denies with 403 (not 500) when the access context cannot be resolved — the GUARD's own fail-closed catch", async () => {
     currentUserRole = 'user';
-    mockResolveAccessContext.mockRejectedValue(new Error('resolveInitiativeAccessContext: db unreachable'));
+    mockResolveAccessContext.mockRejectedValue(
+      new Error('resolveInitiativeAccessContext: db unreachable')
+    );
 
     const res = await request(app)
       .post(`/api/pmo/initiatives/${INITIATIVE_ID}/lifecycle-gate-decisions`)
@@ -536,7 +543,7 @@ describe('POST /:id/lifecycle-gate-decisions — fail-closed governance gate', (
     expect(mockRecordDecision).not.toHaveBeenCalled();
   });
 
-  it('denies with 403 (not 500) when evaluateInitiativeGateAccess itself throws — the ROUTE HANDLER\'s own fail-closed catch, decoupled from the guard', async () => {
+  it("denies with 403 (not 500) when evaluateInitiativeGateAccess itself throws — the ROUTE HANDLER's own fail-closed catch, decoupled from the guard", async () => {
     currentUserRole = 'user';
     // Bypasses the real guard entirely for this call — proves the route's
     // OWN try/catch around the evaluateInitiativeGateAccess call, not the

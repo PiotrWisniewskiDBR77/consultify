@@ -90,7 +90,6 @@ const serviceFallback = (
  * Coverage: tests/integration/publicSystemSurface.contract.test.ts
  */
 
-
 /**
  * GET /api/system-health/detailed
  * Detailed health check (SuperAdmin only)

@@ -190,7 +190,12 @@ describe.sequential('finance-intelligence.routes.ts — zero-writer lock-in (rea
     app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
-      req.v8Context = { organizationId: org, userId: noMembershipUser, userRole: 'ADMIN', isSuperAdmin: false };
+      req.v8Context = {
+        organizationId: org,
+        userId: noMembershipUser,
+        userRole: 'ADMIN',
+        isSuperAdmin: false,
+      };
       next();
     });
     // Real router mounted directly — the middleware above stands in for the
@@ -291,7 +296,10 @@ describe.sequential('finance-intelligence.routes.ts — zero-writer lock-in (rea
     const res = await request(app)
       .post('/api/v8/finance-intelligence/anomalies/detect')
       .set(bearer(noMembershipUser, org))
-      .send({ type: 'P&L', lines: [{ code: 'REV', label: 'Revenue', value: 1000, priorValue: 900 }] });
+      .send({
+        type: 'P&L',
+        lines: [{ code: 'REV', label: 'Revenue', value: 1000, priorValue: 900 }],
+      });
     expect(res.status).toBe(200);
     expect(res.body?.data?.anomalies).toBeDefined();
   });
@@ -304,7 +312,7 @@ describe.sequential('finance-intelligence.routes.ts — zero-writer lock-in (rea
   //    contain ANY write primitive behind this file. Scoped to this run's
   //    unique org so a concurrent run can never pollute this count.
   // ---------------------------------------------------------------------
-  it('exercising this file\'s handlers writes ZERO rows to financial_analyses / financial_analysis_ratios / financial_statement_packs', async () => {
+  it("exercising this file's handlers writes ZERO rows to financial_analyses / financial_analysis_ratios / financial_statement_packs", async () => {
     const countRows = async () => {
       const result = await pool.query<{ n: string }>(
         `SELECT

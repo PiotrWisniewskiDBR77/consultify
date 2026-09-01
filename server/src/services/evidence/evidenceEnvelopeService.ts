@@ -18,11 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import {
-  getCurrentPgTransactionClient,
-  queryAll,
-  queryRun,
-} from '../../utils/queryHelpers.js';
+import { getCurrentPgTransactionClient, queryAll, queryRun } from '../../utils/queryHelpers.js';
 
 // ==========================================
 // TYPES — EvidenceEnvelope (kontrakt §3.1)

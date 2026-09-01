@@ -116,8 +116,8 @@ import {
 } from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
-import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,

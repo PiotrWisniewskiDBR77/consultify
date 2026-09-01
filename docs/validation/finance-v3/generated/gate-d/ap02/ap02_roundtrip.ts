@@ -33,16 +33,28 @@
 import { randomUUID } from 'node:crypto';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
-if (!(process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres'))) {
-  throw new Error('ap02_roundtrip.ts requires RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... against an ephemeral cluster — refusing to run against an ambiguous/default target.');
+if (
+  !(
+    process.env.RUN_DB_TESTS === '1' &&
+    process.env.MOCK_DB === 'false' &&
+    CONNECTION_STRING.startsWith('postgres')
+  )
+) {
+  throw new Error(
+    'ap02_roundtrip.ts requires RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... against an ephemeral cluster — refusing to run against an ambiguous/default target.'
+  );
 }
 process.env.DB_TYPE = 'postgres';
 
 async function main() {
-  const { withPinnedPostgresTransaction } = await import('../../../../../../server/src/database/PostgresDatabase.js');
-  const artifactVersionService = await import('../../../../../../server/src/services/finance/canonical/artifactVersionService.js');
-  const financeExportService = await import('../../../../../../server/src/services/finance/canonical/financeExportService.js');
-  const financeImportService = await import('../../../../../../server/src/services/finance/canonical/financeImportService.js');
+  const { withPinnedPostgresTransaction } =
+    await import('../../../../../../server/src/database/PostgresDatabase.js');
+  const artifactVersionService =
+    await import('../../../../../../server/src/services/finance/canonical/artifactVersionService.js');
+  const financeExportService =
+    await import('../../../../../../server/src/services/finance/canonical/financeExportService.js');
+  const financeImportService =
+    await import('../../../../../../server/src/services/finance/canonical/financeImportService.js');
 
   type Tx = { queryAll: Function; queryOne: Function; queryRun: Function };
 
@@ -56,7 +68,12 @@ async function main() {
   const preparerId = 'user-preparer-ap02';
   const approverId = 'user-approver-ap02';
 
-  await withPinnedPostgresTransaction((tx: Tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'GoldCo Manufacturing Group (AP-02 fixture)']));
+  await withPinnedPostgresTransaction((tx: Tx) =>
+    tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+      orgId,
+      'GoldCo Manufacturing Group (AP-02 fixture)',
+    ])
+  );
 
   // --- Calendar + 2 FY periods -------------------------------------------------
   const calendarId = await withPinnedPostgresTransaction(async (tx: Tx) => {
@@ -93,7 +110,7 @@ async function main() {
     createdBy: preparerId,
   });
   const artifactId = created.artifact.artifact_id;
-  let bv1 = created.businessVersion.business_version_id;
+  const bv1 = created.businessVersion.business_version_id;
 
   // --- Entity scoped to bv1 -----------------------------------------------------
   const entityId = await withPinnedPostgresTransaction(async (tx: Tx) => {
@@ -129,7 +146,17 @@ async function main() {
            organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id,
            value_status, value_decimal, native_currency, presentation_currency, unit, accounting_policy, created_by
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'USD', 'USD', 'THOUSANDS', 'IFRS', ?)`,
-        [orgId, bv1, statementType, lineIds.get(lineCode), entityId, periodId, status, value, preparerId]
+        [
+          orgId,
+          bv1,
+          statementType,
+          lineIds.get(lineCode),
+          entityId,
+          periodId,
+          status,
+          value,
+          preparerId,
+        ]
       );
     };
     // FY2024 — fully populated
@@ -155,15 +182,43 @@ async function main() {
     businessVersionId: bv1,
     requestedBy: preparerId,
   });
-  assert(exportResult.ok === true, 'AP02-T1', 'P0', 'exportFinanceStatementPack succeeds for a DRAFT business version');
+  assert(
+    exportResult.ok === true,
+    'AP02-T1',
+    'P0',
+    'exportFinanceStatementPack succeeds for a DRAFT business version'
+  );
   if (!exportResult.ok) return finish();
 
-  assert(exportResult.manifest.rowCount === 9, 'AP02-T2', 'P1', `manifest.rowCount reflects the 9 seeded rows (got ${exportResult.manifest.rowCount})`);
-  assert(exportResult.workbookBuffer.length > 0, 'AP02-T3', 'P1', 'exported workbook buffer is non-empty');
+  assert(
+    exportResult.manifest.rowCount === 9,
+    'AP02-T2',
+    'P1',
+    `manifest.rowCount reflects the 9 seeded rows (got ${exportResult.manifest.rowCount})`
+  );
+  assert(
+    exportResult.workbookBuffer.length > 0,
+    'AP02-T3',
+    'P1',
+    'exported workbook buffer is non-empty'
+  );
 
-  const parsed = await financeImportService.parseFinanceExcelBuffer(exportResult.workbookBuffer, 'goldco_ap02_export.xlsx');
-  assert(parsed.manifest !== null, 'AP02-T4', 'P0', 'exported workbook round-trips through parseFinanceExcelBuffer with a readable Manifest sheet');
-  assert(parsed.rows.length === 9, 'AP02-T5', 'P1', `parsed Values sheet has 9 rows (got ${parsed.rows.length})`);
+  const parsed = await financeImportService.parseFinanceExcelBuffer(
+    exportResult.workbookBuffer,
+    'goldco_ap02_export.xlsx'
+  );
+  assert(
+    parsed.manifest !== null,
+    'AP02-T4',
+    'P0',
+    'exported workbook round-trips through parseFinanceExcelBuffer with a readable Manifest sheet'
+  );
+  assert(
+    parsed.rows.length === 9,
+    'AP02-T5',
+    'P1',
+    `parsed Values sheet has 9 rows (got ${parsed.rows.length})`
+  );
 
   // Simulate an analyst's offline edit pass:
   //   - CHANGE: REVENUE FY2024 500000 -> 512000 (typo fix)
@@ -230,14 +285,44 @@ async function main() {
     manifest: parsed.manifest!,
     rows: simulatedReimportRows,
   });
-  assert(preview.rowErrors.length === 0, 'AP02-T6', 'P0', `preview has zero row validation errors (got ${preview.rowErrors.length}: ${JSON.stringify(preview.rowErrors)})`);
-  assert(preview.diff.toChange.length === 2, 'AP02-T7', 'P0', `preview detects exactly 2 changes (REVENUE FY2024, CASH FY2025 MISSING->91000) — got ${preview.diff.toChange.length}`);
-  assert(preview.diff.toClear.length === 1, 'AP02-T8', 'P0', `preview detects exactly 1 clear (CURRENT_LIABILITIES FY2024) — got ${preview.diff.toClear.length}`);
-  assert(preview.diff.toAdd.length === 3, 'AP02-T9', 'P0', `preview detects exactly 3 adds (GROSS_MARGIN/CURRENT_ASSETS/CURRENT_LIABILITIES FY2025) — got ${preview.diff.toAdd.length}`);
+  assert(
+    preview.rowErrors.length === 0,
+    'AP02-T6',
+    'P0',
+    `preview has zero row validation errors (got ${preview.rowErrors.length}: ${JSON.stringify(preview.rowErrors)})`
+  );
+  assert(
+    preview.diff.toChange.length === 2,
+    'AP02-T7',
+    'P0',
+    `preview detects exactly 2 changes (REVENUE FY2024, CASH FY2025 MISSING->91000) — got ${preview.diff.toChange.length}`
+  );
+  assert(
+    preview.diff.toClear.length === 1,
+    'AP02-T8',
+    'P0',
+    `preview detects exactly 1 clear (CURRENT_LIABILITIES FY2024) — got ${preview.diff.toClear.length}`
+  );
+  assert(
+    preview.diff.toAdd.length === 3,
+    'AP02-T9',
+    'P0',
+    `preview detects exactly 3 adds (GROSS_MARGIN/CURRENT_ASSETS/CURRENT_LIABILITIES FY2025) — got ${preview.diff.toAdd.length}`
+  );
   const addedZero = preview.diff.toAdd.find((c) => c.value.status === 'PRESENT_ZERO');
-  assert(!!addedZero, 'AP02-T10', 'P0', 'explicit 0 in the Value column resolves to PRESENT_ZERO (never silently MISSING)');
+  assert(
+    !!addedZero,
+    'AP02-T10',
+    'P0',
+    'explicit 0 in the Value column resolves to PRESENT_ZERO (never silently MISSING)'
+  );
   const clearedRow = preview.diff.toClear[0];
-  assert(!!clearedRow, 'AP02-T11', 'P0', 'clear diff entry present for the blanked CURRENT_LIABILITIES cell');
+  assert(
+    !!clearedRow,
+    'AP02-T11',
+    'P0',
+    'clear diff entry present for the blanked CURRENT_LIABILITIES cell'
+  );
 
   const applyResult = await financeImportService.applyFinanceImport({
     organizationId: orgId,
@@ -250,9 +335,21 @@ async function main() {
     rows: simulatedReimportRows,
     batchIdempotencyKey: `ap02-apply-${randomUUID()}`,
   });
-  assert(applyResult.ok === true, 'AP02-T12', 'P0', `applyFinanceImport succeeds on DRAFT (got: ${JSON.stringify(applyResult)})`);
+  assert(
+    applyResult.ok === true,
+    'AP02-T12',
+    'P0',
+    `applyFinanceImport succeeds on DRAFT (got: ${JSON.stringify(applyResult)})`
+  );
   if (applyResult.ok) {
-    assert(applyResult.appliedCount.added === 3 && applyResult.appliedCount.changed === 2 && applyResult.appliedCount.cleared === 1, 'AP02-T13', 'P0', `appliedCount matches diff (got ${JSON.stringify(applyResult.appliedCount)})`);
+    assert(
+      applyResult.appliedCount.added === 3 &&
+        applyResult.appliedCount.changed === 2 &&
+        applyResult.appliedCount.cleared === 1,
+      'AP02-T13',
+      'P0',
+      `appliedCount matches diff (got ${JSON.stringify(applyResult.appliedCount)})`
+    );
   }
 
   // Re-read from DB to prove the transactional apply actually landed.
@@ -266,29 +363,67 @@ async function main() {
       [bv1]
     )
   );
-  const byKey = new Map((postApplyRows as any[]).map((r) => [`${r.line_code}|${r.period_label}`, r]));
+  const byKey = new Map(
+    (postApplyRows as any[]).map((r) => [`${r.line_code}|${r.period_label}`, r])
+  );
   const revenue2024 = byKey.get('REVENUE|FY2024');
-  assert(revenue2024?.value_decimal === '512000', 'AP02-T14', 'P0', `REVENUE FY2024 updated to 512000 in DB (got ${revenue2024?.value_decimal})`);
+  assert(
+    revenue2024?.value_decimal === '512000',
+    'AP02-T14',
+    'P0',
+    `REVENUE FY2024 updated to 512000 in DB (got ${revenue2024?.value_decimal})`
+  );
   const curLiab2024 = byKey.get('CURRENT_LIABILITIES|FY2024');
-  assert(curLiab2024?.value_status === 'MISSING' && curLiab2024?.value_decimal === null, 'AP02-T15', 'P0', `CURRENT_LIABILITIES FY2024 cleared to MISSING, not 0 (got status=${curLiab2024?.value_status} value=${curLiab2024?.value_decimal})`);
+  assert(
+    curLiab2024?.value_status === 'MISSING' && curLiab2024?.value_decimal === null,
+    'AP02-T15',
+    'P0',
+    `CURRENT_LIABILITIES FY2024 cleared to MISSING, not 0 (got status=${curLiab2024?.value_status} value=${curLiab2024?.value_decimal})`
+  );
   const cash2025 = byKey.get('CASH|FY2025');
-  assert(cash2025?.value_decimal === '91000', 'AP02-T16', 'P0', `CASH FY2025 (previously MISSING) now 91000 (got ${cash2025?.value_decimal})`);
+  assert(
+    cash2025?.value_decimal === '91000',
+    'AP02-T16',
+    'P0',
+    `CASH FY2025 (previously MISSING) now 91000 (got ${cash2025?.value_decimal})`
+  );
   const curLiab2025 = byKey.get('CURRENT_LIABILITIES|FY2025');
-  assert(curLiab2025?.value_status === 'PRESENT_ZERO' && curLiab2025?.value_decimal === '0', 'AP02-T17', 'P0', `new CURRENT_LIABILITIES FY2025 is PRESENT_ZERO/0, never silently MISSING (got status=${curLiab2025?.value_status} value=${curLiab2025?.value_decimal})`);
+  assert(
+    curLiab2025?.value_status === 'PRESENT_ZERO' && curLiab2025?.value_decimal === '0',
+    'AP02-T17',
+    'P0',
+    `new CURRENT_LIABILITIES FY2025 is PRESENT_ZERO/0, never silently MISSING (got status=${curLiab2025?.value_status} value=${curLiab2025?.value_decimal})`
+  );
 
   // Idempotency replay: re-applying the SAME batchIdempotencyKey must be a no-op replay, not a double-apply.
   const replayResult = await financeImportService.applyFinanceImport({
     organizationId: orgId,
     artifactId,
     businessVersionId: bv1,
-    expectedWorkingRevisionId: applyResult.ok ? applyResult.newWorkingRevisionId : exportResult.manifest.workingRevisionId,
+    expectedWorkingRevisionId: applyResult.ok
+      ? applyResult.newWorkingRevisionId
+      : exportResult.manifest.workingRevisionId,
     actorId: preparerId,
     actorRole: 'preparer',
     manifest: parsed.manifest!,
     rows: simulatedReimportRows,
-    batchIdempotencyKey: applyResult.ok ? (await withPinnedPostgresTransaction((tx: Tx) => tx.queryOne(`SELECT checkpoint_payload->>'batchIdempotencyKey' AS k FROM finance_working_revisions WHERE working_revision_id = ?`, [applyResult.newWorkingRevisionId]))).k : 'n/a',
+    batchIdempotencyKey: applyResult.ok
+      ? (
+          await withPinnedPostgresTransaction((tx: Tx) =>
+            tx.queryOne(
+              `SELECT checkpoint_payload->>'batchIdempotencyKey' AS k FROM finance_working_revisions WHERE working_revision_id = ?`,
+              [applyResult.newWorkingRevisionId]
+            )
+          )
+        ).k
+      : 'n/a',
   });
-  assert(replayResult.ok === true && (replayResult as any).idempotentReplay === true, 'AP02-T18', 'P1', `re-applying the same batchIdempotencyKey replays idempotently (got ${JSON.stringify(replayResult)})`);
+  assert(
+    replayResult.ok === true && (replayResult as any).idempotentReplay === true,
+    'AP02-T18',
+    'P1',
+    `re-applying the same batchIdempotencyKey replays idempotently (got ${JSON.stringify(replayResult)})`
+  );
 
   // =============================================================================
   // PHASE B — Approved-immutability guard
@@ -303,8 +438,14 @@ async function main() {
   // that the guard is a real, physically-enforced invariant, not just an
   // application convention this file could have bypassed.
   const approvedBv = await withPinnedPostgresTransaction(async (tx: Tx) => {
-    const wr = await tx.queryOne(`SELECT working_revision_id FROM finance_working_revisions WHERE artifact_id = ? AND is_current = true`, [artifactId]);
-    const manifestRow = await tx.queryOne(`SELECT engine_manifest_id FROM finance_business_versions WHERE business_version_id = ?`, [bv1]);
+    const wr = await tx.queryOne(
+      `SELECT working_revision_id FROM finance_working_revisions WHERE artifact_id = ? AND is_current = true`,
+      [artifactId]
+    );
+    const manifestRow = await tx.queryOne(
+      `SELECT engine_manifest_id FROM finance_business_versions WHERE business_version_id = ?`,
+      [bv1]
+    );
     const snapshot = await tx.queryOne(
       `INSERT INTO finance_compute_snapshots (artifact_id, organization_id, working_revision_id, engine_manifest_id, as_of, created_by)
        VALUES (?, ?, ?, ?, now(), ?) RETURNING compute_snapshot_id`,
@@ -317,7 +458,12 @@ async function main() {
     return row;
   });
 
-  const preApprovedRows = await withPinnedPostgresTransaction((tx: Tx) => tx.queryAll(`SELECT id, value_status, value_decimal::text AS value_decimal FROM finance_stmt_lines WHERE business_version_id = ? ORDER BY id`, [bv1]));
+  const preApprovedRows = await withPinnedPostgresTransaction((tx: Tx) =>
+    tx.queryAll(
+      `SELECT id, value_status, value_decimal::text AS value_decimal FROM finance_stmt_lines WHERE business_version_id = ? ORDER BY id`,
+      [bv1]
+    )
+  );
 
   const rejectedImport = await financeImportService.applyFinanceImport({
     organizationId: orgId,
@@ -330,7 +476,14 @@ async function main() {
     rows: simulatedReimportRows,
     batchIdempotencyKey: `ap02-rejected-${randomUUID()}`,
   });
-  assert(rejectedImport.ok === false && (rejectedImport as any).code === 'STATE_PRECONDITION_FAILED' && (rejectedImport as any).reopenRequired === true, 'AP02-T19', 'P0', `import on APPROVED without reopen is rejected (got ${JSON.stringify(rejectedImport)})`);
+  assert(
+    rejectedImport.ok === false &&
+      (rejectedImport as any).code === 'STATE_PRECONDITION_FAILED' &&
+      (rejectedImport as any).reopenRequired === true,
+    'AP02-T19',
+    'P0',
+    `import on APPROVED without reopen is rejected (got ${JSON.stringify(rejectedImport)})`
+  );
 
   const reopenedImport = await financeImportService.applyFinanceImport({
     organizationId: orgId,
@@ -340,17 +493,44 @@ async function main() {
     actorId: approverId,
     actorRole: 'approver',
     manifest: parsed.manifest!,
-    rows: simulatedReimportRows.map((r: any) => (r['Line Code'] === 'REVENUE' && r['Period Label'] === 'FY2024' ? { ...r, Value: '999999', 'Value Status': '' } : r)),
+    rows: simulatedReimportRows.map((r: any) =>
+      r['Line Code'] === 'REVENUE' && r['Period Label'] === 'FY2024'
+        ? { ...r, Value: '999999', 'Value Status': '' }
+        : r
+    ),
     batchIdempotencyKey: `ap02-reopen-import-${randomUUID()}`,
-    reopen: { reason: 'AP-02 test: re-import after approval requires reopen', expectedVersion: approvedBv.version },
+    reopen: {
+      reason: 'AP-02 test: re-import after approval requires reopen',
+      expectedVersion: approvedBv.version,
+    },
   });
-  assert(reopenedImport.ok === true && (reopenedImport as any).reopened === true, 'AP02-T20', 'P0', `import on APPROVED WITH reopen succeeds against a new draft (got ${JSON.stringify(reopenedImport)})`);
+  assert(
+    reopenedImport.ok === true && (reopenedImport as any).reopened === true,
+    'AP02-T20',
+    'P0',
+    `import on APPROVED WITH reopen succeeds against a new draft (got ${JSON.stringify(reopenedImport)})`
+  );
   if (reopenedImport.ok) {
-    assert((reopenedImport as any).businessVersionId !== bv1, 'AP02-T21', 'P0', 'reopen produced a NEW business_version_id, distinct from the Approved bv1');
+    assert(
+      (reopenedImport as any).businessVersionId !== bv1,
+      'AP02-T21',
+      'P0',
+      'reopen produced a NEW business_version_id, distinct from the Approved bv1'
+    );
   }
 
-  const postApprovedRows = await withPinnedPostgresTransaction((tx: Tx) => tx.queryAll(`SELECT id, value_status, value_decimal::text AS value_decimal FROM finance_stmt_lines WHERE business_version_id = ? ORDER BY id`, [bv1]));
-  assert(JSON.stringify(preApprovedRows) === JSON.stringify(postApprovedRows), 'AP02-T22', 'P0', 'Approved bv1 finance_stmt_lines rows are BYTE-IDENTICAL before/after the reopen+import (immutability upheld)');
+  const postApprovedRows = await withPinnedPostgresTransaction((tx: Tx) =>
+    tx.queryAll(
+      `SELECT id, value_status, value_decimal::text AS value_decimal FROM finance_stmt_lines WHERE business_version_id = ? ORDER BY id`,
+      [bv1]
+    )
+  );
+  assert(
+    JSON.stringify(preApprovedRows) === JSON.stringify(postApprovedRows),
+    'AP02-T22',
+    'P0',
+    'Approved bv1 finance_stmt_lines rows are BYTE-IDENTICAL before/after the reopen+import (immutability upheld)'
+  );
 
   if (reopenedImport.ok) {
     const newBvRows = await withPinnedPostgresTransaction((tx: Tx) =>
@@ -362,7 +542,12 @@ async function main() {
       )
     );
     const newRevenue = (newBvRows as any[]).find((r) => r.value_decimal === '999999');
-    assert(!!newRevenue, 'AP02-T23', 'P0', 'the NEW draft (post-reopen) carries the re-imported value, the Approved parent does not');
+    assert(
+      !!newRevenue,
+      'AP02-T23',
+      'P0',
+      'the NEW draft (post-reopen) carries the re-imported value, the Approved parent does not'
+    );
   }
 
   finish();

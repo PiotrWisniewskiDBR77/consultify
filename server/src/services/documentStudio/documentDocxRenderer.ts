@@ -32,9 +32,10 @@
 // `routes/report-builder.routes.ts`). We use the same namespace + cast pattern
 // so the renderer stays type-safe at call sites without forking the `docx`
 // types.
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 import * as docxModule from 'docx';
 import { imageSize } from 'image-size';
-import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
@@ -47,14 +48,14 @@ import {
   buildDocxStyleConfig,
   clampHeadingText,
   clampTableColumns,
-  DRD_REPORT_GEOMETRY,
-  DRD_REPORT_PALETTE,
-  DRD_DOCX_STYLE_IDS,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
   DOCX_TONE_COLOR,
   DOCX_TONE_FILL,
+  DRD_DOCX_STYLE_IDS,
+  DRD_REPORT_GEOMETRY,
+  DRD_REPORT_PALETTE,
   isDrdReportProfile,
   resolveDocxFonts,
   resolveFormattingClass,
@@ -499,9 +500,11 @@ function headingLevelForSection(
   return HeadingLevel.HEADING_3;
 }
 
-function buildAssumptionMarker(font: string): TextRun {
+function buildAssumptionMarker(font: string, language: string): TextRun {
   return new TextRun({
-    text: '  [Assumption — needs source]',
+    text: language.toLowerCase().startsWith('pl')
+      ? '  [Założenie — wymaga źródła]'
+      : '  [Assumption — needs source]',
     italics: true,
     color: DOCX_PALETTE.amberInk,
     size: 18,
@@ -532,30 +535,90 @@ function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
   });
 }
 
-function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
+/**
+ * Split `**bold**` spans out of a line into real Word runs.
+ *
+ * FIX-195 (3): `bold` MUST stay `undefined` for a plain span. Passing an
+ * explicit `false` makes the docx library emit `<w:b w:val="false"/>
+ * <w:bCs w:val="false"/>` into every run, which changes document.xml
+ * byte-for-byte for every legacy caller and broke the day-32 parity pin
+ * without changing a single pixel of the rendered document.
+ *
+ * `base` carries run properties the caller wants on every span (a callout's
+ * italics / colour), so a bold span inside a callout stays a callout run.
+ */
+function markdownRuns(
+  text: string,
+  font: string,
+  base: { italics?: boolean; bold?: boolean; color?: string; size?: number } = {}
+): TextRun[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  // An empty string must still produce ONE empty run: a Word paragraph with no
+  // run at all is a different (and different-looking) `<w:p>`, and callouts
+  // built from the legacy `{title, body}` shape carry no `text` at all.
+  if (parts.length === 0) parts.push('');
+  return parts.map((part) => {
+    const bold = /^\*\*[^*]+\*\*$/.test(part);
+    return new TextRun({
+      ...base,
+      text: bold ? part.slice(2, -2) : part,
+      bold: bold || base.bold || undefined,
+      font,
+    });
+  });
+}
+
+function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   const value = (block.content ?? {}) as BlockTextContent & {
     docxStyleId?: string;
     pageBreakBefore?: boolean;
   };
   const text = asString(value.text ?? '');
-  const children: TextRun[] = [
-    new TextRun({
-      text,
-      font: ctx.bodyFont,
-    }),
-  ];
-  if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
+  // FIX-195 (3): both paragraph shapes resolve the SAME style and page-break
+  // contract. The markdown-list branch used to hardcode BODY_TEXT and drop
+  // `pageBreakBefore`, so a DRD-profile block that happened to contain a "- "
+  // line silently lost its named style and its page break.
+  const paragraphStyle =
+    isDrdReportProfile(ctx.schema) && value.docxStyleId
+      ? value.docxStyleId
+      : block.isAssumption
+        ? DOCX_STYLE_IDS.ASSUMPTION_BODY
+        : DOCX_STYLE_IDS.BODY_TEXT;
+  const pageBreakBefore = value.pageBreakBefore === true ? true : undefined;
+  const lines = text.split(/\r?\n/);
+  const hasMarkdownList = lines.some((line) => /^\s*(?:- |\d+\. )/.test(line));
+  if (hasMarkdownList && !/^\s*\|.*\|\s*$/m.test(text)) {
+    const kept = lines.filter((line) => line.trim());
+    return kept.map((line, index) => {
+      const numbered = /^\s*\d+\. /.test(line);
+      const bullet = /^\s*- /.test(line);
+      const clean = line.replace(/^\s*(?:- |\d+\. )/, '');
+      const children = markdownRuns(clean, ctx.bodyFont);
+      if (block.isAssumption && index === kept.length - 1) {
+        children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
+      }
+      return new Paragraph({
+        style: paragraphStyle,
+        // Only the FIRST materialized paragraph may carry the block's page
+        // break; repeating it would push every list item onto its own page.
+        pageBreakBefore: index === 0 ? pageBreakBefore : undefined,
+        numbering:
+          bullet || numbered
+            ? {
+                reference: numbered
+                  ? DOCX_NUMBERING_REFERENCE.DECIMAL
+                  : DOCX_NUMBERING_REFERENCE.BULLET,
+                level: 0,
+              }
+            : undefined,
+        children,
+      });
+    });
+  }
+  const children = markdownRuns(text, ctx.bodyFont);
+  if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
   if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
-  return new Paragraph({
-    style:
-      isDrdReportProfile(ctx.schema) && value.docxStyleId
-        ? value.docxStyleId
-        : block.isAssumption
-          ? DOCX_STYLE_IDS.ASSUMPTION_BODY
-          : DOCX_STYLE_IDS.BODY_TEXT,
-    pageBreakBefore: value.pageBreakBefore === true ? true : undefined,
-    children,
-  });
+  return [new Paragraph({ style: paragraphStyle, pageBreakBefore, children })];
 }
 
 function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
@@ -572,7 +635,7 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
     // real, editable list marker (`<w:numPr>`), not literal characters.
     const children: TextRun[] = [new TextRun({ text: itemText, font: ctx.bodyFont })];
     if (block.isAssumption && index === items.length - 1) {
-      children.push(buildAssumptionMarker(ctx.bodyFont));
+      children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
     }
     return new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -628,7 +691,12 @@ function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
     style: DOCX_STYLE_IDS.CALLOUT,
     shading: { type: 'clear', fill },
     border: { left: { color: accent, space: 12, style: 'single', size: 24 } },
-    children: [new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont })],
+    // FIX-195 (6): a callout is prose from the same LLM layer as a paragraph,
+    // so it arrives with the same `**…**` markup. Rendering it as one literal
+    // run put raw asterisks into the exported document. `markdownRuns` strips
+    // the markers; the callout's own run properties (italics, accent colour,
+    // bold-by-design) ride along as the base for every span.
+    children: markdownRuns(text, ctx.bodyFont, { italics: true, bold: true, color: accent }),
   });
 }
 
@@ -1149,7 +1217,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'heading':
       return [renderHeadingBlock(block, ctx)];
     case 'paragraph':
-      return [renderParagraphBlock(block, ctx)];
+      return renderParagraphBlock(block, ctx);
     case 'bullet_list':
     case 'numbered_list':
       return renderListBlocks(block, ctx);
@@ -1174,7 +1242,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
       // a dedicated renderer (citations are usually attached via
       // `block.sourceRef` on a body block, so a standalone `citation`
       // block degrades gracefully into a paragraph).
-      return [renderParagraphBlock(block, ctx)];
+      return renderParagraphBlock(block, ctx);
   }
 }
 
@@ -1242,9 +1310,15 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   const schema = ctx.schema;
   const isPolish = schema.language.toLowerCase().startsWith('pl');
   const documentTypeLabels: Record<string, string> = {
+    board_report: 'raport dla zarządu',
     steering_committee_report: 'raport komitetu sterującego',
   };
-  const densityLabels: Record<string, string> = { detailed: 'szczegółowy', concise: 'zwięzły' };
+  const densityLabels: Record<string, string> = {
+    concise: 'zwięzły',
+    standard: 'standardowy',
+    detailed: 'szczegółowy',
+    comprehensive: 'kompleksowy',
+  };
   const confidentialityLabels: Record<string, string> = {
     client_confidential: 'poufne dla klienta',
     confidential: 'poufne',

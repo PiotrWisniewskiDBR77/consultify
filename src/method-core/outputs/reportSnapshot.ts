@@ -60,9 +60,7 @@ function groupResultsFrom(output: AssessmentOutput): ReportGroupResult[] {
 }
 
 function overallResultFrom(output: AssessmentOutput): number | null {
-  const values = Object.values(output.aggregation.byGroup).filter(
-    (v): v is number => v !== null
-  );
+  const values = Object.values(output.aggregation.byGroup).filter((v): v is number => v !== null);
   if (values.length === 0) return null;
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }

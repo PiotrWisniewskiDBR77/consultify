@@ -54,7 +54,7 @@ function tokenFor(userId: string, role = 'admin'): string {
       jti: `jti-${userId}-${Math.random().toString(36).slice(2, 10)}`,
     },
     (config as unknown as { JWT_SECRET: string }).JWT_SECRET,
-    { expiresIn: '30m' },
+    { expiresIn: '30m' }
   );
 }
 
@@ -94,7 +94,7 @@ async function cleanup(): Promise<void> {
   }
   await auditRun(
     `DELETE FROM audit_pack_criteria WHERE pack_id IN (SELECT id FROM audit_packs WHERE organization_id = $1)`,
-    [ORG],
+    [ORG]
   );
   await auditRun(`DELETE FROM audit_packs WHERE organization_id = $1`, [ORG]);
   await auditRun(`DELETE FROM audit_norm_sources WHERE organization_id = $1`, [ORG]);
@@ -114,7 +114,7 @@ beforeAll(async () => {
        VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')
        ON CONFLICT (organization_id, user_id)
        DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status`,
-      [`slice-membership-${userId}`, ORG, userId],
+      [`slice-membership-${userId}`, ORG, userId]
     );
   }
 }, 180_000);
@@ -145,9 +145,10 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
     expect(source.sourceType).toBe('INTERNAL_PROCEDURE');
     expect(source.verificationStatus).toBe('UNVERIFIED');
 
-    const verifyRes = await admin
-      .post(`/api/audits/sources/${source.id}/verify`)
-      .send({ verificationStatus: 'VERIFIED', verificationNote: 'Sprawdzone z właścicielem procesu' });
+    const verifyRes = await admin.post(`/api/audits/sources/${source.id}/verify`).send({
+      verificationStatus: 'VERIFIED',
+      verificationNote: 'Sprawdzone z właścicielem procesu',
+    });
     expect(verifyRes.status).toBe(200);
     const verified = body<{ sourceType: string; verificationStatus: string }>(verifyRes);
     // Sedno P0: weryfikacja nie przepisała natury dokumentu.
@@ -164,8 +165,18 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
       objectives: 'Potwierdzić zgodność z procedurą wewnętrzną',
       requiredRoles: ['lead_auditor', 'auditee'],
       findingTaxonomy: [
-        { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
-        { key: 'nonconforming', label: 'Niezgodne', nonConforming: true, requiresCorrectiveAction: true },
+        {
+          key: 'conforming',
+          label: 'Zgodne',
+          nonConforming: false,
+          requiresCorrectiveAction: false,
+        },
+        {
+          key: 'nonconforming',
+          label: 'Niezgodne',
+          nonConforming: true,
+          requiresCorrectiveAction: true,
+        },
         {
           key: 'evidence_insufficient',
           label: 'Dowód niewystarczający',
@@ -221,7 +232,7 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
     const snapshot = await auditAll<{ id: string; ref_code: string; requirement_text: string }>(
       `SELECT id, ref_code, requirement_text FROM audit_program_criteria
         WHERE organization_id = $1 AND program_id = $2 AND node_kind = 'criterion'`,
-      [ORG, programId],
+      [ORG, programId]
     );
     expect(snapshot).toHaveLength(1);
     const criterionId = snapshot[0].id;
@@ -444,7 +455,7 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
          JOIN audit_outputs o          ON o.program_id = f.program_id
          JOIN audit_reports r          ON r.output_id = o.id
         WHERE f.id = $1 AND f.organization_id = $2`,
-      [finding.id, ORG],
+      [finding.id, ORG]
     );
 
     expect(chain).toHaveLength(1);
@@ -460,7 +471,7 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
     const events = await auditAll<{ kernel_event_type: string | null; actor_kind: string }>(
       `SELECT kernel_event_type, actor_kind FROM audit_domain_events
         WHERE organization_id = $1 AND program_id = $2`,
-      [ORG, programId],
+      [ORG, programId]
     );
     expect(events.length).toBeGreaterThan(5);
     expect(events.every((e) => e.actor_kind === 'human')).toBe(true);
@@ -473,7 +484,9 @@ describe('P5 — vertical slice: Library → Session → Output → Report → I
     const listRes = await lead.get('/api/audits/programs');
     expect(listRes.status).toBe(200);
     const programs = body<{ programs?: unknown[] } | unknown[]>(listRes);
-    const arr = Array.isArray(programs) ? programs : ((programs as { programs?: unknown[] }).programs ?? []);
+    const arr = Array.isArray(programs)
+      ? programs
+      : ((programs as { programs?: unknown[] }).programs ?? []);
     expect(arr.length).toBeGreaterThan(0);
   }, 60_000);
 });

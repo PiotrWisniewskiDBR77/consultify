@@ -113,17 +113,17 @@ const EV_LIGHT_MPQ =
 const EV_DARK_MPQ = EV_LIGHT_MPQ.replace('lightMpq', 'darkMpq');
 
 const EV_REPORT_ALL =
-  'src/config/consultingToolsStandard.ts:35 CONSULTING_TOOL_STANDARD_OUTPUTS = [\'initiative\'] ' +
+  "src/config/consultingToolsStandard.ts:35 CONSULTING_TOOL_STANDARD_OUTPUTS = ['initiative'] " +
   '— re-potwierdzone ten stream (grep na 91b562ea66) — żaden frontendowy CTA nie oferuje ' +
   '"report" dla ŻADNEGO z 19 narzędzi. Backend (ToolController.promoteToOutput, ' +
-  'outputType===\'report\') first-party sprawdzony TYM streamem tylko dla sop-builder: HTTP 200, ' +
+  "outputType==='report') first-party sprawdzony TYM streamem tylko dla sop-builder: HTTP 200, " +
   'wiersz report_builder_reports utworzony (scratch test, uruchomiony i usunięty, log w ' +
   'readiness/evidence/h3-scratch-report-presentation.txt). Nie sprawdzone dla pozostałych 18. ' +
   'DoD na poziomie użytecznym dla klienta = FAIL dla wszystkich 19, bo brak ścieżki UI.';
 
 const EV_PRESENTATION_ALL =
   'src/config/consultingToolsStandard.ts:35 — jak wyżej, ten sam brak CTA. Backend ' +
-  '(outputType===\'presentation\') first-party sprawdzony tym streamem tylko dla ' +
+  "(outputType==='presentation') first-party sprawdzony tym streamem tylko dla " +
   'capability-mapper: HTTP 200 (log jw.). Nie sprawdzone dla pozostałych 18. FAIL dla wszystkich ' +
   '19 na poziomie użytecznym dla klienta.';
 
@@ -146,7 +146,7 @@ const EV_RENDERER_FAIL =
 
 const EV_OUTPUT_SWOT =
   'server/src/services/tools/toolOutputSnapshotService.ts:179 — jedyna gałąź ' +
-  'tool_type-specyficzna (`if (session.tool_type === \'dynamic-swot\')`), wywołuje realny most ' +
+  "tool_type-specyficzna (`if (session.tool_type === 'dynamic-swot')`), wywołuje realny most " +
   'buildSwotOutput (treść bogata, nie generyczna). Re-run ten stream: ' +
   'tests/integration/tools-outputs-immutable.realdb.test.ts + ' +
   'tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts → 2 pliki / 18 testów PASS na ' +
@@ -155,7 +155,7 @@ const EV_OUTPUT_SWOT =
 const EV_OUTPUT_GENERIC_EMPTY_PROVEN =
   'tests/integration/tools-archetype-promote-characterization.realdb.test.ts — re-run ten stream ' +
   '(8/8 PASS na 91b562ea66, port 56800): wiersz tool_outputs UTWORZONY, ale ' +
-  'payload_json.items=[] i payload_json.engineVersion=\'generic-fallback-1.0.0\' — DOWIEDZIONE ' +
+  "payload_json.items=[] i payload_json.engineVersion='generic-fallback-1.0.0' — DOWIEDZIONE " +
   'puste-ale-uczciwe. Nie spełnia DoD dla realnej treści klienckiej mimo że mechanizm działa.';
 
 const EV_OUTPUT_NOT_DRIVEN =
@@ -167,12 +167,12 @@ const EV_OUTPUT_NOT_DRIVEN =
 const EV_INITIATIVE_PASS =
   'tests/integration/tools-archetype-promote-characterization.realdb.test.ts (8/8, re-run ten ' +
   'stream) + dynamic-swot: tests/acceptance/tls04-swot-proposal-lifecycle.e2e.test.ts (33/33, ' +
-  're-run ten stream) — wiersz tool_initiative_links (batch_id=\'promote-initiative\') + realny ' +
-  'wiersz initiatives utworzony. Frontend CTA też oferuje \'initiative\' (jedyny wystawiony ' +
+  "re-run ten stream) — wiersz tool_initiative_links (batch_id='promote-initiative') + realny " +
+  "wiersz initiatives utworzony. Frontend CTA też oferuje 'initiative' (jedyny wystawiony " +
   'outputType — CONSULTING_TOOL_STANDARD_OUTPUTS).';
 
 const EV_INITIATIVE_NOT_DRIVEN =
-  'Nie odpalone tym streamem dla tego narzędzia. Gałąź outputType===\'initiative\' w ' +
+  "Nie odpalone tym streamem dla tego narzędzia. Gałąź outputType==='initiative' w " +
   'ToolController.promoteToOutput nie ma logiki warunkowej po tool_type poza wpisem do ' +
   'toolTrace (przeczytane na 91b562ea66) — oczekiwane identyczne zachowanie, ale NOT_VERIFIED, ' +
   'nie PASS na wnioskowaniu.';
@@ -494,7 +494,10 @@ function buildRecord(def: ToolDef): ToolReadinessRecord {
     engine: rec(PASS, EV_ENGINE),
     questionWorkflowMapping: rec(PASS, EV_QUESTION_WORKFLOW),
     persistence: rec(PASS, EV_PERSISTENCE),
-    renderer: rec(def.rendererPass ? 'PASS' : 'FAIL', def.rendererPass ? EV_RENDERER_PASS : EV_RENDERER_FAIL),
+    renderer: rec(
+      def.rendererPass ? 'PASS' : 'FAIL',
+      def.rendererPass ? EV_RENDERER_PASS : EV_RENDERER_FAIL
+    ),
     validationEvidence: rec(PASS, EV_VALIDATION),
     output: rec(def.outputStatus, def.outputEvidence),
     report: rec('FAIL', EV_REPORT_ALL),

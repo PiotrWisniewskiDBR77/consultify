@@ -103,9 +103,12 @@ export const smedPlannerPack: ToolPack = {
         pl: 'Zdefiniować zakres i bazę przezbrojeń objętych analizą.',
         en: 'Define the scope and baseline of changeovers under analysis.',
       },
-      whatGoodLooksLike: 'Nazwana linia/maszyna, częstotliwość przezbrojeń i wstępny szacunek łącznego czasu.',
-      evidenceToAskFor: 'Ile razy dziennie/tygodniowo następuje to przezbrojenie i jaki jest jego wpływ na wydajność.',
-      completionCriterion: 'Zakres i częstotliwość przezbrojenia zaakceptowane przez właściciela linii.',
+      whatGoodLooksLike:
+        'Nazwana linia/maszyna, częstotliwość przezbrojeń i wstępny szacunek łącznego czasu.',
+      evidenceToAskFor:
+        'Ile razy dziennie/tygodniowo następuje to przezbrojenie i jaki jest jego wpływ na wydajność.',
+      completionCriterion:
+        'Zakres i częstotliwość przezbrojenia zaakceptowane przez właściciela linii.',
     },
     {
       id: 'changeover-steps',
@@ -130,8 +133,10 @@ export const smedPlannerPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każde usprawnienie przypisane do jednej fazy, z impact/effort i dowodem (pilotaż lub pomiar), nie gołym pomysłem.',
-      evidenceToAskFor: 'Jaki dowód lub pilotaż potwierdza, że usprawnienie realnie usuwa czas z przezbrojenia.',
-      completionCriterion: 'Co najmniej jedna faza ma kandydatów na usprawnienia (rankSmedPhases ordered.length > 0).',
+      evidenceToAskFor:
+        'Jaki dowód lub pilotaż potwierdza, że usprawnienie realnie usuwa czas z przezbrojenia.',
+      completionCriterion:
+        'Co najmniej jedna faza ma kandydatów na usprawnienia (rankSmedPhases ordered.length > 0).',
     },
     {
       id: 'summary',
@@ -143,7 +148,8 @@ export const smedPlannerPack: ToolPack = {
       whatGoodLooksLike:
         'Werdykt answer-first wskazujący najsilniejszą dźwignię (fit = atrakcyjność × wykonalność) i pulę minut, jaką obejmuje; sekwencja W2 zmapowana na 3-5 inicjatyw w porządku Shingo.',
       evidenceToAskFor: 'Czy werdykt wynika z rankSmedPhases i computeBaseline, nie z intuicji.',
-      completionCriterion: 'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
+      completionCriterion:
+        'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
     },
   ],
 
@@ -169,14 +175,16 @@ export const smedPlannerPack: ToolPack = {
       answerType: 'choice',
       challengeRule:
         'Krok wewnętrzny zaklasyfikowany bez podanego powodu jest niebezpieczny — silnik traktuje go jako "unclassified-or-assumed" i wymusza sklasyfikowanie w pętli, zanim jakikolwiek pomiar wejdzie do rankingu (smedQuestionBank.ts smed-classify-force). Klasyfikacja bez powodu jest zwykle nawykiem, nie ograniczeniem fizycznym.',
-      followUpProbes: ['Czy klasyfikacja przetrwałaby sceptycznego inżyniera pytającego „dlaczego nie w trakcie pracy?"'],
+      followUpProbes: [
+        'Czy klasyfikacja przetrwałaby sceptycznego inżyniera pytającego „dlaczego nie w trakcie pracy?"',
+      ],
     },
     {
       id: 'smed-quant-source',
       phaseId: 'changeover-steps',
       prompt: {
         pl: 'Skąd pochodzi liczba minut tego kroku — pomiar stoperem/wideo, czy szacunek z pamięci?',
-        en: 'Where does this step\'s minute figure come from — stopwatch/video measurement, or an estimate from memory?',
+        en: "Where does this step's minute figure come from — stopwatch/video measurement, or an estimate from memory?",
       },
       answerType: 'evidence',
       challengeRule:
@@ -289,10 +297,12 @@ export const smedPlannerPack: ToolPack = {
     sourceUsed: 'src/config/smedplanner/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'Metoda ma nazwanego twórcę (Shingo), a repo nie zawiera ŻADNEGO cytowania — nie wolno prezentować jako wolnej od licencji.',
+    trademarkNote:
+      'Metoda ma nazwanego twórcę (Shingo), a repo nie zawiera ŻADNEGO cytowania — nie wolno prezentować jako wolnej od licencji.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'Metoda z nazwanym autorem i zerową atrybucją w repo — najwyższy priorytet do wyjaśnienia w grupie operacyjnej.',
+    uncertainty:
+      'Metoda z nazwanym autorem i zerową atrybucją w repo — najwyższy priorytet do wyjaśnienia w grupie operacyjnej.',
   },
 };

@@ -50,6 +50,9 @@ class FakeMediaRecorder {
     public stream: { getTracks: () => Array<{ stop: () => void }> },
     public opts: unknown
   ) {
+    // Atrapa musi oddac swoja instancje na zewnatrz — test recznie odpala
+    // na niej ondataavailable/onstop. To jest cel tej atrapy, nie przypadek.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     lastRecorder = this;
   }
   start(_timesliceMs?: number): void {
@@ -163,7 +166,10 @@ describe('Voice transcript reaches InterviewFocusPanel through the SAME handler 
     // EXACT SAME onAnswerChange prop the textarea uses, appending to the
     // existing answerText — there is no separate voice-only save path.
     await waitFor(() =>
-      expect(onAnswerChange).toHaveBeenCalledWith(question.question.questionId, 'Wstępna notatka. dowód kompletny')
+      expect(onAnswerChange).toHaveBeenCalledWith(
+        question.question.questionId,
+        'Wstępna notatka. dowód kompletny'
+      )
     );
     expect(onAnswerChange).toHaveBeenCalledTimes(1);
   });

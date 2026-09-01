@@ -74,9 +74,7 @@ export function createPresentationSourceBlock(
     dataSnapshot: input.dataSnapshot,
     title: input.title,
     keyMessage: input.keyMessage,
-    evidenceRefs: input.finding
-      ? input.finding.supportingEvidence.map((e) => e.evidenceId)
-      : [],
+    evidenceRefs: input.finding ? input.finding.supportingEvidence.map((e) => e.evidenceId) : [],
     visualIntent: input.visualIntent,
     preferredLayouts: input.preferredLayouts,
     density: input.density,

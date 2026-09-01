@@ -107,7 +107,9 @@ export function applyRowAddCap<T>(
     return { rowsToAdd: [], truncatedCount: incomingRows.length, blocked: true };
   }
   const rowsToAdd =
-    incomingRows.length > remainingCapacity ? incomingRows.slice(0, remainingCapacity) : incomingRows;
+    incomingRows.length > remainingCapacity
+      ? incomingRows.slice(0, remainingCapacity)
+      : incomingRows;
   return {
     rowsToAdd,
     truncatedCount: incomingRows.length - rowsToAdd.length,

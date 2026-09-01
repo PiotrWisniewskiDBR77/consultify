@@ -42,7 +42,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -105,7 +106,9 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
   // keystroke of an obviously-incomplete id.
   useEffect(() => {
     const trimmed = kpiId.trim();
-    const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+    const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      trimmed
+    );
     if (!looksLikeUuid) {
       setResolvedName(null);
       return;
@@ -177,17 +180,28 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
             placeholder={isPolish ? 'wklej identyfikator KPI (UUID)' : 'paste the KPI id (UUID)'}
           />
           {kpiIdError ? (
-            <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'KPI jest wymagane' : 'KPI is required'}</p>
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'KPI jest wymagane' : 'KPI is required'}
+            </p>
           ) : resolvedName === 'loading' ? (
-            <p className="mt-1 text-[11px] text-c-text-muted" data-testid="kpi-scorecard-add-item-resolve-loading">
+            <p
+              className="mt-1 text-[11px] text-c-text-muted"
+              data-testid="kpi-scorecard-add-item-resolve-loading"
+            >
               {isPolish ? 'Sprawdzanie…' : 'Checking…'}
             </p>
           ) : resolvedName ? (
-            <p className="mt-1 text-[11px] text-c-success" data-testid="kpi-scorecard-add-item-resolve-name">
+            <p
+              className="mt-1 text-[11px] text-c-success"
+              data-testid="kpi-scorecard-add-item-resolve-name"
+            >
               {isPolish ? `Rozpoznano: ${resolvedName}` : `Resolved: ${resolvedName}`}
             </p>
           ) : kpiId.trim() ? (
-            <p className="mt-1 text-[11px] text-c-text-muted" data-testid="kpi-scorecard-add-item-resolve-empty">
+            <p
+              className="mt-1 text-[11px] text-c-text-muted"
+              data-testid="kpi-scorecard-add-item-resolve-empty"
+            >
               {isPolish
                 ? 'Nie rozpoznano nazwy dla tego identyfikatora (nie znaleziono lub brak widoczności).'
                 : 'Could not resolve a name for this id (not found or no visibility).'}
@@ -225,7 +239,11 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
           />
         </div>
         {errorMessage ? (
-          <p className="text-[12px] text-c-danger" role="alert" data-testid="kpi-scorecard-add-item-error">
+          <p
+            className="text-[12px] text-c-danger"
+            role="alert"
+            data-testid="kpi-scorecard-add-item-error"
+          >
             {isConflict
               ? isPolish
                 ? `Konflikt zapisu: ${errorMessage}`
@@ -292,7 +310,9 @@ export const RemoveKpiScorecardItemDialog: React.FC<RemoveKpiScorecardItemDialog
             className={DANGER_BUTTON_CLASS}
           >
             <Trash2 size={16} />
-            <span>{busy ? (isPolish ? 'Usuwanie…' : 'Removing…') : isPolish ? 'Usuń' : 'Remove'}</span>
+            <span>
+              {busy ? (isPolish ? 'Usuwanie…' : 'Removing…') : isPolish ? 'Usuń' : 'Remove'}
+            </span>
           </button>
         </>
       }
@@ -311,7 +331,11 @@ export const RemoveKpiScorecardItemDialog: React.FC<RemoveKpiScorecardItemDialog
           />
         </div>
         {errorMessage ? (
-          <p className="flex items-start gap-1.5 text-[12px] text-c-danger" role="alert" data-testid="kpi-scorecard-remove-item-error">
+          <p
+            className="flex items-start gap-1.5 text-[12px] text-c-danger"
+            role="alert"
+            data-testid="kpi-scorecard-remove-item-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
             <span>
               {isConflict

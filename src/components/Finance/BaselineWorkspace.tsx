@@ -33,8 +33,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
-import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
-import { LoadingState } from '@/components/shared/states';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
@@ -43,6 +41,8 @@ import {
   type WorkspaceBarLifecycleTransition,
   type WorkspaceBarMoreMenuItem,
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
+import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
+import { LoadingState } from '@/components/shared/states';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';

@@ -83,7 +83,8 @@ export function toAssessmentOutput(raw: RawAssessmentOutputRecord): AssessmentOu
     evidenceCompleteness: raw.evidenceCompleteness,
     limitations: raw.limitations,
     findings: raw.findings.map(toFinding),
-    prioritisationResult: (raw.prioritisationResult ?? null) as AssessmentOutput['prioritisationResult'],
+    prioritisationResult: (raw.prioritisationResult ??
+      null) as AssessmentOutput['prioritisationResult'],
     lineage: {
       sourceSessionId: raw.sessionId,
       sourceRevisionOfSessionId: raw.sourceRevisionOfSessionId ?? null,
@@ -111,7 +112,8 @@ export function extractUnknownReasonBreakdown(
 ): RawUnknownReasonBreakdown | undefined {
   const breakdown = raw.evidenceCompleteness?.unitsMissingEvidenceBreakdown;
   if (!breakdown || typeof breakdown !== 'object') return undefined;
-  if (typeof breakdown.dontKnow !== 'number' || typeof breakdown.noEvidence !== 'number') return undefined;
+  if (typeof breakdown.dontKnow !== 'number' || typeof breakdown.noEvidence !== 'number')
+    return undefined;
   return {
     dontKnow: breakdown.dontKnow,
     noEvidence: breakdown.noEvidence,

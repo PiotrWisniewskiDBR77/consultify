@@ -33,7 +33,9 @@ export const ANALYSIS_INDUSTRY_PRESETS = [
 ] as const;
 export type AnalysisIndustryCode = (typeof ANALYSIS_INDUSTRY_PRESETS)[number]['code'];
 
-const INDUSTRY_LABEL_BY_CODE = new Map(ANALYSIS_INDUSTRY_PRESETS.map((p) => [p.code as string, p.labelPl] as const));
+const INDUSTRY_LABEL_BY_CODE = new Map(
+  ANALYSIS_INDUSTRY_PRESETS.map((p) => [p.code as string, p.labelPl] as const)
+);
 
 /**
  * Polish label for an industry code — the ONE place every industry-code render in the Analysis
@@ -53,7 +55,12 @@ export function industryLabelForCode(industryCode: string): string {
  * `GET /analysis/kpi-catalog` w danej organizacji — ta lista jest
  * PREFERENCJĄ (kolejność/wybór), nie źródłem prawdy o istnieniu KPI.
  */
-const UNIVERSAL_RECOMMENDED_CODES = ['REVENUE_GROWTH_YOY', 'GROSS_MARGIN_PCT', 'EBITDA_MARGIN_PCT', 'NET_MARGIN_PCT'] as const;
+const UNIVERSAL_RECOMMENDED_CODES = [
+  'REVENUE_GROWTH_YOY',
+  'GROSS_MARGIN_PCT',
+  'EBITDA_MARGIN_PCT',
+  'NET_MARGIN_PCT',
+] as const;
 
 const INDUSTRY_ADDITIONAL_CODES: Record<AnalysisIndustryCode, readonly string[]> = {
   GENERAL: [],
@@ -105,7 +112,13 @@ export type FormulaValidationResult =
   | { ok: true; normalizedExpression: string; referencedLineCodes: string[] }
   | {
       ok: false;
-      code: 'EMPTY' | 'UNKNOWN_TOKEN' | 'UNKNOWN_IDENTIFIER' | 'UNBALANCED_PARENS' | 'TOO_LONG' | 'INVALID_SYNTAX';
+      code:
+        | 'EMPTY'
+        | 'UNKNOWN_TOKEN'
+        | 'UNKNOWN_IDENTIFIER'
+        | 'UNBALANCED_PARENS'
+        | 'TOO_LONG'
+        | 'INVALID_SYNTAX';
       messagePl: string;
       position?: number;
     };
@@ -118,13 +131,20 @@ const MAX_FORMULA_LENGTH = 500;
  * caller filtruje tę listę przed wywołaniem; ta funkcja tylko odmawia
  * identyfikatorów spoza niej, nie wie nic o okresach.
  */
-export function validateCustomFormula(rawExpression: string, availableLineCodes: readonly string[]): FormulaValidationResult {
+export function validateCustomFormula(
+  rawExpression: string,
+  availableLineCodes: readonly string[]
+): FormulaValidationResult {
   const expression = rawExpression.trim();
   if (expression.length === 0) {
     return { ok: false, code: 'EMPTY', messagePl: 'Formuła nie może być pusta.' };
   }
   if (expression.length > MAX_FORMULA_LENGTH) {
-    return { ok: false, code: 'TOO_LONG', messagePl: `Formuła może mieć maksymalnie ${MAX_FORMULA_LENGTH} znaków.` };
+    return {
+      ok: false,
+      code: 'TOO_LONG',
+      messagePl: `Formuła może mieć maksymalnie ${MAX_FORMULA_LENGTH} znaków.`,
+    };
   }
 
   const knownIdentifiers = new Set<string>([...availableLineCodes, ...ALLOWED_FUNCTIONS]);
@@ -163,7 +183,12 @@ export function validateCustomFormula(rawExpression: string, availableLineCodes:
       if (operator === '(') depth += 1;
       if (operator === ')') depth -= 1;
       if (depth < 0) {
-        return { ok: false, code: 'UNBALANCED_PARENS', messagePl: 'Niesparowany nawias zamykający.', position: match.index };
+        return {
+          ok: false,
+          code: 'UNBALANCED_PARENS',
+          messagePl: 'Niesparowany nawias zamykający.',
+          position: match.index,
+        };
       }
     }
     cursor = match.index + full.length;

@@ -10,7 +10,6 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import i18n from '../../i18n';
 import {
   AlertCircle,
   Archive,
@@ -91,6 +90,7 @@ import { getArtifactPath } from '@/utils/artifactLinks';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03TasksStandardTableEnabled } from '@/utils/m03TasksStandardTableFlag';
 
+import i18n from '../../i18n';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
 import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';

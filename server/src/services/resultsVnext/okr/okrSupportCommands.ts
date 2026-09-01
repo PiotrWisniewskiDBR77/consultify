@@ -29,21 +29,23 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
-
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 import {
-  toOkrSupportRequest,
   type OkrRecognitionVisibility,
   type OkrSupportRequest,
   type OkrSupportRequestRow,
+  toOkrSupportRequest,
 } from './okrSupportTypes.js';
 
 // ==========================================
@@ -69,7 +71,9 @@ export class OkrRecognitionDisabledError extends Error {
   code = 'RECOGNITION_DISABLED';
   details: Record<string, unknown>;
   constructor(programId: string) {
-    super(`Recognition is disabled for OKR program ${programId} (program.recognition_enabled = false)`);
+    super(
+      `Recognition is disabled for OKR program ${programId} (program.recognition_enabled = false)`
+    );
     this.name = 'OkrRecognitionDisabledError';
     this.details = { programId };
   }
@@ -97,7 +101,11 @@ async function assertObjectiveAndKeyResultBelongToSet(
   );
   const objectiveRow = objectiveResult.rows[0];
   if (!objectiveRow) {
-    throw new OkrSupportRequestValidationError(`Objective ${objectiveId} not found`, 'OBJECTIVE_NOT_FOUND', { objectiveId });
+    throw new OkrSupportRequestValidationError(
+      `Objective ${objectiveId} not found`,
+      'OBJECTIVE_NOT_FOUND',
+      { objectiveId }
+    );
   }
   if (objectiveRow.set_id !== setId) {
     throw new OkrSupportRequestValidationError(
@@ -113,7 +121,11 @@ async function assertObjectiveAndKeyResultBelongToSet(
     );
     const krRow = krResult.rows[0];
     if (!krRow) {
-      throw new OkrSupportRequestValidationError(`KeyResult ${keyResultId} not found`, 'KEY_RESULT_NOT_FOUND', { keyResultId });
+      throw new OkrSupportRequestValidationError(
+        `KeyResult ${keyResultId} not found`,
+        'KEY_RESULT_NOT_FOUND',
+        { keyResultId }
+      );
     }
     if (krRow.objective_id !== objectiveId) {
       throw new OkrSupportRequestValidationError(
@@ -175,7 +187,9 @@ export interface PostCommentInput {
   access: CommandAccessContext;
 }
 
-export async function postComment(input: PostCommentInput): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
+export async function postComment(
+  input: PostCommentInput
+): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
   const {
     setId,
     objectiveId,
@@ -203,7 +217,12 @@ export async function postComment(input: PostCommentInput): Promise<AtomicComman
       // not owner/reviewer-restricted.
       void access;
 
-      await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
+      await assertObjectiveAndKeyResultBelongToSet(client, {
+        setId,
+        objectiveId,
+        keyResultId,
+        organizationId,
+      });
       const insertResult = await client.query<OkrSupportRequestRow>(
         `INSERT INTO okr_vnext_support_requests
            (organization_id, set_id, objective_id, key_result_id, kind, body, created_by)
@@ -265,7 +284,9 @@ export interface PostRecognitionInput {
   access: CommandAccessContext;
 }
 
-export async function postRecognition(input: PostRecognitionInput): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
+export async function postRecognition(
+  input: PostRecognitionInput
+): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
   const {
     setId,
     objectiveId,
@@ -292,11 +313,19 @@ export async function postRecognition(input: PostRecognitionInput): Promise<Atom
       // RN-G5 DECISION: same as postComment — team-wide-by-design.
       void access;
 
-      await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
+      await assertObjectiveAndKeyResultBelongToSet(client, {
+        setId,
+        objectiveId,
+        keyResultId,
+        organizationId,
+      });
 
       // Fail-closed on program.recognition_enabled = false, checked via the
       // Set's own program_id — BEFORE any write (design §8.2).
-      const programResult = await client.query<{ program_id: string; recognition_enabled: boolean }>(
+      const programResult = await client.query<{
+        program_id: string;
+        recognition_enabled: boolean;
+      }>(
         `SELECT p.program_id, p.recognition_enabled
            FROM okr_vnext_programs p
            JOIN okr_vnext_sets s ON s.program_id = p.program_id
@@ -305,7 +334,11 @@ export async function postRecognition(input: PostRecognitionInput): Promise<Atom
       );
       const programRow = programResult.rows[0];
       if (!programRow) {
-        throw new OkrSupportRequestValidationError(`Set ${setId} or its Program not found`, 'SET_NOT_FOUND', { setId });
+        throw new OkrSupportRequestValidationError(
+          `Set ${setId} or its Program not found`,
+          'SET_NOT_FOUND',
+          { setId }
+        );
       }
       if (!programRow.recognition_enabled) {
         throw new OkrRecognitionDisabledError(programRow.program_id);
@@ -348,7 +381,12 @@ export async function postRecognition(input: PostRecognitionInput): Promise<Atom
         resultingVersion: result.rowVersion,
         // plan §13's distinct notification category, carried in the event
         // payload for the (not-yet-built) notification projection to read.
-        payload: { objectiveId, keyResultId, requestId: result.requestId, notificationCategory: 'positive_recognition' },
+        payload: {
+          objectiveId,
+          keyResultId,
+          requestId: result.requestId,
+          notificationCategory: 'positive_recognition',
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -413,7 +451,12 @@ export async function raiseSupportRequest(
       // assign it to whoever they choose).
       void access;
 
-      await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
+      await assertObjectiveAndKeyResultBelongToSet(client, {
+        setId,
+        objectiveId,
+        keyResultId,
+        organizationId,
+      });
 
       if (originCheckInId) {
         const checkInResult = await client.query<{ checkin_id: string }>(
@@ -435,7 +478,16 @@ export async function raiseSupportRequest(
             status, assigned_to_user_id, created_by)
          VALUES ($1, $2, $3, $4, 'support_request', $5, $6, 'open', $7, $8)
          RETURNING *`,
-        [organizationId, setId, objectiveId, keyResultId, body, originCheckInId, assignedToUserId, createdBy]
+        [
+          organizationId,
+          setId,
+          objectiveId,
+          keyResultId,
+          body,
+          originCheckInId,
+          assignedToUserId,
+          createdBy,
+        ]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[raiseSupportRequest] insert returned no row');
@@ -551,7 +603,8 @@ export async function acknowledgeSupportRequest(
         [actorUserId, nextVersion, requestId]
       );
       const row = updateResult.rows[0];
-      if (!row) throw new Error(`[acknowledgeSupportRequest] update returned no row for ${requestId}`);
+      if (!row)
+        throw new Error(`[acknowledgeSupportRequest] update returned no row for ${requestId}`);
       return toOkrSupportRequest(row);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -621,7 +674,10 @@ export async function resolveSupportRequest(
   } = input;
 
   if (!resolutionNote || !resolutionNote.trim()) {
-    throw new OkrSupportRequestValidationError('resolutionNote is required', 'RESOLUTION_NOTE_REQUIRED');
+    throw new OkrSupportRequestValidationError(
+      'resolutionNote is required',
+      'RESOLUTION_NOTE_REQUIRED'
+    );
   }
 
   let beforeState: Record<string, unknown> | null = null;
@@ -640,7 +696,10 @@ export async function resolveSupportRequest(
         responsibleUserIds: [currentRow.assigned_to_user_id, currentRow.created_by],
       });
 
-      if (currentRow.kind !== 'support_request' || !['open', 'acknowledged'].includes(currentRow.status ?? '')) {
+      if (
+        currentRow.kind !== 'support_request' ||
+        !['open', 'acknowledged'].includes(currentRow.status ?? '')
+      ) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot be resolved from its current state (kind=${currentRow.kind}, status=${currentRow.status})`,
           'INVALID_TRANSITION',
@@ -740,7 +799,10 @@ export async function dismissSupportRequest(
   } = input;
 
   if (!dismissedReason || !dismissedReason.trim()) {
-    throw new OkrSupportRequestValidationError('dismissedReason is required', 'DISMISSED_REASON_REQUIRED');
+    throw new OkrSupportRequestValidationError(
+      'dismissedReason is required',
+      'DISMISSED_REASON_REQUIRED'
+    );
   }
 
   let beforeState: Record<string, unknown> | null = null;
@@ -759,7 +821,10 @@ export async function dismissSupportRequest(
         responsibleUserIds: [currentRow.assigned_to_user_id, currentRow.created_by],
       });
 
-      if (currentRow.kind !== 'support_request' || !['open', 'acknowledged'].includes(currentRow.status ?? '')) {
+      if (
+        currentRow.kind !== 'support_request' ||
+        !['open', 'acknowledged'].includes(currentRow.status ?? '')
+      ) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot be dismissed from its current state (kind=${currentRow.kind}, status=${currentRow.status})`,
           'INVALID_TRANSITION',

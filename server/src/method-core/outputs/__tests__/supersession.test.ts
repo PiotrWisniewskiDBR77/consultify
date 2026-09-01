@@ -4,6 +4,7 @@
  * their content columns are never part of the UPDATE statement that does it.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { KernelTestDbHandle } from '../../__tests__/kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
@@ -49,7 +50,11 @@ describe('Supersession on new freeze (test 8)', () => {
     const outputV2 = await outputs.freezeOutput(
       makeFreezeInput({ sessionId, revisionOfOutputId: outputV1.id })
     );
-    const touched = await reports.supersedeCurrentForSession(organizationId, sessionId, outputV2.id);
+    const touched = await reports.supersedeCurrentForSession(
+      organizationId,
+      sessionId,
+      outputV2.id
+    );
 
     expect(touched).toBe(1);
 

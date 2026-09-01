@@ -213,7 +213,8 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
   // doc above) — the field recompute stays for `showDetails`, where it lists
   // WHICH fields are missing, but must not drive the headline % / color.
   const completeness =
-    typeof initiative.charterCompleteness === 'number' && !Number.isNaN(initiative.charterCompleteness)
+    typeof initiative.charterCompleteness === 'number' &&
+    !Number.isNaN(initiative.charterCompleteness)
       ? Math.max(0, Math.min(100, Math.round(initiative.charterCompleteness)))
       : calculateCompleteness(fields);
   const missingRequired = fields.filter((f) => f.isRequired && !f.isFilled);

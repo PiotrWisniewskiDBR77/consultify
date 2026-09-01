@@ -236,7 +236,11 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
     return userId;
   }
 
-  async function teardown(orgIds: string[], projectIds: string[], userIds: string[] = []): Promise<void> {
+  async function teardown(
+    orgIds: string[],
+    projectIds: string[],
+    userIds: string[] = []
+  ): Promise<void> {
     for (const projectId of projectIds) {
       await control
         .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
@@ -254,7 +258,9 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -479,7 +485,10 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       // never rewritten.
       expect(historyAfterSecond[0]).toMatchObject({ tier: 'LIGHTWEIGHT', reason: 'case_created' });
       expect(historyAfterSecond[1]).toMatchObject({ tier: 'STANDARD', reason: 'first escalation' });
-      expect(historyAfterSecond[2]).toMatchObject({ tier: 'CONTROLLED', reason: 'second escalation' });
+      expect(historyAfterSecond[2]).toMatchObject({
+        tier: 'CONTROLLED',
+        reason: 'second escalation',
+      });
     } finally {
       await teardown([orgId], [projectId], [actorId]);
     }
@@ -586,12 +595,20 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
         createdByActorId: actorB,
       });
 
-      const listForA = await caseCoreService.listCasesForOrganization(fixtureA.orgId, undefined, actorA);
+      const listForA = await caseCoreService.listCasesForOrganization(
+        fixtureA.orgId,
+        undefined,
+        actorA
+      );
       expect(listForA.map((c) => c.caseId)).toContain(caseA.caseId);
       expect(listForA.map((c) => c.caseId)).not.toContain(caseB.caseId);
       expect(listForA.every((c) => c.organizationId === fixtureA.orgId)).toBe(true);
 
-      const listForB = await caseCoreService.listCasesForOrganization(fixtureB.orgId, undefined, actorB);
+      const listForB = await caseCoreService.listCasesForOrganization(
+        fixtureB.orgId,
+        undefined,
+        actorB
+      );
       expect(listForB.map((c) => c.caseId)).toContain(caseB.caseId);
       expect(listForB.map((c) => c.caseId)).not.toContain(caseA.caseId);
       expect(listForB.every((c) => c.organizationId === fixtureB.orgId)).toBe(true);

@@ -48,8 +48,8 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as caseCoreService from '../../caseCoreService.js';
-import * as casePlanVersionService from '../../casePlanVersionService.js';
 import type { CanonicalGraph } from '../../casePlanVersionService.js';
+import * as casePlanVersionService from '../../casePlanVersionService.js';
 import * as executionGraphService from '../../executionGraphService.js';
 import * as nodeRunService from '../../nodeRunService.js';
 import * as runLifecycleService from '../../runLifecycleService.js';
@@ -75,7 +75,10 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
         WHERE table_schema = 'public' AND table_name = 'case_workspace_gateway_evaluations'
           AND column_name IN ('node_run_id', 'run_id', 'gateway_node_type', 'outcome_status')`
     );
-    return Number(runs.rows[0]?.present ?? 0) === 3 && Number(gatewayEvaluations.rows[0]?.present ?? 0) === 4;
+    return (
+      Number(runs.rows[0]?.present ?? 0) === 3 &&
+      Number(gatewayEvaluations.rows[0]?.present ?? 0) === 4
+    );
   } catch {
     return false;
   } finally {
@@ -239,16 +242,24 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
         [params.projectId]
       )
       .catch(() => undefined);
-    await control.query(`DELETE FROM case_core WHERE project_id = $1`, [params.projectId]).catch(() => undefined);
-    await control.query(`DELETE FROM projects WHERE id = $1`, [params.projectId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_core WHERE project_id = $1`, [params.projectId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM projects WHERE id = $1`, [params.projectId])
+      .catch(() => undefined);
     await control
       .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [params.orgId])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [params.orgId])
       .catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [params.orgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organizations WHERE id = $1`, [params.orgId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM users WHERE organization_id = $1`, [params.orgId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM organizations WHERE id = $1`, [params.orgId])
+      .catch(() => undefined);
   }
 
   /** Drives a READY NodeRun through claim -> attempt -> SUCCEEDED. */
@@ -316,7 +327,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
     const fx = await seedPublishedCase('decision-gateway', graph);
     try {
       const created = await runLifecycleService.createRun(
-        { caseId: fx.caseId, casePlanVersionId: fx.casePlanVersionId, idempotencyKey: `dg-${randomUUID()}` },
+        {
+          caseId: fx.caseId,
+          casePlanVersionId: fx.casePlanVersionId,
+          idempotencyKey: `dg-${randomUUID()}`,
+        },
         fx.actorId
       );
       const started = await runLifecycleService.startRun(created.runId, fx.actorId);
@@ -328,7 +343,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       // must not complete.
       const afterN1 = await runLifecycleService.advanceRun(created.runId, fx.actorId);
       expect(afterN1.run.status).not.toBe('COMPLETED');
-      const gwNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'gw', fx.actorId);
+      const gwNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'gw',
+        fx.actorId
+      );
       expect(gwNodeRun?.status).toBe('READY');
       expect(await countNodeRuns(created.runId, 'branchA')).toBe(0);
       expect(await countNodeRuns(created.runId, 'branchB')).toBe(0);
@@ -366,7 +385,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       const resolvedGw = await nodeRunService.getNodeRun(gwNodeRun.nodeRunId, fx.actorId);
       expect(resolvedGw?.status).toBe('SUCCEEDED');
 
-      const branchANodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'branchA', fx.actorId);
+      const branchANodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'branchA',
+        fx.actorId
+      );
       expect(branchANodeRun?.status).toBe('READY');
       // branchB was NEVER selected — it must never exist, now or later.
       expect(await countNodeRuns(created.runId, 'branchB')).toBe(0);
@@ -375,7 +398,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       await succeed(branchANodeRun.nodeRunId);
       const afterBranchA = await runLifecycleService.advanceRun(created.runId, fx.actorId);
       expect(afterBranchA.run.status).toBe('RUNNING');
-      const endNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'end', fx.actorId);
+      const endNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'end',
+        fx.actorId
+      );
       expect(endNodeRun?.status).toBe('READY');
 
       if (!endNodeRun) throw new Error('unreachable');
@@ -417,7 +444,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
     const fx = await seedPublishedCase('parallel-split', graph);
     try {
       const created = await runLifecycleService.createRun(
-        { caseId: fx.caseId, casePlanVersionId: fx.casePlanVersionId, idempotencyKey: `ps-${randomUUID()}` },
+        {
+          caseId: fx.caseId,
+          casePlanVersionId: fx.casePlanVersionId,
+          idempotencyKey: `ps-${randomUUID()}`,
+        },
         fx.actorId
       );
       const started = await runLifecycleService.startRun(created.runId, fx.actorId);
@@ -427,15 +458,26 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       const advanced = await runLifecycleService.advanceRun(created.runId, fx.actorId);
       expect(advanced.run.status).toBe('RUNNING');
 
-      const splitNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'split', fx.actorId);
+      const splitNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'split',
+        fx.actorId
+      );
       expect(splitNodeRun?.status).toBe('SUCCEEDED');
       if (!splitNodeRun) throw new Error('unreachable');
       expect(await countGatewayEvaluations(created.runId, splitNodeRun.nodeRunId)).toBe(1);
-      const splitEvaluation = await executionGraphService.getGatewayEvaluation(splitNodeRun.nodeRunId, fx.actorId);
+      const splitEvaluation = await executionGraphService.getGatewayEvaluation(
+        splitNodeRun.nodeRunId,
+        fx.actorId
+      );
       expect(splitEvaluation?.outcomeStatus).toBe('SPLIT_ACTIVATED');
 
       for (const branchId of ['b1', 'b2', 'b3']) {
-        const branchNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, branchId, fx.actorId);
+        const branchNodeRun = await nodeRunService.getLatestNodeRunForNode(
+          created.runId,
+          branchId,
+          fx.actorId
+        );
         expect(branchNodeRun?.status).toBe('READY');
         expect(await countNodeRuns(created.runId, branchId)).toBe(1);
       }
@@ -472,7 +514,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
     const fx = await seedPublishedCase('parallel-join', graph);
     try {
       const created = await runLifecycleService.createRun(
-        { caseId: fx.caseId, casePlanVersionId: fx.casePlanVersionId, idempotencyKey: `pj-${randomUUID()}` },
+        {
+          caseId: fx.caseId,
+          casePlanVersionId: fx.casePlanVersionId,
+          idempotencyKey: `pj-${randomUUID()}`,
+        },
         fx.actorId
       );
       const started = await runLifecycleService.startRun(created.runId, fx.actorId);
@@ -489,20 +535,33 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       const afterOneOfTwo = await runLifecycleService.advanceRun(created.runId, fx.actorId);
       expect(afterOneOfTwo.run.status).toBe('RUNNING'); // b2 still active
       expect(await countNodeRuns(created.runId, 'join')).toBe(0);
-      expect(await nodeRunService.getLatestNodeRunForNode(created.runId, 'join', fx.actorId)).toBeNull();
+      expect(
+        await nodeRunService.getLatestNodeRunForNode(created.runId, 'join', fx.actorId)
+      ).toBeNull();
 
       // 2 of 2: must pass.
       await succeed(b2.nodeRunId);
       const afterTwoOfTwo = await runLifecycleService.advanceRun(created.runId, fx.actorId);
       expect(afterTwoOfTwo.run.status).toBe('RUNNING'); // `end` now active
-      const joinNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'join', fx.actorId);
+      const joinNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'join',
+        fx.actorId
+      );
       expect(joinNodeRun?.status).toBe('SUCCEEDED');
       if (!joinNodeRun) throw new Error('unreachable');
-      const joinEvaluation = await executionGraphService.getGatewayEvaluation(joinNodeRun.nodeRunId, fx.actorId);
+      const joinEvaluation = await executionGraphService.getGatewayEvaluation(
+        joinNodeRun.nodeRunId,
+        fx.actorId
+      );
       expect(joinEvaluation?.outcomeStatus).toBe('JOIN_SATISFIED');
       expect(joinEvaluation?.joinPolicy).toBe('ALL');
 
-      const endNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'end', fx.actorId);
+      const endNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'end',
+        fx.actorId
+      );
       expect(endNodeRun?.status).toBe('READY');
 
       if (!endNodeRun) throw new Error('unreachable');
@@ -539,7 +598,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
     const fx = await seedPublishedCase('concurrent-split', graph);
     try {
       const created = await runLifecycleService.createRun(
-        { caseId: fx.caseId, casePlanVersionId: fx.casePlanVersionId, idempotencyKey: `cps-${randomUUID()}` },
+        {
+          caseId: fx.caseId,
+          casePlanVersionId: fx.casePlanVersionId,
+          idempotencyKey: `cps-${randomUUID()}`,
+        },
         fx.actorId
       );
       const started = await runLifecycleService.startRun(created.runId, fx.actorId);
@@ -557,7 +620,11 @@ suite('runLifecycleService.advanceRun — gateway evaluation against a real Post
       await runLifecycleService.advanceRun(created.runId, fx.actorId);
 
       expect(await countNodeRuns(created.runId, 'split')).toBe(1);
-      const splitNodeRun = await nodeRunService.getLatestNodeRunForNode(created.runId, 'split', fx.actorId);
+      const splitNodeRun = await nodeRunService.getLatestNodeRunForNode(
+        created.runId,
+        'split',
+        fx.actorId
+      );
       expect(splitNodeRun?.status).toBe('SUCCEEDED');
       if (!splitNodeRun) throw new Error('unreachable');
       expect(await countGatewayEvaluations(created.runId, splitNodeRun.nodeRunId)).toBe(1);

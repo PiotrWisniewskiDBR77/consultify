@@ -13,7 +13,6 @@
  * `registry/*.ts`).
  */
 
-import type { ActionContext, ActionResult, Tool, ToolActionMap } from './types';
 // RISK-30 (S5-TERESA, 2026-08-12): potwierdzenie skorelowane dla akcji toru.
 // Pełne uzasadnienie mechanizmu + budżetu limitu czasu: `src/actions/quickActionAck.ts`.
 import {
@@ -29,6 +28,8 @@ import { Api } from '@/services/api';
 // gołego `Api` z `src/services/api.ts`).
 import * as TP from '@/services/api/tablePlatform.api';
 
+import type { ActionContext, ActionResult, Tool, ToolActionMap } from './types';
+
 // ─────────────────────── SZYNA: realne wywołania runtime ───────────────────────
 
 /**
@@ -37,7 +38,11 @@ import * as TP from '@/services/api/tablePlatform.api';
  *   mindmap/useMindMapQuickActions.ts:1243 · whiteboard/useWhiteboardQuickActions.ts:147
  *   processflow/useProcessFlowQuickActions.ts:163 · table/useTableQuickActions.ts:316
  */
-export function dispatchQuickAction(action: string, ctx: ActionContext, extra?: Record<string, unknown>) {
+export function dispatchQuickAction(
+  action: string,
+  ctx: ActionContext,
+  extra?: Record<string, unknown>
+) {
   window.dispatchEvent(
     new CustomEvent('idea-workspace-quick-action', {
       detail: { action, ideaId: ctx.ideaId, source: ctx.source, ...(extra || {}) },
@@ -402,7 +407,10 @@ export async function runEdgeParamCallback(
  * wywołać te operacje z czatu. Stąd świadoma decyzja: UI-only na tę turę,
  * bez budowania nowej infrastruktury szyny na spekulację.
  */
-export async function runToolbarUiOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+export async function runToolbarUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source !== 'ui' || typeof run !== 'function') {
     return {
@@ -511,7 +519,10 @@ export async function runMindmapPaneUiOnlyCallback(
  * ŻADNEJ szynie, więc nie ma czego reużyć bez pisania nowej infrastruktury
  * na spekulację — ten sam ostrożny wybór co `runToolbarUiOnlyCallback`).
  */
-export async function runKeyboardOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+export async function runKeyboardOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source !== 'ui' || typeof run !== 'function') {
     return {
@@ -533,7 +544,10 @@ export async function runKeyboardOnlyCallback(actionId: string, ctx: ActionConte
  * traceable id/undo/Teresa-manifest entry. No panel action reaches Teresa
  * through this path yet — same honest gap as the toolbar/keyboard twins.
  */
-export async function runPanelUiOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+export async function runPanelUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source !== 'ui' || typeof run !== 'function') {
     return {
@@ -600,9 +614,7 @@ export async function runMindmapAiSuggestionApplyUiOnlyCallback(
  * `pushUndoSnapshot`) — zgłoszone niżej w `undo.evidence`, nie ukryte.
  */
 export function dispatchNodeUpdate(nodeId: string, data: Record<string, unknown>) {
-  window.dispatchEvent(
-    new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
-  );
+  window.dispatchEvent(new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } }));
 }
 
 /**
@@ -993,7 +1005,8 @@ export async function runLaneParamCallback(
     return {
       ok: false,
       actionId,
-      message: 'Nie wiem, na którym torze Przepływu wykonać tę akcję — podaj `laneId` albo zaznacz go najpierw.',
+      message:
+        'Nie wiem, na którym torze Przepływu wykonać tę akcję — podaj `laneId` albo zaznacz go najpierw.',
     };
   }
   const runtime = RUNTIME_LANE_ACTION_MAPS[actionId]?.[ctx.tool];
@@ -1043,7 +1056,10 @@ export const RUNTIME_FRAME_ACTION_MAPS: Partial<Record<string, ToolActionMap>> =
  * `frameId` → szyna `idea-workspace-quick-action` →
  * `useWhiteboardQuickActions.ts`.
  */
-export async function runFrameParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+export async function runFrameParamCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
     const ui = await runUiClosureAsync(run);
@@ -1116,7 +1132,9 @@ export async function runFrameNodeParamCallback(ctx: ActionContext): Promise<Act
  * musi kliknąć Akceptuj/Odrzuć (rozdz. 09 §3, model propozycji zachowany dla
  * obu ścieżek).
  */
-export async function runProcessFlowAIRewriteStepCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runProcessFlowAIRewriteStepCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.node.pf_ai_rewrite_step';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -1175,7 +1193,9 @@ export async function runProcessFlowAIRewriteStepCallback(ctx: ActionContext): P
  * ścieżka rejestru co istniejący `idea.workspace.convert` (patrz ten wpis),
  * nie nowe ograniczenie wprowadzone tutaj.
  */
-export async function runProcessFlowConvertInitiativeCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runProcessFlowConvertInitiativeCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.node.pf_convert_initiative';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -1298,7 +1318,9 @@ export async function runProcessFlowConvertTargetCallback(
  * istnieje. Klik człowieka zostaje BAJT W BAJT taki sam (ta sama ścieżka, ten
  * sam toast), a Teresa dostaje jawną odmowę zamiast obietnicy.
  */
-export async function runProcessFlowConvertAnalysisCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runProcessFlowConvertAnalysisCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.node.pf_convert_analysis';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -1459,7 +1481,12 @@ export async function runMindmapAttachKnowledgeCallback(ctx: ActionContext): Pro
   // `runNodeEditLabelCallback` below -- a fire-and-forget CustomEvent on a
   // TERESA-REACHABLE branch. Nothing observes whether the knowledge was
   // actually attached, so `confirmed: false` is the only honest value.
-  return { ok: true, actionId: 'idea.node.mm_attach_knowledge', confirmed: false, data: { nodeId } };
+  return {
+    ok: true,
+    actionId: 'idea.node.mm_attach_knowledge',
+    confirmed: false,
+    data: { nodeId },
+  };
 }
 
 export async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
@@ -2141,7 +2168,10 @@ export const RUNTIME_MM_NODE_AI_SUGGEST_LINKS: ToolActionMap = {
  * nieodwracalne bez backupu, stąd `manual_delete`-podobne ostrzeżenie mimo
  * braku nowego obiektu do skasowania).
  */
-export function tableSavedViewGuard(actionId: string, viewId: string | undefined): ActionResult | null {
+export function tableSavedViewGuard(
+  actionId: string,
+  viewId: string | undefined
+): ActionResult | null {
   if (!viewId) {
     return {
       ok: false,
@@ -2239,7 +2269,9 @@ export async function runTableToolbarUiOnlyCallback(
  * powyżej, osobna funkcja WYŁĄCZNIE dla uczciwego komunikatu ("panel", nie
  * "górny pasek narzędzi").
  */
-export async function runTableChatToSchemaProposeCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableChatToSchemaProposeCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.ai.table_schema_propose';
   const run = ctx.params?.run;
   if (ctx.source !== 'ui' || typeof run !== 'function') {
@@ -2279,7 +2311,9 @@ export async function runTableToolbarOrKeyboardCallback(
   return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
-export async function runTablePlatformSavedViewRenameCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTablePlatformSavedViewRenameCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.view.table_platform_saved_view_rename';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -2296,7 +2330,9 @@ export async function runTablePlatformSavedViewRenameCallback(ctx: ActionContext
   return runByTool(actionId, RUNTIME_TBL_VIEW_RENAME_PLATFORM, ctx, { viewId, name });
 }
 
-export async function runTablePlatformSavedViewDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTablePlatformSavedViewDeleteCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'idea.view.table_platform_saved_view_delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -2398,7 +2434,10 @@ export async function runTablePlatformSavedViewDeleteCallback(ctx: ActionContext
  * przewidzianej regułą. Udokumentowane w `undo.evidence` każdego wpisu,
  * świadomie NIE łatane po cichu.
  */
-export function tableColumnGuard(actionId: string, colKey: string | undefined): ActionResult | null {
+export function tableColumnGuard(
+  actionId: string,
+  colKey: string | undefined
+): ActionResult | null {
   if (!colKey) {
     return {
       ok: false,
@@ -2653,7 +2692,6 @@ export async function runTableCellClearCallback(ctx: ActionContext): Promise<Act
   return runByTool(actionId, RUNTIME_TBL_CELL_CLEAR, ctx, { rowId, colKey });
 }
 
-
 /**
  * N-TP (2026-08-10) — 22 class-d z audytu (`04_ACTION_COVERAGE_INVENTORY.csv`,
  * plik → linia dowodu w `source` każdej akcji niżej) w jedenastu samodzielnych
@@ -2810,17 +2848,20 @@ export function buildDateDependencyConfigFromParams(ctx: ActionContext) {
     durationFieldId:
       typeof ctx.params?.durationFieldId === 'string' ? ctx.params.durationFieldId : undefined,
     predecessorFieldId:
-      typeof ctx.params?.predecessorFieldId === 'string' ? ctx.params.predecessorFieldId : undefined,
+      typeof ctx.params?.predecessorFieldId === 'string'
+        ? ctx.params.predecessorFieldId
+        : undefined,
     defaultDependencyType: (typeof ctx.params?.defaultDependencyType === 'string'
       ? ctx.params.defaultDependencyType
       : 'FS') as 'FS' | 'SS' | 'FF' | 'SF',
     defaultLagDays: typeof ctx.params?.defaultLagDays === 'number' ? ctx.params.defaultLagDays : 0,
-    skipWeekends:
-      typeof ctx.params?.skipWeekends === 'boolean' ? ctx.params.skipWeekends : false,
+    skipWeekends: typeof ctx.params?.skipWeekends === 'boolean' ? ctx.params.skipWeekends : false,
   };
 }
 
-export async function runTableDateDependencySaveCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableDateDependencySaveCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.date_dependency.save';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -2895,7 +2936,9 @@ export async function runTableDateDependencyRecalculateCallback(
 }
 
 // ─── Record templates (RecordTemplateManager.tsx) ───
-export async function runTableRecordTemplateDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableRecordTemplateDeleteCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.record_template.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -2918,7 +2961,9 @@ export async function runTableRecordTemplateDeleteCallback(ctx: ActionContext): 
   }
 }
 
-export async function runTableRecordTemplateSaveCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableRecordTemplateSaveCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.record_template.save';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -3060,7 +3105,9 @@ export async function runTableAutomationDeleteCallback(ctx: ActionContext): Prom
 }
 
 // ─── Webhook relays (connectors/WebhookRelayPanel.tsx) ───
-export async function runTableWebhookRelayDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableWebhookRelayDeleteCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.webhook_relay.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -3084,7 +3131,9 @@ export async function runTableWebhookRelayDeleteCallback(ctx: ActionContext): Pr
 }
 
 // ─── Forms (forms/FormsIndex.tsx, forms/IntakeJwtPanel.tsx) ───
-export async function runTableFormShareModeChangeCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableFormShareModeChangeCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.form.share_mode_change';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -3144,7 +3193,9 @@ export async function runTableFormDeleteCallback(ctx: ActionContext): Promise<Ac
   }
 }
 
-export async function runTableFormIntakeSaveAllowListCallback(ctx: ActionContext): Promise<ActionResult> {
+export async function runTableFormIntakeSaveAllowListCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
   const actionId = 'table.form_intake.save_allow_list';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {

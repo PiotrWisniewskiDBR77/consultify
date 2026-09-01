@@ -33,28 +33,27 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  EVENT_INSERT_SQL,
   executeAtomicCommand,
   executeAtomicCreate,
   resolveConsumerGroups,
-  EVENT_INSERT_SQL,
-  type AtomicCommandOutcome,
-  type AtomicEventInput,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { attachSourceEventId, createObligation } from '../platform/obligations.js';
-
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import {
-  toDeviationCase,
-  toEffectivenessVerification,
   type DeviationCase,
   type DeviationCaseRow,
   type EffectivenessVerification,
   type EffectivenessVerificationRow,
   type EffectivenessVerificationStatus,
+  toDeviationCase,
+  toEffectivenessVerification,
 } from './kpiDeviationTypes.js';
 import type { KpiMeasurementRow } from './kpiTypes.js';
 
@@ -115,7 +114,9 @@ export class DeviationSelfApprovalDeniedError extends Error {
   code = 'SELF_APPROVAL_DENIED';
   details: Record<string, unknown>;
   constructor(caseId: string, approverId: string, reasonField: 'plan_submitted_by' | 'created_by') {
-    super(`User ${approverId} may not approve the corrective plan for case ${caseId}: matches its own ${reasonField}`);
+    super(
+      `User ${approverId} may not approve the corrective plan for case ${caseId}: matches its own ${reasonField}`
+    );
     this.name = 'DeviationSelfApprovalDeniedError';
     this.details = { caseId, approverId, reasonField };
   }
@@ -159,30 +160,33 @@ async function insertManualDeviationEvent(
   client: PoolClient,
   eventInput: AtomicEventInput
 ): Promise<string | undefined> {
-  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-    eventInput.schemaVersion,
-    eventInput.eventType,
-    eventInput.aggregateType,
-    eventInput.aggregateId,
-    eventInput.organizationId,
-    eventInput.actorUserId,
-    eventInput.actorEffectiveRole,
-    eventInput.commandId,
-    eventInput.correlationId,
-    eventInput.causationId,
-    eventInput.occurredAt,
-    eventInput.policyVersion,
-    eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-    eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-    eventInput.stateHash,
-    eventInput.reason,
-    JSON.stringify(eventInput.evidenceRefs ?? []),
-    eventInput.source,
-    eventInput.idempotencyKey,
-    eventInput.expectedVersion,
-    eventInput.resultingVersion,
-    JSON.stringify(eventInput.payload ?? {}),
-  ]);
+  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+    EVENT_INSERT_SQL,
+    [
+      eventInput.schemaVersion,
+      eventInput.eventType,
+      eventInput.aggregateType,
+      eventInput.aggregateId,
+      eventInput.organizationId,
+      eventInput.actorUserId,
+      eventInput.actorEffectiveRole,
+      eventInput.commandId,
+      eventInput.correlationId,
+      eventInput.causationId,
+      eventInput.occurredAt,
+      eventInput.policyVersion,
+      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+      eventInput.stateHash,
+      eventInput.reason,
+      JSON.stringify(eventInput.evidenceRefs ?? []),
+      eventInput.source,
+      eventInput.idempotencyKey,
+      eventInput.expectedVersion,
+      eventInput.resultingVersion,
+      JSON.stringify(eventInput.payload ?? {}),
+    ]
+  );
 
   const inserted = eventResult.rows[0];
   if (!inserted) return undefined;
@@ -226,7 +230,8 @@ export async function openOrEscalateDeviationCase(
   client: PoolClient,
   params: OpenOrEscalateDeviationCaseParams
 ): Promise<OpenOrEscalateDeviationCaseResult | null> {
-  const { organizationId, kpiId, measurementId, performanceStatus, ownerUserId, managerUserId } = params;
+  const { organizationId, kpiId, measurementId, performanceStatus, ownerUserId, managerUserId } =
+    params;
   if (performanceStatus !== 'warning' && performanceStatus !== 'critical') return null;
 
   const existing = await client.query<{ case_id: string; status: string; severity: string }>(
@@ -250,7 +255,11 @@ export async function openOrEscalateDeviationCase(
       // causes one), not off the case, so two distinct critical
       // measurements in a row each get their own event even though they
       // escalate the same case.
-      const afterState = { caseId: openCase.case_id, severity: 'critical' as const, triggerMeasurementId: measurementId };
+      const afterState = {
+        caseId: openCase.case_id,
+        severity: 'critical' as const,
+        triggerMeasurementId: measurementId,
+      };
       await insertManualDeviationEvent(client, {
         schemaVersion: 1,
         eventType: 'kpi.deviation_escalated',
@@ -281,9 +290,10 @@ export async function openOrEscalateDeviationCase(
     return { caseId: openCase.case_id, created: false, severityChanged: false };
   }
 
-  const responseHours = performanceStatus === 'critical'
-    ? (params.responseHoursOverride?.critical ?? 48)
-    : (params.responseHoursOverride?.warning ?? 120);
+  const responseHours =
+    performanceStatus === 'critical'
+      ? (params.responseHoursOverride?.critical ?? 48)
+      : (params.responseHoursOverride?.warning ?? 120);
 
   // -- DEVIATION FROM DESIGN: §B's literal code wraps ONLY the INSERT in a
   // plain try/catch and, on a caught 23505, immediately issues a second
@@ -314,7 +324,16 @@ export async function openOrEscalateDeviationCase(
           owner_user_id, manager_user_id, response_due_at, created_by)
        VALUES ($1, $2, $3, $4, 'open', $5, $6, now() + ($7 * interval '1 hour'), $8)
        RETURNING case_id`,
-      [organizationId, kpiId, measurementId, performanceStatus, ownerUserId, managerUserId, responseHours, params.actorUserId]
+      [
+        organizationId,
+        kpiId,
+        measurementId,
+        performanceStatus,
+        ownerUserId,
+        managerUserId,
+        responseHours,
+        params.actorUserId,
+      ]
     );
     newCaseId = insertResult.rows[0]!.case_id;
     await client.query('RELEASE SAVEPOINT deviation_case_create');
@@ -335,7 +354,13 @@ export async function openOrEscalateDeviationCase(
     // Decision #4: kpi.deviation_opened as its own rvn_platform_events row,
     // manual insert, same transaction, in addition to whatever buildEvent()
     // produces for kpi.measurement_recorded in the OUTER command.
-    const afterState = { caseId: newCaseId, kpiId, severity: performanceStatus, ownerUserId, managerUserId };
+    const afterState = {
+      caseId: newCaseId,
+      kpiId,
+      severity: performanceStatus,
+      ownerUserId,
+      managerUserId,
+    };
     const eventId = await insertManualDeviationEvent(client, {
       schemaVersion: 1,
       eventType: 'kpi.deviation_opened',
@@ -414,8 +439,16 @@ export async function closeDeviationCase(
   input: CloseDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -453,7 +486,10 @@ export async function closeDeviationCase(
           WHERE kd.kpi_id = $1`,
         [currentRow.kpi_id]
       );
-      const acceptedStatuses = policyResult.rows[0]?.accepted ?? ['effective', 'partially_effective'];
+      const acceptedStatuses = policyResult.rows[0]?.accepted ?? [
+        'effective',
+        'partially_effective',
+      ];
 
       const verificationResult = await client.query<EffectivenessVerificationRow>(
         `SELECT * FROM rvn_kpi_effectiveness_verifications
@@ -542,8 +578,16 @@ export async function acknowledgeDeviationCase(
   input: AcknowledgeDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -579,7 +623,8 @@ export async function acknowledgeDeviationCase(
         [nextVersion, caseId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[acknowledgeDeviationCase] update returned no row for ${caseId}`);
+      if (!updatedRow)
+        throw new Error(`[acknowledgeDeviationCase] update returned no row for ${caseId}`);
       return toDeviationCase(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -631,10 +676,21 @@ export async function submitRootCause(
   input: SubmitRootCauseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
-    rootCauseSummary = null, rootCauseCategory = null, recurrenceFlag = false,
-    expectedRecoveryDate = null, expectedRecoveryValue = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    rootCauseSummary = null,
+    rootCauseCategory = null,
+    recurrenceFlag = false,
+    expectedRecoveryDate = null,
+    expectedRecoveryValue = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -744,8 +800,16 @@ export async function submitPlan(
   input: SubmitPlanInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -842,8 +906,16 @@ export async function approvePlan(
   input: ApprovePlanInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, approverId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    approverId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -942,9 +1014,17 @@ export async function recordRecoveryObservation(
   input: RecordRecoveryObservationInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
-    recoveryObservationMeasurementId, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    recoveryObservationMeasurementId,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -994,7 +1074,8 @@ export async function recordRecoveryObservation(
         [actorUserId, recoveryObservationMeasurementId, nextVersion, caseId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[recordRecoveryObservation] update returned no row for ${caseId}`);
+      if (!updatedRow)
+        throw new Error(`[recordRecoveryObservation] update returned no row for ${caseId}`);
       return toDeviationCase(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -1052,10 +1133,21 @@ export async function submitEffectivenessVerification(
   input: SubmitEffectivenessVerificationInput
 ): Promise<AtomicCommandOutcome<SubmitEffectivenessVerificationResult>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
-    verificationWindowStart, verificationWindowEnd, outcome, rationale = null,
-    measurementIds = [], access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    verificationWindowStart,
+    verificationWindowEnd,
+    outcome,
+    rationale = null,
+    measurementIds = [],
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1089,10 +1181,20 @@ export async function submitEffectivenessVerification(
             status, rationale, verified_by, verified_at, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8)
          RETURNING *`,
-        [caseId, organizationId, verificationWindowStart, verificationWindowEnd, outcome, rationale, actorUserId, actorUserId]
+        [
+          caseId,
+          organizationId,
+          verificationWindowStart,
+          verificationWindowEnd,
+          outcome,
+          rationale,
+          actorUserId,
+          actorUserId,
+        ]
       );
       const verificationRow = verificationInsert.rows[0];
-      if (!verificationRow) throw new Error('[submitEffectivenessVerification] verification insert returned no row');
+      if (!verificationRow)
+        throw new Error('[submitEffectivenessVerification] verification insert returned no row');
 
       for (const measurementId of measurementIds) {
         await client.query(
@@ -1115,7 +1217,10 @@ export async function submitEffectivenessVerification(
         [nextStatus, nextVersion, caseId]
       );
       const updatedCaseRow = caseUpdate.rows[0];
-      if (!updatedCaseRow) throw new Error(`[submitEffectivenessVerification] case update returned no row for ${caseId}`);
+      if (!updatedCaseRow)
+        throw new Error(
+          `[submitEffectivenessVerification] case update returned no row for ${caseId}`
+        );
 
       return {
         case: toDeviationCase(updatedCaseRow),
@@ -1169,8 +1274,17 @@ async function runEscalationOverlay(
   input: EscalateDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, escalatedReason = null, access,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    escalatedReason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1302,9 +1416,18 @@ export async function reopenDeviationCase(
   input: ReopenDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
-    priorCaseId, organizationId, actorUserId, actorEffectiveRole, idempotencyKey,
-    correlationId, causationId = null, reason = null,
-    triggerMeasurementId, ownerUserId, managerUserId, access,
+    priorCaseId,
+    organizationId,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    triggerMeasurementId,
+    ownerUserId,
+    managerUserId,
+    access,
   } = input;
 
   return executeAtomicCreate<DeviationCase>({
@@ -1316,9 +1439,13 @@ export async function reopenDeviationCase(
       );
       const prior = priorResult.rows[0];
       if (!prior) {
-        throw new KpiDeviationValidationError(`Deviation case ${priorCaseId} not found`, 'CASE_NOT_FOUND', {
-          priorCaseId,
-        });
+        throw new KpiDeviationValidationError(
+          `Deviation case ${priorCaseId} not found`,
+          'CASE_NOT_FOUND',
+          {
+            priorCaseId,
+          }
+        );
       }
 
       // RN-G5: the prior (closed) case's own owner/manager are the

@@ -32,9 +32,13 @@ describe('StatementReportActionsSection — sequential gating', () => {
     );
     expect(screen.getByTestId('statement-report-step-button-draft')).not.toBeDisabled();
     expect(screen.getByTestId('statement-report-step-button-open')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-open')).toHaveTextContent('Najpierw wygeneruj szkic');
+    expect(screen.getByTestId('statement-report-step-reason-open')).toHaveTextContent(
+      'Najpierw wygeneruj szkic'
+    );
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Najpierw otwórz wynik');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent(
+      'Najpierw otwórz wynik'
+    );
   });
 
   it('step 2 (open) unlocks once draftStatus is ready; step 3 remains blocked until opened', () => {
@@ -53,7 +57,9 @@ describe('StatementReportActionsSection — sequential gating', () => {
     expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled();
     expect(screen.queryByTestId('statement-report-step-reason-open')).not.toBeInTheDocument();
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Najpierw otwórz wynik');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent(
+      'Najpierw otwórz wynik'
+    );
   });
 
   it('step 3 (publish) unlocks ONLY after the result has actually been opened (openStatus=opened), not merely available', () => {
@@ -86,7 +92,9 @@ describe('StatementReportActionsSection — sequential gating', () => {
         onPublish={() => {}}
       />
     );
-    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent('Serwer nie odpowiedział');
+    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent(
+      'Serwer nie odpowiedział'
+    );
   });
 
   it('clicking each enabled step calls its own callback, not a shared handler', () => {
@@ -127,8 +135,12 @@ describe('StatementReportActionsSection — sequential gating', () => {
       />
     );
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Już opublikowano');
-    expect(screen.getByTestId('statement-report-step-status-publish')).toHaveTextContent('Opublikowano');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent(
+      'Już opublikowano'
+    );
+    expect(screen.getByTestId('statement-report-step-status-publish')).toHaveTextContent(
+      'Opublikowano'
+    );
   });
 
   // KONTROLA NEGATYWNA: rerender z innym stanem musi zmienić i status, i disabled.
@@ -145,7 +157,9 @@ describe('StatementReportActionsSection — sequential gating', () => {
         onPublish={() => {}}
       />
     );
-    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent('Nie rozpoczęto');
+    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent(
+      'Nie rozpoczęto'
+    );
     expect(screen.getByTestId('statement-report-step-button-open')).toBeDisabled();
 
     rerender(
@@ -160,8 +174,12 @@ describe('StatementReportActionsSection — sequential gating', () => {
         onPublish={() => {}}
       />
     );
-    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent('Szkic gotowy');
-    expect(screen.getByTestId('statement-report-step-status-draft')).not.toHaveTextContent('Nie rozpoczęto');
+    expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent(
+      'Szkic gotowy'
+    );
+    expect(screen.getByTestId('statement-report-step-status-draft')).not.toHaveTextContent(
+      'Nie rozpoczęto'
+    );
     expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled();
   });
 });

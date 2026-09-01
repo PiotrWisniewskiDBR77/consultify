@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+
 import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;

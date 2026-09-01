@@ -18,7 +18,6 @@
 import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -26,10 +25,7 @@ import {
   isDemoBypassOperatorEnabled,
   isProductionEnvironment,
 } from '../../method-core/demoBypass.js';
-import {
-  establishDatabaseReadiness,
-  type ReadinessDeps,
-} from '../databaseReadiness.js';
+import { establishDatabaseReadiness, type ReadinessDeps } from '../databaseReadiness.js';
 import {
   isTestMode,
   runsRealDbInTestMode,
@@ -96,7 +92,10 @@ describe('P0A — bootstrap configuration matrix (11 rows)', () => {
     expect(runsRealDbInTestMode(PRODUCTION)).toBe(false);
     expect(shouldUseMockDatabase(PRODUCTION)).toBe(false);
     expect(
-      isDemoBypassAllowed({ NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' }, true)
+      isDemoBypassAllowed(
+        { NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' },
+        true
+      )
     ).toBe(false);
   });
 
@@ -222,7 +221,11 @@ describe('P0A — bootstrap configuration matrix (11 rows)', () => {
     });
 
     await expect(
-      withTimeout(establishDatabaseReadiness(hangingDeps), 15, 'Database readiness sequence did not settle within 15ms')
+      withTimeout(
+        establishDatabaseReadiness(hangingDeps),
+        15,
+        'Database readiness sequence did not settle within 15ms'
+      )
     ).rejects.toThrow('did not settle within 15ms');
   });
 
@@ -387,7 +390,7 @@ describe('P0A — six production guarantees (RUN_DB_TESTS must never weaken prod
     // is unique to THIS specific catch (the outer database-init IIFE's own
     // production-exit branch) rather than counting on a small character
     // budget spanning a long explanatory comment.
-    const anchor = "Cannot proceed without database. Exiting...";
+    const anchor = 'Cannot proceed without database. Exiting...';
     const anchorIndex = indexSource.indexOf(anchor);
     expect(anchorIndex).toBeGreaterThan(-1);
     const windowBeforeAnchor = indexSource.slice(Math.max(0, anchorIndex - 2000), anchorIndex);

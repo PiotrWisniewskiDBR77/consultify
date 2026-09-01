@@ -10,10 +10,13 @@ const mockGetCase = vi.fn();
 const mockListCasesForOrganization = vi.fn();
 const mockTransitionStatus = vi.fn();
 const mockCancelCase = vi.fn();
-const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) =>
+  input.operation()
+);
 
 vi.mock('../../../services/executionActionRegistryService.js', () => ({
-  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+  executeGovernedExecutionAction: (...args: unknown[]) =>
+    mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
 }));
 
 vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
@@ -21,9 +24,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return {
     ...actual,
     requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args),
@@ -44,9 +47,9 @@ vi.mock('../../../services/caseWorkspace/caseCoreService.js', () => ({
   cancelCase: (...args: unknown[]) => mockCancelCase(...args),
 }));
 
-import casesRoutes from '../cases.routes.js';
-import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
 import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
+import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import casesRoutes from '../cases.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -66,9 +69,24 @@ function createApp(): Express {
 describe('caseWorkspace cases routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireOrgMember.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireOrgMember.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a create-case body missing required fields with 400', async () => {
@@ -80,13 +98,11 @@ describe('caseWorkspace cases routes', () => {
 
   it('never forwards a body-supplied organizationId to the service — always uses the authenticated org', async () => {
     mockCreateCase.mockResolvedValue({ caseId: 'case-1', organizationId: ORG });
-    const res = await request(createApp())
-      .post('/api/v8/case-workspace/cases')
-      .send({
-        projectId: 'proj-1',
-        contractedClosureType: 'DELIVERY_COMPLETED',
-        organizationId: 'attacker-org', // must be ignored
-      });
+    const res = await request(createApp()).post('/api/v8/case-workspace/cases').send({
+      projectId: 'proj-1',
+      contractedClosureType: 'DELIVERY_COMPLETED',
+      organizationId: 'attacker-org', // must be ignored
+    });
     expect(res.status).toBe(201);
     expect(mockCreateCase).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId: ORG, createdByActorId: USER })
@@ -103,7 +119,9 @@ describe('caseWorkspace cases routes', () => {
   });
 
   it('maps a not_org_member auth failure to 403', async () => {
-    mockRequireOrgMember.mockRejectedValue(new CaseWorkspaceAuthError('not_org_member', 'not a member'));
+    mockRequireOrgMember.mockRejectedValue(
+      new CaseWorkspaceAuthError('not_org_member', 'not a member')
+    );
     const res = await request(createApp()).get('/api/v8/case-workspace/cases');
     expect(res.status).toBe(403);
   });
@@ -132,12 +150,16 @@ describe('caseWorkspace cases routes', () => {
   });
 
   it('rejects an invalid enum query param with 400', async () => {
-    const res = await request(createApp()).get('/api/v8/case-workspace/cases').query({ caseStatus: 'NOT_A_STATUS' });
+    const res = await request(createApp())
+      .get('/api/v8/case-workspace/cases')
+      .query({ caseStatus: 'NOT_A_STATUS' });
     expect(res.status).toBe(400);
   });
 
   it('rejects a cancel-case call missing reason with 400 before calling the service', async () => {
-    const res = await request(createApp()).post('/api/v8/case-workspace/cases/case-1/cancel').send({});
+    const res = await request(createApp())
+      .post('/api/v8/case-workspace/cases/case-1/cancel')
+      .send({});
     expect(res.status).toBe(400);
     expect(mockCancelCase).not.toHaveBeenCalled();
   });

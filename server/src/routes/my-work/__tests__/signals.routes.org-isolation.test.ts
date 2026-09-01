@@ -158,7 +158,8 @@ describe('POST /my-work/signals/:key mutations — cross-org guard', () => {
         return { signal_id: OWN_SIGNAL };
       }
       if (sql.includes('my_work_signal_snoozes')) return { snoozed_until: '2026-08-27T00:00:00Z' };
-      if (sql.includes('my_work_signal_dismissals')) return { dismissed_at: '2026-08-26T00:00:00Z' };
+      if (sql.includes('my_work_signal_dismissals'))
+        return { dismissed_at: '2026-08-26T00:00:00Z' };
       return null;
     });
     expect(

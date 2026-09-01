@@ -34,12 +34,48 @@ const pack = (readiness: string, status = 'imported') => ({
     pack_status: 'draft',
     pack_readiness_status: readiness,
     statements: [
-      { id: 'pl-2025', statement_type: 'P&L', period_label: '2025', readiness_status: readiness, status },
-      { id: 'pl-2024', statement_type: 'P&L', period_label: '2024', readiness_status: readiness, status },
-      { id: 'bs-2025', statement_type: 'BS', period_label: '2025', readiness_status: readiness, status },
-      { id: 'bs-2024', statement_type: 'BS', period_label: '2024', readiness_status: readiness, status },
-      { id: 'cf-2025', statement_type: 'CF', period_label: '2025', readiness_status: readiness, status },
-      { id: 'cf-2024', statement_type: 'CF', period_label: '2024', readiness_status: readiness, status },
+      {
+        id: 'pl-2025',
+        statement_type: 'P&L',
+        period_label: '2025',
+        readiness_status: readiness,
+        status,
+      },
+      {
+        id: 'pl-2024',
+        statement_type: 'P&L',
+        period_label: '2024',
+        readiness_status: readiness,
+        status,
+      },
+      {
+        id: 'bs-2025',
+        statement_type: 'BS',
+        period_label: '2025',
+        readiness_status: readiness,
+        status,
+      },
+      {
+        id: 'bs-2024',
+        statement_type: 'BS',
+        period_label: '2024',
+        readiness_status: readiness,
+        status,
+      },
+      {
+        id: 'cf-2025',
+        statement_type: 'CF',
+        period_label: '2025',
+        readiness_status: readiness,
+        status,
+      },
+      {
+        id: 'cf-2024',
+        statement_type: 'CF',
+        period_label: '2024',
+        readiness_status: readiness,
+        status,
+      },
     ],
   },
 });
@@ -56,7 +92,9 @@ describe('useFinanceSelection Statement ratio capability', () => {
 
     act(() => result.current.onSelectRow(row as any));
 
-    await waitFor(() => expect(result.current.statementPreviewDetail?.childStatements).toHaveLength(6));
+    await waitFor(() =>
+      expect(result.current.statementPreviewDetail?.childStatements).toHaveLength(6)
+    );
     expect(api.getStatementRatios).not.toHaveBeenCalled();
     expect(result.current.statementPreviewRatios).toBeNull();
   });

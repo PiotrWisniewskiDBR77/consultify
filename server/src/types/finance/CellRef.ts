@@ -83,7 +83,11 @@ export const FinanceTableNameSchema = z.enum(FinanceTableNameValues);
 // finance_stmt_lines row/column key branches (WP-D01 section 4.5 / 4.2 / 4.3)
 // ---------------------------------------------------------------------------
 
-export const FinanceConsolidationScopeValues = ['STANDALONE', 'CONSOLIDATED', 'ELIMINATION'] as const;
+export const FinanceConsolidationScopeValues = [
+  'STANDALONE',
+  'CONSOLIDATED',
+  'ELIMINATION',
+] as const;
 export type FinanceConsolidationScope = (typeof FinanceConsolidationScopeValues)[number];
 
 export const FinanceAccumulationBasisValues = ['QUARTER_ONLY', 'YTD', 'LTM', 'FULL_YEAR'] as const;
@@ -120,7 +124,9 @@ export const financeAnalysisKpiValuesColumnKeySchema = z.object({
   tableName: z.literal('finance_analysis_kpi_values'),
   periodId: z.string().min(1),
 });
-export type FinanceAnalysisKpiValuesColumnKey = z.infer<typeof financeAnalysisKpiValuesColumnKeySchema>;
+export type FinanceAnalysisKpiValuesColumnKey = z.infer<
+  typeof financeAnalysisKpiValuesColumnKeySchema
+>;
 
 // ---------------------------------------------------------------------------
 // finance_baseline_outputs row/column key branches (WP-D05 section 4.4 —
@@ -154,13 +160,17 @@ export const financePredictionOutputsEffectiveRowKeySchema = z.object({
   canonicalLineId: z.string().min(1),
   consolidationScope: z.enum(FinanceConsolidationScopeValues),
 });
-export type FinancePredictionOutputsEffectiveRowKey = z.infer<typeof financePredictionOutputsEffectiveRowKeySchema>;
+export type FinancePredictionOutputsEffectiveRowKey = z.infer<
+  typeof financePredictionOutputsEffectiveRowKeySchema
+>;
 
 export const financePredictionOutputsEffectiveColumnKeySchema = z.object({
   tableName: z.literal('finance_prediction_outputs_effective'),
   periodId: z.string().min(1),
 });
-export type FinancePredictionOutputsEffectiveColumnKey = z.infer<typeof financePredictionOutputsEffectiveColumnKeySchema>;
+export type FinancePredictionOutputsEffectiveColumnKey = z.infer<
+  typeof financePredictionOutputsEffectiveColumnKeySchema
+>;
 
 // ---------------------------------------------------------------------------
 // finance_valuation_methods row/column key branches (WP-D09 section 4.2 —
@@ -189,7 +199,9 @@ export type FinanceValuationMethodsRowKey = z.infer<typeof financeValuationMetho
 export const financeValuationMethodsColumnKeySchema = z.object({
   tableName: z.literal('finance_valuation_methods'),
 });
-export type FinanceValuationMethodsColumnKey = z.infer<typeof financeValuationMethodsColumnKeySchema>;
+export type FinanceValuationMethodsColumnKey = z.infer<
+  typeof financeValuationMethodsColumnKeySchema
+>;
 
 // ---------------------------------------------------------------------------
 // CellRowKey / CellColumnKey — discriminated unions on `tableName`. Adding a
@@ -253,10 +265,18 @@ export const CellRefSchema = z
   })
   .superRefine((ref, ctx) => {
     if (ref.rowKey.tableName !== ref.tableName) {
-      ctx.addIssue({ code: 'custom', message: 'rowKey.tableName must match CellRef.tableName', path: ['rowKey', 'tableName'] });
+      ctx.addIssue({
+        code: 'custom',
+        message: 'rowKey.tableName must match CellRef.tableName',
+        path: ['rowKey', 'tableName'],
+      });
     }
     if (ref.columnKey.tableName !== ref.tableName) {
-      ctx.addIssue({ code: 'custom', message: 'columnKey.tableName must match CellRef.tableName', path: ['columnKey', 'tableName'] });
+      ctx.addIssue({
+        code: 'custom',
+        message: 'columnKey.tableName must match CellRef.tableName',
+        path: ['columnKey', 'tableName'],
+      });
     }
   });
 export type CellRef = z.infer<typeof CellRefSchema>;
@@ -305,7 +325,11 @@ export function financeAnalysisKpiValuesCellRef(params: {
     organizationId: params.organizationId,
     businessVersionId: params.businessVersionId,
     tableName: 'finance_analysis_kpi_values',
-    rowKey: { tableName: 'finance_analysis_kpi_values', entityId: params.entityId, kpiCatalogId: params.kpiCatalogId },
+    rowKey: {
+      tableName: 'finance_analysis_kpi_values',
+      entityId: params.entityId,
+      kpiCatalogId: params.kpiCatalogId,
+    },
     columnKey: { tableName: 'finance_analysis_kpi_values', periodId: params.periodId },
     period: { periodId: params.periodId, accumulationBasis: null },
   };
@@ -390,7 +414,13 @@ function stableStringify(value: Record<string, unknown>): string {
 }
 
 export function cellRefKey(ref: CellRef): string {
-  return [ref.organizationId, ref.businessVersionId, ref.tableName, stableStringify(ref.rowKey), stableStringify(ref.columnKey)].join(' ');
+  return [
+    ref.organizationId,
+    ref.businessVersionId,
+    ref.tableName,
+    stableStringify(ref.rowKey),
+    stableStringify(ref.columnKey),
+  ].join(' ');
 }
 
 export function cellRefsEqual(a: CellRef, b: CellRef): boolean {

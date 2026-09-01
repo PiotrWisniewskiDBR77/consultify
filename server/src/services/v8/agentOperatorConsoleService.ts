@@ -1,5 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'node:crypto';
+
+import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { withPgTransaction } from '../../utils/queryHelpers.js';
@@ -180,7 +181,8 @@ export async function recoverAgentRunTarget(input: {
       )
     ).rows[0];
     if (replay) {
-      if (replay.input_digest !== inputDigest) throw new Error('recovery_idempotency_payload_conflict');
+      if (replay.input_digest !== inputDigest)
+        throw new Error('recovery_idempotency_payload_conflict');
       return {
         recoveryId: replay.recovery_id,
         status: input.action === 'expire_stale_review' ? 'expired' : 'pending',
@@ -209,7 +211,13 @@ export async function recoverAgentRunTarget(input: {
         `INSERT INTO v8_run_state_transitions
           (transition_id,run_id,from_state,to_state,triggered_by,reason,transitioned_at)
          VALUES (?,?,'waiting_for_review','expired',?,?,?)`,
-        [`run-transition-${uuidv4()}`, input.executionRunId, input.actorUserId, input.reason.trim(), now]
+        [
+          `run-transition-${uuidv4()}`,
+          input.executionRunId,
+          input.actorUserId,
+          input.reason.trim(),
+          now,
+        ]
       );
       const after = { ...run, state: 'expired', resolved_at: now, updated_at: now };
       const recoveryId = `agent-recovery-${uuidv4()}`;
@@ -218,8 +226,19 @@ export async function recoverAgentRunTarget(input: {
          (recovery_id,organization_id,execution_run_id,target_type,target_id,action,actor_user_id,
           reason,before_json,after_json,idempotency_key,input_digest)
          VALUES (?,?,?,'execution_run',?,?,?,?,?::text,?::text,?,?)`,
-        [recoveryId,input.organizationId,input.executionRunId,input.targetId,input.action,input.actorUserId,
-         input.reason.trim(),JSON.stringify(run),JSON.stringify(after),input.idempotencyKey,inputDigest]
+        [
+          recoveryId,
+          input.organizationId,
+          input.executionRunId,
+          input.targetId,
+          input.action,
+          input.actorUserId,
+          input.reason.trim(),
+          JSON.stringify(run),
+          JSON.stringify(after),
+          input.idempotencyKey,
+          inputDigest,
+        ]
       );
       return { recoveryId, status: 'expired', idempotentReplay: false };
     }
@@ -257,56 +276,191 @@ export async function recoverAgentRunTarget(input: {
        (recovery_id,organization_id,execution_run_id,target_type,target_id,action,actor_user_id,
         reason,before_json,after_json,idempotency_key,input_digest)
        VALUES (?,?,?,'branch_task',?,?,?,?,?::text,?::text,?,?)`,
-      [recoveryId,input.organizationId,input.executionRunId,input.targetId,input.action,input.actorUserId,
-       input.reason.trim(),JSON.stringify(task),JSON.stringify(after),input.idempotencyKey,inputDigest]
+      [
+        recoveryId,
+        input.organizationId,
+        input.executionRunId,
+        input.targetId,
+        input.action,
+        input.actorUserId,
+        input.reason.trim(),
+        JSON.stringify(task),
+        JSON.stringify(after),
+        input.idempotencyKey,
+        inputDigest,
+      ]
     );
     return { recoveryId, status: 'pending', idempotentReplay: false };
   });
 }
 
 async function requestWorkGraphCancellation(input: {
-  organizationId: string; executionRunId: string; actorUserId: string; targetId: string;
-  action: 'cancel_graph'; reason: string; idempotencyKey: string;
+  organizationId: string;
+  executionRunId: string;
+  actorUserId: string;
+  targetId: string;
+  action: 'cancel_graph';
+  reason: string;
+  idempotencyKey: string;
 }): Promise<{ recoveryId: string; status: string; idempotentReplay: boolean }> {
-  const payload = JSON.stringify({executionRunId:input.executionRunId,targetId:input.targetId,action:input.action,reason:input.reason.trim()});
-  const inputDigest=createHash('sha256').update(payload).digest('hex');
-  return withPgTransaction(async(client)=>{
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`,[`${input.organizationId}:${input.executionRunId}:${input.idempotencyKey}`]);
-    const replay=(await client.query<any>(`SELECT recovery_id,input_digest FROM v8_agent_operator_recovery_events WHERE organization_id=? AND execution_run_id=? AND idempotency_key=? FOR UPDATE`,[input.organizationId,input.executionRunId,input.idempotencyKey])).rows[0];
-    if(replay){if(replay.input_digest!==inputDigest)throw new Error('recovery_idempotency_payload_conflict');return{recoveryId:replay.recovery_id,status:'cancellation_requested',idempotentReplay:true};}
-    const graph=(await client.query<any>(`SELECT * FROM v8_agent_work_graphs WHERE graph_id=? AND execution_run_id=? AND organization_id=? FOR UPDATE`,[input.targetId,input.executionRunId,input.organizationId])).rows[0];
-    if(!graph)throw new Error('operator_target_not_found');
-    if(['completed','cancelled'].includes(graph.status))throw new Error('work_graph_cancel_not_allowed');
-    await client.query(`UPDATE v8_agent_work_graphs SET status='cancellation_requested',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=?`,[input.targetId,input.organizationId]);
-    await client.query(`UPDATE v8_agent_branch_tasks SET status='cancelled',error_text='graph_cancelled',lease_owner=NULL,lease_expires_at=NULL,updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status IN ('pending','failed')`,[input.targetId,input.organizationId]);
-    await client.query(`UPDATE v8_agent_branch_tasks SET status='cancellation_requested',error_text='graph_cancellation_requested',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status='running'`,[input.targetId,input.organizationId]);
-    const after={...graph,status:'cancellation_requested'};const recoveryId=`agent-recovery-${uuidv4()}`;
-    await client.query(`INSERT INTO v8_agent_operator_recovery_events (recovery_id,organization_id,execution_run_id,target_type,target_id,action,actor_user_id,reason,before_json,after_json,idempotency_key,input_digest) VALUES (?,?,?,'work_graph',?,?,?,?,?::text,?::text,?,?)`,[recoveryId,input.organizationId,input.executionRunId,input.targetId,input.action,input.actorUserId,input.reason.trim(),JSON.stringify(graph),JSON.stringify(after),input.idempotencyKey,inputDigest]);
-    await client.query(`INSERT INTO v8_agent_canonical_projection_outbox (outbox_id,organization_id,execution_run_id,alias_type,external_id,actor_user_id,reason) VALUES (?, ?, ?, 'work_graph', ?, ?, ?)`,[`projection-outbox-${uuidv4()}`,input.organizationId,input.executionRunId,input.targetId,input.actorUserId,`Operator requested work graph cancellation: ${input.reason.trim()}`]);
-    return{recoveryId,status:'cancellation_requested',idempotentReplay:false};
+  const payload = JSON.stringify({
+    executionRunId: input.executionRunId,
+    targetId: input.targetId,
+    action: input.action,
+    reason: input.reason.trim(),
+  });
+  const inputDigest = createHash('sha256').update(payload).digest('hex');
+  return withPgTransaction(async (client) => {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
+      `${input.organizationId}:${input.executionRunId}:${input.idempotencyKey}`,
+    ]);
+    const replay = (
+      await client.query<any>(
+        `SELECT recovery_id,input_digest FROM v8_agent_operator_recovery_events WHERE organization_id=? AND execution_run_id=? AND idempotency_key=? FOR UPDATE`,
+        [input.organizationId, input.executionRunId, input.idempotencyKey]
+      )
+    ).rows[0];
+    if (replay) {
+      if (replay.input_digest !== inputDigest)
+        throw new Error('recovery_idempotency_payload_conflict');
+      return {
+        recoveryId: replay.recovery_id,
+        status: 'cancellation_requested',
+        idempotentReplay: true,
+      };
+    }
+    const graph = (
+      await client.query<any>(
+        `SELECT * FROM v8_agent_work_graphs WHERE graph_id=? AND execution_run_id=? AND organization_id=? FOR UPDATE`,
+        [input.targetId, input.executionRunId, input.organizationId]
+      )
+    ).rows[0];
+    if (!graph) throw new Error('operator_target_not_found');
+    if (['completed', 'cancelled'].includes(graph.status))
+      throw new Error('work_graph_cancel_not_allowed');
+    await client.query(
+      `UPDATE v8_agent_work_graphs SET status='cancellation_requested',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=?`,
+      [input.targetId, input.organizationId]
+    );
+    await client.query(
+      `UPDATE v8_agent_branch_tasks SET status='cancelled',error_text='graph_cancelled',lease_owner=NULL,lease_expires_at=NULL,updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status IN ('pending','failed')`,
+      [input.targetId, input.organizationId]
+    );
+    await client.query(
+      `UPDATE v8_agent_branch_tasks SET status='cancellation_requested',error_text='graph_cancellation_requested',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status='running'`,
+      [input.targetId, input.organizationId]
+    );
+    const after = { ...graph, status: 'cancellation_requested' };
+    const recoveryId = `agent-recovery-${uuidv4()}`;
+    await client.query(
+      `INSERT INTO v8_agent_operator_recovery_events (recovery_id,organization_id,execution_run_id,target_type,target_id,action,actor_user_id,reason,before_json,after_json,idempotency_key,input_digest) VALUES (?,?,?,'work_graph',?,?,?,?,?::text,?::text,?,?)`,
+      [
+        recoveryId,
+        input.organizationId,
+        input.executionRunId,
+        input.targetId,
+        input.action,
+        input.actorUserId,
+        input.reason.trim(),
+        JSON.stringify(graph),
+        JSON.stringify(after),
+        input.idempotencyKey,
+        inputDigest,
+      ]
+    );
+    await client.query(
+      `INSERT INTO v8_agent_canonical_projection_outbox (outbox_id,organization_id,execution_run_id,alias_type,external_id,actor_user_id,reason) VALUES (?, ?, ?, 'work_graph', ?, ?, ?)`,
+      [
+        `projection-outbox-${uuidv4()}`,
+        input.organizationId,
+        input.executionRunId,
+        input.targetId,
+        input.actorUserId,
+        `Operator requested work graph cancellation: ${input.reason.trim()}`,
+      ]
+    );
+    return { recoveryId, status: 'cancellation_requested', idempotentReplay: false };
   });
 }
 
-export async function acknowledgeWorkGraphTaskCancellation(input:{organizationId:string;executionRunId:string;graphId:string;taskId:string;workerId:string}){
-  return withPgTransaction(async(client)=>{
-    const task=(await client.query<any>(`SELECT t.* FROM v8_agent_branch_tasks t JOIN v8_agent_work_graphs g ON g.graph_id=t.graph_id WHERE t.task_id=? AND t.graph_id=? AND t.organization_id=? AND g.execution_run_id=? FOR UPDATE OF t`,[input.taskId,input.graphId,input.organizationId,input.executionRunId])).rows[0];
-    if(!task)throw new Error('operator_target_not_found');
-    if(task.status==='cancelled')return{idempotentReplay:true,status:'cancelled'};
-    if(task.status!=='cancellation_requested'||task.lease_owner!==input.workerId)throw new Error('cancellation_ack_not_allowed');
-    await client.query(`UPDATE v8_agent_branch_tasks SET status='cancelled',lease_owner=NULL,lease_expires_at=NULL,error_text='worker_cancellation_acknowledged',updated_at=CURRENT_TIMESTAMP WHERE task_id=? AND organization_id=?`,[input.taskId,input.organizationId]);
-    const remaining=(await client.query<{count:number}>(`SELECT COUNT(*)::int count FROM v8_agent_branch_tasks WHERE graph_id=? AND organization_id=? AND status='cancellation_requested'`,[input.graphId,input.organizationId])).rows[0];
-    if(Number(remaining?.count??0)===0)await client.query(`UPDATE v8_agent_work_graphs SET status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status='cancellation_requested'`,[input.graphId,input.organizationId]);
-    return{idempotentReplay:false,status:'cancelled'};
+export async function acknowledgeWorkGraphTaskCancellation(input: {
+  organizationId: string;
+  executionRunId: string;
+  graphId: string;
+  taskId: string;
+  workerId: string;
+}) {
+  return withPgTransaction(async (client) => {
+    const task = (
+      await client.query<any>(
+        `SELECT t.* FROM v8_agent_branch_tasks t JOIN v8_agent_work_graphs g ON g.graph_id=t.graph_id WHERE t.task_id=? AND t.graph_id=? AND t.organization_id=? AND g.execution_run_id=? FOR UPDATE OF t`,
+        [input.taskId, input.graphId, input.organizationId, input.executionRunId]
+      )
+    ).rows[0];
+    if (!task) throw new Error('operator_target_not_found');
+    if (task.status === 'cancelled') return { idempotentReplay: true, status: 'cancelled' };
+    if (task.status !== 'cancellation_requested' || task.lease_owner !== input.workerId)
+      throw new Error('cancellation_ack_not_allowed');
+    await client.query(
+      `UPDATE v8_agent_branch_tasks SET status='cancelled',lease_owner=NULL,lease_expires_at=NULL,error_text='worker_cancellation_acknowledged',updated_at=CURRENT_TIMESTAMP WHERE task_id=? AND organization_id=?`,
+      [input.taskId, input.organizationId]
+    );
+    const remaining = (
+      await client.query<{ count: number }>(
+        `SELECT COUNT(*)::int count FROM v8_agent_branch_tasks WHERE graph_id=? AND organization_id=? AND status='cancellation_requested'`,
+        [input.graphId, input.organizationId]
+      )
+    ).rows[0];
+    if (Number(remaining?.count ?? 0) === 0)
+      await client.query(
+        `UPDATE v8_agent_work_graphs SET status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE graph_id=? AND organization_id=? AND status='cancellation_requested'`,
+        [input.graphId, input.organizationId]
+      );
+    return { idempotentReplay: false, status: 'cancelled' };
   });
 }
 
-export async function processCanonicalProjectionOutbox(input:{workerId:string;limit?:number}){
-  const claimed=await withPgTransaction(async(client)=>{
-    const rows=(await client.query<any>(`SELECT * FROM v8_agent_canonical_projection_outbox WHERE status IN ('pending','failed') ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT ?`,[input.limit??10])).rows;
-    for(const row of rows)await client.query(`UPDATE v8_agent_canonical_projection_outbox SET status='claimed',claim_owner=?,claimed_at=?,attempt_count=attempt_count+1,updated_at=? WHERE outbox_id=?`,[input.workerId,new Date().toISOString(),new Date().toISOString(),row.outbox_id]);
+export async function processCanonicalProjectionOutbox(input: {
+  workerId: string;
+  limit?: number;
+}) {
+  const claimed = await withPgTransaction(async (client) => {
+    const rows = (
+      await client.query<any>(
+        `SELECT * FROM v8_agent_canonical_projection_outbox WHERE status IN ('pending','failed') ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT ?`,
+        [input.limit ?? 10]
+      )
+    ).rows;
+    for (const row of rows)
+      await client.query(
+        `UPDATE v8_agent_canonical_projection_outbox SET status='claimed',claim_owner=?,claimed_at=?,attempt_count=attempt_count+1,updated_at=? WHERE outbox_id=?`,
+        [input.workerId, new Date().toISOString(), new Date().toISOString(), row.outbox_id]
+      );
     return rows;
   });
-  const results=[];
-  for(const row of claimed){try{await projectCanonicalRunAfterExternalTransition({canonicalRunId:row.execution_run_id,organizationId:row.organization_id,aliasType:'work_graph',externalId:row.external_id,actorUserId:row.actor_user_id,reason:row.reason});await dbRun(`UPDATE v8_agent_canonical_projection_outbox SET status='applied',applied_at=?,last_error=NULL,updated_at=? WHERE outbox_id=? AND status='claimed'`,[new Date().toISOString(),new Date().toISOString(),row.outbox_id]);results.push({outboxId:row.outbox_id,status:'applied'});}catch(error){await dbRun(`UPDATE v8_agent_canonical_projection_outbox SET status='failed',last_error=?,updated_at=? WHERE outbox_id=? AND status='claimed'`,[String((error as Error).message),new Date().toISOString(),row.outbox_id]);results.push({outboxId:row.outbox_id,status:'failed'});}}
+  const results = [];
+  for (const row of claimed) {
+    try {
+      await projectCanonicalRunAfterExternalTransition({
+        canonicalRunId: row.execution_run_id,
+        organizationId: row.organization_id,
+        aliasType: 'work_graph',
+        externalId: row.external_id,
+        actorUserId: row.actor_user_id,
+        reason: row.reason,
+      });
+      await dbRun(
+        `UPDATE v8_agent_canonical_projection_outbox SET status='applied',applied_at=?,last_error=NULL,updated_at=? WHERE outbox_id=? AND status='claimed'`,
+        [new Date().toISOString(), new Date().toISOString(), row.outbox_id]
+      );
+      results.push({ outboxId: row.outbox_id, status: 'applied' });
+    } catch (error) {
+      await dbRun(
+        `UPDATE v8_agent_canonical_projection_outbox SET status='failed',last_error=?,updated_at=? WHERE outbox_id=? AND status='claimed'`,
+        [String((error as Error).message), new Date().toISOString(), row.outbox_id]
+      );
+      results.push({ outboxId: row.outbox_id, status: 'failed' });
+    }
+  }
   return results;
 }

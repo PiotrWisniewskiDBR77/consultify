@@ -18,11 +18,7 @@
  * segregacja obowiązków byłaby fikcją.
  */
 
-import {
-  AuditPermissionError,
-  auditAll,
-  auditGet,
-} from './auditsDb.js';
+import { auditAll, auditGet, AuditPermissionError } from './auditsDb.js';
 import type { AuditActor, AuditRole, PackDecisionRules } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -149,13 +145,7 @@ const ROLE_CAPABILITIES: Record<AuditRole, AuditCapability[]> = {
     'ai.propose',
     'ai.commit',
   ],
-  technical_expert: [
-    'pack.read',
-    'program.read',
-    'evidence.review',
-    'finding.draft',
-    'ai.propose',
-  ],
+  technical_expert: ['pack.read', 'program.read', 'evidence.review', 'finding.draft', 'ai.propose'],
   auditee: [
     'program.read',
     'criterion.respond_as_auditee',
@@ -177,12 +167,7 @@ const ROLE_CAPABILITIES: Record<AuditRole, AuditCapability[]> = {
     'verification.perform',
     'report.approve',
   ],
-  action_owner: [
-    'program.read',
-    'action.report_implementation',
-    'evidence.submit',
-    'ai.propose',
-  ],
+  action_owner: ['program.read', 'action.report_implementation', 'evidence.submit', 'ai.propose'],
   administrator: [
     'pack.read',
     'pack.write',
@@ -234,13 +219,13 @@ const PLATFORM_ADMIN_CAPABILITIES: AuditCapability[] = [
 export async function getProgramRoles(
   organizationId: string,
   programId: string,
-  userId: string,
+  userId: string
 ): Promise<AuditRole[]> {
   const rows = await auditAll<{ member_role: string }>(
     `SELECT member_role FROM audit_program_members
       WHERE organization_id = $1 AND program_id = $2 AND user_id = $3
         AND removed_at IS NULL`,
-    [organizationId, programId, userId],
+    [organizationId, programId, userId]
   );
   return rows.map((r) => r.member_role as AuditRole);
 }
@@ -277,7 +262,7 @@ export interface ProgramAccess {
 
 export async function resolveProgramAccess(
   actor: AuditActor,
-  programId: string,
+  programId: string
 ): Promise<ProgramAccess> {
   const roles = await getProgramRoles(actor.organizationId, programId, actor.userId);
   const capabilities = capabilitiesForRoles(roles);
@@ -296,12 +281,11 @@ export async function resolveProgramAccess(
 export function assertCapability(
   access: ProgramAccess,
   capability: AuditCapability,
-  hint?: string,
+  hint?: string
 ): void {
   if (!access.capabilities.has(capability)) {
     throw new AuditPermissionError(
-      hint ??
-        `Ta czynność (${capability}) wymaga roli audytowej, której nie masz w tym programie`,
+      hint ?? `Ta czynność (${capability}) wymaga roli audytowej, której nie masz w tym programie`
     );
   }
 }
@@ -310,7 +294,7 @@ export async function requireCapability(
   actor: AuditActor,
   programId: string,
   capability: AuditCapability,
-  hint?: string,
+  hint?: string
 ): Promise<ProgramAccess> {
   const access = await resolveProgramAccess(actor, programId);
   assertCapability(access, capability, hint);
@@ -331,18 +315,21 @@ export async function requireCapability(
 export async function assertNotConcludingOwnResponse(
   organizationId: string,
   criterionId: string,
-  userId: string,
+  userId: string
 ): Promise<void> {
-  const row = await auditGet<{ auditee_responded_by: string | null; assigned_auditee_id: string | null }>(
+  const row = await auditGet<{
+    auditee_responded_by: string | null;
+    assigned_auditee_id: string | null;
+  }>(
     `SELECT auditee_responded_by, assigned_auditee_id
        FROM audit_program_criteria
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, criterionId],
+    [organizationId, criterionId]
   );
   if (!row) return;
   if (row.auditee_responded_by && row.auditee_responded_by === userId) {
     throw new AuditPermissionError(
-      'Nie możesz wyciągnąć wniosku audytowego dla kryterium, na które sam odpowiadałeś jako strona audytowana',
+      'Nie możesz wyciągnąć wniosku audytowego dla kryterium, na które sam odpowiadałeś jako strona audytowana'
     );
   }
 }
@@ -353,16 +340,16 @@ export async function assertNotConcludingOwnResponse(
 export async function assertNotClosingOwnFinding(
   organizationId: string,
   findingId: string,
-  userId: string,
+  userId: string
 ): Promise<void> {
   const row = await auditGet<{ owner_user_id: string | null }>(
     `SELECT owner_user_id FROM audit_program_findings
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, findingId],
+    [organizationId, findingId]
   );
   if (row?.owner_user_id && row.owner_user_id === userId) {
     throw new AuditPermissionError(
-      'Właściciel ustalenia nie może go sam zamknąć — zamknięcie wymaga niezależnej weryfikacji',
+      'Właściciel ustalenia nie może go sam zamknąć — zamknięcie wymaga niezależnej weryfikacji'
     );
   }
 }
@@ -375,7 +362,7 @@ export async function assertIndependentVerifier(
   organizationId: string,
   correctiveActionId: string,
   userId: string,
-  decisionRules?: PackDecisionRules,
+  decisionRules?: PackDecisionRules
 ): Promise<void> {
   const requireIndependent = decisionRules?.requireIndependentVerification !== false;
   if (!requireIndependent) return;
@@ -383,12 +370,12 @@ export async function assertIndependentVerifier(
   const row = await auditGet<{ owner_user_id: string | null; implemented_by: string | null }>(
     `SELECT owner_user_id, implemented_by FROM audit_corrective_actions
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, correctiveActionId],
+    [organizationId, correctiveActionId]
   );
   if (!row) return;
   if (row.owner_user_id === userId || row.implemented_by === userId) {
     throw new AuditPermissionError(
-      'Weryfikację skuteczności musi wykonać osoba inna niż właściciel lub wykonawca działania',
+      'Weryfikację skuteczności musi wykonać osoba inna niż właściciel lub wykonawca działania'
     );
   }
 }
@@ -399,17 +386,15 @@ export async function assertIndependentVerifier(
 export async function assertNotReviewingOwnFinding(
   organizationId: string,
   findingId: string,
-  userId: string,
+  userId: string
 ): Promise<void> {
   const row = await auditGet<{ author_id: string | null }>(
     `SELECT author_id FROM audit_program_findings
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, findingId],
+    [organizationId, findingId]
   );
   if (row?.author_id && row.author_id === userId) {
-    throw new AuditPermissionError(
-      'Autor ustalenia nie może być jego recenzentem',
-    );
+    throw new AuditPermissionError('Autor ustalenia nie może być jego recenzentem');
   }
 }
 
@@ -419,13 +404,13 @@ export async function assertNotReviewingOwnFinding(
  */
 export function assertCanAcceptResidualRisk(
   access: ProgramAccess,
-  decisionRules?: PackDecisionRules,
+  decisionRules?: PackDecisionRules
 ): void {
   const allowed = decisionRules?.riskAcceptanceRoles ?? ['program_owner'];
   const has = access.roles.some((r) => allowed.includes(r));
   if (!has) {
     throw new AuditPermissionError(
-      `Akceptacja ryzyka rezydualnego wymaga roli: ${allowed.join(', ')}`,
+      `Akceptacja ryzyka rezydualnego wymaga roli: ${allowed.join(', ')}`
     );
   }
 }
@@ -455,7 +440,7 @@ const AI_NEVER_COMMITS: AuditCapability[] = [
 export function assertAiMayCommit(capability: AuditCapability): void {
   if (AI_NEVER_COMMITS.includes(capability)) {
     throw new AuditPermissionError(
-      `Teresa nie może wykonać tej czynności (${capability}) — wymaga jawnej decyzji uprawnionej osoby`,
+      `Teresa nie może wykonać tej czynności (${capability}) — wymaga jawnej decyzji uprawnionej osoby`
     );
   }
 }

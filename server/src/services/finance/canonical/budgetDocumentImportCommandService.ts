@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 
+import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 import {
   detectNumberNotation,
-  parseStatementNumber,
   type NumberNotationProfile,
+  parseStatementNumber,
 } from '../numberNotation.js';
-import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
 
 const DEFINITIONS = [
   { code: 'REVENUE', keywords: ['revenue', 'sales', 'turnover', 'przychody', 'sprzedaż'] },

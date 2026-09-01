@@ -114,7 +114,8 @@ export const rpaScannerPack: ToolPack = {
         en: 'Define the process family and the automation goal.',
       },
       whatGoodLooksLike: 'Nazwana rodzina procesów, cel biznesowy i horyzont decyzji o backlogu.',
-      evidenceToAskFor: 'Który dział/proces zgłasza problem i jaki jest budżetowy/czasowy horyzont.',
+      evidenceToAskFor:
+        'Który dział/proces zgłasza problem i jaki jest budżetowy/czasowy horyzont.',
       completionCriterion: 'Cel automatyzacji zaakceptowany przez właściciela decyzji.',
     },
     {
@@ -124,9 +125,12 @@ export const rpaScannerPack: ToolPack = {
         pl: 'Wypisać procesy kandydujące do RPA z ich wolumenem i regułowością.',
         en: 'List candidate processes for RPA with their volume and rule-basedness.',
       },
-      whatGoodLooksLike: 'Każdy kandydat ma wolumen (zmierzony lub jawnie oznaczony jako szacunek) i poziom standaryzacji.',
-      evidenceToAskFor: 'Log systemowy, raport lub obserwacja potwierdzająca wolumen; nie "wydaje się, że dużo".',
-      completionCriterion: 'Co najmniej jeden kandydat ma zmierzony wolumen (rpaQuestionBank.ts: pętla rpa-volume-force nie blokuje dalej).',
+      whatGoodLooksLike:
+        'Każdy kandydat ma wolumen (zmierzony lub jawnie oznaczony jako szacunek) i poziom standaryzacji.',
+      evidenceToAskFor:
+        'Log systemowy, raport lub obserwacja potwierdzająca wolumen; nie "wydaje się, że dużo".',
+      completionCriterion:
+        'Co najmniej jeden kandydat ma zmierzony wolumen (rpaQuestionBank.ts: pętla rpa-volume-force nie blokuje dalej).',
     },
     {
       id: 'sizing',
@@ -135,9 +139,11 @@ export const rpaScannerPack: ToolPack = {
         pl: 'Oszacować każdego kandydata wg wolumenu, wysiłku i złożoności.',
         en: 'Size each candidate by volume, effort, and complexity.',
       },
-      whatGoodLooksLike: 'Każdy kandydat ma exceptionRate, handlingMinutes i techTier (rpa/ocr/api/ai) osadzone w danych, nie w domysłach.',
+      whatGoodLooksLike:
+        'Każdy kandydat ma exceptionRate, handlingMinutes i techTier (rpa/ocr/api/ai) osadzone w danych, nie w domysłach.',
       evidenceToAskFor: 'Udział wyjątków wymagających człowieka i czas obsługi jednego przebiegu.',
-      completionCriterion: 'Roczne minuty automatyzowalnej pracy policzone przez silnik (feasibilityEngine.ts: computeBaseline).',
+      completionCriterion:
+        'Roczne minuty automatyzowalnej pracy policzone przez silnik (feasibilityEngine.ts: computeBaseline).',
     },
     {
       id: 'backlog',
@@ -146,9 +152,11 @@ export const rpaScannerPack: ToolPack = {
         pl: 'Spriorytetyzować backlog automatyzacji wg czterech bramek oceny.',
         en: 'Prioritize the automation backlog across the four assessment gates.',
       },
-      whatGoodLooksLike: 'Pomysły automatyzacji przypisane do bramek (identify/standardize/quantify/feasibility) z impact i effort.',
+      whatGoodLooksLike:
+        'Pomysły automatyzacji przypisane do bramek (identify/standardize/quantify/feasibility) z impact i effort.',
       evidenceToAskFor: 'Dlaczego pomysł trafia do tej bramki, a nie do "automate" wprost.',
-      completionCriterion: 'Ranking bramek policzony (rankRpaGates) z co najmniej jedną bramką mającą pomysł.',
+      completionCriterion:
+        'Ranking bramek policzony (rankRpaGates) z co najmniej jedną bramką mającą pomysł.',
     },
     {
       id: 'summary',
@@ -157,9 +165,11 @@ export const rpaScannerPack: ToolPack = {
         pl: 'Zamienić ranking bramek w W2-zwalidowaną sekwencję ruchów i inicjatywy.',
         en: 'Turn the gate ranking into a W2-validated move sequence and initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch ma rationale, trade-off i odrzucony wariant (walidacja: valid=true, brak missing/weak).',
+      whatGoodLooksLike:
+        'Każdy ruch ma rationale, trade-off i odrzucony wariant (walidacja: valid=true, brak missing/weak).',
       evidenceToAskFor: 'Co świadomie odrzucamy wybierając tę kolejność bramek i jakim kosztem.',
-      completionCriterion: 'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
+      completionCriterion:
+        'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
     },
   ],
 
@@ -174,7 +184,10 @@ export const rpaScannerPack: ToolPack = {
       answerType: 'text',
       challengeRule:
         'Odrzuć odpowiedź bez nazwanej rodziny procesów ("chcemy zautomatyzować firmę" = za ogólne) — cel musi wskazywać dział lub proces.',
-      followUpProbes: ['Kto zgłosił ten problem?', 'Co się stanie, jeśli backlog nie powstanie w tym kwartale?'],
+      followUpProbes: [
+        'Kto zgłosił ten problem?',
+        'Co się stanie, jeśli backlog nie powstanie w tym kwartale?',
+      ],
     },
     {
       id: 'rpa-candidates-volume-evidence',
@@ -312,6 +325,7 @@ export const rpaScannerPack: ToolPack = {
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'Repo twierdzi, że to wzorzec autorski, ale nie zweryfikowano tego wobec źródeł zewnętrznych.',
+    uncertainty:
+      'Repo twierdzi, że to wzorzec autorski, ale nie zweryfikowano tego wobec źródeł zewnętrznych.',
   },
 };

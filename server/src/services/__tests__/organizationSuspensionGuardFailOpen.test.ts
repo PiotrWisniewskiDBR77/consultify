@@ -28,10 +28,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  __testing__,
-  isOrganizationSuspended,
-} from '../organizationSuspensionGuard.js';
+import { __testing__, isOrganizationSuspended } from '../organizationSuspensionGuard.js';
 
 describe('DEC-91 FIX-4 — database failures do not poison the suspension cache', () => {
   beforeEach(() => __testing__.reset());

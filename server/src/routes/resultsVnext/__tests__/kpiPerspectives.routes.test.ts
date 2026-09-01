@@ -119,19 +119,23 @@ vi.mock('../../../services/resultsVnext/kpi/kpiInitiativeImpactRepository.js', (
   listInitiativeImpactsForKpi: (...args: unknown[]) => mockListInitiativeImpactsForKpi(...args),
   listKpiImpactsForInitiative: (...args: unknown[]) => mockListKpiImpactsForInitiative(...args),
 }));
-vi.mock('../../../services/resultsVnext/kpi/kpiInitiativeImpactCommands.js', async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import('../../../services/resultsVnext/kpi/kpiInitiativeImpactCommands.js')
-    >();
-  return {
-    ...actual,
-    proposeInitiativeKpiImpact: (...args: unknown[]) => mockProposeInitiativeKpiImpact(...args),
-    commitInitiativeKpiImpact: (...args: unknown[]) => mockCommitInitiativeKpiImpact(...args),
-    recordReviewedAttribution: (...args: unknown[]) => mockRecordReviewedAttribution(...args),
-    supersedeInitiativeKpiImpact: (...args: unknown[]) => mockSupersedeInitiativeKpiImpact(...args),
-  };
-});
+vi.mock(
+  '../../../services/resultsVnext/kpi/kpiInitiativeImpactCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/kpi/kpiInitiativeImpactCommands.js')
+      >();
+    return {
+      ...actual,
+      proposeInitiativeKpiImpact: (...args: unknown[]) => mockProposeInitiativeKpiImpact(...args),
+      commitInitiativeKpiImpact: (...args: unknown[]) => mockCommitInitiativeKpiImpact(...args),
+      recordReviewedAttribution: (...args: unknown[]) => mockRecordReviewedAttribution(...args),
+      supersedeInitiativeKpiImpact: (...args: unknown[]) =>
+        mockSupersedeInitiativeKpiImpact(...args),
+    };
+  }
+);
 
 // kpi.routes.ts's own dependencies, mocked so it imports cleanly for the
 // mount-order guard test (same shape kpiDeviation.routes.test.ts uses).
@@ -173,9 +177,8 @@ vi.mock('../../../services/resultsVnext/kpi/kpiRepository.js', () => ({
 
 const { InitiativeKpiImpactSelfApprovalDeniedError, KpiInitiativeImpactValidationError } =
   await import('../../../services/resultsVnext/kpi/kpiInitiativeImpactCommands.js');
-const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } = await import(
-  '../../../services/resultsVnext/platform/atomicWrite.js'
-);
+const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const kpiPerspectivesRoutes = (await import('../kpiPerspectives.routes.js')).default;
 const { initiativesKpiImpactsRouter } = await import('../kpiPerspectives.routes.js');
@@ -285,9 +288,7 @@ describe('GET /api/vnext/results/kpi/my — listMyKpis', () => {
   it('passes limit/offset through to the repository', async () => {
     mockListMyKpis.mockResolvedValue([]);
     await request(createApp()).get('/api/vnext/results/kpi/my').query({ limit: '10', offset: '5' });
-    expect(mockListMyKpis).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 10, offset: 5 })
-    );
+    expect(mockListMyKpis).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, offset: 5 }));
   });
 });
 
@@ -421,11 +422,9 @@ describe('POST .../initiative-impacts/:impactId/commit — commitInitiativeKpiIm
 
   it('maps NOT_PROPOSED to 409', async () => {
     mockCommitInitiativeKpiImpact.mockRejectedValue(
-      new KpiInitiativeImpactValidationError(
-        `Impact ${IMPACT_ID} is "committed"`,
-        'NOT_PROPOSED',
-        { impactId: IMPACT_ID }
-      )
+      new KpiInitiativeImpactValidationError(`Impact ${IMPACT_ID} is "committed"`, 'NOT_PROPOSED', {
+        impactId: IMPACT_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/kpi/initiative-impacts/${IMPACT_ID}/commit`)
@@ -507,7 +506,10 @@ describe('POST .../initiative-impacts/:impactId/supersede — supersedeInitiativ
       resultingVersion: 2,
       result: {
         superseded: impactFixture({ status: 'superseded', rowVersion: 2 }),
-        replacement: impactFixture({ impactId: '33333333-3333-4333-8333-333333333333', status: 'proposed' }),
+        replacement: impactFixture({
+          impactId: '33333333-3333-4333-8333-333333333333',
+          status: 'proposed',
+        }),
       },
     });
     const response = await request(createApp())
@@ -535,10 +537,14 @@ describe('POST .../initiative-impacts/:impactId/supersede — supersedeInitiativ
 
   it('returns 409 STALE_VERSION on an optimistic-concurrency conflict', async () => {
     mockSupersedeInitiativeKpiImpact.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 1,
+        }
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/kpi/initiative-impacts/${IMPACT_ID}/supersede`)

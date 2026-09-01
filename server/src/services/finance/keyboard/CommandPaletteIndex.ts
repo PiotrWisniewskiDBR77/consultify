@@ -48,7 +48,13 @@ function tokenize(text: string): string[] {
 function buildEntry(command: KeyboardCommand): CommandPaletteEntry {
   // `scope` joins the token source so a user can type "workspace" and see every
   // shell-level command — the level split is only useful if it is searchable.
-  const tokenSource = [command.id, command.label, command.description, command.category, command.scope].join(' ');
+  const tokenSource = [
+    command.id,
+    command.label,
+    command.description,
+    command.category,
+    command.scope,
+  ].join(' ');
   const tokens = new Set<string>(tokenize(tokenSource));
   tokens.add(command.id.toLowerCase());
   return {
@@ -77,7 +83,9 @@ export class CommandPaletteIndex {
   }
 
   byContext(context: CommandContext): readonly CommandPaletteEntry[] {
-    return this.entries.filter((e) => e.command.context === context || e.command.context === 'global');
+    return this.entries.filter(
+      (e) => e.command.context === context || e.command.context === 'global'
+    );
   }
 
   /** Level grouping — a palette renders "Siatka" and "Obszar roboczy" as separate sections rather than one flat list of 30 rows. */
@@ -101,7 +109,9 @@ export class CommandPaletteIndex {
   /** `search()` narrowed to one context — the shape a palette actually renders (user is typing while the grid is in a specific mode, only commands reachable from there are useful suggestions). */
   searchInContext(query: string, context: CommandContext): readonly CommandPaletteEntry[] {
     const q = query.trim().toLowerCase();
-    return this.byContext(context).filter((e) => q.length === 0 || e.searchTokens.some((t) => t.includes(q)));
+    return this.byContext(context).filter(
+      (e) => q.length === 0 || e.searchTokens.some((t) => t.includes(q))
+    );
   }
 
   /** Convenience for a palette row's shortcut-hint column. */

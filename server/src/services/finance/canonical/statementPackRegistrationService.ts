@@ -1,4 +1,10 @@
-import { createArtifact } from './artifactVersionService.js';
+import logger from '../../../utils/Logger.js';
+import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import {
+  recomputeStatementPack,
+  runStatementPackShadowReconcile,
+  syncStatementToPack,
+} from '../../financialStatementPackService.js';
 import {
   confirmStatement,
   getLatestStatementIngestRun,
@@ -6,16 +12,10 @@ import {
   recordStatementSourceArtifact,
   snapshotCanonicalStatementVersion,
   startStatementIngestRun,
-  updateStatementIngestRun,
   type StatementReadinessEvaluation,
+  updateStatementIngestRun,
 } from '../../financialStatementService.js';
-import {
-  recomputeStatementPack,
-  runStatementPackShadowReconcile,
-  syncStatementToPack,
-} from '../../financialStatementPackService.js';
-import logger from '../../../utils/Logger.js';
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import { createArtifact } from './artifactVersionService.js';
 
 export interface ConfirmAndRegisterStatementPackParams {
   statementId: string;
@@ -138,8 +138,7 @@ export async function confirmAndRegisterStatementPack(
     // re-syncing by the individual statement period fragments the six-sibling
     // document into period-specific packs and breaks cold/deep-link recovery.
     const statementPackId =
-      existingPackId ||
-      (await syncStatementToPack(params.statementId, { deferShadow: true }));
+      existingPackId || (await syncStatementToPack(params.statementId, { deferShadow: true }));
     if (!statementPackId) throw new Error('Statement pack registration produced no pack');
 
     // syncStatementToPack already refreshes a newly assigned pack on the

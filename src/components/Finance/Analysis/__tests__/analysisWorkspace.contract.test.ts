@@ -6,9 +6,13 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { resolveControlState, type WorkspaceBarEvaluationContext } from '../../shared/financeWorkspaceBar.contract';
+import {
+  resolveControlState,
+  type WorkspaceBarEvaluationContext,
+} from '../../shared/financeWorkspaceBar.contract';
 import {
   ANALYSIS_HAS_KPIS_GATE,
+  type AnalysisCompleteness,
   buildAnalysisLifecycleTransitions,
   buildAnalysisWorkspaceBarConfig,
   buildReopenedVersionMeta,
@@ -17,11 +21,13 @@ import {
   canSubmitAnalysisForReview,
   isAnalysisEmpty,
   resolveAnalysisPrimaryCta,
-  type AnalysisCompleteness,
 } from '../analysisWorkspace.contract';
 
 const EMPTY: AnalysisCompleteness = { selectedKpiCount: 0, computedValueCount: 0 };
-const CONFIGURED_NEVER_COMPUTED: AnalysisCompleteness = { selectedKpiCount: 5, computedValueCount: 0 };
+const CONFIGURED_NEVER_COMPUTED: AnalysisCompleteness = {
+  selectedKpiCount: 5,
+  computedValueCount: 0,
+};
 const CONFIGURED_COMPUTED: AnalysisCompleteness = { selectedKpiCount: 5, computedValueCount: 5 };
 
 describe('isAnalysisEmpty', () => {
@@ -44,7 +50,9 @@ describe('OWN-FIN-008 — resolveAnalysisPrimaryCta: pusty draft', () => {
   });
 
   it('DRAFT + KPI skonfigurowane, nigdy nie przeliczone ⇒ compute_first_time', () => {
-    expect(resolveAnalysisPrimaryCta('DRAFT', CONFIGURED_NEVER_COMPUTED, false).id).toBe('compute_first_time');
+    expect(resolveAnalysisPrimaryCta('DRAFT', CONFIGURED_NEVER_COMPUTED, false).id).toBe(
+      'compute_first_time'
+    );
   });
 
   it('DRAFT + KPI przeliczone + freshness stale ⇒ recompute', () => {
@@ -52,11 +60,15 @@ describe('OWN-FIN-008 — resolveAnalysisPrimaryCta: pusty draft', () => {
   });
 
   it('DRAFT + KPI przeliczone + freshness current ⇒ submit_for_review', () => {
-    expect(resolveAnalysisPrimaryCta('DRAFT', CONFIGURED_COMPUTED, false).id).toBe('submit_for_review');
+    expect(resolveAnalysisPrimaryCta('DRAFT', CONFIGURED_COMPUTED, false).id).toBe(
+      'submit_for_review'
+    );
   });
 
   it('OWN-FIN-013: APPROVED + KPI ⇒ reopen_or_new_version (nigdy dead-end)', () => {
-    expect(resolveAnalysisPrimaryCta('APPROVED', CONFIGURED_COMPUTED, false).id).toBe('reopen_or_new_version');
+    expect(resolveAnalysisPrimaryCta('APPROVED', CONFIGURED_COMPUTED, false).id).toBe(
+      'reopen_or_new_version'
+    );
   });
 });
 
@@ -104,7 +116,12 @@ describe('OWN-FIN-012 — buildAnalysisLifecycleTransitions: przejścia realne, 
   it('KONTROLA NEGATYWNA: resolveControlState odmawia submit_for_review, gdy bramka KPI=false w evaluationContext', () => {
     const transitions = buildAnalysisLifecycleTransitions('DRAFT', EMPTY, 'preparer');
     const submit = transitions.find((t) => t.action === 'submit_for_review')!;
-    const ctx: WorkspaceBarEvaluationContext = { status: 'DRAFT', role: 'preparer', freshness: 'NEVER_COMPUTED', gates: { [ANALYSIS_HAS_KPIS_GATE]: false } };
+    const ctx: WorkspaceBarEvaluationContext = {
+      status: 'DRAFT',
+      role: 'preparer',
+      freshness: 'NEVER_COMPUTED',
+      gates: { [ANALYSIS_HAS_KPIS_GATE]: false },
+    };
     const state = resolveControlState(submit.enablement, ctx);
     expect(state.available).toBe(false);
   });
@@ -112,21 +129,46 @@ describe('OWN-FIN-012 — buildAnalysisLifecycleTransitions: przejścia realne, 
   it('gdy bramka KPI=true, submit_for_review staje się dostępny (dowód, że gate faktycznie coś zmienia, nie stała atrapa)', () => {
     const transitions = buildAnalysisLifecycleTransitions('DRAFT', CONFIGURED_COMPUTED, 'preparer');
     const submit = transitions.find((t) => t.action === 'submit_for_review')!;
-    const ctx: WorkspaceBarEvaluationContext = { status: 'DRAFT', role: 'preparer', freshness: 'CURRENT', gates: { [ANALYSIS_HAS_KPIS_GATE]: true } };
+    const ctx: WorkspaceBarEvaluationContext = {
+      status: 'DRAFT',
+      role: 'preparer',
+      freshness: 'CURRENT',
+      gates: { [ANALYSIS_HAS_KPIS_GATE]: true },
+    };
     expect(resolveControlState(submit.enablement, ctx).available).toBe(true);
   });
 
   it('OWN-FIN-013 KONTROLA NEGATYWNA: APPROVED NIGDY nie zwraca pustej listy przejść', () => {
-    const transitions = buildAnalysisLifecycleTransitions('APPROVED', CONFIGURED_COMPUTED, 'viewer');
+    const transitions = buildAnalysisLifecycleTransitions(
+      'APPROVED',
+      CONFIGURED_COMPUTED,
+      'viewer'
+    );
     expect(transitions.length).toBeGreaterThan(0);
-    expect(transitions.map((t) => t.action)).toEqual(expect.arrayContaining(['new_version', 'reopen']));
+    expect(transitions.map((t) => t.action)).toEqual(
+      expect.arrayContaining(['new_version', 'reopen'])
+    );
   });
 
   it('approve wymaga roli approver/finance_admin — resolveControlState odmawia dla preparer nawet z KPI', () => {
-    const transitions = buildAnalysisLifecycleTransitions('IN_REVIEW', CONFIGURED_COMPUTED, 'preparer');
+    const transitions = buildAnalysisLifecycleTransitions(
+      'IN_REVIEW',
+      CONFIGURED_COMPUTED,
+      'preparer'
+    );
     const approve = transitions.find((t) => t.action === 'approve')!;
-    const ctxPreparer: WorkspaceBarEvaluationContext = { status: 'IN_REVIEW', role: 'preparer', freshness: 'CURRENT', gates: { [ANALYSIS_HAS_KPIS_GATE]: true } };
-    const ctxApprover: WorkspaceBarEvaluationContext = { status: 'IN_REVIEW', role: 'approver', freshness: 'CURRENT', gates: { [ANALYSIS_HAS_KPIS_GATE]: true } };
+    const ctxPreparer: WorkspaceBarEvaluationContext = {
+      status: 'IN_REVIEW',
+      role: 'preparer',
+      freshness: 'CURRENT',
+      gates: { [ANALYSIS_HAS_KPIS_GATE]: true },
+    };
+    const ctxApprover: WorkspaceBarEvaluationContext = {
+      status: 'IN_REVIEW',
+      role: 'approver',
+      freshness: 'CURRENT',
+      gates: { [ANALYSIS_HAS_KPIS_GATE]: true },
+    };
     expect(resolveControlState(approve.enablement, ctxPreparer).available).toBe(false);
     expect(resolveControlState(approve.enablement, ctxApprover).available).toBe(true);
   });

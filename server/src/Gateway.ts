@@ -113,7 +113,6 @@ import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
-import signalsFeedRoutes from './routes/signals.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
 import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
@@ -285,7 +284,6 @@ import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.ro
 // /api/results* surface above (see kpi.routes.ts's own header comment:
 // "not aliases for new commands", plan §7).
 import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
-import resultsVnextSearchRoutes from './routes/resultsVnext/search.routes.js';
 // KPI-E003 Deviation Closed Loop — mounted at the MORE SPECIFIC
 // `/api/vnext/results/kpi/deviation-cases` prefix and registered BEFORE
 // resultsVnextKpiRoutes below (see kpiDeviation.routes.ts's own "MOUNT-ORDER
@@ -356,6 +354,7 @@ import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyA
 // the KPI-E005 precedent's ordering convention above, not because
 // correctness depends on it here.
 import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
+import resultsVnextSearchRoutes from './routes/resultsVnext/search.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -367,6 +366,7 @@ import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import shareRoutes from './routes/share.routes.js';
+import signalsFeedRoutes from './routes/signals.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
 import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
@@ -515,12 +515,19 @@ export class ApiGateway {
       'helpAnalyticsRoutes', // HelpAnalyticsDashboard.tsx (admin view)
     ]);
 
+    // DEC-116 (CONSULTANTS_DUAL_PRODUCER_AUDIT_2026-08-26): router=null means the
+    // stub router was deleted outright (wrong-shape SQL with no matching DDL in the
+    // repo). The name must stay in STUB_NAMES_WITH_LIVE_UI_ON_DEMO so the honest 501
+    // is mounted in EVERY environment (dev included) — live FE callers must get a
+    // structured 501, never a silent 404.
     const mountStub = (mountPath: string, router: any, name: string) => {
-      if (enableStubRoutes) {
+      if (router && enableStubRoutes) {
         app.use(mountPath, router);
       } else if (STUB_NAMES_WITH_LIVE_UI_ON_DEMO.has(name)) {
         logger.warn(
-          `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+          router
+            ? `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+            : `[ApiGateway] Stub route has no router (deleted) but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
         );
         app.use(mountPath, (_req, res) => {
           res.status(501).json({

@@ -19,27 +19,34 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { StandardBreadcrumb } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { OkrSetDto } from './okrApi';
-import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
-import { getOkrCheckInSetLock } from './okrObjectiveMappers';
 import {
   correctCheckIn,
+  type CorrectOkrCheckInInput,
   listCheckInOccurrences,
   listCheckIns,
   newOkrCheckInIdempotencyKey,
   OkrCheckInApiError,
-  recordCheckIn,
-  suggestNextCheckInValue,
-  type CorrectOkrCheckInInput,
   type OkrCheckInDto,
   type OkrCheckInOccurrenceOption,
   type OkrSuggestNextCheckInValue,
+  recordCheckIn,
   type RecordOkrCheckInInput,
+  suggestNextCheckInValue,
 } from './okrCheckInApi';
-import { buildOkrCheckInColumns, buildOkrCheckInPreview, buildOkrCheckInRowMenu } from './okrCheckInPresenters';
-import { OkrCheckInCorrectDialog, type OkrCheckInCorrectFormValues } from './OkrCheckInCorrectDialog';
+import {
+  OkrCheckInCorrectDialog,
+  type OkrCheckInCorrectFormValues,
+} from './OkrCheckInCorrectDialog';
+import {
+  buildOkrCheckInColumns,
+  buildOkrCheckInPreview,
+  buildOkrCheckInRowMenu,
+} from './okrCheckInPresenters';
 import { OkrCheckInRecordDialog, type OkrCheckInRecordFormValues } from './OkrCheckInRecordDialog';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { getOkrCheckInSetLock } from './okrObjectiveMappers';
 
 function withId<T extends { checkInId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.checkInId };
@@ -53,7 +60,12 @@ export interface OkrCheckInsViewProps {
   breadcrumbs: StandardBreadcrumb[];
 }
 
-export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult, isPolish, breadcrumbs }) => {
+export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({
+  set,
+  keyResult,
+  isPolish,
+  breadcrumbs,
+}) => {
   const [checkIns, setCheckIns] = useState<OkrCheckInDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,8 +87,12 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
   const [recordBusy, setRecordBusy] = useState(false);
   const [recordError, setRecordError] = useState<string | null>(null);
   const [recordConflict, setRecordConflict] = useState(false);
-  const [suggestion, setSuggestion] = useState<OkrSuggestNextCheckInValue | null | undefined>(undefined);
-  const [occurrences, setOccurrences] = useState<OkrCheckInOccurrenceOption[] | undefined>(undefined);
+  const [suggestion, setSuggestion] = useState<OkrSuggestNextCheckInValue | null | undefined>(
+    undefined
+  );
+  const [occurrences, setOccurrences] = useState<OkrCheckInOccurrenceOption[] | undefined>(
+    undefined
+  );
   const [occurrencesError, setOccurrencesError] = useState<string | null>(null);
 
   const [correctTarget, setCorrectTarget] = useState<OkrCheckInDto | null>(null);
@@ -122,7 +138,10 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
       setRecordBusy(true);
       setRecordError(null);
       setRecordConflict(false);
-      const input: RecordOkrCheckInInput = { ...values, idempotencyKey: newOkrCheckInIdempotencyKey() };
+      const input: RecordOkrCheckInInput = {
+        ...values,
+        idempotencyKey: newOkrCheckInIdempotencyKey(),
+      };
       recordCheckIn(keyResult.keyResultId, input)
         .then(() => {
           setRecordOpen(false);
@@ -144,7 +163,10 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
       setCorrectBusy(true);
       setCorrectError(null);
       setCorrectConflict(false);
-      const input: CorrectOkrCheckInInput = { ...values, idempotencyKey: newOkrCheckInIdempotencyKey() };
+      const input: CorrectOkrCheckInInput = {
+        ...values,
+        idempotencyKey: newOkrCheckInIdempotencyKey(),
+      };
       correctCheckIn(keyResult.keyResultId, correctTarget.checkInId, input)
         .then(() => {
           setCorrectTarget(null);
@@ -192,7 +214,11 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
                   description: isPolish
                     ? 'Dla tego Kluczowego Rezultatu nie zarejestrowano jeszcze żadnego check-inu.'
                     : 'No check-in has been recorded for this Key Result yet.',
-                  actionLabel: blockedReason ? undefined : isPolish ? 'Nowy check-in' : 'New check-in',
+                  actionLabel: blockedReason
+                    ? undefined
+                    : isPolish
+                      ? 'Nowy check-in'
+                      : 'New check-in',
                   onAction: blockedReason ? undefined : openRecord,
                 }
               : undefined,

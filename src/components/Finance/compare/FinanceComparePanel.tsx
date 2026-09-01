@@ -18,11 +18,11 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import {
   CANONICAL_LINE_META,
   type CanonicalLineCode,
 } from '@/components/Finance/baseline/baselineLabels';
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCompareFlag } from '@/hooks/useFinanceCompareFlag';
 import {
   compareFinanceActualVsForecast,
@@ -128,7 +128,9 @@ function dimensionsForDisplay(dimensions: Record<string, string>): string {
  */
 function comparePanelCurrencyLabel(rows: CompareRowDto[]): string | null {
   const currencies = new Set(
-    rows.flatMap((r) => [r.a.presentationCurrency, r.b.presentationCurrency]).filter((c): c is string => !!c)
+    rows
+      .flatMap((r) => [r.a.presentationCurrency, r.b.presentationCurrency])
+      .filter((c): c is string => !!c)
   );
   return currencies.size === 1 ? [...currencies][0] : null;
 }
@@ -255,7 +257,8 @@ export function FinanceComparePanel({
             <p className="text-xs text-c-text-secondary">
               {result.sourceA.label} vs {result.sourceB.label} · próg istotności{' '}
               {result.materialityThresholdPct}%
-              {comparePanelCurrencyLabel(result.rows) && ` · waluta: ${comparePanelCurrencyLabel(result.rows)}`}
+              {comparePanelCurrencyLabel(result.rows) &&
+                ` · waluta: ${comparePanelCurrencyLabel(result.rows)}`}
             </p>
           </div>
           <button

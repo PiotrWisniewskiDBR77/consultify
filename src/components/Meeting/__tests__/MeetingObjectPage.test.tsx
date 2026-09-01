@@ -18,7 +18,7 @@
  */
 import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Local override of the global `react-i18next` mock (tests/setup.ts): this
 // suite needs `t()` to return the literal defaultValue (not a key-agnostic
@@ -42,7 +42,11 @@ vi.mock('react-i18next', () => ({
 
 const { navigateMock, routerState } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
-  routerState: { pathname: '/meetings/meeting-1', meetingId: 'meeting-1', noteId: undefined as string | undefined },
+  routerState: {
+    pathname: '/meetings/meeting-1',
+    meetingId: 'meeting-1',
+    noteId: undefined as string | undefined,
+  },
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -98,6 +102,10 @@ describe('MeetingObjectPage', () => {
     routerState.noteId = undefined;
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('fetches through the dedicated single-meeting endpoint, not the list', async () => {
     getMeetingMock.mockResolvedValue({ meeting });
     render(<MeetingObjectPage />);
@@ -149,7 +157,19 @@ describe('MeetingObjectPage', () => {
     expect(await screen.findByText('Quarterly Review')).toBeTruthy();
   });
 
-  it('Protokół section shows a governed note\'s decisions/actionItems honestly (string and object shapes)', async () => {
+  it('leaves the loading state for an honest retryable error when the meeting request never settles', async () => {
+    vi.useFakeTimers();
+    getMeetingMock.mockImplementation(() => new Promise(() => undefined));
+    render(<MeetingObjectPage />);
+
+    expect(screen.getAllByText('Loading').length).toBeGreaterThan(0);
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(await screen.findByText('Failed to load meetings')).toBeTruthy();
+    expect(screen.queryByText('Loading')).toBeNull();
+  });
+
+  it("Protokół section shows a governed note's decisions/actionItems honestly (string and object shapes)", async () => {
     routerState.pathname = '/meetings/meeting-1/minutes';
     getMeetingMock.mockResolvedValue({ meeting });
     listNotesMock.mockResolvedValue({

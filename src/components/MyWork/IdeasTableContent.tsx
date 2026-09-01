@@ -521,7 +521,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const renderedTitleWidth = useMemo(() => {
     if (scrollerAvailableWidth === null) return columnWidths.title;
     const fitWidth = Math.min(columnWidths.title, scrollerAvailableWidth - fixedColumnsWidthSum);
-    return Math.max(IDEAS_RESIZE_BOUNDS.title.min, Math.min(IDEAS_RESIZE_BOUNDS.title.max, fitWidth));
+    return Math.max(
+      IDEAS_RESIZE_BOUNDS.title.min,
+      Math.min(IDEAS_RESIZE_BOUNDS.title.max, fitWidth)
+    );
   }, [scrollerAvailableWidth, fixedColumnsWidthSum, columnWidths.title]);
 
   const tableMinWidth = useMemo(() => {

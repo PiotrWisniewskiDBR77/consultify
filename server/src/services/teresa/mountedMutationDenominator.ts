@@ -16,7 +16,12 @@ export function extractMountedMutationRoutes(
   const routes: MountedMutationRoute[] = [];
   const matcher = /\brouter\.(post|put|patch|delete)\s*\(\s*['"]([^'"]+)['"]/g;
   for (const match of sourceText.matchAll(matcher)) {
-    routes.push({ module, method: match[1].toUpperCase() as MountedMutationRoute['method'], path: match[2], source });
+    routes.push({
+      module,
+      method: match[1].toUpperCase() as MountedMutationRoute['method'],
+      path: match[2],
+      source,
+    });
   }
   return routes;
 }
@@ -38,12 +43,22 @@ export function adaptMountedMutationDenominator(
     const supported = supportedByMountedId.get(id);
     if (supported) return { ...supported, mountedMutationId: id };
     return {
-      actionId: `mounted.${id.toLowerCase()}@1`, version: 1, module: route.module,
-      surface: route.path, mountedMutationId: id, effect: 'DESTRUCTIVE_MUTATION',
-      roles: ['ROUTE_AUTHORIZATION_REQUIRED'], tenantScope: 'ORGANIZATION',
-      preview: 'REQUIRED', confirm: 'REQUIRED', idempotency: null, receipt: null, auditEvent: null,
+      actionId: `mounted.${id.toLowerCase()}@1`,
+      version: 1,
+      module: route.module,
+      surface: route.path,
+      mountedMutationId: id,
+      effect: 'DESTRUCTIVE_MUTATION',
+      roles: ['ROUTE_AUTHORIZATION_REQUIRED'],
+      tenantScope: 'ORGANIZATION',
+      preview: 'REQUIRED',
+      confirm: 'REQUIRED',
+      idempotency: null,
+      receipt: null,
+      auditEvent: null,
       compensation: 'unsupported-until-shared-command-is-proven',
-      uiExecutor: `${route.source}:${route.method}:${route.path}`, teresaExecutor: null,
+      uiExecutor: `${route.source}:${route.method}:${route.path}`,
+      teresaExecutor: null,
       mvpDisposition: 'NOT_SUPPORTED_IN_MVP',
     };
   });

@@ -14,8 +14,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
-import { apiGateway } from '../../../../Gateway.js';
 import config from '../../../../config/Config.js';
+import { apiGateway } from '../../../../Gateway.js';
 import verifyToken, { validateOrgMembership } from '../../../../middleware/auth.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../../../middleware/v8Auth.middleware.js';
 import casesRoutes from '../../../../routes/caseWorkspace/cases.routes.js';
@@ -370,6 +370,11 @@ async function main(): Promise<void> {
       });
     } catch (error) {
       await pool.query('ROLLBACK').catch(() => undefined);
+      // ZNANY HAZARD (do osobnej naprawy): ten rzut wychodzi z bloku finally
+      // wyzej, wiec ZASLANIA oryginalny wyjatek z glownego biegu harnessu.
+      // Zostawiony bez zmiany semantyki celowo — zamiana na log ukrylaby
+      // awarie sprzatania, a harness nie byl uruchamiany w tej sesji.
+      // eslint-disable-next-line no-unsafe-finally
       throw error;
     } finally {
       await pool.end();

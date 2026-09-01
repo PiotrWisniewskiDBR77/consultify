@@ -29,7 +29,6 @@
  */
 
 import { randomUUID } from 'crypto';
-
 import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -98,14 +97,18 @@ describe('ASM-METHOD-CATALOG-001 — method catalog fail-closed gate — real Po
 
   beforeAll(async () => {
     if (process.env.NODE_ENV !== 'test' || process.env.RUN_DB_TESTS !== '1') {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real DATABASE_URL.'
+      );
     }
 
     // Fail-closed proof this suite is on a real connection, not the app
     // mock DB — env vars alone only state intent (see assertRealDatabase.ts).
     const { getDatabaseAsync } = await import('../../../database/Database.js');
     const db = await getDatabaseAsync();
-    await assertRealDatabase(fromAppDb(db as unknown as { all: (sql: string) => Promise<unknown> }));
+    await assertRealDatabase(
+      fromAppDb(db as unknown as { all: (sql: string) => Promise<unknown> })
+    );
 
     await run(`INSERT INTO organizations (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING`, [
       ORG_A,
@@ -123,10 +126,10 @@ describe('ASM-METHOD-CATALOG-001 — method catalog fail-closed gate — real Po
   });
 
   afterAll(async () => {
-    await run(`DELETE FROM assessment_sessions WHERE assessment_id IN (SELECT id FROM assessments WHERE organization_id IN (?, ?))`, [
-      ORG_A,
-      ORG_B,
-    ]);
+    await run(
+      `DELETE FROM assessment_sessions WHERE assessment_id IN (SELECT id FROM assessments WHERE organization_id IN (?, ?))`,
+      [ORG_A, ORG_B]
+    );
     await run(`DELETE FROM assessments WHERE organization_id IN (?, ?)`, [ORG_A, ORG_B]);
     await run(`DELETE FROM organizations WHERE id IN (?, ?)`, [ORG_A, ORG_B]);
   });

@@ -8,9 +8,8 @@ vi.mock('../../utils/DbPromise.js', () => ({
   run: (...args: unknown[]) => mockRun(...args),
 }));
 
-const { applyApprovedPresentationTeresaEdit, PresentationTeresaBridgeError } = await import(
-  '../presentationTeresaBridgeService.js'
-);
+const { applyApprovedPresentationTeresaEdit, PresentationTeresaBridgeError } =
+  await import('../presentationTeresaBridgeService.js');
 
 const deck = {
   deck_id: 'deck-1',
@@ -60,8 +59,12 @@ describe('presentationTeresaBridgeService', () => {
       skippedLockedSlides: [2],
     });
     expect(mockRun.mock.calls[0][0]).toBe('BEGIN TRANSACTION');
-    expect(mockRun.mock.calls.some((call) => String(call[0]).includes('presentation_deck_versions'))).toBe(true);
-    expect(mockRun.mock.calls.some((call) => String(call[0]).includes('presentation_ai_operations'))).toBe(true);
+    expect(
+      mockRun.mock.calls.some((call) => String(call[0]).includes('presentation_deck_versions'))
+    ).toBe(true);
+    expect(
+      mockRun.mock.calls.some((call) => String(call[0]).includes('presentation_ai_operations'))
+    ).toBe(true);
     const update = mockRun.mock.calls.find((call) =>
       String(call[0]).includes('UPDATE presentation_decks')
     );

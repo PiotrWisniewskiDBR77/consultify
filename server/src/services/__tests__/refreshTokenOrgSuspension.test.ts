@@ -84,9 +84,7 @@ describe('DEC-91 FIX-6 — RefreshTokenService and organization suspension', () 
     // Without this carve-out, suspending the org a superadmin happens to sit in
     // would take away the route used to reactivate it.
     await expect(
-      RefreshTokenService.generateTokenPair(
-        user('org-suspended', 'super-1', 'SUPERADMIN') as never
-      )
+      RefreshTokenService.generateTokenPair(user('org-suspended', 'super-1', 'SUPERADMIN') as never)
     ).resolves.toBeTruthy();
   });
 
@@ -94,9 +92,7 @@ describe('DEC-91 FIX-6 — RefreshTokenService and organization suspension', () 
     // users.role for user-1 is ADMIN in the database; the role passed in is not
     // trusted. This is the same rule as everywhere else in DEC-91.
     await expect(
-      RefreshTokenService.generateTokenPair(
-        user('org-suspended', 'user-1', 'SUPERADMIN') as never
-      )
+      RefreshTokenService.generateTokenPair(user('org-suspended', 'user-1', 'SUPERADMIN') as never)
     ).rejects.toThrow('ORG_SUSPENDED');
   });
 });

@@ -14,10 +14,10 @@ import { Decimal } from 'decimal.js';
 import { describe, expect, it } from 'vitest';
 
 import {
+  type AnalysisKnownAnswerKpiDef,
   computeKnownAnswerKpi,
   evaluateArithmeticExpression,
   financeValuesToLineCodeMap,
-  type AnalysisKnownAnswerKpiDef,
 } from '../analysisKpiCompute';
 
 function num(d: ReturnType<typeof evaluateArithmeticExpression>): number | null {
@@ -35,7 +35,11 @@ describe('evaluateArithmeticExpression — parser bezpieczny (Decimal)', () => {
   });
 
   it('MISSING propaguje przez cały wyrażenie, nawet zagnieżdżone', () => {
-    const result = evaluateArithmeticExpression('ROUND((REVENUE - COGS) / OPEX)', { REVENUE: 100, COGS: null, OPEX: 5 });
+    const result = evaluateArithmeticExpression('ROUND((REVENUE - COGS) / OPEX)', {
+      REVENUE: 100,
+      COGS: null,
+      OPEX: 5,
+    });
     expect(result).toBeNull();
   });
 
@@ -117,7 +121,10 @@ describe('computeKnownAnswerKpi — KNOWN-ANSWER (DoD)', () => {
   });
 
   it('polityka ALLOW_NEGATIVE_RATIO: ten sam ujemny mianownik TERAZ liczy realną wartość (dowód, że polityka faktycznie rozgałęzia zachowanie, nie jest dekoracją)', () => {
-    const def: AnalysisKnownAnswerKpiDef = { ...GROSS_MARGIN, negativeDenominatorPolicy: 'ALLOW_NEGATIVE_RATIO' };
+    const def: AnalysisKnownAnswerKpiDef = {
+      ...GROSS_MARGIN,
+      negativeDenominatorPolicy: 'ALLOW_NEGATIVE_RATIO',
+    };
     const result = computeKnownAnswerKpi(def, { REVENUE: -200, COGS: 100 });
     // (REVENUE - COGS) / REVENUE = (-200 - 100) / -200 = -300 / -200 = 1.5, liczone ręcznie.
     expect(result.status).toBe('PRESENT_NONZERO');
@@ -176,7 +183,11 @@ describe('computeKnownAnswerKpi — piąty stan NOT_APPLICABLE (strukturalna nie
   });
 
   it('domyślnie (context pominięty) ⇒ stosowalny, liczy normalnie — dowód, że domyślne zachowanie się nie zmieniło', () => {
-    const result = computeKnownAnswerKpi(INVENTORY_TURNOVER, { COGS: 500_000, BEG_INVENTORY: 10_000, END_INVENTORY: 12_000 });
+    const result = computeKnownAnswerKpi(INVENTORY_TURNOVER, {
+      COGS: 500_000,
+      BEG_INVENTORY: 10_000,
+      END_INVENTORY: 12_000,
+    });
     expect(result.status).toBe('PRESENT_NONZERO');
     // COGS / ((10000+12000)/2) = 500000 / 11000 = 45.4545... — Decimal zachowuje pełną powtarzalność ułamka.
     expect(result.valueDecimal).toContain('45.454545');
@@ -219,7 +230,10 @@ describe('WP-D02 — cztery klasyczne pułapki: average balance / interim / LTM 
       denominatorExpression: '(BEG_ASSETS + END_ASSETS) / 2',
       negativeDenominatorPolicy: 'FORCE_NA',
     };
-    const result = computeKnownAnswerKpi(ASSET_TURNOVER_LTM, { LTM_REVENUE: 48_200_000, END_ASSETS: 20_600_000 }); // BEG_ASSETS nieprzekazane
+    const result = computeKnownAnswerKpi(ASSET_TURNOVER_LTM, {
+      LTM_REVENUE: 48_200_000,
+      END_ASSETS: 20_600_000,
+    }); // BEG_ASSETS nieprzekazane
     expect(result.status).toBe('MISSING');
     expect(result.valueDecimal).toBeNull();
     expect(result.reasonCode).toBe('MISSING_INPUT');
@@ -252,7 +266,10 @@ describe('WP-D02 — cztery klasyczne pułapki: average balance / interim / LTM 
       denominatorExpression: 'LTM_REVENUE',
       negativeDenominatorPolicy: 'FORCE_NA',
     };
-    const result = computeKnownAnswerKpi(NET_MARGIN_LTM, { LTM_NET_INCOME: '-2400000', LTM_REVENUE: '48000000' });
+    const result = computeKnownAnswerKpi(NET_MARGIN_LTM, {
+      LTM_NET_INCOME: '-2400000',
+      LTM_REVENUE: '48000000',
+    });
     expect(result.status).toBe('PRESENT_NONZERO'); // mianownik DODATNI — polityka ujemnego mianownika w ogóle się nie uruchamia
     expect(result.valueDecimal).toBe('-0.05');
     expect(result.reasonCode).toBeNull();
@@ -269,7 +286,10 @@ describe('WP-D02 — cztery klasyczne pułapki: average balance / interim / LTM 
     // Firma w stracie, kapitał własny ujemny (typowe dla wczesnej fazy/startupu) —
     // matematycznie -1200000 / -3000000 = 0.4 (40% ROE) byłoby MYLĄCE (sugeruje
     // zdrową rentowność), stąd FORCE_NA jako domyślna polityka produktu.
-    const result = computeKnownAnswerKpi(ROE_LTM, { LTM_NET_INCOME: '-1200000', AVG_EQUITY: '-3000000' });
+    const result = computeKnownAnswerKpi(ROE_LTM, {
+      LTM_NET_INCOME: '-1200000',
+      AVG_EQUITY: '-3000000',
+    });
     expect(result.status).toBe('NA');
     expect(result.valueDecimal).toBeNull();
     expect(result.reasonCode).toBe('NEGATIVE_DENOMINATOR');
@@ -282,7 +302,10 @@ describe('financeValuesToLineCodeMap — most z semantyki FinanceValue (Pakiet C
       { lineCode: 'REVENUE', value: { status: 'PRESENT_NONZERO', valueDecimal: '1000' } },
       { lineCode: 'DEPRECIATION', value: { status: 'PRESENT_ZERO', valueDecimal: '0' } },
       { lineCode: 'ONE_OFF', value: { status: 'MISSING', valueDecimal: null } },
-      { lineCode: 'SERVICE_INVENTORY_DAYS', value: { status: 'NOT_APPLICABLE', valueDecimal: null } },
+      {
+        lineCode: 'SERVICE_INVENTORY_DAYS',
+        value: { status: 'NOT_APPLICABLE', valueDecimal: null },
+      },
       { lineCode: 'ANALYST_NA', value: { status: 'NA', valueDecimal: null } },
     ]);
     expect(map.REVENUE).toBeInstanceOf(Decimal);
@@ -298,7 +321,10 @@ describe('financeValuesToLineCodeMap — most z semantyki FinanceValue (Pakiet C
 
   it('KONTROLA NEGATYWNA (precyzja): valueDecimal string pełnej precyzji przechodzi PROSTO do Decimal, nie przez Number() (dowód: 17-cyfrowy string zachowuje wszystkie cyfry)', () => {
     const map = financeValuesToLineCodeMap([
-      { lineCode: 'PRECISE', value: { status: 'PRESENT_NONZERO', valueDecimal: '12345678901234.5678' } },
+      {
+        lineCode: 'PRECISE',
+        value: { status: 'PRESENT_NONZERO', valueDecimal: '12345678901234.5678' },
+      },
     ]);
     expect(map.PRECISE!.toString()).toBe('12345678901234.5678');
   });

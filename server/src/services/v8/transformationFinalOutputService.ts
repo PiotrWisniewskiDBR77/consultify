@@ -12,31 +12,31 @@ import {
   type DocumentSchema,
 } from '../documentStudio/documentStudioTypes.js';
 import {
+  deckDocumentToRenderableUnifiedJson,
+  normalizeDeckDocument,
+} from '../presentationDeckDocumentService.js';
+import {
   createNativeDeck,
   createNativeDeckVersion,
   withPresentationOwnerClient,
 } from '../presentationGeneratorService.js';
-import {
-  deckDocumentToRenderableUnifiedJson,
-  normalizeDeckDocument,
-} from '../presentationDeckDocumentService.js';
+import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
+import type { UnifiedReportJSON } from '../report/pptx/types.js';
 import {
   createNativeReport,
   createVersion as createNativeReportVersion,
   type NativeReportSectionInput,
   withReportBuilderClient,
 } from '../reportBuilderService.js';
-import { PptxPipelineService } from '../report/pptx/PptxPipelineService.js';
-import type { UnifiedReportJSON } from '../report/pptx/types.js';
-import { withArtifactRegistryClient } from './artifactRegistryService.js';
-import { TransformationCaseOperationError } from './transformationCaseService.js';
 import { dispatchAgentAdapter } from './agentAdapterOrchestratorService.js';
-import { loadTransformationAgentExecutionContext } from './transformationAgentExecutionContextService.js';
 import {
   assertProposalExecutable,
   registerGovernedProposal,
   withProposalGovernanceClient,
 } from './agentProposalGovernanceService.js';
+import { withArtifactRegistryClient } from './artifactRegistryService.js';
+import { loadTransformationAgentExecutionContext } from './transformationAgentExecutionContextService.js';
+import { TransformationCaseOperationError } from './transformationCaseService.js';
 
 interface FactsRow {
   transformation_case_id: string;
@@ -233,9 +233,7 @@ async function loadFacts(
     );
   const hasOpenRecovery = Number(row.open_recovery_count ?? 0) > 0;
   const ideas = Array.isArray(row.idea_facts_json) ? row.idea_facts_json : [];
-  const interviewInsights = Array.isArray(row.interview_facts_json)
-    ? row.interview_facts_json
-    : [];
+  const interviewInsights = Array.isArray(row.interview_facts_json) ? row.interview_facts_json : [];
   const drd = row.drd_fact_json as Record<string, unknown> | null;
   const portfolioDecision = row.decision_fact_json as Record<string, unknown> | null;
   if (

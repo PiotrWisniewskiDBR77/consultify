@@ -39,8 +39,8 @@ import {
   appendEvent,
   findConsumingEvent,
   getEventById,
-  withTeresaTransaction,
   type TeresaEventRow,
+  withTeresaTransaction,
 } from './teresaEventStore.js';
 
 /** Preview lifetime — long enough for a human to read and decide, short enough that a stale proposal cannot land later. */
@@ -73,7 +73,10 @@ function parsePayload(row: TeresaEventRow): StoredProposalPayload {
  * or `invalid` preview) because the human must be able to SEE why something
  * did not pass the quality gate; `commit()` is what refuses to act on it.
  */
-export async function propose(intent: TeresaIntent, session: TeresaSwotSessionSnapshot): Promise<TeresaPreview> {
+export async function propose(
+  intent: TeresaIntent,
+  session: TeresaSwotSessionSnapshot
+): Promise<TeresaPreview> {
   assertCapabilityNotForbidden(intent.capabilityId);
   const entry = TERESA_CAPABILITY_REGISTRY[intent.capabilityId];
   if (!entry) {
@@ -150,7 +153,10 @@ export async function commit(
     const payload = parsePayload(previewRow);
 
     if (isForbiddenEffect(payload.capabilityId)) {
-      return refusal({ kind: 'forbidden_effect', effect: payload.capabilityId as TeresaForbiddenEffect });
+      return refusal({
+        kind: 'forbidden_effect',
+        effect: payload.capabilityId as TeresaForbiddenEffect,
+      });
     }
 
     const now = new Date();
@@ -176,7 +182,10 @@ export async function commit(
     }
 
     if (payload.qualityVerdict === 'invalid') {
-      return refusal({ kind: 'quality_invalid', failedChecks: payload.failedChecks as TeresaQualityCheck[] });
+      return refusal({
+        kind: 'quality_invalid',
+        failedChecks: payload.failedChecks as TeresaQualityCheck[],
+      });
     }
 
     if (request.decision === 'reject' || request.decision === 'rethink') {
@@ -189,7 +198,13 @@ export async function commit(
         actorKind: 'human',
         actorUserId: request.actorUserId,
         methodPackVersion: ctx.methodPackVersion,
-        payload: { proposalId: payload.proposalId, capabilityId: payload.capabilityId, previewRef: payload.previewRef, qualityVerdict: payload.qualityVerdict, decision: request.decision },
+        payload: {
+          proposalId: payload.proposalId,
+          capabilityId: payload.capabilityId,
+          previewRef: payload.previewRef,
+          qualityVerdict: payload.qualityVerdict,
+          decision: request.decision,
+        },
         supersedes: request.previewId,
         idempotencyKey: request.idempotencyKey,
       });

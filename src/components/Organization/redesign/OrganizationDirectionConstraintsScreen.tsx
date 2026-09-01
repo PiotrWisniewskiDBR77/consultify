@@ -37,13 +37,13 @@ import {
   CLOUD_LEVELS,
   COMMUNICATION_STYLES,
   COMPETITIVE_POSITIONS,
+  computeCompleteness,
   EMPTY_PROFILE,
   GROWTH_STAGES,
   JARGON_LEVELS,
+  type OrgProfile,
   REGULATIONS,
   RISK_APPETITES,
-  computeCompleteness,
-  type OrgProfile,
 } from '../../../views/ContextBuilder/modules/organizationProfileTaxonomy';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import {
@@ -208,7 +208,11 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
 
   const counts = useMemo(() => {
     const filled = SCREEN_FIELDS.filter((field) => isFilled(profile, field.id));
-    return { all: SCREEN_FIELDS.length, filled: filled.length, missing: SCREEN_FIELDS.length - filled.length };
+    return {
+      all: SCREEN_FIELDS.length,
+      filled: filled.length,
+      missing: SCREEN_FIELDS.length - filled.length,
+    };
   }, [profile]);
 
   const matchesChip = useCallback(
@@ -240,7 +244,8 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
   );
 
   const sectionHasContent = useCallback(
-    (section: DirectionConstraintsSection) => shownFields.some((field) => field.section === section),
+    (section: DirectionConstraintsSection) =>
+      shownFields.some((field) => field.section === section),
     [shownFields]
   );
 
@@ -304,7 +309,9 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
     totalFields: counts.all,
     approvedFacts: context?.counts?.claims,
     sourcesSummary:
-      typeof context?.counts?.claims === 'number' ? `${context.counts.claims} twierdzeń` : undefined,
+      typeof context?.counts?.claims === 'number'
+        ? `${context.counts.claims} twierdzeń`
+        : undefined,
     sources: context
       ? [
           {
@@ -364,7 +371,10 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                     value={profile.growth_stage}
                     options={GROWTH_STAGES.map((stage) => ({
                       value: stage.value,
-                      label: t(`organization.profile.options.growthStage.${stage.value}`, stage.label),
+                      label: t(
+                        `organization.profile.options.growthStage.${stage.value}`,
+                        stage.label
+                      ),
                     }))}
                     onChange={(value) => update('growth_stage', value)}
                   />
@@ -503,7 +513,10 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                     value={profile.industry_jargon_level}
                     options={JARGON_LEVELS.map((level) => ({
                       value: level.value,
-                      label: t(`organization.profile.options.jargonLevel.${level.value}`, level.label),
+                      label: t(
+                        `organization.profile.options.jargonLevel.${level.value}`,
+                        level.label
+                      ),
                     }))}
                     onChange={(value) => update('industry_jargon_level', value)}
                   />

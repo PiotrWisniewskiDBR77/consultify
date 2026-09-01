@@ -213,14 +213,17 @@ class DecisionService {
    * Create a new decision request
    */
   async createDecision(input: CreateDecisionInput): Promise<Decision> {
-    if (input.idempotencyKey && input.sourceType === 'myw_agent_proposal') return this.createIdempotentDecision(input);
+    if (input.idempotencyKey && input.sourceType === 'myw_agent_proposal')
+      return this.createIdempotentDecision(input);
     const db = await this.getDb();
     if (input.idempotencyKey) {
-      const replay = await db.get<{id:string;source_type?:string;source_id?:string}>(
+      const replay = await db.get<{ id: string; source_type?: string; source_id?: string }>(
         `SELECT id,source_type,source_id FROM decisions WHERE organization_id=? AND idempotency_key=?`,
-        [input.organizationId,input.idempotencyKey]);
+        [input.organizationId, input.idempotencyKey]
+      );
       if (replay) {
-        if (replay.source_type!==input.sourceType || replay.source_id!==input.sourceId) throw new Error('DECISION_IDEMPOTENCY_COLLISION');
+        if (replay.source_type !== input.sourceType || replay.source_id !== input.sourceId)
+          throw new Error('DECISION_IDEMPOTENCY_COLLISION');
         return this.getDecision(replay.id) as Promise<Decision>;
       }
     }
@@ -305,50 +308,103 @@ class DecisionService {
    */
   private async createIdempotentDecision(input: CreateDecisionInput): Promise<Decision> {
     const commandKey = input.idempotencyKey!;
-    const options = input.options || (input.type === 'GO_NO_GO'
-      ? [{id:'go',label:'Go',description:'Proceed'},{id:'no-go',label:'No-Go',description:'Do not proceed'}]
-      : [{id:'approve',label:'Approve'},{id:'reject',label:'Reject'}]);
-    const deadline = input.deadline || new Date(Date.now()+7*24*60*60*1000).toISOString();
-    const escalationDeadline = new Date(new Date(deadline).getTime()+7*24*60*60*1000).toISOString();
+    const options =
+      input.options ||
+      (input.type === 'GO_NO_GO'
+        ? [
+            { id: 'go', label: 'Go', description: 'Proceed' },
+            { id: 'no-go', label: 'No-Go', description: 'Do not proceed' },
+          ]
+        : [
+            { id: 'approve', label: 'Approve' },
+            { id: 'reject', label: 'Reject' },
+          ]);
+    const deadline = input.deadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const escalationDeadline = new Date(
+      new Date(deadline).getTime() + 7 * 24 * 60 * 60 * 1000
+    ).toISOString();
     const targetId = await withPgTransaction(async (tx) => {
-      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`,[`decision-command:${input.organizationId}:${commandKey}`]);
-      const existing = await tx.query<any>(`SELECT id,source_type,source_id FROM decisions
-        WHERE organization_id=? AND idempotency_key=? AND source_type='myw_agent_proposal'`,[input.organizationId,commandKey]);
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
+        `decision-command:${input.organizationId}:${commandKey}`,
+      ]);
+      const existing = await tx.query<any>(
+        `SELECT id,source_type,source_id FROM decisions
+        WHERE organization_id=? AND idempotency_key=? AND source_type='myw_agent_proposal'`,
+        [input.organizationId, commandKey]
+      );
       if (existing.rows[0]) {
-        if (existing.rows[0].source_type!==input.sourceType || existing.rows[0].source_id!==input.sourceId) {
+        if (
+          existing.rows[0].source_type !== input.sourceType ||
+          existing.rows[0].source_id !== input.sourceId
+        ) {
           throw new Error('DECISION_IDEMPOTENCY_COLLISION');
         }
         return existing.rows[0].id as string;
       }
-      const id=`decision-${uuidv4()}`, now=new Date().toISOString();
-      await tx.query(`INSERT INTO decisions (id,organization_id,project_id,initiative_id,task_id,title,description,type,
+      const id = `decision-${uuidv4()}`,
+        now = new Date().toISOString();
+      await tx.query(
+        `INSERT INTO decisions (id,organization_id,project_id,initiative_id,task_id,title,description,type,
         decision_maker_id,options,criteria,deadline,escalation_deadline,status,created_by,created_at,updated_at,
         idempotency_key,source_type,source_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?,?,?,?,?)`,
-      [id,input.organizationId,input.projectId||null,input.initiativeId||null,input.taskId||null,input.title,input.description||null,
-        input.type,input.decisionMakerId,JSON.stringify(options),input.criteria||null,deadline,escalationDeadline,input.createdBy,now,now,
-        commandKey,input.sourceType||null,input.sourceId||null]);
+        [
+          id,
+          input.organizationId,
+          input.projectId || null,
+          input.initiativeId || null,
+          input.taskId || null,
+          input.title,
+          input.description || null,
+          input.type,
+          input.decisionMakerId,
+          JSON.stringify(options),
+          input.criteria || null,
+          deadline,
+          escalationDeadline,
+          input.createdBy,
+          now,
+          now,
+          commandKey,
+          input.sourceType || null,
+          input.sourceId || null,
+        ]
+      );
       return id;
     });
-    if (input.faultInjection==='AFTER_CORE') throw new Error('DECISION_TEST_CRASH_AFTER_CORE');
+    if (input.faultInjection === 'AFTER_CORE') throw new Error('DECISION_TEST_CRASH_AFTER_CORE');
 
     await withPgTransaction(async (tx) => {
-      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`,[`decision-command:${input.organizationId}:${commandKey}`]);
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
+        `decision-command:${input.organizationId}:${commandKey}`,
+      ]);
       for (const stakeholderId of input.stakeholderIds || []) {
-        await tx.query(`INSERT INTO decision_stakeholders(id,decision_id,user_id,role)
+        await tx.query(
+          `INSERT INTO decision_stakeholders(id,decision_id,user_id,role)
           SELECT ?,?,?, 'informed' WHERE NOT EXISTS(SELECT 1 FROM decision_stakeholders WHERE decision_id=? AND user_id=?)`,
-        [uuidv4(),targetId,stakeholderId,targetId,stakeholderId]);
+          [uuidv4(), targetId, stakeholderId, targetId, stakeholderId]
+        );
       }
-      await tx.query(`INSERT INTO decision_history(id,decision_id,action,old_status,new_status,changed_by,details)
+      await tx.query(
+        `INSERT INTO decision_history(id,decision_id,action,old_status,new_status,changed_by,details)
         SELECT ?,?,'created',NULL,'pending',?,NULL WHERE NOT EXISTS(
           SELECT 1 FROM decision_history WHERE decision_id=? AND action='created' AND changed_by=?)`,
-      [uuidv4(),targetId,input.createdBy,targetId,input.createdBy]);
+        [uuidv4(), targetId, input.createdBy, targetId, input.createdBy]
+      );
     });
-    if (input.faultInjection==='AFTER_HISTORY') throw new Error('DECISION_TEST_CRASH_AFTER_HISTORY');
+    if (input.faultInjection === 'AFTER_HISTORY')
+      throw new Error('DECISION_TEST_CRASH_AFTER_HISTORY');
 
     await withPgTransaction(async (tx) => {
-      await tx.query(`INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
+      await tx.query(
+        `INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
         VALUES(?,?, 'decision',?,'decision.created',?::jsonb) ON CONFLICT(organization_id,command_key,event_type) DO NOTHING`,
-      [input.organizationId,commandKey,targetId,JSON.stringify({decisionMakerId:input.decisionMakerId,title:input.title})]);
+        [
+          input.organizationId,
+          commandKey,
+          targetId,
+          JSON.stringify({ decisionMakerId: input.decisionMakerId, title: input.title }),
+        ]
+      );
     });
     logger.info(`[DecisionService] Created/reconciled decision ${targetId}: ${input.title}`);
     return this.getDecision(targetId) as Promise<Decision>;

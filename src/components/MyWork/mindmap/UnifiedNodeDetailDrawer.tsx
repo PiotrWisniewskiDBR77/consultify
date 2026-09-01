@@ -66,7 +66,7 @@ import {
 } from '@/utils/ideaDetailsInPanelFlag';
 
 import TeresaMark from '../../shared/TeresaMark';
-import { EMPTY_SELECTION, type AIProposalBatch, type CanvasToolType } from '../ideaSelectionTypes';
+import { type AIProposalBatch, type CanvasToolType, EMPTY_SELECTION } from '../ideaSelectionTypes';
 import {
   insertMentionIntoText,
   renderMentionText,

@@ -9,7 +9,11 @@
  * dowód wykrywania duplikatów/niespójności jednostek nie zależał od renderu.
  */
 
-import type { FinanceValue, ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
+import type {
+  FinanceValue,
+  ReconciliationDetailRowDto,
+  StatementLineDto,
+} from '@/services/api/financeV2.types';
 
 const LINE_CODE_FALLBACK_PREFIX = 'linecode:';
 
@@ -88,7 +92,8 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
     periodLabelCounts.get(label)!.add(line.periodId);
 
     const usesLineCodeFallback = !line.canonicalLineId;
-    const rowKey = line.canonicalLineId || `${LINE_CODE_FALLBACK_PREFIX}${line.lineCode || 'unknown'}`;
+    const rowKey =
+      line.canonicalLineId || `${LINE_CODE_FALLBACK_PREFIX}${line.lineCode || 'unknown'}`;
     if (!rowsByKey.has(rowKey)) {
       rowsByKey.set(rowKey, {
         rowKey,
@@ -117,7 +122,9 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
     currencyByRowKey.get(rowKey)!.add(line.value.presentationCurrency);
   }
 
-  const periods = Array.from(periodsById.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  const periods = Array.from(periodsById.values()).sort((a, b) =>
+    a.sortKey.localeCompare(b.sortKey)
+  );
   const rows = Array.from(rowsByKey.values());
 
   const warnings: StatementWarning[] = [];
@@ -181,7 +188,10 @@ export function pickHeaderCurrencyAndScale(
   for (const row of table.rows) {
     for (const period of table.periods) {
       const cell = row.cellsByPeriodId[period.periodId];
-      if (cell && (cell.value.status === 'PRESENT_ZERO' || cell.value.status === 'PRESENT_NONZERO')) {
+      if (
+        cell &&
+        (cell.value.status === 'PRESENT_ZERO' || cell.value.status === 'PRESENT_NONZERO')
+      ) {
         return { currency: cell.value.presentationCurrency, unit: cell.value.unit };
       }
     }

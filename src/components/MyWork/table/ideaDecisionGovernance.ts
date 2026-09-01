@@ -36,7 +36,12 @@
 // outcomes" (§6.4), not a boolean.
 // ─────────────────────────────────────────────────────────────────────────
 
-export const DECISION_OUTCOMES = ['approved', 'rejected', 'returned_for_evidence', 'deferred'] as const;
+export const DECISION_OUTCOMES = [
+  'approved',
+  'rejected',
+  'returned_for_evidence',
+  'deferred',
+] as const;
 export type DecisionOutcome = (typeof DECISION_OUTCOMES)[number];
 
 /** A decision entry that has not been ruled on yet. Distinct from all four
@@ -130,7 +135,10 @@ export function validateDecisionEntry(entry: DecisionLogEntry): DecisionValidati
     errors.push({ field: 'recommendation', message: 'Recommendation is required.' });
   if (!entry.approver.trim()) errors.push({ field: 'approver', message: 'Approver is required.' });
   if (entry.decision !== 'pending' && !(entry.rationale ?? '').trim()) {
-    errors.push({ field: 'rationale', message: 'Rationale is required once a decision has been ruled on.' });
+    errors.push({
+      field: 'rationale',
+      message: 'Rationale is required once a decision has been ruled on.',
+    });
   }
   return errors;
 }
@@ -274,7 +282,8 @@ export function evaluateApprovalGate(
     blockers.push({
       type: 'financial-freshness-error',
       reason:
-        opts.financialFreshness.reason ?? 'Financial freshness could not be verified for this idea.',
+        opts.financialFreshness.reason ??
+        'Financial freshness could not be verified for this idea.',
     });
   } else if (opts.financialFreshness.status === 'unknown') {
     warnings.push(
@@ -317,7 +326,9 @@ export function recordDecisionOutcome(
   }
 ): DecisionLogEntry {
   if (!canRecordOutcome(opts.role, opts.outcome)) {
-    throw new ForbiddenOutcomeError(`Role "${opts.role}" may not record outcome "${opts.outcome}".`);
+    throw new ForbiddenOutcomeError(
+      `Role "${opts.role}" may not record outcome "${opts.outcome}".`
+    );
   }
   const rationale = opts.rationale.trim();
   if (rationale.length === 0) {
@@ -326,7 +337,10 @@ export function recordDecisionOutcome(
   if (opts.outcome === 'approved') {
     const gate = evaluateApprovalGate(entry, { financialFreshness: opts.financialFreshness });
     if (gate.blocked) {
-      throw new DecisionGateBlockedError('Approval blocked by outstanding gate conditions.', gate.blockers);
+      throw new DecisionGateBlockedError(
+        'Approval blocked by outstanding gate conditions.',
+        gate.blockers
+      );
     }
   }
   return {
@@ -399,7 +413,10 @@ export function getActiveDecisions(entries: DecisionLogEntry[]): DecisionLogEntr
 
 /** Full version chain for one decision, oldest first, by following
  *  `supersedesId` backward from `entry`. */
-export function getVersionChain(entry: DecisionLogEntry, allEntries: DecisionLogEntry[]): DecisionLogEntry[] {
+export function getVersionChain(
+  entry: DecisionLogEntry,
+  allEntries: DecisionLogEntry[]
+): DecisionLogEntry[] {
   const byId = new Map(allEntries.map((e) => [e.id, e]));
   const chain: DecisionLogEntry[] = [entry];
   let cur = entry;

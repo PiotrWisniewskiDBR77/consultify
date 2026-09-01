@@ -26,8 +26,8 @@
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
-import { genId, isUniqueViolation, parseJson, runOrThrow } from './db.js';
 import type { MethodActorKind, MethodEvent, MethodEventType } from './contracts/index.js';
+import { genId, isUniqueViolation, parseJson, runOrThrow } from './db.js';
 
 interface MethodEventRow {
   id: string;

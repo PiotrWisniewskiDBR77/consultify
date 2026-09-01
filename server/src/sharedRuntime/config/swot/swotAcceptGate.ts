@@ -57,8 +57,8 @@
  * on trust from an upstream (AI-authored) value.
  */
 
-import { DECLARED_UNCONFIRMED_LABEL } from './dynamicSwotQuestionBank.js';
 import type { SwotStrengthClassification } from './dynamicSwotQuestionBank.js';
+import { DECLARED_UNCONFIRMED_LABEL } from './dynamicSwotQuestionBank.js';
 
 export type SwotAcceptQuadrant = 'strengths' | 'weaknesses' | 'opportunities' | 'threats';
 
@@ -160,7 +160,9 @@ export function evaluateSwotAcceptGate(item: SwotAcceptGateItem): SwotAcceptGate
 
   if (
     item.classification &&
-    EXTERNALLY_VALIDATED_CLASSIFICATIONS.includes(item.classification as SwotStrengthClassification) &&
+    EXTERNALLY_VALIDATED_CLASSIFICATIONS.includes(
+      item.classification as SwotStrengthClassification
+    ) &&
     !hasEvidence
   ) {
     return {
@@ -188,7 +190,11 @@ export function evaluateSwotAcceptGate(item: SwotAcceptGateItem): SwotAcceptGate
 export function stampAcceptedSwotItem<T extends SwotAcceptGateItem>(
   item: T,
   gate: SwotAcceptGateOk
-): T & { status: 'accepted'; proposalStatus: 'accepted'; evidenceStatus: 'confirmed' | 'declared' } {
+): T & {
+  status: 'accepted';
+  proposalStatus: 'accepted';
+  evidenceStatus: 'confirmed' | 'declared';
+} {
   return {
     ...item,
     status: 'accepted',

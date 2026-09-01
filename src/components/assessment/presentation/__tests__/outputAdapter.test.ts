@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractUnknownReasonBreakdown, isPlausibleRawOutput, toAssessmentOutput } from '../outputAdapter';
+import {
+  extractUnknownReasonBreakdown,
+  isPlausibleRawOutput,
+  toAssessmentOutput,
+} from '../outputAdapter';
 import type { RawAssessmentOutputRecord } from '../rawOutputTypes';
 
 function makeRaw(overrides: Partial<RawAssessmentOutputRecord> = {}): RawAssessmentOutputRecord {
@@ -39,7 +43,9 @@ function makeRaw(overrides: Partial<RawAssessmentOutputRecord> = {}): RawAssessm
         currentLevel: 2,
         targetLevel: 4,
         gap: 2,
-        supportingEvidence: [{ evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2', locator: 'x' }],
+        supportingEvidence: [
+          { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2', locator: 'x' },
+        ],
         contradictingEvidence: [],
         businessMeaning: 'Ownership is unclear.',
         rootCauseHypothesis: null,
@@ -87,7 +93,9 @@ describe('toAssessmentOutput', () => {
   });
 
   it('synthesizes lineage from sessionId/revisionOfOutputId without inventing a supersededByOutputId', () => {
-    const output = toAssessmentOutput(makeRaw({ sessionId: 'session-42', revisionOfOutputId: 'output-0' }));
+    const output = toAssessmentOutput(
+      makeRaw({ sessionId: 'session-42', revisionOfOutputId: 'output-0' })
+    );
     expect(output.lineage.sourceSessionId).toBe('session-42');
     expect(output.lineage.revisionOfOutputId).toBe('output-0');
     expect(output.lineage.supersededByOutputId).toBeNull();
@@ -116,7 +124,7 @@ describe('isPlausibleRawOutput', () => {
 });
 
 describe('extractUnknownReasonBreakdown', () => {
-  it('returns undefined when the field is absent (today\'s real Output contract)', () => {
+  it("returns undefined when the field is absent (today's real Output contract)", () => {
     expect(extractUnknownReasonBreakdown(makeRaw())).toBeUndefined();
   });
 

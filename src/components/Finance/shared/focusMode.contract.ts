@@ -69,7 +69,9 @@ export const FOCUS_MODE_HIDDEN_REGIONS: readonly FinanceChromeRegion[] = [
 
 export type FocusModeRegionVisibility = 'retained' | 'hidden';
 
-export function regionVisibilityInFocusMode(region: FinanceChromeRegion): FocusModeRegionVisibility {
+export function regionVisibilityInFocusMode(
+  region: FinanceChromeRegion
+): FocusModeRegionVisibility {
   return FOCUS_MODE_RETAINED_REGIONS.includes(region) ? 'retained' : 'hidden';
 }
 
@@ -77,7 +79,14 @@ export function regionVisibilityInFocusMode(region: FinanceChromeRegion): FocusM
 // Zachowany stan — focusModeContract.ts:117-160 (5 pól z rejestru + activeView)
 // ---------------------------------------------------------------------------
 
-export const FOCUS_MODE_PRESERVED_STATE_KEYS = ['selection', 'filters', 'scroll', 'focus', 'draft', 'activeView'] as const;
+export const FOCUS_MODE_PRESERVED_STATE_KEYS = [
+  'selection',
+  'filters',
+  'scroll',
+  'focus',
+  'draft',
+  'activeView',
+] as const;
 export type FocusModePreservedStateKey = (typeof FOCUS_MODE_PRESERVED_STATE_KEYS)[number];
 
 /** Compile-time-ish dokumentacja: toggle nie robi ŻADNYCH efektów danych (zero refetch). */
@@ -87,7 +96,11 @@ export const FOCUS_MODE_NEVER_REFETCHES = true as const;
 // Sesja + toggle — focusModeContract.ts:166-297
 // ---------------------------------------------------------------------------
 
-export type FocusModeTrigger = 'toggle-control' | 'escape-key' | 'programmatic' | 'keyboard-shortcut';
+export type FocusModeTrigger =
+  | 'toggle-control'
+  | 'escape-key'
+  | 'programmatic'
+  | 'keyboard-shortcut';
 
 export interface FocusModeSession<TState = unknown> {
   active: boolean;
@@ -143,7 +156,10 @@ export function enterFocusMode<TState>(
     activeViewId: session.activeViewId,
     workspaceState: session.workspaceState, // ta sama referencja — to jest cały sens
   };
-  const effects: FocusModeEffect[] = FOCUS_MODE_HIDDEN_REGIONS.map((region) => ({ kind: 'hide-region' as const, region }));
+  const effects: FocusModeEffect[] = FOCUS_MODE_HIDDEN_REGIONS.map((region) => ({
+    kind: 'hide-region' as const,
+    region,
+  }));
   effects.push({
     kind: 'announce',
     messageKey: 'finance.focusMode.entered',
@@ -166,7 +182,10 @@ export function exitFocusMode<TState>(
     activeViewId: session.activeViewId,
     workspaceState: session.workspaceState,
   };
-  const effects: FocusModeEffect[] = FOCUS_MODE_HIDDEN_REGIONS.map((region) => ({ kind: 'show-region' as const, region }));
+  const effects: FocusModeEffect[] = FOCUS_MODE_HIDDEN_REGIONS.map((region) => ({
+    kind: 'show-region' as const,
+    region,
+  }));
   effects.push({ kind: 'move-focus', controlId: session.restoreFocusToControlId });
   effects.push({
     kind: 'announce',
@@ -190,7 +209,9 @@ export interface FocusModePreservationViolation {
   detail: string;
 }
 
-export type FocusModePreservationCheck = { ok: true } | { ok: false; violations: FocusModePreservationViolation[] };
+export type FocusModePreservationCheck =
+  | { ok: true }
+  | { ok: false; violations: FocusModePreservationViolation[] };
 
 /**
  * Porównaj sesję PRZED i PO toggle i udowodnij, że wszystko przetrwało.
@@ -207,7 +228,8 @@ export function assertFocusModePreservation<TState>(
     for (const key of ['selection', 'filters', 'scroll', 'draft'] as const) {
       violations.push({
         key,
-        detail: 'Stan roboczy modułu został podmieniony przez toggle. Focus mode musi nieść ten sam obiekt — nowy obiekt oznacza, że coś go przebudowało lub przeładowało.',
+        detail:
+          'Stan roboczy modułu został podmieniony przez toggle. Focus mode musi nieść ten sam obiekt — nowy obiekt oznacza, że coś go przebudowało lub przeładowało.',
       });
     }
   }
@@ -220,7 +242,10 @@ export function assertFocusModePreservation<TState>(
   return violations.length === 0 ? { ok: true } : { ok: false, violations };
 }
 
-export function focusModeActiveViewId(session: Pick<FocusModeSession, 'activeViewId'>, fallbackViewId: string): string {
+export function focusModeActiveViewId(
+  session: Pick<FocusModeSession, 'activeViewId'>,
+  fallbackViewId: string
+): string {
   return session.activeViewId ?? fallbackViewId;
 }
 
@@ -229,7 +254,13 @@ export function focusModeActiveViewId(session: Pick<FocusModeSession, 'activeVie
 // patrz nagłówek pliku).
 // ---------------------------------------------------------------------------
 
-export const ESCAPE_PRECEDENCE = ['modal', 'command-palette', 'popover', 'cell-editing', 'focus-mode'] as const;
+export const ESCAPE_PRECEDENCE = [
+  'modal',
+  'command-palette',
+  'popover',
+  'cell-editing',
+  'focus-mode',
+] as const;
 export type EscapeConsumer = (typeof ESCAPE_PRECEDENCE)[number] | 'none';
 
 export interface EscapeContext {
@@ -273,7 +304,9 @@ export interface ViewportCapability {
 }
 
 /** Desktop = pełna edycja; tablet = odczyt/review; mobile = mutacje/compute/review fail-closed. */
-export const FINANCE_VIEWPORT_CAPABILITIES: Readonly<Record<FinanceViewportClass, ViewportCapability>> = {
+export const FINANCE_VIEWPORT_CAPABILITIES: Readonly<
+  Record<FinanceViewportClass, ViewportCapability>
+> = {
   desktop: { edit: true, compute: true, review: true, read: true, focusMode: true },
   tablet: { edit: false, compute: false, review: true, read: true, focusMode: true },
   mobile: { edit: false, compute: false, review: false, read: false, focusMode: false },

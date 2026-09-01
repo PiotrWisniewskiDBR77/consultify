@@ -61,8 +61,10 @@ const OPERATION_LABEL: Record<SwotProposal['operation'], { en: string; pl: strin
 
 function confidenceLabel(confidence: number, isPolish: boolean): string {
   const pct = Math.round(Math.max(0, Math.min(1, confidence || 0)) * 100);
-  if (confidence >= 0.75) return isPolish ? `Wysoka pewność · ${pct}%` : `High confidence · ${pct}%`;
-  if (confidence >= 0.4) return isPolish ? `Średnia pewność · ${pct}%` : `Medium confidence · ${pct}%`;
+  if (confidence >= 0.75)
+    return isPolish ? `Wysoka pewność · ${pct}%` : `High confidence · ${pct}%`;
+  if (confidence >= 0.4)
+    return isPolish ? `Średnia pewność · ${pct}%` : `Medium confidence · ${pct}%`;
   return isPolish ? `Niska pewność · ${pct}%` : `Low confidence · ${pct}%`;
 }
 
@@ -370,16 +372,16 @@ export function TeresaSwotProposals({
 
   const errorMessage = useMemo(() => {
     if (errorKind === 'PROVIDER_ERROR') {
-      return isPolish
-        ? 'Teresa jest chwilowo niedostępna.'
-        : 'Teresa is temporarily unavailable.';
+      return isPolish ? 'Teresa jest chwilowo niedostępna.' : 'Teresa is temporarily unavailable.';
     }
     if (errorKind === 'INVALID_MODEL_RESPONSE') {
       return isPolish
         ? 'Teresa nie ukończyła tej propozycji poprawnie.'
         : "Teresa couldn't complete this proposal correctly.";
     }
-    return isPolish ? 'Teresa nie ukończyła tego zadania — spróbuj ponownie.' : "Teresa couldn't complete this — try again.";
+    return isPolish
+      ? 'Teresa nie ukończyła tego zadania — spróbuj ponownie.'
+      : "Teresa couldn't complete this — try again.";
   }, [errorKind, isPolish]);
 
   const handleGenerate = useCallback(async () => {
@@ -405,7 +407,9 @@ export function TeresaSwotProposals({
       if (cancelledRef.current || err?.name === 'AbortError' || !mountedRef.current) return;
       const code = String(err?.data?.code || '').toUpperCase();
       setErrorKind(
-        code === 'PROVIDER_ERROR' || code === 'INVALID_MODEL_RESPONSE' ? (code as ErrorKind) : 'UNKNOWN'
+        code === 'PROVIDER_ERROR' || code === 'INVALID_MODEL_RESPONSE'
+          ? (code as ErrorKind)
+          : 'UNKNOWN'
       );
       setPhase('error');
     }
@@ -625,9 +629,7 @@ export function TeresaSwotProposals({
                   [proposal.id]: cur[proposal.id] ?? proposal.proposedAfter?.text ?? '',
                 }));
               }}
-              onEditChange={(value) =>
-                setEditDrafts((cur) => ({ ...cur, [proposal.id]: value }))
-              }
+              onEditChange={(value) => setEditDrafts((cur) => ({ ...cur, [proposal.id]: value }))}
               onAccept={() => handleAccept(proposal)}
               onReject={() => handleReject(proposal)}
               onRetryWithCurrentVersion={(currentVersion) => runAccept(proposal, currentVersion)}

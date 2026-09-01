@@ -17,8 +17,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 import type { AuditProgramSummary } from '../auditsMethodApi';
+import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 
 function makeProgram(overrides: Partial<AuditProgramSummary>): AuditProgramSummary {
   return {

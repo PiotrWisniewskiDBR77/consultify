@@ -7,8 +7,14 @@
  * `src/actions/ideaActionRegistry.ts` + `docs/standards/idea-workspace/02_REJESTR_AKCJI.md`.
  */
 
-import type { ActionDef } from './types';
 import {
+  dispatchQuickAction,
+  runByTool,
+  runContextMenuUiOnlyCallback,
+  runFrameNodeParamCallback,
+  runFrameParamCallback,
+  runKeyboardOnlyCallback,
+  runNodeEditLabelCallback,
   RUNTIME_AI_EXTRACT_ACTIONS,
   RUNTIME_AI_FIND_THEMES,
   RUNTIME_AI_NAME_CLUSTERS,
@@ -23,16 +29,10 @@ import {
   RUNTIME_TOGGLE_VOTING,
   RUNTIME_WB_TO_MINDMAP,
   RUNTIME_WB_TO_TABLE,
-  dispatchQuickAction,
-  runByTool,
-  runContextMenuUiOnlyCallback,
-  runFrameNodeParamCallback,
-  runFrameParamCallback,
-  runKeyboardOnlyCallback,
-  runNodeEditLabelCallback,
   runToolbarBusAction,
   runToolbarUiOnlyCallback,
 } from './runtimeHelpers';
+import type { ActionDef } from './types';
 
 export const WHITEBOARD_ACTIONS: ActionDef[] = [
   {
@@ -128,7 +128,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
     scope: 'current_view',
     tools: ['whiteboard'],
     surfaces: ['toolbar'],
-    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_circle', RUNTIME_INSERT_SHAPE_CIRCLE, ctx),
+    handler: (ctx) =>
+      runToolbarBusAction('idea.canvas.insert_shape_circle', RUNTIME_INSERT_SHAPE_CIRCLE, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -149,7 +150,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
     scope: 'current_view',
     tools: ['whiteboard'],
     surfaces: ['toolbar'],
-    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_diamond', RUNTIME_INSERT_SHAPE_DIAMOND, ctx),
+    handler: (ctx) =>
+      runToolbarBusAction('idea.canvas.insert_shape_diamond', RUNTIME_INSERT_SHAPE_DIAMOND, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -170,7 +172,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
     scope: 'current_view',
     tools: ['whiteboard'],
     surfaces: ['toolbar'],
-    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_hexagon', RUNTIME_INSERT_SHAPE_HEXAGON, ctx),
+    handler: (ctx) =>
+      runToolbarBusAction('idea.canvas.insert_shape_hexagon', RUNTIME_INSERT_SHAPE_HEXAGON, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -366,7 +369,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
       description:
         'Ustawia tło Tablicy na wzór kropek. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:335-341 (overflow „…", bg-dots)',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:335-341 (overflow „…", bg-dots)',
   },
   {
     id: 'idea.canvas.set_bg_grid',
@@ -385,7 +389,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
       description:
         'Ustawia tło Tablicy na wzór siatki. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:342-348 (overflow „…", bg-grid)',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:342-348 (overflow „…", bg-grid)',
   },
   {
     id: 'idea.canvas.set_bg_lines',
@@ -404,7 +409,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
       description:
         'Ustawia tło Tablicy na wzór linii. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:349-355 (overflow „…", bg-lines)',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:349-355 (overflow „…", bg-lines)',
   },
   {
     id: 'idea.canvas.set_bg_blank',
@@ -423,7 +429,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
       description:
         'Ustawia puste (bez wzoru) tło Tablicy. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:356-362 (overflow „…", bg-blank)',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:356-362 (overflow „…", bg-blank)',
   },
   {
     // WB-P2-03 (08_P1_P3_EXECUTION_PLAN §6 Whiteboard) — "Tidy board" /
@@ -1040,7 +1047,8 @@ export const WHITEBOARD_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'deleteFrame(frameId,false) → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+      evidence:
+        'deleteFrame(frameId,false) → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
     },
     destructive: true,
     teresa: {

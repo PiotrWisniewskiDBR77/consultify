@@ -80,7 +80,10 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
     exceptionInboxService = await import('../exceptionInboxService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'GoldCo AP-08 Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'GoldCo AP-08 Test Org',
+      ])
     );
 
     // --- GoldCo artifact 1: STATEMENT_PACK — hosts the explicit exception + stale freshness ---
@@ -110,7 +113,9 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
     // append-only child row exists — that is the schema's guarantee working as intended, not a
     // test bug). finance_comments/finance_comment_assignments have no deny-delete trigger.
     await withPinnedPostgresTransaction(async (tx) => {
-      await tx.queryRun(`DELETE FROM finance_comment_assignments WHERE organization_id = ?`, [orgId]);
+      await tx.queryRun(`DELETE FROM finance_comment_assignments WHERE organization_id = ?`, [
+        orgId,
+      ]);
       await tx.queryRun(`DELETE FROM finance_comments WHERE organization_id = ?`, [orgId]);
     });
   });
@@ -121,14 +126,21 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
       artifactId: statementPackArtifactId,
       businessVersionId: statementPackBvId,
       severity: 'WARNING',
-      sourceRef: { statement_line_code: 'TOTAL_ASSETS', period_id: '2026-Q2', entity_id: 'goldco_main' },
+      sourceRef: {
+        statement_line_code: 'TOTAL_ASSETS',
+        period_id: '2026-Q2',
+        entity_id: 'goldco_main',
+      },
       reasonCode: 'ROUNDING_TOLERANCE_EXCEEDED',
       owner: analystId,
       raisedBy: preparerId,
     });
     expect(raised.ok).toBe(true);
 
-    const inbox = await exceptionInboxService.listExceptionInbox({ organizationId: orgId, artifactId: statementPackArtifactId });
+    const inbox = await exceptionInboxService.listExceptionInbox({
+      organizationId: orgId,
+      artifactId: statementPackArtifactId,
+    });
     const entry = inbox.find((e) => e.category === 'tie_out_fail');
     expect(entry).toBeTruthy();
     expect(entry?.severity).toBe('WARNING');
@@ -153,14 +165,21 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
     if (!created.ok) throw new Error('unreachable');
     blockingCommentId = created.comment.id;
 
-    const inbox = await exceptionInboxService.listExceptionInbox({ organizationId: orgId, artifactId: baselineModelArtifactId });
+    const inbox = await exceptionInboxService.listExceptionInbox({
+      organizationId: orgId,
+      artifactId: baselineModelArtifactId,
+    });
     const entry = inbox.find((e) => e.category === 'blocker');
     expect(entry).toBeTruthy();
     expect(entry?.owner).toBe(reviewerId); // no assignment yet -> defaults to comment author
     expect(entry?.ownerIsDefault).toBe(true);
     expect(entry?.businessVersionId).toBe(baselineModelBvId);
     expect(entry?.deepLink.url).toContain(`comment=${blockingCommentId}`);
-    expect(entry?.sources[0]).toEqual({ category: 'blocker', table: 'finance_comments', id: blockingCommentId });
+    expect(entry?.sources[0]).toEqual({
+      category: 'blocker',
+      table: 'finance_comments',
+      id: blockingCommentId,
+    });
   });
 
   it('type 3: stale freshness after a source change -> stale entry, owner defaults to the business version creator', async () => {
@@ -172,7 +191,10 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
       )
     );
 
-    const inbox = await exceptionInboxService.listExceptionInbox({ organizationId: orgId, artifactId: statementPackArtifactId });
+    const inbox = await exceptionInboxService.listExceptionInbox({
+      organizationId: orgId,
+      artifactId: statementPackArtifactId,
+    });
     const entry = inbox.find((e) => e.category === 'stale');
     expect(entry).toBeTruthy();
     expect(entry?.severity).toBe('WARNING');
@@ -190,7 +212,10 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
   });
 
   it('dedupe: a second finance_exceptions row for the SAME root cause as the existing stale entry does not add a 4th entry', async () => {
-    const before = await exceptionInboxService.listExceptionInbox({ organizationId: orgId, artifactId: statementPackArtifactId });
+    const before = await exceptionInboxService.listExceptionInbox({
+      organizationId: orgId,
+      artifactId: statementPackArtifactId,
+    });
     expect(before).toHaveLength(2); // tie_out_fail (ROUNDING_TOLERANCE_EXCEEDED) + stale (SHARED_ROOT_CAUSE), on this artifact
 
     const raisedAgain = await exceptionLedgerService.raise({
@@ -198,17 +223,26 @@ describe.skipIf(!REAL_PG)('AP-08 exception inbox — real PostgreSQL', () => {
       artifactId: statementPackArtifactId,
       businessVersionId: statementPackBvId,
       severity: 'MATERIAL', // deliberately higher severity than the stale entry's fixed WARNING, to also assert severity escalates on merge
-      sourceRef: { statement_line_code: 'TOTAL_ASSETS', period_id: '2026-Q2', entity_id: 'goldco_main' },
+      sourceRef: {
+        statement_line_code: 'TOTAL_ASSETS',
+        period_id: '2026-Q2',
+        entity_id: 'goldco_main',
+      },
       reasonCode: SHARED_ROOT_CAUSE, // SAME normalized cause as the stale entry's freshness_reason
       raisedBy: preparerId,
     });
     expect(raisedAgain.ok).toBe(true);
 
-    const after = await exceptionInboxService.listExceptionInbox({ organizationId: orgId, artifactId: statementPackArtifactId });
+    const after = await exceptionInboxService.listExceptionInbox({
+      organizationId: orgId,
+      artifactId: statementPackArtifactId,
+    });
     // Still 2 on this artifact (tie_out_fail#1 + the merged stale/tie_out_fail#2), not 3.
     expect(after).toHaveLength(2);
 
-    const merged = after.find((e) => e.businessVersionId === statementPackBvId && e.reason === SHARED_ROOT_CAUSE);
+    const merged = after.find(
+      (e) => e.businessVersionId === statementPackBvId && e.reason === SHARED_ROOT_CAUSE
+    );
     expect(merged).toBeTruthy();
     expect(merged?.mergedCategories.sort()).toEqual(['stale', 'tie_out_fail']);
     expect(merged?.category).toBe('tie_out_fail'); // explicit finance_exceptions row outranks a derived freshness flag (CATEGORY_PRIORITY)

@@ -127,7 +127,10 @@ export function mergeLibraryContentJson(
   existingRaw: string | null | undefined,
   seedRaw: string | null | undefined
 ): string {
-  const merged = mergeLibraryContent(parseLibraryContent(existingRaw), parseLibraryContent(seedRaw));
+  const merged = mergeLibraryContent(
+    parseLibraryContent(existingRaw),
+    parseLibraryContent(seedRaw)
+  );
   return stableStringify(merged);
 }
 

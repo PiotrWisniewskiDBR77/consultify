@@ -25,7 +25,9 @@ vi.mock('@/components/ui/primitives', () => ({
   ErrorState: ({ title, retry }: { title: string; retry: () => void }) => (
     <div role="alert">
       {title}
-      <button type="button" onClick={retry}>Retry</button>
+      <button type="button" onClick={retry}>
+        Retry
+      </button>
     </div>
   ),
 }));
@@ -45,7 +47,9 @@ vi.mock('@/components/shared/TableWithPreviewLayout', () => ({
       {selectedItem ? (
         <div data-testid="decision-preview">
           {renderPreview(selectedItem)}
-          <button type="button" onClick={() => onOpenFull(selectedItem.id)}>Open full</button>
+          <button type="button" onClick={() => onOpenFull(selectedItem.id)}>
+            Open full
+          </button>
         </div>
       ) : null}
     </div>
@@ -55,7 +59,9 @@ vi.mock('@/components/standard', () => ({
   StandardTable: ({ data, onRowClick }: any) => (
     <div data-testid="decisions-table">
       {data.map((row: any) => (
-        <button type="button" key={row.id} onClick={() => onRowClick(row)}>{row.title}</button>
+        <button type="button" key={row.id} onClick={() => onRowClick(row)}>
+          {row.title}
+        </button>
       ))}
     </div>
   ),
@@ -91,7 +97,11 @@ describe('DecisionsPanelContent owner states', () => {
 
   it('renders an honest loading state followed by the empty state', async () => {
     let resolve: (value: unknown[]) => void = () => undefined;
-    api.getDecisions.mockReturnValue(new Promise((done) => { resolve = done; }));
+    api.getDecisions.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      })
+    );
     render(<DecisionsPanelContent {...requiredProps} viewMode="my" searchQuery="" />);
     expect(screen.getByRole('status')).toHaveTextContent('Loading decisions');
     resolve([]);
@@ -101,9 +111,7 @@ describe('DecisionsPanelContent owner states', () => {
   });
 
   it('fails closed with Retry and recovers the canonical table', async () => {
-    api.getDecisions
-      .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce([decision]);
+    api.getDecisions.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([decision]);
     render(<DecisionsPanelContent {...requiredProps} viewMode="my" searchQuery="" />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load decisions');
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));

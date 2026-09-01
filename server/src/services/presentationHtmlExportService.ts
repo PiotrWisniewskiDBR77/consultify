@@ -125,7 +125,8 @@ function renderBlockHtml(
       return `<div class="block block-smart-layout animate-block">${items.map((item) => `<div class="smart-card" style="border-left:3px solid ${theme.accent};background:${theme.surface}"><strong style="color:${theme.heading}">${escapeHtml(String(item.title || ''))}</strong><p style="color:${theme.textSecondary}">${escapeHtml(String(item.description || ''))}</p></div>`).join('')}</div>`;
     }
     case 'timeline_block': {
-      const items = (c.items as Array<{ date?: string; title?: string; description?: string }>) || [];
+      const items =
+        (c.items as Array<{ date?: string; title?: string; description?: string }>) || [];
       return `<div class="block block-timeline animate-block">${items.map((item) => `<div class="timeline-item"><span style="color:${theme.accent}">${escapeHtml(String(item.date || ''))}</span><strong style="color:${theme.heading}">${escapeHtml(String(item.title || ''))}</strong><p style="color:${theme.textSecondary}">${escapeHtml(String(item.description || ''))}</p></div>`).join('')}</div>`;
     }
     case 'table': {

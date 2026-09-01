@@ -68,11 +68,9 @@ describe('verifyDomainTxt', () => {
 
   it('refuses a null/undefined token without throwing (would otherwise 500 on token.trim())', async () => {
     const resolver = vi.fn();
-    const result = await verifyDomainTxt(
-      'example.com',
-      null as unknown as string,
-      { resolveTxt: resolver }
-    );
+    const result = await verifyDomainTxt('example.com', null as unknown as string, {
+      resolveTxt: resolver,
+    });
     expect(result.status).toBe('invalid_token');
     expect(resolver).not.toHaveBeenCalled();
   });

@@ -79,50 +79,50 @@ export async function consumeNextExecutionSignal(
     try {
       if (input.__testForceFailure) throw input.__testForceFailure;
       const inserted = await tx.query<{ receipt_id: string }>(
-      `INSERT INTO rvn_execution_signal_receipts
+        `INSERT INTO rvn_execution_signal_receipts
          (organization_id,source_signal_id,source_execution_link_id,
           source_initiative_id,source_case_id,signal_type,payload_version,observation_payload)
        VALUES (?,?,?,?,?,?,?,?::jsonb)
        ON CONFLICT (organization_id,source_signal_id) DO NOTHING
        RETURNING receipt_id`,
-      [
-        signal.organization_id,
-        signal.signal_id,
-        signal.execution_link_id,
-        signal.initiative_id,
-        signal.case_id,
-        signal.signal_type,
-        signal.payload_version,
-        JSON.stringify(signal.payload_json),
-      ]
-    );
+        [
+          signal.organization_id,
+          signal.signal_id,
+          signal.execution_link_id,
+          signal.initiative_id,
+          signal.case_id,
+          signal.signal_type,
+          signal.payload_version,
+          JSON.stringify(signal.payload_json),
+        ]
+      );
       const existing = inserted.rows[0]
-      ? null
-      : await tx.query<{ receipt_id: string }>(
-          `SELECT receipt_id FROM rvn_execution_signal_receipts
+        ? null
+        : await tx.query<{ receipt_id: string }>(
+            `SELECT receipt_id FROM rvn_execution_signal_receipts
             WHERE organization_id = ? AND source_signal_id = ?`,
-          [signal.organization_id, signal.signal_id]
-        );
+            [signal.organization_id, signal.signal_id]
+          );
       const receiptId = inserted.rows[0]?.receipt_id ?? existing?.rows[0]?.receipt_id;
       if (!receiptId) throw new Error('execution_signal_receipt_missing_after_upsert');
 
       await tx.query(
-      `UPDATE execution_results_signal_outbox
+        `UPDATE execution_results_signal_outbox
           SET delivery_status = 'DELIVERED',delivered_at = COALESCE(delivered_at,now()),
               claimed_at = NULL,last_error = NULL
         WHERE signal_id = ? AND organization_id = ? AND delivery_status = 'PROCESSING'`,
-      [signal.signal_id, signal.organization_id]
-    );
+        [signal.signal_id, signal.organization_id]
+      );
       return { signalId: signal.signal_id, receiptId, replay: !inserted.rows[0] };
     } catch (error) {
-      const message=error instanceof Error?error.message:String(error);
+      const message = error instanceof Error ? error.message : String(error);
       await tx.query(
         `UPDATE execution_results_signal_outbox
           SET delivery_status=CASE WHEN attempt_count>=max_attempts THEN 'DEAD_LETTER' ELSE 'FAILED' END,
               last_error=?,claimed_at=NULL,
               dead_lettered_at=CASE WHEN attempt_count>=max_attempts THEN now() ELSE dead_lettered_at END
          WHERE signal_id=? AND organization_id=? AND delivery_status='PROCESSING'`,
-        [message,signal.signal_id,signal.organization_id]
+        [message, signal.signal_id, signal.organization_id]
       );
       return null;
     }
@@ -130,16 +130,17 @@ export async function consumeNextExecutionSignal(
 }
 
 export async function redriveExecutionSignalDeadLetter(
-  organizationId:string,signalId:string
-):Promise<boolean>{
-  return withPgTransaction(async(tx)=>{
-    const result=await tx.query(
+  organizationId: string,
+  signalId: string
+): Promise<boolean> {
+  return withPgTransaction(async (tx) => {
+    const result = await tx.query(
       `UPDATE execution_results_signal_outbox SET delivery_status='PENDING',attempt_count=0,
         claimed_at=NULL,last_error=NULL,dead_lettered_at=NULL
        WHERE signal_id=? AND organization_id=? AND delivery_status='DEAD_LETTER'`,
-      [signalId,organizationId]
+      [signalId, organizationId]
     );
-    return result.rowCount===1;
+    return result.rowCount === 1;
   });
 }
 

@@ -75,8 +75,8 @@ import {
   getResultsDomainTabs,
   isResultsDomain,
 } from '../resultsDomainNavigation';
-import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
+import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   approveRoiCase,

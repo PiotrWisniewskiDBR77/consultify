@@ -59,15 +59,23 @@
  *    `dotTone`.
  */
 
-import { Activity, FileSearch, Image, LayoutGrid, LayoutTemplate, Link2, MessageSquare } from 'lucide-react';
+import {
+  Activity,
+  FileSearch,
+  Image,
+  LayoutGrid,
+  LayoutTemplate,
+  Link2,
+  MessageSquare,
+} from 'lucide-react';
 import React from 'react';
 
+import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 import {
   ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 export type DeckBuilderRightRailToolId =
@@ -216,7 +224,10 @@ const PANEL_KEY: Record<DeckBuilderRightRailToolId, keyof DeckBuilderRightRailPa
   artefakt: 'blocks', // nieużywane w ścieżce ON (branch niżej obsługuje 'artefakt' osobno); wymagane dla wyczerpującego typu Record.
 };
 
-const SECTION_CAPTIONS: Record<'relations' | 'evidence' | 'comments' | 'history', { pl: string; en: string }> = {
+const SECTION_CAPTIONS: Record<
+  'relations' | 'evidence' | 'comments' | 'history',
+  { pl: string; en: string }
+> = {
   relations: { pl: 'Powiązania — z czym to sąsiaduje', en: 'Relations — what this sits next to' },
   evidence: {
     pl: 'Źródła i założenia — na czym to oparto',

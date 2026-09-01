@@ -8,9 +8,9 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 describe('Day 142 — KPI survival after canonical initiative closure', () => {
   const databaseUrl = process.env.DATABASE_URL || '';
@@ -60,7 +60,13 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
       `INSERT INTO transformation_cases
          (transformation_case_id,organization_id,initiated_by_user_id,mandate,lineage_id,idempotency_key)
        VALUES ($1,$2,$3,'Day 142 closure proof',$4,$5)`,
-      [transformationCaseId, organizationId, userId, `lineage_${transformationCaseId}`, `idem_${transformationCaseId}`]
+      [
+        transformationCaseId,
+        organizationId,
+        userId,
+        `lineage_${transformationCaseId}`,
+        `idem_${transformationCaseId}`,
+      ]
     );
     await pool.query(
       `INSERT INTO v8_agent_proposal_versions
@@ -69,7 +75,14 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
           expires_at,status,created_by_user_id)
        VALUES ($1,$2,$3,$4,1,1,$5,'{}'::jsonb,'{}'::jsonb,'[]'::jsonb,'{}'::jsonb,
                now()+interval '1 day','approved',$6)`,
-      [proposalVersionId, `proposal_${proposalVersionId}`, organizationId, `run_${proposalVersionId}`, 'a'.repeat(64), userId]
+      [
+        proposalVersionId,
+        `proposal_${proposalVersionId}`,
+        organizationId,
+        `run_${proposalVersionId}`,
+        'a'.repeat(64),
+        userId,
+      ]
     );
     await pool.query(
       `INSERT INTO v8_agent_proposal_scope_reviews
@@ -85,7 +98,19 @@ describe('Day 142 — KPI survival after canonical initiative closure', () => {
           idempotency_key,input_digest)
        VALUES ($1,$2,$3,$4,'CLOSURE',1,'approved',$5,1,$6::jsonb,$7,$8,$9,
                'day142-test-authority','Day 142 approved closure proof',now()+interval '1 day',$10,$11)`,
-      [`decision_${randomUUID()}`, organizationId, initiativeId, transformationCaseId, 'b'.repeat(64), JSON.stringify(['day142-baseline']), proposalVersionId, reviewId, userId, `idem_gate_${randomUUID()}`, 'c'.repeat(64)]
+      [
+        `decision_${randomUUID()}`,
+        organizationId,
+        initiativeId,
+        transformationCaseId,
+        'b'.repeat(64),
+        JSON.stringify(['day142-baseline']),
+        proposalVersionId,
+        reviewId,
+        userId,
+        `idem_gate_${randomUUID()}`,
+        'c'.repeat(64),
+      ]
     );
 
     app = express();

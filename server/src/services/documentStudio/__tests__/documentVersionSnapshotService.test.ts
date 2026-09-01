@@ -17,8 +17,8 @@
  *     versionNumber, origin and statusAtCapture in details.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DocumentAuditEntry, DocumentSchema, DocumentStatus } from '../documentStudioTypes.js';
 import {

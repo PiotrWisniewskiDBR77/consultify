@@ -27,13 +27,13 @@
 
 import React from 'react';
 
+import type { ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 import {
   financeValueDisplayReasonLabel,
   financeValueStatusLabel,
   formatFinanceValueForDisplay,
   reconciliationBucketLabel,
 } from '@/services/api/financeV2.types';
-import type { ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 
 import type { StatementTableCell } from './deriveStatementTable';
 
@@ -70,7 +70,9 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
 
       <dl className="space-y-2 text-xs">
         <Row label="Wartość">
-          <span className={`tabular-nums font-semibold ${display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}>
+          <span
+            className={`tabular-nums font-semibold ${display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}
+          >
             {display.text}
           </span>
         </Row>
@@ -96,17 +98,23 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           <span className="text-c-text-secondary">
             {cell.value.presentationCurrency} · {cell.value.unit}
             {cell.value.presentationCurrency !== cell.value.nativeCurrency && (
-              <span className="ml-1 text-c-text-muted">(źródłowo: {cell.value.nativeCurrency})</span>
+              <span className="ml-1 text-c-text-muted">
+                (źródłowo: {cell.value.nativeCurrency})
+              </span>
             )}
           </span>
         </Row>
         <Row label="Charakter wartości">
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-              cell.value.isAdjustment ? 'bg-c-warning/10 text-c-warning' : 'bg-c-surface-raised text-c-text-secondary'
+              cell.value.isAdjustment
+                ? 'bg-c-warning/10 text-c-warning'
+                : 'bg-c-surface-raised text-c-text-secondary'
             }`}
           >
-            {cell.value.isAdjustment ? 'Korekta zarządcza (management-adjusted)' : 'Jak zaraportowano (as-reported)'}
+            {cell.value.isAdjustment
+              ? 'Korekta zarządcza (management-adjusted)'
+              : 'Jak zaraportowano (as-reported)'}
           </span>
         </Row>
         {cell.value.isAdjustment && cell.value.adjustmentReason && (
@@ -129,19 +137,28 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
         )}
         {cell.reclassifiedFromLineId && (
           <Row label="Reklasyfikacja">
-            <span className="font-mono text-[10px] text-c-text-secondary">z {cell.reclassifiedFromLineId}</span>
+            <span className="font-mono text-[10px] text-c-text-secondary">
+              z {cell.reclassifiedFromLineId}
+            </span>
           </Row>
         )}
       </dl>
 
       <div className="mt-4 border-t border-c-border-subtle pt-3">
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">Dowód źródłowy</p>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+          Dowód źródłowy
+        </p>
         {sourceRefEntries && sourceRefEntries.length > 0 ? (
-          <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-ref">
+          <dl
+            className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]"
+            data-testid="source-evidence-ref"
+          >
             {sourceRefEntries.map(([key, value]) => (
               <div key={key} className="flex items-baseline justify-between gap-2">
                 <dt className="text-c-text-muted">{key}</dt>
-                <dd className="font-mono text-c-text">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd>
+                <dd className="font-mono text-c-text">
+                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                </dd>
               </div>
             ))}
           </dl>
@@ -153,16 +170,25 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
       </div>
 
       {mappingRow !== undefined && (
-        <div className="mt-4 border-t border-c-border-subtle pt-3" data-testid="source-evidence-mapping">
+        <div
+          className="mt-4 border-t border-c-border-subtle pt-3"
+          data-testid="source-evidence-mapping"
+        >
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
             Ścieżka mapowania (rekoncyliacja)
           </p>
           {mappingRow === null ? (
-            <p className="text-[11px] text-c-text-muted" data-testid="source-evidence-mapping-missing">
+            <p
+              className="text-[11px] text-c-text-muted"
+              data-testid="source-evidence-mapping-missing"
+            >
               Wybrany przebieg rekoncyliacji nie zawiera wiersza mapowania dla tej komórki.
             </p>
           ) : (
-            <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-mapping-row">
+            <dl
+              className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]"
+              data-testid="source-evidence-mapping-row"
+            >
               <div className="flex items-baseline justify-between gap-2">
                 <dt className="text-c-text-muted">Kategoria mapowania</dt>
                 <dd className="font-mono text-c-text" data-testid="source-evidence-mapping-bucket">
@@ -180,7 +206,10 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
               {mappingRow.sourceRowRef && (
                 <div className="flex items-baseline justify-between gap-2">
                   <dt className="text-c-text-muted">sourceRowRef</dt>
-                  <dd className="font-mono text-c-text" data-testid="source-evidence-mapping-source-row-ref">
+                  <dd
+                    className="font-mono text-c-text"
+                    data-testid="source-evidence-mapping-source-row-ref"
+                  >
                     {JSON.stringify(mappingRow.sourceRowRef)}
                   </dd>
                 </div>
@@ -193,7 +222,13 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.ReactElement {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-c-text-muted">{label}</dt>

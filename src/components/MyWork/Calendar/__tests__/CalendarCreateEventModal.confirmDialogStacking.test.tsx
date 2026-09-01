@@ -84,6 +84,8 @@ describe('CalendarCreateEventModal — confirm dialog stacks above the portaled 
     const confirmDialogIndex = bodyChildren.indexOf(confirmDialogRoot as Element);
     expect(confirmDialogIndex).toBeGreaterThan(eventModalIndex);
 
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: /duplicate/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /duplicate/i })).toBeInTheDocument()
+    );
   });
 });

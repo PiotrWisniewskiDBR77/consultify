@@ -36,20 +36,20 @@ import {
   undoWorkbookCommand,
   WorkbookCommandError,
 } from '../services/workbook/workbookCommandService.js';
+import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import {
   pruneWorkbookRuntimeCache,
   workbookRuntimeCache as workbookCache,
 } from '../services/workbook/workbookRuntimeCache.js';
-import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
-import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
 import {
+  type CellStyle,
   ChartImageSchema,
   ConditionalFormattingBlockSchema,
-  type CellStyle,
   type WorkbookSchema,
   WorkbookSchemaValidator,
 } from '../services/workbook/WorkbookSchema.js';
+import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';

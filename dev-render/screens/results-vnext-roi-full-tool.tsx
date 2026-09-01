@@ -123,36 +123,179 @@ const roiCase = {
 };
 
 const baseline = {
-  baselineId: 'bl-1', caseId: CASE_ID, organizationId: ORG_ID,
-  baselinePeriodStart: '2026-01-01', baselinePeriodEnd: '2026-03-31',
-  currentMeasuredValue: 82, currentMeasuredUnit: 'defektów/tydzień', currentMeasuredAsOf: '2026-03-31',
-  bauProjectionMethod: 'flat', bauGrowthRatePct: null, bauReferenceValue: null,
-  interventionComparisonNotes: null, source: 'Raport jakości Q1', confidence: 'medium',
-  ownerUserId: USER_ID, frozenAt: null, frozenBy: null, rowVersion: 1,
-  createdBy: USER_ID, createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-01T08:00:00Z',
+  baselineId: 'bl-1',
+  caseId: CASE_ID,
+  organizationId: ORG_ID,
+  baselinePeriodStart: '2026-01-01',
+  baselinePeriodEnd: '2026-03-31',
+  currentMeasuredValue: 82,
+  currentMeasuredUnit: 'defektów/tydzień',
+  currentMeasuredAsOf: '2026-03-31',
+  bauProjectionMethod: 'flat',
+  bauGrowthRatePct: null,
+  bauReferenceValue: null,
+  interventionComparisonNotes: null,
+  source: 'Raport jakości Q1',
+  confidence: 'medium',
+  ownerUserId: USER_ID,
+  frozenAt: null,
+  frozenBy: null,
+  rowVersion: 1,
+  createdBy: USER_ID,
+  createdAt: '2026-06-01T08:00:00Z',
+  updatedAt: '2026-06-01T08:00:00Z',
 };
 const policy = {
-  policyRowId: 'pol-1', caseId: CASE_ID, organizationId: ORG_ID,
-  discountRatePct: 8, taxTreatment: 'pre_tax', inflationRatePct: 2.5, roundingPolicy: 'half_up_2dp',
-  requiredMetrics: ['npv', 'irr'], notes: null, confidence: 'high', ownerUserId: USER_ID,
-  frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID,
-  createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-01T08:00:00Z',
+  policyRowId: 'pol-1',
+  caseId: CASE_ID,
+  organizationId: ORG_ID,
+  discountRatePct: 8,
+  taxTreatment: 'pre_tax',
+  inflationRatePct: 2.5,
+  roundingPolicy: 'half_up_2dp',
+  requiredMetrics: ['npv', 'irr'],
+  notes: null,
+  confidence: 'high',
+  ownerUserId: USER_ID,
+  frozenAt: null,
+  frozenBy: null,
+  rowVersion: 1,
+  createdBy: USER_ID,
+  createdAt: '2026-06-01T08:00:00Z',
+  updatedAt: '2026-06-01T08:00:00Z',
 };
 const assumptions: any[] = [
-  { assumptionId: 'as-1', caseId: CASE_ID, organizationId: ORG_ID, category: 'Wydajność', label: 'Redukcja przestojów', unit: '%', baseValue: 15, downsideValue: 8, upsideValue: 22, confidence: 'medium', evidenceRef: null, source: null, ownerUserId: USER_ID, sensitivityRank: 1, notes: null, deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: '2026-06-02T08:00:00Z', updatedAt: '2026-06-02T08:00:00Z' },
+  {
+    assumptionId: 'as-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    category: 'Wydajność',
+    label: 'Redukcja przestojów',
+    unit: '%',
+    baseValue: 15,
+    downsideValue: 8,
+    upsideValue: 22,
+    confidence: 'medium',
+    evidenceRef: null,
+    source: null,
+    ownerUserId: USER_ID,
+    sensitivityRank: 1,
+    notes: null,
+    deletedAt: null,
+    deletedBy: null,
+    frozenAt: null,
+    frozenBy: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-06-02T08:00:00Z',
+    updatedAt: '2026-06-02T08:00:00Z',
+  },
 ];
 const costLines: any[] = [
-  { costLineId: 'cl-1', caseId: CASE_ID, organizationId: ORG_ID, category: 'Licencje', label: 'Licencja MES (roczna)', description: null, amount: 180000, currency: 'PLN', timingType: 'recurring', oneTimePeriodDate: null, recurrenceStartDate: '2026-01-01', recurrenceEndDate: '2026-12-31', recurrenceCadence: 'annual', confidence: 'high', source: null, ownerUserId: USER_ID, deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: '2026-06-02T08:00:00Z', updatedAt: '2026-06-02T08:00:00Z' },
+  {
+    costLineId: 'cl-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    category: 'Licencje',
+    label: 'Licencja MES (roczna)',
+    description: null,
+    amount: 180000,
+    currency: 'PLN',
+    timingType: 'recurring',
+    oneTimePeriodDate: null,
+    recurrenceStartDate: '2026-01-01',
+    recurrenceEndDate: '2026-12-31',
+    recurrenceCadence: 'annual',
+    confidence: 'high',
+    source: null,
+    ownerUserId: USER_ID,
+    deletedAt: null,
+    deletedBy: null,
+    frozenAt: null,
+    frozenBy: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-06-02T08:00:00Z',
+    updatedAt: '2026-06-02T08:00:00Z',
+  },
 ];
 const benefitLines: any[] = [
-  { benefitLineId: 'bn-1', caseId: CASE_ID, organizationId: ORG_ID, category: 'Jakość', label: 'Redukcja odpadu', description: null, isFinancial: true, amount: 240000, currency: 'PLN', timingType: 'recurring', oneTimePeriodDate: null, recurrenceStartDate: '2026-04-01', recurrenceEndDate: '2026-12-31', recurrenceCadence: 'quarterly', rampPeriods: 2, doubleCountingGroup: null, doubleCountingResolutionNote: null, confidence: 'medium', source: null, ownerUserId: USER_ID, deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: '2026-06-02T08:00:00Z', updatedAt: '2026-06-02T08:00:00Z' },
+  {
+    benefitLineId: 'bn-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    category: 'Jakość',
+    label: 'Redukcja odpadu',
+    description: null,
+    isFinancial: true,
+    amount: 240000,
+    currency: 'PLN',
+    timingType: 'recurring',
+    oneTimePeriodDate: null,
+    recurrenceStartDate: '2026-04-01',
+    recurrenceEndDate: '2026-12-31',
+    recurrenceCadence: 'quarterly',
+    rampPeriods: 2,
+    doubleCountingGroup: null,
+    doubleCountingResolutionNote: null,
+    confidence: 'medium',
+    source: null,
+    ownerUserId: USER_ID,
+    deletedAt: null,
+    deletedBy: null,
+    frozenAt: null,
+    frozenBy: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-06-02T08:00:00Z',
+    updatedAt: '2026-06-02T08:00:00Z',
+  },
 ];
 const evidenceLinks: Record<string, any[]> = { 'bn-1': [] };
 const scenarios: any[] = [
-  { scenarioId: 'sc-1', caseId: CASE_ID, organizationId: ORG_ID, scenarioType: 'downside', label: 'Opóźnione wdrożenie', description: 'Start przesunięty o kwartał', deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: '2026-06-05T08:00:00Z', updatedAt: '2026-06-05T08:00:00Z' },
+  {
+    scenarioId: 'sc-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    scenarioType: 'downside',
+    label: 'Opóźnione wdrożenie',
+    description: 'Start przesunięty o kwartał',
+    deletedAt: null,
+    deletedBy: null,
+    frozenAt: null,
+    frozenBy: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-06-05T08:00:00Z',
+    updatedAt: '2026-06-05T08:00:00Z',
+  },
 ];
 const calcRuns: any[] = [
-  { runId: 'run-1', caseId: CASE_ID, organizationId: ORG_ID, scenarioId: null, status: 'completed', totalCosts: 180000, totalFinancialBenefits: 240000, simpleRoi: 33.3, npv: 41250, irrPct: 24.1, irrStatus: 'computed', paybackPeriods: 9, discountedPaybackPeriods: 10, benefitCostRatio: 1.33, inputHash: 'hash-1', hasUnresolvedDoubleCounting: false, hasMixedCurrencyFailure: false, validationFindings: [], warnings: [], initiatedBy: USER_ID, startedAt: '2026-08-01T09:00:00Z', completedAt: '2026-08-01T09:00:05Z', createdAt: '2026-08-01T09:00:05Z' },
+  {
+    runId: 'run-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    scenarioId: null,
+    status: 'completed',
+    totalCosts: 180000,
+    totalFinancialBenefits: 240000,
+    simpleRoi: 33.3,
+    npv: 41250,
+    irrPct: 24.1,
+    irrStatus: 'computed',
+    paybackPeriods: 9,
+    discountedPaybackPeriods: 10,
+    benefitCostRatio: 1.33,
+    inputHash: 'hash-1',
+    hasUnresolvedDoubleCounting: false,
+    hasMixedCurrencyFailure: false,
+    validationFindings: [],
+    warnings: [],
+    initiatedBy: USER_ID,
+    startedAt: '2026-08-01T09:00:00Z',
+    completedAt: '2026-08-01T09:00:05Z',
+    createdAt: '2026-08-01T09:00:05Z',
+  },
 ];
 const approvalSnapshots: any[] = [];
 const forecastVersions: any[] = [];
@@ -166,31 +309,66 @@ const varianceCauses: Record<string, any[]> = {};
 // the deterministic execute-time-denial demo (see `raceOnExecute` below).
 const pirs: any[] = [
   {
-    pirId: 'pir-1', caseId: CASE_ID, organizationId: ORG_ID, sequenceNumber: 1,
-    status: 'draft', startedBy: USER_ID, startedAt: '2026-08-05T09:00:00Z',
-    reviewSnapshotHash: 'snap-hash-pir-1', outcome: null, lessonsLearned: null,
-    recommendation: null, openVarianceWaiverReason: null,
-    teresaDraftLessonsPayload: null, teresaDraftGeneratedAt: null,
-    teresaDraftDisposition: null, teresaDraftDispositionBy: null, teresaDraftDispositionAt: null,
-    finalizedBy: null, finalizedAt: null, rowVersion: 1,
-    createdBy: USER_ID, createdAt: '2026-08-05T09:00:00Z', updatedBy: null, updatedAt: '2026-08-05T09:00:00Z',
+    pirId: 'pir-1',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    sequenceNumber: 1,
+    status: 'draft',
+    startedBy: USER_ID,
+    startedAt: '2026-08-05T09:00:00Z',
+    reviewSnapshotHash: 'snap-hash-pir-1',
+    outcome: null,
+    lessonsLearned: null,
+    recommendation: null,
+    openVarianceWaiverReason: null,
+    teresaDraftLessonsPayload: null,
+    teresaDraftGeneratedAt: null,
+    teresaDraftDisposition: null,
+    teresaDraftDispositionBy: null,
+    teresaDraftDispositionAt: null,
+    finalizedBy: null,
+    finalizedAt: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-08-05T09:00:00Z',
+    updatedBy: null,
+    updatedAt: '2026-08-05T09:00:00Z',
   },
   {
-    pirId: 'pir-2', caseId: CASE_ID, organizationId: ORG_ID, sequenceNumber: 2,
-    status: 'draft', startedBy: USER_ID, startedAt: '2026-08-07T09:00:00Z',
-    reviewSnapshotHash: 'snap-hash-pir-2', outcome: null, lessonsLearned: null,
-    recommendation: null, openVarianceWaiverReason: null,
-    teresaDraftLessonsPayload: null, teresaDraftGeneratedAt: null,
-    teresaDraftDisposition: null, teresaDraftDispositionBy: null, teresaDraftDispositionAt: null,
-    finalizedBy: null, finalizedAt: null, rowVersion: 1,
-    createdBy: USER_ID, createdAt: '2026-08-07T09:00:00Z', updatedBy: null, updatedAt: '2026-08-07T09:00:00Z',
+    pirId: 'pir-2',
+    caseId: CASE_ID,
+    organizationId: ORG_ID,
+    sequenceNumber: 2,
+    status: 'draft',
+    startedBy: USER_ID,
+    startedAt: '2026-08-07T09:00:00Z',
+    reviewSnapshotHash: 'snap-hash-pir-2',
+    outcome: null,
+    lessonsLearned: null,
+    recommendation: null,
+    openVarianceWaiverReason: null,
+    teresaDraftLessonsPayload: null,
+    teresaDraftGeneratedAt: null,
+    teresaDraftDisposition: null,
+    teresaDraftDispositionBy: null,
+    teresaDraftDispositionAt: null,
+    finalizedBy: null,
+    finalizedAt: null,
+    rowVersion: 1,
+    createdBy: USER_ID,
+    createdAt: '2026-08-07T09:00:00Z',
+    updatedBy: null,
+    updatedAt: '2026-08-07T09:00:00Z',
   },
 ];
 const financeLinks: any[] = [];
 const financeReconciliations: any[] = [];
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 function errorResponse(message: string, status: number, code?: string): Response {
   return jsonResponse({ error: message, code }, status);
@@ -209,21 +387,53 @@ function errorResponse(message: string, status: number, code?: string): Response
 // reads, so approving+executing here is immediately visible in the table
 // and unlocks the pre-existing "Decyzja o szkicu Teresy" disposition step.
 // ==========================================================================
-type TeresaEnvelopeState = 'proposal' | 'pending_approval' | 'approved' | 'executing' | 'completed' | 'undone' | 'rejected';
+type TeresaEnvelopeState =
+  | 'proposal'
+  | 'pending_approval'
+  | 'approved'
+  | 'executing'
+  | 'completed'
+  | 'undone'
+  | 'rejected';
 interface TeresaMockProposal {
   id: string;
   state: TeresaEnvelopeState;
   targetModule: string;
   targetPayload: any;
   handoffContext: any;
-  auditTrail: Array<{ id: string; proposal_id: string; action: string; actor: string; timestamp: string; from_state: TeresaEnvelopeState | null; to_state: TeresaEnvelopeState; detail: any }>;
+  auditTrail: Array<{
+    id: string;
+    proposal_id: string;
+    action: string;
+    actor: string;
+    timestamp: string;
+    from_state: TeresaEnvelopeState | null;
+    to_state: TeresaEnvelopeState;
+    detail: any;
+  }>;
 }
 const teresaProposals = new Map<string, TeresaMockProposal>();
 let teresaSeq = 0;
 let teresaRaceConsumed = false;
 
-function teresaAuditEntry(p: TeresaMockProposal, action: string, actor: string, from: TeresaEnvelopeState | null, to: TeresaEnvelopeState, detail: any) {
-  const entry = { id: `taudit-${(teresaSeq += 1)}`, proposal_id: p.id, action, actor, timestamp: new Date().toISOString(), from_state: from, to_state: to, detail };
+function teresaAuditEntry(
+  p: TeresaMockProposal,
+  action: string,
+  actor: string,
+  from: TeresaEnvelopeState | null,
+  to: TeresaEnvelopeState,
+  detail: any
+) {
+  const entry = {
+    id: `taudit-${(teresaSeq += 1)}`,
+    proposal_id: p.id,
+    action,
+    actor,
+    timestamp: new Date().toISOString(),
+    from_state: from,
+    to_state: to,
+    detail,
+  };
   p.auditTrail.push(entry);
   return entry;
 }
@@ -253,7 +463,14 @@ function teresaEnvelope(p: TeresaMockProposal) {
     title: intent.length > 72 ? `${intent.slice(0, 71)}…` : intent,
     summary: p.handoffContext?.proposed_next_action?.handoff_intent || intent,
     state: p.state,
-    approvalState: p.state === 'approved' ? 'approved' : p.state === 'completed' || p.state === 'undone' ? 'completed' : p.state === 'rejected' ? 'rejected' : 'awaiting_review',
+    approvalState:
+      p.state === 'approved'
+        ? 'approved'
+        : p.state === 'completed' || p.state === 'undone'
+          ? 'completed'
+          : p.state === 'rejected'
+            ? 'rejected'
+            : 'awaiting_review',
     allowedActions: teresaAllowedActions(p.state),
     targetModule: p.targetModule,
     targetLabel: p.targetModule.toUpperCase(),
@@ -270,7 +487,11 @@ function teresaEnvelope(p: TeresaMockProposal) {
  * (`window.fetch` override below) does the prefix match/strip once, the
  * same convention the pre-existing ROI branch in this file uses for its
  * own `/vnext/results/roi` prefix. */
-async function handleTeresaProposalRoute(sub: string, method: string, body: any): Promise<Response | null> {
+async function handleTeresaProposalRoute(
+  sub: string,
+  method: string,
+  body: any
+): Promise<Response | null> {
   const segs = sub.split('/').filter(Boolean); // ['proposal', ':id'?, 'approve'|'reject'|'execute'?] | ['audit', ':id'] | ['proposals']
 
   if (teresaDown && sub === '/proposal' && method === 'POST') {
@@ -281,8 +502,17 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
 
   if (segs[0] === 'proposal' && segs.length === 1 && method === 'POST') {
     const id = `tprop-${(teresaSeq += 1)}`;
-    const p: TeresaMockProposal = { id, state: 'proposal', targetModule: body.targetModule, targetPayload: body.targetPayload, handoffContext: body.handoffContext, auditTrail: [] };
-    teresaAuditEntry(p, 'proposal_created', 'teresa', null, 'proposal', { target_module: body.targetModule });
+    const p: TeresaMockProposal = {
+      id,
+      state: 'proposal',
+      targetModule: body.targetModule,
+      targetPayload: body.targetPayload,
+      handoffContext: body.handoffContext,
+      auditTrail: [],
+    };
+    teresaAuditEntry(p, 'proposal_created', 'teresa', null, 'proposal', {
+      target_module: body.targetModule,
+    });
     teresaProposals.set(id, p);
     return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'proposal_created' } }, 201);
   }
@@ -307,14 +537,26 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
     if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
     const from = p.state;
     p.state = 'rejected';
-    teresaAuditEntry(p, 'rejected', 'user:user-piotr-demo', from, 'rejected', body?.reason ? { reason: body.reason } : null);
+    teresaAuditEntry(
+      p,
+      'rejected',
+      'user:user-piotr-demo',
+      from,
+      'rejected',
+      body?.reason ? { reason: body.reason } : null
+    );
     return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'rejected' } });
   }
 
   if (segs[0] === 'proposal' && segs.length === 3 && segs[2] === 'execute' && method === 'POST') {
     const p = teresaProposals.get(segs[1]);
     if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
-    if (p.state !== 'approved') return errorResponse(`Cannot execute proposal in state: ${p.state}`, 400, 'P08_INVALID_STATE_TRANSITION');
+    if (p.state !== 'approved')
+      return errorResponse(
+        `Cannot execute proposal in state: ${p.state}`,
+        400,
+        'P08_INVALID_STATE_TRANSITION'
+      );
     teresaAuditEntry(p, 'execution_started', 'user:user-piotr-demo', 'approved', 'executing', null);
 
     // ROI pir_lessons_draft — the one wired-up mode.
@@ -331,41 +573,127 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
         if (pir) pir.teresaDraftDisposition = 'rejected';
       }
       if (!pir) {
-        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error: `PIR ${pirId} not found`, degraded: 'tool_unavailable' };
+        const execution = {
+          success: false,
+          proposal_id: p.id,
+          target_module: 'roi',
+          state: 'rejected' as TeresaEnvelopeState,
+          audit_entry_id: '',
+          error: `PIR ${pirId} not found`,
+          degraded: 'tool_unavailable',
+        };
         p.state = 'rejected';
-        teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error: execution.error });
-        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+        teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', {
+          error: execution.error,
+        });
+        return jsonResponse(
+          { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+          500
+        );
       }
       if (pir.status !== 'draft') {
         const error = `PIR ${pirId} is "${pir.status}" — Teresa may only draft lessons while the PIR is a draft`;
-        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error, degraded: 'tool_unavailable' };
+        const execution = {
+          success: false,
+          proposal_id: p.id,
+          target_module: 'roi',
+          state: 'rejected' as TeresaEnvelopeState,
+          audit_entry_id: '',
+          error,
+          degraded: 'tool_unavailable',
+        };
         p.state = 'rejected';
-        const auditEntry = teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error });
+        const auditEntry = teresaAuditEntry(
+          p,
+          'execution_failed',
+          'teresa:system',
+          'executing',
+          'rejected',
+          { error }
+        );
         execution.audit_entry_id = auditEntry.id;
-        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+        return jsonResponse(
+          { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+          500
+        );
       }
       if (pir.teresaDraftDisposition !== null) {
         const error = `PIR ${pirId} already has a recorded Teresa draft disposition ("${pir.teresaDraftDisposition}") — regenerating would silently invalidate a human decision`;
-        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error, degraded: 'tool_unavailable' };
+        const execution = {
+          success: false,
+          proposal_id: p.id,
+          target_module: 'roi',
+          state: 'rejected' as TeresaEnvelopeState,
+          audit_entry_id: '',
+          error,
+          degraded: 'tool_unavailable',
+        };
         p.state = 'rejected';
-        const auditEntry = teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error });
+        const auditEntry = teresaAuditEntry(
+          p,
+          'execution_failed',
+          'teresa:system',
+          'executing',
+          'rejected',
+          { error }
+        );
         execution.audit_entry_id = auditEntry.id;
-        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+        return jsonResponse(
+          { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+          500
+        );
       }
       pir.teresaDraftLessonsPayload = roiCtx.pir_lessons_draft;
       pir.teresaDraftGeneratedAt = new Date().toISOString();
       pir.rowVersion += 1;
       pir.updatedAt = new Date().toISOString();
       p.state = 'completed';
-      const auditEntry = teresaAuditEntry(p, 'execution_completed', 'roi_service', 'executing', 'completed', { handoff_result: { handoff: 'roi', advisor_mode: 'pir_lessons_draft', pir_id: pirId, real_entity: true } });
-      const execution = { success: true, proposal_id: p.id, target_module: 'roi', state: 'completed' as TeresaEnvelopeState, audit_entry_id: auditEntry.id, handoff_result: { pir_id: pirId, real_entity: true } };
-      return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } });
+      const auditEntry = teresaAuditEntry(
+        p,
+        'execution_completed',
+        'roi_service',
+        'executing',
+        'completed',
+        {
+          handoff_result: {
+            handoff: 'roi',
+            advisor_mode: 'pir_lessons_draft',
+            pir_id: pirId,
+            real_entity: true,
+          },
+        }
+      );
+      const execution = {
+        success: true,
+        proposal_id: p.id,
+        target_module: 'roi',
+        state: 'completed' as TeresaEnvelopeState,
+        audit_entry_id: auditEntry.id,
+        handoff_result: { pir_id: pirId, real_entity: true },
+      };
+      return jsonResponse({
+        data: { execution, proposal: teresaEnvelope(p) },
+        meta: { action: 'executed' },
+      });
     }
 
-    const execution = { success: false, proposal_id: p.id, target_module: p.targetModule, state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error: `dev-render mock: target_module "${p.targetModule}" not implemented`, degraded: 'tool_unavailable' };
+    const execution = {
+      success: false,
+      proposal_id: p.id,
+      target_module: p.targetModule,
+      state: 'rejected' as TeresaEnvelopeState,
+      audit_entry_id: '',
+      error: `dev-render mock: target_module "${p.targetModule}" not implemented`,
+      degraded: 'tool_unavailable',
+    };
     p.state = 'rejected';
-    teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error: execution.error });
-    return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+    teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', {
+      error: execution.error,
+    });
+    return jsonResponse(
+      { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+      500
+    );
   }
 
   if (segs[0] === 'audit' && segs.length === 2 && method === 'GET') {
@@ -386,7 +714,8 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
   g.__RVN_ROI_FULL_TOOL_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const rawUrl =
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
     // RN-G4 lane `teresa` (FALA 2, 2026-08-11) — P08 Teresa proposal
@@ -412,23 +741,59 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     const body: any = init?.body ? JSON.parse(String(init.body)) : {};
     const seg = path.split('/').filter(Boolean); // e.g. ['cases','case-full-1','baseline']
 
-    const bump = () => { roiCase.rowVersion += 1; roiCase.updatedAt = new Date().toISOString(); };
+    const bump = () => {
+      roiCase.rowVersion += 1;
+      roiCase.updatedAt = new Date().toISOString();
+    };
 
     // ---- org perspectives ----
     if (path === '/org/benefits-realization') {
-      return jsonResponse({ attention: { cases: [{ caseId: CASE_ID, initiativeId: 'init-mes-1', title: roiCase.title, status: roiCase.status, approvedFinancialBenefits: null, actualFinancialBenefits: null, benefitsRealizationPct: null }], portfolioTotals: { totalApprovedFinancialBenefits: 0, totalActualFinancialBenefits: 0, caseCountWithActual: 0, caseCountTotal: 1 } } });
+      return jsonResponse({
+        attention: {
+          cases: [
+            {
+              caseId: CASE_ID,
+              initiativeId: 'init-mes-1',
+              title: roiCase.title,
+              status: roiCase.status,
+              approvedFinancialBenefits: null,
+              actualFinancialBenefits: null,
+              benefitsRealizationPct: null,
+            },
+          ],
+          portfolioTotals: {
+            totalApprovedFinancialBenefits: 0,
+            totalActualFinancialBenefits: 0,
+            caseCountWithActual: 0,
+            caseCountTotal: 1,
+          },
+        },
+      });
     }
     if (path === '/org/pir-outcomes') return jsonResponse({ pirOutcomes: [] });
 
     // ---- cases ----
     if (path === '/cases' && method === 'GET') {
-      if (registryState === 'loading') return new Promise(() => { /* never resolves */ });
-      if (registryState === 'error') return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
+      if (registryState === 'loading')
+        return new Promise(() => {
+          /* never resolves */
+        });
+      if (registryState === 'error')
+        return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
       if (registryState === 'empty') return jsonResponse({ cases: [] });
       return jsonResponse({ cases: [roiCase] });
     }
     if (path === '/cases' && method === 'POST') {
-      const created = { ...roiCase, caseId: nextId('case'), title: body.title, initiativeId: body.initiativeId, ownerUserId: body.ownerUserId, currency: body.currency, status: 'draft', rowVersion: 1 };
+      const created = {
+        ...roiCase,
+        caseId: nextId('case'),
+        title: body.title,
+        initiativeId: body.initiativeId,
+        ownerUserId: body.ownerUserId,
+        currency: body.currency,
+        status: 'draft',
+        rowVersion: 1,
+      };
       return jsonResponse({ outcome: 'applied', created: true, case: created }, 201);
     }
     if (seg[0] === 'cases' && seg.length === 2 && method === 'GET') {
@@ -441,30 +806,72 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (transitionMatch && method === 'POST') {
       const action = seg[3];
       const STATUS_AFTER: Record<string, string> = {
-        'start-modeling': 'modeling', 'ready-for-review': 'ready_for_review',
-        'submit-for-approval': 'submitted_for_approval', 'reopen-after-rejection': 'modeling',
-        approve: 'approved', reject: 'rejected', 'request-changes': 'changes_requested',
-        'reopen-for-revision': 'modeling', 'start-tracking': 'tracking',
-        'start-benefits-realization': 'benefits_realization', cancel: 'cancelled',
-        'mark-pir-due': 'post_investment_review_due', 'start-pir': 'post_investment_review',
+        'start-modeling': 'modeling',
+        'ready-for-review': 'ready_for_review',
+        'submit-for-approval': 'submitted_for_approval',
+        'reopen-after-rejection': 'modeling',
+        approve: 'approved',
+        reject: 'rejected',
+        'request-changes': 'changes_requested',
+        'reopen-for-revision': 'modeling',
+        'start-tracking': 'tracking',
+        'start-benefits-realization': 'benefits_realization',
+        cancel: 'cancelled',
+        'mark-pir-due': 'post_investment_review_due',
+        'start-pir': 'post_investment_review',
         close: 'closed',
       };
       const next = STATUS_AFTER[action ?? ''];
-      if (next) { roiCase.status = next as any; bump(); }
-      if (action === 'approve') { approvalSnapshots.push({ snapshotId: nextId('snap'), caseId: CASE_ID, organizationId: ORG_ID, approvedBy: USER_ID, approvedAt: new Date().toISOString(), baselineSnapshot: {}, economicModelSnapshot: {}, calculationRunId: calcRuns[0]?.runId ?? 'run-1', createdAt: new Date().toISOString() }); return jsonResponse({ outcome: 'applied', case: roiCase, snapshot: approvalSnapshots[approvalSnapshots.length - 1] }); }
-      if (action === 'start-pir' || action === 'close') { const pir = pirs[pirs.length - 1] ?? null; return jsonResponse({ outcome: 'applied', case: roiCase, pir }); }
+      if (next) {
+        roiCase.status = next as any;
+        bump();
+      }
+      if (action === 'approve') {
+        approvalSnapshots.push({
+          snapshotId: nextId('snap'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          approvedBy: USER_ID,
+          approvedAt: new Date().toISOString(),
+          baselineSnapshot: {},
+          economicModelSnapshot: {},
+          calculationRunId: calcRuns[0]?.runId ?? 'run-1',
+          createdAt: new Date().toISOString(),
+        });
+        return jsonResponse({
+          outcome: 'applied',
+          case: roiCase,
+          snapshot: approvalSnapshots[approvalSnapshots.length - 1],
+        });
+      }
+      if (action === 'start-pir' || action === 'close') {
+        const pir = pirs[pirs.length - 1] ?? null;
+        return jsonResponse({ outcome: 'applied', case: roiCase, pir });
+      }
       return jsonResponse({ outcome: 'applied', case: roiCase });
     }
 
     // ---- baseline ----
     if (seg[2] === 'baseline') {
       if (method === 'GET') return jsonResponse({ baseline });
-      if (method === 'PUT') { Object.assign(baseline, body, { rowVersion: baseline.rowVersion + 1, updatedAt: new Date().toISOString() }); return jsonResponse({ outcome: 'applied', baseline }); }
+      if (method === 'PUT') {
+        Object.assign(baseline, body, {
+          rowVersion: baseline.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
+        return jsonResponse({ outcome: 'applied', baseline });
+      }
     }
     // ---- calculation-policy ----
     if (seg[2] === 'calculation-policy') {
       if (method === 'GET') return jsonResponse({ calculationPolicy: policy });
-      if (method === 'PUT') { Object.assign(policy, body, { rowVersion: policy.rowVersion + 1, updatedAt: new Date().toISOString() }); return jsonResponse({ outcome: 'applied', calculationPolicy: policy }); }
+      if (method === 'PUT') {
+        Object.assign(policy, body, {
+          rowVersion: policy.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
+        return jsonResponse({ outcome: 'applied', calculationPolicy: policy });
+      }
     }
 
     // ---- assumptions / cost-lines / benefit-lines (generic CRUD helper) ----
@@ -472,14 +879,30 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
       if (seg[2] !== resourceSeg) return null;
       if (seg.length === 3 && method === 'GET') return jsonResponse({ [`${envelopeKey}s`]: list });
       if (seg.length === 3 && method === 'POST') {
-        const created = { ...body, [idField]: nextId(resourceSeg), caseId: CASE_ID, organizationId: ORG_ID, deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const created = {
+          ...body,
+          [idField]: nextId(resourceSeg),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          deletedAt: null,
+          deletedBy: null,
+          frozenAt: null,
+          frozenBy: null,
+          rowVersion: 1,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
         list.push(created);
         return jsonResponse({ outcome: 'applied', [envelopeKey]: created }, 201);
       }
       if (seg.length === 4 && method === 'PATCH') {
         const row = list.find((r) => r[idField] === seg[3]);
         if (!row) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(row, body, { rowVersion: row.rowVersion + 1, updatedAt: new Date().toISOString() });
+        Object.assign(row, body, {
+          rowVersion: row.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
         return jsonResponse({ outcome: 'applied', [envelopeKey]: row });
       }
       if (seg.length === 4 && method === 'DELETE') {
@@ -503,7 +926,25 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
       const links = (evidenceLinks[benefitLineId] ??= []);
       if (seg.length === 5 && method === 'GET') return jsonResponse({ links });
       if (seg.length === 5 && method === 'POST') {
-        const created = { linkId: nextId('link'), benefitLineId, caseId: CASE_ID, organizationId: ORG_ID, kpiId: body.kpiId, pinnedKpiDefinitionVersionId: body.pinnedKpiDefinitionVersionId, expectedUnit: body.expectedUnit ?? null, purpose: body.purpose, linkedBy: USER_ID, linkedAt: new Date().toISOString(), freshnessCheckedAt: null, disputeStatus: 'none', notes: body.notes ?? null, rowVersion: 1, createdBy: USER_ID, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const created = {
+          linkId: nextId('link'),
+          benefitLineId,
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          kpiId: body.kpiId,
+          pinnedKpiDefinitionVersionId: body.pinnedKpiDefinitionVersionId,
+          expectedUnit: body.expectedUnit ?? null,
+          purpose: body.purpose,
+          linkedBy: USER_ID,
+          linkedAt: new Date().toISOString(),
+          freshnessCheckedAt: null,
+          disputeStatus: 'none',
+          notes: body.notes ?? null,
+          rowVersion: 1,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
         links.push(created);
         return jsonResponse({ outcome: 'applied', link: created }, 201);
       }
@@ -523,14 +964,34 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'scenarios') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ scenarios });
       if (seg.length === 3 && method === 'POST') {
-        const created = { scenarioId: nextId('sc'), caseId: CASE_ID, organizationId: ORG_ID, scenarioType: body.scenarioType, label: body.label, description: body.description ?? null, deletedAt: null, deletedBy: null, frozenAt: null, frozenBy: null, rowVersion: 1, createdBy: USER_ID, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const created = {
+          scenarioId: nextId('sc'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          scenarioType: body.scenarioType,
+          label: body.label,
+          description: body.description ?? null,
+          deletedAt: null,
+          deletedBy: null,
+          frozenAt: null,
+          frozenBy: null,
+          rowVersion: 1,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
         scenarios.push(created);
         return jsonResponse({ outcome: 'applied', scenario: created }, 201);
       }
       if (seg.length === 4 && method === 'PATCH') {
         const s = scenarios.find((x) => x.scenarioId === seg[3]);
         if (!s) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(s, { label: body.label ?? s.label, description: body.description ?? s.description, rowVersion: s.rowVersion + 1, updatedAt: new Date().toISOString() });
+        Object.assign(s, {
+          label: body.label ?? s.label,
+          description: body.description ?? s.description,
+          rowVersion: s.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
         return jsonResponse({ outcome: 'applied', scenario: s });
       }
       if (seg.length === 4 && method === 'DELETE') {
@@ -539,7 +1000,18 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
         return jsonResponse({ outcome: 'applied', scenario: s });
       }
       if (seg.length === 5 && seg[4] === 'overrides' && method === 'POST') {
-        const created = { overrideId: nextId('ov'), scenarioId: seg[3], organizationId: ORG_ID, targetType: body.targetType, targetId: body.targetId, overrideValue: body.overrideValue ?? null, overrideAmount: body.overrideAmount ?? null, note: body.note ?? null, createdBy: USER_ID, createdAt: new Date().toISOString() };
+        const created = {
+          overrideId: nextId('ov'),
+          scenarioId: seg[3],
+          organizationId: ORG_ID,
+          targetType: body.targetType,
+          targetId: body.targetId,
+          overrideValue: body.overrideValue ?? null,
+          overrideAmount: body.overrideAmount ?? null,
+          note: body.note ?? null,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+        };
         return jsonResponse({ outcome: 'applied', override: created }, 201);
       }
       if (seg.length === 6 && seg[4] === 'overrides' && method === 'DELETE') {
@@ -551,7 +1023,13 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'calculation-runs') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ runs: calcRuns });
       if (seg.length === 3 && method === 'POST') {
-        const created = { ...calcRuns[0], runId: nextId('run'), scenarioId: body.scenarioId ?? null, createdAt: new Date().toISOString(), completedAt: new Date().toISOString() };
+        const created = {
+          ...calcRuns[0],
+          runId: nextId('run'),
+          scenarioId: body.scenarioId ?? null,
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+        };
         calcRuns.unshift(created);
         return jsonResponse({ outcome: 'applied', run: created }, 201);
       }
@@ -563,7 +1041,8 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
 
     // ---- approval-snapshots ----
     if (seg[2] === 'approval-snapshots') {
-      if (seg.length === 3 && method === 'GET') return jsonResponse({ snapshots: approvalSnapshots });
+      if (seg.length === 3 && method === 'GET')
+        return jsonResponse({ snapshots: approvalSnapshots });
       if (seg.length === 4 && method === 'GET') {
         const s = approvalSnapshots.find((x) => x.snapshotId === seg[3]);
         return s ? jsonResponse({ snapshot: s }) : errorResponse('Not found', 404, 'NOT_FOUND');
@@ -574,24 +1053,83 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'forecast-versions') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ forecastVersions });
       if (seg.length === 3 && method === 'POST') {
-        const created = { forecastVersionId: nextId('fv'), caseId: CASE_ID, organizationId: ORG_ID, sequenceNumber: forecastVersions.length + 1, status: 'completed', totalCosts: 180000, totalFinancialBenefits: 250000, simpleRoi: 38.9, npv: 45000, irrPct: 26, irrStatus: 'computed', paybackPeriods: 8, discountedPaybackPeriods: 9, benefitCostRatio: 1.39, reason: body.reason, publishedBy: USER_ID, publishedAt: new Date().toISOString(), hasUnresolvedDoubleCounting: false, hasMixedCurrencyFailure: false, validationFindings: [], warnings: [], createdAt: new Date().toISOString() };
+        const created = {
+          forecastVersionId: nextId('fv'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          sequenceNumber: forecastVersions.length + 1,
+          status: 'completed',
+          totalCosts: 180000,
+          totalFinancialBenefits: 250000,
+          simpleRoi: 38.9,
+          npv: 45000,
+          irrPct: 26,
+          irrStatus: 'computed',
+          paybackPeriods: 8,
+          discountedPaybackPeriods: 9,
+          benefitCostRatio: 1.39,
+          reason: body.reason,
+          publishedBy: USER_ID,
+          publishedAt: new Date().toISOString(),
+          hasUnresolvedDoubleCounting: false,
+          hasMixedCurrencyFailure: false,
+          validationFindings: [],
+          warnings: [],
+          createdAt: new Date().toISOString(),
+        };
         forecastVersions.unshift(created);
         return jsonResponse({ outcome: 'applied', forecastVersion: created }, 201);
       }
       if (seg.length === 4 && method === 'GET') {
         const f = forecastVersions.find((x) => x.forecastVersionId === seg[3]);
-        return f ? jsonResponse({ forecastVersion: f }) : errorResponse('Not found', 404, 'NOT_FOUND');
+        return f
+          ? jsonResponse({ forecastVersion: f })
+          : errorResponse('Not found', 404, 'NOT_FOUND');
       }
     }
     if (seg[2] === 'compare' && method === 'GET') {
-      return jsonResponse({ compare: { caseId: CASE_ID, metrics: { npv: { approved: null, forecast: forecastVersions[0]?.npv ?? null, actual: null }, simpleRoi: { approved: null, forecast: forecastVersions[0]?.simpleRoi ?? null, actual: null } } } });
+      return jsonResponse({
+        compare: {
+          caseId: CASE_ID,
+          metrics: {
+            npv: { approved: null, forecast: forecastVersions[0]?.npv ?? null, actual: null },
+            simpleRoi: {
+              approved: null,
+              forecast: forecastVersions[0]?.simpleRoi ?? null,
+              actual: null,
+            },
+          },
+        },
+      });
     }
 
     // ---- actuals ----
     if (seg[2] === 'actuals' && seg.length === 3) {
       if (method === 'GET') return jsonResponse({ entries: actualEntries });
       if (method === 'POST') {
-        const created = { actualEntryId: nextId('ae'), caseId: CASE_ID, organizationId: ORG_ID, entryType: body.entryType, costLineId: body.costLineId ?? null, benefitLineId: body.benefitLineId ?? null, periodStart: body.periodStart, periodEnd: body.periodEnd, amount: body.amount ?? null, currency: body.currency ?? null, dataQualityStatus: 'unverified', correctionOfActualEntryId: null, correctionReason: null, source: body.source, evidenceRefs: [], notes: body.notes ?? null, recordedBy: USER_ID, recordedAt: new Date().toISOString(), verifiedBy: null, verifiedAt: null, lineKey: body.costLineId ?? body.benefitLineId ?? 'none' };
+        const created = {
+          actualEntryId: nextId('ae'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          entryType: body.entryType,
+          costLineId: body.costLineId ?? null,
+          benefitLineId: body.benefitLineId ?? null,
+          periodStart: body.periodStart,
+          periodEnd: body.periodEnd,
+          amount: body.amount ?? null,
+          currency: body.currency ?? null,
+          dataQualityStatus: 'unverified',
+          correctionOfActualEntryId: null,
+          correctionReason: null,
+          source: body.source,
+          evidenceRefs: [],
+          notes: body.notes ?? null,
+          recordedBy: USER_ID,
+          recordedAt: new Date().toISOString(),
+          verifiedBy: null,
+          verifiedAt: null,
+          lineKey: body.costLineId ?? body.benefitLineId ?? 'none',
+        };
         actualEntries.unshift(created);
         return jsonResponse({ outcome: 'applied', actualEntry: created }, 201);
       }
@@ -604,11 +1142,27 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
       const original = actualEntries.find((x) => x.actualEntryId === seg[3]);
       if (!original) return errorResponse('Not found', 404, 'NOT_FOUND');
       const kind = seg[4];
-      const superseding = { ...original, actualEntryId: nextId('ae'), correctionOfActualEntryId: original.actualEntryId, recordedAt: new Date().toISOString(),
+      const superseding = {
+        ...original,
+        actualEntryId: nextId('ae'),
+        correctionOfActualEntryId: original.actualEntryId,
+        recordedAt: new Date().toISOString(),
         amount: kind === 'corrections' ? (body.amount ?? null) : original.amount,
-        correctionReason: kind === 'corrections' ? body.correctionReason : kind === 'dispute' ? body.disputeReason : (body.notes ?? null),
-        dataQualityStatus: kind === 'verify' ? 'verified' : kind === 'dispute' ? 'disputed' : original.dataQualityStatus,
-        verifiedBy: kind === 'verify' ? USER_ID : null, verifiedAt: kind === 'verify' ? new Date().toISOString() : null };
+        correctionReason:
+          kind === 'corrections'
+            ? body.correctionReason
+            : kind === 'dispute'
+              ? body.disputeReason
+              : (body.notes ?? null),
+        dataQualityStatus:
+          kind === 'verify'
+            ? 'verified'
+            : kind === 'dispute'
+              ? 'disputed'
+              : original.dataQualityStatus,
+        verifiedBy: kind === 'verify' ? USER_ID : null,
+        verifiedAt: kind === 'verify' ? new Date().toISOString() : null,
+      };
       actualEntries.unshift(superseding);
       return jsonResponse({ outcome: 'applied', actualEntry: superseding }, 201);
     }
@@ -617,13 +1171,34 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'actual-snapshots') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ actualSnapshots });
       if (seg.length === 3 && method === 'POST') {
-        const created = { actualSnapshotId: nextId('as'), caseId: CASE_ID, organizationId: ORG_ID, totalActualCosts: 90000, totalActualFinancialBenefits: 60000, actualSimpleRoi: -33.3, actualNpv: -12000, coveragePct: 40, periodsWithActualCount: 3, periodsExpectedCount: 8, unverifiedEntryCount: 1, disputedEntryCount: 0, entryIdsIncluded: actualEntries.map((e) => e.actualEntryId), sequenceNumber: actualSnapshots.length + 1, asOfPeriodEnd: body.asOfPeriodEnd, publishedBy: USER_ID, publishedAt: new Date().toISOString(), createdAt: new Date().toISOString() };
+        const created = {
+          actualSnapshotId: nextId('as'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          totalActualCosts: 90000,
+          totalActualFinancialBenefits: 60000,
+          actualSimpleRoi: -33.3,
+          actualNpv: -12000,
+          coveragePct: 40,
+          periodsWithActualCount: 3,
+          periodsExpectedCount: 8,
+          unverifiedEntryCount: 1,
+          disputedEntryCount: 0,
+          entryIdsIncluded: actualEntries.map((e) => e.actualEntryId),
+          sequenceNumber: actualSnapshots.length + 1,
+          asOfPeriodEnd: body.asOfPeriodEnd,
+          publishedBy: USER_ID,
+          publishedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        };
         actualSnapshots.unshift(created);
         return jsonResponse({ outcome: 'applied', actualSnapshot: created }, 201);
       }
       if (seg.length === 4 && method === 'GET') {
         const s = actualSnapshots.find((x) => x.actualSnapshotId === seg[3]);
-        return s ? jsonResponse({ actualSnapshot: s }) : errorResponse('Not found', 404, 'NOT_FOUND');
+        return s
+          ? jsonResponse({ actualSnapshot: s })
+          : errorResponse('Not found', 404, 'NOT_FOUND');
       }
     }
 
@@ -631,7 +1206,27 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'variances') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ variances });
       if (seg.length === 3 && method === 'POST') {
-        const created = { varianceId: nextId('var'), caseId: CASE_ID, organizationId: ORG_ID, comparisonType: body.comparisonType, metric: body.metric, referenceApprovalSnapshotId: body.referenceApprovalSnapshotId ?? null, referenceForecastVersionId: body.referenceForecastVersionId ?? null, referenceActualSnapshotId: body.referenceActualSnapshotId ?? null, baselineValue: 45000, comparisonValue: -12000, varianceAmount: -57000, variancePct: -126.7, status: 'open', ownerUserId: body.ownerUserId ?? null, rowVersion: 1, createdBy: USER_ID, createdAt: new Date().toISOString(), updatedBy: null, updatedAt: new Date().toISOString() };
+        const created = {
+          varianceId: nextId('var'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          comparisonType: body.comparisonType,
+          metric: body.metric,
+          referenceApprovalSnapshotId: body.referenceApprovalSnapshotId ?? null,
+          referenceForecastVersionId: body.referenceForecastVersionId ?? null,
+          referenceActualSnapshotId: body.referenceActualSnapshotId ?? null,
+          baselineValue: 45000,
+          comparisonValue: -12000,
+          varianceAmount: -57000,
+          variancePct: -126.7,
+          status: 'open',
+          ownerUserId: body.ownerUserId ?? null,
+          rowVersion: 1,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+          updatedBy: null,
+          updatedAt: new Date().toISOString(),
+        };
         variances.unshift(created);
         return jsonResponse({ outcome: 'applied', variance: created }, 201);
       }
@@ -642,11 +1237,25 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
       if (seg.length === 4 && method === 'PATCH') {
         const v = variances.find((x) => x.varianceId === seg[3]);
         if (!v) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(v, { status: body.status ?? v.status, ownerUserId: body.ownerUserId ?? v.ownerUserId, rowVersion: v.rowVersion + 1, updatedAt: new Date().toISOString() });
+        Object.assign(v, {
+          status: body.status ?? v.status,
+          ownerUserId: body.ownerUserId ?? v.ownerUserId,
+          rowVersion: v.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
         return jsonResponse({ outcome: 'applied', variance: v });
       }
       if (seg.length === 5 && seg[4] === 'causes' && method === 'POST') {
-        const created = { causeId: nextId('cause'), varianceId: seg[3], organizationId: ORG_ID, causeCategory: body.causeCategory, contributionPct: body.contributionPct ?? null, narrative: body.narrative, createdBy: USER_ID, createdAt: new Date().toISOString() };
+        const created = {
+          causeId: nextId('cause'),
+          varianceId: seg[3],
+          organizationId: ORG_ID,
+          causeCategory: body.causeCategory,
+          contributionPct: body.contributionPct ?? null,
+          narrative: body.narrative,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+        };
         (varianceCauses[seg[3]] ??= []).push(created);
         return jsonResponse({ outcome: 'applied', varianceCause: created }, 201);
       }
@@ -660,30 +1269,54 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
 
     // ---- benefits-realization (case-level) ----
     if (seg[2] === 'benefits-realization' && method === 'GET') {
-      return jsonResponse({ benefitsRealization: { caseId: CASE_ID, approvedFinancialBenefits: null, actualFinancialBenefits: actualEntries.length > 0 ? 60000 : null, benefitsRealizationPct: null } });
+      return jsonResponse({
+        benefitsRealization: {
+          caseId: CASE_ID,
+          approvedFinancialBenefits: null,
+          actualFinancialBenefits: actualEntries.length > 0 ? 60000 : null,
+          benefitsRealizationPct: null,
+        },
+      });
     }
 
     // ---- PIR ----
     if (seg[2] === 'post-investment-review-schedule' && method === 'PUT') {
-      roiCase.nextReviewAt = body.nextReviewAt; bump();
+      roiCase.nextReviewAt = body.nextReviewAt;
+      bump();
       return jsonResponse({ outcome: 'applied', case: roiCase });
     }
     if (seg[2] === 'post-investment-reviews') {
-      if (seg.length === 3 && method === 'GET') return jsonResponse({ postInvestmentReviews: pirs });
+      if (seg.length === 3 && method === 'GET')
+        return jsonResponse({ postInvestmentReviews: pirs });
       if (seg.length === 4 && method === 'GET') {
         const p = pirs.find((x) => x.pirId === seg[3]);
-        return p ? jsonResponse({ postInvestmentReview: p }) : errorResponse('Not found', 404, 'NOT_FOUND');
+        return p
+          ? jsonResponse({ postInvestmentReview: p })
+          : errorResponse('Not found', 404, 'NOT_FOUND');
       }
       if (seg.length === 4 && method === 'PATCH') {
         const p = pirs.find((x) => x.pirId === seg[3]);
         if (!p) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(p, { outcome: body.outcome ?? p.outcome, lessonsLearned: body.lessonsLearned ?? p.lessonsLearned, recommendation: body.recommendation ?? p.recommendation, rowVersion: p.rowVersion + 1, updatedAt: new Date().toISOString() });
+        Object.assign(p, {
+          outcome: body.outcome ?? p.outcome,
+          lessonsLearned: body.lessonsLearned ?? p.lessonsLearned,
+          recommendation: body.recommendation ?? p.recommendation,
+          rowVersion: p.rowVersion + 1,
+          updatedAt: new Date().toISOString(),
+        });
         return jsonResponse({ outcome: 'applied', postInvestmentReview: p });
       }
       if (seg.length === 5 && seg[4] === 'teresa-draft-disposition' && method === 'POST') {
         const p = pirs.find((x) => x.pirId === seg[3]);
         if (!p) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(p, { teresaDraftDisposition: body.disposition, teresaDraftDispositionBy: USER_ID, teresaDraftDispositionAt: new Date().toISOString(), lessonsLearned: body.disposition !== 'rejected' ? body.finalLessonsText : p.lessonsLearned, rowVersion: p.rowVersion + 1 });
+        Object.assign(p, {
+          teresaDraftDisposition: body.disposition,
+          teresaDraftDispositionBy: USER_ID,
+          teresaDraftDispositionAt: new Date().toISOString(),
+          lessonsLearned:
+            body.disposition !== 'rejected' ? body.finalLessonsText : p.lessonsLearned,
+          rowVersion: p.rowVersion + 1,
+        });
         return jsonResponse({ outcome: 'applied', postInvestmentReview: p });
       }
     }
@@ -692,7 +1325,26 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'finance-links') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ financeLinks });
       if (seg.length === 3 && method === 'POST') {
-        const created = { linkId: nextId('flink'), caseId: CASE_ID, organizationId: ORG_ID, financeArtifactType: body.financeArtifactType, financeArtifactId: body.financeArtifactId, financeVersionId: body.financeVersionId, mappingVersion: body.mappingVersion ?? 1, source: body.source, asOf: body.asOf, semanticUnit: body.semanticUnit ?? null, currency: body.currency ?? null, linkPurpose: body.linkPurpose, linkedBy: USER_ID, linkedAt: new Date().toISOString(), rowVersion: 1, createdBy: USER_ID, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const created = {
+          linkId: nextId('flink'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          financeArtifactType: body.financeArtifactType,
+          financeArtifactId: body.financeArtifactId,
+          financeVersionId: body.financeVersionId,
+          mappingVersion: body.mappingVersion ?? 1,
+          source: body.source,
+          asOf: body.asOf,
+          semanticUnit: body.semanticUnit ?? null,
+          currency: body.currency ?? null,
+          linkPurpose: body.linkPurpose,
+          linkedBy: USER_ID,
+          linkedAt: new Date().toISOString(),
+          rowVersion: 1,
+          createdBy: USER_ID,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
         financeLinks.unshift(created);
         return jsonResponse({ outcome: 'applied', financeLink: created }, 201);
       }
@@ -705,23 +1357,55 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
     if (seg[2] === 'finance-reconciliations') {
       if (seg.length === 3 && method === 'GET') return jsonResponse({ financeReconciliations });
       if (seg.length === 3 && method === 'POST') {
-        const created = { reconciliationId: nextId('recon'), caseId: CASE_ID, organizationId: ORG_ID, financeLinkId: body.financeLinkId, roiValue: body.roiValue, financeValue: body.financeValue, divergenceReason: body.divergenceReason ?? null, status: 'open', openedBy: USER_ID, openedAt: new Date().toISOString(), resolvedBy: null, resolvedAt: null, resolutionNotes: null, rowVersion: 1 };
+        const created = {
+          reconciliationId: nextId('recon'),
+          caseId: CASE_ID,
+          organizationId: ORG_ID,
+          financeLinkId: body.financeLinkId,
+          roiValue: body.roiValue,
+          financeValue: body.financeValue,
+          divergenceReason: body.divergenceReason ?? null,
+          status: 'open',
+          openedBy: USER_ID,
+          openedAt: new Date().toISOString(),
+          resolvedBy: null,
+          resolvedAt: null,
+          resolutionNotes: null,
+          rowVersion: 1,
+        };
         financeReconciliations.unshift(created);
         return jsonResponse({ outcome: 'applied', financeReconciliation: created }, 201);
       }
       if (seg.length === 4 && method === 'PATCH') {
         const r = financeReconciliations.find((x) => x.reconciliationId === seg[3]);
         if (!r) return errorResponse('Not found', 404, 'NOT_FOUND');
-        Object.assign(r, { status: body.status, resolutionNotes: body.resolutionNotes ?? r.resolutionNotes, resolvedBy: body.status === 'resolved' || body.status === 'accepted_divergence' ? USER_ID : r.resolvedBy, resolvedAt: body.status === 'resolved' || body.status === 'accepted_divergence' ? new Date().toISOString() : r.resolvedAt, rowVersion: r.rowVersion + 1 });
+        Object.assign(r, {
+          status: body.status,
+          resolutionNotes: body.resolutionNotes ?? r.resolutionNotes,
+          resolvedBy:
+            body.status === 'resolved' || body.status === 'accepted_divergence'
+              ? USER_ID
+              : r.resolvedBy,
+          resolvedAt:
+            body.status === 'resolved' || body.status === 'accepted_divergence'
+              ? new Date().toISOString()
+              : r.resolvedAt,
+          rowVersion: r.rowVersion + 1,
+        });
         return jsonResponse({ outcome: 'applied', financeReconciliation: r });
       }
     }
-    if (seg[2] === 'finance-projections' && method === 'GET') return jsonResponse({ financeProjections: [] });
+    if (seg[2] === 'finance-projections' && method === 'GET')
+      return jsonResponse({ financeProjections: [] });
 
     // Unmatched — fail loudly rather than silently falling through to the
     // real network (a stray unmocked ROI endpoint should 404 visibly in the
     // harness, not hang on a real fetch that has nothing to answer it).
-    return errorResponse(`dev-render ROI full-tool mock: unmatched ${method} ${path}`, 404, 'MOCK_UNMATCHED');
+    return errorResponse(
+      `dev-render ROI full-tool mock: unmatched ${method} ${path}`,
+      404,
+      'MOCK_UNMATCHED'
+    );
   };
 }
 

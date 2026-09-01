@@ -153,7 +153,8 @@ function safeJsonParse(raw: unknown, fb: any = {}): any {
 
 function analysisPeriodLabel(value: Record<string, any>): string | null {
   const evidence = safeJsonParse(value.evidenceJson ?? value.evidence_json, {});
-  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  const label =
+    value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
   return label == null || String(label).trim() === '' ? null : String(label);
 }
 function mapRow(row: any): FinancialAnalysis {

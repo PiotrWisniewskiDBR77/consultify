@@ -28,6 +28,25 @@
  * directly by the AP-03 test suite (task scope item 5).
  */
 
+// AP-09's label convention (i18n key + Polish default), reused rather than
+// re-invented so a keyboard prompt and a Workspace Bar prompt are the same
+// kind of object. `workspaceBarContract.ts` is pure data/logic with no DB and
+// no DOM (its own header says so), so importing it keeps this package
+// unit-testable with no environment.
+import type { WorkspaceBarLabel } from '../workspace/workspaceBarContract.js';
+import {
+  AVAILABILITY_ALWAYS,
+  AVAILABILITY_COMMENT,
+  AVAILABILITY_COMPUTE,
+  AVAILABILITY_EDIT,
+  AVAILABILITY_FOCUS_MODE,
+  AVAILABILITY_LIFECYCLE,
+  AVAILABILITY_READ,
+  type CommandEvaluationContext,
+  type CommandExecutability,
+  type CommandUnavailableReason,
+  evaluateCommandAvailability,
+} from './CommandAvailability.js';
 import type {
   CommandContext,
   CommandEngineBinding,
@@ -37,26 +56,13 @@ import type {
   KeyboardEventLike,
   Platform,
 } from './commandTypes.js';
-import { activationSurfaces, comboHasGuardModifier, comboIdentity, comboMatchesEvent, describeCombo } from './commandTypes.js';
 import {
-  AVAILABILITY_ALWAYS,
-  AVAILABILITY_COMMENT,
-  AVAILABILITY_COMPUTE,
-  AVAILABILITY_EDIT,
-  AVAILABILITY_FOCUS_MODE,
-  AVAILABILITY_LIFECYCLE,
-  AVAILABILITY_READ,
-  evaluateCommandAvailability,
-  type CommandEvaluationContext,
-  type CommandExecutability,
-  type CommandUnavailableReason,
-} from './CommandAvailability.js';
-// AP-09's label convention (i18n key + Polish default), reused rather than
-// re-invented so a keyboard prompt and a Workspace Bar prompt are the same
-// kind of object. `workspaceBarContract.ts` is pure data/logic with no DB and
-// no DOM (its own header says so), so importing it keeps this package
-// unit-testable with no environment.
-import type { WorkspaceBarLabel } from '../workspace/workspaceBarContract.js';
+  activationSurfaces,
+  comboHasGuardModifier,
+  comboIdentity,
+  comboMatchesEvent,
+  describeCombo,
+} from './commandTypes.js';
 
 /**
  * The most cells a DESTRUCTIVE command may touch from an UNMODIFIED key
@@ -202,7 +208,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_EDIT,
     category: 'history',
     label: 'Undo',
-    description: 'Undo the last operation — atomic: reverts every cell a bulk/paste operation touched in one move.',
+    description:
+      'Undo the last operation — atomic: reverts every cell a bulk/paste operation touched in one move.',
     engineBinding: {
       kind: 'function',
       engine: 'AP-04',
@@ -227,7 +234,7 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
       engine: 'AP-04',
       module: 'services/finance/collaboration/operationStack.ts',
       functionName: 'redo',
-      note: 'Instance method on the same `OperationStack`; replays the original operation with a freshly-minted operation identity (see `rehydrateOperation`\'s doc comment in `operationStack.ts` for why the ids cannot be reused verbatim).',
+      note: "Instance method on the same `OperationStack`; replays the original operation with a freshly-minted operation identity (see `rehydrateOperation`'s doc comment in `operationStack.ts` for why the ids cannot be reused verbatim).",
     },
     focusRestoreReason: 'redo',
     ...NON_DESTRUCTIVE,
@@ -444,7 +451,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_READ,
     category: 'navigation',
     label: 'Next cell',
-    description: 'Move the active cell one column right, wrapping to the start of the next row at the row end.',
+    description:
+      'Move the active cell one column right, wrapping to the start of the next row at the row end.',
     engineBinding: {
       kind: 'function',
       engine: 'AP-01',
@@ -465,7 +473,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_COMPUTE,
     category: 'finance',
     label: 'Compute',
-    description: "Enqueue a compute job pinned to the artifact's current working-revision content hash.",
+    description:
+      "Enqueue a compute job pinned to the artifact's current working-revision content hash.",
     engineBinding: {
       kind: 'function',
       engine: 'AP-04',
@@ -483,7 +492,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_READ,
     category: 'finance',
     label: 'Compare',
-    description: 'Open Compare against the currently configured second source (period/version/entity/scenario/method).',
+    description:
+      'Open Compare against the currently configured second source (period/version/entity/scenario/method).',
     engineBinding: {
       kind: 'function',
       engine: 'AP-05',
@@ -536,7 +546,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_READ,
     category: 'workspace',
     label: 'Command palette',
-    description: 'Open the command palette to search every available command by name or description.',
+    description:
+      'Open the command palette to search every available command by name or description.',
     engineBinding: {
       kind: 'keyboard-owned',
       note: '`CommandPaletteIndex` (this package) is the searchable index; opening/closing the palette is local UI state this package`s resolver owns end to end. Mod+K is the cross-application convention (VS Code, Linear, Slack, Notion) and is deliberately `global` — the palette is the escape hatch when a user does not remember a shortcut, which is exactly the moment they may be mid-edit.',
@@ -552,7 +563,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_FOCUS_MODE,
     category: 'workspace',
     label: 'Focus mode',
-    description: 'Toggle the full work-area (focus) mode — hides global topbar and Finance chrome, keeps Menu 1, the Workspace Bar, view navigation and the workspace.',
+    description:
+      'Toggle the full work-area (focus) mode — hides global topbar and Finance chrome, keeps Menu 1, the Workspace Bar, view navigation and the workspace.',
     engineBinding: {
       kind: 'function',
       engine: 'AP-09',
@@ -626,7 +638,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_READ,
     category: 'workspace',
     label: 'Powiązane',
-    description: 'Open or close the Related (Powiązane) drawer — parents, children, indirect descendants and siblings of this artifact.',
+    description:
+      'Open or close the Related (Powiązane) drawer — parents, children, indirect descendants and siblings of this artifact.',
     engineBinding: {
       kind: 'function',
       engine: 'AP-09',
@@ -645,7 +658,8 @@ export const FINANCE_KEYBOARD_COMMANDS: readonly KeyboardCommand[] = [
     availability: AVAILABILITY_LIFECYCLE,
     category: 'workspace',
     label: 'Status i cykl życia',
-    description: 'Open the lifecycle (status) control and its permitted transitions for this version.',
+    description:
+      'Open the lifecycle (status) control and its permitted transitions for this version.',
     engineBinding: {
       kind: 'inline-contract',
       engine: 'AP-09',
@@ -729,7 +743,15 @@ export function commandActivations(command: KeyboardCommand): string[] {
 
 /** Pure check — returns every activation in which two or more commands answer to the same combo, or `[]` if the registry is collision-free. Exported so the test suite (task scope item 5) can assert against it directly without relying on the constructor throwing. */
 export function findComboCollisions(commands: readonly KeyboardCommand[]): ComboCollision[] {
-  const groups = new Map<string, { surface: CommandSurface; context: CommandContext; comboIdentity: string; commandIds: string[] }>();
+  const groups = new Map<
+    string,
+    {
+      surface: CommandSurface;
+      context: CommandContext;
+      comboIdentity: string;
+      commandIds: string[];
+    }
+  >();
   for (const command of commands) {
     const combo = comboIdentity(command.combo);
     for (const activation of commandActivations(command)) {
@@ -792,7 +814,9 @@ export interface CommandGuardViolation {
  * tests assert against it directly (and so a future contributor can run it
  * over a candidate command set before adding it).
  */
-export function findDestructiveGuardViolations(commands: readonly KeyboardCommand[]): CommandGuardViolation[] {
+export function findDestructiveGuardViolations(
+  commands: readonly KeyboardCommand[]
+): CommandGuardViolation[] {
   const violations: CommandGuardViolation[] = [];
   for (const command of commands) {
     const combo = describeCombo(command.combo, 'windows');
@@ -864,7 +888,10 @@ export function assertDestructiveCommandsAreGuarded(commands: readonly KeyboardC
  * makes the declaration operative, and `dispatch()` below calls it so a
  * caller using the registry's single entry point cannot forget.
  */
-export function requiresConfirmationBeforeExecuting(command: KeyboardCommand, targetCount: number): boolean {
+export function requiresConfirmationBeforeExecuting(
+  command: KeyboardCommand,
+  targetCount: number
+): boolean {
   if (!command.destructive) return false;
   if (command.requiresConfirmation) return true;
   if (command.confirmAboveTargetCount === null) return true; // Unreachable in a validated registry; fail closed anyway.
@@ -926,7 +953,11 @@ export class KeyboardCommandRegistry {
    * given `(context, combo)` pair, so "first match" is a defensive
    * tie-break, not a meaningful priority order.
    */
-  resolve(event: KeyboardEventLike, context: CommandContext, platform: Platform): KeyboardCommand | null {
+  resolve(
+    event: KeyboardEventLike,
+    context: CommandContext,
+    platform: Platform
+  ): KeyboardCommand | null {
     for (const command of this.forContext(context)) {
       if (comboMatchesEvent(command.combo, event, platform)) return command;
     }
@@ -991,7 +1022,10 @@ export type CommandDispatchResult =
     }
   | { status: 'execute'; command: KeyboardCommand; targetCount: number };
 
-function decideDispatch(command: KeyboardCommand, ctx: CommandDispatchContext): CommandDispatchResult {
+function decideDispatch(
+  command: KeyboardCommand,
+  ctx: CommandDispatchContext
+): CommandDispatchResult {
   const executability = evaluateCommandAvailability(command.availability, ctx);
   if (!executability.canExecute) {
     return {

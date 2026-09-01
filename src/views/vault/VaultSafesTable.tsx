@@ -240,7 +240,10 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
       render: (row: TableRow) => {
         const safe = row as unknown as VaultSafe;
         return (
-          <span className="block truncate text-sm text-c-text-secondary" title={`${safeLevelLabel(safe.type, isPolish, t)}${safe.type === 'project' ? ` · ${safe.name}` : ''}`}>
+          <span
+            className="block truncate text-sm text-c-text-secondary"
+            title={`${safeLevelLabel(safe.type, isPolish, t)}${safe.type === 'project' ? ` · ${safe.name}` : ''}`}
+          >
             {safeLevelLabel(safe.type, isPolish, t)}
             {safe.type === 'project' ? ` · ${safe.name}` : ''}
           </span>

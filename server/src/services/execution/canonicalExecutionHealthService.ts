@@ -51,7 +51,7 @@ export function executionHealthRag(score: number | null): CanonicalExecutionRag 
 }
 
 export function computeCanonicalExecutionHealth(
-  input: CanonicalExecutionHealthInput,
+  input: CanonicalExecutionHealthInput
 ): CanonicalExecutionHealth {
   const components: CanonicalExecutionHealth['components'] = {};
   if (finite(input.progressPct)) components.progress = clampPct(input.progressPct);
@@ -65,16 +65,18 @@ export function computeCanonicalExecutionHealth(
   } else if (finite(input.criticalPathPercent) || finite(input.overdueCriticalCount)) {
     const critical = finite(input.criticalPathPercent) ? input.criticalPathPercent : 0;
     const overdue = finite(input.overdueCriticalCount) ? input.overdueCriticalCount : 0;
-    components.schedule = critical > 50 || overdue > 1 ? 40 : critical >= 30 || overdue > 0 ? 70 : 100;
+    components.schedule =
+      critical > 50 || overdue > 1 ? 40 : critical >= 30 || overdue > 0 ? 70 : 100;
   }
 
   const costFromEvm = normalizePerformanceIndex(input.cpi);
   if (costFromEvm != null) components.cost = costFromEvm;
 
   const values = Object.values(components);
-  const score = values.length > 0
-    ? clampPct(values.reduce((sum, value) => sum + value, 0) / values.length)
-    : null;
+  const score =
+    values.length > 0
+      ? clampPct(values.reduce((sum, value) => sum + value, 0) / values.length)
+      : null;
   return {
     formulaVersion: EXECUTION_HEALTH_FORMULA_VERSION,
     score,

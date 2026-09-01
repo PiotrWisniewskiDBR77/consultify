@@ -21,8 +21,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { auditAll, auditRun, newId } from '../auditsDb.js';
-import { concludeCriterion, listCriteria, recordTest } from '../criterionService.js';
 import { approveAction, proposeAction, reportImplementation } from '../correctiveActionService.js';
+import { concludeCriterion, listCriteria, recordTest } from '../criterionService.js';
 import { createRequest, reviewEvidence, submitEvidence } from '../evidenceService.js';
 import {
   closeFinding,
@@ -75,7 +75,7 @@ async function cleanup(): Promise<void> {
   }
   await auditRun(
     `DELETE FROM audit_pack_criteria WHERE pack_id IN (SELECT id FROM audit_packs WHERE organization_id = $1)`,
-    [ORG],
+    [ORG]
   );
   await auditRun(`DELETE FROM audit_packs WHERE organization_id = $1`, [ORG]);
   await auditRun(`DELETE FROM audit_norm_sources WHERE organization_id = $1`, [ORG]);
@@ -100,7 +100,12 @@ describe('GOLDEN FLOW — audyt od pakietu do zamkniętego ustalenia', () => {
       objectives: 'Sprawdzenie zgodności z wewnętrzną procedurą obsługi zgłoszeń',
       requiredRoles: ['lead_auditor', 'auditee'],
       findingTaxonomy: [
-        { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
+        {
+          key: 'conforming',
+          label: 'Zgodne',
+          nonConforming: false,
+          requiresCorrectiveAction: false,
+        },
         {
           key: 'nonconforming',
           label: 'Niezgodne',
@@ -134,7 +139,8 @@ describe('GOLDEN FLOW — audyt od pakietu do zamkniętego ustalenia', () => {
         requirementText:
           'Każde zgłoszenie klienta jest rejestrowane w systemie w ciągu jednego dnia roboczego.',
         sourceReference: 'Procedura obsługi zgłoszeń, pkt 3.1',
-        auditQuestion: 'Czy wszystkie zgłoszenia z próby zostały zarejestrowane w wymaganym czasie?',
+        auditQuestion:
+          'Czy wszystkie zgłoszenia z próby zostały zarejestrowane w wymaganym czasie?',
         auditProcedure: 'Pobierz próbę 10 zgłoszeń i porównaj datę wpływu z datą rejestracji.',
         expectedEvidence: [{ kind: 'system_export', description: 'Eksport rejestru zgłoszeń' }],
         mandatory: true,
@@ -255,7 +261,8 @@ describe('GOLDEN FLOW — audyt od pakietu do zamkniętego ustalenia', () => {
 
     await submitManagementResponse(ORG, auditee, findingId, {
       position: 'accept',
-      statement: 'Przyjmujemy ustalenie. Przyczyną jest brak alertu o niezarejestrowanym zgłoszeniu.',
+      statement:
+        'Przyjmujemy ustalenie. Przyczyną jest brak alertu o niezarejestrowanym zgłoszeniu.',
     });
 
     // Sama korekta nie wystarcza — musi istnieć działanie usuwające przyczynę.
@@ -377,7 +384,7 @@ describe('GOLDEN FLOW — audyt od pakietu do zamkniętego ustalenia', () => {
          JOIN audit_corrective_actions a ON a.finding_id = f.id AND a.action_kind = 'corrective_action'
          JOIN audit_verifications v    ON v.corrective_action_id = a.id
         WHERE f.id = $1 AND f.organization_id = $2`,
-      [findingId, ORG],
+      [findingId, ORG]
     );
 
     expect(chain).toHaveLength(1);

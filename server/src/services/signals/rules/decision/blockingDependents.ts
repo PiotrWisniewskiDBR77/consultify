@@ -35,6 +35,7 @@ export const decisionBlockingDependentsRule: SignalRule = {
       data: {
         dependents: dependents.map((row) => ({ ref: row.impacted_id, refType: row.impacted_type })),
       },
+      bodyParams: { value: dependents.length },
     }));
   },
   dedupeKey: (hit) => `dec.blocking_dependents:${hit.subjectId}`,

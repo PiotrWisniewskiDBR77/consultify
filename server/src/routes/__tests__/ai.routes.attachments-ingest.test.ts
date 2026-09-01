@@ -150,9 +150,13 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
     // The doc row must be born with organization_id already set (M01-P04C —
     // single INSERT, not a follow-up UPDATE that could silently no-op and
     // leave the row ownerless).
-    const docInsertCall = pgQuery.mock.calls.find((c) => String(c[0]).includes('INSERT INTO knowledge_docs'));
+    const docInsertCall = pgQuery.mock.calls.find((c) =>
+      String(c[0]).includes('INSERT INTO knowledge_docs')
+    );
     expect(docInsertCall).toBeDefined();
-    const [, docParams] = docInsertCall as [string, unknown[]];
+    const [docSql, docParams] = docInsertCall as [string, unknown[]];
+    expect(docSql).toContain('scope');
+    expect(docSql).toContain("'organization'");
     expect(docParams).toContain('org-ingest-1');
     expect(docParams).toContain(res.body.docId);
 
@@ -262,9 +266,13 @@ describe('POST /ai/attachments/ingest-url (URL ingest)', () => {
     expect(res.body.filename).toBe('Operating Model Overview');
     expect(res.body.totalChunks).toBeGreaterThanOrEqual(1);
 
-    const docInsertCall = dbRun.mock.calls.find((c) => String(c[0]).includes('INSERT INTO knowledge_docs'));
+    const docInsertCall = dbRun.mock.calls.find((c) =>
+      String(c[0]).includes('INSERT INTO knowledge_docs')
+    );
     expect(docInsertCall).toBeDefined();
-    const [, docParams] = docInsertCall as [string, unknown[]];
+    const [docSql, docParams] = docInsertCall as [string, unknown[]];
+    expect(docSql).toContain('scope');
+    expect(docSql).toContain("'organization'");
     expect(docParams).toContain('org-ingest-1');
 
     vi.unstubAllGlobals();

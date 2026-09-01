@@ -19,17 +19,36 @@ export type ArtifactSelectionKind =
   | 'multi';
 
 export type ArtifactCommandPlacement =
-  'menu2' | 'menu3' | 'left-panel' | 'bottom-bar' | 'context-menu' | 'workflow';
+  | 'menu2'
+  | 'menu3'
+  | 'left-panel'
+  | 'bottom-bar'
+  | 'context-menu'
+  | 'workflow';
 
 export type ArtifactCommandAlias =
-  'keyboard' | 'context-menu' | 'kebab' | 'command-palette' | 'inline-affordance';
+  | 'keyboard'
+  | 'context-menu'
+  | 'kebab'
+  | 'command-palette'
+  | 'inline-affordance';
 
 export type ArtifactCommandPriority = 'P0' | 'P1';
 export type ArtifactCommandImplementation = 'available' | 'missing';
 export type ArtifactCommandAuditClass =
-  'none' | 'version' | 'governance' | 'access' | 'ai' | 'export';
+  | 'none'
+  | 'version'
+  | 'governance'
+  | 'access'
+  | 'ai'
+  | 'export';
 export type ArtifactCommandUndoPolicy =
-  'none' | 'view-toggle' | 'undo' | 'confirm' | 'new-version' | 'retry';
+  | 'none'
+  | 'view-toggle'
+  | 'undo'
+  | 'confirm'
+  | 'new-version'
+  | 'retry';
 export type ArtifactCommandCategory =
   | 'navigation'
   | 'editing'

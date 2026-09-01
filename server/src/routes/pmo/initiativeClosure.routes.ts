@@ -23,6 +23,7 @@ import {
   getReceiptForInitiative,
   retryDeliveryForOrg,
 } from '../../services/closureDeliveryReceiptService.js';
+import { isPinnedEvidenceType } from '../../services/initiative/closureEvidenceSourceReader.js';
 import {
   addEvidence,
   approveClosureRequest,
@@ -35,7 +36,6 @@ import {
   returnClosureRequest,
   submitClosureRequest,
 } from '../../services/initiative/initiativeClosureService.js';
-import { isPinnedEvidenceType } from '../../services/initiative/closureEvidenceSourceReader.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 

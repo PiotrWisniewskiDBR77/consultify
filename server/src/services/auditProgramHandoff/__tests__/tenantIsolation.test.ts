@@ -55,7 +55,7 @@ describeDb('tenant isolation — org B cannot touch org A audit data (real Postg
     await pool.end();
   });
 
-  it('org B cannot register org A\'s proposal, and lifecycle rows stay invisible cross-tenant', async () => {
+  it("org B cannot register org A's proposal, and lifecycle rows stay invisible cross-tenant", async () => {
     const programA = await makeProgram(pool, orgA, userA);
     await addMember(pool, orgA, programA, userA, 'lead_auditor');
     await addMember(pool, orgA, programA, userA, 'program_owner');
@@ -64,20 +64,25 @@ describeDb('tenant isolation — org B cannot touch org A audit data (real Postg
     await pool.query(
       `INSERT INTO audit_program_criteria (id, program_id, organization_id, ordinal, ref_code, title, requirement_text)
        VALUES ($1,$2,$3,1,'A.1','Kryterium izolacji','Wymaganie testowe — izolacja')`,
-      [criterionId, programA, orgA],
+      [criterionId, programA, orgA]
     );
 
     const findingId = uid('find');
     await pool.query(
       `INSERT INTO audit_program_findings (id, program_id, organization_id, statement, classification, severity, status, criterion_id)
        VALUES ($1,$2,$3,'Ustalenie org A — izolacja','nonconforming','medium','confirmed',$4)`,
-      [findingId, programA, orgA, criterionId],
+      [findingId, programA, orgA, criterionId]
     );
 
-    const [proposal] = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA, userA), programA, {
-      findingIds: [findingId],
-      title: 'Propozycja org A — izolacja',
-    });
+    const [proposal] = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA, userA),
+      programA,
+      {
+        findingIds: [findingId],
+        title: 'Propozycja org A — izolacja',
+      }
+    );
 
     // 1. org B cannot READ org A's proposal by id.
     const readAsB = await proposalService.getProposal(orgB, proposal.id);
@@ -91,7 +96,9 @@ describeDb('tenant isolation — org B cannot touch org A audit data (real Postg
 
     // 3. org B cannot REGISTER org A's proposal — even with a program_owner
     //    actor in ITS OWN org, calling with orgB as the tenant scope.
-    await expect(proposalService.registerAsInitiative(orgB, actorFor(orgB, userB), proposal.id)).rejects.toMatchObject({
+    await expect(
+      proposalService.registerAsInitiative(orgB, actorFor(orgB, userB), proposal.id)
+    ).rejects.toMatchObject({
       code: 'AUDIT_NOT_FOUND',
     });
 
@@ -108,7 +115,11 @@ describeDb('tenant isolation — org B cannot touch org A audit data (real Postg
     // Positive control: org A can still do all of the above on its own data.
     const readAsA = await proposalService.getProposal(orgA, proposal.id);
     expect(readAsA?.id).toBe(proposal.id);
-    const registeredByA = await proposalService.registerAsInitiative(orgA, actorFor(orgA, userA), proposal.id);
+    const registeredByA = await proposalService.registerAsInitiative(
+      orgA,
+      actorFor(orgA, userA),
+      proposal.id
+    );
     expect(registeredByA.status).toBe('registered');
   }, 60_000);
 });

@@ -33,7 +33,9 @@ export function readApprovedPartnerAccrualPolicy(
     !validInteger(value.payoutFeeBps, 10_000) ||
     !validInteger(value.minimumPayoutMinor, Number.MAX_SAFE_INTEGER)
   ) {
-    throw new PartnerAccrualPolicyBlockedError('Partner accrual policy is absent, unapproved or invalid');
+    throw new PartnerAccrualPolicyBlockedError(
+      'Partner accrual policy is absent, unapproved or invalid'
+    );
   }
   return {
     status: 'APPROVED',

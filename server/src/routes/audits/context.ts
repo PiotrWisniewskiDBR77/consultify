@@ -19,9 +19,7 @@ export function auditActor(req: AuthRequest): AuditActor {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = (req as any).user || {};
   return {
-    organizationId: String(
-      req.organizationId || user.organizationId || user.organization_id || '',
-    ),
+    organizationId: String(req.organizationId || user.organizationId || user.organization_id || ''),
     userId: String(req.userId || user.id || user.userId || ''),
     platformRole: String(user.role || user.accessRole || '') || undefined,
   };
@@ -29,7 +27,11 @@ export function auditActor(req: AuthRequest): AuditActor {
 
 export function assertActor(actor: AuditActor): void {
   if (!actor.organizationId || !actor.userId) {
-    throw new AuditDomainError('Brak kontekstu organizacji lub użytkownika', 401, 'AUDIT_NO_CONTEXT');
+    throw new AuditDomainError(
+      'Brak kontekstu organizacji lub użytkownika',
+      401,
+      'AUDIT_NO_CONTEXT'
+    );
   }
 }
 
@@ -59,10 +61,7 @@ export function handleAuditError(res: Response, error: unknown, where: string): 
 }
 
 /** Opakowanie handlera — jedna ścieżka błędu dla wszystkich tras modułu. */
-export function route(
-  where: string,
-  handler: (req: AuthRequest, res: Response) => Promise<void>,
-) {
+export function route(where: string, handler: (req: AuthRequest, res: Response) => Promise<void>) {
   return async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       await handler(req, res);

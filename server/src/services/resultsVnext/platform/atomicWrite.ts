@@ -32,7 +32,6 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import logger from '../../../utils/Logger.js';
-
 import type { PlatformEventEnvelope } from './eventEnvelope.js';
 
 // ==========================================
@@ -678,7 +677,6 @@ export interface ExecuteAtomicCommandParams<TAggregateRow, TResult> {
    * cannot be reconstructed from `after_state` alone should supply this.
    */
   loadExistingResult?: (client: PoolClient, existingEvent: ExistingEventRow) => Promise<TResult>;
-
 }
 
 export interface ExistingEventRow {
@@ -1115,9 +1113,12 @@ export async function executeAtomicCreate<TResult>(
     try {
       await client.query('ROLLBACK');
     } catch (rollbackErr) {
-      logger.warn('[resultsVnext/platform/atomicWrite] rollback after error failed (executeAtomicCreate)', {
-        error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
-      });
+      logger.warn(
+        '[resultsVnext/platform/atomicWrite] rollback after error failed (executeAtomicCreate)',
+        {
+          error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+        }
+      );
     }
     throw err;
   } finally {

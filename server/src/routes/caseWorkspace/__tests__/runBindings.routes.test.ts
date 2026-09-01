@@ -14,9 +14,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
 });
 
@@ -31,8 +31,8 @@ vi.mock('../../../services/caseWorkspace/casePlanVersionService.js', () => ({
   getPlanVersion: (...args: unknown[]) => mockGetPlanVersion(...args),
 }));
 
-import runBindingsRoutes from '../runBindings.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import runBindingsRoutes from '../runBindings.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -48,8 +48,18 @@ function createApp(): Express {
 describe('caseWorkspace run-binding routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a bind-run body missing casePlanVersionId with 400', async () => {

@@ -1,7 +1,6 @@
 /** @vitest-environment node */
 
 import { randomUUID } from 'crypto';
-
 import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -54,7 +53,9 @@ describe('M10 accepted assessment freeze — real PostgreSQL', () => {
 
   beforeAll(async () => {
     if (process.env.NODE_ENV !== 'test' || process.env.RUN_DB_TESTS !== '1') {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real DATABASE_URL.'
+      );
     }
 
     // CEL B fail-closed proof (S4, 2026-08-13): the guard above only checks
@@ -64,7 +65,9 @@ describe('M10 accepted assessment freeze — real PostgreSQL', () => {
     // detail correctly — it proves it directly with a real round-trip query.
     const { getDatabaseAsync } = await import('../../../database/Database.js');
     const db = await getDatabaseAsync();
-    await assertRealDatabase(fromAppDb(db as unknown as { all: (sql: string) => Promise<unknown> }));
+    await assertRealDatabase(
+      fromAppDb(db as unknown as { all: (sql: string) => Promise<unknown> })
+    );
 
     await run(`INSERT INTO organizations (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING`, [
       ORG,

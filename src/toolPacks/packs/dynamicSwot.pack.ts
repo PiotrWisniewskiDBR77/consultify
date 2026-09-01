@@ -148,7 +148,8 @@ export const dynamicSwotPack: ToolPack = {
       },
       whatGoodLooksLike: 'Każdy ruch ma wybrane, odrzucone i uzasadnienie oraz pierwszy krok.',
       evidenceToAskFor: 'Co świadomie odrzucamy wybierając ten ruch i jakim kosztem.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 (rationale + trade-off + odrzucona opcja).',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 (rationale + trade-off + odrzucona opcja).',
     },
   ],
 

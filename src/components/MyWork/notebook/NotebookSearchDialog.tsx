@@ -97,7 +97,10 @@ export const NotebookSearchDialog: React.FC<NotebookSearchDialogProps> = ({
           if (seq !== requestSeq.current) return;
           setResults([]);
           setError(
-            t('notebook.notebookContent.searchAllNotebooksFailed', isPolish ? 'Wyszukiwanie nie powiodło się' : 'Search failed')
+            t(
+              'notebook.notebookContent.searchAllNotebooksFailed',
+              isPolish ? 'Wyszukiwanie nie powiodło się' : 'Search failed'
+            )
           );
         })
         .finally(() => {
@@ -126,7 +129,10 @@ export const NotebookSearchDialog: React.FC<NotebookSearchDialogProps> = ({
       className="fixed inset-0 z-overlay flex items-start justify-center bg-black/50 backdrop-blur-sm pt-[12vh]"
       role="dialog"
       aria-modal="true"
-      aria-label={t('notebook.notebookContent.searchAllNotebooks', isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks')}
+      aria-label={t(
+        'notebook.notebookContent.searchAllNotebooks',
+        isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks'
+      )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -151,7 +157,10 @@ export const NotebookSearchDialog: React.FC<NotebookSearchDialogProps> = ({
       <div className="w-full max-w-lg bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <h2 className="text-sm font-semibold text-c-text">
-            {t('notebook.notebookContent.searchAllNotebooks', isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks')}
+            {t(
+              'notebook.notebookContent.searchAllNotebooks',
+              isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks'
+            )}
           </h2>
           <button
             type="button"
@@ -180,12 +189,19 @@ export const NotebookSearchDialog: React.FC<NotebookSearchDialogProps> = ({
               )}
               className={FIELD_CLASS}
               data-testid="notebook-search-dialog-input"
-              aria-label={t('notebook.notebookContent.searchAllNotebooks', isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks')}
+              aria-label={t(
+                'notebook.notebookContent.searchAllNotebooks',
+                isPolish ? 'Szukaj we wszystkich notatnikach' : 'Search all notebooks'
+              )}
             />
           </div>
         </div>
 
-        <div className="max-h-[50vh] overflow-y-auto px-2 pb-2" role="listbox" aria-label={t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}>
+        <div
+          className="max-h-[50vh] overflow-y-auto px-2 pb-2"
+          role="listbox"
+          aria-label={t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}
+        >
           {loading ? (
             <div className="flex items-center justify-center py-8 text-c-text-muted">
               <Loader2 size={18} className="animate-spin" />
@@ -198,11 +214,16 @@ export const NotebookSearchDialog: React.FC<NotebookSearchDialogProps> = ({
             <div className="px-3 py-8 text-center text-[12px] text-c-text-muted">
               {t(
                 'notebook.notebookContent.searchAllNotebooksPrompt',
-                isPolish ? 'Wpisz frazę, aby przeszukać wszystkie notatniki' : 'Type to search across every notebook'
+                isPolish
+                  ? 'Wpisz frazę, aby przeszukać wszystkie notatniki'
+                  : 'Type to search across every notebook'
               )}
             </div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-8 text-center text-[12px] text-c-text-muted" data-testid="notebook-search-dialog-empty">
+            <div
+              className="px-3 py-8 text-center text-[12px] text-c-text-muted"
+              data-testid="notebook-search-dialog-empty"
+            >
               {t(
                 'notebook.notebookContent.searchAllNotebooksEmpty',
                 isPolish ? 'Brak pasujących stron' : 'No matching pages'

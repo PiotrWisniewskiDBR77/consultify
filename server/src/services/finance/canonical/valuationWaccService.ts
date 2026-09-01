@@ -125,7 +125,11 @@ export function assertWaccConsistency(
 // Hamada unlever/relever + CAPM + WACC
 // ---------------------------------------------------------------------------
 
-export function relever(betaUnlevered: number, debtToEquity: number, cashTaxRatePct: number): number {
+export function relever(
+  betaUnlevered: number,
+  debtToEquity: number,
+  cashTaxRatePct: number
+): number {
   return betaUnlevered * (1 + (1 - cashTaxRatePct / 100) * debtToEquity);
 }
 
@@ -153,11 +157,27 @@ export function computeWacc(wacc: WaccInputsRow, fcffCurrency: string): ComputeW
 
   const missing: string[] = [];
   const riskFreeRatePct = requireNumber(wacc.risk_free_rate_pct, 'risk_free_rate_pct', missing);
-  const equityRiskPremiumPct = requireNumber(wacc.equity_risk_premium_pct, 'equity_risk_premium_pct', missing);
+  const equityRiskPremiumPct = requireNumber(
+    wacc.equity_risk_premium_pct,
+    'equity_risk_premium_pct',
+    missing
+  );
   const betaUnlevered = requireNumber(wacc.beta_unlevered, 'beta_unlevered', missing);
-  const targetDebtPct = requireNumber(wacc.target_capital_structure_debt_pct, 'target_capital_structure_debt_pct', missing);
-  const targetEquityPct = requireNumber(wacc.target_capital_structure_equity_pct, 'target_capital_structure_equity_pct', missing);
-  const costOfDebtPretaxPct = requireNumber(wacc.cost_of_debt_pretax_pct, 'cost_of_debt_pretax_pct', missing);
+  const targetDebtPct = requireNumber(
+    wacc.target_capital_structure_debt_pct,
+    'target_capital_structure_debt_pct',
+    missing
+  );
+  const targetEquityPct = requireNumber(
+    wacc.target_capital_structure_equity_pct,
+    'target_capital_structure_equity_pct',
+    missing
+  );
+  const costOfDebtPretaxPct = requireNumber(
+    wacc.cost_of_debt_pretax_pct,
+    'cost_of_debt_pretax_pct',
+    missing
+  );
   const cashTaxRatePct = requireNumber(wacc.cash_tax_rate_pct, 'cash_tax_rate_pct', missing);
 
   if (missing.length > 0) {
@@ -192,7 +212,14 @@ export function computeWacc(wacc: WaccInputsRow, fcffCurrency: string): ComputeW
 
   return {
     ok: true,
-    breakdown: { betaRelevered, costOfEquityPct, costOfDebtAfterTaxPct, waccPct, targetDebtWeight, targetEquityWeight },
+    breakdown: {
+      betaRelevered,
+      costOfEquityPct,
+      costOfDebtAfterTaxPct,
+      waccPct,
+      targetDebtWeight,
+      targetEquityWeight,
+    },
   };
 }
 
@@ -200,7 +227,10 @@ export function computeWacc(wacc: WaccInputsRow, fcffCurrency: string): ComputeW
 // DB read/write
 // ---------------------------------------------------------------------------
 
-export async function loadWaccInputs(organizationId: string, businessVersionId: string): Promise<WaccInputsRow | null> {
+export async function loadWaccInputs(
+  organizationId: string,
+  businessVersionId: string
+): Promise<WaccInputsRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<WaccInputsRow>(
       `SELECT * FROM finance_valuation_wacc_inputs WHERE organization_id = ? AND business_version_id = ?`,
@@ -238,7 +268,9 @@ export async function persistComputedWacc(
 // `baselineComputeService.upsertAssumptionsBatch` (assumption authoring had zero writer either).
 // ---------------------------------------------------------------------------
 
-export type UpsertWaccInputsResult = { ok: true; wacc: WaccInputsRow } | { ok: false; code: 'BUSINESS_VERSION_NOT_FOUND'; message: string };
+export type UpsertWaccInputsResult =
+  | { ok: true; wacc: WaccInputsRow }
+  | { ok: false; code: 'BUSINESS_VERSION_NOT_FOUND'; message: string };
 
 export interface UpsertWaccInputsParams {
   organizationId: string;
@@ -269,7 +301,9 @@ export interface UpsertWaccInputsParams {
  * full `runDcfFcffValuation()`) to get a new value. On first INSERT both columns are simply NULL
  * (nothing to reset).
  */
-export async function upsertWaccInputs(params: UpsertWaccInputsParams): Promise<UpsertWaccInputsResult> {
+export async function upsertWaccInputs(
+  params: UpsertWaccInputsParams
+): Promise<UpsertWaccInputsResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const bv = await tx.queryOne<{ business_version_id: string }>(
       `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
@@ -332,7 +366,10 @@ export async function upsertWaccInputs(params: UpsertWaccInputsParams): Promise<
         params.organizationId,
       ]
     );
-    if (!row) throw new Error('upsertWaccInputs: no row returned (organization mismatch on conflict, or insert failure)');
+    if (!row)
+      throw new Error(
+        'upsertWaccInputs: no row returned (organization mismatch on conflict, or insert failure)'
+      );
     return { ok: true, wacc: row } as const;
   });
 }

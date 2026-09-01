@@ -66,7 +66,11 @@ describe('presentation deck audience-quality contract', () => {
     expect(deck.cards).toHaveLength(8);
     expect(new Set(deck.cards.map((card) => card.layout_id)).size).toBeGreaterThanOrEqual(7);
     const visible = deck.cards
-      .flatMap((card) => [card.title, card.key_message, ...card.blocks.map((b) => JSON.stringify(b.content))])
+      .flatMap((card) => [
+        card.title,
+        card.key_message,
+        ...card.blocks.map((b) => JSON.stringify(b.content)),
+      ])
       .join('\n');
     expect(visible).not.toMatch(/(?:^|\n)\s*(?:Source|Sources|Źródło|Źródła)\s*:/i);
     expect(deck.cards[0].speaker_notes).toContain('[Sources]');

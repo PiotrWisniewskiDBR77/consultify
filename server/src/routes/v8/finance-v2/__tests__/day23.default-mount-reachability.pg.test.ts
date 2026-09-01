@@ -3,8 +3,8 @@ import request from 'supertest';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { v8FeatureGate } from '../../../../middleware/v8FeatureGate.middleware.js';
-import v8Router from '../../index.js';
 import { mountedFinanceStatementRouter } from '../../financeStatementMountedSurface.js';
+import v8Router from '../../index.js';
 
 const CARD_READS = [
   ['Statements', '/api/v8/finance-v2/statements/not-a-real-pack/lines'],

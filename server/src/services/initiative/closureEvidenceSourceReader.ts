@@ -550,7 +550,6 @@ async function resolveMethodOutput(
     return { ok: false, reason: 'NOT_ELIGIBLE', state: 'content_hash_not_sha256' };
   }
 
-
   // NOT independently recomputed, and this is a limitation worth naming rather
   // than papering over. `method_outputs.content_hash` is produced by
   // `MethodOutputService` over `buildHashableOutputContent`, whose input

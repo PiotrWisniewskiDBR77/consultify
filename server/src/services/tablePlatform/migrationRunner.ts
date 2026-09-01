@@ -1,15 +1,15 @@
-import fs from 'fs';
 import crypto from 'crypto';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import {
-  RUNTIME_MIGRATION_ALLOWLIST as RUNTIME_MIGRATION_ALLOWLIST_FILES,
   classifyMigrationChecksum,
   fileChecksum,
   isRuntimeMigrationFile,
+  RUNTIME_MIGRATION_ALLOWLIST as RUNTIME_MIGRATION_ALLOWLIST_FILES,
 } from './migrationIdentity.js';
 
 // Backwards-compatible test/diagnostic surface retained for packets that

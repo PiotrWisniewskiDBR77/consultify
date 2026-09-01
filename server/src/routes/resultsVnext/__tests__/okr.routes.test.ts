@@ -82,7 +82,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 }));
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
-  requireOrgRole: (..._roles: string[]) => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
 }));
 vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
@@ -96,7 +99,9 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 vi.mock('../../../services/resultsVnext/okr/okrProgramCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrProgramCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrProgramCommands.js')
+    >();
   return {
     ...actual,
     createProgram: (...args: unknown[]) => mockCreateProgram(...args),
@@ -111,7 +116,8 @@ vi.mock('../../../services/resultsVnext/okr/okrCycleCommands.js', async (importO
   return {
     ...actual,
     createCycle: (...args: unknown[]) => mockCreateCycle(...args),
-    runOkrCycleLifecycleTransition: (...args: unknown[]) => mockRunOkrCycleLifecycleTransition(...args),
+    runOkrCycleLifecycleTransition: (...args: unknown[]) =>
+      mockRunOkrCycleLifecycleTransition(...args),
   };
 });
 
@@ -137,14 +143,19 @@ vi.mock('../../../services/resultsVnext/okr/okrSetCommands.js', async (importOri
   };
 });
 
-vi.mock('../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js')>();
-  return {
-    ...actual,
-    recordOkrSetMaterialChange: (...args: unknown[]) => mockRecordOkrSetMaterialChange(...args),
-  };
-});
+vi.mock(
+  '../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js')
+      >();
+    return {
+      ...actual,
+      recordOkrSetMaterialChange: (...args: unknown[]) => mockRecordOkrSetMaterialChange(...args),
+    };
+  }
+);
 
 vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', () => ({
   getOkrSet: (...args: unknown[]) => mockGetOkrSet(...args),
@@ -162,7 +173,9 @@ vi.mock('../../../services/resultsVnext/okr/okrPerspectivesRepository.js', () =>
 // OKR-E003
 vi.mock('../../../services/resultsVnext/okr/okrObjectiveCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrObjectiveCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrObjectiveCommands.js')
+    >();
   return {
     ...actual,
     createObjective: (...args: unknown[]) => mockCreateObjective(...args),
@@ -173,7 +186,9 @@ vi.mock('../../../services/resultsVnext/okr/okrObjectiveCommands.js', async (imp
 
 vi.mock('../../../services/resultsVnext/okr/okrKeyResultCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrKeyResultCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrKeyResultCommands.js')
+    >();
   return {
     ...actual,
     createKeyResult: (...args: unknown[]) => mockCreateKeyResult(...args),
@@ -191,7 +206,9 @@ vi.mock('../../../services/resultsVnext/okr/okrObjectiveRepository.js', () => ({
 // OKR-E004
 vi.mock('../../../services/resultsVnext/okr/okrCheckInCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrCheckInCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrCheckInCommands.js')
+    >();
   return {
     ...actual,
     recordCheckIn: (...args: unknown[]) => mockRecordCheckIn(...args),
@@ -211,7 +228,9 @@ vi.mock('../../../services/resultsVnext/okr/okrCheckInSuggestionService.js', () 
 // OKR-E005
 vi.mock('../../../services/resultsVnext/okr/okrAlignmentCommands.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrAlignmentCommands.js')>();
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrAlignmentCommands.js')
+    >();
   return {
     ...actual,
     proposeAlignment: (...args: unknown[]) => mockProposeAlignment(...args),
@@ -223,13 +242,14 @@ vi.mock('../../../services/resultsVnext/okr/okrAlignmentCommands.js', async (imp
 
 vi.mock('../../../services/resultsVnext/okr/okrAlignmentRepository.js', () => ({
   listAlignmentsForObjective: (...args: unknown[]) => mockListAlignmentsForObjective(...args),
-  getAlignmentTreeUnderObjective: (...args: unknown[]) => mockGetAlignmentTreeUnderObjective(...args),
+  getAlignmentTreeUnderObjective: (...args: unknown[]) =>
+    mockGetAlignmentTreeUnderObjective(...args),
 }));
 
-const { OkrProgramValidationError } = await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
-const { OkrCycleProgramNotActiveError, OkrCycleValidationError } = await import(
-  '../../../services/resultsVnext/okr/okrCycleCommands.js'
-);
+const { OkrProgramValidationError } =
+  await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
+const { OkrCycleProgramNotActiveError, OkrCycleValidationError } =
+  await import('../../../services/resultsVnext/okr/okrCycleCommands.js');
 const {
   OkrSetNoActiveVisibilityPolicyError,
   OkrSetNotReadyForSubmissionError,
@@ -239,12 +259,10 @@ const {
 } = await import('../../../services/resultsVnext/okr/okrSetCommands.js');
 const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
   await import('../../../services/resultsVnext/platform/atomicWrite.js');
-const { OkrObjectiveNotFoundError, OkrObjectiveSetNotEditableError, OkrObjectiveValidationError } = await import(
-  '../../../services/resultsVnext/okr/okrObjectiveCommands.js'
-);
-const { OkrKeyResultNotFoundError, OkrKeyResultValidationError } = await import(
-  '../../../services/resultsVnext/okr/okrKeyResultCommands.js'
-);
+const { OkrObjectiveNotFoundError, OkrObjectiveSetNotEditableError, OkrObjectiveValidationError } =
+  await import('../../../services/resultsVnext/okr/okrObjectiveCommands.js');
+const { OkrKeyResultNotFoundError, OkrKeyResultValidationError } =
+  await import('../../../services/resultsVnext/okr/okrKeyResultCommands.js');
 const {
   OkrCheckInAlreadyExistsForOccurrenceError,
   OkrCheckInNotFoundError,
@@ -386,14 +404,18 @@ describe('POST /programs + GET /programs/:programId — create -> get roundtrip'
     expect(createArgs.createdBy).toBe('user-1');
     expect(typeof createArgs.idempotencyKey).toBe('string');
 
-    const getResponse = await request(createApp()).get(`/api/vnext/results/okr/programs/${PROGRAM_ID}`);
+    const getResponse = await request(createApp()).get(
+      `/api/vnext/results/okr/programs/${PROGRAM_ID}`
+    );
     expect(getResponse.status).toBe(200);
     expect(getResponse.body.program.programId).toBe(PROGRAM_ID);
   });
 
   it('404s GET for a program the repository does not return', async () => {
     mockGetProgram.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/programs/${PROGRAM_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/programs/${PROGRAM_ID}`
+    );
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('NOT_FOUND');
   });
@@ -412,7 +434,9 @@ describe('POST /programs + GET /programs/:programId — create -> get roundtrip'
 describe('GET /programs — listPrograms', () => {
   it('passes status/limit/offset through to the repository', async () => {
     mockListPrograms.mockResolvedValue([programFixture()]);
-    const response = await request(createApp()).get('/api/vnext/results/okr/programs?status=active&limit=10&offset=5');
+    const response = await request(createApp()).get(
+      '/api/vnext/results/okr/programs?status=active&limit=10&offset=5'
+    );
     expect(response.status).toBe(200);
     expect(response.body.programs).toHaveLength(1);
     expect(mockListPrograms).toHaveBeenCalledWith({
@@ -441,10 +465,14 @@ describe('PATCH /programs/:programId/draft — editProgramDraft', () => {
   it('edits and maps STALE_VERSION to 409', async () => {
     mockGetProgram.mockResolvedValue(programFixture());
     mockEditProgramDraft.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 1,
+        }
+      )
     );
     const response = await request(createApp())
       .patch(`/api/vnext/results/okr/programs/${PROGRAM_ID}/draft`)
@@ -478,7 +506,11 @@ describe('POST /programs/:programId/publish — publishProgram', () => {
       eventId: 'evt-2',
       resultingVersion: 2,
       result: {
-        program: programFixture({ status: 'active', activePolicyVersionId: POLICY_VERSION_ID, rowVersion: 2 }),
+        program: programFixture({
+          status: 'active',
+          activePolicyVersionId: POLICY_VERSION_ID,
+          rowVersion: 2,
+        }),
         policyVersion: {
           policyVersionId: POLICY_VERSION_ID,
           programId: PROGRAM_ID,
@@ -523,7 +555,9 @@ describe('POST /cycles + GET /cycles/:cycleId — create -> get roundtrip', () =
     });
     mockGetCycle.mockResolvedValue(cycle);
 
-    const createResponse = await request(createApp()).post('/api/vnext/results/okr/cycles').send(cycleCreateBody());
+    const createResponse = await request(createApp())
+      .post('/api/vnext/results/okr/cycles')
+      .send(cycleCreateBody());
     expect(createResponse.status).toBe(201);
     expect(createResponse.body.cycle.cycleId).toBe(CYCLE_ID);
     expect(mockCreateCycle).toHaveBeenCalledTimes(1);
@@ -536,14 +570,20 @@ describe('POST /cycles + GET /cycles/:cycleId — create -> get roundtrip', () =
 
   it('maps OkrCycleProgramNotActiveError to 409', async () => {
     mockCreateCycle.mockRejectedValue(new OkrCycleProgramNotActiveError(PROGRAM_ID, 'draft'));
-    const response = await request(createApp()).post('/api/vnext/results/okr/cycles').send(cycleCreateBody());
+    const response = await request(createApp())
+      .post('/api/vnext/results/okr/cycles')
+      .send(cycleCreateBody());
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('PROGRAM_NOT_ACTIVE');
   });
 
   it('maps AtomicWriteAggregateNotFoundError to 404 (referenced Program does not exist)', async () => {
-    mockCreateCycle.mockRejectedValue(new AtomicWriteAggregateNotFoundError('OKR Program not found'));
-    const response = await request(createApp()).post('/api/vnext/results/okr/cycles').send(cycleCreateBody());
+    mockCreateCycle.mockRejectedValue(
+      new AtomicWriteAggregateNotFoundError('OKR Program not found')
+    );
+    const response = await request(createApp())
+      .post('/api/vnext/results/okr/cycles')
+      .send(cycleCreateBody());
     expect(response.status).toBe(404);
   });
 
@@ -607,7 +647,9 @@ describe('POST /cycles/:cycleId/{open-drafting|activate|open-review|close|cancel
   it('cancel: maps OkrCycleValidationError to 409', async () => {
     mockGetCycle.mockResolvedValue(cycleFixture({ status: 'closed' }));
     mockRunOkrCycleLifecycleTransition.mockRejectedValue(
-      new OkrCycleValidationError('cannot cancel a closed cycle', 'INVALID_TRANSITION', { cycleId: CYCLE_ID })
+      new OkrCycleValidationError('cannot cancel a closed cycle', 'INVALID_TRANSITION', {
+        cycleId: CYCLE_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/cycles/${CYCLE_ID}/cancel`)
@@ -696,16 +738,14 @@ describe('POST /sets + GET /sets/:setId — create -> get roundtrip', () => {
     });
     mockGetOkrSet.mockResolvedValue(set);
 
-    const createResponse = await request(createApp())
-      .post('/api/vnext/results/okr/sets')
-      .send({
-        programId: PROGRAM_ID,
-        cycleId: CYCLE_ID,
-        scopeType: 'individual',
-        scopeId: 'user-owner',
-        ownerUserId: 'user-owner',
-        title: 'Set title',
-      });
+    const createResponse = await request(createApp()).post('/api/vnext/results/okr/sets').send({
+      programId: PROGRAM_ID,
+      cycleId: CYCLE_ID,
+      scopeType: 'individual',
+      scopeId: 'user-owner',
+      ownerUserId: 'user-owner',
+      title: 'Set title',
+    });
     expect(createResponse.status).toBe(201);
     expect(createResponse.body.set.setId).toBe(SET_ID);
     expect(createResponse.body.created).toBe(true);
@@ -727,16 +767,14 @@ describe('POST /sets + GET /sets/:setId — create -> get roundtrip', () => {
       resultingVersion: 1,
       result: { set: setFixture(), created: false },
     });
-    const response = await request(createApp())
-      .post('/api/vnext/results/okr/sets')
-      .send({
-        programId: PROGRAM_ID,
-        cycleId: CYCLE_ID,
-        scopeType: 'individual',
-        scopeId: 'user-owner',
-        ownerUserId: 'user-owner',
-        title: 'Set title',
-      });
+    const response = await request(createApp()).post('/api/vnext/results/okr/sets').send({
+      programId: PROGRAM_ID,
+      cycleId: CYCLE_ID,
+      scopeType: 'individual',
+      scopeId: 'user-owner',
+      ownerUserId: 'user-owner',
+      title: 'Set title',
+    });
     expect(response.status).toBe(200);
     expect(response.body.created).toBe(false);
   });
@@ -756,16 +794,14 @@ describe('POST /sets + GET /sets/:setId — create -> get roundtrip', () => {
 
   it('maps OkrSetNoActiveVisibilityPolicyError to 409', async () => {
     mockCreateOkrSet.mockRejectedValue(new OkrSetNoActiveVisibilityPolicyError('org-1', 'okr'));
-    const response = await request(createApp())
-      .post('/api/vnext/results/okr/sets')
-      .send({
-        programId: PROGRAM_ID,
-        cycleId: CYCLE_ID,
-        scopeType: 'individual',
-        scopeId: 'user-owner',
-        ownerUserId: 'user-owner',
-        title: 'Set title',
-      });
+    const response = await request(createApp()).post('/api/vnext/results/okr/sets').send({
+      programId: PROGRAM_ID,
+      cycleId: CYCLE_ID,
+      scopeType: 'individual',
+      scopeId: 'user-owner',
+      ownerUserId: 'user-owner',
+      title: 'Set title',
+    });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('NO_ACTIVE_VISIBILITY_POLICY');
   });
@@ -865,10 +901,14 @@ describe('PATCH /sets/:setId/draft — updateOkrSetDraft', () => {
   it('edits and maps STALE_VERSION to 409', async () => {
     mockGetOkrSet.mockResolvedValue(setFixture());
     mockUpdateOkrSetDraft.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 1,
+        }
+      )
     );
     const response = await request(createApp())
       .patch(`/api/vnext/results/okr/sets/${SET_ID}/draft`)
@@ -1000,7 +1040,9 @@ describe('POST /sets/:setId/approve — approveOkrSet', () => {
 
   it('maps OkrSetSelfApprovalDeniedError to 403', async () => {
     mockGetOkrSet.mockResolvedValue(setFixture({ status: 'submitted' }));
-    mockApproveOkrSet.mockRejectedValue(new OkrSetSelfApprovalDeniedError(SET_ID, 'user-1', 'submitted_by'));
+    mockApproveOkrSet.mockRejectedValue(
+      new OkrSetSelfApprovalDeniedError(SET_ID, 'user-1', 'submitted_by')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/approve`)
       .send({ expectedVersion: 1 });
@@ -1062,7 +1104,9 @@ describe('POST /sets/:setId/{activate|cancel}', () => {
   it('cancel: maps OkrSetValidationError to 409', async () => {
     mockGetOkrSet.mockResolvedValue(setFixture({ status: 'closed' }));
     mockRunOkrSetLifecycleTransition.mockRejectedValue(
-      new OkrSetValidationError('cannot cancel a closed Set', 'INVALID_TRANSITION', { setId: SET_ID })
+      new OkrSetValidationError('cannot cancel a closed Set', 'INVALID_TRANSITION', {
+        setId: SET_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/cancel`)
@@ -1093,7 +1137,12 @@ describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', ()
       eventId: 'evt-matchange-1',
       resultingVersion: 2,
       result: {
-        set: setFixture({ status: 'active', currentVersion: 2, rowVersion: 2, title: 'Revised title' }),
+        set: setFixture({
+          status: 'active',
+          currentVersion: 2,
+          rowVersion: 2,
+          title: 'Revised title',
+        }),
         version: {
           versionId: '66666666-6666-4666-8666-666666666666',
           setId: SET_ID,
@@ -1115,7 +1164,12 @@ describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', ()
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
-      .send({ expectedVersion: 1, fieldName: 'title', afterValue: 'Revised title', reason: 'feedback' });
+      .send({
+        expectedVersion: 1,
+        fieldName: 'title',
+        afterValue: 'Revised title',
+        reason: 'feedback',
+      });
     expect(response.status).toBe(200);
     expect(response.body.set.title).toBe('Revised title');
     expect(response.body.version.versionNumber).toBe(2);
@@ -1128,7 +1182,12 @@ describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', ()
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
-      .send({ expectedVersion: 1, fieldName: 'title', afterValue: 'Revised title', reason: 'feedback' });
+      .send({
+        expectedVersion: 1,
+        fieldName: 'title',
+        afterValue: 'Revised title',
+        reason: 'feedback',
+      });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('NOT_ACTIVE');
   });
@@ -1137,7 +1196,12 @@ describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', ()
     mockGetOkrSet.mockResolvedValue(setFixture({ status: 'active' }));
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
-      .send({ expectedVersion: 1, fieldName: 'status', afterValue: 'cancelled', reason: 'feedback' });
+      .send({
+        expectedVersion: 1,
+        fieldName: 'status',
+        afterValue: 'cancelled',
+        reason: 'feedback',
+      });
     expect(response.status).toBe(400);
     expect(mockRecordOkrSetMaterialChange).not.toHaveBeenCalled();
   });
@@ -1150,7 +1214,9 @@ describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', ()
 describe('GET /sets/:setId/approval-snapshots(/:snapshotId)', () => {
   it('lists approval snapshots', async () => {
     mockListOkrSetApprovedSnapshots.mockResolvedValue([snapshotSummaryFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots`
+    );
     expect(response.status).toBe(200);
     expect(response.body.snapshots).toHaveLength(1);
     expect(mockListOkrSetApprovedSnapshots).toHaveBeenCalledWith({
@@ -1329,7 +1395,9 @@ describe('POST /sets/:setId/objectives + GET /sets/:setId/objectives — createO
   });
 
   it('400s create when required fields are missing (Zod validation)', async () => {
-    const response = await request(createApp()).post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`).send({});
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
+      .send({});
     expect(response.status).toBe(400);
     expect(mockCreateObjective).not.toHaveBeenCalled();
   });
@@ -1337,7 +1405,9 @@ describe('POST /sets/:setId/objectives + GET /sets/:setId/objectives — createO
   it('maps AMBITION_TYPE_DISABLED (OkrObjectiveValidationError) to 409', async () => {
     mockGetOkrSet.mockResolvedValue(setFixture());
     mockCreateObjective.mockRejectedValue(
-      new OkrObjectiveValidationError('ambition_type disabled', 'AMBITION_TYPE_DISABLED', { ambitionType: 'committed' })
+      new OkrObjectiveValidationError('ambition_type disabled', 'AMBITION_TYPE_DISABLED', {
+        ambitionType: 'committed',
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
@@ -1357,12 +1427,20 @@ describe('POST /sets/:setId/objectives + GET /sets/:setId/objectives — createO
   });
 
   it('lists Objectives with nested KeyResults for the Set', async () => {
-    mockListObjectivesForSet.mockResolvedValue([{ ...objectiveFixture(), keyResults: [keyResultFixture()] }]);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/objectives`);
+    mockListObjectivesForSet.mockResolvedValue([
+      { ...objectiveFixture(), keyResults: [keyResultFixture()] },
+    ]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/objectives`
+    );
     expect(response.status).toBe(200);
     expect(response.body.objectives).toHaveLength(1);
     expect(response.body.objectives[0].keyResults).toHaveLength(1);
-    expect(mockListObjectivesForSet).toHaveBeenCalledWith({ userId: 'user-1', organizationId: 'org-1', setId: SET_ID });
+    expect(mockListObjectivesForSet).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      setId: SET_ID,
+    });
   });
 });
 
@@ -1373,7 +1451,9 @@ describe('POST /sets/:setId/objectives + GET /sets/:setId/objectives — createO
 describe('GET /objectives/:objectiveId — getObjective', () => {
   it('returns the Objective with nested KeyResults', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [keyResultFixture()] });
-    const response = await request(createApp()).get(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`
+    );
     expect(response.status).toBe(200);
     expect(response.body.objective.objectiveId).toBe(OBJECTIVE_ID);
     expect(response.body.objective.keyResults).toHaveLength(1);
@@ -1381,7 +1461,9 @@ describe('GET /objectives/:objectiveId — getObjective', () => {
 
   it('404s when not found/visible', async () => {
     mockGetObjective.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`
+    );
     expect(response.status).toBe(404);
   });
 });
@@ -1414,7 +1496,11 @@ describe('PATCH /objectives/:objectiveId — updateObjective', () => {
   it('maps CONFIDENCE_NOT_OWNER_EDITABLE (OkrObjectiveValidationError) to 409', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
     mockUpdateObjective.mockRejectedValue(
-      new OkrObjectiveValidationError('confidence not owner editable', 'CONFIDENCE_NOT_OWNER_EDITABLE', {})
+      new OkrObjectiveValidationError(
+        'confidence not owner editable',
+        'CONFIDENCE_NOT_OWNER_EDITABLE',
+        {}
+      )
     );
     const response = await request(createApp())
       .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
@@ -1426,10 +1512,14 @@ describe('PATCH /objectives/:objectiveId — updateObjective', () => {
   it('maps STALE_VERSION to 409', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
     mockUpdateObjective.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 2,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 2,
+          expectedVersion: 1,
+        }
+      )
     );
     const response = await request(createApp())
       .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
@@ -1500,7 +1590,14 @@ describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => 
     mockGetObjective.mockResolvedValue(null);
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
-      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'numeric', direction: 'reach', targetValue: 10, currentValue: 5 });
+      .send({
+        ownerUserId: 'user-owner',
+        title: 'KR title',
+        measurementType: 'numeric',
+        direction: 'reach',
+        targetValue: 10,
+        currentValue: 5,
+      });
     expect(response.status).toBe(404);
     expect(mockCreateKeyResult).not.toHaveBeenCalled();
   });
@@ -1508,7 +1605,14 @@ describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => 
   it('400s when currency is missing for measurementType="currency" (Zod refine)', async () => {
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
-      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'currency', direction: 'reach', targetValue: 10, currentValue: 5 });
+      .send({
+        ownerUserId: 'user-owner',
+        title: 'KR title',
+        measurementType: 'currency',
+        direction: 'reach',
+        targetValue: 10,
+        currentValue: 5,
+      });
     expect(response.status).toBe(400);
     expect(mockCreateKeyResult).not.toHaveBeenCalled();
   });
@@ -1516,7 +1620,12 @@ describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => 
   it('400s when range_min/range_max are missing for direction="maintain_range" (Zod refine)', async () => {
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
-      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'numeric', direction: 'maintain_range' });
+      .send({
+        ownerUserId: 'user-owner',
+        title: 'KR title',
+        measurementType: 'numeric',
+        direction: 'maintain_range',
+      });
     expect(response.status).toBe(400);
     expect(mockCreateKeyResult).not.toHaveBeenCalled();
   });
@@ -1524,11 +1633,18 @@ describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => 
   it('maps MEASUREMENT_TYPE_NOT_IMPLEMENTED (OkrKeyResultValidationError) to 409', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
     mockCreateKeyResult.mockRejectedValue(
-      new OkrKeyResultValidationError('not implemented', 'MEASUREMENT_TYPE_NOT_IMPLEMENTED', { measurementType: 'milestone' })
+      new OkrKeyResultValidationError('not implemented', 'MEASUREMENT_TYPE_NOT_IMPLEMENTED', {
+        measurementType: 'milestone',
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
-      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'milestone', direction: 'reach' });
+      .send({
+        ownerUserId: 'user-owner',
+        title: 'KR title',
+        measurementType: 'milestone',
+        direction: 'reach',
+      });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('MEASUREMENT_TYPE_NOT_IMPLEMENTED');
   });
@@ -1541,14 +1657,18 @@ describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => 
 describe('GET /key-results/:keyResultId — getKeyResult', () => {
   it('returns the KeyResult', async () => {
     mockGetKeyResult.mockResolvedValue(keyResultFixture());
-    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`
+    );
     expect(response.status).toBe(200);
     expect(response.body.keyResult.keyResultId).toBe(KEY_RESULT_ID);
   });
 
   it('404s when not found/visible', async () => {
     mockGetKeyResult.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`
+    );
     expect(response.status).toBe(404);
   });
 });
@@ -1659,7 +1779,9 @@ function checkInFixture(overrides: Record<string, unknown> = {}) {
 describe('GET /key-results/:keyResultId/check-ins — listCheckIns', () => {
   it('404s when the KeyResult does not exist/visible, without calling listCheckIns', async () => {
     mockGetKeyResult.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`
+    );
     expect(response.status).toBe(404);
     expect(mockListCheckIns).not.toHaveBeenCalled();
   });
@@ -1667,7 +1789,9 @@ describe('GET /key-results/:keyResultId/check-ins — listCheckIns', () => {
   it('returns the check-in list', async () => {
     mockGetKeyResult.mockResolvedValue(keyResultFixture());
     mockListCheckIns.mockResolvedValue([checkInFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`
+    );
     expect(response.status).toBe(200);
     expect(response.body.checkIns).toHaveLength(1);
     expect(response.body.checkIns[0].checkInId).toBe(CHECKIN_ID);
@@ -1718,7 +1842,11 @@ describe('POST /key-results/:keyResultId/check-ins — recordCheckIn', () => {
       outcome: 'applied',
       eventId: 'evt-checkin-1',
       resultingVersion: 1,
-      result: { checkIn: checkInFixture(), keyResult: keyResultFixture({ currentValue: '7', progress: '0.7' }), set: { setId: SET_ID, overallProgress: '0.7' } },
+      result: {
+        checkIn: checkInFixture(),
+        keyResult: keyResultFixture({ currentValue: '7', progress: '0.7' }),
+        set: { setId: SET_ID, overallProgress: '0.7' },
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
@@ -1727,7 +1855,12 @@ describe('POST /key-results/:keyResultId/check-ins — recordCheckIn', () => {
     expect(response.body.checkIn.checkInId).toBe(CHECKIN_ID);
     expect(response.body.keyResult.currentValue).toBe('7');
     expect(mockRecordCheckIn).toHaveBeenCalledWith(
-      expect.objectContaining({ keyResultId: KEY_RESULT_ID, cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'progress update' })
+      expect.objectContaining({
+        keyResultId: KEY_RESULT_ID,
+        cadenceOccurrenceId: OCCURRENCE_ID,
+        newValue: 7,
+        note: 'progress update',
+      })
     );
   });
 
@@ -1746,7 +1879,9 @@ describe('POST /key-results/:keyResultId/check-ins — recordCheckIn', () => {
 
   it('maps OkrCheckInValidationError to 409', async () => {
     mockGetKeyResult.mockResolvedValue(keyResultFixture());
-    mockRecordCheckIn.mockRejectedValue(new OkrCheckInValidationError('Set not active', 'SET_NOT_ACTIVE'));
+    mockRecordCheckIn.mockRejectedValue(
+      new OkrCheckInValidationError('Set not active', 'SET_NOT_ACTIVE')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
       .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'x' });
@@ -1794,7 +1929,11 @@ describe('POST /key-results/:keyResultId/check-ins/:checkinId/correct — correc
       resultingVersion: 1,
       result: {
         original: checkInFixture(),
-        superseding: checkInFixture({ checkInId: 'corrected-id', newValue: '8', correctionOfCheckInId: CHECKIN_ID }),
+        superseding: checkInFixture({
+          checkInId: 'corrected-id',
+          newValue: '8',
+          correctionOfCheckInId: CHECKIN_ID,
+        }),
         keyResult: keyResultFixture({ currentValue: '8' }),
         set: { setId: SET_ID },
       },
@@ -1832,13 +1971,20 @@ describe('GET /key-results/:keyResultId/suggested-next-check-in-value — sugges
   it('returns the pure suggestion computed from listCheckIns history', async () => {
     mockGetKeyResult.mockResolvedValue(keyResultFixture());
     mockListCheckIns.mockResolvedValue([checkInFixture()]);
-    mockSuggestNextCheckInValue.mockReturnValue({ suggestedValue: null, basis: 'no_history', reason: 'no_history: ...' });
+    mockSuggestNextCheckInValue.mockReturnValue({
+      suggestedValue: null,
+      basis: 'no_history',
+      reason: 'no_history: ...',
+    });
     const response = await request(createApp()).get(
       `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/suggested-next-check-in-value`
     );
     expect(response.status).toBe(200);
     expect(response.body.suggestion.basis).toBe('no_history');
-    expect(mockSuggestNextCheckInValue).toHaveBeenCalledWith([checkInFixture()], keyResultFixture());
+    expect(mockSuggestNextCheckInValue).toHaveBeenCalledWith(
+      [checkInFixture()],
+      keyResultFixture()
+    );
   });
 });
 
@@ -1850,7 +1996,9 @@ describe('GET /key-results/:keyResultId/suggested-next-check-in-value — sugges
 describe('Mount order — GET /objectives/:objectiveId and /key-results/:keyResultId are reachable without swallowing sibling routes', () => {
   it('GET /sets/:setId/objectives still resolves to the Set-scoped list route, not the single-Objective route', async () => {
     mockListObjectivesForSet.mockResolvedValue([]);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/objectives`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/objectives`
+    );
     expect(response.status).toBe(200);
     expect(mockListObjectivesForSet).toHaveBeenCalledTimes(1);
     expect(mockGetObjective).not.toHaveBeenCalled();
@@ -1919,7 +2067,9 @@ describe('POST /objectives/:objectiveId/alignments — proposeAlignment', () => 
   it('maps OkrAlignmentValidationError (SELF_LOOP) to 409', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
     mockProposeAlignment.mockRejectedValue(
-      new OkrAlignmentValidationError('self-loop', 'SELF_LOOP', { objectiveId: SOURCE_OBJECTIVE_ID })
+      new OkrAlignmentValidationError('self-loop', 'SELF_LOOP', {
+        objectiveId: SOURCE_OBJECTIVE_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
@@ -1931,7 +2081,9 @@ describe('POST /objectives/:objectiveId/alignments — proposeAlignment', () => 
   it('maps OkrAlignmentNotOwnerError (NOT_SOURCE_OWNER) to 403', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
     mockProposeAlignment.mockRejectedValue(
-      new OkrAlignmentNotOwnerError('not owner', 'NOT_SOURCE_OWNER', { objectiveId: SOURCE_OBJECTIVE_ID })
+      new OkrAlignmentNotOwnerError('not owner', 'NOT_SOURCE_OWNER', {
+        objectiveId: SOURCE_OBJECTIVE_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
@@ -1954,7 +2106,9 @@ describe('POST /objectives/:objectiveId/alignments — proposeAlignment', () => 
 
   it('maps OkrAlignmentCycleMismatchError to 409', async () => {
     mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
-    mockProposeAlignment.mockRejectedValue(new OkrAlignmentCycleMismatchError(CYCLE_ID, 'other-cycle-id'));
+    mockProposeAlignment.mockRejectedValue(
+      new OkrAlignmentCycleMismatchError(CYCLE_ID, 'other-cycle-id')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
       .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
@@ -2003,7 +2157,9 @@ describe('GET /objectives/:objectiveId/alignments — listAlignmentsForObjective
 
 describe('GET /objectives/:objectiveId/alignment-tree — getAlignmentTreeUnderObjective', () => {
   it('returns the alignment tree nodes', async () => {
-    mockGetAlignmentTreeUnderObjective.mockResolvedValue([{ alignment: alignmentFixture(), depth: 1 }]);
+    mockGetAlignmentTreeUnderObjective.mockResolvedValue([
+      { alignment: alignmentFixture(), depth: 1 },
+    ]);
     const response = await request(createApp()).get(
       `/api/vnext/results/okr/objectives/${TARGET_OBJECTIVE_ID}/alignment-tree`
     );
@@ -2031,7 +2187,9 @@ describe('POST /alignments/:alignmentId/accept — acceptAlignment', () => {
 
   it('maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403', async () => {
     mockAcceptAlignment.mockRejectedValue(
-      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', { alignmentId: ALIGNMENT_ID })
+      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', {
+        alignmentId: ALIGNMENT_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
@@ -2064,7 +2222,10 @@ describe('POST /alignments/:alignmentId/accept — acceptAlignment', () => {
 
   it('maps AtomicWriteConflictError (STALE_VERSION) to 409', async () => {
     mockAcceptAlignment.mockRejectedValue(
-      new AtomicWriteConflictError('stale', 'STALE_VERSION', { currentVersion: 2, expectedVersion: 1 })
+      new AtomicWriteConflictError('stale', 'STALE_VERSION', {
+        currentVersion: 2,
+        expectedVersion: 1,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
@@ -2108,7 +2269,9 @@ describe('POST /alignments/:alignmentId/reject — rejectAlignment', () => {
 
   it('maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403', async () => {
     mockRejectAlignment.mockRejectedValue(
-      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', { alignmentId: ALIGNMENT_ID })
+      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', {
+        alignmentId: ALIGNMENT_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/reject`)
@@ -2146,7 +2309,9 @@ describe('POST /alignments/:alignmentId/remove — removeAlignment', () => {
 
   it('maps OkrAlignmentValidationError (NOT_REMOVABLE) to 409', async () => {
     mockRemoveAlignment.mockRejectedValue(
-      new OkrAlignmentValidationError('not removable', 'NOT_REMOVABLE', { alignmentId: ALIGNMENT_ID })
+      new OkrAlignmentValidationError('not removable', 'NOT_REMOVABLE', {
+        alignmentId: ALIGNMENT_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/remove`)

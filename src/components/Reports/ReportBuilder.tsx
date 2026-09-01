@@ -305,8 +305,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 interfejsie. Kanon dat (`src/utils/listDateFormat.ts`,
                 SSOT list/podglądów) daje jeden zapis `DD/MM/YYYY`
                 niezależnie od locale przeglądarki. */}
-            {t('reports.lastUpdated', 'Last updated')}:{' '}
-            {formatListDate(report.updatedAt)}
+            {t('reports.lastUpdated', 'Last updated')}: {formatListDate(report.updatedAt)}
           </span>
           {readOnly && (
             <>

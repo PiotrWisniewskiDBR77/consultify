@@ -14,6 +14,20 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AUDIT_ACTION_KINDS,
+  AUDIT_ACTION_STATUSES,
+  AUDIT_FINDING_SEVERITIES,
+  AUDIT_FINDING_STATUSES,
+  AUDIT_LIFECYCLE_STATES,
+  AUDIT_PROPOSAL_STATUSES,
+  AUDIT_REPORT_STATUSES,
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
+  isComplianceGrade,
+  isNormativeSourceType,
+  PACK_PUBLICATION_STATUSES,
+} from '../auditsMethodApi';
+import {
   actionKindLabel,
   actionStatusLabel,
   actionStatusTone,
@@ -36,26 +50,17 @@ import {
   reportStatusLabel,
   reportStatusTone,
 } from '../auditStatusTones';
-import {
-  AUDIT_ACTION_KINDS,
-  AUDIT_ACTION_STATUSES,
-  AUDIT_FINDING_SEVERITIES,
-  AUDIT_FINDING_STATUSES,
-  AUDIT_LIFECYCLE_STATES,
-  AUDIT_PROPOSAL_STATUSES,
-  AUDIT_REPORT_STATUSES,
-  AUDIT_SOURCE_TYPES,
-  AUDIT_VERIFICATION_STATES,
-  isComplianceGrade,
-  isNormativeSourceType,
-  PACK_PUBLICATION_STATUSES,
-} from '../auditsMethodApi';
 
 describe('packSourceTypeLabel — oś 1 (CZYM jest źródło)', () => {
   it('never lets a non-normative source type render a label containing "norm" — checked on rendered TEXT, not the key', () => {
     const nonNormative = AUDIT_SOURCE_TYPES.filter((t) => !isNormativeSourceType(t));
     expect(nonNormative).toEqual(
-      expect.arrayContaining(['INTERNAL_PROCEDURE', 'INTERNAL_FRAMEWORK', 'DEMONSTRATION', 'LEGACY'])
+      expect.arrayContaining([
+        'INTERNAL_PROCEDURE',
+        'INTERNAL_FRAMEWORK',
+        'DEMONSTRATION',
+        'LEGACY',
+      ])
     );
     for (const sourceType of nonNormative) {
       expect(packSourceTypeLabel(sourceType, true).toLowerCase()).not.toMatch(/norm/);
@@ -95,7 +100,9 @@ describe('packSourceTypeLabel — oś 1 (CZYM jest źródło)', () => {
 
   it('changing verificationStatus never changes the source-type label — same pack, four verification states, identical type label', () => {
     for (const sourceType of AUDIT_SOURCE_TYPES) {
-      const labelsAcrossVerification = AUDIT_VERIFICATION_STATES.map(() => packSourceTypeLabel(sourceType, true));
+      const labelsAcrossVerification = AUDIT_VERIFICATION_STATES.map(() =>
+        packSourceTypeLabel(sourceType, true)
+      );
       expect(new Set(labelsAcrossVerification).size).toBe(1);
     }
   });
@@ -278,7 +285,9 @@ describe('actionStatusTone / actionStatusLabel', () => {
 
 describe('actionKindLabel', () => {
   it('distinguishes correction (removes the effect) from corrective_action (removes the cause) in the rendered label', () => {
-    expect(actionKindLabel('correction', true)).not.toBe(actionKindLabel('corrective_action', true));
+    expect(actionKindLabel('correction', true)).not.toBe(
+      actionKindLabel('corrective_action', true)
+    );
   });
 
   it('resolves every action kind to a non-empty label without throwing', () => {

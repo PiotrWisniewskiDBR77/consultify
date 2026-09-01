@@ -18,23 +18,27 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiScenario,
-  toRoiScenarioOverride,
   type RoiScenario,
   type RoiScenarioOverride,
   type RoiScenarioOverrideRow,
   type RoiScenarioOverrideTargetType,
   type RoiScenarioRow,
   type RoiScenarioType,
+  toRoiScenario,
+  toRoiScenarioOverride,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -54,7 +58,11 @@ export class RoiScenarioFrozenError extends Error {
 export class RoiScenarioValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_SCENARIO_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_SCENARIO_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiScenarioValidationError';
     this.code = code;
@@ -120,7 +128,9 @@ export interface AddScenarioInput {
   access: CommandAccessContext;
 }
 
-export async function addScenario(input: AddScenarioInput): Promise<AtomicCommandOutcome<RoiScenario>> {
+export async function addScenario(
+  input: AddScenarioInput
+): Promise<AtomicCommandOutcome<RoiScenario>> {
   const {
     caseId,
     organizationId,
@@ -224,7 +234,9 @@ export interface UpdateScenarioInput {
  * scenario's own override rows silently become semantically inconsistent
  * with its (new) type. Callers that picked the wrong type must remove and
  * re-add. */
-export async function updateScenario(input: UpdateScenarioInput): Promise<AtomicCommandOutcome<RoiScenario>> {
+export async function updateScenario(
+  input: UpdateScenarioInput
+): Promise<AtomicCommandOutcome<RoiScenario>> {
   const {
     scenarioId,
     caseId,
@@ -320,7 +332,9 @@ export interface RemoveScenarioInput {
   access: CommandAccessContext;
 }
 
-export async function removeScenario(input: RemoveScenarioInput): Promise<AtomicCommandOutcome<RoiScenario>> {
+export async function removeScenario(
+  input: RemoveScenarioInput
+): Promise<AtomicCommandOutcome<RoiScenario>> {
   const {
     scenarioId,
     caseId,
@@ -485,7 +499,16 @@ export async function setScenarioOverride(
          DO UPDATE SET override_value = EXCLUDED.override_value, override_amount = EXCLUDED.override_amount,
                         note = EXCLUDED.note
          RETURNING *`,
-        [scenarioId, organizationId, targetType, targetId, overrideValue, overrideAmount, note, actorUserId]
+        [
+          scenarioId,
+          organizationId,
+          targetType,
+          targetId,
+          overrideValue,
+          overrideAmount,
+          note,
+          actorUserId,
+        ]
       );
       const row = upsertResult.rows[0];
       if (!row) throw new Error('[setScenarioOverride] upsert returned no row');
@@ -493,10 +516,10 @@ export async function setScenarioOverride(
       // Bump the parent scenario's own row_version — overrides have none of
       // their own, so this IS the CAS surface a concurrent second override
       // write on the same scenario serializes against.
-      await client.query(`UPDATE rvn_roi_scenarios SET row_version = $1, updated_at = now() WHERE scenario_id = $2`, [
-        nextVersion,
-        scenarioId,
-      ]);
+      await client.query(
+        `UPDATE rvn_roi_scenarios SET row_version = $1, updated_at = now() WHERE scenario_id = $2`,
+        [nextVersion, scenarioId]
+      );
 
       return toRoiScenarioOverride(row);
     },
@@ -589,10 +612,10 @@ export async function removeScenarioOverride(
         );
       }
 
-      await client.query(`UPDATE rvn_roi_scenarios SET row_version = $1, updated_at = now() WHERE scenario_id = $2`, [
-        nextVersion,
-        scenarioId,
-      ]);
+      await client.query(
+        `UPDATE rvn_roi_scenarios SET row_version = $1, updated_at = now() WHERE scenario_id = $2`,
+        [nextVersion, scenarioId]
+      );
 
       return { overrideId };
     },

@@ -21,20 +21,23 @@
 
 import {
   CaseWorkspaceAuthError,
+  type OrgMembership,
+  type OrgRole,
   requireCaseAccess,
   requireOrgMember,
   requireOrgRole,
-  type OrgMembership,
-  type OrgRole,
 } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
-import type { CaseWorkspaceActor } from './handler.js';
 import { executeGovernedExecutionAction } from '../../../services/executionActionRegistryService.js';
+import type { CaseWorkspaceActor } from './handler.js';
 
 export { CaseWorkspaceAuthError };
 export type { OrgMembership, OrgRole };
 
 /** Fail-closed: actor must be an ACTIVE member of the caseId's own organization. */
-export function requireCaseAccessForActor(actor: CaseWorkspaceActor, caseId: string): Promise<OrgMembership> {
+export function requireCaseAccessForActor(
+  actor: CaseWorkspaceActor,
+  caseId: string
+): Promise<OrgMembership> {
   return requireCaseAccess(actor.actorUserId, caseId);
 }
 
@@ -44,7 +47,10 @@ export function requireOrgMemberForActor(actor: CaseWorkspaceActor): Promise<Org
 }
 
 /** Fail-closed: actor must hold at least `minimumRole` in their own authenticated organization. */
-export function requireOrgRoleForActor(actor: CaseWorkspaceActor, minimumRole: OrgRole): Promise<OrgMembership> {
+export function requireOrgRoleForActor(
+  actor: CaseWorkspaceActor,
+  minimumRole: OrgRole
+): Promise<OrgMembership> {
   return requireOrgRole(actor.actorUserId, actor.organizationId, minimumRole);
 }
 
@@ -54,7 +60,11 @@ export async function executeGovernedCaseAction<T>(input: {
   targetId: string;
   operation: () => Promise<T>;
 }): Promise<T> {
-  const membership = await requireOrgRole(input.actor.actorUserId, input.actor.organizationId, 'MEMBER');
+  const membership = await requireOrgRole(
+    input.actor.actorUserId,
+    input.actor.organizationId,
+    'MEMBER'
+  );
   return executeGovernedExecutionAction({
     organizationId: input.actor.organizationId,
     actionId: input.actionId,

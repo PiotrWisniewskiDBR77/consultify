@@ -82,7 +82,10 @@ describe('deriveStatementTable', () => {
   // strukturalną (zero arytmetyki), więc dowód "brak koercji" musi objąć
   // WSZYSTKIE pięć z osobna, nie tylko MISSING-vs-PRESENT_ZERO.
   it('round-trips all five FinanceValueStatus values through the derivation UNCHANGED — no coercion of any kind', () => {
-    const statuses: Array<{ status: StatementLineDto['value']['status']; valueDecimal: string | null }> = [
+    const statuses: Array<{
+      status: StatementLineDto['value']['status'];
+      valueDecimal: string | null;
+    }> = [
       { status: 'PRESENT_ZERO', valueDecimal: '0' },
       { status: 'PRESENT_NONZERO', valueDecimal: '42.5' },
       { status: 'MISSING', valueDecimal: null },
@@ -141,7 +144,13 @@ describe('deriveStatementTable', () => {
   it('detects duplicate period labels across distinct periodIds', () => {
     const table = deriveStatementTable([
       line({ stmtLineId: 'l1', periodId: 'p1', periodLabel: 'FY2025' }),
-      line({ stmtLineId: 'l2', periodId: 'p1b', periodLabel: 'FY2025', canonicalLineId: 'canon-cogs', lineCode: 'COGS' }),
+      line({
+        stmtLineId: 'l2',
+        periodId: 'p1b',
+        periodLabel: 'FY2025',
+        canonicalLineId: 'canon-cogs',
+        lineCode: 'COGS',
+      }),
     ]);
     const dup = table.warnings.find((w) => w.code === 'DUPLICATE_PERIOD_LABEL');
     expect(dup).toBeDefined();
@@ -228,7 +237,9 @@ describe('pickHeaderCurrencyAndScale', () => {
   });
 });
 
-function reconRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string }): ReconciliationDetailRowDto {
+function reconRow(
+  overrides: Partial<ReconciliationDetailRowDto> & { id: string }
+): ReconciliationDetailRowDto {
   return {
     canonicalLineId: 'canon-revenue',
     entityId: 'entity-1',
@@ -254,14 +265,18 @@ function reconRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string 
 // canonicalLineId from `onSelectCell`'s rowKey without a duplicated field.
 describe('canonicalLineIdFromRowKey', () => {
   it('returns the rowKey unchanged when it is a real canonicalLineId (round-trips with deriveStatementTable)', () => {
-    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' })]);
+    const table = deriveStatementTable([
+      line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' }),
+    ]);
     const row = table.rows[0]!;
     expect(canonicalLineIdFromRowKey(row.rowKey)).toBe('canon-revenue');
     expect(canonicalLineIdFromRowKey(row.rowKey)).toBe(row.canonicalLineId);
   });
 
   it('returns null for a lineCode-fallback rowKey (round-trips with deriveStatementTable)', () => {
-    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: null, lineCode: 'MISC_LINE' })]);
+    const table = deriveStatementTable([
+      line({ stmtLineId: 'l1', canonicalLineId: null, lineCode: 'MISC_LINE' }),
+    ]);
     const row = table.rows[0]!;
     expect(row.usesLineCodeFallback).toBe(true);
     expect(canonicalLineIdFromRowKey(row.rowKey)).toBeNull();
@@ -271,7 +286,9 @@ describe('canonicalLineIdFromRowKey', () => {
   // string is NOT itself a fallback — proves the check is prefix-based on the ACTUAL rowKey
   // construction, not a heuristic on the canonicalLineId's own contents alone.
   it('NEGATIVE CONTROL — a genuine canonicalLineId is never rewritten to null merely because a differently-shaped id could look similar', () => {
-    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' })]);
+    const table = deriveStatementTable([
+      line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' }),
+    ]);
     expect(canonicalLineIdFromRowKey(table.rows[0]!.rowKey)).not.toBeNull();
   });
 });
@@ -279,9 +296,24 @@ describe('canonicalLineIdFromRowKey', () => {
 describe('findReconciliationDetailRowForCell', () => {
   it('finds the reconciliation row that maps to a presented cell, by (canonicalLineId, periodId, entityId)', () => {
     const rows = [
-      reconRow({ id: 'r1', canonicalLineId: 'canon-cogs', periodId: 'period-1', entityId: 'entity-1' }),
-      reconRow({ id: 'r2', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' }),
-      reconRow({ id: 'r3', canonicalLineId: 'canon-revenue', periodId: 'period-2', entityId: 'entity-1' }),
+      reconRow({
+        id: 'r1',
+        canonicalLineId: 'canon-cogs',
+        periodId: 'period-1',
+        entityId: 'entity-1',
+      }),
+      reconRow({
+        id: 'r2',
+        canonicalLineId: 'canon-revenue',
+        periodId: 'period-1',
+        entityId: 'entity-1',
+      }),
+      reconRow({
+        id: 'r3',
+        canonicalLineId: 'canon-revenue',
+        periodId: 'period-2',
+        entityId: 'entity-1',
+      }),
     ];
     const match = findReconciliationDetailRowForCell(
       { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
@@ -292,7 +324,14 @@ describe('findReconciliationDetailRowForCell', () => {
   });
 
   it('returns null (honest absence) when no row matches — never guesses the nearest one', () => {
-    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-cogs', periodId: 'period-1', entityId: 'entity-1' })];
+    const rows = [
+      reconRow({
+        id: 'r1',
+        canonicalLineId: 'canon-cogs',
+        periodId: 'period-1',
+        entityId: 'entity-1',
+      }),
+    ];
     expect(
       findReconciliationDetailRowForCell(
         { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
@@ -302,13 +341,32 @@ describe('findReconciliationDetailRowForCell', () => {
   });
 
   it('returns null for cells without a canonicalLineId (lineCode fallback rows cannot be reconciled by definition)', () => {
-    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' })];
-    expect(findReconciliationDetailRowForCell({ canonicalLineId: null, periodId: 'period-1', entityId: 'entity-1' }, rows)).toBeNull();
+    const rows = [
+      reconRow({
+        id: 'r1',
+        canonicalLineId: 'canon-revenue',
+        periodId: 'period-1',
+        entityId: 'entity-1',
+      }),
+    ];
+    expect(
+      findReconciliationDetailRowForCell(
+        { canonicalLineId: null, periodId: 'period-1', entityId: 'entity-1' },
+        rows
+      )
+    ).toBeNull();
   });
 
   // KONTROLA NEGATYWNA: zmiana JEDNEGO pola dopasowania (entityId) musi zerwać dopasowanie.
   it('NEGATIVE CONTROL — changing only entityId breaks the match even when canonicalLineId+periodId still agree', () => {
-    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' })];
+    const rows = [
+      reconRow({
+        id: 'r1',
+        canonicalLineId: 'canon-revenue',
+        periodId: 'period-1',
+        entityId: 'entity-1',
+      }),
+    ];
     const sameEntity = findReconciliationDetailRowForCell(
       { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
       rows

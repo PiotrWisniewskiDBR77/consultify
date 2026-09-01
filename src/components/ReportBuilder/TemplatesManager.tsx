@@ -10,11 +10,11 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
+import type { TFunction } from 'i18next';
 import { Building2, Calendar, Copy, FileText, Play, Plus, Trash2, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   StandardModuleBar,
@@ -344,7 +344,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   // Handlers
   const handleDelete = useCallback(
     async (templateId: string) => {
-      if (!confirm(t(`${NS}.toast.confirmDelete`, 'Are you sure you want to delete this template?')))
+      if (
+        !confirm(t(`${NS}.toast.confirmDelete`, 'Are you sure you want to delete this template?'))
+      )
         return;
 
       try {
@@ -420,9 +422,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
         filterOptions: SOURCE_TYPE_FILTER_OPTIONS,
         render: (row: TableRow) => (
           <TagChip
-            label={
-              row.sourceType ? getSourceTypeLabel(t, row.sourceType as string) : '—'
-            }
+            label={row.sourceType ? getSourceTypeLabel(t, row.sourceType as string) : '—'}
             dot={getSourceTypeBadgeConfig(row.sourceType as string).dot}
           />
         ),
@@ -546,7 +546,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
         universalHandlers: {
           preview: () => setPreviewId(template.id),
           edit: template.isSystem ? undefined : () => openEditor(template),
-          editNote: template.isSystem ? t(`${NS}.rowMenu.systemTemplate`, 'System template') : undefined,
+          editNote: template.isSystem
+            ? t(`${NS}.rowMenu.systemTemplate`, 'System template')
+            : undefined,
         },
         destructive: template.isSystem
           ? { note: t(`${NS}.rowMenu.systemCannotDelete`, 'System templates cannot be deleted') }
@@ -670,7 +672,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               description: searchQuery
                 ? t(`${NS}.empty.tryAdjusting`, 'Try adjusting your search terms')
                 : t(`${NS}.empty.createToStart`, 'Create a new template to get started'),
-              actionLabel: searchQuery ? undefined : t(`${NS}.moduleBar.newTemplate`, 'New Template'),
+              actionLabel: searchQuery
+                ? undefined
+                : t(`${NS}.moduleBar.newTemplate`, 'New Template'),
               onAction: searchQuery ? undefined : () => openEditor(),
             }}
             selectedRowId={previewId}
@@ -712,7 +716,11 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 ],
                 trailing: (
                   <span className="text-[11px] font-semibold text-c-text-secondary">
-                    {formatDate(t, i18n.language, previewTemplate.updatedAt || previewTemplate.createdAt)}
+                    {formatDate(
+                      t,
+                      i18n.language,
+                      previewTemplate.updatedAt || previewTemplate.createdAt
+                    )}
                   </span>
                 ),
               }}

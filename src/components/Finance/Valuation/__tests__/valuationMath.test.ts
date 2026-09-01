@@ -7,7 +7,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import type { ValuationAdvisorFindingGeneratedDto, ValuationAdvisorFindingStoredDto, ValuationSensitivityCellDto } from '@/services/api/financeV2.types';
+import type {
+  ValuationAdvisorFindingGeneratedDto,
+  ValuationAdvisorFindingStoredDto,
+  ValuationSensitivityCellDto,
+} from '@/services/api/financeV2.types';
 
 import {
   assertGBelowWacc,
@@ -97,13 +101,17 @@ describe('impliedGFromReinvestmentRoic / evaluateGConsistency', () => {
 // =============================================================================================
 
 describe('assertWaccConsistency', () => {
-  const nominalPostTaxPln = { nominalOrReal: 'NOMINAL' as const, preOrPostTax: 'POST_TAX' as const, currency: 'PLN' };
+  const nominalPostTaxPln = {
+    nominalOrReal: 'NOMINAL' as const,
+    preOrPostTax: 'POST_TAX' as const,
+    currency: 'PLN',
+  };
 
   it('accepts NOMINAL/POST_TAX WACC matching the FCFF currency', () => {
     expect(assertWaccConsistency(nominalPostTaxPln, 'PLN')).toEqual({ ok: true });
   });
 
-  it('rejects REAL WACC against this engine\'s always-NOMINAL FCFF (the classic nominal/real mixing error)', () => {
+  it("rejects REAL WACC against this engine's always-NOMINAL FCFF (the classic nominal/real mixing error)", () => {
     const result = assertWaccConsistency({ ...nominalPostTaxPln, nominalOrReal: 'REAL' }, 'PLN');
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('UNSUPPORTED_NOMINAL_REAL_CONVENTION');
@@ -133,12 +141,26 @@ describe('assertWaccConsistency', () => {
 
 /** A monotonic 5x5: EV falls as WACC (col) rises, EV rises as g (row) rises. Base cell = center. */
 function makeMonotonicCells() {
-  const cells: { rowIndex: number; colIndex: number; rowAxisValue: number; columnAxisValue: number; cellValueDecimal: number | null; isBaseCell: boolean }[] = [];
+  const cells: {
+    rowIndex: number;
+    colIndex: number;
+    rowAxisValue: number;
+    columnAxisValue: number;
+    cellValueDecimal: number | null;
+    isBaseCell: boolean;
+  }[] = [];
   for (let r = 1; r <= 5; r++) {
     for (let c = 1; c <= 5; c++) {
       // EV increases with row (g), decreases with col (WACC) — strictly monotonic synthetic surface.
       const value = 1000 + r * 50 - c * 30;
-      cells.push({ rowIndex: r, colIndex: c, rowAxisValue: r, columnAxisValue: c, cellValueDecimal: value, isBaseCell: r === 3 && c === 3 });
+      cells.push({
+        rowIndex: r,
+        colIndex: c,
+        rowAxisValue: r,
+        columnAxisValue: c,
+        cellValueDecimal: value,
+        isBaseCell: r === 3 && c === 3,
+      });
     }
   }
   return cells;
@@ -164,11 +186,25 @@ describe('findSensitivityMonotonicityViolation', () => {
     // Value depends ONLY on row (flat across columns) — row-wise check is trivially satisfied
     // (equal, never increasing), so a broken row-wise check can never mask/coincide with the
     // column-wise violation this test is isolating.
-    const cells: { rowIndex: number; colIndex: number; rowAxisValue: number; columnAxisValue: number; cellValueDecimal: number | null; isBaseCell: boolean }[] = [];
+    const cells: {
+      rowIndex: number;
+      colIndex: number;
+      rowAxisValue: number;
+      columnAxisValue: number;
+      cellValueDecimal: number | null;
+      isBaseCell: boolean;
+    }[] = [];
     const rowValue = [1000, 1100, 1200, 1300, 1400]; // strictly increasing with row(g) — correct baseline
     for (let r = 1; r <= 5; r++) {
       for (let c = 1; c <= 5; c++) {
-        cells.push({ rowIndex: r, colIndex: c, rowAxisValue: r, columnAxisValue: c, cellValueDecimal: rowValue[r - 1], isBaseCell: r === 3 && c === 3 });
+        cells.push({
+          rowIndex: r,
+          colIndex: c,
+          rowAxisValue: r,
+          columnAxisValue: c,
+          cellValueDecimal: rowValue[r - 1],
+          isBaseCell: r === 3 && c === 3,
+        });
       }
     }
     expect(findSensitivityMonotonicityViolation(cells)).toBeNull(); // sanity: baseline is clean
@@ -222,12 +258,22 @@ describe('assertSensitivityGridIntegrity', () => {
 // Disagreement analysis / range (coordinator correction — WP-D05: range, not a false single value)
 // =============================================================================================
 
-function method(overrides: Partial<{ methodType: string; readiness: string; status: string; valueDecimal: string | null }> = {}) {
+function method(
+  overrides: Partial<{
+    methodType: string;
+    readiness: string;
+    status: string;
+    valueDecimal: string | null;
+  }> = {}
+) {
   return {
     methodId: overrides.methodType ?? 'm',
     methodType: (overrides.methodType ?? 'DCF_FCFF') as any,
     readiness: (overrides.readiness ?? 'READY') as any,
-    result: { status: (overrides.status ?? 'PRESENT_NONZERO') as any, valueDecimal: overrides.valueDecimal === undefined ? '1000' : overrides.valueDecimal },
+    result: {
+      status: (overrides.status ?? 'PRESENT_NONZERO') as any,
+      valueDecimal: overrides.valueDecimal === undefined ? '1000' : overrides.valueDecimal,
+    },
     isInRecommendationBasket: true,
     weightPct: '50',
   };
@@ -249,8 +295,18 @@ describe('computeMethodResultRange', () => {
   it('excludes NA/NOT_APPLICABLE/MISSING/DATA_INCOMPLETE methods — never coerces them into the range as 0', () => {
     const methods = [
       method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }),
-      method({ methodType: 'TRADING_COMPS', readiness: 'NOT_CONFIGURED', status: 'NA', valueDecimal: null }),
-      method({ methodType: 'ASSET_BASED', readiness: 'DATA_INCOMPLETE', status: 'MISSING', valueDecimal: null }),
+      method({
+        methodType: 'TRADING_COMPS',
+        readiness: 'NOT_CONFIGURED',
+        status: 'NA',
+        valueDecimal: null,
+      }),
+      method({
+        methodType: 'ASSET_BASED',
+        readiness: 'DATA_INCOMPLETE',
+        status: 'MISSING',
+        valueDecimal: null,
+      }),
     ];
     const range = computeMethodResultRange(methods as any);
     expect(range.readyCount).toBe(1);
@@ -261,13 +317,19 @@ describe('computeMethodResultRange', () => {
   });
 
   it('flags material disagreement when spread exceeds the threshold', () => {
-    const methods = [method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }), method({ methodType: 'TRADING_COMPS', valueDecimal: '2000' })];
+    const methods = [
+      method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }),
+      method({ methodType: 'TRADING_COMPS', valueDecimal: '2000' }),
+    ];
     const range = computeMethodResultRange(methods as any, 20);
     expect(range.hasMaterialDisagreement).toBe(true);
   });
 
   it('does not flag disagreement for a tight spread under the threshold', () => {
-    const methods = [method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }), method({ methodType: 'TRADING_COMPS', valueDecimal: '1030' })];
+    const methods = [
+      method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }),
+      method({ methodType: 'TRADING_COMPS', valueDecimal: '1030' }),
+    ];
     const range = computeMethodResultRange(methods as any, 20);
     expect(range.hasMaterialDisagreement).toBe(false);
   });
@@ -282,7 +344,10 @@ describe('computeMethodResultRange', () => {
   });
 
   it('KONTROLA NEGATYWNA: a 100% spread must be flagged material under a 20% threshold, proving the check is not always-false', () => {
-    const methods = [method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }), method({ methodType: 'TRADING_COMPS', valueDecimal: '2000' })];
+    const methods = [
+      method({ methodType: 'DCF_FCFF', valueDecimal: '1000' }),
+      method({ methodType: 'TRADING_COMPS', valueDecimal: '2000' }),
+    ];
     expect(computeMethodResultRange(methods as any, 20).hasMaterialDisagreement).not.toBe(false);
   });
 });
@@ -314,37 +379,54 @@ describe('validateBasketWeights', () => {
   });
 
   it('rejects a cross-check carrying a weight (DEC-FIN-005: cross-checks are never weighted)', () => {
-    const result = validateBasketWeights([{ methodId: 'm1', isInRecommendationBasket: false, weightPct: 10 }]);
+    const result = validateBasketWeights([
+      { methodId: 'm1', isInRecommendationBasket: false, weightPct: 10 },
+    ]);
     expect(result.ok).toBe(false);
     expect(result.issues[0].code).toBe('WEIGHT_NOT_ALLOWED');
   });
 
   it('rejects a basket member with no weight — this is the N/A!=0 vector for weights specifically', () => {
-    const result = validateBasketWeights([{ methodId: 'm1', isInRecommendationBasket: true, weightPct: null }]);
+    const result = validateBasketWeights([
+      { methodId: 'm1', isInRecommendationBasket: true, weightPct: null },
+    ]);
     expect(result.ok).toBe(false);
     expect(result.issues[0].code).toBe('MISSING_WEIGHT');
   });
 
   it('rejects a non-positive weight (0 or negative) on a basket member', () => {
-    const result = validateBasketWeights([{ methodId: 'm1', isInRecommendationBasket: true, weightPct: 0 }]);
+    const result = validateBasketWeights([
+      { methodId: 'm1', isInRecommendationBasket: true, weightPct: 0 },
+    ]);
     expect(result.ok).toBe(false);
     expect(result.issues[0].code).toBe('WEIGHT_NOT_POSITIVE');
   });
 
   it('an empty basket (no members at all) is not itself an error — basketSumPct is null, not 0', () => {
-    const result = validateBasketWeights([{ methodId: 'm1', isInRecommendationBasket: false, weightPct: null }]);
+    const result = validateBasketWeights([
+      { methodId: 'm1', isInRecommendationBasket: false, weightPct: null },
+    ]);
     expect(result.basketSumPct).toBeNull();
     expect(result.ok).toBe(true);
   });
 
   it('KONTROLA NEGATYWNA: 99% (one less than the true 100% boundary) must fail, proving the test is not vacuously true', () => {
-    const almost = validateBasketWeights([{ methodId: 'm1', isInRecommendationBasket: true, weightPct: 99 }]);
+    const almost = validateBasketWeights([
+      { methodId: 'm1', isInRecommendationBasket: true, weightPct: 99 },
+    ]);
     expect(almost.sumMatches100).not.toBe(true);
   });
 
   it('validateBasketWeightsFromMethods parses decimal-string weightPct from the DTO', () => {
     const result = validateBasketWeightsFromMethods([
-      { methodId: 'm1', methodType: 'DCF_FCFF', readiness: 'READY', result: { status: 'PRESENT_NONZERO', valueDecimal: '1000' }, isInRecommendationBasket: true, weightPct: '100' },
+      {
+        methodId: 'm1',
+        methodType: 'DCF_FCFF',
+        readiness: 'READY',
+        result: { status: 'PRESENT_NONZERO', valueDecimal: '1000' },
+        isInRecommendationBasket: true,
+        weightPct: '100',
+      },
     ]);
     expect(result.basketSumPct).toBe(100);
     expect(result.ok).toBe(true);
@@ -355,7 +437,11 @@ describe('validateBasketWeights', () => {
 // Sensitivity 5x5 shape (OWN-FIN-002 regression class)
 // =============================================================================================
 
-function make5x5Cells(overrides: Partial<Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>>[] = []): Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>[] {
+function make5x5Cells(
+  overrides: Partial<
+    Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>
+  >[] = []
+): Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>[] {
   const cells: Pick<ValuationSensitivityCellDto, 'rowIndex' | 'colIndex' | 'isBaseCell'>[] = [];
   for (let r = 1; r <= 5; r++) {
     for (let c = 1; c <= 5; c++) {
@@ -408,7 +494,9 @@ describe('assertSensitivityGridShape', () => {
     cells[24] = { ...cells[0], isBaseCell: false };
     const result = assertSensitivityGridShape(cells);
     expect(result.ok).toBe(false);
-    expect(['DUPLICATE_CELL_COORDINATE', 'INCOMPLETE_ROW_OR_COLUMN_COVERAGE']).toContain(!result.ok ? result.code : null);
+    expect(['DUPLICATE_CELL_COORDINATE', 'INCOMPLETE_ROW_OR_COLUMN_COVERAGE']).toContain(
+      !result.ok ? result.code : null
+    );
   });
 
   it('rejects a row index out of the 1..5 range', () => {
@@ -435,7 +523,22 @@ const GENERATED_FINDING: ValuationAdvisorFindingGeneratedDto = {
   outputKind: 'FACT',
   title: 'Terminal value share of EV',
   narrative: 'Terminal value is 62% of enterprise value.',
-  evidenceRef: { ruleId: 'ADV-R01', generator: 'RULE_ENGINE', rulesVersion: '1', pointers: [{ table: 'finance_valuation_terminal', column: 'terminal_share_pct', rowId: 't1', observedValue: 62, label: 'Terminal share' }], derived: {}, impactUnit: 'PCT' },
+  evidenceRef: {
+    ruleId: 'ADV-R01',
+    generator: 'RULE_ENGINE',
+    rulesVersion: '1',
+    pointers: [
+      {
+        table: 'finance_valuation_terminal',
+        column: 'terminal_share_pct',
+        rowId: 't1',
+        observedValue: 62,
+        label: 'Terminal share',
+      },
+    ],
+    derived: {},
+    impactUnit: 'PCT',
+  },
   driverRef: 'TERMINAL_SHARE',
   impactDecimal: 62,
   confidence: 'HIGH',
@@ -451,7 +554,22 @@ const STORED_FINDING: ValuationAdvisorFindingStoredDto = {
   output_kind: 'FACT',
   title: 'Terminal value share of EV',
   narrative: 'Terminal value is 62% of enterprise value.',
-  evidence_ref: { ruleId: 'ADV-R01', generator: 'RULE_ENGINE', rulesVersion: '1', pointers: [{ table: 'finance_valuation_terminal', column: 'terminal_share_pct', rowId: 't1', observedValue: 62, label: 'Terminal share' }], derived: {}, impactUnit: 'PCT' },
+  evidence_ref: {
+    ruleId: 'ADV-R01',
+    generator: 'RULE_ENGINE',
+    rulesVersion: '1',
+    pointers: [
+      {
+        table: 'finance_valuation_terminal',
+        column: 'terminal_share_pct',
+        rowId: 't1',
+        observedValue: 62,
+        label: 'Terminal share',
+      },
+    ],
+    derived: {},
+    impactUnit: 'PCT',
+  },
   driver_ref: 'TERMINAL_SHARE',
   impact_decimal: '62',
   confidence: 'HIGH',
@@ -504,7 +622,10 @@ describe('normalizeAdvisorFinding', () => {
 
 describe('groupAdvisorFindingsByKind', () => {
   it('groups a mixed list into all five kinds, including empty groups', () => {
-    const findings = [normalizeAdvisorFinding(GENERATED_FINDING), normalizeAdvisorFinding({ ...STORED_FINDING, output_kind: 'RISK', id: 'find-2' })];
+    const findings = [
+      normalizeAdvisorFinding(GENERATED_FINDING),
+      normalizeAdvisorFinding({ ...STORED_FINDING, output_kind: 'RISK', id: 'find-2' }),
+    ];
     const grouped = groupAdvisorFindingsByKind(findings);
     expect(grouped.FACT).toHaveLength(1);
     expect(grouped.RISK).toHaveLength(1);

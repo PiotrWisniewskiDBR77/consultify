@@ -36,8 +36,8 @@ import {
   SettingsSlider,
   SettingsToggle,
 } from '../../components/AISettings';
-import { InfoButton } from '../../components/shared/InfoButton';
 import { SettingsHeaderActionPortal } from '../../components/settings/SettingsHeaderActions';
+import { InfoButton } from '../../components/shared/InfoButton';
 import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { AIPolicyLevel, AIRole, OrgAISettings } from '../../types/domain/ai';

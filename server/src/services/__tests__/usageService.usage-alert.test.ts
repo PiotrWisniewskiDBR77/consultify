@@ -64,7 +64,9 @@ describe('checkAndSendUsageAlert (N2)', () => {
           current_period_start: new Date('2026-08-01').toISOString(),
           current_period_end: new Date('2026-08-31').toISOString(),
         }),
-        getPlanById: vi.fn().mockResolvedValue({ token_limit: 1000, storage_limit_gb: 10, name: 'Pro' }),
+        getPlanById: vi
+          .fn()
+          .mockResolvedValue({ token_limit: 1000, storage_limit_gb: 10, name: 'Pro' }),
       },
       payAsYouGoService: {},
       budgetManagementService: {},
@@ -118,7 +120,9 @@ describe('checkAndSendUsageAlert (N2)', () => {
         entityType: 'billing',
       })
     );
-    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ userId: 'admin-2', type: 'usage_alert' }));
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'admin-2', type: 'usage_alert' })
+    );
   });
 
   it('does not pass explicit channels — relies on the usage_alert registry default of in_app+email', async () => {
@@ -131,7 +135,8 @@ describe('checkAndSendUsageAlert (N2)', () => {
   it('skips send() entirely when the daily per-threshold dedup already fired', async () => {
     mockDbGet.mockImplementation((...args: unknown[]) => {
       const sql = sqlOf(args);
-      if (sql.includes('usage_records')) return Promise.resolve({ tokens_used: 950, storage_bytes: 0 });
+      if (sql.includes('usage_records'))
+        return Promise.resolve({ tokens_used: 950, storage_bytes: 0 });
       if (sql.includes('billing_alerts'))
         return Promise.resolve({
           token_threshold_80: 1,
@@ -154,7 +159,8 @@ describe('checkAndSendUsageAlert (N2)', () => {
   it('does not send when usage is below every threshold', async () => {
     mockDbGet.mockImplementation((...args: unknown[]) => {
       const sql = sqlOf(args);
-      if (sql.includes('usage_records')) return Promise.resolve({ tokens_used: 100, storage_bytes: 0 });
+      if (sql.includes('usage_records'))
+        return Promise.resolve({ tokens_used: 100, storage_bytes: 0 });
       if (sql.includes('billing_alerts'))
         return Promise.resolve({
           token_threshold_80: 1,

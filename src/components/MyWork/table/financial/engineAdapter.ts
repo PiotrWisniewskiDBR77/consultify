@@ -96,8 +96,8 @@ import {
   computeBenefitCostRatio,
   computeCumulativeCashFlowAndPayback,
   computeImplementationCost,
-  computeNPV,
   computeNetCashFlowPerPeriod,
+  computeNPV,
   computeSimpleROI,
   FORMULA_VERSION,
 } from '@/services/ideaFinance';
@@ -310,7 +310,11 @@ function buildEngineInput(uiInput: FinancialCaseInput, warnings: FinancialCaseWa
   const engineInput: IdeaFinancialCaseInput = {
     formulaVersion: FORMULA_VERSION,
     currency: caseCurrency,
-    periodConvention: { unit: 'month', periodsPerYear: 12, anchorDate: `${uiInput.startPeriod}-01` },
+    periodConvention: {
+      unit: 'month',
+      periodsPerYear: 12,
+      anchorDate: `${uiInput.startPeriod}-01`,
+    },
     discountRatePct: uiInput.discountRatePct,
     baseline: [],
     investments,
@@ -384,7 +388,10 @@ function computeScenarioResult(
     ['annual benefit', annualResult] as const,
   ]) {
     if (r.status !== 'ok') {
-      warnings.push({ code: 'metric_not_computable', message: `Scenario "${scenarioName}" ${label}: ${r.reason}` });
+      warnings.push({
+        code: 'metric_not_computable',
+        message: `Scenario "${scenarioName}" ${label}: ${r.reason}`,
+      });
     }
   }
 

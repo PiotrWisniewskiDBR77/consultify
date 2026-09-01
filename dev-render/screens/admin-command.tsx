@@ -368,9 +368,7 @@ const RISK_SUMMARY_REAL = {
   organizationId: ORG_ID,
   summary: {
     audit: { totalLogs: 812, unresolvedCount: 9, highRiskCount: 4 },
-    incidents: [
-      { id: 'inc-1', provider: 'Anthropic', status: 'resolved', severity: 'medium' },
-    ],
+    incidents: [{ id: 'inc-1', provider: 'Anthropic', status: 'resolved', severity: 'medium' }],
   },
 };
 

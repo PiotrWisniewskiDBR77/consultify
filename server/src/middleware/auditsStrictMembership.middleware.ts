@@ -43,7 +43,6 @@ import type { NextFunction, Response } from 'express';
 
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-
 import type { AuthRequest } from './auth.middleware.js';
 
 function deny(res: Response) {

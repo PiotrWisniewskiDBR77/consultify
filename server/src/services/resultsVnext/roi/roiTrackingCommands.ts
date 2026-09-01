@@ -15,15 +15,18 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
-
 import { ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
-import { toRoiCase, type RoiCase, type RoiCaseRow } from './roiTypes.js';
+import { type RoiCase, type RoiCaseRow, toRoiCase } from './roiTypes.js';
 
 // ROI-E004 §4, Decision D2: obligation type created alongside
 // startRoiCaseTracking — mirrors createRoiCase's own obligation. No source

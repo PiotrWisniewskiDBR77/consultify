@@ -3,7 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AutosaveScheduler, DEFAULT_AUTOSAVE_DEBOUNCE_MS, DEFAULT_AUTOSAVE_MAX_WAIT_MS } from '../autosaveScheduler.js';
+import {
+  AutosaveScheduler,
+  DEFAULT_AUTOSAVE_DEBOUNCE_MS,
+  DEFAULT_AUTOSAVE_MAX_WAIT_MS,
+} from '../autosaveScheduler.js';
 
 beforeEach(() => {
   vi.useFakeTimers();

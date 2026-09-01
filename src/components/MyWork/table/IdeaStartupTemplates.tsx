@@ -232,7 +232,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               <Sparkles size={16} className="text-c-text-secondary" />
             </div>
             <div>
-              <h3 id="idea-startup-templates-heading" className="text-[15px] font-semibold text-c-text">
+              <h3
+                id="idea-startup-templates-heading"
+                className="text-[15px] font-semibold text-c-text"
+              >
                 {t('myWorkTable.ideaStartupTemplates.newIdea')}
               </h3>
               <p className="text-[11px] text-c-text-muted mt-0.5">

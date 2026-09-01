@@ -15,9 +15,10 @@
  * Nic poza nagłówkiem nie może się różnić.
  */
 
-import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
 
 /** Repo root — dwa poziomy nad server/src/method-core/__tests__. */
 const REPO_ROOT = path.resolve(__dirname, '../../../..');

@@ -1,17 +1,17 @@
 import { createHash } from 'node:crypto';
 
-import { executeInitiativeTransition } from '../initiative/initiativeTransitionService.js';
-import {
-  recordInitiativeLifecycleGateDecision,
-  type InitiativeLifecycleGateDomain,
-} from '../initiative/initiativeLifecycleGateDecisionService.js';
 import { withPgTransaction } from '../../utils/queryHelpers.js';
+import {
+  type InitiativeLifecycleGateDomain,
+  recordInitiativeLifecycleGateDecision,
+} from '../initiative/initiativeLifecycleGateDecisionService.js';
+import { executeInitiativeTransition } from '../initiative/initiativeTransitionService.js';
+import { dispatchAgentAdapter } from './agentAdapterOrchestratorService.js';
 import {
   registerGovernedProposal,
   reviewProposalScope,
   withProposalGovernanceClient,
 } from './agentProposalGovernanceService.js';
-import { dispatchAgentAdapter } from './agentAdapterOrchestratorService.js';
 import { loadTransformationAgentExecutionContext } from './transformationAgentExecutionContextService.js';
 
 type LifecycleTarget = 'SCHEDULED' | 'EXECUTING' | 'DONE';
@@ -68,7 +68,9 @@ export interface ProposeEarlyInitiativeTransitionInput {
 }
 
 /** Propose only. Approval remains exclusively owned by the generic A05 review boundary. */
-export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitiativeTransitionInput) {
+export async function proposeEarlyInitiativeTransition(
+  input: ProposeEarlyInitiativeTransitionInput
+) {
   if (input.proposerUserId === input.reviewerUserId)
     throw new Error('initiative_lifecycle_self_review_denied');
   const context = await loadTransformationAgentExecutionContext({
@@ -98,31 +100,45 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
                          WHERE reviewer_pm.project_id=c.project_id AND reviewer_pm.user_id=?
                            AND UPPER(reviewer_pm.project_role) IN ('PROJECT_SPONSOR','STEERING_COMMITTEE'))
           FOR SHARE OF c,p,l,i`,
-        [input.initiativeId, input.transformationCaseId, input.organizationId, input.proposerUserId,
-          input.reviewerUserId, input.reviewerUserId]
+        [
+          input.initiativeId,
+          input.transformationCaseId,
+          input.organizationId,
+          input.proposerUserId,
+          input.reviewerUserId,
+          input.reviewerUserId,
+        ]
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
     if (String(current.status).toUpperCase() !== expectedStatus)
       throw new Error('initiative_lifecycle_expected_status_drift');
-    const milestoneRows = input.targetStatus === 'SCHEDULED'
-      ? (await client.query<any>(
-          `SELECT id,target_date FROM initiative_milestones
+    const milestoneRows =
+      input.targetStatus === 'SCHEDULED'
+        ? (
+            await client.query<any>(
+              `SELECT id,target_date FROM initiative_milestones
             WHERE initiative_id=? AND organization_id=? ORDER BY id`,
-          [input.initiativeId, input.organizationId]
-        )).rows
-      : [];
-    if (input.targetStatus === 'SCHEDULED' &&
-        (!current.planned_start_date || !current.planned_end_date || milestoneRows.length === 0))
+              [input.initiativeId, input.organizationId]
+            )
+          ).rows
+        : [];
+    if (
+      input.targetStatus === 'SCHEDULED' &&
+      (!current.planned_start_date || !current.planned_end_date || milestoneRows.length === 0)
+    )
       throw new Error('initiative_schedule_exact_baseline_required');
-    const baselineRefs = input.targetStatus === 'SCHEDULED'
-      ? milestoneRows.map((row: any) => `milestone:${row.id}:${String(row.target_date)}`)
-      : input.targetStatus === 'EXECUTING' || input.targetStatus === 'DONE'
-        ? [`schedule-baseline:${String(current.schedule_baseline_id ?? '')}:v${Number(current.baseline_version ?? 0)}`]
-        : [
-            `transformation-case:${input.transformationCaseId}:v${Number(current.case_version)}`,
-            `initiative:${input.initiativeId}:${expectedStatus}`,
-          ];
+    const baselineRefs =
+      input.targetStatus === 'SCHEDULED'
+        ? milestoneRows.map((row: any) => `milestone:${row.id}:${String(row.target_date)}`)
+        : input.targetStatus === 'EXECUTING' || input.targetStatus === 'DONE'
+          ? [
+              `schedule-baseline:${String(current.schedule_baseline_id ?? '')}:v${Number(current.baseline_version ?? 0)}`,
+            ]
+          : [
+              `transformation-case:${input.transformationCaseId}:v${Number(current.case_version)}`,
+              `initiative:${input.initiativeId}:${expectedStatus}`,
+            ];
     if (baselineRefs.some((ref: string) => ref.includes('::')))
       throw new Error('initiative_lifecycle_baseline_reference_required');
     const payload = {
@@ -142,7 +158,10 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
         organizationId: input.organizationId,
         canonicalRunId: context.canonicalRunId,
         planVersion: Number(current.plan_version),
-        contextDigest: digest({ transformationCaseId: input.transformationCaseId, contextSnapshotId: current.context_snapshot_id }),
+        contextDigest: digest({
+          transformationCaseId: input.transformationCaseId,
+          contextSnapshotId: current.context_snapshot_id,
+        }),
         before: { status: expectedStatus },
         after: payload,
         approvalScopes: [scopeKey],
@@ -166,7 +185,9 @@ export interface ExecuteApprovedEarlyInitiativeTransitionInput {
 }
 
 /** Consumes an already-approved exact A05 review; never creates or approves one. */
-export async function executeApprovedEarlyInitiativeTransition(input: ExecuteApprovedEarlyInitiativeTransitionInput) {
+export async function executeApprovedEarlyInitiativeTransition(
+  input: ExecuteApprovedEarlyInitiativeTransitionInput
+) {
   const deferred: Array<() => Promise<void>> = [];
   const { gate, transition } = await withPgTransaction(async (client) => {
     const row = (
@@ -189,15 +210,25 @@ export async function executeApprovedEarlyInitiativeTransition(input: ExecuteApp
       )
     ).rows[0];
     if (!row) throw new Error('initiative_lifecycle_approved_review_required');
-    if (new Date(row.expires_at).getTime() <= Date.now()) throw new Error('initiative_lifecycle_proposal_expired');
+    if (new Date(row.expires_at).getTime() <= Date.now())
+      throw new Error('initiative_lifecycle_proposal_expired');
     const payload = row.after_json as any;
     if (String(payload.initiativeId) !== input.initiativeId)
       throw new Error('initiative_lifecycle_proposal_target_mismatch');
     const targetStatus = payload.targetStatus as ApprovedLifecycleTarget;
-    if (!APPROVED_DOMAIN_BY_TARGET[targetStatus] || payload.pmoDomain !== APPROVED_DOMAIN_BY_TARGET[targetStatus])
+    if (
+      !APPROVED_DOMAIN_BY_TARGET[targetStatus] ||
+      payload.pmoDomain !== APPROVED_DOMAIN_BY_TARGET[targetStatus]
+    )
       throw new Error('initiative_lifecycle_proposal_target_invalid');
     const expectedDigest = digest(payload);
-    const pins = { payload, sourceDigest: expectedDigest, reviewId: String(row.review_id), expiresAt: new Date(row.expires_at).toISOString(), scopeKey: `initiative_lifecycle:${payload.pmoDomain.toLowerCase()}` };
+    const pins = {
+      payload,
+      sourceDigest: expectedDigest,
+      reviewId: String(row.review_id),
+      expiresAt: new Date(row.expires_at).toISOString(),
+      scopeKey: `initiative_lifecycle:${payload.pmoDomain.toLowerCase()}`,
+    };
     const gate = await recordInitiativeLifecycleGateDecision(client, {
       organizationId: input.organizationId,
       initiativeId: pins.payload.initiativeId,
@@ -226,11 +257,16 @@ export async function executeApprovedEarlyInitiativeTransition(input: ExecuteApp
       transactionClient: client,
       deferPostCommitEffect: (effect) => deferred.push(effect),
     });
-    if (!transition.ok) throw new Error(`initiative_transition_denied:${JSON.stringify(transition.body)}`);
+    if (!transition.ok)
+      throw new Error(`initiative_transition_denied:${JSON.stringify(transition.body)}`);
     return { gate, transition };
   });
   await Promise.allSettled(deferred.map((effect) => effect()));
-  return { gateDecisionId: gate.decision.decisionId, transition, idempotentReplay: gate.idempotentReplay };
+  return {
+    gateDecisionId: gate.decision.decisionId,
+    transition,
+    idempotentReplay: gate.idempotentReplay,
+  };
 }
 
 export interface GovernedInitiativeTransitionInput {

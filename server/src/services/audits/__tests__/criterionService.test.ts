@@ -38,7 +38,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[criterionService.test.ts SKIPPED — clean skip, not a failure] wymaga NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...'
   );
 }
 
@@ -49,7 +49,11 @@ suite('criterionService (Postgres realny — U3)', () => {
   let evidenceService: typeof import('../evidenceService.js');
 
   const orgId = `u3-crit-org-${randomUUID()}`;
-  const adminActor = { userId: `u3-crit-admin-${randomUUID()}`, organizationId: orgId, platformRole: 'admin' as const };
+  const adminActor = {
+    userId: `u3-crit-admin-${randomUUID()}`,
+    organizationId: orgId,
+    platformRole: 'admin' as const,
+  };
   const leadAuditorUserId = `u3-crit-lead-${randomUUID()}`;
   const auditeeUserId = `u3-crit-auditee-${randomUUID()}`;
   const noRoleUserId = `u3-crit-norole-${randomUUID()}`;
@@ -72,7 +76,7 @@ suite('criterionService (Postgres realny — U3)', () => {
          (id, pack_id, parent_id, ordinal, ref_code, node_kind, title, requirement_text,
           audit_question, expected_evidence, mandatory)
        VALUES ($1,$2,NULL,$3,$4,'criterion',$5,'Wymaganie testowe','Pytanie testowe','[]'::jsonb,true)`,
-      [id, packId, ordinal, refCode, `Kryterium ${refCode}`],
+      [id, packId, ordinal, refCode, `Kryterium ${refCode}`]
     );
     return id;
   }
@@ -96,10 +100,15 @@ suite('criterionService (Postgres realny — U3)', () => {
         `u3-crit-pack-key-${packId}`,
         'Pakiet testowy U3 — criterionService',
         JSON.stringify([
-          { key: 'nonconforming', label: 'Niezgodność', nonConforming: true, requiresCorrectiveAction: true },
+          {
+            key: 'nonconforming',
+            label: 'Niezgodność',
+            nonConforming: true,
+            requiresCorrectiveAction: true,
+          },
         ]),
         JSON.stringify(['lead_auditor', 'auditor', 'auditee']),
-      ],
+      ]
     );
 
     await insertPackLeaf('T1-no-test', 1);
@@ -116,7 +125,7 @@ suite('criterionService (Postgres realny — U3)', () => {
 
     const rows = await auditsDb.auditAll<{ id: string; ref_code: string }>(
       `SELECT id, ref_code FROM audit_program_criteria WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
     for (const r of rows) criterionIdByRef[r.ref_code] = r.id;
 
@@ -144,8 +153,12 @@ suite('criterionService (Postgres realny — U3)', () => {
   afterAll(async () => {
     if (!auditsDb) return;
     await auditsDb.auditRun(`DELETE FROM audit_evidence WHERE organization_id = $1`, [orgId]);
-    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [orgId]);
-    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [
+      orgId,
+    ]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [
+      orgId,
+    ]);
     await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);
     await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id = $1`, [packId]);
     await auditsDb.auditRun(`DELETE FROM audit_packs WHERE id = $1`, [packId]);
@@ -159,21 +172,26 @@ suite('criterionService (Postgres realny — U3)', () => {
       criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
         conformityStatus: 'nonconforming',
         auditorConclusion: 'Próbuję bez testu',
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE' });
 
     await expect(
       criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
         conformityStatus: 'conforming',
         auditorConclusion: 'Próbuję bez testu',
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE' });
 
     // Wyjątek z zadania: 'evidence_insufficient' NIE wymaga testu — musi przejść.
-    const concluded = await criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
-      conformityStatus: 'evidence_insufficient',
-      auditorConclusion: 'Za mało danych, bez testu',
-    });
+    const concluded = await criterionService.concludeCriterion(
+      orgId,
+      leadAuditorActor,
+      criterionId,
+      {
+        conformityStatus: 'evidence_insufficient',
+        auditorConclusion: 'Za mało danych, bez testu',
+      }
+    );
     expect(concluded.conformityStatus).toBe('evidence_insufficient');
   });
 
@@ -191,14 +209,19 @@ suite('criterionService (Postgres realny — U3)', () => {
       criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
         conformityStatus: 'conforming',
         auditorConclusion: 'Test wykonany, ale brak dowodu',
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE' });
 
     // 'nonconforming' NIE wymaga zaakceptowanego dowodu (tylko 'conforming') — musi przejść.
-    const concluded = await criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
-      conformityStatus: 'nonconforming',
-      auditorConclusion: 'Test wykonany, wynik negatywny',
-    });
+    const concluded = await criterionService.concludeCriterion(
+      orgId,
+      leadAuditorActor,
+      criterionId,
+      {
+        conformityStatus: 'nonconforming',
+        auditorConclusion: 'Test wykonany, wynik negatywny',
+      }
+    );
     expect(concluded.conformityStatus).toBe('nonconforming');
   });
 
@@ -210,7 +233,7 @@ suite('criterionService (Postgres realny — U3)', () => {
       orgId,
       dualRoleActor,
       criterionId,
-      'Odpowiedź audytowanego (ta sama osoba ma też rolę lead_auditor)',
+      'Odpowiedź audytowanego (ta sama osoba ma też rolę lead_auditor)'
     );
 
     // dualRoleActor MA capability criterion.conclude (rola lead_auditor) — użyto
@@ -221,14 +244,19 @@ suite('criterionService (Postgres realny — U3)', () => {
       criterionService.concludeCriterion(orgId, dualRoleActor, criterionId, {
         conformityStatus: 'observation',
         auditorConclusion: 'Próbuję zamknąć własną odpowiedź',
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN' });
 
     // Inna osoba z rolą audytową (leadAuditorActor) MOŻE wyciągnąć wniosek.
-    const concluded = await criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
-      conformityStatus: 'observation',
-      auditorConclusion: 'Niezależny wniosek innej osoby',
-    });
+    const concluded = await criterionService.concludeCriterion(
+      orgId,
+      leadAuditorActor,
+      criterionId,
+      {
+        conformityStatus: 'observation',
+        auditorConclusion: 'Niezależny wniosek innej osoby',
+      }
+    );
     expect(concluded.conformityStatus).toBe('observation');
   });
 
@@ -240,7 +268,7 @@ suite('criterionService (Postgres realny — U3)', () => {
       criterionService.recordTest(orgId, noRoleActor, criterionId, {
         testPerformed: 'Próba bez roli',
         testResult: 'pass',
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN' });
 
     // Negatywna kontrola: ta sama osoba z rolą audytową (leadAuditorActor) — dozwolone.
@@ -276,10 +304,15 @@ suite('criterionService (Postgres realny — U3)', () => {
       accepted: true,
     });
 
-    const concluded = await criterionService.concludeCriterion(orgId, leadAuditorActor, criterionId, {
-      conformityStatus: 'conforming',
-      auditorConclusion: 'Test wykonany, dowód zaakceptowany',
-    });
+    const concluded = await criterionService.concludeCriterion(
+      orgId,
+      leadAuditorActor,
+      criterionId,
+      {
+        conformityStatus: 'conforming',
+        auditorConclusion: 'Test wykonany, dowód zaakceptowany',
+      }
+    );
     expect(concluded.conformityStatus).toBe('conforming');
   });
 });

@@ -39,16 +39,27 @@
  */
 
 import {
+  createDecision,
+  type CreateDecisionInput,
+  type Decision,
+  getDecision,
+} from '../../decisionService.js';
+import * as artifactLinkService from '../artifactLinkService.js';
+import {
+  type CapabilityExecutionEnvelope,
   CapabilityHandlerError,
+  type InternalCommandBinding,
   registerCapabilityBinding,
   registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
 } from '../capabilityAdapterService.js';
 import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import { createDecision, getDecision, type CreateDecisionInput, type Decision } from '../../decisionService.js';
-import { attachArtifactLink, requireEnumInput, requireNonBlankInput, resolveCaseContext, resultRefFor } from './_shared.js';
+import {
+  attachArtifactLink,
+  requireEnumInput,
+  requireNonBlankInput,
+  resolveCaseContext,
+  resultRefFor,
+} from './_shared.js';
 
 export const DECISION_CREATE_CAPABILITY_ID = 'case-workspace.decision.create';
 export const DECISION_CREATE_CAPABILITY_VERSION = '1.0.0';
@@ -114,7 +125,9 @@ export function buildDecisionCreateBinding(deps: DecisionAdapterDeps = {}): Inte
         // input problem from this capability's point of view, never OUR bug.
         throw new CapabilityHandlerError(
           'CAPABILITY_INPUT_INVALID',
-          error instanceof Error ? error.name || 'decision_create_rejected' : 'decision_create_rejected'
+          error instanceof Error
+            ? error.name || 'decision_create_rejected'
+            : 'decision_create_rejected'
         );
       }
 

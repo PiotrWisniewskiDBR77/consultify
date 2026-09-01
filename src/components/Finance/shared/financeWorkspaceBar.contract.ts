@@ -23,7 +23,13 @@
  *     martwa dla frontendu warstwa, PKG_B_API_report.md §1.3).
  */
 
-import type { BusinessVersionStatus, FinanceArtifactFreshness, FinanceArtifactType, FinanceRole, LifecycleAction } from '@/services/api/financeV2.types';
+import type {
+  BusinessVersionStatus,
+  FinanceArtifactFreshness,
+  FinanceArtifactType,
+  FinanceRole,
+  LifecycleAction,
+} from '@/services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
 // Limity — workspaceBarContract.ts:58-93
@@ -47,7 +53,9 @@ export interface WorkspaceBarLabel {
 
 export const WORKSPACE_BAR_FRESHNESS_SEPARATOR = ' · ';
 
-export const WORKSPACE_BAR_FRESHNESS_PREFIX: Readonly<Record<FinanceArtifactFreshness, WorkspaceBarLabel | null>> = {
+export const WORKSPACE_BAR_FRESHNESS_PREFIX: Readonly<
+  Record<FinanceArtifactFreshness, WorkspaceBarLabel | null>
+> = {
   CURRENT: null,
   NEVER_COMPUTED: { key: 'finance.freshness.neverComputed', pl: 'Nie przeliczono' },
   STALE_SOURCE: { key: 'finance.freshness.staleSource', pl: 'Nieaktualne' },
@@ -132,7 +140,14 @@ export function resolveControlState(
 // Tożsamość (lewa strona) — workspaceBarContract.ts:231-328
 // ---------------------------------------------------------------------------
 
-export const WORKSPACE_BAR_CONTEXT_FIELDS = ['type', 'period', 'entity', 'currencyScale', 'source', 'lastCompute'] as const;
+export const WORKSPACE_BAR_CONTEXT_FIELDS = [
+  'type',
+  'period',
+  'entity',
+  'currencyScale',
+  'source',
+  'lastCompute',
+] as const;
 export type WorkspaceBarContextField = (typeof WORKSPACE_BAR_CONTEXT_FIELDS)[number];
 
 export interface WorkspaceBarEditableName {
@@ -160,8 +175,18 @@ export interface WorkspaceBarIdentity {
 }
 
 /** Approved (i inne terminalne) = niezmienialne — reopen/nowa wersja to wspierana ścieżka. workspaceBarContract.ts:288-295. */
-export const RENAMEABLE_STATUSES: readonly BusinessVersionStatus[] = ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'];
-export const RENAMEABLE_ROLES: readonly FinanceRole[] = ['preparer', 'reviewer', 'approver', 'finance_admin'];
+export const RENAMEABLE_STATUSES: readonly BusinessVersionStatus[] = [
+  'DRAFT',
+  'READY_FOR_REVIEW',
+  'IN_REVIEW',
+  'NEEDS_CHANGES',
+];
+export const RENAMEABLE_ROLES: readonly FinanceRole[] = [
+  'preparer',
+  'reviewer',
+  'approver',
+  'finance_admin',
+];
 
 export function canRenameArtifact(
   status: BusinessVersionStatus,
@@ -188,7 +213,11 @@ export function validateWorkspaceName(raw: string): WorkspaceNameValidation {
     return code < 32 || code === 127;
   });
   if (hasControlChars) {
-    return { ok: false, code: 'NAME_CONTROL_CHARS', message: 'Nazwa zawiera niedozwolone znaki sterujące' };
+    return {
+      ok: false,
+      code: 'NAME_CONTROL_CHARS',
+      message: 'Nazwa zawiera niedozwolone znaki sterujące',
+    };
   }
   if (normalized.length > WORKSPACE_BAR_NAME_MAX_CHARS) {
     return {
@@ -207,7 +236,13 @@ export function validateWorkspaceName(raw: string): WorkspaceNameValidation {
 export type WorkspaceBarViewNavigationPlacement = 'in-bar' | 'separate-row';
 export type WorkspaceBarViewNavigationKind = 'tabs' | 'stepper';
 
-export type WorkspaceBarViewStateKind = 'not-configured' | 'incomplete' | 'ready' | 'stale' | 'blocked' | 'not-applicable';
+export type WorkspaceBarViewStateKind =
+  | 'not-configured'
+  | 'incomplete'
+  | 'ready'
+  | 'stale'
+  | 'blocked'
+  | 'not-applicable';
 
 export interface WorkspaceBarViewState {
   kind: WorkspaceBarViewStateKind;
@@ -228,7 +263,9 @@ export interface WorkspaceBarViewNavigation {
   placement: WorkspaceBarViewNavigationPlacement;
 }
 
-export function resolveViewNavigationPlacement(viewCount: number): WorkspaceBarViewNavigationPlacement {
+export function resolveViewNavigationPlacement(
+  viewCount: number
+): WorkspaceBarViewNavigationPlacement {
   return viewCount <= WORKSPACE_BAR_INLINE_VIEW_LIMIT ? 'in-bar' : 'separate-row';
 }
 
@@ -236,7 +273,13 @@ export function resolveViewNavigationPlacement(viewCount: number): WorkspaceBarV
 // Prawa strona — workspaceBarContract.ts:377-465. Budżet 5 kontrolek.
 // ---------------------------------------------------------------------------
 
-export type WorkspaceBarControlKind = 'primary' | 'secondary' | 'lifecycle' | 'more' | 'fullscreen' | 'extra';
+export type WorkspaceBarControlKind =
+  | 'primary'
+  | 'secondary'
+  | 'lifecycle'
+  | 'more'
+  | 'fullscreen'
+  | 'extra';
 
 interface WorkspaceBarControlBase {
   id: string;
@@ -271,7 +314,12 @@ export interface WorkspaceBarLifecycleControl extends WorkspaceBarControlBase {
   transitions: readonly WorkspaceBarLifecycleTransition[];
 }
 
-export type WorkspaceBarMoreMenuItemGroup = 'document' | 'report' | 'data' | 'navigation' | 'danger';
+export type WorkspaceBarMoreMenuItemGroup =
+  | 'document'
+  | 'report'
+  | 'data'
+  | 'navigation'
+  | 'danger';
 
 export interface WorkspaceBarMoreMenuItem {
   id: string;
@@ -306,7 +354,12 @@ export interface WorkspaceBarActions {
   extraDirectControls: readonly WorkspaceBarExtraControl[];
 }
 
-export type FinanceWorkspaceModuleId = 'statements' | 'analysis' | 'baselineModel' | 'prediction' | 'valuation';
+export type FinanceWorkspaceModuleId =
+  | 'statements'
+  | 'analysis'
+  | 'baselineModel'
+  | 'prediction'
+  | 'valuation';
 
 export interface WorkspaceBarConfig {
   moduleId: FinanceWorkspaceModuleId;
@@ -359,9 +412,13 @@ export interface WorkspaceBarValidationError {
   message: string;
 }
 
-export type WorkspaceBarValidationResult = { ok: true } | { ok: false; errors: WorkspaceBarValidationError[] };
+export type WorkspaceBarValidationResult =
+  | { ok: true }
+  | { ok: false; errors: WorkspaceBarValidationError[] };
 
-export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): WorkspaceBarValidationResult {
+export function validateWorkspaceBarConfig(
+  config: WorkspaceBarConfig
+): WorkspaceBarValidationResult {
   const errors: WorkspaceBarValidationError[] = [];
   const { actions, viewNavigation, identity } = config;
 
@@ -374,10 +431,18 @@ export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): Workspac
     });
   }
   if (!actions.primary) {
-    errors.push({ code: 'MISSING_PRIMARY_ACTION', path: 'actions.primary', message: 'Wymagana dokładnie jedna akcja primary.' });
+    errors.push({
+      code: 'MISSING_PRIMARY_ACTION',
+      path: 'actions.primary',
+      message: 'Wymagana dokładnie jedna akcja primary.',
+    });
   }
   if (!actions.fullscreen) {
-    errors.push({ code: 'MISSING_FULLSCREEN_CONTROL', path: 'actions.fullscreen', message: 'Fullscreen (focus mode) jest obowiązkową, zawsze ostatnią kontrolką.' });
+    errors.push({
+      code: 'MISSING_FULLSCREEN_CONTROL',
+      path: 'actions.fullscreen',
+      message: 'Fullscreen (focus mode) jest obowiązkową, zawsze ostatnią kontrolką.',
+    });
   }
 
   const controlIds: Array<{ id: string; path: string }> = [];
@@ -385,26 +450,43 @@ export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): Workspac
   if (actions.secondary) controlIds.push({ id: actions.secondary.id, path: 'actions.secondary' });
   if (actions.lifecycle) controlIds.push({ id: actions.lifecycle.id, path: 'actions.lifecycle' });
   if (actions.more) controlIds.push({ id: actions.more.id, path: 'actions.more' });
-  if (actions.fullscreen) controlIds.push({ id: actions.fullscreen.id, path: 'actions.fullscreen' });
-  actions.extraDirectControls.forEach((extra, index) => controlIds.push({ id: extra.id, path: `actions.extraDirectControls[${index}]` }));
+  if (actions.fullscreen)
+    controlIds.push({ id: actions.fullscreen.id, path: 'actions.fullscreen' });
+  actions.extraDirectControls.forEach((extra, index) =>
+    controlIds.push({ id: extra.id, path: `actions.extraDirectControls[${index}]` })
+  );
   if (actions.more) {
-    actions.more.items.forEach((item, index) => controlIds.push({ id: item.id, path: `actions.more.items[${index}]` }));
+    actions.more.items.forEach((item, index) =>
+      controlIds.push({ id: item.id, path: `actions.more.items[${index}]` })
+    );
   }
   const seenControlIds = new Set<string>();
   for (const entry of controlIds) {
     if (seenControlIds.has(entry.id)) {
-      errors.push({ code: 'DUPLICATE_CONTROL_ID', path: entry.path, message: `Zduplikowany id kontrolki "${entry.id}".` });
+      errors.push({
+        code: 'DUPLICATE_CONTROL_ID',
+        path: entry.path,
+        message: `Zduplikowany id kontrolki "${entry.id}".`,
+      });
     }
     seenControlIds.add(entry.id);
   }
 
   if (actions.more && actions.more.items.length === 0) {
-    errors.push({ code: 'EMPTY_MORE_MENU', path: 'actions.more.items', message: 'Menu More bez pozycji to martwa kontrolka — pomiń menu.' });
+    errors.push({
+      code: 'EMPTY_MORE_MENU',
+      path: 'actions.more.items',
+      message: 'Menu More bez pozycji to martwa kontrolka — pomiń menu.',
+    });
   }
   if (actions.more) {
     actions.more.items.forEach((item, index) => {
       if (item.destructive && !item.requiresConfirmation) {
-        errors.push({ code: 'DESTRUCTIVE_WITHOUT_CONFIRMATION', path: `actions.more.items[${index}]`, message: `Destrukcyjna pozycja "${item.id}" musi wymagać potwierdzenia.` });
+        errors.push({
+          code: 'DESTRUCTIVE_WITHOUT_CONFIRMATION',
+          path: `actions.more.items[${index}]`,
+          message: `Destrukcyjna pozycja "${item.id}" musi wymagać potwierdzenia.`,
+        });
       }
     });
   }
@@ -412,27 +494,47 @@ export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): Workspac
     const seenTransitions = new Set<WorkspaceBarLifecycleActionId>();
     actions.lifecycle.transitions.forEach((transition, index) => {
       if (transition.destructive && !transition.requiresConfirmation) {
-        errors.push({ code: 'DESTRUCTIVE_WITHOUT_CONFIRMATION', path: `actions.lifecycle.transitions[${index}]`, message: `Destrukcyjne przejście "${transition.action}" musi wymagać potwierdzenia.` });
+        errors.push({
+          code: 'DESTRUCTIVE_WITHOUT_CONFIRMATION',
+          path: `actions.lifecycle.transitions[${index}]`,
+          message: `Destrukcyjne przejście "${transition.action}" musi wymagać potwierdzenia.`,
+        });
       }
       if (seenTransitions.has(transition.action)) {
-        errors.push({ code: 'DUPLICATE_LIFECYCLE_TRANSITION', path: `actions.lifecycle.transitions[${index}]`, message: `Akcja lifecycle "${transition.action}" zadeklarowana dwukrotnie.` });
+        errors.push({
+          code: 'DUPLICATE_LIFECYCLE_TRANSITION',
+          path: `actions.lifecycle.transitions[${index}]`,
+          message: `Akcja lifecycle "${transition.action}" zadeklarowana dwukrotnie.`,
+        });
       }
       seenTransitions.add(transition.action);
     });
   }
 
   if (viewNavigation.views.length === 0) {
-    errors.push({ code: 'EMPTY_VIEW_NAVIGATION', path: 'viewNavigation.views', message: 'Każdy workspace deklaruje co najmniej jeden widok.' });
+    errors.push({
+      code: 'EMPTY_VIEW_NAVIGATION',
+      path: 'viewNavigation.views',
+      message: 'Każdy workspace deklaruje co najmniej jeden widok.',
+    });
   } else {
     const seenViewIds = new Set<string>();
     viewNavigation.views.forEach((view, index) => {
       if (seenViewIds.has(view.id)) {
-        errors.push({ code: 'DUPLICATE_VIEW_ID', path: `viewNavigation.views[${index}]`, message: `Zduplikowany id widoku "${view.id}".` });
+        errors.push({
+          code: 'DUPLICATE_VIEW_ID',
+          path: `viewNavigation.views[${index}]`,
+          message: `Zduplikowany id widoku "${view.id}".`,
+        });
       }
       seenViewIds.add(view.id);
     });
     if (!seenViewIds.has(viewNavigation.activeViewId)) {
-      errors.push({ code: 'ACTIVE_VIEW_NOT_FOUND', path: 'viewNavigation.activeViewId', message: `activeViewId "${viewNavigation.activeViewId}" nie jest jednym z deklarowanych widoków.` });
+      errors.push({
+        code: 'ACTIVE_VIEW_NOT_FOUND',
+        path: 'viewNavigation.activeViewId',
+        message: `activeViewId "${viewNavigation.activeViewId}" nie jest jednym z deklarowanych widoków.`,
+      });
     }
     const expectedPlacement = resolveViewNavigationPlacement(viewNavigation.views.length);
     if (viewNavigation.placement !== expectedPlacement) {
@@ -448,14 +550,29 @@ export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): Workspac
   if (!nameCheck.ok) {
     errors.push({ code: 'INVALID_NAME', path: 'identity.name.value', message: nameCheck.message });
   }
-  if (identity.name.maxChars !== WORKSPACE_BAR_NAME_MAX_CHARS || identity.name.layoutBudgetChars !== WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS) {
-    errors.push({ code: 'NAME_BUDGET_MISCONFIGURED', path: 'identity.name', message: `Limity nazwy są stałą programu (maks ${WORKSPACE_BAR_NAME_MAX_CHARS}, budżet layoutu ${WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS}).` });
+  if (
+    identity.name.maxChars !== WORKSPACE_BAR_NAME_MAX_CHARS ||
+    identity.name.layoutBudgetChars !== WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS
+  ) {
+    errors.push({
+      code: 'NAME_BUDGET_MISCONFIGURED',
+      path: 'identity.name',
+      message: `Limity nazwy są stałą programu (maks ${WORKSPACE_BAR_NAME_MAX_CHARS}, budżet layoutu ${WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS}).`,
+    });
   }
   if (identity.artifactRef.artifactType !== config.artifactType) {
-    errors.push({ code: 'ARTIFACT_TYPE_MISMATCH', path: 'identity.artifactRef.artifactType', message: `Config deklaruje artifactType "${config.artifactType}", identity.artifactRef ma "${identity.artifactRef.artifactType}".` });
+    errors.push({
+      code: 'ARTIFACT_TYPE_MISMATCH',
+      path: 'identity.artifactRef.artifactType',
+      message: `Config deklaruje artifactType "${config.artifactType}", identity.artifactRef ma "${identity.artifactRef.artifactType}".`,
+    });
   }
   if (identity.contextFields.length === 0) {
-    errors.push({ code: 'EMPTY_CONTEXT_FIELDS', path: 'identity.contextFields', message: 'Context popover musi nieść co najmniej jedno pole.' });
+    errors.push({
+      code: 'EMPTY_CONTEXT_FIELDS',
+      path: 'identity.contextFields',
+      message: 'Context popover musi nieść co najmniej jedno pole.',
+    });
   }
 
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
@@ -504,12 +621,22 @@ export interface WorkspaceBarLayoutEstimate {
   displayableNameChars: number;
   targetNameChars: number;
   slackPx: number;
-  breakdown: { identityFixedPx: number; viewNavigationPx: number; actionsPx: number; gapsPx: number };
+  breakdown: {
+    identityFixedPx: number;
+    viewNavigationPx: number;
+    actionsPx: number;
+    gapsPx: number;
+  };
 }
 
 export function estimateWorkspaceBarLayout(
   config: WorkspaceBarConfig,
-  options: { viewportPx?: number; nameChars?: number; freshness?: FinanceArtifactFreshness; metrics?: WorkspaceBarLayoutMetrics } = {}
+  options: {
+    viewportPx?: number;
+    nameChars?: number;
+    freshness?: FinanceArtifactFreshness;
+    metrics?: WorkspaceBarLayoutMetrics;
+  } = {}
 ): WorkspaceBarLayoutEstimate {
   const m = options.metrics ?? DEFAULT_WORKSPACE_BAR_METRICS;
   const viewportPx = options.viewportPx ?? WORKSPACE_BAR_REFERENCE_VIEWPORT_PX;
@@ -519,14 +646,20 @@ export function estimateWorkspaceBarLayout(
   const labeledPx = (label: string): number => m.labelPaddingPx + label.length * m.charPx;
   const identityFixedPx = m.backControlPx + m.versionBadgePx + m.statusBadgePx;
 
-  const inlineViews = config.viewNavigation.placement === 'in-bar' ? config.viewNavigation.views : [];
+  const inlineViews =
+    config.viewNavigation.placement === 'in-bar' ? config.viewNavigation.views : [];
   const viewNavigationPx = inlineViews.reduce(
-    (total, v) => total + Math.max(m.inlineViewMinPx, m.inlineViewPaddingPx + v.label.pl.length * m.charPx),
+    (total, v) =>
+      total + Math.max(m.inlineViewMinPx, m.inlineViewPaddingPx + v.label.pl.length * m.charPx),
     0
   );
 
   const { actions } = config;
-  const primaryLabel = mergeFreshnessIntoPrimaryLabel(actions.primary.label, freshness, actions.primary.mergesFreshness).pl;
+  const primaryLabel = mergeFreshnessIntoPrimaryLabel(
+    actions.primary.label,
+    freshness,
+    actions.primary.mergesFreshness
+  ).pl;
   let actionsPx = labeledPx(primaryLabel);
   if (actions.secondary) actionsPx += labeledPx(actions.secondary.label.pl);
   if (actions.lifecycle) actionsPx += labeledPx(actions.lifecycle.label.pl);

@@ -144,7 +144,7 @@ describe.skipIf(!enabled)('Day 175 task Risk & Alternatives persistence on real 
     }
   });
 
-  it('FIX-175 Z-3: refuses to read another organization\'s risks/alternatives (tenant isolation)', async () => {
+  it("FIX-175 Z-3: refuses to read another organization's risks/alternatives (tenant isolation)", async () => {
     const response = await request(app)
       .get(`/api/tasks/${taskId}/risk-alternatives`)
       .set(otherAuth);

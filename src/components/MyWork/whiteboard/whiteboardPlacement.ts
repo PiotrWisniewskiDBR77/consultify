@@ -79,9 +79,7 @@ function snap(value: number, grid: number): number {
 }
 
 function rectsOverlap(a: WhiteboardRect, b: WhiteboardRect): boolean {
-  return (
-    a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
-  );
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 function clampToViewport(
@@ -187,15 +185,7 @@ export function resolveWhiteboardPlacement(input: WhiteboardPlacementInput): {
   // 3) Search radius exhausted (pathologically dense board) — return the
   //    last cascade candidate. May overlap, but placement always resolves.
   const fallbackOffset = CASCADE_ATTEMPTS * CASCADE_STEP;
-  const fallback = candidateAt(
-    baseX,
-    baseY,
-    fallbackOffset,
-    fallbackOffset,
-    size,
-    grid,
-    viewport
-  );
+  const fallback = candidateAt(baseX, baseY, fallbackOffset, fallbackOffset, size, grid, viewport);
   return { x: fallback.x, y: fallback.y };
 }
 
@@ -272,9 +262,7 @@ export interface TidyLayoutInput {
   grid?: number;
 }
 
-export function computeTidyLayout(
-  input: TidyLayoutInput
-): Map<string, { x: number; y: number }> {
+export function computeTidyLayout(input: TidyLayoutInput): Map<string, { x: number; y: number }> {
   const { items, anchor, fixedRects = [], viewport, grid } = input;
   const occupied: WhiteboardRect[] = [...fixedRects];
   const result = new Map<string, { x: number; y: number }>();
@@ -287,7 +275,12 @@ export function computeTidyLayout(
       grid,
     });
     result.set(item.id, position);
-    occupied.push({ x: position.x, y: position.y, width: item.rect.width, height: item.rect.height });
+    occupied.push({
+      x: position.x,
+      y: position.y,
+      width: item.rect.width,
+      height: item.rect.height,
+    });
   }
   return result;
 }

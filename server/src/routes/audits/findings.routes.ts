@@ -8,6 +8,7 @@
 
 import { Router } from 'express';
 
+import { AuditStateError } from '../../services/audits/auditsDb.js';
 import {
   acceptResidualRisk,
   closeFinding,
@@ -21,9 +22,7 @@ import {
   submitManagementResponse,
   updateFinding,
 } from '../../services/audits/findingService.js';
-
-import { AuditStateError } from '../../services/audits/auditsDb.js';
-import { auditActor, assertActor, parsePaging, route } from './context.js';
+import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
 
@@ -41,7 +40,7 @@ router.get(
     const programId = requireProgramId(req.query as Record<string, unknown>);
     const data = await getFindingStatistics(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -52,7 +51,7 @@ router.get(
     const programId = requireProgramId(req.query as Record<string, unknown>);
     const data = await detectSystemicFindings(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -75,7 +74,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -85,7 +84,7 @@ router.get(
     assertActor(actor);
     const data = await getFinding(actor.organizationId, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -95,7 +94,7 @@ router.post(
     assertActor(actor);
     const data = await createFinding(actor.organizationId, actor, req.body || {});
     res.status(201).json({ success: true, data });
-  }),
+  })
 );
 
 router.patch(
@@ -105,7 +104,7 @@ router.patch(
     assertActor(actor);
     const data = await updateFinding(actor.organizationId, actor, req.params.id, req.body || {});
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -115,7 +114,7 @@ router.post(
     assertActor(actor);
     const data = await reviewFinding(actor.organizationId, actor, req.params.id, req.body || {});
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -123,9 +122,14 @@ router.post(
   route('POST /findings/:id/response', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const data = await submitManagementResponse(actor.organizationId, actor, req.params.id, req.body || {});
+    const data = await submitManagementResponse(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.body || {}
+    );
     res.status(201).json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -133,9 +137,14 @@ router.post(
   route('POST /findings/responses/:responseId/review', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const data = await reviewManagementResponse(actor.organizationId, actor, req.params.responseId, req.body || {});
+    const data = await reviewManagementResponse(
+      actor.organizationId,
+      actor,
+      req.params.responseId,
+      req.body || {}
+    );
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -143,9 +152,14 @@ router.post(
   route('POST /findings/:id/accept-risk', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const data = await acceptResidualRisk(actor.organizationId, actor, req.params.id, req.body || {});
+    const data = await acceptResidualRisk(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.body || {}
+    );
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -155,7 +169,7 @@ router.post(
     assertActor(actor);
     const data = await closeFinding(actor.organizationId, actor, req.params.id, req.body || {});
     res.json({ success: true, data });
-  }),
+  })
 );
 
 export default router;

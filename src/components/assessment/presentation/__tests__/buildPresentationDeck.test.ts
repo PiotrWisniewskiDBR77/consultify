@@ -6,9 +6,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { makeEvidence, makeFinding, makeOutput } from '@/method-core/outputs/__tests__/testFixtures';
-
 import { DRD_METHOD_PACK_VERSION } from '@/method-core/methods/drd/compileDrdPack';
+import {
+  makeEvidence,
+  makeFinding,
+  makeOutput,
+} from '@/method-core/outputs/__tests__/testFixtures';
 
 import { buildPresentationDeck } from '../buildPresentationDeck';
 
@@ -140,7 +143,12 @@ describe('buildPresentationDeck', () => {
       gap: 2,
       supportingEvidence: [makeEvidence({ strength: 'E0' })],
     });
-    const output = makeOutput({ findings: [draft], current: { 'u-draft': 1 }, target: { 'u-draft': 3 }, gap: { 'u-draft': 2 } });
+    const output = makeOutput({
+      findings: [draft],
+      current: { 'u-draft': 1 },
+      target: { 'u-draft': 3 },
+      gap: { 'u-draft': 2 },
+    });
     const model = buildPresentationDeck(output);
     expect(model.strengths).toHaveLength(0);
     expect(model.gapsAndRisks).toHaveLength(0);

@@ -89,9 +89,9 @@ export function KeyMessagesLayout(
   const charsPerLine = Math.max(18, Math.floor(cardW * 11));
   const descriptionLines = Math.max(
     1,
-    ...c.messages.slice(0, total).map((message) =>
-      Math.ceil(message.description.length / charsPerLine)
-    )
+    ...c.messages
+      .slice(0, total)
+      .map((message) => Math.ceil(message.description.length / charsPerLine))
   );
   const naturalCardH = isStacked ? 0.9 : Math.min(2.6, 1.25 + descriptionLines * 0.24);
   const cardH = Math.min(availableCardH, naturalCardH);

@@ -15,13 +15,18 @@
 import { CheckCircle2, FileText, Plus, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { PreviewActionButton } from '@/components/shared/PreviewPane/PreviewActionButton';
-import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@/components/shared/states';
+import {
+  ErrorState,
+  LoadingState,
+  SaveStateIndicator,
+  type SaveStatus,
+} from '@/components/shared/states';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
-import * as workspaceApi from './workspaceApi';
 import type { EvidenceKind, WorkspaceCapability, WorkspaceEvidence } from './workspaceApi';
+import * as workspaceApi from './workspaceApi';
 
 export interface EvidencePanelProps {
   programId: string;
@@ -107,7 +112,11 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       .listEvidence({ programId, criterionId })
       .then((res) => setItems(res))
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : t('Nie udało się wczytać dowodów', 'Could not load evidence'))
+        setError(
+          e instanceof Error
+            ? e.message
+            : t('Nie udało się wczytać dowodów', 'Could not load evidence')
+        )
       )
       .finally(() => setLoading(false));
   }, [programId, criterionId, t]);
@@ -172,7 +181,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       width: '140px',
       render: (row: WorkspaceEvidence) => (
         <span className="text-sm text-c-text">
-          {(isPolish ? EVIDENCE_KIND_LABEL_PL : EVIDENCE_KIND_LABEL_EN)[row.evidenceKind] ?? row.evidenceKind}
+          {(isPolish ? EVIDENCE_KIND_LABEL_PL : EVIDENCE_KIND_LABEL_EN)[row.evidenceKind] ??
+            row.evidenceKind}
         </span>
       ),
     },
@@ -186,10 +196,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         ) : row.supportsConformity ? (
           <StatusChip label={t('Wspiera', 'Supports')} tone="success" />
         ) : (
-          <StatusChip
-            label={t('Dowód przeczący', 'Contradicting evidence')}
-            tone="danger"
-          />
+          <StatusChip label={t('Dowód przeczący', 'Contradicting evidence')} tone="danger" />
         ),
     },
     {
@@ -286,8 +293,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               icon: FileText,
               title: t('Brak dowodów', 'No evidence yet'),
               description: canSubmit
-                ? t('Dodaj pierwszy dowód dla tego kryterium.', 'Add the first piece of evidence for this criterion.')
-                : t('Audytowany jeszcze nie złożył dowodu.', 'The auditee has not submitted evidence yet.'),
+                ? t(
+                    'Dodaj pierwszy dowód dla tego kryterium.',
+                    'Add the first piece of evidence for this criterion.'
+                  )
+                : t(
+                    'Audytowany jeszcze nie złożył dowodu.',
+                    'The auditee has not submitted evidence yet.'
+                  ),
             }}
           />
           {maxRows && items.length > maxRows && (
@@ -305,7 +318,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       )}
 
       {selected && canReview && (
-        <div data-testid="evidence-review-form" className="space-y-2 rounded-token-md border border-c-border-subtle p-3">
+        <div
+          data-testid="evidence-review-form"
+          className="space-y-2 rounded-token-md border border-c-border-subtle p-3"
+        >
           <p className="text-xs font-semibold text-c-text">
             {t('Recenzja dowodu:', 'Evidence review:')} {selected.title}
           </p>
@@ -314,13 +330,17 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               variant="positive"
               label={t('Wspiera zgodność', 'Supports conformity')}
               icon={CheckCircle2}
-              onClick={() => handleReview(selected.id, { supportsConformity: true, accepted: true })}
+              onClick={() =>
+                handleReview(selected.id, { supportsConformity: true, accepted: true })
+              }
             />
             <PreviewActionButton
               variant="destructive"
               label={t('Dowód przeczący', 'Contradicting evidence')}
               icon={XCircle}
-              onClick={() => handleReview(selected.id, { supportsConformity: false, accepted: true })}
+              onClick={() =>
+                handleReview(selected.id, { supportsConformity: false, accepted: true })
+              }
             />
             <PreviewActionButton
               variant="neutral"

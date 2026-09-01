@@ -26,10 +26,7 @@
  */
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import {
-  DEMO_ENTRY_SOURCE_PREF_KEY,
-  PUBLIC_DEMO_ENTRY_SOURCE,
-} from './demoSignupProvisioning.js';
+import { DEMO_ENTRY_SOURCE_PREF_KEY, PUBLIC_DEMO_ENTRY_SOURCE } from './demoSignupProvisioning.js';
 
 // NOTE: RefreshTokenService is imported dynamically inside
 // `retireExpiredDemoPrincipal`, never at module scope. RefreshTokenService has to

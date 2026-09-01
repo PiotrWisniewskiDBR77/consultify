@@ -784,7 +784,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               [t('finance.statements.scaling', 'Scaling'), scalingLabel(detail.scaling)],
               [t('finance.statements.status', 'Status'), statusLabel(detail.status)],
               [t('finance.statements.readiness', 'Readiness'), statusLabel(detail.readinessStatus)],
-              [t('finance.statements.validation', 'Validation'), statusLabel(detail.validation_status)],
+              [
+                t('finance.statements.validation', 'Validation'),
+                statusLabel(detail.validation_status),
+              ],
               [t('finance.statements.sourceFile', 'Source file'), detail.source_file_name || '—'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3">

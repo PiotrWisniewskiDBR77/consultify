@@ -14,10 +14,10 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  SearchCheck,
-  ShieldCheck,
   Search,
+  SearchCheck,
   Send,
+  ShieldCheck,
   Sparkles,
   Trash2,
   X,
@@ -31,11 +31,12 @@ import {
   type CanvasContextMenuItemDescriptor,
 } from '@/components/shared/CanvasContextMenu';
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
-import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell/ChipDescriptor';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { type FormulaSheet, recalcWorkbook } from '@/utils/workbookFormulaEngine';
 
 import {
   EditableSpreadsheetGrid,
@@ -46,7 +47,6 @@ import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { createSpreadsheetArtifactCommandRegistry } from './spreadsheetArtifactCommands';
 import { buildSpreadsheetReplacements, findSpreadsheetMatches } from './spreadsheetFindReplace';
 import { useWorkbookStudioController } from './useWorkbookStudioController';
-import { recalcWorkbook, type FormulaSheet } from '@/utils/workbookFormulaEngine';
 
 interface SpreadsheetArtifactStudioProps {
   preview: ArtifactPreview;
@@ -2026,12 +2026,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     </div>
   );
 
-  const panelAction = (
-    key: string,
-    label: string,
-    Icon: typeof Download,
-    onClick: () => void
-  ) => (
+  const panelAction = (key: string, label: string, Icon: typeof Download, onClick: () => void) => (
     <button
       key={key}
       type="button"

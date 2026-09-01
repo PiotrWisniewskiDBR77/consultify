@@ -8,10 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  evaluateConfidence,
-  evaluateSourceCoverage,
-} from '../interviewConfidenceEvaluator.js';
+import { evaluateConfidence, evaluateSourceCoverage } from '../interviewConfidenceEvaluator.js';
 import type { P10EvidencePointer, P10EvidencePointerType } from '../interviewInsightCanon.js';
 
 function pointer(

@@ -50,7 +50,11 @@ describe('drdAdapter.resolveOpenLevels — DRD ramp mechanic', () => {
   });
 
   it('confirming nothing blocks at level 1, currentLevel stays null', () => {
-    const result = drdAdapter.resolveOpenLevels({ unitId: '1A', confirmedLevels: [], evidenceByLevel: {} });
+    const result = drdAdapter.resolveOpenLevels({
+      unitId: '1A',
+      confirmedLevels: [],
+      evidenceByLevel: {},
+    });
     expect(result.currentLevel).toBeNull();
     expect(result.blockedAtLevel).toBe(1);
     expect(result.openLevels).toEqual([1]);
@@ -58,15 +62,28 @@ describe('drdAdapter.resolveOpenLevels — DRD ramp mechanic', () => {
   });
 
   it('prerequisite skipped (only level 3 confirmed, 1 & 2 never) is rejected — currentLevel stays null', () => {
-    const result = drdAdapter.resolveOpenLevels({ unitId: '1A', confirmedLevels: [3], evidenceByLevel: {} });
+    const result = drdAdapter.resolveOpenLevels({
+      unitId: '1A',
+      confirmedLevels: [3],
+      evidenceByLevel: {},
+    });
     expect(result.currentLevel).toBeNull();
     expect(result.blockedAtLevel).toBe(1);
     expect(result.aboveGapLevels).toEqual([3]);
   });
 
   it('unknown unit id degrades safely instead of throwing', () => {
-    const result = drdAdapter.resolveOpenLevels({ unitId: 'ZZ', confirmedLevels: [1], evidenceByLevel: {} });
-    expect(result).toEqual({ currentLevel: null, blockedAtLevel: null, openLevels: [], aboveGapLevels: [] });
+    const result = drdAdapter.resolveOpenLevels({
+      unitId: 'ZZ',
+      confirmedLevels: [1],
+      evidenceByLevel: {},
+    });
+    expect(result).toEqual({
+      currentLevel: null,
+      blockedAtLevel: null,
+      openLevels: [],
+      aboveGapLevels: [],
+    });
   });
 
   it('is deterministic — same input twice yields identical output', () => {

@@ -2004,7 +2004,6 @@ export const ResultsHub: React.FC = () => {
           }}
         />
 
-
         {drawerState && (
           <KPITimeSeriesDrawer
             kpiId={drawerState.kpiId}
@@ -2444,7 +2443,6 @@ export const ResultsHub: React.FC = () => {
           />
         ) : null}
       </StandardModuleBar>
-
 
       {drawerState && (
         <KPITimeSeriesDrawer

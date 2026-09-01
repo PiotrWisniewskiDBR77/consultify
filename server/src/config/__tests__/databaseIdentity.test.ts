@@ -94,7 +94,9 @@ describe('databaseIdentitiesMatch — comparator semantics', () => {
 
   it('does not match on the shared database NAME alone', () => {
     // All three Railway databases are named `railway` (DEC-2026-08-28-165).
-    const thomas = parseDatabaseIdentityFromUrl('postgres://u:p@thomas.proxy.rlwy.net:28864/railway');
+    const thomas = parseDatabaseIdentityFromUrl(
+      'postgres://u:p@thomas.proxy.rlwy.net:28864/railway'
+    );
     expect(sakura!.database).toBe(thomas!.database);
     expect(databaseIdentitiesMatch(sakura, thomas)).toBe(false);
   });
@@ -107,7 +109,9 @@ describe('databaseIdentitiesMatch — comparator semantics', () => {
 
 describe('log formatting', () => {
   it('emits a greppable, credential-free line', () => {
-    const identity = parseDatabaseIdentityFromUrl('postgres://app:s3cret@sakura.host:41234/railway');
+    const identity = parseDatabaseIdentityFromUrl(
+      'postgres://app:s3cret@sakura.host:41234/railway'
+    );
     const line = formatDatabaseIdentityLine('app', identity);
     expect(line).toContain('DB_IDENTITY role=app');
     expect(line).toContain('host=sakura.host');

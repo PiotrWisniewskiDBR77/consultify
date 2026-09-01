@@ -7,8 +7,19 @@
  * `src/actions/ideaActionRegistry.ts` + `docs/standards/idea-workspace/02_REJESTR_AKCJI.md`.
  */
 
-import type { ActionDef } from './types';
+import { Api } from '@/services/api';
+
 import {
+  runByTool,
+  runEdgeParamCallback,
+  runKeyboardOnlyCallback,
+  runMindmapAiSuggestionApplyUiOnlyCallback,
+  runMindmapAttachKnowledgeCallback,
+  runMindmapNodeBusAction,
+  runMindmapNodeConvertAction,
+  runMindmapNodeUiOnlyCallback,
+  runMindmapPaneUiOnlyCallback,
+  runNodeEditLabelCallback,
   RUNTIME_AI_AUTO_CONNECT,
   RUNTIME_AI_EXPAND,
   RUNTIME_AI_GAP_ANALYSIS,
@@ -36,20 +47,10 @@ import {
   RUNTIME_PANE_FOLD_1,
   RUNTIME_PANE_FOLD_2,
   RUNTIME_PANE_SELECT_ALL,
-  runByTool,
-  runEdgeParamCallback,
-  runKeyboardOnlyCallback,
-  runMindmapAiSuggestionApplyUiOnlyCallback,
-  runMindmapAttachKnowledgeCallback,
-  runMindmapNodeBusAction,
-  runMindmapNodeConvertAction,
-  runMindmapNodeUiOnlyCallback,
-  runMindmapPaneUiOnlyCallback,
-  runNodeEditLabelCallback,
   runToolbarBusAction,
   runWbOpenDetailCallback,
 } from './runtimeHelpers';
-import { Api } from '@/services/api';
+import type { ActionDef } from './types';
 
 export const MINDMAP_ACTIONS: ActionDef[] = [
   {
@@ -275,7 +276,10 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi relacji) na Mapie myśli.' },
+          edgeId: {
+            type: 'string',
+            description: 'Id połączenia (krawędzi relacji) na Mapie myśli.',
+          },
           relation: {
             type: 'string',
             description: 'Typ relacji: related, depends_on, blocks, supports lub contradicts.',
@@ -637,7 +641,8 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     // („byte-identical human-click behavior" przez `ctx.params.run`). Nowy id
     // reużywa TEN SAM runtime string (`mm_add_child`) — zero nowej logiki po
     // stronie hooka, tylko druga, ostrożniejsza ścieżka wejścia.
-    handler: (ctx) => runMindmapNodeBusAction('idea.node.mm_add_child', RUNTIME_MM_NODE_ADD_CHILD, ctx),
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_add_child', RUNTIME_MM_NODE_ADD_CHILD, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -712,7 +717,8 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     // zaznaczonych kształtów bez pojęcia rodzica. Różny zakres (`single_item`
     // vs `selected_items`) I różny odbiornik (`mm_duplicate` vs
     // `wb_duplicate`) — nie kosmetyka, osobne id.
-    handler: (ctx) => runMindmapNodeBusAction('idea.node.mm_duplicate', RUNTIME_MM_NODE_DUPLICATE, ctx),
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_duplicate', RUNTIME_MM_NODE_DUPLICATE, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -852,7 +858,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
         'Owija co najmniej dwa zaznaczone węzły Mapy myśli we wspólną ramkę grupy. Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła; przy mniej niż 2 zaznaczonych węzłach po cichu nic nie robi (tylko komunikat toast), zachowanie identyczne jak przed tym wpisem.',
     },
     source:
-      'src/components/MyWork/IdeaMapWorkspace.tsx onGroup → handleQuickAction(\'group\') + useMindMapQuickActions.ts:786',
+      "src/components/MyWork/IdeaMapWorkspace.tsx onGroup → handleQuickAction('group') + useMindMapQuickActions.ts:786",
   },
   {
     // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useKeyboardShortcuts.ts`'s
@@ -873,15 +879,14 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence:
-        'useMindMapNodes.tsx promoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
+      evidence: 'useMindMapNodes.tsx promoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
     },
     teresa: {
       description:
         'Przenosi zaznaczony węzeł Mapy myśli o jeden poziom wyżej w hierarchii (pod dziadka). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła. Bez zaznaczonego, reparentowalnego węzła (korzeń/gałąź/zablokowany/bez dziadka) po cichu nic nie robi — tak samo jak przed tym wpisem.',
     },
     source:
-      'src/components/MyWork/IdeaMapWorkspace.tsx onReparentPromote → handleQuickAction(\'mm_reparent_promote\') + useMindMapQuickActions.ts:339 + useMindMapNodes.tsx reparentSelectedPromote',
+      "src/components/MyWork/IdeaMapWorkspace.tsx onReparentPromote → handleQuickAction('mm_reparent_promote') + useMindMapQuickActions.ts:339 + useMindMapNodes.tsx reparentSelectedPromote",
   },
   {
     id: 'idea.node.mm_reparent_demote',
@@ -896,15 +901,14 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence:
-        'useMindMapNodes.tsx demoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
+      evidence: 'useMindMapNodes.tsx demoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
     },
     teresa: {
       description:
         'Przenosi zaznaczony węzeł Mapy myśli pod poprzednie rodzeństwo (o jeden poziom niżej w hierarchii). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła. Bez zaznaczonego, reparentowalnego węzła po cichu nic nie robi — tak samo jak przed tym wpisem.',
     },
     source:
-      'src/components/MyWork/IdeaMapWorkspace.tsx onReparentDemote → handleQuickAction(\'mm_reparent_demote\') + useMindMapQuickActions.ts:340 + useMindMapNodes.tsx reparentSelectedDemote',
+      "src/components/MyWork/IdeaMapWorkspace.tsx onReparentDemote → handleQuickAction('mm_reparent_demote') + useMindMapQuickActions.ts:340 + useMindMapNodes.tsx reparentSelectedDemote",
   },
   {
     id: 'idea.node.mm_focus_subtree',
@@ -1032,7 +1036,11 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     tools: ['mindmap'],
     surfaces: ['context'],
     handler: (ctx) =>
-      runMindmapNodeBusAction('idea.node.mm_duplicate_branch', RUNTIME_MM_NODE_DUPLICATE_BRANCH, ctx),
+      runMindmapNodeBusAction(
+        'idea.node.mm_duplicate_branch',
+        RUNTIME_MM_NODE_DUPLICATE_BRANCH,
+        ctx
+      ),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -1203,7 +1211,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:340 (ctx_subtree_convert_decision) + FloatingNodeToolbar.tsx:563 + IdeaRecommendationMap.tsx:4982/5688 convertBranch(\'decision\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:340 (ctx_subtree_convert_decision) + FloatingNodeToolbar.tsx:563 + IdeaRecommendationMap.tsx:4982/5688 convertBranch('decision', ...)",
   },
   {
     id: 'idea.node.mm_convert_branch_tasks',
@@ -1240,7 +1248,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:346 (ctx_subtree_convert_tasks) + FloatingNodeToolbar.tsx:568 + IdeaRecommendationMap.tsx:4983/5689 convertBranch(\'task_set\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:346 (ctx_subtree_convert_tasks) + FloatingNodeToolbar.tsx:568 + IdeaRecommendationMap.tsx:4983/5689 convertBranch('task_set', ...)",
   },
   {
     id: 'idea.node.mm_convert_branch_task_set',
@@ -1277,7 +1285,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:352 (ctx_subtree_convert_task_set) + FloatingNodeToolbar.tsx:573 + IdeaRecommendationMap.tsx:4984/5690 convertBranch(\'task_set\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:352 (ctx_subtree_convert_task_set) + FloatingNodeToolbar.tsx:573 + IdeaRecommendationMap.tsx:4984/5690 convertBranch('task_set', ...)",
   },
   {
     id: 'idea.node.mm_convert_branch_initiative',
@@ -1314,7 +1322,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:358 (ctx_subtree_convert_initiative) + FloatingNodeToolbar.tsx:578 + IdeaRecommendationMap.tsx:4985/5691 convertBranch(\'initiative\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:358 (ctx_subtree_convert_initiative) + FloatingNodeToolbar.tsx:578 + IdeaRecommendationMap.tsx:4985/5691 convertBranch('initiative', ...)",
   },
   {
     id: 'idea.node.mm_convert_branch_process_flow',
@@ -1370,7 +1378,7 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:364 (ctx_subtree_convert_process_flow) + FloatingNodeToolbar.tsx:583 + IdeaRecommendationMap.tsx:4986-4991/5694 convertBranch(\'process_flow\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:364 (ctx_subtree_convert_process_flow) + FloatingNodeToolbar.tsx:583 + IdeaRecommendationMap.tsx:4986-4991/5694 convertBranch('process_flow', ...)",
   },
   {
     id: 'idea.node.mm_ai_rewrite_node',

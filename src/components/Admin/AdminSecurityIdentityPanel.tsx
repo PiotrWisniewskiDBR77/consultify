@@ -113,13 +113,22 @@ export const AdminSecurityIdentityPanel: React.FC<AdminSecurityIdentityPanelProp
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('admin.security.identityPanel.tabs.label', 'Security and identity sections')}>
+        <div
+          className="flex flex-wrap gap-2"
+          role="tablist"
+          aria-label={t(
+            'admin.security.identityPanel.tabs.label',
+            'Security and identity sections'
+          )}
+        >
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
-                ref={(node) => { tabRefs.current[index] = node; }}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
                 id={`admin-security-tab-${tab.id}`}
                 role="tab"
                 aria-selected={activeTab === tab.id}
@@ -142,7 +151,11 @@ export const AdminSecurityIdentityPanel: React.FC<AdminSecurityIdentityPanelProp
         </div>
       </div>
 
-      <div role="tabpanel" id={`admin-security-panel-${activeTab}`} aria-labelledby={`admin-security-tab-${activeTab}`}>
+      <div
+        role="tabpanel"
+        id={`admin-security-panel-${activeTab}`}
+        aria-labelledby={`admin-security-tab-${activeTab}`}
+      >
         {activeTab === 'policy' && <AdminSecurityPolicyPanel />}
         {activeTab === 'collaboration' && <AdminCollaborationControlsPanel />}
         {activeTab === 'api-access' && <ApiKeysManagementView />}

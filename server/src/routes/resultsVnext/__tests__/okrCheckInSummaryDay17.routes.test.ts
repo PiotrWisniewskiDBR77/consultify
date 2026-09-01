@@ -27,7 +27,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 }));
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
-  requireOrgRole: (..._roles: string[]) => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
 }));
 vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
@@ -46,7 +49,8 @@ vi.mock('../../../services/effectiveAccessService.js', () => ({
   hasEffectiveCapability: () => true,
 }));
 vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetRepository.js')>();
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetRepository.js')>();
   return { ...actual, getOkrSet: (...args: unknown[]) => getOkrSet(...args) };
 });
 vi.mock('../../../services/resultsVnext/okr/okrCheckInSummaryRepository.js', () => ({
@@ -76,7 +80,11 @@ describe('Day 17 §O.2 — GET /sets/:setId/check-in-summary', () => {
         {
           keyResultId: 'kr-1',
           objectiveId: 'obj-1',
-          lastCheckIn: { checkInId: 'chk-1', recordedAt: '2026-01-05T00:00:00.000Z', confidence: 'high' },
+          lastCheckIn: {
+            checkInId: 'chk-1',
+            recordedAt: '2026-01-05T00:00:00.000Z',
+            confidence: 'high',
+          },
           nextExpectedAt: null,
           staleness: 'CURRENT',
           stalenessReason: null,
@@ -101,14 +109,24 @@ describe('Day 17 §O.2 — GET /sets/:setId/check-in-summary', () => {
       calculatedAt: '2026-01-06T00:00:00.000Z',
     });
 
-    const response = await request(app()).get(`/api/vnext/results/okr/sets/${SET_ID}/check-in-summary`);
+    const response = await request(app()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/check-in-summary`
+    );
 
     expect(response.status).toBe(200);
     expect(response.body.setId).toBe(SET_ID);
     expect(response.body.keyResults).toHaveLength(2);
     expect(response.body.keyResults[0]).toMatchObject({ staleness: 'CURRENT' });
-    expect(response.body.keyResults[1]).toMatchObject({ staleness: 'OVERDUE', stalenessReason: 'NO_CHECKIN_YET' });
-    expect(response.body.rollup).toMatchObject({ total: 2, withCheckIn: 1, overdue: 1, neverCheckedIn: 1 });
+    expect(response.body.keyResults[1]).toMatchObject({
+      staleness: 'OVERDUE',
+      stalenessReason: 'NO_CHECKIN_YET',
+    });
+    expect(response.body.rollup).toMatchObject({
+      total: 2,
+      withCheckIn: 1,
+      overdue: 1,
+      neverCheckedIn: 1,
+    });
     expect(getOkrSet).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId: 'org-1', userId: 'user-1', setId: SET_ID })
     );
@@ -120,7 +138,9 @@ describe('Day 17 §O.2 — GET /sets/:setId/check-in-summary', () => {
   it('returns 404 instead of an empty aggregate for an invisible/foreign-tenant Set', async () => {
     getOkrSet.mockResolvedValue(null);
 
-    const response = await request(app()).get(`/api/vnext/results/okr/sets/${SET_ID}/check-in-summary`);
+    const response = await request(app()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/check-in-summary`
+    );
 
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('NOT_FOUND');
@@ -130,7 +150,9 @@ describe('Day 17 §O.2 — GET /sets/:setId/check-in-summary', () => {
   });
 
   it('rejects a non-UUID setId at the param-validation layer, before touching the repository', async () => {
-    const response = await request(app()).get('/api/vnext/results/okr/sets/not-a-uuid/check-in-summary');
+    const response = await request(app()).get(
+      '/api/vnext/results/okr/sets/not-a-uuid/check-in-summary'
+    );
 
     expect(response.status).toBe(400);
     expect(getOkrSet).not.toHaveBeenCalled();

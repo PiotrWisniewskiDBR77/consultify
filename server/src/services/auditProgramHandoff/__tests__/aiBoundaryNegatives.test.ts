@@ -21,15 +21,15 @@ import { describe, expect, it } from 'vitest';
 import { AI_NEVER_COMMITS, assertAiMayCommit } from '../../audits/permissions.js';
 
 describe('assertAiMayCommit — Teresa cannot commit proposal.register (or any AI_NEVER_COMMITS capability)', () => {
-  it('refuses proposal.register — the capability this task\'s exactly-once fix protects downstream of', () => {
+  it("refuses proposal.register — the capability this task's exactly-once fix protects downstream of", () => {
     expect(() => assertAiMayCommit('proposal.register')).toThrowError(
-      /Teresa nie może wykonać tej czynności \(proposal\.register\) — wymaga jawnej decyzji uprawnionej osoby/,
+      /Teresa nie może wykonać tej czynności \(proposal\.register\) — wymaga jawnej decyzji uprawnionej osoby/
     );
   });
 
   it('refuses a second, unrelated blocked capability — verification.perform', () => {
     expect(() => assertAiMayCommit('verification.perform')).toThrowError(
-      /Teresa nie może wykonać tej czynności \(verification\.perform\) — wymaga jawnej decyzji uprawnionej osoby/,
+      /Teresa nie może wykonać tej czynności \(verification\.perform\) — wymaga jawnej decyzji uprawnionej osoby/
     );
   });
 

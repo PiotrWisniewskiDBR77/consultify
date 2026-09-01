@@ -19,10 +19,10 @@ import {
 } from '../canvas/edgeArrowMarkers';
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { findIdeaTemplate } from '../IdeaTemplateGallery';
-import { isRelationEdge } from './useMindMapNodes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
 import { applyStructureLayout } from './StructureLayouts';
+import { isRelationEdge } from './useMindMapNodes';
 
 // ── #DEAD-ACTIONS fix: mm_create / mm_expand_branch / mm_apply_framework ──────
 // mindmapIntentDetector.ts (AIChat) recognizes these 3 action names from free-text
@@ -1479,8 +1479,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const newId = `node-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
       const sourceNode = nodes.find((n) => n.id === edge.source);
       const targetNode = nodes.find((n) => n.id === edge.target);
-      const posX = sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : 0;
-      const posY = sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : 0;
+      const posX =
+        sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : 0;
+      const posY =
+        sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : 0;
       const newNode: Node = {
         id: newId,
         type: 'idea',
@@ -1497,7 +1499,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const without = prev.filter((e) => e.id !== edgeId);
         return [
           ...without,
-          { ...edge, id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, target: newId } as Edge,
+          {
+            ...edge,
+            id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            target: newId,
+          } as Edge,
           {
             ...edge,
             id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
@@ -1559,9 +1565,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const nextStyle = styles[nextIdx];
       handlers.pushUndo();
       setters.setEdges((prev) =>
-        prev.map((e) =>
-          e.id === edgeId ? { ...e, data: { ...e.data, edgeStyle: nextStyle } } : e
-        )
+        prev.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, edgeStyle: nextStyle } } : e))
       );
       toast.success(
         i18n.t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),

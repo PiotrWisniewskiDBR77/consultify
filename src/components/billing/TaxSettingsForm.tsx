@@ -343,7 +343,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 <option value="">{t('billing.tax.selectCountry', 'Select...')}</option>
                 {COUNTRIES.map((country) => (
                   <option key={country.code} value={country.code}>
-                  {regionNames.of(country.code) || country.name}
+                    {regionNames.of(country.code) || country.name}
                   </option>
                 ))}
               </select>

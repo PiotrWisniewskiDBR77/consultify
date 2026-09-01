@@ -28,7 +28,9 @@ describe('Task generated-section hand-off', () => {
       </NModeCardState>
     );
     expect(screen.getByRole('status')).toHaveTextContent('save the task to persist it');
-    expect(screen.queryByText('sharedComponents.nModeCardState.acceptAction')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('sharedComponents.nModeCardState.acceptAction')
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('sharedComponents.nModeCardState.regenerateAction'));
     fireEvent.click(screen.getByText('sharedComponents.nModeCardState.editAction'));
     expect(regenerate).toHaveBeenCalledTimes(1);

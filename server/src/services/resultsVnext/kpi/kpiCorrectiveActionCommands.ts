@@ -40,23 +40,22 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import { KpiDeviationValidationError } from './kpiDeviationCommands.js';
 import {
-  toCorrectiveAction,
   type CorrectiveAction,
   type CorrectiveActionRow,
   type CorrectiveActionStatus,
+  toCorrectiveAction,
 } from './kpiDeviationTypes.js';
 
 // ==========================================
@@ -127,9 +126,13 @@ export async function addCorrectiveAction(
       );
       const caseRow = caseResult.rows[0];
       if (!caseRow) {
-        throw new KpiDeviationValidationError(`Deviation case ${deviationCaseId} not found`, 'CASE_NOT_FOUND', {
-          deviationCaseId,
-        });
+        throw new KpiDeviationValidationError(
+          `Deviation case ${deviationCaseId} not found`,
+          'CASE_NOT_FOUND',
+          {
+            deviationCaseId,
+          }
+        );
       }
 
       // RN-G5: authorization FIRST, before the domain-state check below —
@@ -155,7 +158,16 @@ export async function addCorrectiveAction(
            (deviation_case_id, organization_id, title, description, owner_user_id, due_date, expected_effect, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [deviationCaseId, organizationId, title, description, ownerUserId, dueDate, expectedEffect, actorUserId]
+        [
+          deviationCaseId,
+          organizationId,
+          title,
+          description,
+          ownerUserId,
+          dueDate,
+          expectedEffect,
+          actorUserId,
+        ]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[addCorrectiveAction] insert returned no row');
@@ -292,8 +304,10 @@ export async function updateCorrectiveAction(
         owner_user_id: edits.ownerUserId ?? currentRow.owner_user_id,
         due_date: edits.dueDate !== undefined ? edits.dueDate : currentRow.due_date,
         status: edits.status ?? currentRow.status,
-        expected_effect: edits.expectedEffect !== undefined ? edits.expectedEffect : currentRow.expected_effect,
-        actual_effect: edits.actualEffect !== undefined ? edits.actualEffect : currentRow.actual_effect,
+        expected_effect:
+          edits.expectedEffect !== undefined ? edits.expectedEffect : currentRow.expected_effect,
+        actual_effect:
+          edits.actualEffect !== undefined ? edits.actualEffect : currentRow.actual_effect,
       };
 
       const updateResult = await client.query<CorrectiveActionRow>(
@@ -315,7 +329,8 @@ export async function updateCorrectiveAction(
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[updateCorrectiveAction] update returned no row for ${actionId}`);
+      if (!updatedRow)
+        throw new Error(`[updateCorrectiveAction] update returned no row for ${actionId}`);
 
       // Decision #8: the FIRST corrective action to enter 'active' on its
       // case auto-transitions the case 'approved' -> 'executing' — "work
@@ -335,7 +350,10 @@ export async function updateCorrectiveAction(
         caseAutoTransitioned = (caseTransition.rowCount ?? 0) > 0;
       }
 
-      return { action: toCorrectiveAction(updatedRow), caseAutoTransitionedToExecuting: caseAutoTransitioned };
+      return {
+        action: toCorrectiveAction(updatedRow),
+        caseAutoTransitionedToExecuting: caseAutoTransitioned,
+      };
     },
     buildEvent: ({ result, nextVersion }) => {
       const afterState = {
@@ -364,7 +382,10 @@ export async function updateCorrectiveAction(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { actionId: result.action.actionId, deviationCaseId: result.action.deviationCaseId },
+        payload: {
+          actionId: result.action.actionId,
+          deviationCaseId: result.action.deviationCaseId,
+        },
       } satisfies AtomicEventInput;
     },
   });

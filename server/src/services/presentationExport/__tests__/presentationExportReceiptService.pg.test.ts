@@ -392,13 +392,15 @@ describe('idempotent retry', () => {
 
   it('fails closed before a receipt for the unapproved sharp SVG/PNG renderer', async () => {
     const { deck, deckId } = makeDeckRow({});
-    await expect(beginPresentationExport({
-      organizationId: ORG_A,
-      deckId,
-      deck,
-      format: 'png',
-      createdBy: USER_A,
-    })).rejects.toThrow('MAT_EXPORT_ENGINE_NOT_APPROVED:native:sharp-svg');
+    await expect(
+      beginPresentationExport({
+        organizationId: ORG_A,
+        deckId,
+        deck,
+        format: 'png',
+        createdBy: USER_A,
+      })
+    ).rejects.toThrow('MAT_EXPORT_ENGINE_NOT_APPROVED:native:sharp-svg');
     const rows = await pool.query(
       `SELECT COUNT(*)::int AS n FROM artifact_export_receipts
         WHERE organization_id = $1 AND source_record_id = $2`,

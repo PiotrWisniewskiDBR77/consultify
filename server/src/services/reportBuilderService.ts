@@ -438,7 +438,9 @@ function queryRun(
 ): Promise<{ changes: number; lastID: number }> {
   const pinned = reportBuilderTransaction.current();
   if (pinned)
-    return pinned.query(sql, params).then((result) => ({ changes: result.rowCount ?? 0, lastID: 0 }));
+    return pinned
+      .query(sql, params)
+      .then((result) => ({ changes: result.rowCount ?? 0, lastID: 0 }));
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (this: { changes: number; lastID: number }, err: Error | null) {
       if (err) reject(err);

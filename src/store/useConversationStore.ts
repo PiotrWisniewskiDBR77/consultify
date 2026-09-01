@@ -360,6 +360,20 @@ export interface ConversationMessage {
       generationId: string;
       title?: string;
     };
+    /**
+     * Dyzur 208 (przekazanie inicjatywy z czatu): wskaznik szkicu inicjatywy
+     * utworzonego z rozmowy. Trzymany na wiadomosci — tak samo jak
+     * `deliverable` wyzej — zeby karta przekazania przetrwala przeladowanie
+     * transkryptu, a nie zyla wylacznie w stanie komponentu.
+     *
+     * Pole zgubilo sie przy scaleniu linii integracyjnej: galaz dopisala
+     * `metadata: { initiativeHandoff }` w UnifiedChatPanel, a wersja typu
+     * z drugiej galezi wygrala i nie miala tego pola.
+     */
+    initiativeHandoff?: {
+      initiativeId: string;
+      title?: string | null;
+    };
   };
   tokenCount?: number;
   modelUsed?: string;

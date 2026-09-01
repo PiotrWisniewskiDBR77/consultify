@@ -138,10 +138,9 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
     });
 
     it('a PATCH with a CURRENT expectedUpdatedAt succeeds and returns a fresh updatedAt', async () => {
-      const before = await pool.query(
-        `SELECT updated_at FROM interview_questions WHERE id = $1`,
-        [questionId2]
-      );
+      const before = await pool.query(`SELECT updated_at FROM interview_questions WHERE id = $1`, [
+        questionId2,
+      ]);
       const t0 = new Date(before.rows[0].updated_at).toISOString();
       expect(t0).toBeTruthy();
 
@@ -165,10 +164,9 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
       // test). t0 (the value BEFORE that write) is now stale — exactly the
       // shape of two concurrent clients that both read the row before either
       // wrote, one of them losing the race.
-      const before = await pool.query(
-        `SELECT updated_at FROM interview_questions WHERE id = $1`,
-        [questionId2]
-      );
+      const before = await pool.query(`SELECT updated_at FROM interview_questions WHERE id = $1`, [
+        questionId2,
+      ]);
       const staleVersion = new Date(before.rows[0].updated_at).toISOString();
 
       await new Promise((r) => setTimeout(r, 10));
@@ -192,10 +190,9 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
     });
 
     it('two concurrent writers with the same version produce exactly one winner', async () => {
-      const before = await pool.query(
-        `SELECT updated_at FROM interview_questions WHERE id = $1`,
-        [questionId]
-      );
+      const before = await pool.query(`SELECT updated_at FROM interview_questions WHERE id = $1`, [
+        questionId,
+      ]);
       const version = new Date(before.rows[0].updated_at).toISOString();
       const [a, b] = await Promise.all([
         request(app)
@@ -248,9 +245,7 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
         usage: {},
       });
 
-      const res = await request(app).post(
-        `/api/interview/sessions/${sessionId}/evaluate-answers`
-      );
+      const res = await request(app).post(`/api/interview/sessions/${sessionId}/evaluate-answers`);
       expect(res.status).toBe(200);
       expect(res.body.overallVerdict).not.toBe('timeout');
       const evalForQ1 = res.body.questionEvaluations.find((q: any) => q.questionId === questionId);

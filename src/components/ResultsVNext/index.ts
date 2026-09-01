@@ -11,6 +11,7 @@ export {
 } from './LifecycleLockBadge';
 export { ResultsKpiRegistryPage } from './ResultsKpiRegistryPage';
 export { ResultsOkrRegistryPage } from './ResultsOkrRegistryPage';
+export { ResultsRoiRegistryPage } from './ResultsRoiRegistryPage';
 export {
   ResultsVNextForbiddenState,
   type ResultsVNextForbiddenStateProps,
@@ -24,24 +25,23 @@ export {
   type ResultsVNextRegistryShellProps,
   type ResultsVNextTableProps,
 } from './ResultsVNextRegistryShell';
-export { ResultsRoiRegistryPage } from './ResultsRoiRegistryPage';
 // R09-3 (2026-08-10) — shared, read-only legacy-archive registry (kpi/roi/okr
 // `.../legacy` index). Exported for the NEXT wave to wire in as a hub tab —
 // deliberately NOT mounted into any existing KPI/ROI/OKR hub here (those
 // belong to other in-flight lanes; see the component's own header comment).
 export {
-  ResultsVNextLegacyArchivePanel,
-  type ResultsVNextLegacyArchivePanelProps,
-} from './legacy/ResultsVNextLegacyArchivePanel';
-export {
-  type LegacyArchiveIndexRow,
+  LegacyArchiveApiError,
   type LegacyArchiveIndexMeta,
   type LegacyArchiveIndexResponse,
+  type LegacyArchiveIndexRow,
   type LegacyArchiveOriginDomain,
-  LegacyArchiveApiError,
   listLegacyArchiveIndex,
   type ResultsVNextLegacyDomain,
 } from './legacy/legacyArchiveApi';
+export {
+  ResultsVNextLegacyArchivePanel,
+  type ResultsVNextLegacyArchivePanelProps,
+} from './legacy/ResultsVNextLegacyArchivePanel';
 // RN-G2 P2 — ROI vertical (registry list + preview). See `roi/` subfolder:
 // `roiApi.ts` (fetch client), `roiRegistryMappers.ts` (status/lock/honest-
 // value pure helpers), `roiRegistryPresenters.tsx` (StandardTable/Preview
@@ -56,9 +56,9 @@ export { ResultsOkrHub } from './okr/ResultsOkrHub';
 // RN-G3 lane `okr` full-tool task (2026-08-11) — the full OKR tool
 // (`OkrSetWorkspace`, reached from a Set's row menu/preview) and the
 // Program/Cycle admin surfaces (`/results/okr/programs`, `/results/okr/cycles`).
-export { OkrSetWorkspace } from './okr/OkrSetWorkspace';
-export { OkrProgramsPage } from './okr/OkrProgramsPage';
 export { OkrCyclesPage } from './okr/OkrCyclesPage';
+export { OkrProgramsPage } from './okr/OkrProgramsPage';
+export { OkrSetWorkspace } from './okr/OkrSetWorkspace';
 // RN-G2 P1 #8 — KPI Scorecards (registry tab on ResultsKpiRegistryPage +
 // its own `/results/kpi/scorecards/:scorecardId` detail route). See
 // `kpiScorecards/` subfolder: `kpiScorecardApi.ts` (fetch client),
@@ -70,8 +70,8 @@ export { ResultsKpiScorecardDetailPage } from './kpiScorecards/ResultsKpiScoreca
 // wired into ResultsKpiRegistryPage.tsx's Scorecards tab (was a ready-to-
 // paste, not-yet-committed diff — RN_G5_SCOPEGAP_DESIGN.md §2).
 export {
-  CreateKpiScorecardModal,
   type CreateKpiScorecardFormValues,
+  CreateKpiScorecardModal,
   type CreateKpiScorecardModalProps,
 } from './kpiScorecards/CreateKpiScorecardModal';
 // RN-G3 lane (2026-08-11) — KPI full tool, klasa L (`/results/kpi/:kpiId`,
@@ -79,8 +79,8 @@ export {
 // `kpiDeviationApi.ts`/`kpiInitiativeImpactApi.ts` (fetch clients),
 // `kpiToolMappers.ts` (status/tone pure helpers), `KpiToolPage.tsx`/
 // `KpiDeviationCaseSubview.tsx` (screens).
-export { KpiToolPage } from './kpiTool/KpiToolPage';
 export { KpiDeviationCaseSubview } from './kpiTool/KpiDeviationCaseSubview';
+export { KpiToolPage } from './kpiTool/KpiToolPage';
 // RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
 // (`/results/attention`). See `attention/` subfolder: `attentionApi.ts`
 // (fetch client for the 3 previously-unconsumed attention/team-health
@@ -91,14 +91,14 @@ export { ResultsAttentionPage } from './attention/ResultsAttentionPage';
 // standalone route + self-contained tab component ready to fold into
 // `ResultsRoiHub.tsx` as a third Menu 2 tab (see `RoiPirOutcomesTab.tsx`
 // header).
-export { RoiPirOutcomesTab } from './roi/RoiPirOutcomesTab';
-export { ResultsRoiPirOutcomesPage } from './roi/ResultsRoiPirOutcomesPage';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,
-  resultsVNextHostAllowsDefaultOn,
   type ResultsVNextFlag,
+  resultsVNextHostAllowsDefaultOn,
 } from './resultsVNextFeatureFlags';
+export { ResultsRoiPirOutcomesPage } from './roi/ResultsRoiPirOutcomesPage';
+export { RoiPirOutcomesTab } from './roi/RoiPirOutcomesTab';
 export type {
   HonestValue,
   ResultsVNextDenyReason,
@@ -111,16 +111,15 @@ export type {
 // sites live alongside each domain's own full-tool files (see
 // `roi/roiTeresaLessonsDraft.ts` for the one wired-up example, ROI's
 // `pir_lessons_draft` advisor mode).
-export { TeresaProposalPanel, type TeresaProposalPanelProps } from './teresa/TeresaProposalPanel';
 export {
   TeresaEvidenceBreakdown,
   type TeresaEvidenceBreakdownProps,
   type TeresaEvidenceBreakdownValue,
 } from './teresa/TeresaEvidenceBreakdown';
-export {
-  TeresaUnavailableBanner,
-  type TeresaUnavailableBannerProps,
-} from './teresa/TeresaUnavailableBanner';
+export type {
+  TeresaHandoffContext,
+  HandoffTargetModule as TeresaHandoffTargetModule,
+} from './teresa/teresaHandoffTypes';
 export {
   approveTeresaProposal,
   createTeresaProposal,
@@ -130,7 +129,8 @@ export {
   rejectTeresaProposal,
   TeresaProposalApiError,
 } from './teresa/teresaProposalApi';
-export type {
-  HandoffTargetModule as TeresaHandoffTargetModule,
-  TeresaHandoffContext,
-} from './teresa/teresaHandoffTypes';
+export { TeresaProposalPanel, type TeresaProposalPanelProps } from './teresa/TeresaProposalPanel';
+export {
+  TeresaUnavailableBanner,
+  type TeresaUnavailableBannerProps,
+} from './teresa/TeresaUnavailableBanner';

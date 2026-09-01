@@ -312,7 +312,13 @@ export function computeCompositeScore(
     const provided = raw !== undefined && raw !== null && Number.isFinite(raw);
     if (!provided) {
       missingDimensions.push(d.key);
-      breakdown.push({ dimension: d.key, provided: false, weight, effectiveWeightShare: 0, contribution: 0 });
+      breakdown.push({
+        dimension: d.key,
+        provided: false,
+        weight,
+        effectiveWeightShare: 0,
+        contribution: 0,
+      });
       continue;
     }
     const clamped = Math.min(DIMENSION_INPUT_MAX, Math.max(DIMENSION_INPUT_MIN, raw as number));
@@ -394,7 +400,11 @@ export type ScoreHistoryEvent =
  *  is" is always answerable by reading down the list. */
 export type ScoreHistory = ScoreHistoryEvent[];
 
-export function appendComputedEvent(history: ScoreHistory, result: CompositeScoreResult, now?: string): ScoreHistory {
+export function appendComputedEvent(
+  history: ScoreHistory,
+  result: CompositeScoreResult,
+  now?: string
+): ScoreHistory {
   return [...history, { type: 'computed', at: now ?? new Date().toISOString(), result }];
 }
 
@@ -407,7 +417,9 @@ export function appendOverrideEvent(history: ScoreHistory, override: ScoreOverri
  *  appended (re-running the model does not silently discard a human's
  *  override; it takes a fresh `computeCompositeScore` + `appendComputedEvent`
  *  call, visible in history same as everything else). */
-export function currentScore(history: ScoreHistory): { value: number; source: 'computed' | 'override'; modelVersion: number } | null {
+export function currentScore(
+  history: ScoreHistory
+): { value: number; source: 'computed' | 'override'; modelVersion: number } | null {
   if (history.length === 0) return null;
   const last = history[history.length - 1];
   return last.type === 'computed'
@@ -447,10 +459,13 @@ export function buildPortfolioComparison(
     const existing = currentScore(history);
     if (existing) {
       const overrideEvent =
-        existing.source === 'override' ? (history[history.length - 1] as Extract<ScoreHistoryEvent, { type: 'override' }>) : undefined;
+        existing.source === 'override'
+          ? (history[history.length - 1] as Extract<ScoreHistoryEvent, { type: 'override' }>)
+          : undefined;
       const missing =
         history[history.length - 1].type === 'computed'
-          ? (history[history.length - 1] as Extract<ScoreHistoryEvent, { type: 'computed' }>).result.missingDimensions
+          ? (history[history.length - 1] as Extract<ScoreHistoryEvent, { type: 'computed' }>).result
+              .missingDimensions
           : [];
       return {
         ideaId: idea.ideaId,

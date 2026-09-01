@@ -50,9 +50,7 @@ export function groupFindingsForInitiativeDrafts(
 ): Finding[][] {
   const groupKeyFn = options.groupKeyFn ?? ((f: Finding) => f.unitId.split('.')[0]);
   const eligible =
-    options.onlyWithGap === false
-      ? findings
-      : findings.filter((f) => f.gap !== null && f.gap > 0);
+    options.onlyWithGap === false ? findings : findings.filter((f) => f.gap !== null && f.gap > 0);
 
   const groups = new Map<string, Finding[]>();
   for (const finding of eligible) {
@@ -140,7 +138,9 @@ export function createInitiativeProposalDraft(
     kpiProposal: input.kpiProposal,
     dependencies: input.dependencies,
     risks: input.risks,
-    evidenceLinks: [...new Set(input.findings.flatMap((f) => f.supportingEvidence.map((e) => e.evidenceId)))].sort(),
+    evidenceLinks: [
+      ...new Set(input.findings.flatMap((f) => f.supportingEvidence.map((e) => e.evidenceId))),
+    ].sort(),
     confidence: input.confidence,
     createdAt: input.createdAt,
   };

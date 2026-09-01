@@ -43,16 +43,17 @@
  * illustrative inline-`.parse()` pseudocode, which would have silently
  * turned every malformed query/param into a 500.
  */
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
-import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { denyMutations } from '../../middleware/readOnlyGuard.middleware.js';
+import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import { resultsVnextLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import {
   getLegacyArchiveIndex,
   getLegacyKpi,
@@ -64,7 +65,6 @@ import {
   listLegacyTpKpiDefinitions,
   listLegacyV8KpiDefinitions,
 } from '../../services/resultsVnext/kpi/kpiLegacyArchiveRepository.js';
-import { resultsVnextLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -146,7 +146,9 @@ function handleLegacyRouteError(res: Response, err: unknown, op: string): void {
   logger.error(`[resultsVnext/kpiLegacyArchive.routes] ${op} failed`, {
     error: err instanceof Error ? err.message : String(err),
   });
-  res.status(500).json({ error: 'Internal server error', code: 'KPI_LEGACY_ARCHIVE_INTERNAL_ERROR' });
+  res
+    .status(500)
+    .json({ error: 'Internal server error', code: 'KPI_LEGACY_ARCHIVE_INTERNAL_ERROR' });
 }
 
 // ==========================================
@@ -188,7 +190,10 @@ router.get(
       const offset = query.offset ?? 0;
       const { rows, total } = await listLegacyKpis(auth.organizationId, limit, offset);
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'kpis' });
-      res.json({ data: rows, meta: legacyMeta('kpis', 'results_legacy', auth.organizationId, total, limit, offset) });
+      res.json({
+        data: rows,
+        meta: legacyMeta('kpis', 'results_legacy', auth.organizationId, total, limit, offset),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyKpis');
     }
@@ -202,10 +207,14 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof LegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof LegacyIdParamsSchema
+      >;
       const row = await getLegacyKpi(auth.organizationId, legacyId);
       if (!row) {
-        res.status(404).json({ data: null, meta: legacyMeta('kpis', 'results_legacy', auth.organizationId) });
+        res
+          .status(404)
+          .json({ data: null, meta: legacyMeta('kpis', 'results_legacy', auth.organizationId) });
         return;
       }
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'kpis' });
@@ -234,7 +243,14 @@ router.get(
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'kpi_definitions' });
       res.json({
         data: rows,
-        meta: legacyMeta('kpi_definitions', 'results_legacy', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'kpi_definitions',
+          'results_legacy',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyKpiDefinitions');
@@ -249,16 +265,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof LegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof LegacyIdParamsSchema
+      >;
       const row = await getLegacyKpiDefinition(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('kpi_definitions', 'results_legacy', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('kpi_definitions', 'results_legacy', auth.organizationId),
+        });
         return;
       }
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'kpi_definitions' });
-      res.json({ data: row, meta: legacyMeta('kpi_definitions', 'results_legacy', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('kpi_definitions', 'results_legacy', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyKpiDefinition');
     }
@@ -283,7 +305,14 @@ router.get(
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'v8_kpi_definitions' });
       res.json({
         data: rows,
-        meta: legacyMeta('v8_kpi_definitions', 'results_legacy', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'v8_kpi_definitions',
+          'results_legacy',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyV8KpiDefinitions');
@@ -298,16 +327,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof LegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof LegacyIdParamsSchema
+      >;
       const row = await getLegacyV8KpiDefinition(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('v8_kpi_definitions', 'results_legacy', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('v8_kpi_definitions', 'results_legacy', auth.organizationId),
+        });
         return;
       }
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'v8_kpi_definitions' });
-      res.json({ data: row, meta: legacyMeta('v8_kpi_definitions', 'results_legacy', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('v8_kpi_definitions', 'results_legacy', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyV8KpiDefinition');
     }
@@ -332,7 +367,14 @@ router.get(
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'tp_kpi_definitions' });
       res.json({
         data: rows,
-        meta: legacyMeta('tp_kpi_definitions', 'table_platform_live', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'tp_kpi_definitions',
+          'table_platform_live',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyTpKpiDefinitions');
@@ -347,16 +389,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof LegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof LegacyIdParamsSchema
+      >;
       const row = await getLegacyTpKpiDefinition(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('tp_kpi_definitions', 'table_platform_live', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('tp_kpi_definitions', 'table_platform_live', auth.organizationId),
+        });
         return;
       }
       resultsVnextLegacyArchiveHitsTotal.inc({ source_table: 'tp_kpi_definitions' });
-      res.json({ data: row, meta: legacyMeta('tp_kpi_definitions', 'table_platform_live', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('tp_kpi_definitions', 'table_platform_live', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyTpKpiDefinition');
     }

@@ -18,7 +18,9 @@ import type {
 
 import { ReconciliationLedgerPanel } from '../ReconciliationLedgerPanel';
 
-function run(overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationRunId: string }): ReconciliationRunSummaryDto {
+function run(
+  overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationRunId: string }
+): ReconciliationRunSummaryDto {
   return {
     artifactId: 'artifact-1',
     businessVersionId: 'bv-1',
@@ -54,7 +56,9 @@ function run(overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationR
   };
 }
 
-function detailRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string }): ReconciliationDetailRowDto {
+function detailRow(
+  overrides: Partial<ReconciliationDetailRowDto> & { id: string }
+): ReconciliationDetailRowDto {
   return {
     canonicalLineId: 'canon-revenue',
     entityId: 'entity-1',
@@ -100,7 +104,9 @@ describe('ReconciliationLedgerPanel — loading/empty distinguished', () => {
         emptyLabel="Brak przebiegów rekoncyliacji."
       />
     );
-    expect(screen.getByTestId('reconciliation-ledger-empty')).toHaveTextContent('Brak przebiegów rekoncyliacji.');
+    expect(screen.getByTestId('reconciliation-ledger-empty')).toHaveTextContent(
+      'Brak przebiegów rekoncyliacji.'
+    );
   });
 });
 
@@ -200,7 +206,9 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
     );
     expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('Zmapowane: 2');
     expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('Duplikat: 1');
-    expect(screen.getByTestId('reconciliation-duplicate-warning')).toHaveTextContent('1 wiersz oznaczony');
+    expect(screen.getByTestId('reconciliation-duplicate-warning')).toHaveTextContent(
+      '1 wiersz oznaczony'
+    );
   });
 
   it('does NOT show a duplicate warning when there are zero duplicates — no false alarm', () => {

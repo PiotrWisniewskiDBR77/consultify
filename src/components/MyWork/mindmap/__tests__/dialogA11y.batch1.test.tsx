@@ -53,7 +53,9 @@ function Harness({
 describe('AddEvidenceModal — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name', async () => {
     render(
-      <Harness>{(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}
+      </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
     const dialog = await screen.findByRole('dialog');
@@ -63,7 +65,9 @@ describe('AddEvidenceModal — dialog a11y contract', () => {
 
   it('closes on Escape and returns focus to the trigger', async () => {
     render(
-      <Harness>{(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}
+      </Harness>
     );
     const trigger = screen.getByTestId('trigger');
     trigger.focus();
@@ -78,7 +82,9 @@ describe('AddEvidenceModal — dialog a11y contract', () => {
 
   it('focuses the title input on open (not via native autoFocus)', async () => {
     render(
-      <Harness>{(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AddEvidenceModal open={open} onClose={onClose} onAdd={() => {}} />}
+      </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
     await screen.findByRole('dialog');
@@ -91,7 +97,9 @@ describe('AddEvidenceModal — dialog a11y contract', () => {
 describe('ImageUrlModal — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name', async () => {
     render(
-      <Harness>{(open, onClose) => <ImageUrlModal open={open} onClose={onClose} onSubmit={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <ImageUrlModal open={open} onClose={onClose} onSubmit={() => {}} />}
+      </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
     const dialog = await screen.findByRole('dialog');
@@ -101,7 +109,9 @@ describe('ImageUrlModal — dialog a11y contract', () => {
 
   it('closes on Escape and returns focus to the trigger', async () => {
     render(
-      <Harness>{(open, onClose) => <ImageUrlModal open={open} onClose={onClose} onSubmit={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <ImageUrlModal open={open} onClose={onClose} onSubmit={() => {}} />}
+      </Harness>
     );
     const trigger = screen.getByTestId('trigger');
     trigger.focus();
@@ -119,7 +129,9 @@ describe('AttachArtifactModal — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name', async () => {
     render(
       <Harness>
-        {(open, onClose) => <AttachArtifactModal open={open} onClose={onClose} onAttach={() => {}} />}
+        {(open, onClose) => (
+          <AttachArtifactModal open={open} onClose={onClose} onAttach={() => {}} />
+        )}
       </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
@@ -131,7 +143,9 @@ describe('AttachArtifactModal — dialog a11y contract', () => {
   it('closes on Escape and returns focus to the trigger', async () => {
     render(
       <Harness>
-        {(open, onClose) => <AttachArtifactModal open={open} onClose={onClose} onAttach={() => {}} />}
+        {(open, onClose) => (
+          <AttachArtifactModal open={open} onClose={onClose} onAttach={() => {}} />
+        )}
       </Harness>
     );
     const trigger = screen.getByTestId('trigger');
@@ -149,7 +163,9 @@ describe('AttachArtifactModal — dialog a11y contract', () => {
 describe('AssignPersonModal — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name', async () => {
     render(
-      <Harness>{(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}
+      </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
     const dialog = await screen.findByRole('dialog');
@@ -159,7 +175,9 @@ describe('AssignPersonModal — dialog a11y contract', () => {
 
   it('closes on Escape and returns focus to the trigger', async () => {
     render(
-      <Harness>{(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}
+      </Harness>
     );
     const trigger = screen.getByTestId('trigger');
     trigger.focus();
@@ -174,7 +192,9 @@ describe('AssignPersonModal — dialog a11y contract', () => {
 
   it('focuses the name input on open (not via native autoFocus)', async () => {
     render(
-      <Harness>{(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}</Harness>
+      <Harness>
+        {(open, onClose) => <AssignPersonModal open={open} onClose={onClose} onAssign={() => {}} />}
+      </Harness>
     );
     fireEvent.click(screen.getByTestId('trigger'));
     await screen.findByRole('dialog');

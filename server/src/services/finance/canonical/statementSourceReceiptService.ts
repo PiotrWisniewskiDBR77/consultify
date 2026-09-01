@@ -1,6 +1,6 @@
-import { canonicalPayloadHash } from './contentHash.js';
 import { type PgTransactionClient, withPgTransaction } from '../../../utils/queryHelpers.js';
 import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
+import { canonicalPayloadHash } from './contentHash.js';
 
 export class StatementGovernanceError extends Error {
   constructor(

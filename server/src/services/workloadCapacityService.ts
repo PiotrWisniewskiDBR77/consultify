@@ -151,8 +151,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   const userCapMap = new Map<string, { name: string; capacityHours: number }>();
   for (const m of members) {
     const existing = userCapMap.get(m.user_id);
-    const addedCap =
-      capacityHoursForAllocation(m.allocation_percent);
+    const addedCap = capacityHoursForAllocation(m.allocation_percent);
     if (existing) {
       existing.capacityHours += addedCap;
     } else {
@@ -303,11 +302,11 @@ export async function getUserForecast(orgId: string, userId: string): Promise<We
     } catch (err) {
       // task_allocations may not exist yet; fall back to estimated_hours —
       // silenceable; anything else logs.
-      logIfNotSilenceableMissingRelation(
-        'getUserForecast: task_allocations lookup failed',
-        err,
-        { orgId, userId, weekStart: wsStr }
-      );
+      logIfNotSilenceableMissingRelation('getUserForecast: task_allocations lookup failed', err, {
+        orgId,
+        userId,
+        weekStart: wsStr,
+      });
     }
 
     if (allocated === 0) {
@@ -463,11 +462,10 @@ export async function getInitiativeCapacity(
     actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.hours)]));
   } catch (err) {
     // time_entries may not exist — silenceable; anything else logs.
-    logIfNotSilenceableMissingRelation(
-      'getInitiativeCapacity: time_entries lookup failed',
-      err,
-      { orgId, initiativeId }
-    );
+    logIfNotSilenceableMissingRelation('getInitiativeCapacity: time_entries lookup failed', err, {
+      orgId,
+      initiativeId,
+    });
   }
 
   const resources: InitiativeResourceCapacity[] = [];
@@ -577,11 +575,9 @@ export async function getLevelingAlerts(orgId: string): Promise<LevelingAlerts> 
     // A missing `role` column is a real schema/migration bug (DEC-112:
     // 42703 "column does not exist" is never silenceable) — logs loudly,
     // even though this alert list still degrades to empty for the caller.
-    logIfNotSilenceableMissingRelation(
-      'getLevelingAlerts: unfilled-roles lookup failed',
-      err,
-      { orgId }
-    );
+    logIfNotSilenceableMissingRelation('getLevelingAlerts: unfilled-roles lookup failed', err, {
+      orgId,
+    });
   }
 
   return { overloaded, underutilized, unfilledRoles };

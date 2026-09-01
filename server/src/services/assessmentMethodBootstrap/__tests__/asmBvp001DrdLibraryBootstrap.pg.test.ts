@@ -79,14 +79,14 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     // not redundant with the RUN_DB_TESTS/MOCK_DB env gate above.
     await assertRealDatabase(fromPgPool(pool));
 
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG_A,
-      'ASM-BVP-001 test org A',
-    ]);
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG_B,
-      'ASM-BVP-001 test org B',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG_A, 'ASM-BVP-001 test org A']
+    );
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG_B, 'ASM-BVP-001 test org B']
+    );
     for (const [id, org] of [
       [USER_A, ORG_A],
       [USER_B, ORG_B],
@@ -320,10 +320,9 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     );
     expect(crossOrgRow.rows[0].n).toBe(0);
 
-    const ownRowB = await pool.query(
-      `SELECT organization_id FROM method_sessions WHERE id = $1`,
-      [sessionIdB]
-    );
+    const ownRowB = await pool.query(`SELECT organization_id FROM method_sessions WHERE id = $1`, [
+      sessionIdB,
+    ]);
     expect(ownRowB.rows[0].organization_id).toBe(ORG_B);
   });
 
@@ -361,12 +360,13 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
   // ---------------------------------------------------------------------------
   it('6. ensureDrdPackRegistered run twice leaves exactly one method_packs row and does not churn the version', async () => {
     const org = `org-bvp1-bootstrap-${SUFFIX}`;
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      org,
-      'ASM-BVP-001 bootstrap-only test org',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [org, 'ASM-BVP-001 bootstrap-only test org']
+    );
     try {
-      const { ensureDrdPackRegistered } = await import('../../../method-core/MethodPackRegistry.js');
+      const { ensureDrdPackRegistered } =
+        await import('../../../method-core/MethodPackRegistry.js');
       const first = await ensureDrdPackRegistered(org);
       const second = await ensureDrdPackRegistered(org);
 
@@ -402,7 +402,8 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     const sessionId = created.body.session.id;
     const originalState = created.body.session.state;
 
-    const { MethodPackRegistry: RegistryCtor } = await import('../../../method-core/MethodPackRegistry.js');
+    const { MethodPackRegistry: RegistryCtor } =
+      await import('../../../method-core/MethodPackRegistry.js');
     const { MethodSessionService } = await import('../../../method-core/MethodSessionService.js');
     const { methodEventStore } = await import('../../../method-core/MethodEventStore.js');
 

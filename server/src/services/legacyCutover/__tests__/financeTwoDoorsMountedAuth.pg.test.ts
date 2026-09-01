@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool, type PoolClient } from 'pg';
@@ -111,14 +112,27 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
   }
 
   const zeroResidue = {
-    organizations: 0, users: 0, memberships: 0, models: 0, model_events: 0,
-    outputs: 0, validations: 0, versions: 0, aliases: 0, artifacts: 0,
-    intents: 0, observations: 0,
+    organizations: 0,
+    users: 0,
+    memberships: 0,
+    models: 0,
+    model_events: 0,
+    outputs: 0,
+    validations: 0,
+    versions: 0,
+    aliases: 0,
+    artifacts: 0,
+    intents: 0,
+    observations: 0,
     finance_observations: 0,
   };
 
   async function callBoth(userId: string, organizationId: string, suffix: string, body = {}) {
-    const headers = authorization(userId, organizationId, userId === superNoMembership ? 'SUPERADMIN' : 'ADMIN');
+    const headers = authorization(
+      userId,
+      organizationId,
+      userId === superNoMembership ? 'SUPERADMIN' : 'ADMIN'
+    );
     return Promise.all([
       request(w01)
         .post(`/api/v8/finance/models/${prefix}-${suffix}-w01/approve`)
@@ -136,7 +150,8 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
   beforeAll(async () => {
     if (!cleanupEnabled) throw new Error('LEGACY_CUTOVER_TEST_CLEANUP=1 is required');
     pool = new Pool({ connectionString: databaseUrl });
-    const databaseName = (await pool.query(`SELECT current_database() AS name`)).rows[0].name as string;
+    const databaseName = (await pool.query(`SELECT current_database() AS name`)).rows[0]
+      .name as string;
     if (!/^consultify_(?:fin|b1_fin)_/.test(databaseName)) {
       throw new Error(`FIN_TWO_DOORS_TEST_DB_NOT_DISPOSABLE:${databaseName}`);
     }
@@ -181,7 +196,9 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     );
     const { createArtifact } = await import('../../finance/canonical/artifactVersionService.js');
     const canonical = await createArtifact({
-      organizationId: org, artifactType: 'HISTORICAL_ANALYSIS', createdBy: active,
+      organizationId: org,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: active,
     });
     artifactId = canonical.artifact.artifact_id;
     businessVersionId = canonical.businessVersion.business_version_id;
@@ -209,22 +226,50 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     try {
       cleanupClient = await pool.connect();
       await cleanupClient.query('BEGIN');
-      await cleanupClient.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
-      await cleanupClient.query(`DELETE FROM legacy_cutover_signal_intents WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
-      await cleanupClient.query(`DELETE FROM finance_legacy_usage_events WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
-      await cleanupClient.query(`DELETE FROM financial_model_versions WHERE model_id LIKE $1`, [`${prefix}%`]);
-      await cleanupClient.query(`DELETE FROM financial_model_validations WHERE model_id LIKE $1`, [`${prefix}%`]);
-      await cleanupClient.query(`DELETE FROM financial_model_outputs WHERE model_id LIKE $1`, [`${prefix}%`]);
-      await cleanupClient.query(`DELETE FROM financial_model_events WHERE model_id LIKE $1`, [`${prefix}%`]);
+      await cleanupClient.query(
+        `DELETE FROM legacy_cutover_usage_events WHERE organization_id IN ($1,$2)`,
+        [org, foreignOrg]
+      );
+      await cleanupClient.query(
+        `DELETE FROM legacy_cutover_signal_intents WHERE organization_id IN ($1,$2)`,
+        [org, foreignOrg]
+      );
+      await cleanupClient.query(
+        `DELETE FROM finance_legacy_usage_events WHERE organization_id IN ($1,$2)`,
+        [org, foreignOrg]
+      );
+      await cleanupClient.query(`DELETE FROM financial_model_versions WHERE model_id LIKE $1`, [
+        `${prefix}%`,
+      ]);
+      await cleanupClient.query(`DELETE FROM financial_model_validations WHERE model_id LIKE $1`, [
+        `${prefix}%`,
+      ]);
+      await cleanupClient.query(`DELETE FROM financial_model_outputs WHERE model_id LIKE $1`, [
+        `${prefix}%`,
+      ]);
+      await cleanupClient.query(`DELETE FROM financial_model_events WHERE model_id LIKE $1`, [
+        `${prefix}%`,
+      ]);
       await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`SET LOCAL session_replication_role = replica`);
-      await cleanupClient.query(`DELETE FROM finance_artifact_aliases WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
-      await cleanupClient.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id=$1`, [artifactId]);
-      await cleanupClient.query(`DELETE FROM finance_working_revisions WHERE artifact_id=$1`, [artifactId]);
-      await cleanupClient.query(`DELETE FROM finance_business_versions WHERE artifact_id=$1`, [artifactId]);
+      await cleanupClient.query(
+        `DELETE FROM finance_artifact_aliases WHERE organization_id IN ($1,$2)`,
+        [org, foreignOrg]
+      );
+      await cleanupClient.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id=$1`, [
+        artifactId,
+      ]);
+      await cleanupClient.query(`DELETE FROM finance_working_revisions WHERE artifact_id=$1`, [
+        artifactId,
+      ]);
+      await cleanupClient.query(`DELETE FROM finance_business_versions WHERE artifact_id=$1`, [
+        artifactId,
+      ]);
       await cleanupClient.query(`DELETE FROM finance_artifacts WHERE artifact_id=$1`, [artifactId]);
       await cleanupClient.query(`SET LOCAL session_replication_role = origin`);
-      await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [`${prefix}%`]);
+      await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [
+        `${prefix}%`,
+      ]);
       await cleanupClient.query(`DELETE FROM users WHERE id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [org, foreignOrg]);
       expect(await fullResidue(cleanupClient)).toEqual(zeroResidue);
@@ -246,11 +291,15 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
   it('rejects missing and invalid bearer identity before either Finance door', async () => {
     const before = await mutationSnapshot();
     for (const app of [w01, w02]) {
-      const path = app === w01
-        ? `/api/v8/finance/models/${orgModel}/approve`
-        : `/api/financial-modeling/models/${orgModel}/approve`;
+      const path =
+        app === w01
+          ? `/api/v8/finance/models/${orgModel}/approve`
+          : `/api/financial-modeling/models/${orgModel}/approve`;
       expect((await request(app).post(path).send({})).status).toBe(401);
-      expect((await request(app).post(path).set('Authorization', 'Bearer invalid.jwt.token').send({})).status).toBe(401);
+      expect(
+        (await request(app).post(path).set('Authorization', 'Bearer invalid.jwt.token').send({}))
+          .status
+      ).toBe(401);
     }
     expect(await mutationSnapshot()).toEqual(before);
   });
@@ -259,17 +308,25 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     const before = await mutationSnapshot();
     const headers = authorization(active, org);
     const [first, second] = await Promise.all([
-      request(w01).post(`/api/v8/finance/models/${orgModel}/approve`).set(headers)
-        .set('x-request-id', `${prefix}-mapped-w01`).send({ organizationId: foreignOrg }),
-      request(w02).post(`/api/financial-modeling/models/${orgModel}/approve`).set(headers)
-        .set('x-request-id', `${prefix}-mapped-w02`).send({ organizationId: foreignOrg }),
+      request(w01)
+        .post(`/api/v8/finance/models/${orgModel}/approve`)
+        .set(headers)
+        .set('x-request-id', `${prefix}-mapped-w01`)
+        .send({ organizationId: foreignOrg }),
+      request(w02)
+        .post(`/api/financial-modeling/models/${orgModel}/approve`)
+        .set(headers)
+        .set('x-request-id', `${prefix}-mapped-w02`)
+        .send({ organizationId: foreignOrg }),
     ]);
     expect(first.status).toBe(410);
     expect(first.body).toMatchObject({ code: 'FINANCE_LEGACY_WRITER_DISABLED' });
     expect(second.status).toBe(410);
     expect(second.body).toMatchObject({
-      code: 'FINANCE_LEGACY_WRITER_DISABLED', writerId: 'FIN-W02',
-      canonicalArtifactId: artifactId, canonicalBusinessVersionId: businessVersionId,
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'FIN-W02',
+      canonicalArtifactId: artifactId,
+      canonicalBusinessVersionId: businessVersionId,
     });
     const after = await mutationSnapshot();
     expectBusinessUnchanged(after, before);
@@ -278,10 +335,16 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
   it('returns 409 for unmapped FIN-W02 and records concurrent retries once', async () => {
     const headers = authorization(active, org);
     const requestId = `${prefix}-retry-w02`;
-    const responses = await Promise.all(Array.from({ length: 4 }, () =>
-      request(w02).post(`/api/financial-modeling/models/${prefix}-unmapped/approve`)
-        .set(headers).set('x-request-id', requestId).set('idempotency-key', requestId).send({})
-    ));
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        request(w02)
+          .post(`/api/financial-modeling/models/${prefix}-unmapped/approve`)
+          .set(headers)
+          .set('x-request-id', requestId)
+          .set('idempotency-key', requestId)
+          .send({})
+      )
+    );
     expect(responses.map((response) => response.status)).toEqual([409, 409, 409, 409]);
     const counts = await pool.query(
       `SELECT
@@ -294,14 +357,20 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
 
   it('rejects the same signed token on the next request after membership is revoked', async () => {
     const before = await mutationSnapshot();
-    await pool.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`, [org, active]);
+    await pool.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [org, active]
+    );
     const [first, second] = await callBoth(active, org, 'revoked');
     for (const response of [first, second]) {
       expect(response.status).toBe(403);
       expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
     expect(await mutationSnapshot()).toEqual(before);
-    await pool.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`, [org, active]);
+    await pool.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [org, active]
+    );
   });
 
   it('denies a SUPERADMIN token without ACTIVE tenant membership', async () => {
@@ -314,49 +383,89 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
   it('denies a foreign ACTIVE caller the real org-A model and ignores body tenant spoofing', async () => {
     const before = await mutationSnapshot();
     const headers = authorization(foreign, foreignOrg);
-    const first = await request(w01).post(`/api/v8/finance/models/${orgModel}/approve`)
-      .set(headers).set('x-request-id', `${prefix}-foreign-w01`)
+    const first = await request(w01)
+      .post(`/api/v8/finance/models/${orgModel}/approve`)
+      .set(headers)
+      .set('x-request-id', `${prefix}-foreign-w01`)
       .send({ organizationId: org, organization_id: org });
-    const second = await request(w02).post(`/api/financial-modeling/models/${orgModel}/approve`)
-      .set(headers).set('x-request-id', `${prefix}-foreign-w02`)
+    const second = await request(w02)
+      .post(`/api/financial-modeling/models/${orgModel}/approve`)
+      .set(headers)
+      .set('x-request-id', `${prefix}-foreign-w02`)
       .send({ organizationId: org, organization_id: org });
     expect(first.status).toBe(410);
     expect(second.status).toBe(409);
     const after = await mutationSnapshot();
     expectBusinessUnchanged(after, before);
-    expect((await pool.query(
-      `SELECT
+    expect(
+      (
+        await pool.query(
+          `SELECT
          (SELECT count(*)::int FROM legacy_cutover_usage_events WHERE request_id LIKE $1 AND organization_id=$2) +
          (SELECT count(*)::int FROM finance_legacy_usage_events WHERE request_id LIKE $1 AND organization_id=$2) +
          (SELECT count(*)::int FROM legacy_cutover_signal_intents WHERE request_id LIKE $1 AND organization_id=$2) AS n`,
-      [`${prefix}-foreign%`, org]
-    )).rows[0].n).toBe(0);
-    expect((await pool.query(
-      `SELECT request_id,user_id,organization_id,access_kind,legacy_table,legacy_id
+          [`${prefix}-foreign%`, org]
+        )
+      ).rows[0].n
+    ).toBe(0);
+    expect(
+      (
+        await pool.query(
+          `SELECT request_id,user_id,organization_id,access_kind,legacy_table,legacy_id
          FROM finance_legacy_usage_events WHERE request_id=$1`,
-      [`${prefix}-foreign-w01`]
-    )).rows).toEqual([{
-      request_id: `${prefix}-foreign-w01`, user_id: foreign, organization_id: foreignOrg,
-      access_kind: 'legacy_writer_blocked', legacy_table: 'financial_models', legacy_id: orgModel,
-    }]);
-    expect((await pool.query(
-      `SELECT request_id,user_id,organization_id,writer_id,access_kind,legacy_table,legacy_id,identity_status
+          [`${prefix}-foreign-w01`]
+        )
+      ).rows
+    ).toEqual([
+      {
+        request_id: `${prefix}-foreign-w01`,
+        user_id: foreign,
+        organization_id: foreignOrg,
+        access_kind: 'legacy_writer_blocked',
+        legacy_table: 'financial_models',
+        legacy_id: orgModel,
+      },
+    ]);
+    expect(
+      (
+        await pool.query(
+          `SELECT request_id,user_id,organization_id,writer_id,access_kind,legacy_table,legacy_id,identity_status
          FROM legacy_cutover_usage_events WHERE request_id=$1`,
-      [`${prefix}-foreign-w02`]
-    )).rows).toEqual([{
-      request_id: `${prefix}-foreign-w02`, user_id: foreign, organization_id: foreignOrg,
-      writer_id: 'FIN-W02', access_kind: 'legacy_identity_unmapped', legacy_table: 'financial_models',
-      legacy_id: orgModel, identity_status: 'not_migrated',
-    }]);
-    expect((await pool.query(
-      `SELECT request_id,user_id,organization_id,writer_id,access_kind,legacy_table,legacy_id,identity_status
+          [`${prefix}-foreign-w02`]
+        )
+      ).rows
+    ).toEqual([
+      {
+        request_id: `${prefix}-foreign-w02`,
+        user_id: foreign,
+        organization_id: foreignOrg,
+        writer_id: 'FIN-W02',
+        access_kind: 'legacy_identity_unmapped',
+        legacy_table: 'financial_models',
+        legacy_id: orgModel,
+        identity_status: 'not_migrated',
+      },
+    ]);
+    expect(
+      (
+        await pool.query(
+          `SELECT request_id,user_id,organization_id,writer_id,access_kind,legacy_table,legacy_id,identity_status
          FROM legacy_cutover_signal_intents WHERE request_id=$1`,
-      [`${prefix}-foreign-w02`]
-    )).rows).toEqual([{
-      request_id: `${prefix}-foreign-w02`, user_id: foreign, organization_id: foreignOrg,
-      writer_id: 'FIN-W02', access_kind: 'legacy_identity_unmapped', legacy_table: 'financial_models',
-      legacy_id: orgModel, identity_status: 'not_migrated',
-    }]);
+          [`${prefix}-foreign-w02`]
+        )
+      ).rows
+    ).toEqual([
+      {
+        request_id: `${prefix}-foreign-w02`,
+        user_id: foreign,
+        organization_id: foreignOrg,
+        writer_id: 'FIN-W02',
+        access_kind: 'legacy_identity_unmapped',
+        legacy_table: 'financial_models',
+        legacy_id: orgModel,
+        identity_status: 'not_migrated',
+      },
+    ]);
   });
 
   it('fails both doors closed on a bounded membership adapter rejection', async () => {
@@ -365,7 +474,10 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     let matchHits = 0;
     const membershipLookup = vi.spyOn(DbPromise, 'get');
     membershipLookup.mockImplementation(async (...args: Parameters<typeof DbPromise.get>) => {
-      const normalizedSql = String(args[0] || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      const normalizedSql = String(args[0] || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
       if (normalizedSql.includes('from organization_members') && matchHits < 2) {
         matchHits += 1;
         throw new Error('bounded membership lookup failure');
@@ -412,7 +524,9 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     try {
       const response = await request(w02)
         .post(`/api/financial-modeling/models/${orgModel}/approve`)
-        .set(authorization(active, org)).set('x-request-id', requestId).send({});
+        .set(authorization(active, org))
+        .set('x-request-id', requestId)
+        .send({});
       expect(response.status).toBe(200);
       const observations = await pool.query(
         `SELECT writer_id,access_kind,count(*)::int AS count
@@ -429,10 +543,15 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
            FROM financial_models WHERE id=$1`,
         [orgModel]
       );
-      expect(approved.rows).toEqual([{
-        status: 'approved', version: 2, approved_by: active,
-        has_approved_at: true, history_count: 1,
-      }]);
+      expect(approved.rows).toEqual([
+        {
+          status: 'approved',
+          version: 2,
+          approved_by: active,
+          has_approved_at: true,
+          history_count: 1,
+        },
+      ]);
     } finally {
       delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     }
@@ -440,11 +559,15 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     const blockedRequestId = `${prefix}-rollback-closed-w02`;
     const blocked = await request(w02)
       .post(`/api/financial-modeling/models/${orgModel}/approve`)
-      .set(authorization(active, org)).set('x-request-id', blockedRequestId).send({});
+      .set(authorization(active, org))
+      .set('x-request-id', blockedRequestId)
+      .send({});
     expect(blocked.status).toBe(410);
     expect(blocked.body).toMatchObject({
-      code: 'FINANCE_LEGACY_WRITER_DISABLED', writerId: 'FIN-W02',
-      canonicalArtifactId: artifactId, canonicalBusinessVersionId: businessVersionId,
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'FIN-W02',
+      canonicalArtifactId: artifactId,
+      canonicalBusinessVersionId: businessVersionId,
     });
     const unchanged = await pool.query(
       `SELECT status,version,
@@ -453,13 +576,15 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       [orgModel]
     );
     expect(unchanged.rows).toEqual([{ status: 'approved', version: 2, history_count: 1 }]);
-    expect((await pool.query(
-      `SELECT writer_id,access_kind,count(*)::int AS count
+    expect(
+      (
+        await pool.query(
+          `SELECT writer_id,access_kind,count(*)::int AS count
          FROM legacy_cutover_usage_events WHERE request_id=$1
         GROUP BY writer_id,access_kind`,
-      [blockedRequestId]
-    )).rows).toEqual([
-      { writer_id: 'FIN-W02', access_kind: 'legacy_writer_blocked', count: 1 },
-    ]);
+          [blockedRequestId]
+        )
+      ).rows
+    ).toEqual([{ writer_id: 'FIN-W02', access_kind: 'legacy_writer_blocked', count: 1 }]);
   });
 });

@@ -54,52 +54,52 @@
  * 5k x 60 = 300k-cell size target this work package tests against.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import ExcelJS from 'exceljs';
 import { Readable } from 'stream';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
-  withPinnedPostgresTransaction,
   type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
 } from '../../../database/PostgresDatabase.js';
 import {
-  financeStmtLinesCellRef,
-  cellRefKey,
   type CellRef,
+  cellRefKey,
   type FinanceAccumulationBasis,
   type FinanceConsolidationScope,
+  financeStmtLinesCellRef,
 } from '../../../types/finance/CellRef.js';
-import {
-  FinanceValueInputSchema,
-  ApplyOperationsBatchRequestSchema,
-  findDuplicateTargetsInBatch,
-  isContentMutableStatus,
-  type ApplyOperationsBatchRequest,
-  type FinanceValueInput,
-  type Operation,
-} from '../../../types/finance/Operation.js';
 import type {
   FinanceValue,
   FinanceValueStatus,
 } from '../../../types/finance/financeValueSemantics.js';
-import { MAX_CELLS_PER_OPERATION, chunkArray } from '../grid/gridCoordinates.js';
 import {
-  reopenVersion,
+  type ApplyOperationsBatchRequest,
+  ApplyOperationsBatchRequestSchema,
+  type FinanceValueInput,
+  FinanceValueInputSchema,
+  findDuplicateTargetsInBatch,
+  isContentMutableStatus,
+  type Operation,
+} from '../../../types/finance/Operation.js';
+import { chunkArray, MAX_CELLS_PER_OPERATION } from '../grid/gridCoordinates.js';
+import {
   type BusinessVersionRow,
+  reopenVersion,
   type RestatementClass,
   type VersionKind,
 } from './artifactVersionService.js';
 import { canonicalPayloadHash } from './contentHash.js';
-import type { BusinessVersionStatus, FinanceRole } from './lifecycleService.js';
 import {
+  checkManifestCompatibility,
   FINANCE_EXCEL_SHEET_NAMES,
   FINANCE_EXCEL_VALUE_COLUMNS,
-  checkManifestCompatibility,
-  parseBooleanCell,
-  parseValueCells,
   type FinanceExcelManifest,
   type FinanceExcelManifestCheck,
+  parseBooleanCell,
+  parseValueCells,
 } from './financeExcelShared.js';
+import type { BusinessVersionStatus, FinanceRole } from './lifecycleService.js';
 
 // ---------------------------------------------------------------------------
 // Stage 1 — parse (pure, no DB)

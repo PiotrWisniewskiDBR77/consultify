@@ -29,29 +29,33 @@
  * verbatim rather than inventing a second convention for the same class of
  * gap. Flagged as a real, disclosed limitation, not silently worked around.
  */
-import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import type { StandardBreadcrumb, TableColumn, TableRow } from '@/components/standard';
 import { Modal } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { OkrSetDto } from './okrApi';
 import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { formatOkrDate } from './okrRegistryMappers';
 import {
   acceptAlignment,
   listAlignmentsForObjective,
   newOkrWorkspaceIdempotencyKey,
+  type OkrAlignmentDto,
   OkrWorkspaceApiError,
   proposeAlignment,
   rejectAlignment,
   removeAlignment,
-  type OkrAlignmentDto,
 } from './okrWorkspaceApi';
-import { OKR_ALIGNMENT_STATUS_TONE, okrAlignmentStatusLabel, shortWorkspaceId } from './okrWorkspaceMappers';
-import { formatOkrDate } from './okrRegistryMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import {
+  OKR_ALIGNMENT_STATUS_TONE,
+  okrAlignmentStatusLabel,
+  shortWorkspaceId,
+} from './okrWorkspaceMappers';
 
 export interface OkrAlignmentsViewProps {
   set: OkrSetDto;
@@ -59,14 +63,22 @@ export interface OkrAlignmentsViewProps {
   breadcrumbs: StandardBreadcrumb[];
 }
 
-function withId(row: OkrAlignmentDto & { direction: 'outgoing' | 'incoming' }): OkrAlignmentDto & { direction: 'outgoing' | 'incoming'; id: string } {
+function withId(
+  row: OkrAlignmentDto & { direction: 'outgoing' | 'incoming' }
+): OkrAlignmentDto & { direction: 'outgoing' | 'incoming'; id: string } {
   return { ...row, id: row.alignmentId };
 }
 
-export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPolish, breadcrumbs }) => {
+export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({
+  set,
+  isPolish,
+  breadcrumbs,
+}) => {
   const [objectives, setObjectives] = useState<OkrObjectiveWithKeyResultsDto[] | null>(null);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
-  const [alignments, setAlignments] = useState<(OkrAlignmentDto & { direction: 'outgoing' | 'incoming' })[] | null>(null);
+  const [alignments, setAlignments] = useState<
+    (OkrAlignmentDto & { direction: 'outgoing' | 'incoming' })[] | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,7 +133,13 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
       width: '150px',
       render: (row: OkrAlignmentDto & { direction: string }) => (
         <span className="text-sm text-c-text-secondary">
-          {row.direction === 'outgoing' ? (isPolish ? 'Przyczynia się do →' : 'Contributes to →') : (isPolish ? '← Przyczynia się tutaj' : '← Contributes here')}
+          {row.direction === 'outgoing'
+            ? isPolish
+              ? 'Przyczynia się do →'
+              : 'Contributes to →'
+            : isPolish
+              ? '← Przyczynia się tutaj'
+              : '← Contributes here'}
         </span>
       ),
     },
@@ -130,8 +148,13 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
       label: isPolish ? 'Powiązany cel' : 'Related objective',
       width: '220px',
       render: (row: OkrAlignmentDto & { direction: string }) => (
-        <span className="font-mono text-sm text-c-text" title={row.direction === 'outgoing' ? row.targetObjectiveId : row.sourceObjectiveId}>
-          {shortWorkspaceId(row.direction === 'outgoing' ? row.targetObjectiveId : row.sourceObjectiveId)}
+        <span
+          className="font-mono text-sm text-c-text"
+          title={row.direction === 'outgoing' ? row.targetObjectiveId : row.sourceObjectiveId}
+        >
+          {shortWorkspaceId(
+            row.direction === 'outgoing' ? row.targetObjectiveId : row.sourceObjectiveId
+          )}
         </span>
       ),
     },
@@ -140,20 +163,34 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
       label: 'Status',
       width: '150px',
       filterable: true,
-      filterOptions: (['proposed', 'accepted', 'rejected', 'removed'] as const).map((s) => ({ value: s, label: okrAlignmentStatusLabel(s, isPolish) })),
-      render: (row: OkrAlignmentDto) => <StatusChip label={okrAlignmentStatusLabel(row.status, isPolish)} tone={OKR_ALIGNMENT_STATUS_TONE[row.status]} />,
+      filterOptions: (['proposed', 'accepted', 'rejected', 'removed'] as const).map((s) => ({
+        value: s,
+        label: okrAlignmentStatusLabel(s, isPolish),
+      })),
+      render: (row: OkrAlignmentDto) => (
+        <StatusChip
+          label={okrAlignmentStatusLabel(row.status, isPolish)}
+          tone={OKR_ALIGNMENT_STATUS_TONE[row.status]}
+        />
+      ),
     },
     {
       id: 'rationale',
       label: isPolish ? 'Uzasadnienie' : 'Rationale',
       width: '260px',
-      render: (row: OkrAlignmentDto) => <span className="text-sm text-c-text-secondary line-clamp-2">{row.rationale ?? '—'}</span>,
+      render: (row: OkrAlignmentDto) => (
+        <span className="text-sm text-c-text-secondary line-clamp-2">{row.rationale ?? '—'}</span>
+      ),
     },
     {
       id: 'proposedAt',
       label: isPolish ? 'Zaproponowano' : 'Proposed',
       width: '150px',
-      render: (row: OkrAlignmentDto) => <span className="text-sm text-c-text-secondary">{formatOkrDate(row.proposedAt, isPolish)}</span>,
+      render: (row: OkrAlignmentDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrDate(row.proposedAt, isPolish)}
+        </span>
+      ),
     },
   ];
 
@@ -193,7 +230,11 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
             },
             testId: 'okr-alignment-propose-cta',
             locked: !selectedObjectiveId,
-            lockedReason: !selectedObjectiveId ? (isPolish ? 'Ten zestaw nie ma jeszcze żadnego celu.' : 'This set has no objective yet.') : undefined,
+            lockedReason: !selectedObjectiveId
+              ? isPolish
+                ? 'Ten zestaw nie ma jeszcze żadnego celu.'
+                : 'This set has no objective yet.'
+              : undefined,
           },
         }}
         table={{
@@ -226,14 +267,22 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
                       label: isPolish ? 'Akceptuj' : 'Accept',
                       onClick: () =>
                         respond(() =>
-                          acceptAlignment(a.alignmentId, { expectedVersion: a.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
+                          acceptAlignment(a.alignmentId, {
+                            expectedVersion: a.rowVersion,
+                            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                          })
                         ),
                     },
                     {
                       id: 'reject',
                       label: isPolish ? 'Odrzuć' : 'Reject',
                       onClick: () =>
-                        respond(() => rejectAlignment(a.alignmentId, { expectedVersion: a.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+                        respond(() =>
+                          rejectAlignment(a.alignmentId, {
+                            expectedVersion: a.rowVersion,
+                            idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                          })
+                        ),
                     },
                   ]
                 : undefined,
@@ -241,11 +290,18 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
                 ? {
                     label: isPolish ? 'Usuń dopasowanie' : 'Remove alignment',
                     onClick: () =>
-                      respond(() => removeAlignment(a.alignmentId, { expectedVersion: a.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+                      respond(() =>
+                        removeAlignment(a.alignmentId, {
+                          expectedVersion: a.rowVersion,
+                          idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                        })
+                      ),
                   }
                 : {
                     label: isPolish ? 'Usuń dopasowanie' : 'Remove alignment',
-                    note: isPolish ? 'Tylko zaakceptowane dopasowanie można usunąć.' : 'Only an accepted alignment may be removed.',
+                    note: isPolish
+                      ? 'Tylko zaakceptowane dopasowanie można usunąć.'
+                      : 'Only an accepted alignment may be removed.',
                   },
             };
           },
@@ -262,7 +318,12 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
         preventEscapeClose={busy}
         footer={
           <>
-            <button type="button" onClick={() => setProposeOpen(false)} disabled={busy} className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
+            <button
+              type="button"
+              onClick={() => setProposeOpen(false)}
+              disabled={busy}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
               {isPolish ? 'Wstecz' : 'Back'}
             </button>
             <button
@@ -296,10 +357,13 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
           <p className="text-[12px] text-c-text-muted">
             {isPolish
               ? 'Brak wyszukiwarki celów w całej organizacji w tym backendzie — wklej identyfikator (UUID) celu docelowego. Nigdy nie zgaduj/generuj identyfikatora losowo.'
-              : 'No cross-organization objective search exists in this backend — paste the target objective\'s UUID. Never guess/generate an id at random.'}
+              : "No cross-organization objective search exists in this backend — paste the target objective's UUID. Never guess/generate an id at random."}
           </p>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-align-target">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-align-target"
+            >
               {isPolish ? 'Docelowy cel (UUID)' : 'Target objective (UUID)'}
             </label>
             <input
@@ -311,7 +375,10 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-align-rationale">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-align-rationale"
+            >
               {isPolish ? 'Uzasadnienie (opcjonalnie)' : 'Rationale (optional)'}
             </label>
             <textarea
@@ -322,7 +389,10 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
             />
           </div>
           {formError ? (
-            <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            >
               <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
               <span>{formError}</span>
             </div>

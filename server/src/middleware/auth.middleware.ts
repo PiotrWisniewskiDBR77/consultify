@@ -5,14 +5,9 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import type { VerifyOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
-import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { getTableColumns } from '../utils/dbSchema.js';
-import logger from '../utils/Logger.js';
 import {
   type ActiveDemoSession,
   DEMO_SESSION_EXPIRED_CODE,
@@ -28,6 +23,11 @@ import {
   isVerifiedPlatformSuperAdmin,
   resolveBlockingOrgStatus,
 } from '../services/organizationSuspensionGuard.js';
+import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 import { evaluateSessionIdlePolicy } from './sessionIdlePolicy.js';
 
@@ -605,7 +605,12 @@ const mapRoleForAuthenticatedUser = (role?: string): UserRole => {
   }
 };
 
-const normalizePermissionRole = (role?: string): string => {
+// FIX-207b (decyzja właściciela 2026-08-31): exported so aiActionExecutor.ts
+// can build the identical req.can('approve_changes') check for the chat
+// create_decision write-proposal path (invokes DecisionController.createDecision
+// directly, in-process, as the single canonical writer — needs the SAME role
+// normalization this middleware uses, not a re-derived copy).
+export const normalizePermissionRole = (role?: string): string => {
   if (typeof role !== 'string') return 'VIEWER';
   const r = role.trim().toUpperCase();
   if (!r) return 'VIEWER';

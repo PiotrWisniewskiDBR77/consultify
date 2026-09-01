@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ReportRun } from '../reportRun.js';
 import { reconstructReportRun } from '../reportReconstruction.js';
+import type { ReportRun } from '../reportRun.js';
 
 const run = (sources: ReportRun['sources']): ReportRun =>
   ({ reportRunId: 'run-1', sources }) as ReportRun;

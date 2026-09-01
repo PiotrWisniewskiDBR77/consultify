@@ -45,10 +45,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
 import { Api } from '@/services/api';
+
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 
 /**
  * ★ WŁĄCZONE NA PROŚBĘ WŁAŚCICIELA (2026-08-30): ten harness startuje z WŁĄCZONYM

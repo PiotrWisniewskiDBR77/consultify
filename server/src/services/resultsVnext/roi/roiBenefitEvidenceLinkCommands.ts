@@ -32,19 +32,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiBenefitEvidenceLink,
   type RoiBenefitEvidenceLink,
   type RoiBenefitEvidenceLinkRow,
   type RoiEvidenceLinkPurpose,
+  toRoiBenefitEvidenceLink,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -54,7 +58,11 @@ import {
 export class RoiBenefitEvidenceLinkValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_BENEFIT_EVIDENCE_LINK', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_BENEFIT_EVIDENCE_LINK',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiBenefitEvidenceLinkValidationError';
     this.code = code;
@@ -305,11 +313,17 @@ export async function removeBenefitEvidenceLink(
     loadForUpdate: loadEvidenceLinkForUpdate,
     getCurrentVersion: evidenceLinkRowVersion,
     applyMutation: async (client, currentRow, _nextVersion) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitEvidenceLink', {
-        access,
-        actorUserId,
-        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.remove,
-      });
+      await assertCaseEditableForUpdate(
+        client,
+        caseId,
+        organizationId,
+        'removeBenefitEvidenceLink',
+        {
+          access,
+          actorUserId,
+          capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.remove,
+        }
+      );
       beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
       await client.query(`DELETE FROM rvn_roi_benefit_evidence_links WHERE link_id = $1`, [linkId]);
       return { linkId };
@@ -421,7 +435,8 @@ export async function flagBenefitEvidenceLinkDisputed(
         [disputeStatus, mergedNotes, nextVersion, linkId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[flagBenefitEvidenceLinkDisputed] update returned no row for ${linkId}`);
+      if (!updatedRow)
+        throw new Error(`[flagBenefitEvidenceLinkDisputed] update returned no row for ${linkId}`);
       return toRoiBenefitEvidenceLink(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -531,7 +546,8 @@ export async function flagEvidenceLinkFreshnessCheck(
         [linkId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[flagEvidenceLinkFreshnessCheck] update returned no row for ${linkId}`);
+      if (!updatedRow)
+        throw new Error(`[flagEvidenceLinkFreshnessCheck] update returned no row for ${linkId}`);
       return toRoiBenefitEvidenceLink(updatedRow);
     },
     buildEvent: ({ result }) => {

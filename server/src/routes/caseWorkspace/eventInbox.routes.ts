@@ -123,9 +123,9 @@ import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
-import logger from '../../utils/Logger.js';
-import { AppError } from '../../utils/ErrorHandler.js';
 import * as eventInboxService from '../../services/caseWorkspace/eventInboxService.js';
+import { AppError } from '../../utils/ErrorHandler.js';
+import logger from '../../utils/Logger.js';
 import { classifyDomainCode } from './_shared/errors.js';
 import { parseBody, parseParams } from './_shared/validate.js';
 
@@ -173,7 +173,9 @@ function loadChannelConfigsFromEnv(): EnvChannelConfig[] {
     return [];
   }
   if (!Array.isArray(parsed)) {
-    logger.error('[eventInboxRoutes] CASE_WORKSPACE_INBOX_CHANNELS_JSON must be a JSON array — zero channels registered.');
+    logger.error(
+      '[eventInboxRoutes] CASE_WORKSPACE_INBOX_CHANNELS_JSON must be a JSON array — zero channels registered.'
+    );
     return [];
   }
   return parsed.filter((entry): entry is EnvChannelConfig => {
@@ -210,11 +212,15 @@ export function bootstrapChannelsFromEnv(): number {
       // validatePayload instead — this bootstrap path is not the only way to
       // register a channel, just the production one.
       validatePayload: (payload) =>
-        eventInboxService.isDeliveredAtWithinTolerance((payload as Record<string, unknown>).deliveredAt),
+        eventInboxService.isDeliveredAtWithinTolerance(
+          (payload as Record<string, unknown>).deliveredAt
+        ),
     });
   }
   if (configs.length > 0) {
-    logger.info(`[eventInboxRoutes] bootstrapped ${configs.length} inbound event channel(s) from env.`);
+    logger.info(
+      `[eventInboxRoutes] bootstrapped ${configs.length} inbound event channel(s) from env.`
+    );
   }
   return configs.length;
 }
@@ -250,7 +256,10 @@ const bodySchema = z.object({
 // Outcome -> HTTP mapping. See this file's header comment for the contract.
 // ---------------------------------------------------------------------------
 
-function respondForResult(res: Response, result: eventInboxService.ReceiveExternalEventResult): void {
+function respondForResult(
+  res: Response,
+  result: eventInboxService.ReceiveExternalEventResult
+): void {
   switch (result.outcome) {
     case 'applied':
       res.status(200).json({
@@ -284,7 +293,9 @@ function respondForResult(res: Response, result: eventInboxService.ReceiveExtern
       return;
     default: {
       const exhaustiveCheck: never = result;
-      throw new Error(`eventInboxRoutes: unhandled receiveExternalEvent outcome: ${JSON.stringify(exhaustiveCheck)}`);
+      throw new Error(
+        `eventInboxRoutes: unhandled receiveExternalEvent outcome: ${JSON.stringify(exhaustiveCheck)}`
+      );
     }
   }
 }
@@ -301,7 +312,9 @@ function respondForResult(res: Response, result: eventInboxService.ReceiveExtern
  */
 function respondForThrown(res: Response, err: unknown): void {
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: { code: err.code, message: err.message, details: err.details } });
+    res
+      .status(err.statusCode)
+      .json({ error: { code: err.code, message: err.message, details: err.details } });
     return;
   }
   if (err instanceof Error && /^[a-z][a-z0-9_]*(:.*)?$/.test(err.message)) {
@@ -309,7 +322,9 @@ function respondForThrown(res: Response, err: unknown): void {
     res.status(status).json({ error: { code: code.toUpperCase() } });
     return;
   }
-  logger.error(`[eventInboxRoutes] unexpected failure: ${err instanceof Error ? err.stack : String(err)}`);
+  logger.error(
+    `[eventInboxRoutes] unexpected failure: ${err instanceof Error ? err.stack : String(err)}`
+  );
   res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
 }
 

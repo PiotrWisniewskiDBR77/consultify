@@ -73,7 +73,10 @@ import {
 } from '../../utils/queryHelpers.js';
 import { getCorrelationId } from '../../utils/RequestStore.js';
 import { publishEvent, redact } from './eventOutboxService.js';
-import { satisfyWaitOnClient, loadWaitByCorrelationKeyOnClient } from './waitSubscriptionService.js';
+import {
+  loadWaitByCorrelationKeyOnClient,
+  satisfyWaitOnClient,
+} from './waitSubscriptionService.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -174,7 +177,12 @@ export interface ReceiveExternalEventInput {
 
 export type ReceiveExternalEventResult =
   | { outcome: 'applied'; inboxRecordId: string; waitId: string }
-  | { outcome: 'duplicate'; inboxRecordId: string; firstReceivedAt: string; appliedEffectRef: string | null }
+  | {
+      outcome: 'duplicate';
+      inboxRecordId: string;
+      firstReceivedAt: string;
+      appliedEffectRef: string | null;
+    }
   | { outcome: 'rejected'; inboxRecordId: string; rejectionCode: InboxRejectionCode }
   | { outcome: 'unauthenticated'; rejectionCode: 'SIGNATURE_INVALID' | 'CHANNEL_UNKNOWN' };
 
@@ -1000,7 +1008,8 @@ export async function listInboxRecordsForOrganization(
   options: { status?: InboxRecordStatus; limit?: number } = {}
 ): Promise<InboxRecord[]> {
   const orgId = requireNonBlank(organizationId, 'inbox_organization_id_required');
-  const limit = Number.isInteger(options.limit) && (options.limit as number) > 0 ? options.limit : 100;
+  const limit =
+    Number.isInteger(options.limit) && (options.limit as number) > 0 ? options.limit : 100;
   const rows = await queryAll<InboxRow>(
     `SELECT ${SELECT_COLUMNS} FROM ${INBOX_TABLE}
       WHERE organization_id = ?
@@ -1017,7 +1026,8 @@ export async function listInboxReconciliationBacklog(
   options: { organizationId?: string; limit?: number } = {}
 ): Promise<InboxRecord[]> {
   const organizationId = optionalTrimmed(options.organizationId);
-  const limit = Number.isInteger(options.limit) && (options.limit as number) > 0 ? options.limit : 100;
+  const limit =
+    Number.isInteger(options.limit) && (options.limit as number) > 0 ? options.limit : 100;
   const rows = await queryAll<InboxRow>(
     `SELECT ${SELECT_COLUMNS} FROM ${INBOX_TABLE}
       WHERE status IN ('REJECTED', 'DEAD_LETTER')

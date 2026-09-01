@@ -15,16 +15,15 @@ import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import emailService from './emailService.js';
 import {
-  buildAssignmentManagerScopeClause,
-  type InterviewManagerScope,
-} from './interviewManagerScope.js';
-import notificationService from './notificationService.js';
-
-import {
   canonicalStatusToken,
   statusEqualsSql,
   statusInSql,
 } from './interview/interviewStatusNormalization.js';
+import {
+  buildAssignmentManagerScopeClause,
+  type InterviewManagerScope,
+} from './interviewManagerScope.js';
+import notificationService from './notificationService.js';
 
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   if (!value) return fallback;

@@ -24,7 +24,6 @@
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import type { FinanceUnsavedOperationStackEntry } from '../../../types/finance/WorkspaceState.js';
-import { OperationStack, type OperationStackEntry } from './operationStack.js';
 import {
   checkpointOperationStack,
   type CheckpointPayload,
@@ -32,6 +31,7 @@ import {
   type CheckpointSource,
   type WorkingRevisionCheckpointRow,
 } from './autosaveService.js';
+import { OperationStack, type OperationStackEntry } from './operationStack.js';
 
 // ---------------------------------------------------------------------------
 // Detection
@@ -60,7 +60,11 @@ function parseCheckpointPayload(raw: unknown): CheckpointPayload | null {
   // `pg` already parses JSONB columns into JS objects; guard defensively in
   // case a caller passes a pre-stringified value through a different path.
   const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as any).unsavedOperationStack)) {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !Array.isArray((value as any).unsavedOperationStack)
+  ) {
     return null;
   }
   return value as CheckpointPayload;
@@ -80,13 +84,17 @@ export async function detectRecoverableCheckpoint(params: {
       `SELECT * FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
       [params.artifactId, params.organizationId]
     );
-    if (!current) return { ok: false, code: 'NOT_FOUND', message: 'No working revision for this artifact' };
+    if (!current)
+      return { ok: false, code: 'NOT_FOUND', message: 'No working revision for this artifact' };
 
     if (!current.crash_recovery_checkpoint) {
       return { ok: true, recoverable: false };
     }
 
-    const lastExplicit = await tx.queryOne<{ working_revision_id: string; revision_seq: number | string }>(
+    const lastExplicit = await tx.queryOne<{
+      working_revision_id: string;
+      revision_seq: number | string;
+    }>(
       `SELECT working_revision_id, revision_seq FROM finance_working_revisions
         WHERE artifact_id = ? AND organization_id = ? AND checkpoint_source = 'EXPLICIT_SAVE'
         ORDER BY revision_seq DESC LIMIT 1`,
@@ -120,21 +128,23 @@ export function reconstructOperationStack(
   checkpoint: Pick<RecoverableCheckpoint, 'payload'>,
   options: { maxDepth?: number } = {}
 ): OperationStack {
-  const entries: OperationStackEntry[] = (checkpoint.payload?.unsavedOperationStack ?? []).map((e) => ({
-    operation: e.operation,
-    // The checkpoint payload only carries `FinanceUnsavedOperationStackEntry`
-    // (operation + appliedAt + committed — the WorkspaceState wire shape,
-    // `server/src/types/finance/WorkspaceState.ts`), which does NOT carry
-    // per-cell `priorValues` (that is OperationStack's own in-memory undo
-    // bookkeeping, never serialized to the server — AP-00 ADR section 8
-    // deliberately keeps WorkspaceState's wire shape minimal). A
-    // crash-recovered stack can therefore REPLAY forward (redo the pending
-    // edits) but cannot itself further UNDO past the recovery point without
-    // the client re-deriving priorValues from the grid it reloads against —
-    // documented here rather than silently guessing empty priorValues.
-    priorValues: [],
-    pushedAt: e.appliedAt,
-  }));
+  const entries: OperationStackEntry[] = (checkpoint.payload?.unsavedOperationStack ?? []).map(
+    (e) => ({
+      operation: e.operation,
+      // The checkpoint payload only carries `FinanceUnsavedOperationStackEntry`
+      // (operation + appliedAt + committed — the WorkspaceState wire shape,
+      // `server/src/types/finance/WorkspaceState.ts`), which does NOT carry
+      // per-cell `priorValues` (that is OperationStack's own in-memory undo
+      // bookkeeping, never serialized to the server — AP-00 ADR section 8
+      // deliberately keeps WorkspaceState's wire shape minimal). A
+      // crash-recovered stack can therefore REPLAY forward (redo the pending
+      // edits) but cannot itself further UNDO past the recovery point without
+      // the client re-deriving priorValues from the grid it reloads against —
+      // documented here rather than silently guessing empty priorValues.
+      priorValues: [],
+      pushedAt: e.appliedAt,
+    })
+  );
   return OperationStack.fromEntries(entries, options);
 }
 
@@ -144,13 +154,20 @@ export async function loadRecoverableWorkspace(params: {
   artifactId: string;
   maxUndoDepth?: number;
 }): Promise<
-  | { ok: true; recoverable: true; checkpoint: RecoverableCheckpoint; operationStack: OperationStack }
+  | {
+      ok: true;
+      recoverable: true;
+      checkpoint: RecoverableCheckpoint;
+      operationStack: OperationStack;
+    }
   | { ok: true; recoverable: false }
   | { ok: false; code: 'NOT_FOUND'; message: string }
 > {
   const detection = await detectRecoverableCheckpoint(params);
   if (!detection.ok || !detection.recoverable) return detection;
-  const operationStack = reconstructOperationStack(detection.checkpoint, { maxDepth: params.maxUndoDepth });
+  const operationStack = reconstructOperationStack(detection.checkpoint, {
+    maxDepth: params.maxUndoDepth,
+  });
   return { ok: true, recoverable: true, checkpoint: detection.checkpoint, operationStack };
 }
 

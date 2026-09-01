@@ -76,7 +76,10 @@ export interface ToolOutputsPanelProps {
   onReopened?: (revisionId: string) => void;
 }
 
-export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionId, onReopened }) => {
+export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({
+  toolSessionId,
+  onReopened,
+}) => {
   const { t } = useTranslation();
 
   const [outputs, setOutputs] = useState<OutputSummary[]>([]);
@@ -216,11 +219,7 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
               : 'rounded-xl border border-c-border-subtle bg-c-surface'
           }
         >
-          {slideMode ? (
-            <SlideDeckView doc={viewingDoc} />
-          ) : (
-            <ToolReportView doc={viewingDoc} />
-          )}
+          {slideMode ? <SlideDeckView doc={viewingDoc} /> : <ToolReportView doc={viewingDoc} />}
         </div>
       </div>
     );
@@ -229,9 +228,7 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
   return (
     <div className="space-y-4" data-testid="tool-outputs-panel">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-c-text">
-          {t('toolOutputs.title', 'Outputs')}
-        </h3>
+        <h3 className="text-sm font-semibold text-c-text">{t('toolOutputs.title', 'Outputs')}</h3>
         {outputsLoading && (
           <span className="text-[11px] text-c-text-muted">{t('common.loading', 'Loading…')}</span>
         )}
@@ -257,7 +254,9 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
               data-testid="tool-output-row"
               data-output-id={o.id}
             >
-              <span className="w-10 shrink-0 text-xs tabular-nums text-c-text-muted">v{o.version}</span>
+              <span className="w-10 shrink-0 text-xs tabular-nums text-c-text-muted">
+                v{o.version}
+              </span>
               <span className="flex-1 truncate text-sm text-c-text">{o.title}</span>
               <EntityStatusChip status={o.isCurrent ? o.status : 'superseded'} />
               <span className="w-24 shrink-0 text-right text-[11px] text-c-text-muted">
@@ -305,7 +304,10 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
             )}
             {!childLoading && reports.length === 0 && (
               <p className="mt-1 text-xs text-c-text-muted">
-                {t('toolOutputs.noReports', 'No report or presentation generated from this output yet.')}
+                {t(
+                  'toolOutputs.noReports',
+                  'No report or presentation generated from this output yet.'
+                )}
               </p>
             )}
             <ul className="mt-1.5 space-y-1">

@@ -54,14 +54,19 @@ import { ArtifactPermalinkButton } from '../ArtifactPermalinkButton';
 export interface AttachmentsLinksCanvasProps {
   /* ── Attachments ─────────────────────────────────────── */
   attachments: Attachment[];
-  onUploadAttachments: (files: FileList) => Promise<void>;
-  onDeleteAttachment: (id: string) => Promise<void>;
+  // Kanwa AWAITUJE te handlery, ale NIGDY nie oglada ich wyniku (linie ~596,
+  // 635, 672, 867, 979, 1114 — samo `await` albo `void`). Sygnatura
+  // `Promise<void>` odrzucala wiec wolajacych, ktorzy przeszli na kontrakt
+  // MutationResult ({ ok, error }) — mimo ze kanwie jest to obojetne.
+  // `Promise<unknown>` mowi prawde: wynik nie jest tu do niczego uzywany.
+  onUploadAttachments: (files: FileList) => Promise<unknown>;
+  onDeleteAttachment: (id: string) => Promise<unknown>;
   onEditAttachment?: (id: string, patch: Partial<Attachment>) => void;
 
   /* ── Linked items ────────────────────────────────────── */
   linkedItems: LinkedItem[];
-  onAddLinkedItem: (item: LinkedItem) => Promise<void>;
-  onRemoveLinkedItem: (item: Pick<LinkedItem, 'id' | 'type'>) => Promise<void>;
+  onAddLinkedItem: (item: LinkedItem) => Promise<unknown>;
+  onRemoveLinkedItem: (item: Pick<LinkedItem, 'id' | 'type'>) => Promise<unknown>;
   onEditLinkedItem?: (key: string, patch: Partial<LinkedItem>) => void;
   onNavigateLinkedItem?: (item: LinkedItem) => void;
   searchLinkedItems?: (query: string) => Promise<LinkedItem[]>;

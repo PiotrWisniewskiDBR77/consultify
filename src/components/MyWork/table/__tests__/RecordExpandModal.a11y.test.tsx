@@ -46,17 +46,13 @@ function Trigger({
 
 describe('RecordExpandModal — a11y dialog contract', () => {
   it('exposes role=dialog', async () => {
-    render(
-      <RecordExpandModal open onClose={vi.fn()} recordId="rec-1" tableId="tbl-1" />
-    );
+    render(<RecordExpandModal open onClose={vi.fn()} recordId="rec-1" tableId="tbl-1" />);
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('Escape closes it', async () => {
     const onClose = vi.fn();
-    render(
-      <RecordExpandModal open onClose={onClose} recordId="rec-1" tableId="tbl-1" />
-    );
+    render(<RecordExpandModal open onClose={onClose} recordId="rec-1" tableId="tbl-1" />);
     await screen.findByRole('dialog');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -66,9 +62,7 @@ describe('RecordExpandModal — a11y dialog contract', () => {
     render(
       <Trigger>
         {(open, close) =>
-          open && (
-            <RecordExpandModal open onClose={close} recordId="rec-1" tableId="tbl-1" />
-          )
+          open && <RecordExpandModal open onClose={close} recordId="rec-1" tableId="tbl-1" />
         }
       </Trigger>
     );

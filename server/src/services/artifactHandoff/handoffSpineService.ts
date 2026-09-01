@@ -49,7 +49,13 @@ export type ProducerKind = (typeof PRODUCER_KINDS)[number];
 export const TARGET_KINDS = ['document', 'presentation', 'workbook', 'material'] as const;
 export type TargetKind = (typeof TARGET_KINDS)[number];
 
-export const PROPOSAL_STATES = ['pending', 'approved', 'rejected', 'materialized', 'failed'] as const;
+export const PROPOSAL_STATES = [
+  'pending',
+  'approved',
+  'rejected',
+  'materialized',
+  'failed',
+] as const;
 export type ProposalState = (typeof PROPOSAL_STATES)[number];
 
 export const EXPORT_ARTIFACT_KINDS = ['document', 'workbook', 'presentation'] as const;
@@ -560,7 +566,8 @@ async function decideProposal(
   const organizationId = requireNonEmpty(input.organizationId, 'organizationId');
   const proposalId = requireNonEmpty(input.proposalId, 'proposalId');
   const decidedBy = requireHumanActor(input.decidedBy, 'decidedBy');
-  const reason = typeof input.reason === 'string' && input.reason.trim() !== '' ? input.reason : null;
+  const reason =
+    typeof input.reason === 'string' && input.reason.trim() !== '' ? input.reason : null;
 
   return withPgTransaction(async (query) => {
     const updated = await query<ProposalRow>(
@@ -841,7 +848,10 @@ export async function recordExportReceipt(
       [exportReceiptId, organizationId]
     );
     if (!inserted.rows[0]) {
-      throw new HandoffSpineError('export receipt not found after insert', 'INSERT_READBACK_FAILED');
+      throw new HandoffSpineError(
+        'export receipt not found after insert',
+        'INSERT_READBACK_FAILED'
+      );
     }
     return { receipt: mapExportReceiptRow(inserted.rows[0]), replayed: false };
   });

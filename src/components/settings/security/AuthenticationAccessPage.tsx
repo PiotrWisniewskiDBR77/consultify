@@ -263,7 +263,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     try {
       await Api.revokeAllSessions();
       await refreshSessions();
-      toast.success(t('settings.securityMessages.allSessionsRevoked', 'All other sessions revoked'));
+      toast.success(
+        t('settings.securityMessages.allSessionsRevoked', 'All other sessions revoked')
+      );
     } catch (error: unknown) {
       toast.error(
         normalizeApiErrorMessage(

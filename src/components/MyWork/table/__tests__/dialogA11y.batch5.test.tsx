@@ -48,12 +48,13 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
   deleteGovernedModel: vi.fn(async () => ({})),
 }));
 
+import type { TablePlatformField } from '@/types/tablePlatform';
+
+import { ChatToSchemaPanel } from '../ChatToSchemaPanel';
 import { FieldManager } from '../FieldManager';
 import { GovernedModelsDashboard } from '../governed/GovernedModelsDashboard';
+import type { ColumnDef, TableNode } from '../tableTypes';
 import { PlatformGridView, type PlatformGridViewProps } from '../ViewRouter';
-import { ChatToSchemaPanel } from '../ChatToSchemaPanel';
-import type { TablePlatformField } from '@/types/tablePlatform';
-import type { TableNode, ColumnDef } from '../tableTypes';
 
 function Harness({
   children,
@@ -295,9 +296,7 @@ describe('PlatformGridView — note editor dialog a11y contract', () => {
 describe('ChatToSchemaPanel — slideOver dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape calls onClose', async () => {
     const onClose = vi.fn();
-    render(
-      <ChatToSchemaPanel workspaceId="ws-1" onClose={onClose} mode="slideOver" />
-    );
+    render(<ChatToSchemaPanel workspaceId="ws-1" onClose={onClose} mode="slideOver" />);
 
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveAttribute('aria-modal', 'true');

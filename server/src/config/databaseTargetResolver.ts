@@ -2,6 +2,16 @@ type ResolveOptions = {
   databaseUrl?: string;
   publicDatabaseUrl?: string;
   env?: NodeJS.ProcessEnv;
+  /**
+   * FIX-204-4: lets a caller with its OWN stricter, opt-in-to-leave-loopback
+   * guard (see scriptDatabaseTarget.ts's `allowOnlyLoopback`) bypass the
+   * "local host requires a test environment" rejection below. Does NOT
+   * bypass the production-host denylist (`assertHostIsNotUnverifiedProduction`
+   * still runs unconditionally) — this only concerns the local/loopback
+   * check, which for such a caller is inverted on purpose: loopback is the
+   * safe default, not the thing that needs an excuse.
+   */
+  allowLocalHost?: boolean;
 };
 
 function normalize(value: unknown): string | undefined {
@@ -13,8 +23,8 @@ function isRailwayPrivateHost(host: string): boolean {
   return host.endsWith('.railway.internal');
 }
 
-function isLocalHost(host: string): boolean {
-  return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+export function isLocalHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1';
 }
 
 function isRunningInsideRailway(env: NodeJS.ProcessEnv): boolean {
@@ -53,10 +63,11 @@ function normalizeLower(value: unknown): string {
  * unset/blank env var cannot silently disable the guard.
  */
 export function getProductionDatabaseHostFingerprints(env: NodeJS.ProcessEnv): string[] {
-  const extra = normalize(env.PRODUCTION_DB_HOST_DENYLIST_EXTRA)
-    ?.split(',')
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean) ?? [];
+  const extra =
+    normalize(env.PRODUCTION_DB_HOST_DENYLIST_EXTRA)
+      ?.split(',')
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean) ?? [];
   return [...DEFAULT_PRODUCTION_DB_HOST_FINGERPRINTS, ...extra];
 }
 
@@ -78,7 +89,9 @@ export function isKnownProductionDatabaseHost(
  * connection-string handoffs, which is exactly how the incident happened.
  */
 export function isVerifiedProductionRuntime(env: NodeJS.ProcessEnv): boolean {
-  return isRunningInsideRailway(env) && normalizeLower(env.RAILWAY_ENVIRONMENT_NAME) === 'production';
+  return (
+    isRunningInsideRailway(env) && normalizeLower(env.RAILWAY_ENVIRONMENT_NAME) === 'production'
+  );
 }
 
 /**
@@ -129,14 +142,15 @@ export function getDatabaseHost(url: string): string | null {
 function assertResolvedDatabaseUrlIsReachable(
   databaseUrl: string,
   env: NodeJS.ProcessEnv,
-  source: 'DATABASE_URL' | 'DATABASE_PUBLIC_URL'
+  source: 'DATABASE_URL' | 'DATABASE_PUBLIC_URL',
+  allowLocalHost = false
 ): void {
   const host = getDatabaseHost(databaseUrl);
   if (!host) {
     throw new Error(`Selected ${source} is not a valid database URL.`);
   }
 
-  if (!allowLocalDatabaseForTests(env) && isLocalHost(host)) {
+  if (!allowLocalHost && !allowLocalDatabaseForTests(env) && isLocalHost(host)) {
     throw new Error(
       `Selected ${source} points to local host ${host}. This project requires the external Postgres target outside tests.`
     );
@@ -184,11 +198,16 @@ export function resolveReachableDatabaseUrl(options: ResolveOptions = {}): {
   }
 
   if (databaseUrl) {
-    assertResolvedDatabaseUrlIsReachable(databaseUrl, env, 'DATABASE_URL');
+    assertResolvedDatabaseUrlIsReachable(databaseUrl, env, 'DATABASE_URL', options.allowLocalHost);
     return { databaseUrl, source: 'DATABASE_URL' };
   }
 
-  assertResolvedDatabaseUrlIsReachable(publicDatabaseUrl!, env, 'DATABASE_PUBLIC_URL');
+  assertResolvedDatabaseUrlIsReachable(
+    publicDatabaseUrl!,
+    env,
+    'DATABASE_PUBLIC_URL',
+    options.allowLocalHost
+  );
   return {
     databaseUrl: publicDatabaseUrl,
     source: 'DATABASE_PUBLIC_URL',

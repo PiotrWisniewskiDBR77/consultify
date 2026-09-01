@@ -13,21 +13,21 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
+import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import type { CriticalPathTask } from '../../services/criticalPathService.js';
 import { calculateCriticalPath } from '../../services/criticalPathService.js';
-import { computeCanonicalExecutionHealth } from '../../services/execution/canonicalExecutionHealthService.js';
 import {
   type CustomFieldDefinition,
   CustomFieldDefinitionSchema,
   UpdateCustomFieldSchema,
   validateCustomFieldValues,
 } from '../../services/customFieldsService.js';
+import { computeCanonicalExecutionHealth } from '../../services/execution/canonicalExecutionHealthService.js';
 import {
   getCapacityOverview,
   getOverloadAlerts,

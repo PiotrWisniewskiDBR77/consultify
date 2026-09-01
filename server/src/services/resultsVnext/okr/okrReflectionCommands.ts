@@ -37,30 +37,31 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import logger from '../../../utils/Logger.js';
-
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  resolveConsumerGroups,
-  EVENT_INSERT_SQL,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  EVENT_INSERT_SQL,
+  executeAtomicCommand,
   type ExistingEventRow,
+  resolveConsumerGroups,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { resolveOkrCyclePinnedPolicySnapshot } from './okrObjectiveCommands.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import type { OkrScoringModel } from './okrProgramTypes.js';
-import { OkrSetValidationError } from './okrSetCommands.js';
-import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
 import {
-  toOkrReflection,
   type OkrFinalScoreKeyResultSnapshot,
   type OkrReflection,
   type OkrReflectionDisposition,
   type OkrReflectionRow,
+  toOkrReflection,
 } from './okrReflectionTypes.js';
+import { OkrSetValidationError } from './okrSetCommands.js';
+import { type OkrSet, type OkrSetRow, toOkrSet } from './okrSetTypes.js';
 
 // ==========================================
 // ERRORS
@@ -98,7 +99,11 @@ export class OkrReflectionNotFoundError extends Error {
 export class OkrReflectionValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_REFLECTION_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_REFLECTION_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'OkrReflectionValidationError';
     this.code = code;
@@ -188,7 +193,11 @@ export interface FinalScoreOkrSetInput {
 
 export interface FinalScoreOkrSetResult {
   set: OkrSet;
-  scoredObjectives: Array<{ objectiveId: string; finalScore: number | null; scoringModelUnsupported: boolean }>;
+  scoredObjectives: Array<{
+    objectiveId: string;
+    finalScore: number | null;
+    scoringModelUnsupported: boolean;
+  }>;
 }
 
 interface ScorableObjectiveRow {
@@ -251,7 +260,11 @@ export async function finalScoreOkrSet(
         );
       }
 
-      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
+      const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(
+        client,
+        setId,
+        organizationId
+      );
       const scoringModel = snapshot.scoringModel;
 
       const objectivesResult = await client.query<ScorableObjectiveRow>(
@@ -330,7 +343,10 @@ export async function finalScoreOkrSet(
       return { set: toOkrSet(updatedRow), scoredObjectives };
     },
     buildEvent: ({ result, nextVersion }) => {
-      const afterState: Record<string, unknown> = { set: result.set, scoredObjectives: result.scoredObjectives };
+      const afterState: Record<string, unknown> = {
+        set: result.set,
+        scoredObjectives: result.scoredObjectives,
+      };
       return {
         schemaVersion: 1,
         eventType: 'okr_set.final_scored',
@@ -435,9 +451,13 @@ export async function recordObjectiveReflection(
     const objectiveRow = objectiveResult.rows[0];
     if (!objectiveRow) {
       await client.query('ROLLBACK');
-      throw new OkrReflectionValidationError(`OKR Objective ${objectiveId} not found`, 'OBJECTIVE_NOT_FOUND', {
-        objectiveId,
-      });
+      throw new OkrReflectionValidationError(
+        `OKR Objective ${objectiveId} not found`,
+        'OBJECTIVE_NOT_FOUND',
+        {
+          objectiveId,
+        }
+      );
     }
     if (objectiveRow.set_id !== setId) {
       await client.query('ROLLBACK');
@@ -496,11 +516,24 @@ export async function recordObjectiveReflection(
             next_cycle_change, disposition, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
-        [setId, objectiveId, organizationId, whatWorked, whatDidNotWork, why, learning, nextCycleChange, disposition, actorUserId]
+        [
+          setId,
+          objectiveId,
+          organizationId,
+          whatWorked,
+          whatDidNotWork,
+          why,
+          learning,
+          nextCycleChange,
+          disposition,
+          actorUserId,
+        ]
       );
       const inserted = insertResult.rows[0];
       if (!inserted) {
-        throw new Error(`[recordObjectiveReflection] insert returned no row for objective ${objectiveId}`);
+        throw new Error(
+          `[recordObjectiveReflection] insert returned no row for objective ${objectiveId}`
+        );
       }
       resultRow = inserted;
     } else {
@@ -529,11 +562,23 @@ export async function recordObjectiveReflection(
                 row_version = $7, updated_by = $8, updated_at = now()
           WHERE objective_id = $9
           RETURNING *`,
-        [whatWorked, whatDidNotWork, why, learning, nextCycleChange, disposition, nextVersion, actorUserId, objectiveId]
+        [
+          whatWorked,
+          whatDidNotWork,
+          why,
+          learning,
+          nextCycleChange,
+          disposition,
+          nextVersion,
+          actorUserId,
+          objectiveId,
+        ]
       );
       const updated = updateResult.rows[0];
       if (!updated) {
-        throw new Error(`[recordObjectiveReflection] update returned no row for objective ${objectiveId}`);
+        throw new Error(
+          `[recordObjectiveReflection] update returned no row for objective ${objectiveId}`
+        );
       }
       resultRow = updated;
     }
@@ -565,30 +610,33 @@ export async function recordObjectiveReflection(
       payload: { setId, objectiveId },
     };
 
-    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-      eventInput.schemaVersion,
-      eventInput.eventType,
-      eventInput.aggregateType,
-      eventInput.aggregateId,
-      eventInput.organizationId,
-      eventInput.actorUserId,
-      eventInput.actorEffectiveRole,
-      eventInput.commandId,
-      eventInput.correlationId,
-      eventInput.causationId,
-      eventInput.occurredAt,
-      eventInput.policyVersion,
-      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-      eventInput.stateHash,
-      eventInput.reason,
-      JSON.stringify(eventInput.evidenceRefs ?? []),
-      eventInput.source,
-      eventInput.idempotencyKey,
-      eventInput.expectedVersion,
-      eventInput.resultingVersion,
-      JSON.stringify(eventInput.payload ?? {}),
-    ]);
+    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+      EVENT_INSERT_SQL,
+      [
+        eventInput.schemaVersion,
+        eventInput.eventType,
+        eventInput.aggregateType,
+        eventInput.aggregateId,
+        eventInput.organizationId,
+        eventInput.actorUserId,
+        eventInput.actorEffectiveRole,
+        eventInput.commandId,
+        eventInput.correlationId,
+        eventInput.causationId,
+        eventInput.occurredAt,
+        eventInput.policyVersion,
+        eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+        eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+        eventInput.stateHash,
+        eventInput.reason,
+        JSON.stringify(eventInput.evidenceRefs ?? []),
+        eventInput.source,
+        eventInput.idempotencyKey,
+        eventInput.expectedVersion,
+        eventInput.resultingVersion,
+        JSON.stringify(eventInput.payload ?? {}),
+      ]
+    );
 
     const insertedEvent = eventResult.rows[0];
     if (!insertedEvent) {
@@ -730,9 +778,13 @@ export async function recordOkrReflectionTeresaDraft(
     const objectiveRow = objectiveResult.rows[0];
     if (!objectiveRow) {
       await client.query('ROLLBACK');
-      throw new OkrReflectionValidationError(`OKR Objective ${objectiveId} not found`, 'OBJECTIVE_NOT_FOUND', {
-        objectiveId,
-      });
+      throw new OkrReflectionValidationError(
+        `OKR Objective ${objectiveId} not found`,
+        'OBJECTIVE_NOT_FOUND',
+        {
+          objectiveId,
+        }
+      );
     }
     if (objectiveRow.set_id !== setId) {
       await client.query('ROLLBACK');
@@ -795,7 +847,9 @@ export async function recordOkrReflectionTeresaDraft(
       );
       const inserted = insertResult.rows[0];
       if (!inserted) {
-        throw new Error(`[recordOkrReflectionTeresaDraft] insert returned no row for objective ${objectiveId}`);
+        throw new Error(
+          `[recordOkrReflectionTeresaDraft] insert returned no row for objective ${objectiveId}`
+        );
       }
       resultRow = inserted;
     } else {
@@ -837,7 +891,9 @@ export async function recordOkrReflectionTeresaDraft(
       );
       const updated = updateResult.rows[0];
       if (!updated) {
-        throw new Error(`[recordOkrReflectionTeresaDraft] update returned no row for objective ${objectiveId}`);
+        throw new Error(
+          `[recordOkrReflectionTeresaDraft] update returned no row for objective ${objectiveId}`
+        );
       }
       resultRow = updated;
     }
@@ -869,30 +925,33 @@ export async function recordOkrReflectionTeresaDraft(
       payload: { setId, objectiveId },
     };
 
-    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-      eventInput.schemaVersion,
-      eventInput.eventType,
-      eventInput.aggregateType,
-      eventInput.aggregateId,
-      eventInput.organizationId,
-      eventInput.actorUserId,
-      eventInput.actorEffectiveRole,
-      eventInput.commandId,
-      eventInput.correlationId,
-      eventInput.causationId,
-      eventInput.occurredAt,
-      eventInput.policyVersion,
-      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-      eventInput.stateHash,
-      eventInput.reason,
-      JSON.stringify(eventInput.evidenceRefs ?? []),
-      eventInput.source,
-      eventInput.idempotencyKey,
-      eventInput.expectedVersion,
-      eventInput.resultingVersion,
-      JSON.stringify(eventInput.payload ?? {}),
-    ]);
+    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+      EVENT_INSERT_SQL,
+      [
+        eventInput.schemaVersion,
+        eventInput.eventType,
+        eventInput.aggregateType,
+        eventInput.aggregateId,
+        eventInput.organizationId,
+        eventInput.actorUserId,
+        eventInput.actorEffectiveRole,
+        eventInput.commandId,
+        eventInput.correlationId,
+        eventInput.causationId,
+        eventInput.occurredAt,
+        eventInput.policyVersion,
+        eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+        eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+        eventInput.stateHash,
+        eventInput.reason,
+        JSON.stringify(eventInput.evidenceRefs ?? []),
+        eventInput.source,
+        eventInput.idempotencyKey,
+        eventInput.expectedVersion,
+        eventInput.resultingVersion,
+        JSON.stringify(eventInput.payload ?? {}),
+      ]
+    );
 
     const insertedEvent = eventResult.rows[0];
     if (!insertedEvent) {
@@ -944,9 +1003,12 @@ export async function recordOkrReflectionTeresaDraft(
     try {
       await client.query('ROLLBACK');
     } catch (rollbackErr) {
-      logger.warn('[resultsVnext/okr/okrReflectionCommands] rollback after error failed (teresa draft)', {
-        error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
-      });
+      logger.warn(
+        '[resultsVnext/okr/okrReflectionCommands] rollback after error failed (teresa draft)',
+        {
+          error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+        }
+      );
     }
     throw err;
   } finally {
@@ -1113,7 +1175,9 @@ export async function recordOkrReflectionTeresaDraftDisposition(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[recordOkrReflectionTeresaDraftDisposition] update returned no row for objective ${objectiveId}`);
+        throw new Error(
+          `[recordOkrReflectionTeresaDraftDisposition] update returned no row for objective ${objectiveId}`
+        );
       }
       return toOkrReflection(updatedRow);
     },

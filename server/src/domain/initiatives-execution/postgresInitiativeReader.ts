@@ -4,8 +4,8 @@ import type { CapacityScenario } from './capacityScenario.js';
 import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js';
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
 import type { PlanScenario } from './planScenario.js';
-import type { PortfolioScenario } from './portfolioScenario.js';
 import type { PortfolioDecision } from './portfolioDecision.js';
+import type { PortfolioScenario } from './portfolioScenario.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
 

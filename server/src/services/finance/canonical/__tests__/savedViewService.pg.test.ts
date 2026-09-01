@@ -102,8 +102,13 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
     // commentReviewService.pg.test.ts — finance_artifacts/finance_business_versions are
     // transitively undeletable once child rows exist (schema guarantee, not a test bug).
     await withPinnedPostgresTransaction(async (tx) => {
-      await tx.queryRun(`DELETE FROM finance_saved_views WHERE organization_id IN (?, ?)`, [orgId, otherOrgId]);
-      await tx.queryRun(`DELETE FROM finance_analysis_kpi_catalog WHERE organization_id = ?`, [orgId]);
+      await tx.queryRun(`DELETE FROM finance_saved_views WHERE organization_id IN (?, ?)`, [
+        orgId,
+        otherOrgId,
+      ]);
+      await tx.queryRun(`DELETE FROM finance_analysis_kpi_catalog WHERE organization_id = ?`, [
+        orgId,
+      ]);
     });
   });
 
@@ -145,7 +150,9 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
         { type: 'quality', values: ['MISSING'] },
         { type: 'entity', values: ['PARENT'] },
       ]);
-      expect(result.view.view_state.gridViewState.columns.find((c) => c.columnId === '2026-Q1')?.pinned).toBe('LEFT');
+      expect(
+        result.view.view_state.gridViewState.columns.find((c) => c.columnId === '2026-Q1')?.pinned
+      ).toBe('LEFT');
       expect(result.view.share_token).toBeTruthy();
     });
 
@@ -162,7 +169,11 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
     });
 
     it('listSavedViews: owner sees it, teammate does not', async () => {
-      const ownerList = await savedViewService.listSavedViews({ organizationId: orgId, artifactId: goldcoAnalysisArtifactId, requesterUserId: ownerUserId });
+      const ownerList = await savedViewService.listSavedViews({
+        organizationId: orgId,
+        artifactId: goldcoAnalysisArtifactId,
+        requesterUserId: ownerUserId,
+      });
       expect(ownerList.map((v) => v.id)).toContain(personalViewId);
 
       const teammateList = await savedViewService.listSavedViews({
@@ -196,7 +207,11 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
     });
 
     it('delete: a non-owner cannot delete; the owner can', async () => {
-      const forbidden = await savedViewService.deleteSavedView(orgId, personalViewId, teammateUserId);
+      const forbidden = await savedViewService.deleteSavedView(
+        orgId,
+        personalViewId,
+        teammateUserId
+      );
       expect(forbidden).toEqual({ ok: false, code: 'FORBIDDEN', message: expect.any(String) });
 
       const deleted = await savedViewService.deleteSavedView(orgId, personalViewId, ownerUserId);
@@ -269,7 +284,21 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
       // KPI-value business content is present on the row at all (there is no column that could
       // carry it), so a caller physically cannot render grid data from this response alone.
       expect(Object.keys(resolved.view).sort()).toEqual(
-        ['artifact_id', 'artifact_type', 'columnAvailability', 'created_at', 'created_by', 'id', 'name', 'organization_id', 'owner_user_id', 'scope', 'share_token', 'updated_at', 'view_state'].sort()
+        [
+          'artifact_id',
+          'artifact_type',
+          'columnAvailability',
+          'created_at',
+          'created_by',
+          'id',
+          'name',
+          'organization_id',
+          'owner_user_id',
+          'scope',
+          'share_token',
+          'updated_at',
+          'view_state',
+        ].sort()
       );
     });
 
@@ -289,7 +318,10 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
       const ownArtifact = await artifactVersionService.getArtifact(orgId, goldcoAnalysisArtifactId);
       expect(ownArtifact).toBeTruthy();
 
-      const foreignLookup = await artifactVersionService.getArtifact(otherOrgId, goldcoAnalysisArtifactId);
+      const foreignLookup = await artifactVersionService.getArtifact(
+        otherOrgId,
+        goldcoAnalysisArtifactId
+      );
       expect(foreignLookup).toBeNull();
     });
 
@@ -371,8 +403,26 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
     const ratioFormulaAst = {
       node: 'operator',
       op: 'ratio',
-      left: { node: 'operand', kind: 'cell_ref', cellRef: { canonicalLineCode: 'CURRENT_ASSETS', consolidationScope: 'CONSOLIDATED', entityScope: 'ANALYSIS_DEFAULT', periodOffset: 'CURRENT' } },
-      right: { node: 'operand', kind: 'cell_ref', cellRef: { canonicalLineCode: 'CURRENT_LIABILITIES', consolidationScope: 'CONSOLIDATED', entityScope: 'ANALYSIS_DEFAULT', periodOffset: 'CURRENT' } },
+      left: {
+        node: 'operand',
+        kind: 'cell_ref',
+        cellRef: {
+          canonicalLineCode: 'CURRENT_ASSETS',
+          consolidationScope: 'CONSOLIDATED',
+          entityScope: 'ANALYSIS_DEFAULT',
+          periodOffset: 'CURRENT',
+        },
+      },
+      right: {
+        node: 'operand',
+        kind: 'cell_ref',
+        cellRef: {
+          canonicalLineCode: 'CURRENT_LIABILITIES',
+          consolidationScope: 'CONSOLIDATED',
+          entityScope: 'ANALYSIS_DEFAULT',
+          periodOffset: 'CURRENT',
+        },
+      },
     };
 
     beforeAll(async () => {
@@ -387,15 +437,21 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
              kpi_code, status, tier, organization_id, category, kpi_name, unit_type, formula_ast,
              period_convention, negative_denominator_policy, required_canonical_line_codes, created_by
            ) VALUES (?, 'DRAFT', 'ORG_CUSTOM', ?, 'LIQUIDITY', ?, 'RATIO', ?, 'POINT_IN_TIME', 'SHOW_WITH_FLAG', ?, ?)`,
-          [kpiCode, orgId, `GoldCo Custom Ratio ${kpiCode}`, JSON.stringify(ratioFormulaAst), ['CURRENT_ASSETS', 'CURRENT_LIABILITIES'], ownerUserId]
+          [
+            kpiCode,
+            orgId,
+            `GoldCo Custom Ratio ${kpiCode}`,
+            JSON.stringify(ratioFormulaAst),
+            ['CURRENT_ASSETS', 'CURRENT_LIABILITIES'],
+            ownerUserId,
+          ]
         )
       );
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_analysis_kpi_catalog SET status = 'ACTIVE', approved_by = ? WHERE kpi_code = ? AND organization_id = ?`, [
-          teammateUserId,
-          kpiCode,
-          orgId,
-        ])
+        tx.queryRun(
+          `UPDATE finance_analysis_kpi_catalog SET status = 'ACTIVE', approved_by = ? WHERE kpi_code = ? AND organization_id = ?`,
+          [teammateUserId, kpiCode, orgId]
+        )
       );
     });
 
@@ -414,7 +470,9 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) throw new Error('unreachable');
       schemaViewId = result.view.id;
-      expect(result.view.view_state.gridViewState.columns.map((c) => c.columnId)).toContain(kpiCode);
+      expect(result.view.view_state.gridViewState.columns.map((c) => c.columnId)).toContain(
+        kpiCode
+      );
     });
 
     it('while the KPI is ACTIVE, the column loads as available', async () => {
@@ -427,7 +485,10 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
 
     it('after the KPI is deprecated (removed from the catalog), the saved view still loads WITHOUT crashing, with the column explicitly marked unavailable', async () => {
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_analysis_kpi_catalog SET status = 'DEPRECATED' WHERE kpi_code = ? AND organization_id = ?`, [kpiCode, orgId])
+        tx.queryRun(
+          `UPDATE finance_analysis_kpi_catalog SET status = 'DEPRECATED' WHERE kpi_code = ? AND organization_id = ?`,
+          [kpiCode, orgId]
+        )
       );
 
       const loaded = await savedViewService.getSavedView(orgId, schemaViewId, ownerUserId);
@@ -435,18 +496,32 @@ describe.skipIf(!REAL_PG)('AP-07 saved views — real PostgreSQL', () => {
       if (!loaded.ok) throw new Error('unreachable');
 
       const columnEntry = loaded.view.columnAvailability.find((c) => c.columnId === kpiCode);
-      expect(columnEntry).toEqual({ columnId: kpiCode, available: false, reason: 'KPI_DEPRECATED' });
+      expect(columnEntry).toEqual({
+        columnId: kpiCode,
+        available: false,
+        reason: 'KPI_DEPRECATED',
+      });
 
       // The stored view_state itself is untouched — the column is NOT silently dropped, only
       // annotated, so a future re-activation of the same kpi_code needs no data migration.
-      expect(loaded.view.view_state.gridViewState.columns.map((c) => c.columnId)).toContain(kpiCode);
+      expect(loaded.view.view_state.gridViewState.columns.map((c) => c.columnId)).toContain(
+        kpiCode
+      );
     });
 
     it('listSavedViews also carries the same column-availability annotation (not just getSavedView)', async () => {
-      const list = await savedViewService.listSavedViews({ organizationId: orgId, artifactId: goldcoAnalysisArtifactId, requesterUserId: ownerUserId });
+      const list = await savedViewService.listSavedViews({
+        organizationId: orgId,
+        artifactId: goldcoAnalysisArtifactId,
+        requesterUserId: ownerUserId,
+      });
       const entry = list.find((v) => v.id === schemaViewId);
       expect(entry).toBeTruthy();
-      expect(entry?.columnAvailability.find((c) => c.columnId === kpiCode)).toEqual({ columnId: kpiCode, available: false, reason: 'KPI_DEPRECATED' });
+      expect(entry?.columnAvailability.find((c) => c.columnId === kpiCode)).toEqual({
+        columnId: kpiCode,
+        available: false,
+        reason: 'KPI_DEPRECATED',
+      });
     });
   });
 });

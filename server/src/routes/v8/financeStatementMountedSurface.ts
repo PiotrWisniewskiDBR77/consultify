@@ -1,4 +1,4 @@
-import { Router, type RequestHandler } from 'express';
+import { type RequestHandler, Router } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
 import { mutationAbortCanary } from '../../middleware/mutationGuard.middleware.js';

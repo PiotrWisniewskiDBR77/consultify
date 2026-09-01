@@ -17,13 +17,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
+import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -213,8 +213,10 @@ const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'CO
  */
 const toolCategoryLabel = (category: 'strategic' | 'operational' | 'digital' | 'automation') => {
   const t = i18next.t.bind(i18next);
-  if (category === 'operational') return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
-  if (category === 'digital') return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
+  if (category === 'operational')
+    return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
+  if (category === 'digital')
+    return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
   if (category === 'automation') return i18next.language === 'pl' ? 'Automatyzacja' : 'Automation';
   return t('discoveryToolsMain.knownToolPreviewV3.categoryStrategy', 'Strategy');
 };

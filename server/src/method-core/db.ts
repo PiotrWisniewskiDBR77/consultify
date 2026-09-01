@@ -9,7 +9,8 @@
  * error, never a silent no-op.
  */
 
-import { randomUUID, createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+
 import * as DbPromise from '../utils/DbPromise.js';
 
 export function genId(): string {

@@ -130,7 +130,9 @@ suite('lightOneClickService — LIGHT one-click start against a real PostgreSQL 
   // Fixture helpers — every test seeds and tears down its own everything.
   // -------------------------------------------------------------------------
 
-  async function seedFixture(label: string): Promise<{ orgId: string; projectId: string; userId: string }> {
+  async function seedFixture(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; userId: string }> {
     const suffix = randomUUID();
     // orgId/userId are DELIBERATELY bare UUIDs, not `light1c-org-<label>-<uuid>`
     // style prefixed ids other suites in this directory use: this system's
@@ -145,7 +147,10 @@ suite('lightOneClickService — LIGHT one-click start against a real PostgreSQL 
     const orgId = suffix;
     const projectId = `light1c-project-${label}-${suffix}`;
     const userId = randomUUID();
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [orgId, `LIGHT 1-click org (${label})`]);
+    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+      orgId,
+      `LIGHT 1-click org (${label})`,
+    ]);
     await control.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)`, [
       projectId,
       orgId,
@@ -164,26 +169,49 @@ suite('lightOneClickService — LIGHT one-click start against a real PostgreSQL 
     return { orgId, projectId, userId };
   }
 
-  async function teardown(caseId: string, orgId: string, projectId: string, userId: string): Promise<void> {
-    await control.query(`DELETE FROM case_workspace_node_run_attempts WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_node_runs WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_run_bindings WHERE case_id = $1`, [caseId]).catch(() => undefined);
+  async function teardown(
+    caseId: string,
+    orgId: string,
+    projectId: string,
+    userId: string
+  ): Promise<void> {
+    await control
+      .query(`DELETE FROM case_workspace_node_run_attempts WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_node_runs WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_run_bindings WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
     const runs = await control
-      .query<{ run_id: string; context_snapshot_id: string }>(
-        `SELECT run_id, context_snapshot_id FROM v8_execution_runs WHERE metadata::text LIKE $1`,
-        [`%${caseId}%`]
-      )
+      .query<{
+        run_id: string;
+        context_snapshot_id: string;
+      }>(`SELECT run_id, context_snapshot_id FROM v8_execution_runs WHERE metadata::text LIKE $1`, [
+        `%${caseId}%`,
+      ])
       .catch(() => ({ rows: [] as { run_id: string; context_snapshot_id: string }[] }));
     for (const run of runs.rows) {
-      await control.query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [run.run_id]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [run.run_id])
+        .catch(() => undefined);
       await control
         .query(`DELETE FROM v8_context_snapshots WHERE snapshot_id = $1`, [run.context_snapshot_id])
         .catch(() => undefined);
     }
-    await control.query(`DELETE FROM case_plan_versions WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_event_outbox WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_core WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_plan_versions WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_event_outbox WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_core WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+      .catch(() => undefined);
     await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -314,7 +342,9 @@ suite('lightOneClickService — LIGHT one-click start against a real PostgreSQL 
       const second = await lightSvc.startLightOneClick({ caseId, actorUserId: userId });
       expect(second.outcome).toBe('already_started');
       expect(second.runId).toBe((first as { runId: string }).runId);
-      expect(second.casePlanVersionId).toBe((first as { casePlanVersionId: string }).casePlanVersionId);
+      expect(second.casePlanVersionId).toBe(
+        (first as { casePlanVersionId: string }).casePlanVersionId
+      );
 
       // "refresh": an independent read confirms the SAME state a fresh page
       // load would show — CW-RT-064, API/service and DB readback agree.
@@ -425,7 +455,12 @@ suite('lightOneClickService — LIGHT one-click start against a real PostgreSQL 
       });
       caseId = created.caseId;
       await caseCoreService.transitionStatus(caseId, 'ACTIVE', { actorUserId: userId });
-      await caseCoreService.transitionStatus(caseId, 'BLOCKED', { actorUserId: userId }, 'test block');
+      await caseCoreService.transitionStatus(
+        caseId,
+        'BLOCKED',
+        { actorUserId: userId },
+        'test block'
+      );
 
       await expect(lightSvc.startLightOneClick({ caseId, actorUserId: userId })).rejects.toThrow(
         'light_one_click_case_not_ready'

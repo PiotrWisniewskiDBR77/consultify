@@ -117,9 +117,8 @@ const handleUpgrade = H.handleUpgrade;
 const { attachIdeaCollabWs } = await import('../ideaCollabWs.gateway.js');
 const { attachPresentationCollabWs } = await import('../presentationCollabWs.gateway.js');
 const { attachNotebookCollabWs } = await import('../notebookCollabWs.gateway.js');
-const { __testing__, buildOrgSuspendedResponseBody } = await import(
-  '../../services/organizationSuspensionGuard.js'
-);
+const { __testing__, buildOrgSuspendedResponseBody } =
+  await import('../../services/organizationSuspensionGuard.js');
 
 interface UpgradeOutcome {
   written: string;
@@ -217,9 +216,7 @@ describe('DEC-91 organization suspension at collab WS upgrade', () => {
 
         const body = outcome.written.slice(outcome.written.indexOf('\r\n\r\n') + 4);
         expect(outcome.written).toContain('Content-Type: application/json');
-        expect(outcome.written).toContain(
-          `Content-Length: ${Buffer.byteLength(body, 'utf8')}`
-        );
+        expect(outcome.written).toContain(`Content-Length: ${Buffer.byteLength(body, 'utf8')}`);
       });
     });
   }

@@ -43,7 +43,12 @@ export type KpiScorecardReviewFrequency = (typeof KPI_SCORECARD_REVIEW_FREQUENCI
 
 // No 'pending_approval' — a Scorecard is a curation/membership object, not a
 // governed contract requiring maker-checker (migration's own column comment).
-export const KPI_SCORECARD_LIFECYCLE_STATUSES = ['draft', 'active', 'suspended', 'archived'] as const;
+export const KPI_SCORECARD_LIFECYCLE_STATUSES = [
+  'draft',
+  'active',
+  'suspended',
+  'archived',
+] as const;
 export type KpiScorecardLifecycleStatus = (typeof KPI_SCORECARD_LIFECYCLE_STATUSES)[number];
 
 export const KPI_SCORECARD_ITEM_ROLES = ['primary', 'supporting'] as const;
@@ -231,7 +236,9 @@ export interface KpiScorecardReviewSnapshot {
   updatedAt: string;
 }
 
-export function toKpiScorecardReviewSnapshot(row: KpiScorecardReviewSnapshotRow): KpiScorecardReviewSnapshot {
+export function toKpiScorecardReviewSnapshot(
+  row: KpiScorecardReviewSnapshotRow
+): KpiScorecardReviewSnapshot {
   return {
     snapshotId: row.snapshot_id,
     scorecardId: row.scorecard_id,

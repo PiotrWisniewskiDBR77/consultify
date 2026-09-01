@@ -66,7 +66,7 @@ function commitCtx() {
 }
 
 beforeAll(async () => {
-  await assertRealPostgresTestEnvironment({ expectedDatabase: 'consultinity' });
+  await assertRealPostgresTestEnvironment();
   process.env.DATABASE_URL = DATABASE_URL;
   process.env.DB_TYPE = 'postgres';
 

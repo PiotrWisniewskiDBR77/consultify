@@ -17,8 +17,8 @@
  * currently reads it.
  */
 
-import { isPublicProductionHost } from '@/utils/publicProduction';
 import { type DemoAcceptanceProfileSource } from '@/utils/demoAcceptanceProfile';
+import { isPublicProductionHost } from '@/utils/publicProduction';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 

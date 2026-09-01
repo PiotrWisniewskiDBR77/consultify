@@ -15,15 +15,14 @@
  * (`getResultsKpiCatalog`), nie przez echo z funkcji zapisującej.
  */
 import { randomUUID } from 'crypto';
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { dbAll, dbGet } from '../../../database/db.js';
+import { recordKpiMeasurement } from '../../../services/results/kpiMeasurementWriterService.js';
 import {
   getResultsKpiCatalog,
   getResultsKpiDrawerDetail,
 } from '../../../services/v8/resultsROIService.js';
-import { recordKpiMeasurement } from '../../../services/results/kpiMeasurementWriterService.js';
 
 const ORG_A = `org-a-${randomUUID().slice(0, 8)}`;
 const ORG_B = `org-b-${randomUUID().slice(0, 8)}`;
@@ -169,10 +168,10 @@ describe('M07 golden flows — realny PostgreSQL', () => {
    * granicę dowodzimy ścieżką szczegółu, która czyta same pomiary.
    */
   it('GF-NC: kontrola negatywna — odczyt szczegółu odrzuca pomiar z podmienioną organizacją', async () => {
-    await run(
-      `UPDATE kpi_time_series SET organization_id = ?, value = 999 WHERE kpi_id = ?`,
-      [ORG_B, KPI_A]
-    );
+    await run(`UPDATE kpi_time_series SET organization_id = ?, value = 999 WHERE kpi_id = ?`, [
+      ORG_B,
+      KPI_A,
+    ]);
 
     const detail = await getResultsKpiDrawerDetail(KPI_A, ORG_A);
     expect(detail.measurements).toHaveLength(0);
@@ -183,10 +182,10 @@ describe('M07 golden flows — realny PostgreSQL', () => {
     expect(Number(kpi?.latestValue)).not.toBe(999);
 
     // Przywracamy stan, żeby kolejne przebiegi startowały czysto.
-    await run(
-      `UPDATE kpi_time_series SET organization_id = ?, value = 76 WHERE kpi_id = ?`,
-      [ORG_A, KPI_A]
-    );
+    await run(`UPDATE kpi_time_series SET organization_id = ?, value = 76 WHERE kpi_id = ?`, [
+      ORG_A,
+      KPI_A,
+    ]);
     const restored = await getResultsKpiDrawerDetail(KPI_A, ORG_A);
     expect(restored.measurements).toHaveLength(1);
     expect(Number(restored.measurements[0].value)).toBe(76);

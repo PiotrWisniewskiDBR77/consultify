@@ -17,9 +17,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { incrementAiTimeouts } from '../middleware/metrics.middleware.js';
-import { logAIAction } from '../services/auditService.js';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
+import { logAIAction } from '../services/auditService.js';
+import {
+  isTruthyFlag,
+  isTruthyFlagSql,
+  LEGACY_FLAG_FALSE,
+  LEGACY_FLAG_TRUE,
+} from '../services/interview/interviewLegacyFlags.js';
+import { sanitizeQuestionText } from '../services/interview/interviewQuestionTextSanitizer.js';
+import {
+  canonicalStatusToken,
+  statusEqualsSql,
+} from '../services/interview/interviewStatusNormalization.js';
 import {
   ensureSystemInterviewTemplateSnapshotForAssignment,
   getPublishedInterviewTemplateSnapshot,
@@ -47,19 +58,6 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-
-import {
-  canonicalStatusToken,
-  statusEqualsSql,
-} from '../services/interview/interviewStatusNormalization.js';
-import { sanitizeQuestionText } from '../services/interview/interviewQuestionTextSanitizer.js';
-
-import {
-  isTruthyFlag,
-  isTruthyFlagSql,
-  LEGACY_FLAG_FALSE,
-  LEGACY_FLAG_TRUE,
-} from '../services/interview/interviewLegacyFlags.js';
 
 // 5 Interview Categories (new spec)
 const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;

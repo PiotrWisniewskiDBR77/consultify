@@ -17,13 +17,13 @@
  */
 import fs from 'fs';
 
+import { isExecutableMigration } from './migrationExecutionPolicy.js';
 import {
-  POSTCONDITION_ATTESTATIONS,
-  attestPartnerUsersUuidVariant,
   type AttestationQueryable,
   type AttestationResult,
+  attestPartnerUsersUuidVariant,
+  POSTCONDITION_ATTESTATIONS,
 } from './schemaAttestation.js';
-import { isExecutableMigration } from './migrationExecutionPolicy.js';
 import { classifySqlChainChecksum } from './sqlChainChecksumPolicy.js';
 
 export type SqlChainState =
@@ -64,9 +64,17 @@ export interface SqlChainEvaluatorDeps {
   attest?: (db: AttestationQueryable) => Promise<AttestationResult>;
 }
 
-function summarize(e: Omit<SqlChainEvaluation, 'detail' | 'state'>): { state: SqlChainState; detail: string } {
-  if (!e.ledgerPresent) return { state: 'ledger_missing', detail: 'schema_migrations table does not exist' };
-  if (e.failed.length > 0) return { state: 'failed', detail: `${e.failed.length} failed migration(s): ${e.failed.slice(0, 5).join(', ')}` };
+function summarize(e: Omit<SqlChainEvaluation, 'detail' | 'state'>): {
+  state: SqlChainState;
+  detail: string;
+} {
+  if (!e.ledgerPresent)
+    return { state: 'ledger_missing', detail: 'schema_migrations table does not exist' };
+  if (e.failed.length > 0)
+    return {
+      state: 'failed',
+      detail: `${e.failed.length} failed migration(s): ${e.failed.slice(0, 5).join(', ')}`,
+    };
   if (e.skipped.length > 0)
     return {
       state: 'skipped',
@@ -78,15 +86,26 @@ function summarize(e: Omit<SqlChainEvaluation, 'detail' | 'state'>): { state: Sq
       detail: `${e.unexplainedDrift.length} migration(s) drifted with no approved (stored,current) pair: ${e.unexplainedDrift.slice(0, 5).join(', ')}`,
     };
   if (e.pending.length > 0)
-    return { state: 'pending', detail: `${e.pending.length} pending migration(s): ${e.pending.slice(0, 5).join(', ')}` };
+    return {
+      state: 'pending',
+      detail: `${e.pending.length} pending migration(s): ${e.pending.slice(0, 5).join(', ')}`,
+    };
   return {
     state: 'ok',
     detail:
       `chain complete` +
-      (e.approvedVariants.length ? `; ${e.approvedVariants.length} approved historical variant(s)` : '') +
-      (e.postconditionVerified.length ? `; ${e.postconditionVerified.length} postcondition-verified` : '') +
-      (e.attestedLegacyVariants.length ? `; ${e.attestedLegacyVariants.length} schema-attested legacy variant(s)` : '') +
-      (e.unverifiable.length ? `; ${e.unverifiable.length} legacy row(s) without a stored checksum` : ''),
+      (e.approvedVariants.length
+        ? `; ${e.approvedVariants.length} approved historical variant(s)`
+        : '') +
+      (e.postconditionVerified.length
+        ? `; ${e.postconditionVerified.length} postcondition-verified`
+        : '') +
+      (e.attestedLegacyVariants.length
+        ? `; ${e.attestedLegacyVariants.length} schema-attested legacy variant(s)`
+        : '') +
+      (e.unverifiable.length
+        ? `; ${e.unverifiable.length} legacy row(s) without a stored checksum`
+        : ''),
   };
 }
 
@@ -128,9 +147,7 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
 
     const crypto = await import('crypto');
     const path = await import('path');
-    const onDisk = fs
-      .readdirSync(deps.migrationsDir)
-      .filter((f) => /\.(sql|js|ts)$/.test(f));
+    const onDisk = fs.readdirSync(deps.migrationsDir).filter((f) => /\.(sql|js|ts)$/.test(f));
     // The runner's own definition of "required" — never a raw directory listing.
     const required = onDisk.filter((f) => isExecutableMigration(f));
 
@@ -169,7 +186,10 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
         if (postcondition) {
           const result = await postcondition(deps.db);
           if (!result.attested) {
-            const failed = result.checks.filter((c) => !c.ok).map((c) => c.name).join(', ');
+            const failed = result.checks
+              .filter((c) => !c.ok)
+              .map((c) => c.name)
+              .join(', ');
             acc.unexplainedDrift.push(
               `${filename} (approved checksum but postcondition FAILED: ${result.failureReason}${failed ? `; failed: ${failed}` : ''})`
             );

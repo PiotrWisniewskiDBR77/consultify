@@ -133,11 +133,13 @@ export interface GetSetCheckInSummaryParams {
   organizationId: string;
 }
 
-export async function getSetCheckInSummary(params: GetSetCheckInSummaryParams): Promise<SetCheckInSummary> {
+export async function getSetCheckInSummary(
+  params: GetSetCheckInSummaryParams
+): Promise<SetCheckInSummary> {
   const { setId, organizationId } = params;
 
-  const [keyResultRows, cadenceCount, lastCheckInRows, overdueRows, nextDueRows] = await withReadClient(
-    async (client) => {
+  const [keyResultRows, cadenceCount, lastCheckInRows, overdueRows, nextDueRows] =
+    await withReadClient(async (client) => {
       const keyResultsResult = await client.query<KeyResultRow>(
         `SELECT key_result_id, objective_id
            FROM okr_vnext_key_results
@@ -220,18 +222,25 @@ export async function getSetCheckInSummary(params: GetSetCheckInSummaryParams): 
         overdueResult.rows,
         nextDueResult.rows,
       ] as const;
-    }
-  );
+    });
 
   const hasCadence = cadenceCount > 0;
-  const lastCheckInByKr = new Map<string, LastCheckInRow>(lastCheckInRows.map((row) => [row.key_result_id, row]));
+  const lastCheckInByKr = new Map<string, LastCheckInRow>(
+    lastCheckInRows.map((row) => [row.key_result_id, row])
+  );
   const overdueKrIds = new Set(overdueRows.map((row) => row.key_result_id));
-  const nextDueByKr = new Map<string, string>(nextDueRows.map((row) => [row.key_result_id, row.next_expected_at]));
+  const nextDueByKr = new Map<string, string>(
+    nextDueRows.map((row) => [row.key_result_id, row.next_expected_at])
+  );
 
   const keyResults: OkrCheckInSummaryKeyResult[] = keyResultRows.map((row) => {
     const lastCheckInRow = lastCheckInByKr.get(row.key_result_id) ?? null;
     const lastCheckIn: OkrCheckInSummaryLastCheckIn | null = lastCheckInRow
-      ? { checkInId: lastCheckInRow.checkin_id, recordedAt: lastCheckInRow.submitted_at, confidence: lastCheckInRow.confidence }
+      ? {
+          checkInId: lastCheckInRow.checkin_id,
+          recordedAt: lastCheckInRow.submitted_at,
+          confidence: lastCheckInRow.confidence,
+        }
       : null;
     const nextExpectedAt = nextDueByKr.get(row.key_result_id) ?? null;
 

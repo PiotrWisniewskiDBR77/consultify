@@ -250,8 +250,8 @@ export async function saveStatementValuesFlow(params: {
         mappingStatus === 'manual' || mappingStatus === 'manual_exclude'
           ? {
               verified: Boolean(value.userVerified),
-              verifiedBy: Boolean(value.userVerified) ? userId : null,
-              verifiedAt: Boolean(value.userVerified) ? new Date().toISOString() : null,
+              verifiedBy: value.userVerified ? userId : null,
+              verifiedAt: value.userVerified ? new Date().toISOString() : null,
               method: 'manual_mapping_review',
             }
           : undefined,

@@ -7,8 +7,8 @@ import {
   type WorkbookMutation,
 } from './workbookMutationEngine.js';
 import { invalidateWorkbookRuntimeCache } from './workbookRuntimeCache.js';
-import { assertWorkbookSchema } from './workbookSchemaGuard.js';
 import type { WorkbookSchema } from './WorkbookSchema.js';
+import { assertWorkbookSchema } from './workbookSchemaGuard.js';
 
 export class WorkbookCommandError extends Error {
   constructor(

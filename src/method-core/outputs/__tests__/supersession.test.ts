@@ -6,8 +6,9 @@
  * server/src/method-core/outputs/__tests__/supersession.test.ts.
  */
 import { describe, expect, it } from 'vitest';
-import { markRecordSuperseded, wrapAsCurrent } from '../supersession';
+
 import { buildReportSnapshot } from '../reportSnapshot';
+import { markRecordSuperseded, wrapAsCurrent } from '../supersession';
 import { makeOutput } from './testFixtures';
 
 describe('Supersession — content untouched, only status changes (test 8, pure half)', () => {
@@ -31,7 +32,12 @@ describe('Supersession — content untouched, only status changes (test 8, pure 
     });
 
     const current = wrapAsCurrent(report);
-    const superseded = markRecordSuperseded(current, 'superseded', 'output-2', '2026-08-14T09:00:00.000Z');
+    const superseded = markRecordSuperseded(
+      current,
+      'superseded',
+      'output-2',
+      '2026-08-14T09:00:00.000Z'
+    );
 
     expect(superseded).not.toBe(current); // new wrapper
     expect(superseded.content).toBe(current.content); // same content reference — never rewritten
@@ -46,7 +52,12 @@ describe('Supersession — content untouched, only status changes (test 8, pure 
 
   it('supports the "source updated" reason distinctly from "superseded"', () => {
     const current = wrapAsCurrent({ slideId: 'slide-1' });
-    const updated = markRecordSuperseded(current, 'source_updated', 'output-3', '2026-08-14T09:00:00.000Z');
+    const updated = markRecordSuperseded(
+      current,
+      'source_updated',
+      'output-3',
+      '2026-08-14T09:00:00.000Z'
+    );
     expect(updated.status).toBe('source_updated');
     expect(updated.content).toBe(current.content);
   });

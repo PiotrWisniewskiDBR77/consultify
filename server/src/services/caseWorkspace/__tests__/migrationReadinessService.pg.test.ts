@@ -90,8 +90,8 @@ import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import * as migrationReadinessService from '../migrationReadinessService.js';
 import type { FeatureFlagState } from '../migrationReadinessService.js';
+import * as migrationReadinessService from '../migrationReadinessService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -247,10 +247,10 @@ suite(
     /** A fresh, real organizations row (required now: organization_members.organization_id FKs into it). */
     async function seedOrg(label: string): Promise<string> {
       const orgId = `case-migreadiness-org-${label}-${randomUUID()}`;
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-        orgId,
-        `Migration Readiness test org (${label})`,
-      ]);
+      await control.query(
+        `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+        [orgId, `Migration Readiness test org (${label})`]
+      );
       return orgId;
     }
 
@@ -311,9 +311,10 @@ suite(
       caseOrgId: string;
     }): Promise<{ history: number; value: number; caseCore: number }> {
       const [historyResult, valueResult, caseResult] = await Promise.all([
-        control.query(`SELECT count(*)::int AS n FROM case_workspace_history_events WHERE organization_id = $1`, [
-          params.historyOrgId,
-        ]),
+        control.query(
+          `SELECT count(*)::int AS n FROM case_workspace_history_events WHERE organization_id = $1`,
+          [params.historyOrgId]
+        ),
         control.query(
           `SELECT count(*)::int AS n FROM case_workspace_value_measurements WHERE organization_id = $1`,
           [params.valueOrgId]
@@ -367,7 +368,9 @@ suite(
       }
       for (const flagKey of params.flagKeysDeepestFirst) {
         await control
-          .query(`DELETE FROM case_workspace_feature_flag_definitions WHERE flag_key = $1`, [flagKey])
+          .query(`DELETE FROM case_workspace_feature_flag_definitions WHERE flag_key = $1`, [
+            flagKey,
+          ])
           .catch(() => undefined);
       }
       for (const userId of params.userIds ?? []) {
@@ -385,7 +388,9 @@ suite(
           .catch(() => undefined);
       }
       for (const orgId of params.orgIds) {
-        await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+          .catch(() => undefined);
       }
     }
 
@@ -485,7 +490,13 @@ suite(
             `INSERT INTO case_workspace_feature_flag_definitions (
                flag_key, parent_flag_key, description, default_enabled, created_at, created_by
              ) VALUES ($1, $2, $3, TRUE, $4, $5)`,
-            [flagKey, null, 'raw-insert default_enabled=TRUE must be rejected', new Date().toISOString(), 'actor-raw-check-default']
+            [
+              flagKey,
+              null,
+              'raw-insert default_enabled=TRUE must be rejected',
+              new Date().toISOString(),
+              'actor-raw-check-default',
+            ]
           );
         } catch (err) {
           caught = err as Error & { code?: string; constraint?: string };
@@ -527,7 +538,11 @@ suite(
         // (organizationId, flagKey) pair -> must read as null/disabled, not
         // fall back to enabled=true the way v8_feature_flags' non-production
         // zero-rows-means-enabled path does.
-        const beforeState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
+        const beforeState = await migrationReadinessService.getCurrentOrgFlagState(
+          orgId,
+          flagKey,
+          actorId
+        );
         expect(beforeState).toBeNull();
 
         const dbRowBefore = await readFeatureFlagRow(orgId, flagKey);
@@ -543,7 +558,11 @@ suite(
         expect(written.organizationId).toBe(orgId);
         expect(written.flagKey).toBe(flagKey);
 
-        const afterState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
+        const afterState = await migrationReadinessService.getCurrentOrgFlagState(
+          orgId,
+          flagKey,
+          actorId
+        );
         expect(afterState).not.toBeNull();
         expect(afterState?.enabled).toBe(true);
         expect(afterState?.flagId).toBe(written.flagId);
@@ -598,7 +617,11 @@ suite(
 
         // listFlagDescendants must reflect the real self-referencing FK
         // hierarchy, not a naming convention.
-        const descendants = await migrationReadinessService.listFlagDescendants(rootKey, actorId, orgId);
+        const descendants = await migrationReadinessService.listFlagDescendants(
+          rootKey,
+          actorId,
+          orgId
+        );
         expect(descendants.map((d) => d.flagKey).sort()).toEqual([childKey, grandchildKey].sort());
 
         for (const key of [rootKey, childKey, grandchildKey]) {
@@ -629,11 +652,8 @@ suite(
           enabled: false,
           updatedBy: actorId,
         });
-        const grandchildDisabledResult = await migrationReadinessService.findSmallestEnabledDescendant(
-          orgId,
-          rootKey,
-          actorId
-        );
+        const grandchildDisabledResult =
+          await migrationReadinessService.findSmallestEnabledDescendant(orgId, rootKey, actorId);
         expect(grandchildDisabledResult).toHaveLength(1);
         expect(grandchildDisabledResult[0].flagKey).toBe(childKey);
         expect(grandchildDisabledResult[0].depth).toBe(1);
@@ -718,7 +738,11 @@ suite(
         });
         expect(scopedCountsBefore).toEqual({ history: 0, value: 0, caseCore: 0 });
 
-        const rolledBack = await migrationReadinessService.rollbackFlag(orgId, targetFlagKey, actorId);
+        const rolledBack = await migrationReadinessService.rollbackFlag(
+          orgId,
+          targetFlagKey,
+          actorId
+        );
         expect(rolledBack.enabled).toBe(false);
         expect(rolledBack.flagKey).toBe(targetFlagKey);
         // rollbackFlag carries cohort/rolloutPercentage/allowList through
@@ -791,11 +815,8 @@ suite(
           rolloutPercentage: 50,
           updatedBy: actorId,
         });
-        const state50: FeatureFlagState | null = await migrationReadinessService.getCurrentOrgFlagState(
-          orgId,
-          flagKey,
-          actorId
-        );
+        const state50: FeatureFlagState | null =
+          await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
         expect(state50).not.toBeNull();
 
         const resultsFor50pct = Array.from({ length: 5 }, () =>
@@ -821,12 +842,18 @@ suite(
           allowList: [entityId],
           updatedBy: actorId,
         });
-        const stateAllowListed = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
+        const stateAllowListed = await migrationReadinessService.getCurrentOrgFlagState(
+          orgId,
+          flagKey,
+          actorId
+        );
         expect(stateAllowListed).not.toBeNull();
         expect(stateAllowListed?.rolloutPercentage).toBe(0);
         expect(stateAllowListed?.allowList).toEqual([entityId]);
 
-        expect(migrationReadinessService.isFlagEnabledForEntity(stateAllowListed, entityId)).toBe(true);
+        expect(migrationReadinessService.isFlagEnabledForEntity(stateAllowListed, entityId)).toBe(
+          true
+        );
 
         // A DIFFERENT entity, not on the allow list, at rollout_percentage=0
         // must NOT be enabled — proves the allow-list check is specific to
@@ -941,7 +968,11 @@ suite(
 
         await expect(
           migrationReadinessService.registerFlagDefinition(
-            { flagKey, description: 'Should not register (no membership)', createdBy: noMembershipActorId },
+            {
+              flagKey,
+              description: 'Should not register (no membership)',
+              createdBy: noMembershipActorId,
+            },
             orgId
           )
         ).rejects.toMatchObject({ code: 'not_org_member' });
@@ -955,7 +986,11 @@ suite(
         // A real definition, created by the ADMIN actor — now prove
         // setOrgFlagState also rejects the MEMBER-role actor.
         await migrationReadinessService.registerFlagDefinition(
-          { flagKey, description: 'Real definition for setOrgFlagState gate test', createdBy: adminActorId },
+          {
+            flagKey,
+            description: 'Real definition for setOrgFlagState gate test',
+            createdBy: adminActorId,
+          },
           orgId
         );
 
@@ -1143,9 +1178,7 @@ suite(
           quarantineReasonCode: 'NO_CASE_MATCH',
           rehearsalRunId,
         });
-        expect(event.payload_ref).toBe(
-          `case_workspace_legacy_quarantine:${created.quarantineId}`
-        );
+        expect(event.payload_ref).toBe(`case_workspace_legacy_quarantine:${created.quarantineId}`);
         // Reason CODE only — the quarantined payload is referenced, never copied.
         const summaryText = JSON.stringify(event.redacted_summary);
         expect(summaryText).not.toContain('must-never-be-copied-into-the-event');
@@ -1271,6 +1304,8 @@ describe('migrationReadinessService — source-level structural checks (no DB re
     // Sanity check that the pattern itself is capable of matching, so a
     // silently-broken regex can't produce a false pass.
     expect('UPDATE case_workspace_legacy_quarantine SET x = 1').toMatch(updateOrDeletePattern);
-    expect('DELETE FROM case_workspace_legacy_quarantine WHERE x = 1').toMatch(updateOrDeletePattern);
+    expect('DELETE FROM case_workspace_legacy_quarantine WHERE x = 1').toMatch(
+      updateOrDeletePattern
+    );
   });
 });

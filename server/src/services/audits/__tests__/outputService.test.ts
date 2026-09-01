@@ -23,7 +23,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 
 describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
   let pool: InstanceType<typeof import('pg').Pool>;
@@ -73,13 +75,13 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
         'Systemy finansowe i katalog AD',
         JSON.stringify({ systems: ['ERP', 'AD'] }),
         leadUser,
-      ],
+      ]
     );
     if (opts.withLead !== false) {
       await pool.query(
         `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role, independence_declared)
          VALUES ($1,$2,$3,$4,'lead_auditor', TRUE)`,
-        [`memb-${randomUUID()}`, id, orgId, leadUser],
+        [`memb-${randomUUID()}`, id, orgId, leadUser]
       );
     }
     return id;
@@ -89,7 +91,7 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
     programId: string,
     orgId: string,
     status: string,
-    extra: Partial<Record<string, unknown>> = {},
+    extra: Partial<Record<string, unknown>> = {}
   ): Promise<string> {
     const id = `find-${randomUUID()}`;
     await pool.query(
@@ -107,7 +109,7 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
         (extra.rootCause as string) ?? null,
         (extra.rootCauseConfirmed as boolean) ?? false,
         (extra.residualRisk as string) ?? null,
-      ],
+      ]
     );
     return id;
   }
@@ -116,7 +118,7 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
     programId: string,
     orgId: string,
     criterionId: string | null,
-    extra: Partial<Record<string, unknown>> = {},
+    extra: Partial<Record<string, unknown>> = {}
   ): Promise<string> {
     const id = `ev-${randomUUID()}`;
     await pool.query(
@@ -135,7 +137,7 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
         (extra.contentHash as string) ?? 'sha256:test',
         (extra.sufficiency as string) ?? 'sufficient',
         (extra.supportsConformity as boolean) ?? true,
-      ],
+      ]
     );
     return id;
   }
@@ -148,14 +150,16 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
     const programId = await makeProgram(orgA);
     await insertFinding(programId, orgA, 'draft');
     await expect(
-      outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v1' }),
+      outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v1' })
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE' });
   });
 
   it('blokuje finalizację, gdy program ma ustalenie w statusie in_review', async () => {
     const programId = await makeProgram(orgA);
     await insertFinding(programId, orgA, 'in_review');
-    await expect(outputService.finalizeOutput(orgA, actorFor(orgA), programId, {})).rejects.toMatchObject({
+    await expect(
+      outputService.finalizeOutput(orgA, actorFor(orgA), programId, {})
+    ).rejects.toMatchObject({
       code: 'AUDIT_INVALID_STATE',
     });
   });
@@ -164,7 +168,7 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
     const programId = await makeProgram(orgA);
     const strangerId = `user-u5-stranger-${randomUUID()}`;
     await expect(
-      outputService.finalizeOutput(orgA, actorFor(orgA, strangerId), programId, {}),
+      outputService.finalizeOutput(orgA, actorFor(orgA, strangerId), programId, {})
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN' });
     const access = await permissions.resolveProgramAccess(actorFor(orgA, strangerId), programId);
     expect(access.capabilities.has('output.finalize')).toBe(false);
@@ -180,7 +184,9 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
   it('izolacja organizacji — program bez outputów w org B nie widzi outputów org A; wiersz org A jest niewidoczny pod org B', async () => {
     const programA = await makeProgram(orgA);
     await insertFinding(programA, orgA, 'confirmed', { rootCauseConfirmed: true, rootCause: 'x' });
-    const outputA = await outputService.finalizeOutput(orgA, actorFor(orgA), programA, { title: 'Izolacja A' });
+    const outputA = await outputService.finalizeOutput(orgA, actorFor(orgA), programA, {
+      title: 'Izolacja A',
+    });
 
     const programB = await makeProgram(orgB);
     const outputsOrgB = await outputService.listOutputs(orgB, { programId: programB });
@@ -195,7 +201,10 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
       'dowodu → diff wykrywa zmianę zgodności → supersede nie kasuje starej wersji',
     async () => {
       const programId = await makeProgram(orgA);
-      await insertEvidence(programId, orgA, null, { materialVersion: 'v7', contentHash: 'sha256:deadbeef' });
+      await insertEvidence(programId, orgA, null, {
+        materialVersion: 'v7',
+        contentHash: 'sha256:deadbeef',
+      });
       await insertFinding(programId, orgA, 'confirmed', {
         statement: 'Konto serwisowe ma nadmiarowy dostęp',
         severity: 'high',
@@ -204,12 +213,16 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
       });
 
       // 1) pierwsza finalizacja startuje od wersji 1
-      const outputV1 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v1' });
+      const outputV1 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, {
+        title: 'Output v1',
+      });
       expect(outputV1.version).toBe(1);
       expect(outputV1.contentHash).toBeTruthy();
 
       // 2) druga finalizacja tego samego programu → wersja rośnie do 2
-      const outputV2 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v2' });
+      const outputV2 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, {
+        title: 'Output v2',
+      });
       expect(outputV2.version).toBe(2);
 
       // 3) hash jest deterministyczny w 10 kolejnych wywołaniach na tym samym payloadzie
@@ -232,11 +245,18 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
       await pool.query(
         `INSERT INTO audit_program_criteria (id, program_id, organization_id, title, conformity_status)
          VALUES ($1,$2,$3,'Kontrola haseł','conforming')`,
-        [critId, programId, orgA],
+        [critId, programId, orgA]
       );
-      const outputV3 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v3' });
-      await pool.query(`UPDATE audit_program_criteria SET conformity_status='nonconforming' WHERE id=$1`, [critId]);
-      const outputV4 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, { title: 'Output v4' });
+      const outputV3 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, {
+        title: 'Output v3',
+      });
+      await pool.query(
+        `UPDATE audit_program_criteria SET conformity_status='nonconforming' WHERE id=$1`,
+        [critId]
+      );
+      const outputV4 = await outputService.finalizeOutput(orgA, actorFor(orgA), programId, {
+        title: 'Output v4',
+      });
 
       const diff = await outputService.diffOutputs(orgA, outputV3.id, outputV4.id);
       const change = diff.conformityChanges.find((c) => c.criterionId === critId);
@@ -251,6 +271,6 @@ describe.skipIf(!REAL_PG)('outputService (real Postgres)', () => {
       expect(reloadedV1!.supersededBy).toBe(outputV4.id);
       expect(reloadedV1!.payload).toEqual(outputV1.payload);
       expect(reloadedV1!.contentHash).toBe(outputV1.contentHash);
-    },
+    }
   );
 });

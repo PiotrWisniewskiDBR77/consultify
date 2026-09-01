@@ -63,13 +63,7 @@ const baseProps = {
 
 describe('Interview single-question owner behavior', () => {
   it('renders the immersive list, progress and stable navigation controls', () => {
-    render(
-      <InterviewSingleQuestionRuntime
-        {...baseProps}
-        immersive
-        onUpdateQuestion={vi.fn()}
-      />
-    );
+    render(<InterviewSingleQuestionRuntime {...baseProps} immersive onUpdateQuestion={vi.fn()} />);
     expect(
       screen.getByRole('navigation', {
         name: 'interview.singleQuestionRuntime.questionNavigation',

@@ -669,7 +669,12 @@ const KnowledgeService = {
   // and no `source_type='knowledge'` rows existed yet, so no leak had
   // manifested from Vault uploads specifically — the confirmed leak was via
   // IngestionPipeline.ingestText/interview answers, same underlying bug).
-  async processDocument(docId: string, text: string, organizationId?: string): Promise<number> {
+  async processDocument(
+    docId: string,
+    text: string,
+    organizationId?: string,
+    skipGlobalEmbeddingIndex: boolean = false
+  ): Promise<number> {
     await ensureKnowledgeSchema();
     const chunks = chunkText(text, { chunkSize: 1000, overlap: 200 });
 
@@ -709,7 +714,7 @@ const KnowledgeService = {
         { fallback: true } as any
       );
 
-      if (embedding && embedding.length > 0) {
+      if (!skipGlobalEmbeddingIndex && embedding && embedding.length > 0) {
         try {
           await embeddingService.storeChunk(
             {
@@ -722,8 +727,19 @@ const KnowledgeService = {
             },
             embedding
           );
-        } catch {
-          // ignore
+        } catch (storeChunkError: any) {
+          // ★ FIX-209.1 — było: `catch { /* ignore */ }`, czyli awaria zapisu
+          // do globalnego indeksu (ai_knowledge_embeddings) znikała bez śladu.
+          // Skutek zmierzony w odbiorze 209: nawet ścieżka POZYTYWNA (dokument
+          // organizacyjny ma trafić do wyszukiwania) bywała cicho pusta — nikt
+          // by się nie dowiedział. Tolerujemy błąd (nie wywracamy całej
+          // indeksacji dla jednego chunka), ale GŁOŚNO, z pełnym komunikatem,
+          // id dokumentu i indeksem chunka, żeby awaria była widoczna w logach
+          // produkcyjnych, nie tylko w teście.
+          logger.error(
+            `[KnowledgeService] processDocument: storeChunk (global embedding index) FAILED for doc=${docId} chunk=${i} — content will remain in scoped Vault chunks but will NOT be searchable via search_knowledge_base.`,
+            storeChunkError?.message || storeChunkError
+          );
         }
       }
 

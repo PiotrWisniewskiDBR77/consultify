@@ -78,7 +78,9 @@ describe('BranchComparison — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
       <Harness>
-        {(open, onClose) => <BranchComparison open={open} onClose={onClose} nodes={[]} edges={[]} />}
+        {(open, onClose) => (
+          <BranchComparison open={open} onClose={onClose} nodes={[]} edges={[]} />
+        )}
       </Harness>
     );
     const { trigger } = await openAndAssertDialog(/Branch Comparison/i);
@@ -89,7 +91,9 @@ describe('BranchComparison — dialog a11y contract', () => {
 describe('TimeHeatmap — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
-      <Harness>{(open, onClose) => <TimeHeatmap open={open} onClose={onClose} ideaId="idea-1" />}</Harness>
+      <Harness>
+        {(open, onClose) => <TimeHeatmap open={open} onClose={onClose} ideaId="idea-1" />}
+      </Harness>
     );
     const { trigger } = await openAndAssertDialog(/Activity/i);
     await assertEscapeClosesAndRestoresFocus(trigger);
@@ -113,7 +117,9 @@ describe('TimelineView — dialog a11y contract', () => {
 describe('IdeaFunnelAnalytics — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
-      <Harness>{(open, onClose) => <IdeaFunnelAnalytics open={open} onClose={onClose} nodes={[]} />}</Harness>
+      <Harness>
+        {(open, onClose) => <IdeaFunnelAnalytics open={open} onClose={onClose} nodes={[]} />}
+      </Harness>
     );
     const { trigger } = await openAndAssertDialog(/Idea Funnel/i);
     await assertEscapeClosesAndRestoresFocus(trigger);

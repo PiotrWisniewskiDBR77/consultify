@@ -65,12 +65,13 @@ vi.mock('../pmSyncRefreshExecutionService.js', () => ({
   storeRefreshExecutionSecret: (...args: unknown[]) => mockStoreRefreshExecutionSecret(...args),
 }));
 
+import type { Request } from 'express';
+
 import {
   buildGovernedExternalAuthSession,
   materializeGovernedExternalAuthCallback,
   shouldMaterializeCallbackDrivenAuth,
 } from '../pmSyncExternalAuthMaterializationService.js';
-import type { Request } from 'express';
 
 /**
  * `Request['get']` is overloaded (`'set-cookie'` resolves to `string[]`), so an
@@ -730,7 +731,8 @@ describe('pmSyncExternalAuthMaterializationService', () => {
         },
       },
       {
-        label: 'the registry entry is approved but its scopes do not exactly match the required scopes',
+        label:
+          'the registry entry is approved but its scopes do not exactly match the required scopes',
         registry: {
           [connectorId]: {
             approved: true,

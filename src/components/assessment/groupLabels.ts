@@ -26,7 +26,11 @@
  * return `null`, and every caller falls back to the raw id. A wrong name on a
  * board-facing deck is worse than a raw id.
  */
-import { listDrdAxisNarratives, resolveDrdAxisName, type DrdSourceLanguage } from './report/drdLabels';
+import {
+  type DrdSourceLanguage,
+  listDrdAxisNarratives,
+  resolveDrdAxisName,
+} from './report/drdLabels';
 
 /**
  * Resolves one `aggregation.byGroup` key to a human-readable dimension name,
@@ -132,7 +136,9 @@ export function buildAxisMatrices(
     // (`currentLevel > 0`), więc podpis pod slajdem nie kłóci się z kartą
     // „Ocenionych" wewnątrz siatki.
     const assessedCount = areas.filter((a) => a.currentLevel !== null).length;
-    const drawableCount = areas.filter((a) => a.currentLevel !== null || a.targetLevel !== null).length;
+    const drawableCount = areas.filter(
+      (a) => a.currentLevel !== null || a.targetLevel !== null
+    ).length;
     if (drawableCount === 0) continue;
     const ladder = axis.sharedLevelLadder;
     const levels = Array.from({ length: axis.levelCount }, (_, i) => {

@@ -249,8 +249,9 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [cancellingDeletion, setCancellingDeletion] = useState(false);
   const [deletionRequest, setDeletionRequest] = useState<DeletionRequest | null>(null);
-  const [latestDeletionRequest, setLatestDeletionRequest] =
-    useState<LatestDeletionRequest | null>(null);
+  const [latestDeletionRequest, setLatestDeletionRequest] = useState<LatestDeletionRequest | null>(
+    null
+  );
   const [exportRequest, setExportRequest] = useState<ExportRequest | null>(null);
   const [exportStatusLoading, setExportStatusLoading] = useState(true);
   const [exportStatusError, setExportStatusError] = useState<string | null>(null);
@@ -744,7 +745,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                   <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface p-4">
                     <p className="text-sm font-medium text-c-text">
                       {t('settings.data.exportStatus', 'Export status')}:{' '}
-                      {t(`settings.data.exportStatuses.${exportRequest.status}`, exportRequest.status)}
+                      {t(
+                        `settings.data.exportStatuses.${exportRequest.status}`,
+                        exportRequest.status
+                      )}
                     </p>
                     <p className="mt-2 break-all font-mono text-[11px] text-c-text-muted">
                       {t('settings.data.requestReceipt', 'Receipt')}: {exportRequest.id}
@@ -835,7 +839,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 {!deletionRequest && latestDeletionRequest?.status === 'cancelled' && (
                   <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface p-4">
                     <p className="text-sm font-medium text-c-text">
-                      {t('settings.data.deletionCancelledStatus', 'Previous deletion request cancelled')}
+                      {t(
+                        'settings.data.deletionCancelledStatus',
+                        'Previous deletion request cancelled'
+                      )}
                     </p>
                     <p className="mt-1 text-xs text-c-text-secondary">
                       {t(

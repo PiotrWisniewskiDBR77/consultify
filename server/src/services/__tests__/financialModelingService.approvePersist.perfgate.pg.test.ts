@@ -21,12 +21,13 @@
  * reports the counts as null rather than guessing.
  */
 import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { approveModel } from '../financialModelingService.js';
 import { getPrimaryPoolSaturationPercent } from '../../database/PostgresDatabase.js';
 import { mapWithConcurrency, summarize } from '../caseWorkspace/__tests__/performance/lib/stats.js';
+import { approveModel } from '../financialModelingService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -67,8 +68,13 @@ function assumptionsJson(): string {
     initialOtherAssets: 0,
     initialOtherLiabilities: 0,
     baseline: {
-      revenue: 1_000_000, cogs: 400_000, opex: 300_000, depreciation: 50_000,
-      interest: 10_000, tax: 50_000, capex: 60_000,
+      revenue: 1_000_000,
+      cogs: 400_000,
+      opex: 300_000,
+      depreciation: 50_000,
+      interest: 10_000,
+      tax: 50_000,
+      capex: 60_000,
     },
   });
 }
@@ -105,10 +111,14 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() perf gate (real Postgre
     pool = new Pool({ connectionString: CONNECTION_STRING, max: 12 });
     await pool.query(
       `INSERT INTO organizations(id,name,plan,status,is_active,created_at)
-       VALUES($1,$2,'enterprise','active',1,now()) ON CONFLICT (id) DO NOTHING`, [org, org]);
+       VALUES($1,$2,'enterprise','active',1,now()) ON CONFLICT (id) DO NOTHING`,
+      [org, org]
+    );
     await pool.query(
       `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'ADMIN','active')
-       ON CONFLICT (id) DO NOTHING`, [user, org, `${user}@example.test`]);
+       ON CONFLICT (id) DO NOTHING`,
+      [user, org, `${user}@example.test`]
+    );
 
     for (let i = 0; i < MODEL_COUNT; i += 1) {
       const modelId = `${prefix}-model-${i}`;
@@ -129,7 +139,9 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() perf gate (real Postgre
   afterAll(async () => {
     if (!pool) return;
     await pool.query(`DELETE FROM financial_model_versions WHERE model_id = ANY($1)`, [modelIds]);
-    await pool.query(`DELETE FROM financial_model_validations WHERE model_id = ANY($1)`, [modelIds]);
+    await pool.query(`DELETE FROM financial_model_validations WHERE model_id = ANY($1)`, [
+      modelIds,
+    ]);
     await pool.query(`DELETE FROM financial_model_outputs WHERE model_id = ANY($1)`, [modelIds]);
     await pool.query(`DELETE FROM financial_models WHERE id = ANY($1)`, [modelIds]);
     await pool.query(`DELETE FROM users WHERE id = $1`, [user]);
@@ -148,208 +160,262 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() perf gate (real Postgre
     await pool.end();
   });
 
-  it(
-    '50 concurrent approveModel() on 50 distinct 60-month models, write p95 <= 1200ms',
-    async () => {
-      if (RELEASE_GATE) {
-        expect(MODEL_COUNT, 'release gate: exactly 50 concurrent models').toBe(50);
-        expect(HORIZON_MONTHS, 'release gate: 60-month horizon').toBe(60);
-        expect(EXPECTED_OUTPUT_ROWS_PER_MODEL, 'release gate: 2580 outputs/model').toBe(2580);
-        expect(WRITE_P95_LIMIT_MS, 'release gate: p95 limit stays 1200ms').toBe(1200);
-        expect(modelIds, 'release gate: 50 seeded models').toHaveLength(50);
-        expect(new Set(modelIds).size, 'release gate: models must be distinct').toBe(50);
-      }
+  it('50 concurrent approveModel() on 50 distinct 60-month models, write p95 <= 1200ms', async () => {
+    if (RELEASE_GATE) {
+      expect(MODEL_COUNT, 'release gate: exactly 50 concurrent models').toBe(50);
+      expect(HORIZON_MONTHS, 'release gate: 60-month horizon').toBe(60);
+      expect(EXPECTED_OUTPUT_ROWS_PER_MODEL, 'release gate: 2580 outputs/model').toBe(2580);
+      expect(WRITE_P95_LIMIT_MS, 'release gate: p95 limit stays 1200ms').toBe(1200);
+      expect(modelIds, 'release gate: 50 seeded models').toHaveLength(50);
+      expect(new Set(modelIds).size, 'release gate: models must be distinct').toBe(50);
+    }
 
-      let statsAvailable = false;
+    let statsAvailable = false;
+    try {
+      await pool.query('SELECT pg_stat_statements_reset()');
+      statsAvailable = true;
+    } catch {
+      // Reported as null below rather than guessed.
+    }
+
+    const walBefore = await pool
+      .query<{ lsn: string }>(`SELECT pg_current_wal_lsn()::text AS lsn`)
+      .then((r) => r.rows[0].lsn)
+      .catch(() => null);
+
+    // Sample pool saturation during the run so "connection wait" is observed,
+    // not inferred.
+    const saturationSamples: number[] = [];
+    const sampler = setInterval(() => {
+      saturationSamples.push(getPrimaryPoolSaturationPercent());
+    }, 25);
+
+    const cpuBefore = process.cpuUsage();
+    const memBefore = process.memoryUsage();
+    const startedAt = performance.now();
+
+    let errors = 0;
+    let thrown = 0;
+    const latenciesMs: number[] = [];
+
+    const outcomes = await mapWithConcurrency(modelIds, MODEL_COUNT, async (modelId) => {
+      const callStart = performance.now();
       try {
-        await pool.query('SELECT pg_stat_statements_reset()');
-        statsAvailable = true;
-      } catch {
-        // Reported as null below rather than guessed.
-      }
-
-      const walBefore = await pool
-        .query<{ lsn: string }>(`SELECT pg_current_wal_lsn()::text AS lsn`)
-        .then((r) => r.rows[0].lsn)
-        .catch(() => null);
-
-      // Sample pool saturation during the run so "connection wait" is observed,
-      // not inferred.
-      const saturationSamples: number[] = [];
-      const sampler = setInterval(() => {
-        saturationSamples.push(getPrimaryPoolSaturationPercent());
-      }, 25);
-
-      const cpuBefore = process.cpuUsage();
-      const memBefore = process.memoryUsage();
-      const startedAt = performance.now();
-
-      let errors = 0;
-      let thrown = 0;
-      const latenciesMs: number[] = [];
-
-      const outcomes = await mapWithConcurrency(modelIds, MODEL_COUNT, async (modelId) => {
-        const callStart = performance.now();
-        try {
-          const result = await approveModel(modelId, user);
-          latenciesMs.push(performance.now() - callStart);
-          if (!result.success) {
-            errors += 1;
-            return { modelId, ok: false, error: result.error, code: result.code };
-          }
-          return { modelId, ok: true };
-        } catch (error) {
-          latenciesMs.push(performance.now() - callStart);
+        const result = await approveModel(modelId, user);
+        latenciesMs.push(performance.now() - callStart);
+        if (!result.success) {
           errors += 1;
-          thrown += 1;
-          return { modelId, ok: false, error: error instanceof Error ? error.message : String(error) };
+          return { modelId, ok: false, error: result.error, code: result.code };
         }
-      });
+        return { modelId, ok: true };
+      } catch (error) {
+        latenciesMs.push(performance.now() - callStart);
+        errors += 1;
+        thrown += 1;
+        return {
+          modelId,
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    });
 
-      const totalDurationMs = performance.now() - startedAt;
-      clearInterval(sampler);
-      const cpuAfter = process.cpuUsage(cpuBefore);
-      const memAfter = process.memoryUsage();
-      const stats = summarize(latenciesMs);
+    const totalDurationMs = performance.now() - startedAt;
+    clearInterval(sampler);
+    const cpuAfter = process.cpuUsage(cpuBefore);
+    const memAfter = process.memoryUsage();
+    const stats = summarize(latenciesMs);
 
-      // ── MEASURED statement accounting (never declared) ───────────────────
-      let perModel: Record<string, unknown> | null = null;
-      let unclassified: unknown[] = [];
-      if (statsAvailable) {
-        const rows = await pool.query<{
-          query: string; calls: string; rows: string;
-          total_exec_time: string; mean_exec_time: string; max_exec_time: string;
-          wal_bytes: string; wal_records: string;
-          shared_blks_dirtied: string; shared_blks_written: string;
-        }>(
-          `SELECT query, calls::text, rows::text,
+    // ── MEASURED statement accounting (never declared) ───────────────────
+    let perModel: Record<string, unknown> | null = null;
+    const unclassified: unknown[] = [];
+    if (statsAvailable) {
+      const rows = await pool.query<{
+        query: string;
+        calls: string;
+        rows: string;
+        total_exec_time: string;
+        mean_exec_time: string;
+        max_exec_time: string;
+        wal_bytes: string;
+        wal_records: string;
+        shared_blks_dirtied: string;
+        shared_blks_written: string;
+      }>(
+        `SELECT query, calls::text, rows::text,
                   round(total_exec_time::numeric,2)::text AS total_exec_time,
                   round(mean_exec_time::numeric,4)::text  AS mean_exec_time,
                   round(max_exec_time::numeric,3)::text   AS max_exec_time,
                   wal_bytes::text, wal_records::text,
                   shared_blks_dirtied::text, shared_blks_written::text
              FROM pg_stat_statements`
-        );
-        const buckets: Record<string, {
-          statementsPerModel: number; rowsPerModel: number;
-          totalExecMs: number; meanExecMs: number; maxExecMs: number;
-          walBytesTotal: number; walRecordsTotal: number; blksDirtied: number; blksWritten: number;
-        }> = {};
-        for (const r of rows.rows) {
-          const kind = classifyStatement(r.query);
-          if (!kind) {
-            if (Number(r.calls) >= MODEL_COUNT) {
-              unclassified.push({ query: r.query.slice(0, 70), calls: Number(r.calls) });
-            }
-            continue;
+      );
+      const buckets: Record<
+        string,
+        {
+          statementsPerModel: number;
+          rowsPerModel: number;
+          totalExecMs: number;
+          meanExecMs: number;
+          maxExecMs: number;
+          walBytesTotal: number;
+          walRecordsTotal: number;
+          blksDirtied: number;
+          blksWritten: number;
+        }
+      > = {};
+      for (const r of rows.rows) {
+        const kind = classifyStatement(r.query);
+        if (!kind) {
+          if (Number(r.calls) >= MODEL_COUNT) {
+            unclassified.push({ query: r.query.slice(0, 70), calls: Number(r.calls) });
           }
-          const b = (buckets[kind] ||= {
-            statementsPerModel: 0, rowsPerModel: 0, totalExecMs: 0, meanExecMs: 0,
-            maxExecMs: 0, walBytesTotal: 0, walRecordsTotal: 0, blksDirtied: 0, blksWritten: 0,
-          });
-          b.statementsPerModel += Number(r.calls) / MODEL_COUNT;
-          b.rowsPerModel += Number(r.rows) / MODEL_COUNT;
-          b.totalExecMs += Number(r.total_exec_time);
-          b.meanExecMs = Math.max(b.meanExecMs, Number(r.mean_exec_time));
-          b.maxExecMs = Math.max(b.maxExecMs, Number(r.max_exec_time));
-          b.walBytesTotal += Number(r.wal_bytes);
-          b.walRecordsTotal += Number(r.wal_records);
-          b.blksDirtied += Number(r.shared_blks_dirtied);
-          b.blksWritten += Number(r.shared_blks_written);
+          continue;
         }
-        for (const b of Object.values(buckets)) {
-          b.statementsPerModel = Math.round(b.statementsPerModel * 100) / 100;
-          b.rowsPerModel = Math.round(b.rowsPerModel * 100) / 100;
-          b.totalExecMs = Math.round(b.totalExecMs * 100) / 100;
-        }
-        perModel = buckets;
+        const b = (buckets[kind] ||= {
+          statementsPerModel: 0,
+          rowsPerModel: 0,
+          totalExecMs: 0,
+          meanExecMs: 0,
+          maxExecMs: 0,
+          walBytesTotal: 0,
+          walRecordsTotal: 0,
+          blksDirtied: 0,
+          blksWritten: 0,
+        });
+        b.statementsPerModel += Number(r.calls) / MODEL_COUNT;
+        b.rowsPerModel += Number(r.rows) / MODEL_COUNT;
+        b.totalExecMs += Number(r.total_exec_time);
+        b.meanExecMs = Math.max(b.meanExecMs, Number(r.mean_exec_time));
+        b.maxExecMs = Math.max(b.maxExecMs, Number(r.max_exec_time));
+        b.walBytesTotal += Number(r.wal_bytes);
+        b.walRecordsTotal += Number(r.wal_records);
+        b.blksDirtied += Number(r.shared_blks_dirtied);
+        b.blksWritten += Number(r.shared_blks_written);
       }
-
-      const walAfter = await pool
-        .query<{ bytes: string }>(
-          `SELECT pg_wal_lsn_diff(pg_current_wal_lsn(), $1::pg_lsn)::text AS bytes`, [walBefore])
-        .then((r) => Number(r.rows[0].bytes))
-        .catch(() => null);
-
-      const lockWaits = await pool.query<{ n: number }>(
-        `SELECT count(*)::int n FROM pg_locks WHERE NOT granted`);
-      const tup = await pool.query<{ n_dead_tup: string; n_live_tup: string }>(
-        `SELECT n_dead_tup::text, n_live_tup::text FROM pg_stat_user_tables WHERE relname='financial_model_outputs'`);
-
-      const totalStatementsPerModel = perModel
-        ? Math.round(Object.values(perModel as Record<string, { statementsPerModel: number }>)
-            .reduce((a, b) => a + b.statementsPerModel, 0) * 100) / 100
-        : null;
-
-      const failed = outcomes.filter((o) => !o.ok);
-
-      // eslint-disable-next-line no-console
-      console.log('FIN_B2_PERF_REPORT ' + JSON.stringify({
-        gate: 'FIN-B2-APPROVE-PERSIST',
-        releaseGate: RELEASE_GATE,
-        denominator: {
-          modelCount: MODEL_COUNT, distinctModels: new Set(modelIds).size,
-          horizonMonths: HORIZON_MONTHS, outputRowsPerModel: EXPECTED_OUTPUT_ROWS_PER_MODEL,
-          writeP95LimitMs: WRITE_P95_LIMIT_MS,
-        },
-        latency: stats,
-        totalDurationMs: Math.round(totalDurationMs),
-        errors, thrown, errorRatePct: (errors / MODEL_COUNT) * 100,
-        cpu: { userMs: Math.round(cpuAfter.user / 1000), systemMs: Math.round(cpuAfter.system / 1000) },
-        memory: {
-          heapUsedMbDelta: Math.round(((memAfter.heapUsed - memBefore.heapUsed) / 1048576) * 100) / 100,
-          rssMbDelta: Math.round(((memAfter.rss - memBefore.rss) / 1048576) * 100) / 100,
-        },
-        pool: {
-          configuredMax: Number(process.env.DB_POOL_SIZE || 10),
-          saturationPctAfterRun: getPrimaryPoolSaturationPercent(),
-          saturationPctMaxDuringRun: saturationSamples.length ? Math.max(...saturationSamples) : null,
-          saturationPctMeanDuringRun: saturationSamples.length
-            ? Math.round(saturationSamples.reduce((a, b) => a + b, 0) / saturationSamples.length) : null,
-          samples: saturationSamples.length,
-        },
-        // MEASURED, not declared.
-        measuredStatementsPerModel: perModel,
-        measuredTotalStatementsPerModel: totalStatementsPerModel,
-        unclassifiedHotStatements: unclassified,
-        walBytesTotalRun: walAfter,
-        lockWaitsAtEnd: lockWaits.rows[0]?.n ?? null,
-        deadTuplesOutputs: tup.rows[0] ?? null,
-        failedCount: failed.length,
-        firstFewFailures: failed.slice(0, 5),
-      }, null, 2));
-
-      expect(errors, `approveModel() must succeed for all ${MODEL_COUNT} models`).toBe(0);
-
-      const counts = await pool.query<{ model_id: string; n: number }>(
-        `SELECT model_id, count(*)::int n FROM financial_model_outputs
-          WHERE model_id = ANY($1) GROUP BY model_id`, [modelIds]);
-      expect(counts.rows).toHaveLength(MODEL_COUNT);
-      for (const row of counts.rows) {
-        expect(row.n, `model ${row.model_id} output row count`).toBe(EXPECTED_OUTPUT_ROWS_PER_MODEL);
+      for (const b of Object.values(buckets)) {
+        b.statementsPerModel = Math.round(b.statementsPerModel * 100) / 100;
+        b.rowsPerModel = Math.round(b.rowsPerModel * 100) / 100;
+        b.totalExecMs = Math.round(b.totalExecMs * 100) / 100;
       }
+      perModel = buckets;
+    }
 
-      // Idempotency under the perf fixture: a stale expectedVersion replay is
-      // a clean VERSION_CONFLICT and duplicates nothing.
-      const replay = await approveModel(modelIds[0], user, { expectedVersion: 1 });
-      expect(replay.success).toBe(false);
-      expect(replay.code).toBe('VERSION_CONFLICT');
-      const recount = await pool.query<{ n: number }>(
-        `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`, [modelIds[0]]);
-      expect(recount.rows[0]?.n).toBe(EXPECTED_OUTPUT_ROWS_PER_MODEL);
+    const walAfter = await pool
+      .query<{ bytes: string }>(
+        `SELECT pg_wal_lsn_diff(pg_current_wal_lsn(), $1::pg_lsn)::text AS bytes`,
+        [walBefore]
+      )
+      .then((r) => Number(r.rows[0].bytes))
+      .catch(() => null);
 
-      await new Promise((r) => setTimeout(r, 50));
-      expect(
-        getPrimaryPoolSaturationPercent(),
-        'PoolClient leak: pool still saturated after all approves settled'
-      ).toBe(0);
+    const lockWaits = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM pg_locks WHERE NOT granted`
+    );
+    const tup = await pool.query<{ n_dead_tup: string; n_live_tup: string }>(
+      `SELECT n_dead_tup::text, n_live_tup::text FROM pg_stat_user_tables WHERE relname='financial_model_outputs'`
+    );
 
-      // The gate. Reported honestly above regardless of outcome.
-      expect(
-        stats.p95Ms,
-        `write p95 ${stats.p95Ms.toFixed(1)}ms must be <= ${WRITE_P95_LIMIT_MS}ms`
-      ).toBeLessThanOrEqual(WRITE_P95_LIMIT_MS);
-    },
-    900_000
-  );
+    const totalStatementsPerModel = perModel
+      ? Math.round(
+          Object.values(perModel as Record<string, { statementsPerModel: number }>).reduce(
+            (a, b) => a + b.statementsPerModel,
+            0
+          ) * 100
+        ) / 100
+      : null;
+
+    const failed = outcomes.filter((o) => !o.ok);
+
+    // eslint-disable-next-line no-console
+    console.log(
+      'FIN_B2_PERF_REPORT ' +
+        JSON.stringify(
+          {
+            gate: 'FIN-B2-APPROVE-PERSIST',
+            releaseGate: RELEASE_GATE,
+            denominator: {
+              modelCount: MODEL_COUNT,
+              distinctModels: new Set(modelIds).size,
+              horizonMonths: HORIZON_MONTHS,
+              outputRowsPerModel: EXPECTED_OUTPUT_ROWS_PER_MODEL,
+              writeP95LimitMs: WRITE_P95_LIMIT_MS,
+            },
+            latency: stats,
+            totalDurationMs: Math.round(totalDurationMs),
+            errors,
+            thrown,
+            errorRatePct: (errors / MODEL_COUNT) * 100,
+            cpu: {
+              userMs: Math.round(cpuAfter.user / 1000),
+              systemMs: Math.round(cpuAfter.system / 1000),
+            },
+            memory: {
+              heapUsedMbDelta:
+                Math.round(((memAfter.heapUsed - memBefore.heapUsed) / 1048576) * 100) / 100,
+              rssMbDelta: Math.round(((memAfter.rss - memBefore.rss) / 1048576) * 100) / 100,
+            },
+            pool: {
+              configuredMax: Number(process.env.DB_POOL_SIZE || 10),
+              saturationPctAfterRun: getPrimaryPoolSaturationPercent(),
+              saturationPctMaxDuringRun: saturationSamples.length
+                ? Math.max(...saturationSamples)
+                : null,
+              saturationPctMeanDuringRun: saturationSamples.length
+                ? Math.round(
+                    saturationSamples.reduce((a, b) => a + b, 0) / saturationSamples.length
+                  )
+                : null,
+              samples: saturationSamples.length,
+            },
+            // MEASURED, not declared.
+            measuredStatementsPerModel: perModel,
+            measuredTotalStatementsPerModel: totalStatementsPerModel,
+            unclassifiedHotStatements: unclassified,
+            walBytesTotalRun: walAfter,
+            lockWaitsAtEnd: lockWaits.rows[0]?.n ?? null,
+            deadTuplesOutputs: tup.rows[0] ?? null,
+            failedCount: failed.length,
+            firstFewFailures: failed.slice(0, 5),
+          },
+          null,
+          2
+        )
+    );
+
+    expect(errors, `approveModel() must succeed for all ${MODEL_COUNT} models`).toBe(0);
+
+    const counts = await pool.query<{ model_id: string; n: number }>(
+      `SELECT model_id, count(*)::int n FROM financial_model_outputs
+          WHERE model_id = ANY($1) GROUP BY model_id`,
+      [modelIds]
+    );
+    expect(counts.rows).toHaveLength(MODEL_COUNT);
+    for (const row of counts.rows) {
+      expect(row.n, `model ${row.model_id} output row count`).toBe(EXPECTED_OUTPUT_ROWS_PER_MODEL);
+    }
+
+    // Idempotency under the perf fixture: a stale expectedVersion replay is
+    // a clean VERSION_CONFLICT and duplicates nothing.
+    const replay = await approveModel(modelIds[0], user, { expectedVersion: 1 });
+    expect(replay.success).toBe(false);
+    expect(replay.code).toBe('VERSION_CONFLICT');
+    const recount = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`,
+      [modelIds[0]]
+    );
+    expect(recount.rows[0]?.n).toBe(EXPECTED_OUTPUT_ROWS_PER_MODEL);
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(
+      getPrimaryPoolSaturationPercent(),
+      'PoolClient leak: pool still saturated after all approves settled'
+    ).toBe(0);
+
+    // The gate. Reported honestly above regardless of outcome.
+    expect(
+      stats.p95Ms,
+      `write p95 ${stats.p95Ms.toFixed(1)}ms must be <= ${WRITE_P95_LIMIT_MS}ms`
+    ).toBeLessThanOrEqual(WRITE_P95_LIMIT_MS);
+  }, 900_000);
 });

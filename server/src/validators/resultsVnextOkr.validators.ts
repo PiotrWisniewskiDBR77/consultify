@@ -14,6 +14,23 @@
  */
 import { z } from 'zod';
 
+import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
+import {
+  OKR_CHECKIN_CONFIDENCE_VALUES,
+  OKR_CHECKIN_STATUS_VALUES,
+} from '../services/resultsVnext/okr/okrCheckInTypes.js';
+import { OKR_CYCLE_STATUSES } from '../services/resultsVnext/okr/okrCycleTypes.js';
+import {
+  OKR_KEY_RESULT_CONFIDENCE_VALUES,
+  OKR_KEY_RESULT_DIRECTIONS,
+  OKR_KEY_RESULT_MEASUREMENT_TYPES,
+  OKR_KEY_RESULT_SOURCE_TYPES,
+  OKR_KEY_RESULT_STATUSES,
+} from '../services/resultsVnext/okr/okrKeyResultTypes.js';
+import {
+  OKR_OBJECTIVE_AMBITION_TYPES,
+  OKR_OBJECTIVE_CONFIDENCE_VALUES,
+} from '../services/resultsVnext/okr/okrObjectiveTypes.js';
 import {
   OKR_CHECKIN_FREQUENCIES,
   OKR_CONFIDENCE_MODELS,
@@ -24,34 +41,17 @@ import {
   OKR_SCORING_MODELS,
   OKR_VISIBILITY_DEFAULTS,
 } from '../services/resultsVnext/okr/okrProgramTypes.js';
-import { OKR_CYCLE_STATUSES } from '../services/resultsVnext/okr/okrCycleTypes.js';
+import { OKR_REFLECTION_DISPOSITIONS } from '../services/resultsVnext/okr/okrReflectionTypes.js';
 import {
-  OKR_OBJECTIVE_AMBITION_TYPES,
-  OKR_OBJECTIVE_CONFIDENCE_VALUES,
-} from '../services/resultsVnext/okr/okrObjectiveTypes.js';
-import {
-  OKR_KEY_RESULT_CONFIDENCE_VALUES,
-  OKR_KEY_RESULT_DIRECTIONS,
-  OKR_KEY_RESULT_MEASUREMENT_TYPES,
-  OKR_KEY_RESULT_SOURCE_TYPES,
-  OKR_KEY_RESULT_STATUSES,
-} from '../services/resultsVnext/okr/okrKeyResultTypes.js';
+  OKR_REVIEW_COMMENT_LEVELS,
+  OKR_REVIEW_TYPES,
+} from '../services/resultsVnext/okr/okrReviewTypes.js';
 import {
   OKR_SET_ATTENTION_STATES,
   OKR_SET_SCOPE_TYPES,
   OKR_SET_STATUSES,
   OKR_SET_VERSION_FIELD_NAMES,
 } from '../services/resultsVnext/okr/okrSetTypes.js';
-import {
-  OKR_CHECKIN_CONFIDENCE_VALUES,
-  OKR_CHECKIN_STATUS_VALUES,
-} from '../services/resultsVnext/okr/okrCheckInTypes.js';
-import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
-import { OKR_REFLECTION_DISPOSITIONS } from '../services/resultsVnext/okr/okrReflectionTypes.js';
-import {
-  OKR_REVIEW_COMMENT_LEVELS,
-  OKR_REVIEW_TYPES,
-} from '../services/resultsVnext/okr/okrReviewTypes.js';
 import {
   OKR_RECOGNITION_VISIBILITY_VALUES,
   OKR_SUPPORT_REQUEST_KIND_VALUES,

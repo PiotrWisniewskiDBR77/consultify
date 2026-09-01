@@ -23,8 +23,12 @@ vi.mock('../workspaceApi', async () => {
 });
 
 import { FindingPanel } from '../FindingPanel';
+import type {
+  WorkspaceCapability,
+  WorkspaceFinding,
+  WorkspaceFindingDetail,
+} from '../workspaceApi';
 import * as workspaceApi from '../workspaceApi';
-import type { WorkspaceCapability, WorkspaceFinding, WorkspaceFindingDetail } from '../workspaceApi';
 
 const mockedListFindings = vi.mocked(workspaceApi.listFindings);
 const mockedGetFinding = vi.mocked(workspaceApi.getFinding);
@@ -100,16 +104,25 @@ function renderPanel(props: {
 describe('FindingPanel', () => {
   it('lists findings in a real StandardTable', async () => {
     mockedListFindings.mockResolvedValue({ items: [findingSummary()], total: 1 });
-    const { container } = renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer' });
+    const { container } = renderPanel({
+      capabilities: ['finding.review'],
+      currentUserId: 'user-reviewer',
+    });
 
-    await waitFor(() => expect(screen.getByText(/access control policy is missing/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/access control policy is missing/i)).toBeInTheDocument()
+    );
     expect(container.querySelector('table')).toBeInTheDocument();
   });
 
   it('does not offer "confirm" to the author of their own draft finding', async () => {
     mockedListFindings.mockResolvedValue({ items: [findingSummary()], total: 1 });
     mockedGetFinding.mockResolvedValue(findingDetail({ authorId: 'user-author', status: 'draft' }));
-    renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-author', selectedFindingId: 'finding-1' });
+    renderPanel({
+      capabilities: ['finding.review'],
+      currentUserId: 'user-author',
+      selectedFindingId: 'finding-1',
+    });
 
     await waitFor(() => expect(mockedGetFinding).toHaveBeenCalledWith('finding-1'));
 
@@ -123,12 +136,21 @@ describe('FindingPanel', () => {
     mockedListFindings.mockResolvedValue({ items: [findingSummary()], total: 1 });
     mockedGetFinding.mockResolvedValue(findingDetail({ authorId: 'user-author', status: 'draft' }));
     mockedReviewFinding.mockResolvedValue(findingSummary({ status: 'confirmed' }));
-    renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer', selectedFindingId: 'finding-1' });
+    renderPanel({
+      capabilities: ['finding.review'],
+      currentUserId: 'user-reviewer',
+      selectedFindingId: 'finding-1',
+    });
 
     const confirmButton = await screen.findByRole('button', { name: /^potwierdź$/i });
     fireEvent.click(confirmButton);
 
-    await waitFor(() => expect(mockedReviewFinding).toHaveBeenCalledWith('finding-1', expect.objectContaining({ decision: 'confirm' })));
+    await waitFor(() =>
+      expect(mockedReviewFinding).toHaveBeenCalledWith(
+        'finding-1',
+        expect.objectContaining({ decision: 'confirm' })
+      )
+    );
   });
 
   it('does not offer the "new finding" form without finding.draft', async () => {
@@ -141,9 +163,21 @@ describe('FindingPanel', () => {
 
   it('maxRows (DEC-88 phase-card table) truncates to N rows with a "show all" toggle; unset stays unlimited', async () => {
     const items = [
-      findingSummary({ id: 'f-1', referenceCode: 'F-1', statement: 'First finding statement text' }),
-      findingSummary({ id: 'f-2', referenceCode: 'F-2', statement: 'Second finding statement text' }),
-      findingSummary({ id: 'f-3', referenceCode: 'F-3', statement: 'Third finding statement text' }),
+      findingSummary({
+        id: 'f-1',
+        referenceCode: 'F-1',
+        statement: 'First finding statement text',
+      }),
+      findingSummary({
+        id: 'f-2',
+        referenceCode: 'F-2',
+        statement: 'Second finding statement text',
+      }),
+      findingSummary({
+        id: 'f-3',
+        referenceCode: 'F-3',
+        statement: 'Third finding statement text',
+      }),
     ];
     mockedListFindings.mockResolvedValue({ items, total: 3 });
     renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer', maxRows: 2 });
@@ -159,9 +193,21 @@ describe('FindingPanel', () => {
 
   it('without maxRows, every row renders and no "show all" toggle appears (V1 unaffected)', async () => {
     const items = [
-      findingSummary({ id: 'f-1', referenceCode: 'F-1', statement: 'First finding statement text' }),
-      findingSummary({ id: 'f-2', referenceCode: 'F-2', statement: 'Second finding statement text' }),
-      findingSummary({ id: 'f-3', referenceCode: 'F-3', statement: 'Third finding statement text' }),
+      findingSummary({
+        id: 'f-1',
+        referenceCode: 'F-1',
+        statement: 'First finding statement text',
+      }),
+      findingSummary({
+        id: 'f-2',
+        referenceCode: 'F-2',
+        statement: 'Second finding statement text',
+      }),
+      findingSummary({
+        id: 'f-3',
+        referenceCode: 'F-3',
+        statement: 'Third finding statement text',
+      }),
     ];
     mockedListFindings.mockResolvedValue({ items, total: 3 });
     renderPanel({ capabilities: ['finding.review'], currentUserId: 'user-reviewer' });

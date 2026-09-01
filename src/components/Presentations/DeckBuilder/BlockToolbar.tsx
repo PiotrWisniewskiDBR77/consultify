@@ -173,13 +173,26 @@ const SelectionTools: React.FC<{
   const buttonClass =
     'rounded-md border border-c-border-subtle px-2 py-1.5 text-[10px] font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-35';
   return (
-    <section aria-label={t('presentations.builder.selection.tools', 'Multiple block selection tools')} className="mb-4 space-y-2">
+    <section
+      aria-label={t('presentations.builder.selection.tools', 'Multiple block selection tools')}
+      className="mb-4 space-y-2"
+    >
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-c-text">{t('presentations.builder.selection.count', '{{count}} blocks selected', { count: blocks.length })}</h3>
-        <span className="text-[10px] text-c-text-secondary">{t('presentations.builder.selection.clickHint', 'Shift/⌘ click')}</span>
+        <h3 className="text-xs font-semibold text-c-text">
+          {t('presentations.builder.selection.count', '{{count}} blocks selected', {
+            count: blocks.length,
+          })}
+        </h3>
+        <span className="text-[10px] text-c-text-secondary">
+          {t('presentations.builder.selection.clickHint', 'Shift/⌘ click')}
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-1">
-        <button className={buttonClass} onClick={onGroup} aria-label={t('presentations.builder.selection.groupAria', 'Group selected blocks')}>
+        <button
+          className={buttonClass}
+          onClick={onGroup}
+          aria-label={t('presentations.builder.selection.groupAria', 'Group selected blocks')}
+        >
           {t('presentations.builder.selection.group', 'Group')}
         </button>
         <button
@@ -191,25 +204,40 @@ const SelectionTools: React.FC<{
           {t('presentations.builder.selection.ungroup', 'Ungroup')}
         </button>
       </div>
-      <div className="grid grid-cols-3 gap-1" aria-label={t('presentations.builder.selection.alignTools', 'Align selected blocks')}>
+      <div
+        className="grid grid-cols-3 gap-1"
+        aria-label={t('presentations.builder.selection.alignTools', 'Align selected blocks')}
+      >
         {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((alignment) => (
           <button
             key={alignment}
             className={buttonClass}
             disabled={geometryCount < 2}
             onClick={() => onAlign?.(alignment)}
-            aria-label={t(`presentations.builder.selection.align.${alignment}`, `Align ${alignment}`)}
+            aria-label={t(
+              `presentations.builder.selection.align.${alignment}`,
+              `Align ${alignment}`
+            )}
           >
             {t(`presentations.builder.selection.position.${alignment}`, alignment)}
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-1" aria-label={t('presentations.builder.selection.distributeTools', 'Distribute selected blocks')}>
+      <div
+        className="grid grid-cols-2 gap-1"
+        aria-label={t(
+          'presentations.builder.selection.distributeTools',
+          'Distribute selected blocks'
+        )}
+      >
         <button
           className={buttonClass}
           disabled={geometryCount < 3}
           onClick={() => onDistribute?.('horizontal')}
-          aria-label={t('presentations.builder.selection.distributeHorizontal', 'Distribute horizontally')}
+          aria-label={t(
+            'presentations.builder.selection.distributeHorizontal',
+            'Distribute horizontally'
+          )}
         >
           {t('presentations.builder.selection.distributeH', 'Distribute H')}
         </button>
@@ -217,14 +245,20 @@ const SelectionTools: React.FC<{
           className={buttonClass}
           disabled={geometryCount < 3}
           onClick={() => onDistribute?.('vertical')}
-          aria-label={t('presentations.builder.selection.distributeVertical', 'Distribute vertically')}
+          aria-label={t(
+            'presentations.builder.selection.distributeVertical',
+            'Distribute vertically'
+          )}
         >
           {t('presentations.builder.selection.distributeV', 'Distribute V')}
         </button>
       </div>
       {geometryCount < 2 && (
         <p className="text-[10px] text-c-text-secondary">
-          {t('presentations.builder.selection.alignmentHint', 'Alignment becomes available for freeform-positioned blocks.')}
+          {t(
+            'presentations.builder.selection.alignmentHint',
+            'Alignment becomes available for freeform-positioned blocks.'
+          )}
         </p>
       )}
     </section>
@@ -429,7 +463,9 @@ const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) 
         className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
       />
       {!normalized && (
-        <p className="text-[10px] text-c-text-secondary mt-2">Wpisz tekst, aby przeszukać wszystkie slajdy</p>
+        <p className="text-[10px] text-c-text-secondary mt-2">
+          Wpisz tekst, aby przeszukać wszystkie slajdy
+        </p>
       )}
       {normalized && matches.length === 0 && (
         <p className="text-xs text-c-text-secondary mt-3">Brak pasujących slajdów</p>

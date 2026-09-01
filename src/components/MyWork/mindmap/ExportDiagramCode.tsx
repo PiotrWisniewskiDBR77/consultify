@@ -130,7 +130,10 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-warning" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="export-diagram-code-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="export-diagram-code-modal-heading"
+            >
               {t('ideas.mindmap.exportDiagramCode', 'Export Diagram Code')}
             </h3>
           </div>

@@ -102,7 +102,8 @@ function ratioRowPeriodLabel(row: Record<string, any>): string | null {
       evidence = {};
     }
   }
-  const label = row.periodLabel ?? row.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  const label =
+    row.periodLabel ?? row.period_label ?? evidence.periodLabel ?? evidence.period_label;
   return label == null || String(label).trim() === '' ? null : String(label);
 }
 

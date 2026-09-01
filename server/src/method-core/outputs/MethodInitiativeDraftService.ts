@@ -145,7 +145,9 @@ export class MethodInitiativeDraftService {
       );
     }
     if (!input.title || input.title.trim() === '') {
-      throw new InitiativeDraftValidationError('InitiativeProposalDraft rejected: title is required');
+      throw new InitiativeDraftValidationError(
+        'InitiativeProposalDraft rejected: title is required'
+      );
     }
 
     const id = genId();

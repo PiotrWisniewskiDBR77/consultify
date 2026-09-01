@@ -54,6 +54,8 @@ import type {
 import {
   formatKpiScorecardDate,
   isKpiScorecardLocked,
+  KPI_SCORECARD_SNAPSHOT_STATUS_TONE,
+  KPI_SCORECARD_STATUS_TONE,
   kpiScorecardItemRoleLabel,
   kpiScorecardLockReason,
   kpiScorecardOwnerDisplay,
@@ -61,8 +63,6 @@ import {
   kpiScorecardScopeLabel,
   kpiScorecardSnapshotStatusLabel,
   kpiScorecardStatusLabel,
-  KPI_SCORECARD_SNAPSHOT_STATUS_TONE,
-  KPI_SCORECARD_STATUS_TONE,
   noMembersActivationReason,
   shortKpiScorecardId,
 } from './kpiScorecardMappers';
@@ -107,7 +107,9 @@ export function buildKpiScorecardColumns(
       label: isPolish ? 'Zakres' : 'Scope',
       width: '160px',
       render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-secondary">{kpiScorecardScopeLabel(row.scopeType, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">
+          {kpiScorecardScopeLabel(row.scopeType, isPolish)}
+        </span>
       ),
     },
     {
@@ -136,7 +138,9 @@ export function buildKpiScorecardColumns(
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.updatedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted">
+          {formatKpiScorecardDate(row.updatedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -162,7 +166,10 @@ export interface KpiScorecardRowMenuCtx {
   onArchive: (row: KpiScorecardDto) => void;
 }
 
-export function buildKpiScorecardRowMenu(row: KpiScorecardDto, ctx: KpiScorecardRowMenuCtx): StandardRowMenu {
+export function buildKpiScorecardRowMenu(
+  row: KpiScorecardDto,
+  ctx: KpiScorecardRowMenuCtx
+): StandardRowMenu {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   const archivedReason = kpiScorecardLockReason(ctx.isPolish);
   const noMembersReason = noMembersActivationReason(ctx.isPolish);
@@ -173,27 +180,52 @@ export function buildKpiScorecardRowMenu(row: KpiScorecardDto, ctx: KpiScorecard
   let statusTransitions: StandardRowMenu['statusTransitions'];
   if (row.lifecycleStatus === 'active') {
     statusTransitions = [
-      { id: 'suspend', label: t('Zawieś', 'Suspend'), onClick: () => ctx.onSuspend(row), disabled: ctx.busy },
+      {
+        id: 'suspend',
+        label: t('Zawieś', 'Suspend'),
+        onClick: () => ctx.onSuspend(row),
+        disabled: ctx.busy,
+      },
     ];
   } else if (row.lifecycleStatus === 'suspended') {
     statusTransitions = knownEmpty
       ? [lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, noMembersReason)]
-      : [{ id: 'activate', label: t('Aktywuj', 'Activate'), onClick: () => ctx.onActivate(row), disabled: ctx.busy }];
+      : [
+          {
+            id: 'activate',
+            label: t('Aktywuj', 'Activate'),
+            onClick: () => ctx.onActivate(row),
+            disabled: ctx.busy,
+          },
+        ];
   } else if (row.lifecycleStatus === 'draft') {
     statusTransitions = knownEmpty
       ? [lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, noMembersReason)]
-      : [{ id: 'activate', label: t('Aktywuj', 'Activate'), onClick: () => ctx.onActivate(row), disabled: ctx.busy }];
+      : [
+          {
+            id: 'activate',
+            label: t('Aktywuj', 'Activate'),
+            onClick: () => ctx.onActivate(row),
+            disabled: ctx.busy,
+          },
+        ];
   } else {
     // archived — terminal, single locked entry stays visible with a reason
     // rather than disappearing (TRIADA §C3).
-    statusTransitions = [lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, archivedReason)];
+    statusTransitions = [
+      lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, archivedReason),
+    ];
   }
 
   const isArchived = row.lifecycleStatus === 'archived';
 
   return {
     primary: [
-      { id: 'open', label: t('Otwórz kartę', 'Open scorecard'), onClick: () => ctx.onOpenDetail(row.scorecardId) },
+      {
+        id: 'open',
+        label: t('Otwórz kartę', 'Open scorecard'),
+        onClick: () => ctx.onOpenDetail(row.scorecardId),
+      },
     ],
     statusTransitions,
     universalHandlers: isArchived
@@ -232,13 +264,19 @@ export interface KpiScorecardPreviewCtx {
   onClose: () => void;
 }
 
-export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecardPreviewCtx): StandardPreviewProps {
+export function buildKpiScorecardPreview(
+  row: KpiScorecardDto,
+  ctx: KpiScorecardPreviewCtx
+): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   const isArchived = row.lifecycleStatus === 'archived';
   const knownEmpty = ctx.memberCount !== undefined && ctx.memberCount < 1;
 
   const lockBadge = isArchived ? (
-    <LifecycleLockBadge label={t('Zarchiwizowana', 'Archived')} reason={kpiScorecardLockReason(ctx.isPolish)} />
+    <LifecycleLockBadge
+      label={t('Zarchiwizowana', 'Archived')}
+      reason={kpiScorecardLockReason(ctx.isPolish)}
+    />
   ) : row.lifecycleStatus === 'suspended' ? (
     <LifecycleLockBadge
       label={t('Zawieszona', 'Suspended')}
@@ -257,7 +295,9 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
             {
               id: 'distribution',
               label: t('Stan pozycji', 'Item status'),
-              value: <span className="text-c-text-muted text-sm">{t('Ładowanie…', 'Loading…')}</span>,
+              value: (
+                <span className="text-c-text-muted text-sm">{t('Ładowanie…', 'Loading…')}</span>
+              ),
             },
           ]
         : [
@@ -284,7 +324,10 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
     headerExtra: lockBadge,
     meta: {
       pills: [
-        { label: kpiScorecardStatusLabel(row.lifecycleStatus, ctx.isPolish), tone: KPI_SCORECARD_STATUS_TONE[row.lifecycleStatus] },
+        {
+          label: kpiScorecardStatusLabel(row.lifecycleStatus, ctx.isPolish),
+          tone: KPI_SCORECARD_STATUS_TONE[row.lifecycleStatus],
+        },
         { label: kpiScorecardScopeLabel(row.scopeType, ctx.isPolish), tone: 'neutral' },
       ],
       trailing: (
@@ -303,16 +346,26 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
         {
           id: 'owner',
           label: t('Właściciel', 'Owner'),
-          value: row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
+          value:
+            row.ownerName ??
+            kpiScorecardOwnerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
         },
         {
           id: 'reviewFrequency',
           label: t('Częstotliwość przeglądu', 'Review frequency'),
           value: kpiScorecardReviewFrequencyLabel(row.reviewFrequency, ctx.isPolish),
         },
-        { id: 'scopeId', label: t('Cel zakresu', 'Scope target'), value: shortKpiScorecardId(row.scopeId) },
+        {
+          id: 'scopeId',
+          label: t('Cel zakresu', 'Scope target'),
+          value: shortKpiScorecardId(row.scopeId),
+        },
         { id: 'description', label: t('Opis', 'Description'), value: row.description ?? '—' },
-        { id: 'created', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },
+        {
+          id: 'created',
+          label: t('Utworzono', 'Created'),
+          value: formatKpiScorecardDate(row.createdAt, ctx.isPolish),
+        },
         ...distributionProperties,
       ],
     },
@@ -427,7 +480,9 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Dodane przez' : 'Added by',
       width: '150px',
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text-secondary" title={row.addedBy}>{row.addedByName ?? shortKpiScorecardId(row.addedBy)}</span>
+        <span className="text-sm text-c-text-secondary" title={row.addedBy}>
+          {row.addedByName ?? shortKpiScorecardId(row.addedBy)}
+        </span>
       ),
     },
     {
@@ -436,7 +491,9 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.addedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted">
+          {formatKpiScorecardDate(row.addedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -477,7 +534,10 @@ export function buildKpiScorecardItemRowMenu(
     ],
     statusTransitions: [
       handlers.isFirst
-        ? lockedRowMenuAction({ id: 'move-up', label: isPolish ? 'Przenieś w górę' : 'Move up' }, edgeReason.up)
+        ? lockedRowMenuAction(
+            { id: 'move-up', label: isPolish ? 'Przenieś w górę' : 'Move up' },
+            edgeReason.up
+          )
         : {
             id: 'move-up',
             label: isPolish ? 'Przenieś w górę' : 'Move up',
@@ -485,7 +545,10 @@ export function buildKpiScorecardItemRowMenu(
             disabled: handlers.busy,
           },
       handlers.isLast
-        ? lockedRowMenuAction({ id: 'move-down', label: isPolish ? 'Przenieś w dół' : 'Move down' }, edgeReason.down)
+        ? lockedRowMenuAction(
+            { id: 'move-down', label: isPolish ? 'Przenieś w dół' : 'Move down' },
+            edgeReason.down
+          )
         : {
             id: 'move-down',
             label: isPolish ? 'Przenieś w dół' : 'Move down',
@@ -520,7 +583,12 @@ export function buildKpiScorecardItemPreview(
     title: `KPI ${row.kpiName ?? shortKpiScorecardId(row.kpiId)}`,
     onClose: ctx.onClose,
     meta: {
-      pills: [{ label: kpiScorecardItemRoleLabel(row.role, ctx.isPolish), tone: row.role === 'primary' ? 'info' : 'neutral' }],
+      pills: [
+        {
+          label: kpiScorecardItemRoleLabel(row.role, ctx.isPolish),
+          tone: row.role === 'primary' ? 'info' : 'neutral',
+        },
+      ],
       trailing: (
         <span className="text-[11px] font-semibold text-c-text-secondary">
           {formatKpiScorecardDate(row.addedAt, ctx.isPolish)}
@@ -533,8 +601,16 @@ export function buildKpiScorecardItemPreview(
       properties: [
         { id: 'kpiId', label: 'KPI ID', value: row.kpiId, mono: true },
         { id: 'sortOrder', label: t('Kolejność', 'Sort order'), value: String(row.sortOrder) },
-        { id: 'addedBy', label: t('Dodane przez', 'Added by'), value: row.addedByName ?? shortKpiScorecardId(row.addedBy) },
-        { id: 'addedAt', label: t('Dodano', 'Added'), value: formatKpiScorecardDate(row.addedAt, ctx.isPolish) },
+        {
+          id: 'addedBy',
+          label: t('Dodane przez', 'Added by'),
+          value: row.addedByName ?? shortKpiScorecardId(row.addedBy),
+        },
+        {
+          id: 'addedAt',
+          label: t('Dodano', 'Added'),
+          value: formatKpiScorecardDate(row.addedAt, ctx.isPolish),
+        },
       ],
     },
     ai: { hints: [], disabled: true, disabledTooltip: t('Wkrótce', 'Coming soon') },
@@ -584,9 +660,9 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
       label: 'Status',
       width: '150px',
       filterable: true,
-      filterOptions: (Object.keys(KPI_SCORECARD_SNAPSHOT_STATUS_TONE) as KpiScorecardReviewSnapshotDto['status'][]).map(
-        (s) => ({ value: s, label: kpiScorecardSnapshotStatusLabel(s, isPolish) })
-      ),
+      filterOptions: (
+        Object.keys(KPI_SCORECARD_SNAPSHOT_STATUS_TONE) as KpiScorecardReviewSnapshotDto['status'][]
+      ).map((s) => ({ value: s, label: kpiScorecardSnapshotStatusLabel(s, isPolish) })),
       render: (row: KpiScorecardReviewSnapshotDto) => (
         <StatusChip
           label={kpiScorecardSnapshotStatusLabel(row.status, isPolish)}
@@ -600,7 +676,9 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardReviewSnapshotDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.publishedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted">
+          {formatKpiScorecardDate(row.publishedAt, isPolish)}
+        </span>
       ),
     },
     {
@@ -609,7 +687,9 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardReviewSnapshotDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.createdAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted">
+          {formatKpiScorecardDate(row.createdAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -648,7 +728,10 @@ export function buildKpiScorecardSnapshotRowMenu(
             onClick: () => handlers.onPublish(row),
             disabled: handlers.busy,
           }
-        : lockedRowMenuAction({ id: 'publish', label: isPolish ? 'Opublikuj' : 'Publish' }, terminalReason),
+        : lockedRowMenuAction(
+            { id: 'publish', label: isPolish ? 'Opublikuj' : 'Publish' },
+            terminalReason
+          ),
     ],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
@@ -674,7 +757,10 @@ export function buildKpiScorecardSnapshotPreview(
     onClose: ctx.onClose,
     meta: {
       pills: [
-        { label: kpiScorecardSnapshotStatusLabel(row.status, ctx.isPolish), tone: KPI_SCORECARD_SNAPSHOT_STATUS_TONE[row.status] },
+        {
+          label: kpiScorecardSnapshotStatusLabel(row.status, ctx.isPolish),
+          tone: KPI_SCORECARD_SNAPSHOT_STATUS_TONE[row.status],
+        },
       ],
       recommendation: isDraft
         ? t(
@@ -695,16 +781,37 @@ export function buildKpiScorecardSnapshotPreview(
       propertyLabel: t('Właściwość', 'Property'),
       valueLabel: t('Wartość', 'Value'),
       properties: [
-        { id: 'createdBy', label: t('Utworzono przez', 'Created by'), value: row.createdByName ?? shortKpiScorecardId(row.createdBy) },
-        { id: 'createdAt', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },
-        { id: 'publishedBy', label: t('Opublikowano przez', 'Published by'), value: row.publishedByName ?? shortKpiScorecardId(row.publishedBy) },
-        { id: 'publishedAt', label: t('Opublikowano', 'Published'), value: formatKpiScorecardDate(row.publishedAt, ctx.isPolish) },
+        {
+          id: 'createdBy',
+          label: t('Utworzono przez', 'Created by'),
+          value: row.createdByName ?? shortKpiScorecardId(row.createdBy),
+        },
+        {
+          id: 'createdAt',
+          label: t('Utworzono', 'Created'),
+          value: formatKpiScorecardDate(row.createdAt, ctx.isPolish),
+        },
+        {
+          id: 'publishedBy',
+          label: t('Opublikowano przez', 'Published by'),
+          value: row.publishedByName ?? shortKpiScorecardId(row.publishedBy),
+        },
+        {
+          id: 'publishedAt',
+          label: t('Opublikowano', 'Published'),
+          value: formatKpiScorecardDate(row.publishedAt, ctx.isPolish),
+        },
         {
           id: 'supersededAt',
           label: t('Zastąpiono', 'Superseded'),
           value: formatKpiScorecardDate(row.supersededAt, ctx.isPolish),
         },
-        { id: 'contentHash', label: t('Suma treści', 'Content hash'), value: row.contentHash ? shortKpiScorecardId(row.contentHash) : '—', mono: true },
+        {
+          id: 'contentHash',
+          label: t('Suma treści', 'Content hash'),
+          value: row.contentHash ? shortKpiScorecardId(row.contentHash) : '—',
+          mono: true,
+        },
       ],
     },
     ai: { hints: [], disabled: true, disabledTooltip: t('Wkrótce', 'Coming soon') },

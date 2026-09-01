@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import type { AgentProcessTemplateGraph } from '../../services/v8/agentProcessTemplateService.js';
 import {
   createAgentProcessTemplate,
   getAgentProcessTemplateGovernance,
@@ -12,10 +13,9 @@ import {
   reviseAgentProcessTemplate,
   transitionAgentProcessTemplate,
 } from '../../services/v8/agentProcessTemplateService.js';
-import type { AgentProcessTemplateGraph } from '../../services/v8/agentProcessTemplateService.js';
 import * as executionSpineService from '../../services/v8/executionSpineService.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
 import { TransformationPlanStepDraftSchema } from '../../types/transformationCase.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 const graphSchema = z.object({
@@ -33,10 +33,21 @@ const graphSchema = z.object({
       agentDefinitionVersions: z.record(z.string(), z.string().min(1)),
     })
     .optional(),
-  planningBlueprint: z.object({
-    intakeDefaults:z.object({mandate:z.string().trim().min(1).max(4000),measurableOutcomes:z.array(z.string().trim().min(1).max(500)).max(20).optional(),sponsor:z.string().trim().max(500).nullable().optional(),scope:z.string().trim().max(2000).nullable().optional(),horizon:z.string().trim().max(500).nullable().optional()}),
-    steps:z.array(TransformationPlanStepDraftSchema.omit({sourceStepId:true})).min(1).max(100),
-  }).optional(),
+  planningBlueprint: z
+    .object({
+      intakeDefaults: z.object({
+        mandate: z.string().trim().min(1).max(4000),
+        measurableOutcomes: z.array(z.string().trim().min(1).max(500)).max(20).optional(),
+        sponsor: z.string().trim().max(500).nullable().optional(),
+        scope: z.string().trim().max(2000).nullable().optional(),
+        horizon: z.string().trim().max(500).nullable().optional(),
+      }),
+      steps: z
+        .array(TransformationPlanStepDraftSchema.omit({ sourceStepId: true }))
+        .min(1)
+        .max(100),
+    })
+    .optional(),
   tasks: z
     .array(
       z.object({
@@ -70,9 +81,7 @@ const graphSchema = z.object({
 // present). Normalize here so the parsed request body matches that DTO shape —
 // mirrors the same `?? null` normalization already applied in
 // transformationCaseService.ts's plan compilers.
-function normalizeGraphForService(
-  graph: z.infer<typeof graphSchema>
-): AgentProcessTemplateGraph {
+function normalizeGraphForService(graph: z.infer<typeof graphSchema>): AgentProcessTemplateGraph {
   const { planningBlueprint, ...rest } = graph;
   return {
     ...rest,

@@ -224,9 +224,7 @@ const LineageChips: React.FC<{
   if (!lineage.length) {
     return (
       <p className="text-[10px] italic text-c-text-muted">
-        {isPolish
-          ? 'Brak powiązania z elementem Idei.'
-          : 'Not linked to an idea element yet.'}
+        {isPolish ? 'Brak powiązania z elementem Idei.' : 'Not linked to an idea element yet.'}
       </p>
     );
   }
@@ -396,7 +394,9 @@ const ClaimsEditor: React.FC<{
               onChange={(e) => setRefId(e.target.value)}
               className={`${INPUT_CLASS} flex-1`}
             >
-              <option value="">{isPolish ? '— źródło (opcjonalnie) —' : '— source (optional) —'}</option>
+              <option value="">
+                {isPolish ? '— źródło (opcjonalnie) —' : '— source (optional) —'}
+              </option>
               {graphNodes.map((n) => (
                 <option key={String(n.id)} value={String(n.id)}>
                   {nodeLabel(n)}
@@ -510,9 +510,7 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
   const patchSection = <K extends keyof IdeaBusinessCaseSections>(
     key: K,
-    updater: (
-      section: IdeaBusinessCaseSections[K]
-    ) => IdeaBusinessCaseSections[K]
+    updater: (section: IdeaBusinessCaseSections[K]) => IdeaBusinessCaseSections[K]
   ) => {
     setDraft((prev) => ({ ...prev, [key]: updater(prev[key]) }));
   };
@@ -560,7 +558,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
         {loadError && (
           <span className="inline-flex items-center gap-1 text-[10px] text-c-warning">
             <AlertTriangle size={10} />
-            {isPolish ? 'Nie udało się wczytać — pokazano pusty szkic.' : "Couldn't load — showing an empty draft."}
+            {isPolish
+              ? 'Nie udało się wczytać — pokazano pusty szkic.'
+              : "Couldn't load — showing an empty draft."}
           </span>
         )}
       </div>
@@ -651,7 +651,11 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 2. Strategic objective & expected outcome */}
       <SubCard
-        title={isPolish ? '2. Cel strategiczny i oczekiwany rezultat' : '2. Strategic objective & outcome'}
+        title={
+          isPolish
+            ? '2. Cel strategiczny i oczekiwany rezultat'
+            : '2. Strategic objective & outcome'
+        }
         complete={isSectionFilled('strategicObjective', draft.strategicObjective.content)}
       >
         <label>
@@ -669,7 +673,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           />
         </label>
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
+          </span>
           <textarea
             value={draft.strategicObjective.content.expectedOutcome}
             onChange={(e) =>
@@ -745,13 +751,17 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
               <select
                 className={`${INPUT_CLASS} col-span-2`}
                 value={row.stance}
-                onChange={(e) => update({ stance: e.target.value as BusinessCaseStakeholder['stance'] })}
+                onChange={(e) =>
+                  update({ stance: e.target.value as BusinessCaseStakeholder['stance'] })
+                }
               >
-                {(['sponsor', 'supportive', 'neutral', 'resistant', 'unknown'] as const).map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
+                {(['sponsor', 'supportive', 'neutral', 'resistant', 'unknown'] as const).map(
+                  (v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  )
+                )}
               </select>
             </>
           )}
@@ -803,7 +813,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 4. Evidence, assumptions & evidence gaps — BY REFERENCE, real reuse */}
       <SubCard
-        title={isPolish ? '4. Dowody, założenia i luki dowodowe' : '4. Evidence, assumptions & gaps'}
+        title={
+          isPolish ? '4. Dowody, założenia i luki dowodowe' : '4. Evidence, assumptions & gaps'
+        }
         complete={isSectionFilled('evidenceAssumptionsGaps', draft.evidenceAssumptionsGaps.content)}
       >
         <p className="text-[10.5px] text-c-text-muted">
@@ -814,7 +826,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
         <EvidencePanelSection artifactType="canvas" artifactId={ideaId} isPolish={isPolish} />
         <label>
           <span className={LABEL_CLASS}>
-            {isPolish ? 'Dodatkowa notatka (specyficzna dla karty biznesowej)' : 'Extra note (business-case specific)'}
+            {isPolish
+              ? 'Dodatkowa notatka (specyficzna dla karty biznesowej)'
+              : 'Extra note (business-case specific)'}
           </span>
           <textarea
             value={draft.evidenceAssumptionsGaps.content.note || ''}
@@ -838,7 +852,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 5. Alternatives (incl. do nothing) */}
       <SubCard
-        title={isPolish ? '5. Alternatywy (w tym „nic nie rób")' : '5. Alternatives (incl. "do nothing")'}
+        title={
+          isPolish ? '5. Alternatywy (w tym „nic nie rób")' : '5. Alternatives (incl. "do nothing")'
+        }
         complete={isSectionFilled('alternatives', draft.alternatives.content)}
       >
         <RowList
@@ -901,7 +917,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
         complete={isSectionFilled('recommendation', draft.recommendation.content)}
       >
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Wybrana alternatywa' : 'Chosen alternative'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Wybrana alternatywa' : 'Chosen alternative'}
+          </span>
           <select
             className={INPUT_CLASS}
             value={draft.recommendation.content.chosenAlternativeId || ''}
@@ -1084,7 +1102,11 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 9. Operational impact & process changes */}
       <SubCard
-        title={isPolish ? '9. Wpływ operacyjny i zmiany procesów' : '9. Operational impact & process changes'}
+        title={
+          isPolish
+            ? '9. Wpływ operacyjny i zmiany procesów'
+            : '9. Operational impact & process changes'
+        }
         complete={isSectionFilled('operationalImpact', draft.operationalImpact.content)}
       >
         <label>
@@ -1123,7 +1145,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           />
         </label>
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Potrzeby szkoleniowe' : 'Training needs'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Potrzeby szkoleniowe' : 'Training needs'}
+          </span>
           <textarea
             className={TEXTAREA_CLASS}
             rows={2}
@@ -1146,7 +1170,11 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 10. Risks, controls, dependencies & constraints */}
       <SubCard
-        title={isPolish ? '10. Ryzyka, kontrole, zależności i ograniczenia' : '10. Risks, controls, dependencies & constraints'}
+        title={
+          isPolish
+            ? '10. Ryzyka, kontrole, zależności i ograniczenia'
+            : '10. Risks, controls, dependencies & constraints'
+        }
         complete={isSectionFilled('risksControls', draft.risksControls.content)}
       >
         <span className={LABEL_CLASS}>{isPolish ? 'Ryzyka' : 'Risks'}</span>
@@ -1208,7 +1236,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           )}
         />
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Zależności (po przecinku)' : 'Dependencies (comma-separated)'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Zależności (po przecinku)' : 'Dependencies (comma-separated)'}
+          </span>
           <input
             className={INPUT_CLASS}
             value={draft.risksControls.content.dependencies.join(', ')}
@@ -1217,14 +1247,19 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
                 ...s,
                 content: {
                   ...s.content,
-                  dependencies: e.target.value.split(',').map((v) => v.trim()).filter(Boolean),
+                  dependencies: e.target.value
+                    .split(',')
+                    .map((v) => v.trim())
+                    .filter(Boolean),
                 },
               }))
             }
           />
         </label>
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Ograniczenia (po przecinku)' : 'Constraints (comma-separated)'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Ograniczenia (po przecinku)' : 'Constraints (comma-separated)'}
+          </span>
           <input
             className={INPUT_CLASS}
             value={draft.risksControls.content.constraints.join(', ')}
@@ -1233,7 +1268,10 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
                 ...s,
                 content: {
                   ...s.content,
-                  constraints: e.target.value.split(',').map((v) => v.trim()).filter(Boolean),
+                  constraints: e.target.value
+                    .split(',')
+                    .map((v) => v.trim())
+                    .filter(Boolean),
                 },
               }))
             }
@@ -1249,11 +1287,17 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 11. Implementation horizon & milestones */}
       <SubCard
-        title={isPolish ? '11. Horyzont wdrożenia i kamienie milowe' : '11. Implementation horizon & milestones'}
+        title={
+          isPolish
+            ? '11. Horyzont wdrożenia i kamienie milowe'
+            : '11. Implementation horizon & milestones'
+        }
         complete={isSectionFilled('implementationHorizon', draft.implementationHorizon.content)}
       >
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Podsumowanie horyzontu' : 'Horizon summary'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Podsumowanie horyzontu' : 'Horizon summary'}
+          </span>
           <input
             className={INPUT_CLASS}
             value={draft.implementationHorizon.content.horizonSummary || ''}
@@ -1313,7 +1357,11 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
 
       {/* 12. KPIs — baseline, target, owner, measurement source */}
       <SubCard
-        title={isPolish ? '12. KPI (punkt odniesienia, cel, właściciel, źródło)' : '12. KPIs (baseline, target, owner, source)'}
+        title={
+          isPolish
+            ? '12. KPI (punkt odniesienia, cel, właściciel, źródło)'
+            : '12. KPIs (baseline, target, owner, source)'
+        }
         complete={isSectionFilled('kpis', draft.kpis.content)}
       >
         <RowList
@@ -1441,7 +1489,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
         complete={isSectionFilled('decisionRequested', draft.decisionRequested.content)}
       >
         <label>
-          <span className={LABEL_CLASS}>{isPolish ? 'Pytanie decyzyjne' : 'Decision question'}</span>
+          <span className={LABEL_CLASS}>
+            {isPolish ? 'Pytanie decyzyjne' : 'Decision question'}
+          </span>
           <textarea
             className={TEXTAREA_CLASS}
             rows={2}

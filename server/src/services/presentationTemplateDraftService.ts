@@ -41,8 +41,8 @@
 import { generateChatResponse } from './aiService.js';
 import {
   buildSystemTemplateRuntime,
-  type PresentationTemplateRuntime,
   type PresentationCustomTemplateDefinition,
+  type PresentationTemplateRuntime,
   type TemplateFamily,
 } from './presentationTemplateRuntimeService.js';
 import type { SlideIntent } from './report/pptx/types.js';

@@ -341,7 +341,8 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
             <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — {formatCurrency(plan.price_monthly)} / {t('billing.alerts.month', 'miesiąc')}
+                {plan.name} — {formatCurrency(plan.price_monthly)} /{' '}
+                {t('billing.alerts.month', 'miesiąc')}
               </option>
             ))}
           </select>

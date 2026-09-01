@@ -107,7 +107,11 @@ export interface ResolutionCardData {
   readonly blocksFreeze: boolean;
 }
 
-export type ResolutionAction = 'assign_question' | 'request_evidence' | 'ask_teresa' | 'return_later';
+export type ResolutionAction =
+  | 'assign_question'
+  | 'request_evidence'
+  | 'ask_teresa'
+  | 'return_later';
 
 // ---------------------------------------------------------------------------
 // Question help (four levels — HELP §3)
@@ -172,7 +176,9 @@ export interface TeresaProposalQueueItem {
 
 export interface MethodWorkspaceSaveOptions {
   readonly debounceMs?: number;
-  readonly save: (reason: 'autosave' | 'manual') => Promise<{ ok: true } | { ok: false; error: string }>;
+  readonly save: (
+    reason: 'autosave' | 'manual'
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   /** Called on every leave attempt; return false to block the leave. */
   readonly onDirtyBeforeUnload?: () => void;
 }
@@ -184,4 +190,10 @@ export interface MethodWorkspaceSaveState {
 }
 
 // Re-exported for consumers that only need the shell-facing surface.
-export type { MethodReadiness, MethodSaveState, MethodSession, TeresaProposedChange, TeresaStatement };
+export type {
+  MethodReadiness,
+  MethodSaveState,
+  MethodSession,
+  TeresaProposedChange,
+  TeresaStatement,
+};

@@ -157,7 +157,10 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
           }
         />
 
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-dev-render-chrome="">
+        <div
+          className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+          data-dev-render-chrome=""
+        >
           <p className="text-xs text-c-text-secondary">
             Panel po prawej pokazuje wynik dla AKTYWNEJ KARTY „Opis i zakres" (Zadanie). Kolejność
             szuflad jest wiążąca: Braki · Ryzyka · Sugestie · Proponowane zmiany.

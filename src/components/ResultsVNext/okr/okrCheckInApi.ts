@@ -103,7 +103,10 @@ export class OkrCheckInApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+async function getJson<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): Promise<T> {
   const query = params
     ? Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -125,7 +128,11 @@ async function getJson<T>(path: string, params?: Record<string, string | number 
     } catch {
       // non-JSON error body — fall through with generic message
     }
-    throw new OkrCheckInApiError(body.error || `Request failed (${res.status})`, res.status, body.code);
+    throw new OkrCheckInApiError(
+      body.error || `Request failed (${res.status})`,
+      res.status,
+      body.code
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -146,7 +153,11 @@ async function mutateJson<T>(method: 'POST', path: string, body: unknown): Promi
     // non-JSON body — fall through
   }
   if (!res.ok) {
-    const { error, code, ...details } = parsed as { error?: string; code?: string; [k: string]: unknown };
+    const { error, code, ...details } = parsed as {
+      error?: string;
+      code?: string;
+      [k: string]: unknown;
+    };
     throw new OkrCheckInApiError(
       (typeof error === 'string' && error) || `Request failed (${res.status})`,
       res.status,
@@ -166,7 +177,10 @@ export function newOkrCheckInIdempotencyKey(): string {
 // (`okr.routes.ts` L1731-1757, query = `ListOkrCheckInsQuerySchema`)
 // ==========================================
 
-export async function listCheckIns(keyResultId: string, currentOnly = true): Promise<OkrCheckInDto[]> {
+export async function listCheckIns(
+  keyResultId: string,
+  currentOnly = true
+): Promise<OkrCheckInDto[]> {
   const { checkIns } = await getJson<{ checkIns: OkrCheckInDto[] }>(
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/check-ins`,
     { currentOnly }
@@ -174,7 +188,9 @@ export async function listCheckIns(keyResultId: string, currentOnly = true): Pro
   return checkIns;
 }
 
-export async function listCheckInOccurrences(keyResultId: string): Promise<OkrCheckInOccurrenceOption[]> {
+export async function listCheckInOccurrences(
+  keyResultId: string
+): Promise<OkrCheckInOccurrenceOption[]> {
   const { occurrences } = await getJson<{ occurrences: OkrCheckInOccurrenceOption[] }>(
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/checkin-occurrences`
   );
@@ -215,7 +231,10 @@ export interface RecordOkrCheckInResponse {
   checkIn: OkrCheckInDto;
 }
 
-export async function recordCheckIn(keyResultId: string, input: RecordOkrCheckInInput): Promise<RecordOkrCheckInResponse> {
+export async function recordCheckIn(
+  keyResultId: string,
+  input: RecordOkrCheckInInput
+): Promise<RecordOkrCheckInResponse> {
   return mutateJson<RecordOkrCheckInResponse>(
     'POST',
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/check-ins`,
@@ -287,7 +306,9 @@ export interface OkrSuggestNextCheckInValue {
   reason: string;
 }
 
-export async function suggestNextCheckInValue(keyResultId: string): Promise<OkrSuggestNextCheckInValue> {
+export async function suggestNextCheckInValue(
+  keyResultId: string
+): Promise<OkrSuggestNextCheckInValue> {
   const { suggestion } = await getJson<{ suggestion: OkrSuggestNextCheckInValue }>(
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/suggested-next-check-in-value`
   );

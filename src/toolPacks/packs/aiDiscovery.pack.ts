@@ -110,7 +110,8 @@ export const aiDiscoveryPack: ToolPack = {
         pl: 'Zdefiniować funkcję, krajobraz danych i ambicję AI.',
         en: 'Define the function, data landscape, and AI ambition.',
       },
-      whatGoodLooksLike: 'Nazwana funkcja biznesowa, znany właściciel decyzji i szczery obraz stanu danych.',
+      whatGoodLooksLike:
+        'Nazwana funkcja biznesowa, znany właściciel decyzji i szczery obraz stanu danych.',
       evidenceToAskFor: 'Który proces/decyzja ma się zmienić i kto go dziś obsługuje.',
       completionCriterion: 'Ambicja AI zaakceptowana przez sponsora biznesowego.',
     },
@@ -121,9 +122,12 @@ export const aiDiscoveryPack: ToolPack = {
         pl: 'Wyselekcjonować kandydujące case’y AI wg wartości i wykonalności.',
         en: 'Shortlist candidate AI use cases by value and feasibility.',
       },
-      whatGoodLooksLike: 'Każdy use case ma nazwaną decyzję biznesową, gotowość danych i status pomiaru (measured/estimated).',
-      evidenceToAskFor: 'Czy sponsor pitchowałby to jako nazwaną decyzję, czy jako "AI dla AI" (aiDiscoveryQuestionBank.ts: aid-surface).',
-      completionCriterion: 'Co najmniej jeden use case ma jawnie oznaczoną gotowość danych (ready/partial/missing).',
+      whatGoodLooksLike:
+        'Każdy use case ma nazwaną decyzję biznesową, gotowość danych i status pomiaru (measured/estimated).',
+      evidenceToAskFor:
+        'Czy sponsor pitchowałby to jako nazwaną decyzję, czy jako "AI dla AI" (aiDiscoveryQuestionBank.ts: aid-surface).',
+      completionCriterion:
+        'Co najmniej jeden use case ma jawnie oznaczoną gotowość danych (ready/partial/missing).',
     },
     {
       id: 'prerequisites',
@@ -132,9 +136,11 @@ export const aiDiscoveryPack: ToolPack = {
         pl: 'Zebrać prerekwizyty danych, kompetencji i platformy.',
         en: 'Capture data, skills, and platform prerequisites.',
       },
-      whatGoodLooksLike: 'Twierdzenie o gotowości danych ma dowód — próbkę, log, audyt jakości — nie deklarację "chyba mamy".',
+      whatGoodLooksLike:
+        'Twierdzenie o gotowości danych ma dowód — próbkę, log, audyt jakości — nie deklarację "chyba mamy".',
       evidenceToAskFor: 'Realna próbka danych albo pilotażowy wyciąg potwierdzający jakość.',
-      completionCriterion: 'Gotowość danych oznaczona z dowodem (aiDiscoveryQuestionBank.ts: pętla aid-data-force nie blokuje dalej).',
+      completionCriterion:
+        'Gotowość danych oznaczona z dowodem (aiDiscoveryQuestionBank.ts: pętla aid-data-force nie blokuje dalej).',
     },
     {
       id: 'pilot-plan',
@@ -143,9 +149,12 @@ export const aiDiscoveryPack: ToolPack = {
         pl: 'Zdefiniować pierwszy pilot, ownerów i sygnały sukcesu.',
         en: 'Define the first pilot, owners, and success signals.',
       },
-      whatGoodLooksLike: 'Wybrana "latarnia" ma nazwanego właściciela biznesowego i gotowe dane — nie jest moonshotem.',
-      evidenceToAskFor: 'Dlaczego ten use case, a nie use case o wyższym potencjale, ale niższej gotowości.',
-      completionCriterion: 'Co najmniej jeden use case z gotowymi danymi ma nazwanego właściciela (useCaseEngine.ts: detectDiscoveryGaps — unowned-ready-value = 0).',
+      whatGoodLooksLike:
+        'Wybrana "latarnia" ma nazwanego właściciela biznesowego i gotowe dane — nie jest moonshotem.',
+      evidenceToAskFor:
+        'Dlaczego ten use case, a nie use case o wyższym potencjale, ale niższej gotowości.',
+      completionCriterion:
+        'Co najmniej jeden use case z gotowymi danymi ma nazwanego właściciela (useCaseEngine.ts: detectDiscoveryGaps — unowned-ready-value = 0).',
     },
     {
       id: 'summary',
@@ -154,9 +163,12 @@ export const aiDiscoveryPack: ToolPack = {
         pl: 'Podsumować odkrycie i wygenerować inicjatywy.',
         en: 'Summarize discovery and generate initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch ma rationale, trade-off i odrzucony wariant (walidacja: valid=true).',
-      evidenceToAskFor: 'Co świadomie odraczamy (moonshoty) i pod jakim warunkiem wracają do portfela.',
-      completionCriterion: 'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
+      whatGoodLooksLike:
+        'Każdy ruch ma rationale, trade-off i odrzucony wariant (walidacja: valid=true).',
+      evidenceToAskFor:
+        'Co świadomie odraczamy (moonshoty) i pod jakim warunkiem wracają do portfela.',
+      completionCriterion:
+        'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
     },
   ],
 
@@ -171,7 +183,10 @@ export const aiDiscoveryPack: ToolPack = {
       answerType: 'text',
       challengeRule:
         'Odrzuć odpowiedź bez nazwanej decyzji ("chcemy być bardziej AI-native" = za ogólne) — wymagaj czyjejś konkretnej decyzji, która się zmienia.',
-      followUpProbes: ['Kto podejmuje tę decyzję dziś?', 'Co się stanie, jeśli decyzja się nie zmieni?'],
+      followUpProbes: [
+        'Kto podejmuje tę decyzję dziś?',
+        'Co się stanie, jeśli decyzja się nie zmieni?',
+      ],
     },
     {
       id: 'aid-usecase-pitch',

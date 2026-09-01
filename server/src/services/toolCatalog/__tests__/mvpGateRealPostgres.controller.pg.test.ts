@@ -73,7 +73,11 @@ process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 process.env.RATE_LIMIT_BYPASS = 'true';
 
 const DATABASE_URL = process.env.DATABASE_URL;
-const FORBIDDEN_DB_HOSTS = ['centerbeam.proxy.rlwy.net', 'trolley.proxy.rlwy.net', 'ballast.proxy.rlwy.net'];
+const FORBIDDEN_DB_HOSTS = [
+  'centerbeam.proxy.rlwy.net',
+  'trolley.proxy.rlwy.net',
+  'ballast.proxy.rlwy.net',
+];
 
 const P = `tls-catalog-001-${Date.now()}-`;
 const ORG_A = `${P}orgA`;
@@ -125,10 +129,12 @@ beforeAll(async () => {
   // for both the positive tenant and the cross-tenant negative control.
   const identity = await freshClient();
   try {
-    await identity.query(
-      `INSERT INTO organizations (id,name) VALUES ($1,$2),($3,$4)`,
-      [ORG_A, `${P}org A`, ORG_B, `${P}org B`]
-    );
+    await identity.query(`INSERT INTO organizations (id,name) VALUES ($1,$2),($3,$4)`, [
+      ORG_A,
+      `${P}org A`,
+      ORG_B,
+      `${P}org B`,
+    ]);
     await identity.query(
       `INSERT INTO users (id,organization_id,email,role,status)
        VALUES ($1,$2,$3,'ADMIN','active')`,
@@ -182,7 +188,10 @@ afterAll(async () => {
   const c = await freshClient();
   try {
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1, $2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1, $2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1, $2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
     await c.query(`DELETE FROM users WHERE id=$1`, [USER]);
     await c.query(`DELETE FROM organizations WHERE id IN ($1, $2)`, [ORG_A, ORG_B]);
   } finally {
@@ -300,13 +309,17 @@ describe('TLS-CATALOG-001 — real runtime gate against real Postgres', () => {
     // ...and never sees it on the list path either.
     const crossOrgList = await request(app).get('/api/tools').set(asUser(ORG_B));
     expect(crossOrgList.status).toBe(200);
-    const leaked = (crossOrgList.body.items as Array<{ id: string }>).some((it) => it.id === sessionId);
+    const leaked = (crossOrgList.body.items as Array<{ id: string }>).some(
+      (it) => it.id === sessionId
+    );
     expect(leaked).toBe(false);
 
     // Sanity: the owning org DOES see it on the list path.
     const sameOrgList = await request(app).get('/api/tools').set(asUser(ORG_A));
     expect(sameOrgList.status).toBe(200);
-    const present = (sameOrgList.body.items as Array<{ id: string }>).some((it) => it.id === sessionId);
+    const present = (sameOrgList.body.items as Array<{ id: string }>).some(
+      (it) => it.id === sessionId
+    );
     expect(present).toBe(true);
   }, 30_000);
 

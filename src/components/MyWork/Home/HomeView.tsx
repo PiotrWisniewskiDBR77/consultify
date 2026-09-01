@@ -1,18 +1,4 @@
 import { motion } from 'framer-motion';
-// Use the app's configured, initialized i18next singleton (HttpBackend +
-// LanguageDetector + resources — see src/i18n.ts), not the raw 'i18next'
-// package export. This file's module-level constants (RING_INFO, QUADRANTS,
-// TYPE_META, ...) call i18n.t(key, defaultValue) at IMPORT time; a raw,
-// never-`.init()`-ed 'i18next' instance returns `undefined` from t() until
-// something else in the module graph happens to initialize the same
-// singleton first. In the real app that ordering luck holds (the app
-// entrypoint imports '@/i18n' before this file ever renders), but it made
-// every static label in this file (ring/quadrant/type text) fragile and, in
-// isolated unit tests, empty — confirmed empirically: all 4 RING_INFO
-// labels rendered as blank <text> nodes. Same fix already applied to
-// ProcessFlowContextMenu.tsx / useProcessFlowAIProposal.ts /
-// notebookCaptureSourceSummary.ts.
-import i18n from '../../../i18n';
 import {
   AlertTriangle,
   BookOpen,
@@ -38,6 +24,20 @@ import { useTranslation } from 'react-i18next';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { cn } from '@/lib/utils';
 
+// Use the app's configured, initialized i18next singleton (HttpBackend +
+// LanguageDetector + resources — see src/i18n.ts), not the raw 'i18next'
+// package export. This file's module-level constants (RING_INFO, QUADRANTS,
+// TYPE_META, ...) call i18n.t(key, defaultValue) at IMPORT time; a raw,
+// never-`.init()`-ed 'i18next' instance returns `undefined` from t() until
+// something else in the module graph happens to initialize the same
+// singleton first. In the real app that ordering luck holds (the app
+// entrypoint imports '@/i18n' before this file ever renders), but it made
+// every static label in this file (ring/quadrant/type text) fragile and, in
+// isolated unit tests, empty — confirmed empirically: all 4 RING_INFO
+// labels rendered as blank <text> nodes. Same fix already applied to
+// ProcessFlowContextMenu.tsx / useProcessFlowAIProposal.ts /
+// notebookCaptureSourceSummary.ts.
+import i18n from '../../../i18n';
 import type {
   HomeScreenAction,
   HomeTimeMode,

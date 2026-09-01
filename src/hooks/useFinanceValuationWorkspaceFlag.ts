@@ -19,8 +19,9 @@
  * `useFeatureFlags({ flags: [...] })`.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_VALUATION_WORKSPACE_FLAG_ID = 'financeValuationWorkspaceV1';
 

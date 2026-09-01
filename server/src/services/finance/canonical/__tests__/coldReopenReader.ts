@@ -635,7 +635,13 @@ async function main(): Promise<void> {
   ) as Record<string, string>;
 
   const connectionString = process.env.DATABASE_URL ?? '';
-  if (!(process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && connectionString.startsWith('postgres'))) {
+  if (
+    !(
+      process.env.RUN_DB_TESTS === '1' &&
+      process.env.MOCK_DB === 'false' &&
+      connectionString.startsWith('postgres')
+    )
+  ) {
     throw new Error(
       'coldReopenReader child requires RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... against an ephemeral cluster.'
     );
@@ -647,7 +653,8 @@ async function main(): Promise<void> {
   const ids = JSON.parse(args.ids) as Partial<ChainIds>;
 
   const readStart = Date.now();
-  const { withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js');
+  const { withPinnedPostgresTransaction } =
+    await import('../../../../database/PostgresDatabase.js');
   const lineageService = await import('../lineageService.js');
 
   const backendPids: number[] = [];
@@ -658,7 +665,9 @@ async function main(): Promise<void> {
     if (mode === 'valuation') return readValuationPayload(tx as Tx, orgId, ids.valuation!);
     return readChainPayload(tx as Tx, orgId, ids as ChainIds, lineageService.getAncestors as any);
   });
-  const witness = await withPinnedPostgresTransaction((tx) => readComputeActivityWitness(tx as Tx, orgId));
+  const witness = await withPinnedPostgresTransaction((tx) =>
+    readComputeActivityWitness(tx as Tx, orgId)
+  );
   const readMs = Date.now() - readStart;
 
   const out: ChildReaderResult = {

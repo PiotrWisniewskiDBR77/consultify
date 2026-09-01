@@ -80,7 +80,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { withPinnedPostgresTransaction, type PinnedTransactionClient } from '../../../database/PostgresDatabase.js';
+import {
+  type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
+} from '../../../database/PostgresDatabase.js';
 
 // ---------------------------------------------------------------------------
 // Vocabulary (mirrors the B01 CHECK constraint on finance_business_versions.freshness)
@@ -101,7 +104,10 @@ export type FreshnessReasonCode =
   | 'COMPUTE_ERROR';
 
 /** The two states propagation can move a descendant INTO (§6.1/§6.2). */
-export type PropagatedFreshnessState = Extract<FreshnessState, 'STALE_SOURCE' | 'STALE_ASSUMPTIONS'>;
+export type PropagatedFreshnessState = Extract<
+  FreshnessState,
+  'STALE_SOURCE' | 'STALE_ASSUMPTIONS'
+>;
 
 /**
  * WP-B03 §6.4 severity ordering:
@@ -130,7 +136,10 @@ export function reasonPriority(reason: string | null | undefined): number {
 }
 
 /** §6.4 — an incoming reason may overwrite the stored one only if it is at least as severe. */
-export function reasonOverrides(incoming: FreshnessReasonCode, current: string | null | undefined): boolean {
+export function reasonOverrides(
+  incoming: FreshnessReasonCode,
+  current: string | null | undefined
+): boolean {
   return reasonPriority(incoming) >= reasonPriority(current);
 }
 

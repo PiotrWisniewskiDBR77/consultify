@@ -1,15 +1,16 @@
 import { randomUUID } from 'node:crypto';
+
 import type { NextFunction, Response } from 'express';
 import express from 'express';
 import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { createArtifact } from '../finance/canonical/artifactVersionService.js';
 import {
   FINANCE_LEGACY_WRITER_ROLLBACK_ENV,
   financeLegacyCutoverGuard,
 } from '../financeLegacyCutover.js';
-import { createArtifact } from '../finance/canonical/artifactVersionService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG =
@@ -162,7 +163,9 @@ describe.skipIf(!REAL_PG)('Finance legacy cutover telemetry (fresh real PostgreS
         WHERE organization_id=$1 AND request_id='foreign-request'`,
       [foreignOrganizationId]
     );
-    expect(row.rows).toEqual([{ canonical_artifact_id: null, canonical_business_version_id: null }]);
+    expect(row.rows).toEqual([
+      { canonical_artifact_id: null, canonical_business_version_id: null },
+    ]);
   });
 
   it('survives a cold connection with stable identity and exactly one row per request', async () => {
@@ -178,6 +181,8 @@ describe.skipIf(!REAL_PG)('Finance legacy cutover telemetry (fresh real PostgreS
     expect(rows.rows).toHaveLength(2);
     expect(rows.rows.every((row) => row.request_id === 'realpg-request')).toBe(true);
     expect(rows.rows.every((row) => row.canonical_artifact_id === artifactId)).toBe(true);
-    expect(rows.rows.every((row) => row.canonical_business_version_id === businessVersionId)).toBe(true);
+    expect(rows.rows.every((row) => row.canonical_business_version_id === businessVersionId)).toBe(
+      true
+    );
   });
 });

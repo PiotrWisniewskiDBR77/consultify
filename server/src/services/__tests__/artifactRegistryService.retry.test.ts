@@ -240,7 +240,9 @@ describe('artifactRegistryService materialization lifecycle reconciliation', () 
   it.each(['rejected', 'failed', 'completed', 'cancelled'])(
     'never reconciles terminal artifact lifecycle %s',
     (artifactStatus) => {
-      expect(isArtifactRunLifecycleMaterializable(artifactStatus, 'approved_for_apply')).toBe(false);
+      expect(isArtifactRunLifecycleMaterializable(artifactStatus, 'approved_for_apply')).toBe(
+        false
+      );
       expect(isArtifactRunLifecycleMaterializable(artifactStatus, 'applying')).toBe(false);
     }
   );

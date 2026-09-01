@@ -14,8 +14,8 @@ import {
   rebaselineGovernedProposal,
   registerGovernedProposal,
   requestProposalRevision,
-  reviseGovernedProposal,
   reviewProposalScope,
+  reviseGovernedProposal,
   withProposalGovernanceClient,
 } from '../agentProposalGovernanceService.js';
 

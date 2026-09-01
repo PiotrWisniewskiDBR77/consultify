@@ -324,9 +324,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
     InitiativeController = (await import('../InitiativeController.js')).default;
     getPortfolioRead = (await import('../../services/v8/planningPortfolioReadService.js'))
       .getPortfolioRead;
-    ({ getCapacityTimeline, getInitiativeCapacity } = await import(
-      '../../services/workloadCapacityService.js'
-    ));
+    ({ getCapacityTimeline, getInitiativeCapacity } =
+      await import('../../services/workloadCapacityService.js'));
   }, 60000);
 
   afterAll(async () => {

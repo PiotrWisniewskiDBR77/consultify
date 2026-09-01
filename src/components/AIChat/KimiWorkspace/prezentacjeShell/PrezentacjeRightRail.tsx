@@ -46,8 +46,11 @@
 import { Activity, LayoutGrid } from 'lucide-react';
 import React from 'react';
 
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 export type PrezentacjeRightRailToolId = 'activity' | 'artefakt';

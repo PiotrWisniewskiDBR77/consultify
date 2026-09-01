@@ -38,7 +38,14 @@ describe('normalizeLineage (pure)', () => {
     const result = normalizeLineage(
       {
         session: { id: 'sess-1', label: 'Session A' },
-        outputs: [{ id: 'out-1', outputVersion: 1, status: 'current', frozenAt: '2026-08-10T10:00:00.000Z' }],
+        outputs: [
+          {
+            id: 'out-1',
+            outputVersion: 1,
+            status: 'current',
+            frozenAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
         reports: [{ id: 'r-1', title: 'Report 1' }],
         presentations: [],
         initiativeDrafts: [],
@@ -85,10 +92,14 @@ describe('ArtifactLineagePanel (component)', () => {
   it('renders the full chain — session, outputs, reports, presentations, initiative proposals', async () => {
     hoisted.getSessionLineage.mockResolvedValue({
       session: { id: 'sess-1', label: 'Session sess-1' },
-      outputs: [{ id: 'out-1', outputVersion: 1, status: 'current', frozenAt: '2026-08-10T10:00:00.000Z' }],
+      outputs: [
+        { id: 'out-1', outputVersion: 1, status: 'current', frozenAt: '2026-08-10T10:00:00.000Z' },
+      ],
       reports: [{ id: 'r-1', title: 'Q3 report', createdAt: '2026-08-10T10:00:00.000Z' }],
       presentations: [{ id: 'p-1', title: 'Board deck', createdAt: '2026-08-10T10:00:00.000Z' }],
-      initiativeDrafts: [{ id: 'd-1', title: 'Automate intake', createdAt: '2026-08-10T10:00:00.000Z' }],
+      initiativeDrafts: [
+        { id: 'd-1', title: 'Automate intake', createdAt: '2026-08-10T10:00:00.000Z' },
+      ],
     });
 
     render(<ArtifactLineagePanel sessionId="sess-1" onClose={vi.fn()} />);
@@ -111,7 +122,9 @@ describe('ArtifactLineagePanel (component)', () => {
     const onOpenOutput = vi.fn();
     const user = userEvent.setup();
 
-    render(<ArtifactLineagePanel sessionId="sess-1" onClose={vi.fn()} onOpenOutput={onOpenOutput} />);
+    render(
+      <ArtifactLineagePanel sessionId="sess-1" onClose={vi.fn()} onOpenOutput={onOpenOutput} />
+    );
 
     await user.click(await screen.findByText('v1'));
     expect(onOpenOutput).toHaveBeenCalledWith('out-1');

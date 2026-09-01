@@ -19,7 +19,6 @@
  */
 
 import { randomUUID } from 'crypto';
-
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import * as aiProposalService from '../aiProposalService.js';
@@ -28,15 +27,13 @@ import { AI_NEVER_COMMITS, assertAiMayCommit, type AuditCapability } from '../pe
 import type { AuditActor } from '../types.js';
 
 const REACHABLE =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  !!process.env.DATABASE_URL;
+  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && !!process.env.DATABASE_URL;
 
 if (!REACHABLE) {
   // eslint-disable-next-line no-console
   console.warn(
     '[aiBoundaries.test SKIPPED — clean skip, not a failure] needs NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>'
   );
 }
 
@@ -50,7 +47,7 @@ async function seedProgram(organizationId: string, programId: string): Promise<v
   await auditRun(
     `INSERT INTO audit_programs (id, organization_id, name, status, lifecycle_state, created_by)
      VALUES ($1,$2,'U6 boundary program','active','fieldwork','seed')`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
 }
 
@@ -58,22 +55,26 @@ async function addMember(
   organizationId: string,
   programId: string,
   userId: string,
-  role: string,
+  role: string
 ): Promise<void> {
   await auditRun(
     `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role)
      VALUES ($1,$2,$3,$4,$5)`,
-    [uid('apm'), programId, organizationId, userId, role],
+    [uid('apm'), programId, organizationId, userId, role]
   );
 }
 
-async function seedCriterion(organizationId: string, programId: string, criterionId: string): Promise<void> {
+async function seedCriterion(
+  organizationId: string,
+  programId: string,
+  criterionId: string
+): Promise<void> {
   await auditRun(
     `INSERT INTO audit_program_criteria
        (id, program_id, organization_id, ordinal, ref_code, title, requirement_text, work_status)
      VALUES ($1,$2,$3,0,'A.1','Polityka bezpieczeństwa jest udokumentowana',
              'Organizacja musi posiadać udokumentowaną politykę bezpieczeństwa.','open')`,
-    [criterionId, programId, organizationId],
+    [criterionId, programId, organizationId]
   );
 }
 
@@ -95,7 +96,7 @@ describe('assertAiMayCommit — granica bezwarunkowa (nie zależy od bazy)', () 
     'odrzuca %s z czytelnym komunikatem kierującym do jawnej decyzji człowieka',
     (capability) => {
       expect(() => assertAiMayCommit(capability)).toThrowError(/jawnej decyzji uprawnionej osoby/);
-    },
+    }
   );
 
   it('lista pokrywa co najmniej 7 zabronionych operacji (wymóg zadania)', () => {
@@ -140,7 +141,7 @@ describe('assertGroundedInSources — filtr, nie tylko instrukcja w promptcie', 
       aiProposalService.assertGroundedInSources('Kryterium A.5.1 ma 3 dowody z 2024 roku.', [
         'ref A.5.1',
         '3 dokumenty zebrane w roku 2024',
-      ]),
+      ])
     ).not.toThrow();
   });
 
@@ -148,7 +149,7 @@ describe('assertGroundedInSources — filtr, nie tylko instrukcja w promptcie', 
     expect(() =>
       aiProposalService.assertGroundedInSources('Stwierdzono 42 przypadki niezgodności.', [
         'Kryterium bez żadnej liczby w treści wymagania',
-      ]),
+      ])
     ).toThrowError(/AUDIT_AI_HALLUCINATION|fakty liczbowe spoza danych/i);
   });
 
@@ -167,7 +168,7 @@ describe('assertHasSources — propozycja bez źródeł jest błędem', () => {
 
   it('nie rzuca, gdy jest co najmniej jedno źródło', () => {
     expect(() =>
-      aiProposalService.assertHasSources([{ type: 'criterion', id: 'x', excerpt: 'y' }]),
+      aiProposalService.assertHasSources([{ type: 'criterion', id: 'x', excerpt: 'y' }])
     ).not.toThrow();
   });
 });
@@ -196,7 +197,7 @@ describeDb('granice Teresy — integracja na realnej bazie', () => {
          (id, program_id, organization_id, ordinal, ref_code, title, requirement_text, audit_question, work_status)
        VALUES ($1,$2,$3,0,'REF','Wymaganie bez liczb','Treść wymagania nie zawiera żadnej liczby ani daty.',
                'Czy wymaganie jest spełnione bez odwołania do liczb?','open')`,
-      [criterionId, programId, organizationId],
+      [criterionId, programId, organizationId]
     );
 
     const actor = actorFor(organizationId, auditor);
@@ -246,7 +247,7 @@ describeDb('granice Teresy — integracja na realnej bazie', () => {
       `UPDATE audit_program_criteria
           SET requirement_text='ZMIENIONE W TLE — nowa wersja 555555'
         WHERE organization_id=$1 AND id=$2`,
-      [organizationId, criterionId],
+      [organizationId, criterionId]
     );
 
     const preview = await aiProposalService.getPreview(organizationId, created.id);
@@ -276,7 +277,7 @@ describeDb('granice Teresy — integracja na realnej bazie', () => {
         targetId: criterionId,
         intent: 'explain_criterion',
         context: {},
-      }),
+      })
     ).rejects.toThrow(/ai\.propose|uprawnień/i);
 
     const created = await aiProposalService.createIntent(organizationId, ownerActor, {
@@ -289,9 +290,9 @@ describeDb('granice Teresy — integracja na realnej bazie', () => {
     await aiProposalService.decide(organizationId, ownerActor, created.id, { decision: 'accept' });
 
     // Osoba bez roli nie może też wykonać (commit) już zaakceptowanej propozycji.
-    await expect(aiProposalService.commit(organizationId, strangerActor, created.id)).rejects.toThrow(
-      /uprawnień|ai\.commit/i,
-    );
+    await expect(
+      aiProposalService.commit(organizationId, strangerActor, created.id)
+    ).rejects.toThrow(/uprawnień|ai\.commit/i);
   });
 
   it('commit wymaga ai.commit osobno od ai.propose — auditee widzi Teresę, ale nie wykonuje jej propozycji', async () => {
@@ -316,7 +317,7 @@ describeDb('granice Teresy — integracja na realnej bazie', () => {
     await aiProposalService.decide(organizationId, actor, created.id, { decision: 'accept' });
 
     await expect(aiProposalService.commit(organizationId, actor, created.id)).rejects.toThrow(
-      /ai\.commit/i,
+      /ai\.commit/i
     );
   });
 });

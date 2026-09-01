@@ -12,10 +12,9 @@
  */
 import type { PoolClient } from 'pg';
 
-import type { RvnOutboxRow } from './outboxDrain.js';
-
-import { dispatchMyWorkProjection } from './myworkProjectionConsumer.js';
 import { dispatchFinanceProjection } from './financeProjectionConsumer.js';
+import { dispatchMyWorkProjection } from './myworkProjectionConsumer.js';
+import type { RvnOutboxRow } from './outboxDrain.js';
 
 /**
  * Minimal shape of an `rvn_platform_events` row the way the dispatcher's

@@ -14,8 +14,8 @@ import { randomUUID } from 'node:crypto';
 
 import type { Pool } from 'pg';
 
-import * as caseCoreService from '../../caseCoreService.js';
 import type { CapabilityExecutionEnvelope } from '../../capabilityAdapterService.js';
+import * as caseCoreService from '../../caseCoreService.js';
 import { cleanupSuiteFixtures } from '../_helpers/fixtureCleanup.js';
 import { uniqueTestId } from '../_helpers/testNamespace.js';
 
@@ -65,10 +65,10 @@ export async function seedCaseFixture(control: Pool, label: string): Promise<Cas
   const suffix = randomUUID();
   const orgId = `cwtest-adapter-org-${label}-${suffix}`;
   const projectId = `cwtest-adapter-project-${label}-${suffix}`;
-  await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-    orgId,
-    `Adapter test org (${label})`,
-  ]);
+  await control.query(
+    `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+    [orgId, `Adapter test org (${label})`]
+  );
   await control.query(
     `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
     [projectId, orgId, `Adapter test project (${label})`]
@@ -113,12 +113,11 @@ export function buildEnvelope(params: {
  * tables only.
  */
 export async function teardownCaseFixture(control: Pool, fixture: CaseFixture): Promise<void> {
-  await control.query(`DELETE FROM decisions WHERE organization_id = $1`, [fixture.orgId]).catch(() => undefined);
   await control
-    .query(
-      `DELETE FROM kpi_metric_audit_log WHERE organization_id = $1`,
-      [fixture.orgId]
-    )
+    .query(`DELETE FROM decisions WHERE organization_id = $1`, [fixture.orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM kpi_metric_audit_log WHERE organization_id = $1`, [fixture.orgId])
     .catch(() => undefined);
   await control
     .query(`DELETE FROM kpi_definition_versions WHERE organization_id = $1`, [fixture.orgId])
@@ -126,7 +125,9 @@ export async function teardownCaseFixture(control: Pool, fixture: CaseFixture): 
   await control
     .query(`DELETE FROM initiative_kpis WHERE organization_id = $1`, [fixture.orgId])
     .catch(() => undefined);
-  await control.query(`DELETE FROM initiatives WHERE organization_id = $1`, [fixture.orgId]).catch(() => undefined);
+  await control
+    .query(`DELETE FROM initiatives WHERE organization_id = $1`, [fixture.orgId])
+    .catch(() => undefined);
   await control
     .query(`DELETE FROM financial_models WHERE organization_id = $1`, [fixture.orgId])
     .catch(() => undefined);

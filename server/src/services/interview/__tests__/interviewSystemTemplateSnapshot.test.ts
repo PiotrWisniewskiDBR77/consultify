@@ -17,9 +17,9 @@ import {
 describe('system Interview template assignment snapshot', () => {
   beforeEach(() => {
     queryMock.mockReset();
-    withPgTransactionMock.mockReset().mockImplementation(async (work) =>
-      work({ query: queryMock })
-    );
+    withPgTransactionMock
+      .mockReset()
+      .mockImplementation(async (work) => work({ query: queryMock }));
   });
 
   it('materializes one immutable global snapshot for an approved system template', async () => {

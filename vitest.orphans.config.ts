@@ -39,10 +39,7 @@ export default defineConfig({
     environment: 'node',
     setupFiles: (base as any).test?.setupFiles,
     env: (base as any).test?.env,
-    include: [
-      'server/tests/**/*.{test,spec}.{ts,js}',
-      'tests/simple_import.test.js',
-    ],
+    include: ['server/tests/**/*.{test,spec}.{ts,js}', 'tests/simple_import.test.js'],
     exclude: [
       'node_modules/**',
       // Not a vitest suite — see module comment above.

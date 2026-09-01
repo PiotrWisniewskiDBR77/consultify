@@ -29,5 +29,9 @@ export function isTruthyFlagSql(column: string): string {
 /** Odpowiednik po stronie JS — dla wartości odczytanych z bazy. */
 export function isTruthyFlag(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
-  return ['1', 'true', 't', 'yes'].includes(String(value ?? '').trim().toLowerCase());
+  return ['1', 'true', 't', 'yes'].includes(
+    String(value ?? '')
+      .trim()
+      .toLowerCase()
+  );
 }

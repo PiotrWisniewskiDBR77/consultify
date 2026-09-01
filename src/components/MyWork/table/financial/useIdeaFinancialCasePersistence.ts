@@ -42,9 +42,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   fetchIdeaFinancialCase,
+  type IdeaFinancialCaseApiResult,
   IdeaFinancialCaseConflictError,
   saveIdeaFinancialCase,
-  type IdeaFinancialCaseApiResult,
 } from '@/services/api/ideaFinancialCase.api';
 
 import type { FinancialCaseInput, FinancialCaseResult } from './financialTypes';
@@ -188,9 +188,7 @@ export function useIdeaFinancialCasePersistence({
    */
   const hasPendingEdits = pendingInput.current !== null;
   const dirty =
-    status === 'dirty' ||
-    status === 'conflict' ||
-    (status === 'error' && hasPendingEdits);
+    status === 'dirty' || status === 'conflict' || (status === 'error' && hasPendingEdits);
 
   /**
    * Returns `Promise<boolean>` (added for the S12-REGISTRY action-registry

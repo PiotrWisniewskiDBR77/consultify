@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../database/IDatabase.js';
 import {
   confirmRecoveryCause,

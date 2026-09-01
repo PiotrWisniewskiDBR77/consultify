@@ -1337,15 +1337,24 @@ export function useTemplates() {
     try {
       const visibility = includeDrafts ? '&include=drafts' : '';
       const [rptRes, presRes, sheetRes] = await Promise.all([
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report${visibility}`, {
-          headers: getHeaders(),
-        }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation${visibility}`, {
-          headers: getHeaders(),
-        }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet${visibility}`, {
-          headers: getHeaders(),
-        }),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report${visibility}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation${visibility}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet${visibility}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
       ]);
 
       const merged: TemplateItem[] = [];

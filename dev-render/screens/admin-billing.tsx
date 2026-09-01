@@ -56,9 +56,27 @@ export type AdminBillingScreenId =
 const ORG_ID = 'org-atelier-toys-0001';
 
 const PLAN_OPTIONS = [
-  { id: 'plan-starter', name: 'Starter', price_monthly: 990, token_limit: 500000, storage_limit_gb: 20 },
-  { id: 'plan-growth', name: 'Growth', price_monthly: 2490, token_limit: 2000000, storage_limit_gb: 100 },
-  { id: 'plan-enterprise', name: 'Enterprise', price_monthly: 6900, token_limit: 8000000, storage_limit_gb: 500 },
+  {
+    id: 'plan-starter',
+    name: 'Starter',
+    price_monthly: 990,
+    token_limit: 500000,
+    storage_limit_gb: 20,
+  },
+  {
+    id: 'plan-growth',
+    name: 'Growth',
+    price_monthly: 2490,
+    token_limit: 2000000,
+    storage_limit_gb: 100,
+  },
+  {
+    id: 'plan-enterprise',
+    name: 'Enterprise',
+    price_monthly: 6900,
+    token_limit: 8000000,
+    storage_limit_gb: 500,
+  },
 ];
 
 const BILLING_SUMMARY = {
@@ -86,15 +104,57 @@ const USAGE_DETAILS = {
 
 const PAYMENT_METHODS = [
   { id: 'pm_1', brand: 'Visa', last4: '4242', exp_month: 9, exp_year: 2027, is_default: true },
-  { id: 'pm_2', brand: 'Mastercard', last4: '0058', exp_month: 3, exp_year: 2026, is_default: false },
+  {
+    id: 'pm_2',
+    brand: 'Mastercard',
+    last4: '0058',
+    exp_month: 3,
+    exp_year: 2026,
+    is_default: false,
+  },
 ];
 
 const INVOICES = [
-  { id: 'inv_1', invoice_number: 'FV/2026/08/0142', status: 'paid', amount_due: 2490.0, amount_paid: 2490.0, due_date: '2026-08-05' },
-  { id: 'inv_2', invoice_number: 'FV/2026/07/0119', status: 'paid', amount_due: 2490.0, amount_paid: 2490.0, due_date: '2026-07-05' },
-  { id: 'inv_3', invoice_number: 'FV/2026/06/0098', status: 'paid', amount_due: 2490.0, amount_paid: 2490.0, due_date: '2026-06-05' },
-  { id: 'inv_4', invoice_number: 'FV/2026/09/0163', status: 'open', amount_due: 2490.0, amount_paid: 0, due_date: '2026-09-05' },
-  { id: 'inv_5', invoice_number: 'FV/2026/05/0071', status: 'void', amount_due: 0, amount_paid: 0, due_date: '2026-05-05' },
+  {
+    id: 'inv_1',
+    invoice_number: 'FV/2026/08/0142',
+    status: 'paid',
+    amount_due: 2490.0,
+    amount_paid: 2490.0,
+    due_date: '2026-08-05',
+  },
+  {
+    id: 'inv_2',
+    invoice_number: 'FV/2026/07/0119',
+    status: 'paid',
+    amount_due: 2490.0,
+    amount_paid: 2490.0,
+    due_date: '2026-07-05',
+  },
+  {
+    id: 'inv_3',
+    invoice_number: 'FV/2026/06/0098',
+    status: 'paid',
+    amount_due: 2490.0,
+    amount_paid: 2490.0,
+    due_date: '2026-06-05',
+  },
+  {
+    id: 'inv_4',
+    invoice_number: 'FV/2026/09/0163',
+    status: 'open',
+    amount_due: 2490.0,
+    amount_paid: 0,
+    due_date: '2026-09-05',
+  },
+  {
+    id: 'inv_5',
+    invoice_number: 'FV/2026/05/0071',
+    status: 'void',
+    amount_due: 0,
+    amount_paid: 0,
+    due_date: '2026-05-05',
+  },
 ];
 
 const BILLING_ALERTS = {

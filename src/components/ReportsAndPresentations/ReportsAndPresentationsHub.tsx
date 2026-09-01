@@ -56,8 +56,8 @@ import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
-import { TemplatesTabContent } from './TemplatesTabContent';
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
+import { TemplatesTabContent } from './TemplatesTabContent';
 import type {
   PresentationSourceType,
   PresentationStatus,
@@ -292,11 +292,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       ? 'all'
       : activeTab === 'outputs_documents'
         ? 'all'
-      : activeTab === 'outputs_mine'
-        ? 'mine'
-        : activeTab === 'outputs_review'
-          ? 'review'
-          : null;
+        : activeTab === 'outputs_mine'
+          ? 'mine'
+          : activeTab === 'outputs_review'
+            ? 'review'
+            : null;
   const {
     rows: artifactOutputRows,
     loading: artifactOutputsLoading,

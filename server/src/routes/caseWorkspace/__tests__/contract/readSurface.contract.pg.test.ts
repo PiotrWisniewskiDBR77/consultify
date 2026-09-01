@@ -123,8 +123,12 @@ suite('CONTRACT — read surface over the real router and real Postgres', () => 
     planVersionId = draft.body.data.casePlanVersionId;
 
     // A run binding needs a published plan version and a real execution run.
-    await request(memberApp).post(`${BASE}/plan-versions/${planVersionId}/propose`).send({ expectedVersion: 1 });
-    await request(adminApp).post(`${BASE}/plan-versions/${planVersionId}/publish`).send({ expectedVersion: 2 });
+    await request(memberApp)
+      .post(`${BASE}/plan-versions/${planVersionId}/propose`)
+      .send({ expectedVersion: 1 });
+    await request(adminApp)
+      .post(`${BASE}/plan-versions/${planVersionId}/publish`)
+      .send({ expectedVersion: 2 });
     runId = await fx.seedExecutionRun(orgId, memberUserId, 'readsurface');
     const bound = await request(memberApp)
       .post(`${BASE}/run-bindings`)

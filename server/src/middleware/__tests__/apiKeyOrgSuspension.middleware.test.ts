@@ -129,9 +129,8 @@ describe('DEC-91 API-key auth refuses a suspended organization', () => {
   });
 
   it('the refusal body matches the JWT path byte for byte', async () => {
-    const { buildOrgSuspendedResponseBody } = await import(
-      '../../services/organizationSuspensionGuard.js'
-    );
+    const { buildOrgSuspendedResponseBody } =
+      await import('../../services/organizationSuspensionGuard.js');
     const result = await runWithKey('org-suspended');
 
     expect(result.body).toEqual(buildOrgSuspendedResponseBody());

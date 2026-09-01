@@ -78,7 +78,7 @@ describe('findingService', () => {
         statement: 'Brak procedury',
         classification: 'nonconforming',
         objectiveEvidence: [fx.evidenceId],
-      }),
+      })
     ).rejects.toThrow(/wskazywać wymaganie i dowód/);
   });
 
@@ -90,7 +90,7 @@ describe('findingService', () => {
         statement: 'Brak procedury',
         classification: 'nonconforming',
         objectiveEvidence: [],
-      }),
+      })
     ).rejects.toThrow(/evidence_insufficient.*observation/);
   });
 
@@ -119,7 +119,7 @@ describe('findingService', () => {
         statement: 'Nie dostarczono dokumentacji',
         classification: 'opportunity_for_improvement',
         objectiveEvidence: [],
-      }),
+      })
     ).rejects.toThrow(AuditStateError);
 
     const insufficient = await createFinding(fx.organizationId, leadAuditor, {
@@ -150,7 +150,7 @@ describe('findingService', () => {
         statement: 'Nie dostarczono dokumentacji',
         classification: 'evidence_insufficient',
         objectiveEvidence: [],
-      }),
+      })
     ).rejects.toThrow(/wskazywać wymaganie i dowód/);
   });
 
@@ -201,7 +201,7 @@ describe('findingService', () => {
     expect(closed.status).toBe('closed');
 
     await expect(
-      updateFinding(fx.organizationId, leadAuditor, finding.id, { classification: 'nonconforming' }),
+      updateFinding(fx.organizationId, leadAuditor, finding.id, { classification: 'nonconforming' })
     ).rejects.toThrow(/nie można zmienić klasyfikacji/i);
 
     // Inne pola pozostają edytowalne mimo zamknięcia.
@@ -228,7 +228,9 @@ describe('findingService', () => {
     await addMember(fx.organizationId, fx.programId, auditeeId, 'auditee');
     const auditee = actorFor(fx.organizationId, auditeeId);
 
-    const confirmed = await reviewFinding(fx.organizationId, reviewer, finding.id, { decision: 'confirm' });
+    const confirmed = await reviewFinding(fx.organizationId, reviewer, finding.id, {
+      decision: 'confirm',
+    });
     expect(confirmed.status).toBe('confirmed');
 
     const response = await submitManagementResponse(fx.organizationId, auditee, finding.id, {
@@ -257,7 +259,7 @@ describe('findingService', () => {
       objectiveEvidence: [fx.evidenceId],
     });
     await expect(
-      reviewFinding(fx.organizationId, reviewer, finding.id, { decision: 'send_back', note: '' }),
+      reviewFinding(fx.organizationId, reviewer, finding.id, { decision: 'send_back', note: '' })
     ).rejects.toThrow(/wymaga podania powodu/);
 
     const sentBack = await reviewFinding(fx.organizationId, reviewer, finding.id, {
@@ -279,7 +281,7 @@ describe('findingService', () => {
     await reviewFinding(fx.organizationId, reviewer, finding.id, { decision: 'confirm' });
 
     await expect(
-      acceptResidualRisk(fx.organizationId, programOwner, finding.id, { note: '' }),
+      acceptResidualRisk(fx.organizationId, programOwner, finding.id, { note: '' })
     ).rejects.toThrow(/wymaga notatki/);
 
     const accepted = await acceptResidualRisk(fx.organizationId, programOwner, finding.id, {
@@ -354,7 +356,9 @@ describe('findingService', () => {
     }
 
     const groups = await detectSystemicFindings(fx.organizationId, fx.programId);
-    const rootCauseGroup = groups.find((g) => g.groupKind === 'root_cause' && g.key === 'brak szkolenia');
+    const rootCauseGroup = groups.find(
+      (g) => g.groupKind === 'root_cause' && g.key === 'brak szkolenia'
+    );
     expect(rootCauseGroup).toBeTruthy();
     expect(rootCauseGroup?.findingIds.sort()).toEqual([f1.id, f2.id].sort());
     expect(groups.every((g) => g.count >= 2)).toBe(true);
@@ -391,7 +395,9 @@ describe('findingService', () => {
       expect(listA.items.find((f) => f.id === otherFinding.id)).toBeUndefined();
 
       // Odczyt cudzego ustalenia pod niewłaściwym organizationId nie znajduje wiersza.
-      await expect(getFinding(fx.organizationId, otherFinding.id)).rejects.toThrow(/nie został znaleziony/);
+      await expect(getFinding(fx.organizationId, otherFinding.id)).rejects.toThrow(
+        /nie został znaleziony/
+      );
     } finally {
       await cleanupFixture(other.organizationId);
     }
@@ -405,5 +411,7 @@ describe('findingService', () => {
 async function closeWithoutActions(fx: TestFixture, findingId: string) {
   const owner = actorFor(fx.organizationId, uid('closer'));
   await addMember(fx.organizationId, fx.programId, owner.userId, 'lead_auditor');
-  return closeFinding(fx.organizationId, owner, findingId, { note: 'Brak działań — obserwacja zamknięta' });
+  return closeFinding(fx.organizationId, owner, findingId, {
+    note: 'Brak działań — obserwacja zamknięta',
+  });
 }

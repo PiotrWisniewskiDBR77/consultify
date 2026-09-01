@@ -32,6 +32,31 @@
  * network is reachable — `refresh()` always re-asks the server.
  */
 
+import {
+  appendEvent,
+  createInitiativeDraft,
+  type CreateInitiativeDraftRequest,
+  createReport,
+  type CreateReportRequest,
+  createSession as apiCreateSession,
+  type CreateSessionRequest,
+  freeze as apiFreeze,
+  type FreezeResponse,
+  getOutput,
+  getSession,
+  isOfflineError,
+  isVersionConflict,
+  listEvents,
+  MethodCoreApiError,
+  type MethodOutputSummary,
+  newIdempotencyKey,
+  teresaCommit,
+  type TeresaCommitOutcome,
+  type TeresaCommitRequestInput,
+  teresaPreview,
+  type TeresaPreviewRequest,
+  transition as apiTransition,
+} from '@/method-core/api/methodCoreApi';
 import type {
   MethodEvent,
   MethodEventType,
@@ -40,32 +65,6 @@ import type {
   MethodSessionState,
   TeresaPreview,
 } from '@/method-core/contracts';
-
-import {
-  appendEvent,
-  createInitiativeDraft,
-  createReport,
-  createSession as apiCreateSession,
-  freeze as apiFreeze,
-  getOutput,
-  getSession,
-  isOfflineError,
-  isVersionConflict,
-  listEvents,
-  MethodCoreApiError,
-  newIdempotencyKey,
-  teresaCommit,
-  teresaPreview,
-  transition as apiTransition,
-  type CreateInitiativeDraftRequest,
-  type CreateReportRequest,
-  type CreateSessionRequest,
-  type FreezeResponse,
-  type MethodOutputSummary,
-  type TeresaCommitOutcome,
-  type TeresaCommitRequestInput,
-  type TeresaPreviewRequest,
-} from '@/method-core/api/methodCoreApi';
 
 export type SiriHttpRuntimeStatus =
   | 'loading'
@@ -206,7 +205,10 @@ export class SiriHttpSessionRuntime {
     } catch {
       // Ignore a corrupt cache entry — refresh() below is the real source.
     }
-    this.state = { ...this.state, pendingWriteCount: readPending(this.storage, this.sessionId).length };
+    this.state = {
+      ...this.state,
+      pendingWriteCount: readPending(this.storage, this.sessionId).length,
+    };
   }
 
   /** Always re-asks the server. This is the ONLY method that resolves
@@ -237,7 +239,15 @@ export class SiriHttpSessionRuntime {
         // current one.
         output = null;
       }
-      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, output });
+      this.setState({
+        status: 'ready',
+        session,
+        roles,
+        events,
+        error: null,
+        serverVersion: null,
+        output,
+      });
     } catch (err) {
       this.handleFailure(err);
     }
@@ -258,7 +268,11 @@ export class SiriHttpSessionRuntime {
     }
     if (isVersionConflict(err)) {
       const currentVersion = (err as MethodCoreApiError).body.currentVersion as number;
-      this.setState({ status: 'conflict', serverVersion: currentVersion, error: 'Sesja zmieniła się na serwerze.' });
+      this.setState({
+        status: 'conflict',
+        serverVersion: currentVersion,
+        error: 'Sesja zmieniła się na serwerze.',
+      });
       return;
     }
     const message = err instanceof Error ? err.message : 'Nieznany błąd';
@@ -288,7 +302,12 @@ export class SiriHttpSessionRuntime {
   // Every write: try the network first. On a genuine offline failure, queue
   // it (status -> 'recovery') instead of losing it or pretending it landed.
 
-  private async runWrite(kind: PendingWrite['kind'], idempotencyKey: string, payload: unknown, exec: () => Promise<void>): Promise<void> {
+  private async runWrite(
+    kind: PendingWrite['kind'],
+    idempotencyKey: string,
+    payload: unknown,
+    exec: () => Promise<void>
+  ): Promise<void> {
     try {
       await exec();
       await this.refresh();
@@ -297,7 +316,11 @@ export class SiriHttpSessionRuntime {
         const pending = readPending(this.storage, this.sessionId);
         pending.push({ id: newIdempotencyKey(), kind, idempotencyKey, payload });
         writePending(this.storage, this.sessionId, pending);
-        this.setState({ status: 'recovery', pendingWriteCount: pending.length, error: 'Zapis w kolejce — offline.' });
+        this.setState({
+          status: 'recovery',
+          pendingWriteCount: pending.length,
+          error: 'Zapis w kolejce — offline.',
+        });
         return;
       }
       this.handleFailure(err);
@@ -321,9 +344,22 @@ export class SiriHttpSessionRuntime {
   }): Promise<void> {
     const idemKey = `answer:${input.questionId}:${input.draft ? 'draft' : 'confirmed'}:${newIdempotencyKey()}`;
     const type: MethodEventType = input.draft ? 'ANSWER_DRAFTED' : 'ANSWER_CONFIRMED';
-    const payload = { questionId: input.questionId, answerState: input.answerState, text: input.text, justification: input.justification };
-    await this.runWrite('event', idemKey, { type, unitId: input.unitId, level: input.level, payload }, () =>
-      appendEvent(this.sessionId, { type, unitId: input.unitId, level: input.level, actorKind: 'human', payload }, idemKey).then(() => undefined)
+    const payload = {
+      questionId: input.questionId,
+      answerState: input.answerState,
+      text: input.text,
+      justification: input.justification,
+    };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type, unitId: input.unitId, level: input.level, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          { type, unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          idemKey
+        ).then(() => undefined)
     );
   }
 
@@ -353,21 +389,46 @@ export class SiriHttpSessionRuntime {
       () =>
         appendEvent(
           this.sessionId,
-          { type: 'EVIDENCE_ATTACHED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
+          {
+            type: 'EVIDENCE_ATTACHED',
+            unitId: input.unitId,
+            level: input.level,
+            actorKind: 'human',
+            payload,
+          },
           idemKey
         ).then(() => undefined)
     );
   }
 
-  async recordTargetDecision(input: { unitId: string; level: number; rationale: string }): Promise<void> {
+  async recordTargetDecision(input: {
+    unitId: string;
+    level: number;
+    rationale: string;
+  }): Promise<void> {
     const idemKey = `target-decision:${input.unitId}:${input.level}:${newIdempotencyKey()}`;
-    const payload = { decisionId: newIdempotencyKey(), subject: 'target_level' as const, decidedValue: input.level, rationale: input.rationale };
-    await this.runWrite('event', idemKey, { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, payload }, () =>
-      appendEvent(
-        this.sessionId,
-        { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, actorKind: 'human', payload },
-        idemKey
-      ).then(() => undefined)
+    const payload = {
+      decisionId: newIdempotencyKey(),
+      subject: 'target_level' as const,
+      decidedValue: input.level,
+      rationale: input.rationale,
+    };
+    await this.runWrite(
+      'event',
+      idemKey,
+      { type: 'DECISION_APPROVED', unitId: input.unitId, level: input.level, payload },
+      () =>
+        appendEvent(
+          this.sessionId,
+          {
+            type: 'DECISION_APPROVED',
+            unitId: input.unitId,
+            level: input.level,
+            actorKind: 'human',
+            payload,
+          },
+          idemKey
+        ).then(() => undefined)
     );
   }
 
@@ -409,7 +470,13 @@ export class SiriHttpSessionRuntime {
         // Best-effort — a reload losing the pointer is a documented gap,
         // not a correctness bug (never fabricates content either way).
       }
-      this.setState({ status: 'ready', session: res.session, error: null, serverVersion: null, output: res.output });
+      this.setState({
+        status: 'ready',
+        session: res.session,
+        error: null,
+        serverVersion: null,
+        output: res.output,
+      });
       return res;
     } catch (err) {
       this.handleFailure(err);
@@ -426,7 +493,9 @@ export class SiriHttpSessionRuntime {
 
   async generateReport(input: CreateReportRequest): Promise<unknown> {
     if (!this.state.output) {
-      throw new Error('siri-http-runtime: cannot generate a Report Snapshot without a loaded Output');
+      throw new Error(
+        'siri-http-runtime: cannot generate a Report Snapshot without a loaded Output'
+      );
     }
     const report = await createReport(this.state.output.id, input);
     this.setState({ reports: [...this.state.reports, report] });
@@ -435,7 +504,9 @@ export class SiriHttpSessionRuntime {
 
   async generateInitiativeDraft(input: CreateInitiativeDraftRequest): Promise<unknown> {
     if (!this.state.output) {
-      throw new Error('siri-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output');
+      throw new Error(
+        'siri-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output'
+      );
     }
     const draft = await createInitiativeDraft(this.state.output.id, input);
     this.setState({ initiatives: [...this.state.initiatives, draft] });
@@ -478,8 +549,23 @@ export class SiriHttpSessionRuntime {
     for (const item of pending) {
       try {
         if (item.kind === 'event') {
-          const p = item.payload as { type: MethodEventType; unitId?: string; level?: number; payload: unknown };
-          await appendEvent(this.sessionId, { type: p.type, unitId: p.unitId, level: p.level, actorKind: 'human', payload: p.payload }, item.idempotencyKey);
+          const p = item.payload as {
+            type: MethodEventType;
+            unitId?: string;
+            level?: number;
+            payload: unknown;
+          };
+          await appendEvent(
+            this.sessionId,
+            {
+              type: p.type,
+              unitId: p.unitId,
+              level: p.level,
+              actorKind: 'human',
+              payload: p.payload,
+            },
+            item.idempotencyKey
+          );
         } else {
           const p = item.payload as { type: MethodSessionState };
           await apiTransition(this.sessionId, { to: p.type }, item.idempotencyKey);

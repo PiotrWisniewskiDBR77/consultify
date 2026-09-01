@@ -11,10 +11,16 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
-import { toRoiForecastVersion, type RoiForecastVersion, type RoiForecastVersionRow } from './roiForecastActualTypes.js';
+import {
+  type RoiForecastVersion,
+  type RoiForecastVersionRow,
+  toRoiForecastVersion,
+} from './roiForecastActualTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -25,7 +31,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -49,9 +59,15 @@ export async function listRoiForecastVersions(
        AND fv.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY fv.sequence_number DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiForecastVersionRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiForecastVersionRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiForecastVersion);
 }
 
@@ -75,9 +91,15 @@ export async function getRoiForecastVersion(
        AND fv.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND fv.forecast_version_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, forecastVersionId];
-  const rows = await withReadClient((client) => queryRows<RoiForecastVersionRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiForecastVersionRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiForecastVersion(row) : null;
 }

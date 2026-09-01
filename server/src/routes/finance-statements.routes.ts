@@ -43,6 +43,13 @@ import {
   searchStatementDocumentIntelligence,
   upsertStatementDocumentIntelligence,
 } from '../services/documentIntelligenceService.js';
+import { confirmGovernedStatement } from '../services/finance/canonical/statementGovernedConfirmationService.js';
+import { recordManualMappingDecision } from '../services/finance/canonical/statementManualMappingDecisionService.js';
+import { confirmAndRegisterStatementPack } from '../services/finance/canonical/statementPackRegistrationService.js';
+import {
+  readStatementSourceReceipt,
+  StatementGovernanceError,
+} from '../services/finance/canonical/statementSourceReceiptService.js';
 import {
   computeInitiativeDeltaForOrg,
   computePortfolioAggregateForPack,
@@ -71,13 +78,6 @@ import {
   publishFinanceReportSectionSnapshot,
 } from '../services/financeReportSectionService.js';
 import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
-import { confirmAndRegisterStatementPack } from '../services/finance/canonical/statementPackRegistrationService.js';
-import { confirmGovernedStatement } from '../services/finance/canonical/statementGovernedConfirmationService.js';
-import { recordManualMappingDecision } from '../services/finance/canonical/statementManualMappingDecisionService.js';
-import {
-  readStatementSourceReceipt,
-  StatementGovernanceError,
-} from '../services/finance/canonical/statementSourceReceiptService.js';
 import {
   assignStatementToExistingPack,
   detachStatementFromPack,
@@ -88,9 +88,10 @@ import {
 } from '../services/financialStatementPackService.js';
 import type { DetectionResult } from '../services/financialStatementService.js';
 import {
-  autoMapLines,
-  classifyStatementDocument,
   appendCfoDerivedMappingSuggestions,
+  autoMapLines,
+  backfillStatementValueSourcePages,
+  classifyStatementDocument,
   cleanupUnpersistedUpload,
   confirmStatement,
   createStatement,
@@ -102,8 +103,8 @@ import {
   finalizeIdempotentUpload,
   getIdempotencyKey,
   getLatestStatementIngestRun,
-  backfillStatementValueSourcePages,
   IdempotencyKeyTooLongError,
+  isStructuredStatementInput,
   learnStatementAliases,
   loadLatestStatementVersionSnapshot,
   loadPersistedStatementCandidateRows,
@@ -121,7 +122,6 @@ import {
   reserveIdempotentUpload,
   resolveDuplicateSuggestedMappings,
   resolveStatementColumnSelection,
-  isStructuredStatementInput,
   saveStatementValues,
   sha256Hex,
   snapshotCanonicalStatementVersion,
@@ -138,7 +138,6 @@ import {
   saveStatementValuesFlow,
   shouldDeferStatementPackSync,
 } from '../services/financialStatementValueWriteService.js';
-import { stageSelectedStatementSections } from '../services/statementMultiSectionImportService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -158,6 +157,7 @@ import {
   getRatioCatalog,
   upsertBenchmark,
 } from '../services/ratioAnalysisService.js';
+import { stageSelectedStatementSections } from '../services/statementMultiSectionImportService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1837,9 +1837,7 @@ router.post(
           code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
           statementType: error?.statementType,
           ...(Array.isArray(error?.missing) ? { missing: error.missing } : {}),
-          ...(Array.isArray(error?.invalidIndexes)
-            ? { invalidIndexes: error.invalidIndexes }
-            : {}),
+          ...(Array.isArray(error?.invalidIndexes) ? { invalidIndexes: error.invalidIndexes } : {}),
         });
       }
     }

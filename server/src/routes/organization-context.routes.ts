@@ -6,10 +6,10 @@ import {
   verifyToken,
 } from '../middleware/auth.middleware.js';
 import { emitOrgContextRebuilt } from '../realtime/orgContextRealtime.js';
+import { resolveLatestGovernedSnapshotRef } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import organizationContextService, {
   NoApprovedGovernedClaimsError,
 } from '../services/organizationContext/OrganizationContextService.js';
-import { resolveLatestGovernedSnapshotRef } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import {
   getOrganizationSnapshotCandidateHandoff,
   handoffOrganizationSnapshotToCandidate,

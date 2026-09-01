@@ -16,7 +16,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 
 describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
   let pool: InstanceType<typeof import('pg').Pool>;
@@ -40,7 +42,10 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     // violation, which is a DIFFERENT scenario (schema-missing-data) than the
     // one this test is proving (lineage gets recorded on success).
     for (const orgId of allOrgIds) {
-      await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [orgId, `U5 test org ${orgId}`]);
+      await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+        orgId,
+        `U5 test org ${orgId}`,
+      ]);
     }
   }, 60000);
 
@@ -67,7 +72,7 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     await pool.query(
       `INSERT INTO audit_programs (id, organization_id, name, status, created_by)
        VALUES ($1,$2,'Program propozycji','fieldwork',$3)`,
-      [id, orgId, ownerUser],
+      [id, orgId, ownerUser]
     );
     // lead_auditor covers proposal.draft; program_owner additionally covers
     // proposal.register (permissions.ts keeps registration to program-owner
@@ -75,12 +80,12 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     await pool.query(
       `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role, independence_declared)
        VALUES ($1,$2,$3,$4,'lead_auditor', TRUE)`,
-      [`memb-${randomUUID()}`, id, orgId, ownerUser],
+      [`memb-${randomUUID()}`, id, orgId, ownerUser]
     );
     await pool.query(
       `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role, independence_declared)
        VALUES ($1,$2,$3,$4,'program_owner', TRUE)`,
-      [`memb-${randomUUID()}`, id, orgId, ownerUser],
+      [`memb-${randomUUID()}`, id, orgId, ownerUser]
     );
     return id;
   }
@@ -89,7 +94,7 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     programId: string,
     orgId: string,
     status: string,
-    extra: Partial<Record<string, unknown>> = {},
+    extra: Partial<Record<string, unknown>> = {}
   ): Promise<string> {
     const id = `find-${randomUUID()}`;
     await pool.query(
@@ -107,7 +112,7 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
         (extra.rootCause as string) ?? null,
         (extra.rootCauseConfirmed as boolean) ?? false,
         (extra.criterionId as string) ?? null,
-      ],
+      ]
     );
     return id;
   }
@@ -125,7 +130,7 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     await expect(
       proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
         findingIds: [draftFind, inReviewFind, rejectedFind],
-      }),
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_PROPOSAL_NO_ELIGIBLE_FINDINGS' });
   });
 
@@ -134,9 +139,14 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     const f1 = await insertFinding(programId, orgA, 'confirmed', { statement: 'Ustalenie A' });
     const f2 = await insertFinding(programId, orgA, 'closed', { statement: 'Ustalenie B' });
 
-    const proposals = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
-      findingIds: [f1, f2],
-    });
+    const proposals = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA),
+      programId,
+      {
+        findingIds: [f1, f2],
+      }
+    );
 
     expect(proposals).toHaveLength(1);
     expect(proposals[0].sourceFindingIds.sort()).toEqual([f1, f2].sort());
@@ -150,9 +160,14 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
     await insertFinding(programId, orgA, 'confirmed', { statement: 'NIE wskazane #1' });
     await insertFinding(programId, orgA, 'confirmed', { statement: 'NIE wskazane #2' });
 
-    const proposals = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
-      findingIds: [eligible1],
-    });
+    const proposals = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA),
+      programId,
+      {
+        findingIds: [eligible1],
+      }
+    );
 
     expect(proposals).toHaveLength(1);
     expect(proposals[0].sourceFindingIds).toEqual([eligible1]);
@@ -163,12 +178,21 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
 
   it('draft z filtrem: część ustaleń jest eligible a część nie — tylko eligible trafiają do propozycji', async () => {
     const programId = await makeProgram(orgA);
-    const eligible = await insertFinding(programId, orgA, 'confirmed', { statement: 'Kwalifikuje się' });
-    const notEligible = await insertFinding(programId, orgA, 'draft', { statement: 'Nie kwalifikuje się' });
-
-    const proposals = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
-      findingIds: [eligible, notEligible],
+    const eligible = await insertFinding(programId, orgA, 'confirmed', {
+      statement: 'Kwalifikuje się',
     });
+    const notEligible = await insertFinding(programId, orgA, 'draft', {
+      statement: 'Nie kwalifikuje się',
+    });
+
+    const proposals = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA),
+      programId,
+      {
+        findingIds: [eligible, notEligible],
+      }
+    );
 
     expect(proposals).toHaveLength(1);
     expect(proposals[0].sourceFindingIds).toEqual([eligible]);
@@ -210,36 +234,55 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
       severity: 'critical',
     });
 
-    const [proposal] = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
-      findingIds: [f1],
-      title: 'Wdrożyć MFA dla kont administracyjnych',
-    });
+    const [proposal] = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA),
+      programId,
+      {
+        findingIds: [f1],
+        title: 'Wdrożyć MFA dla kont administracyjnych',
+      }
+    );
 
-    const registered = await proposalService.registerAsInitiative(orgA, actorFor(orgA), proposal.id);
+    const registered = await proposalService.registerAsInitiative(
+      orgA,
+      actorFor(orgA),
+      proposal.id
+    );
     expect(registered.status).toBe('registered');
     expect(registered.registeredInitiativeId).toBeTruthy();
     expect(registered.registeredAt).toBeTruthy();
     createdInitiativeIds.push(registered.registeredInitiativeId as string);
 
-    const initiativeRow = await pool.query(`SELECT id, source_type, source_id, title FROM initiatives WHERE id=$1`, [
-      registered.registeredInitiativeId,
-    ]);
+    const initiativeRow = await pool.query(
+      `SELECT id, source_type, source_id, title FROM initiatives WHERE id=$1`,
+      [registered.registeredInitiativeId]
+    );
     expect(initiativeRow.rows).toHaveLength(1);
     expect(initiativeRow.rows[0].source_type).toBe('audit');
     expect(initiativeRow.rows[0].source_id).toBe(proposal.id);
 
     // Ponowna rejestracja tej samej propozycji jest zablokowana.
-    await expect(proposalService.registerAsInitiative(orgA, actorFor(orgA), proposal.id)).rejects.toMatchObject({
+    await expect(
+      proposalService.registerAsInitiative(orgA, actorFor(orgA), proposal.id)
+    ).rejects.toMatchObject({
       code: 'AUDIT_INVALID_STATE',
     });
   });
 
   it('izolacja organizacji — propozycje z org A są niewidoczne dla org B', async () => {
     const programA = await makeProgram(orgA);
-    const f1 = await insertFinding(programA, orgA, 'confirmed', { statement: 'Ustalenie izolacja' });
-    const [proposal] = await proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programA, {
-      findingIds: [f1],
+    const f1 = await insertFinding(programA, orgA, 'confirmed', {
+      statement: 'Ustalenie izolacja',
     });
+    const [proposal] = await proposalService.draftProposalsFromFindings(
+      orgA,
+      actorFor(orgA),
+      programA,
+      {
+        findingIds: [f1],
+      }
+    );
 
     const fromOrgB = await proposalService.getProposal(orgB, proposal.id);
     expect(fromOrgB).toBeNull();
@@ -252,7 +295,9 @@ describe.skipIf(!REAL_PG)('proposalService (real Postgres)', () => {
   it('draft wymaga co najmniej jednego wskazanego findingId', async () => {
     const programId = await makeProgram(orgA);
     await expect(
-      proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, { findingIds: [] }),
+      proposalService.draftProposalsFromFindings(orgA, actorFor(orgA), programId, {
+        findingIds: [],
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_PROPOSAL_NO_FINDINGS' });
   });
 });

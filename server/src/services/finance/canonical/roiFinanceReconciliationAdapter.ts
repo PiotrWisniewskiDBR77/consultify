@@ -46,12 +46,12 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import { listRoiFinanceLinks } from '../../resultsVnext/roi/roiFinanceLinkRepository.js';
 import {
   openRoiFinanceReconciliation,
   updateRoiFinanceReconciliationStatus,
 } from '../../resultsVnext/roi/roiFinanceReconciliationCommands.js';
-import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import {
   type RoiFinanceLink,
   type RoiFinanceReconciliation,

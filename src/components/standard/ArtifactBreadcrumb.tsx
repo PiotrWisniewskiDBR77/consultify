@@ -63,10 +63,7 @@
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import {
-  MENU_1_BREADCRUMB_CURRENT,
-  MENU_1_BREADCRUMB_LINK,
-} from '../shared/ModuleMenu3';
+import { MENU_1_BREADCRUMB_CURRENT, MENU_1_BREADCRUMB_LINK } from '../shared/ModuleMenu3';
 
 /** Ten sam kształt co `StandardBreadcrumb` (Lista) — jeden typ, dwie powłoki. */
 export interface ArtifactBreadcrumbItem {

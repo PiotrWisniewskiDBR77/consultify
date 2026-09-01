@@ -12,6 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { createLegacyCutoverGuard } from '../../services/legacyCutover/legacyCutoverKernel.js';
+import { RESULTS_CUTOVER } from '../../services/legacyCutover/registry/results.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import {
   type RcaSuggestInput,
@@ -63,8 +66,8 @@ import {
   createRecoveryExperiment,
   decideRecoveryExperiment,
   listRecoveryExperiments,
-  RecoveryExperimentError,
   type RecoveryExperimentDecision,
+  RecoveryExperimentError,
   type RecoveryExperimentVerdict,
 } from '../../services/results/kpiRecoveryExperimentService.js';
 import {
@@ -105,9 +108,6 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
-import { createLegacyCutoverGuard } from '../../services/legacyCutover/legacyCutoverKernel.js';
-import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
-import { RESULTS_CUTOVER } from '../../services/legacyCutover/registry/results.js';
 
 const router = Router();
 router.use(requireActiveMembership);
@@ -3386,7 +3386,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -3396,7 +3399,9 @@ router.get(
       signalType: 'deviation' as const,
       severity: String(s.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(s.deviation_summary || 'Deviation detected'),
-      detectedAt: s.detected_at ? new Date(s.detected_at as string | number | Date).toISOString() : '',
+      detectedAt: s.detected_at
+        ? new Date(s.detected_at as string | number | Date).toISOString()
+        : '',
     }));
 
     return res.json({
@@ -3704,7 +3709,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 

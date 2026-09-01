@@ -17,12 +17,26 @@
 import { AlertTriangle, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
-import type { PutRoiCalculationPolicyInput, RoiCalculationPolicy, RoiConfidenceLevel, RoiRoundingPolicy, RoiTaxTreatment } from './roiCaseDetailApi';
-import { ROI_CONFIDENCE_LEVELS, ROI_ROUNDING_POLICIES, ROI_TAX_TREATMENTS } from './roiCaseDetailApi';
-import { roiConfidenceLabel, roiRoundingPolicyLabel, roiTaxTreatmentLabel } from './roiCaseDetailMappers';
+import type {
+  PutRoiCalculationPolicyInput,
+  RoiCalculationPolicy,
+  RoiConfidenceLevel,
+  RoiRoundingPolicy,
+  RoiTaxTreatment,
+} from './roiCaseDetailApi';
+import {
+  ROI_CONFIDENCE_LEVELS,
+  ROI_ROUNDING_POLICIES,
+  ROI_TAX_TREATMENTS,
+} from './roiCaseDetailApi';
+import {
+  roiConfidenceLabel,
+  roiRoundingPolicyLabel,
+  roiTaxTreatmentLabel,
+} from './roiCaseDetailMappers';
 
 export interface RoiCalculationPolicyEditModalProps {
   open: boolean;
@@ -43,7 +57,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -71,9 +86,17 @@ export const RoiCalculationPolicyEditModal: React.FC<RoiCalculationPolicyEditMod
 
   useEffect(() => {
     if (!open) return;
-    setDiscountRate(policy?.discountRatePct !== null && policy?.discountRatePct !== undefined ? String(policy.discountRatePct) : '');
+    setDiscountRate(
+      policy?.discountRatePct !== null && policy?.discountRatePct !== undefined
+        ? String(policy.discountRatePct)
+        : ''
+    );
     setTaxTreatment(policy?.taxTreatment ?? '');
-    setInflationRate(policy?.inflationRatePct !== null && policy?.inflationRatePct !== undefined ? String(policy.inflationRatePct) : '');
+    setInflationRate(
+      policy?.inflationRatePct !== null && policy?.inflationRatePct !== undefined
+        ? String(policy.inflationRatePct)
+        : ''
+    );
     setRoundingPolicy(policy?.roundingPolicy ?? 'half_up_2dp');
     setRequiredMetrics(policy?.requiredMetrics?.join(', ') ?? '');
     setNotes(policy?.notes ?? '');
@@ -105,7 +128,11 @@ export const RoiCalculationPolicyEditModal: React.FC<RoiCalculationPolicyEditMod
       open={open}
       onClose={busy ? () => {} : onClose}
       title={isPolish ? 'Edytuj politykę kalkulacji' : 'Edit calculation policy'}
-      description={isPolish ? 'Zapisuje realną politykę kalkulacji sprawy ROI (PUT .../calculation-policy).' : 'Saves the real ROI case calculation policy (PUT .../calculation-policy).'}
+      description={
+        isPolish
+          ? 'Zapisuje realną politykę kalkulacji sprawy ROI (PUT .../calculation-policy).'
+          : 'Saves the real ROI case calculation policy (PUT .../calculation-policy).'
+      }
       size="lg"
       preventOverlayClose={busy}
       preventEscapeClose={busy}
@@ -123,7 +150,15 @@ export const RoiCalculationPolicyEditModal: React.FC<RoiCalculationPolicyEditMod
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Save size={16} />
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz politykę' : 'Save policy'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Zapisz politykę'
+                  : 'Save policy'}
+            </span>
           </button>
         </>
       }
@@ -131,45 +166,95 @@ export const RoiCalculationPolicyEditModal: React.FC<RoiCalculationPolicyEditMod
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-policy-discount-rate">{isPolish ? 'Stopa dyskonta (%)' : 'Discount rate (%)'}</label>
-            <input id="roi-policy-discount-rate" type="number" value={discountRate} onChange={(e) => setDiscountRate(e.target.value)} className={FIELD_CLASS} data-testid="roi-policy-discount-rate" />
+            <label className={LABEL_CLASS} htmlFor="roi-policy-discount-rate">
+              {isPolish ? 'Stopa dyskonta (%)' : 'Discount rate (%)'}
+            </label>
+            <input
+              id="roi-policy-discount-rate"
+              type="number"
+              value={discountRate}
+              onChange={(e) => setDiscountRate(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-policy-discount-rate"
+            />
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-policy-tax-treatment">{isPolish ? 'Traktowanie podatkowe' : 'Tax treatment'}</label>
-            <select id="roi-policy-tax-treatment" value={taxTreatment} onChange={(e) => setTaxTreatment(e.target.value as RoiTaxTreatment | '')} className={FIELD_CLASS} data-testid="roi-policy-tax-treatment">
+            <label className={LABEL_CLASS} htmlFor="roi-policy-tax-treatment">
+              {isPolish ? 'Traktowanie podatkowe' : 'Tax treatment'}
+            </label>
+            <select
+              id="roi-policy-tax-treatment"
+              value={taxTreatment}
+              onChange={(e) => setTaxTreatment(e.target.value as RoiTaxTreatment | '')}
+              className={FIELD_CLASS}
+              data-testid="roi-policy-tax-treatment"
+            >
               <option value="">—</option>
               {ROI_TAX_TREATMENTS.map((t) => (
-                <option key={t} value={t}>{roiTaxTreatmentLabel(t, isPolish)}</option>
+                <option key={t} value={t}>
+                  {roiTaxTreatmentLabel(t, isPolish)}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-policy-inflation-rate">{isPolish ? 'Stopa inflacji (%)' : 'Inflation rate (%)'}</label>
-            <input id="roi-policy-inflation-rate" type="number" value={inflationRate} onChange={(e) => setInflationRate(e.target.value)} className={FIELD_CLASS} data-testid="roi-policy-inflation-rate" />
+            <label className={LABEL_CLASS} htmlFor="roi-policy-inflation-rate">
+              {isPolish ? 'Stopa inflacji (%)' : 'Inflation rate (%)'}
+            </label>
+            <input
+              id="roi-policy-inflation-rate"
+              type="number"
+              value={inflationRate}
+              onChange={(e) => setInflationRate(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-policy-inflation-rate"
+            />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-policy-rounding">{isPolish ? 'Polityka zaokrągleń' : 'Rounding policy'}</label>
-            <select id="roi-policy-rounding" value={roundingPolicy} onChange={(e) => setRoundingPolicy(e.target.value as RoiRoundingPolicy)} className={FIELD_CLASS} data-testid="roi-policy-rounding">
+            <label className={LABEL_CLASS} htmlFor="roi-policy-rounding">
+              {isPolish ? 'Polityka zaokrągleń' : 'Rounding policy'}
+            </label>
+            <select
+              id="roi-policy-rounding"
+              value={roundingPolicy}
+              onChange={(e) => setRoundingPolicy(e.target.value as RoiRoundingPolicy)}
+              className={FIELD_CLASS}
+              data-testid="roi-policy-rounding"
+            >
               {ROI_ROUNDING_POLICIES.map((r) => (
-                <option key={r} value={r}>{roiRoundingPolicyLabel(r, isPolish)}</option>
+                <option key={r} value={r}>
+                  {roiRoundingPolicyLabel(r, isPolish)}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-policy-confidence">{isPolish ? 'Pewność' : 'Confidence'}</label>
-            <select id="roi-policy-confidence" value={confidence} onChange={(e) => setConfidence(e.target.value as RoiConfidenceLevel | '')} className={FIELD_CLASS} data-testid="roi-policy-confidence">
+            <label className={LABEL_CLASS} htmlFor="roi-policy-confidence">
+              {isPolish ? 'Pewność' : 'Confidence'}
+            </label>
+            <select
+              id="roi-policy-confidence"
+              value={confidence}
+              onChange={(e) => setConfidence(e.target.value as RoiConfidenceLevel | '')}
+              className={FIELD_CLASS}
+              data-testid="roi-policy-confidence"
+            >
               <option value="">—</option>
               {ROI_CONFIDENCE_LEVELS.map((c) => (
-                <option key={c} value={c}>{roiConfidenceLabel(c, isPolish)}</option>
+                <option key={c} value={c}>
+                  {roiConfidenceLabel(c, isPolish)}
+                </option>
               ))}
             </select>
           </div>
         </div>
         <div>
           <label className={LABEL_CLASS} htmlFor="roi-policy-required-metrics">
-            {isPolish ? 'Wymagane metryki (rozdzielone przecinkiem)' : 'Required metrics (comma-separated)'}
+            {isPolish
+              ? 'Wymagane metryki (rozdzielone przecinkiem)'
+              : 'Required metrics (comma-separated)'}
           </label>
           <input
             id="roi-policy-required-metrics"
@@ -181,22 +266,56 @@ export const RoiCalculationPolicyEditModal: React.FC<RoiCalculationPolicyEditMod
           />
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-policy-notes">{isPolish ? 'Notatki' : 'Notes'}</label>
-          <textarea id="roi-policy-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-policy-notes" />
+          <label className={LABEL_CLASS} htmlFor="roi-policy-notes">
+            {isPolish ? 'Notatki' : 'Notes'}
+          </label>
+          <textarea
+            id="roi-policy-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-policy-notes"
+          />
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-policy-owner">{isPolish ? 'Właściciel' : 'Owner'}</label>
-          <input id="roi-policy-owner" value={ownerUserId} onChange={(e) => setOwnerUserId(e.target.value)} className={FIELD_CLASS} data-testid="roi-policy-owner" />
+          <label className={LABEL_CLASS} htmlFor="roi-policy-owner">
+            {isPolish ? 'Właściciel' : 'Owner'}
+          </label>
+          <input
+            id="roi-policy-owner"
+            value={ownerUserId}
+            onChange={(e) => setOwnerUserId(e.target.value)}
+            className={FIELD_CLASS}
+            data-testid="roi-policy-owner"
+          />
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-policy-reason">{isPolish ? 'Notatka do audytu (opcjonalnie)' : 'Audit note (optional)'}</label>
-          <textarea id="roi-policy-reason" value={reason} onChange={(e) => setReason(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-policy-reason" />
+          <label className={LABEL_CLASS} htmlFor="roi-policy-reason">
+            {isPolish ? 'Notatka do audytu (opcjonalnie)' : 'Audit note (optional)'}
+          </label>
+          <textarea
+            id="roi-policy-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-policy-reason"
+          />
         </div>
 
         {errorMessage ? (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="roi-policy-error">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            data-testid="roi-policy-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

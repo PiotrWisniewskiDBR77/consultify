@@ -70,16 +70,16 @@
  * unrelated Investment Case root.
  */
 
+import { createModel, getModel } from '../../financialModelingService.js';
+import * as artifactLinkService from '../artifactLinkService.js';
 import {
+  type CapabilityExecutionEnvelope,
   CapabilityHandlerError,
+  type InternalCommandBinding,
   registerCapabilityBinding,
   registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
 } from '../capabilityAdapterService.js';
 import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import { createModel, getModel } from '../../financialModelingService.js';
 import {
   attachArtifactLink,
   requireEnumInput,
@@ -123,7 +123,9 @@ function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
-export function buildFinanceModelCreateBinding(deps: FinanceAdapterDeps = {}): InternalCommandBinding {
+export function buildFinanceModelCreateBinding(
+  deps: FinanceAdapterDeps = {}
+): InternalCommandBinding {
   const create = deps.createModel ?? createModel;
   const read = (deps.getModel ?? getModel) as (
     modelId: string,
@@ -170,7 +172,9 @@ export function buildFinanceModelCreateBinding(deps: FinanceAdapterDeps = {}): I
         // capability's point of view, never OUR bug.
         throw new CapabilityHandlerError(
           'CAPABILITY_INPUT_INVALID',
-          error instanceof Error ? error.name || 'finance_model_create_rejected' : 'finance_model_create_rejected'
+          error instanceof Error
+            ? error.name || 'finance_model_create_rejected'
+            : 'finance_model_create_rejected'
         );
       }
 
@@ -212,7 +216,9 @@ export function buildFinanceModelCreateBinding(deps: FinanceAdapterDeps = {}): I
       };
     },
     validateOutput: (output) =>
-      typeof output.modelId === 'string' && output.modelId.length > 0 && typeof output.status === 'string',
+      typeof output.modelId === 'string' &&
+      output.modelId.length > 0 &&
+      typeof output.status === 'string',
   };
 }
 
@@ -226,7 +232,9 @@ export function registerFinanceModelCreateAdapterBinding(deps: FinanceAdapterDep
 }
 
 /** The registry row this capability registers as, per doc 05 §5's CapabilityDefinition. */
-export function financeModelCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
+export function financeModelCreateRegistrationInput(
+  createdByActorId: string
+): RegisterCapabilityInput {
   return {
     capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
     capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,

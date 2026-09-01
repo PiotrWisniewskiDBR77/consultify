@@ -1033,8 +1033,8 @@ export const MeetingHub: React.FC = () => {
                         value: selectedMeeting.location || t('meeting.noLocation2', 'No location'),
                       },
                     ],
-                    propertyLabel: isPolish ? 'Właściwość' : 'Property',
-                    valueLabel: isPolish ? 'Wartość' : 'Value',
+                    propertyLabel: t('meeting.preview.propertyLabel', 'Property'),
+                    valueLabel: t('meeting.preview.valueLabel', 'Value'),
                     onCopy: () => {
                       void navigator.clipboard?.writeText(
                         `${selectedMeeting.title} — ${formatDateTime(selectedMeeting.startAt, isPolish)}`
@@ -1338,7 +1338,8 @@ export const MeetingHub: React.FC = () => {
                             ) : null}
                             {note.decisionReason ? (
                               <p className="mt-2 text-xs text-c-text-muted">
-                                {t('meeting.notes.decisionReason', 'Decision reason')}: {note.decisionReason}
+                                {t('meeting.notes.decisionReason', 'Decision reason')}:{' '}
+                                {note.decisionReason}
                               </p>
                             ) : null}
                           </div>

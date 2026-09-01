@@ -489,9 +489,7 @@ afterAll(async () => {
     }
   }
   // eslint-disable-next-line no-console
-  console.info(
-    `[CLOSEOUT-08] proof-of-work evidence:\n${JSON.stringify(evidence, null, 2)}`
-  );
+  console.info(`[CLOSEOUT-08] proof-of-work evidence:\n${JSON.stringify(evidence, null, 2)}`);
 }, 120_000);
 
 /**
@@ -709,7 +707,10 @@ describe('CLOSEOUT-08 — runtime bootstrap DDL: initiatives.status default', ()
     // Positive half: the guard must not pass merely because the column was
     // renamed or deleted.
     const declared = code.match(/\bstatus\s+TEXT\s+DEFAULT\s+'([^']+)'/i);
-    expect(declared, 'runtime DDL no longer declares a default for `initiatives.status`').not.toBeNull();
+    expect(
+      declared,
+      'runtime DDL no longer declares a default for `initiatives.status`'
+    ).not.toBeNull();
     expect(CANONICAL_STATUSES as readonly string[]).toContain(declared![1]);
     expect(declared![1]).toBe(EXPECTED_DEFAULT);
   });

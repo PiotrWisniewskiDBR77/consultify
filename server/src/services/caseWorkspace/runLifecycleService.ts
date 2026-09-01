@@ -170,15 +170,19 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import * as caseCoreService from './caseCoreService.js';
-import * as casePlanVersionService from './casePlanVersionService.js';
 import type { CanonicalGraph, GraphEdge, GraphNode } from './casePlanVersionService.js';
+import * as casePlanVersionService from './casePlanVersionService.js';
 import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
+import type {
+  CaseExecutionNodeType,
+  CaseGatewayEvaluation,
+  CaseGatewayJoinPolicy,
+} from './executionGraphService.js';
 import * as executionGraphService from './executionGraphService.js';
-import type { CaseExecutionNodeType, CaseGatewayEvaluation, CaseGatewayJoinPolicy } from './executionGraphService.js';
 import * as lightOneClickService from './lightOneClickService.js';
-import * as nodeRunService from './nodeRunService.js';
 import type { NodeRun, NodeRunStatus } from './nodeRunService.js';
+import * as nodeRunService from './nodeRunService.js';
 import * as runBindingService from './runBindingService.js';
 import * as waitSubscriptionService from './waitSubscriptionService.js';
 
@@ -289,7 +293,11 @@ const NODE_ACTIVE_LIKE: readonly NodeRunStatus[] = [
   'RETRY_SCHEDULED',
   'FAILED_RETRYABLE',
 ];
-const NODE_WAITING_LIKE: readonly NodeRunStatus[] = ['WAITING_HUMAN', 'WAITING_TIMER', 'WAITING_EVENT'];
+const NODE_WAITING_LIKE: readonly NodeRunStatus[] = [
+  'WAITING_HUMAN',
+  'WAITING_TIMER',
+  'WAITING_EVENT',
+];
 
 /** NodeRun statuses a CancelRun cascade may still transition to CANCELLED —
  *  nodeRunService's own §4.5 table (mirrored here, not imported, per this
@@ -361,7 +369,9 @@ function requireNonBlank(value: string | null | undefined, reason: string): stri
  * than minting yet another orphaned v8_execution_runs row.
  */
 function deterministicRunId(caseId: string, idempotencyKey: string): string {
-  const hex = createHash('sha256').update(`case-workspace:run-lifecycle:v1:${caseId}:${idempotencyKey}`).digest('hex');
+  const hex = createHash('sha256')
+    .update(`case-workspace:run-lifecycle:v1:${caseId}:${idempotencyKey}`)
+    .digest('hex');
   return `cwrun-${hex.slice(0, 32)}`;
 }
 
@@ -413,7 +423,9 @@ function resolveJoinPolicy(
   branchTotalCount: number
 ): { policy: CaseGatewayJoinPolicy; requiredCount: number | null } {
   const rawPolicy = node?.joinPolicy;
-  const policy = (rawPolicy === undefined || rawPolicy === null ? 'ALL' : rawPolicy) as CaseGatewayJoinPolicy;
+  const policy = (
+    rawPolicy === undefined || rawPolicy === null ? 'ALL' : rawPolicy
+  ) as CaseGatewayJoinPolicy;
   if (policy !== 'ALL' && policy !== 'ANY' && policy !== 'N_OF_M') {
     throw new Error('run_lifecycle_join_policy_invalid');
   }
@@ -434,7 +446,8 @@ function resolveJoinPolicy(
 function countControlEdgesInto(graph: CanonicalGraph, nodeId: string): number {
   return (graph.edges ?? []).filter(
     (e: GraphEdge) =>
-      e.targetNodeId === nodeId && (!e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL')
+      e.targetNodeId === nodeId &&
+      (!e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL')
   ).length;
 }
 
@@ -490,7 +503,10 @@ function assertPathAllowed(path: readonly RunStatus[]): void {
   }
 }
 
-async function loadForUpdate(client: PgTransactionClient, runId: string): Promise<CaseWorkspaceRunRow> {
+async function loadForUpdate(
+  client: PgTransactionClient,
+  runId: string
+): Promise<CaseWorkspaceRunRow> {
   const result = await client.query<CaseWorkspaceRunRow>(
     `SELECT * FROM ${RUN_TABLE} WHERE run_id = ? FOR UPDATE`,
     [runId]
@@ -613,7 +629,10 @@ export async function createRun(input: CreateRunInput, actorUserId: string): Pro
     input.casePlanVersionId,
     'run_lifecycle_case_plan_version_id_required'
   );
-  const idempotencyKey = requireNonBlank(input.idempotencyKey, 'run_lifecycle_idempotency_key_required');
+  const idempotencyKey = requireNonBlank(
+    input.idempotencyKey,
+    'run_lifecycle_idempotency_key_required'
+  );
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
   const initiatedBy = optionalTrimmed(input.initiatedBy ?? null) ?? actor;
   const correlationId = optionalTrimmed(input.correlationId ?? null);
@@ -781,7 +800,10 @@ export async function startRun(
       return { outcome: 'already_started', run: mapRow(row) };
     }
 
-    const planVersion = await casePlanVersionService.getPlanVersion(row.case_plan_version_id, actor);
+    const planVersion = await casePlanVersionService.getPlanVersion(
+      row.case_plan_version_id,
+      actor
+    );
     if (!planVersion || planVersion.status !== 'PUBLISHED') {
       throw new Error('run_lifecycle_plan_not_published');
     }
@@ -832,31 +854,53 @@ export async function startRun(
  *  `advanceRun` below refuses to run while status is not in its active
  *  family (RUNNING/WAITING/BLOCKED/RETRY_SCHEDULED); it never touches
  *  PAUSED. */
-export async function pauseRun(runId: string, actorUserId: string, expectedVersion: number): Promise<Run> {
+export async function pauseRun(
+  runId: string,
+  actorUserId: string,
+  expectedVersion: number
+): Promise<Run> {
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
     if (Number(row.version) !== expectedVersion) throw new Error('run_lifecycle_version_conflict');
-    const updated = await transitionRunOnClient(client, row, ['RUNNING', 'PAUSED'], 'run.paused', actor);
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      ['RUNNING', 'PAUSED'],
+      'run.paused',
+      actor
+    );
     return mapRow(updated);
   });
 }
 
 /** §5 ResumeRun. PAUSED -> RUNNING. */
-export async function resumeRun(runId: string, actorUserId: string, expectedVersion: number): Promise<Run> {
+export async function resumeRun(
+  runId: string,
+  actorUserId: string,
+  expectedVersion: number
+): Promise<Run> {
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
     if (Number(row.version) !== expectedVersion) throw new Error('run_lifecycle_version_conflict');
-    const updated = await transitionRunOnClient(client, row, ['PAUSED', 'RUNNING'], 'run.resumed', actor);
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      ['PAUSED', 'RUNNING'],
+      'run.resumed',
+      actor
+    );
     return mapRow(updated);
   });
 }
@@ -883,17 +927,25 @@ export async function cancelRun(
 ): Promise<Run> {
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
     if (Number(row.version) !== expectedVersion) throw new Error('run_lifecycle_version_conflict');
 
-    const updated = await transitionRunOnClient(client, row, [row.status, 'CANCELLED'], 'run.cancelled', actor, {
-      completedAt: true,
-      summary: { reason: optionalTrimmed(reason ?? null) },
-    });
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      [row.status, 'CANCELLED'],
+      'run.cancelled',
+      actor,
+      {
+        completedAt: true,
+        summary: { reason: optionalTrimmed(reason ?? null) },
+      }
+    );
 
     const nodeRuns = await nodeRunService.listNodeRunsForRun(row.run_id, actor);
     for (const nodeRun of nodeRuns) {
@@ -963,7 +1015,11 @@ export async function retryNode(
     // explicit, STABLE idempotencyKey; the default (`retry-${uuidv4()}`) is
     // fresh every call by construction, so this never short-circuits an
     // ordinary, distinct RetryNode.
-    const existingRetry = await nodeRunService.getNodeRunByIdempotencyKey(row.run_id, nodeIdempotencyKey, actor);
+    const existingRetry = await nodeRunService.getNodeRunByIdempotencyKey(
+      row.run_id,
+      nodeIdempotencyKey,
+      actor
+    );
     if (existingRetry) {
       return { run: mapRow(row), nodeRun: existingRetry };
     }
@@ -989,9 +1045,16 @@ export async function retryNode(
 
     let finalRow = row;
     if (row.status === 'WAITING' || row.status === 'BLOCKED' || row.status === 'RETRY_SCHEDULED') {
-      finalRow = await transitionRunOnClient(client, row, [row.status, 'RUNNING'], 'run.retry_node_resumed', actor, {
-        summary: { nodeId: node, nodeRunId: created.nodeRunId },
-      });
+      finalRow = await transitionRunOnClient(
+        client,
+        row,
+        [row.status, 'RUNNING'],
+        'run.retry_node_resumed',
+        actor,
+        {
+          summary: { nodeId: node, nodeRunId: created.nodeRunId },
+        }
+      );
     }
 
     return { run: mapRow(finalRow), nodeRun: created };
@@ -1010,16 +1073,24 @@ export async function failRun(
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
   const reasonText = requireNonBlank(reason, 'run_lifecycle_fail_reason_required');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
     if (Number(row.version) !== expectedVersion) throw new Error('run_lifecycle_version_conflict');
-    const updated = await transitionRunOnClient(client, row, [row.status, 'FAILED'], 'run.failed', actor, {
-      completedAt: true,
-      summary: { reason: reasonText },
-    });
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      [row.status, 'FAILED'],
+      'run.failed',
+      actor,
+      {
+        completedAt: true,
+        summary: { reason: reasonText },
+      }
+    );
     return mapRow(updated);
   });
 }
@@ -1060,13 +1131,18 @@ export async function provideNodeInput(input: {
 
   const nodeRun = await nodeRunService.getNodeRun(nodeRunId, actor);
   if (!nodeRun) throw new Error('run_lifecycle_node_run_not_found');
-  if (nodeRun.status !== 'WAITING_HUMAN') throw new Error('run_lifecycle_node_run_not_waiting_human');
+  if (nodeRun.status !== 'WAITING_HUMAN')
+    throw new Error('run_lifecycle_node_run_not_waiting_human');
   const waitId = requireNonBlank(nodeRun.waitId, 'run_lifecycle_node_run_missing_wait');
 
   const wait = await waitSubscriptionService.getWait(waitId, actor);
   if (!wait) throw new Error('run_lifecycle_wait_not_found');
 
-  await waitSubscriptionService.provideHumanInput(waitId, { inputRef, actorUserId: actor }, wait.version);
+  await waitSubscriptionService.provideHumanInput(
+    waitId,
+    { inputRef, actorUserId: actor },
+    wait.version
+  );
 
   const readyNodeRun = await nodeRunService.transitionNodeRun(nodeRunId, 'READY', nodeRun.version, {
     actorUserId: actor,
@@ -1088,7 +1164,13 @@ async function maybeResumeRunFromWaiting(runId: string, actorUserId: string): Pr
     const stillWaiting = nodeRuns.some((n) => NODE_WAITING_LIKE.includes(n.status));
     if (stillWaiting) return mapRow(row);
 
-    const updated = await transitionRunOnClient(client, row, ['WAITING', 'RUNNING'], 'run.resumed_from_waiting', actorUserId);
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      ['WAITING', 'RUNNING'],
+      'run.resumed_from_waiting',
+      actorUserId
+    );
     return mapRow(updated);
   });
 }
@@ -1119,7 +1201,8 @@ export async function compensateRun(
 ): Promise<{ run: Run; markedNodeRunIds: string[] }> {
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
@@ -1138,9 +1221,14 @@ export async function compensateRun(
     const markedNodeRunIds: string[] = [];
     for (const nodeRun of nodeRuns) {
       if (nodeRun.compensationState !== 'REQUIRED') continue;
-      await nodeRunService.recordNodeRunCompensation(nodeRun.nodeRunId, 'IN_PROGRESS', nodeRun.version, {
-        actorUserId: actor,
-      });
+      await nodeRunService.recordNodeRunCompensation(
+        nodeRun.nodeRunId,
+        'IN_PROGRESS',
+        nodeRun.version,
+        {
+          actorUserId: actor,
+        }
+      );
       markedNodeRunIds.push(nodeRun.nodeRunId);
     }
 
@@ -1172,12 +1260,16 @@ export async function recordNodeCompensationOutcome(
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
     if (row.status !== 'COMPENSATING') {
-      throw new Error(`run_lifecycle_status_transition_not_allowed:${row.status}->COMPENSATION_OUTCOME`);
+      throw new Error(
+        `run_lifecycle_status_transition_not_allowed:${row.status}->COMPENSATION_OUTCOME`
+      );
     }
 
     const target = await nodeRunService.getNodeRun(nodeRunId, actor);
     if (!target || target.runId !== row.run_id) throw new Error('run_lifecycle_node_run_not_found');
-    await nodeRunService.recordNodeRunCompensation(nodeRunId, outcome, target.version, { actorUserId: actor });
+    await nodeRunService.recordNodeRunCompensation(nodeRunId, outcome, target.version, {
+      actorUserId: actor,
+    });
 
     const nodeRuns = await nodeRunService.listNodeRunsForRun(row.run_id, actor);
     const unresolved = nodeRuns.some(
@@ -1318,14 +1410,20 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
 
-  const runRow = await queryOne<CaseWorkspaceRunRow>(`SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`, [id]);
+  const runRow = await queryOne<CaseWorkspaceRunRow>(
+    `SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`,
+    [id]
+  );
   if (!runRow) throw new Error('run_lifecycle_run_not_found');
   await requireCaseAccess(actor, runRow.case_id);
   if (!['RUNNING', 'WAITING', 'BLOCKED', 'RETRY_SCHEDULED'].includes(runRow.status)) {
     return { run: mapRow(runRow), createdNodeRunIds: [] };
   }
 
-  const planVersion = await casePlanVersionService.getPlanVersion(runRow.case_plan_version_id, actor);
+  const planVersion = await casePlanVersionService.getPlanVersion(
+    runRow.case_plan_version_id,
+    actor
+  );
   if (!planVersion) throw new Error('run_lifecycle_plan_version_not_found');
   const graph = planVersion.semanticGraph as CanonicalGraph;
   // Defense in depth: startRun already refused a malformed N_OF_M join
@@ -1335,14 +1433,17 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
   validateJoinPolicies(graph);
   const graphNodes = Array.isArray(graph.nodes) ? graph.nodes : [];
   const graphEdges = Array.isArray(graph.edges) ? graph.edges : [];
-  const nodeTypeById = new Map<string, string>(graphNodes.map((n) => [n.nodeId, String(n.type ?? '')]));
+  const nodeTypeById = new Map<string, string>(
+    graphNodes.map((n) => [n.nodeId, String(n.type ?? '')])
+  );
   const graphNodeById = new Map<string, GraphNode>(graphNodes.map((n) => [n.nodeId, n]));
 
   const nodeRuns = await nodeRunService.listNodeRunsForRun(runRow.run_id, actor);
   const latestByNode = new Map<string, NodeRun>();
   for (const nodeRun of nodeRuns) {
     const current = latestByNode.get(nodeRun.nodeId);
-    if (!current || nodeRun.createdAt >= current.createdAt) latestByNode.set(nodeRun.nodeId, nodeRun);
+    if (!current || nodeRun.createdAt >= current.createdAt)
+      latestByNode.set(nodeRun.nodeId, nodeRun);
   }
 
   const successIds = new Set<string>();
@@ -1525,7 +1626,8 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       // already makes this a one-shot creation regardless of how many
       // predecessors eventually succeed.
       const gatewayTypeForReadiness = nodeTypeById.get(node.nodeId);
-      let resolvedJoin: { policy: CaseGatewayJoinPolicy; requiredCount: number | null } | null = null;
+      let resolvedJoin: { policy: CaseGatewayJoinPolicy; requiredCount: number | null } | null =
+        null;
       let readySatisfied: boolean;
       if (gatewayTypeForReadiness === 'PARALLEL_JOIN') {
         resolvedJoin = resolveJoinPolicy(graphNodeById.get(node.nodeId), incoming.length);
@@ -1617,7 +1719,8 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
   }
 
   const terminalNodeIds = Array.isArray(graph.terminalNodeIds) ? graph.terminalNodeIds : [];
-  const allTerminalSucceeded = terminalNodeIds.length > 0 && terminalNodeIds.every((tid) => successIds.has(tid));
+  const allTerminalSucceeded =
+    terminalNodeIds.length > 0 && terminalNodeIds.every((tid) => successIds.has(tid));
 
   let nextStatus: RunStatus = runRow.status;
   if (allTerminalSucceeded) {
@@ -1648,10 +1751,17 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       // call (or the transition that just won) will settle things.
       return { run: mapRow(row), createdNodeRunIds };
     }
-    const updated = await transitionRunOnClient(client, row, [row.status, nextStatus], 'run.advanced', actor, {
-      completedAt: ['COMPLETED', 'COMPLETED_WITH_WARNINGS'].includes(nextStatus),
-      summary: { createdNodeRunIds, successCount: successIds.size, failedCount: failedIds.size },
-    });
+    const updated = await transitionRunOnClient(
+      client,
+      row,
+      [row.status, nextStatus],
+      'run.advanced',
+      actor,
+      {
+        completedAt: ['COMPLETED', 'COMPLETED_WITH_WARNINGS'].includes(nextStatus),
+        summary: { createdNodeRunIds, successCount: successIds.size, failedCount: failedIds.size },
+      }
+    );
     return { run: mapRow(updated), createdNodeRunIds };
   });
 }
@@ -1682,13 +1792,19 @@ export async function recordRunOutcome(
     'PARTIALLY_ACCEPTED',
     'NOT_APPLICABLE',
   ];
-  if (!OUTCOME_STATUSES.includes(outcomeStatus)) throw new Error('run_lifecycle_outcome_status_invalid');
-  if (typeof expectedVersion !== 'number') throw new Error('run_lifecycle_expected_version_required');
+  if (!OUTCOME_STATUSES.includes(outcomeStatus))
+    throw new Error('run_lifecycle_outcome_status_invalid');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('run_lifecycle_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actor, row.case_id);
-    if (!['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED', 'CANCELLED', 'COMPENSATED'].includes(row.status)) {
+    if (
+      !['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED', 'CANCELLED', 'COMPENSATED'].includes(
+        row.status
+      )
+    ) {
       throw new Error('run_lifecycle_not_technically_complete');
     }
     if (Number(row.version) !== expectedVersion) throw new Error('run_lifecycle_version_conflict');
@@ -1753,9 +1869,10 @@ export async function startLightRun(
   }
 
   return withPgTransaction(async (client) => {
-    const existing = await client.query<CaseWorkspaceRunRow>(`SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`, [
-      result.runId,
-    ]);
+    const existing = await client.query<CaseWorkspaceRunRow>(
+      `SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`,
+      [result.runId]
+    );
     if (existing.rows[0]) {
       return { outcome: 'already_started', run: mapRow(existing.rows[0]) };
     }
@@ -1786,9 +1903,10 @@ export async function startLightRun(
     );
     const insertedRow = inserted.rows[0];
     if (!insertedRow) {
-      const race = await client.query<CaseWorkspaceRunRow>(`SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`, [
-        result.runId,
-      ]);
+      const race = await client.query<CaseWorkspaceRunRow>(
+        `SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`,
+        [result.runId]
+      );
       const raceRow = race.rows[0];
       if (!raceRow) throw new Error('run_lifecycle_insert_failed');
       return { outcome: 'already_started', run: mapRow(raceRow) };
@@ -1811,7 +1929,10 @@ export async function startLightRun(
       redactedSummary: redact({ from: 'CREATED', to: 'RUNNING', source: 'light-one-click' }),
     });
 
-    return { outcome: result.outcome === 'already_started' ? 'already_started' : 'started', run: mapRow(insertedRow) };
+    return {
+      outcome: result.outcome === 'already_started' ? 'already_started' : 'started',
+      run: mapRow(insertedRow),
+    };
   });
 }
 
@@ -1822,7 +1943,9 @@ export async function startLightRun(
 export async function getRun(runId: string, actorUserId: string): Promise<Run | null> {
   const id = requireNonBlank(runId, 'run_lifecycle_run_id_required');
   const actor = requireNonBlank(actorUserId, 'run_lifecycle_actor_required');
-  const row = await queryOne<CaseWorkspaceRunRow>(`SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`, [id]);
+  const row = await queryOne<CaseWorkspaceRunRow>(`SELECT * FROM ${RUN_TABLE} WHERE run_id = ?`, [
+    id,
+  ]);
   if (!row) return null;
   await requireCaseAccess(actor, row.case_id);
   return mapRow(row);

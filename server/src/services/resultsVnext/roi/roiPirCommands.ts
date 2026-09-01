@@ -28,27 +28,30 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
-
 import { CONFIRM_BENEFITS_REALIZATION_OBLIGATION_TYPE } from './roiBenefitsRealizationCommands.js';
 import { getRoiCaseBenefitsRealizationView } from './roiBenefitsRealizationRepository.js';
-import { getRoiCaseCompareView } from './roiCompareRepository.js';
 import { ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
-import { listVariances } from './roiVarianceRepository.js';
+import { getRoiCaseCompareView } from './roiCompareRepository.js';
 import {
-  toRoiPostInvestmentReview,
   type RoiPirOutcome,
   type RoiPirReviewSnapshotPayload,
   type RoiPirTeresaDraftDisposition,
   type RoiPostInvestmentReview,
   type RoiPostInvestmentReviewRow,
+  toRoiPostInvestmentReview,
 } from './roiPirTypes.js';
-import { toRoiCase, type RoiCase, type RoiCaseRow, type RoiCaseStatus } from './roiTypes.js';
+import { type RoiCase, type RoiCaseRow, type RoiCaseStatus, toRoiCase } from './roiTypes.js';
+import { listVariances } from './roiVarianceRepository.js';
 
 // ==========================================
 // SHARED CONSTANTS
@@ -257,7 +260,9 @@ export async function scheduleRoiCasePostInvestmentReview(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[scheduleRoiCasePostInvestmentReview] update returned no row for ${caseId}`);
+        throw new Error(
+          `[scheduleRoiCasePostInvestmentReview] update returned no row for ${caseId}`
+        );
       }
       return toRoiCase(updatedRow);
     },
@@ -370,7 +375,9 @@ export async function markRoiCasePostInvestmentReviewDue(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[markRoiCasePostInvestmentReviewDue] update returned no row for ${caseId}`);
+        throw new Error(
+          `[markRoiCasePostInvestmentReviewDue] update returned no row for ${caseId}`
+        );
       }
 
       // Decision D5 — first real completeObligation call site in this
@@ -543,7 +550,9 @@ export async function startRoiCasePostInvestmentReview(
       // Fixed key order (object literal above, never reconstructed from a
       // Postgres JSONB round-trip) — computeStateHash is only ever called
       // on THIS in-memory object, once, before the INSERT below.
-      const reviewSnapshotHash = computeStateHash(reviewSnapshotPayload as unknown as Record<string, unknown>);
+      const reviewSnapshotHash = computeStateHash(
+        reviewSnapshotPayload as unknown as Record<string, unknown>
+      );
 
       // Design §4.3 step 5 — safe under the case row's own FOR UPDATE lock:
       // no concurrent startRoiCasePostInvestmentReview call for this case
@@ -559,11 +568,20 @@ export async function startRoiCasePostInvestmentReview(
            (case_id, organization_id, sequence_number, status, started_by, review_snapshot_payload, review_snapshot_hash, created_by)
          VALUES ($1, $2, $3, 'draft', $4, $5, $6, $4)
          RETURNING *`,
-        [caseId, organizationId, sequenceNumber, actorUserId, JSON.stringify(reviewSnapshotPayload), reviewSnapshotHash]
+        [
+          caseId,
+          organizationId,
+          sequenceNumber,
+          actorUserId,
+          JSON.stringify(reviewSnapshotPayload),
+          reviewSnapshotHash,
+        ]
       );
       const pirRow = pirInsert.rows[0];
       if (!pirRow) {
-        throw new Error('[startRoiCasePostInvestmentReview] insert into rvn_roi_post_investment_reviews returned no row');
+        throw new Error(
+          '[startRoiCasePostInvestmentReview] insert into rvn_roi_post_investment_reviews returned no row'
+        );
       }
 
       const caseUpdate = await client.query<RoiCaseRow>(
@@ -576,7 +594,9 @@ export async function startRoiCasePostInvestmentReview(
       );
       const updatedCaseRow = caseUpdate.rows[0];
       if (!updatedCaseRow) {
-        throw new Error(`[startRoiCasePostInvestmentReview] case update returned no row for ${caseId}`);
+        throw new Error(
+          `[startRoiCasePostInvestmentReview] case update returned no row for ${caseId}`
+        );
       }
 
       return { case: toRoiCase(updatedCaseRow), pir: toRoiPostInvestmentReview(pirRow) };
@@ -687,8 +707,10 @@ export async function updateRoiPostInvestmentReviewDraft(
 
       const merged = {
         outcome: edits.outcome !== undefined ? edits.outcome : currentRow.outcome,
-        lessons_learned: edits.lessonsLearned !== undefined ? edits.lessonsLearned : currentRow.lessons_learned,
-        recommendation: edits.recommendation !== undefined ? edits.recommendation : currentRow.recommendation,
+        lessons_learned:
+          edits.lessonsLearned !== undefined ? edits.lessonsLearned : currentRow.lessons_learned,
+        recommendation:
+          edits.recommendation !== undefined ? edits.recommendation : currentRow.recommendation,
       };
 
       const updateResult = await client.query<RoiPostInvestmentReviewRow>(
@@ -697,7 +719,14 @@ export async function updateRoiPostInvestmentReviewDraft(
                 row_version = $4, updated_by = $5, updated_at = now()
           WHERE pir_id = $6
           RETURNING *`,
-        [merged.outcome, merged.lessons_learned, merged.recommendation, nextVersion, actorUserId, pirId]
+        [
+          merged.outcome,
+          merged.lessons_learned,
+          merged.recommendation,
+          nextVersion,
+          actorUserId,
+          pirId,
+        ]
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
@@ -824,7 +853,8 @@ export async function recordRoiPirTeresaDraftDisposition(
       beforeState = { pir: toRoiPostInvestmentReview(currentRow) };
 
       // AC-06's literal mechanism.
-      const lessonsLearned = disposition === 'rejected' ? currentRow.lessons_learned : (finalLessonsText as string);
+      const lessonsLearned =
+        disposition === 'rejected' ? currentRow.lessons_learned : (finalLessonsText as string);
 
       const updateResult = await client.query<RoiPostInvestmentReviewRow>(
         `UPDATE rvn_roi_post_investment_reviews
@@ -1040,7 +1070,9 @@ export interface CloseRoiCaseResult {
  * (this function's own `applyMutation`), inside the ONE transaction
  * `executeAtomicCommand` wraps around the whole call.
  */
-export async function closeRoiCase(input: CloseRoiCaseInput): Promise<AtomicCommandOutcome<CloseRoiCaseResult>> {
+export async function closeRoiCase(
+  input: CloseRoiCaseInput
+): Promise<AtomicCommandOutcome<CloseRoiCaseResult>> {
   const {
     caseId,
     organizationId,

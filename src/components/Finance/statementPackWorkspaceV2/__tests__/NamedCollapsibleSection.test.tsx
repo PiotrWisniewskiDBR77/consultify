@@ -11,7 +11,13 @@ import { describe, expect, it } from 'vitest';
 
 import { NamedCollapsibleSection } from '../NamedCollapsibleSection';
 
-function Harness({ initialOpen = false, state = '5/5' }: { initialOpen?: boolean; state?: string }) {
+function Harness({
+  initialOpen = false,
+  state = '5/5',
+}: {
+  initialOpen?: boolean;
+  state?: string;
+}) {
   const [open, setOpen] = useState(initialOpen);
   return (
     <NamedCollapsibleSection

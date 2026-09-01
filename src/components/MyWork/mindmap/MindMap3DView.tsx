@@ -160,13 +160,13 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
 
   return (
     <div
-        ref={dialogContainerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mindmap-3d-view-heading"
-        tabIndex={-1}
-        className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden outline-none"
-      >
+      ref={dialogContainerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mindmap-3d-view-heading"
+      tabIndex={-1}
+      className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
+    >
       <div className="flex items-center gap-3 px-6 py-3 bg-c-surface border-b border-c-border-subtle">
         <button
           onClick={onClose}
@@ -175,7 +175,9 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
           <ChevronLeft size={16} />
         </button>
         <Box size={16} className="text-c-text-muted" />
-        <h2 className="text-sm font-bold text-c-text" id="mindmap-3d-view-heading">{t('ideas.mindmap.n3dView', '3D View')}</h2>
+        <h2 className="text-sm font-bold text-c-text" id="mindmap-3d-view-heading">
+          {t('ideas.mindmap.n3dView', '3D View')}
+        </h2>
         <span className="text-[10px] text-c-text-secondary ml-2">
           {t('ideas.mindmap.dragRotate', 'Drag to rotate')}
         </span>

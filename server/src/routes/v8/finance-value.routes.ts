@@ -35,7 +35,6 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   bankBenefit,
   bankingStatus,
@@ -50,6 +49,7 @@ import {
   type IndustryBenchmark,
 } from '../../services/extendedRatiosService.js';
 import { detectEarlyWarnings, type KpiLineagePair } from '../../services/kpiLineageService.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   ActualNotFoundError,
   ActualPeriodMismatchError,

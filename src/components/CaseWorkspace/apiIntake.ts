@@ -234,8 +234,8 @@ export function getCaseForConversation(
 }
 
 /** Case -> rozmowa ("wróć do czatu, z którego to powstało"). */
-export function getConversationForCase(
-  caseId: string
-): Promise<CaseIntakeConversationLink | null> {
-  return get<CaseIntakeConversationLink | null>(`/cases/${encodeURIComponent(caseId)}/conversation`);
+export function getConversationForCase(caseId: string): Promise<CaseIntakeConversationLink | null> {
+  return get<CaseIntakeConversationLink | null>(
+    `/cases/${encodeURIComponent(caseId)}/conversation`
+  );
 }

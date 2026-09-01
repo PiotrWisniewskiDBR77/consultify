@@ -287,7 +287,11 @@ class InterviewEnterpriseService {
       ? new Date(data.expiresAt)
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     if (!Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
-      throw new InterviewDistributionError('Invite expiry must be in the future', 'INVALID_EXPIRY', 400);
+      throw new InterviewDistributionError(
+        'Invite expiry must be in the future',
+        'INVALID_EXPIRY',
+        400
+      );
     }
 
     await queryHelpers.queryRun(
@@ -403,7 +407,11 @@ class InterviewEnterpriseService {
     throw new InterviewDistributionError('Invite expired', 'INVITE_EXPIRED', 410);
   }
 
-  async revokeDistribution(orgId: string, distributionId: string, actorId: string): Promise<boolean> {
+  async revokeDistribution(
+    orgId: string,
+    distributionId: string,
+    actorId: string
+  ): Promise<boolean> {
     const result = await queryHelpers.queryRun(
       `UPDATE interview_distributions
           SET revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, status = 'revoked'

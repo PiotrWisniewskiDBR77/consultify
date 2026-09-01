@@ -21,12 +21,16 @@ import os from 'node:os';
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import logger from '../../../utils/Logger.js';
+import { enqueueOperationalAlertRepairIntent } from '../../operationalAlertRepairService.js';
 import { operationalAlerts } from '../../operationalAlertService.js';
 import { durableOperationalAlertsEnabled } from '../../operationalAlertSignalDeliveryService.js';
-import { enqueueOperationalAlertRepairIntent } from '../../operationalAlertRepairService.js';
-import logger from '../../../utils/Logger.js';
 import { sendSystemAlert } from '../../systemAlertNotifier.js';
-
+import {
+  CONSUMER_REGISTRY,
+  type RvnPlatformEventRow,
+  UNBUILT_CONSUMER_GROUPS,
+} from './consumerRegistry.js';
 import {
   claimOutboxBatch,
   markDispatched,
@@ -35,29 +39,39 @@ import {
   reclaimExpiredClaims,
   type RvnOutboxRow,
 } from './outboxDrain.js';
-import {
-  CONSUMER_REGISTRY,
-  UNBUILT_CONSUMER_GROUPS,
-  type RvnPlatformEventRow,
-} from './consumerRegistry.js';
 
 let missedDurableAlertSignals = 0;
-async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outcome: 'SUCCESS' | 'FAILURE') {
+async function recordDurableWrite(
+  event: RvnPlatformEventRow,
+  row: RvnOutboxRow,
+  outcome: 'SUCCESS' | 'FAILURE'
+) {
   if (!durableOperationalAlertsEnabled()) return;
-  try { await enqueueOperationalAlertRepairIntent({
-    organizationId: event.organization_id,
-    actorId: event.actor_user_id ?? 'system',
-    correlationId: event.event_id,
-    sourceType: 'rvn_platform_outbox',
-    sourceTerminalId: row.outbox_id,
-    kind: 'WRITE_FAILURE_RATE',
-    outcome,
-  }); } catch (error) {
+  try {
+    await enqueueOperationalAlertRepairIntent({
+      organizationId: event.organization_id,
+      actorId: event.actor_user_id ?? 'system',
+      correlationId: event.event_id,
+      sourceType: 'rvn_platform_outbox',
+      sourceTerminalId: row.outbox_id,
+      kind: 'WRITE_FAILURE_RATE',
+      outcome,
+    });
+  } catch (error) {
     missedDurableAlertSignals++;
-    logger.warn('[RvnPlatformOutbox] primary outcome committed; repair-intent enqueue missed; terminal-source reconstruction remains available', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
+    logger.warn(
+      '[RvnPlatformOutbox] primary outcome committed; repair-intent enqueue missed; terminal-source reconstruction remains available',
+      {
+        outboxId: row.outbox_id,
+        outcome,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    );
   }
 }
-export function getMissedResultsDurableAlertSignals(): number { return missedDurableAlertSignals; }
+export function getMissedResultsDurableAlertSignals(): number {
+  return missedDurableAlertSignals;
+}
 import { drainExecutionSignalIngress } from './executionSignalIngress.js';
 
 const DEFAULT_BATCH_SIZE = 50;

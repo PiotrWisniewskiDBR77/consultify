@@ -35,12 +35,12 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
-import i18n from '../src/i18n';
+import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMethodWorkspaceScreen';
 import { FeatureFlagsProvider } from '../src/contexts/FeatureFlagsContext';
+import i18n from '../src/i18n';
 import { createDrdDemoSession } from '../src/method-core/methods/drd/drdSessionRuntime';
 import { useAppStore } from '../src/store/useAppStore';
 import { DrdLibraryEntryHarness } from './screens/drd-library-entry';
-import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMethodWorkspaceScreen';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') || 'light';
@@ -81,7 +81,10 @@ const SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>
   reopen: 'reopened',
 };
 
-const VIEW_MODE_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['initialViewMode']> = {
+const VIEW_MODE_BY_SCREEN: Record<
+  string,
+  Parameters<typeof DrdMethodWorkspaceScreen>[0]['initialViewMode']
+> = {
   matrix: 'matrix',
 };
 
@@ -92,16 +95,20 @@ const ACTOR_BY_SCREEN: Record<string, string> = {
 };
 
 // -- P0C (2026-08-13): HTTP source-of-truth screens ------------------------
-const HTTP_SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['seedTo']> = {
+const HTTP_SEED_BY_SCREEN: Record<
+  string,
+  Parameters<typeof DrdMethodWorkspaceScreen>[0]['seedTo']
+> = {
   'http-server': 'interview',
   'http-frozen': 'frozen',
 };
-const HTTP_FORCE_STATE_BY_SCREEN: Record<string, 'offline' | 'conflict' | 'recovery' | 'loading'> = {
-  'http-loading': 'loading',
-  'http-conflict': 'conflict',
-  'http-offline': 'offline',
-  'http-recovery': 'recovery',
-};
+const HTTP_FORCE_STATE_BY_SCREEN: Record<string, 'offline' | 'conflict' | 'recovery' | 'loading'> =
+  {
+    'http-loading': 'loading',
+    'http-conflict': 'conflict',
+    'http-offline': 'offline',
+    'http-recovery': 'recovery',
+  };
 
 // Computed once at module scope (not inside `Root`, which React.StrictMode
 // intentionally double-invokes) so this doesn't silently create two

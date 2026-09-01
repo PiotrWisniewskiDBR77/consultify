@@ -51,12 +51,12 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import {
   GATE_PERMISSIONS,
+  type GateTypeValue,
   getGateForTransition,
   getLifecycleOrder,
   getLocalizedStatusDescription,
   getLocalizedStatusLabel,
   getStatusMeta,
-  type GateTypeValue,
 } from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
 

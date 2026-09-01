@@ -14,8 +14,8 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { getCorrelationId, isValidCorrelationId } from '../correlationId.js';
 import type { AuthenticatedRequest } from '../../../types/index.js';
+import { getCorrelationId, isValidCorrelationId } from '../correlationId.js';
 
 function fakeReq(opts: { attached?: unknown; header?: string | undefined }): AuthenticatedRequest {
   return {

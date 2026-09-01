@@ -95,4 +95,6 @@ export function canonicalPayloadHash(payload: unknown): string {
  * `computePinning.ts` instead checks the structural fact "is this the
  * `createArtifact()` birth row" — see that file's own comment.
  */
-export const EMPTY_WORKING_REVISION_CONTENT_HASH: string = canonicalPayloadHash({ unsavedOperationStack: [] });
+export const EMPTY_WORKING_REVISION_CONTENT_HASH: string = canonicalPayloadHash({
+  unsavedOperationStack: [],
+});

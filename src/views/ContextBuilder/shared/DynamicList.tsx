@@ -109,9 +109,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             {col.label}
           </div>
         ))}
-        <div className="w-20 text-right">
-          {t('contextBuilder.dynamicList.actions', 'Actions')}
-        </div>
+        <div className="w-20 text-right">{t('contextBuilder.dynamicList.actions', 'Actions')}</div>
       </div>
 
       {/* List Items */}

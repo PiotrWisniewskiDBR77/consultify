@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
+import { confirmValuationRecommendationCandidateHandoff } from './finance/financeValuationRecommendationCandidateHandoff.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import {
   computeModel,
@@ -11,7 +12,6 @@ import {
   type PeriodOutput,
   persistComputeResult,
 } from './financialModelingService.js';
-import { confirmValuationRecommendationCandidateHandoff } from './finance/financeValuationRecommendationCandidateHandoff.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'ARCHIVED';
 export type ValuationSourceType = 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
@@ -323,10 +323,10 @@ export async function listValuations(orgId: string): Promise<any[]> {
 }
 
 export async function getValuation(orgId: string, valuationId: string): Promise<any | null> {
-  const row = await dbGet<any>(`SELECT * FROM valuations WHERE id = ? AND organization_id = ? AND status <> 'ARCHIVED'`, [
-    valuationId,
-    orgId,
-  ]);
+  const row = await dbGet<any>(
+    `SELECT * FROM valuations WHERE id = ? AND organization_id = ? AND status <> 'ARCHIVED'`,
+    [valuationId, orgId]
+  );
   if (!row) return null;
   return {
     ...row,

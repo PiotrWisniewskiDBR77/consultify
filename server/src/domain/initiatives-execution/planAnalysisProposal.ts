@@ -1,3 +1,4 @@
+import type { CapacityScenario } from './capacityScenario.js';
 import {
   executeMaterialCommand,
   type MaterialCommandEnvelope,
@@ -5,7 +6,6 @@ import {
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
-import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
 import { solvePlanScenario } from './planSolver.js';
 

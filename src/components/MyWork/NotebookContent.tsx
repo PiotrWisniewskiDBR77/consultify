@@ -107,6 +107,7 @@ import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
+import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
 import { NotebookTopicChips } from './notebook/NotebookTopicChips';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
@@ -118,7 +119,6 @@ import {
   SlashMenu,
   type SlashMenuState,
 } from './notebook/SlashMenu';
-import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
 import { buildAskAIMessage } from './shared/askAiHelper';

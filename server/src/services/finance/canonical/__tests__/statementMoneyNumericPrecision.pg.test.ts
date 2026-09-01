@@ -130,9 +130,10 @@ describe.skipIf(!REAL_PG)('Finance v3 CO-9 — statement money columns are exact
       await raw.query(`DELETE FROM public.financial_statement_values WHERE statement_id = $1`, [
         statementId,
       ]);
-      await raw.query(`DELETE FROM public.financial_statement_validations WHERE statement_id = $1`, [
-        statementId,
-      ]);
+      await raw.query(
+        `DELETE FROM public.financial_statement_validations WHERE statement_id = $1`,
+        [statementId]
+      );
       await raw.query(`DELETE FROM public.financial_statements WHERE id = $1`, [statementId]);
       await raw.query(`DELETE FROM public.organizations WHERE id = $1`, [orgId]);
       await raw.end();

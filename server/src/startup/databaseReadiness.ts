@@ -12,13 +12,12 @@
  * lets the caller own that, so tests can assert the production policy without
  * killing the test runner.
  */
-import type { MigrationResult } from '../services/tablePlatform/migrationRunner.js';
-
 import {
   isSqlChainAcceptable,
   type SqlChainEvaluation,
   type SqlChainState,
 } from '../services/releaseGate/sqlChainEvaluator.js';
+import type { MigrationResult } from '../services/tablePlatform/migrationRunner.js';
 
 export type TpMigrationState = 'pending' | 'ok' | 'failed' | 'disabled_by_operator';
 
@@ -84,9 +83,7 @@ export interface ReadinessDeps {
   evaluateSqlChain?: () => Promise<SqlChainEvaluation>;
 }
 
-export async function establishDatabaseReadiness(
-  deps: ReadinessDeps
-): Promise<ReadinessOutcome> {
+export async function establishDatabaseReadiness(deps: ReadinessDeps): Promise<ReadinessOutcome> {
   const unevaluatedSql: SqlMigrationStatus = {
     state: 'error',
     failed: 0,
@@ -196,7 +193,8 @@ export async function establishDatabaseReadiness(
     if (!isSqlChainAcceptable(evaluation)) {
       const detail = `SQL migration chain not acceptable (${evaluation.state}): ${evaluation.detail}`;
       deps.logger.error(`[Readiness] ${detail}. Refusing readiness.`);
-      if (deps.alert) await deps.alert('SQL migration chain not acceptable', detail).catch(() => {});
+      if (deps.alert)
+        await deps.alert('SQL migration chain not acceptable', detail).catch(() => {});
       return notReady(detail, migrations, sqlMigrations);
     }
     deps.logger.info(`[Readiness] SQL chain: ${evaluation.detail}`);
@@ -214,7 +212,9 @@ export async function establishDatabaseReadiness(
     seeded = true;
   } catch (seedErr: any) {
     // Seeding is best-effort and does not gate readiness.
-    deps.logger.warn(`[Readiness] Template seeding skipped: ${String(seedErr?.message || seedErr)}`);
+    deps.logger.warn(
+      `[Readiness] Template seeding skipped: ${String(seedErr?.message || seedErr)}`
+    );
   }
 
   return { ready: true, error: null, migrations, sqlMigrations, seeded, shouldExitProcess: false };

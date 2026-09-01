@@ -24,7 +24,6 @@ import type {
   ScoringInput,
   ScoringResult,
 } from '../../contracts';
-
 import { compileDrdPack, DRD_AGGREGATION_VERSION, DRD_METHOD_PACK_ID } from './compileDrdPack';
 
 // ---------------------------------------------------------------------------
@@ -39,7 +38,10 @@ const EVIDENCE_RANK: Record<EvidenceStrength, number> = {
   E4: 4,
 };
 
-function meetsMinimumEvidence(actual: EvidenceStrength | undefined, minimum: EvidenceStrength): boolean {
+function meetsMinimumEvidence(
+  actual: EvidenceStrength | undefined,
+  minimum: EvidenceStrength
+): boolean {
   if (!actual) return false;
   return EVIDENCE_RANK[actual] >= EVIDENCE_RANK[minimum];
 }
@@ -51,7 +53,13 @@ function meetsMinimumEvidence(actual: EvidenceStrength | undefined, minimum: Evi
 // blindly, never thrown on for malformed input (falls back to "missing").
 // ---------------------------------------------------------------------------
 
-export type DrdAnswerState = 'confirmed' | 'partial' | 'no' | 'dont_know' | 'no_evidence' | 'not_applicable';
+export type DrdAnswerState =
+  | 'confirmed'
+  | 'partial'
+  | 'no'
+  | 'dont_know'
+  | 'no_evidence'
+  | 'not_applicable';
 
 export interface DrdAnswerRecord {
   readonly state: DrdAnswerState;
@@ -127,9 +135,12 @@ function resolveOpenLevels(input: ProgressionInput): ProgressionResult {
     }
   }
 
-  const openLevels = blockedAtLevel === null ? [] : scale.filter((lvl) => lvl <= (blockedAtLevel as number));
+  const openLevels =
+    blockedAtLevel === null ? [] : scale.filter((lvl) => lvl <= (blockedAtLevel as number));
   const aboveGapLevels =
-    blockedAtLevel === null ? [] : scale.filter((lvl) => lvl > (blockedAtLevel as number) && confirmed.has(lvl));
+    blockedAtLevel === null
+      ? []
+      : scale.filter((lvl) => lvl > (blockedAtLevel as number) && confirmed.has(lvl));
 
   return { currentLevel, blockedAtLevel, openLevels, aboveGapLevels };
 }
@@ -329,7 +340,9 @@ function aggregate(input: AggregationInput): AggregationResult {
    * every existing Output's numbers. The normalised figure is added ALONGSIDE.
    */
   const byGroupNorm: Record<string, number | null> = {};
-  const axisIds = new Set(pack.units.map((u) => u.parentId).filter((id): id is string => id !== null));
+  const axisIds = new Set(
+    pack.units.map((u) => u.parentId).filter((id): id is string => id !== null)
+  );
   /** Ladder length per axis, read from the pack — never assumed. */
   const axisLmax = new Map<string, number>();
   for (const unit of pack.units) {
@@ -354,7 +367,8 @@ function aggregate(input: AggregationInput): AggregationResult {
       continue;
     }
     const norms = values.map((v) => (v - 1) / (lmax - 1));
-    byGroupNorm[key] = Math.round((norms.reduce((a, b) => a + b, 0) / norms.length) * 10000) / 10000;
+    byGroupNorm[key] =
+      Math.round((norms.reduce((a, b) => a + b, 0) / norms.length) * 10000) / 10000;
   }
 
   return {

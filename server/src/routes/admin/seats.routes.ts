@@ -29,13 +29,11 @@ router.use(
         .trim()
         .toUpperCase() !== 'ACTIVE'
     )
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Active organization membership required',
-          code: 'ADMIN_MEMBERSHIP_REQUIRED',
-        });
+      return res.status(403).json({
+        success: false,
+        error: 'Active organization membership required',
+        code: 'ADMIN_MEMBERSHIP_REQUIRED',
+      });
     if (
       !['OWNER', 'ADMIN'].includes(
         String(membership.role || '')
@@ -43,13 +41,11 @@ router.use(
           .toUpperCase()
       )
     )
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Tenant admin role required',
-          code: 'ADMIN_ACCESS_REQUIRED',
-        });
+      return res.status(403).json({
+        success: false,
+        error: 'Tenant admin role required',
+        code: 'ADMIN_ACCESS_REQUIRED',
+      });
     next();
   })
 );

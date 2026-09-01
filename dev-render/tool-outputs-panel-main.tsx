@@ -13,7 +13,6 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
 import ToolOutputsPanelScreen from './screens/tool-outputs-panel';
 
 const params = new URLSearchParams(window.location.search);

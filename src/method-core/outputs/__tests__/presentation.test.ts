@@ -5,17 +5,24 @@
  *     (traceability).
  */
 import { describe, expect, it } from 'vitest';
-import { buildPresentationView } from '../reportSnapshot';
+
 import {
   createPresentationSourceBlock,
   PresentationSourceBlockError,
 } from '../presentationSourceBlock';
+import { buildPresentationView } from '../reportSnapshot';
 import { makeEvidence, makeFinding, makeOutput } from './testFixtures';
 
 describe('Presentation View — approved-only by default (test 5)', () => {
   it('excludes findings whose evidence is needs_evidence (E0) from acceptedFindings', () => {
-    const acceptedFinding = makeFinding({ id: 'f-accepted', supportingEvidence: [makeEvidence({ strength: 'E2' })] });
-    const draftFinding = makeFinding({ id: 'f-draft', supportingEvidence: [makeEvidence({ strength: 'E0' })] });
+    const acceptedFinding = makeFinding({
+      id: 'f-accepted',
+      supportingEvidence: [makeEvidence({ strength: 'E2' })],
+    });
+    const draftFinding = makeFinding({
+      id: 'f-draft',
+      supportingEvidence: [makeEvidence({ strength: 'E0' })],
+    });
     const output = makeOutput({ findings: [acceptedFinding, draftFinding] });
 
     const view = buildPresentationView(output);
@@ -25,8 +32,14 @@ describe('Presentation View — approved-only by default (test 5)', () => {
   });
 
   it('surfaces draft content only when explicitly requested, and always tagged isDraft: true', () => {
-    const acceptedFinding = makeFinding({ id: 'f-accepted', supportingEvidence: [makeEvidence({ strength: 'E2' })] });
-    const draftFinding = makeFinding({ id: 'f-draft', supportingEvidence: [makeEvidence({ strength: 'E0' })] });
+    const acceptedFinding = makeFinding({
+      id: 'f-accepted',
+      supportingEvidence: [makeEvidence({ strength: 'E2' })],
+    });
+    const draftFinding = makeFinding({
+      id: 'f-draft',
+      supportingEvidence: [makeEvidence({ strength: 'E0' })],
+    });
     const output = makeOutput({ findings: [acceptedFinding, draftFinding] });
 
     const view = buildPresentationView(output, { includeDrafts: true });

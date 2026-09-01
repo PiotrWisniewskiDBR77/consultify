@@ -13,12 +13,8 @@
  *  - ruch bez trade-offu i odrzuconej alternatywy nie przechodzi bramki W2.
  */
 
-import {
-  isAcceptedSwotItem,
-  validateRecommendedMove,
-} from '../config/swot/swotTensionEngine.js';
+import { isAcceptedSwotItem, validateRecommendedMove } from '../config/swot/swotTensionEngine.js';
 import type { SWOTItem, SWOTMove, SWOTTension } from '../types/swot.js';
-
 import { computeOutputHash } from './outputLifecycle.js';
 import type {
   EvidenceKind,
@@ -56,7 +52,11 @@ const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, 
  * stamp at all → obserwacja (never fakt, bo brak pomiaru to nie pomiar).
  */
 export function toEvidenceKind(item: SWOTItem): EvidenceKind {
-  if (item.evidenceType === 'fact' || item.evidenceType === 'observation' || item.evidenceType === 'hypothesis') {
+  if (
+    item.evidenceType === 'fact' ||
+    item.evidenceType === 'observation' ||
+    item.evidenceType === 'hypothesis'
+  ) {
     return item.evidenceType;
   }
   const status = String(item.evidenceStatus ?? '');
@@ -232,11 +232,7 @@ export const IMPACT_PL: Record<string, string> = {
  * i postawę. Świadomie NIE jest to tytuł rekomendacji: tytuł sekcji niesie
  * wniosek biznesowy, a K1 niesie policzalną podstawę.
  */
-function buildK1(
-  move: SWOTMove,
-  sourceTensionIds: string[],
-  tensions: OutputTension[]
-): string {
+function buildK1(move: SWOTMove, sourceTensionIds: string[], tensions: OutputTension[]): string {
   const linked = tensions.filter((t) => sourceTensionIds.includes(t.id));
   if (linked.length === 0) {
     return `Ruch „${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`;

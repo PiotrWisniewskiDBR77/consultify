@@ -258,17 +258,24 @@ export function useReportBuilder() {
       sourceId: string,
       title: string,
       description?: string,
-      config?: Record<string, unknown>
+      config?: Record<string, unknown>,
+      confidentiality?: Confidentiality
     ): Promise<{ report: Report; sections: ReportSection[] } | null> => {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
+        // FIX-215 pkt 1: `confidentiality` musi jechać jako pole najwyższego
+        // poziomu (nie tylko wewnątrz `config`) — trasa `POST /report-builder`
+        // i `reportBuilderService.createReport` czytają wyłącznie top-level
+        // `params.confidentiality`. Zagnieżdżenie w `config` nigdy tam nie
+        // dociera (patrz ODBIÓR_215.md, luka poufności).
         const response = await Api.post('/report-builder', {
           sourceType,
           sourceId,
           title,
           description,
           config,
+          confidentiality,
         });
 
         const { report, sections } = response || {};

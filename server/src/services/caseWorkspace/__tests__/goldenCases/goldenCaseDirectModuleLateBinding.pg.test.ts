@@ -206,7 +206,9 @@ suite('GOLDEN CASE F — a module artifact predates its Case; late binding never
       //    module's own UI (which never calls this API, by design). --------
       const beforeRoundTrip = await as('get', `${BASE}/cases/${caseId}/artifact-links`);
       expect(beforeRoundTrip.status).toBe(200);
-      const entryBefore = beforeRoundTrip.body.data.find((l: { linkId: string }) => l.linkId === linkId);
+      const entryBefore = beforeRoundTrip.body.data.find(
+        (l: { linkId: string }) => l.linkId === linkId
+      );
       expect(entryBefore).toMatchObject({ artifactRevision: 'rev-2', linkStatus: 'ACTIVE' });
 
       // (No API call happens here on purpose — this IS the gap. Opening the
@@ -217,7 +219,9 @@ suite('GOLDEN CASE F — a module artifact predates its Case; late binding never
 
       const afterRoundTrip = await as('get', `${BASE}/cases/${caseId}/artifact-links`);
       expect(afterRoundTrip.status).toBe(200);
-      const entryAfter = afterRoundTrip.body.data.find((l: { linkId: string }) => l.linkId === linkId);
+      const entryAfter = afterRoundTrip.body.data.find(
+        (l: { linkId: string }) => l.linkId === linkId
+      );
       // The Case-side pointer is byte-for-byte the same before and after —
       // whatever the module's UI does to ITS OWN object, the Case's record of
       // it is unaffected, because the Case never held a copy to begin with.

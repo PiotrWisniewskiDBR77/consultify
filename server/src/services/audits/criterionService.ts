@@ -21,23 +21,23 @@
  */
 
 import {
-  AuditDomainError,
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   parseJson,
   recordAuditEvent,
   toBool,
   toIso,
   toNum,
 } from './auditsDb.js';
-import { requireCapability, assertNotConcludingOwnResponse } from './permissions.js';
+import { assertNotConcludingOwnResponse, requireCapability } from './permissions.js';
 import {
-  CONFORMITY_STATUSES,
   type AuditActor,
   type AuditProgramCriterion,
+  CONFORMITY_STATUSES,
   type ConformityStatus,
   type CriterionNodeKind,
   type CriterionWorkStatus,
@@ -98,17 +98,17 @@ function mapCriterionRow(row: Record<string, unknown>): AuditProgramCriterion {
 
 async function loadCriterionRow(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<Record<string, unknown> | null> {
   return auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_criteria WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
 }
 
 async function loadCriterionOrThrow(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<AuditProgramCriterion> {
   const row = await loadCriterionRow(organizationId, id);
   if (!row) throw new AuditNotFoundError('Kryterium audytu');
@@ -131,7 +131,10 @@ export interface ListCriteriaOptions {
   search?: string;
 }
 
-function buildCriterionTree(nodes: AuditProgramCriterion[], countsByCriterion: Map<string, { evidence: number; finding: number }>): CriterionWithCounts[] {
+function buildCriterionTree(
+  nodes: AuditProgramCriterion[],
+  countsByCriterion: Map<string, { evidence: number; finding: number }>
+): CriterionWithCounts[] {
   const withCounts = new Map<string, CriterionWithCounts>();
   for (const node of nodes) {
     const counts = countsByCriterion.get(node.id) ?? { evidence: 0, finding: 0 };
@@ -170,7 +173,7 @@ function buildCriterionTree(nodes: AuditProgramCriterion[], countsByCriterion: M
 export async function listCriteria(
   organizationId: string,
   programId: string,
-  options: ListCriteriaOptions = {},
+  options: ListCriteriaOptions = {}
 ): Promise<CriterionWithCounts[]> {
   const where: string[] = ['organization_id = $1', 'program_id = $2'];
   const params: unknown[] = [organizationId, programId];
@@ -192,7 +195,7 @@ export async function listCriteria(
 
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_program_criteria WHERE ${where.join(' AND ')} ORDER BY ordinal ASC`,
-    params,
+    params
   );
   const criteria = rows.map(mapCriterionRow);
   if (criteria.length === 0) return [];
@@ -201,13 +204,13 @@ export async function listCriteria(
     `SELECT criterion_id, COUNT(*)::text AS cnt FROM audit_evidence
       WHERE organization_id = $1 AND program_id = $2 AND criterion_id IS NOT NULL
       GROUP BY criterion_id`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   const findingRows = await auditAll<{ criterion_id: string; cnt: string }>(
     `SELECT criterion_id, COUNT(*)::text AS cnt FROM audit_program_findings
       WHERE organization_id = $1 AND program_id = $2 AND criterion_id IS NOT NULL
       GROUP BY criterion_id`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const countsByCriterion = new Map<string, { evidence: number; finding: number }>();
@@ -260,7 +263,7 @@ export interface CriterionDetail {
 
 export async function getCriterion(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<CriterionDetail | null> {
   const row = await loadCriterionRow(organizationId, id);
   if (!row) return null;
@@ -271,19 +274,19 @@ export async function getCriterion(
        FROM audit_evidence
       WHERE organization_id = $1 AND criterion_id = $2
       ORDER BY created_at DESC`,
-    [organizationId, id],
+    [organizationId, id]
   );
   const requestRows = await auditAll<Record<string, unknown>>(
     `SELECT id, title, status, due_date FROM audit_evidence_requests
       WHERE organization_id = $1 AND criterion_id = $2
       ORDER BY requested_at DESC`,
-    [organizationId, id],
+    [organizationId, id]
   );
   const findingRows = await auditAll<Record<string, unknown>>(
     `SELECT id, statement, classification, severity, status FROM audit_program_findings
       WHERE organization_id = $1 AND criterion_id = $2
       ORDER BY created_at DESC`,
-    [organizationId, id],
+    [organizationId, id]
   );
 
   return {
@@ -323,21 +326,21 @@ export async function updateApplicability(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: { applicable: boolean; reason?: string | null },
+  input: { applicable: boolean; reason?: string | null }
 ): Promise<AuditProgramCriterion> {
   const criterion = await loadCriterionOrThrow(organizationId, id);
   await requireCapability(
     actor,
     criterion.programId,
     'criterion.assign',
-    'Zmiana stosowalności kryterium wymaga uprawnień przypisywania w programie',
+    'Zmiana stosowalności kryterium wymaga uprawnień przypisywania w programie'
   );
 
   if (!input.applicable && !isNonEmpty(input.reason)) {
     throw new AuditDomainError(
       'Oznaczenie kryterium jako „nie dotyczy" wymaga podania powodu',
       400,
-      'AUDIT_APPLICABILITY_REASON_REQUIRED',
+      'AUDIT_APPLICABILITY_REASON_REQUIRED'
     );
   }
 
@@ -345,7 +348,7 @@ export async function updateApplicability(
     `UPDATE audit_program_criteria
         SET applicable = $1, not_applicable_reason = $2, updated_at = NOW()
       WHERE id = $3 AND organization_id = $4`,
-    [input.applicable, input.applicable ? null : (input.reason ?? null), id, organizationId],
+    [input.applicable, input.applicable ? null : (input.reason ?? null), id, organizationId]
   );
 
   await recordAuditEvent({
@@ -368,7 +371,7 @@ export async function assignCriterion(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: { auditorId?: string | null; auditeeId?: string | null },
+  input: { auditorId?: string | null; auditeeId?: string | null }
 ): Promise<AuditProgramCriterion> {
   const criterion = await loadCriterionOrThrow(organizationId, id);
   await requireCapability(actor, criterion.programId, 'criterion.assign');
@@ -380,7 +383,7 @@ export async function assignCriterion(
     `UPDATE audit_program_criteria
         SET assigned_auditor_id = $1, assigned_auditee_id = $2, updated_at = NOW()
       WHERE id = $3 AND organization_id = $4`,
-    [nextAuditor, nextAuditee, id, organizationId],
+    [nextAuditor, nextAuditee, id, organizationId]
   );
 
   await recordAuditEvent({
@@ -401,10 +404,14 @@ export async function submitAuditeeResponse(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  text: string,
+  text: string
 ): Promise<AuditProgramCriterion> {
   if (!isNonEmpty(text)) {
-    throw new AuditDomainError('Odpowiedź audytowanego nie może być pusta', 400, 'AUDIT_RESPONSE_EMPTY');
+    throw new AuditDomainError(
+      'Odpowiedź audytowanego nie może być pusta',
+      400,
+      'AUDIT_RESPONSE_EMPTY'
+    );
   }
   const criterion = await loadCriterionOrThrow(organizationId, id);
   await requireCapability(actor, criterion.programId, 'criterion.respond_as_auditee');
@@ -421,7 +428,7 @@ export async function submitAuditeeResponse(
         SET auditee_response = $1, auditee_responded_by = $2, auditee_responded_at = NOW(),
             work_status = $3, updated_at = NOW()
       WHERE id = $4 AND organization_id = $5`,
-    [text.trim(), actor.userId, nextWorkStatus, id, organizationId],
+    [text.trim(), actor.userId, nextWorkStatus, id, organizationId]
   );
 
   await recordAuditEvent({
@@ -449,7 +456,7 @@ export async function recordTest(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: RecordTestInput,
+  input: RecordTestInput
 ): Promise<AuditProgramCriterion> {
   const criterion = await loadCriterionOrThrow(organizationId, id);
   await requireCapability(actor, criterion.programId, 'criterion.perform_test');
@@ -467,7 +474,7 @@ export async function recordTest(
       input.auditorNote ?? null,
       id,
       organizationId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -504,13 +511,13 @@ export async function concludeCriterion(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: ConcludeCriterionInput,
+  input: ConcludeCriterionInput
 ): Promise<AuditProgramCriterion> {
   if (!CONFORMITY_STATUSES.includes(input.conformityStatus)) {
     throw new AuditDomainError(
       `Nieznany status zgodności: ${input.conformityStatus}`,
       400,
-      'AUDIT_CONFORMITY_STATUS_INVALID',
+      'AUDIT_CONFORMITY_STATUS_INVALID'
     );
   }
 
@@ -523,7 +530,7 @@ export async function concludeCriterion(
     !isNonEmpty(criterion.testResult)
   ) {
     throw new AuditStateError(
-      'Wniosek o zgodności ("conforming"/"nonconforming") wymaga wcześniej wykonanej procedury testowej — brak zarejestrowanego wyniku testu (recordTest)',
+      'Wniosek o zgodności ("conforming"/"nonconforming") wymaga wcześniej wykonanej procedury testowej — brak zarejestrowanego wyniku testu (recordTest)'
     );
   }
 
@@ -531,11 +538,11 @@ export async function concludeCriterion(
     const acceptedRow = await auditGet<{ cnt: string }>(
       `SELECT COUNT(*)::text AS cnt FROM audit_evidence
         WHERE organization_id = $1 AND criterion_id = $2 AND accepted = true`,
-      [organizationId, id],
+      [organizationId, id]
     );
     if (Number(acceptedRow?.cnt ?? 0) === 0) {
       throw new AuditStateError(
-        'Wniosek "conforming" wymaga co najmniej jednego zaakceptowanego dowodu — brak dowodu to "evidence_insufficient", nie zgodność',
+        'Wniosek "conforming" wymaga co najmniej jednego zaakceptowanego dowodu — brak dowodu to "evidence_insufficient", nie zgodność'
       );
     }
   }
@@ -545,7 +552,7 @@ export async function concludeCriterion(
         SET auditor_conclusion = $1, conformity_status = $2, concluded_by = $3, concluded_at = NOW(),
             work_status = 'concluded', updated_at = NOW()
       WHERE id = $4 AND organization_id = $5`,
-    [input.auditorConclusion ?? null, input.conformityStatus, actor.userId, id, organizationId],
+    [input.auditorConclusion ?? null, input.conformityStatus, actor.userId, id, organizationId]
   );
 
   await recordAuditEvent({
@@ -578,7 +585,7 @@ export interface CriterionCoverage {
 
 export async function getCoverage(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<CriterionCoverage> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT
@@ -591,7 +598,7 @@ export async function getCoverage(
         COUNT(*) FILTER (WHERE conformity_status = 'not_applicable') AS not_applicable_total
        FROM audit_program_criteria
       WHERE organization_id = $1 AND program_id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   return {

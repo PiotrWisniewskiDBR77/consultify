@@ -44,8 +44,14 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
     await assertRealPostgresTestEnvironment();
     pool = new Pool({ connectionString: DATABASE_URL });
 
-    for (const [organizationId, name] of [[orgA, 'ORG OPS A'], [orgB, 'ORG OPS B']]) {
-      await pool.query(`INSERT INTO organizations (id, name, plan, status) VALUES ($1,$2,'enterprise','active')`, [organizationId, name]);
+    for (const [organizationId, name] of [
+      [orgA, 'ORG OPS A'],
+      [orgB, 'ORG OPS B'],
+    ]) {
+      await pool.query(
+        `INSERT INTO organizations (id, name, plan, status) VALUES ($1,$2,'enterprise','active')`,
+        [organizationId, name]
+      );
     }
     for (const [userId, organizationId, membershipStatus] of [
       [ownerA, orgA, 'ACTIVE'],
@@ -65,13 +71,23 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
     }
 
     for (const [documentId, organizationId] of [
-      [docA, orgA], [docB, orgB], [staleDocA, orgA], [staleDocB, orgB],
+      [docA, orgA],
+      [docB, orgB],
+      [staleDocA, orgA],
+      [staleDocB, orgB],
     ]) {
       await pool.query(
         `INSERT INTO knowledge_docs
            (id, filename, original_name, filepath, file_hash, version, organization_id, status, scope, owner_id)
          VALUES ($1,$2,$2,$3,$4,1,$5,'uploaded','project',$6)`,
-        [documentId, `${documentId}.txt`, `/nonexistent/${documentId}.txt`, 'a'.repeat(64), organizationId, organizationId === orgA ? ownerA : ownerB]
+        [
+          documentId,
+          `${documentId}.txt`,
+          `/nonexistent/${documentId}.txt`,
+          'a'.repeat(64),
+          organizationId,
+          organizationId === orgA ? ownerA : ownerB,
+        ]
       );
     }
     for (const [jobId, documentId, organizationId, status] of [
@@ -83,14 +99,25 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
            (id, organization_id, user_id, document_id, scope, pipeline_type, status,
             attempt_count, locked_at, locked_by, lease_expires_at, created_at, updated_at)
          VALUES ($1,$2,$3,$4,'project','document_text_extraction',$5,0,$6,$7,$6,NOW(),NOW())`,
-        [jobId, organizationId, organizationId === orgA ? ownerA : ownerB, documentId, status,
-         null, null]
+        [
+          jobId,
+          organizationId,
+          organizationId === orgA ? ownerA : ownerB,
+          documentId,
+          status,
+          null,
+          null,
+        ]
       );
     }
 
     const { default: config } = await import('../../../config/Config.js');
     const sign = (userId: string, organizationId: string) =>
-      jwt.sign({ id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
+      jwt.sign(
+        { id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` },
+        config.JWT_SECRET,
+        { expiresIn: '10m' }
+      );
     ownerAToken = sign(ownerA, orgA);
     ownerBToken = sign(ownerB, orgB);
     staleToken = sign(staleA, orgA);
@@ -104,15 +131,25 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
   afterAll(async () => {
     if (!pool) return;
     await pool.query(`DELETE FROM audit_log WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM organization_context_processing_jobs WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM knowledge_docs WHERE id = ANY($1)`, [[docA, docB, staleDocA, staleDocB]]);
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(
+      `DELETE FROM organization_context_processing_jobs WHERE organization_id = ANY($1)`,
+      [[orgA, orgB]]
+    );
+    await pool.query(`DELETE FROM knowledge_docs WHERE id = ANY($1)`, [
+      [docA, docB, staleDocA, staleDocB],
+    ]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[ownerA, ownerB, staleA]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     const residue = await pool.query<{ n: number }>(
       `SELECT (SELECT count(*) FROM organization_context_processing_jobs WHERE organization_id = ANY($1))::int +
               (SELECT count(*) FROM users WHERE id = ANY($2))::int AS n`,
-      [[orgA, orgB], [ownerA, ownerB, staleA]]
+      [
+        [orgA, orgB],
+        [ownerA, ownerB, staleA],
+      ]
     );
     expect(residue.rows[0]?.n).toBe(0);
     await pool.end();
@@ -124,15 +161,29 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
       .set(bearer(ownerAToken))
       .send({ confirmation: 'run_context_worker_once', limit: 25 });
     expect(response.status).toBe(200);
-    expect(response.body.data).toMatchObject({ processed: 0, retried: 1, deadLettered: 0, auditRecorded: true });
+    expect(response.body.data).toMatchObject({
+      processed: 0,
+      retried: 1,
+      deadLettered: 0,
+      auditRecorded: true,
+    });
     expect(response.body.data.errors).toEqual([
       expect.objectContaining({ jobId: jobA, documentId: docA }),
     ]);
     expect(response.body.data.errors[0].errorCode).toMatch(/^enoent/);
 
-    const rows = await pool.query(`SELECT id, status, attempt_count FROM organization_context_processing_jobs WHERE id = ANY($1) ORDER BY id`, [[jobA, jobB]]);
-    expect(rows.rows.find((row) => row.id === jobA)).toMatchObject({ status: 'retry_scheduled', attempt_count: 1 });
-    expect(rows.rows.find((row) => row.id === jobB)).toMatchObject({ status: 'queued', attempt_count: 0 });
+    const rows = await pool.query(
+      `SELECT id, status, attempt_count FROM organization_context_processing_jobs WHERE id = ANY($1) ORDER BY id`,
+      [[jobA, jobB]]
+    );
+    expect(rows.rows.find((row) => row.id === jobA)).toMatchObject({
+      status: 'retry_scheduled',
+      attempt_count: 1,
+    });
+    expect(rows.rows.find((row) => row.id === jobB)).toMatchObject({
+      status: 'queued',
+      attempt_count: 0,
+    });
   });
 
   it('retries deterministically to dead-letter while metrics remain tenant-scoped', async () => {
@@ -143,7 +194,10 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
         .send({ confirmation: 'run_context_worker_once', limit: 25 });
       expect(response.status).toBe(200);
     }
-    const dead = await pool.query(`SELECT status, attempt_count, error_code FROM organization_context_processing_jobs WHERE id = $1`, [jobA]);
+    const dead = await pool.query(
+      `SELECT status, attempt_count, error_code FROM organization_context_processing_jobs WHERE id = $1`,
+      [jobA]
+    );
     expect(dead.rows[0]).toMatchObject({ status: 'dead_letter', attempt_count: 3 });
     expect(dead.rows[0].error_code).toMatch(/^enoent/);
 
@@ -174,7 +228,11 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
       .set(bearer(ownerAToken))
       .send({ confirmation: 'requeue_context_processing_job' });
     expect(owner.status).toBe(200);
-    expect(owner.body.data).toMatchObject({ requeued: true, jobId: jobA, status: 'retry_scheduled' });
+    expect(owner.body.data).toMatchObject({
+      requeued: true,
+      jobId: jobA,
+      status: 'retry_scheduled',
+    });
   });
 
   it('stale-lock recovery is tenant-scoped and stale membership is denied', async () => {
@@ -199,7 +257,10 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
     expect(recovered.status).toBe(200);
     expect(recovered.body.data.recoveredLocks).toBe(1);
 
-    const locks = await pool.query(`SELECT id, status FROM organization_context_processing_jobs WHERE id = ANY($1)`, [[staleJobA, staleJobB]]);
+    const locks = await pool.query(
+      `SELECT id, status FROM organization_context_processing_jobs WHERE id = ANY($1)`,
+      [[staleJobA, staleJobB]]
+    );
     expect(locks.rows.find((row) => row.id === staleJobA)?.status).toBe('retry_scheduled');
     expect(locks.rows.find((row) => row.id === staleJobB)?.status).toBe('claimed');
 
@@ -213,12 +274,26 @@ describe.skipIf(!REAL_DB)('ORG-OPS-001 — mounted worker operations (real Postg
   it('cold connection sees tenant-only job state and durable operator audit', async () => {
     const cold = new Client({ connectionString: DATABASE_URL });
     await cold.connect();
-    const jobs = await cold.query(`SELECT id, organization_id, status, attempt_count FROM organization_context_processing_jobs WHERE id = ANY($1)`, [[jobA, jobB, staleJobA, staleJobB]]);
-    const audits = await cold.query(`SELECT organization_id, action_type, resource_id FROM audit_log WHERE organization_id = ANY($1) AND action_type LIKE 'organization_context.%'`, [[orgA, orgB]]);
+    const jobs = await cold.query(
+      `SELECT id, organization_id, status, attempt_count FROM organization_context_processing_jobs WHERE id = ANY($1)`,
+      [[jobA, jobB, staleJobA, staleJobB]]
+    );
+    const audits = await cold.query(
+      `SELECT organization_id, action_type, resource_id FROM audit_log WHERE organization_id = ANY($1) AND action_type LIKE 'organization_context.%'`,
+      [[orgA, orgB]]
+    );
     await cold.end();
 
-    expect(jobs.rows.find((row) => row.id === jobA)).toMatchObject({ organization_id: orgA, status: 'retry_scheduled', attempt_count: 0 });
-    expect(jobs.rows.find((row) => row.id === jobB)).toMatchObject({ organization_id: orgB, status: 'queued', attempt_count: 0 });
+    expect(jobs.rows.find((row) => row.id === jobA)).toMatchObject({
+      organization_id: orgA,
+      status: 'retry_scheduled',
+      attempt_count: 0,
+    });
+    expect(jobs.rows.find((row) => row.id === jobB)).toMatchObject({
+      organization_id: orgB,
+      status: 'queued',
+      attempt_count: 0,
+    });
     expect(audits.rows.filter((row) => row.organization_id === orgA)).toHaveLength(5);
     expect(audits.rows.filter((row) => row.organization_id === orgB)).toHaveLength(0);
   });

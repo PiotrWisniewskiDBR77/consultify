@@ -134,7 +134,11 @@ function listSourceFiles(dir: string): string[] {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       out.push(...listSourceFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith('.ts') && !/\.(test|spec)\.ts$/.test(entry.name)) {
+    } else if (
+      entry.isFile() &&
+      entry.name.endsWith('.ts') &&
+      !/\.(test|spec)\.ts$/.test(entry.name)
+    ) {
       out.push(full);
     }
   }
@@ -146,8 +150,8 @@ function countInlineSha256(source: string): number {
   return matches ? matches.length : 0;
 }
 
-describe('hash consolidation guard (W3) — createHash(\'sha256\') under server/src/services/finance', () => {
-  it('every inline createHash(\'sha256\') site is an allowlisted, non-content-hash role', () => {
+describe("hash consolidation guard (W3) — createHash('sha256') under server/src/services/finance", () => {
+  it("every inline createHash('sha256') site is an allowlisted, non-content-hash role", () => {
     const files = listSourceFiles(FINANCE_ROOT);
     const actual = new Map<string, number>();
     for (const abs of files) {
@@ -166,7 +170,9 @@ describe('hash consolidation guard (W3) — createHash(\'sha256\') under server/
     for (const [file, count] of actual) {
       const cap = allowed.get(file) ?? 0;
       if (count > cap) {
-        overages.push(`${file}: found ${count}, allowlisted ${cap} — new inline sha256 call, use canonicalPayloadHash() if this is a content_semantic_hash, or add a justified allowlist entry if it is a genuinely different role (idempotency key / input fingerprint / evidence digest)`);
+        overages.push(
+          `${file}: found ${count}, allowlisted ${cap} — new inline sha256 call, use canonicalPayloadHash() if this is a content_semantic_hash, or add a justified allowlist entry if it is a genuinely different role (idempotency key / input fingerprint / evidence digest)`
+        );
       }
     }
     expect(overages, overages.join('\n')).toEqual([]);
@@ -175,7 +181,10 @@ describe('hash consolidation guard (W3) — createHash(\'sha256\') under server/
     //    other way round, so an unrecognised file shows up explicitly rather than as
     //    "found 1, allowlisted 0" noise).
     const unknownFiles = [...actual.keys()].filter((f) => !allowed.has(f));
-    expect(unknownFiles, `New file(s) with inline createHash('sha256') not yet triaged: ${unknownFiles.join(', ')}`).toEqual([]);
+    expect(
+      unknownFiles,
+      `New file(s) with inline createHash('sha256') not yet triaged: ${unknownFiles.join(', ')}`
+    ).toEqual([]);
   });
 
   it('the four consolidated content-hash sites (W3) really do import canonicalPayloadHash', () => {
@@ -197,6 +206,9 @@ describe('hash consolidation guard (W3) — createHash(\'sha256\') under server/
         missing.push(rel);
       }
     }
-    expect(missing, `File(s) that should import canonicalPayloadHash from contentHash.ts but don't: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `File(s) that should import canonicalPayloadHash from contentHash.ts but don't: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 });

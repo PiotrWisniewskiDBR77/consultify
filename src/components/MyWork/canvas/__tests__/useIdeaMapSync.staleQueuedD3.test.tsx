@@ -62,13 +62,7 @@ import {
 
 type SyncApi = ReturnType<typeof useIdeaMapSync>;
 
-function Harness({
-  ideaId,
-  onReady,
-}: {
-  ideaId: string;
-  onReady: (api: SyncApi) => void;
-}) {
+function Harness({ ideaId, onReady }: { ideaId: string; onReady: (api: SyncApi) => void }) {
   const api = useIdeaMapSync({ ideaId, tool: 'whiteboard', open: true });
   useEffect(() => {
     onReady(api);

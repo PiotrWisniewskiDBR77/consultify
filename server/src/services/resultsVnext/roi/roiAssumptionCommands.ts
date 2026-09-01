@@ -18,19 +18,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiAssumption,
   type RoiAssumption,
   type RoiAssumptionRow,
   type RoiConfidenceLevel,
+  toRoiAssumption,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -118,7 +122,9 @@ export interface AddAssumptionInput {
   access: CommandAccessContext;
 }
 
-export async function addAssumption(input: AddAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
+export async function addAssumption(
+  input: AddAssumptionInput
+): Promise<AtomicCommandOutcome<RoiAssumption>> {
   const {
     caseId,
     organizationId,
@@ -253,7 +259,9 @@ export interface UpdateAssumptionInput {
   access: CommandAccessContext;
 }
 
-export async function updateAssumption(input: UpdateAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
+export async function updateAssumption(
+  input: UpdateAssumptionInput
+): Promise<AtomicCommandOutcome<RoiAssumption>> {
   const {
     assumptionId,
     caseId,
@@ -294,13 +302,16 @@ export async function updateAssumption(input: UpdateAssumptionInput): Promise<At
         label: edits.label ?? currentRow.label,
         unit: edits.unit !== undefined ? edits.unit : currentRow.unit,
         base_value: edits.baseValue !== undefined ? edits.baseValue : currentRow.base_value,
-        downside_value: edits.downsideValue !== undefined ? edits.downsideValue : currentRow.downside_value,
+        downside_value:
+          edits.downsideValue !== undefined ? edits.downsideValue : currentRow.downside_value,
         upside_value: edits.upsideValue !== undefined ? edits.upsideValue : currentRow.upside_value,
         confidence: edits.confidence !== undefined ? edits.confidence : currentRow.confidence,
         evidence_ref: edits.evidenceRef !== undefined ? edits.evidenceRef : currentRow.evidence_ref,
         source: edits.source !== undefined ? edits.source : currentRow.source,
-        owner_user_id: edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
-        sensitivity_rank: edits.sensitivityRank !== undefined ? edits.sensitivityRank : currentRow.sensitivity_rank,
+        owner_user_id:
+          edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
+        sensitivity_rank:
+          edits.sensitivityRank !== undefined ? edits.sensitivityRank : currentRow.sensitivity_rank,
         notes: edits.notes !== undefined ? edits.notes : currentRow.notes,
       };
 
@@ -329,7 +340,8 @@ export async function updateAssumption(input: UpdateAssumptionInput): Promise<At
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[updateAssumption] update returned no row for ${assumptionId}`);
+      if (!updatedRow)
+        throw new Error(`[updateAssumption] update returned no row for ${assumptionId}`);
       return toRoiAssumption(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -380,7 +392,9 @@ export interface RemoveAssumptionInput {
   access: CommandAccessContext;
 }
 
-export async function removeAssumption(input: RemoveAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
+export async function removeAssumption(
+  input: RemoveAssumptionInput
+): Promise<AtomicCommandOutcome<RoiAssumption>> {
   const {
     assumptionId,
     caseId,
@@ -423,7 +437,8 @@ export async function removeAssumption(input: RemoveAssumptionInput): Promise<At
         [actorUserId, nextVersion, assumptionId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[removeAssumption] update returned no row for ${assumptionId}`);
+      if (!updatedRow)
+        throw new Error(`[removeAssumption] update returned no row for ${assumptionId}`);
       return toRoiAssumption(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {

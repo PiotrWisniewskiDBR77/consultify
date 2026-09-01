@@ -10,25 +10,25 @@ import {
   ensureRecoveryCardForCase,
   getRecoveryCardDTO,
   progressRecoveryCard as progressLegacyRecoveryCard,
-  RecoveryCardServiceError,
-  updateRecoveryCard as updateLegacyRecoveryCard,
   type RecoveryCardDTO,
   type RecoveryCardRow,
+  RecoveryCardServiceError,
   type RecoveryEffectivenessRating,
   type RecoveryPriority,
   type RecoveryReferenceItem,
+  updateRecoveryCard as updateLegacyRecoveryCard,
 } from '../../results/kpiRecoveryCardService.js';
 import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
   executeAtomicCreate,
-  type AtomicCommandOutcome,
-  type AtomicEventInput,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../platform/commandCapabilityGuard.js';
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 
@@ -167,7 +167,12 @@ async function loadCardAuthority(
   return result.rows[0];
 }
 
-function event(input: Context, result: CommandResult, eventType: string, expectedVersion: number | null): AtomicEventInput {
+function event(
+  input: Context,
+  result: CommandResult,
+  eventType: string,
+  expectedVersion: number | null
+): AtomicEventInput {
   return {
     schemaVersion: 1,
     eventType,
@@ -194,7 +199,9 @@ function event(input: Context, result: CommandResult, eventType: string, expecte
   };
 }
 
-function unwrap(outcome: AtomicCommandOutcome<CommandResult>): AtomicCommandOutcome<RecoveryCardDTO> {
+function unwrap(
+  outcome: AtomicCommandOutcome<CommandResult>
+): AtomicCommandOutcome<RecoveryCardDTO> {
   return { ...outcome, result: outcome.result.card };
 }
 
@@ -209,8 +216,12 @@ function mapServiceError(error: unknown): never {
 export async function createRecoveryCard(
   input: Context & { caseId: string; initialPatch?: RecoveryCardPatch }
 ): Promise<AtomicCommandOutcome<RecoveryCardDTO>> {
-  const hash = fingerprint({ op: 'create-card', actorUserId: input.actorUserId, caseId: input.caseId,
-    initialPatch: input.initialPatch ?? {} });
+  const hash = fingerprint({
+    op: 'create-card',
+    actorUserId: input.actorUserId,
+    caseId: input.caseId,
+    initialPatch: input.initialPatch ?? {},
+  });
   const outcome = await executeAtomicCreate<CommandResult>({
     organizationId: input.organizationId,
     idempotencyKey: input.idempotencyKey,
@@ -253,12 +264,18 @@ export async function createRecoveryCard(
         );
         if (input.initialPatch && Object.keys(input.initialPatch).length > 0) {
           const initialized = await updateLegacyRecoveryCard({
-            db: database(client), orgId: input.organizationId, recoveryCardId: created.cardId,
-            expectedVersion: row.rows[0]!.version, patch: input.initialPatch,
+            db: database(client),
+            orgId: input.organizationId,
+            recoveryCardId: created.cardId,
+            expectedVersion: row.rows[0]!.version,
+            patch: input.initialPatch,
             actorUserId: input.actorUserId,
           });
           if (!initialized.ok) {
-            throw new AtomicWriteConflictError('Recovery card changed during creation', 'STALE_VERSION');
+            throw new AtomicWriteConflictError(
+              'Recovery card changed during creation',
+              'STALE_VERSION'
+            );
           }
           row = await client.query<RecoveryCardRow>(
             'SELECT * FROM kpi_recovery_cards WHERE id=$1 AND organization_id=$2',
@@ -294,8 +311,13 @@ export interface RecoveryCardPatch {
 export async function updateRecoveryCard(
   input: Context & { cardId: string; expectedVersion: number; patch: RecoveryCardPatch }
 ): Promise<AtomicCommandOutcome<RecoveryCardDTO>> {
-  const hash = fingerprint({ op: 'update-card', actorUserId: input.actorUserId, cardId: input.cardId,
-    expectedVersion: input.expectedVersion, patch: input.patch });
+  const hash = fingerprint({
+    op: 'update-card',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    expectedVersion: input.expectedVersion,
+    patch: input.patch,
+  });
   const outcome = await executeAtomicCreate<CommandResult>({
     organizationId: input.organizationId,
     idempotencyKey: input.idempotencyKey,
@@ -311,21 +333,32 @@ export async function updateRecoveryCard(
       await assertActiveMember(client, input.organizationId, input.actorUserId);
       try {
         const updated = await updateLegacyRecoveryCard({
-          db: database(client), orgId: input.organizationId, recoveryCardId: input.cardId,
-          expectedVersion: input.expectedVersion, patch: input.patch, actorUserId: input.actorUserId,
+          db: database(client),
+          orgId: input.organizationId,
+          recoveryCardId: input.cardId,
+          expectedVersion: input.expectedVersion,
+          patch: input.patch,
+          actorUserId: input.actorUserId,
         });
         if (!updated.ok) {
           throw new AtomicWriteConflictError('Recovery card changed', 'STALE_VERSION', {
-            currentVersion: (await getRecoveryCardDTO(database(client), input.organizationId, input.cardId))?.version,
+            currentVersion: (
+              await getRecoveryCardDTO(database(client), input.organizationId, input.cardId)
+            )?.version,
             expectedVersion: input.expectedVersion,
           });
         }
-        return { card: updated.card, requestHash: hash, deviationCaseId: authority.deviation_case_id };
+        return {
+          card: updated.card,
+          requestHash: hash,
+          deviationCaseId: authority.deviation_case_id,
+        };
       } catch (error) {
         return mapServiceError(error);
       }
     },
-    buildEvent: ({ result }) => event(input, result, 'kpi.recovery_card_updated', input.expectedVersion),
+    buildEvent: ({ result }) =>
+      event(input, result, 'kpi.recovery_card_updated', input.expectedVersion),
   });
   return unwrap(outcome);
 }
@@ -339,9 +372,15 @@ export async function closeRecoveryCard(
     effectivenessRating: RecoveryEffectivenessRating;
   }
 ): Promise<AtomicCommandOutcome<RecoveryCardDTO>> {
-  const hash = fingerprint({ op: 'close-card', actorUserId: input.actorUserId, cardId: input.cardId,
-    expectedVersion: input.expectedVersion, evidenceText: input.evidenceText ?? null,
-    evidenceRef: input.evidenceRef ?? null, effectivenessRating: input.effectivenessRating });
+  const hash = fingerprint({
+    op: 'close-card',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    expectedVersion: input.expectedVersion,
+    evidenceText: input.evidenceText ?? null,
+    evidenceRef: input.evidenceRef ?? null,
+    effectivenessRating: input.effectivenessRating,
+  });
   const outcome = await executeAtomicCreate<CommandResult>({
     organizationId: input.organizationId,
     idempotencyKey: input.idempotencyKey,
@@ -357,9 +396,13 @@ export async function closeRecoveryCard(
       await assertActiveMember(client, input.organizationId, input.actorUserId);
       try {
         const closed = await closeLegacyRecoveryCard({
-          db: database(client), orgId: input.organizationId, recoveryCardId: input.cardId,
-          expectedVersion: input.expectedVersion, evidenceText: input.evidenceText,
-          evidenceRef: input.evidenceRef, effectivenessRating: input.effectivenessRating,
+          db: database(client),
+          orgId: input.organizationId,
+          recoveryCardId: input.cardId,
+          expectedVersion: input.expectedVersion,
+          evidenceText: input.evidenceText,
+          evidenceRef: input.evidenceRef,
+          effectivenessRating: input.effectivenessRating,
           actorUserId: input.actorUserId,
         });
         if (!closed.closed) {
@@ -368,16 +411,23 @@ export async function closeRecoveryCard(
             `RECOVERY_CARD_CLOSE_${closed.reason}`,
             {
               reason: closed.reason,
-              ...('latestMeasurement' in closed ? { latestMeasurement: closed.latestMeasurement } : {}),
+              ...('latestMeasurement' in closed
+                ? { latestMeasurement: closed.latestMeasurement }
+                : {}),
             }
           );
         }
-        return { card: closed.card, requestHash: hash, deviationCaseId: authority.deviation_case_id };
+        return {
+          card: closed.card,
+          requestHash: hash,
+          deviationCaseId: authority.deviation_case_id,
+        };
       } catch (error) {
         return mapServiceError(error);
       }
     },
-    buildEvent: ({ result }) => event(input, result, 'kpi.recovery_card_closed', input.expectedVersion),
+    buildEvent: ({ result }) =>
+      event(input, result, 'kpi.recovery_card_closed', input.expectedVersion),
   });
   return unwrap(outcome);
 }
@@ -440,13 +490,20 @@ export async function progressRecoveryCard(
       });
       if (!progressed.ok) {
         throw new AtomicWriteConflictError('Recovery card changed', 'STALE_VERSION', {
-          currentVersion: (await getRecoveryCardDTO(database(client), input.organizationId, input.cardId))?.version,
+          currentVersion: (
+            await getRecoveryCardDTO(database(client), input.organizationId, input.cardId)
+          )?.version,
           expectedVersion: input.expectedVersion,
         });
       }
-      return { card: progressed.card, requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        card: progressed.card,
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event(input, result, 'kpi.recovery_card_updated', input.expectedVersion),
+    buildEvent: ({ result }) =>
+      event(input, result, 'kpi.recovery_card_updated', input.expectedVersion),
   });
   return unwrap(outcome);
 }

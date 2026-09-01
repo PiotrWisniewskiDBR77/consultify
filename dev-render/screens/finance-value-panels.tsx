@@ -17,21 +17,21 @@
  */
 import React, { useEffect } from 'react';
 
-import { EfficientFrontierPanel } from '../../src/components/Economics/panels/EfficientFrontierPanel';
-import { MonteCarloNpvPanel } from '../../src/components/Economics/panels/MonteCarloNpvPanel';
-import { RealOptionsPanel } from '../../src/components/Economics/panels/RealOptionsPanel';
-import { ScenarioComputePanel } from '../../src/components/Economics/panels/ScenarioComputePanel';
-import { WhatIfSensitivityPanel } from '../../src/components/Economics/panels/WhatIfSensitivityPanel';
 import {
   type DriverNode,
   DriverPlannerPanel,
 } from '../../src/components/Economics/panels/DriverPlannerPanel';
+import { EfficientFrontierPanel } from '../../src/components/Economics/panels/EfficientFrontierPanel';
+import { MonteCarloNpvPanel } from '../../src/components/Economics/panels/MonteCarloNpvPanel';
+import { RealOptionsPanel } from '../../src/components/Economics/panels/RealOptionsPanel';
+import { ScenarioComputePanel } from '../../src/components/Economics/panels/ScenarioComputePanel';
 import {
   type PortfolioResponse,
   type ValueBridgeResponse,
   type ValueOfficeInitiative,
   ValueOfficePanel,
 } from '../../src/components/Economics/panels/ValueOfficePanel';
+import { WhatIfSensitivityPanel } from '../../src/components/Economics/panels/WhatIfSensitivityPanel';
 
 // ── ValueOffice — realistic REAL-shaped initiatives (mapped from a real org's
 // initiatives, DBR77-scale numbers). These stand in for what FinanceHub's

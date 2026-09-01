@@ -145,9 +145,9 @@ export interface InterviewHandoffPayload {
 // ────────────────────────────────────────────────────────────────
 
 export type ResultsKpiAdvisorMode =
-  | 'draft_quality_review'   // KPI-F-027
+  | 'draft_quality_review' // KPI-F-027
   | 'check_in_manager_brief' // KPI-F-028
-  | 'reflection_rca';        // KPI-F-030
+  | 'reflection_rca'; // KPI-F-030
 
 export interface ResultsKpiEvidenceBreakdown {
   facts: string[];
@@ -220,8 +220,7 @@ export interface ResultsKpiHandoffContext {
 // ROI-E008 — Results/ROI advisor handoff (one governed mode)
 // ────────────────────────────────────────────────────────────────
 
-export type ResultsRoiAdvisorMode =
-  | 'pir_lessons_draft'; // ROI-E006 D13's deferred generation call — the ONLY named ROI advisor need
+export type ResultsRoiAdvisorMode = 'pir_lessons_draft'; // ROI-E006 D13's deferred generation call — the ONLY named ROI advisor need
 
 export interface RoiPirLessonsAdvisorEvidenceBreakdown {
   facts: string[];
@@ -244,9 +243,9 @@ export interface ResultsRoiHandoffContext {
   target_resource: {
     resource_type: 'roi_pir';
     resource_id: string; // pir_id — never null; the PIR must already exist
-                          // (started via the ROI-E006 PIR-start command)
-                          // before Teresa can draft lessons for it. No
-                          // create path, unlike KPI's draft_quality_review.
+    // (started via the ROI-E006 PIR-start command)
+    // before Teresa can draft lessons for it. No
+    // create path, unlike KPI's draft_quality_review.
   };
   case_id: string;
   expected_version: number; // PIR row_version — CAS, never null
@@ -293,11 +292,11 @@ export interface ResultsRoiHandoffContext {
 // ────────────────────────────────────────────────────────────────
 
 export type ResultsOkrAdvisorMode =
-  | 'objective_draft'          // OKR-F-025, POST .../advisor/draft
+  | 'objective_draft' // OKR-F-025, POST .../advisor/draft
   | 'objective_quality_review' // OKR-F-025, POST .../advisor/quality-review
-  | 'check_in_assist'          // OKR-F-026, POST .../advisor/check-in
-  | 'manager_brief'            // OKR-F-026, POST .../advisor/manager-brief
-  | 'reflection_synthesis';    // OKR-F-027, POST .../advisor/reflection
+  | 'check_in_assist' // OKR-F-026, POST .../advisor/check-in
+  | 'manager_brief' // OKR-F-026, POST .../advisor/manager-brief
+  | 'reflection_synthesis'; // OKR-F-027, POST .../advisor/reflection
 
 export interface ResultsOkrEvidenceBreakdown {
   facts: string[];
@@ -550,9 +549,16 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
 // ────────────────────────────────────────────────────────────────
 
 export const P08_KPI_FORBIDDEN_VERBS = [
-  'approveDefinitionVersion', 'rejectDefinitionVersion', 'activateKpi',
-  'suspendKpi', 'archiveKpi', 'verifyMeasurement', 'disputeMeasurement',
-  'approvePlan', 'submitEffectivenessVerification', 'closeDeviationCase',
+  'approveDefinitionVersion',
+  'rejectDefinitionVersion',
+  'activateKpi',
+  'suspendKpi',
+  'archiveKpi',
+  'verifyMeasurement',
+  'disputeMeasurement',
+  'approvePlan',
+  'submitEffectivenessVerification',
+  'closeDeviationCase',
   'reopenDeviationCase',
 ] as const;
 
@@ -581,50 +587,83 @@ export const P08_KPI_FORBIDDEN_VERBS = [
 
 export const P08_ROI_FORBIDDEN_VERBS = [
   // roiCaseCommands.ts
-  'createRoiCase', 'updateRoiCaseDetails', 'archiveRoiCase', 'startModeling',
-  'markReadyForReview', 'reopenRejectedRoiCase',
+  'createRoiCase',
+  'updateRoiCaseDetails',
+  'archiveRoiCase',
+  'startModeling',
+  'markReadyForReview',
+  'reopenRejectedRoiCase',
   // roiCaseApprovalCommands.ts
-  'submitRoiCaseForApproval', 'approveRoiCase', 'rejectRoiCase',
-  'requestChangesOnRoiCase', 'reopenApprovedRoiCaseForRevision',
+  'submitRoiCaseForApproval',
+  'approveRoiCase',
+  'rejectRoiCase',
+  'requestChangesOnRoiCase',
+  'reopenApprovedRoiCaseForRevision',
   // roiBaselineCommands.ts
-  'captureOrUpdateBaseline', 'freezeRoiBaseline', 'unfreezeRoiBaseline',
+  'captureOrUpdateBaseline',
+  'freezeRoiBaseline',
+  'unfreezeRoiBaseline',
   // roiBenefitsRealizationCommands.ts
-  'startRoiCaseBenefitsRealization', 'cancelRoiCase',
+  'startRoiCaseBenefitsRealization',
+  'cancelRoiCase',
   // roiPirCommands.ts (ROI-E006 + this epic's own recordRoiPirTeresaLessonsDraft is the ONE exception)
-  'scheduleRoiCasePostInvestmentReview', 'markRoiCasePostInvestmentReviewDue',
-  'startRoiCasePostInvestmentReview', 'updateRoiPostInvestmentReviewDraft',
-  'recordRoiPirTeresaDraftDisposition', 'closeRoiCase',
+  'scheduleRoiCasePostInvestmentReview',
+  'markRoiCasePostInvestmentReviewDue',
+  'startRoiCasePostInvestmentReview',
+  'updateRoiPostInvestmentReviewDraft',
+  'recordRoiPirTeresaDraftDisposition',
+  'closeRoiCase',
   // roiActualEntryCommands.ts / roiActualSnapshotCommands.ts
-  'recordActualEntry', 'correctActualEntry', 'verifyActualEntry', 'disputeActualEntry',
+  'recordActualEntry',
+  'correctActualEntry',
+  'verifyActualEntry',
+  'disputeActualEntry',
   'publishRoiActualSnapshot',
   // roiVarianceCommands.ts
-  'recordVariance', 'updateVarianceStatus', 'addVarianceCause', 'removeVarianceCause',
+  'recordVariance',
+  'updateVarianceStatus',
+  'addVarianceCause',
+  'removeVarianceCause',
   // roiFinanceLinkCommands.ts / roiFinanceReconciliationCommands.ts (ROI-E007)
-  'createRoiFinanceLink', 'removeRoiFinanceLink', 'openRoiFinanceReconciliation',
+  'createRoiFinanceLink',
+  'removeRoiFinanceLink',
+  'openRoiFinanceReconciliation',
   'updateRoiFinanceReconciliationStatus',
   // roiBenefitEvidenceLinkCommands.ts (ROI-E002 + E007's flagEvidenceLinkFreshnessCheck)
-  'addBenefitEvidenceLink', 'removeBenefitEvidenceLink', 'flagBenefitEvidenceLinkDisputed',
+  'addBenefitEvidenceLink',
+  'removeBenefitEvidenceLink',
+  'flagBenefitEvidenceLinkDisputed',
   'flagEvidenceLinkFreshnessCheck',
   // roiAssumptionCommands.ts
-  'addAssumption', 'updateAssumption', 'removeAssumption',
+  'addAssumption',
+  'updateAssumption',
+  'removeAssumption',
   // roiBenefitLineCommands.ts
-  'addBenefitLine', 'updateBenefitLine', 'removeBenefitLine',
+  'addBenefitLine',
+  'updateBenefitLine',
+  'removeBenefitLine',
   // roiCostLineCommands.ts
-  'addCostLine', 'updateCostLine', 'removeCostLine',
+  'addCostLine',
+  'updateCostLine',
+  'removeCostLine',
   // roiCalculationRunCommands.ts (write verb only — see file-header note on
   // excluded pure helpers)
   'createRoiCalculationRun',
   // roiCalculationPolicyCommands.ts
   'captureOrUpdateCalculationPolicy',
   // roiScenarioCommands.ts
-  'addScenario', 'updateScenario', 'removeScenario', 'setScenarioOverride',
+  'addScenario',
+  'updateScenario',
+  'removeScenario',
+  'setScenarioOverride',
   'removeScenarioOverride',
   // roiForecastVersionCommands.ts
   'createRoiForecastVersion',
   // roiTrackingCommands.ts
   'startRoiCaseTracking',
   // roiEconomicModelFreeze.ts
-  'freezeRoiEconomicModel', 'unfreezeRoiEconomicModel',
+  'freezeRoiEconomicModel',
+  'unfreezeRoiEconomicModel',
 ] as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -673,41 +712,64 @@ export const P08_ROI_FORBIDDEN_VERBS = [
 
 export const P08_OKR_FORBIDDEN_VERBS = [
   // okrAlignmentCommands.ts (OKR-E005)
-  'proposeAlignment', 'acceptAlignment', 'rejectAlignment', 'removeAlignment',
+  'proposeAlignment',
+  'acceptAlignment',
+  'rejectAlignment',
+  'removeAlignment',
   // okrCarryForwardCommands.ts (OKR-E007)
   'carryForwardOkrSet',
   // okrCheckInCommands.ts (OKR-E004) — recordCheckIn is Teresa's own
   // check_in_assist whitelist call, excluded; correctCheckIn is not.
   'correctCheckIn',
   // okrKeyResultCommands.ts (OKR-E003)
-  'createKeyResult', 'updateKeyResult', 'cancelKeyResult',
+  'createKeyResult',
+  'updateKeyResult',
+  'cancelKeyResult',
   // okrCycleCommands.ts (OKR-E001)
-  'createCycle', 'runOkrCycleLifecycleTransition',
+  'createCycle',
+  'runOkrCycleLifecycleTransition',
   // okrReviewCommands.ts (OKR-E007)
-  'submitOkrSetSelfReview', 'submitOkrSetForManagerReview',
-  'approveOkrSetManagerReview', 'requestChangesOnOkrSetManagerReview',
+  'submitOkrSetSelfReview',
+  'submitOkrSetForManagerReview',
+  'approveOkrSetManagerReview',
+  'requestChangesOnOkrSetManagerReview',
   'recordOkrSetReviewComment',
   // okrObjectiveCommands.ts (OKR-E003) — createObjective is Teresa's own
   // objective_draft whitelist call, excluded; updateObjective/cancelObjective
   // are not (Teresa never edits/cancels an existing Objective directly).
-  'updateObjective', 'cancelObjective',
+  'updateObjective',
+  'cancelObjective',
   // okrReflectionCommands.ts (OKR-E007 + this epic's own
   // recordOkrReflectionTeresaDraft is the ONE exception — same shape as
   // ROI-E008's recordRoiPirTeresaLessonsDraft exception)
-  'finalScoreOkrSet', 'recordObjectiveReflection', 'recordOkrReflectionTeresaDraftDisposition',
+  'finalScoreOkrSet',
+  'recordObjectiveReflection',
+  'recordOkrReflectionTeresaDraftDisposition',
   // okrProgramCommands.ts (OKR-E001)
-  'createProgram', 'editProgramDraft', 'publishProgram',
+  'createProgram',
+  'editProgramDraft',
+  'publishProgram',
   // okrDecisionCommands.ts (OKR-E006)
-  'requestDecisionFromSupportRequest', 'acknowledgeDecisionResolution',
+  'requestDecisionFromSupportRequest',
+  'acknowledgeDecisionResolution',
   // okrSetCommands.ts (OKR-E002)
-  'createOkrSet', 'updateOkrSetDraft', 'narrowOkrSetVisibility',
-  'submitOkrSetForApproval', 'approveOkrSet', 'requestChangesOnOkrSet',
-  'runOkrSetLifecycleTransition', 'closeOkrSet',
+  'createOkrSet',
+  'updateOkrSetDraft',
+  'narrowOkrSetVisibility',
+  'submitOkrSetForApproval',
+  'approveOkrSet',
+  'requestChangesOnOkrSet',
+  'runOkrSetLifecycleTransition',
+  'closeOkrSet',
   // okrSetMaterialChangeCommands.ts (OKR-E002)
   'recordOkrSetMaterialChange',
   // okrSupportCommands.ts (OKR-E006)
-  'postComment', 'postRecognition', 'raiseSupportRequest',
-  'acknowledgeSupportRequest', 'resolveSupportRequest', 'dismissSupportRequest',
+  'postComment',
+  'postRecognition',
+  'raiseSupportRequest',
+  'acknowledgeSupportRequest',
+  'resolveSupportRequest',
+  'dismissSupportRequest',
 ] as const;
 
 export const P08_COMMON_PAYLOAD_FIELDS = [

@@ -15,4 +15,3 @@ export const TASK_GENERATED_SECTION_PERSISTENCE: Record<
   evidence: 'local-only',
   dependencies: 'reference-only',
 };
-

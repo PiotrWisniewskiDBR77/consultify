@@ -11,7 +11,10 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { AUDITS_SCALE_AND_POLISH_FLAG_KEYS, isAuditsScaleAndPolishEnabled } from '../auditsScaleAndPolishFlag';
+import {
+  AUDITS_SCALE_AND_POLISH_FLAG_KEYS,
+  isAuditsScaleAndPolishEnabled,
+} from '../auditsScaleAndPolishFlag';
 
 const ORIGINAL_LOCATION = window.location;
 

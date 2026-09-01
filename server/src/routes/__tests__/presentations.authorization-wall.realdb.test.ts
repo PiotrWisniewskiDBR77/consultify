@@ -146,7 +146,12 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
       [memberId, orgId, id, orgRole, status]
     );
     createdMemberIds.push(memberId);
-    return { id, email, memberId, token: signToken({ id, email, organizationId: orgId, role: tokenRole }) };
+    return {
+      id,
+      email,
+      memberId,
+      token: signToken({ id, email, organizationId: orgId, role: tokenRole }),
+    };
   }
 
   /** An identity with a user row but NO membership row anywhere. */
@@ -184,11 +189,23 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
    */
   async function snapshotState() {
     const [deck, versions, approvals, analytics, audits] = await Promise.all([
-      pool.query(`SELECT version, deck_json, status FROM presentation_decks WHERE id = $1`, [deckId]),
-      pool.query(`SELECT count(*)::int AS c FROM presentation_deck_versions WHERE deck_id = $1`, [deckId]),
-      pool.query(`SELECT count(*)::int AS c FROM approval_assignments WHERE artifact_id = $1 OR proposal_id = $1`, [deckId]),
-      pool.query(`SELECT count(*)::int AS c FROM presentation_analytics WHERE deck_id = $1`, [deckId]),
-      pool.query(`SELECT count(*)::int AS c FROM audit_events WHERE org_id = $1 OR resource_id = $2 OR entity_id = $2`, [orgA, deckId]),
+      pool.query(`SELECT version, deck_json, status FROM presentation_decks WHERE id = $1`, [
+        deckId,
+      ]),
+      pool.query(`SELECT count(*)::int AS c FROM presentation_deck_versions WHERE deck_id = $1`, [
+        deckId,
+      ]),
+      pool.query(
+        `SELECT count(*)::int AS c FROM approval_assignments WHERE artifact_id = $1 OR proposal_id = $1`,
+        [deckId]
+      ),
+      pool.query(`SELECT count(*)::int AS c FROM presentation_analytics WHERE deck_id = $1`, [
+        deckId,
+      ]),
+      pool.query(
+        `SELECT count(*)::int AS c FROM audit_events WHERE org_id = $1 OR resource_id = $2 OR entity_id = $2`,
+        [orgA, deckId]
+      ),
     ]);
     return {
       deckRow: deck.rows[0] ?? null,
@@ -210,7 +227,10 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
           .set(auth)
           .send({ assignedToUserId: ownerA.id, ...body }),
       approve: () =>
-        request(app).post(`/api/presentations/decks/${deckId}/approval/approve`).set(auth).send(body),
+        request(app)
+          .post(`/api/presentations/decks/${deckId}/approval/approve`)
+          .set(auth)
+          .send(body),
       reject: () =>
         request(app)
           .post(`/api/presentations/decks/${deckId}/approval/reject`)
@@ -276,7 +296,8 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
       default?: { JWT_SECRET: string };
     };
     jwtSecret = configModule.config?.JWT_SECRET || configModule.default?.JWT_SECRET || '';
-    if (!jwtSecret) throw new Error('Real Config.js did not yield a JWT_SECRET — cannot sign real tokens');
+    if (!jwtSecret)
+      throw new Error('Real Config.js did not yield a JWT_SECRET — cannot sign real tokens');
 
     const routesModule = await import('../presentations.routes.js');
     app = express();
@@ -387,7 +408,7 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
           trigger_name: string;
           tgenabled: string;
         }>(
-      `SELECT c.relname AS table_name, t.tgname AS trigger_name, t.tgenabled::text AS tgenabled
+          `SELECT c.relname AS table_name, t.tgname AS trigger_name, t.tgenabled::text AS tgenabled
          FROM pg_trigger t
          JOIN pg_class c ON c.oid = t.tgrelid
         WHERE NOT t.tgisinternal
@@ -474,15 +495,20 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
     const res = await writerProbes(adminA.token).autosave();
     expect(res.status).toBe(200);
 
-    const after = await pool.query(`SELECT version FROM presentation_decks WHERE id = $1`, [deckId]);
+    const after = await pool.query(`SELECT version FROM presentation_decks WHERE id = $1`, [
+      deckId,
+    ]);
     expect(Number(after.rows[0].version)).toBeGreaterThan(1);
 
     // Put the fixture back to a known state for the remaining cases.
-    await pool.query(
-      `UPDATE presentation_decks SET version = 1, deck_json = $2 WHERE id = $1`,
-      [deckId, JSON.stringify({ cards: [{ id: 'c1', title: 'original' }] })]
-    );
-    await pool.query(`DELETE FROM presentation_deck_versions WHERE deck_id = $1 AND id <> $2`, [deckId, versionId]);
+    await pool.query(`UPDATE presentation_decks SET version = 1, deck_json = $2 WHERE id = $1`, [
+      deckId,
+      JSON.stringify({ cards: [{ id: 'c1', title: 'original' }] }),
+    ]);
+    await pool.query(`DELETE FROM presentation_deck_versions WHERE deck_id = $1 AND id <> $2`, [
+      deckId,
+      versionId,
+    ]);
   }, 60_000);
 
   // ===========================================================================
@@ -492,14 +518,19 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
     // Request #1 proves the token itself is good while the membership is ACTIVE.
     const allowed = await writerProbes(revokedA.token).autosave();
     expect(allowed.status).toBe(200);
-    await pool.query(
-      `UPDATE presentation_decks SET version = 1, deck_json = $2 WHERE id = $1`,
-      [deckId, JSON.stringify({ cards: [{ id: 'c1', title: 'original' }] })]
-    );
-    await pool.query(`DELETE FROM presentation_deck_versions WHERE deck_id = $1 AND id <> $2`, [deckId, versionId]);
+    await pool.query(`UPDATE presentation_decks SET version = 1, deck_json = $2 WHERE id = $1`, [
+      deckId,
+      JSON.stringify({ cards: [{ id: 'c1', title: 'original' }] }),
+    ]);
+    await pool.query(`DELETE FROM presentation_deck_versions WHERE deck_id = $1 AND id <> $2`, [
+      deckId,
+      versionId,
+    ]);
 
     // Revoke, then reuse the SAME token immediately.
-    await pool.query(`UPDATE organization_members SET status = 'REVOKED' WHERE id = $1`, [revokedA.memberId]);
+    await pool.query(`UPDATE organization_members SET status = 'REVOKED' WHERE id = $1`, [
+      revokedA.memberId,
+    ]);
 
     const before = await snapshotState();
     const denied = await writerProbes(revokedA.token).autosave();
@@ -549,7 +580,10 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
     expect(spoofed.body.code).toBe('PERMISSION_DENIED');
 
     // A ghost claiming a tenant it has no membership in stays a ghost.
-    const ghostSpoof = await writerProbes(ghostA.token, { organizationId: orgA, role: 'OWNER' }).autosave();
+    const ghostSpoof = await writerProbes(ghostA.token, {
+      organizationId: orgA,
+      role: 'OWNER',
+    }).autosave();
     expect(ghostSpoof.status).toBe(403);
     expect(ghostSpoof.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
 
@@ -564,13 +598,17 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
     // Make the lookup query fail for real by taking the table out from under
     // it. Restored in `finally` — this is a disposable database, but the
     // suite still must not depend on teardown for correctness.
-    await pool.query(`ALTER TABLE organization_members RENAME TO organization_members__authwall_hidden`);
+    await pool.query(
+      `ALTER TABLE organization_members RENAME TO organization_members__authwall_hidden`
+    );
     try {
       const res = await writerProbes(adminA.token).autosave();
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('ORG_MEMBERSHIP_LOOKUP_FAILED');
     } finally {
-      await pool.query(`ALTER TABLE organization_members__authwall_hidden RENAME TO organization_members`);
+      await pool.query(
+        `ALTER TABLE organization_members__authwall_hidden RENAME TO organization_members`
+      );
     }
     expect(await snapshotState()).toEqual(before);
   }, 60_000);

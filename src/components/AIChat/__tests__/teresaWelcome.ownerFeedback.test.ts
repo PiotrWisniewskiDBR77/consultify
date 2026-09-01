@@ -1,11 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import {
-  getHydratedTeresaWelcomeFirstName,
-  getSafeTeresaWelcomeFirstName,
-} from '../teresaWelcome';
+import { getHydratedTeresaWelcomeFirstName, getSafeTeresaWelcomeFirstName } from '../teresaWelcome';
 
 describe('Teresa welcome owner feedback', () => {
   it('normalizes a safe first name and falls back without leaking stale identity', () => {

@@ -23,11 +23,11 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
-import { listOkrCycles, type OkrCycleDto } from './okrAdminApi';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { listOkrCycles, type OkrCycleDto } from './okrAdminApi';
 
 export interface OkrCarryForwardDialogProps {
   open: boolean;
@@ -40,7 +40,8 @@ export interface OkrCarryForwardDialogProps {
   isConflict?: boolean;
 }
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const SELECT_CLASS =
   'w-full h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text ' +
@@ -57,7 +58,14 @@ const PRIMARY_BUTTON_CLASS = `${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed 
 function formatCycleOption(c: OkrCycleDto, isPolish: boolean): string {
   const start = new Date(c.startDate);
   const end = new Date(c.endDate);
-  const fmt = (d: Date) => (Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' }));
+  const fmt = (d: Date) =>
+    Number.isNaN(d.getTime())
+      ? '—'
+      : d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
   return `${c.name} (${fmt(start)} – ${fmt(end)})`;
 }
 
@@ -121,7 +129,13 @@ export const OkrCarryForwardDialog: React.FC<OkrCarryForwardDialogProps> = ({
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS} data-testid="okr-carry-forward-back">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className={GHOST_BUTTON_CLASS}
+            data-testid="okr-carry-forward-back"
+          >
             {isPolish ? 'Wstecz' : 'Back'}
           </button>
           <button
@@ -131,7 +145,15 @@ export const OkrCarryForwardDialog: React.FC<OkrCarryForwardDialogProps> = ({
             data-testid="okr-carry-forward-submit"
             className={PRIMARY_BUTTON_CLASS}
           >
-            <span>{busy ? (isPolish ? 'Przenoszenie…' : 'Carrying forward…') : isPolish ? 'Przenieś' : 'Carry forward'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Przenoszenie…'
+                  : 'Carrying forward…'
+                : isPolish
+                  ? 'Przenieś'
+                  : 'Carry forward'}
+            </span>
           </button>
         </>
       }
@@ -178,7 +200,10 @@ export const OkrCarryForwardDialog: React.FC<OkrCarryForwardDialogProps> = ({
             </select>
           )}
           {fieldError ? (
-            <p className="mt-1 text-[11px] text-c-danger" data-testid="okr-carry-forward-field-error">
+            <p
+              className="mt-1 text-[11px] text-c-danger"
+              data-testid="okr-carry-forward-field-error"
+            >
               {isPolish ? 'Wybierz docelowy cykl' : 'Select a target cycle'}
             </p>
           ) : null}
@@ -191,7 +216,13 @@ export const OkrCarryForwardDialog: React.FC<OkrCarryForwardDialogProps> = ({
             data-testid="okr-carry-forward-error"
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

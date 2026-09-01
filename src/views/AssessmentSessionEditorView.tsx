@@ -27,6 +27,7 @@ import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWork
 import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
+import { DrdMethodWorkspaceScreen } from '@/components/assessment/drd/DrdMethodWorkspaceScreen';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
@@ -37,7 +38,6 @@ import { DRDForm } from '@/components/assessment/tools/DRDForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
-import { DrdMethodWorkspaceScreen } from '@/components/assessment/drd/DrdMethodWorkspaceScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
@@ -906,7 +906,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
             };
           }
           const resp = (await updateCoreAssessmentSession(payload)) as
-            { updatedAt?: string } | undefined;
+            | { updatedAt?: string }
+            | undefined;
           if (!isMountedRef.current) return;
           const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
           setLastSavedAt(ts);
@@ -999,7 +1000,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
       }
       const resp = (await updateCoreAssessmentSession(payload)) as
-        { updatedAt?: string } | undefined;
+        | { updatedAt?: string }
+        | undefined;
       const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
       setLastSavedAt(ts);
       setServerUpdatedAt(ts);

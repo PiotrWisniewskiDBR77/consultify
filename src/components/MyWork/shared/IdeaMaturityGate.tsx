@@ -13,7 +13,14 @@
  * applied), the checkbox is disabled with an explanatory label instead of
  * silently pretending the click saved anything.
  */
-import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronRight, Circle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import type {
@@ -55,9 +62,7 @@ const CriterionRow: React.FC<{
             disabled={!canAttest}
             onClick={() => canAttest && onAttest?.(criterion.id, !criterion.met, noteDraft)}
             className={`mt-0.5 flex-shrink-0 h-3.5 w-3.5 rounded-sm border flex items-center justify-center ${
-              criterion.met
-                ? 'bg-c-success border-c-success text-white'
-                : 'border-c-border-subtle'
+              criterion.met ? 'bg-c-success border-c-success text-white' : 'border-c-border-subtle'
             } ${canAttest ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
             title={
               canAttest
@@ -120,8 +125,7 @@ const CriterionRow: React.FC<{
                   onClick={() => setEditingNote(true)}
                   className="text-[10.5px] text-c-text-muted underline decoration-dotted"
                 >
-                  {criterion.note ||
-                    (isPolish ? '+ dodaj notatkę' : '+ add note')}
+                  {criterion.note || (isPolish ? '+ dodaj notatkę' : '+ add note')}
                 </button>
               )}
             </div>
@@ -143,7 +147,8 @@ const StageBlock: React.FC<{
 }> = ({ stageId, report, isPolish, open, onToggle, attestationsSupported, onAttest }) => {
   const stage = report.stages.find((s) => s.id === stageId)!;
   const isComputedCurrent = report.computedBucket === stageId;
-  const isPast = MATURITY_STAGE_ORDER.indexOf(stageId) < MATURITY_STAGE_ORDER.indexOf(report.computedBucket);
+  const isPast =
+    MATURITY_STAGE_ORDER.indexOf(stageId) < MATURITY_STAGE_ORDER.indexOf(report.computedBucket);
 
   return (
     <div className="border-b border-c-border-subtle last:border-b-0">
@@ -201,7 +206,7 @@ export const IdeaMaturityGate: React.FC<IdeaMaturityGateProps> = ({
       new Set(
         defaultExpandAll
           ? MATURITY_STAGE_ORDER
-          : [report.computedBucket, report.nextStage].filter(Boolean) as MaturityStageId[]
+          : ([report.computedBucket, report.nextStage].filter(Boolean) as MaturityStageId[])
       )
   );
 

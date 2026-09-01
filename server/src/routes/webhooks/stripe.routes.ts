@@ -13,13 +13,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { send as sendNotification } from '../../services/notificationService.js';
 import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
-// Partner services for commission tracking
-import * as PartnerReferralService from '../../services/partnerReferralService.js';
 // AMD-PRT-ECONOMICS-002: partner economics (commission/discount/accrual/payout)
 // are excluded by owner decision; this predicate/guard fails closed before
 // any of the writes below (attribution activation, first_payment_at stamp,
 // commission row) can execute.
 import { assertPartnerEconomicsOperationAllowed } from '../../services/partnerEconomicsPolicy.js';
+// Partner services for commission tracking
+import * as PartnerReferralService from '../../services/partnerReferralService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 

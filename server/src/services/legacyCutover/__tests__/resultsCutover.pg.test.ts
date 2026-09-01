@@ -15,24 +15,12 @@
  * `../registry/results.ts`).
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
-import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
-import { RESULTS_CUTOVER } from '../registry/results.js';
-import { createRoiCase } from '../../resultsVnext/roi/roiCaseCommands.js';
-import { addAssumption } from '../../resultsVnext/roi/roiAssumptionCommands.js';
-import { addBenefitLine } from '../../resultsVnext/roi/roiBenefitLineCommands.js';
-import { listAssumptions } from '../../resultsVnext/roi/roiEconomicModelRepository.js';
-import { recordActualEntry } from '../../resultsVnext/roi/roiActualEntryCommands.js';
-import { listActualEntries } from '../../resultsVnext/roi/roiActualEntryRepository.js';
-import {
-  publishRoiGovernedVisibilityPolicy,
-  ROI_GOVERNED_VISIBILITY_POLICY,
-} from '../../resultsVnext/platform/visibilityResolver.js';
 import { createDefinition } from '../../results/kpiDefinitionService.js';
 import {
   approveDefinitionVersion,
@@ -41,9 +29,22 @@ import {
   editDraft,
   submitDefinition,
 } from '../../resultsVnext/kpi/kpiDefinitionCommands.js';
-import { recordMeasurement } from '../../resultsVnext/kpi/kpiMeasurementCommands.js';
 import { proposeInitiativeKpiImpact } from '../../resultsVnext/kpi/kpiInitiativeImpactCommands.js';
+import { recordMeasurement } from '../../resultsVnext/kpi/kpiMeasurementCommands.js';
 import { getKpi, listMeasurements } from '../../resultsVnext/kpi/kpiRepository.js';
+import {
+  publishRoiGovernedVisibilityPolicy,
+  ROI_GOVERNED_VISIBILITY_POLICY,
+} from '../../resultsVnext/platform/visibilityResolver.js';
+import { recordActualEntry } from '../../resultsVnext/roi/roiActualEntryCommands.js';
+import { listActualEntries } from '../../resultsVnext/roi/roiActualEntryRepository.js';
+import { addAssumption } from '../../resultsVnext/roi/roiAssumptionCommands.js';
+import { addBenefitLine } from '../../resultsVnext/roi/roiBenefitLineCommands.js';
+import { createRoiCase } from '../../resultsVnext/roi/roiCaseCommands.js';
+import { listAssumptions } from '../../resultsVnext/roi/roiEconomicModelRepository.js';
+import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
+import { RESULTS_CUTOVER } from '../registry/results.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -186,10 +187,19 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
       [[orgA, orgB]]
     );
     await pool.query(`DELETE FROM rvn_roi_cases WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM rvn_kpi_initiative_impacts WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`UPDATE rvn_kpi_definitions SET current_definition_version_id=NULL WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM rvn_kpi_initiative_impacts WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(
+      `UPDATE rvn_kpi_definitions SET current_definition_version_id=NULL WHERE organization_id = ANY($1)`,
+      [[orgA, orgB]]
+    );
+    await pool.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(
       `DELETE FROM rvn_platform_visibility_policies WHERE organization_id = ANY($1)`,
       [[orgA, orgB]]
@@ -206,49 +216,116 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
   });
 
   it.each([
-    { writerId: 'RESULTS-W01', method: 'post' as const, path: '/api/v8/results/kpis', successor: '/api/vnext/results/kpi', body: { name: `${prefix}-kpi` } },
-    { writerId: 'RESULTS-W02', method: 'put' as const, path: '/api/v8/results/kpis/legacy-kpi', successor: '/api/vnext/results/kpi/:kpiId/draft', body: { name: 'forbidden direct edit' } },
-    { writerId: 'RESULTS-W03', method: 'delete' as const, path: '/api/v8/results/kpis/legacy-kpi', successor: '/api/vnext/results/kpi/:kpiId/archive', body: {} },
-    { writerId: 'RESULTS-W04', method: 'post' as const, path: '/api/v8/results/kpis/legacy-kpi/time-series', successor: '/api/vnext/results/kpi/:kpiId/measurements', body: { value: 99, periodStart: '2026-08-19' } },
-    { writerId: 'RESULTS-W17', method: 'post' as const, path: '/api/v8/results/kpi-mappings', successor: '/api/vnext/results/initiatives/initiative-impacts', body: { initiativeId: 'legacy-initiative', kpiId: 'legacy-kpi' } },
+    {
+      writerId: 'RESULTS-W01',
+      method: 'post' as const,
+      path: '/api/v8/results/kpis',
+      successor: '/api/vnext/results/kpi',
+      body: { name: `${prefix}-kpi` },
+    },
+    {
+      writerId: 'RESULTS-W02',
+      method: 'put' as const,
+      path: '/api/v8/results/kpis/legacy-kpi',
+      successor: '/api/vnext/results/kpi/:kpiId/draft',
+      body: { name: 'forbidden direct edit' },
+    },
+    {
+      writerId: 'RESULTS-W03',
+      method: 'delete' as const,
+      path: '/api/v8/results/kpis/legacy-kpi',
+      successor: '/api/vnext/results/kpi/:kpiId/archive',
+      body: {},
+    },
+    {
+      writerId: 'RESULTS-W04',
+      method: 'post' as const,
+      path: '/api/v8/results/kpis/legacy-kpi/time-series',
+      successor: '/api/vnext/results/kpi/:kpiId/measurements',
+      body: { value: 99, periodStart: '2026-08-19' },
+    },
+    {
+      writerId: 'RESULTS-W17',
+      method: 'post' as const,
+      path: '/api/v8/results/kpi-mappings',
+      successor: '/api/vnext/results/initiatives/initiative-impacts',
+      body: { initiativeId: 'legacy-initiative', kpiId: 'legacy-kpi' },
+    },
   ])('refuses Wave 4 writer $writerId before mutation', async (entry) => {
     const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
-    const before = await pool.query(`SELECT
+    const before = await pool.query(
+      `SELECT
       (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
       (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings,
-      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`, [orgA]);
-    const response = await request(app)[entry.method](entry.path).set('x-request-id', requestId).send(entry.body);
+      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`,
+      [orgA]
+    );
+    const response = await request(app)
+      [entry.method](entry.path)
+      .set('x-request-id', requestId)
+      .send(entry.body);
     expect(response.status).toBe(410);
-    expect(response.body).toMatchObject({ code: 'RESULTS_LEGACY_WRITER_DISABLED', writerId: entry.writerId, successor: entry.successor });
-    const after = await pool.query(`SELECT
+    expect(response.body).toMatchObject({
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: entry.writerId,
+      successor: entry.successor,
+    });
+    const after = await pool.query(
+      `SELECT
       (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
       (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings,
-      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`, [orgA]);
+      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`,
+      [orgA]
+    );
     expect(after.rows).toEqual(before.rows);
   });
 
   it('writes and cold-reads the exact canonical KPI create, impact and archive successors', async () => {
-    await pool.query(`INSERT INTO rvn_platform_visibility_policies
+    await pool.query(
+      `INSERT INTO rvn_platform_visibility_policies
       (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-      VALUES ($1,'kpi',1,'OPEN_ORG',true,$2) ON CONFLICT DO NOTHING`, [orgA, actor]);
+      VALUES ($1,'kpi',1,'OPEN_ORG',true,$2) ON CONFLICT DO NOTHING`,
+      [orgA, actor]
+    );
     const initiativeId = `${prefix}-canonical-initiative`;
-    await pool.query(`INSERT INTO initiatives(id,organization_id,name,status) VALUES($1,$2,$3,'DRAFT')`, [initiativeId, orgA, 'Wave 4 canonical initiative']);
+    await pool.query(
+      `INSERT INTO initiatives(id,organization_id,name,status) VALUES($1,$2,$3,'DRAFT')`,
+      [initiativeId, orgA, 'Wave 4 canonical initiative']
+    );
     const access = { capabilities: ['*'], platformRole: 'ADMIN' as const };
     const created = await createKpiDraft({
-      organizationId: orgA, kpiCode: `${prefix}-canonical`, name: 'Wave 4 canonical KPI',
-      targetGeometry: 'exact', targetValue: 1, createdBy: actor, actorEffectiveRole: 'ADMIN',
-      idempotencyKey: `${prefix}-canonical-create`, access,
+      organizationId: orgA,
+      kpiCode: `${prefix}-canonical`,
+      name: 'Wave 4 canonical KPI',
+      targetGeometry: 'exact',
+      targetValue: 1,
+      createdBy: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-canonical-create`,
+      access,
     });
     const kpiId = created.result.kpi.kpiId;
     const impact = await proposeInitiativeKpiImpact({
-      organizationId: orgA, kpiId, initiativeId, expectedContributionValue: 1,
-      expectedContributionDirection: 'increase', targetCompletionDate: null, proposedBy: actor,
-      actorEffectiveRole: 'ADMIN', idempotencyKey: `${prefix}-canonical-impact`, access,
+      organizationId: orgA,
+      kpiId,
+      initiativeId,
+      expectedContributionValue: 1,
+      expectedContributionDirection: 'increase',
+      targetCompletionDate: null,
+      proposedBy: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-canonical-impact`,
+      access,
     });
     expect(impact.result.impact).toMatchObject({ kpiId, initiativeId, status: 'proposed' });
     const archived = await archiveKpi({
-      organizationId: orgA, kpiId, expectedVersion: created.result.kpi.rowVersion,
-      actorUserId: actor, actorEffectiveRole: 'ADMIN', idempotencyKey: `${prefix}-canonical-archive`, access,
+      organizationId: orgA,
+      kpiId,
+      expectedVersion: created.result.kpi.rowVersion,
+      actorUserId: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-canonical-archive`,
+      access,
     });
     expect(archived.result.status).toBe('archived');
     const cold = await getKpi({ userId: actor, organizationId: orgA, kpiId });
@@ -327,9 +404,9 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     const retry = await recordMeasurement(measurementInput);
     expect(retry.result.measurementId).toBe(first.result.measurementId);
     expect(first.result.performanceStatus).toBe('critical');
-    await expect(
-      recordMeasurement({ ...measurementInput, actualValue: 51 })
-    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+    await expect(recordMeasurement({ ...measurementInput, actualValue: 51 })).rejects.toMatchObject(
+      { code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' }
+    );
     const sameKeyRows = await pool.query(
       `SELECT count(*)::int count FROM rvn_kpi_measurements
         WHERE organization_id=$1 AND kpi_id=$2 AND period_start=$3`,
@@ -361,9 +438,9 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     expect(cold).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-        measurementId: first.result.measurementId,
-        definitionVersionId: definitionVersion.definitionVersionId,
-        performanceStatus: 'critical',
+          measurementId: first.result.measurementId,
+          definitionVersionId: definitionVersion.definitionVersionId,
+          performanceStatus: 'critical',
         }),
       ])
     );
@@ -382,7 +459,11 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     ]);
 
     await expect(
-      recordMeasurement({ ...measurementInput, organizationId: orgB, idempotencyKey: `${prefix}-foreign` })
+      recordMeasurement({
+        ...measurementInput,
+        organizationId: orgB,
+        idempotencyKey: `${prefix}-foreign`,
+      })
     ).rejects.toMatchObject({ code: 'MEASUREMENT_NOT_FOUND' });
   });
 
@@ -691,15 +772,36 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
 
   it('records all five retained canonical-current writers without blocking them', async () => {
     const calls = [
-      { writerId: 'RESULTS-W05', method: 'post' as const, path: '/api/v8/results/benefits/missing-benefit/promote' },
-      { writerId: 'RESULTS-W06', method: 'post' as const, path: '/api/v8/results/benefits/missing-benefit/dismiss' },
-      { writerId: 'RESULTS-W18', method: 'delete' as const, path: '/api/v8/results/kpi-mappings/missing-mapping' },
-      { writerId: 'RESULTS-W23', method: 'post' as const, path: '/api/v8/results/deviation-cases/missing-case/resolve' },
-      { writerId: 'RESULTS-W34', method: 'put' as const, path: '/api/v8/results/scorecards/missing-scorecard' },
+      {
+        writerId: 'RESULTS-W05',
+        method: 'post' as const,
+        path: '/api/v8/results/benefits/missing-benefit/promote',
+      },
+      {
+        writerId: 'RESULTS-W06',
+        method: 'post' as const,
+        path: '/api/v8/results/benefits/missing-benefit/dismiss',
+      },
+      {
+        writerId: 'RESULTS-W18',
+        method: 'delete' as const,
+        path: '/api/v8/results/kpi-mappings/missing-mapping',
+      },
+      {
+        writerId: 'RESULTS-W23',
+        method: 'post' as const,
+        path: '/api/v8/results/deviation-cases/missing-case/resolve',
+      },
+      {
+        writerId: 'RESULTS-W34',
+        method: 'put' as const,
+        path: '/api/v8/results/scorecards/missing-scorecard',
+      },
     ];
 
     for (const call of calls) {
-      const response = await request(app)[call.method](call.path)
+      const response = await request(app)
+        [call.method](call.path)
         .set('x-request-id', `${prefix}-${call.writerId.toLowerCase()}-retained`)
         .send({ name: 'retained-writer-observation' });
       expect(response.status).not.toBe(410);

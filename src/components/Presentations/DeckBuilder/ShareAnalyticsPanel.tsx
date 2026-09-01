@@ -158,10 +158,14 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                       </span>
                       {avgDur > 0 && (
                         <span className="text-[9px] text-c-text-secondary w-12 text-right">
-                          {new Intl.NumberFormat(i18n.language.startsWith('pl') ? 'pl-PL' : 'en-US', {
-                            minimumFractionDigits: 1,
-                            maximumFractionDigits: 1,
-                          }).format(avgDur / 1000)} s
+                          {new Intl.NumberFormat(
+                            i18n.language.startsWith('pl') ? 'pl-PL' : 'en-US',
+                            {
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
+                            }
+                          ).format(avgDur / 1000)}{' '}
+                          s
                         </span>
                       )}
                     </div>

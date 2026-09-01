@@ -20,10 +20,10 @@
 
 import type { FinanceGridRangeSelection } from '../../../types/finance/WorkspaceState.js';
 import {
+  coordEquals,
   type GridAddressResolver,
   type GridCoordinate,
   type GridRect,
-  coordEquals,
   iterateRect,
   rectCellCount,
   rectFromCorners,
@@ -91,7 +91,9 @@ export class GridSelectionModel {
   /** Removes every cell of `rect` from the selection, splitting any range it partially overlaps. */
   subtractRange(rect: GridRect): void {
     if (rectIsEmpty(rect)) return;
-    this.ranges_ = this.ranges_.flatMap((r) => subtractRect(r, rect)).filter((r) => !rectIsEmpty(r));
+    this.ranges_ = this.ranges_
+      .flatMap((r) => subtractRect(r, rect))
+      .filter((r) => !rectIsEmpty(r));
   }
 
   /**
@@ -125,7 +127,10 @@ export class GridSelectionModel {
 
   /** True iff `coord` falls inside at least one range. */
   contains(coord: GridCoordinate): boolean {
-    return this.ranges_.some((r) => coord.row >= r.top && coord.row <= r.bottom && coord.col >= r.left && coord.col <= r.right);
+    return this.ranges_.some(
+      (r) =>
+        coord.row >= r.top && coord.row <= r.bottom && coord.col >= r.left && coord.col <= r.right
+    );
   }
 
   /** O(ranges), not O(cells): the disjoint invariant makes this a plain sum. */

@@ -173,18 +173,20 @@ describe.skipIf(!REAL_PG)('Day 33 committed numeric contribution (E-O4 variant C
   });
 
   it('does not classify a proposed (not yet committed) contribution as committed', async () => {
-    await client.query(`UPDATE rvn_kpi_initiative_impacts SET status='cancelled' WHERE impact_id=$1`, [
-      impactId,
-    ]);
+    await client.query(
+      `UPDATE rvn_kpi_initiative_impacts SET status='cancelled' WHERE impact_id=$1`,
+      [impactId]
+    );
     const response = await envelope(tokenA);
     const pair = response.body.goalInitiativeContributions.find(
       (item: { initiativeId: string }) => item.initiativeId === initiativeWithImpact
     );
     expect(pair.numericContributionState).toBe('NONE');
     expect(pair.presentationPrecedence).toBe('CONTRIBUTION_CLASS');
-    await client.query(`UPDATE rvn_kpi_initiative_impacts SET status='committed' WHERE impact_id=$1`, [
-      impactId,
-    ]);
+    await client.query(
+      `UPDATE rvn_kpi_initiative_impacts SET status='committed' WHERE impact_id=$1`,
+      [impactId]
+    );
   });
 
   it('NEGATYW TENANTA — another organization sees none of it', async () => {

@@ -53,7 +53,7 @@ if (!ENABLED) {
   console.warn(
     '[auditIndependenceDetectorSchedulerFlag.test.ts SKIPPED — clean skip, not a failure] requires ' +
       'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://..., plus ' +
-      'AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1 and AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=<disposable prefix>.',
+      'AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1 and AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=<disposable prefix>.'
   );
 }
 
@@ -75,7 +75,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
     const db = String(row?.db ?? '');
     if (!db.startsWith(DISPOSABLE_DB_PREFIX)) {
       throw new Error(
-        `AUD_SCHED_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with '${DISPOSABLE_DB_PREFIX}' — refusing to delete anything.`,
+        `AUD_SCHED_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with '${DISPOSABLE_DB_PREFIX}' — refusing to delete anything.`
       );
     }
     return db;
@@ -104,7 +104,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
 
   async function cursorRowCount(): Promise<number> {
     const row = await auditsDb.auditGet<{ n: string }>(
-      `SELECT count(*)::text AS n FROM audit_independence_scan_cursor WHERE id = 'global'`,
+      `SELECT count(*)::text AS n FROM audit_independence_scan_cursor WHERE id = 'global'`
     );
     return Number(row?.n ?? -1);
   }
@@ -116,7 +116,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
       leased_until: string | null;
     }>(
       `SELECT last_program_id, lease_fence, leased_until
-         FROM audit_independence_scan_cursor WHERE id = 'global'`,
+         FROM audit_independence_scan_cursor WHERE id = 'global'`
     );
   }
 
@@ -127,7 +127,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
       ids.push(id);
       await auditsDb.auditRun(
         `INSERT INTO audit_programs (id, organization_id, name, created_by) VALUES ($1, $2, $3, $4)`,
-        [id, orgId, `Scheduler flag program ${i}`, `aud-sched-seeder-${orgId}`],
+        [id, orgId, `Scheduler flag program ${i}`, `aud-sched-seeder-${orgId}`]
       );
     }
     return ids;
@@ -167,14 +167,14 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
       await cleanupOwnFixtures();
       const row = await auditsDb.auditGet<{ n: string }>(
         `SELECT count(*)::text AS n FROM audit_programs WHERE id LIKE $1`,
-        [`${RUN_PREFIX}%`],
+        [`${RUN_PREFIX}%`]
       );
       expect(Number(row?.n)).toBe(0); // residue0
     } finally {
       try {
         const unlocked = await client.query<{ unlocked: boolean }>(
           'SELECT pg_advisory_unlock($1) AS unlocked',
-          [SUITE_LOCK_KEY],
+          [SUITE_LOCK_KEY]
         );
         expect(unlocked.rows).toEqual([{ unlocked: true }]);
       } finally {
@@ -269,10 +269,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
       await seedPrograms(5);
 
       const { runAuditIndependenceSchedulerTick } = await import('../Scheduler.js');
-      await Promise.all([
-        runAuditIndependenceSchedulerTick(),
-        runAuditIndependenceSchedulerTick(),
-      ]);
+      await Promise.all([runAuditIndependenceSchedulerTick(), runAuditIndependenceSchedulerTick()]);
 
       // Whether the two overlapped (one claim) or serialised (two claims), the
       // fence is monotonic and bounded by the number of invocations — it can

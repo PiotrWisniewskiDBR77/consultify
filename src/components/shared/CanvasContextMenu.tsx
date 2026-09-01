@@ -1,6 +1,6 @@
+import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
 
 import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
 
@@ -203,7 +203,10 @@ function SubmenuFlyout({
       : Math.min(anchorRect.right + 2, bounds.right - rect.width - VIEWPORT_GAP);
     const top = Math.max(
       bounds.top + VIEWPORT_GAP,
-      Math.min(anchorRect.top, bounds.bottom - Math.min(rect.height, availableHeight) - VIEWPORT_GAP)
+      Math.min(
+        anchorRect.top,
+        bounds.bottom - Math.min(rect.height, availableHeight) - VIEWPORT_GAP
+      )
     );
     setPosition({ left, top });
   }, [anchorRect, items.length]);
@@ -429,9 +432,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     buttons[(current + offset + buttons.length) % buttons.length]?.focus({ preventScroll: true });
   };
 
-  const openSubmenuItem = openSubmenuId
-    ? items.find((it) => it.id === openSubmenuId)
-    : undefined;
+  const openSubmenuItem = openSubmenuId ? items.find((it) => it.id === openSubmenuId) : undefined;
   const openSubmenuAnchor = openSubmenuId ? submenuAnchors.current[openSubmenuId] : null;
 
   const menu = (
@@ -489,21 +490,19 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   return (
     <>
       {createPortal(menu, target)}
-      {openSubmenuItem?.children && openSubmenuAnchor
-        ? (
-            <SubmenuFlyout
-              anchorRect={openSubmenuAnchor.getBoundingClientRect()}
-              items={openSubmenuItem.children}
-              minWidth={Math.max(180, minWidth - 24)}
-              portalTarget={target}
-              onSelectLeaf={handleSelectLeaf}
-              onRequestClose={() => {
-                setOpenSubmenuId(null);
-                openSubmenuAnchor.focus({ preventScroll: true });
-              }}
-            />
-          )
-        : null}
+      {openSubmenuItem?.children && openSubmenuAnchor ? (
+        <SubmenuFlyout
+          anchorRect={openSubmenuAnchor.getBoundingClientRect()}
+          items={openSubmenuItem.children}
+          minWidth={Math.max(180, minWidth - 24)}
+          portalTarget={target}
+          onSelectLeaf={handleSelectLeaf}
+          onRequestClose={() => {
+            setOpenSubmenuId(null);
+            openSubmenuAnchor.focus({ preventScroll: true });
+          }}
+        />
+      ) : null}
     </>
   );
 };

@@ -14,7 +14,11 @@
  * preview -> confirm -> commit path, using a supplied transcript string in
  * place of live STT output.
  */
-import type { TeresaCommitRequest, TeresaCommitResult, TeresaPreview } from '../../method-core/contracts/teresa.js';
+import type {
+  TeresaCommitRequest,
+  TeresaCommitResult,
+  TeresaPreview,
+} from '../../method-core/contracts/teresa.js';
 import type { TeresaSwotSessionSnapshot } from './teresaCapabilities.js';
 import { commit, propose, type TeresaCommitContext } from './teresaKernel.js';
 

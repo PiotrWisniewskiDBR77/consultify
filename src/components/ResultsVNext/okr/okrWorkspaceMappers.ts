@@ -113,14 +113,22 @@ export const OKR_REVIEW_STATUS_TONE: Record<OkrReviewStatus, OkrReviewStatusTone
 // Reflection disposition labels
 // ==========================================
 
-export const OKR_REFLECTION_DISPOSITION_LABELS: Record<OkrReflectionDisposition, { pl: string; en: string }> = {
+export const OKR_REFLECTION_DISPOSITION_LABELS: Record<
+  OkrReflectionDisposition,
+  { pl: string; en: string }
+> = {
   complete: { pl: 'Zrealizowany', en: 'Complete' },
   carry_forward: { pl: 'Przenieś dalej', en: 'Carry forward' },
   drop: { pl: 'Porzuć', en: 'Drop' },
   redefine: { pl: 'Przedefiniuj', en: 'Redefine' },
 };
-export function okrReflectionDispositionLabel(d: OkrReflectionDisposition, isPolish: boolean): string {
-  return isPolish ? OKR_REFLECTION_DISPOSITION_LABELS[d].pl : OKR_REFLECTION_DISPOSITION_LABELS[d].en;
+export function okrReflectionDispositionLabel(
+  d: OkrReflectionDisposition,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_REFLECTION_DISPOSITION_LABELS[d].pl
+    : OKR_REFLECTION_DISPOSITION_LABELS[d].en;
 }
 
 // ==========================================
@@ -135,13 +143,19 @@ export const OKR_SUPPORT_KIND_LABELS: Record<OkrSupportRequestKind, { pl: string
 export function okrSupportKindLabel(kind: OkrSupportRequestKind, isPolish: boolean): string {
   return isPolish ? OKR_SUPPORT_KIND_LABELS[kind].pl : OKR_SUPPORT_KIND_LABELS[kind].en;
 }
-export const OKR_SUPPORT_STATUS_LABELS: Record<OkrSupportRequestStatus, { pl: string; en: string }> = {
+export const OKR_SUPPORT_STATUS_LABELS: Record<
+  OkrSupportRequestStatus,
+  { pl: string; en: string }
+> = {
   open: { pl: 'Otwarta', en: 'Open' },
   acknowledged: { pl: 'Przyjęta do wiadomości', en: 'Acknowledged' },
   resolved: { pl: 'Rozwiązana', en: 'Resolved' },
   dismissed: { pl: 'Odrzucona', en: 'Dismissed' },
 };
-export function okrSupportStatusLabel(status: OkrSupportRequestStatus | null, isPolish: boolean): string {
+export function okrSupportStatusLabel(
+  status: OkrSupportRequestStatus | null,
+  isPolish: boolean
+): string {
   if (!status) return '—';
   return isPolish ? OKR_SUPPORT_STATUS_LABELS[status].pl : OKR_SUPPORT_STATUS_LABELS[status].en;
 }
@@ -152,12 +166,20 @@ export const OKR_SUPPORT_STATUS_TONE: Record<OkrSupportRequestStatus, OkrSupport
   resolved: 'success',
   dismissed: 'danger',
 };
-export const OKR_RECOGNITION_VISIBILITY_LABELS: Record<OkrRecognitionVisibility, { pl: string; en: string }> = {
+export const OKR_RECOGNITION_VISIBILITY_LABELS: Record<
+  OkrRecognitionVisibility,
+  { pl: string; en: string }
+> = {
   team: { pl: 'Zespół', en: 'Team' },
   organization: { pl: 'Organizacja', en: 'Organization' },
 };
-export function okrRecognitionVisibilityLabel(v: OkrRecognitionVisibility, isPolish: boolean): string {
-  return isPolish ? OKR_RECOGNITION_VISIBILITY_LABELS[v].pl : OKR_RECOGNITION_VISIBILITY_LABELS[v].en;
+export function okrRecognitionVisibilityLabel(
+  v: OkrRecognitionVisibility,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_RECOGNITION_VISIBILITY_LABELS[v].pl
+    : OKR_RECOGNITION_VISIBILITY_LABELS[v].en;
 }
 
 // ==========================================
@@ -181,7 +203,11 @@ export interface OkrActionGate {
 // SAME i18n label dictionary the rest of the workspace already uses
 // (`OKR_SET_STATUS_LABELS` via `okrSetStatusLabel`) so the sentence reads in
 // plain PL/EN business language instead of the wire-format state machine.
-function reasonWrongStatus(action: { pl: string; en: string }, allowed: OkrSetStatus[], current: OkrSetStatus): OkrActionGate {
+function reasonWrongStatus(
+  action: { pl: string; en: string },
+  allowed: OkrSetStatus[],
+  current: OkrSetStatus
+): OkrActionGate {
   const allowedListPl = allowed.map((status) => okrSetStatusLabel(status, true)).join(', ');
   const allowedListEn = allowed.map((status) => okrSetStatusLabel(status, false)).join(', ');
   return {
@@ -193,7 +219,11 @@ function reasonWrongStatus(action: { pl: string; en: string }, allowed: OkrSetSt
 export function gateSubmit(set: OkrSetDto): OkrActionGate | null {
   const allowed: OkrSetStatus[] = ['draft', 'changes_requested'];
   if (allowed.includes(set.status)) return null;
-  return reasonWrongStatus({ pl: 'Złożenie do akceptacji', en: 'Submit for approval' }, allowed, set.status);
+  return reasonWrongStatus(
+    { pl: 'Złożenie do akceptacji', en: 'Submit for approval' },
+    allowed,
+    set.status
+  );
 }
 
 export function gateApprove(set: OkrSetDto, currentUserId: string | null): OkrActionGate | null {
@@ -211,7 +241,11 @@ export function gateApprove(set: OkrSetDto, currentUserId: string | null): OkrAc
 
 export function gateRequestChanges(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'submitted') {
-    return reasonWrongStatus({ pl: 'Żądanie poprawek', en: 'Request changes' }, ['submitted'], set.status);
+    return reasonWrongStatus(
+      { pl: 'Żądanie poprawek', en: 'Request changes' },
+      ['submitted'],
+      set.status
+    );
   }
   return null;
 }
@@ -225,7 +259,11 @@ export function gateActivate(set: OkrSetDto): OkrActionGate | null {
 
 export function gateOpenReview(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'active') {
-    return reasonWrongStatus({ pl: 'Otwarcie przeglądu', en: 'Open review' }, ['active'], set.status);
+    return reasonWrongStatus(
+      { pl: 'Otwarcie przeglądu', en: 'Open review' },
+      ['active'],
+      set.status
+    );
   }
   return null;
 }
@@ -245,7 +283,11 @@ export function gateClose(set: OkrSetDto): OkrActionGate | null {
 
 export function gateCarryForward(set: OkrSetDto): OkrActionGate | null {
   if (set.status !== 'closed') {
-    return reasonWrongStatus({ pl: 'Przeniesienie na kolejny cykl', en: 'Carry forward' }, ['closed'], set.status);
+    return reasonWrongStatus(
+      { pl: 'Przeniesienie na kolejny cykl', en: 'Carry forward' },
+      ['closed'],
+      set.status
+    );
   }
   return null;
 }

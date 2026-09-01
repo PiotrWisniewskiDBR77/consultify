@@ -18,29 +18,31 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
   EVENT_INSERT_SQL,
   executeAtomicCommand,
   resolveConsumerGroups,
-  type AtomicCommandOutcome,
-  type AtomicEventInput,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
-import { unfreezeRoiBaseline, freezeRoiBaseline } from './roiBaselineCommands.js';
-import { ROI_EVENT_SOURCE, RoiCaseNotReadyForReviewError, RoiCaseValidationError } from './roiCaseCommands.js';
-import { freezeRoiEconomicModel, unfreezeRoiEconomicModel } from './roiEconomicModelFreeze.js';
 import {
-  toRoiAssumption,
-  toRoiBenefitEvidenceLink,
-  toRoiBenefitLine,
-  toRoiCalculationPolicy,
-  toRoiCalculationRun,
-  toRoiCostLine,
-  toRoiScenario,
-  toRoiScenarioOverride,
+  type RoiApprovalSnapshotPayload,
+  type RoiApprovalSnapshotRow,
+  type RoiApprovalSnapshotSummary,
+  toRoiApprovalSnapshotSummary,
+} from './roiApprovalSnapshotTypes.js';
+import { freezeRoiBaseline, unfreezeRoiBaseline } from './roiBaselineCommands.js';
+import {
+  ROI_EVENT_SOURCE,
+  RoiCaseNotReadyForReviewError,
+  RoiCaseValidationError,
+} from './roiCaseCommands.js';
+import { freezeRoiEconomicModel, unfreezeRoiEconomicModel } from './roiEconomicModelFreeze.js';
+import { isRoiCaseReadyForReviewEligibleWithEconomicModel } from './roiEconomicModelReadiness.js';
+import {
   type RoiAssumptionRow,
   type RoiBenefitEvidenceLinkRow,
   type RoiBenefitLineRow,
@@ -49,15 +51,22 @@ import {
   type RoiCostLineRow,
   type RoiScenarioOverrideRow,
   type RoiScenarioRow,
+  toRoiAssumption,
+  toRoiBenefitEvidenceLink,
+  toRoiBenefitLine,
+  toRoiCalculationPolicy,
+  toRoiCalculationRun,
+  toRoiCostLine,
+  toRoiScenario,
+  toRoiScenarioOverride,
 } from './roiEconomicModelTypes.js';
-import { isRoiCaseReadyForReviewEligibleWithEconomicModel } from './roiEconomicModelReadiness.js';
 import {
-  toRoiApprovalSnapshotSummary,
-  type RoiApprovalSnapshotPayload,
-  type RoiApprovalSnapshotRow,
-  type RoiApprovalSnapshotSummary,
-} from './roiApprovalSnapshotTypes.js';
-import { toRoiBaseline, toRoiCase, type RoiBaselineRow, type RoiCase, type RoiCaseRow } from './roiTypes.js';
+  type RoiBaselineRow,
+  type RoiCase,
+  type RoiCaseRow,
+  toRoiBaseline,
+  toRoiCase,
+} from './roiTypes.js';
 
 // ==========================================
 // ERRORS
@@ -143,31 +152,37 @@ async function loadRoiBaselineRow(
 // helper (nesting a second BEGIN on an already-open pinned client).
 // ==========================================
 
-async function insertManualRoiEvent(client: PoolClient, eventInput: AtomicEventInput): Promise<string | undefined> {
-  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-    eventInput.schemaVersion,
-    eventInput.eventType,
-    eventInput.aggregateType,
-    eventInput.aggregateId,
-    eventInput.organizationId,
-    eventInput.actorUserId,
-    eventInput.actorEffectiveRole,
-    eventInput.commandId,
-    eventInput.correlationId,
-    eventInput.causationId,
-    eventInput.occurredAt,
-    eventInput.policyVersion,
-    eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-    eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-    eventInput.stateHash,
-    eventInput.reason,
-    JSON.stringify(eventInput.evidenceRefs ?? []),
-    eventInput.source,
-    eventInput.idempotencyKey,
-    eventInput.expectedVersion,
-    eventInput.resultingVersion,
-    JSON.stringify(eventInput.payload ?? {}),
-  ]);
+async function insertManualRoiEvent(
+  client: PoolClient,
+  eventInput: AtomicEventInput
+): Promise<string | undefined> {
+  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+    EVENT_INSERT_SQL,
+    [
+      eventInput.schemaVersion,
+      eventInput.eventType,
+      eventInput.aggregateType,
+      eventInput.aggregateId,
+      eventInput.organizationId,
+      eventInput.actorUserId,
+      eventInput.actorEffectiveRole,
+      eventInput.commandId,
+      eventInput.correlationId,
+      eventInput.causationId,
+      eventInput.occurredAt,
+      eventInput.policyVersion,
+      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+      eventInput.stateHash,
+      eventInput.reason,
+      JSON.stringify(eventInput.evidenceRefs ?? []),
+      eventInput.source,
+      eventInput.idempotencyKey,
+      eventInput.expectedVersion,
+      eventInput.resultingVersion,
+      JSON.stringify(eventInput.payload ?? {}),
+    ]
+  );
 
   const inserted = eventResult.rows[0];
   if (!inserted) return undefined;
@@ -250,7 +265,11 @@ export async function submitRoiCaseForApproval(
       if (!baselineRow) {
         throw new Error(`[submitRoiCaseForApproval] no baseline row found for case ${caseId}`);
       }
-      const check = await isRoiCaseReadyForReviewEligibleWithEconomicModel(client, currentRow, baselineRow);
+      const check = await isRoiCaseReadyForReviewEligibleWithEconomicModel(
+        client,
+        currentRow,
+        baselineRow
+      );
       if (!check.eligible) {
         throw new RoiCaseNotReadyForReviewError(caseId, check.reason ?? 'unspecified');
       }
@@ -341,7 +360,9 @@ export interface ApproveRoiCaseResult {
   snapshot: RoiApprovalSnapshotSummary;
 }
 
-export async function approveRoiCase(input: ApproveRoiCaseInput): Promise<AtomicCommandOutcome<ApproveRoiCaseResult>> {
+export async function approveRoiCase(
+  input: ApproveRoiCaseInput
+): Promise<AtomicCommandOutcome<ApproveRoiCaseResult>> {
   const {
     caseId,
     organizationId,
@@ -518,11 +539,21 @@ export async function approveRoiCase(input: ApproveRoiCaseInput): Promise<Atomic
             approved_by, content_hash, snapshot_payload)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [caseId, organizationId, sequenceNumber, decisionRunId, approverId, contentHash, JSON.stringify(payload)]
+        [
+          caseId,
+          organizationId,
+          sequenceNumber,
+          decisionRunId,
+          approverId,
+          contentHash,
+          JSON.stringify(payload),
+        ]
       );
       const snapshotRow = snapshotInsert.rows[0];
       if (!snapshotRow) {
-        throw new Error(`[approveRoiCase] insert into rvn_roi_approval_snapshots returned no row for case ${caseId}`);
+        throw new Error(
+          `[approveRoiCase] insert into rvn_roi_approval_snapshots returned no row for case ${caseId}`
+        );
       }
 
       // 8. Freeze the baseline (cross-epic contract, ROI-E001) + its own
@@ -637,7 +668,11 @@ export async function approveRoiCase(input: ApproveRoiCaseInput): Promise<Atomic
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { caseId, snapshotId: result.snapshot.snapshotId, sequenceNumber: result.snapshot.sequenceNumber },
+        payload: {
+          caseId,
+          snapshotId: result.snapshot.snapshotId,
+          sequenceNumber: result.snapshot.sequenceNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -665,7 +700,9 @@ export interface RejectRoiCaseInput {
  * own submission isn't the conflict self-approval-denial exists to
  * prevent). No freeze/unfreeze call — nothing is frozen pre-approval.
  */
-export async function rejectRoiCase(input: RejectRoiCaseInput): Promise<AtomicCommandOutcome<RoiCase>> {
+export async function rejectRoiCase(
+  input: RejectRoiCaseInput
+): Promise<AtomicCommandOutcome<RoiCase>> {
   const {
     caseId,
     organizationId,

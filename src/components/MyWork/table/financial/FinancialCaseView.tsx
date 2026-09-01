@@ -73,7 +73,8 @@ export const FinancialCaseView: React.FC<FinancialCaseViewProps> = ({
   onResultChange,
 }) => {
   const { t } = useTranslation();
-  const resolvedComputeFn = computeFn === null ? undefined : (computeFn ?? computeIdeaFinancialCase);
+  const resolvedComputeFn =
+    computeFn === null ? undefined : (computeFn ?? computeIdeaFinancialCase);
   const fc = useFinancialCase({ initialCase, computeFn: resolvedComputeFn, onCaseChange });
 
   useEffect(() => {

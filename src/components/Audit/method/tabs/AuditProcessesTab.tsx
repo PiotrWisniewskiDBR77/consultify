@@ -17,37 +17,37 @@ import { ArrowRight, ClipboardList } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState } from '@/components/shared/states';
 import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from '../auditRoleLabels';
-import { programLifecycleLabel, programLifecycleTone } from '../auditStatusTones';
 import {
   AUDIT_LIFECYCLE_STATES,
+  type AuditCriterionSummary,
+  type AuditOutputSummary,
+  type AuditProgramCoverage,
+  type AuditProgramDetail,
+  type AuditProgramLifecycle,
+  type AuditProgramSummary,
   finalizeOutput,
   getProgram,
   getProgramCoverage,
   getProgramLifecycle,
   listProgramCriteria,
   transitionProgram,
-  type AuditProgramCoverage,
-  type AuditProgramDetail,
-  type AuditProgramLifecycle,
-  type AuditProgramSummary,
-  type AuditCriterionSummary,
-  type AuditOutputSummary,
 } from '../auditsMethodApi';
+import { programLifecycleLabel, programLifecycleTone } from '../auditStatusTones';
 import { AuditCriteriaBrowser } from './AuditCriteriaBrowser';
 
 export interface AuditProcessesTabProps {

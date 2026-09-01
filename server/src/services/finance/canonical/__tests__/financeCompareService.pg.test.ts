@@ -48,7 +48,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -77,7 +79,10 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
     // moment. Pinned to the canonical seed row, same pattern `kpiComputeService.pg.test.ts`
     // already uses for its own `writeLine` lookup.
     const row = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [code])
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`,
+        [code]
+      )
     );
     if (!row) throw new Error(`financial_statement_lines has no line_code=${code}`);
     lineIds.set(code, row.id);
@@ -99,7 +104,13 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
     return row.id;
   }
 
-  async function insertStmtLine(businessVersionId: string, entityId: string, canonicalLineId: string, periodId: string, opts: { value: number | null; status?: 'PRESENT_NONZERO' | 'MISSING' }) {
+  async function insertStmtLine(
+    businessVersionId: string,
+    entityId: string,
+    canonicalLineId: string,
+    periodId: string,
+    opts: { value: number | null; status?: 'PRESENT_NONZERO' | 'MISSING' }
+  ) {
     const status = opts.status ?? (opts.value === null ? 'MISSING' : 'PRESENT_NONZERO');
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
@@ -108,7 +119,16 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
            accumulation_basis, consolidation_scope, value_status, value_decimal, native_currency,
            presentation_currency, unit, multiplier, accounting_policy, created_by
          ) VALUES (?, ?, 'P&L', ?, ?, ?, 'FULL_YEAR', 'STANDALONE', ?, ?, 'PLN', 'PLN', 'UNITS', 1, 'IFRS', ?)`,
-        [orgId, businessVersionId, canonicalLineId, entityId, periodId, status, status === 'MISSING' ? null : opts.value, preparerId]
+        [
+          orgId,
+          businessVersionId,
+          canonicalLineId,
+          entityId,
+          periodId,
+          status,
+          status === 'MISSING' ? null : opts.value,
+          preparerId,
+        ]
       )
     );
   }
@@ -119,7 +139,12 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
     lineageService = await import('../lineageService.js');
     compareService = await import('../financeCompareService.js');
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 AP-05 Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 AP-05 Test Org',
+      ])
+    );
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -154,21 +179,41 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
 
   describe('compareVersions — GoldCo FY2024 Statement Pack, ORIGINAL vs RESTATED', () => {
     it('diffs exactly the restated lines, matches entity_id-varying rows via entity_code, and surfaces both MISSING flavors as null-diff (never false 0)', async () => {
-      const created = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: preparerId });
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'STATEMENT_PACK',
+        createdBy: preparerId,
+      });
       const bv1 = created.businessVersion.business_version_id;
       const entity1 = await makeEntity(bv1, 'PARENT');
 
       // v1 ORIGINAL — real goldco_oracle.json parent.FY2024_original.pl / .bs figures.
-      await insertStmtLine(bv1, entity1, await lineId('REVENUE'), periodFY2024, { value: 165_000_000 });
-      await insertStmtLine(bv1, entity1, await lineId('COGS'), periodFY2024, { value: 106_000_000 });
+      await insertStmtLine(bv1, entity1, await lineId('REVENUE'), periodFY2024, {
+        value: 165_000_000,
+      });
+      await insertStmtLine(bv1, entity1, await lineId('COGS'), periodFY2024, {
+        value: 106_000_000,
+      });
       await insertStmtLine(bv1, entity1, await lineId('OPEX'), periodFY2024, { value: 32_000_000 });
-      await insertStmtLine(bv1, entity1, await lineId('GROSS_MARGIN'), periodFY2024, { value: 59_000_000 });
-      await insertStmtLine(bv1, entity1, await lineId('EBITDA'), periodFY2024, { value: 27_000_000 });
+      await insertStmtLine(bv1, entity1, await lineId('GROSS_MARGIN'), periodFY2024, {
+        value: 59_000_000,
+      });
+      await insertStmtLine(bv1, entity1, await lineId('EBITDA'), periodFY2024, {
+        value: 27_000_000,
+      });
       await insertStmtLine(bv1, entity1, await lineId('EBIT'), periodFY2024, { value: 20_500_000 });
-      await insertStmtLine(bv1, entity1, await lineId('NET_INCOME'), periodFY2024, { value: 14_823_000 });
-      await insertStmtLine(bv1, entity1, await lineId('INVENTORY'), periodFY2024, { value: 21_000_000 });
-      await insertStmtLine(bv1, entity1, await lineId('TOTAL_ASSETS'), periodFY2024, { value: 151_000_000 });
-      await insertStmtLine(bv1, entity1, await lineId('WORKING_CAPITAL'), periodFY2024, { value: 38_000_000 });
+      await insertStmtLine(bv1, entity1, await lineId('NET_INCOME'), periodFY2024, {
+        value: 14_823_000,
+      });
+      await insertStmtLine(bv1, entity1, await lineId('INVENTORY'), periodFY2024, {
+        value: 21_000_000,
+      });
+      await insertStmtLine(bv1, entity1, await lineId('TOTAL_ASSETS'), periodFY2024, {
+        value: 151_000_000,
+      });
+      await insertStmtLine(bv1, entity1, await lineId('WORKING_CAPITAL'), periodFY2024, {
+        value: 38_000_000,
+      });
       await insertStmtLine(bv1, entity1, await lineId('CASH'), periodFY2024, { value: 9_500_000 }); // deliberately NOT carried into v2 -> structural MISSING_IN_B
 
       // v2 RESTATED — manual sibling row (this suite tests Compare, not the reopen/approve
@@ -191,16 +236,33 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
       expect(entity2).not.toBe(entity1); // copy-on-write per business_version_id, confirmed live
 
       // v2 RESTATED — real goldco_oracle.json parent.FY2024_restated figures.
-      await insertStmtLine(bv2, entity2, await lineId('REVENUE'), periodFY2024, { value: 165_000_000 }); // unchanged
-      await insertStmtLine(bv2, entity2, await lineId('COGS'), periodFY2024, { value: 109_000_000 }); // +3,000,000
+      await insertStmtLine(bv2, entity2, await lineId('REVENUE'), periodFY2024, {
+        value: 165_000_000,
+      }); // unchanged
+      await insertStmtLine(bv2, entity2, await lineId('COGS'), periodFY2024, {
+        value: 109_000_000,
+      }); // +3,000,000
       await insertStmtLine(bv2, entity2, await lineId('OPEX'), periodFY2024, { value: 32_000_000 }); // unchanged
-      await insertStmtLine(bv2, entity2, await lineId('GROSS_MARGIN'), periodFY2024, { value: 56_000_000 }); // -3,000,000
-      await insertStmtLine(bv2, entity2, await lineId('EBITDA'), periodFY2024, { value: 24_000_000 }); // -3,000,000
+      await insertStmtLine(bv2, entity2, await lineId('GROSS_MARGIN'), periodFY2024, {
+        value: 56_000_000,
+      }); // -3,000,000
+      await insertStmtLine(bv2, entity2, await lineId('EBITDA'), periodFY2024, {
+        value: 24_000_000,
+      }); // -3,000,000
       await insertStmtLine(bv2, entity2, await lineId('EBIT'), periodFY2024, { value: 17_500_000 }); // -3,000,000
-      await insertStmtLine(bv2, entity2, await lineId('NET_INCOME'), periodFY2024, { value: 11_823_000 }); // -3,000,000, matches oracle restatementDeltaNetIncome
-      await insertStmtLine(bv2, entity2, await lineId('INVENTORY'), periodFY2024, { value: 18_000_000 }); // -3,000,000
-      await insertStmtLine(bv2, entity2, await lineId('TOTAL_ASSETS'), periodFY2024, { value: 148_000_000 }); // -3,000,000
-      await insertStmtLine(bv2, entity2, await lineId('WORKING_CAPITAL'), periodFY2024, { value: null, status: 'MISSING' }); // explicit MISSING row
+      await insertStmtLine(bv2, entity2, await lineId('NET_INCOME'), periodFY2024, {
+        value: 11_823_000,
+      }); // -3,000,000, matches oracle restatementDeltaNetIncome
+      await insertStmtLine(bv2, entity2, await lineId('INVENTORY'), periodFY2024, {
+        value: 18_000_000,
+      }); // -3,000,000
+      await insertStmtLine(bv2, entity2, await lineId('TOTAL_ASSETS'), periodFY2024, {
+        value: 148_000_000,
+      }); // -3,000,000
+      await insertStmtLine(bv2, entity2, await lineId('WORKING_CAPITAL'), periodFY2024, {
+        value: null,
+        status: 'MISSING',
+      }); // explicit MISSING row
       // CASH: deliberately not inserted at all -> structural NO_ROW on side B.
 
       const result = await compareService.compareVersions({
@@ -261,8 +323,16 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
 
       // entity_code, not the raw per-version entity_id UUID, is what paired these rows.
       expect(revenueRow.dimensions.entityId).toBe('PARENT');
-      expect(revenueRow.a.cellRef?.rowKey.tableName === 'finance_stmt_lines' ? (revenueRow.a.cellRef.rowKey as any).entityId : null).toBe(entity1);
-      expect(revenueRow.b.cellRef?.rowKey.tableName === 'finance_stmt_lines' ? (revenueRow.b.cellRef.rowKey as any).entityId : null).toBe(entity2);
+      expect(
+        revenueRow.a.cellRef?.rowKey.tableName === 'finance_stmt_lines'
+          ? (revenueRow.a.cellRef.rowKey as any).entityId
+          : null
+      ).toBe(entity1);
+      expect(
+        revenueRow.b.cellRef?.rowKey.tableName === 'finance_stmt_lines'
+          ? (revenueRow.b.cellRef.rowKey as any).entityId
+          : null
+      ).toBe(entity2);
     });
   });
 
@@ -270,7 +340,11 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
     it('Base reads through the real STANDARD_BASE -> finance_baseline_outputs passthrough; direction and magnitude match the published delta', async () => {
       const revenueLineId = await lineId('REVENUE');
 
-      const baselineArtifact = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: preparerId });
+      const baselineArtifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'BASELINE_MODEL',
+        createdBy: preparerId,
+      });
       const baselineBv = baselineArtifact.businessVersion.business_version_id;
       const baselineEntity = await makeEntity(baselineBv, 'PARENT');
       await withPinnedPostgresTransaction((tx) =>
@@ -280,11 +354,23 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
              consolidation_scope, value_status, value_decimal, native_currency, presentation_currency, unit,
              multiplier, value_kind, created_by
            ) VALUES (?, ?, 'P&L', ?, ?, ?, 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 1, 'FORECAST', ?)`,
-          [orgId, baselineBv, revenueLineId, baselineEntity, periodJan2026, 11_943_750.0, preparerId]
+          [
+            orgId,
+            baselineBv,
+            revenueLineId,
+            baselineEntity,
+            periodJan2026,
+            11_943_750.0,
+            preparerId,
+          ]
         )
       );
 
-      const baseScenarioArtifact = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'PREDICTION_SCENARIO', createdBy: preparerId });
+      const baseScenarioArtifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'PREDICTION_SCENARIO',
+        createdBy: preparerId,
+      });
       const baseScenarioBv = baseScenarioArtifact.businessVersion.business_version_id;
       await withPinnedPostgresTransaction((tx) =>
         tx.queryRun(
@@ -305,7 +391,11 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
       });
       expect(edge.ok).toBe(true);
 
-      const downsideArtifact = await artifactVersionService.createArtifact({ organizationId: orgId, artifactType: 'PREDICTION_SCENARIO', createdBy: preparerId });
+      const downsideArtifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'PREDICTION_SCENARIO',
+        createdBy: preparerId,
+      });
       const downsideBv = downsideArtifact.businessVersion.business_version_id;
       await withPinnedPostgresTransaction((tx) =>
         tx.queryRun(
@@ -321,7 +411,15 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
              consolidation_scope, value_status, value_decimal, native_currency, presentation_currency, unit,
              multiplier, created_by
            ) VALUES (?, ?, 'P&L', ?, ?, ?, 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 1, ?)`,
-          [orgId, downsideBv, revenueLineId, downsideEntity, periodJan2026, 11_602_500.0, preparerId]
+          [
+            orgId,
+            downsideBv,
+            revenueLineId,
+            downsideEntity,
+            periodJan2026,
+            11_602_500.0,
+            preparerId,
+          ]
         )
       );
 

@@ -141,7 +141,12 @@ describe('M15-H02 — progi budżetowe są fail-closed', () => {
     it('PUT nie melduje sukcesu — odpowiada 503 z kodem niedostępności', async () => {
       const res = await request(buildApp())
         .put('/api/admin/billing/alerts')
-        .send({ alerts: [{ type: 'tokens', threshold: 80 }, { type: 'spend', threshold: 75 }] });
+        .send({
+          alerts: [
+            { type: 'tokens', threshold: 80 },
+            { type: 'spend', threshold: 75 },
+          ],
+        });
 
       expect(res.status).toBe(503);
       expect(res.body.success).toBe(false);
@@ -181,7 +186,12 @@ describe('M15-H02 — progi budżetowe są fail-closed', () => {
     it('PUT zwraca sukces oraz stan potwierdzony read-backiem', async () => {
       const res = await request(buildApp())
         .put('/api/admin/billing/alerts')
-        .send({ alerts: [{ type: 'tokens', threshold: 80 }, { type: 'spend', threshold: 75 }] });
+        .send({
+          alerts: [
+            { type: 'tokens', threshold: 80 },
+            { type: 'spend', threshold: 75 },
+          ],
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -215,7 +225,12 @@ describe('M15-H02 — progi budżetowe są fail-closed', () => {
 
       const res = await request(buildApp())
         .put('/api/admin/billing/alerts')
-        .send({ alerts: [{ type: 'tokens', threshold: 80 }, { type: 'spend', threshold: 75 }] });
+        .send({
+          alerts: [
+            { type: 'tokens', threshold: 80 },
+            { type: 'spend', threshold: 75 },
+          ],
+        });
 
       expect(res.status).toBe(503);
       expect(res.body.success).toBe(false);

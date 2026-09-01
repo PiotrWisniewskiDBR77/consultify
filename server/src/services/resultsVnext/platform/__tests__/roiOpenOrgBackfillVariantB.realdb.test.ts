@@ -78,7 +78,8 @@ const USER_FOREIGN_TENANT = `roi-backfill-foreign-admin-${tag}`;
 type VisibilityResolverModule =
   typeof import('../../../../services/resultsVnext/platform/visibilityResolver.js');
 type RoiRepositoryModule = typeof import('../../../../services/resultsVnext/roi/roiRepository.js');
-type RoiCaseCommandsModule = typeof import('../../../../services/resultsVnext/roi/roiCaseCommands.js');
+type RoiCaseCommandsModule =
+  typeof import('../../../../services/resultsVnext/roi/roiCaseCommands.js');
 
 let publishRoiGovernedVisibilityPolicy: VisibilityResolverModule['publishRoiGovernedVisibilityPolicy'];
 let ROI_GOVERNED_VISIBILITY_POLICY: VisibilityResolverModule['ROI_GOVERNED_VISIBILITY_POLICY'];
@@ -92,7 +93,11 @@ let reachable = false;
 let legacyPolicyId: string;
 let controlKpiPolicyId: string;
 
-async function insertUserAndMembership(userId: string, role: string, status = 'ACTIVE'): Promise<void> {
+async function insertUserAndMembership(
+  userId: string,
+  role: string,
+  status = 'ACTIVE'
+): Promise<void> {
   await client.query(
     `INSERT INTO users (id, email, organization_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
     [userId, `${userId}@roi-backfill.local`, ORG_ID]
@@ -109,7 +114,10 @@ async function runBackfillMigration(): Promise<void> {
   const fs = await import('node:fs');
   const path = await import('node:path');
   const sql = fs.readFileSync(
-    path.resolve(process.cwd(), 'server/migrations/20261022_backfill_roi_case_open_org_to_governed.sql'),
+    path.resolve(
+      process.cwd(),
+      'server/migrations/20261022_backfill_roi_case_open_org_to_governed.sql'
+    ),
     'utf8'
   );
   await client.query(sql);
@@ -119,7 +127,9 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
   beforeAll(async () => {
     if (!DB_CONFIGURED) {
       // eslint-disable-next-line no-console
-      console.error('[skip] No Postgres configured — roiOpenOrgBackfillVariantB realdb tests did NOT run. This run is not evidence.');
+      console.error(
+        '[skip] No Postgres configured — roiOpenOrgBackfillVariantB realdb tests did NOT run. This run is not evidence.'
+      );
       return;
     }
 
@@ -149,15 +159,16 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
     }
     reachable = true;
 
-    const visMod: VisibilityResolverModule = await import(
-      '../../../../services/resultsVnext/platform/visibilityResolver.js'
-    );
+    const visMod: VisibilityResolverModule =
+      await import('../../../../services/resultsVnext/platform/visibilityResolver.js');
     publishRoiGovernedVisibilityPolicy = visMod.publishRoiGovernedVisibilityPolicy;
     ROI_GOVERNED_VISIBILITY_POLICY = visMod.ROI_GOVERNED_VISIBILITY_POLICY;
-    const repoMod: RoiRepositoryModule = await import('../../../../services/resultsVnext/roi/roiRepository.js');
+    const repoMod: RoiRepositoryModule =
+      await import('../../../../services/resultsVnext/roi/roiRepository.js');
     listRoiCases = repoMod.listRoiCases;
     getRoiCase = repoMod.getRoiCase;
-    const caseMod: RoiCaseCommandsModule = await import('../../../../services/resultsVnext/roi/roiCaseCommands.js');
+    const caseMod: RoiCaseCommandsModule =
+      await import('../../../../services/resultsVnext/roi/roiCaseCommands.js');
     createRoiCase = caseMod.createRoiCase;
     RoiCaseCreationNotAuthorizedError = caseMod.RoiCaseCreationNotAuthorizedError;
 
@@ -243,12 +254,18 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
       [ORG_ID]
     );
     await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
+    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
     // rvn_finance_reconciliation_grant_events and organizations are left in
@@ -269,18 +286,26 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
       timeoutMs
     );
 
-  itDB('BEFORE the backfill: the legacy case is stamped OPEN_ORG, exactly as a pre-packet createRoiCase left it', async () => {
-    const row = await client.query<{ visibility_mode: string }>(
-      `SELECT visibility_mode FROM rvn_platform_resource_visibility WHERE resource_type='roi_case' AND resource_id=$1`,
-      [CASE_ID]
-    );
-    expect(row.rows[0]?.visibility_mode).toBe('OPEN_ORG');
-  });
+  itDB(
+    'BEFORE the backfill: the legacy case is stamped OPEN_ORG, exactly as a pre-packet createRoiCase left it',
+    async () => {
+      const row = await client.query<{ visibility_mode: string }>(
+        `SELECT visibility_mode FROM rvn_platform_resource_visibility WHERE resource_type='roi_case' AND resource_id=$1`,
+        [CASE_ID]
+      );
+      expect(row.rows[0]?.visibility_mode).toBe('OPEN_ORG');
+    }
+  );
 
   itDB(
     'BEFORE the backfill: an ordinary member with no grant can see the legacy case — proving the gap is real, not assumed',
     async () => {
-      const detail = await getRoiCase({ userId: USER_MEMBER, organizationId: ORG_ID, caseId: CASE_ID, includeArchived: true });
+      const detail = await getRoiCase({
+        userId: USER_MEMBER,
+        organizationId: ORG_ID,
+        caseId: CASE_ID,
+        includeArchived: true,
+      });
       expect(detail?.caseId).toBe(CASE_ID);
       const list = await listRoiCases({ userId: USER_MEMBER, organizationId: ORG_ID });
       expect(list.some((c) => c.caseId === CASE_ID)).toBe(true);
@@ -314,7 +339,12 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
     'AFTER the backfill: the gap is closed — an ordinary member with no grant, a revoked member, an unmembered caller, and an ACTIVE ADMIN of a DIFFERENT (foreign) tenant are ALL denied the exact same case that was visible before — no existence leak (null/empty, never an error)',
     async () => {
       for (const userId of [USER_MEMBER, USER_REVOKED, USER_UNMEMBERED, USER_FOREIGN_TENANT]) {
-        const detail = await getRoiCase({ userId, organizationId: ORG_ID, caseId: CASE_ID, includeArchived: true });
+        const detail = await getRoiCase({
+          userId,
+          organizationId: ORG_ID,
+          caseId: CASE_ID,
+          includeArchived: true,
+        });
         expect(detail).toBeNull();
         const list = await listRoiCases({ userId, organizationId: ORG_ID });
         expect(list.some((c) => c.caseId === CASE_ID)).toBe(false);
@@ -325,7 +355,12 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
   itDB(
     'AFTER the backfill: same-tenant ACTIVE OWNER, ADMIN, and a current Finance-authority-grant holder all still see the legacy case — but ONLY once the governed policy is actually published for this org (fail-closed until then)',
     async () => {
-      const beforePublish = await getRoiCase({ userId: USER_OWNER, organizationId: ORG_ID, caseId: CASE_ID, includeArchived: true });
+      const beforePublish = await getRoiCase({
+        userId: USER_OWNER,
+        organizationId: ORG_ID,
+        caseId: CASE_ID,
+        includeArchived: true,
+      });
       expect(beforePublish).toBeNull();
 
       const publish = await publishRoiGovernedVisibilityPolicy({
@@ -338,7 +373,12 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
       expect(publish.outcome).toBe('applied');
 
       for (const userId of [USER_OWNER, USER_ADMIN, USER_FINANCE_GRANTEE]) {
-        const detail = await getRoiCase({ userId, organizationId: ORG_ID, caseId: CASE_ID, includeArchived: true });
+        const detail = await getRoiCase({
+          userId,
+          organizationId: ORG_ID,
+          caseId: CASE_ID,
+          includeArchived: true,
+        });
         expect(detail?.caseId).toBe(CASE_ID);
         const list = await listRoiCases({ userId, organizationId: ORG_ID });
         expect(list.some((c) => c.caseId === CASE_ID)).toBe(true);
@@ -346,55 +386,59 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Post
     }
   );
 
-  itDB('createRoiCase: a denied actor (including a foreign-tenant ADMIN) produces a ZERO-WRITE delta, measured before and after — the resolver-path gate holds with no route/middleware in the call chain at all', async () => {
-    const countBefore = await client.query<{ n: string }>(
-      `SELECT count(*)::text n FROM rvn_roi_cases WHERE organization_id = $1`,
-      [ORG_ID]
-    );
-    for (const userId of [USER_MEMBER, USER_REVOKED, USER_UNMEMBERED, USER_FOREIGN_TENANT]) {
-      await expect(
-        createRoiCase({
-          organizationId: ORG_ID,
-          initiativeId: INITIATIVE_ID,
-          title: `Should not be created by ${userId}`,
-          ownerUserId: userId,
-          currency: 'USD',
-          createdBy: userId,
-          actorEffectiveRole: 'member',
-          idempotencyKey: `roi-backfill-deny-${userId}-${tag}`,
-        })
-      ).rejects.toBeInstanceOf(RoiCaseCreationNotAuthorizedError);
+  itDB(
+    'createRoiCase: a denied actor (including a foreign-tenant ADMIN) produces a ZERO-WRITE delta, measured before and after — the resolver-path gate holds with no route/middleware in the call chain at all',
+    async () => {
+      const countBefore = await client.query<{ n: string }>(
+        `SELECT count(*)::text n FROM rvn_roi_cases WHERE organization_id = $1`,
+        [ORG_ID]
+      );
+      for (const userId of [USER_MEMBER, USER_REVOKED, USER_UNMEMBERED, USER_FOREIGN_TENANT]) {
+        await expect(
+          createRoiCase({
+            organizationId: ORG_ID,
+            initiativeId: INITIATIVE_ID,
+            title: `Should not be created by ${userId}`,
+            ownerUserId: userId,
+            currency: 'USD',
+            createdBy: userId,
+            actorEffectiveRole: 'member',
+            idempotencyKey: `roi-backfill-deny-${userId}-${tag}`,
+          })
+        ).rejects.toBeInstanceOf(RoiCaseCreationNotAuthorizedError);
+      }
+      const countAfter = await client.query<{ n: string }>(
+        `SELECT count(*)::text n FROM rvn_roi_cases WHERE organization_id = $1`,
+        [ORG_ID]
+      );
+      expect(countAfter.rows[0]?.n).toBe(countBefore.rows[0]?.n);
     }
-    const countAfter = await client.query<{ n: string }>(
-      `SELECT count(*)::text n FROM rvn_roi_cases WHERE organization_id = $1`,
-      [ORG_ID]
-    );
-    expect(countAfter.rows[0]?.n).toBe(countBefore.rows[0]?.n);
-  });
+  );
 
-  itDB('createRoiCase: a real OWNER succeeds and the new case is stamped ROI_GOVERNED (never OPEN_ORG)', async () => {
-    const newInitiativeId = `${INITIATIVE_ID}-2`;
-    await client.query(`INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, $4)`, [
-      newInitiativeId,
-      ORG_ID,
-      'Second backfill fixture initiative',
-      'EXECUTING',
-    ]);
-    const outcome = await createRoiCase({
-      organizationId: ORG_ID,
-      initiativeId: newInitiativeId,
-      title: 'New case created by a real OWNER',
-      ownerUserId: USER_OWNER,
-      currency: 'USD',
-      createdBy: USER_OWNER,
-      actorEffectiveRole: 'owner',
-      idempotencyKey: `roi-backfill-owner-create-${tag}`,
-    });
-    expect(outcome.outcome).toBe('applied');
-    const stamped = await client.query<{ visibility_mode: string }>(
-      `SELECT visibility_mode FROM rvn_platform_resource_visibility WHERE resource_type='roi_case' AND resource_id=$1`,
-      [outcome.result.case.caseId]
-    );
-    expect(stamped.rows[0]?.visibility_mode).toBe('ROI_GOVERNED');
-  });
+  itDB(
+    'createRoiCase: a real OWNER succeeds and the new case is stamped ROI_GOVERNED (never OPEN_ORG)',
+    async () => {
+      const newInitiativeId = `${INITIATIVE_ID}-2`;
+      await client.query(
+        `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, $4)`,
+        [newInitiativeId, ORG_ID, 'Second backfill fixture initiative', 'EXECUTING']
+      );
+      const outcome = await createRoiCase({
+        organizationId: ORG_ID,
+        initiativeId: newInitiativeId,
+        title: 'New case created by a real OWNER',
+        ownerUserId: USER_OWNER,
+        currency: 'USD',
+        createdBy: USER_OWNER,
+        actorEffectiveRole: 'owner',
+        idempotencyKey: `roi-backfill-owner-create-${tag}`,
+      });
+      expect(outcome.outcome).toBe('applied');
+      const stamped = await client.query<{ visibility_mode: string }>(
+        `SELECT visibility_mode FROM rvn_platform_resource_visibility WHERE resource_type='roi_case' AND resource_id=$1`,
+        [outcome.result.case.caseId]
+      );
+      expect(stamped.rows[0]?.visibility_mode).toBe('ROI_GOVERNED');
+    }
+  );
 });

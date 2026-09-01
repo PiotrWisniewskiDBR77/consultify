@@ -14,6 +14,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { SKIP_REASON_OPTIONS } from '@/components/method-workspace/skipReasonCodes';
+
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
 
 function makeMemoryStorage(): Storage {

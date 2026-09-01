@@ -29,7 +29,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[evidenceService.test.ts SKIPPED — clean skip, not a failure] wymaga NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...'
   );
 }
 
@@ -39,7 +39,11 @@ suite('evidenceService (Postgres realny — U3)', () => {
   let evidenceService: typeof import('../evidenceService.js');
 
   const orgId = `u3-evid-org-${randomUUID()}`;
-  const adminActor = { userId: `u3-evid-admin-${randomUUID()}`, organizationId: orgId, platformRole: 'admin' as const };
+  const adminActor = {
+    userId: `u3-evid-admin-${randomUUID()}`,
+    organizationId: orgId,
+    platformRole: 'admin' as const,
+  };
   const leadAuditorUserId = `u3-evid-lead-${randomUUID()}`;
   const evidenceOwnerUserId = `u3-evid-owner-${randomUUID()}`;
 
@@ -68,10 +72,15 @@ suite('evidenceService (Postgres realny — U3)', () => {
         `u3-evid-pack-key-${packId}`,
         'Pakiet testowy U3 — evidenceService',
         JSON.stringify([
-          { key: 'nonconforming', label: 'Niezgodność', nonConforming: true, requiresCorrectiveAction: true },
+          {
+            key: 'nonconforming',
+            label: 'Niezgodność',
+            nonConforming: true,
+            requiresCorrectiveAction: true,
+          },
         ]),
         JSON.stringify(['lead_auditor', 'evidence_owner']),
-      ],
+      ]
     );
 
     // Kryterium Z1 ma zdefiniowany oczekiwany dowód i NIE dostanie żadnego
@@ -85,8 +94,10 @@ suite('evidenceService (Postgres realny — U3)', () => {
       [
         gapCriterionId,
         packId,
-        JSON.stringify([{ kind: 'document', description: 'polityka bezpieczeństwa', mandatory: true }]),
-      ],
+        JSON.stringify([
+          { kind: 'document', description: 'polityka bezpieczeństwa', mandatory: true },
+        ]),
+      ]
     );
 
     // Kryterium Z2 dostanie dowód (positive control — NIE powinno pojawić się w lukach).
@@ -99,8 +110,10 @@ suite('evidenceService (Postgres realny — U3)', () => {
       [
         coveredCriterionId,
         packId,
-        JSON.stringify([{ kind: 'document', description: 'polityka bezpieczeństwa', mandatory: true }]),
-      ],
+        JSON.stringify([
+          { kind: 'document', description: 'polityka bezpieczeństwa', mandatory: true },
+        ]),
+      ]
     );
 
     const detail = await programService.createProgramFromPack(orgId, adminActor, {
@@ -111,7 +124,7 @@ suite('evidenceService (Postgres realny — U3)', () => {
 
     const rows = await auditsDb.auditAll<{ id: string; ref_code: string }>(
       `SELECT id, ref_code FROM audit_program_criteria WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
     for (const r of rows) criterionIdByRef[r.ref_code] = r.id;
 
@@ -136,10 +149,16 @@ suite('evidenceService (Postgres realny — U3)', () => {
 
   afterAll(async () => {
     if (!auditsDb) return;
-    await auditsDb.auditRun(`DELETE FROM audit_evidence_requests WHERE organization_id = $1`, [orgId]);
+    await auditsDb.auditRun(`DELETE FROM audit_evidence_requests WHERE organization_id = $1`, [
+      orgId,
+    ]);
     await auditsDb.auditRun(`DELETE FROM audit_evidence WHERE organization_id = $1`, [orgId]);
-    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [orgId]);
-    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [
+      orgId,
+    ]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [
+      orgId,
+    ]);
     await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);
     await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id = $1`, [packId]);
     await auditsDb.auditRun(`DELETE FROM audit_packs WHERE id = $1`, [packId]);

@@ -6,4 +6,3 @@ export function requiresOrganizationVisibilityConsent(
 ): boolean {
   return destinationScope === 'team' && sourceScope !== 'team';
 }
-

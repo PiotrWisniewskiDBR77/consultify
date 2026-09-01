@@ -139,7 +139,9 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
   const handleTransferOwnership = async () => {
     if (!selectedAdminId) {
-      toast.error(t('admin.ownership.toasts.selectAdmin', 'Please select an admin to transfer ownership to'));
+      toast.error(
+        t('admin.ownership.toasts.selectAdmin', 'Please select an admin to transfer ownership to')
+      );
       return;
     }
 
@@ -162,7 +164,9 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       setShowTransferModal(false);
       loadOwnershipData();
     } catch (error) {
-      toast.error(t('admin.ownership.toasts.transferFailed', 'Failed to initiate ownership transfer'));
+      toast.error(
+        t('admin.ownership.toasts.transferFailed', 'Failed to initiate ownership transfer')
+      );
     }
     setSaving(false);
   };
@@ -188,7 +192,9 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       }
 
       await AdminApi.acceptOrganizationOwnershipTransfer(currentOrganization.id);
-      toast.success(t('admin.ownership.toasts.acceptedOwnership', 'You are now the organization owner!'));
+      toast.success(
+        t('admin.ownership.toasts.acceptedOwnership', 'You are now the organization owner!')
+      );
       loadOwnershipData();
     } catch (error) {
       toast.error(t('admin.ownership.toasts.acceptFailed', 'Failed to accept transfer'));

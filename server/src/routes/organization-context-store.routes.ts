@@ -8,6 +8,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import Logger from '../utils/Logger.js';
 
@@ -117,6 +118,22 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
     );
     if (persisted.length !== 1 || !persisted[0].updated_at) {
       throw new Error('Persisted organization context version is unavailable');
+    }
+    // 17-I R1 (dyżur 205): zapis-obok do claim-writer. Fail-soft — błąd
+    // tutaj nigdy nie psuje odpowiedzi głównego, CLOSED_FINAL zapisu powyżej.
+    try {
+      await organizationContextService.recordOrganizationContextStoreSave({
+        organizationId: orgId,
+        userId: userId ?? null,
+        goals: hasGoals ? goals : undefined,
+        challenges: hasChallenges ? challenges : undefined,
+        synthesis: hasSynthesis ? synthesis : undefined,
+      });
+    } catch (claimErr: any) {
+      Logger.error('[org-context-store] parallel claim-write failed (non-fatal)', {
+        orgId,
+        err: claimErr?.message,
+      });
     }
     res.json({
       ok: true,

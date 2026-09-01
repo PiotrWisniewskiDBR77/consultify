@@ -73,7 +73,12 @@ export function rectsEqual(a: GridRect, b: GridRect): boolean {
 }
 
 export function rectContainsCoord(rect: GridRect, coord: GridCoordinate): boolean {
-  return coord.row >= rect.top && coord.row <= rect.bottom && coord.col >= rect.left && coord.col <= rect.right;
+  return (
+    coord.row >= rect.top &&
+    coord.row <= rect.bottom &&
+    coord.col >= rect.left &&
+    coord.col <= rect.right
+  );
 }
 
 export function rectIntersects(a: GridRect, b: GridRect): boolean {
@@ -111,10 +116,20 @@ export function subtractRect(a: GridRect, b: GridRect): GridRect[] {
     pieces.push({ top: clipped.bottom + 1, bottom: a.bottom, left: a.left, right: a.right });
   }
   if (clipped.left > a.left) {
-    pieces.push({ top: clipped.top, bottom: clipped.bottom, left: a.left, right: clipped.left - 1 });
+    pieces.push({
+      top: clipped.top,
+      bottom: clipped.bottom,
+      left: a.left,
+      right: clipped.left - 1,
+    });
   }
   if (clipped.right < a.right) {
-    pieces.push({ top: clipped.top, bottom: clipped.bottom, left: clipped.right + 1, right: a.right });
+    pieces.push({
+      top: clipped.top,
+      bottom: clipped.bottom,
+      left: clipped.right + 1,
+      right: a.right,
+    });
   }
   return pieces.filter((piece) => !rectIsEmpty(piece));
 }
@@ -150,12 +165,29 @@ export interface GridAddressResolver {
   coordinateOf(ref: CellRef): GridCoordinate | null;
 }
 
-export function isCoordInBounds(coord: GridCoordinate, resolver: Pick<GridAddressResolver, 'rowCount' | 'colCount'>): boolean {
-  return coord.row >= 0 && coord.row < resolver.rowCount && coord.col >= 0 && coord.col < resolver.colCount;
+export function isCoordInBounds(
+  coord: GridCoordinate,
+  resolver: Pick<GridAddressResolver, 'rowCount' | 'colCount'>
+): boolean {
+  return (
+    coord.row >= 0 &&
+    coord.row < resolver.rowCount &&
+    coord.col >= 0 &&
+    coord.col < resolver.colCount
+  );
 }
 
-export function isRectInBounds(rect: GridRect, resolver: Pick<GridAddressResolver, 'rowCount' | 'colCount'>): boolean {
-  return rect.top >= 0 && rect.left >= 0 && rect.bottom < resolver.rowCount && rect.right < resolver.colCount && !rectIsEmpty(rect);
+export function isRectInBounds(
+  rect: GridRect,
+  resolver: Pick<GridAddressResolver, 'rowCount' | 'colCount'>
+): boolean {
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom < resolver.rowCount &&
+    rect.right < resolver.colCount &&
+    !rectIsEmpty(rect)
+  );
 }
 
 // ---------------------------------------------------------------------------

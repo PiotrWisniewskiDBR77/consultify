@@ -12,8 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   validateBody,
@@ -122,33 +122,31 @@ const router = Router();
 
 /** Chat streaming is provider-bearing: stale role claims and SUPERADMIN do not
  * replace an authoritative ACTIVE tenant membership row. */
-const requireActiveChatMembership = asyncHandler(
-  async (req: AuthRequest, res: Response, next) => {
-    const userId = String(req.userId || req.user?.id || '').trim();
-    const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
-    if (!userId || !organizationId) {
+const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: Response, next) => {
+  const userId = String(req.userId || req.user?.id || '').trim();
+  const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
+  if (!userId || !organizationId) {
+    return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
+  }
+  try {
+    const membership = await dbGet<{ status?: string }>(
+      `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
+      [userId, organizationId],
+      { fallback: false }
+    );
+    if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
-    try {
-      const membership = await dbGet<{ status?: string }>(
-        `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
-        [userId, organizationId],
-        { fallback: false }
-      );
-      if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
-        return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
-      }
-    } catch (error) {
-      logger.warn('[AI Stream] membership verification unavailable', {
-        userId,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
-    }
-    next();
+  } catch (error) {
+    logger.warn('[AI Stream] membership verification unavailable', {
+      userId,
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
   }
-);
+  next();
+});
 
 function isConnectorFreshDataAsk(message: unknown): boolean {
   const text = String(message || '').toLowerCase();
@@ -597,8 +595,8 @@ router.post(
 
       await client.query(
         `INSERT INTO knowledge_docs
-         (id, filename, filepath, status, organization_id, source_type, file_hash, version, created_at)
-         VALUES ($1, $2, $3, 'ready', $4, 'document_extraction', $5, 1, CURRENT_TIMESTAMP)`,
+         (id, filename, filepath, status, organization_id, source_type, file_hash, version, scope, created_at)
+         VALUES ($1, $2, $3, 'ready', $4, 'document_extraction', $5, 1, 'organization', CURRENT_TIMESTAMP)`,
         [docId, filename, '', orgId, fileHash]
       );
       for (const chunk of embedded) {
@@ -656,7 +654,6 @@ router.post(
     } finally {
       client.release();
     }
-
   })
 );
 
@@ -865,8 +862,8 @@ router.post(
     // not a separate try/catch-swallowed UPDATE that could leave the row
     // with an unresolved (NULL) owner.
     await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, created_at)
-       VALUES (?, ?, ?, 'indexed', ?, 'chat_url_attachment', CURRENT_TIMESTAMP)`,
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, scope, created_at)
+       VALUES (?, ?, ?, 'indexed', ?, 'chat_url_attachment', 'organization', CURRENT_TIMESTAMP)`,
       [docId, filename, finalUrl || inputUrl, orgId],
       { fallback: true } as any
     );
@@ -4073,8 +4070,7 @@ router.post(
         } as any;
       }
 
-      const orgKnowledgeRetrievalEnabled =
-        process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
+      const orgKnowledgeRetrievalEnabled = process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
 
       // Day 131 fix (N3): an EXPLICIT context-scope choice made by the user is authoritative.
       // The feature flag may supply a default when the user made no choice, but it must never
@@ -4156,7 +4152,9 @@ router.post(
                 type: 'document',
                 title: String(chunk?.filename || 'Organization document'),
                 reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                excerpt: String(chunk?.content || '')
+                  .trim()
+                  .slice(0, 500),
                 fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
               })),
             });
@@ -4264,7 +4262,9 @@ router.post(
                   type: 'document',
                   title: String(chunk?.filename || 'Organization document'),
                   reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                  excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                  excerpt: String(chunk?.content || '')
+                    .trim()
+                    .slice(0, 500),
                   fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
                 })),
               });
@@ -4278,89 +4278,95 @@ router.post(
           );
         }
 
-        if (governedAttachmentDocIds.length > 0) try {
-          const ragModule = await import('../services/ragService.js');
-          const ragService = (ragModule.default || ragModule) as any;
-          const chunks = await ragService.searchRelevantChunks(message, {
-            limit: 5,
-            organizationId: req.organizationId || undefined,
-            documentIds: governedAttachmentDocIds,
-          });
-
-          if (Array.isArray(chunks) && chunks.length > 0) {
-            attachmentChunksInjected = true;
-            emitSSE({
-              type: 'thought',
-              step: 'attachments',
-              status: 'completed',
-              label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+        if (governedAttachmentDocIds.length > 0)
+          try {
+            const ragModule = await import('../services/ragService.js');
+            const ragService = (ragModule.default || ragModule) as any;
+            const chunks = await ragService.searchRelevantChunks(message, {
+              limit: 5,
+              organizationId: req.organizationId || undefined,
+              // FIX-2 (dyżur 210): thread the real requester so an owner-aware
+              // access filter (ragService.appendKnowledgeDocAccessFilter) can
+              // see their own private docs. Same identity resolution as
+              // sharedRetrieval.retrieveContext above.
+              userId: (req as any).user?.id || (req as any).userId || undefined,
+              documentIds: governedAttachmentDocIds,
             });
-            const attachmentsText = chunks
-              .slice(0, 5)
-              .map((c: any, i: number) => {
+
+            if (Array.isArray(chunks) && chunks.length > 0) {
+              attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+              });
+              const attachmentsText = chunks
+                .slice(0, 5)
+                .map((c: any, i: number) => {
+                  const source = String(c?.source || 'Attachment');
+                  const content = String(c?.content || '').trim();
+                  return `[A${i + 1}] ${source}\n${content}`;
+                })
+                .join('\n\n');
+              const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
                 const source = String(c?.source || 'Attachment');
-                const content = String(c?.content || '').trim();
-                return `[A${i + 1}] ${source}\n${content}`;
-              })
-              .join('\n\n');
-            const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
-              const source = String(c?.source || 'Attachment');
-              return {
-                id: `attachment_${i + 1}`,
-                type: 'document',
-                title: source,
-                reference: source,
-                excerpt: String(c?.content || '')
-                  .trim()
-                  .slice(0, 500),
-                // GF-CHAT-02 fragment anchor: real chunk ordinal
-                // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
-                // `null` — never a fabricated `0` — when the source has none.
-                fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
-              };
-            });
-            emitSSE({ type: 'citations', citations: attachmentCitations });
-            hasGovernedGrounding = true;
+                return {
+                  id: `attachment_${i + 1}`,
+                  type: 'document',
+                  title: source,
+                  reference: source,
+                  excerpt: String(c?.content || '')
+                    .trim()
+                    .slice(0, 500),
+                  // GF-CHAT-02 fragment anchor: real chunk ordinal
+                  // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
+                  // `null` — never a fabricated `0` — when the source has none.
+                  fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
+                };
+              });
+              emitSSE({ type: 'citations', citations: attachmentCitations });
+              hasGovernedGrounding = true;
 
-            pipelineRequest = {
-              ...pipelineRequest,
-              options: {
-                ...(pipelineRequest.options || {}),
-                systemInstruction:
-                  String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
-              },
-              context: {
-                ...((pipelineRequest as any).context || {}),
-                external: {
-                  ...(context as any)?.external,
-                  attachmentsRag: {
-                    documentIds: governedAttachmentDocIds,
-                    chunks,
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+                },
+                context: {
+                  ...((pipelineRequest as any).context || {}),
+                  external: {
+                    ...(context as any)?.external,
+                    attachmentsRag: {
+                      documentIds: governedAttachmentDocIds,
+                      chunks,
+                    },
                   },
                 },
-              },
-            } as any;
+              } as any;
 
-            if (chatRunId) {
-              import('../services/ai/chatTraceService.js')
-                .then((m: any) =>
-                  (m.default || m).addEvent(chatRunId, 'attachment_rag', {
-                    attachmentDocIdsCount: governedAttachmentDocIds.length,
-                    chunksCount: chunks.length,
-                  })
-                )
-                .catch(() => {
-                  /* ignore */
-                });
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'attachment_rag', {
+                      attachmentDocIdsCount: governedAttachmentDocIds.length,
+                      chunksCount: chunks.length,
+                    })
+                  )
+                  .catch(() => {
+                    /* ignore */
+                  });
+              }
             }
+          } catch (err: any) {
+            logger.warn(
+              '[AI Stream] Attachment RAG failed, continuing without it:',
+              err?.message || String(err)
+            );
           }
-        } catch (err: any) {
-          logger.warn(
-            '[AI Stream] Attachment RAG failed, continuing without it:',
-            err?.message || String(err)
-          );
-        }
 
         // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
@@ -4797,6 +4803,78 @@ router.post(
         );
       }
 
+      // Day207 / 17-C — the model may call the existing create_task/create_decision
+      // tools, but while the opt-in flag is ON their executor creates only an
+      // ai_actions proposal. The target mutation remains behind explicit approval.
+      try {
+        if (featureFlags.ENABLE_TERESA_TOOL_LOOP_WRITE && !aiModes?.deepResearch) {
+          (pipelineRequest as any).options = {
+            ...((pipelineRequest as any).options || {}),
+            writeProposalTools: {
+              context: {
+                onProposalToolCall: async (toolName: string, args: unknown) => {
+                  const { checkChatPermission } =
+                    await import('../services/chatPermissionService.js');
+                  const chatPermission = await checkChatPermission(
+                    String(req.userId || ''),
+                    String(req.organizationId || ''),
+                    'add_message'
+                  );
+                  if (!chatPermission.allowed) {
+                    return {
+                      status: 'PROPOSAL_REJECTED',
+                      tool: toolName,
+                      message:
+                        chatPermission.reason || 'Write permission denied; no change was made.',
+                    };
+                  }
+
+                  const executorModule = await import('../services/aiActionExecutor.js');
+                  const executor = (executorModule.default || executorModule) as any;
+                  const proposal = await executor.requestChatToolProposal({
+                    toolName,
+                    args,
+                    userId: req.userId,
+                    organizationId: req.organizationId,
+                    projectId,
+                    conversationId: conversationId || null,
+                  });
+                  if (!proposal?.success) {
+                    return {
+                      status: 'PROPOSAL_REJECTED',
+                      tool: toolName,
+                      message: proposal?.error || 'Write proposal denied; no change was made.',
+                    };
+                  }
+
+                  // Minimal same-turn envelope: no raw tool output or document content.
+                  emitSSE({
+                    type: 'execution_proposal',
+                    proposalId: proposal.actionId,
+                    actionType:
+                      toolName === 'create_task' ? 'CREATE_DRAFT_TASK' : 'CREATE_DRAFT_DECISION',
+                    lifecycleState: 'pending_review',
+                    toolName,
+                  });
+                  return {
+                    status: 'PENDING_APPROVAL',
+                    tool: toolName,
+                    proposalId: proposal.actionId,
+                    message: 'Proposal created and waiting for human approval; no change was made.',
+                  };
+                },
+              },
+            },
+          };
+        }
+      } catch (writeProposalWireErr) {
+        logger.warn(
+          `[AI Stream] write-proposal tool wiring skipped: ${String(
+            (writeProposalWireErr as Error)?.message || writeProposalWireErr
+          ).slice(0, 160)}`
+        );
+      }
+
       // Z4 transport (fala „Teresa steruje Ideą przez rejestr") — front dołącza
       // manifest akcji OTWARTEJ reprezentacji Idei w `context.ideaActionManifest`
       // (przepuszczalne pole `context`, więc bez zmian w walidatorze). Model widzi
@@ -4854,6 +4932,128 @@ router.post(
             (ideaWireErr as Error)?.message || ideaWireErr
           ).slice(0, 160)}`
         );
+      }
+
+      // Day206 / 17-B: READ-only tool loop. The executor stays on the existing
+      // governed path; no raw result is ever emitted through SSE.
+      if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !aiModes?.deepResearch) {
+        const { executeToolCall } = await import('../services/ai/toolDefinitions.js');
+        const { estimateAgentToolCostUsd } = await import('../services/ai/toolCostEstimates.js');
+        // FIX-206 (P0, ODBIOR_205_206.md): `context.projectId` przychodzi z ciala
+        // zadania, a executory czytaja po nim dane — audytor zmierzyl wyciek
+        // cross-org. Projekt wchodzi do petli TYLKO po potwierdzeniu, ze nalezy
+        // do organizacji z tokenu; inaczej petla dziala bez projektu (fail-closed).
+        let verifiedLoopProjectId: string | undefined;
+        {
+          const claimedProjectId = String((context as any)?.projectId || '').trim();
+          if (claimedProjectId && req.organizationId) {
+            try {
+              const { get: dbGetProject } = await import('../utils/DbPromise.js');
+              const ownedProject = (await dbGetProject(
+                `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+                [claimedProjectId, String(req.organizationId)]
+              )) as { id?: string } | undefined;
+              verifiedLoopProjectId = ownedProject?.id ? claimedProjectId : undefined;
+            } catch {
+              verifiedLoopProjectId = undefined;
+            }
+          }
+        }
+        let paidCostUsd = 0;
+        const maxPaidCostUsd = 0.08;
+        // Zegar kroku — konfigurowalny tak samo jak TERESA_TOOL_LOOP_MAX_ITERATIONS,
+        // zeby test mogl zmierzyc kopertę TIMEOUT bez 12-sekundowego czekania.
+        const timeoutMs = (() => {
+          const parsed = Number(process.env.TERESA_TOOL_LOOP_TIMEOUT_MS || 12_000);
+          return Number.isFinite(parsed) && parsed >= 10 && parsed <= 60_000 ? parsed : 12_000;
+        })();
+        (pipelineRequest as any).options = {
+          ...((pipelineRequest as any).options || {}),
+          readTools: {
+            enabled: true,
+            context: {
+              executeReadTool: async (toolName: string, args: Record<string, unknown>) => {
+                // FIX-206 (pkt 6): wycena kosztu MUSI byc wewnatrz try.
+                // `estimateAgentToolCostUsd` rzuca UnknownToolCostError dla
+                // narzedzia bez ceny — poza try ten wyjatek wychodzil z callbacku
+                // do dostawcy i wywracal CALA ture. Kontrakt: nieznana cena konczy
+                // JEDEN krok bledem, rozmowa zyje dalej.
+                let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+                try {
+                  const estimatedCostUsd = estimateAgentToolCostUsd(toolName);
+                  if (paidCostUsd + estimatedCostUsd > maxPaidCostUsd) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'blocked',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'BLOCKED',
+                      error: 'Conversation tool cost limit reached',
+                    });
+                  }
+                  paidCostUsd += estimatedCostUsd;
+                  emitSSE({ type: 'tool_step', toolName, status: 'running', costUsd: paidCostUsd });
+                  logger.info(
+                    `[TeresaToolLoop] tool=${toolName} cumulativeCostUsd=${paidCostUsd.toFixed(4)}`
+                  );
+                  // FIX-206 (pkt 5): wyscig z zegarem musi byc ROZPOZNAWALNY.
+                  // Wczesniej koperta TIMEOUT wracala tym samym torem co wynik i
+                  // panel dostawal `completed` — krok wygladal na udany, choc
+                  // narzedzie nie odpowiedzialo.
+                  const TIMED_OUT = Symbol('tool_timeout');
+                  const result = await Promise.race([
+                    executeToolCall(toolName, args, {
+                      organizationId: String(req.organizationId || ''),
+                      userId: String(req.userId || ''),
+                      // FIX-206 (P0): projectId NIE moze pochodzic z ciala zadania —
+                      // executory czytaja po nim dane. Kontrakt: bierzemy go tylko
+                      // wtedy, gdy nalezy do organizacji z tokenu (druga warstwa
+                      // obrony; pierwsza to org-scope w samych zapytaniach).
+                      projectId: verifiedLoopProjectId,
+                      conversationId: conversationId || undefined,
+                      // FIX-206 (pkt 2): tryb prywatny rozmowy jedzie az do
+                      // executorow — to on odcina zakresy org_shared/public_kb
+                      // w chatPolicyGateway.
+                      privateMode: Boolean(privateMode),
+                    }),
+                    new Promise<typeof TIMED_OUT>((resolve) => {
+                      timeoutHandle = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
+                    }),
+                  ]);
+                  if (result === TIMED_OUT) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'timeout',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'TIMEOUT',
+                      error: 'Tool did not answer in time',
+                    });
+                  }
+                  emitSSE({
+                    type: 'tool_step',
+                    toolName,
+                    status: 'completed',
+                    costUsd: paidCostUsd,
+                  });
+                  return result as string;
+                } catch (error) {
+                  emitSSE({ type: 'tool_step', toolName, status: 'failed', costUsd: paidCostUsd });
+                  return JSON.stringify({
+                    status: 'ERROR',
+                    error: String((error as Error)?.message || error),
+                  });
+                } finally {
+                  if (timeoutHandle) clearTimeout(timeoutHandle);
+                }
+              },
+            },
+          },
+        };
       }
 
       const aiPipeline = await getAIPipeline();

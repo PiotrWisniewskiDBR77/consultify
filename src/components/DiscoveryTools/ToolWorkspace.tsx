@@ -540,7 +540,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         console.warn('[ToolWorkspace] autosave failed', err);
         try {
           const fresh = await Api.getToolSession(toolSessionId);
-          sessionVersionRef.current = (fresh as { version?: number })?.version ?? sessionVersionRef.current;
+          sessionVersionRef.current =
+            (fresh as { version?: number })?.version ?? sessionVersionRef.current;
         } catch {
           // Best-effort only -- next tick will retry the GET too.
         }
@@ -578,7 +579,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // existed (sessionId prop) -- the create-effect's version write above
       // only covers a BRAND NEW session, so this GET is what populates
       // sessionVersionRef for a resumed one.
-      sessionVersionRef.current = (data as { version?: number }).version ?? sessionVersionRef.current;
+      sessionVersionRef.current =
+        (data as { version?: number }).version ?? sessionVersionRef.current;
     };
     loadGenerated();
   }, [toolSessionId]);

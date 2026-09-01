@@ -51,7 +51,10 @@ export function seedRealisticSession(): void {
           isDemoMode: true,
           demoSessionOrgId: prevState.demoSessionOrgId ?? null,
         },
-        version: parsed && typeof parsed === 'object' && typeof parsed.version === 'number' ? parsed.version : 2,
+        version:
+          parsed && typeof parsed === 'object' && typeof parsed.version === 'number'
+            ? parsed.version
+            : 2,
       })
     );
   } catch {

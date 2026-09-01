@@ -42,17 +42,17 @@ import {
   startCase,
   toFailure,
 } from './api';
-import type { CaseCommandResult, CaseApiFailure, CaseCoreView } from './types';
+import type { CaseApiFailure, CaseCommandResult, CaseCoreView } from './types';
 import {
   CaseStateBlock,
   CommandBanner,
   CommandDialog,
+  type CommandNotice,
   formatDateTime,
   MoreTabsMenu,
   relativeDays,
   StatusTag,
   useViewportWidth,
-  type CommandNotice,
 } from './ui';
 
 // Zapamiętane „skąd wyszedłem" — do przywrócenia fokusu po Wstecz. Moduł, nie
@@ -323,9 +323,7 @@ export const CasesListScreen: React.FC = () => {
         getCaseIntakeSummary(item.caseId).catch(() => null),
         // `projectName` bywa w wierszu listy NIEOBECNE (nie `null`) — wtedy i
         // tylko wtedy dopytujemy trasę pojedynczego zlecenia.
-        item.projectName != null
-          ? Promise.resolve(item)
-          : getCase(item.caseId).catch(() => null),
+        item.projectName != null ? Promise.resolve(item) : getCase(item.caseId).catch(() => null),
       ]);
       return [
         item.caseId,
@@ -473,7 +471,9 @@ export const CasesListScreen: React.FC = () => {
     // „to zlecenie" bez cudzysłowu — inaczej wygląda, jakby zlecenie
     // NAZYWAŁO SIĘ „to zlecenie".
     const rawName = niepusty(
-      naming[pending.item.caseId]?.goal ?? naming[pending.item.caseId]?.projectName ?? pending.item.projectName
+      naming[pending.item.caseId]?.goal ??
+        naming[pending.item.caseId]?.projectName ??
+        pending.item.projectName
     );
     const subject = rawName ? `Zlecenie „${rawName}"` : 'To zlecenie';
     if (pending.kind === 'start') {

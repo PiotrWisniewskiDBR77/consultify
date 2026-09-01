@@ -266,9 +266,11 @@ export interface OkrLegacyArchiveIndexRow {
 }
 
 const OKR_LEGACY_LIVE_LABEL =
-  "Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext";
+  'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext';
 
-export async function getOkrLegacyArchiveIndex(organizationId: string): Promise<OkrLegacyArchiveIndexRow[]> {
+export async function getOkrLegacyArchiveIndex(
+  organizationId: string
+): Promise<OkrLegacyArchiveIndexRow[]> {
   return withReadClient(async (client) => {
     const tables = [
       { routeKey: 'cycles', sourceTable: 'okr_cycles' },

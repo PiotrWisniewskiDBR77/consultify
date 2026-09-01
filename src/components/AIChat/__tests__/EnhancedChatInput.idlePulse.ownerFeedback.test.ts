@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 const inputSource = fs.readFileSync(path.resolve(__dirname, '../EnhancedChatInput.tsx'), 'utf8');

@@ -8,13 +8,14 @@
  *     one draft per finding.
  */
 import { describe, expect, it } from 'vitest';
+
+import * as outputsPackage from '../index';
 import {
   createInitiativeProposalDraft,
   groupFindingsForInitiativeDrafts,
   InitiativeDraftValidationError,
 } from '../initiativeDraft';
 import { makeFinding, makeOutput } from './testFixtures';
-import * as outputsPackage from '../index';
 
 describe('Initiative Proposal Draft — lineage to findings and snapshot (test 7)', () => {
   it('links to the findings it was built from, sorted deterministically', () => {

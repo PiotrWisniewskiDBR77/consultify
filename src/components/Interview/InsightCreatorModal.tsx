@@ -38,8 +38,8 @@ import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import {
   CREATOR_SHELL_GEOMETRY,
-  type WizardStep,
   WizardModal,
+  type WizardStep,
   WizardStepper,
 } from '@/components/shared/WizardModal';
 import { Button, LoadingState } from '@/components/ui/primitives';
@@ -1272,10 +1272,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     { bg: 'bg-c-tag-12/12', text: 'text-c-tag-12', border: 'border-c-tag-12/30' },
   ];
 
-  const getColorClasses = (
-    tagIndex: number,
-    variant: 'bg' | 'border' | 'text' | 'ring'
-  ) => {
+  const getColorClasses = (tagIndex: number, variant: 'bg' | 'border' | 'text' | 'ring') => {
     if (variant === 'ring') return 'ring-c-focus';
     return TAG_ICON_CLASSES[(tagIndex - 1) % TAG_ICON_CLASSES.length][variant];
   };
@@ -2645,9 +2642,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const creatorScopeSessionsText = t('interview.creator.shell.sessionsCount', {
     count: selectedSessions.length,
   });
-  const creatorScopeApprovedSessionsText = t('interview.insightCreatorModal.approvedSessionsCount', {
-    count: selectedSessions.length,
-  });
+  const creatorScopeApprovedSessionsText = t(
+    'interview.insightCreatorModal.approvedSessionsCount',
+    {
+      count: selectedSessions.length,
+    }
+  );
   const creatorScopePeopleText = t('interview.creator.shell.peopleCount', {
     count: selectedRespondents.length,
   });

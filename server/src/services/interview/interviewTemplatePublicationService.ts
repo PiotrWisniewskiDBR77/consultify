@@ -1,12 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
-
-import {
-  isTruthyFlagSql,
-  LEGACY_FLAG_FALSE,
-  LEGACY_FLAG_TRUE,
-} from './interviewLegacyFlags.js';
+import { isTruthyFlagSql, LEGACY_FLAG_FALSE, LEGACY_FLAG_TRUE } from './interviewLegacyFlags.js';
 
 export class TemplatePublicationError extends Error {
   constructor(

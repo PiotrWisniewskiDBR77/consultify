@@ -20,9 +20,7 @@ describe('Interview PreviewActionBar owner behavior', () => {
           },
         ]}
         overflowLabel="More interview actions"
-        overflowActions={[
-          { label: 'Delegate', onClick: delegate, colorScheme: 'neutral' },
-        ]}
+        overflowActions={[{ label: 'Delegate', onClick: delegate, colorScheme: 'neutral' }]}
       />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open' }));
@@ -43,9 +41,7 @@ describe('Interview PreviewActionBar owner behavior', () => {
     render(
       <PreviewActionBar
         overflowLabel="More interview actions"
-        overflowActions={[
-          { label: 'Archive', onClick: vi.fn(), colorScheme: 'neutral' },
-        ]}
+        overflowActions={[{ label: 'Archive', onClick: vi.fn(), colorScheme: 'neutral' }]}
       />
     );
     const trigger = screen.getByRole('button', { name: 'More interview actions' });

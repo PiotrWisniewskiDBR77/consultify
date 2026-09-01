@@ -24,7 +24,10 @@ import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { listExceptionInbox } from '../../../services/finance/canonical/exceptionInboxService.js';
 import { listOpen } from '../../../services/finance/canonical/exceptionLedgerService.js';
 import { listFreshnessEvents } from '../../../services/finance/canonical/lineageFreshnessService.js';
-import { getAncestors, getDescendants } from '../../../services/finance/canonical/lineageService.js';
+import {
+  getAncestors,
+  getDescendants,
+} from '../../../services/finance/canonical/lineageService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -41,7 +44,10 @@ router.get(
     const { organizationId } = getV8Context(req);
     const businessVersionId = String(req.params.businessVersionId || '');
     const maxDepthRaw = req.query.maxDepth;
-    const maxDepth = typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw)) ? Number(maxDepthRaw) : undefined;
+    const maxDepth =
+      typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw))
+        ? Number(maxDepthRaw)
+        : undefined;
     if (maxDepthRaw !== undefined && maxDepth === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'maxDepth must be a finite number');
     }
@@ -66,7 +72,11 @@ router.get(
     });
 
     return res.status(200).json({
-      data: { businessVersionId, ancestors: ancestors.map(toDto), descendants: descendants.map(toDto) },
+      data: {
+        businessVersionId,
+        ancestors: ancestors.map(toDto),
+        descendants: descendants.map(toDto),
+      },
       meta: financeV2Meta(),
     });
   })
@@ -83,7 +93,10 @@ router.get(
     const { organizationId } = getV8Context(req);
     const businessVersionId = String(req.params.businessVersionId || '');
     const limitRaw = req.query.limit;
-    const limit = typeof limitRaw === 'string' && Number.isFinite(Number(limitRaw)) ? Number(limitRaw) : undefined;
+    const limit =
+      typeof limitRaw === 'string' && Number.isFinite(Number(limitRaw))
+        ? Number(limitRaw)
+        : undefined;
     if (limitRaw !== undefined && limit === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'limit must be a finite number');
     }

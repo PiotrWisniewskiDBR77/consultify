@@ -17,19 +17,23 @@
  * verbs, not variants of each other.
  */
 
-import { CellRefSchema } from '../../../types/finance/CellRef.js';
 import type { CellRef } from '../../../types/finance/CellRef.js';
+import { CellRefSchema } from '../../../types/finance/CellRef.js';
+import type {
+  ApplyOperationsBatchRequest,
+  FinanceResetStrategy,
+  FinanceValueInput,
+} from '../../../types/finance/Operation.js';
 import { FinanceValueInputSchema } from '../../../types/finance/Operation.js';
-import type { ApplyOperationsBatchRequest, FinanceResetStrategy, FinanceValueInput } from '../../../types/finance/Operation.js';
 import {
-  type EngineError,
-  type EngineMutationContext,
   checkCapability,
+  type EngineError,
   engineError,
+  type EngineMutationContext,
   resolveIdGenerator,
   resolveNow,
 } from './engineContext.js';
-import { MAX_CELLS_PER_OPERATION, chunkArray } from './gridCoordinates.js';
+import { chunkArray, MAX_CELLS_PER_OPERATION } from './gridCoordinates.js';
 
 export type BulkOpKind = 'CLEAR' | 'RESET' | 'SET';
 
@@ -51,7 +55,10 @@ export interface BuildBulkSetParams extends BulkOpsCommonParams {
   value: FinanceValueInput;
 }
 
-export type BuildBulkOperationsParams = BuildBulkClearParams | BuildBulkResetParams | BuildBulkSetParams;
+export type BuildBulkOperationsParams =
+  | BuildBulkClearParams
+  | BuildBulkResetParams
+  | BuildBulkSetParams;
 
 export interface BulkOpsEngineSuccess {
   ok: true;
@@ -82,7 +89,11 @@ export function buildBulkOperations(params: BuildBulkOperationsParams): BulkOpsE
     parsedTargets.push(parsed.data);
   });
   if (issues.length > 0) {
-    return engineError('VALIDATION_FAILED', `${issues.length} target(s) failed CellRef validation.`, issues);
+    return engineError(
+      'VALIDATION_FAILED',
+      `${issues.length} target(s) failed CellRef validation.`,
+      issues
+    );
   }
 
   let parsedValue: FinanceValueInput | null = null;
@@ -92,7 +103,10 @@ export function buildBulkOperations(params: BuildBulkOperationsParams): BulkOpsE
       return engineError(
         'VALIDATION_FAILED',
         'Bulk set value failed FinanceValueInput validation.',
-        result.error.issues.map((issue) => ({ path: ['value', ...issue.path.map(String)], message: issue.message }))
+        result.error.issues.map((issue) => ({
+          path: ['value', ...issue.path.map(String)],
+          message: issue.message,
+        }))
       );
     }
     parsedValue = result.data;
@@ -114,10 +128,10 @@ export function buildBulkOperations(params: BuildBulkOperationsParams): BulkOpsE
 
     const operation =
       params.kind === 'CLEAR'
-        ? ({ type: 'clear' as const, ...common, target: targets })
+        ? { type: 'clear' as const, ...common, target: targets }
         : params.kind === 'RESET'
-          ? ({ type: 'reset' as const, ...common, target: targets, strategy: params.strategy })
-          : ({ type: 'bulk_set' as const, ...common, target: targets, value: parsedValue! });
+          ? { type: 'reset' as const, ...common, target: targets, strategy: params.strategy }
+          : { type: 'bulk_set' as const, ...common, target: targets, value: parsedValue! };
 
     return {
       organizationId: params.organizationId,

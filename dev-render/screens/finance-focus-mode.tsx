@@ -15,12 +15,17 @@
 import React, { useEffect, useState } from 'react';
 
 import { FinanceWorkspaceBar } from '../../src/components/Finance/shared/FinanceWorkspaceBar';
-import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig } from '../../src/components/Finance/shared/financeWorkspaceBar.contract';
+import {
+  ENABLEMENT_ALWAYS,
+  type WorkspaceBarConfig,
+} from '../../src/components/Finance/shared/financeWorkspaceBar.contract';
 import { useFinanceFocusMode } from '../../src/hooks/useFinanceFocusMode';
 
 const params = new URLSearchParams(window.location.search);
 const autofocus = params.get('autofocus') === '1';
-const initialDraft = params.get('draft') || 'Niezapisana zmiana wpisana przez użytkownika PRZED wejściem w focus mode.';
+const initialDraft =
+  params.get('draft') ||
+  'Niezapisana zmiana wpisana przez użytkownika PRZED wejściem w focus mode.';
 
 interface DraftState {
   draftValue: string;
@@ -32,10 +37,24 @@ function buildConfig(name: string): WorkspaceBarConfig {
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-focus-1', artifactId: 'art-focus-1' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-focus-1',
+        artifactId: 'art-focus-1',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
-      name: { value: name, editable: true, editableBlockedReason: null, maxChars: 120, layoutBudgetChars: 60 },
-      version: { label: 'v1', businessVersionId: 'bv-focus-1', hasUncommittedWorkingRevision: true },
+      name: {
+        value: name,
+        editable: true,
+        editableBlockedReason: null,
+        maxChars: 120,
+        layoutBudgetChars: 60,
+      },
+      version: {
+        label: 'v1',
+        businessVersionId: 'bv-focus-1',
+        hasUncommittedWorkingRevision: true,
+      },
       status: 'DRAFT',
       freshness: 'CURRENT',
       contextFields: ['type', 'period'],
@@ -77,11 +96,17 @@ function buildConfig(name: string): WorkspaceBarConfig {
 function GlobalChrome(): React.ReactElement {
   return (
     <>
-      <div data-testid="global-topbar" className="flex h-10 items-center justify-between border-b border-c-border-subtle bg-c-surface-raised px-4 text-xs text-c-text-secondary">
+      <div
+        data-testid="global-topbar"
+        className="flex h-10 items-center justify-between border-b border-c-border-subtle bg-c-surface-raised px-4 text-xs text-c-text-secondary"
+      >
         <span>Consultify — global topbar (POWINIEN zniknąć w focus mode)</span>
         <span>Piotr W. · DBR77</span>
       </div>
-      <div data-testid="finance-breadcrumbs" className="flex h-8 items-center gap-1 border-b border-c-border-subtle px-4 text-xs text-c-text-muted">
+      <div
+        data-testid="finance-breadcrumbs"
+        className="flex h-8 items-center gap-1 border-b border-c-border-subtle px-4 text-xs text-c-text-muted"
+      >
         <span>Finance</span>
         <span>/</span>
         <span>Models</span>
@@ -94,7 +119,10 @@ function GlobalChrome(): React.ReactElement {
 
 function Menu1(): React.ReactElement {
   return (
-    <div data-testid="menu1" className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary">
+    <div
+      data-testid="menu1"
+      className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary"
+    >
       <span className="font-semibold text-c-text">Consultify</span>
       <span>Finance</span>
       <span className="text-c-text-muted">(Menu 1 — MUSI zostać widoczne w focus mode)</span>
@@ -103,7 +131,10 @@ function Menu1(): React.ReactElement {
 }
 
 export default function FinanceFocusModeScreen(): React.ReactElement {
-  const [workspaceState, setWorkspaceState] = useState<DraftState>({ draftValue: initialDraft, unsavedChanges: true });
+  const [workspaceState, setWorkspaceState] = useState<DraftState>({
+    draftValue: initialDraft,
+    unsavedChanges: true,
+  });
 
   const focusMode = useFinanceFocusMode<DraftState>({ workspaceState, activeViewId: 'outputs' });
 
@@ -117,7 +148,11 @@ export default function FinanceFocusModeScreen(): React.ReactElement {
   const config = buildConfig('DBR77 — Model bazowy FY2026');
 
   return (
-    <div className="min-h-screen bg-c-bg" data-testid="finance-focus-mode-screen" data-focus-active={focusMode.active}>
+    <div
+      className="min-h-screen bg-c-bg"
+      data-testid="finance-focus-mode-screen"
+      data-focus-active={focusMode.active}
+    >
       {!focusMode.active && <GlobalChrome />}
       <Menu1 />
       <FinanceWorkspaceBar
@@ -134,7 +169,10 @@ export default function FinanceFocusModeScreen(): React.ReactElement {
       />
 
       {!focusMode.active && (
-        <div data-testid="finance-status-strip" className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-1.5 text-xs text-c-text-muted">
+        <div
+          data-testid="finance-status-strip"
+          className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-1.5 text-xs text-c-text-muted"
+        >
           Pasek statusu Finance (POWINIEN zniknąć w focus mode)
         </div>
       )}
@@ -149,12 +187,21 @@ export default function FinanceFocusModeScreen(): React.ReactElement {
           className="w-full max-w-xl rounded-lg border border-c-border-subtle bg-c-surface p-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         />
         <p className="mt-2 text-xs text-c-text-muted">
-          Stan skupienia: <span className="font-mono" data-testid="focus-active-label">{String(focusMode.active)}</span> · Niezapisane zmiany:{' '}
-          <span className="font-mono" data-testid="unsaved-label">{String(workspaceState.unsavedChanges)}</span>
+          Stan skupienia:{' '}
+          <span className="font-mono" data-testid="focus-active-label">
+            {String(focusMode.active)}
+          </span>{' '}
+          · Niezapisane zmiany:{' '}
+          <span className="font-mono" data-testid="unsaved-label">
+            {String(workspaceState.unsavedChanges)}
+          </span>
         </p>
         {focusMode.lastPreservationCheck && (
           <p className="mt-1 text-xs text-c-text-muted" data-testid="preservation-check">
-            assertFocusModePreservation: <span className="font-mono">{focusMode.lastPreservationCheck.ok ? 'ok' : 'VIOLATION'}</span>
+            assertFocusModePreservation:{' '}
+            <span className="font-mono">
+              {focusMode.lastPreservationCheck.ok ? 'ok' : 'VIOLATION'}
+            </span>
           </p>
         )}
         <button
@@ -163,7 +210,9 @@ export default function FinanceFocusModeScreen(): React.ReactElement {
           onClick={() => focusMode.toggle('fullscreen.toggle')}
           className="mt-4 inline-flex min-h-[2.75rem] items-center rounded-xl border border-c-border-subtle bg-c-surface px-4 text-xs font-semibold text-c-text shadow-sm hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          {focusMode.active ? 'Wyjdź z trybu pełnego obszaru (lub Esc)' : 'Włącz tryb pełnego obszaru roboczego'}
+          {focusMode.active
+            ? 'Wyjdź z trybu pełnego obszaru (lub Esc)'
+            : 'Włącz tryb pełnego obszaru roboczego'}
         </button>
       </div>
     </div>

@@ -74,7 +74,9 @@ export function toOkrSetApprovedSnapshot(row: OkrSetApprovedSnapshotRow): OkrSet
   };
 }
 
-export function toOkrSetApprovedSnapshotSummary(row: OkrSetApprovedSnapshotRow): OkrSetApprovedSnapshotSummary {
+export function toOkrSetApprovedSnapshotSummary(
+  row: OkrSetApprovedSnapshotRow
+): OkrSetApprovedSnapshotSummary {
   return {
     snapshotId: row.snapshot_id,
     setId: row.set_id,

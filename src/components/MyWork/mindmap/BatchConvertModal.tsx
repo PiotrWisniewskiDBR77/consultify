@@ -81,7 +81,6 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
     [onClose, onConvert, selected, t]
   );
 
-
   if (!open) return null;
 
   return (
@@ -96,7 +95,10 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
       >
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
-            <h3 id="batch-convert-modal-title" className="text-sm font-bold text-c-text dark:text-c-text">
+            <h3
+              id="batch-convert-modal-title"
+              className="text-sm font-bold text-c-text dark:text-c-text"
+            >
               {t('ideas.mindmap.batchConvert', 'Batch Convert')}
             </h3>
             <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-0.5">

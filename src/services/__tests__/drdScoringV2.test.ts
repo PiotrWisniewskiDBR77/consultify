@@ -14,6 +14,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+
 import {
   calculateAxisScore,
   calculateAxisScoreLegacyV1,
@@ -23,9 +24,9 @@ import {
   calculateOverallScoreLegacyV1,
   calculateOverallScoreV2,
   calculateOverallScoreVersioned,
+  type DrdAreaInputV2,
   drdLevelFromNorm,
   normalizeDrdAreaV2,
-  type DrdAreaInputV2,
 } from '@/services/drdStructure';
 
 describe('DRD scoring — legacy_v1 golden values (frozen, do not "fix")', () => {
@@ -121,7 +122,9 @@ describe('DRD scoring — test 3: real assessed_zero vs DRD ladder (1..Lmax)', (
     });
     expect(aggregate.assessedZeroCount).toBe(1);
     expect(aggregate.assessedCount).toBe(1);
-    expect(aggregate.scoreNorm).toBe(calculateAxisScoreV2(2, { '2B': { actual: 4, target: 5 } }).scoreNorm);
+    expect(aggregate.scoreNorm).toBe(
+      calculateAxisScoreV2(2, { '2B': { actual: 4, target: 5 } }).scoreNorm
+    );
     expect(aggregate.excluded).toContainEqual({ areaId: '2A', state: 'assessed_zero' });
   });
 });
@@ -208,10 +211,16 @@ describe('DRD scoring — test 8: drd_scoring_v2 is deterministic', () => {
   it('deterministic across a fresh module instance (vi.resetModules — guards against module-level cache bugs)', async () => {
     vi.resetModules();
     const fresh = await import('@/services/drdStructure');
-    const a = fresh.calculateOverallScoreV2({ '2A': { actual: 4, target: 5 }, '2B': { actual: 2, target: 5 } });
+    const a = fresh.calculateOverallScoreV2({
+      '2A': { actual: 4, target: 5 },
+      '2B': { actual: 2, target: 5 },
+    });
     vi.resetModules();
     const fresh2 = await import('@/services/drdStructure');
-    const b = fresh2.calculateOverallScoreV2({ '2A': { actual: 4, target: 5 }, '2B': { actual: 2, target: 5 } });
+    const b = fresh2.calculateOverallScoreV2({
+      '2A': { actual: 4, target: 5 },
+      '2B': { actual: 2, target: 5 },
+    });
     expect(a).toEqual(b);
   });
 

@@ -34,7 +34,11 @@ describe('OrganizationScenariosBriefScreen', () => {
   beforeEach(() => {
     setSynthesis.mockReset();
     vi.mocked(useContextBuilderStore).mockReturnValue({
-      synthesis: { risks: [{ id: 'r1', severity: 'High' }], strengths: [], selectedScenarioId: 'ai-powered' },
+      synthesis: {
+        risks: [{ id: 'r1', severity: 'High' }],
+        strengths: [],
+        selectedScenarioId: 'ai-powered',
+      },
       setSynthesis,
       challenges: { declaredChallenges: [{ id: 'c1', challenge: 'Braki jakościowe' }] },
       goals: { strategicGoals: [], successMetrics: [] },

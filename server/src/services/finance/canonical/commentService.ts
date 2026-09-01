@@ -25,7 +25,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { CellRefSchema, type CellRef } from '../../../types/finance/CellRef.js';
+import { type CellRef, CellRefSchema } from '../../../types/finance/CellRef.js';
 
 // ---------------------------------------------------------------------------
 // Row shapes
@@ -103,7 +103,11 @@ export async function createComment(params: CreateCommentParams): Promise<Create
   if (params.anchor != null) {
     const parsed = CellRefSchema.safeParse(params.anchor);
     if (!parsed.success) {
-      return { ok: false, code: 'INVALID_ANCHOR', message: `anchor is not a valid CellRef: ${parsed.error.message}` };
+      return {
+        ok: false,
+        code: 'INVALID_ANCHOR',
+        message: `anchor is not a valid CellRef: ${parsed.error.message}`,
+      };
     }
     anchor = parsed.data;
   }
@@ -153,7 +157,8 @@ export async function resolveComment(
       [commentId, organizationId]
     );
     if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Comment not found' };
-    if (current.resolved_at) return { ok: false, code: 'ALREADY_RESOLVED', message: 'Comment is already resolved' };
+    if (current.resolved_at)
+      return { ok: false, code: 'ALREADY_RESOLVED', message: 'Comment is already resolved' };
 
     const updated = await tx.queryOne<FinanceCommentRow>(
       `UPDATE finance_comments SET resolved_by = ?, resolved_at = now()
@@ -170,14 +175,18 @@ export type ReopenCommentResult =
   | { ok: false; code: 'NOT_FOUND' | 'NOT_RESOLVED'; message: string };
 
 /** Clears resolved_by/resolved_at, putting the comment back into the "open" state (unresolved_at IS NULL). */
-export async function reopenComment(organizationId: string, commentId: string): Promise<ReopenCommentResult> {
+export async function reopenComment(
+  organizationId: string,
+  commentId: string
+): Promise<ReopenCommentResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<FinanceCommentRow>(
       `SELECT * FROM finance_comments WHERE id = ? AND organization_id = ?`,
       [commentId, organizationId]
     );
     if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Comment not found' };
-    if (!current.resolved_at) return { ok: false, code: 'NOT_RESOLVED', message: 'Comment is not resolved' };
+    if (!current.resolved_at)
+      return { ok: false, code: 'NOT_RESOLVED', message: 'Comment is not resolved' };
 
     const updated = await tx.queryOne<FinanceCommentRow>(
       `UPDATE finance_comments SET resolved_by = NULL, resolved_at = NULL
@@ -219,7 +228,14 @@ export async function assignComment(params: AssignCommentParams): Promise<Assign
          id, comment_id, organization_id, assignee_id, due_date, assigned_by
        ) VALUES (?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [uuidv4(), params.commentId, params.organizationId, params.assigneeId, params.dueDate ?? null, params.assignedBy]
+      [
+        uuidv4(),
+        params.commentId,
+        params.organizationId,
+        params.assigneeId,
+        params.dueDate ?? null,
+        params.assignedBy,
+      ]
     );
     if (!assignment) throw new Error('finance_comment_assignments insert returned no row');
     return { ok: true, assignment };
@@ -244,12 +260,15 @@ export async function getCurrentAssignment(
 // queries
 // ---------------------------------------------------------------------------
 
-export async function getComment(organizationId: string, commentId: string): Promise<FinanceCommentRow | null> {
+export async function getComment(
+  organizationId: string,
+  commentId: string
+): Promise<FinanceCommentRow | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<FinanceCommentRow>(`SELECT * FROM finance_comments WHERE id = ? AND organization_id = ?`, [
-      commentId,
-      organizationId,
-    ])
+    tx.queryOne<FinanceCommentRow>(
+      `SELECT * FROM finance_comments WHERE id = ? AND organization_id = ?`,
+      [commentId, organizationId]
+    )
   );
   return row ? normalizeCommentRow(row) : null;
 }
@@ -261,7 +280,10 @@ export interface ListCommentsOptions {
   blockingOnly?: boolean;
 }
 
-function buildListFilters(opts: ListCommentsOptions | undefined, startIndex: number): { clause: string; extra: unknown[] } {
+function buildListFilters(
+  opts: ListCommentsOptions | undefined,
+  startIndex: number
+): { clause: string; extra: unknown[] } {
   const clauses: string[] = [];
   if (opts?.unresolvedOnly) clauses.push('resolved_at IS NULL');
   if (opts?.blockingOnly) clauses.push('is_blocking = true');
@@ -300,7 +322,11 @@ export async function listByBusinessVersion(
 }
 
 /** Comments anchored to a specific cell — exact-match containment on the CellRef JSON (row+column+table+version). */
-export async function listByCell(organizationId: string, businessVersionId: string, cellRef: CellRef): Promise<FinanceCommentRow[]> {
+export async function listByCell(
+  organizationId: string,
+  businessVersionId: string,
+  cellRef: CellRef
+): Promise<FinanceCommentRow[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<FinanceCommentRow>(
       `SELECT * FROM finance_comments
@@ -312,7 +338,10 @@ export async function listByCell(organizationId: string, businessVersionId: stri
   return rows.map(normalizeCommentRow);
 }
 
-export async function listMentioning(organizationId: string, userId: string): Promise<FinanceCommentRow[]> {
+export async function listMentioning(
+  organizationId: string,
+  userId: string
+): Promise<FinanceCommentRow[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<FinanceCommentRow>(
       `SELECT * FROM finance_comments WHERE organization_id = ? AND ? = ANY(mentions) ORDER BY created_at DESC`,
@@ -332,7 +361,10 @@ export async function listMentioning(organizationId: string, userId: string): Pr
  * check must run on the SAME pinned connection/transaction as the rest of
  * the atomic approve, not a separate round-trip).
  */
-export async function hasUnresolvedBlockingComments(organizationId: string, businessVersionId: string): Promise<boolean> {
+export async function hasUnresolvedBlockingComments(
+  organizationId: string,
+  businessVersionId: string
+): Promise<boolean> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ id: string }>(
       `SELECT id FROM finance_comments

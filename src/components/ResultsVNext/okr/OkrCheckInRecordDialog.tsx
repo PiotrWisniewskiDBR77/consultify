@@ -14,10 +14,15 @@
 import { AlertTriangle, Info, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
-import type { OkrCheckInConfidence, OkrCheckInOccurrenceOption, OkrCheckInStatus, OkrSuggestNextCheckInValue } from './okrCheckInApi';
+import type {
+  OkrCheckInConfidence,
+  OkrCheckInOccurrenceOption,
+  OkrCheckInStatus,
+  OkrSuggestNextCheckInValue,
+} from './okrCheckInApi';
 import { okrSuggestBasisLabel } from './okrCheckInMappers';
 
 export interface OkrCheckInRecordFormValues {
@@ -66,7 +71,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -114,7 +120,8 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
 
   const cadenceError = touched && !cadenceOccurrenceId.trim();
   const noteError = touched && !note.trim();
-  const confidenceNumericError = touched && confidence === 'numeric' && confidenceNumericValue.trim() === '';
+  const confidenceNumericError =
+    touched && confidence === 'numeric' && confidenceNumericValue.trim() === '';
   const submitDisabled = busy || !!blockedReason;
 
   const handleSubmit = () => {
@@ -139,7 +146,9 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
       open={open}
       onClose={busy ? () => {} : onClose}
       title={isPolish ? 'Nowy check-in' : 'New check-in'}
-      description={isPolish ? `Kluczowy Rezultat: ${keyResultTitle}` : `Key Result: ${keyResultTitle}`}
+      description={
+        isPolish ? `Kluczowy Rezultat: ${keyResultTitle}` : `Key Result: ${keyResultTitle}`
+      }
       size="md"
       preventOverlayClose={busy}
       preventEscapeClose={busy}
@@ -156,7 +165,15 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             data-testid="okr-checkin-record-submit"
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zarejestruj check-in' : 'Record check-in'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Zarejestruj check-in'
+                  : 'Record check-in'}
+            </span>
           </button>
         </>
       }
@@ -168,13 +185,18 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             className="flex items-start gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-c-text"
             data-testid="okr-checkin-blocked"
           >
-            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
+            <AlertTriangle
+              size={14}
+              className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300"
+            />
             <span>{blockedReason}</span>
           </div>
         ) : null}
 
         {suggestion === undefined ? (
-          <p className="text-[12px] text-c-text-muted">{isPolish ? 'Wczytywanie sugestii…' : 'Loading suggestion…'}</p>
+          <p className="text-[12px] text-c-text-muted">
+            {isPolish ? 'Wczytywanie sugestii…' : 'Loading suggestion…'}
+          </p>
         ) : suggestion ? (
           <div
             className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-[12px] text-c-text-secondary"
@@ -186,7 +208,9 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
                 {isPolish ? 'Sugestia serwera: ' : 'Server suggestion: '}
                 <strong className="text-c-text">
                   {suggestion.suggestedValue !== null
-                    ? suggestion.suggestedValue.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 2 })
+                    ? suggestion.suggestedValue.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+                        maximumFractionDigits: 2,
+                      })
                     : okrSuggestBasisLabel(suggestion.basis, isPolish)}
                 </strong>{' '}
                 ({okrSuggestBasisLabel(suggestion.basis, isPolish)})
@@ -221,17 +245,37 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
           >
             <option value="">
               {occurrences === undefined
-                ? isPolish ? 'Wczytywanie okien…' : 'Loading windows…'
+                ? isPolish
+                  ? 'Wczytywanie okien…'
+                  : 'Loading windows…'
                 : occurrencesError
-                  ? isPolish ? 'Nie udało się pobrać okien' : 'Failed to load windows'
+                  ? isPolish
+                    ? 'Nie udało się pobrać okien'
+                    : 'Failed to load windows'
                   : occurrences.length === 0
-                    ? isPolish ? 'Brak dostępnych okien' : 'No windows available'
-                    : isPolish ? '— wybierz okno —' : '— select a window —'}
+                    ? isPolish
+                      ? 'Brak dostępnych okien'
+                      : 'No windows available'
+                    : isPolish
+                      ? '— wybierz okno —'
+                      : '— select a window —'}
             </option>
             {(occurrences ?? []).map((occurrence) => (
-              <option key={occurrence.cadenceOccurrenceId} value={occurrence.cadenceOccurrenceId} disabled={occurrence.used}>
+              <option
+                key={occurrence.cadenceOccurrenceId}
+                value={occurrence.cadenceOccurrenceId}
+                disabled={occurrence.used}
+              >
                 {occurrence.windowStart} – {occurrence.windowEnd}
-                {occurrence.used ? (isPolish ? ' (wykorzystane)' : ' (used)') : occurrence.isCurrent ? (isPolish ? ' (bieżące)' : ' (current)') : ''}
+                {occurrence.used
+                  ? isPolish
+                    ? ' (wykorzystane)'
+                    : ' (used)'
+                  : occurrence.isCurrent
+                    ? isPolish
+                      ? ' (bieżące)'
+                      : ' (current)'
+                    : ''}
               </option>
             ))}
           </select>
@@ -244,7 +288,9 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             </span>
           </p>
           {cadenceError ? (
-            <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'To pole jest wymagane' : 'This field is required'}</p>
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'To pole jest wymagane' : 'This field is required'}
+            </p>
           ) : null}
           {occurrencesError ? (
             <div
@@ -272,7 +318,9 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
               data-testid="okr-checkin-value"
             />
             <p className="mt-1 text-[11px] text-c-text-muted">
-              {isPolish ? 'Puste = check-in wyłącznie jakościowy, wartość KR bez zmian.' : 'Empty = qualitative-only check-in, KR value unchanged.'}
+              {isPolish
+                ? 'Puste = check-in wyłącznie jakościowy, wartość KR bez zmian.'
+                : 'Empty = qualitative-only check-in, KR value unchanged.'}
             </p>
           </div>
           <div>
@@ -331,7 +379,11 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
                 aria-invalid={confidenceNumericError || undefined}
               />
               {confidenceNumericError ? (
-                <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane, gdy pewność = „liczbowa"' : 'Required when confidence = "numeric"'}</p>
+                <p className="mt-1 text-[11px] text-c-danger">
+                  {isPolish
+                    ? 'Wymagane, gdy pewność = „liczbowa"'
+                    : 'Required when confidence = "numeric"'}
+                </p>
               ) : null}
             </div>
           ) : null}
@@ -349,7 +401,11 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             data-testid="okr-checkin-note"
             aria-invalid={noteError || undefined}
           />
-          {noteError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Notatka jest wymagana' : 'Note is required'}</p> : null}
+          {noteError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Notatka jest wymagana' : 'Note is required'}
+            </p>
+          ) : null}
         </div>
 
         <div>
@@ -385,7 +441,13 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             data-testid="okr-checkin-record-error"
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

@@ -26,6 +26,7 @@
  * different table) plus a genuine alias of its own.
  */
 import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -113,7 +114,11 @@ describe.skipIf(!REAL_PG)('legacy_cutover_identity_denominator (fresh real Postg
     legacyTable: string;
     legacyId: string;
     organizationId: string;
-    mappingConfidence: 'AUTO_MIGRATE' | 'MIGRATE_WITH_WARNING' | 'QUARANTINE' | 'EXCLUDE_WITH_REASON';
+    mappingConfidence:
+      | 'AUTO_MIGRATE'
+      | 'MIGRATE_WITH_WARNING'
+      | 'QUARANTINE'
+      | 'EXCLUDE_WITH_REASON';
     mappingReason?: string;
   }): Promise<void> {
     const artifactId = `${prefix}-af-${randomUUID().slice(0, 8)}`;

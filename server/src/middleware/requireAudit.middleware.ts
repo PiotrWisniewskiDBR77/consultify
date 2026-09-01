@@ -15,6 +15,10 @@ import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 declare global {
+  // Rozszerzenie typow Express WYMAGA deklaracji przestrzeni nazw — skladni
+  // modulowej ES2015 nie da sie tu uzyc, wiec regula nie ma w tym miejscu
+  // zastosowania. Wyciszenie celowane, nie globalne.
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       emitAuditEvent?: (

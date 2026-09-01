@@ -40,13 +40,18 @@
  * succeeded), but IS logged at `error` level because a silent failure
  * here reproduces exactly the "awaria bez sygnału" the audit warns about.
  */
-import { getPreferences, updatePreferences } from './notificationService.js';
 import logger from '../utils/Logger.js';
+import { getPreferences, updatePreferences } from './notificationService.js';
 
 export type ChannelToggle = { email?: boolean; inApp?: boolean };
 
 export const TASK_ASSIGNMENT_TYPES = ['task_assigned'];
-export const TASK_UPDATE_TYPES = ['task_completed', 'task_comment', 'task_overdue', 'task_due_soon'];
+export const TASK_UPDATE_TYPES = [
+  'task_completed',
+  'task_comment',
+  'task_overdue',
+  'task_due_soon',
+];
 export const PROJECT_ALERT_TYPES = ['project_member_added', 'project_archived'];
 
 function channelsFromToggle(toggle: ChannelToggle): string[] {

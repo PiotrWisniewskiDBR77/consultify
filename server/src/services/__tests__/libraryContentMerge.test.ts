@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isEmptyValue,
+  type LibraryContent,
   mergeLibraryContent,
   mergeLibraryContentJson,
   parseLibraryContent,
-  type LibraryContent,
 } from '../libraryContentMerge.js';
 
 /**

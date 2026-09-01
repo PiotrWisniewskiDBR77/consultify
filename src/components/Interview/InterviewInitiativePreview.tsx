@@ -22,7 +22,11 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { EntityStatusChip, PriorityChip, type PriorityLevel } from '@/components/ui/primitives/chips';
+import {
+  EntityStatusChip,
+  PriorityChip,
+  type PriorityLevel,
+} from '@/components/ui/primitives/chips';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewInitiativePreviewBody

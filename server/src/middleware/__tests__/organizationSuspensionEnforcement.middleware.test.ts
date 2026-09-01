@@ -30,12 +30,7 @@ import type { NextFunction, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __testing__ } from '../../services/organizationSuspensionGuard.js';
-import {
-  type AuthRequest,
-  __private__,
-  setDependencies,
-  verifyToken,
-} from '../auth.middleware.js';
+import { __private__, type AuthRequest, setDependencies, verifyToken } from '../auth.middleware.js';
 
 /** Tenants the fake database knows about, keyed by id. */
 const ORG_STATUS: Record<string, string> = {
@@ -88,7 +83,10 @@ const mockDbGet = vi.fn(
     // A caller that asked for `fallback: false` is asking for a REJECTION on
     // failure. Honour that here so the "database is down" case below exercises
     // the real contract instead of a convenient fiction.
-    if (SIMULATE_DB_FAILURE.on && (text.includes('FROM organizations') || text.includes('FROM users'))) {
+    if (
+      SIMULATE_DB_FAILURE.on &&
+      (text.includes('FROM organizations') || text.includes('FROM users'))
+    ) {
       if (options?.fallback === false) throw new Error('simulated database failure');
       return undefined;
     }
@@ -106,8 +104,7 @@ const mockDbGet = vi.fn(
       // Every test user is an ACTIVE member of the org in its token, so the
       // "any ACTIVE membership" rescue in attachUser is a no-op here and the
       // effective tenant is exactly the one the test asked for.
-      const orgId =
-        text.includes('organization_id = ?') && params?.[1] ? String(params[1]) : first;
+      const orgId = text.includes('organization_id = ?') && params?.[1] ? String(params[1]) : first;
       return { organization_id: orgId, role: 'ADMIN', status: 'ACTIVE' } as never;
     }
     return undefined;

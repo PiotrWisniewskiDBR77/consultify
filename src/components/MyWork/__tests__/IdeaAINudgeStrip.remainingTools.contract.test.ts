@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 const read = (name: string) => fs.readFileSync(path.resolve(__dirname, `../${name}`), 'utf8');

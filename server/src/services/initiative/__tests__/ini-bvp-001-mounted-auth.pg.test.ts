@@ -8,7 +8,10 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
-const REAL_DB = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && DATABASE_URL.startsWith('postgres');
+const REAL_DB =
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  DATABASE_URL.startsWith('postgres');
 
 describe.skipIf(!REAL_DB)('INI-BVP-001 mounted candidate acceptance (real PostgreSQL)', () => {
   const suffix = randomUUID();
@@ -29,10 +32,21 @@ describe.skipIf(!REAL_DB)('INI-BVP-001 mounted candidate acceptance (real Postgr
   beforeAll(async () => {
     process.env.DB_TYPE = 'postgres';
     pool = new Pool({ connectionString: DATABASE_URL });
-    for (const org of [orgA, orgB]) await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [org]);
-    for (const [user, org, status] of [[ownerA, orgA, 'ACTIVE'], [ownerB, orgB, 'ACTIVE'], [staleA, orgA, 'INACTIVE']]) {
-      await pool.query(`INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'unused','OWNER','active')`, [user, org, `${user}@example.test`]);
-      await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER',$4)`, [id(`member_${user}`), org, user, status]);
+    for (const org of [orgA, orgB])
+      await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [org]);
+    for (const [user, org, status] of [
+      [ownerA, orgA, 'ACTIVE'],
+      [ownerB, orgB, 'ACTIVE'],
+      [staleA, orgA, 'INACTIVE'],
+    ]) {
+      await pool.query(
+        `INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'unused','OWNER','active')`,
+        [user, org, `${user}@example.test`]
+      );
+      await pool.query(
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER',$4)`,
+        [id(`member_${user}`), org, user, status]
+      );
     }
     for (const candidateId of [candidate, staleCandidate]) {
       await pool.query(
@@ -42,7 +56,12 @@ describe.skipIf(!REAL_DB)('INI-BVP-001 mounted candidate acceptance (real Postgr
       );
     }
     const { default: config } = await import('../../../config/Config.js');
-    const sign = (user: string, org: string) => jwt.sign({ id: user, organizationId: org, role: 'OWNER', email: `${user}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
+    const sign = (user: string, org: string) =>
+      jwt.sign(
+        { id: user, organizationId: org, role: 'OWNER', email: `${user}@example.test` },
+        config.JWT_SECRET,
+        { expiresIn: '10m' }
+      );
     ownerAToken = sign(ownerA, orgA);
     ownerBToken = sign(ownerB, orgB);
     staleToken = sign(staleA, orgA);
@@ -54,10 +73,14 @@ describe.skipIf(!REAL_DB)('INI-BVP-001 mounted candidate acceptance (real Postgr
 
   afterAll(async () => {
     if (!pool) return;
-    await pool.query(`DELETE FROM initiative_candidates WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM initiative_candidates WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(`DELETE FROM initiatives WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[ownerA, ownerB, staleA]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
@@ -66,19 +89,32 @@ describe.skipIf(!REAL_DB)('INI-BVP-001 mounted candidate acceptance (real Postgr
   const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
   it('concurrent mounted acceptance converges to one Initiative and stable receipt', async () => {
-    const accept = () => request(app).post(`/api/initiatives/candidates/${candidate}/accept`).set(auth(ownerAToken)).send({ fill: false });
+    const accept = () =>
+      request(app)
+        .post(`/api/initiatives/candidates/${candidate}/accept`)
+        .set(auth(ownerAToken))
+        .send({ fill: false });
     const [a, b] = await Promise.all([accept(), accept()]);
     expect(a.status).toBe(200);
     expect(b.status).toBe(200);
     expect(a.body.initiativeId).toBe(b.body.initiativeId);
-    const rows = await pool.query(`SELECT id FROM initiatives WHERE organization_id=$1 AND id=$2`, [orgA, a.body.initiativeId]);
+    const rows = await pool.query(`SELECT id FROM initiatives WHERE organization_id=$1 AND id=$2`, [
+      orgA,
+      a.body.initiativeId,
+    ]);
     expect(rows.rows).toHaveLength(1);
   });
 
   it('denies foreign tenant and stale membership through mounted auth', async () => {
-    const foreign = await request(app).post(`/api/initiatives/candidates/${staleCandidate}/accept`).set(auth(ownerBToken)).send({ fill: false });
+    const foreign = await request(app)
+      .post(`/api/initiatives/candidates/${staleCandidate}/accept`)
+      .set(auth(ownerBToken))
+      .send({ fill: false });
     expect(foreign.status).toBe(404);
-    const stale = await request(app).post(`/api/initiatives/candidates/${staleCandidate}/accept`).set(auth(staleToken)).send({ fill: false });
+    const stale = await request(app)
+      .post(`/api/initiatives/candidates/${staleCandidate}/accept`)
+      .set(auth(staleToken))
+      .send({ fill: false });
     expect(stale.status).toBe(403);
     expect(stale.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
   });

@@ -25,17 +25,20 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
+import type { RoiApprovalSnapshotRow } from './roiApprovalSnapshotTypes.js';
 import { ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import { ROI_COMPARE_METRICS, type RoiCompareMetric } from './roiCompareRepository.js';
 import {
-  toRoiVariance,
-  toRoiVarianceCause,
   type RoiActualSnapshotRow,
   type RoiForecastVersionRow,
   type RoiVariance,
@@ -44,8 +47,9 @@ import {
   type RoiVarianceComparisonType,
   type RoiVarianceRow,
   type RoiVarianceStatus,
+  toRoiVariance,
+  toRoiVarianceCause,
 } from './roiForecastActualTypes.js';
-import type { RoiApprovalSnapshotRow } from './roiApprovalSnapshotTypes.js';
 
 // ==========================================
 // ERRORS
@@ -54,7 +58,11 @@ import type { RoiApprovalSnapshotRow } from './roiApprovalSnapshotTypes.js';
 export class RoiVarianceValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_VARIANCE_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_VARIANCE_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiVarianceValidationError';
     this.code = code;
@@ -80,7 +88,13 @@ type VarianceScope = 'approved' | 'forecast' | 'actual';
 
 async function readScopedMetricValue(
   client: PoolClient,
-  params: { scope: VarianceScope; referenceId: string; caseId: string; organizationId: string; metric: RoiCompareMetric }
+  params: {
+    scope: VarianceScope;
+    referenceId: string;
+    caseId: string;
+    organizationId: string;
+    metric: RoiCompareMetric;
+  }
 ): Promise<number | null> {
   const { scope, referenceId, caseId, organizationId, metric } = params;
 
@@ -156,7 +170,10 @@ async function readScopedMetricValue(
   return value === null ? null : Number(value);
 }
 
-const COMPARISON_TYPE_SCOPES: Record<RoiVarianceComparisonType, { baseline: VarianceScope; comparison: VarianceScope }> = {
+const COMPARISON_TYPE_SCOPES: Record<
+  RoiVarianceComparisonType,
+  { baseline: VarianceScope; comparison: VarianceScope }
+> = {
   approved_vs_forecast: { baseline: 'approved', comparison: 'forecast' },
   approved_vs_actual: { baseline: 'approved', comparison: 'actual' },
   forecast_vs_actual: { baseline: 'forecast', comparison: 'actual' },
@@ -204,7 +221,9 @@ export interface RecordVarianceInput {
   access: CommandAccessContext;
 }
 
-export async function recordVariance(input: RecordVarianceInput): Promise<AtomicCommandOutcome<RoiVariance>> {
+export async function recordVariance(
+  input: RecordVarianceInput
+): Promise<AtomicCommandOutcome<RoiVariance>> {
   const {
     caseId,
     organizationId,
@@ -224,7 +243,9 @@ export async function recordVariance(input: RecordVarianceInput): Promise<Atomic
   } = input;
 
   if (!ROI_COMPARE_METRICS.includes(metric)) {
-    throw new RoiVarianceValidationError(`Unknown metric "${metric}"`, 'UNKNOWN_METRIC', { metric });
+    throw new RoiVarianceValidationError(`Unknown metric "${metric}"`, 'UNKNOWN_METRIC', {
+      metric,
+    });
   }
 
   const scopes = COMPARISON_TYPE_SCOPES[comparisonType];
@@ -269,9 +290,12 @@ export async function recordVariance(input: RecordVarianceInput): Promise<Atomic
         metric,
       });
 
-      const varianceAmount = baselineValue === null || comparisonValue === null ? null : comparisonValue - baselineValue;
+      const varianceAmount =
+        baselineValue === null || comparisonValue === null ? null : comparisonValue - baselineValue;
       const variancePct =
-        varianceAmount === null || baselineValue === null || baselineValue === 0 ? null : (varianceAmount / baselineValue) * 100;
+        varianceAmount === null || baselineValue === null || baselineValue === 0
+          ? null
+          : (varianceAmount / baselineValue) * 100;
 
       const insertResult = await client.query<RoiVarianceRow>(
         `INSERT INTO rvn_roi_variances (
@@ -484,7 +508,9 @@ export interface AddVarianceCauseInput {
   access: CommandAccessContext;
 }
 
-export async function addVarianceCause(input: AddVarianceCauseInput): Promise<AtomicCommandOutcome<RoiVarianceCause>> {
+export async function addVarianceCause(
+  input: AddVarianceCauseInput
+): Promise<AtomicCommandOutcome<RoiVarianceCause>> {
   const {
     varianceId,
     organizationId,
@@ -503,7 +529,11 @@ export async function addVarianceCause(input: AddVarianceCauseInput): Promise<At
   return executeAtomicCreate<RoiVarianceCause>({
     organizationId,
     applyMutation: async (client) => {
-      const varianceResult = await client.query<{ variance_id: string; case_id: string; owner_user_id: string | null }>(
+      const varianceResult = await client.query<{
+        variance_id: string;
+        case_id: string;
+        owner_user_id: string | null;
+      }>(
         `SELECT variance_id, case_id, owner_user_id FROM rvn_roi_variances WHERE variance_id = $1 AND organization_id = $2`,
         [varianceId, organizationId]
       );
@@ -512,7 +542,11 @@ export async function addVarianceCause(input: AddVarianceCauseInput): Promise<At
         throw new RoiVarianceNotFoundError(varianceId, organizationId);
       }
 
-      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, varianceRow.case_id, organizationId);
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(
+        client,
+        varianceRow.case_id,
+        organizationId
+      );
       assertCommandCapability({
         access,
         actorUserId: createdBy,
@@ -615,7 +649,11 @@ export async function removeVarianceCause(
       if (!varianceRow) {
         throw new RoiVarianceNotFoundError(varianceId, organizationId);
       }
-      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, varianceRow.case_id, organizationId);
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(
+        client,
+        varianceRow.case_id,
+        organizationId
+      );
       assertCommandCapability({
         access,
         actorUserId,

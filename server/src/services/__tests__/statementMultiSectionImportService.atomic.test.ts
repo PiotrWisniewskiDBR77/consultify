@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const state = vi.hoisted(() => ({ statements: [] as string[], rows: [] as string[], receipts: [] as string[] }));
+const state = vi.hoisted(() => ({
+  statements: [] as string[],
+  rows: [] as string[],
+  receipts: [] as string[],
+}));
 const mocks = vi.hoisted(() => ({
   locate: vi.fn(),
   create: vi.fn(),
@@ -206,17 +210,14 @@ describe('statementMultiSectionImportService atomic staging', () => {
 
     expect(result.selectedTypes).toEqual(['P&L', 'BS', 'CF']);
     expect(result.statements).toHaveLength(6);
-    expect(result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)).toEqual([
-      'P&L:2025',
-      'P&L:2024',
-      'BS:2025',
-      'BS:2024',
-      'CF:2025',
-      'CF:2024',
-    ]);
+    expect(
+      result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)
+    ).toEqual(['P&L:2025', 'P&L:2024', 'BS:2025', 'BS:2024', 'CF:2025', 'CF:2024']);
     expect(new Set(result.statements.map(({ statementId }) => statementId)).size).toBe(6);
     expect(new Set(result.statements.map(({ sourceReceiptId }) => sourceReceiptId)).size).toBe(6);
-    expect(result.statements.filter(({ comparisonOfStatementId }) => comparisonOfStatementId)).toHaveLength(3);
+    expect(
+      result.statements.filter(({ comparisonOfStatementId }) => comparisonOfStatementId)
+    ).toHaveLength(3);
     expect(result.statements).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -269,14 +270,9 @@ describe('statementMultiSectionImportService atomic staging', () => {
     });
 
     expect(result.selectedTypes).toEqual(['P&L', 'BS', 'CF']);
-    expect(result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)).toEqual([
-      'P&L:2025',
-      'P&L:2024',
-      'BS:2025',
-      'BS:2024',
-      'CF:2025',
-      'CF:2024',
-    ]);
+    expect(
+      result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)
+    ).toEqual(['P&L:2025', 'P&L:2024', 'BS:2025', 'BS:2024', 'CF:2025', 'CF:2024']);
     expect(result.statements[0]).toMatchObject({
       statementId: 'primary-1',
       statementType: 'P&L',

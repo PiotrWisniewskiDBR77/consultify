@@ -22,9 +22,9 @@ import {
   siriTierAvailability,
   type SiriTierViewResult,
 } from '../../src/method-core/methods/siri/siriTierView';
-import { SIRI_PM_V2_FLAG_KEYS } from '../../src/utils/siriPmV2Flag';
 import type { SiriPmPlanningHorizon } from '../../src/services/siriPrioritisation';
 import { SIRI_PRIORITISATION_AREAS } from '../../src/services/siriStructure';
+import { SIRI_PM_V2_FLAG_KEYS } from '../../src/utils/siriPmV2Flag';
 
 const params = new URLSearchParams(window.location.search);
 const frozen = params.get('frozen') !== '0';
@@ -68,12 +68,29 @@ function Screen(): React.ReactElement {
   }, [availability.available]);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--c-bg)', color: 'var(--c-text)', padding: 24, fontFamily: 'system-ui' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--c-bg)',
+        color: 'var(--c-text)',
+        padding: 24,
+        fontFamily: 'system-ui',
+      }}
+    >
       <header style={{ marginBottom: 16 }}>
-        <p style={{ fontSize: 11, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--c-text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+          }}
+        >
           SIRI · Osobny ekran (nie MethodWorkspaceShell)
         </p>
-        <h1 style={{ fontSize: 18, fontWeight: 700, margin: '2px 0' }}>TIER — Prioritisation Matrix</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 700, margin: '2px 0' }}>
+          TIER — Prioritisation Matrix
+        </h1>
         <p style={{ fontSize: 12, color: 'var(--c-text-secondary)' }}>
           Uruchamiany dopiero po zamrożeniu (freeze) Assessment Matrix — dwie kolejne macierze
           (ASSESSMENT_KB_SIRI.md §4), nigdy w tym samym formularzu co wybór Bandu.
@@ -100,7 +117,10 @@ function Screen(): React.ReactElement {
       )}
 
       {result && (
-        <div data-testid="siri-tier-result" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div
+          data-testid="siri-tier-result"
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
           <div
             style={{
               display: 'flex',
@@ -120,13 +140,15 @@ function Screen(): React.ReactElement {
               <strong>planningHorizon:</strong> {result.planningHorizon}
             </span>
             <span>
-              <strong>wagi (cost/kpi/proximity):</strong> {result.weights.cost} / {result.weights.kpi} / {result.weights.proximity}
+              <strong>wagi (cost/kpi/proximity):</strong> {result.weights.cost} /{' '}
+              {result.weights.kpi} / {result.weights.proximity}
             </span>
             <span>
               <strong>parametersVersion:</strong> {result.parametersVersion}
             </span>
             <span>
-              <strong>flaga SIRI_PM_V2:</strong> {flagOn ? 'ON' : 'OFF'} (URL ?flag={flagOn ? '1' : '0'})
+              <strong>flaga SIRI_PM_V2:</strong> {flagOn ? 'ON' : 'OFF'} (URL ?flag=
+              {flagOn ? '1' : '0'})
             </span>
           </div>
 
@@ -137,15 +159,26 @@ function Screen(): React.ReactElement {
                 data-testid={`siri-tier-focus-block-${block.buildingBlock}`}
                 style={{ border: '1px solid var(--c-border)', borderRadius: 10, padding: 12 }}
               >
-                <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--c-text-muted)' }}>
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'var(--c-text-muted)',
+                  }}
+                >
                   {BUILDING_BLOCK_LABEL[block.buildingBlock] ?? block.buildingBlock}
                 </p>
                 {block.focusAreaIds.length === 0 ? (
-                  <p style={{ fontSize: 12, color: 'var(--c-warning)' }}>Brak focus dimension — nieoczekiwane.</p>
+                  <p style={{ fontSize: 12, color: 'var(--c-warning)' }}>
+                    Brak focus dimension — nieoczekiwane.
+                  </p>
                 ) : (
                   <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: 12 }}>
                     {block.focusAreaIds.map((id) => (
-                      <li key={id}>{SIRI_PRIORITISATION_AREAS.find((a) => a.id === id)?.name ?? id}</li>
+                      <li key={id}>
+                        {SIRI_PRIORITISATION_AREAS.find((a) => a.id === id)?.name ?? id}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -154,8 +187,8 @@ function Screen(): React.ReactElement {
           </div>
 
           <p style={{ fontSize: 12, color: 'var(--c-text-secondary)' }}>
-            Łącznie <strong data-testid="siri-tier-total-focus">{result.totalFocusCount}</strong> focus dimension(s) — ≥1 na
-            każdy z 3 building blocks + 1 dodatkowy (Whitepaper Step 8).
+            Łącznie <strong data-testid="siri-tier-total-focus">{result.totalFocusCount}</strong>{' '}
+            focus dimension(s) — ≥1 na każdy z 3 building blocks + 1 dodatkowy (Whitepaper Step 8).
           </p>
 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -173,13 +206,17 @@ function Screen(): React.ReactElement {
                   key={row.areaId}
                   style={{
                     borderTop: '1px solid var(--c-border-subtle)',
-                    background: row.isFocus ? 'color-mix(in srgb, var(--c-info) 8%, transparent)' : undefined,
+                    background: row.isFocus
+                      ? 'color-mix(in srgb, var(--c-info) 8%, transparent)'
+                      : undefined,
                   }}
                 >
                   <td style={{ padding: '4px 8px' }}>{row.rank}</td>
                   <td style={{ padding: '4px 8px' }}>{row.areaName}</td>
                   <td style={{ padding: '4px 8px' }}>{row.isFocus ? 'SELECTED_FOCUS' : '—'}</td>
-                  <td style={{ padding: '4px 8px', color: 'var(--c-text-secondary)' }}>{row.rationale}</td>
+                  <td style={{ padding: '4px 8px', color: 'var(--c-text-secondary)' }}>
+                    {row.rationale}
+                  </td>
                 </tr>
               ))}
             </tbody>

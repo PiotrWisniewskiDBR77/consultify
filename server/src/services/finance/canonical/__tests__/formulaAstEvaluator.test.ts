@@ -7,18 +7,26 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  evaluateFormula,
   type CellRefOperand,
   type CellResolution,
   type CellResolver,
   type DynamicConstantResolver,
+  evaluateFormula,
   type EvaluationResult,
   type FormulaNode,
   type FormulaRefResolver,
 } from '../formulaAstEvaluator.js';
 
-function cellRef(canonicalLineCode: string, periodOffset: CellRefOperand['periodOffset'] = 'CURRENT'): CellRefOperand {
-  return { canonicalLineCode, consolidationScope: 'CONSOLIDATED', entityScope: 'ANALYSIS_DEFAULT', periodOffset };
+function cellRef(
+  canonicalLineCode: string,
+  periodOffset: CellRefOperand['periodOffset'] = 'CURRENT'
+): CellRefOperand {
+  return {
+    canonicalLineCode,
+    consolidationScope: 'CONSOLIDATED',
+    entityScope: 'ANALYSIS_DEFAULT',
+    periodOffset,
+  };
 }
 
 function fixedCellResolver(values: Record<string, number | 'MISSING'>): CellResolver {
@@ -56,13 +64,21 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 200, 'CURRENT_LIABILITIES::CURRENT': 100 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 200,
+          'CURRENT_LIABILITIES::CURRENT': 100,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
       'SHOW_WITH_FLAG'
     );
-    expect(result).toEqual({ status: 'PRESENT_NONZERO', value: 2, qualityFlag: null, detail: null });
+    expect(result).toEqual({
+      status: 'PRESENT_NONZERO',
+      value: 2,
+      qualityFlag: null,
+      detail: null,
+    });
   });
 
   it('DIVISION_BY_ZERO: denominator exactly 0 -> NA (P1 fix), never a fabricated number, never silently PRESENT_ZERO', async () => {
@@ -75,7 +91,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 200, 'CURRENT_LIABILITIES::CURRENT': 0 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 200,
+          'CURRENT_LIABILITIES::CURRENT': 0,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -93,7 +112,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 0, 'CURRENT_LIABILITIES::CURRENT': 100 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 0,
+          'CURRENT_LIABILITIES::CURRENT': 100,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -110,7 +132,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 200, 'CURRENT_LIABILITIES::CURRENT': -50 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 200,
+          'CURRENT_LIABILITIES::CURRENT': -50,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -125,7 +150,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 200, 'CURRENT_LIABILITIES::CURRENT': -50 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 200,
+          'CURRENT_LIABILITIES::CURRENT': -50,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -142,7 +170,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 'MISSING', 'CURRENT_LIABILITIES::CURRENT': 100 }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 'MISSING',
+          'CURRENT_LIABILITIES::CURRENT': 100,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -156,7 +187,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 200, 'CURRENT_LIABILITIES::CURRENT': 'MISSING' }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 200,
+          'CURRENT_LIABILITIES::CURRENT': 'MISSING',
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -172,7 +206,10 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     const result = await evaluateFormula(
       ast,
       {
-        cellResolver: fixedCellResolver({ 'CURRENT_ASSETS::CURRENT': 'MISSING', 'CURRENT_LIABILITIES::CURRENT': 'MISSING' }),
+        cellResolver: fixedCellResolver({
+          'CURRENT_ASSETS::CURRENT': 'MISSING',
+          'CURRENT_LIABILITIES::CURRENT': 'MISSING',
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -188,7 +225,11 @@ describe('evaluateFormula — DSO shape (root op is divide, not ratio, but polic
   const dsoAst: FormulaNode = {
     node: 'operator',
     op: 'divide',
-    left: { node: 'operand', kind: 'cell_ref', cellRef: cellRef('AR', 'AVERAGE_CURRENT_AND_PRIOR') },
+    left: {
+      node: 'operand',
+      kind: 'cell_ref',
+      cellRef: cellRef('AR', 'AVERAGE_CURRENT_AND_PRIOR'),
+    },
     right: {
       node: 'operator',
       op: 'divide',
@@ -201,7 +242,10 @@ describe('evaluateFormula — DSO shape (root op is divide, not ratio, but polic
     const result = await evaluateFormula(
       dsoAst,
       {
-        cellResolver: fixedCellResolver({ 'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000, 'REVENUE::CURRENT': 182_000_000 }),
+        cellResolver: fixedCellResolver({
+          'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000,
+          'REVENUE::CURRENT': 182_000_000,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -215,7 +259,10 @@ describe('evaluateFormula — DSO shape (root op is divide, not ratio, but polic
     const result = await evaluateFormula(
       dsoAst,
       {
-        cellResolver: fixedCellResolver({ 'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000, 'REVENUE::CURRENT': 182_000_000 }),
+        cellResolver: fixedCellResolver({
+          'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000,
+          'REVENUE::CURRENT': 182_000_000,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: { daysInPeriod: () => 0, annualizationFactor: () => null },
       },
@@ -234,7 +281,10 @@ describe('evaluateFormula — DSO shape (root op is divide, not ratio, but polic
       // A negative AR average is not realistic business data, but this proves the policy check
       // fires on the outer "divide" root, not only on a literal "ratio" node.
       {
-        cellResolver: fixedCellResolver({ 'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000, 'REVENUE::CURRENT': -182_000_000 }),
+        cellResolver: fixedCellResolver({
+          'AR::AVERAGE_CURRENT_AND_PRIOR': 25_000_000,
+          'REVENUE::CURRENT': -182_000_000,
+        }),
         formulaRefResolver: noFormulaRefs,
         dynamicConstants: fixedDays(365),
       },
@@ -273,7 +323,12 @@ describe('evaluateFormula — CASH_CONVERSION_CYCLE shape (formula_ref composite
       },
       null
     );
-    expect(result).toEqual({ status: 'PRESENT_NONZERO', value: 60, qualityFlag: null, detail: null }); // 50+40-30
+    expect(result).toEqual({
+      status: 'PRESENT_NONZERO',
+      value: 60,
+      qualityFlag: null,
+      detail: null,
+    }); // 50+40-30
   });
 
   it('one MISSING formula_ref dependency propagates MISSING for the whole composite (never a partial sum)', async () => {
@@ -302,15 +357,28 @@ describe('evaluateFormula — INSUFFICIENT_HISTORY propagation (AVERAGE_BALANCE 
       node: 'operator',
       op: 'ratio',
       left: { node: 'operand', kind: 'cell_ref', cellRef: cellRef('NET_INCOME') },
-      right: { node: 'operand', kind: 'cell_ref', cellRef: cellRef('EQUITY', 'AVERAGE_CURRENT_AND_PRIOR') },
+      right: {
+        node: 'operand',
+        kind: 'cell_ref',
+        cellRef: cellRef('EQUITY', 'AVERAGE_CURRENT_AND_PRIOR'),
+      },
     };
     const cellResolver: CellResolver = {
       async resolveCell(ref) {
-        if (ref.canonicalLineCode === 'NET_INCOME') return { ok: true, status: 'PRESENT_NONZERO', value: 100 };
-        return { ok: false, reason: 'INSUFFICIENT_HISTORY', detail: 'first period on record, no previous_period_id' };
+        if (ref.canonicalLineCode === 'NET_INCOME')
+          return { ok: true, status: 'PRESENT_NONZERO', value: 100 };
+        return {
+          ok: false,
+          reason: 'INSUFFICIENT_HISTORY',
+          detail: 'first period on record, no previous_period_id',
+        };
       },
     };
-    const result = await evaluateFormula(ast, { cellResolver, formulaRefResolver: noFormulaRefs, dynamicConstants: fixedDays(365) }, 'SHOW_WITH_FLAG');
+    const result = await evaluateFormula(
+      ast,
+      { cellResolver, formulaRefResolver: noFormulaRefs, dynamicConstants: fixedDays(365) },
+      'SHOW_WITH_FLAG'
+    );
     expect(result.status).toBe('NOT_APPLICABLE');
     expect(result.qualityFlag).toBe('INSUFFICIENT_HISTORY');
     expect(result.value).toBeNull();

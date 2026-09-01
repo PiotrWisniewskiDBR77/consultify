@@ -36,6 +36,26 @@ function createUnitOfWork(
         aggregates: new Map(store.aggregates),
       };
       const transaction: MaterialCommandTransaction = {
+        // FIX-216-5: the atrapa (test double) previously implemented 21 of
+        // the interface's 25 members — a pre-existing gap that TypeScript
+        // never caught here because this object is assigned to the
+        // `MaterialCommandTransaction`-typed local `transaction` above with
+        // no structural check against unused members actually being called;
+        // it only surfaces if some caller invokes a missing method, which
+        // none of this file's own tests do. Filled in the remaining three
+        // (createRaidItem/deleteRaidItem/appendLegacyTaskCutoverLedgerEntry)
+        // as explicit "not used by material command unit tests" stubs, same
+        // as the pre-existing adoptAcceptedClassicInitiative stub below, so
+        // the double is a complete, honest implementation of the interface.
+        async createRaidItem() {
+          throw new Error('not used by material command unit tests');
+        },
+        async deleteRaidItem() {
+          throw new Error('not used by material command unit tests');
+        },
+        async appendLegacyTaskCutoverLedgerEntry() {
+          throw new Error('not used by material command unit tests');
+        },
         async adoptAcceptedClassicInitiative() {
           throw new Error('not used by material command unit tests');
         },

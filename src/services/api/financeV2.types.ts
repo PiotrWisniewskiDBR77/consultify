@@ -283,7 +283,8 @@ export function formatAnalysisKpiValueForDisplay(
   input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
   formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
 ): FinanceValueDisplay {
-  const numericFormatter = input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
+  const numericFormatter =
+    input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
   const base = formatFinanceValueForDisplay(input.value, numericFormatter);
   if (base.isMissingLikeGlyph) return base;
 
@@ -297,8 +298,14 @@ export function formatAnalysisKpiValueForDisplay(
     case 'MONETARY': {
       const currency = input.value.presentationCurrency?.trim();
       const unit = input.value.unit;
-      const scale = unit === 'THOUSANDS' || unit === 'MILLIONS' || unit === 'BILLIONS' ? financeUnitLabel(unit) : null;
-      return { ...base, text: `${base.text}${currency ? ` ${currency}` : ''}${scale ? `, ${scale}` : ''}` };
+      const scale =
+        unit === 'THOUSANDS' || unit === 'MILLIONS' || unit === 'BILLIONS'
+          ? financeUnitLabel(unit)
+          : null;
+      return {
+        ...base,
+        text: `${base.text}${currency ? ` ${currency}` : ''}${scale ? `, ${scale}` : ''}`,
+      };
     }
     default:
       return base;

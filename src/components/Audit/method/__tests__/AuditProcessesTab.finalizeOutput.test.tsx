@@ -15,15 +15,16 @@ vi.mock('../auditsMethodApi', async () => {
 });
 
 import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
-import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
+
 import {
+  type AuditProgramSummary,
   finalizeOutput,
   getProgram,
   getProgramCoverage,
   getProgramLifecycle,
   listProgramCriteria,
-  type AuditProgramSummary,
 } from '../auditsMethodApi';
+import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 
 const program: AuditProgramSummary = {
   id: 'prog-1',

@@ -12,8 +12,9 @@
  * wizualnym).
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_PREDICTION_WORKSPACE_FLAG_ID = 'financePredictionWorkspaceV1';
 

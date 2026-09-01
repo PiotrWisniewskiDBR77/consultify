@@ -40,36 +40,39 @@ import {
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
-import { StandardTable } from '@/components/standard/StandardTable';
+import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import {
+  type DrdSkipReasonCode,
+  formatSkipJustification,
+} from '@/components/method-workspace/skipReasonCodes';
 import type {
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
   ResolutionAction,
 } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
-import {
-  formatSkipJustification,
-  type DrdSkipReasonCode,
-} from '@/components/method-workspace/skipReasonCodes';
+import { StandardTable } from '@/components/standard/StandardTable';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
-import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import {
   isOfflineError,
   MethodCoreApiError,
   newIdempotencyKey,
   recordAssessmentSkipReason,
 } from '@/method-core/api/methodCoreApi';
+import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
+import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
-  DrdHttpSessionRuntime,
   type DrdHttpRuntimeState,
+  DrdHttpSessionRuntime,
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
-import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
 
+import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
+import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
+import { DrdSourceIndicator } from './DrdSourceIndicator';
 import {
   buildMatrixRowsForAxis,
   buildNavigatorNodes,
@@ -81,9 +84,6 @@ import {
   pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
-import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
-import { DrdSourceIndicator } from './DrdSourceIndicator';
-import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 
 const AssessmentReportContractView = React.lazy(() =>
   import('../report/AssessmentReportContractView').then((module) => ({

@@ -110,7 +110,8 @@ export function normalizeLineage(raw: unknown, sessionId: string): NormalizedLin
 
   const nodes = Array.isArray(record.nodes) ? (record.nodes as unknown[]) : null;
   if (nodes) {
-    const byKind = (kind: string) => nodes.filter((n) => (n as Record<string, unknown>)?.kind === kind);
+    const byKind = (kind: string) =>
+      nodes.filter((n) => (n as Record<string, unknown>)?.kind === kind);
     const sessionNode = byKind('session')[0] as Record<string, unknown> | undefined;
     return {
       session: {
@@ -193,7 +194,8 @@ export function normalizeLineage(raw: unknown, sessionId: string): NormalizedLin
         if (item) initiativeDrafts.push(item);
       }
     }
-    const rootSessionId = typeof record.rootSessionId === 'string' ? record.rootSessionId : sessionId;
+    const rootSessionId =
+      typeof record.rootSessionId === 'string' ? record.rootSessionId : sessionId;
     return {
       session: { id: rootSessionId, label: rootSessionId },
       outputs,
@@ -299,12 +301,18 @@ const LineageGroup: React.FC<{
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-medium text-c-text">{item.label}</span>
                   {item.sublabel ? (
-                    <span className="text-[10px] text-c-text-muted">{formatListDate(item.sublabel)}</span>
+                    <span className="text-[10px] text-c-text-muted">
+                      {formatListDate(item.sublabel)}
+                    </span>
                   ) : null}
                 </span>
                 <span className="flex shrink-0 items-center gap-1.5">
                   {item.status ? (
-                    <StatusChip label={statusLabel(isPolish, item.status) ?? item.status} tone={statusTone(item.status)} size="sm" />
+                    <StatusChip
+                      label={statusLabel(isPolish, item.status) ?? item.status}
+                      tone={statusTone(item.status)}
+                      size="sm"
+                    />
                   ) : null}
                   {onOpen ? <ChevronRight size={12} className="text-c-text-muted" /> : null}
                 </span>
@@ -371,7 +379,8 @@ export const ArtifactLineagePanel: React.FC<ArtifactLineagePanelProps> = ({
     [raw, sessionId]
   );
 
-  const shapeUnrecognized = !loading && !hasLoadError && !forbidden && raw !== undefined && normalized === null;
+  const shapeUnrecognized =
+    !loading && !hasLoadError && !forbidden && raw !== undefined && normalized === null;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-token-md border border-c-border-subtle bg-c-surface">
@@ -430,7 +439,10 @@ export const ArtifactLineagePanel: React.FC<ArtifactLineagePanelProps> = ({
               <div className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {t('assessment.lineage.session', 'Session')}
               </div>
-              <div className="mt-0.5 truncate text-xs font-medium text-c-text" title={normalized.session?.id}>
+              <div
+                className="mt-0.5 truncate text-xs font-medium text-c-text"
+                title={normalized.session?.id}
+              >
                 {normalized.session?.label ?? sessionId}
               </div>
             </div>
@@ -455,7 +467,10 @@ export const ArtifactLineagePanel: React.FC<ArtifactLineagePanelProps> = ({
               title={t('assessment.lineage.presentations', 'Presentations')}
               icon={Presentation}
               items={normalized.presentations}
-              emptyLabel={t('assessment.lineage.presentationsEmpty', 'No Presentation snapshot yet.')}
+              emptyLabel={t(
+                'assessment.lineage.presentationsEmpty',
+                'No Presentation snapshot yet.'
+              )}
               isPolish={isPolish}
               onOpen={onOpenPresentation}
             />
@@ -463,7 +478,10 @@ export const ArtifactLineagePanel: React.FC<ArtifactLineagePanelProps> = ({
               title={t('assessment.lineage.initiativeDrafts', 'Initiative Proposals')}
               icon={Lightbulb}
               items={normalized.initiativeDrafts}
-              emptyLabel={t('assessment.lineage.initiativeDraftsEmpty', 'No Initiative Proposal Draft yet.')}
+              emptyLabel={t(
+                'assessment.lineage.initiativeDraftsEmpty',
+                'No Initiative Proposal Draft yet.'
+              )}
               isPolish={isPolish}
               onOpen={onOpenInitiativeDraft}
             />

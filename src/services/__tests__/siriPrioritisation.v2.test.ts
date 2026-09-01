@@ -12,6 +12,9 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest';
+
+import type { PrioritisationInput } from '@/method-core/contracts';
+import { siriAdapter } from '@/method-core/methods/siri/siriAdapter';
 import {
   calculateImpactValue,
   DEFAULT_SIRI_PM_WEIGHTS,
@@ -20,10 +23,8 @@ import {
   SIRI_PM_WEIGHT_PRESETS,
   type SIRIPrioritisationInput,
 } from '@/services/siriPrioritisation';
-import { siriAdapter } from '@/method-core/methods/siri/siriAdapter';
 import { SIRI_PRIORITISATION_AREAS } from '@/services/siriStructure';
 import { SIRI_PM_V2_FLAG_KEYS } from '@/utils/siriPmV2Flag';
-import type { PrioritisationInput } from '@/method-core/contracts';
 
 // Real SIRI area ids, used so `name` resolution in the engine is exercised too.
 const AREA_1 = 'vertical_integration';
@@ -328,13 +329,39 @@ describe('SIRI PM engine — legacy_v1 vs siri_pm_v2 (COORD-08)', () => {
   // -----------------------------------------------------------------------
   it('6) same input twice gives an identical result, for both legacy_v1 and siri_pm_v2', () => {
     const inputs: SIRIPrioritisationInput[] = [
-      { areaId: AREA_1, ams: 1, bic: 4, costRelevance: 1, costProfile: 2, kpiRelevance: 1, kpiImportance: 3 },
-      { areaId: AREA_2, ams: 3, bic: 2, costRelevance: 0.5, costProfile: 4, kpiRelevance: 1, kpiImportance: 1 },
-      { areaId: AREA_3, ams: 0, bic: 5, costRelevance: 1, costProfile: 1, kpiRelevance: 1, kpiImportance: 1 },
+      {
+        areaId: AREA_1,
+        ams: 1,
+        bic: 4,
+        costRelevance: 1,
+        costProfile: 2,
+        kpiRelevance: 1,
+        kpiImportance: 3,
+      },
+      {
+        areaId: AREA_2,
+        ams: 3,
+        bic: 2,
+        costRelevance: 0.5,
+        costProfile: 4,
+        kpiRelevance: 1,
+        kpiImportance: 1,
+      },
+      {
+        areaId: AREA_3,
+        ams: 0,
+        bic: 5,
+        costRelevance: 1,
+        costProfile: 1,
+        kpiRelevance: 1,
+        kpiImportance: 1,
+      },
     ];
 
     expect(rankByImpactValue(inputs)).toEqual(rankByImpactValue(inputs));
-    expect(rankByImpactValueV2(inputs, 'tactical')).toEqual(rankByImpactValueV2(inputs, 'tactical'));
+    expect(rankByImpactValueV2(inputs, 'tactical')).toEqual(
+      rankByImpactValueV2(inputs, 'tactical')
+    );
   });
 
   // -----------------------------------------------------------------------
@@ -342,8 +369,24 @@ describe('SIRI PM engine — legacy_v1 vs siri_pm_v2 (COORD-08)', () => {
   // -----------------------------------------------------------------------
   it('7) neither calculateImpactValue, rankByImpactValue, nor rankByImpactValueV2 mutate their input', () => {
     const inputs: SIRIPrioritisationInput[] = [
-      { areaId: AREA_1, ams: 1, bic: 4, costRelevance: 1, costProfile: 2, kpiRelevance: 1, kpiImportance: 3 },
-      { areaId: AREA_2, ams: 3, bic: 2, costRelevance: 0.5, costProfile: 4, kpiRelevance: 1, kpiImportance: 1 },
+      {
+        areaId: AREA_1,
+        ams: 1,
+        bic: 4,
+        costRelevance: 1,
+        costProfile: 2,
+        kpiRelevance: 1,
+        kpiImportance: 3,
+      },
+      {
+        areaId: AREA_2,
+        ams: 3,
+        bic: 2,
+        costRelevance: 0.5,
+        costProfile: 4,
+        kpiRelevance: 1,
+        kpiImportance: 1,
+      },
     ];
     const before = deepClone(inputs);
 
@@ -364,8 +407,24 @@ describe('SIRI PM engine — legacy_v1 vs siri_pm_v2 (COORD-08)', () => {
   // -----------------------------------------------------------------------
   it('8) every result carries calculationVersion; v2 results never claim legacy_v1 and vice versa', () => {
     const inputs: SIRIPrioritisationInput[] = [
-      { areaId: AREA_1, ams: 1, bic: 4, costRelevance: 1, costProfile: 2, kpiRelevance: 1, kpiImportance: 3 },
-      { areaId: AREA_2, ams: 3, bic: 2, costRelevance: 0.5, costProfile: 4, kpiRelevance: 1, kpiImportance: 1 },
+      {
+        areaId: AREA_1,
+        ams: 1,
+        bic: 4,
+        costRelevance: 1,
+        costProfile: 2,
+        kpiRelevance: 1,
+        kpiImportance: 3,
+      },
+      {
+        areaId: AREA_2,
+        ams: 3,
+        bic: 2,
+        costRelevance: 0.5,
+        costProfile: 4,
+        kpiRelevance: 1,
+        kpiImportance: 1,
+      },
     ];
 
     const legacy = rankByImpactValue(inputs);

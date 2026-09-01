@@ -9,7 +9,9 @@ const pgQuery = vi.fn();
 
 vi.mock('../../../utils/DbPromise.js', () => ({ all: dbAll, get: dbGet, run: dbRun }));
 vi.mock('../multiAgentWorkManagerService.js', () => ({ retryBranchTask, cancelWorkGraph }));
-vi.mock('../../../utils/queryHelpers.js', () => ({ withPgTransaction: (fn: any) => fn({ query: pgQuery }) }));
+vi.mock('../../../utils/queryHelpers.js', () => ({
+  withPgTransaction: (fn: any) => fn({ query: pgQuery }),
+}));
 
 describe('agentOperatorConsoleService', () => {
   beforeEach(() => {
@@ -58,7 +60,10 @@ describe('agentOperatorConsoleService', () => {
         }),
         expect.objectContaining({ code: 'FAILED_BRANCH', safeAction: 'retry_failed_branch' }),
         expect.objectContaining({ code: 'BLOCKED_GRAPH' }),
-        expect.objectContaining({ code: 'EXPIRED_APPROVAL_REVIEW', safeAction: 'expire_stale_review' }),
+        expect.objectContaining({
+          code: 'EXPIRED_APPROVAL_REVIEW',
+          safeAction: 'expire_stale_review',
+        }),
       ])
     );
     expect(snapshot.metrics).toEqual(
@@ -77,12 +82,16 @@ describe('agentOperatorConsoleService', () => {
     pgQuery
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{
-      task_id: 'expired-1',
-      status: 'running',
-      lease_owner: 'dead-worker',
-      lease_expires_at: '2026-08-07T09:00:00.000Z',
-      }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            task_id: 'expired-1',
+            status: 'running',
+            lease_owner: 'dead-worker',
+            lease_expires_at: '2026-08-07T09:00:00.000Z',
+          },
+        ],
+      })
       .mockResolvedValueOnce({ rowCount: 1, rows: [] })
       .mockResolvedValueOnce({ rowCount: 1, rows: [] });
     const { recoverAgentRunTarget } = await import('../agentOperatorConsoleService.js');
@@ -105,17 +114,16 @@ describe('agentOperatorConsoleService', () => {
     expect(pgQuery).toHaveBeenNthCalledWith(
       5,
       expect.stringContaining('v8_agent_operator_recovery_events'),
-      expect.arrayContaining([
-        'run-1',
-        'expired-1',
-        'recover_expired_lease',
-        'operator-a',
-      ])
+      expect.arrayContaining(['run-1', 'expired-1', 'recover_expired_lease', 'operator-a'])
     );
   });
 
   it('refuses expired-lease recovery when the guarded update changes no row', async () => {
-    pgQuery.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{task_id:'active-1',status:'running'}]}).mockResolvedValueOnce({rowCount:0,rows:[]});
+    pgQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ task_id: 'active-1', status: 'running' }] })
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] });
     const { recoverAgentRunTarget } = await import('../agentOperatorConsoleService.js');
     await expect(
       recoverAgentRunTarget({
@@ -134,29 +142,71 @@ describe('agentOperatorConsoleService', () => {
     pgQuery
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ run_id: 'run-1', organization_id: 'org-a', state: 'waiting_for_review', expires_at: '2026-08-07T09:00:00.000Z' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            run_id: 'run-1',
+            organization_id: 'org-a',
+            state: 'waiting_for_review',
+            expires_at: '2026-08-07T09:00:00.000Z',
+          },
+        ],
+      })
       .mockResolvedValueOnce({ rowCount: 1, rows: [] })
       .mockResolvedValueOnce({ rowCount: 1, rows: [] })
       .mockResolvedValueOnce({ rowCount: 1, rows: [] });
     const { recoverAgentRunTarget } = await import('../agentOperatorConsoleService.js');
     const result = await recoverAgentRunTarget({
-      organizationId: 'org-a', executionRunId: 'run-1', actorUserId: 'operator-a',
-      targetId: 'run-1', action: 'expire_stale_review', reason: 'Review deadline elapsed.',
-      idempotencyKey: 'expire-review-key', now: '2026-08-07T10:00:00.000Z',
+      organizationId: 'org-a',
+      executionRunId: 'run-1',
+      actorUserId: 'operator-a',
+      targetId: 'run-1',
+      action: 'expire_stale_review',
+      reason: 'Review deadline elapsed.',
+      idempotencyKey: 'expire-review-key',
+      now: '2026-08-07T10:00:00.000Z',
     });
     expect(result).toEqual(expect.objectContaining({ status: 'expired', idempotentReplay: false }));
-    expect(pgQuery).toHaveBeenNthCalledWith(4, expect.stringContaining("state='waiting_for_review'"), [
-      '2026-08-07T10:00:00.000Z', '2026-08-07T10:00:00.000Z', 'run-1', 'org-a', '2026-08-07T10:00:00.000Z',
-    ]);
-    expect(pgQuery).toHaveBeenNthCalledWith(5, expect.stringContaining('v8_run_state_transitions'), expect.arrayContaining(['run-1', 'operator-a']));
-    expect(pgQuery).toHaveBeenNthCalledWith(6, expect.stringContaining("'execution_run'"), expect.arrayContaining(['expire_stale_review']));
+    expect(pgQuery).toHaveBeenNthCalledWith(
+      4,
+      expect.stringContaining("state='waiting_for_review'"),
+      [
+        '2026-08-07T10:00:00.000Z',
+        '2026-08-07T10:00:00.000Z',
+        'run-1',
+        'org-a',
+        '2026-08-07T10:00:00.000Z',
+      ]
+    );
+    expect(pgQuery).toHaveBeenNthCalledWith(
+      5,
+      expect.stringContaining('v8_run_state_transitions'),
+      expect.arrayContaining(['run-1', 'operator-a'])
+    );
+    expect(pgQuery).toHaveBeenNthCalledWith(
+      6,
+      expect.stringContaining("'execution_run'"),
+      expect.arrayContaining(['expire_stale_review'])
+    );
   });
 
   it('fails closed when stale-review guarded update changes no row', async () => {
-    pgQuery.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[]})
-      .mockResolvedValueOnce({rows:[{run_id:'run-1',state:'waiting_for_review'}]})
-      .mockResolvedValueOnce({rowCount:0,rows:[]});
+    pgQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ run_id: 'run-1', state: 'waiting_for_review' }] })
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] });
     const { recoverAgentRunTarget } = await import('../agentOperatorConsoleService.js');
-    await expect(recoverAgentRunTarget({organizationId:'org-a',executionRunId:'run-1',actorUserId:'operator-a',targetId:'run-1',action:'expire_stale_review',reason:'Too early.',idempotencyKey:'future-review-key'})).rejects.toThrow('stale_review_expiry_not_allowed');
+    await expect(
+      recoverAgentRunTarget({
+        organizationId: 'org-a',
+        executionRunId: 'run-1',
+        actorUserId: 'operator-a',
+        targetId: 'run-1',
+        action: 'expire_stale_review',
+        reason: 'Too early.',
+        idempotencyKey: 'future-review-key',
+      })
+    ).rejects.toThrow('stale_review_expiry_not_allowed');
   });
 });

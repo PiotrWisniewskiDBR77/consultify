@@ -293,9 +293,19 @@ class NotebookService {
     if (data.faultInjection === 'AFTER_CORE') throw new Error('NOTEBOOK_TEST_CRASH_AFTER_CORE');
 
     if (data.idempotencyKey) {
-      await queryHelpers.queryRun(`UPDATE notebook_pages SET materialization_provenance=?::jsonb
-        WHERE id=? AND organization_id=?`,[JSON.stringify({sourceType:'myw_agent_proposal',sourceIdentity:data.sourceIdentity,
-        commandVersion:1}),id,orgId]);
+      await queryHelpers.queryRun(
+        `UPDATE notebook_pages SET materialization_provenance=?::jsonb
+        WHERE id=? AND organization_id=?`,
+        [
+          JSON.stringify({
+            sourceType: 'myw_agent_proposal',
+            sourceIdentity: data.sourceIdentity,
+            commandVersion: 1,
+          }),
+          id,
+          orgId,
+        ]
+      );
     }
 
     let ftsIndexed = false;
@@ -315,8 +325,10 @@ class NotebookService {
       }
     }
     if (data.idempotencyKey) {
-      await queryHelpers.queryRun(`UPDATE notebook_pages SET materialization_fts_completed=? WHERE id=? AND organization_id=?`,
-        [ftsIndexed,id,orgId]);
+      await queryHelpers.queryRun(
+        `UPDATE notebook_pages SET materialization_fts_completed=? WHERE id=? AND organization_id=?`,
+        [ftsIndexed, id, orgId]
+      );
     }
 
     let embeddingStored = false;
@@ -1253,23 +1265,46 @@ export async function createNote(params: {
   const userId = params.userId || 'system';
   const title = params.title || 'Untitled';
   if (params.idempotencyKey) {
-    const replay = await queryHelpers.queryOne<{ id: string; title: string; source_id: string | null; content_text: string | null }>(
+    const replay = await queryHelpers.queryOne<{
+      id: string;
+      title: string;
+      source_id: string | null;
+      content_text: string | null;
+    }>(
       `SELECT id,title,source_id,content_text FROM notebook_pages WHERE organization_id=? AND idempotency_key=? AND source_type='myw_agent_proposal'`,
-      [params.organizationId,params.idempotencyKey]
+      [params.organizationId, params.idempotencyKey]
     );
     if (replay) {
-      if (replay.source_id !== (params.sourceIdentity || null)) throw new Error('NOTEBOOK_IDEMPOTENCY_COLLISION');
+      if (replay.source_id !== (params.sourceIdentity || null))
+        throw new Error('NOTEBOOK_IDEMPOTENCY_COLLISION');
       await queryHelpers.withPgTransaction(async (tx) => {
-        await tx.query(`UPDATE notebook_pages SET materialization_provenance=?::jsonb,
+        await tx.query(
+          `UPDATE notebook_pages SET materialization_provenance=?::jsonb,
           search_vector=to_tsvector('simple',coalesce(title,'')||' '||coalesce(content_text,'')||' '||coalesce(tags_json,'')),
           materialization_fts_completed=TRUE WHERE id=? AND organization_id=?`,
-        [JSON.stringify({sourceType:'myw_agent_proposal',sourceIdentity:params.sourceIdentity,commandVersion:1}),replay.id,params.organizationId]);
-        await tx.query(`INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
+          [
+            JSON.stringify({
+              sourceType: 'myw_agent_proposal',
+              sourceIdentity: params.sourceIdentity,
+              commandVersion: 1,
+            }),
+            replay.id,
+            params.organizationId,
+          ]
+        );
+        await tx.query(
+          `INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
           VALUES(?,?,'notebook',?,'notebook.materialized',?::jsonb)
           ON CONFLICT(organization_id,command_key,event_type) DO NOTHING`,
-        [params.organizationId,params.idempotencyKey,replay.id,JSON.stringify({title:replay.title})]);
+          [
+            params.organizationId,
+            params.idempotencyKey,
+            replay.id,
+            JSON.stringify({ title: replay.title }),
+          ]
+        );
       });
-      return { id: replay.id,noteId: replay.id,title: replay.title };
+      return { id: replay.id, noteId: replay.id, title: replay.title };
     }
   }
   const hasReminder = Boolean(params.reminder && (params.reminder.dueAt || params.reminder.term));
@@ -1299,10 +1334,17 @@ export async function createNote(params: {
     faultInjection: params.faultInjection,
   });
   if (params.idempotencyKey) {
-    await queryHelpers.queryRun(`INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
+    await queryHelpers.queryRun(
+      `INSERT INTO myw_agent_canonical_outbox(organization_id,command_key,target_kind,target_id,event_type,payload)
       VALUES(?,?,'notebook',?,'notebook.materialized',?::jsonb)
       ON CONFLICT(organization_id,command_key,event_type) DO NOTHING`,
-    [params.organizationId,params.idempotencyKey,result.pageId,JSON.stringify({title:result.title})]);
+      [
+        params.organizationId,
+        params.idempotencyKey,
+        result.pageId,
+        JSON.stringify({ title: result.title }),
+      ]
+    );
   }
   return { id: result.pageId, noteId: result.pageId, title: result.title };
 }

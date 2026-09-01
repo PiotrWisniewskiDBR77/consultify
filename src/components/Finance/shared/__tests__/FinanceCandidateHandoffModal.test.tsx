@@ -20,8 +20,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  FinanceCandidateHandoffModal,
   type FinanceCandidateConfirmResult,
+  FinanceCandidateHandoffModal,
   type FinanceCandidatePreviewResult,
 } from '../FinanceCandidateHandoffModal';
 
@@ -50,7 +50,9 @@ const eligiblePreview: FinanceCandidatePreviewResult = {
   },
 };
 
-function renderModal(overrides: Partial<React.ComponentProps<typeof FinanceCandidateHandoffModal>> = {}) {
+function renderModal(
+  overrides: Partial<React.ComponentProps<typeof FinanceCandidateHandoffModal>> = {}
+) {
   const onClose = vi.fn();
   const onConfirmed = vi.fn();
   const preview = vi.fn().mockResolvedValue(eligiblePreview);
@@ -171,7 +173,9 @@ describe('FinanceCandidateHandoffModal', () => {
     await waitFor(() => expect(fetchHandoff).toHaveBeenCalled());
     // Still a real success — confirm()'s own persisted response is used as
     // the fallback source of truth.
-    await waitFor(() => expect(onConfirmed).toHaveBeenCalledWith(expect.objectContaining({ created: true })));
+    await waitFor(() =>
+      expect(onConfirmed).toHaveBeenCalledWith(expect.objectContaining({ created: true }))
+    );
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -210,7 +214,9 @@ describe('FinanceCandidateHandoffModal', () => {
     const confirmButton = await screen.findByRole('button', { name: 'Send as Candidate' });
     fireEvent.click(confirmButton);
 
-    expect(await screen.findByText('Candidate created: Statement pack — FY2026 Q2')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Candidate created: Statement pack — FY2026 Q2')
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open/ })).toHaveAttribute('href', '/initiatives');
     expect(onClose).not.toHaveBeenCalled();
   });

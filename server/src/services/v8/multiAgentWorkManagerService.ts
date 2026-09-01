@@ -436,9 +436,7 @@ export async function executeReadyWorkGraphBranches(input: {
   return Promise.all(
     claimed.map(async (task: any) => {
       const taskId = String(task.task_id);
-      let resourceReservation:
-        | Awaited<ReturnType<typeof reserveAgentResource>>
-        | null = null;
+      let resourceReservation: Awaited<ReturnType<typeof reserveAgentResource>> | null = null;
       try {
         const budget = JSON.parse(task.budget_json || '{}') as { timeoutSeconds?: number };
         const requestedTools = JSON.parse(task.tool_scope_json || '[]') as string[];

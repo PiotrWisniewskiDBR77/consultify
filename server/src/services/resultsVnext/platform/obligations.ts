@@ -28,7 +28,7 @@
  */
 import type { PoolClient } from 'pg';
 
-import { toObligation, type Obligation, type ObligationRow } from '../kpi/kpiDeviationTypes.js';
+import { type Obligation, type ObligationRow, toObligation } from '../kpi/kpiDeviationTypes.js';
 
 // ==========================================
 // createObligation
@@ -155,7 +155,14 @@ export async function completeObligation(
   client: PoolClient,
   params: CompleteObligationParams
 ): Promise<Obligation | null> {
-  const { organizationId, referenceType, referenceId, obligationType, completedViaCommand, cadenceOccurrenceId } = params;
+  const {
+    organizationId,
+    referenceType,
+    referenceId,
+    obligationType,
+    completedViaCommand,
+    cadenceOccurrenceId,
+  } = params;
 
   const result = await client.query<ObligationRow>(
     `UPDATE rvn_platform_obligations
@@ -165,7 +172,14 @@ export async function completeObligation(
         AND obligation_type = $4 AND status = 'open'
         AND ($6::text IS NULL OR cadence_occurrence_id = $6::text)
       RETURNING *`,
-    [organizationId, referenceType, referenceId, obligationType, completedViaCommand, cadenceOccurrenceId ?? null]
+    [
+      organizationId,
+      referenceType,
+      referenceId,
+      obligationType,
+      completedViaCommand,
+      cadenceOccurrenceId ?? null,
+    ]
   );
   const row = result.rows[0];
   return row ? toObligation(row) : null;

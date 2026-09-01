@@ -1,5 +1,5 @@
-import { isPilotRestrictedRole } from './roleGuards';
 import { isBetaClosed } from './betaAccess';
+import { isPilotRestrictedRole } from './roleGuards';
 
 // VTS pilot scope: Chat + Interview plus My Work (Ideas stays locked via
 // isPilotAllowedMyWorkTab), Initiatives, Execution and Settings.
@@ -28,6 +28,15 @@ const PILOT_ALLOWED_ROUTE_PREFIXES = [
   '/implementation',
   '/settings',
   '/share/',
+  // FIX-181 (2026-08-30): Meetings beta went OPEN in BETA_MENU_STATUS
+  // (`betaMenuStatus.ts`, MODULE_MEETING) but this independent pilot route
+  // allowlist still redirected every pilot-restricted role away from
+  // `/meetings` to `/interview` — see day181 finding MTG-PF-006 and
+  // `RouterSync.tsx:316` (isPilotAllowedRoute gate). Canonical grammar is
+  // `/meetings` (list) + `/meetings/:meetingId` (object) — DEC-2026-08-24-07,
+  // `routeConfig.ts` ROUTES.MEETINGS. `/meeting` (singular) is only a legacy
+  // redirect alias and stays out of the pilot allowlist on purpose.
+  '/meetings',
 ] as const;
 
 const PILOT_ALLOWED_ARTIFACT_TYPES = new Set(['insight']);

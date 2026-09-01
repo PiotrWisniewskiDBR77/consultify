@@ -551,11 +551,14 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               trailing: (
                 <span className="text-[11px] font-semibold text-c-text-secondary">
                   {previewItem.updatedAt
-                    ? new Date(previewItem.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
+                    ? new Date(previewItem.updatedAt).toLocaleDateString(
+                        isPolish ? 'pl-PL' : 'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }
+                      )
                     : '—'}
                 </span>
               ),

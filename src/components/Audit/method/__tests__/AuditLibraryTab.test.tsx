@@ -18,7 +18,8 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
       if (typeof fallback === 'string') return fallback;
-      if (fallback && typeof fallback === 'object' && fallback.defaultValue) return fallback.defaultValue;
+      if (fallback && typeof fallback === 'object' && fallback.defaultValue)
+        return fallback.defaultValue;
       return key;
     },
     i18n: { language: 'en' },
@@ -34,14 +35,14 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
-import { AuditLibraryTab } from '../tabs/AuditLibraryTab';
 import {
   AUDIT_VERIFICATION_STATES,
-  getPack,
   type AuditPackDetail,
   type AuditPackSummary,
   type AuditVerificationState,
+  getPack,
 } from '../auditsMethodApi';
+import { AuditLibraryTab } from '../tabs/AuditLibraryTab';
 
 const mockedGetPack = vi.mocked(getPack);
 

@@ -19,9 +19,9 @@ vi.mock('../resultsShowcaseData', () => ({
   createResultsShowcaseKpis: vi.fn(() => [{ id: 'showcase' }]),
 }));
 
+import { isResultsVNextFlagEnabled } from '../../ResultsVNext/resultsVNextFeatureFlags';
 import { loadResultsKpis } from '../kpiRuntime';
 import { isResultsOwnerReviewModeEnabled } from '../resultsOwnerReviewMode';
-import { isResultsVNextFlagEnabled } from '../../ResultsVNext/resultsVNextFeatureFlags';
 
 describe('Wave 3 Results owner-review profile', () => {
   beforeEach(() => {

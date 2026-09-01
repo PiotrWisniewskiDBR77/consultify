@@ -20,8 +20,8 @@ import { describe, expect, it } from 'vitest';
 import {
   isTestMode,
   runsRealDbInTestMode,
-  shouldMountTestGatewayRoutes,
   shouldInitializeTestDatabase,
+  shouldMountTestGatewayRoutes,
   shouldStartPersistentBackgroundWorkers,
 } from '../testModeGates.js';
 

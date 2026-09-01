@@ -5,7 +5,6 @@
  * `okrRegistryMappers.ts`'s own shape for the Set level.
  */
 import type { HonestValue } from '../types';
-import { formatOkrDate, shortOkrId } from './okrRegistryMappers';
 import type {
   OkrKeyResultConfidence,
   OkrKeyResultDirection,
@@ -16,6 +15,7 @@ import type {
   OkrObjectiveConfidence,
   OkrObjectiveStatus,
 } from './okrObjectiveApi';
+import { formatOkrDate, shortOkrId } from './okrRegistryMappers';
 
 export { formatOkrDate, shortOkrId };
 
@@ -52,43 +52,62 @@ export const OKR_OBJECTIVE_STATUS_TONE: Record<OkrObjectiveStatus, OkrStatusTone
   closed: 'neutral',
 };
 
-export const OKR_OBJECTIVE_AMBITION_LABELS: Record<OkrObjectiveAmbitionType, { pl: string; en: string }> = {
+export const OKR_OBJECTIVE_AMBITION_LABELS: Record<
+  OkrObjectiveAmbitionType,
+  { pl: string; en: string }
+> = {
   committed: { pl: 'Zobowiązanie', en: 'Committed' },
   aspirational: { pl: 'Aspiracyjny', en: 'Aspirational' },
   standard: { pl: 'Standardowy', en: 'Standard' },
 };
 
-export function okrObjectiveAmbitionLabel(ambition: OkrObjectiveAmbitionType, isPolish: boolean): string {
-  return isPolish ? OKR_OBJECTIVE_AMBITION_LABELS[ambition].pl : OKR_OBJECTIVE_AMBITION_LABELS[ambition].en;
+export function okrObjectiveAmbitionLabel(
+  ambition: OkrObjectiveAmbitionType,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_OBJECTIVE_AMBITION_LABELS[ambition].pl
+    : OKR_OBJECTIVE_AMBITION_LABELS[ambition].en;
 }
 
-export const OKR_OBJECTIVE_CONFIDENCE_LABELS: Record<OkrObjectiveConfidence, { pl: string; en: string }> = {
+export const OKR_OBJECTIVE_CONFIDENCE_LABELS: Record<
+  OkrObjectiveConfidence,
+  { pl: string; en: string }
+> = {
   high: { pl: 'Wysoka', en: 'High' },
   medium: { pl: 'Średnia', en: 'Medium' },
   low: { pl: 'Niska', en: 'Low' },
   numeric: { pl: 'Liczbowa', en: 'Numeric' },
 };
 
-export function okrObjectiveConfidenceLabel(confidence: OkrObjectiveConfidence, isPolish: boolean): string {
-  return isPolish ? OKR_OBJECTIVE_CONFIDENCE_LABELS[confidence].pl : OKR_OBJECTIVE_CONFIDENCE_LABELS[confidence].en;
+export function okrObjectiveConfidenceLabel(
+  confidence: OkrObjectiveConfidence,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_OBJECTIVE_CONFIDENCE_LABELS[confidence].pl
+    : OKR_OBJECTIVE_CONFIDENCE_LABELS[confidence].en;
 }
 
 // ==========================================
 // Key Result status labels — 7-state machine, `okrKeyResultTypes.ts` L35-44.
 // ==========================================
 
-export const OKR_KEY_RESULT_STATUS_LABELS: Record<OkrKeyResultStatus, { pl: string; en: string }> = {
-  not_started: { pl: 'Nierozpoczęty', en: 'Not started' },
-  on_track: { pl: 'Zgodnie z planem', en: 'On track' },
-  at_risk: { pl: 'Zagrożony', en: 'At risk' },
-  off_track: { pl: 'Poza planem', en: 'Off track' },
-  achieved: { pl: 'Osiągnięty', en: 'Achieved' },
-  not_achieved: { pl: 'Nieosiągnięty', en: 'Not achieved' },
-  cancelled: { pl: 'Anulowany', en: 'Cancelled' },
-};
+export const OKR_KEY_RESULT_STATUS_LABELS: Record<OkrKeyResultStatus, { pl: string; en: string }> =
+  {
+    not_started: { pl: 'Nierozpoczęty', en: 'Not started' },
+    on_track: { pl: 'Zgodnie z planem', en: 'On track' },
+    at_risk: { pl: 'Zagrożony', en: 'At risk' },
+    off_track: { pl: 'Poza planem', en: 'Off track' },
+    achieved: { pl: 'Osiągnięty', en: 'Achieved' },
+    not_achieved: { pl: 'Nieosiągnięty', en: 'Not achieved' },
+    cancelled: { pl: 'Anulowany', en: 'Cancelled' },
+  };
 
 export function okrKeyResultStatusLabel(status: OkrKeyResultStatus, isPolish: boolean): string {
-  return isPolish ? OKR_KEY_RESULT_STATUS_LABELS[status].pl : OKR_KEY_RESULT_STATUS_LABELS[status].en;
+  return isPolish
+    ? OKR_KEY_RESULT_STATUS_LABELS[status].pl
+    : OKR_KEY_RESULT_STATUS_LABELS[status].en;
 }
 
 export const OKR_KEY_RESULT_STATUS_TONE: Record<OkrKeyResultStatus, OkrStatusTone> = {
@@ -101,7 +120,10 @@ export const OKR_KEY_RESULT_STATUS_TONE: Record<OkrKeyResultStatus, OkrStatusTon
   cancelled: 'danger',
 };
 
-export const OKR_KEY_RESULT_DIRECTION_LABELS: Record<OkrKeyResultDirection, { pl: string; en: string }> = {
+export const OKR_KEY_RESULT_DIRECTION_LABELS: Record<
+  OkrKeyResultDirection,
+  { pl: string; en: string }
+> = {
   increase: { pl: 'Wzrost', en: 'Increase' },
   decrease: { pl: 'Spadek', en: 'Decrease' },
   reach: { pl: 'Osiągnięcie wartości', en: 'Reach' },
@@ -109,28 +131,42 @@ export const OKR_KEY_RESULT_DIRECTION_LABELS: Record<OkrKeyResultDirection, { pl
   binary: { pl: 'Binarny (tak/nie)', en: 'Binary (yes/no)' },
 };
 
-export function okrKeyResultDirectionLabel(direction: OkrKeyResultDirection, isPolish: boolean): string {
-  return isPolish ? OKR_KEY_RESULT_DIRECTION_LABELS[direction].pl : OKR_KEY_RESULT_DIRECTION_LABELS[direction].en;
+export function okrKeyResultDirectionLabel(
+  direction: OkrKeyResultDirection,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_KEY_RESULT_DIRECTION_LABELS[direction].pl
+    : OKR_KEY_RESULT_DIRECTION_LABELS[direction].en;
 }
 
 /** MVP-supported subset only (`okrKeyResultCommands.ts` L84:
  * "numeric/percentage/currency/binary only" — `milestone`/`custom` are
  * schema-permitted but command-layer-rejected, so this client never offers
  * them as a create/edit option). */
-export const OKR_KEY_RESULT_MEASUREMENT_TYPE_LABELS: Record<OkrKeyResultMeasurementType, { pl: string; en: string }> = {
+export const OKR_KEY_RESULT_MEASUREMENT_TYPE_LABELS: Record<
+  OkrKeyResultMeasurementType,
+  { pl: string; en: string }
+> = {
   numeric: { pl: 'Liczbowy', en: 'Numeric' },
   percentage: { pl: 'Procentowy', en: 'Percentage' },
   currency: { pl: 'Walutowy', en: 'Currency' },
   binary: { pl: 'Binarny (tak/nie)', en: 'Binary (yes/no)' },
 };
 
-export function okrKeyResultMeasurementTypeLabel(type: OkrKeyResultMeasurementType, isPolish: boolean): string {
+export function okrKeyResultMeasurementTypeLabel(
+  type: OkrKeyResultMeasurementType,
+  isPolish: boolean
+): string {
   return isPolish
     ? OKR_KEY_RESULT_MEASUREMENT_TYPE_LABELS[type].pl
     : OKR_KEY_RESULT_MEASUREMENT_TYPE_LABELS[type].en;
 }
 
-export const OKR_KEY_RESULT_SOURCE_TYPE_LABELS: Record<OkrKeyResultSourceType, { pl: string; en: string }> = {
+export const OKR_KEY_RESULT_SOURCE_TYPE_LABELS: Record<
+  OkrKeyResultSourceType,
+  { pl: string; en: string }
+> = {
   manual: { pl: 'Ręczny', en: 'Manual' },
   import: { pl: 'Import', en: 'Import' },
   connector: { pl: 'Konektor', en: 'Connector' },
@@ -138,19 +174,32 @@ export const OKR_KEY_RESULT_SOURCE_TYPE_LABELS: Record<OkrKeyResultSourceType, {
   calculated: { pl: 'Wyliczany', en: 'Calculated' },
 };
 
-export function okrKeyResultSourceTypeLabel(type: OkrKeyResultSourceType, isPolish: boolean): string {
-  return isPolish ? OKR_KEY_RESULT_SOURCE_TYPE_LABELS[type].pl : OKR_KEY_RESULT_SOURCE_TYPE_LABELS[type].en;
+export function okrKeyResultSourceTypeLabel(
+  type: OkrKeyResultSourceType,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_KEY_RESULT_SOURCE_TYPE_LABELS[type].pl
+    : OKR_KEY_RESULT_SOURCE_TYPE_LABELS[type].en;
 }
 
-export const OKR_KEY_RESULT_CONFIDENCE_LABELS: Record<OkrKeyResultConfidence, { pl: string; en: string }> = {
+export const OKR_KEY_RESULT_CONFIDENCE_LABELS: Record<
+  OkrKeyResultConfidence,
+  { pl: string; en: string }
+> = {
   high: { pl: 'Wysoka', en: 'High' },
   medium: { pl: 'Średnia', en: 'Medium' },
   low: { pl: 'Niska', en: 'Low' },
   numeric: { pl: 'Liczbowa', en: 'Numeric' },
 };
 
-export function okrKeyResultConfidenceLabel(confidence: OkrKeyResultConfidence, isPolish: boolean): string {
-  return isPolish ? OKR_KEY_RESULT_CONFIDENCE_LABELS[confidence].pl : OKR_KEY_RESULT_CONFIDENCE_LABELS[confidence].en;
+export function okrKeyResultConfidenceLabel(
+  confidence: OkrKeyResultConfidence,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? OKR_KEY_RESULT_CONFIDENCE_LABELS[confidence].pl
+    : OKR_KEY_RESULT_CONFIDENCE_LABELS[confidence].en;
 }
 
 // ==========================================
@@ -259,12 +308,16 @@ const NOT_CALCULABLE_PREFIX = 'not_calculable:';
  * never `'not_calculable'`, so this function never fabricates a distinction
  * the reason string does not support.
  */
-export function parseOkrObjectiveProgress(progress: string | null, progressCalcReason: string | null): HonestValue<number> {
+export function parseOkrObjectiveProgress(
+  progress: string | null,
+  progressCalcReason: string | null
+): HonestValue<number> {
   if (progress !== null) {
     const parsed = Number(progress);
     return Number.isFinite(parsed) ? parsed : null;
   }
-  if (progressCalcReason && progressCalcReason.startsWith(NOT_CALCULABLE_PREFIX)) return 'not_calculable';
+  if (progressCalcReason && progressCalcReason.startsWith(NOT_CALCULABLE_PREFIX))
+    return 'not_calculable';
   return null;
 }
 
@@ -276,12 +329,16 @@ export function parseOkrObjectiveProgress(progress: string | null, progressCalcR
  * `'not_calculable:'`-prefixed. Still checks the prefix explicitly (never
  * assumes) rather than treating "reason present" as sufficient.
  */
-export function parseOkrKeyResultProgress(progress: string | null, progressCalcReason: string | null): HonestValue<number> {
+export function parseOkrKeyResultProgress(
+  progress: string | null,
+  progressCalcReason: string | null
+): HonestValue<number> {
   if (progress !== null) {
     const parsed = Number(progress);
     return Number.isFinite(parsed) ? parsed : null;
   }
-  if (progressCalcReason && progressCalcReason.startsWith(NOT_CALCULABLE_PREFIX)) return 'not_calculable';
+  if (progressCalcReason && progressCalcReason.startsWith(NOT_CALCULABLE_PREFIX))
+    return 'not_calculable';
   return null;
 }
 
@@ -295,7 +352,8 @@ export function parseOkrObjectiveConfidence(
   confidenceCalcReason: string | null
 ): HonestValue<OkrObjectiveConfidence> {
   if (confidence !== null) return confidence;
-  if (confidenceCalcReason && confidenceCalcReason.startsWith(NOT_CALCULABLE_PREFIX)) return 'not_calculable';
+  if (confidenceCalcReason && confidenceCalcReason.startsWith(NOT_CALCULABLE_PREFIX))
+    return 'not_calculable';
   return null;
 }
 
@@ -314,6 +372,8 @@ export function formatOkrProgressPercent(value: number, isPolish: boolean): stri
 }
 
 export function formatOkrNumeric(value: number, isPolish: boolean, unit?: string | null): string {
-  const formatted = value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 2 });
+  const formatted = value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+    maximumFractionDigits: 2,
+  });
   return unit ? `${formatted} ${unit}` : formatted;
 }

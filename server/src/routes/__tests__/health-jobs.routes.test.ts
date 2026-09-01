@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import routes from '../admin/health-panel.routes.js';
 const dbGet = vi.fn();
 const dbAll = vi.fn();

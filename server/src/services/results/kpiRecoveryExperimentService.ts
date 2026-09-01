@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+
 import type { IDatabase } from '../../database/IDatabase.js';
 
 export type RecoveryExperimentVerdict = 'SUPPORTED' | 'NOT_SUPPORTED' | 'INCONCLUSIVE';
@@ -116,15 +117,17 @@ export async function createRecoveryExperiment(input: {
   remeasureAt: string;
 }) {
   await ownCard(input.db, input.orgId, input.cardId);
-  if (!(
-    input.idempotencyKey &&
-    input.intervention &&
-    input.baseline &&
-    input.measurementWindow &&
-    input.successCriterion &&
-    input.ownerUserId &&
-    input.remeasureAt
-  ))
+  if (
+    !(
+      input.idempotencyKey &&
+      input.intervention &&
+      input.baseline &&
+      input.measurementWindow &&
+      input.successCriterion &&
+      input.ownerUserId &&
+      input.remeasureAt
+    )
+  )
     throw new RecoveryExperimentError(
       'RESULTS_RECOVERY_EXPERIMENT_FIELDS_REQUIRED',
       400,

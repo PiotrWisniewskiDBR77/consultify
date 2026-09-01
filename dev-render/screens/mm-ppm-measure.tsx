@@ -30,7 +30,10 @@ const MmPpmMeasureScreen: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative h-[800px] w-[1280px] bg-c-surface text-c-text" data-testid="mels-canvas">
+    <div
+      className="relative h-[800px] w-[1280px] bg-c-surface text-c-text"
+      data-testid="mels-canvas"
+    >
       <div className="absolute left-2 top-2 z-[100] rounded bg-black/80 px-2 py-1 font-mono text-xs text-white">
         top-level height: {menuHeight === null ? 'measuring…' : `${Math.round(menuHeight)}px`} /
         viewport 800px

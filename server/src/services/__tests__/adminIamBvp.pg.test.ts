@@ -93,8 +93,10 @@ describe.skipIf(!REAL_DB)('ADM-BVP-001 — Admin/IAM BVP on real PostgreSQL', ()
           inviteLink: `test://invite/${token}`,
           deliveryStatus: 'SENT' as const,
         }),
-        sendProjectInvitation: async (_email: string, _project: string, token: string) =>
-          ({ inviteLink: `test://invite/${token}`, deliveryStatus: 'SENT' as const }),
+        sendProjectInvitation: async (_email: string, _project: string, token: string) => ({
+          inviteLink: `test://invite/${token}`,
+          deliveryStatus: 'SENT' as const,
+        }),
         sendResentInvitation: async (_email: string, token: string) => ({
           inviteLink: `test://invite/${token}`,
           deliveryStatus: 'SENT' as const,

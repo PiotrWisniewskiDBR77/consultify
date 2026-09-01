@@ -1,3 +1,4 @@
+import { validateControlKpiPolicyParameters } from '../../services/executionControl/controlKpiPolicySchema.js';
 import {
   executeMaterialCommand,
   MaterialCommandConflictError,
@@ -7,7 +8,6 @@ import {
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
-import { validateControlKpiPolicyParameters } from '../../services/executionControl/controlKpiPolicySchema.js';
 
 export interface KpiPolicyCapableTransaction extends MaterialCommandTransaction {
   upsertExecutionControlKpiPolicy(input: {

@@ -80,10 +80,7 @@ const DEFAULT_TEAMS_SCOPES = ['offline_access', 'openid', 'profile', 'email', 'U
  * exactly the connector id used below.
  */
 function buildApprovedRegistry(
-  entries: Record<
-    string,
-    { approved?: boolean; scopes: readonly string[]; residency?: string }
-  >
+  entries: Record<string, { approved?: boolean; scopes: readonly string[]; residency?: string }>
 ): string {
   const registry: Record<string, unknown> = {};
   for (const [connectorId, entry] of Object.entries(entries)) {
@@ -556,14 +553,12 @@ describe('V8 sync read-only routes', () => {
 
   it('POST /api/v8/sync/connectors/:connectorId/connect ignores a spoofed connected_by/actorId/userId in the request body', async () => {
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/sync/connectors/jira/connect')
-      .send({
-        connected_by: 'attacker-connected-by',
-        connectedBy: 'attacker-connectedBy',
-        actorId: 'attacker-actor-id',
-        userId: 'attacker-user-id',
-      });
+    const res = await request(app).post('/api/v8/sync/connectors/jira/connect').send({
+      connected_by: 'attacker-connected-by',
+      connectedBy: 'attacker-connectedBy',
+      actorId: 'attacker-actor-id',
+      userId: 'attacker-user-id',
+    });
 
     expect(res.status).toBe(201);
 
@@ -1685,9 +1680,7 @@ describe('V8 sync read-only routes', () => {
       } else {
         process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = registryValue;
       }
-      mockDbAll.mockResolvedValueOnce([
-        { connector_id: 'jira', config: REAUTH_JIRA_CONFIG },
-      ]);
+      mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', config: REAUTH_JIRA_CONFIG }]);
 
       const app = createApp();
       const res = await request(app).post('/api/v8/sync/integrations/int-1/reauth').send({});

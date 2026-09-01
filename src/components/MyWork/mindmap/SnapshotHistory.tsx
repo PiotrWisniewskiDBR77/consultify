@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 export interface MapSnapshot {
@@ -383,7 +382,10 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-c-warning" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="snapshot-history-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="snapshot-history-modal-heading"
+            >
               {t('Historia wersji', 'Version History')}
             </h3>
             {!backend && (

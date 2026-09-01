@@ -21,9 +21,9 @@ import {
   type EvidenceContractSource,
 } from '../evidence/evidenceContract.js';
 import {
-  enforceBlockGrounding,
   type ContentBlock,
   type ContentBlockType,
+  enforceBlockGrounding,
 } from './documentBlockContentGenerator.js';
 import type {
   DocumentBlock,
@@ -132,8 +132,17 @@ export function enforceDocumentSchemaGrounding(
     'offense strategy': 'Strategia ofensywna',
     'repair strategy': 'Strategia naprawcza',
   };
+  // FIX-195 (5): four of the day-190 tokens are POLISH WORDS, not English
+  // ones — `portfolio`, `total`, `plan`, `medium` (report 190, table "R1 —
+  // kompletna tabela tokenów 36 z 36", the four rows answering "tak" to "Czy
+  // jest słowem polskim?"). Day 190 made them non-destructive but they still
+  // set `changed`, so a fully grounded Polish paragraph — "Plan wdrożenia
+  // obejmuje trzy fale…" — came out amber. A Polish word is not evidence of
+  // English, so it must not raise the signal either. The other 32 tokens stay:
+  // per the same table `impact`, `owner` and `timing` are anglicisms, not
+  // Polish words, and remain a legitimate signal.
   const obviousEnglish =
-    /\b(the|and|for|with|without|required|information|portfolio|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|total|plan|realization|milestones?|completed|high|medium|low|scope|timing)\b/i;
+    /\b(the|and|for|with|without|required|information|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|realization|milestones?|completed|high|low|scope|timing)\b/i;
 
   const localizePolishValue = (
     value: unknown,
@@ -145,7 +154,7 @@ export function enforceDocumentSchemaGrounding(
       }
       const translated = plCanonical[value.trim().toLowerCase()];
       if (translated) return { value: translated, changed: translated !== value };
-      if (obviousEnglish.test(value)) return { value: removed, changed: true };
+      if (obviousEnglish.test(value)) return { value, changed: true };
       return { value, changed: false };
     }
     if (Array.isArray(value)) {
@@ -178,25 +187,28 @@ export function enforceDocumentSchemaGrounding(
     };
   };
 
-  const guardedTitle = guardText(next.title);
-  if (guardedTitle.changed) next.title = removed;
-
+  const sectionMetadataSignals: string[] = [];
   for (const section of next.sections) {
+    let localizedTitleChanged = false;
+    let localizedPurposeChanged = false;
     if (language === 'pl') {
       const localizedTitle = localizePolishValue(section.title);
       section.title = String(localizedTitle.value);
+      localizedTitleChanged = localizedTitle.changed;
       if (section.purpose) {
         const localizedPurpose = localizePolishValue(section.purpose);
         section.purpose = String(localizedPurpose.value);
+        localizedPurposeChanged = localizedPurpose.changed;
       }
     }
     const title = guardText(section.title);
-    if (title.changed) section.title = removed;
     let purposeChanged = false;
     if (section.purpose) {
       const purpose = guardText(section.purpose);
-      if (purpose.changed) section.purpose = removed;
-      purposeChanged = purpose.changed;
+      purposeChanged = purpose.changed || localizedPurposeChanged;
+    }
+    if (title.changed || localizedTitleChanged || purposeChanged) {
+      sectionMetadataSignals.push(section.title);
     }
     for (const block of section.blocks) {
       const guarded = enforceBlockGrounding(
@@ -206,8 +218,7 @@ export function enforceDocumentSchemaGrounding(
         groundingSource
       );
       block.content = guarded.content;
-      block.isAssumption =
-        block.isAssumption === true || guarded.changed || title.changed || purposeChanged;
+      block.isAssumption = block.isAssumption === true || guarded.changed;
       if (language === 'pl') {
         const localized = localizePolishValue(block.content);
         block.content = localized.value;
@@ -431,9 +442,10 @@ export function enforceDocumentSchemaGrounding(
       // business cases must state an explicit approve/decide action so the
       // reader knows which governance gate is being requested.
       if (!/\b(approv(?:e|ing)|decide|zatwierd|decyduj)/i.test(executiveText)) {
-        const decisionText = language === 'pl'
-          ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
-          : 'We recommend approving the next validation gate described in this business case.';
+        const decisionText =
+          language === 'pl'
+            ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
+            : 'We recommend approving the next validation gate described in this business case.';
         const insertAt = executive.blocks.findIndex((block) => block.type !== 'heading');
         executive.blocks.splice(insertAt < 0 ? executive.blocks.length : insertAt, 0, {
           blockId: uuidv4(),
@@ -445,7 +457,25 @@ export function enforceDocumentSchemaGrounding(
     }
   }
 
-  next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
+  const evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
+  next.evidence = evidence;
+  sectionMetadataSignals.forEach((sectionTitle) => {
+    evidence.toVerify.push(
+      language === 'pl'
+        ? `Tytuł lub cel sekcji "${sectionTitle}" zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.`
+        : `The title or purpose of section "${sectionTitle}" contains an unsupported fragment and requires verification.`
+    );
+  });
+  const localizedDocumentTitle = language === 'pl' ? localizePolishValue(next.title) : null;
+  const documentTitleSignal =
+    guardText(next.title).changed || localizedDocumentTitle?.changed === true;
+  if (documentTitleSignal) {
+    evidence.toVerify.push(
+      language === 'pl'
+        ? 'Tytuł dokumentu zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'
+        : 'The document title contains an unsupported fragment and requires verification.'
+    );
+  }
   return next;
 }
 

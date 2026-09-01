@@ -18,11 +18,11 @@
  * unresolved "production" telemetry for the public ingress.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import {
@@ -30,6 +30,7 @@ import {
   PARTNERS_PUBLIC_CUTOVER,
   PARTNERS_SUPERADMIN_CUTOVER,
 } from '../registry/partnersSiblings.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =

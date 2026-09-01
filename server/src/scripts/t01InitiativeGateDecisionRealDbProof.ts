@@ -4,12 +4,12 @@ import fs from 'node:fs';
 
 import pg, { type PoolClient } from 'pg';
 
-import type { PgTransactionClient } from '../utils/queryHelpers.js';
 import {
   assertCurrentApprovedInitiativeLifecycleGateDecision,
   recordInitiativeLifecycleGateDecision,
   type RecordInitiativeLifecycleGateDecisionInput,
 } from '../services/initiative/initiativeLifecycleGateDecisionService.js';
+import type { PgTransactionClient } from '../utils/queryHelpers.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 const databaseHost = databaseUrl ? new URL(databaseUrl).hostname : '';

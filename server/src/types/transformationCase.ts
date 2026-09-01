@@ -201,11 +201,21 @@ export const ProposePortfolioDecisionSchema = z.object({
   decisionMakerId: z.string().trim().min(1).max(256),
   deadline: z.string().datetime().optional(),
   supportingEvidence: z
-    .array(z.object({ ref: z.string().trim().min(1).max(500), snapshot: z.record(z.string(), z.unknown()) }))
+    .array(
+      z.object({
+        ref: z.string().trim().min(1).max(500),
+        snapshot: z.record(z.string(), z.unknown()),
+      })
+    )
     .min(1)
     .max(50),
   contradictingEvidence: z
-    .array(z.object({ ref: z.string().trim().min(1).max(500), snapshot: z.record(z.string(), z.unknown()) }))
+    .array(
+      z.object({
+        ref: z.string().trim().min(1).max(500),
+        snapshot: z.record(z.string(), z.unknown()),
+      })
+    )
     .min(1)
     .max(50),
 });
@@ -315,7 +325,11 @@ export interface TransformationPlanStep {
   dependsOn: string[];
   approvalClass: 'none' | 'policy_approvable' | 'requires_human_approval';
   riskClass:
-    'read_only' | 'safe_additive' | 'safe_update' | 'sensitive_update' | 'governance_transition';
+    | 'read_only'
+    | 'safe_additive'
+    | 'safe_update'
+    | 'sensitive_update'
+    | 'governance_transition';
   executionMode: 'foreground' | 'background' | 'scheduled' | 'human_activity';
   estimatedEffort: string;
   status: 'proposed';

@@ -20,9 +20,9 @@
 import React from 'react';
 
 import {
+  type FinanceArtifactType,
   financeArtifactTypeLabel,
   financeLineageTransformationKindLabel,
-  type FinanceArtifactType,
   type LineageEdgeDto,
 } from '@/services/api/financeV2.types';
 
@@ -44,7 +44,8 @@ export interface RelatedArtifactsSectionProps {
 }
 
 export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): React.ReactElement {
-  const { sourceBusinessVersionId, descendants, loading, loaded, onOpenArtifact, onCreateNew } = props;
+  const { sourceBusinessVersionId, descendants, loading, loaded, onOpenArtifact, onCreateNew } =
+    props;
 
   if (loading) {
     return (
@@ -97,7 +98,9 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
               </button>
             </div>
             {edges.length === 0 ? (
-              <p className="text-[10px] text-c-text-muted">Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.</p>
+              <p className="text-[10px] text-c-text-muted">
+                Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.
+              </p>
             ) : (
               <ul className="space-y-1">
                 {edges.map((edge) => (
@@ -108,9 +111,13 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
                       data-testid={`related-artifacts-open-${edge.targetVersionId}`}
                       className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left text-[11px] text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
-                      <span className="truncate font-mono text-[10px]">v.{edge.targetVersionId.slice(0, 8)}</span>
+                      <span className="truncate font-mono text-[10px]">
+                        v.{edge.targetVersionId.slice(0, 8)}
+                      </span>
                       <span className="shrink-0 text-[9px] text-c-text-muted">
-                        {financeLineageTransformationKindLabel(edge.transformationKind || edge.edgeType)}
+                        {financeLineageTransformationKindLabel(
+                          edge.transformationKind || edge.edgeType
+                        )}
                       </span>
                     </button>
                   </li>

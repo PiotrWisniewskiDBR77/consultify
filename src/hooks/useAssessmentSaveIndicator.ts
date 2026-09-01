@@ -172,7 +172,13 @@ export interface UseAssessmentSaveIndicatorReturn {
 export function useAssessmentSaveIndicator(
   options: UseAssessmentSaveIndicatorOptions
 ): UseAssessmentSaveIndicatorReturn {
-  const { runtimeStatus, saveState, pendingWriteCount, isReconciling, recoveredDisplayMs = 2500 } = options;
+  const {
+    runtimeStatus,
+    saveState,
+    pendingWriteCount,
+    isReconciling,
+    recoveredDisplayMs = 2500,
+  } = options;
 
   const [justRecovered, setJustRecovered] = useState(false);
   const wasReconcilingRef = useRef(false);

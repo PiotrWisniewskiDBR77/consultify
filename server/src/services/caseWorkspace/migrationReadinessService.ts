@@ -158,7 +158,11 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
-import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
+import {
+  CaseWorkspaceAuthError,
+  requireOrgMember,
+  requireOrgRole,
+} from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
@@ -517,10 +521,9 @@ async function assertNoAncestorCycle(
     // without it TypeScript reports result as circularly self-referential.
     const result: { rows: { parent_flag_key: string | null }[] } = await client.query<{
       parent_flag_key: string | null;
-    }>(
-      `SELECT parent_flag_key FROM case_workspace_feature_flag_definitions WHERE flag_key = ?`,
-      [cursor]
-    );
+    }>(`SELECT parent_flag_key FROM case_workspace_feature_flag_definitions WHERE flag_key = ?`, [
+      cursor,
+    ]);
     cursor = result.rows[0]?.parent_flag_key ?? null;
   }
 }
@@ -640,7 +643,10 @@ async function applyOrgFlagState(
   input: SetOrgFlagStateInput,
   eventType: 'flag.org_state_changed' | 'flag.rolled_back'
 ): Promise<FeatureFlagState> {
-  const organizationId = requireNonBlank(input.organizationId, 'feature_flag_organization_id_required');
+  const organizationId = requireNonBlank(
+    input.organizationId,
+    'feature_flag_organization_id_required'
+  );
   const flagKey = requireNonBlank(input.flagKey, 'feature_flag_key_required');
   const updatedBy = requireNonBlank(input.updatedBy, 'feature_flag_updated_by_required');
 
@@ -685,7 +691,17 @@ async function applyOrgFlagState(
                       updated_at = EXCLUDED.updated_at,
                       updated_by = EXCLUDED.updated_by
        RETURNING *`,
-      [flagId, organizationId, flagKey, enabled, cohort, rolloutPercentage, JSON.stringify(allowList), now, updatedBy]
+      [
+        flagId,
+        organizationId,
+        flagKey,
+        enabled,
+        cohort,
+        rolloutPercentage,
+        JSON.stringify(allowList),
+        now,
+        updatedBy,
+      ]
     );
 
     const upsertedRow = upserted.rows[0];
@@ -793,10 +809,7 @@ export async function listCurrentOrgFlags(
  * never flips as unrelated entities are added and a percentage increase
  * only ever adds entities, never removes one.
  */
-export function isFlagEnabledForEntity(
-  state: FeatureFlagState | null,
-  entityId: string
-): boolean {
+export function isFlagEnabledForEntity(state: FeatureFlagState | null, entityId: string): boolean {
   if (!state || state.enabled !== true) return false;
   const id = String(entityId ?? '').trim();
   if (!id) return false;
@@ -831,7 +844,11 @@ export async function findSmallestEnabledDescendant(
   const descendants = await listFlagDescendants(rootKey, actor, orgId);
   const allNodes: Array<{ flagKey: string; parentFlagKey: string | null; depth: number }> = [
     { flagKey: rootDefinition.flagKey, parentFlagKey: rootDefinition.parentFlagKey, depth: 0 },
-    ...descendants.map((d) => ({ flagKey: d.flagKey, parentFlagKey: d.parentFlagKey, depth: d.depth })),
+    ...descendants.map((d) => ({
+      flagKey: d.flagKey,
+      parentFlagKey: d.parentFlagKey,
+      depth: d.depth,
+    })),
   ];
 
   const statesByFlagKey = new Map<string, FeatureFlagState | null>();
@@ -926,10 +943,22 @@ export async function recordQuarantinedLegacyRecord(
   input: RecordQuarantinedLegacyRecordInput,
   actorUserId: string
 ): Promise<QuarantinedLegacyRecord> {
-  const organizationId = requireNonBlank(input.organizationId, 'legacy_quarantine_organization_id_required');
-  await requireOrgMember(requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'), organizationId);
-  const rehearsalRunId = requireNonBlank(input.rehearsalRunId, 'legacy_quarantine_rehearsal_run_id_required');
-  const sourceSystem = requireNonBlank(input.sourceSystem, 'legacy_quarantine_source_system_required');
+  const organizationId = requireNonBlank(
+    input.organizationId,
+    'legacy_quarantine_organization_id_required'
+  );
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'),
+    organizationId
+  );
+  const rehearsalRunId = requireNonBlank(
+    input.rehearsalRunId,
+    'legacy_quarantine_rehearsal_run_id_required'
+  );
+  const sourceSystem = requireNonBlank(
+    input.sourceSystem,
+    'legacy_quarantine_source_system_required'
+  );
   const sourceTable = requireNonBlank(input.sourceTable, 'legacy_quarantine_source_table_required');
   const sourceId = requireNonBlank(input.sourceId, 'legacy_quarantine_source_id_required');
   const quarantineReasonCode = requireNonBlank(
@@ -940,7 +969,10 @@ export async function recordQuarantinedLegacyRecord(
     input.quarantineReasonDetail,
     'legacy_quarantine_reason_detail_required'
   );
-  const recoveryPathRef = requireNonBlank(input.recoveryPathRef, 'legacy_quarantine_recovery_path_ref_required');
+  const recoveryPathRef = requireNonBlank(
+    input.recoveryPathRef,
+    'legacy_quarantine_recovery_path_ref_required'
+  );
   const detectedAt = requireNonBlank(input.detectedAt, 'legacy_quarantine_detected_at_required');
 
   return withPgTransaction(async (client) => {

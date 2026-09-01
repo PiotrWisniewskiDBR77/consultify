@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { listWorkbookTemplates, getWorkbook, getWorkbookSchema } = vi.hoisted(() => ({

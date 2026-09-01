@@ -241,9 +241,19 @@ export async function acquireDurableIdeaNodeLock(
             fencing_token::int as "fencingToken", expires_at::text as "expiresAt"
      FROM acquired`,
     [
-      input.organizationId, input.ideaId, input.nodeId,
-      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner, ttl,
-      input.organizationId, input.ideaId, input.userId, input.correlationId,
+      input.organizationId,
+      input.ideaId,
+      input.nodeId,
+      input.organizationId,
+      input.ideaId,
+      input.nodeId,
+      input.userId,
+      input.leaseOwner,
+      ttl,
+      input.organizationId,
+      input.ideaId,
+      input.userId,
+      input.correlationId,
     ]
   );
   return row ?? null;
@@ -277,10 +287,23 @@ export async function releaseDurableIdeaNodeLock(
      )
      SELECT EXISTS (SELECT 1 FROM released) AS released`,
     [
-      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner,
-      input.fencingToken, input.organizationId, input.ideaId, input.userId, input.correlationId,
-      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner,
-      input.fencingToken, input.correlationId,
+      input.organizationId,
+      input.ideaId,
+      input.nodeId,
+      input.userId,
+      input.leaseOwner,
+      input.fencingToken,
+      input.organizationId,
+      input.ideaId,
+      input.userId,
+      input.correlationId,
+      input.organizationId,
+      input.ideaId,
+      input.nodeId,
+      input.userId,
+      input.leaseOwner,
+      input.fencingToken,
+      input.correlationId,
     ]
   );
   return row?.released === true;
@@ -410,7 +433,10 @@ async function persistCanonicalPatch(
     await client.query('BEGIN');
     begun = true;
     const selected = await client.query<{
-      id: string; version: number; nodes_json: unknown; edges_json: unknown;
+      id: string;
+      version: number;
+      nodes_json: unknown;
+      edges_json: unknown;
     }>(
       `SELECT id, version, nodes_json, edges_json
        FROM my_idea_maps
@@ -419,16 +445,26 @@ async function persistCanonicalPatch(
       [ideaId, organizationId]
     );
     const canonical = selected.rows[0];
-    if (!canonical) throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
-    const touchedNodeIds = [...new Set(ops.flatMap((op) => {
-      const data = op?.data || {};
-      if (op.op.endsWith('_node')) return [String(data.id || '')];
-      if (op.op.endsWith('_edge')) return [String(data.source || ''), String(data.target || '')];
-      return [];
-    }).filter(Boolean))];
+    if (!canonical)
+      throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
+    const touchedNodeIds = [
+      ...new Set(
+        ops
+          .flatMap((op) => {
+            const data = op?.data || {};
+            if (op.op.endsWith('_node')) return [String(data.id || '')];
+            if (op.op.endsWith('_edge'))
+              return [String(data.source || ''), String(data.target || '')];
+            return [];
+          })
+          .filter(Boolean)
+      ),
+    ];
     if (touchedNodeIds.length > 0) {
       const locks = await client.query<{
-        node_id: string; lease_owner: string; fencing_token: string;
+        node_id: string;
+        lease_owner: string;
+        fencing_token: string;
       }>(
         `SELECT node_id, lease_owner, fencing_token, expires_at > NOW() AS unexpired
          FROM idea_workspace_node_locks

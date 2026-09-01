@@ -39,12 +39,12 @@
  * silently downgraded to `'watch'` and forgotten — see that entry for the
  * exact statement of what a future Program-policy field would need to add.
  */
+import type { OkrObjectiveConfidenceModel, OkrObjectiveRollupModel } from './okrProgramTypes.js';
 import {
   calculateObjectiveConfidenceRollup,
   calculateObjectiveProgressRollup,
   type OkrConfidenceValue,
 } from './okrProgressEngine.js';
-import type { OkrObjectiveConfidenceModel, OkrObjectiveRollupModel } from './okrProgramTypes.js';
 import type { OkrSetAttentionState } from './okrSetTypes.js';
 
 export interface ComputeSetRollupObjectiveInput {
@@ -131,7 +131,14 @@ export interface ComputeSetRollupResult {
  * are `null`, never a fabricated `0`.
  */
 export function computeSetRollup(input: ComputeSetRollupInput): ComputeSetRollupResult {
-  const { objectives, objectiveRollupModel, objectiveConfidenceModel, anyKeyResultStale, lastCheckinAt, nextCheckinDueAt } = input;
+  const {
+    objectives,
+    objectiveRollupModel,
+    objectiveConfidenceModel,
+    anyKeyResultStale,
+    lastCheckinAt,
+    nextCheckinDueAt,
+  } = input;
 
   const progressResult = calculateObjectiveProgressRollup({
     keyResultProgresses: objectives.map((o) => ({ progress: o.progress, weight: null })),
@@ -145,7 +152,10 @@ export function computeSetRollup(input: ComputeSetRollupInput): ComputeSetRollup
   // itself already returns a clean `not_calculable` for a `null`
   // `ownerSelectedValue` rather than throwing, so this degrades safely.
   const confidenceResult = calculateObjectiveConfidenceRollup({
-    keyResultConfidences: objectives.map((o) => ({ confidence: o.confidence, confidenceNumericValue: o.confidenceNumericValue })),
+    keyResultConfidences: objectives.map((o) => ({
+      confidence: o.confidence,
+      confidenceNumericValue: o.confidenceNumericValue,
+    })),
     confidenceModel: objectiveConfidenceModel,
     ownerSelectedValue: null,
   });
@@ -155,7 +165,8 @@ export function computeSetRollup(input: ComputeSetRollupInput): ComputeSetRollup
   // one KR has a genuinely overdue check-in. Neither branch requires a
   // tunable number.
   const anyObjectiveLowConfidence = objectives.some((o) => o.confidence === 'low');
-  const attentionState: OkrSetAttentionState = anyObjectiveLowConfidence || anyKeyResultStale ? 'watch' : 'none';
+  const attentionState: OkrSetAttentionState =
+    anyObjectiveLowConfidence || anyKeyResultStale ? 'watch' : 'none';
 
   const objectiveCount = objectives.length;
   const progressReason =

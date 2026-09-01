@@ -69,9 +69,9 @@ describe.skipIf(!enabled)('DAY174 cancellation — real PG + Redis', () => {
     await queueEvents.waitUntilReady();
     const worker = initWorker();
     try {
-      expect(await tryDispatchBackgroundExecution({ planId: plan.id, organizationId, userId })).toBe(
-        'enqueued'
-      );
+      expect(
+        await tryDispatchBackgroundExecution({ planId: plan.id, organizationId, userId })
+      ).toBe('enqueued');
       const receipt = (
         await pool.query(
           `SELECT receipt_id,bull_job_id FROM ai_agent_job_receipts WHERE plan_id=$1`,
@@ -124,9 +124,8 @@ describe.skipIf(!enabled)('DAY174 cancellation — real PG + Redis', () => {
   // lied about an ordinary, already-recorded cancellation.
   it('cancels during the LAST step (okno a2), clears the lease, closes the receipt (not FAILED)', async () => {
     const { agentPlannerService } = await import('../agentPlannerService.js');
-    const { tryDispatchBackgroundExecution } = await import(
-      '../../../routes/ai/agent-plan.routes.js'
-    );
+    const { tryDispatchBackgroundExecution } =
+      await import('../../../routes/ai/agent-plan.routes.js');
     const { redriveAgentTask } = await import('../agentTaskDispatchService.js');
     const { default: queue } = await import('../../../queues/aiQueue.js');
     const { initWorker } = await import('../../../workers/aiWorker.js');
@@ -186,9 +185,10 @@ describe.skipIf(!enabled)('DAY174 cancellation — real PG + Redis', () => {
       expect(readback.status).not.toBe('executing');
       expect(readback.status).not.toBe('failed');
       const receiptRow = (
-        await pool.query(`SELECT status,last_error_code FROM ai_agent_job_receipts WHERE receipt_id=$1`, [
-          receipt.receipt_id,
-        ])
+        await pool.query(
+          `SELECT status,last_error_code FROM ai_agent_job_receipts WHERE receipt_id=$1`,
+          [receipt.receipt_id]
+        )
       ).rows[0];
       expect(receiptRow.status).toBe('SUCCEEDED');
       expect(receiptRow.status).not.toBe('RUNNING');

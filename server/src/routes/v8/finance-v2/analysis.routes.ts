@@ -21,12 +21,17 @@ import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
   computeAnalysisKpis,
+  type ComputeAnalysisKpisParams,
   listKpiCatalog,
   listKpiValues,
-  type ComputeAnalysisKpisParams,
 } from '../../../services/finance/canonical/kpiComputeService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { financeV2Meta, mapOrgRoleToFinanceRole, readExpectedVersion, sendError } from './_shared.js';
+import {
+  financeV2Meta,
+  mapOrgRoleToFinanceRole,
+  readExpectedVersion,
+  sendError,
+} from './_shared.js';
 
 const router = Router();
 
@@ -41,9 +46,16 @@ router.get(
     const { organizationId } = getV8Context(req);
     const tierRaw = req.query.tier;
     const tier =
-      tierRaw === 'UNIVERSAL' || tierRaw === 'INDUSTRY' || tierRaw === 'ORG_CUSTOM' ? tierRaw : undefined;
+      tierRaw === 'UNIVERSAL' || tierRaw === 'INDUSTRY' || tierRaw === 'ORG_CUSTOM'
+        ? tierRaw
+        : undefined;
     if (tierRaw !== undefined && !tier) {
-      return sendError(res, 400, 'INVALID_QUERY', 'tier must be one of UNIVERSAL, INDUSTRY, ORG_CUSTOM');
+      return sendError(
+        res,
+        400,
+        'INVALID_QUERY',
+        'tier must be one of UNIVERSAL, INDUSTRY, ORG_CUSTOM'
+      );
     }
 
     const rows = await listKpiCatalog(organizationId, {
@@ -88,8 +100,16 @@ router.post(
 
     const attemptReadinessTransition = body.attemptReadinessTransition === true;
     const expectedVersion = attemptReadinessTransition ? readExpectedVersion(req) : undefined;
-    if (attemptReadinessTransition && (expectedVersion === undefined || Number.isNaN(expectedVersion))) {
-      return sendError(res, 400, 'EXPECTED_VERSION_REQUIRED', 'expectedVersion is required when attemptReadinessTransition=true');
+    if (
+      attemptReadinessTransition &&
+      (expectedVersion === undefined || Number.isNaN(expectedVersion))
+    ) {
+      return sendError(
+        res,
+        400,
+        'EXPECTED_VERSION_REQUIRED',
+        'expectedVersion is required when attemptReadinessTransition=true'
+      );
     }
 
     const params: ComputeAnalysisKpisParams = {
@@ -105,7 +125,11 @@ router.post(
     const result = await computeAnalysisKpis(params);
 
     if (!result.ok) {
-      const status = result.code === 'NO_SOURCE_STATEMENT_PACK_EDGE' || result.code === 'BUSINESS_VERSION_NOT_FOUND' ? 404 : 409;
+      const status =
+        result.code === 'NO_SOURCE_STATEMENT_PACK_EDGE' ||
+        result.code === 'BUSINESS_VERSION_NOT_FOUND'
+          ? 404
+          : 409;
       return sendError(res, status, result.code, result.message);
     }
 

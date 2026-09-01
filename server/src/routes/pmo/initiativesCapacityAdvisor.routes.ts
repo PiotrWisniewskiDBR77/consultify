@@ -1,7 +1,8 @@
-import { Router, type Request } from 'express';
+import { type Request, Router } from 'express';
 import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
 
+import databaseConfig from '../../config/DatabaseConfig.js';
 import {
   capacityOptionFindings,
   createCapacityOptions,
@@ -16,7 +17,6 @@ import {
 } from '../../domain/initiatives-execution/materialCommand.js';
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
-import databaseConfig from '../../config/DatabaseConfig.js';
 
 const router = Router();
 const pool = new Pool(databaseConfig.postgres as PoolConfig | undefined);

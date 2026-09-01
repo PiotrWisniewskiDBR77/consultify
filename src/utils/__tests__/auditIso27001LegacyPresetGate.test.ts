@@ -25,11 +25,11 @@ import { AUDIT_ISO27001_LEGACY_PRESET_ENABLED } from '../auditIso27001LegacyPres
 
 const GATE_PATH = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../auditIso27001LegacyPresetGate.ts',
+  '../auditIso27001LegacyPresetGate.ts'
 );
 const PRESETS_PATH = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../components/Audit/auditPresets.ts',
+  '../../components/Audit/auditPresets.ts'
 );
 
 function stripComments(src: string): string {
@@ -98,9 +98,8 @@ describe('AUDIT_PRESETS — the ISO preset is excluded at the primary choke poin
   });
 
   it('at the shipped value, AUDIT_PRESETS omits the ISO preset and getPresetById cannot resolve it', async () => {
-    const { AUDIT_PRESETS, getPresetById, ISO_27001_PRESET } = await import(
-      '../../components/Audit/auditPresets'
-    );
+    const { AUDIT_PRESETS, getPresetById, ISO_27001_PRESET } =
+      await import('../../components/Audit/auditPresets');
     expect(AUDIT_PRESETS.some((p) => p.id === ISO_27001_PRESET.id)).toBe(false);
     // The id-guessing path is closed too: no preset object comes back.
     expect(getPresetById('iso27001')).toBeNull();

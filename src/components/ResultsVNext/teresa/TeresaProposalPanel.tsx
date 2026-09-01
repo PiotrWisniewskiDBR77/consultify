@@ -34,9 +34,20 @@
 import { AlertTriangle, Check, History, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
+import {
+  TeresaEvidenceBreakdown,
+  type TeresaEvidenceBreakdownValue,
+} from './TeresaEvidenceBreakdown';
+import type {
+  HandoffTargetModule,
+  TeresaAuditEntry,
+  TeresaChatProposalEnvelope,
+  TeresaHandoffContext,
+  TeresaHandoffExecutionResult,
+} from './teresaHandoffTypes';
 import {
   approveTeresaProposal,
   createTeresaProposal,
@@ -45,18 +56,7 @@ import {
   rejectTeresaProposal,
   TeresaProposalApiError,
 } from './teresaProposalApi';
-import {
-  TeresaEvidenceBreakdown,
-  type TeresaEvidenceBreakdownValue,
-} from './TeresaEvidenceBreakdown';
 import { TeresaUnavailableBanner } from './TeresaUnavailableBanner';
-import type {
-  HandoffTargetModule,
-  TeresaAuditEntry,
-  TeresaChatProposalEnvelope,
-  TeresaHandoffContext,
-  TeresaHandoffExecutionResult,
-} from './teresaHandoffTypes';
 
 type PanelPhase =
   | 'thinking' // createTeresaProposal in flight
@@ -98,7 +98,10 @@ export interface TeresaProposalPanelProps {
   /** Called once with a SUCCESSFUL execution result — the only place a
    * caller should update its own domain-row state (e.g. ROI enabling its
    * pre-existing disposition action). */
-  onCompleted: (execution: TeresaHandoffExecutionResult, proposal: TeresaChatProposalEnvelope | null) => void;
+  onCompleted: (
+    execution: TeresaHandoffExecutionResult,
+    proposal: TeresaChatProposalEnvelope | null
+  ) => void;
   /** Opens a manual editor that never calls Teresa — required reachable
    * from BOTH the unavailable banner and (optionally) as an escape hatch. */
   onManualFallback?: () => void;
@@ -285,7 +288,8 @@ export const TeresaProposalPanel: React.FC<TeresaProposalPanelProps> = ({
       .finally(() => setAuditLoading(false));
   };
 
-  const busy = phase === 'thinking' || phase === 'approving' || phase === 'rejecting' || phase === 'executing';
+  const busy =
+    phase === 'thinking' || phase === 'approving' || phase === 'rejecting' || phase === 'executing';
 
   return (
     <Modal
@@ -386,9 +390,7 @@ export const TeresaProposalPanel: React.FC<TeresaProposalPanelProps> = ({
                 <div>
                   <p className="font-semibold">{isPolish ? 'Zapisano' : 'Saved'}</p>
                   <p className="text-c-text-muted">
-                    {isPolish
-                      ? 'Wpis audytowy: '
-                      : 'Audit entry: '}
+                    {isPolish ? 'Wpis audytowy: ' : 'Audit entry: '}
                     <span className="font-mono">{execution.audit_entry_id}</span>
                   </p>
                 </div>
@@ -396,14 +398,20 @@ export const TeresaProposalPanel: React.FC<TeresaProposalPanelProps> = ({
             ) : null}
 
             {errorText ? (
-              <div role="alert" className="rounded-lg border border-c-danger/30 bg-c-danger/10 p-2 text-[12px] text-c-text">
+              <div
+                role="alert"
+                className="rounded-lg border border-c-danger/30 bg-c-danger/10 p-2 text-[12px] text-c-text"
+              >
                 {errorText}
               </div>
             ) : null}
 
             {showRejectForm ? (
               <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted" htmlFor="teresa-reject-reason">
+                <label
+                  className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted"
+                  htmlFor="teresa-reject-reason"
+                >
                   {isPolish ? 'Powód odrzucenia (opcjonalnie)' : 'Rejection reason (optional)'}
                 </label>
                 <textarea
@@ -498,7 +506,11 @@ export const TeresaProposalPanel: React.FC<TeresaProposalPanelProps> = ({
                   data-testid="teresa-load-audit"
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border bg-transparent px-3 text-[12px] font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:opacity-50"
                 >
-                  {auditLoading ? <Loader2 size={13} className="animate-spin" /> : <History size={13} />}
+                  {auditLoading ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <History size={13} />
+                  )}
                   <span>{isPolish ? 'Zobacz ślad audytowy' : 'View audit trail'}</span>
                 </button>
                 {auditTrail ? (
@@ -507,11 +519,18 @@ export const TeresaProposalPanel: React.FC<TeresaProposalPanelProps> = ({
                     className="mt-2 space-y-1 text-[11px] text-c-text-muted"
                   >
                     {auditTrail.map((entry) => (
-                      <li key={entry.id} className="flex justify-between gap-2 border-b border-c-border/50 py-1">
+                      <li
+                        key={entry.id}
+                        className="flex justify-between gap-2 border-b border-c-border/50 py-1"
+                      >
                         <span className="font-mono">{entry.action}</span>
                         <span>{entry.actor}</span>
-                        <span>{entry.from_state ?? '—'} → {entry.to_state}</span>
-                        <span>{new Date(entry.timestamp).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>
+                        <span>
+                          {entry.from_state ?? '—'} → {entry.to_state}
+                        </span>
+                        <span>
+                          {new Date(entry.timestamp).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                        </span>
                       </li>
                     ))}
                   </ul>

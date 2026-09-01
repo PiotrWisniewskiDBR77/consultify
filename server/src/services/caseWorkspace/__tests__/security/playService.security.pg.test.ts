@@ -127,10 +127,10 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
 
   async function seedOrg(label: string): Promise<string> {
     const orgId = `secplay-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Stream E play test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Stream E play test org (${label})`]
+    );
     return orgId;
   }
 
@@ -159,7 +159,10 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
   }
 
   async function setMemberStatus(membershipId: string, status: string): Promise<void> {
-    await control.query(`UPDATE organization_members SET status = $1 WHERE id = $2`, [status, membershipId]);
+    await control.query(`UPDATE organization_members SET status = $1 WHERE id = $2`, [
+      status,
+      membershipId,
+    ]);
   }
 
   /**
@@ -183,7 +186,9 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
     return userId;
   }
 
-  async function seedOrgProjectCase(label: string): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  async function seedOrgProjectCase(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
     const orgId = await seedOrg(label);
     const projectId = `secplay-project-${label}-${randomUUID()}`;
     await control.query(
@@ -200,7 +205,10 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
     return { orgId, projectId, caseId: created.caseId };
   }
 
-  async function publishedPlay(orgId: string, tag: string): Promise<{ definitionId: string; versionId: string }> {
+  async function publishedPlay(
+    orgId: string,
+    tag: string
+  ): Promise<{ definitionId: string; versionId: string }> {
     // Both the owner and the reviewer must be real ACTIVE members of orgId:
     // createProcessDefinition/createProcessVersionDraft/proposeProcessVersion/
     // publishProcessVersion all now call requireOrgMember(actorUserId, org)
@@ -219,7 +227,11 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
       semanticGraph: SIMPLE_GRAPH,
       createdByActorId: ownerActorId,
     });
-    const proposed = await playService.proposeProcessVersion(draft.processVersionId, { actorUserId: ownerActorId }, draft.version);
+    const proposed = await playService.proposeProcessVersion(
+      draft.processVersionId,
+      { actorUserId: ownerActorId },
+      draft.version
+    );
     const reviewed = await playService.reviewProcessVersion(
       proposed.processVersionId,
       { actorUserId: reviewerActorId },
@@ -227,17 +239,32 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
       undefined,
       proposed.version
     );
-    const published = await playService.publishProcessVersion(reviewed.processVersionId, { actorUserId: ownerActorId }, reviewed.version);
+    const published = await playService.publishProcessVersion(
+      reviewed.processVersionId,
+      { actorUserId: ownerActorId },
+      reviewed.version
+    );
     return { definitionId: definition.processDefinitionId, versionId: published.processVersionId };
   }
 
-  async function teardown(opts: { orgIds?: string[]; projectIds?: string[]; userIds?: string[]; definitionIds?: string[] }): Promise<void> {
+  async function teardown(opts: {
+    orgIds?: string[];
+    projectIds?: string[];
+    userIds?: string[];
+    definitionIds?: string[];
+  }): Promise<void> {
     for (const definitionId of opts.definitionIds ?? []) {
-      await control.query(`DELETE FROM process_versions WHERE process_definition_id = $1`, [definitionId]).catch(() => undefined);
-      await control.query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [definitionId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM process_versions WHERE process_definition_id = $1`, [definitionId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [definitionId])
+        .catch(() => undefined);
     }
     for (const projectId of opts.projectIds ?? []) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of opts.userIds ?? []) {
@@ -248,8 +275,12 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
       // organizations); users does not carry that FK, so any actor seeded
       // via seedActiveActor()/seedUser() for this org is swept here by
       // organization_id rather than needing per-test tracking.
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -269,7 +300,12 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
           code: 'case_access_denied',
         });
       } finally {
-        await teardown({ orgIds: [orgId, attackerOrgId], projectIds: [projectId], userIds: [attackerUserId], definitionIds: [definitionId] });
+        await teardown({
+          orgIds: [orgId, attackerOrgId],
+          projectIds: [projectId],
+          userIds: [attackerUserId],
+          definitionIds: [definitionId],
+        });
       }
       void versionId;
     }, 30_000);
@@ -350,7 +386,10 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
           playService.instantiateProcessVersion(versionId, caseId, { actorUserId: attackerUserId })
         ).rejects.toThrow('process_version_not_found');
 
-        const rows = await control.query(`SELECT case_plan_version_id FROM case_plan_versions WHERE case_id = $1`, [caseId]);
+        const rows = await control.query(
+          `SELECT case_plan_version_id FROM case_plan_versions WHERE case_id = $1`,
+          [caseId]
+        );
         expect(rows.rows).toHaveLength(0); // no plan draft was ever created
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId], definitionIds: [definitionId] });
@@ -378,7 +417,11 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         semanticGraph: SIMPLE_GRAPH,
         createdByActorId: revokedOwnerId,
       });
-      const proposed = await playService.proposeProcessVersion(draft.processVersionId, { actorUserId: revokedOwnerId }, draft.version);
+      const proposed = await playService.proposeProcessVersion(
+        draft.processVersionId,
+        { actorUserId: revokedOwnerId },
+        draft.version
+      );
       const reviewed = await playService.reviewProcessVersion(
         proposed.processVersionId,
         { actorUserId: reviewerId },
@@ -386,7 +429,11 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         undefined,
         proposed.version
       );
-      await playService.publishProcessVersion(reviewed.processVersionId, { actorUserId: revokedOwnerId }, reviewed.version);
+      await playService.publishProcessVersion(
+        reviewed.processVersionId,
+        { actorUserId: revokedOwnerId },
+        reviewed.version
+      );
 
       // NOW revoke — simulates the owner's standing being pulled AFTER they
       // published, before they attempt to share.
@@ -403,7 +450,10 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         // (isAuthorizedPublisher collapses both not_org_member and
         // insufficient_org_role to a plain `false`, so the caller cannot
         // distinguish "revoked" from "role too low" from the error alone).
-        const currentDefinition = await playService.getProcessDefinition(definition.processDefinitionId, reviewerId);
+        const currentDefinition = await playService.getProcessDefinition(
+          definition.processDefinitionId,
+          reviewerId
+        );
         await expect(
           playService.shareProcessDefinition(
             definition.processDefinitionId,
@@ -413,10 +463,17 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
           )
         ).rejects.toThrow('process_definition_share_not_authorized');
 
-        const after = await control.query(`SELECT visibility FROM process_definitions WHERE process_definition_id = $1`, [definition.processDefinitionId]);
+        const after = await control.query(
+          `SELECT visibility FROM process_definitions WHERE process_definition_id = $1`,
+          [definition.processDefinitionId]
+        );
         expect(after.rows[0]?.visibility).toBe('PRIVATE'); // unchanged
       } finally {
-        await teardown({ orgIds: [orgId], userIds: [revokedOwnerId, reviewerId], definitionIds: [definition.processDefinitionId] });
+        await teardown({
+          orgIds: [orgId],
+          userIds: [revokedOwnerId, reviewerId],
+          definitionIds: [definition.processDefinitionId],
+        });
       }
     }, 30_000);
 
@@ -437,7 +494,11 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         semanticGraph: SIMPLE_GRAPH,
         createdByActorId: memberUserId,
       });
-      const proposed = await playService.proposeProcessVersion(draft.processVersionId, { actorUserId: memberUserId }, draft.version);
+      const proposed = await playService.proposeProcessVersion(
+        draft.processVersionId,
+        { actorUserId: memberUserId },
+        draft.version
+      );
       const reviewed = await playService.reviewProcessVersion(
         proposed.processVersionId,
         { actorUserId: reviewerId },
@@ -445,10 +506,17 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         undefined,
         proposed.version
       );
-      await playService.publishProcessVersion(reviewed.processVersionId, { actorUserId: memberUserId }, reviewed.version);
+      await playService.publishProcessVersion(
+        reviewed.processVersionId,
+        { actorUserId: memberUserId },
+        reviewed.version
+      );
 
       try {
-        const currentDefinition = await playService.getProcessDefinition(definition.processDefinitionId, reviewerId);
+        const currentDefinition = await playService.getProcessDefinition(
+          definition.processDefinitionId,
+          reviewerId
+        );
         await expect(
           playService.shareProcessDefinition(
             definition.processDefinitionId,
@@ -458,7 +526,11 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
           )
         ).rejects.toThrow('process_definition_share_not_authorized');
       } finally {
-        await teardown({ orgIds: [orgId], userIds: [memberUserId, reviewerId], definitionIds: [definition.processDefinitionId] });
+        await teardown({
+          orgIds: [orgId],
+          userIds: [memberUserId, reviewerId],
+          definitionIds: [definition.processDefinitionId],
+        });
       }
     }, 30_000);
   });
@@ -492,12 +564,20 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         const outcomes = await Promise.allSettled([
           playService.updateProcessVersionDraft(
             draft.processVersionId,
-            { semanticGraph: SIMPLE_GRAPH, policyRef: 'policy-a', expectedVersion: staleExpectedVersion },
+            {
+              semanticGraph: SIMPLE_GRAPH,
+              policyRef: 'policy-a',
+              expectedVersion: staleExpectedVersion,
+            },
             { actorUserId: editorAId }
           ),
           playService.updateProcessVersionDraft(
             draft.processVersionId,
-            { semanticGraph: SIMPLE_GRAPH, policyRef: 'policy-b', expectedVersion: staleExpectedVersion },
+            {
+              semanticGraph: SIMPLE_GRAPH,
+              policyRef: 'policy-b',
+              expectedVersion: staleExpectedVersion,
+            },
             { actorUserId: editorBId }
           ),
         ]);
@@ -506,7 +586,8 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         expect(fulfilled).toHaveLength(1);
         expect(rejected).toHaveLength(1);
         expect(
-          (rejected[0] as PromiseRejectedResult).reason?.message ?? String((rejected[0] as PromiseRejectedResult).reason)
+          (rejected[0] as PromiseRejectedResult).reason?.message ??
+            String((rejected[0] as PromiseRejectedResult).reason)
         ).toMatch(/process_version_conflict/);
       } finally {
         await teardown({ orgIds: [orgId], definitionIds: [definition.processDefinitionId] });
@@ -548,7 +629,12 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
         // so re-sharing at ORGANIZATION (already the ceiling) must fail the
         // strict-widening check rather than silently no-op.
         await expect(
-          playService.shareProcessDefinition(definitionId, 'ORGANIZATION', { actorUserId: ownerUserId }, widened.version)
+          playService.shareProcessDefinition(
+            definitionId,
+            'ORGANIZATION',
+            { actorUserId: ownerUserId },
+            widened.version
+          )
         ).rejects.toThrow(/process_definition_share_not_a_widening/);
       } finally {
         await teardown({ orgIds: [orgId], userIds: [ownerUserId], definitionIds: [definitionId] });

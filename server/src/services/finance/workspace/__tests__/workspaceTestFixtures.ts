@@ -41,10 +41,7 @@
  */
 import type { ArtifactRef } from '../../../../types/finance/ArtifactRef.js';
 import { buildWorkspaceBarConfig, type FinanceModuleAdapter } from '../moduleAdapters.js';
-import type {
-  WorkspaceBarConfig,
-  WorkspaceBarEvaluationContext,
-} from '../workspaceBarContract.js';
+import type { WorkspaceBarConfig, WorkspaceBarEvaluationContext } from '../workspaceBarContract.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures

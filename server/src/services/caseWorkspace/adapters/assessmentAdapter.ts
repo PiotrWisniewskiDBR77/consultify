@@ -153,17 +153,20 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  CapabilityHandlerError,
-  registerCapabilityBinding,
-  registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
-} from '../capabilityAdapterService.js';
-import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import { ensureAssessmentSchema, normalizeStatus } from '../../../controllers/AssessmentController.js';
+  ensureAssessmentSchema,
+  normalizeStatus,
+} from '../../../controllers/AssessmentController.js';
 import { getMemberRole } from '../../../services/organizationService.js';
 import * as queryHelpers from '../../../utils/queryHelpers.js';
+import * as artifactLinkService from '../artifactLinkService.js';
+import {
+  type CapabilityExecutionEnvelope,
+  CapabilityHandlerError,
+  type InternalCommandBinding,
+  registerCapabilityBinding,
+  registerCapabilityWithAdapter,
+} from '../capabilityAdapterService.js';
+import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
 import {
   attachArtifactLink,
   requireEnumInput,
@@ -309,12 +312,17 @@ export async function getAssessmentReadback(
 
 export interface AssessmentAdapterDeps {
   createAssessment?: (input: InsertAssessmentInput) => Promise<string>;
-  getAssessment?: (assessmentId: string, organizationId: string) => Promise<AssessmentReadback | null>;
+  getAssessment?: (
+    assessmentId: string,
+    organizationId: string
+  ) => Promise<AssessmentReadback | null>;
   getMemberRole?: (organizationId: string, userId: string) => Promise<string | null>;
   linkArtifactToCase?: typeof artifactLinkService.linkArtifactToCase;
 }
 
-export function buildAssessmentCreateBinding(deps: AssessmentAdapterDeps = {}): InternalCommandBinding {
+export function buildAssessmentCreateBinding(
+  deps: AssessmentAdapterDeps = {}
+): InternalCommandBinding {
   const create = deps.createAssessment ?? insertAssessment;
   const read = deps.getAssessment ?? getAssessmentReadback;
   const readRole = deps.getMemberRole ?? getMemberRole;
@@ -339,7 +347,11 @@ export function buildAssessmentCreateBinding(deps: AssessmentAdapterDeps = {}): 
     timeoutMs: 30_000,
     async handler(payload: Record<string, unknown>, envelope: CapabilityExecutionEnvelope) {
       const caseId = requireNonBlankInput(payload.caseId, 'case_id');
-      const assessmentType = requireEnumInput(payload.assessmentType, ASSESSMENT_TYPES, 'assessment_type');
+      const assessmentType = requireEnumInput(
+        payload.assessmentType,
+        ASSESSMENT_TYPES,
+        'assessment_type'
+      );
       const name = requireNonBlankInput(payload.name, 'name');
 
       // Case existence, actor standing, AND envelope-org/Case-org agreement
@@ -352,7 +364,10 @@ export function buildAssessmentCreateBinding(deps: AssessmentAdapterDeps = {}): 
       // real POST /assessments route refuses it.
       const actorRole = await readRole(caseContext.organizationId, envelope.actor.actorId);
       if (!canCreateOrEditAssessment(actorRole)) {
-        throw new CapabilityHandlerError('CAPABILITY_UNAUTHORIZED', 'assessment_role_not_create_capable');
+        throw new CapabilityHandlerError(
+          'CAPABILITY_UNAUTHORIZED',
+          'assessment_role_not_create_capable'
+        );
       }
 
       const assessmentId = await create({
@@ -413,7 +428,9 @@ export function registerAssessmentCreateAdapterBinding(deps: AssessmentAdapterDe
 }
 
 /** The registry row this capability registers as, per doc 05 §5's CapabilityDefinition. */
-export function assessmentCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
+export function assessmentCreateRegistrationInput(
+  createdByActorId: string
+): RegisterCapabilityInput {
   return {
     capabilityId: ASSESSMENT_CREATE_CAPABILITY_ID,
     capabilityVersion: ASSESSMENT_CREATE_CAPABILITY_VERSION,

@@ -324,7 +324,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
       .catch((err) => {
         if (!alive) return;
         console.warn('[ExceleParametricTemplates] Failed to reopen workbook:', err);
-        setGridError(t('Nie udało się ponownie otworzyć skoroszytu.', 'Failed to reopen workbook.'));
+        setGridError(
+          t('Nie udało się ponownie otworzyć skoroszytu.', 'Failed to reopen workbook.')
+        );
       })
       .finally(() => {
         if (alive) setGridLoading(false);

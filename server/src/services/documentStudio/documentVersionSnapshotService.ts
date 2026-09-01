@@ -46,12 +46,12 @@ import type {
 import {
   __resetSnapshotRegistryDaoForTests,
   deleteSnapshot as daoDeleteSnapshot,
+  type DocumentVersionLineageEntry,
   insertCheckpointSnapshotWithCas as daoInsertCheckpointSnapshotWithCas,
   loadLatestSnapshotMeta as daoLoadLatestSnapshotMeta,
   loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
   loadVersionLineage as daoLoadVersionLineage,
   persistSnapshot as daoPersistSnapshot,
-  type DocumentVersionLineageEntry,
 } from './documentVersionSnapshotRegistryDao.js';
 
 // =============================================================================
@@ -643,7 +643,8 @@ export async function createCheckpointSnapshotWithCas(
   const expectedParentVersionId =
     params.expectedVersion !== undefined
       ? params.expectedVersion
-      : (await daoLoadLatestSnapshotMeta(params.artifactId, params.organizationId))?.versionId ?? null;
+      : ((await daoLoadLatestSnapshotMeta(params.artifactId, params.organizationId))?.versionId ??
+        null);
 
   const contentHash = computeDocumentSchemaContentHash(params.schema);
   const versionId = makeId('document-snapshot');
@@ -666,7 +667,11 @@ export async function createCheckpointSnapshotWithCas(
 
   if (result.outcome === 'error') return { outcome: 'error' };
   if (result.outcome === 'conflict') {
-    return { outcome: 'conflict', yourVersion: expectedParentVersionId, serverVersion: result.serverLatest };
+    return {
+      outcome: 'conflict',
+      yourVersion: expectedParentVersionId,
+      serverVersion: result.serverLatest,
+    };
   }
 
   const snapshot: DocumentVersionSnapshot = {

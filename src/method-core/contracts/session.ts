@@ -64,10 +64,7 @@ export const METHOD_SESSION_TRANSITIONS: Readonly<
   archived: [],
 } as const;
 
-export function canTransition(
-  from: MethodSessionState,
-  to: MethodSessionState
-): boolean {
+export function canTransition(from: MethodSessionState, to: MethodSessionState): boolean {
   return METHOD_SESSION_TRANSITIONS[from].includes(to);
 }
 
@@ -81,9 +78,7 @@ export type TransitionRefusal =
   | { kind: 'readiness_blocked'; blockers: readonly string[] }
   | { kind: 'pack_not_released'; methodPackId: string };
 
-export type TransitionResult =
-  | { ok: true }
-  | { ok: false; refusal: TransitionRefusal };
+export type TransitionResult = { ok: true } | { ok: false; refusal: TransitionRefusal };
 
 /**
  * Process roles, layered ON TOP of app roles and project roles — the kernel

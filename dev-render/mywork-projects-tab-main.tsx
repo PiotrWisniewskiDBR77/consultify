@@ -33,11 +33,10 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import { MyWorkHub } from '../src/components/MyWork/MyWorkHub';
+import i18n from '../src/i18n';
 import { AppProviders } from '../src/providers/AppProviders';
 import { Api } from '../src/services/api';
-import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
-
 import { seedRealisticSession } from './mocks/seedStore';
 
 seedRealisticSession();

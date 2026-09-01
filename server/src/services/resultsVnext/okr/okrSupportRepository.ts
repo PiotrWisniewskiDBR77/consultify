@@ -20,17 +20,19 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 import {
-  toOkrDecisionLink,
-  toOkrSupportRequest,
   type OkrDecisionLinkRow,
   type OkrDecisionLinkWithLiveStatus,
   type OkrSupportRequest,
   type OkrSupportRequestKind,
   type OkrSupportRequestRow,
+  toOkrDecisionLink,
+  toOkrSupportRequest,
 } from './okrSupportTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -42,7 +44,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -75,9 +81,15 @@ export async function listSupportRequestsForSet(
        ${kindClause}
      ORDER BY sr.created_at DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = kind ? [...wrapped.values, setId, kind] : [...wrapped.values, setId];
-  const rows = await withReadClient((client) => queryRows<OkrSupportRequestRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrSupportRequestRow>(client, wrapped.sql, values)
+  );
   return rows.map(toOkrSupportRequest);
 }
 
@@ -91,7 +103,9 @@ export interface GetSupportRequestParams {
   requestId: string;
 }
 
-export async function getSupportRequest(params: GetSupportRequestParams): Promise<OkrSupportRequest | null> {
+export async function getSupportRequest(
+  params: GetSupportRequestParams
+): Promise<OkrSupportRequest | null> {
   const { userId, organizationId, requestId } = params;
   const baseQuerySql = `
     SELECT sr.*
@@ -101,9 +115,15 @@ export async function getSupportRequest(params: GetSupportRequestParams): Promis
      WHERE sr.organization_id = $1
        AND sr.request_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, requestId];
-  const rows = await withReadClient((client) => queryRows<OkrSupportRequestRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrSupportRequestRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toOkrSupportRequest(row) : null;
 }
@@ -124,7 +144,9 @@ export interface GetDecisionLinkParams {
   linkId: string;
 }
 
-export async function getDecisionLink(params: GetDecisionLinkParams): Promise<OkrDecisionLinkWithLiveStatus | null> {
+export async function getDecisionLink(
+  params: GetDecisionLinkParams
+): Promise<OkrDecisionLinkWithLiveStatus | null> {
   const { userId, organizationId, linkId } = params;
   const baseQuerySql = `
     SELECT dl.*, d.status AS decision_status, d.decision_rationale AS decision_rationale, d.decided_at AS decision_decided_at
@@ -136,14 +158,20 @@ export async function getDecisionLink(params: GetDecisionLinkParams): Promise<Ok
      WHERE dl.organization_id = $1
        AND dl.link_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, linkId];
   const rows = await withReadClient((client) =>
-    queryRows<OkrDecisionLinkRow & { decision_status: string | null; decision_rationale: string | null; decision_decided_at: string | null }>(
-      client,
-      wrapped.sql,
-      values
-    )
+    queryRows<
+      OkrDecisionLinkRow & {
+        decision_status: string | null;
+        decision_rationale: string | null;
+        decision_decided_at: string | null;
+      }
+    >(client, wrapped.sql, values)
   );
   const row = rows[0];
   if (!row) return null;
@@ -181,14 +209,20 @@ export async function getDecisionLinkForSupportRequest(
      WHERE dl.organization_id = $1
        AND dl.support_request_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, requestId];
   const rows = await withReadClient((client) =>
-    queryRows<OkrDecisionLinkRow & { decision_status: string | null; decision_rationale: string | null; decision_decided_at: string | null }>(
-      client,
-      wrapped.sql,
-      values
-    )
+    queryRows<
+      OkrDecisionLinkRow & {
+        decision_status: string | null;
+        decision_rationale: string | null;
+        decision_decided_at: string | null;
+      }
+    >(client, wrapped.sql, values)
   );
   const row = rows[0];
   if (!row) return null;

@@ -720,7 +720,11 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
         <ChevronDown
           size={14}
           aria-hidden
-          className={open ? 'rotate-180 transition motion-reduce:transition-none' : 'transition motion-reduce:transition-none'}
+          className={
+            open
+              ? 'rotate-180 transition motion-reduce:transition-none'
+              : 'transition motion-reduce:transition-none'
+          }
         />
       </button>
       {open ? (

@@ -107,11 +107,17 @@ export class TaskService {
   /**
    * Create a new task
    */
-  async createTask(input: CreateTaskInput, userId: string, command?: {
-    idempotencyKey: string; sourceType: string; sourceId: string;
-    /** Internal acceptance hook; never exposed by an HTTP schema. */
-    faultInjection?: 'AFTER_CORE';
-  }): Promise<Task> {
+  async createTask(
+    input: CreateTaskInput,
+    userId: string,
+    command?: {
+      idempotencyKey: string;
+      sourceType: string;
+      sourceId: string;
+      /** Internal acceptance hook; never exposed by an HTTP schema. */
+      faultInjection?: 'AFTER_CORE';
+    }
+  ): Promise<Task> {
     // Validate input
     const validated = CreateTaskSchema.parse(input);
 
@@ -142,7 +148,10 @@ export class TaskService {
         [organizationId, command.idempotencyKey]
       );
       if (replay.rows[0]) {
-        if ((replay.rows[0] as any).source_type !== command.sourceType || (replay.rows[0] as any).source_id !== command.sourceId) {
+        if (
+          (replay.rows[0] as any).source_type !== command.sourceType ||
+          (replay.rows[0] as any).source_id !== command.sourceId
+        ) {
           throw new Error('TASK_IDEMPOTENCY_COLLISION');
         }
         return this.mapRowToTask(replay.rows[0]);

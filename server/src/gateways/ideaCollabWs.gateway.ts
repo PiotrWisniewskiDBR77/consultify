@@ -3,8 +3,8 @@
  * Auth, presence, cursors, shared session state, persistence.
  */
 
-import type { Server as HttpServer } from 'http';
 import { randomUUID } from 'crypto';
+import type { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { type WebSocket, WebSocketServer } from 'ws';
 
@@ -12,6 +12,8 @@ import { config } from '../config/Config.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { evaluateRealtimeAccess, trackRealtimeConnection } from '../realtime/demoRealtimeGuard.js';
+import type { GraphPatchOp, IdeaNodeFenceMap } from '../realtime/ideaMapAccess.js';
 import {
   acquireDurableIdeaNodeLock,
   applyGraphPatchToCanonical,
@@ -19,21 +21,16 @@ import {
   listDurableIdeaNodeLocks,
   releaseDurableIdeaNodeLock,
 } from '../realtime/ideaMapAccess.js';
-import type { GraphPatchOp, IdeaNodeFenceMap } from '../realtime/ideaMapAccess.js';
 import {
   isWsOrgContextFresh,
   resolveWsOrgContext,
   type WsOrgContext,
 } from '../realtime/wsOrgContext.js';
-import logger from '../utils/Logger.js';
 import {
   isOrganizationSuspended,
   writeOrgSuspendedUpgradeRefusal,
 } from '../services/organizationSuspensionGuard.js';
-import {
-  evaluateRealtimeAccess,
-  trackRealtimeConnection,
-} from '../realtime/demoRealtimeGuard.js';
+import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,19 +96,33 @@ const HEARTBEAT_INTERVAL_MS = 30_000;
 const PONG_TIMEOUT_MS = 10_000;
 const MAX_WS_PAYLOAD_BYTES = 256 * 1024;
 const MAX_GRAPH_PATCH_OPS = 200;
-const GRAPH_OPS = new Set(['add_node', 'update_node', 'remove_node', 'add_edge', 'update_edge', 'remove_edge']);
+const GRAPH_OPS = new Set([
+  'add_node',
+  'update_node',
+  'remove_node',
+  'add_edge',
+  'update_edge',
+  'remove_edge',
+]);
 
 function validateGraphPatchMessage(msg: any): { ok: true; ops: GraphPatchOp[] } | { ok: false } {
-  if (!Array.isArray(msg?.operations) || msg.operations.length > MAX_GRAPH_PATCH_OPS) return { ok: false };
+  if (!Array.isArray(msg?.operations) || msg.operations.length > MAX_GRAPH_PATCH_OPS)
+    return { ok: false };
   for (const op of msg.operations) {
-    if (!op || !GRAPH_OPS.has(op.op) || !op.data || typeof op.data !== 'object') return { ok: false };
+    if (!op || !GRAPH_OPS.has(op.op) || !op.data || typeof op.data !== 'object')
+      return { ok: false };
     const id = op.data.id;
     if (typeof id !== 'string' || id.length < 1 || id.length > 200) return { ok: false };
     for (const key of ['source', 'target']) {
-      if (op.data[key] != null && (typeof op.data[key] !== 'string' || op.data[key].length > 200)) return { ok: false };
+      if (op.data[key] != null && (typeof op.data[key] !== 'string' || op.data[key].length > 200))
+        return { ok: false };
     }
   }
-  if (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)) return { ok: false };
+  if (
+    msg.correlationId != null &&
+    (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)
+  )
+    return { ok: false };
   return { ok: true, ops: msg.operations };
 }
 
@@ -615,7 +626,10 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           // legacy relay-only mode. Feature flags may change persistence, never
           // the tenant/revocation boundary.
           const currentMembership = await assertIdeaMembership(
-            db, user.organizationId || '', user.id, ideaId
+            db,
+            user.organizationId || '',
+            user.id,
+            ideaId
           );
           if (!currentMembership.canWrite) {
             if (featureFlags.ENABLE_SHARED_IDEA_MAPS) ws.__canWrite = false;
@@ -636,8 +650,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             break;
 
           case 'cursor':
-            if (![msg.x ?? 0, msg.y ?? 0].every((value) => Number.isFinite(value) && Math.abs(value) <= 10_000_000) ||
-                (msg.activeNodeId != null && (typeof msg.activeNodeId !== 'string' || msg.activeNodeId.length > 200))) {
+            if (
+              ![msg.x ?? 0, msg.y ?? 0].every(
+                (value) => Number.isFinite(value) && Math.abs(value) <= 10_000_000
+              ) ||
+              (msg.activeNodeId != null &&
+                (typeof msg.activeNodeId !== 'string' || msg.activeNodeId.length > 200))
+            ) {
               ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
               break;
             }
@@ -650,9 +669,16 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           case 'lock_node': {
             const nodeId = msg.nodeId;
             const ttlSeconds = Number(msg.ttlSeconds ?? 30);
-            if (typeof nodeId !== 'string' || !nodeId || nodeId.length > 200 ||
-                !Number.isFinite(ttlSeconds) || ttlSeconds < 5 || ttlSeconds > 300 ||
-                (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128))) {
+            if (
+              typeof nodeId !== 'string' ||
+              !nodeId ||
+              nodeId.length > 200 ||
+              !Number.isFinite(ttlSeconds) ||
+              ttlSeconds < 5 ||
+              ttlSeconds > 300 ||
+              (msg.correlationId != null &&
+                (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128))
+            ) {
               ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
               break;
             }
@@ -668,9 +694,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             if (!acquired) {
               const locks = await listDurableIdeaNodeLocks(db, user.organizationId || '', ideaId);
               const held = locks.find((entry) => entry.nodeId === String(nodeId));
-              ws.send(JSON.stringify({
-                type: 'lock_rejected', nodeId, heldBy: held?.holderUserId || null,
-              }));
+              ws.send(
+                JSON.stringify({
+                  type: 'lock_rejected',
+                  nodeId,
+                  heldBy: held?.holderUserId || null,
+                })
+              );
               break;
             }
             state.lockedNodes.set(nodeId, user.id);
@@ -686,9 +716,15 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           case 'unlock_node': {
             const nodeId = msg.nodeId;
             const suppliedFence = msg.fencingToken;
-            if (typeof nodeId !== 'string' || !nodeId || nodeId.length > 200 ||
-                (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)) ||
-                (suppliedFence != null && (!Number.isSafeInteger(Number(suppliedFence)) || Number(suppliedFence) <= 0))) {
+            if (
+              typeof nodeId !== 'string' ||
+              !nodeId ||
+              nodeId.length > 200 ||
+              (msg.correlationId != null &&
+                (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)) ||
+              (suppliedFence != null &&
+                (!Number.isSafeInteger(Number(suppliedFence)) || Number(suppliedFence) <= 0))
+            ) {
               ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
               break;
             }
@@ -715,8 +751,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           }
 
           case 'select_nodes': {
-            if (!Array.isArray(msg.nodeIds) || msg.nodeIds.length > 200 ||
-                msg.nodeIds.some((id: unknown) => typeof id !== 'string' || id.length < 1 || id.length > 200)) {
+            if (
+              !Array.isArray(msg.nodeIds) ||
+              msg.nodeIds.length > 200 ||
+              msg.nodeIds.some(
+                (id: unknown) => typeof id !== 'string' || id.length < 1 || id.length > 200
+              )
+            ) {
               ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
               break;
             }
@@ -755,9 +796,10 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             // maps relay only after the canonical fenced write succeeds, so a
             // stale lease cannot transiently overwrite peers before rehydrate.
             const patchStr = JSON.stringify(patch);
-            const relayPatch = () => room.forEach((_, otherWs) => {
-              if (otherWs !== ws && otherWs.readyState === 1) otherWs.send(patchStr);
-            });
+            const relayPatch = () =>
+              room.forEach((_, otherWs) => {
+                if (otherWs !== ws && otherWs.readyState === 1) otherWs.send(patchStr);
+              });
 
             // (b+c) DP-3: sequentially persist into the canonical row and
             // broadcast the new version to the WHOLE room (author included).
@@ -765,16 +807,24 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             if (featureFlags.ENABLE_SHARED_IDEA_MAPS) {
               const ops = validated.ops;
               try {
-                const touchedNodeIds = [...new Set(ops.flatMap((op) => {
-                  if (op.op.endsWith('_node')) return [String(op.data?.id || '')];
-                  return [String(op.data?.source || ''), String(op.data?.target || '')];
-                }).filter(Boolean))];
+                const touchedNodeIds = [
+                  ...new Set(
+                    ops
+                      .flatMap((op) => {
+                        if (op.op.endsWith('_node')) return [String(op.data?.id || '')];
+                        return [String(op.data?.source || ''), String(op.data?.target || '')];
+                      })
+                      .filter(Boolean)
+                  ),
+                ];
                 const fences: IdeaNodeFenceMap = {};
                 for (const nodeId of touchedNodeIds) {
                   const token = ws.__lockTokens?.get(nodeId);
-                  if (token != null) fences[nodeId] = {
-                    leaseOwner: ws.__leaseOwner || '', fencingToken: token,
-                  };
+                  if (token != null)
+                    fences[nodeId] = {
+                      leaseOwner: ws.__leaseOwner || '',
+                      fencingToken: token,
+                    };
                 }
                 const { version } = await applyGraphPatchToCanonical(
                   db,
@@ -785,9 +835,12 @@ export function attachIdeaCollabWs(server: HttpServer): void {
                   fences
                 );
                 ws.__actionsCount = (ws.__actionsCount || 0) + 1;
-                if (ws.__sessionId) await persistEvent(db, ws.__sessionId, 'graph_patch', {
-                  opCount: ops.length, correlationId: String(msg.correlationId || ''), version,
-                });
+                if (ws.__sessionId)
+                  await persistEvent(db, ws.__sessionId, 'graph_patch', {
+                    opCount: ops.length,
+                    correlationId: String(msg.correlationId || ''),
+                    version,
+                  });
                 relayPatch();
                 broadcastGraphVersion(ideaId, version);
               } catch (err) {

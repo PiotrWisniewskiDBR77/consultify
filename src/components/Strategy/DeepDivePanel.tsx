@@ -45,8 +45,8 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
   // undefined" (confirmed live: opening ANY scenario card crashed the whole
   // app, ErrorBoundary at DeepDivePanel.tsx). The `|| []` guard makes an
   // unpopulated scenario render an honest empty list instead of crashing.
-  const getGains = () => ((sTexts?.gains || scenario.gains || []) as string[]);
-  const getSacrifices = () => ((sTexts?.sacrifices || scenario.sacrifices || []) as string[]);
+  const getGains = () => (sTexts?.gains || scenario.gains || []) as string[];
+  const getSacrifices = () => (sTexts?.sacrifices || scenario.sacrifices || []) as string[];
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/20">

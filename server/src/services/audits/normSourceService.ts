@@ -15,22 +15,15 @@
 
 import {
   auditAll,
-  auditGet,
-  auditRun,
   AuditDomainError,
+  auditGet,
   AuditNotFoundError,
+  auditRun,
   AuditStateError,
   newId,
   recordAuditEvent,
   toIso,
 } from './auditsDb.js';
-import {
-  AUDIT_SOURCE_TYPES,
-  AUDIT_VERIFICATION_STATES,
-  PACK_CLASSIFICATIONS,
-  RIGHTS_STATUSES,
-  SOURCE_KINDS,
-} from './types.js';
 import type {
   AuditActor,
   AuditNormSource,
@@ -39,6 +32,13 @@ import type {
   PackClassification,
   RightsStatus,
   SourceKind,
+} from './types.js';
+import {
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
+  PACK_CLASSIFICATIONS,
+  RIGHTS_STATUSES,
+  SOURCE_KINDS,
 } from './types.js';
 
 interface NormSourceRow {
@@ -111,11 +111,15 @@ function assertValidEnums(input: {
   rightsStatus?: string | null;
   verificationStatus?: string | null;
 }): void {
-  if (input.sourceKind !== undefined && input.sourceKind !== null && !SOURCE_KINDS.includes(input.sourceKind as SourceKind)) {
+  if (
+    input.sourceKind !== undefined &&
+    input.sourceKind !== null &&
+    !SOURCE_KINDS.includes(input.sourceKind as SourceKind)
+  ) {
     throw new AuditDomainError(
       `Nieznany rodzaj źródła: „${input.sourceKind}". Dozwolone: ${SOURCE_KINDS.join(', ')}`,
       400,
-      'AUDIT_SOURCE_KIND_INVALID',
+      'AUDIT_SOURCE_KIND_INVALID'
     );
   }
   if (
@@ -126,7 +130,7 @@ function assertValidEnums(input: {
     throw new AuditDomainError(
       `Nieznany status praw: „${input.rightsStatus}". Dozwolone: ${RIGHTS_STATUSES.join(', ')}`,
       400,
-      'AUDIT_RIGHTS_STATUS_INVALID',
+      'AUDIT_RIGHTS_STATUS_INVALID'
     );
   }
   if (
@@ -137,7 +141,7 @@ function assertValidEnums(input: {
     throw new AuditDomainError(
       `Nieznany typ źródła: „${input.sourceType}". Dozwolone: ${AUDIT_SOURCE_TYPES.join(', ')}`,
       400,
-      'AUDIT_SOURCE_TYPE_INVALID',
+      'AUDIT_SOURCE_TYPE_INVALID'
     );
   }
   if (
@@ -148,7 +152,7 @@ function assertValidEnums(input: {
     throw new AuditDomainError(
       `Nieznany status weryfikacji: „${input.verificationStatus}". Dozwolone: ${AUDIT_VERIFICATION_STATES.join(', ')}`,
       400,
-      'AUDIT_VERIFICATION_STATUS_INVALID',
+      'AUDIT_VERIFICATION_STATUS_INVALID'
     );
   }
 }
@@ -172,7 +176,7 @@ function assertCanMarkVerifiedNormative(candidate: {
   }
   if (!NORMATIVE_RIGHTS.includes(candidate.rightsStatus)) {
     problems.push(
-      `status praw musi być jednym z: ${NORMATIVE_RIGHTS.join(', ')} (obecnie: ${candidate.rightsStatus})`,
+      `status praw musi być jednym z: ${NORMATIVE_RIGHTS.join(', ')} (obecnie: ${candidate.rightsStatus})`
     );
   }
   if (!isNonEmpty(candidate.publisher)) {
@@ -182,7 +186,7 @@ function assertCanMarkVerifiedNormative(candidate: {
     throw new AuditDomainError(
       `Nie można oznaczyć źródła jako VERIFIED_NORMATIVE: ${problems.join('; ')}`,
       422,
-      'AUDIT_SOURCE_NOT_VERIFIABLE',
+      'AUDIT_SOURCE_NOT_VERIFIABLE'
     );
   }
 }
@@ -202,14 +206,16 @@ export interface ListSourcesParams {
 
 export async function listSources(
   organizationId: string,
-  params: ListSourcesParams = {},
+  params: ListSourcesParams = {}
 ): Promise<{ items: AuditNormSource[]; total: number }> {
   const conditions: string[] = ['(organization_id = $1 OR organization_id IS NULL)'];
   const values: unknown[] = [organizationId];
 
   if (isNonEmpty(params.search)) {
     values.push(`%${params.search.trim()}%`);
-    conditions.push(`(title ILIKE $${values.length} OR source_key ILIKE $${values.length} OR publisher ILIKE $${values.length})`);
+    conditions.push(
+      `(title ILIKE $${values.length} OR source_key ILIKE $${values.length} OR publisher ILIKE $${values.length})`
+    );
   }
   if (isNonEmpty(params.sourceKind)) {
     values.push(params.sourceKind);
@@ -232,11 +238,11 @@ export async function listSources(
 
   const countRow = await auditGet<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM audit_norm_sources WHERE ${where}`,
-    values,
+    values
   );
   const rows = await auditAll<NormSourceRow>(
     `SELECT * FROM audit_norm_sources WHERE ${where} ORDER BY updated_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
-    [...values, limit, offset],
+    [...values, limit, offset]
   );
 
   return {
@@ -248,7 +254,7 @@ export async function listSources(
 export async function getSource(organizationId: string, id: string): Promise<AuditNormSource> {
   const row = await auditGet<NormSourceRow>(
     `SELECT * FROM audit_norm_sources WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Źródło normatywne');
   return mapRow(row);
@@ -277,10 +283,14 @@ export interface CreateSourceInput {
 
 export async function createSource(
   actor: AuditActor,
-  input: CreateSourceInput,
+  input: CreateSourceInput
 ): Promise<AuditNormSource> {
   if (!isNonEmpty(input.sourceKey)) {
-    throw new AuditDomainError('Źródło musi mieć klucz (source_key)', 400, 'AUDIT_SOURCE_KEY_MISSING');
+    throw new AuditDomainError(
+      'Źródło musi mieć klucz (source_key)',
+      400,
+      'AUDIT_SOURCE_KEY_MISSING'
+    );
   }
   if (!isNonEmpty(input.title)) {
     throw new AuditDomainError('Źródło musi mieć tytuł', 400, 'AUDIT_SOURCE_TITLE_MISSING');
@@ -319,7 +329,7 @@ export async function createSource(
       input.sourceType ?? 'INTERNAL_PROCEDURE',
       'UNVERIFIED',
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -353,13 +363,17 @@ export interface UpdateSourceInput {
 export async function updateSource(
   actor: AuditActor,
   id: string,
-  input: UpdateSourceInput,
+  input: UpdateSourceInput
 ): Promise<AuditNormSource> {
   const existing = await getSource(actor.organizationId, id);
   assertValidEnums({ sourceKind: input.sourceKind, rightsStatus: input.rightsStatus });
 
   if (input.title !== undefined && !isNonEmpty(input.title)) {
-    throw new AuditDomainError('Tytuł źródła nie może być pusty', 400, 'AUDIT_SOURCE_TITLE_MISSING');
+    throw new AuditDomainError(
+      'Tytuł źródła nie może być pusty',
+      400,
+      'AUDIT_SOURCE_TITLE_MISSING'
+    );
   }
 
   const rightsStatus = input.rightsStatus ?? existing.rightsStatus;
@@ -394,7 +408,7 @@ export async function updateSource(
       input.sourceType !== undefined ? input.sourceType : existing.sourceType,
       id,
       actor.organizationId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -417,7 +431,7 @@ export interface VerifySourceInput {
 export async function verifySource(
   actor: AuditActor,
   id: string,
-  input: VerifySourceInput,
+  input: VerifySourceInput
 ): Promise<AuditNormSource> {
   const existing = await getSource(actor.organizationId, id);
   assertValidEnums({ verificationStatus: input.verificationStatus });
@@ -435,7 +449,13 @@ export async function verifySource(
        verification_state = $1, verified_by = $2, verified_at = NOW(), verification_note = $3,
        updated_at = NOW()
      WHERE id = $4 AND (organization_id = $5 OR organization_id IS NULL)`,
-    [input.verificationStatus, actor.userId, input.verificationNote ?? null, id, actor.organizationId],
+    [
+      input.verificationStatus,
+      actor.userId,
+      input.verificationNote ?? null,
+      id,
+      actor.organizationId,
+    ]
   );
 
   await recordAuditEvent({
@@ -458,17 +478,17 @@ export async function deleteSource(actor: AuditActor, id: string): Promise<void>
     `SELECT id, title FROM audit_packs
       WHERE source_id = $1 AND publication_status = 'published'
       LIMIT 1`,
-    [id],
+    [id]
   );
   if (usedByPublished) {
     throw new AuditStateError(
-      `Nie można usunąć źródła „${existing.title}" — jest wykorzystywane przez opublikowany pakiet „${usedByPublished.title}"`,
+      `Nie można usunąć źródła „${existing.title}" — jest wykorzystywane przez opublikowany pakiet „${usedByPublished.title}"`
     );
   }
 
   await auditRun(
     `DELETE FROM audit_norm_sources WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-    [id, actor.organizationId],
+    [id, actor.organizationId]
   );
 
   await recordAuditEvent({

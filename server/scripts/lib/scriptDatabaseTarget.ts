@@ -6,6 +6,7 @@ import {
   assertNoLocalDatabaseOutsideTests,
   assertNoPrivateRailwayDbHostOutsideRailway,
   getDatabaseHost,
+  isLocalHost,
   resolveReachableDatabaseUrl,
 } from '../../src/config/databaseTargetResolver.js';
 
@@ -14,7 +15,30 @@ type ResolveScriptDatabaseTargetOptions = {
   databaseUrl?: string;
   publicDatabaseUrl?: string;
   requireExplicitTarget?: boolean;
+  /**
+   * FIX-204-4 (Z28 reversal): before this flag, EVERY script — this one
+   * included — was pushed toward a remote (demo/staging) Postgres target:
+   * `assertNoLocalDatabaseOutsideTests` refused a loopback DATABASE_URL
+   * outright unless the operator faked a test environment (NODE_ENV=test /
+   * CI=true / VITEST=1), and the production denylist covers only the
+   * production host fingerprint — demo and staging were wide open. That is
+   * backwards for a migration runner meant to be piloted locally first.
+   *
+   * When true: a loopback target (localhost/127.0.0.1/::1) is accepted as
+   * the normal path with NO special environment flags. Reaching a
+   * NON-loopback host still requires a SEPARATE, explicit operator
+   * acknowledgement via `ALLOW_REMOTE_DB_TARGET` (see
+   * REMOTE_DB_TARGET_ENV/VALUE below) — this is intentionally NOT satisfied
+   * by NODE_ENV/CI/VITEST, so it cannot be flipped on by accident the way
+   * the old local-host bypass could. The production-host denylist
+   * (`assertHostIsNotUnverifiedProduction`) still runs unconditionally on
+   * top of this — this flag only concerns the loopback-vs-remote axis.
+   */
+  allowOnlyLoopback?: boolean;
 };
+
+const REMOTE_DB_TARGET_ENV = 'ALLOW_REMOTE_DB_TARGET';
+const REMOTE_DB_TARGET_VALUE = 'i-understand-this-leaves-loopback';
 
 export type ScriptDatabaseTarget = {
   connectionString: string;
@@ -49,12 +73,23 @@ export function describeTargetInputs(params: {
 export function resolveScriptDatabaseTarget(
   options: ResolveScriptDatabaseTargetOptions
 ): ScriptDatabaseTarget {
-  assertNoLocalDatabaseOutsideTests(process.env);
+  const allowOnlyLoopback = options.allowOnlyLoopback === true;
+
+  // The historical "no local database outside tests" guard exists to stop a
+  // script from silently landing on a developer's own machine when a remote
+  // target was intended. For an `allowOnlyLoopback` caller that guard is
+  // exactly backwards — loopback IS the intended, safe default — so skip it
+  // here; the loopback-vs-remote check a few lines down enforces the
+  // correct direction instead.
+  if (!allowOnlyLoopback) {
+    assertNoLocalDatabaseOutsideTests(process.env);
+  }
   assertNoPrivateRailwayDbHostOutsideRailway(process.env);
 
   const resolved = resolveReachableDatabaseUrl({
     databaseUrl: options.databaseUrl,
     publicDatabaseUrl: options.publicDatabaseUrl,
+    allowLocalHost: allowOnlyLoopback,
   });
   const connectionString = resolved.databaseUrl;
 
@@ -79,6 +114,18 @@ export function resolveScriptDatabaseTarget(
         publicDatabaseUrl: options.publicDatabaseUrl,
       })}`
     );
+  }
+
+  if (allowOnlyLoopback && !isLocalHost(host)) {
+    const ack = String(process.env[REMOTE_DB_TARGET_ENV] || '').trim();
+    if (ack !== REMOTE_DB_TARGET_VALUE) {
+      throw new Error(
+        `[${options.label}] Target host "${host}" is not loopback. This script defaults to a ` +
+          `local database (D-13: pilot locally before touching anything remote). To ` +
+          `deliberately point it at a remote host, set ${REMOTE_DB_TARGET_ENV}=${REMOTE_DB_TARGET_VALUE} ` +
+          `(the production-host denylist still applies on top of this).`
+      );
+    }
   }
 
   return {

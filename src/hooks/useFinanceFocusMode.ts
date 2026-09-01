@@ -25,15 +25,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  FOCUS_MODE_HIDDEN_REGIONS,
   assertFocusModePreservation,
   createFocusModeSession,
   enterFocusMode,
-  exitFocusMode,
-  resolveEscapeKey,
   type EscapeContext,
+  exitFocusMode,
+  FOCUS_MODE_HIDDEN_REGIONS,
   type FocusModeSession,
   type FocusModeTrigger,
+  resolveEscapeKey,
 } from '@/components/Finance/shared/focusMode.contract';
 
 const FOCUS_MODE_BODY_CLASS = 'finance-focus-mode-active';
@@ -67,14 +67,18 @@ export function useFinanceFocusMode<TState>(
   sessionRef.current = { ...sessionRef.current, workspaceState: params.workspaceState };
 
   const [, forceRender] = useState(0);
-  const [lastPreservationCheck, setLastPreservationCheck] = useState<UseFinanceFocusModeResult<TState>['lastPreservationCheck']>(null);
+  const [lastPreservationCheck, setLastPreservationCheck] =
+    useState<UseFinanceFocusModeResult<TState>['lastPreservationCheck']>(null);
 
-  const applyToggle = useCallback((next: FocusModeSession<TState>, before: FocusModeSession<TState>) => {
-    sessionRef.current = next;
-    setLastPreservationCheck(assertFocusModePreservation(before, next));
-    document.body.classList.toggle(FOCUS_MODE_BODY_CLASS, next.active);
-    forceRender((n) => n + 1);
-  }, []);
+  const applyToggle = useCallback(
+    (next: FocusModeSession<TState>, before: FocusModeSession<TState>) => {
+      sessionRef.current = next;
+      setLastPreservationCheck(assertFocusModePreservation(before, next));
+      document.body.classList.toggle(FOCUS_MODE_BODY_CLASS, next.active);
+      forceRender((n) => n + 1);
+    },
+    []
+  );
 
   const enter = useCallback(
     (restoreFocusToControlId: string | null, trigger: FocusModeTrigger = 'toggle-control') => {
@@ -95,7 +99,9 @@ export function useFinanceFocusMode<TState>(
       if (controlId) {
         // Odłożone na kolejny tick, żeby DOM chowanego regionu zdążył się z powrotem pokazać.
         window.setTimeout(() => {
-          const el = document.getElementById(controlId) ?? document.querySelector<HTMLElement>(`[data-testid="${controlId}"]`);
+          const el =
+            document.getElementById(controlId) ??
+            document.querySelector<HTMLElement>(`[data-testid="${controlId}"]`);
           el?.focus();
         }, 0);
       }
@@ -133,7 +139,13 @@ export function useFinanceFocusMode<TState>(
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exit, params.escapeContext?.modalOpen, params.escapeContext?.commandPaletteOpen, params.escapeContext?.popoverOpen, params.escapeContext?.cellEditing]);
+  }, [
+    exit,
+    params.escapeContext?.modalOpen,
+    params.escapeContext?.commandPaletteOpen,
+    params.escapeContext?.popoverOpen,
+    params.escapeContext?.cellEditing,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -155,5 +167,5 @@ export function useFinanceFocusMode<TState>(
   );
 }
 
-export { FOCUS_MODE_HIDDEN_REGIONS, FOCUS_MODE_BODY_CLASS };
+export { FOCUS_MODE_BODY_CLASS, FOCUS_MODE_HIDDEN_REGIONS };
 export default useFinanceFocusMode;

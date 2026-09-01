@@ -6,9 +6,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import type { AnalysisKpiCatalogEntryLike } from '../analysisKpiCatalog';
 import {
   ANALYSIS_CREATOR_STEPS,
+  type AnalysisCreatorPeriodOption,
+  type AnalysisCreatorState,
+  applyIndustryRecommendations,
   buildAnalysisCreatorDraftPayload,
   canNavigateToStep,
   createInitialAnalysisCreatorState,
@@ -18,10 +20,8 @@ import {
   runAnalysisPreflightCheck,
   toggleKpiSelected,
   togglePeriodSelected,
-  applyIndustryRecommendations,
-  type AnalysisCreatorPeriodOption,
-  type AnalysisCreatorState,
 } from '../analysisCreatorWizard.contract';
+import type { AnalysisKpiCatalogEntryLike } from '../analysisKpiCatalog';
 
 describe('createInitialAnalysisCreatorState', () => {
   it('zaczyna na source_version, wszystko puste', () => {
@@ -40,7 +40,10 @@ describe('isStepComplete / nextStep — gate liniowy', () => {
   });
 
   it('po wybraniu źródła nextStep przechodzi do periods', () => {
-    const state: AnalysisCreatorState = { ...createInitialAnalysisCreatorState(), sourceVersionId: 'bv-stmt-1' };
+    const state: AnalysisCreatorState = {
+      ...createInitialAnalysisCreatorState(),
+      sourceVersionId: 'bv-stmt-1',
+    };
     expect(nextStep(state)).toBe('periods');
   });
 
@@ -67,7 +70,10 @@ describe('isStepComplete / nextStep — gate liniowy', () => {
 
 describe('canNavigateToStep — KONTROLA NEGATYWNA: nie da się przeskoczyć kroku', () => {
   it('kpi_selection NIEOSIĄGALNE, gdy periods puste (nawet z wybranym źródłem)', () => {
-    const state: AnalysisCreatorState = { ...createInitialAnalysisCreatorState(), sourceVersionId: 'bv-1' };
+    const state: AnalysisCreatorState = {
+      ...createInitialAnalysisCreatorState(),
+      sourceVersionId: 'bv-1',
+    };
     expect(canNavigateToStep('kpi_selection', state)).toBe(false);
   });
 
@@ -144,7 +150,10 @@ describe('applyIndustryRecommendations — ADDYTYWNE, nie kasuje ręcznego wybor
   ];
 
   it('KONTROLA NEGATYWNA: bez industryCode ⇒ no-op, selekcja niezmieniona', () => {
-    const state: AnalysisCreatorState = { ...createInitialAnalysisCreatorState(), selectedKpiCodes: ['CUSTOM_MY_KPI'] };
+    const state: AnalysisCreatorState = {
+      ...createInitialAnalysisCreatorState(),
+      selectedKpiCodes: ['CUSTOM_MY_KPI'],
+    };
     const after = applyIndustryRecommendations(state, catalog);
     expect(after.selectedKpiCodes).toEqual(['CUSTOM_MY_KPI']);
   });
@@ -164,8 +173,16 @@ describe('applyIndustryRecommendations — ADDYTYWNE, nie kasuje ręcznego wybor
 
 describe('runAnalysisPreflightCheck', () => {
   const catalog = [
-    { kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', requiredCanonicalLineCodes: ['REVENUE', 'COGS'] },
-    { kpiCode: 'EBITDA_MARGIN_PCT', kpiName: 'Marża EBITDA', requiredCanonicalLineCodes: ['REVENUE', 'EBITDA'] },
+    {
+      kpiCode: 'GROSS_MARGIN_PCT',
+      kpiName: 'Marża brutto',
+      requiredCanonicalLineCodes: ['REVENUE', 'COGS'],
+    },
+    {
+      kpiCode: 'EBITDA_MARGIN_PCT',
+      kpiName: 'Marża EBITDA',
+      requiredCanonicalLineCodes: ['REVENUE', 'EBITDA'],
+    },
   ];
 
   it('wszystkie wymagane kody dostępne ⇒ ok:true, issues puste', () => {

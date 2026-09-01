@@ -1313,10 +1313,7 @@ export async function provideHumanInput(
  * this layer (CW-P12 auth-retrofit decision), same posture as
  * claimTimerWait/renewTimerWaitClaimLease.
  */
-export async function expireWait(
-  waitId: string,
-  expectedVersion: number
-): Promise<CaseWait> {
+export async function expireWait(waitId: string, expectedVersion: number): Promise<CaseWait> {
   // Taxonomy: `wait.expired`, "Scheduler actor" — §1 names expireWait as the
   // literal example of a `system:<worker>` emitter.
   return applySimpleWaitTransition(waitId, expectedVersion, 'EXPIRED', {
@@ -1417,10 +1414,7 @@ async function applySimpleWaitTransition(
 }
 
 /** CW-RT-020, CW-DOD-B5. Plain read, no lock. */
-export async function getWait(
-  waitId: string,
-  actorUserId: string
-): Promise<CaseWait | null> {
+export async function getWait(waitId: string, actorUserId: string): Promise<CaseWait | null> {
   const actor = requireNonBlank(actorUserId, 'wait_actor_required');
   const row = await queryOne<CaseWorkspaceWaitRow>(
     `SELECT * FROM case_workspace_waits WHERE wait_id = ?`,
@@ -1440,10 +1434,7 @@ export async function getWait(
  * CW-GR-026 (GET /api/runs/:runId/waits), CW-02-029. Plain read, no lock,
  * newest created_at first.
  */
-export async function listWaitsForRun(
-  runId: string,
-  actorUserId: string
-): Promise<CaseWait[]> {
+export async function listWaitsForRun(runId: string, actorUserId: string): Promise<CaseWait[]> {
   const id = requireNonBlank(runId, 'wait_run_id_required');
   const actor = requireNonBlank(actorUserId, 'wait_actor_required');
   const rows = await queryAll<CaseWorkspaceWaitRow>(
@@ -1674,7 +1665,9 @@ export function startTimerWaitClaimHeartbeat(
  */
 export async function reclaimExpiredTimerWaitClaim(
   waitId: string,
-  reconcile: (wait: CaseWait) => Promise<TimerWaitReconciliationVerdict> | TimerWaitReconciliationVerdict,
+  reconcile: (
+    wait: CaseWait
+  ) => Promise<TimerWaitReconciliationVerdict> | TimerWaitReconciliationVerdict,
   params: { leaseMs?: number } = {}
 ): Promise<ReclaimExpiredTimerWaitClaimOutcome> {
   const id = requireNonBlank(waitId, 'wait_id_required');
@@ -1690,10 +1683,7 @@ export async function reclaimExpiredTimerWaitClaim(
     return { outcome: 'not_reclaimable' };
   }
   if (!current.claim_owner_token) return { outcome: 'not_reclaimable' };
-  if (
-    current.claim_lease_expires_at &&
-    Date.parse(current.claim_lease_expires_at) > Date.now()
-  ) {
+  if (current.claim_lease_expires_at && Date.parse(current.claim_lease_expires_at) > Date.now()) {
     return { outcome: 'lease_active' };
   }
 

@@ -38,7 +38,8 @@ export const dmsBuilderPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (DMS_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Daily Management System / tiered huddle boards — Lean operations management practice',
+      source:
+        'Daily Management System / tiered huddle boards — Lean operations management practice',
       verifiableInRepo: false,
       note: 'DMS jest powszechną praktyką zarządzania operacyjnego (Lean), bez jednego autora metodycznego. Repo nie zawiera pliku źródłowego z atrybucją — nie zgadujemy.',
     },
@@ -104,7 +105,8 @@ export const dmsBuilderPack: ToolPack = {
         pl: 'Zdefiniować zakres i governance systemu zarządzania dziennego.',
         en: 'Define the scope and governance of the daily management system.',
       },
-      whatGoodLooksLike: 'Nazwany obszar (linia/zmiana/dział) i poziom zarządczy, który będzie właścicielem pętli.',
+      whatGoodLooksLike:
+        'Nazwany obszar (linia/zmiana/dział) i poziom zarządczy, który będzie właścicielem pętli.',
       evidenceToAskFor: 'Kto dziś reaguje (jeśli ktokolwiek) na odchylenia w tym obszarze.',
       completionCriterion: 'Zakres i poziom zarządczy zaakceptowane przez sponsora.',
     },
@@ -117,7 +119,8 @@ export const dmsBuilderPack: ToolPack = {
       },
       whatGoodLooksLike:
         '4-8 wskaźników, każdy z celem/progiem, przypisanym właścicielem i nazwanym rytmem przeglądu — nie „kiedy ktoś sobie przypomni".',
-      evidenceToAskFor: 'Gdyby ten wskaźnik jutro gwałtownie się zmienił, kto zmieniłby swoje działanie?',
+      evidenceToAskFor:
+        'Gdyby ten wskaźnik jutro gwałtownie się zmienił, kto zmieniłby swoje działanie?',
       completionCriterion:
         'Warstwa visibility ma present=true (co najmniej jeden KPI) i warstwa cadence present=true (co najmniej jeden KPI z frequency).',
     },
@@ -130,7 +133,8 @@ export const dmsBuilderPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każda reguła ma próg liczbowy + czas, nazwany poziom/rolę eskalacji oraz akcję naprawczą z weryfikacją powrotu wskaźnika na cel.',
-      evidenceToAskFor: 'Jaki jest policzony wyzwalacz eskalacji i kto realnie ma władzę zareagować na tym poziomie.',
+      evidenceToAskFor:
+        'Jaki jest policzony wyzwalacz eskalacji i kto realnie ma władzę zareagować na tym poziomie.',
       completionCriterion:
         'Warstwa escalation present=true (co najmniej jedna reguła) i warstwa response present=true (co najmniej jedna reguła z akcją naprawczą).',
     },
@@ -143,8 +147,10 @@ export const dmsBuilderPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Werdykt answer-first nazywający najsłabsze ogniwo pętli i jego dojrzałość (0-3); sekwencja W2 zmapowana na 3-5 inicjatyw w porządku pętli (visibility→cadence→escalation→response).',
-      evidenceToAskFor: 'Czy werdykt wynika z rankDmsLayers, nie z ogólnego wrażenia „słaba komunikacja".',
-      completionCriterion: 'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
+      evidenceToAskFor:
+        'Czy werdykt wynika z rankDmsLayers, nie z ogólnego wrażenia „słaba komunikacja".',
+      completionCriterion:
+        'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
     },
   ],
 
@@ -159,7 +165,9 @@ export const dmsBuilderPack: ToolPack = {
       answerType: 'choice',
       challengeRule:
         'Metryka, przez którą nikt nie zmienia zachowania, zajmuje miejsce na tablicy, ale nie kontroluje niczego — oznacz do usunięcia albo wymuś realny rytm (dmsBuilderQuestionBank.ts dms-cadence-force).',
-      followUpProbes: ['Gdyby ten wskaźnik jutro gwałtownie się zmienił, kto zmieniłby swoje działanie?'],
+      followUpProbes: [
+        'Gdyby ten wskaźnik jutro gwałtownie się zmienił, kto zmieniłby swoje działanie?',
+      ],
     },
     {
       id: 'dms-cadence-forced',

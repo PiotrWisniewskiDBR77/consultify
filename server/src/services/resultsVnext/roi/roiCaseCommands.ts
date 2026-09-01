@@ -28,10 +28,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
@@ -44,23 +44,25 @@ import { createObligation } from '../platform/obligations.js';
 // publishRoiGovernedVisibilityPolicy's own dual-write now guarantees
 // exists (mode 'ROI_GOVERNED') once resolveRoiGovernedVisibility has
 // already said allow — see the comment at its one call site below.
-import { getActiveVisibilityPolicy, resolveRoiGovernedVisibility } from '../platform/visibilityResolver.js';
-
+import {
+  getActiveVisibilityPolicy,
+  resolveRoiGovernedVisibility,
+} from '../platform/visibilityResolver.js';
 import { isRoiCaseReadyForReviewEligibleWithEconomicModel } from './roiEconomicModelReadiness.js';
 import {
-  toRoiCalculationPolicy,
   type RoiCalculationPolicy,
   type RoiCalculationPolicyRow,
+  toRoiCalculationPolicy,
 } from './roiEconomicModelTypes.js';
 import {
-  toRoiBaseline,
-  toRoiCase,
   type RoiBaseline,
   type RoiBaselineRow,
   type RoiCase,
   type RoiCaseGranularity,
   type RoiCaseRow,
   type RoiCaseStatus,
+  toRoiBaseline,
+  toRoiCase,
 } from './roiTypes.js';
 
 // ==========================================
@@ -131,7 +133,9 @@ export class RoiCaseCreationNotAuthorizedError extends Error {
   code = 'ROI_CASE_CREATION_NOT_AUTHORIZED';
   details: Record<string, unknown>;
   constructor(organizationId: string, reason: string) {
-    super('Creating a ROI case requires a same-tenant ACTIVE OWNER, ADMIN, or current Finance-authority grant.');
+    super(
+      'Creating a ROI case requires a same-tenant ACTIVE OWNER, ADMIN, or current Finance-authority grant.'
+    );
     this.name = 'RoiCaseCreationNotAuthorizedError';
     this.details = { organizationId, reason };
   }
@@ -232,7 +236,9 @@ async function loadCaseWithBaseline(
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
-    throw new Error(`[createRoiCase] winning case ${caseId} could not be re-read after SAVEPOINT rollback`);
+    throw new Error(
+      `[createRoiCase] winning case ${caseId} could not be re-read after SAVEPOINT rollback`
+    );
   }
   const baselineResult = await client.query<RoiBaselineRow>(
     `SELECT * FROM rvn_roi_baselines WHERE case_id = $1 AND organization_id = $2`,
@@ -429,7 +435,17 @@ export async function createRoiCase(
               analysis_start, analysis_end, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING *`,
-          [organizationId, initiativeId, title, ownerUserId, currency, granularity, analysisStart, analysisEnd, createdBy]
+          [
+            organizationId,
+            initiativeId,
+            title,
+            ownerUserId,
+            currency,
+            granularity,
+            analysisStart,
+            analysisEnd,
+            createdBy,
+          ]
         );
         const inserted = caseInsert.rows[0];
         if (!inserted) {
@@ -582,7 +598,11 @@ export async function createRoiCase(
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: result.case.rowVersion,
-        payload: { caseId: result.case.caseId, baselineId: result.baseline.baselineId, created: result.created },
+        payload: {
+          caseId: result.case.caseId,
+          baselineId: result.baseline.baselineId,
+          created: result.created,
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -696,7 +716,8 @@ export async function updateRoiCaseDetails(
         owner_user_id: edits.ownerUserId ?? currentRow.owner_user_id,
         currency: edits.currency ?? currentRow.currency,
         granularity: edits.granularity ?? currentRow.granularity,
-        analysis_start: edits.analysisStart !== undefined ? edits.analysisStart : currentRow.analysis_start,
+        analysis_start:
+          edits.analysisStart !== undefined ? edits.analysisStart : currentRow.analysis_start,
         analysis_end: edits.analysisEnd !== undefined ? edits.analysisEnd : currentRow.analysis_end,
       };
 
@@ -921,7 +942,11 @@ interface RoiCaseLifecycleTransitionSpec {
    * can run its own `SELECT` against `rvn_roi_calculation_runs` on the SAME
    * client/transaction, rather than being restricted to pure in-memory
    * row checks. Throws `RoiCaseNotReadyForReviewError` on failure. */
-  guard?: (client: PoolClient, caseRow: RoiCaseRow, baselineRow: RoiBaselineRow) => Promise<RoiCaseReadyForReviewCheck>;
+  guard?: (
+    client: PoolClient,
+    caseRow: RoiCaseRow,
+    baselineRow: RoiBaselineRow
+  ) => Promise<RoiCaseReadyForReviewCheck>;
   /** RN-G5: capability gating this specific transition. */
   capability: string;
 }

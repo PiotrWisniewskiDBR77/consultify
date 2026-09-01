@@ -38,7 +38,9 @@ describe('MethodNavigator — owner-approved compact axis navigation', () => {
   it('expands only the root containing the active area', () => {
     render(<MethodNavigator nodes={nodes} activeUnitId="1A" onSelect={vi.fn()} />);
 
-    const roots = screen.getAllByRole('treeitem').filter((item) => item.getAttribute('aria-expanded') !== null);
+    const roots = screen
+      .getAllByRole('treeitem')
+      .filter((item) => item.getAttribute('aria-expanded') !== null);
     expect(roots).toHaveLength(2);
     expect(within(roots[0]).getByText('Digital Processes')).toBeInTheDocument();
     expect(roots[0]).toHaveAttribute('aria-expanded', 'true');
@@ -57,7 +59,9 @@ describe('MethodNavigator — owner-approved compact axis navigation', () => {
   });
 
   it('moves the expanded context when the active area changes', () => {
-    const { rerender } = render(<MethodNavigator nodes={nodes} activeUnitId="1A" onSelect={vi.fn()} />);
+    const { rerender } = render(
+      <MethodNavigator nodes={nodes} activeUnitId="1A" onSelect={vi.fn()} />
+    );
 
     rerender(<MethodNavigator nodes={nodes} activeUnitId="2B" onSelect={vi.fn()} />);
 

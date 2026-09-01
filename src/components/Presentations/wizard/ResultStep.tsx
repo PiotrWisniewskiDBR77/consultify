@@ -134,13 +134,21 @@ export const ResultStep: React.FC<ResultStepProps> = ({
           </span>
           <span>&middot;</span>
           <span>
-            {t(`presentations.wizard.modes.${settings.presentationMode}`, settings.presentationMode)}
+            {t(
+              `presentations.wizard.modes.${settings.presentationMode}`,
+              settings.presentationMode
+            )}
           </span>
           <span>&middot;</span>
-          <span>{t(`presentations.languages.${settings.language}`, settings.language.toUpperCase())}</span>
+          <span>
+            {t(`presentations.languages.${settings.language}`, settings.language.toUpperCase())}
+          </span>
           <span>&middot;</span>
           <span>
-            {t(`presentations.confidentialities.${settings.confidentiality}`, settings.confidentiality)}
+            {t(
+              `presentations.confidentialities.${settings.confidentiality}`,
+              settings.confidentiality
+            )}
           </span>
         </div>
       </div>

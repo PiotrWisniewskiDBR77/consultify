@@ -899,7 +899,10 @@ export function rawCellToEditText(cell: FormulaCellRaw | undefined): string {
 }
 
 /** Tekst wyświetlany w komórce siatki (wynik obliczony, nie formuła). */
-export function formatComputedForDisplay(cell: ComputedCell | undefined, numberFormat?: string): string {
+export function formatComputedForDisplay(
+  cell: ComputedCell | undefined,
+  numberFormat?: string
+): string {
   if (!cell) return '';
   if (cell.error) return cell.error;
   const v = cell.computed;
@@ -920,7 +923,9 @@ export function formatComputedForDisplay(cell: ComputedCell | undefined, numberF
       if (decimalPattern.includes('%')) {
         return v.toLocaleString('pl-PL', { ...options, style: 'percent' });
       }
-      const currency = decimalPattern.match(/(?:^|\s)(PLN|EUR|USD|GBP)(?:\s|$)/i)?.[1]?.toUpperCase();
+      const currency = decimalPattern
+        .match(/(?:^|\s)(PLN|EUR|USD|GBP)(?:\s|$)/i)?.[1]
+        ?.toUpperCase();
       if (currency) {
         return v.toLocaleString('pl-PL', { ...options, style: 'currency', currency });
       }

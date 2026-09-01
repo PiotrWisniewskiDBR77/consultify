@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { applyToolStepEvent, type ToolStepEvent } from '@/components/AIChat/toolSteps';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -342,6 +343,13 @@ type StreamOptions = {
    * opcjonalny: gdy go nie ma, zdarzenie jest ignorowane i czat działa jak dziś.
    */
   onIdeaAction?: (payload: { toolName: string; args?: Record<string, unknown> }) => void;
+  /** Day207: governed WRITE proposal created during the current stream turn. */
+  onExecutionProposal?: (payload: {
+    proposalId: string;
+    actionType: string;
+    lifecycleState: 'pending_review';
+    toolName?: string;
+  }) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -382,6 +390,12 @@ export type UseAIStreamReturn = {
   teresaProposal: TeresaChatProposal | null;
   deepThinkingState: any | null;
   researchProgress: any | null;
+  /**
+   * FIX-206 (pkt 4): kroki narzedzi Teresy maja WLASNY slot. Doklejanie ich do
+   * `researchProgress` zapalalo panel „Deep Research" przy kazdej turze z
+   * narzedziem — fantom, bo zadne glebokie badanie nie bylo uruchomione.
+   */
+  toolSteps: ToolStepEvent[] | null;
   researchVisibility: any | null;
   agentAuditState: any | null;
   agentReviewProgressByAgentId: Record<string, any>;
@@ -510,6 +524,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [streamCompletedSignal, setStreamCompletedSignal] = useState(false);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
+  const [toolSteps, setToolSteps] = useState<ToolStepEvent[] | null>(null);
   const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
     null
   );
@@ -574,6 +589,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setTeresaProposal(null);
     teresaProposalRef.current = null;
     setResearchProgress(null);
+    setToolSteps(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
     setAgentReviewProgressByAgentId({});
@@ -960,6 +976,20 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           return;
         }
 
+        if (evt.type === 'execution_proposal') {
+          const proposalId = String((evt as any).proposalId || '').trim();
+          const actionType = String((evt as any).actionType || '').trim();
+          if (proposalId && actionType) {
+            options.onExecutionProposal?.({
+              proposalId,
+              actionType,
+              lifecycleState: 'pending_review',
+              toolName: String((evt as any).toolName || '').trim() || undefined,
+            });
+          }
+          return;
+        }
+
         // Native model reasoning channel — real chain-of-thought tokens streamed
         // as `{type:'reasoning',delta}` events, interleaved with content. We
         // accumulate the deltas and surface them LIVE in the per-message "Tok
@@ -1111,6 +1141,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'research_progress') {
           const e = evt as ResearchProgressEvent;
           setResearchProgress(e);
+          return;
+        }
+        if (evt.type === 'tool_step') {
+          const e = evt as ToolStepEvent;
+          // FIX-206 (pkt 4): wlasny stan, NIE `researchProgress` — inaczej sam
+          // fakt uzycia narzedzia otwieral panel Deep Research.
+          setToolSteps((previous) => applyToolStepEvent(previous, e));
           return;
         }
 
@@ -1511,6 +1548,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     teresaProposal,
     deepThinkingState,
     researchProgress,
+    toolSteps,
     researchVisibility,
     agentAuditState,
     agentReviewProgressByAgentId,

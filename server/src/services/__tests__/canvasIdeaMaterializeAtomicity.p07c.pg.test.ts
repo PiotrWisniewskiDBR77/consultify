@@ -155,7 +155,10 @@ describe.runIf(REACHABLE)('M01-P07C — canvasMaterialize idea atomicity (real P
        WHERE schemaname = 'public' AND tablename = 'canvas_idea_materialization_receipts'`
     );
     const presentIndexNames = new Set(indexRows.rows.map((row) => row.indexname as string));
-    const requiredIndexNames = ['idx_canvas_idea_receipts_org_idem', 'idx_canvas_idea_receipts_idea_id'];
+    const requiredIndexNames = [
+      'idx_canvas_idea_receipts_org_idem',
+      'idx_canvas_idea_receipts_idea_id',
+    ];
     const missingIndexNames = requiredIndexNames.filter((name) => !presentIndexNames.has(name));
     if (missingIndexNames.length > 0) {
       throw new Error(
@@ -242,33 +245,48 @@ describe.runIf(REACHABLE)('M01-P07C — canvasMaterialize idea atomicity (real P
   });
 
   afterAll(async () => {
-    await probe.query('DROP TRIGGER IF EXISTS trg_p07c_fault_idea_insert ON my_ideas').catch(() => undefined);
+    await probe
+      .query('DROP TRIGGER IF EXISTS trg_p07c_fault_idea_insert ON my_ideas')
+      .catch(() => undefined);
     await probe.query('DROP FUNCTION IF EXISTS __p07c_fault_idea_insert()').catch(() => undefined);
-    await probe.query('DROP TRIGGER IF EXISTS trg_p07c_fault_map_insert ON my_idea_maps').catch(() => undefined);
+    await probe
+      .query('DROP TRIGGER IF EXISTS trg_p07c_fault_map_insert ON my_idea_maps')
+      .catch(() => undefined);
     await probe.query('DROP FUNCTION IF EXISTS __p07c_fault_map_insert()').catch(() => undefined);
-    await probe.query('DROP TRIGGER IF EXISTS trg_p07c_fault_map_vanish ON my_idea_maps').catch(() => undefined);
+    await probe
+      .query('DROP TRIGGER IF EXISTS trg_p07c_fault_map_vanish ON my_idea_maps')
+      .catch(() => undefined);
     await probe.query('DROP FUNCTION IF EXISTS __p07c_fault_map_vanish()').catch(() => undefined);
     await probe
       .query(
         'DROP TRIGGER IF EXISTS trg_p07c_fault_receipt_insert ON canvas_idea_materialization_receipts'
       )
       .catch(() => undefined);
-    await probe.query('DROP FUNCTION IF EXISTS __p07c_fault_receipt_insert()').catch(() => undefined);
+    await probe
+      .query('DROP FUNCTION IF EXISTS __p07c_fault_receipt_insert()')
+      .catch(() => undefined);
 
     // Data cleanup — every row this file created carries a RUN_ID-scoped org
     // or draft id, so this cannot touch any other test's/run's data.
-    await probe.query(`DELETE FROM canvas_idea_materialization_receipts WHERE organization_id LIKE $1`, [
+    await probe.query(
+      `DELETE FROM canvas_idea_materialization_receipts WHERE organization_id LIKE $1`,
+      [`p07c-org-${RUN_ID}-%`]
+    );
+    await probe.query(`DELETE FROM my_idea_maps WHERE organization_id LIKE $1`, [
       `p07c-org-${RUN_ID}-%`,
     ]);
-    await probe.query(`DELETE FROM my_idea_maps WHERE organization_id LIKE $1`, [`p07c-org-${RUN_ID}-%`]);
-    await probe.query(`DELETE FROM my_ideas WHERE organization_id LIKE $1`, [`p07c-org-${RUN_ID}-%`]);
+    await probe.query(`DELETE FROM my_ideas WHERE organization_id LIKE $1`, [
+      `p07c-org-${RUN_ID}-%`,
+    ]);
 
     await probe.end();
   });
 
   async function counts(organizationId: string) {
     const [ideas, maps, receipts] = await Promise.all([
-      probe.query(`SELECT count(*)::int AS n FROM my_ideas WHERE organization_id = $1`, [organizationId]),
+      probe.query(`SELECT count(*)::int AS n FROM my_ideas WHERE organization_id = $1`, [
+        organizationId,
+      ]),
       probe.query(`SELECT count(*)::int AS n FROM my_idea_maps WHERE organization_id = $1`, [
         organizationId,
       ]),

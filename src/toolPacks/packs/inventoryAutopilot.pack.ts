@@ -41,7 +41,8 @@ export const inventoryAutopilotPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (INVENTORY_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'ABC/XYZ inventory segmentation — standardowa praktyka zarządzania zapasami/łańcuchem dostaw',
+      source:
+        'ABC/XYZ inventory segmentation — standardowa praktyka zarządzania zapasami/łańcuchem dostaw',
       verifiableInRepo: false,
       note: 'Klasyfikacja ABC (Pareto na wartość) i XYZ (zmienność popytu) to powszechna praktyka SCM bez jednego autora. Repo nie zawiera pliku źródłowego z atrybucją — nie zgadujemy.',
     },
@@ -107,8 +108,10 @@ export const inventoryAutopilotPack: ToolPack = {
         pl: 'Zdefiniować zakres i cele analizy zapasów.',
         en: 'Define the scope and objectives of the inventory analysis.',
       },
-      whatGoodLooksLike: 'Nazwany zakres asortymentu i cel (uwolnić kapitał / podnieść poziom obsługi / oba).',
-      evidenceToAskFor: 'Który problem boli bardziej dziś: uwięziony kapitał czy braki na bestsellerach.',
+      whatGoodLooksLike:
+        'Nazwany zakres asortymentu i cel (uwolnić kapitał / podnieść poziom obsługi / oba).',
+      evidenceToAskFor:
+        'Który problem boli bardziej dziś: uwięziony kapitał czy braki na bestsellerach.',
       completionCriterion: 'Zakres i cel zaakceptowane przez właściciela polityki zapasowej.',
     },
     {
@@ -120,7 +123,8 @@ export const inventoryAutopilotPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każdy segment ma klasę ABC i XYZ, zmierzoną wartość zapasu i obrót, oraz jawnie oznaczone pozycje poniżej celu obsługi lub martwe.',
-      evidenceToAskFor: 'Skąd pochodzi wartość zapasu/obrót tego segmentu — z systemu, czy z szacunku.',
+      evidenceToAskFor:
+        'Skąd pochodzi wartość zapasu/obrót tego segmentu — z systemu, czy z szacunku.',
       completionCriterion:
         'Żaden segment nie pozostaje "unsegmented pile" (inventoryQuestionBank.ts inv-classify-force musi się rozwiązać dla każdego segmentu).',
     },
@@ -133,8 +137,10 @@ export const inventoryAutopilotPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każdy ruch polityki przypisany do dźwigni (classify/service/replenish/deadstock) z impact/effort i dowodem, autopilot ograniczony do segmentów z zaufanymi danymi.',
-      evidenceToAskFor: 'Jaki dowód (analiza, pilotaż, pociągnięcie danych) potwierdza, że ta polityka pasuje do klasy segmentu.',
-      completionCriterion: 'Co najmniej jedna dźwignia ma kandydatów na ruchy (rankLevers ordered.length > 0).',
+      evidenceToAskFor:
+        'Jaki dowód (analiza, pilotaż, pociągnięcie danych) potwierdza, że ta polityka pasuje do klasy segmentu.',
+      completionCriterion:
+        'Co najmniej jedna dźwignia ma kandydatów na ruchy (rankLevers ordered.length > 0).',
     },
     {
       id: 'summary',
@@ -145,8 +151,10 @@ export const inventoryAutopilotPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Werdykt answer-first wskazujący najsilniejszą dźwignię i pulę kapitału, jaką obejmuje; sekwencja W2 zmapowana na 3-5 inicjatyw w porządku classify→service/deadstock→replenish.',
-      evidenceToAskFor: 'Czy werdykt wynika z rankLevers i computeBaseline, nie z intuicji planisty.',
-      completionCriterion: 'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
+      evidenceToAskFor:
+        'Czy werdykt wynika z rankLevers i computeBaseline, nie z intuicji planisty.',
+      completionCriterion:
+        'Każdy ruch sekwencji W2 przechodzi walidator (rationale + trade-off + odrzucona alternatywa).',
     },
   ],
 
@@ -178,7 +186,7 @@ export const inventoryAutopilotPack: ToolPack = {
       phaseId: 'sku-classification',
       prompt: {
         pl: 'Skąd pochodzi wartość zapasu i obrót tego segmentu — wyciąg z systemu, czy szacunek?',
-        en: 'Where does this segment\'s stock value and turnover come from — a system extract, or an estimate?',
+        en: "Where does this segment's stock value and turnover come from — a system extract, or an estimate?",
       },
       answerType: 'evidence',
       challengeRule:
@@ -289,8 +297,10 @@ export const inventoryAutopilotPack: ToolPack = {
    */
   rights: {
     methodologyName: 'Segmentacja zapasów ABC/XYZ',
-    commonlyAttributedTo: 'Brak jednego autora — standardowa praktyka SCM (ABC na bazie Pareto + XYZ wg zmienności popytu)',
-    sourceUsed: 'src/config/inventoryautopilot/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    commonlyAttributedTo:
+      'Brak jednego autora — standardowa praktyka SCM (ABC na bazie Pareto + XYZ wg zmienności popytu)',
+    sourceUsed:
+      'src/config/inventoryautopilot/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: 'Termin generyczny.',

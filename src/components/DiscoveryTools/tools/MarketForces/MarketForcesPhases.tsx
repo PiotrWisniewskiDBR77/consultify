@@ -398,95 +398,95 @@ export function MarketForcesInsightsPhase({
               {t('discoveryToolsTools.marketForces.implicationsTitle')}
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {t('discoveryToolsTools.marketForces.implicationsSubtitle')}
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
-        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-          {t('discoveryToolsTools.marketForces.acceptedForces')}
-        </div>
-        <div className="grid gap-2 md:grid-cols-5">
-          {acceptedForces.map((forceId) => (
-            <div key={forceId} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
-              <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                {isPolish ? FORCE_LABELS[forceId].pl : FORCE_LABELS[forceId].en}
-              </div>
-              <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
-                {data.forces[forceId].score}/5
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {(data.implications || []).map((implication) => (
-          <div
-            key={implication.id}
-            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
-          >
-            <div className="mb-2 flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
-                  {proposalBadge(implication.proposalStatus)}
-                </div>
-                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
-                  {implication.title}
-                </h3>
-              </div>
-              {implication.proposalStatus === 'ai-proposed' && (
-                <CardActions
-                  cardType="tension"
-                  cardId={implication.id}
-                  isPolish={isPolish}
-                  onAcceptCard={onAcceptCard}
-                  onRejectCard={onRejectCard}
-                  onRethinkCard={onRethinkCard}
-                />
-              )}
-            </div>
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              {implication.insight}
+              {t('discoveryToolsTools.marketForces.implicationsSubtitle')}
             </p>
-            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-navy-900/60 dark:text-slate-300">
-              {implication.recommendation}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
+            <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
+              {t('discoveryToolsTools.marketForces.acceptedForces')}
+            </div>
+            <div className="grid gap-2 md:grid-cols-5">
+              {acceptedForces.map((forceId) => (
+                <div key={forceId} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? FORCE_LABELS[forceId].pl : FORCE_LABELS[forceId].en}
+                  </div>
+                  <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {data.forces[forceId].score}/5
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {(data.recommendedMoves || []).map((move) => (
-          <div
-            key={move.id}
-            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
-          >
-            <div className="mb-2 flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">
-                  {move.category}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {(data.implications || []).map((implication) => (
+              <div
+                key={implication.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
+                      {proposalBadge(implication.proposalStatus)}
+                    </div>
+                    <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                      {implication.title}
+                    </h3>
+                  </div>
+                  {implication.proposalStatus === 'ai-proposed' && (
+                    <CardActions
+                      cardType="tension"
+                      cardId={implication.id}
+                      isPolish={isPolish}
+                      onAcceptCard={onAcceptCard}
+                      onRejectCard={onRejectCard}
+                      onRethinkCard={onRethinkCard}
+                    />
+                  )}
                 </div>
-                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
-                  {move.title}
-                </h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {implication.insight}
+                </p>
+                <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-navy-900/60 dark:text-slate-300">
+                  {implication.recommendation}
+                </div>
               </div>
-              {move.proposalStatus === 'ai-proposed' && (
-                <CardActions
-                  cardType="move"
-                  cardId={move.id}
-                  isPolish={isPolish}
-                  onAcceptCard={onAcceptCard}
-                  onRejectCard={onRejectCard}
-                  onRethinkCard={onRethinkCard}
-                />
-              )}
-            </div>
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              {move.rationale}
-            </p>
-            {move.firstStep && (
-              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            ))}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {(data.recommendedMoves || []).map((move) => (
+              <div
+                key={move.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">
+                      {move.category}
+                    </div>
+                    <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                      {move.title}
+                    </h3>
+                  </div>
+                  {move.proposalStatus === 'ai-proposed' && (
+                    <CardActions
+                      cardType="move"
+                      cardId={move.id}
+                      isPolish={isPolish}
+                      onAcceptCard={onAcceptCard}
+                      onRejectCard={onRejectCard}
+                      onRethinkCard={onRethinkCard}
+                    />
+                  )}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {move.rationale}
+                </p>
+                {move.firstStep && (
+                  <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                     {t('discoveryToolsTools.common.firstStepColonSpace')}
                     {move.firstStep}
                   </div>

@@ -11,14 +11,15 @@
  * two of the three competing GDPR export/deletion writers.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { SETTINGS_CUTOVER } from '../registry/settings.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -86,13 +87,14 @@ describe.skipIf(!REAL_PG)('SETTINGS legacy-cutover guard (fresh real PostgreSQL)
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
-    await pool.query(`DELETE FROM data_export_requests WHERE user_id = ANY($1)`, [
-      [userA, userB],
-    ]);
+    await pool.query(`DELETE FROM data_export_requests WHERE user_id = ANY($1)`, [[userA, userB]]);
     await pool.query(`DELETE FROM gdpr_requests WHERE user_id = ANY($1)`, [[userA, userB]]);
     await pool.query(`DELETE FROM user_preferences WHERE user_id = ANY($1)`, [[userA, userB]]);
     await pool.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[orgA, orgB]]);

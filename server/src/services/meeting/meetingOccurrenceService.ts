@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPgTransaction } from '../../database/PostgresDatabase.js';
-import { parseRRule } from '../v8/recurrenceEngine.js';
 import { getMeeting, type MeetingRecord } from '../meetingService.js';
+import { parseRRule } from '../v8/recurrenceEngine.js';
 
 export type MeetingOccurrenceScope = 'this' | 'this_and_following' | 'all';
 export type MeetingOccurrenceChanges = Partial<

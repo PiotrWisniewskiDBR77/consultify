@@ -174,7 +174,5 @@ export interface TeresaProposalEventPayload {
 
 /** Type guard used at the API boundary to reject unknown event types. */
 export function isMethodEventType(value: unknown): value is MethodEventType {
-  return (
-    typeof value === 'string' && (METHOD_EVENT_TYPES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (METHOD_EVENT_TYPES as readonly string[]).includes(value);
 }

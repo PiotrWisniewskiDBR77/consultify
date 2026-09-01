@@ -86,7 +86,11 @@ async function getJson<T>(path: string): Promise<T> {
     } catch {
       // non-JSON error body — fall through with a generic message
     }
-    throw new LegacyArchiveApiError(body.error || `Request failed (${res.status})`, res.status, body.code);
+    throw new LegacyArchiveApiError(
+      body.error || `Request failed (${res.status})`,
+      res.status,
+      body.code
+    );
   }
   return res.json() as Promise<T>;
 }

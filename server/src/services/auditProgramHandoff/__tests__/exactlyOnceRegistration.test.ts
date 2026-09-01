@@ -54,14 +54,13 @@ import {
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const MIGRATION_FILE = path.join(
   REPO_ROOT,
-  'server/migrations/20260910_claude_a_audit_initiative_proposal_exactly_once.sql',
+  'server/migrations/20260910_claude_a_audit_initiative_proposal_exactly_once.sql'
 );
 
 // Integration must be able to run this proof against the integrator's isolated
 // PostgreSQL container. Keep the lane-local name only as a backwards-compatible
 // default instead of silently creating the scratch database in a different DB.
-const DOCKER_CONTAINER =
-  process.env.CLOSURE_POSTGRES_CONTAINER || 'consultify-closure-a-34916';
+const DOCKER_CONTAINER = process.env.CLOSURE_POSTGRES_CONTAINER || 'consultify-closure-a-34916';
 
 function dockerAvailable(): boolean {
   try {
@@ -97,7 +96,11 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
     await pool.end();
   });
 
-  async function makeDraftProposal(): Promise<{ programId: string; findingId: string; proposalId: string }> {
+  async function makeDraftProposal(): Promise<{
+    programId: string;
+    findingId: string;
+    proposalId: string;
+  }> {
     const programId = await makeProgram(pool, orgId, lead);
     await addMember(pool, orgId, programId, lead, 'lead_auditor');
     await addMember(pool, orgId, programId, lead, 'program_owner');
@@ -107,20 +110,25 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       `INSERT INTO audit_program_findings
          (id, program_id, organization_id, statement, classification, severity, status)
        VALUES ($1,$2,$3,$4,'nonconforming','medium','confirmed')`,
-      [findingId, programId, orgId, `Ustalenie exactly-once ${findingId}`],
+      [findingId, programId, orgId, `Ustalenie exactly-once ${findingId}`]
     );
 
-    const [proposal] = await proposalService.draftProposalsFromFindings(orgId, actorFor(orgId, lead), programId, {
-      findingIds: [findingId],
-      title: `Propozycja exactly-once ${findingId}`,
-    });
+    const [proposal] = await proposalService.draftProposalsFromFindings(
+      orgId,
+      actorFor(orgId, lead),
+      programId,
+      {
+        findingIds: [findingId],
+        title: `Propozycja exactly-once ${findingId}`,
+      }
+    );
     return { programId, findingId, proposalId: proposal.id };
   }
 
   async function receiptCount(sourceId: string): Promise<number> {
     const { rows } = await pool.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM initiatives WHERE organization_id=$1 AND source_type='audit' AND source_id=$2`,
-      [orgId, sourceId],
+      [orgId, sourceId]
     );
     return Number(rows[0]?.count ?? 0);
   }
@@ -144,9 +152,10 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
     const count = await receiptCount(proposalId);
     expect(count).toBe(1);
 
-    const proposalRow = await pool.query(`SELECT status, registered_initiative_id FROM audit_initiative_proposals WHERE id=$1`, [
-      proposalId,
-    ]);
+    const proposalRow = await pool.query(
+      `SELECT status, registered_initiative_id FROM audit_initiative_proposals WHERE id=$1`,
+      [proposalId]
+    );
     expect(proposalRow.rows[0].status).toBe('registered');
     expect(proposalRow.rows[0].registered_initiative_id).toBeTruthy();
   }, 60_000);
@@ -154,7 +163,11 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
   it('2. SEQUENTIAL replay: registering twice in a row ⇒ still one receipt, second call yields a DEFINED outcome (never an unhandled exception)', async () => {
     const { proposalId } = await makeDraftProposal();
 
-    const first = await proposalService.registerAsInitiative(orgId, actorFor(orgId, lead), proposalId);
+    const first = await proposalService.registerAsInitiative(
+      orgId,
+      actorFor(orgId, lead),
+      proposalId
+    );
     expect(first.status).toBe('registered');
 
     let secondError: unknown = null;
@@ -176,13 +189,18 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
   it('3. POSITIVE control: a single register call still SUCCEEDS end-to-end and produces exactly one receipt', async () => {
     const { proposalId } = await makeDraftProposal();
 
-    const registered = await proposalService.registerAsInitiative(orgId, actorFor(orgId, lead), proposalId);
+    const registered = await proposalService.registerAsInitiative(
+      orgId,
+      actorFor(orgId, lead),
+      proposalId
+    );
     expect(registered.status).toBe('registered');
     expect(registered.registeredInitiativeId).toBeTruthy();
 
-    const initiativeRow = await pool.query(`SELECT id, source_type, source_id FROM initiatives WHERE id=$1`, [
-      registered.registeredInitiativeId,
-    ]);
+    const initiativeRow = await pool.query(
+      `SELECT id, source_type, source_id FROM initiatives WHERE id=$1`,
+      [registered.registeredInitiativeId]
+    );
     expect(initiativeRow.rows).toHaveLength(1);
     expect(initiativeRow.rows[0].source_type).toBe('audit');
     expect(initiativeRow.rows[0].source_id).toBe(proposalId);
@@ -201,7 +219,7 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
     // eslint-disable-next-line no-console
     console.warn(
       `[exactlyOnceRegistration.test SKIPPED test 4 — clean skip, not a failure] ` +
-        `docker exec ${DOCKER_CONTAINER} unreachable from this environment`,
+        `docker exec ${DOCKER_CONTAINER} unreachable from this environment`
     );
   }
 
@@ -210,14 +228,17 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
     let scratchPool: InstanceType<typeof import('pg').Pool>;
 
     beforeAll(async () => {
-      execSync(`docker exec ${DOCKER_CONTAINER} psql -U consultinity -d consultinity -c "CREATE DATABASE ${scratchDb};"`, {
-        stdio: 'pipe',
-      });
+      execSync(
+        `docker exec ${DOCKER_CONTAINER} psql -U consultinity -d consultinity -c "CREATE DATABASE ${scratchDb};"`,
+        {
+          stdio: 'pipe',
+        }
+      );
       // Schema-only clone: fast, and sufficient — this test only needs the
       // table shapes, not the data.
       execSync(
         `docker exec ${DOCKER_CONTAINER} bash -c "pg_dump -U consultinity -d consultinity --schema-only --no-owner --no-privileges | psql -U consultinity -d ${scratchDb} -q"`,
-        { stdio: 'pipe' },
+        { stdio: 'pipe' }
       );
       // The clone was schema-dumped AFTER this migration was already applied
       // to the source `consultinity` DB (this suite's own beforeAll chain
@@ -228,11 +249,17 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       // implicit transaction in Postgres's simple query protocol, so an
       // error in a later statement silently rolls back an earlier DROP INDEX
       // in the same call (discovered the hard way while building this test).
-      execSync(`docker exec ${DOCKER_CONTAINER} psql -U consultinity -d ${scratchDb} -c "DROP INDEX IF EXISTS uq_initiatives_audit_source_once;"`, { stdio: 'pipe' });
-      execSync(`docker exec ${DOCKER_CONTAINER} psql -U consultinity -d ${scratchDb} -c "DROP INDEX IF EXISTS uq_audit_initiative_proposals_registered_initiative_id;"`, { stdio: 'pipe' });
+      execSync(
+        `docker exec ${DOCKER_CONTAINER} psql -U consultinity -d ${scratchDb} -c "DROP INDEX IF EXISTS uq_initiatives_audit_source_once;"`,
+        { stdio: 'pipe' }
+      );
+      execSync(
+        `docker exec ${DOCKER_CONTAINER} psql -U consultinity -d ${scratchDb} -c "DROP INDEX IF EXISTS uq_audit_initiative_proposals_registered_initiative_id;"`,
+        { stdio: 'pipe' }
+      );
       execSync(
         `docker exec ${DOCKER_CONTAINER} psql -U consultinity -d ${scratchDb} -c "DELETE FROM schema_migrations WHERE filename LIKE '%20260910_claude_a%';"`,
-        { stdio: 'pipe' },
+        { stdio: 'pipe' }
       );
 
       const { Pool } = await import('pg');
@@ -243,25 +270,30 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       // Seed the exact duplicate shapes the migration must survive: two
       // 'audit'-sourced initiatives sharing one source_id, and two proposals
       // sharing one registered_initiative_id.
-      await scratchPool.query(`INSERT INTO organizations (id, name) VALUES ('dupe-org','Dupe org') ON CONFLICT DO NOTHING`);
+      await scratchPool.query(
+        `INSERT INTO organizations (id, name) VALUES ('dupe-org','Dupe org') ON CONFLICT DO NOTHING`
+      );
       await scratchPool.query(
         `INSERT INTO initiatives (id, organization_id, name, source_type, source_id, created_at) VALUES
            ('dupe-init-1','dupe-org','Dupe Init 1','audit','dupe-src-1', now() - interval '2 days'),
-           ('dupe-init-2','dupe-org','Dupe Init 2','audit','dupe-src-1', now() - interval '1 day')`,
+           ('dupe-init-2','dupe-org','Dupe Init 2','audit','dupe-src-1', now() - interval '1 day')`
       );
       await scratchPool.query(
         `INSERT INTO audit_initiative_proposals (id, program_id, organization_id, title, registered_initiative_id, registered_at, created_at) VALUES
            ('dupe-prop-1','dupe-prog','dupe-org','Dupe Prop 1','dupe-shared-init', now() - interval '2 days', now() - interval '2 days'),
-           ('dupe-prop-2','dupe-prog','dupe-org','Dupe Prop 2','dupe-shared-init', now() - interval '1 day', now() - interval '1 day')`,
+           ('dupe-prop-2','dupe-prog','dupe-org','Dupe Prop 2','dupe-shared-init', now() - interval '1 day', now() - interval '1 day')`
       );
     }, 180_000);
 
     afterAll(async () => {
       if (scratchPool) await scratchPool.end();
       try {
-        execSync(`docker exec ${DOCKER_CONTAINER} psql -U consultinity -d consultinity -c "DROP DATABASE IF EXISTS ${scratchDb};"`, {
-          stdio: 'pipe',
-        });
+        execSync(
+          `docker exec ${DOCKER_CONTAINER} psql -U consultinity -d consultinity -c "DROP DATABASE IF EXISTS ${scratchDb};"`,
+          {
+            stdio: 'pipe',
+          }
+        );
       } catch {
         /* best-effort cleanup */
       }
@@ -273,7 +305,7 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       await expect(scratchPool.query(sql)).resolves.toBeDefined();
 
       const initiatives = await scratchPool.query(
-        `SELECT id, source_id FROM initiatives WHERE id IN ('dupe-init-1','dupe-init-2') ORDER BY id`,
+        `SELECT id, source_id FROM initiatives WHERE id IN ('dupe-init-1','dupe-init-2') ORDER BY id`
       );
       expect(initiatives.rows).toEqual([
         { id: 'dupe-init-1', source_id: 'dupe-src-1' },
@@ -281,7 +313,7 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       ]);
 
       const proposals = await scratchPool.query(
-        `SELECT id, registered_initiative_id FROM audit_initiative_proposals WHERE id IN ('dupe-prop-1','dupe-prop-2') ORDER BY id`,
+        `SELECT id, registered_initiative_id FROM audit_initiative_proposals WHERE id IN ('dupe-prop-1','dupe-prop-2') ORDER BY id`
       );
       expect(proposals.rows).toEqual([
         { id: 'dupe-prop-1', registered_initiative_id: 'dupe-shared-init' },
@@ -291,8 +323,8 @@ describeDb('registerAsInitiative — exactly ONE downstream receipt (real Postgr
       // The constraint is now live: a fresh duplicate insert is rejected.
       await expect(
         scratchPool.query(
-          `INSERT INTO initiatives (id, organization_id, name, source_type, source_id) VALUES ('dupe-init-3','dupe-org','Dupe Init 3','audit','dupe-src-1')`,
-        ),
+          `INSERT INTO initiatives (id, organization_id, name, source_type, source_id) VALUES ('dupe-init-3','dupe-org','Dupe Init 3','audit','dupe-src-1')`
+        )
       ).rejects.toThrow(/duplicate key value violates unique constraint/);
 
       // Re-applying the migration a second time is a no-op (IF NOT EXISTS).

@@ -33,6 +33,7 @@
  * `results-vnext.legacy-archive.<domain>`, distinct per domain so KPI/ROI/OKR
  * archive tabs never share column-layout localStorage state.
  */
+import { Archive as ArchiveIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -41,9 +42,11 @@ import {
   type StandardRowMenu,
   type TableColumn,
 } from '@/components/standard';
-import { Archive as ArchiveIcon } from 'lucide-react';
 
-import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from '../ResultsVNextRegistryShell';
+import {
+  ResultsVNextRegistryShell,
+  type ResultsVNextTableProps,
+} from '../ResultsVNextRegistryShell';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextDomain } from '../types';
 import {
@@ -66,7 +69,10 @@ const DOMAIN_TITLE: Record<ResultsVNextDomain, { pl: string; en: string }> = {
 
 const ORIGIN_LABEL: Record<LegacyArchiveOriginDomain, { pl: string; en: string }> = {
   results_legacy: { pl: 'Archiwum Results (legacy)', en: 'Results legacy archive' },
-  table_platform_live: { pl: 'Table Platform (żywy, zewnętrzny)', en: 'Table Platform (live, external)' },
+  table_platform_live: {
+    pl: 'Table Platform (żywy, zewnętrzny)',
+    en: 'Table Platform (live, external)',
+  },
 };
 
 /** `StandardTable`/`FilterableTable` require `row.id: string` — the index
@@ -251,7 +257,12 @@ export const ResultsVNextLegacyArchivePanel: React.FC<ResultsVNextLegacyArchiveP
               label: isPolish ? 'Tabela' : 'Table',
               value: <span className="font-mono">{selectedRow.sourceTable}</span>,
             },
-            { id: 'count', label: isPolish ? 'Liczba rekordów' : 'Record count', value: selectedRow.count, mono: true },
+            {
+              id: 'count',
+              label: isPolish ? 'Liczba rekordów' : 'Record count',
+              value: selectedRow.count,
+              mono: true,
+            },
             {
               id: 'readOnly',
               label: isPolish ? 'Zapis' : 'Writes',

@@ -99,8 +99,10 @@ export const marketForcesPack: ToolPack = {
         en: 'Define the market, scope, decision frame, and success signal.',
       },
       whatGoodLooksLike: 'Jedno ostre pytanie decyzyjne o rynku z zakresem i horyzontem.',
-      evidenceToAskFor: 'Definicja rynku (kto jest w nim konkurentem), horyzont, kryterium sukcesu.',
-      completionCriterion: 'Pytanie decyzyjne i zakres rynku zaakceptowane przez właściciela decyzji.',
+      evidenceToAskFor:
+        'Definicja rynku (kto jest w nim konkurentem), horyzont, kryterium sukcesu.',
+      completionCriterion:
+        'Pytanie decyzyjne i zakres rynku zaakceptowane przez właściciela decyzji.',
     },
     {
       id: 'input',
@@ -109,9 +111,11 @@ export const marketForcesPack: ToolPack = {
         pl: 'Zebrać dowody rynkowe, wywiad, benchmarki i sygnały konkurencyjne.',
         en: 'Capture market evidence, interview notes, benchmarks, and competitive signals.',
       },
-      whatGoodLooksLike: 'Sygnały nazwane wprost (rywale, udziały, warunki handlowe), nie ogólniki.',
+      whatGoodLooksLike:
+        'Sygnały nazwane wprost (rywale, udziały, warunki handlowe), nie ogólniki.',
       evidenceToAskFor: 'Źródło każdego sygnału i czy jest potwierdzony czy zadeklarowany.',
-      completionCriterion: 'Wystarczające sygnały, by rozpocząć ładder pytań dla co najmniej jednej siły.',
+      completionCriterion:
+        'Wystarczające sygnały, by rozpocząć ładder pytań dla co najmniej jednej siły.',
     },
     {
       id: 'forces',
@@ -122,8 +126,10 @@ export const marketForcesPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każda siła ma intensywność wyliczoną z drabiny odpowiedzi oraz — jeśli wysoka/średnia — nazwany dominujący sterownik strukturalny.',
-      evidenceToAskFor: 'Odpowiedzi na drabinę L1-L4 (powierzchnia → dowód strukturalny → kwantyfikacja → trend).',
-      completionCriterion: 'Wszystkie 5 sił ma intensywność (nawet prowizoryczną) i staircase K1→K2→K3.',
+      evidenceToAskFor:
+        'Odpowiedzi na drabinę L1-L4 (powierzchnia → dowód strukturalny → kwantyfikacja → trend).',
+      completionCriterion:
+        'Wszystkie 5 sił ma intensywność (nawet prowizoryczną) i staircase K1→K2→K3.',
     },
     {
       id: 'insights',
@@ -144,9 +150,12 @@ export const marketForcesPack: ToolPack = {
         pl: 'Przygotować final source summary oraz wygenerować outputy i inicjatywy.',
         en: 'Prepare the final source summary and generate downstream outputs and initiatives.',
       },
-      whatGoodLooksLike: 'Każda odpowiedź strategiczna ma rationale, trade-off i odrzuconą alternatywę.',
-      evidenceToAskFor: 'Co świadomie odrzucamy wybierając daną odpowiedź strategiczną i jakim kosztem.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 (rationale zakotwiczone w siłach + trade-off + odrzucona opcja + pierwszy krok).',
+      whatGoodLooksLike:
+        'Każda odpowiedź strategiczna ma rationale, trade-off i odrzuconą alternatywę.',
+      evidenceToAskFor:
+        'Co świadomie odrzucamy wybierając daną odpowiedź strategiczną i jakim kosztem.',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 (rationale zakotwiczone w siłach + trade-off + odrzucona opcja + pierwszy krok).',
     },
   ],
 
@@ -156,7 +165,7 @@ export const marketForcesPack: ToolPack = {
       phaseId: 'mission',
       prompt: {
         pl: 'Jaką decyzję o pozycji na rynku ma wesprzeć ta analiza i jak definiujecie granice tego rynku?',
-        en: 'What market-position decision should this analysis support, and how do you define this market\'s boundaries?',
+        en: "What market-position decision should this analysis support, and how do you define this market's boundaries?",
       },
       answerType: 'text',
       challengeRule:
@@ -276,12 +285,13 @@ export const marketForcesPack: ToolPack = {
    * Flaga bazy license='free' jest flagą PRODUKTOWĄ, nie dowodem prawnym.
    */
   rights: {
-    methodologyName: 'Porter\'s Five Forces',
+    methodologyName: "Porter's Five Forces",
     commonlyAttributedTo: 'Michael E. Porter (HBS), HBR 1979 / „Competitive Strategy" 1980',
     sourceUsed: 'src/config/porter/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'Nazwa używana w branży generycznie; oryginalny tekst HBR/książki objęty prawem autorskim, nie reprodukowany.',
+    trademarkNote:
+      'Nazwa używana w branży generycznie; oryginalny tekst HBR/książki objęty prawem autorskim, nie reprodukowany.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',

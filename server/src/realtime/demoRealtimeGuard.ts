@@ -26,8 +26,6 @@
  * client sends in the handshake (`organizationId`, demo flags, headers) is
  * consulted.
  */
-import logger from '../utils/Logger.js';
-import { get as dbGet } from '../utils/DbPromise.js';
 import {
   DEMO_ENTRY_SOURCE_PREF_KEY,
   PUBLIC_DEMO_ENTRY_SOURCE,
@@ -36,6 +34,8 @@ import {
   isOrganizationSuspended,
   ORG_SUSPENDED_CODE,
 } from '../services/organizationSuspensionGuard.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 export const REALTIME_DEMO_DENIED_REASON = 'demo_realtime_forbidden';
 
@@ -156,10 +156,10 @@ export async function sweepRealtimeConnections(): Promise<number> {
       try {
         // `fallback: false`: a swallowed error must not read as "not suspended".
         if (
-          await isOrganizationSuspended(connection.organizationId, <T,>(
-            sql: string,
-            params?: unknown[]
-          ) => dbGet<T>(sql, params, { fallback: false }))
+          await isOrganizationSuspended(
+            connection.organizationId,
+            <T>(sql: string, params?: unknown[]) => dbGet<T>(sql, params, { fallback: false })
+          )
         ) {
           decision = { allowed: false, reason: ORG_SUSPENDED_CODE };
         }

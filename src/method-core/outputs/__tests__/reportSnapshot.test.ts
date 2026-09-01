@@ -7,6 +7,7 @@
  * report is untouched.
  */
 import { describe, expect, it } from 'vitest';
+
 import { buildReportSnapshot } from '../reportSnapshot';
 import { makeFinding, makeOutput } from './testFixtures';
 

@@ -68,9 +68,7 @@ describe('StatementPackWorkspaceV2 — persistence + cold reopen (AP_MOUNT §6)'
     );
 
     await waitFor(() =>
-      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
-        'CD PROJEKT S.A.'
-      )
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('CD PROJEKT S.A.')
     );
     expect(screen.queryByText(/financial_statement_packs:/)).not.toBeInTheDocument();
   });

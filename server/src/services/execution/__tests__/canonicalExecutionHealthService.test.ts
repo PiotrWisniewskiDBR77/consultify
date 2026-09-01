@@ -13,7 +13,7 @@ describe('canonical execution health v1', () => {
         taskCompletionPct: 60,
         decisionHealthPct: 100,
         riskHealthPct: 80,
-      }),
+      })
     ).toEqual({
       formulaVersion: EXECUTION_HEALTH_FORMULA_VERSION,
       score: 80,

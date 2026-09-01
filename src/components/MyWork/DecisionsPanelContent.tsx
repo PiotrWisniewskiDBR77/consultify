@@ -828,10 +828,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setDecisions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
-      const message = t(
-        'myWork.decisionsPanel.toast.loadFailed',
-        'Failed to load decisions'
-      );
+      const message = t('myWork.decisionsPanel.toast.loadFailed', 'Failed to load decisions');
       setLoadError(message);
       toast.error(message);
     } finally {
@@ -1528,10 +1525,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       <div className="flex-1 flex items-center justify-center h-full">
         <ErrorState
           title={loadError}
-          message={t(
-            'myWork.decisionsPanel.loadErrorHint',
-            'Check your connection and try again.'
-          )}
+          message={t('myWork.decisionsPanel.loadErrorHint', 'Check your connection and try again.')}
           retry={() => void fetchDecisions()}
           className="h-full"
         />

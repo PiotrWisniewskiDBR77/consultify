@@ -53,9 +53,11 @@ export const FinanceValueStatusSchema = z.enum(FinanceValueStatusValues);
 export const FINANCE_VALUE_STATUS_MEANING: Readonly<Record<FinanceValueStatus, string>> = {
   PRESENT_ZERO: 'A real, confirmed value of exactly zero.',
   PRESENT_NONZERO: 'A real, confirmed non-zero value.',
-  MISSING: 'The data should exist but is not yet known (source gap or pending mapping). Never treated as zero.',
+  MISSING:
+    'The data should exist but is not yet known (source gap or pending mapping). Never treated as zero.',
   NA: 'The analyst explicitly marked this cell as not applicable for this period/scenario. Never treated as zero without this explicit flag.',
-  NOT_APPLICABLE: 'The field is structurally undefined for this line/industry/entity. Never treated as zero.',
+  NOT_APPLICABLE:
+    'The field is structurally undefined for this line/industry/entity. Never treated as zero.',
 };
 
 // ---------------------------------------------------------------------------
@@ -137,19 +139,38 @@ export const FinanceValueObjectSchema = z.object({
 
 /** `value_status`/`value_decimal` shape rule, mirrored from `chk_finance_stmt_lines_value_shape` (WP-D01 section 4.5) so a malformed FinanceValue is rejected client-side before it ever reaches a batch mutation request. */
 export const FinanceValueSchema = FinanceValueObjectSchema.superRefine((value, ctx) => {
-    if (value.status === 'PRESENT_NONZERO' && (value.valueDecimal === null || value.valueDecimal === '0')) {
-      ctx.addIssue({ code: 'custom', message: 'PRESENT_NONZERO requires a non-null, non-zero valueDecimal', path: ['valueDecimal'] });
-    }
-    if (value.status === 'PRESENT_ZERO' && value.valueDecimal !== '0') {
-      ctx.addIssue({ code: 'custom', message: 'PRESENT_ZERO requires valueDecimal === "0"', path: ['valueDecimal'] });
-    }
-    if (['MISSING', 'NA', 'NOT_APPLICABLE'].includes(value.status) && value.valueDecimal !== null) {
-      ctx.addIssue({ code: 'custom', message: `${value.status} requires valueDecimal to be null`, path: ['valueDecimal'] });
-    }
-    if (value.isAdjustment && !value.adjustmentReason) {
-      ctx.addIssue({ code: 'custom', message: 'isAdjustment=true requires a non-empty adjustmentReason', path: ['adjustmentReason'] });
-    }
-  });
+  if (
+    value.status === 'PRESENT_NONZERO' &&
+    (value.valueDecimal === null || value.valueDecimal === '0')
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'PRESENT_NONZERO requires a non-null, non-zero valueDecimal',
+      path: ['valueDecimal'],
+    });
+  }
+  if (value.status === 'PRESENT_ZERO' && value.valueDecimal !== '0') {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'PRESENT_ZERO requires valueDecimal === "0"',
+      path: ['valueDecimal'],
+    });
+  }
+  if (['MISSING', 'NA', 'NOT_APPLICABLE'].includes(value.status) && value.valueDecimal !== null) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `${value.status} requires valueDecimal to be null`,
+      path: ['valueDecimal'],
+    });
+  }
+  if (value.isAdjustment && !value.adjustmentReason) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'isAdjustment=true requires a non-empty adjustmentReason',
+      path: ['adjustmentReason'],
+    });
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Guards / helpers

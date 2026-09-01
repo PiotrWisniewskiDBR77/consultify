@@ -2,13 +2,12 @@
  * MFA Routes (Multi-Factor Authentication)
  * Implements TOTP-based MFA for enhanced security
  */
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 
-import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireActiveTenantMembershipOrUnavailable } from '../middleware/auditsStrictMembership.middleware.js';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-
+import { verifyToken } from '../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 

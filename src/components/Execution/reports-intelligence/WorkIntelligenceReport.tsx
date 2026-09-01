@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
+import {
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard/StandardTable';
 import {
   listExecutionCases,
   readExecutionMilestones,
@@ -94,7 +98,10 @@ const REASON_LABEL_KEY: Record<string, [string, string]> = {
     'No objective-mapping API available',
   ],
 };
-const EPISTEMIC_LABEL_KEY: Record<'fact' | 'recommendation' | 'unknown' | 'calculated', [string, string]> = {
+const EPISTEMIC_LABEL_KEY: Record<
+  'fact' | 'recommendation' | 'unknown' | 'calculated',
+  [string, string]
+> = {
   fact: ['execution.reports.intelligence.epistemic.fact', 'FACT'],
   recommendation: ['execution.reports.intelligence.epistemic.recommendation', 'RECOMMENDATION'],
   unknown: ['execution.reports.intelligence.epistemic.unknown', 'UNKNOWN'],
@@ -223,10 +230,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       label: t('execution.reports.intelligence.columns.kind', 'Type'),
       sortable: true,
       render: (row: TableRow) =>
-        trPair(
-          t,
-          KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]
-        ),
+        trPair(t, KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]),
     },
     {
       id: 'status',
@@ -303,10 +307,12 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   under the trust strip, instead of a raw ISO string here and
                   the same instant repeated (also as raw ISO) on every one of
                   the eight KPI cards below. */}
-              <dd>{new Date(state.syncedAt).toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}</dd>
+              <dd>
+                {new Date(state.syncedAt).toLocaleString(i18n.language, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </dd>
             </div>
             <div>
               <dt className="text-c-text-muted">
@@ -428,8 +434,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.stake', 'What is at stake')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.BRAK_API_BSC)} ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} · {trPair(t, REASON_LABEL_KEY.BRAK_API_BSC)} ·{' '}
             {t(
               'execution.reports.intelligence.operationalOnly',
               'Objective mappings are unavailable; this remains an operational report, not a strategy report.'
@@ -485,7 +490,10 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                 className="rounded-lg border border-c-border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               >
                 {t('execution.reports.intelligence.showAllRecords', 'Show all records')} (
-                {t(`execution.reports.intelligence.metrics.${selectedMetric.id}`, selectedMetric.id)}{' '}
+                {t(
+                  `execution.reports.intelligence.metrics.${selectedMetric.id}`,
+                  selectedMetric.id
+                )}{' '}
                 → {model.items.length})
               </button>
             ) : null}

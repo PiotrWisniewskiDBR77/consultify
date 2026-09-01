@@ -13,13 +13,12 @@
  * Finance route/service file, per this work package's scope boundary.
  */
 
-import { Router, type RequestHandler } from 'express';
+import { type RequestHandler, Router } from 'express';
 
 import {
   requireActiveMembership,
   requireFinanceEditorMembership,
 } from '../../../services/legacyCutover/requireActiveMembership.js';
-
 import analysisRoutes from './analysis.routes.js';
 import artifactsRoutes from './artifacts.routes.js';
 import baselineRoutes from './baseline.routes.js';

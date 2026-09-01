@@ -9,10 +9,13 @@ const mockCreateActionProposal = vi.fn();
 const mockGetActionProposal = vi.fn();
 const mockRecordApprovalDecision = vi.fn();
 const mockListActionProposalsForCase = vi.fn();
-const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) =>
+  input.operation()
+);
 
 vi.mock('../../../services/executionActionRegistryService.js', () => ({
-  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+  executeGovernedExecutionAction: (...args: unknown[]) =>
+    mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
 }));
 
 vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
@@ -46,9 +49,9 @@ vi.mock('../../../services/caseWorkspace/proposalApprovalService.js', () => ({
   listDecisionsForProposal: vi.fn(),
 }));
 
-import actionProposalsRoutes from '../actionProposals.routes.js';
-import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
 import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
+import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import actionProposalsRoutes from '../actionProposals.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';

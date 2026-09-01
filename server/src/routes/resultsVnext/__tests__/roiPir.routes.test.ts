@@ -45,14 +45,20 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../services/resultsVnext/roi/roiPirCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiPirCommands.js')>();
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/roi/roiPirCommands.js')>();
   return {
     ...actual,
-    scheduleRoiCasePostInvestmentReview: (...args: unknown[]) => mockScheduleRoiCasePostInvestmentReview(...args),
-    markRoiCasePostInvestmentReviewDue: (...args: unknown[]) => mockMarkRoiCasePostInvestmentReviewDue(...args),
-    startRoiCasePostInvestmentReview: (...args: unknown[]) => mockStartRoiCasePostInvestmentReview(...args),
-    updateRoiPostInvestmentReviewDraft: (...args: unknown[]) => mockUpdateRoiPostInvestmentReviewDraft(...args),
-    recordRoiPirTeresaDraftDisposition: (...args: unknown[]) => mockRecordRoiPirTeresaDraftDisposition(...args),
+    scheduleRoiCasePostInvestmentReview: (...args: unknown[]) =>
+      mockScheduleRoiCasePostInvestmentReview(...args),
+    markRoiCasePostInvestmentReviewDue: (...args: unknown[]) =>
+      mockMarkRoiCasePostInvestmentReviewDue(...args),
+    startRoiCasePostInvestmentReview: (...args: unknown[]) =>
+      mockStartRoiCasePostInvestmentReview(...args),
+    updateRoiPostInvestmentReviewDraft: (...args: unknown[]) =>
+      mockUpdateRoiPostInvestmentReviewDraft(...args),
+    recordRoiPirTeresaDraftDisposition: (...args: unknown[]) =>
+      mockRecordRoiPirTeresaDraftDisposition(...args),
     closeRoiCase: (...args: unknown[]) => mockCloseRoiCase(...args),
   };
 });
@@ -61,7 +67,8 @@ vi.mock('../../../services/resultsVnext/roi/roiPirRepository.js', () => ({
   getRoiPostInvestmentReview: (...args: unknown[]) => mockGetRoiPostInvestmentReview(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiOrgPerspectiveRepository.js', () => ({
-  listOrganizationRoiPirOutcomes: (...args: unknown[]) => mockListOrganizationRoiPirOutcomes(...args),
+  listOrganizationRoiPirOutcomes: (...args: unknown[]) =>
+    mockListOrganizationRoiPirOutcomes(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiCase: (...args: unknown[]) => mockGetRoiCase(...args),
@@ -69,11 +76,12 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: vi.fn(),
 }));
 
-const { RoiCaseValidationError } = await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
-const { RoiPirNotFoundError, RoiPirSelfCloseDeniedError, RoiPirValidationError } = await import(
-  '../../../services/resultsVnext/roi/roiPirCommands.js'
-);
+const { RoiCaseValidationError } =
+  await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { RoiPirNotFoundError, RoiPirSelfCloseDeniedError, RoiPirValidationError } =
+  await import('../../../services/resultsVnext/roi/roiPirCommands.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 const roiPerspectivesRoutes = (await import('../roiPerspectives.routes.js')).default;
@@ -163,7 +171,11 @@ describe('PUT .../post-investment-review-schedule', () => {
       outcome: 'applied',
       eventId: 'evt-1',
       resultingVersion: 4,
-      result: caseFixture({ status: 'tracking', rowVersion: 4, nextReviewAt: '2026-12-01T00:00:00.000Z' }),
+      result: caseFixture({
+        status: 'tracking',
+        rowVersion: 4,
+        nextReviewAt: '2026-12-01T00:00:00.000Z',
+      }),
     });
     const response = await request(createApp())
       .put(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-review-schedule`)
@@ -171,7 +183,11 @@ describe('PUT .../post-investment-review-schedule', () => {
     expect(response.status).toBe(200);
     expect(response.body.case.nextReviewAt).toBe('2026-12-01T00:00:00.000Z');
     expect(mockScheduleRoiCasePostInvestmentReview).toHaveBeenCalledWith(
-      expect.objectContaining({ caseId: CASE_ID, expectedVersion: 3, nextReviewAt: '2026-12-01T00:00:00.000Z' })
+      expect.objectContaining({
+        caseId: CASE_ID,
+        expectedVersion: 3,
+        nextReviewAt: '2026-12-01T00:00:00.000Z',
+      })
     );
   });
 
@@ -195,7 +211,9 @@ describe('PUT .../post-investment-review-schedule', () => {
   it('maps RoiCaseValidationError to 409 (guard scope)', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'draft' }));
     mockScheduleRoiCasePostInvestmentReview.mockRejectedValue(
-      new RoiCaseValidationError('not schedulable', 'INVALID_ROI_CASE_STATUS_TRANSITION', { caseId: CASE_ID })
+      new RoiCaseValidationError('not schedulable', 'INVALID_ROI_CASE_STATUS_TRANSITION', {
+        caseId: CASE_ID,
+      })
     );
     const response = await request(createApp())
       .put(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-review-schedule`)
@@ -227,7 +245,9 @@ describe('POST .../transitions/mark-pir-due', () => {
 
   it('maps AtomicWriteConflictError to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'benefits_realization' }));
-    mockMarkRoiCasePostInvestmentReviewDue.mockRejectedValue(new AtomicWriteConflictError('stale', 'STALE_VERSION'));
+    mockMarkRoiCasePostInvestmentReviewDue.mockRejectedValue(
+      new AtomicWriteConflictError('stale', 'STALE_VERSION')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/mark-pir-due`)
       .send({ expectedVersion: 2 });
@@ -246,7 +266,10 @@ describe('POST .../transitions/start-pir', () => {
       outcome: 'applied',
       eventId: 'evt-3',
       resultingVersion: 4,
-      result: { case: caseFixture({ status: 'post_investment_review', rowVersion: 4 }), pir: pirFixture() },
+      result: {
+        case: caseFixture({ status: 'post_investment_review', rowVersion: 4 }),
+        pir: pirFixture(),
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/start-pir`)
@@ -273,7 +296,9 @@ describe('POST .../transitions/start-pir', () => {
 describe('GET .../post-investment-reviews', () => {
   it('200s with the list', async () => {
     mockListRoiPostInvestmentReviews.mockResolvedValue([pirFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews`
+    );
     expect(response.status).toBe(200);
     expect(response.body.postInvestmentReviews).toHaveLength(1);
   });
@@ -308,7 +333,11 @@ describe('PATCH .../post-investment-reviews/:pirId', () => {
       outcome: 'applied',
       eventId: 'evt-4',
       resultingVersion: 2,
-      result: pirFixture({ outcome: 'benefits_fully_realized', lessonsLearned: 'Lesson', rowVersion: 2 }),
+      result: pirFixture({
+        outcome: 'benefits_fully_realized',
+        lessonsLearned: 'Lesson',
+        rowVersion: 2,
+      }),
     });
     const response = await request(createApp())
       .patch(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}`)
@@ -354,7 +383,9 @@ describe('POST .../post-investment-reviews/:pirId/teresa-draft-disposition', () 
       result: pirFixture({ teresaDraftDisposition: 'rejected', rowVersion: 2 }),
     });
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`
+      )
       .send({ expectedVersion: 1, disposition: 'rejected' });
     expect(response.status).toBe(200);
     expect(response.body.postInvestmentReview.teresaDraftDisposition).toBe('rejected');
@@ -365,10 +396,16 @@ describe('POST .../post-investment-reviews/:pirId/teresa-draft-disposition', () 
       outcome: 'applied',
       eventId: 'evt-6',
       resultingVersion: 2,
-      result: pirFixture({ teresaDraftDisposition: 'accepted', lessonsLearned: 'Final text', rowVersion: 2 }),
+      result: pirFixture({
+        teresaDraftDisposition: 'accepted',
+        lessonsLearned: 'Final text',
+        rowVersion: 2,
+      }),
     });
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`
+      )
       .send({ expectedVersion: 1, disposition: 'accepted', finalLessonsText: 'Final text' });
     expect(response.status).toBe(200);
     expect(response.body.postInvestmentReview.lessonsLearned).toBe('Final text');
@@ -379,7 +416,9 @@ describe('POST .../post-investment-reviews/:pirId/teresa-draft-disposition', () 
       new RoiPirValidationError('missing text', 'FINAL_LESSONS_TEXT_REQUIRED', { pirId: PIR_ID })
     );
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`
+      )
       .send({ expectedVersion: 1, disposition: 'accepted' });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('FINAL_LESSONS_TEXT_REQUIRED');
@@ -387,7 +426,9 @@ describe('POST .../post-investment-reviews/:pirId/teresa-draft-disposition', () 
 
   it('400s for an invalid disposition enum value', async () => {
     const response = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/post-investment-reviews/${PIR_ID}/teresa-draft-disposition`
+      )
       .send({ expectedVersion: 1, disposition: 'maybe' });
     expect(response.status).toBe(400);
     expect(mockRecordRoiPirTeresaDraftDisposition).not.toHaveBeenCalled();
@@ -406,7 +447,12 @@ describe('POST .../transitions/close', () => {
       eventId: 'evt-7',
       resultingVersion: 4,
       result: {
-        case: caseFixture({ status: 'closed', rowVersion: 4, nextActionType: null, nextActionDueAt: null }),
+        case: caseFixture({
+          status: 'closed',
+          rowVersion: 4,
+          nextActionType: null,
+          nextActionDueAt: null,
+        }),
         pir: pirFixture({ status: 'finalized', finalizedBy: 'user-actor' }),
       },
     });
@@ -420,7 +466,9 @@ describe('POST .../transitions/close', () => {
 
   it('D6: maps RoiPirSelfCloseDeniedError to 403', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'post_investment_review' }));
-    mockCloseRoiCase.mockRejectedValue(new RoiPirSelfCloseDeniedError(CASE_ID, PIR_ID, 'user-actor'));
+    mockCloseRoiCase.mockRejectedValue(
+      new RoiPirSelfCloseDeniedError(CASE_ID, PIR_ID, 'user-actor')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/close`)
       .send({ expectedVersion: 3 });
@@ -441,7 +489,10 @@ describe('POST .../transitions/close', () => {
   it('AC-03: maps RoiPirValidationError (OPEN_VARIANCES_UNRESOLVED) to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'post_investment_review' }));
     mockCloseRoiCase.mockRejectedValue(
-      new RoiPirValidationError('open variances', 'OPEN_VARIANCES_UNRESOLVED', { caseId: CASE_ID, openVarianceIds: ['v-1'] })
+      new RoiPirValidationError('open variances', 'OPEN_VARIANCES_UNRESOLVED', {
+        caseId: CASE_ID,
+        openVarianceIds: ['v-1'],
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/close`)
@@ -452,7 +503,9 @@ describe('POST .../transitions/close', () => {
 
   it('AC-03: maps RoiPirValidationError (PIR_INCOMPLETE) to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'post_investment_review' }));
-    mockCloseRoiCase.mockRejectedValue(new RoiPirValidationError('incomplete', 'PIR_INCOMPLETE', { caseId: CASE_ID }));
+    mockCloseRoiCase.mockRejectedValue(
+      new RoiPirValidationError('incomplete', 'PIR_INCOMPLETE', { caseId: CASE_ID })
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/close`)
       .send({ expectedVersion: 3, openVarianceWaiverReason: 'waived' });
@@ -496,7 +549,12 @@ describe('GET .../org/pir-outcomes', () => {
           finalizedAt: '2026-08-01T00:00:00.000Z',
         },
       ],
-      portfolioTotals: { closedCaseCount: 1, fullyRealizedCount: 1, partiallyRealizedCount: 0, notRealizedCount: 0 },
+      portfolioTotals: {
+        closedCaseCount: 1,
+        fullyRealizedCount: 1,
+        partiallyRealizedCount: 0,
+        notRealizedCount: 0,
+      },
     });
     const response = await request(createApp())
       .get('/api/vnext/results/roi/org/pir-outcomes')
@@ -509,10 +567,15 @@ describe('GET .../org/pir-outcomes', () => {
     );
   });
 
-  it('does NOT fall through to roi.routes.ts\'s /cases/:caseId family — mount-order regression guard', async () => {
+  it("does NOT fall through to roi.routes.ts's /cases/:caseId family — mount-order regression guard", async () => {
     mockListOrganizationRoiPirOutcomes.mockResolvedValue({
       cases: [],
-      portfolioTotals: { closedCaseCount: 0, fullyRealizedCount: 0, partiallyRealizedCount: 0, notRealizedCount: 0 },
+      portfolioTotals: {
+        closedCaseCount: 0,
+        fullyRealizedCount: 0,
+        partiallyRealizedCount: 0,
+        notRealizedCount: 0,
+      },
     });
     const response = await request(createApp()).get('/api/vnext/results/roi/org/pir-outcomes');
     expect(response.status).toBe(200);

@@ -42,7 +42,6 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
-import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 import {
   type AuditCriterionSummary,
   type AuditProgramSummary,
@@ -51,6 +50,7 @@ import {
   getProgramLifecycle,
   listProgramCriteria,
 } from '../auditsMethodApi';
+import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 
 const mockedGetProgram = vi.mocked(getProgram);
 const mockedGetProgramCoverage = vi.mocked(getProgramCoverage);
@@ -93,17 +93,38 @@ function criterion(overrides: Partial<AuditCriterionSummary>): AuditCriterionSum
 }
 
 const criteria: AuditCriterionSummary[] = [
-  criterion({ id: 'c-1', refCode: 'INT-01', title: 'Customer complaint intake', workStatus: 'open' }),
-  criterion({ id: 'c-2', refCode: 'INT-02', title: 'Supplier requalification cadence', workStatus: 'concluded' }),
-  criterion({ id: 'c-3', refCode: 'INT-03', title: 'Warehouse temperature log retention', workStatus: 'tested' }),
+  criterion({
+    id: 'c-1',
+    refCode: 'INT-01',
+    title: 'Customer complaint intake',
+    workStatus: 'open',
+  }),
+  criterion({
+    id: 'c-2',
+    refCode: 'INT-02',
+    title: 'Supplier requalification cadence',
+    workStatus: 'concluded',
+  }),
+  criterion({
+    id: 'c-3',
+    refCode: 'INT-03',
+    title: 'Warehouse temperature log retention',
+    workStatus: 'tested',
+  }),
 ];
 
 function setupApiMocks() {
   mockedGetProgram.mockResolvedValue({
-    ...program, objective: null, scopeText: null, projectId: null, members: [],
+    ...program,
+    objective: null,
+    scopeText: null,
+    projectId: null,
+    members: [],
   });
   mockedGetProgramCoverage.mockResolvedValue({
-    applicableCriteria: 3, concludedCriteria: 1, insufficientEvidenceCriteria: 0,
+    applicableCriteria: 3,
+    concludedCriteria: 1,
+    insufficientEvidenceCriteria: 0,
   });
   mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
   mockedListProgramCriteria.mockResolvedValue(criteria);
@@ -162,9 +183,7 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
     fireEvent.change(screen.getByTestId('criteria-browser-search'), {
       target: { value: 'warehouse' },
     });
-    await waitFor(() =>
-      expect(screen.queryByText('Customer complaint intake')).toBeNull()
-    );
+    await waitFor(() => expect(screen.queryByText('Customer complaint intake')).toBeNull());
     expect(screen.getByText('Warehouse temperature log retention')).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('criteria-browser-search'), { target: { value: '' } });
 
@@ -181,7 +200,12 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
     // find them.
     const manyCriteria: AuditCriterionSummary[] = [
       ...Array.from({ length: 25 }, (_, i) =>
-        criterion({ id: `open-${i}`, refCode: `OPEN-${i}`, title: `Open item ${i}`, workStatus: 'open' })
+        criterion({
+          id: `open-${i}`,
+          refCode: `OPEN-${i}`,
+          title: `Open item ${i}`,
+          workStatus: 'open',
+        })
       ),
       ...Array.from({ length: 3 }, (_, i) =>
         criterion({
@@ -193,10 +217,16 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
       ),
     ];
     mockedGetProgram.mockResolvedValue({
-      ...program, objective: null, scopeText: null, projectId: null, members: [],
+      ...program,
+      objective: null,
+      scopeText: null,
+      projectId: null,
+      members: [],
     });
     mockedGetProgramCoverage.mockResolvedValue({
-      applicableCriteria: 28, concludedCriteria: 3, insufficientEvidenceCriteria: 0,
+      applicableCriteria: 28,
+      concludedCriteria: 3,
+      insufficientEvidenceCriteria: 0,
     });
     mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
     mockedListProgramCriteria.mockResolvedValue(manyCriteria);
@@ -212,10 +242,14 @@ describe('AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPo
 
     // Open the (only) column filter — `workStatus` is the sole `filterable`
     // column in this table, so any "Filter…" trigger is it.
-    const filterTrigger = screen.getAllByRole('button').find((btn) => /^filter/i.test(btn.getAttribute('aria-label') || ''));
+    const filterTrigger = screen
+      .getAllByRole('button')
+      .find((btn) => /^filter/i.test(btn.getAttribute('aria-label') || ''));
     expect(filterTrigger).toBeTruthy();
     fireEvent.click(filterTrigger!);
-    const concludedOption = screen.getByRole('checkbox', { name: /Zakończone wnioskiem|Concluded/i });
+    const concludedOption = screen.getByRole('checkbox', {
+      name: /Zakończone wnioskiem|Concluded/i,
+    });
     fireEvent.click(concludedOption);
     // The panel's checkbox change is staged locally — it only reaches
     // `onFilterChange` once "Apply" is clicked (`FilterDropdown.handleApply`).

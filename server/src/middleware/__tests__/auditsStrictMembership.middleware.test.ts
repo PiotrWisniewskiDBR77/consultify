@@ -177,7 +177,10 @@ describe('requireActiveAuditsMembership', () => {
     const next = vi.fn() as unknown as NextFunction;
 
     await requireActiveAuditsMembership(
-      { user: { id: 'sa', organizationId: 'org-home', isSuperAdmin: true }, organizationId: 'org-foreign' } as any,
+      {
+        user: { id: 'sa', organizationId: 'org-home', isSuperAdmin: true },
+        organizationId: 'org-foreign',
+      } as any,
       res,
       next
     );

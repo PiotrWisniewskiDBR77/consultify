@@ -119,10 +119,7 @@ const BLOCKING_ORG_STATUSES = new Set(['suspended', 'locked']);
  * has something to enumerate, and so a future reader can tell "considered and
  * excluded" apart from "never thought about".
  */
-export const DELIBERATELY_NON_BLOCKING_ORG_STATUSES = Object.freeze([
-  'purge_scheduled',
-  'expired',
-]);
+export const DELIBERATELY_NON_BLOCKING_ORG_STATUSES = Object.freeze(['purge_scheduled', 'expired']);
 
 const DEFAULT_CACHE_TTL_MS = 30_000;
 const MIN_CACHE_TTL_MS = 1_000;
@@ -375,7 +372,11 @@ export function buildOrgSuspendedResponseBody(blockingStatus?: string | null): {
   messageKey: string;
   guidance: string;
 } {
-  if (String(blockingStatus || '').trim().toLowerCase() === 'locked') {
+  if (
+    String(blockingStatus || '')
+      .trim()
+      .toLowerCase() === 'locked'
+  ) {
     return {
       error: 'Your organization is temporarily locked by the platform operator.',
       code: ORG_LOCKED_CODE,

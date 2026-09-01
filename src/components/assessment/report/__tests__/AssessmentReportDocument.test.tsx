@@ -55,7 +55,12 @@ function buildData(overrides: Partial<AssessmentReportData['output']> = {}): Ass
           targetLevel: 6,
           gap: 2,
           supportingEvidence: [
-            { evidenceId: 'ev-1', evidenceType: 'system_export', strength: 'E2', locator: 'vault://ev-1' },
+            {
+              evidenceId: 'ev-1',
+              evidenceType: 'system_export',
+              strength: 'E2',
+              locator: 'vault://ev-1',
+            },
           ],
           contradictingEvidence: [],
           businessMeaning: 'Sprzedaż rejestruje dane cyfrowo, brak automatyzacji kanału online.',
@@ -131,7 +136,9 @@ describe('AssessmentReportDocument', () => {
   it('renders the limitations block verbatim (never buried/omitted)', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     expect(
-      screen.getByText(/Output wygenerowany automatycznie z event-store — deterministyczne szablony\./)
+      screen.getByText(
+        /Output wygenerowany automatycznie z event-store — deterministyczne szablony\./
+      )
     ).toBeInTheDocument();
   });
 
@@ -220,7 +227,9 @@ describe('AssessmentReportDocument', () => {
   });
 
   it('never leaks the crimson brand-accent class into signal/status markup', () => {
-    const { container } = render(<AssessmentReportDocument data={buildData({ demoBypassActive: true })} />);
+    const { container } = render(
+      <AssessmentReportDocument data={buildData({ demoBypassActive: true })} />
+    );
     // Built from parts on purpose — a literal crimson-token substring in
     // THIS file trips the repo's own triada-canon pre-commit guard, which
     // greps new file content for the banned pattern regardless of context.
@@ -235,7 +244,9 @@ describe('AssessmentReportDocument', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     expect(screen.getByRole('heading', { name: /^1\. Jak prowadzono badanie$/ })).toBeTruthy();
     expect(screen.getByRole('heading', { name: /^2\. Siedem osi metodyki$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^3\. Odpowiedzi i wstępna paleta wniosków$/ })).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: /^3\. Odpowiedzi i wstępna paleta wniosków$/ })
+    ).toBeTruthy();
     expect(screen.getByRole('heading', { name: /^4\. Podsumowanie$/ })).toBeTruthy();
   });
 
@@ -253,7 +264,9 @@ describe('AssessmentReportDocument', () => {
       expect(screen.getByRole('heading', { name: `${nr}. ${nazwa}` })).toBeTruthy();
     }
     // Oś bez ani jednego ocenionego obszaru zostaje w dokumencie i mówi to wprost.
-    expect(screen.getAllByText(/Żaden obszar tej osi nie został objęty tą oceną/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Żaden obszar tej osi nie został objęty tą oceną/).length
+    ).toBeGreaterThan(0);
   });
 
   it('podpina definicję poziomu Z TEGO obszaru — nie z pierwszego obszaru osi', () => {
@@ -266,7 +279,12 @@ describe('AssessmentReportDocument', () => {
     // test (na danych z 1A, czyli areas[0], NIE wywracała — false green).
     render(
       <AssessmentReportDocument
-        data={buildData({ current: { '6C': 5 }, target: { '6C': 6 }, gap: { '6C': 1 }, findings: [] })}
+        data={buildData({
+          current: { '6C': 5 },
+          target: { '6C': 6 },
+          gap: { '6C': 1 },
+          findings: [],
+        })}
       />
     );
     expect(screen.getByText(/Poziom obecny 5 — Monitoring i detekcja/)).toBeTruthy();
@@ -284,7 +302,11 @@ describe('AssessmentReportDocument', () => {
   it('nie zostawia jednostki bez osi poza dokumentem', () => {
     render(
       <AssessmentReportDocument
-        data={buildData({ current: { '1A': 4, ZZ9: 2 }, target: { '1A': 6, ZZ9: 3 }, gap: { '1A': 2, ZZ9: 1 } })}
+        data={buildData({
+          current: { '1A': 4, ZZ9: 2 },
+          target: { '1A': 6, ZZ9: 3 },
+          gap: { '1A': 2, ZZ9: 1 },
+        })}
       />
     );
     expect(screen.getByRole('heading', { name: 'Jednostki poza strukturą osi' })).toBeTruthy();

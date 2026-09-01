@@ -84,14 +84,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import { EmptyState } from '@/components/shared/states';
-import { ErrorState, LoadingState } from '@/components/ui/primitives';
-import { StatusChip } from '@/components/ui/primitives/chips';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import type { KartaNKey } from '@/components/standard/registry';
 import {
   StandardArtifactShell,
   type StandardSekcjaDef,
 } from '@/components/standard/StandardArtifactShell';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { StatusChip } from '@/components/ui/primitives/chips';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -294,8 +294,17 @@ export const MeetingObjectPage: React.FC = () => {
     setLoading(true);
     setLoadError(null);
     setNotFound(false);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
-      const response = await Api.getMeeting(meetingId);
+      const response = await Promise.race([
+        Api.getMeeting(meetingId),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error('Meeting request timed out after 20 seconds')),
+            20_000
+          );
+        }),
+      ]);
       setMeeting((response?.meeting as MeetingItem) || null);
     } catch (error: unknown) {
       console.error('Failed to load meeting:', error);
@@ -309,6 +318,7 @@ export const MeetingObjectPage: React.FC = () => {
         setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
       }
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -795,7 +805,10 @@ export const MeetingObjectPage: React.FC = () => {
             />
             <textarea
               className={`${decisionInputClass} min-h-16`}
-              placeholder={t('meeting.decisionRecords.rationalePlaceholder', 'Rationale (optional)')}
+              placeholder={t(
+                'meeting.decisionRecords.rationalePlaceholder',
+                'Rationale (optional)'
+              )}
               value={decisionRationale}
               onChange={(e) => setDecisionRationale(e.target.value)}
             />

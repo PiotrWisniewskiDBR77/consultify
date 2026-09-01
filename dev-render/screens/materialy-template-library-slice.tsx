@@ -144,7 +144,10 @@ export default function MaterialyTemplateLibrarySliceScreen(): React.ReactElemen
     <MemoryRouter initialEntries={['/materialy?tab=templates']}>
       <FeatureFlagsProvider showDevTools={false}>
         <div className="h-screen w-screen bg-c-bg flex flex-col">
-          <div className="border-b border-c-border px-6 py-3 shrink-0" data-dev-render-chrome="true">
+          <div
+            className="border-b border-c-border px-6 py-3 shrink-0"
+            data-dev-render-chrome="true"
+          >
             <div className="text-sm font-semibold text-c-text">
               Materiały ▸ Biblioteka wzorców — slice „szablon dokumentu"
             </div>

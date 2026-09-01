@@ -86,7 +86,9 @@ vi.mock('../../workspaceApi', async () => {
 });
 
 vi.mock('../../../auditsMethodApi', async () => {
-  const actual = await vi.importActual<typeof import('../../../auditsMethodApi')>('../../../auditsMethodApi');
+  const actual = await vi.importActual<typeof import('../../../auditsMethodApi')>(
+    '../../../auditsMethodApi'
+  );
   return {
     ...actual,
     getProgram: vi.fn(),
@@ -96,10 +98,14 @@ vi.mock('../../../auditsMethodApi', async () => {
   };
 });
 
-import { CriterionWorkspaceV2 } from '../CriterionWorkspaceV2';
 import * as auditsMethodApi from '../../../auditsMethodApi';
+import type {
+  CriterionDetail,
+  WorkspaceCriterion,
+  WorkspaceProgramMember,
+} from '../../workspaceApi';
 import * as workspaceApi from '../../workspaceApi';
-import type { CriterionDetail, WorkspaceCriterion, WorkspaceProgramMember } from '../../workspaceApi';
+import { CriterionWorkspaceV2 } from '../CriterionWorkspaceV2';
 
 const mockedGetCriterion = vi.mocked(workspaceApi.getCriterion);
 const mockedGetProgramMembers = vi.mocked(workspaceApi.getProgramMembers);
@@ -160,7 +166,10 @@ function baseDetail(
   };
 }
 
-function membersWithRole(userId: string, memberRole: WorkspaceProgramMember['memberRole']): WorkspaceProgramMember[] {
+function membersWithRole(
+  userId: string,
+  memberRole: WorkspaceProgramMember['memberRole']
+): WorkspaceProgramMember[] {
   return [{ userId, name: 'Piotr Wiśniewski', memberRole }];
 }
 
@@ -168,7 +177,10 @@ function renderV2() {
   return render(
     <MemoryRouter initialEntries={['/audit-programs/prog-1/criteria/crit-1']}>
       <Routes>
-        <Route path="/audit-programs/:programId/criteria/:criterionId" element={<CriterionWorkspaceV2 />} />
+        <Route
+          path="/audit-programs/:programId/criteria/:criterionId"
+          element={<CriterionWorkspaceV2 />}
+        />
       </Routes>
     </MemoryRouter>
   );
@@ -220,12 +232,16 @@ describe('CriterionWorkspaceV2', () => {
     // Ustalenia → Naprawa i zamknięcie), not just presence.
     const cards = phaseIds.map((id) => screen.getByTestId(`v2-phase-${id}`));
     for (let i = 1; i < cards.length; i++) {
-      expect(cards[i - 1].compareDocumentPosition(cards[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(
+        cards[i - 1].compareDocumentPosition(cards[i]) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     }
 
     // Fresh criterion: phase 1 (pack metadata) always reads done in the
     // existing chainLinks mechanic; phase 2 is where the real work starts.
-    expect(within(screen.getByTestId('v2-phase-planowanie')).getByText('3 / 3')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('v2-phase-planowanie')).getByText('3 / 3')
+    ).toBeInTheDocument();
     expect(within(screen.getByTestId('v2-phase-naprawa')).getByText('0 / 6')).toBeInTheDocument();
   });
 
@@ -237,7 +253,9 @@ describe('CriterionWorkspaceV2', () => {
     const aside = await screen.findByRole('complementary');
     // Single query, so document order is preserved (unlike concatenating two
     // separately-filtered `expanded:true`/`expanded:false` queries).
-    const allButtons = within(aside).getAllByRole('button', { hidden: true }).filter((b) => b.hasAttribute('aria-expanded'));
+    const allButtons = within(aside)
+      .getAllByRole('button', { hidden: true })
+      .filter((b) => b.hasAttribute('aria-expanded'));
     const order = ARTIFACT_PANEL_SECTION_ORDER.filter((id) => id !== 'results');
     const positions = order.map((id) =>
       allButtons.findIndex((h) => sectionLabelMatches(h.textContent || '', id))
@@ -245,14 +263,16 @@ describe('CriterionWorkspaceV2', () => {
     expect(positions.every((p) => p >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
 
-    const expandedLabels = allButtons.filter((b) => b.getAttribute('aria-expanded') === 'true').map((b) => b.textContent || '');
+    const expandedLabels = allButtons
+      .filter((b) => b.getAttribute('aria-expanded') === 'true')
+      .map((b) => b.textContent || '');
     expect(expandedLabels.some((h) => sectionLabelMatches(h, 'actions'))).toBe(true);
     expect(expandedLabels.some((h) => sectionLabelMatches(h, 'properties'))).toBe(true);
     expect(expandedLabels.some((h) => sectionLabelMatches(h, 'history'))).toBe(false);
     expect(expandedLabels.some((h) => sectionLabelMatches(h, 'comments'))).toBe(false);
   });
 
-  it('shows the criterion\'s real program name (not a placeholder) in the Menu 1 breadcrumb once auditsMethodApi.getProgram resolves', async () => {
+  it("shows the criterion's real program name (not a placeholder) in the Menu 1 breadcrumb once auditsMethodApi.getProgram resolves", async () => {
     mockedGetCriterion.mockResolvedValue(baseDetail());
     renderV2();
     await waitFor(() => expect(mockedGetProgram).toHaveBeenCalledWith('prog-1'));
@@ -302,7 +322,15 @@ describe('CriterionWorkspaceV2', () => {
             createdAt: '2026-08-01T00:00:00Z',
           },
         ],
-        [{ id: 'find-1', statement: 'x', classification: 'nonconforming', severity: 'medium', status: 'confirmed' }]
+        [
+          {
+            id: 'find-1',
+            statement: 'x',
+            classification: 'nonconforming',
+            severity: 'medium',
+            status: 'confirmed',
+          },
+        ]
       )
     );
     mockedListFindings.mockResolvedValue({

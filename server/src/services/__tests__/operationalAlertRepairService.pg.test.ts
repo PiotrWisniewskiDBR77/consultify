@@ -1,7 +1,9 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
 import {
   enqueueOperationalAlertRepairIntent,
   reconstructTerminalOperationalAlertIntents,

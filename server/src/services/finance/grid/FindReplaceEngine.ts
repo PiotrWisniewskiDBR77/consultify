@@ -25,20 +25,23 @@
  * mode does not — flagged in the ADR, not silently ignored.
  */
 
-import { CellRefSchema } from '../../../types/finance/CellRef.js';
 import type { CellRef } from '../../../types/finance/CellRef.js';
-import { FinanceValueInputSchema } from '../../../types/finance/Operation.js';
-import type { ApplyOperationsBatchRequest, FinanceValueInput } from '../../../types/finance/Operation.js';
+import { CellRefSchema } from '../../../types/finance/CellRef.js';
 import type { FinanceValueStatus } from '../../../types/finance/financeValueSemantics.js';
+import type {
+  ApplyOperationsBatchRequest,
+  FinanceValueInput,
+} from '../../../types/finance/Operation.js';
+import { FinanceValueInputSchema } from '../../../types/finance/Operation.js';
 import {
-  type EngineError,
-  type EngineMutationContext,
   checkCapability,
+  type EngineError,
   engineError,
+  type EngineMutationContext,
   resolveIdGenerator,
   resolveNow,
 } from './engineContext.js';
-import { MAX_CELLS_PER_OPERATION, chunkArray, type GridCoordinate } from './gridCoordinates.js';
+import { chunkArray, type GridCoordinate, MAX_CELLS_PER_OPERATION } from './gridCoordinates.js';
 
 /** A cell as visible to search: its grid position, domain address, and current value. Built by the caller from whatever in-memory grid data source it holds — this package does not own cell storage (see AP-01 ADR section 2 for why: the grid's actual populated-cell store is React-layer state, out of scope here). */
 export interface GridCellSnapshot {
@@ -81,7 +84,10 @@ export function byNoConfirmedValue(): CellPredicate {
 // ---------------------------------------------------------------------------
 
 /** Pure, synchronous scan — `cells` is whatever iterable the caller's in-memory grid data source produces (an array, or a generator over a sparse Map's values for the 10k x 120 scale; see the performance test for the latter). */
-export function findCells(cells: Iterable<GridCellSnapshot>, predicate: CellPredicate): GridCellSnapshot[] {
+export function findCells(
+  cells: Iterable<GridCellSnapshot>,
+  predicate: CellPredicate
+): GridCellSnapshot[] {
   const matches: GridCellSnapshot[] = [];
   for (const cell of cells) {
     if (predicate(cell)) matches.push(cell);
@@ -107,7 +113,9 @@ export interface FindReplaceEngineSuccess {
 
 export type FindReplaceEngineResult = FindReplaceEngineSuccess | EngineError;
 
-export function buildFindReplaceOperations(params: BuildFindReplaceOperationsParams): FindReplaceEngineResult {
+export function buildFindReplaceOperations(
+  params: BuildFindReplaceOperationsParams
+): FindReplaceEngineResult {
   const capabilityError = checkCapability(params);
   if (capabilityError) return capabilityError;
 
@@ -123,14 +131,22 @@ export function buildFindReplaceOperations(params: BuildFindReplaceOperationsPar
   params.matches.forEach((cell, i) => {
     const parsedRef = CellRefSchema.safeParse(cell.ref);
     if (!parsedRef.success) {
-      issues.push({ path: [`matches[${i}]`, 'ref'], message: 'matched cell has an invalid CellRef' });
+      issues.push({
+        path: [`matches[${i}]`, 'ref'],
+        message: 'matched cell has an invalid CellRef',
+      });
       return;
     }
-    const rawValue = isShared ? (params.replacement as FinanceValueInput) : (params.replacement as (c: GridCellSnapshot) => FinanceValueInput)(cell);
+    const rawValue = isShared
+      ? (params.replacement as FinanceValueInput)
+      : (params.replacement as (c: GridCellSnapshot) => FinanceValueInput)(cell);
     const parsedValue = FinanceValueInputSchema.safeParse(rawValue);
     if (!parsedValue.success) {
       for (const issue of parsedValue.error.issues) {
-        issues.push({ path: [`matches[${i}]`, 'replacement', ...issue.path.map(String)], message: issue.message });
+        issues.push({
+          path: [`matches[${i}]`, 'replacement', ...issue.path.map(String)],
+          message: issue.message,
+        });
       }
       return;
     }
@@ -139,7 +155,11 @@ export function buildFindReplaceOperations(params: BuildFindReplaceOperationsPar
   });
 
   if (issues.length > 0) {
-    return engineError('VALIDATION_FAILED', `${issues.length} match(es) failed validation.`, issues);
+    return engineError(
+      'VALIDATION_FAILED',
+      `${issues.length} match(es) failed validation.`,
+      issues
+    );
   }
   // A shared, function-free replacement is validated once above per-match
   // (cheap, and keeps the loop uniform); collapse to the single parsed value

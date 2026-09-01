@@ -10,12 +10,7 @@
  * Walidator jest deterministyczny i nie sięga do sieci ani bazy.
  */
 
-import {
-  EVIDENCE_MISSING,
-  isEvidenceMissing,
-  type Bilingual,
-  type ToolPack,
-} from './contract';
+import { type Bilingual, EVIDENCE_MISSING, isEvidenceMissing, type ToolPack } from './contract';
 import { evaluateRuntimeReadiness } from './runtimeReadiness';
 
 export type ValidationSeverity = 'error' | 'warning';
@@ -249,7 +244,13 @@ export function validateToolPack(pack: ToolPack, candidateSha = ''): ValidationR
 
   // --- kontrakt konkluzji W2 (CONCLUSION_LAYER_STANDARD) ---
   (
-    ['k1FactSource', 'k2GroundingScope', 'k3PrioritySource', 'k4EffectRule', 'tradeoffRule'] as const
+    [
+      'k1FactSource',
+      'k2GroundingScope',
+      'k3PrioritySource',
+      'k4EffectRule',
+      'tradeoffRule',
+    ] as const
   ).forEach((key) => {
     if (isEvidenceMissing(pack.conclusion?.[key]) && !declaredMissing) {
       err(`conclusion.${key}`, 'Brak kontraktu konkluzji W2 wymaganego przez FROZEN standard.');
@@ -325,7 +326,10 @@ function findDuplicates(values: string[]): string[] {
  * `candidateSha` przekazujemy jawnie — `packs.map(validateToolPack)` wstawiłoby
  * indeks tablicy jako SHA i po cichu unieważniło bramkę świeżości dowodów.
  */
-export function validateAll(packs: ToolPack[], candidateSha = ''): {
+export function validateAll(
+  packs: ToolPack[],
+  candidateSha = ''
+): {
   results: ValidationResult[];
   summary: {
     total: number;

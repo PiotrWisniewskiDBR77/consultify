@@ -311,7 +311,9 @@ export const SubscriptionAnalytics: React.FC = () => {
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {churn?.averages?.mrrChurnRate || '0'}%
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{t('billing.analytics.monthlyMrrChurn', 'Miesięczna utrata MRR')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            {t('billing.analytics.monthlyMrrChurn', 'Miesięczna utrata MRR')}
+          </p>
         </div>
 
         {/* LTV Card */}
@@ -328,7 +330,8 @@ export const SubscriptionAnalytics: React.FC = () => {
             {formatCurrency(ltv?.ltv || 0)}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-            {t('billing.analytics.arpaLabel', 'Średni przychód na konto (ARPA)')}: {formatCurrency(ltv?.arpa || 0)}/{t('billing.analytics.monthShort', 'mies.')}
+            {t('billing.analytics.arpaLabel', 'Średni przychód na konto (ARPA)')}:{' '}
+            {formatCurrency(ltv?.arpa || 0)}/{t('billing.analytics.monthShort', 'mies.')}
           </p>
         </div>
       </div>
@@ -337,7 +340,9 @@ export const SubscriptionAnalytics: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* MRR Trend Chart */}
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t('billing.analytics.mrrTrend', 'Trend MRR')}</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            {t('billing.analytics.mrrTrend', 'Trend MRR')}
+          </h3>
           <div className="h-64 flex items-end gap-1">
             {mrrTrend?.data?.slice(-30).map((day, i) => {
               const maxMRR = Math.max(...(mrrTrend?.data?.map((d) => d.mrr) || [1]));
@@ -403,7 +408,10 @@ export const SubscriptionAnalytics: React.FC = () => {
             })}
             {(!mrr?.byPlan || mrr.byPlan.length === 0) && (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                {t('billing.analytics.noPlanDistribution', 'Brak danych o przychodach według planu')}
+                {t(
+                  'billing.analytics.noPlanDistribution',
+                  'Brak danych o przychodach według planu'
+                )}
               </div>
             )}
           </div>
@@ -424,8 +432,12 @@ export const SubscriptionAnalytics: React.FC = () => {
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
                   <th className="pb-2">{t('billing.analytics.month', 'Miesiąc')}</th>
-                  <th className="pb-2 text-right">{t('billing.analytics.churned', 'Rezygnacje')}</th>
-                  <th className="pb-2 text-right">{t('billing.analytics.mrrLost', 'Utracone MRR')}</th>
+                  <th className="pb-2 text-right">
+                    {t('billing.analytics.churned', 'Rezygnacje')}
+                  </th>
+                  <th className="pb-2 text-right">
+                    {t('billing.analytics.mrrLost', 'Utracone MRR')}
+                  </th>
                   <th className="pb-2 text-right">{t('billing.analytics.rate', 'Wskaźnik')}</th>
                 </tr>
               </thead>
@@ -466,8 +478,12 @@ export const SubscriptionAnalytics: React.FC = () => {
               <thead>
                 <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
                   <th className="pb-2">{t('billing.analytics.month', 'Miesiąc')}</th>
-                  <th className="pb-2 text-right">{t('billing.analytics.expansion', 'Rozszerzenie')}</th>
-                  <th className="pb-2 text-right">{t('billing.analytics.contraction', 'Ograniczenie')}</th>
+                  <th className="pb-2 text-right">
+                    {t('billing.analytics.expansion', 'Rozszerzenie')}
+                  </th>
+                  <th className="pb-2 text-right">
+                    {t('billing.analytics.contraction', 'Ograniczenie')}
+                  </th>
                   <th className="pb-2 text-right">{t('billing.analytics.net', 'Netto')}</th>
                 </tr>
               </thead>
@@ -538,7 +554,9 @@ export const SubscriptionAnalytics: React.FC = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('billing.analytics.lifetimeValue', 'Wartość klienta')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('billing.analytics.lifetimeValue', 'Wartość klienta')}
+            </p>
             <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {formatCurrency(ltv?.ltv || 0)}
             </p>
@@ -552,19 +570,25 @@ export const SubscriptionAnalytics: React.FC = () => {
             </p>
           </div>
           <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('billing.analytics.avgRevenuePerCustomer', 'Śr. przychód na klienta')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('billing.analytics.avgRevenuePerCustomer', 'Śr. przychód na klienta')}
+            </p>
             <p className="text-xl font-bold text-green-600 dark:text-green-400">
               {formatCurrency(ltv?.avgRevenuePerCustomer || 0)}
             </p>
           </div>
           <div className="text-center p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('billing.analytics.avgLifespan', 'Śr. okres współpracy')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('billing.analytics.avgLifespan', 'Śr. okres współpracy')}
+            </p>
             <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
               {ltv?.avgLifespanMonths || 0} {t('billing.analytics.monthShort', 'mies.')}
             </p>
           </div>
           <div className="text-center p-4 rounded-lg bg-slate-50 dark:bg-slate-700">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('billing.analytics.monthlyChurn', 'Miesięczna rezygnacja')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('billing.analytics.monthlyChurn', 'Miesięczna rezygnacja')}
+            </p>
             <p className="text-xl font-bold text-slate-700 dark:text-slate-300">
               {ltv?.monthlyChurnRate || 0}%
             </p>

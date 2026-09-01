@@ -2,16 +2,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { executeToolCall } from './ai/toolDefinitions.js';
-import { authorizeAgentToolExecution } from './v8/agentToolExecutionGovernanceService.js';
-import {
-  executeWithAgentResourceReservation,
-} from './v8/agentResourceGovernanceService.js';
 import { projectCanonicalRunAfterExternalTransition } from './v8/agentCanonicalRunService.js';
 import { revalidateCanonicalRunContextForWorker } from './v8/agentContextGroundingService.js';
+import { executeWithAgentResourceReservation } from './v8/agentResourceGovernanceService.js';
+import { authorizeAgentToolExecution } from './v8/agentToolExecutionGovernanceService.js';
 
 export type Wave8AgentRisk = 'low' | 'medium' | 'high';
 export type Wave8AgentRunStatus =
-  'planned' | 'blocked' | 'scheduled' | 'running' | 'completed' | 'failed';
+  | 'planned'
+  | 'blocked'
+  | 'scheduled'
+  | 'running'
+  | 'completed'
+  | 'failed';
 
 export interface Wave8AgentDefinition {
   agentId: string;
@@ -644,7 +647,8 @@ export async function listWave8AgentDefinitions(params?: {
             ...(definition as Wave8AgentDefinition),
             editable: Boolean((definition as Wave8AgentDefinition).editable),
             source: ((definition as Wave8AgentDefinition).source || 'database') as
-              'code' | 'database',
+              | 'code'
+              | 'database',
             updatedBy: (definition as Wave8AgentDefinition).updatedBy || null,
           }) satisfies Wave8AgentDefinitionListItem
       );

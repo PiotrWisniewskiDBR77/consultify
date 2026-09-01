@@ -40,8 +40,20 @@ import { useAppStore } from '../../src/store/useAppStore';
 // same-as-before "fetch fails, falls back to short id" no-op.
 useAppStore.setState({ currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' } });
 OrganizationApi.getOrganizationMembers = (async () => [
-  { userId: 'user-anna', email: 'anna.kowalska@firma-demo.pl', name: 'Anna Kowalska', role: 'member', status: 'active' },
-  { userId: 'user-marek', email: 'marek.nowak@firma-demo.pl', name: 'Marek Nowak', role: 'member', status: 'active' },
+  {
+    userId: 'user-anna',
+    email: 'anna.kowalska@firma-demo.pl',
+    name: 'Anna Kowalska',
+    role: 'member',
+    status: 'active',
+  },
+  {
+    userId: 'user-marek',
+    email: 'marek.nowak@firma-demo.pl',
+    name: 'Marek Nowak',
+    role: 'member',
+    status: 'active',
+  },
 ]) as typeof OrganizationApi.getOrganizationMembers;
 
 const params = new URLSearchParams(window.location.search);
@@ -90,20 +102,46 @@ const MOCK_KPI_ATTENTION = {
     },
   ],
   ineffectiveCorrectiveActions: [
-    { caseId: 'case-1', kpiId: 'kpi-koszt-pracy-004', verificationId: 'ver-1', status: 'ineffective' as const },
+    {
+      caseId: 'case-1',
+      kpiId: 'kpi-koszt-pracy-004',
+      verificationId: 'ver-1',
+      status: 'ineffective' as const,
+    },
   ],
 };
 
 const MOCK_OKR_ATTENTION = {
-  staleCheckins: [{ setId: 'set-1', title: 'Q3 Sprzedaż', nextCheckinDueAt: '2026-08-01T00:00:00Z' }],
+  staleCheckins: [
+    { setId: 'set-1', title: 'Q3 Sprzedaż', nextCheckinDueAt: '2026-08-01T00:00:00Z' },
+  ],
   lowConfidenceObjectives: [
-    { keyResultId: 'kr-1', objectiveId: 'obj-1', setId: 'set-1', title: 'Zwiększ NPS', confidence: 'low' },
+    {
+      keyResultId: 'kr-1',
+      objectiveId: 'obj-1',
+      setId: 'set-1',
+      title: 'Zwiększ NPS',
+      confidence: 'low',
+    },
   ],
   openSupportRequests: [
-    { requestId: 'sr-1', setId: 'set-1', objectiveId: 'obj-1', keyResultId: 'kr-1', assignedToUserId: 'user-anna', status: 'open' },
+    {
+      requestId: 'sr-1',
+      setId: 'set-1',
+      objectiveId: 'obj-1',
+      keyResultId: 'kr-1',
+      assignedToUserId: 'user-anna',
+      status: 'open',
+    },
   ],
   openBlockers: [
-    { checkInId: 'ci-1', keyResultId: 'kr-1', objectiveId: 'obj-1', setId: 'set-1', blocker: 'Brak dostępu do danych CRM' },
+    {
+      checkInId: 'ci-1',
+      keyResultId: 'kr-1',
+      objectiveId: 'obj-1',
+      setId: 'set-1',
+      blocker: 'Brak dostępu do danych CRM',
+    },
   ],
   escalatedSets: [{ setId: 'set-2', title: 'Redukcja kosztów Q3', attentionState: 'escalated' }],
 };
@@ -134,27 +172,45 @@ function outcomeFor(state: string, ready: unknown, empty: unknown) {
 const realGet = Api.get.bind(Api);
 Api.get = (async (url: string) => {
   if (url.startsWith('/vnext/results/kpi/attention')) {
-    return outcomeFor(kpiState, { attention: MOCK_KPI_ATTENTION }, {
-      attention: {
-        processCoverage: [],
-        ownerLoad: [],
-        missingOwnership: [],
-        performanceDistribution: { onTarget: 0, warning: 0, critical: 0, neutralOrMissing: 0 },
-        overdueObligations: [],
-        repeatedDeviations: [],
-        ineffectiveCorrectiveActions: [],
-      },
-    });
+    return outcomeFor(
+      kpiState,
+      { attention: MOCK_KPI_ATTENTION },
+      {
+        attention: {
+          processCoverage: [],
+          ownerLoad: [],
+          missingOwnership: [],
+          performanceDistribution: { onTarget: 0, warning: 0, critical: 0, neutralOrMissing: 0 },
+          overdueObligations: [],
+          repeatedDeviations: [],
+          ineffectiveCorrectiveActions: [],
+        },
+      }
+    );
   }
   if (url.startsWith('/vnext/results/okr/attention')) {
-    return outcomeFor(okrState, { attention: MOCK_OKR_ATTENTION }, {
-      attention: { staleCheckins: [], lowConfidenceObjectives: [], openSupportRequests: [], openBlockers: [], escalatedSets: [] },
-    });
+    return outcomeFor(
+      okrState,
+      { attention: MOCK_OKR_ATTENTION },
+      {
+        attention: {
+          staleCheckins: [],
+          lowConfidenceObjectives: [],
+          openSupportRequests: [],
+          openBlockers: [],
+          escalatedSets: [],
+        },
+      }
+    );
   }
   if (url.startsWith('/vnext/results/okr/team-health')) {
-    return outcomeFor(okrState, { teamHealth: MOCK_TEAM_HEALTH }, {
-      teamHealth: { countsByStatus: [], countsByScopeType: [], attentionBreakdown: [], sets: [] },
-    });
+    return outcomeFor(
+      okrState,
+      { teamHealth: MOCK_TEAM_HEALTH },
+      {
+        teamHealth: { countsByStatus: [], countsByScopeType: [], attentionBreakdown: [], sets: [] },
+      }
+    );
   }
   return realGet(url);
 }) as typeof Api.get;
@@ -164,8 +220,14 @@ const ResultsVNextAttentionScreen: React.FC = () => (
     <MemoryRouter initialEntries={['/results/attention']}>
       <Routes>
         <Route path="/results/attention" element={<ResultsAttentionPage />} />
-        <Route path="/results/kpi" element={<div data-testid="dev-render-fake-kpi-route">KPI route</div>} />
-        <Route path="/results/okr" element={<div data-testid="dev-render-fake-okr-route">OKR route</div>} />
+        <Route
+          path="/results/kpi"
+          element={<div data-testid="dev-render-fake-kpi-route">KPI route</div>}
+        />
+        <Route
+          path="/results/okr"
+          element={<div data-testid="dev-render-fake-okr-route">OKR route</div>}
+        />
       </Routes>
     </MemoryRouter>
   </div>

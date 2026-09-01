@@ -9,9 +9,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { assertPublishable, validatePack } from '../packValidator.js';
 import type { ValidatePackInput } from '../packValidator.js';
-import type { AuditNormSource, AuditPack, AuditPackCriterion, FindingTaxonomyEntry } from '../types.js';
+import { assertPublishable, validatePack } from '../packValidator.js';
+import type {
+  AuditNormSource,
+  AuditPack,
+  AuditPackCriterion,
+  FindingTaxonomyEntry,
+} from '../types.js';
 
 function basePack(overrides: Partial<AuditPack> = {}): Partial<AuditPack> {
   return {
@@ -32,7 +37,12 @@ function basePack(overrides: Partial<AuditPack> = {}): Partial<AuditPack> {
 function baseTaxonomy(): FindingTaxonomyEntry[] {
   return [
     { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
-    { key: 'nonconforming', label: 'Niezgodne', nonConforming: true, requiresCorrectiveAction: true },
+    {
+      key: 'nonconforming',
+      label: 'Niezgodne',
+      nonConforming: true,
+      requiresCorrectiveAction: true,
+    },
   ];
 }
 
@@ -82,7 +92,11 @@ function verifiedSource(overrides: Partial<AuditNormSource> = {}): AuditNormSour
 describe('packValidator', () => {
   it('1. pakiet bez źródła nie może być VERIFIED_NORMATIVE', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+      }),
       criteria: [leafCriterion()],
       source: null,
       targetPublicationStatus: 'published',
@@ -94,7 +108,12 @@ describe('packValidator', () => {
 
   it('2. źródło z rights_status="not_verified" blokuje publikację normatywną', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+        sourceId: 'src-1',
+      }),
       criteria: [leafCriterion()],
       source: verifiedSource({ rightsStatus: 'not_verified' }),
       targetPublicationStatus: 'published',
@@ -106,7 +125,12 @@ describe('packValidator', () => {
 
   it('3. brak wersji źródła blokuje publikację normatywną', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+        sourceId: 'src-1',
+      }),
       criteria: [leafCriterion()],
       source: verifiedSource({ sourceVersion: null }),
       targetPublicationStatus: 'published',
@@ -132,7 +156,12 @@ describe('packValidator', () => {
     const input: ValidatePackInput = {
       pack: basePack({
         findingTaxonomy: [
-          { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
+          {
+            key: 'conforming',
+            label: 'Zgodne',
+            nonConforming: false,
+            requiresCorrectiveAction: false,
+          },
         ],
       }),
       criteria: [leafCriterion()],
@@ -167,7 +196,10 @@ describe('packValidator', () => {
 
   it('8. tytuł "Audyt ISO 27001 — wersja demonstracyjna" przechodzi (nie zgłasza PACK_TITLE_IMPLIES_NORMATIVE)', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ title: 'Audyt ISO 27001 — wersja demonstracyjna', classification: 'DEMONSTRATION' }),
+      pack: basePack({
+        title: 'Audyt ISO 27001 — wersja demonstracyjna',
+        classification: 'DEMONSTRATION',
+      }),
       criteria: [leafCriterion()],
       source: null,
       targetPublicationStatus: 'draft',
@@ -189,7 +221,12 @@ describe('packValidator', () => {
 
   it('10. eligibleClassifications zawiera VERIFIED_NORMATIVE gdy źródło i ekspert w komplecie', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+        sourceId: 'src-1',
+      }),
       criteria: [leafCriterion()],
       source: verifiedSource(),
       targetPublicationStatus: 'draft',
@@ -200,7 +237,13 @@ describe('packValidator', () => {
 
   it('11. pełny normatywny pakiet z zatwierdzeniem eksperckim jest publikowalny (assertPublishable nie rzuca)', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1', sourceVersion: '2018' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+        sourceId: 'src-1',
+        sourceVersion: '2018',
+      }),
       criteria: [leafCriterion()],
       source: verifiedSource(),
     };
@@ -209,7 +252,11 @@ describe('packValidator', () => {
 
   it('12. assertPublishable rzuca z listą powodów, gdy pakiet nie jest gotowy', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+      }),
       criteria: [leafCriterion()],
       source: null,
     };
@@ -241,7 +288,12 @@ describe('packValidator', () => {
 
   it('15. źródło typu „checklist" nie uzasadnia audytu zgodności — pyta o TYP, nie o zaufanie (SOURCE_TYPE_NOT_NORMATIVE)', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
+      pack: basePack({
+        classification: 'VERIFIED_NORMATIVE',
+        sourceType: 'LICENSED_STANDARD',
+        verificationStatus: 'VERIFIED',
+        sourceId: 'src-1',
+      }),
       criteria: [leafCriterion()],
       source: verifiedSource({ sourceKind: 'checklist', sourceType: 'INTERNAL_FRAMEWORK' }),
       targetPublicationStatus: 'published',

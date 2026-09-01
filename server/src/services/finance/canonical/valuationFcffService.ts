@@ -39,10 +39,13 @@
  */
 
 import {
-  withPinnedPostgresTransaction,
   type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
 } from '../../../database/PostgresDatabase.js';
-import { FINANCE_UNIT_MULTIPLIER, type FinanceUnit } from '../../../types/finance/financeValueSemantics.js';
+import {
+  FINANCE_UNIT_MULTIPLIER,
+  type FinanceUnit,
+} from '../../../types/finance/financeValueSemantics.js';
 import type { LineageEdgeType } from './lineageService.js';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +54,10 @@ import type { LineageEdgeType } from './lineageService.js';
 
 export type ValuationSourceType = 'BASELINE' | 'PREDICTION';
 
-const SOURCE_EDGE_TYPES: readonly LineageEdgeType[] = ['MODEL_TO_VALUATION', 'SCENARIO_TO_VALUATION'];
+const SOURCE_EDGE_TYPES: readonly LineageEdgeType[] = [
+  'MODEL_TO_VALUATION',
+  'SCENARIO_TO_VALUATION',
+];
 
 export interface CellRow {
   canonical_line_id: string;
@@ -110,7 +116,11 @@ export type ComputeFcffSeriesResult =
     }
   | {
       ok: false;
-      code: 'NO_VALUATION_SOURCE_EDGE' | 'MULTIPLE_VALUATION_SOURCE_EDGES' | 'UNKNOWN_CANONICAL_LINE' | 'INCONSISTENT_CURRENCY';
+      code:
+        | 'NO_VALUATION_SOURCE_EDGE'
+        | 'MULTIPLE_VALUATION_SOURCE_EDGES'
+        | 'UNKNOWN_CANONICAL_LINE'
+        | 'INCONSISTENT_CURRENCY';
       message: string;
     };
 
@@ -125,7 +135,11 @@ export interface ResolvedValuationSource {
 
 export type ResolveValuationSourceResult =
   | { ok: true; source: ResolvedValuationSource }
-  | { ok: false; code: 'NO_VALUATION_SOURCE_EDGE' | 'MULTIPLE_VALUATION_SOURCE_EDGES'; message: string };
+  | {
+      ok: false;
+      code: 'NO_VALUATION_SOURCE_EDGE' | 'MULTIPLE_VALUATION_SOURCE_EDGES';
+      message: string;
+    };
 
 /**
  * Resolves the ONE `MODEL_TO_VALUATION` or `SCENARIO_TO_VALUATION` edge targeting this Valuation
@@ -174,14 +188,19 @@ export async function resolveValuationSource(
 // ---------------------------------------------------------------------------
 
 /** `value_decimal` converted to full presentation-currency units. `null` iff the cell is not a present value. */
-export function toFullUnitValue(row: Pick<CellRow, 'value_status' | 'value_decimal' | 'unit' | 'multiplier'>): number | null {
+export function toFullUnitValue(
+  row: Pick<CellRow, 'value_status' | 'value_decimal' | 'unit' | 'multiplier'>
+): number | null {
   if (row.value_status !== 'PRESENT_ZERO' && row.value_status !== 'PRESENT_NONZERO') return null;
   if (row.value_decimal === null) return null;
   const unitMultiplier = FINANCE_UNIT_MULTIPLIER[row.unit];
   return Number(row.value_decimal) * unitMultiplier * Number(row.multiplier);
 }
 
-async function loadLineIds(tx: PinnedTransactionClient, lineCodes: readonly string[]): Promise<Map<string, string>> {
+async function loadLineIds(
+  tx: PinnedTransactionClient,
+  lineCodes: readonly string[]
+): Promise<Map<string, string>> {
   const rows = await tx.queryAll<{ id: string; line_code: string }>(
     `SELECT id, line_code FROM financial_statement_lines WHERE line_code = ANY(?)`,
     [[...lineCodes]]
@@ -199,7 +218,8 @@ async function loadCells(
   periodIds: readonly string[]
 ): Promise<CellRow[]> {
   if (periodIds.length === 0) return [];
-  const table = sourceType === 'BASELINE' ? 'finance_baseline_outputs' : 'finance_prediction_outputs_effective';
+  const table =
+    sourceType === 'BASELINE' ? 'finance_baseline_outputs' : 'finance_prediction_outputs_effective';
   return tx.queryAll<CellRow>(
     `SELECT canonical_line_id, period_id, value_status, value_decimal, presentation_currency, unit, multiplier
        FROM ${table}
@@ -232,9 +252,12 @@ export function sumFlow(
   orderedPeriodIds: readonly string[]
 ): { value: number | null; presentCount: number } {
   const rowsForLine = cells.filter((c) => c.canonical_line_id === lineId);
-  if (rowsForLine.length < orderedPeriodIds.length) return { value: null, presentCount: rowsForLine.length };
+  if (rowsForLine.length < orderedPeriodIds.length)
+    return { value: null, presentCount: rowsForLine.length };
   const periodRank = new Map(orderedPeriodIds.map((pid, idx) => [pid, idx]));
-  const sorted = [...rowsForLine].sort((a, b) => (periodRank.get(a.period_id) ?? 0) - (periodRank.get(b.period_id) ?? 0));
+  const sorted = [...rowsForLine].sort(
+    (a, b) => (periodRank.get(a.period_id) ?? 0) - (periodRank.get(b.period_id) ?? 0)
+  );
   let sum = 0;
   for (const r of sorted) {
     const v = toFullUnitValue(r);
@@ -248,15 +271,26 @@ export function sumFlow(
 // Public API
 // ---------------------------------------------------------------------------
 
-export async function computeFcffSeries(params: ComputeFcffSeriesParams): Promise<ComputeFcffSeriesResult> {
-  const resolved = await resolveValuationSource(params.organizationId, params.valuationBusinessVersionId);
+export async function computeFcffSeries(
+  params: ComputeFcffSeriesParams
+): Promise<ComputeFcffSeriesResult> {
+  const resolved = await resolveValuationSource(
+    params.organizationId,
+    params.valuationBusinessVersionId
+  );
   if (!resolved.ok) return resolved;
   const { sourceType, sourceBusinessVersionId } = resolved.source;
 
-  const lineIds = await withPinnedPostgresTransaction((tx) => loadLineIds(tx, ['EBIT', 'DEPRECIATION', 'CAPEX', 'WORKING_CAPITAL']));
+  const lineIds = await withPinnedPostgresTransaction((tx) =>
+    loadLineIds(tx, ['EBIT', 'DEPRECIATION', 'CAPEX', 'WORKING_CAPITAL'])
+  );
   for (const code of ['EBIT', 'DEPRECIATION', 'CAPEX', 'WORKING_CAPITAL']) {
     if (!lineIds.has(code)) {
-      return { ok: false, code: 'UNKNOWN_CANONICAL_LINE', message: `financial_statement_lines has no row for line_code=${code}` };
+      return {
+        ok: false,
+        code: 'UNKNOWN_CANONICAL_LINE',
+        message: `financial_statement_lines has no row for line_code=${code}`,
+      };
     }
   }
   const ebitId = lineIds.get('EBIT')!;
@@ -286,7 +320,11 @@ export async function computeFcffSeries(params: ComputeFcffSeriesParams): Promis
     for (const c of currenciesThisYear) {
       if (currency === null) currency = c;
       else if (currency !== c) {
-        return { ok: false, code: 'INCONSISTENT_CURRENCY', message: `fiscal year ${year.fiscalYear} presentation currency ${c} differs from prior year's ${currency}` };
+        return {
+          ok: false,
+          code: 'INCONSISTENT_CURRENCY',
+          message: `fiscal year ${year.fiscalYear} presentation currency ${c} differs from prior year's ${currency}`,
+        };
       }
     }
 
@@ -301,8 +339,11 @@ export async function computeFcffSeries(params: ComputeFcffSeriesParams): Promis
     const closingWcCell =
       closingWcCells.length <= 1
         ? closingWcCells[0]
-        : (await withPinnedPostgresTransaction((tx) => loadCells(tx, sourceType, sourceBusinessVersionId, params.entityId, [closingPeriodId])))
-            .filter((c) => c.canonical_line_id === wcId)[0];
+        : (
+            await withPinnedPostgresTransaction((tx) =>
+              loadCells(tx, sourceType, sourceBusinessVersionId, params.entityId, [closingPeriodId])
+            )
+          ).filter((c) => c.canonical_line_id === wcId)[0];
     const closingWc = closingWcCell ? toFullUnitValue(closingWcCell) : null;
 
     let deltaWc: number | null = null;

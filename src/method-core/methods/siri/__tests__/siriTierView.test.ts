@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SIRI_PRIORITISATION_AREAS } from '@/services/siriStructure';
 import { SIRI_PM_V2_FLAG_KEYS } from '@/utils/siriPmV2Flag';
 
-import { runSiriTier, siriTierActiveCalculationVersionFromFlag, siriTierAvailability } from '../siriTierView';
+import {
+  runSiriTier,
+  siriTierActiveCalculationVersionFromFlag,
+  siriTierAvailability,
+} from '../siriTierView';
 
 function frozenLevels(): Record<string, number> {
   const levels: Record<string, number> = {};

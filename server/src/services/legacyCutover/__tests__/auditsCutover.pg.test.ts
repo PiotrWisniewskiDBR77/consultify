@@ -15,14 +15,15 @@
  *     tenant when two tenants share a request id.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { AUDITS_CUTOVER } from '../registry/audits.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -101,7 +102,10 @@ describe.skipIf(!REAL_PG)('AUDITS legacy-cutover guard (fresh real PostgreSQL)',
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
@@ -112,7 +116,7 @@ describe.skipIf(!REAL_PG)('AUDITS legacy-cutover guard (fresh real PostgreSQL)',
   it(
     'does not gate the already-retired audit_programs CRUD trio a second time ' +
       '(AUDITS-W03/W04/W05/W06 are `enforcedBy: domain` — the kernel observes, ' +
-      "it does not re-block behind a lever that cannot restore the route)",
+      'it does not re-block behind a lever that cannot restore the route)',
     async () => {
       const create = await request(programsApp)
         .post('/api/audit/programs')
@@ -152,10 +156,30 @@ describe.skipIf(!REAL_PG)('AUDITS legacy-cutover guard (fresh real PostgreSQL)',
       // Recorded, tenant-resolved, and NOT `legacy_writer_blocked` — the kernel
       // never decided to refuse these, matching `enforcedBy: 'domain'`.
       expect(rows.rows).toEqual([
-        { writer_id: 'AUDITS-W03', access_kind: 'legacy_uncovered_writer', tenant_resolution: 'resolved', organization_id: orgA },
-        { writer_id: 'AUDITS-W04', access_kind: 'legacy_uncovered_writer', tenant_resolution: 'resolved', organization_id: orgA },
-        { writer_id: 'AUDITS-W05', access_kind: 'legacy_uncovered_writer', tenant_resolution: 'resolved', organization_id: orgA },
-        { writer_id: 'AUDITS-W06', access_kind: 'legacy_uncovered_writer', tenant_resolution: 'resolved', organization_id: orgA },
+        {
+          writer_id: 'AUDITS-W03',
+          access_kind: 'legacy_uncovered_writer',
+          tenant_resolution: 'resolved',
+          organization_id: orgA,
+        },
+        {
+          writer_id: 'AUDITS-W04',
+          access_kind: 'legacy_uncovered_writer',
+          tenant_resolution: 'resolved',
+          organization_id: orgA,
+        },
+        {
+          writer_id: 'AUDITS-W05',
+          access_kind: 'legacy_uncovered_writer',
+          tenant_resolution: 'resolved',
+          organization_id: orgA,
+        },
+        {
+          writer_id: 'AUDITS-W06',
+          access_kind: 'legacy_uncovered_writer',
+          tenant_resolution: 'resolved',
+          organization_id: orgA,
+        },
       ]);
     }
   );

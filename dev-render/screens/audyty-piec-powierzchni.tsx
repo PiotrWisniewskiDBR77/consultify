@@ -34,7 +34,6 @@
  */
 import React from 'react';
 
-import { AuditsMethodHub } from '../../src/components/Audit/method/AuditsMethodHub';
 import type {
   AuditActionSummary,
   AuditCriterionSummary,
@@ -52,6 +51,7 @@ import type {
   AuditReportSummary,
   AuditSystemicFindingGroup,
 } from '../../src/components/Audit/method/auditsMethodApi';
+import { AuditsMethodHub } from '../../src/components/Audit/method/AuditsMethodHub';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
@@ -180,7 +180,8 @@ const MOCK_PACKS: AuditPackSummary[] = [
     packKey: 'RODO-CLIENT-UNVERIFIED',
     version: 1,
     title: 'Checklist RODO — pakiet klienta Elmax Industries',
-    summary: 'Lista kontrolna dostarczona przez klienta — źródło i prawa autorskie NIE zostały potwierdzone.',
+    summary:
+      'Lista kontrolna dostarczona przez klienta — źródło i prawa autorskie NIE zostały potwierdzone.',
     sourceId: null,
     sourceTitle: null,
     sourceVersion: null,
@@ -196,9 +197,12 @@ const MOCK_PACKS: AuditPackSummary[] = [
 const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
   'pack-qms-elmax': {
     ...MOCK_PACKS[0],
-    purpose: 'Potwierdzić zgodność systemu zarządzania jakością klienta z jego własną procedurą QMS przed przeglądem zarządzania. Odniesienie metodyczne: struktura systemu zarządzania jakością.',
-    scope: 'Wszystkie procesy objęte certyfikatem: projektowanie, produkcja, kontrola jakości, zarządzanie dostawcami.',
-    objectives: 'Zidentyfikować niezgodności, ocenić dojrzałość procesów, potwierdzić gotowość do audytu jednostki certyfikującej.',
+    purpose:
+      'Potwierdzić zgodność systemu zarządzania jakością klienta z jego własną procedurą QMS przed przeglądem zarządzania. Odniesienie metodyczne: struktura systemu zarządzania jakością.',
+    scope:
+      'Wszystkie procesy objęte certyfikatem: projektowanie, produkcja, kontrola jakości, zarządzanie dostawcami.',
+    objectives:
+      'Zidentyfikować niezgodności, ocenić dojrzałość procesów, potwierdzić gotowość do audytu jednostki certyfikującej.',
     auditType: 'Audyt zgodności normatywnej',
     requiredCompetencies: ['Audytor wiodący systemów zarządzania', 'Znajomość branży produkcyjnej'],
     findingTaxonomy: [
@@ -212,7 +216,8 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
   },
   'pack-it-vendor': {
     ...MOCK_PACKS[1],
-    purpose: 'Ocenić proces kwalifikacji i bieżącego nadzoru dostawców IT pod kątem bezpieczeństwa i ciągłości działania.',
+    purpose:
+      'Ocenić proces kwalifikacji i bieżącego nadzoru dostawców IT pod kątem bezpieczeństwa i ciągłości działania.',
     scope: 'Dostawcy IT z dostępem do danych produkcyjnych lub infrastruktury krytycznej.',
     objectives: 'Wykryć luki w procesie onboardingu dostawców i w cyklicznym przeglądzie SLA.',
     auditType: 'Audyt wewnętrzny (framework własny)',
@@ -228,7 +233,8 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
   },
   'pack-nis2-demo': {
     ...MOCK_PACKS[2],
-    purpose: 'Materiał roboczy do wewnętrznych ćwiczeń przygotowawczych pod wymogi NIS2 — NIE do użytku u klienta.',
+    purpose:
+      'Materiał roboczy do wewnętrznych ćwiczeń przygotowawczych pod wymogi NIS2 — NIE do użytku u klienta.',
     scope: 'Wybrane obszary zarządzania ryzykiem cyberbezpieczeństwa (wersja niepełna).',
     objectives: 'Przetestować szablon kryteriów przed formalną publikacją pakietu.',
     auditType: 'Demonstracja / materiał roboczy',
@@ -247,12 +253,14 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     requiredCompetencies: ['Audytor danych'],
     findingTaxonomy: [{ key: 'gap', label: 'Luka danych', nonConforming: true }],
     rightsStatus: 'Nie zweryfikowano',
-    rightsNote: 'Metodyka wycofana z aktywnego użycia w 2023 — zachowana wyłącznie do wglądu historycznego.',
+    rightsNote:
+      'Metodyka wycofana z aktywnego użycia w 2023 — zachowana wyłącznie do wglądu historycznego.',
     criteria: [],
   },
   'pack-rodo-client': {
     ...MOCK_PACKS[4],
-    purpose: 'Lista kontrolna dostarczona przez klienta Elmax Industries — pochodzenie nie zostało potwierdzone.',
+    purpose:
+      'Lista kontrolna dostarczona przez klienta Elmax Industries — pochodzenie nie zostało potwierdzone.',
     scope: 'Nieustalony — brak dokumentu źródłowego do porównania.',
     objectives: 'Do potwierdzenia po dostarczeniu przez klienta dowodu źródła.',
     auditType: 'Nieustalony (brak dowodu źródła)',
@@ -371,8 +379,10 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
 const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
   'prog-elmax-iso': {
     ...MOCK_PROGRAMS[0],
-    objective: 'Potwierdzić zgodność systemu zarządzania jakością Elmax Industries z własną procedurą QMS przed przeglądem zarządzania.',
-    scopeText: 'Zakład produkcyjny w Tarnowie — procesy produkcyjne, kontrola jakości, zarządzanie dostawcami.',
+    objective:
+      'Potwierdzić zgodność systemu zarządzania jakością Elmax Industries z własną procedurą QMS przed przeglądem zarządzania.',
+    scopeText:
+      'Zakład produkcyjny w Tarnowie — procesy produkcyjne, kontrola jakości, zarządzanie dostawcami.',
     projectId: 'proj-elmax-2026',
     members: [
       { userId: 'user-katarzyna', name: 'Katarzyna Nowicka', memberRole: 'lead_auditor' },
@@ -391,10 +401,13 @@ const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
   },
   'prog-metalplast-itvendor': {
     ...MOCK_PROGRAMS[2],
-    objective: 'Ocena procesu zarządzania dostawcami IT pod kątem bezpieczeństwa i ciągłości działania.',
+    objective:
+      'Ocena procesu zarządzania dostawcami IT pod kątem bezpieczeństwa i ciągłości działania.',
     scopeText: 'Wszyscy dostawcy IT z dostępem do danych produkcyjnych (12 dostawców).',
     projectId: 'proj-metalplast-itvendor',
-    members: [{ userId: 'user-aleksandra', name: 'Aleksandra Dąbrowska', memberRole: 'lead_auditor' }],
+    members: [
+      { userId: 'user-aleksandra', name: 'Aleksandra Dąbrowska', memberRole: 'lead_auditor' },
+    ],
   },
   'prog-elmax-remediation': {
     ...MOCK_PROGRAMS[3],
@@ -429,7 +442,13 @@ const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
 // plausible-looking set — varied workStatus/refCode/title — for ANY
 // requested programId, purely so the odbiór harness can demonstrate the
 // full-screen StandardTable browser (search/status filter/pager) at scale.
-const CRITERION_WORK_STATUS_CYCLE = ['open', 'evidence_requested', 'evidence_received', 'tested', 'concluded'] as const;
+const CRITERION_WORK_STATUS_CYCLE = [
+  'open',
+  'evidence_requested',
+  'evidence_received',
+  'tested',
+  'concluded',
+] as const;
 const CRITERION_TOPIC_CYCLE = [
   'Kwalifikacja dostawców krytycznych',
   'Zarządzanie zmianą dokumentacji',
@@ -455,7 +474,8 @@ function buildMockCriteria(count: number): AuditCriterionSummary[] {
       refCode: `KR-${String(n).padStart(3, '0')}`,
       title: `${topic} (obszar ${Math.ceil(n / CRITERION_TOPIC_CYCLE.length)})`,
       applicable: n % 11 !== 0,
-      conformityStatus: workStatus === 'concluded' ? (n % 3 === 0 ? 'nonconforming' : 'conforming') : 'not_tested',
+      conformityStatus:
+        workStatus === 'concluded' ? (n % 3 === 0 ? 'nonconforming' : 'conforming') : 'not_tested',
       workStatus,
       evidenceCount: workStatus === 'open' ? 0 : (n % 4) + 1,
       findingCount: workStatus === 'concluded' && n % 3 === 0 ? 1 : 0,
@@ -480,32 +500,74 @@ const DEFAULT_COVERAGE = {
   evidenceInsufficientTotal: 0,
 };
 
-const MOCK_COVERAGE: Record<string, { applicableTotal: number; concludedTotal: number; evidenceInsufficientTotal: number }> = {
+const MOCK_COVERAGE: Record<
+  string,
+  { applicableTotal: number; concludedTotal: number; evidenceInsufficientTotal: number }
+> = {
   'prog-elmax-iso': { applicableTotal: 42, concludedTotal: 0, evidenceInsufficientTotal: 0 },
   'prog-vantico-iso': { applicableTotal: 42, concludedTotal: 12, evidenceInsufficientTotal: 3 },
-  'prog-metalplast-itvendor': { applicableTotal: 27, concludedTotal: 27, evidenceInsufficientTotal: 0 },
-  'prog-elmax-remediation': { applicableTotal: 27, concludedTotal: 27, evidenceInsufficientTotal: 0 },
-  'prog-vantico-verification': { applicableTotal: 42, concludedTotal: 40, evidenceInsufficientTotal: 1 },
-  'prog-metalplast-closed': { applicableTotal: 39, concludedTotal: 39, evidenceInsufficientTotal: 0 },
+  'prog-metalplast-itvendor': {
+    applicableTotal: 27,
+    concludedTotal: 27,
+    evidenceInsufficientTotal: 0,
+  },
+  'prog-elmax-remediation': {
+    applicableTotal: 27,
+    concludedTotal: 27,
+    evidenceInsufficientTotal: 0,
+  },
+  'prog-vantico-verification': {
+    applicableTotal: 42,
+    concludedTotal: 40,
+    evidenceInsufficientTotal: 1,
+  },
+  'prog-metalplast-closed': {
+    applicableTotal: 39,
+    concludedTotal: 39,
+    evidenceInsufficientTotal: 0,
+  },
 };
 
-const DEFAULT_LIFECYCLE: AuditProgramLifecycle = { state: 'planning' as AuditLifecycleState, allowed: [] };
+const DEFAULT_LIFECYCLE: AuditProgramLifecycle = {
+  state: 'planning' as AuditLifecycleState,
+  allowed: [],
+};
 
 const MOCK_LIFECYCLE: Record<string, AuditProgramLifecycle> = {
   'prog-elmax-iso': { state: 'planning', allowed: [{ state: 'preparation', blockers: [] }] },
   'prog-vantico-iso': {
     state: 'fieldwork',
-    allowed: [{ state: 'evidence_review', blockers: ['Zbierz dowody dla 30 z 42 kryteriów zanim przejdziesz do przeglądu dowodów.'] }],
+    allowed: [
+      {
+        state: 'evidence_review',
+        blockers: ['Zbierz dowody dla 30 z 42 kryteriów zanim przejdziesz do przeglądu dowodów.'],
+      },
+    ],
   },
   'prog-metalplast-itvendor': {
     state: 'findings_review',
-    allowed: [{ state: 'management_response', blockers: ['6 ustaleń nie ma jeszcze przypisanej klasyfikacji krytyczności.'] }],
+    allowed: [
+      {
+        state: 'management_response',
+        blockers: ['6 ustaleń nie ma jeszcze przypisanej klasyfikacji krytyczności.'],
+      },
+    ],
   },
   'prog-elmax-remediation': {
     state: 'remediation',
-    allowed: [{ state: 'effectiveness_verification', blockers: ['2 działania naprawcze nadal otwarte — zamknij je przed weryfikacją skuteczności.'] }],
+    allowed: [
+      {
+        state: 'effectiveness_verification',
+        blockers: [
+          '2 działania naprawcze nadal otwarte — zamknij je przed weryfikacją skuteczności.',
+        ],
+      },
+    ],
   },
-  'prog-vantico-verification': { state: 'effectiveness_verification', allowed: [{ state: 'closure', blockers: [] }] },
+  'prog-vantico-verification': {
+    state: 'effectiveness_verification',
+    allowed: [{ state: 'closure', blockers: [] }],
+  },
   'prog-metalplast-closed': { state: 'closed', allowed: [] },
 };
 
@@ -733,24 +795,27 @@ const METALPOL_EVIDENCE: AuditEvidenceSummary[] = [
 const SHARED_ROOT_CAUSE =
   'brak automatycznego przypomnienia w module srm o zbliżającym się terminie oceny okresowej dostawcy';
 
-let metalpolFindingsStore: AuditFindingSummary[] = [
+const metalpolFindingsStore: AuditFindingSummary[] = [
   {
     id: 'find-ust-2026-014',
     programId: METALPOL_PROGRAM_ID,
     criterionId: METALPOL_CRITERION_1,
     referenceCode: 'UST-2026-014',
     statement: 'Brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A (2026-08-21)',
-    requirementText: 'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
+    requirementText:
+      'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
     conditionText: 'Dla 5 z 17 dostawców klasy A brak jest karty oceny okresowej za 2025.',
     sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.1',
-    gapText: 'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
+    gapText:
+      'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
     objectiveEvidence: ['evid-d1', 'evid-d2'],
     contradictingEvidence: [],
     classification: 'nonconforming',
     severity: 'medium',
     riskText: null,
     impactText: null,
-    recommendation: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
+    recommendation:
+      'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
     rootCause: SHARED_ROOT_CAUSE,
     rootCauseMethod: '5 x Dlaczego',
     rootCauseConfirmed: true,
@@ -777,9 +842,12 @@ let metalpolFindingsStore: AuditFindingSummary[] = [
     programId: METALPOL_PROGRAM_ID,
     criterionId: METALPOL_CRITERION_2,
     referenceCode: 'UST-2026-015',
-    statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
-    requirementText: 'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
-    conditionText: 'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
+    statement:
+      'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
+    requirementText:
+      'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
+    conditionText:
+      'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
     sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.2',
     gapText: null,
     objectiveEvidence: ['evid-d4'],
@@ -815,18 +883,23 @@ let metalpolFindingsStore: AuditFindingSummary[] = [
     programId: METALPOL_PROGRAM_ID,
     criterionId: METALPOL_CRITERION_1,
     referenceCode: 'UST-2026-016',
-    statement: 'Brak zapisu kwalifikacji wstępnej dla 2 nowych dostawców klasy A wprowadzonych w 2026',
-    requirementText: 'Każdy nowy dostawca klasy A przechodzi udokumentowaną kwalifikację wstępną przed pierwszym zamówieniem.',
-    conditionText: '2 z 4 dostawców klasy A wprowadzonych w 2026 nie mają zapisu kwalifikacji wstępnej.',
+    statement:
+      'Brak zapisu kwalifikacji wstępnej dla 2 nowych dostawców klasy A wprowadzonych w 2026',
+    requirementText:
+      'Każdy nowy dostawca klasy A przechodzi udokumentowaną kwalifikację wstępną przed pierwszym zamówieniem.',
+    conditionText:
+      '2 z 4 dostawców klasy A wprowadzonych w 2026 nie mają zapisu kwalifikacji wstępnej.',
     sourceReference: 'Procedura P-ZAK-02 rew. 4, pkt 8.4.1',
-    gapText: 'Ten sam brak mechanizmu przypominającego w module SRM — kwalifikacja wstępna nie jest wymuszana systemowo.',
+    gapText:
+      'Ten sam brak mechanizmu przypominającego w module SRM — kwalifikacja wstępna nie jest wymuszana systemowo.',
     objectiveEvidence: ['evid-d1'],
     contradictingEvidence: [],
     classification: 'nonconforming',
     severity: 'high',
     riskText: null,
     impactText: null,
-    recommendation: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej.',
+    recommendation:
+      'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej.',
     rootCause: SHARED_ROOT_CAUSE,
     rootCauseMethod: '5 x Dlaczego',
     rootCauseConfirmed: true,
@@ -844,19 +917,21 @@ let metalpolFindingsStore: AuditFindingSummary[] = [
     residualRiskNote: null,
     closedAt: '2026-10-05T09:30:00Z',
     closedBy: METALPOL_AUDITOR_ID,
-    closureNote: 'Działanie korygujące potwierdzone jako skuteczne w próbie kontrolnej z września 2026. Ustalenie zamknięte.',
+    closureNote:
+      'Działanie korygujące potwierdzone jako skuteczne w próbie kontrolnej z września 2026. Ustalenie zamknięte.',
     createdAt: '2026-08-22T09:10:00Z',
     updatedAt: '2026-10-05T09:30:00Z',
   },
 ];
 
-let metalpolActionsStore: AuditActionSummary[] = [
+const metalpolActionsStore: AuditActionSummary[] = [
   {
     id: 'act-korygujace-01',
     findingId: 'find-ust-2026-014',
     programId: METALPOL_PROGRAM_ID,
     actionKind: 'corrective_action',
-    title: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
+    title:
+      'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
     ownerUserId: METALPOL_AUDITEE_ID,
     dueDate: '2026-09-15',
     status: 'approved',
@@ -876,7 +951,8 @@ let metalpolActionsStore: AuditActionSummary[] = [
     findingId: 'find-ust-2026-016',
     programId: METALPOL_PROGRAM_ID,
     actionKind: 'corrective_action',
-    title: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+    title:
+      'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
     ownerUserId: METALPOL_AUDITEE_ID,
     dueDate: '2026-09-01',
     status: 'verified',
@@ -951,8 +1027,8 @@ let programsStore: AuditProgramSummary[] = [...MOCK_PROGRAMS, METALPOL_PROGRAM];
 // na Reports, Register/Defer/Dismiss na Initiatives) — te same bramki co
 // backend (`reportService.ts`/`proposalService.ts`), więc odbiór na zrzutach
 // pokazuje faktycznie działające akcje, nie atrapę.
-let reportsStore: AuditReportSummary[] = [...MOCK_REPORTS];
-let proposalsStore: AuditProposalSummary[] = [...MOCK_PROPOSALS];
+const reportsStore: AuditReportSummary[] = [...MOCK_REPORTS];
+const proposalsStore: AuditProposalSummary[] = [...MOCK_PROPOSALS];
 
 Api.get = (async (url: string, ...rest: unknown[]) => {
   if (!url.startsWith('/audits/')) return (originalGet as any)(url, ...rest);
@@ -1010,7 +1086,11 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
     // `AuditCriteriaBrowser` full-screen drill-down needs volume, not
     // fidelity, for any program).
     const programId = new URL(url, 'http://localhost').searchParams.get('programId');
-    const items = empty ? [] : programId === METALPOL_PROGRAM_ID ? METALPOL_CRITERIA : MOCK_CRITERIA_ALL;
+    const items = empty
+      ? []
+      : programId === METALPOL_PROGRAM_ID
+        ? METALPOL_CRITERIA
+        : MOCK_CRITERIA_ALL;
     return envelope({ criteria: items, total: items.length });
   }
 
@@ -1102,7 +1182,8 @@ Api.post = (async (url: string, data: any) => {
     if (idx >= 0) {
       programsStore[idx] = {
         ...programsStore[idx],
-        lifecycleState: (data?.targetState as AuditLifecycleState) ?? programsStore[idx].lifecycleState,
+        lifecycleState:
+          (data?.targetState as AuditLifecycleState) ?? programsStore[idx].lifecycleState,
       };
       return envelope(programsStore[idx]);
     }
@@ -1119,11 +1200,19 @@ Api.post = (async (url: string, data: any) => {
     if (idx < 0) serverUnavailable();
     const report = reportsStore[idx];
     if (report.status !== 'draft' && report.status !== 'in_review') {
-      throw Object.assign(new Error(`Raport w statusie „${report.status}" nie może zostać zatwierdzony.`), {
-        status: 409,
-      });
+      throw Object.assign(
+        new Error(`Raport w statusie „${report.status}" nie może zostać zatwierdzony.`),
+        {
+          status: 409,
+        }
+      );
     }
-    reportsStore[idx] = { ...report, status: 'approved', approvedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    reportsStore[idx] = {
+      ...report,
+      status: 'approved',
+      approvedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(reportsStore[idx]);
   }
   const publishReport = url.match(/^\/audits\/reports\/([^/]+)\/publish$/);
@@ -1133,11 +1222,19 @@ Api.post = (async (url: string, data: any) => {
     if (idx < 0) serverUnavailable();
     const report = reportsStore[idx];
     if (report.status !== 'approved') {
-      throw Object.assign(new Error(`Raport w statusie „${report.status}" nie może zostać opublikowany.`), {
-        status: 409,
-      });
+      throw Object.assign(
+        new Error(`Raport w statusie „${report.status}" nie może zostać opublikowany.`),
+        {
+          status: 409,
+        }
+      );
     }
-    reportsStore[idx] = { ...report, status: 'published', publishedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    reportsStore[idx] = {
+      ...report,
+      status: 'published',
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(reportsStore[idx]);
   }
 
@@ -1151,11 +1248,18 @@ Api.post = (async (url: string, data: any) => {
     if (idx < 0) serverUnavailable();
     const proposal = proposalsStore[idx];
     if (proposal.status === 'registered' || proposal.status === 'dismissed') {
-      throw Object.assign(new Error(`Propozycja w statusie „${proposal.status}" nie może zostać zarejestrowana.`), {
-        status: 409,
-      });
+      throw Object.assign(
+        new Error(`Propozycja w statusie „${proposal.status}" nie może zostać zarejestrowana.`),
+        {
+          status: 409,
+        }
+      );
     }
-    proposalsStore[idx] = { ...proposal, status: 'registered', updatedAt: new Date().toISOString() };
+    proposalsStore[idx] = {
+      ...proposal,
+      status: 'registered',
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(proposalsStore[idx]);
   }
   const dismissProposal = url.match(/^\/audits\/proposals\/([^/]+)\/dismiss$/);
@@ -1164,9 +1268,15 @@ Api.post = (async (url: string, data: any) => {
     const idx = proposalsStore.findIndex((p) => p.id === id);
     if (idx < 0) serverUnavailable();
     if (proposalsStore[idx].status === 'registered') {
-      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odrzucić.'), { status: 409 });
+      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odrzucić.'), {
+        status: 409,
+      });
     }
-    proposalsStore[idx] = { ...proposalsStore[idx], status: 'dismissed', updatedAt: new Date().toISOString() };
+    proposalsStore[idx] = {
+      ...proposalsStore[idx],
+      status: 'dismissed',
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(proposalsStore[idx]);
   }
   const deferProposal = url.match(/^\/audits\/proposals\/([^/]+)\/defer$/);
@@ -1175,9 +1285,15 @@ Api.post = (async (url: string, data: any) => {
     const idx = proposalsStore.findIndex((p) => p.id === id);
     if (idx < 0) serverUnavailable();
     if (proposalsStore[idx].status === 'registered') {
-      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odroczyć.'), { status: 409 });
+      throw Object.assign(new Error('Zarejestrowanej propozycji nie można odroczyć.'), {
+        status: 409,
+      });
     }
-    proposalsStore[idx] = { ...proposalsStore[idx], status: 'deferred', updatedAt: new Date().toISOString() };
+    proposalsStore[idx] = {
+      ...proposalsStore[idx],
+      status: 'deferred',
+      updatedAt: new Date().toISOString(),
+    };
     return envelope(proposalsStore[idx]);
   }
 
@@ -1195,7 +1311,8 @@ Api.post = (async (url: string, data: any) => {
     if ((decision === 'send_back' || decision === 'reject') && !note) {
       throw Object.assign(new Error('Ta decyzja wymaga podania powodu.'), { status: 400 });
     }
-    const nextStatus = decision === 'confirm' ? 'confirmed' : decision === 'send_back' ? 'draft' : 'rejected';
+    const nextStatus =
+      decision === 'confirm' ? 'confirmed' : decision === 'send_back' ? 'draft' : 'rejected';
     metalpolFindingsStore[idx] = {
       ...metalpolFindingsStore[idx],
       status: nextStatus,
@@ -1211,7 +1328,11 @@ Api.post = (async (url: string, data: any) => {
     const idx = metalpolFindingsStore.findIndex((f) => f.id === id);
     if (idx < 0) serverUnavailable();
     const note = String(data?.note || '').trim();
-    if (!note) throw Object.assign(new Error('Akceptacja ryzyka rezydualnego wymaga notatki uzasadniającej decyzję.'), { status: 400 });
+    if (!note)
+      throw Object.assign(
+        new Error('Akceptacja ryzyka rezydualnego wymaga notatki uzasadniającej decyzję.'),
+        { status: 400 }
+      );
     metalpolFindingsStore[idx] = {
       ...metalpolFindingsStore[idx],
       status: 'risk_accepted',
@@ -1228,7 +1349,8 @@ Api.post = (async (url: string, data: any) => {
     const idx = metalpolFindingsStore.findIndex((f) => f.id === id);
     if (idx < 0) serverUnavailable();
     const note = String(data?.note || '').trim();
-    if (!note) throw Object.assign(new Error('Zamknięcie ustalenia wymaga notatki.'), { status: 400 });
+    if (!note)
+      throw Object.assign(new Error('Zamknięcie ustalenia wymaga notatki.'), { status: 400 });
     const stillOpenCorrective = metalpolActionsStore.some(
       (a) =>
         a.findingId === id &&
@@ -1239,7 +1361,9 @@ Api.post = (async (url: string, data: any) => {
     );
     if (stillOpenCorrective) {
       throw Object.assign(
-        new Error('Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności działania korygującego.'),
+        new Error(
+          'Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności działania korygującego.'
+        ),
         { status: 409 }
       );
     }

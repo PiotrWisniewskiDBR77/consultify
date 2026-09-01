@@ -47,7 +47,9 @@ const RECOGNIZED_ORGANIZATION_ROLE_INPUTS = new Set([
 ]);
 
 function requireOrganizationRole(rawRole: string | null | undefined): OrganizationRole {
-  const normalized = String(rawRole || '').trim().toUpperCase();
+  const normalized = String(rawRole || '')
+    .trim()
+    .toUpperCase();
   if (!RECOGNIZED_ORGANIZATION_ROLE_INPUTS.has(normalized)) {
     throw new Error('Invalid role');
   }

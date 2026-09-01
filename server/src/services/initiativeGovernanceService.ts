@@ -7,13 +7,13 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
+import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   CONTRIBUTION_CLASSES,
   type PolicyParameterName,
 } from './executionControl/controlKpiPolicySchema.js';
-
-import logger from '../utils/Logger.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 
 /**
  * FIX-2 (day 33 odbior): arytmetyczny zastepnik dla wagi, ktorej nikt nie ustawil.

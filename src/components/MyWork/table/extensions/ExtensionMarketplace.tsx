@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
 // `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
 // latter compiles under esbuild (which strips types without checking them) and fails
 // under `tsc` with TS2305.
 import type { TFunction } from 'i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface MarketplaceExtension {
@@ -133,7 +133,9 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
               : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
-          {t('myWorkTable.extensionMarketplace.installedCount', 'Installed ({{count}})', { count: installed.length })}
+          {t('myWorkTable.extensionMarketplace.installedCount', 'Installed ({{count}})', {
+            count: installed.length,
+          })}
         </button>
         <button
           onClick={() => setTab('marketplace')}
@@ -175,8 +177,18 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
         ) : tab === 'marketplace' ? (
           marketplace.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
-              <p className="text-sm">{t('myWorkTable.extensionMarketplace.noneAvailable', 'No extensions available yet.')}</p>
-              <p className="text-xs mt-1">{t('myWorkTable.extensionMarketplace.checkBackLater', 'Check back later or register your own.')}</p>
+              <p className="text-sm">
+                {t(
+                  'myWorkTable.extensionMarketplace.noneAvailable',
+                  'No extensions available yet.'
+                )}
+              </p>
+              <p className="text-xs mt-1">
+                {t(
+                  'myWorkTable.extensionMarketplace.checkBackLater',
+                  'Check back later or register your own.'
+                )}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -194,7 +206,9 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
           )
         ) : installed.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
-            <p className="text-sm">{t('myWorkTable.extensionMarketplace.noneInstalled', 'No extensions installed.')}</p>
+            <p className="text-sm">
+              {t('myWorkTable.extensionMarketplace.noneInstalled', 'No extensions installed.')}
+            </p>
             <button
               onClick={() => setTab('marketplace')}
               className="mt-2 text-xs text-c-tag-2 hover:text-c-tag-2"

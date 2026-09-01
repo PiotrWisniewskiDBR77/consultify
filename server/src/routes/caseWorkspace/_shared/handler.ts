@@ -58,7 +58,11 @@ export function readIdempotencyKeyHeader(req: AuthRequest): string | undefined {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : undefined;
 }
 
-type CaseWorkspaceRouteFn = (req: AuthRequest, res: Response, actor: CaseWorkspaceActor) => Promise<void>;
+type CaseWorkspaceRouteFn = (
+  req: AuthRequest,
+  res: Response,
+  actor: CaseWorkspaceActor
+) => Promise<void>;
 
 /**
  * Wraps a case-workspace route handler: resolves the actor once, invokes

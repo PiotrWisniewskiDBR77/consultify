@@ -1,8 +1,8 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
-import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { runDeterministicForOrganization } from '../jobs/workSignalProducerJob.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { readSignalFeed } from '../services/signals/signalReadModel.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { queryAll, queryOne } from '../utils/queryHelpers.js';

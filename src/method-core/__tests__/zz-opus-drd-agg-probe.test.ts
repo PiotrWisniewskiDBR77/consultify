@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { calculateOverallScore, calculateAxisScore } from '@/services/drdStructure';
+import { describe, expect, it } from 'vitest';
+
+import { calculateAxisScore, calculateOverallScore } from '@/services/drdStructure';
 
 describe('OPUS PROBE — agregacja DRD vs kanon §6', () => {
   it('DEFEKT 1: brak normalizacji min-max — poziom 5/5 traktowany jak 5/7', () => {
@@ -23,7 +24,7 @@ describe('OPUS PROBE — agregacja DRD vs kanon §6', () => {
     const zJednymNieocenionym = calculateAxisScore(2, {
       '2A': { actual: 4, target: 5 },
       '2B': { actual: 4, target: 5 },
-      '2C': { actual: 0, target: 0 },   // NIEOCENIONY
+      '2C': { actual: 0, target: 0 }, // NIEOCENIONY
     });
     console.log('PROBE dwa ocenione        =', JSON.stringify(ocenione));
     console.log('PROBE + jeden nieoceniony =', JSON.stringify(zJednymNieocenionym));

@@ -64,13 +64,7 @@
 // primary supported form.
 import { Decimal } from 'decimal.js';
 
-import {
-  discountedPayback,
-  irr,
-  npv,
-  payback,
-} from '../../../investmentAppraisalService.js';
-
+import { discountedPayback, irr, npv, payback } from '../../../investmentAppraisalService.js';
 import type {
   RoiCalculationEngineInput,
   RoiCalculationEngineOutput,
@@ -103,7 +97,11 @@ function parseIsoDate(dateStr: string): { year: number; month: number; day: numb
 }
 
 /** 0-based period offset of `dateStr` from `startStr`, at `granularity`. */
-function periodIndexForDate(dateStr: string, startStr: string, granularity: RoiEngineGranularity): number {
+function periodIndexForDate(
+  dateStr: string,
+  startStr: string,
+  granularity: RoiEngineGranularity
+): number {
   const d = parseIsoDate(dateStr);
   const s = parseIsoDate(startStr);
   if (granularity === 'monthly') {
@@ -112,12 +110,20 @@ function periodIndexForDate(dateStr: string, startStr: string, granularity: RoiE
   return d.year - s.year;
 }
 
-function computePeriodCount(analysisStart: string, analysisEnd: string, granularity: RoiEngineGranularity): number {
+function computePeriodCount(
+  analysisStart: string,
+  analysisEnd: string,
+  granularity: RoiEngineGranularity
+): number {
   const lastIndex = periodIndexForDate(analysisEnd, analysisStart, granularity);
   return Math.max(1, lastIndex + 1);
 }
 
-function periodLabelForIndex(analysisStart: string, granularity: RoiEngineGranularity, index: number): string {
+function periodLabelForIndex(
+  analysisStart: string,
+  granularity: RoiEngineGranularity,
+  index: number
+): string {
   const { year, month } = parseIsoDate(analysisStart);
   if (granularity === 'monthly') {
     const totalMonths = year * 12 + (month - 1) + index;
@@ -133,7 +139,8 @@ function periodLabelForIndex(analysisStart: string, granularity: RoiEngineGranul
  * `periodIndexForDate`, which never reads the day component). */
 function stepDate(dateStr: string, cadence: RoiEngineRecurrenceCadence, steps: number): string {
   const { year, month, day } = parseIsoDate(dateStr);
-  const monthsToAdd = cadence === 'monthly' ? steps : cadence === 'quarterly' ? steps * 3 : steps * 12;
+  const monthsToAdd =
+    cadence === 'monthly' ? steps : cadence === 'quarterly' ? steps * 3 : steps * 12;
   const totalMonths = year * 12 + (month - 1) + monthsToAdd;
   const newYear = Math.floor(totalMonths / 12);
   const newMonth = (totalMonths % 12) + 1;
@@ -248,7 +255,9 @@ function scanDoubleCounting(benefitLines: RoiEngineBenefitLine[]): {
   for (const [group, lines] of groups) {
     if (lines.length < 2) continue;
     const resolved = lines.some(
-      (l) => typeof l.doubleCountingResolutionNote === 'string' && l.doubleCountingResolutionNote.trim().length > 0
+      (l) =>
+        typeof l.doubleCountingResolutionNote === 'string' &&
+        l.doubleCountingResolutionNote.trim().length > 0
     );
     if (!resolved) {
       hasUnresolved = true;
@@ -333,7 +342,8 @@ function addLineContributions(params: LineContributionParams): void {
       // i.e. the FIRST occurrence already contributes 1/rampPeriods of the
       // full amount (not literally $0), reaching exactly 1x at the
       // rampPeriods-th occurrence and staying at 1x thereafter.
-      const factor = rampPeriods && rampPeriods > 0 ? Math.min(occurrenceIndex, rampPeriods) / rampPeriods : 1;
+      const factor =
+        rampPeriods && rampPeriods > 0 ? Math.min(occurrenceIndex, rampPeriods) / rampPeriods : 1;
       target[idx] = target[idx].plus(new Decimal(amount).mul(factor));
     }
     cursor = stepDate(cursor, recurrenceCadence, 1);
@@ -347,7 +357,11 @@ function expandPeriods(
   costLines: RoiEngineCostLine[],
   benefitLines: RoiEngineBenefitLine[],
   findings: RoiCalculationValidationFinding[]
-): { periodSeries: RoiEngineCashFlowPeriod[]; totalCosts: Decimal; totalFinancialBenefits: Decimal } {
+): {
+  periodSeries: RoiEngineCashFlowPeriod[];
+  totalCosts: Decimal;
+  totalFinancialBenefits: Decimal;
+} {
   const costs: Decimal[] = Array.from({ length: periodCount }, () => new Decimal(0));
   const benefits: Decimal[] = Array.from({ length: periodCount }, () => new Decimal(0));
 
@@ -433,7 +447,9 @@ function roundMoney(value: Decimal, policy: RoiEngineRoundingPolicy): number {
 // MAIN ENTRY POINT
 // ==========================================
 
-export function runRoiCalculationEngine(input: RoiCalculationEngineInput): RoiCalculationEngineOutput {
+export function runRoiCalculationEngine(
+  input: RoiCalculationEngineInput
+): RoiCalculationEngineOutput {
   const warnings: string[] = [];
   const validationFindings: RoiCalculationValidationFinding[] = [];
 
@@ -514,10 +530,14 @@ export function runRoiCalculationEngine(input: RoiCalculationEngineInput): RoiCa
   const paybackRaw = payback(cashflows, initialInvestment);
   const paybackPeriods = Number.isFinite(paybackRaw) ? paybackRaw : null;
   const discountedPaybackRaw = discountedPayback(cashflows, periodRatePct, initialInvestment);
-  const discountedPaybackPeriods = Number.isFinite(discountedPaybackRaw) ? discountedPaybackRaw : null;
+  const discountedPaybackPeriods = Number.isFinite(discountedPaybackRaw)
+    ? discountedPaybackRaw
+    : null;
 
   const irrRequired =
-    !input.requiredMetrics || input.requiredMetrics.length === 0 || input.requiredMetrics.includes('irr');
+    !input.requiredMetrics ||
+    input.requiredMetrics.length === 0 ||
+    input.requiredMetrics.includes('irr');
   let irrPct: number | null = null;
   let irrStatus: RoiEngineIrrStatus;
   if (!irrRequired) {
@@ -532,7 +552,9 @@ export function runRoiCalculationEngine(input: RoiCalculationEngineInput): RoiCa
     }
   }
 
-  const simpleRoiDecimal = totalCosts.gt(0) ? totalFinancialBenefits.minus(totalCosts).div(totalCosts) : null;
+  const simpleRoiDecimal = totalCosts.gt(0)
+    ? totalFinancialBenefits.minus(totalCosts).div(totalCosts)
+    : null;
   const bcrDecimal = totalCosts.gt(0) ? totalFinancialBenefits.div(totalCosts) : null;
 
   return {

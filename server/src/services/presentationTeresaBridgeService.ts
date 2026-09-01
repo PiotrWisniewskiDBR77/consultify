@@ -52,11 +52,7 @@ function parseDeckJson(value: unknown): Record<string, any> {
 }
 
 function getCards(deck: Record<string, any>): any[] {
-  return Array.isArray(deck.cards)
-    ? deck.cards
-    : Array.isArray(deck.slides)
-      ? deck.slides
-      : [];
+  return Array.isArray(deck.cards) ? deck.cards : Array.isArray(deck.slides) ? deck.slides : [];
 }
 
 /**
@@ -121,7 +117,9 @@ export async function applyApprovedPresentationTeresaEdit(
   const edit = applyPresentationEditPlan({
     plan,
     prompt: instruction,
-    isPolish: String(input.language || '').toLowerCase().startsWith('pl'),
+    isPolish: String(input.language || '')
+      .toLowerCase()
+      .startsWith('pl'),
     deck: {
       ...originalDeck,
       deck_id: originalDeck.deck_id || deckId,
@@ -154,7 +152,14 @@ export async function applyApprovedPresentationTeresaEdit(
       `INSERT INTO presentation_deck_versions
          (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [snapshotId, deckId, versionBefore, row.deck_json || originalJson, getCards(originalDeck).length, input.userId],
+      [
+        snapshotId,
+        deckId,
+        versionBefore,
+        row.deck_json || originalJson,
+        getCards(originalDeck).length,
+        input.userId,
+      ],
       { fallback: false }
     );
     await run(

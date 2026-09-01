@@ -4,16 +4,10 @@
  */
 
 import { createHash } from 'crypto';
-
 import type { Response } from 'express';
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { SwotAcceptGateItem } from '../sharedRuntime/config/swot/swotAcceptGate.js';
-import {
-  evaluateSwotAcceptGate,
-  stampAcceptedSwotItem,
-} from '../sharedRuntime/config/swot/swotAcceptGate.js';
 import { generateSwotProposals } from '../services/ai/swotProposalService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
@@ -41,6 +35,11 @@ import {
   ToolOutputPersistenceUnavailableError,
 } from '../services/tools/toolOutputSnapshotService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import type { SwotAcceptGateItem } from '../sharedRuntime/config/swot/swotAcceptGate.js';
+import {
+  evaluateSwotAcceptGate,
+  stampAcceptedSwotItem,
+} from '../sharedRuntime/config/swot/swotAcceptGate.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';

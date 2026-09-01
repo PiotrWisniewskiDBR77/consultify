@@ -3,17 +3,17 @@ import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { attachV8Context } from '../../middleware/v8Auth.middleware.js';
-import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
-import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
-import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import {
   isTeresaTtsConfigured,
   synthesizeTeresaSpeech,
   TeresaTtsUnavailableError,
 } from '../../services/ai/teresaTtsService.js';
 import { resolveVoiceRuntime } from '../../services/ai/voiceRuntimeService.js';
+import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 
 const router = Router();
 

@@ -104,6 +104,7 @@ import {
   listKpis,
   listMeasurements,
 } from '../../services/resultsVnext/kpi/kpiRepository.js';
+import { buildKpiTrend } from '../../services/resultsVnext/kpi/kpiTrend.js';
 import {
   type KpiDefinitionVersionRow,
   type KpiMeasurementRow,
@@ -115,12 +116,11 @@ import {
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
 import {
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
-import { getCorrelationId } from './correlationId.js';
 import {
   ApproveDefinitionVersionSchema,
   CorrectMeasurementSchema,
@@ -141,7 +141,7 @@ import {
   SubmitDefinitionSchema,
   VerifyMeasurementSchema,
 } from '../../validators/resultsVnextKpi.validators.js';
-import { buildKpiTrend } from '../../services/resultsVnext/kpi/kpiTrend.js';
+import { getCorrelationId } from './correlationId.js';
 
 const router = Router();
 

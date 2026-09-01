@@ -75,8 +75,28 @@ const ASSESSMENT_REPORT_APPROVED = {
 };
 
 const KNOWN_TOOLS = [
-  { id: 'known:dynamic-swot', slug: 'dynamic-swot', toolType: 'dynamic-swot', name: 'Dynamic SWOT', libraryCategory: 'strategic', isActive: true, isComingSoon: false, tags: [], whatYouGet: [] },
-  { id: 'known:value-chain', slug: 'value-chain', toolType: 'value-chain', name: 'Value Chain', libraryCategory: 'operational', isActive: true, isComingSoon: false, tags: [], whatYouGet: [] },
+  {
+    id: 'known:dynamic-swot',
+    slug: 'dynamic-swot',
+    toolType: 'dynamic-swot',
+    name: 'Dynamic SWOT',
+    libraryCategory: 'strategic',
+    isActive: true,
+    isComingSoon: false,
+    tags: [],
+    whatYouGet: [],
+  },
+  {
+    id: 'known:value-chain',
+    slug: 'value-chain',
+    toolType: 'value-chain',
+    name: 'Value Chain',
+    libraryCategory: 'operational',
+    isActive: true,
+    isComingSoon: false,
+    tags: [],
+    whatYouGet: [],
+  },
 ];
 
 /** Podmiana METOD Api (nie window.fetch) — jednorazowa, idempotentna. */

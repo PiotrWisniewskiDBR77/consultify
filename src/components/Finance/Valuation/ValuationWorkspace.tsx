@@ -55,9 +55,9 @@ import {
   previewValuationRecommendationCandidateHandoff,
 } from '@/services/api/v8/financeCandidateHandoffValuation';
 
+import { FinanceCandidateHandoffModal } from '../shared/FinanceCandidateHandoffModal';
 import { FinanceErrorBoundary } from '../shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
-import { FinanceCandidateHandoffModal } from '../shared/FinanceCandidateHandoffModal';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,

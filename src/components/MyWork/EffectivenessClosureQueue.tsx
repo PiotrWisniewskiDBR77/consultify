@@ -583,7 +583,9 @@ export const EffectivenessClosureQueue = () => {
                 <button
                   className="btn-primary"
                   disabled={legalHold || !archive.retentionRef || !archive.exportRef}
-                  onClick={() => runAction('effectiveness.archive.create', () => void archiveCase())}
+                  onClick={() =>
+                    runAction('effectiveness.archive.create', () => void archiveCase())
+                  }
                 >
                   Create Archive Manifest
                 </button>

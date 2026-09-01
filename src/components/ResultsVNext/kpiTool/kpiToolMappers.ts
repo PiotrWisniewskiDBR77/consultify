@@ -13,13 +13,19 @@
  * that file before adding a tone value not already in the union.
  */
 import type { StatusTone } from '@/components/ui/primitives';
+
+import type {
+  KpiApprovalStatus,
+  KpiDataQualityStatus,
+  KpiPerformanceStatus,
+  KpiTargetGeometry,
+} from '../kpiApi';
 import type {
   CorrectiveActionStatus,
   DeviationCaseStatus,
   EffectivenessVerificationStatus,
 } from './kpiDeviationApi';
 import type { InitiativeKpiImpactStatus } from './kpiInitiativeImpactApi';
-import type { KpiApprovalStatus, KpiPerformanceStatus, KpiDataQualityStatus, KpiTargetGeometry } from '../kpiApi';
 
 export const DEVIATION_CASE_STATUS_TONE: Record<DeviationCaseStatus, StatusTone> = {
   open: 'danger',
@@ -54,7 +60,10 @@ export const DEVIATION_SEVERITY_TONE: Record<'warning' | 'critical', StatusTone>
   critical: 'danger',
 };
 
-export function deviationSeverityLabel(severity: 'warning' | 'critical', isPolish: boolean): string {
+export function deviationSeverityLabel(
+  severity: 'warning' | 'critical',
+  isPolish: boolean
+): string {
   if (severity === 'critical') return isPolish ? 'Krytyczna' : 'Critical';
   return isPolish ? 'Ostrzegawcza' : 'Warning';
 }
@@ -74,8 +83,13 @@ const CORRECTIVE_ACTION_STATUS_LABEL: Record<CorrectiveActionStatus, { pl: strin
   cancelled: { pl: 'Anulowana', en: 'Cancelled' },
 };
 
-export function correctiveActionStatusLabel(status: CorrectiveActionStatus, isPolish: boolean): string {
-  return isPolish ? CORRECTIVE_ACTION_STATUS_LABEL[status].pl : CORRECTIVE_ACTION_STATUS_LABEL[status].en;
+export function correctiveActionStatusLabel(
+  status: CorrectiveActionStatus,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? CORRECTIVE_ACTION_STATUS_LABEL[status].pl
+    : CORRECTIVE_ACTION_STATUS_LABEL[status].en;
 }
 
 export const CORRECTIVE_ACTION_STATUS_TONE: Record<CorrectiveActionStatus, StatusTone> = {
@@ -105,14 +119,20 @@ export function effectivenessVerificationStatusLabel(
     : EFFECTIVENESS_VERIFICATION_STATUS_LABEL[status].en;
 }
 
-export const EFFECTIVENESS_VERIFICATION_STATUS_TONE: Record<EffectivenessVerificationStatus, StatusTone> = {
+export const EFFECTIVENESS_VERIFICATION_STATUS_TONE: Record<
+  EffectivenessVerificationStatus,
+  StatusTone
+> = {
   pending: 'neutral',
   effective: 'success',
   partially_effective: 'warning',
   ineffective: 'danger',
 };
 
-const INITIATIVE_KPI_IMPACT_STATUS_LABEL: Record<InitiativeKpiImpactStatus, { pl: string; en: string }> = {
+const INITIATIVE_KPI_IMPACT_STATUS_LABEL: Record<
+  InitiativeKpiImpactStatus,
+  { pl: string; en: string }
+> = {
   proposed: { pl: 'Zaproponowany', en: 'Proposed' },
   committed: { pl: 'Zatwierdzony (baseline)', en: 'Committed (baseline)' },
   superseded: { pl: 'Zastąpiony', en: 'Superseded' },
@@ -120,7 +140,10 @@ const INITIATIVE_KPI_IMPACT_STATUS_LABEL: Record<InitiativeKpiImpactStatus, { pl
   cancelled: { pl: 'Anulowany', en: 'Cancelled' },
 };
 
-export function initiativeKpiImpactStatusLabel(status: InitiativeKpiImpactStatus, isPolish: boolean): string {
+export function initiativeKpiImpactStatusLabel(
+  status: InitiativeKpiImpactStatus,
+  isPolish: boolean
+): string {
   return isPolish
     ? INITIATIVE_KPI_IMPACT_STATUS_LABEL[status].pl
     : INITIATIVE_KPI_IMPACT_STATUS_LABEL[status].en;
@@ -195,12 +218,21 @@ export const KPI_APPROVAL_STATUS_TONE: Record<KpiApprovalStatus, StatusTone> = {
 };
 
 const KPI_TARGET_GEOMETRY_LABEL: Record<KpiTargetGeometry, { pl: string; en: string }> = {
-  threshold_min: { pl: 'Próg minimalny (im więcej, tym lepiej)', en: 'Minimum threshold (higher is better)' },
-  threshold_max: { pl: 'Próg maksymalny (im mniej, tym lepiej)', en: 'Maximum threshold (lower is better)' },
+  threshold_min: {
+    pl: 'Próg minimalny (im więcej, tym lepiej)',
+    en: 'Minimum threshold (higher is better)',
+  },
+  threshold_max: {
+    pl: 'Próg maksymalny (im mniej, tym lepiej)',
+    en: 'Maximum threshold (lower is better)',
+  },
   range: { pl: 'Przedział', en: 'Range' },
   exact: { pl: 'Wartość dokładna', en: 'Exact value' },
   binary: { pl: 'Zero-jedynkowy (spełniony/niespełniony)', en: 'Binary (met/not met)' },
-  custom: { pl: 'Niestandardowy (formuła, bez oceny automatycznej)', en: 'Custom (formula, no automatic evaluation)' },
+  custom: {
+    pl: 'Niestandardowy (formuła, bez oceny automatycznej)',
+    en: 'Custom (formula, no automatic evaluation)',
+  },
 };
 
 export function kpiTargetGeometryLabel(geometry: KpiTargetGeometry, isPolish: boolean): string {

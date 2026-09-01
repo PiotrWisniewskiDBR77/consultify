@@ -37,17 +37,17 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { getDatabase } from '../database/Database.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
-import { requireTables, requireUser } from './my-work/_helpers.js';
 import ideaFinancialCaseService, {
   IdeaFinancialCaseForeignOrgError,
   IdeaFinancialCaseVersionConflictError,
 } from '../services/ideaFinancialCaseService.js';
-import { getDatabase } from '../database/Database.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { requireTables, requireUser } from './my-work/_helpers.js';
 
 const router = Router();
 
@@ -226,7 +226,14 @@ router.put(
               discountRatePct: (previous.payload.input as any)?.discountRatePct ?? null,
               lastComputedAt: previous.payload.lastComputedAt,
             }
-          : { version: 0, driverCount: 0, currency: null, horizonMonths: null, discountRatePct: null, lastComputedAt: null },
+          : {
+              version: 0,
+              driverCount: 0,
+              currency: null,
+              horizonMonths: null,
+              discountRatePct: null,
+              lastComputedAt: null,
+            },
         after: {
           version: financialCase.version,
           driverCount: Array.isArray((financialCase.payload.input as any)?.drivers)
@@ -238,9 +245,7 @@ router.put(
           lastComputedAt: financialCase.payload.lastComputedAt,
         },
       })
-      .catch((err: any) =>
-        logger.warn('[IdeaFinancialCase] Audit log failed:', err?.message)
-      );
+      .catch((err: any) => logger.warn('[IdeaFinancialCase] Audit log failed:', err?.message));
 
     res.json({ financialCase });
   })

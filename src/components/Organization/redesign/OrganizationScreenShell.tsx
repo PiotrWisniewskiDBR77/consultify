@@ -26,14 +26,12 @@ import React from 'react';
 
 import { cn } from '../../../lib/utils';
 import {
-  StandardModuleBar,
   type StandardCounterChip,
+  StandardModuleBar,
   type StandardModuleTab,
   type StandardPrimaryCta,
 } from '../../standard/StandardModuleBar';
-import OrganizationStatePanel, {
-  type OrganizationStatePanelProps,
-} from './OrganizationStatePanel';
+import OrganizationStatePanel, { type OrganizationStatePanelProps } from './OrganizationStatePanel';
 
 export interface OrganizationScreenShellProps {
   /** MENU 2 — sekcje TEGO ekranu (nie moduły!). Puste ⇒ pasek bez pigułek. */
@@ -86,19 +84,19 @@ export const OrganizationScreenShell: React.FC<OrganizationScreenShellProps> = (
   return (
     <div data-testid="org-screen-shell" className={cn('flex min-w-0 flex-col', className)}>
       {showModuleBar && (
-      <StandardModuleBar
-        tabs={sections}
-        activeTab={activeSection}
-        onTabChange={onSectionChange}
-        onSearch={onSearch}
-        searchValue={searchValue}
-        primaryCta={primaryCta}
-        chips={chips}
-        activeChip={activeChip ?? undefined}
-        onChipChange={onChipChange}
-        menu3Right={aiAction}
-        className="-mx-1"
-      />
+        <StandardModuleBar
+          tabs={sections}
+          activeTab={activeSection}
+          onTabChange={onSectionChange}
+          onSearch={onSearch}
+          searchValue={searchValue}
+          primaryCta={primaryCta}
+          chips={chips}
+          activeChip={activeChip ?? undefined}
+          onChipChange={onChipChange}
+          menu3Right={aiAction}
+          className="-mx-1"
+        />
       )}
       <div
         className={cn(

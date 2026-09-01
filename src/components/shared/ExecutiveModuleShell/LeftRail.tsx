@@ -85,8 +85,18 @@ export const LeftRail: React.FC<LeftRailProps> = ({
           type="button"
           onClick={onToggleCollapse}
           className="flex h-11 w-11 items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          title={toggleLabel ?? (collapsed ? t('mels.expandLeftRail', 'Expand left rail') : t('mels.collapseLeftRail', 'Collapse left rail'))}
-          aria-label={toggleLabel ?? (collapsed ? t('mels.expandLeftRail', 'Expand left rail') : t('mels.collapseLeftRail', 'Collapse left rail'))}
+          title={
+            toggleLabel ??
+            (collapsed
+              ? t('mels.expandLeftRail', 'Expand left rail')
+              : t('mels.collapseLeftRail', 'Collapse left rail'))
+          }
+          aria-label={
+            toggleLabel ??
+            (collapsed
+              ? t('mels.expandLeftRail', 'Expand left rail')
+              : t('mels.collapseLeftRail', 'Collapse left rail'))
+          }
           aria-pressed={collapsed}
           data-testid="mels-left-rail-toggle"
         >
@@ -121,7 +131,12 @@ export const LeftRail: React.FC<LeftRailProps> = ({
       ) : null}
 
       {!collapsed && onResize ? (
-        <RailResizeHandle ariaLabel={t('mels.resizeLeftRail', 'Resize left rail')} side="left" currentWidth={width} onResize={onResize} />
+        <RailResizeHandle
+          ariaLabel={t('mels.resizeLeftRail', 'Resize left rail')}
+          side="left"
+          currentWidth={width}
+          onResize={onResize}
+        />
       ) : null}
     </aside>
   );

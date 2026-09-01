@@ -11,8 +11,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { ProcessFlowNodeCommentThread } from '../ProcessFlowNodeCommentThread';
 import type { ProcessFlowNodeComment } from '../nodeComments';
+import { ProcessFlowNodeCommentThread } from '../ProcessFlowNodeCommentThread';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
@@ -29,11 +29,7 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-function Harness({
-  comments = [],
-}: {
-  comments?: ProcessFlowNodeComment[];
-}) {
+function Harness({ comments = [] }: { comments?: ProcessFlowNodeComment[] }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div>

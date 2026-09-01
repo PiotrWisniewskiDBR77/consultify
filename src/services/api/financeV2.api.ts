@@ -13,11 +13,13 @@
  * w `./financeV2.types` do przetłumaczenia tego na komunikat PL.
  */
 
-import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
+import type { ScenarioDraft } from '@/components/Finance/Prediction/predictionScenarioModel';
+
 import {
   clearPersistentCommandId,
   persistentCommandId,
 } from '../initiatives-execution/persistentCommandId';
+import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import type {
   AnalysisComputeResultDto,
   AnalysisKpiCatalogEntryDto,
@@ -59,8 +61,8 @@ import type {
   FinanceImportRawRow,
   FinanceLineageEdgeCreatedDto,
   FinanceLineageNavigatorDto,
-  FinancePredictionCalculateResultDto,
   FinancePredictionAuthoringDto,
+  FinancePredictionCalculateResultDto,
   FinancePredictionPreflightResultDto,
   FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
@@ -101,7 +103,6 @@ import type {
   ValuationWeightedRecommendationDto,
   VersionLineageDto,
 } from './financeV2.types';
-import type { ScenarioDraft } from '@/components/Finance/Prediction/predictionScenarioModel';
 import { v8Delete, v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
 
 const BASE = '/finance-v2';

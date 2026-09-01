@@ -1,16 +1,16 @@
+import type { TFunction } from 'i18next';
 import { AlertTriangle, Check, FileCheck2, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/primitives';
 import {
   type GovernedClaim,
-  type GovernedSnapshotVersion,
   type GovernedSnapshotRef,
-  type PinnedGovernedSnapshot,
-  type OrganizationSnapshotCandidateReceipt,
+  type GovernedSnapshotVersion,
   organizationGovernedContextApi,
+  type OrganizationSnapshotCandidateReceipt,
+  type PinnedGovernedSnapshot,
 } from '@/services/organizationGovernedContextApi';
 
 interface GovernedContextWorkspaceProps {
@@ -793,8 +793,10 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                   key={ref.claimId}
                   className="rounded-lg bg-c-surface px-3 py-2 text-xs text-c-text-secondary"
                 >
-                  <span className="font-medium text-c-text">{sourceTypeLabel(ref.sourceType, t)}</span> ·{' '}
-                  {ref.sourceDocId || ref.itemId}
+                  <span className="font-medium text-c-text">
+                    {sourceTypeLabel(ref.sourceType, t)}
+                  </span>{' '}
+                  · {ref.sourceDocId || ref.itemId}
                   {ref.fileHash && (
                     <span className="block break-all font-mono">
                       {ref.fileHash} · doc v{ref.docVersion ?? '?'}

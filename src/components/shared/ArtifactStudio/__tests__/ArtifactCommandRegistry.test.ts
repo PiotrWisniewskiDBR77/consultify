@@ -12,10 +12,7 @@ const documentContext: ArtifactCommandContext = {
   lifecycle: { status: 'draft' },
 };
 
-function command(
-  commandId: string,
-  overrides: Partial<ArtifactCommand> = {}
-): ArtifactCommand {
+function command(commandId: string, overrides: Partial<ArtifactCommand> = {}): ArtifactCommand {
   return {
     commandId,
     labelKey: commandId,
@@ -39,21 +36,19 @@ describe('ArtifactCommandRegistry invariants', () => {
   it('rejects duplicate command ids without partially registering the batch', () => {
     const registry = new ArtifactCommandRegistry().register(command('doc.existing'));
 
-    expect(() =>
-      registry.registerMany([command('doc.new'), command('doc.existing')])
-    ).toThrow('Duplicate artifact commandId: doc.existing');
+    expect(() => registry.registerMany([command('doc.new'), command('doc.existing')])).toThrow(
+      'Duplicate artifact commandId: doc.existing'
+    );
     expect(registry.get('doc.new')).toBeUndefined();
     expect(registry.get('doc.existing')).toBeDefined();
   });
 
   it('rejects template commands and a fixed Teresa command in Menu 3', () => {
+    expect(() => new ArtifactCommandRegistry().register(command('doc.template.save'))).toThrow(
+      'outside the open-artifact scope'
+    );
     expect(() =>
-      new ArtifactCommandRegistry().register(command('doc.template.save'))
-    ).toThrow('outside the open-artifact scope');
-    expect(() =>
-      new ArtifactCommandRegistry().register(
-        command('doc.m3.teresa.open', { category: 'teresa' })
-      )
+      new ArtifactCommandRegistry().register(command('doc.m3.teresa.open', { category: 'teresa' }))
     ).toThrow('cannot be fixed in Menu 3');
   });
 
@@ -78,9 +73,7 @@ describe('ArtifactCommandRegistry invariants', () => {
 
   it('uses one handler for canonical and aliased surfaces', async () => {
     const execute = vi.fn().mockResolvedValue('done');
-    const registry = new ArtifactCommandRegistry().register(
-      command('doc.text.bold', { execute })
-    );
+    const registry = new ArtifactCommandRegistry().register(command('doc.text.bold', { execute }));
 
     expect(registry.query({ placement: 'menu3' })).toHaveLength(1);
     expect(registry.query({ alias: 'context-menu' })).toHaveLength(1);

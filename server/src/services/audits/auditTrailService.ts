@@ -15,7 +15,7 @@
  * WPROST, niezależnie od tego, jak naruszenie powstało.
  */
 
-import { AuditNotFoundError, auditAll, auditGet, parseJson, toIso } from './auditsDb.js';
+import { auditAll, auditGet, AuditNotFoundError, parseJson, toIso } from './auditsDb.js';
 
 // ---------------------------------------------------------------------------
 // Zdarzenia domenowe
@@ -75,7 +75,7 @@ export interface ListEventsResult {
 /** Zdarzenia z paginacją i filtrami — widok „dziennik" ścieżki audytowej. */
 export async function listEvents(
   organizationId: string,
-  filters: ListEventsFilters,
+  filters: ListEventsFilters
 ): Promise<ListEventsResult> {
   const clauses = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -100,7 +100,7 @@ export async function listEvents(
 
   const countRow = await auditGet<{ count: string }>(
     `SELECT COUNT(*) AS count FROM audit_domain_events WHERE ${where}`,
-    params,
+    params
   );
   const total = Number(countRow?.count ?? 0);
 
@@ -111,7 +111,7 @@ export async function listEvents(
       WHERE ${where}
       ORDER BY occurred_at DESC
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-    [...params, limit, offset],
+    [...params, limit, offset]
   );
 
   return { items: rows.map(mapEventRow), total, limit, offset };
@@ -121,13 +121,13 @@ export async function listEvents(
 export async function getEntityHistory(
   organizationId: string,
   entityType: string,
-  entityId: string,
+  entityId: string
 ): Promise<DomainEventRecord[]> {
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_domain_events
       WHERE organization_id=$1 AND entity_type=$2 AND entity_id=$3
       ORDER BY occurred_at ASC`,
-    [organizationId, entityType, entityId],
+    [organizationId, entityType, entityId]
   );
   return rows.map(mapEventRow);
 }
@@ -162,11 +162,11 @@ function pickLifecycleStage(payload: Record<string, unknown>): string | null {
  */
 export async function getProgramTimeline(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<TimelineStageGroup[]> {
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_domain_events WHERE organization_id=$1 AND program_id=$2 ORDER BY occurred_at ASC`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const groups: TimelineStageGroup[] = [];
@@ -214,7 +214,7 @@ export interface TrailExport {
 export async function exportTrail(organizationId: string, programId: string): Promise<TrailExport> {
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_domain_events WHERE organization_id=$1 AND program_id=$2 ORDER BY occurred_at ASC`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   const entries: TrailExportEntry[] = rows.map((raw) => {
     const event = mapEventRow(raw);
@@ -268,11 +268,11 @@ export interface IndependenceReport {
  */
 export async function getIndependenceReport(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<IndependenceReport> {
   const program = await auditGet<Record<string, unknown>>(
     `SELECT id FROM audit_programs WHERE organization_id=$1 AND id=$2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   if (!program) throw new AuditNotFoundError('Program audytowy');
 
@@ -283,7 +283,7 @@ export async function getIndependenceReport(
        FROM audit_program_criteria
       WHERE organization_id=$1 AND program_id=$2
         AND auditee_responded_by IS NOT NULL AND auditee_responded_by = concluded_by`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   for (const row of criteriaRows) {
     const personId = String(row.auditee_responded_by);
@@ -302,7 +302,7 @@ export async function getIndependenceReport(
        JOIN audit_verifications v ON v.corrective_action_id = ca.id
       WHERE ca.organization_id=$1 AND ca.program_id=$2 AND v.performed_by IS NOT NULL
         AND (v.performed_by = ca.owner_user_id OR v.performed_by = ca.implemented_by)`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   for (const row of actionRows) {
     const personId = String(row.performed_by);
@@ -320,7 +320,7 @@ export async function getIndependenceReport(
        FROM audit_program_findings
       WHERE organization_id=$1 AND program_id=$2
         AND author_id IS NOT NULL AND author_id = reviewed_by`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   for (const row of findingRows) {
     const personId = String(row.author_id);

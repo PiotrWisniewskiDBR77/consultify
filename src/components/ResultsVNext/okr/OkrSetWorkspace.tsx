@@ -38,19 +38,19 @@
  */
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { StandardModuleBar, type StandardBreadcrumb } from '@/components/standard';
+import { type StandardBreadcrumb, StandardModuleBar } from '@/components/standard';
 import { tokenService } from '@/services/tokenService';
 
+import { OkrAlignmentsView } from './OkrAlignmentsView';
 import type { OkrSetDto } from './okrApi';
+import { OkrCheckInsView } from './OkrCheckInsView';
+import { OkrHistoryView } from './OkrHistoryView';
+import { OkrKeyResultsView } from './OkrKeyResultsView';
 import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
 import { OkrObjectivesView } from './OkrObjectivesView';
-import { OkrKeyResultsView } from './OkrKeyResultsView';
-import { OkrCheckInsView } from './OkrCheckInsView';
-import { OkrSetOverviewView } from './OkrSetOverviewView';
-import { OkrAlignmentsView } from './OkrAlignmentsView';
-import { OkrSupportView } from './OkrSupportView';
 import { OkrReviewReflectionView } from './OkrReviewReflectionView';
-import { OkrHistoryView } from './OkrHistoryView';
+import { OkrSetOverviewView } from './OkrSetOverviewView';
+import { OkrSupportView } from './OkrSupportView';
 
 function resolveCurrentUserIdFromToken(): string | null {
   try {
@@ -77,7 +77,13 @@ export interface OkrSetWorkspaceProps {
   onSetChanged: (set: OkrSetDto) => void;
 }
 
-export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish, setsLabel, onBackToSets, onSetChanged }) => {
+export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({
+  set,
+  isPolish,
+  setsLabel,
+  onBackToSets,
+  onSetChanged,
+}) => {
   const [tab, setTab] = useState<WorkspaceTab>('overview');
   const [objDrill, setObjDrill] = useState<ObjectivesDrill>(null);
   const currentUserId = useMemo(() => resolveCurrentUserIdFromToken(), []);
@@ -85,7 +91,13 @@ export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish,
   const rootCrumbs: StandardBreadcrumb[] = useMemo(
     () => [
       { label: setsLabel, onClick: onBackToSets },
-      { label: set.title, onClick: () => { setTab('overview'); setObjDrill(null); } },
+      {
+        label: set.title,
+        onClick: () => {
+          setTab('overview');
+          setObjDrill(null);
+        },
+      },
     ],
     [setsLabel, onBackToSets, set.title]
   );
@@ -93,14 +105,20 @@ export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish,
   const openKeyResults = useCallback((objective: OkrObjectiveWithKeyResultsDto) => {
     setObjDrill({ level: 'keyResults', objective });
   }, []);
-  const openCheckIns = useCallback((keyResult: OkrKeyResultDto, objective: OkrObjectiveWithKeyResultsDto) => {
-    setObjDrill({ level: 'checkIns', objective, keyResult });
-  }, []);
+  const openCheckIns = useCallback(
+    (keyResult: OkrKeyResultDto, objective: OkrObjectiveWithKeyResultsDto) => {
+      setObjDrill({ level: 'checkIns', objective, keyResult });
+    },
+    []
+  );
 
   if (tab === 'objectives' && objDrill?.level === 'keyResults') {
     const breadcrumbs: StandardBreadcrumb[] = [
       ...rootCrumbs,
-      { label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results', onClick: () => setObjDrill(null) },
+      {
+        label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results',
+        onClick: () => setObjDrill(null),
+      },
       { label: objDrill.objective.title },
     ];
     return (
@@ -117,33 +135,63 @@ export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish,
   if (tab === 'objectives' && objDrill?.level === 'checkIns') {
     const breadcrumbs: StandardBreadcrumb[] = [
       ...rootCrumbs,
-      { label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results', onClick: () => setObjDrill(null) },
+      {
+        label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results',
+        onClick: () => setObjDrill(null),
+      },
       {
         label: objDrill.objective.title,
         onClick: () => setObjDrill({ level: 'keyResults', objective: objDrill.objective }),
       },
       { label: objDrill.keyResult.title },
     ];
-    return <OkrCheckInsView set={set} objective={objDrill.objective} keyResult={objDrill.keyResult} isPolish={isPolish} breadcrumbs={breadcrumbs} />;
+    return (
+      <OkrCheckInsView
+        set={set}
+        objective={objDrill.objective}
+        keyResult={objDrill.keyResult}
+        isPolish={isPolish}
+        breadcrumbs={breadcrumbs}
+      />
+    );
   }
 
   if (tab === 'objectives') {
-    const breadcrumbs: StandardBreadcrumb[] = [...rootCrumbs, { label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results' }];
-    return <OkrObjectivesView set={set} isPolish={isPolish} breadcrumbs={breadcrumbs} onOpenKeyResults={(o) => openKeyResults(o)} />;
+    const breadcrumbs: StandardBreadcrumb[] = [
+      ...rootCrumbs,
+      { label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results' },
+    ];
+    return (
+      <OkrObjectivesView
+        set={set}
+        isPolish={isPolish}
+        breadcrumbs={breadcrumbs}
+        onOpenKeyResults={(o) => openKeyResults(o)}
+      />
+    );
   }
 
   if (tab === 'alignment') {
-    const breadcrumbs: StandardBreadcrumb[] = [...rootCrumbs, { label: isPolish ? 'Dopasowania' : 'Alignment' }];
+    const breadcrumbs: StandardBreadcrumb[] = [
+      ...rootCrumbs,
+      { label: isPolish ? 'Dopasowania' : 'Alignment' },
+    ];
     return <OkrAlignmentsView set={set} isPolish={isPolish} breadcrumbs={breadcrumbs} />;
   }
 
   if (tab === 'support') {
-    const breadcrumbs: StandardBreadcrumb[] = [...rootCrumbs, { label: isPolish ? 'Rozmowy i wsparcie' : 'Conversations & Support' }];
+    const breadcrumbs: StandardBreadcrumb[] = [
+      ...rootCrumbs,
+      { label: isPolish ? 'Rozmowy i wsparcie' : 'Conversations & Support' },
+    ];
     return <OkrSupportView set={set} isPolish={isPolish} breadcrumbs={breadcrumbs} />;
   }
 
   if (tab === 'history') {
-    const breadcrumbs: StandardBreadcrumb[] = [...rootCrumbs, { label: isPolish ? 'Historia' : 'History' }];
+    const breadcrumbs: StandardBreadcrumb[] = [
+      ...rootCrumbs,
+      { label: isPolish ? 'Historia' : 'History' },
+    ];
     return <OkrHistoryView set={set} isPolish={isPolish} breadcrumbs={breadcrumbs} />;
   }
 
@@ -158,7 +206,10 @@ export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish,
         breadcrumbs={rootCrumbs}
         tabs={[
           { id: 'overview', label: isPolish ? 'Przegląd' : 'Overview' },
-          { id: 'objectives', label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results' },
+          {
+            id: 'objectives',
+            label: isPolish ? 'Cele i Kluczowe Rezultaty' : 'Objectives & Key Results',
+          },
           { id: 'alignment', label: isPolish ? 'Dopasowania' : 'Alignment' },
           { id: 'support', label: isPolish ? 'Rozmowy i wsparcie' : 'Conversations & Support' },
           { id: 'review', label: isPolish ? 'Przegląd i refleksja' : 'Review & Reflection' },
@@ -169,9 +220,19 @@ export const OkrSetWorkspace: React.FC<OkrSetWorkspaceProps> = ({ set, isPolish,
         showTabCounts={false}
       >
         {tab === 'overview' ? (
-          <OkrSetOverviewView set={set} isPolish={isPolish} currentUserId={currentUserId} onSetChanged={onSetChanged} />
+          <OkrSetOverviewView
+            set={set}
+            isPolish={isPolish}
+            currentUserId={currentUserId}
+            onSetChanged={onSetChanged}
+          />
         ) : (
-          <OkrReviewReflectionView set={set} isPolish={isPolish} currentUserId={currentUserId} onSetChanged={onSetChanged} />
+          <OkrReviewReflectionView
+            set={set}
+            isPolish={isPolish}
+            currentUserId={currentUserId}
+            onSetChanged={onSetChanged}
+          />
         )}
       </StandardModuleBar>
     </div>

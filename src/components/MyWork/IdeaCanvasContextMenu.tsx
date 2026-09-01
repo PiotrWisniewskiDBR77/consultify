@@ -50,7 +50,7 @@ import i18n from '@/i18n';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
-import { EMPTY_SELECTION, type AIProposalBatch, type CanvasToolType } from './ideaSelectionTypes';
+import { type AIProposalBatch, type CanvasToolType, EMPTY_SELECTION } from './ideaSelectionTypes';
 
 interface ContextMenuPosition {
   x: number;
@@ -649,7 +649,8 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   // 'frame'` branch before writing this). `target.nodeKind` (the RAW
   // ReactFlow node type, newly threaded through `handleCanvasContextMenu`)
   // is what actually distinguishes a frame reliably.
-  const isFrameTarget = isOnNode && (target.nodeKind === 'frameNode' || target.nodeKind === 'groupNode');
+  const isFrameTarget =
+    isOnNode && (target.nodeKind === 'frameNode' || target.nodeKind === 'groupNode');
   const nodeHeaderTypeLabel = getCanvasNodeTypeLabel(
     target.nodeType || (isFrameTarget ? 'frame' : undefined),
     isPl
@@ -806,8 +807,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
               // Separate the AI group from the base ops above it — node menu
               // always has base ops ahead of it; pane menu only does once
               // "Paste" (registryPaneBaseItems) is non-empty.
-              separatorBefore:
-                index === 0 && (isOnNode || registryPaneBaseItems.length > 0),
+              separatorBefore: index === 0 && (isOnNode || registryPaneBaseItems.length > 0),
               closeOnSelect: false,
               onSelect: () => runViaRegistry(def.id, () => void handleAction(item)),
             };
@@ -980,7 +980,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   // (never on the frame's own menu above), only when this node actually has
   // a parent (`target.nodeParentId`, threaded through `handleCanvasContextMenu`).
   const registryChildFrameItems =
-    useRegistry && isOnNode && !isFrameTarget && target.nodeParentId && target.nodeId && registryById
+    useRegistry &&
+    isOnNode &&
+    !isFrameTarget &&
+    target.nodeParentId &&
+    target.nodeId &&
+    registryById
       ? (() => {
           const entry = registryById.get('idea.node.remove_from_frame');
           if (!entry) return [];

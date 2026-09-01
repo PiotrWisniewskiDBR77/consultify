@@ -153,8 +153,15 @@ export class GridViewState {
    * except the first (the group's summary/header position) — matches
    * Excel's outline-group collapse behavior.
    */
-  createGroup(params: { groupId: string; label: string; axis: 'ROW' | 'COLUMN'; memberIds: readonly string[]; collapsed?: boolean }): void {
-    if (params.memberIds.length === 0) throw new RangeError('createGroup: memberIds must be non-empty');
+  createGroup(params: {
+    groupId: string;
+    label: string;
+    axis: 'ROW' | 'COLUMN';
+    memberIds: readonly string[];
+    collapsed?: boolean;
+  }): void {
+    if (params.memberIds.length === 0)
+      throw new RangeError('createGroup: memberIds must be non-empty');
     const group: GridViewGroupState = {
       groupId: params.groupId,
       label: params.label,
@@ -238,7 +245,8 @@ export class GridViewState {
     state.setFreeze(snapshot.freezeRowsCount, snapshot.freezeColumnsCount);
     for (const col of snapshot.columns) state.columns_.set(col.columnId, { ...col });
     for (const row of snapshot.rows) state.rows_.set(row.rowId, { ...row });
-    for (const group of snapshot.groups) state.groups_.set(group.groupId, { ...group, memberIds: [...group.memberIds] });
+    for (const group of snapshot.groups)
+      state.groups_.set(group.groupId, { ...group, memberIds: [...group.memberIds] });
     return state;
   }
 }

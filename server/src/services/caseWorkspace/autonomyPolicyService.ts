@@ -114,10 +114,7 @@
  * §1/§3 of that document (aggregate = the aggregate whose action was refused).
  */
 
-import {
-  type PgTransactionClient,
-  queryOne,
-} from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, queryOne } from '../../utils/queryHelpers.js';
 import type { CapabilityEffectClass } from './capabilityRegistryService.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
@@ -791,9 +788,7 @@ function disqualifyControl(
  * The whole gate, without throwing — for callers that want to render "this
  * will need approval" before attempting anything.
  */
-export async function evaluateAutonomy(
-  input: EvaluateAutonomyInput
-): Promise<AutonomyEvaluation> {
+export async function evaluateAutonomy(input: EvaluateAutonomyInput): Promise<AutonomyEvaluation> {
   const classification = classifyActionClass(input.action);
   const resolution = await resolveEffectiveAutonomy(
     input.organizationId,
@@ -801,10 +796,7 @@ export async function evaluateAutonomy(
     classification.actionClass,
     { client: input.client ?? null, organizationCeiling: input.organizationCeiling ?? null }
   );
-  const requirement = requiredControlFor(
-    classification.actionClass,
-    resolution.effectiveAutonomy
-  );
+  const requirement = requiredControlFor(classification.actionClass, resolution.effectiveAutonomy);
 
   const deny = (code: AutonomyDenialCode, extra: string[] = []): AutonomyEvaluation => ({
     allowed: false,

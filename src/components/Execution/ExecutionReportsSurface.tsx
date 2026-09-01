@@ -206,13 +206,13 @@ export const ExecutionReportsSurface = ({
       ])) as Array<{ items?: any[]; cases?: any[] }>;
       const reportRuns =
         (b.items ?? []).length > 0
-          ? b.items ?? []
+          ? (b.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewReportRuns
             : [];
       const reportDefinitions =
         (definitionList.items ?? []).length > 0
-          ? definitionList.items ?? []
+          ? (definitionList.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewReportDefinitions
             : [];
@@ -267,7 +267,7 @@ export const ExecutionReportsSurface = ({
       );
       setExecutionCases(
         (c.cases ?? []).length > 0
-          ? c.cases ?? []
+          ? (c.cases ?? [])
           : executionLocalReviewEnabled
             ? executionReviewCases
             : []

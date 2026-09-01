@@ -24,11 +24,11 @@
  */
 import {
   AlertTriangle,
+  FileText,
   LayoutGrid,
   LogOut,
   MessageSquareText,
   MoreHorizontal,
-  FileText,
   Settings,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -109,7 +109,11 @@ function readStoredViewMode(sessionId: string): MethodWorkspaceViewMode {
 // resztą apki: „Wywiad" (Interview — patrz Sidebar/menuConfig.ts,
 // FeedbackSidePanel.tsx), „Macierz" (Matrix — patrz DrdHttpMethodWorkspaceScreen
 // „Macierz osi"), „Raport".
-const VIEW_MODE_OPTIONS: Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> = [
+const VIEW_MODE_OPTIONS: Array<{
+  id: MethodWorkspaceViewMode;
+  label: string;
+  icon: React.ReactNode;
+}> = [
   { id: 'interview', label: 'Wywiad', icon: <MessageSquareText size={13} /> },
   { id: 'matrix', label: 'Macierz', icon: <LayoutGrid size={13} /> },
   { id: 'report', label: 'Raport', icon: <FileText size={13} /> },
@@ -339,7 +343,9 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         >
           <div>
             <p className="font-semibold text-c-text">Informacje o dokumencie</p>
-            <p>Metoda {methodName} · {packVersionLabel}</p>
+            <p>
+              Metoda {methodName} · {packVersionLabel}
+            </p>
             <p>Wersja sesji v{session.version}</p>
             {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
@@ -381,9 +387,16 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           <div>
             {/* DEC-2026-08-25-56: "Akceptacje", nie "Zatwierdzenia". */}
             <p className="font-semibold text-c-text">Akceptacje</p>
-            <p>Odpowiedzi: {session.state === 'in_review' || session.state === 'frozen' ? 'w przeglądzie lub zatwierdzone' : 'robocze'}</p>
+            <p>
+              Odpowiedzi:{' '}
+              {session.state === 'in_review' || session.state === 'frozen'
+                ? 'w przeglądzie lub zatwierdzone'
+                : 'robocze'}
+            </p>
             <p>Targety i raport: {session.state === 'frozen' ? 'zamrożone' : 'niezatwierdzone'}</p>
-            {governanceActions && <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>}
+            {governanceActions && (
+              <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>
+            )}
           </div>
           <div>
             <p className="font-semibold text-c-text">Licencja i wersje</p>
@@ -415,7 +428,11 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           {readiness.answeredUnits}/{readiness.totalUnits} jednostek odpowiedzianych
           {readiness.unitsMissingEvidence > 0 && ` · ${readiness.unitsMissingEvidence} bez dowodu`}
         </div>
-        <div role="tablist" aria-label="Tryb widoku" className="flex items-center rounded-lg border border-c-border p-0.5">
+        <div
+          role="tablist"
+          aria-label="Tryb widoku"
+          className="flex items-center rounded-lg border border-c-border p-0.5"
+        >
           {VIEW_MODE_OPTIONS.map((opt) => (
             <button
               key={opt.id}
@@ -425,7 +442,9 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               data-testid={`view-mode-${opt.id}`}
               onClick={() => setViewMode(opt.id)}
               className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${transitionClass} ${
-                viewMode === opt.id ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
+                viewMode === opt.id
+                  ? 'bg-c-surface-raised text-c-text'
+                  : 'text-c-text-muted hover:text-c-text'
               }`}
             >
               {opt.icon}
@@ -446,7 +465,10 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               <LiveMatrix {...matrixProps} methodName={methodName} className="h-full" />
             </div>
           ) : viewMode === 'report' ? (
-            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4" data-testid="method-report-workspace">
+            <div
+              className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4"
+              data-testid="method-report-workspace"
+            >
               {reportContent}
             </div>
           ) : (
@@ -455,7 +477,6 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

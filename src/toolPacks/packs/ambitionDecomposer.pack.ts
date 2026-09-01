@@ -31,7 +31,8 @@ export const ambitionDecomposerPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (AMBITION_DECOMPOSER_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Klasyczna praktyka strategy decomposition / OKR cascading — brak noty licencyjnej w repo',
+      source:
+        'Klasyczna praktyka strategy decomposition / OKR cascading — brak noty licencyjnej w repo',
       verifiableInRepo: false,
       note: 'Metoda z domeny publicznej strategii wykonania; brak potwierdzonego źródła licencyjnego w repo (L10).',
     },
@@ -110,7 +111,8 @@ export const ambitionDecomposerPack: ToolPack = {
         en: 'Capture signals that inform how the ambition can be decomposed.',
       },
       whatGoodLooksLike: 'Sygnały o dźwigniach, ograniczeniach i możliwych właścicielach wątków.',
-      evidenceToAskFor: 'Które dźwignie są już nazwane przez organizację, a które trzeba dopiero odkryć.',
+      evidenceToAskFor:
+        'Które dźwignie są już nazwane przez organizację, a które trzeba dopiero odkryć.',
       completionCriterion: 'Każdy sygnał ma jawny status dowodu.',
     },
     {
@@ -122,8 +124,10 @@ export const ambitionDecomposerPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Co najmniej dwa odrębne, niezależnie dowożalne wątki, każdy z targetMetric, horyzontem i archetypem (foundation/accelerator/bet/enabler).',
-      evidenceToAskFor: 'Czy dwie różne osoby mogłyby wziąć po jednym wątku, nie wchodząc sobie w drogę.',
-      completionCriterion: 'Co najmniej dwa zaakceptowane wątki, żaden nie jest tylko przeformułowaniem ambicji.',
+      evidenceToAskFor:
+        'Czy dwie różne osoby mogłyby wziąć po jednym wątku, nie wchodząc sobie w drogę.',
+      completionCriterion:
+        'Co najmniej dwa zaakceptowane wątki, żaden nie jest tylko przeformułowaniem ambicji.',
     },
     {
       id: 'insights',
@@ -135,7 +139,8 @@ export const ambitionDecomposerPack: ToolPack = {
       whatGoodLooksLike:
         'Priorytet wątku = znaczenie × pilność horyzontu, sekwencja stawia fundamenty przed akceleratorami i zakładami.',
       evidenceToAskFor: 'Czy krytyczny wątek (fundament/zakład) ma pod sobą choć jedną inicjatywę.',
-      completionCriterion: 'Drzewo ambicji zbudowane (buildAmbitionTree) i luki wykryte (detectAmbitionGaps).',
+      completionCriterion:
+        'Drzewo ambicji zbudowane (buildAmbitionTree) i luki wykryte (detectAmbitionGaps).',
     },
     {
       id: 'outputs',
@@ -147,7 +152,8 @@ export const ambitionDecomposerPack: ToolPack = {
       whatGoodLooksLike:
         'Każdy ruch ma rationale, trade-off i odrzucony wariant sekwencji; inicjatywy uporządkowane topologicznie bez cykli.',
       evidenceToAskFor: 'Co świadomie odkładamy, realizując ten wątek najpierw.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 i zero inicjatyw sierocych (orphan-initiative).',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 i zero inicjatyw sierocych (orphan-initiative).',
     },
   ],
 
@@ -203,7 +209,8 @@ export const ambitionDecomposerPack: ToolPack = {
         en: 'What are we deferring by delivering this theme ahead of the others, and at what cost?',
       },
       answerType: 'text',
-      challengeRule: 'Ruch bez rejectedVariant (wariant sekwencji świadomie odrzucony) nie przechodzi bramki W2.',
+      challengeRule:
+        'Ruch bez rejectedVariant (wariant sekwencji świadomie odrzucony) nie przechodzi bramki W2.',
     },
   ],
 
@@ -277,7 +284,8 @@ export const ambitionDecomposerPack: ToolPack = {
   rights: {
     methodologyName: 'Dekompozycja ambicji na tematy strategiczne (bliska kaskadzie OKR)',
     commonlyAttributedTo: 'Brak jednego autora — generyczna praktyka egzekucji strategii',
-    sourceUsed: 'src/config/ambitiondecomposer/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    sourceUsed:
+      'src/config/ambitiondecomposer/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: 'Brak znanego znaku towarowego.',

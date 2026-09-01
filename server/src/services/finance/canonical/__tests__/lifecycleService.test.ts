@@ -35,20 +35,30 @@ describe('validateTransition — WP-B02 §3.2 transition table', () => {
   });
 
   it('T6 request_changes requires a reason (REASON_REQUIRED) when reasonProvided is false', () => {
-    const result = validateTransition('IN_REVIEW', 'request_changes', 'reviewer', { reasonProvided: false });
+    const result = validateTransition('IN_REVIEW', 'request_changes', 'reviewer', {
+      reasonProvided: false,
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('REASON_REQUIRED');
   });
 
   it('T6 request_changes succeeds once a reason is provided', () => {
-    const result = validateTransition('IN_REVIEW', 'request_changes', 'reviewer', { reasonProvided: true });
+    const result = validateTransition('IN_REVIEW', 'request_changes', 'reviewer', {
+      reasonProvided: true,
+    });
     expect(result).toEqual({ ok: true, toStatus: 'NEEDS_CHANGES', requiresReason: true });
   });
 
   it('T11 invalidate is reachable by finance_admin and approver, requires a reason', () => {
-    expect(validateTransition('APPROVED', 'invalidate', 'finance_admin', { reasonProvided: true }).ok).toBe(true);
-    expect(validateTransition('APPROVED', 'invalidate', 'approver', { reasonProvided: true }).ok).toBe(true);
-    expect(validateTransition('APPROVED', 'invalidate', 'preparer', { reasonProvided: true }).ok).toBe(false);
+    expect(
+      validateTransition('APPROVED', 'invalidate', 'finance_admin', { reasonProvided: true }).ok
+    ).toBe(true);
+    expect(
+      validateTransition('APPROVED', 'invalidate', 'approver', { reasonProvided: true }).ok
+    ).toBe(true);
+    expect(
+      validateTransition('APPROVED', 'invalidate', 'preparer', { reasonProvided: true }).ok
+    ).toBe(false);
   });
 
   it('T7 resume_editing: NEEDS_CHANGES -> DRAFT for the preparer', () => {
@@ -90,7 +100,13 @@ describe('allowedActionsFromStatus — drives the UI action bar (OWN-FIN-012)', 
   });
 
   it('viewer never gets any mutating action', () => {
-    for (const status of ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'APPROVED', 'NEEDS_CHANGES'] as const) {
+    for (const status of [
+      'DRAFT',
+      'READY_FOR_REVIEW',
+      'IN_REVIEW',
+      'APPROVED',
+      'NEEDS_CHANGES',
+    ] as const) {
       expect(allowedActionsFromStatus(status, 'viewer')).toEqual([]);
     }
   });
@@ -125,8 +141,16 @@ describe('checkSelfApproval — WP-B02 §7.2 point 6 (SoD gate)', () => {
   });
 
   it('MATERIAL blocks approver === submittedBy', () => {
-    const result = checkSelfApproval({ riskTier: 'MATERIAL', approverUserId: 'u1', submittedBy: 'u1' });
-    expect(result).toEqual({ forbidden: true, code: 'SELF_APPROVAL_FORBIDDEN', conflictingRole: 'preparer' });
+    const result = checkSelfApproval({
+      riskTier: 'MATERIAL',
+      approverUserId: 'u1',
+      submittedBy: 'u1',
+    });
+    expect(result).toEqual({
+      forbidden: true,
+      code: 'SELF_APPROVAL_FORBIDDEN',
+      conflictingRole: 'preparer',
+    });
   });
 
   it('MATERIAL blocks approver in the editor list even if not the submitter', () => {
@@ -156,7 +180,11 @@ describe('checkSelfApproval — WP-B02 §7.2 point 6 (SoD gate)', () => {
       submittedBy: 'u1',
       reviewStartedBy: 'u3',
     });
-    expect(result).toEqual({ forbidden: true, code: 'SELF_APPROVAL_FORBIDDEN', conflictingRole: 'reviewer' });
+    expect(result).toEqual({
+      forbidden: true,
+      code: 'SELF_APPROVAL_FORBIDDEN',
+      conflictingRole: 'reviewer',
+    });
   });
 
   it('a genuinely independent approver is never blocked at any tier', () => {

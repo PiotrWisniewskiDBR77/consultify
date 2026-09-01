@@ -31,7 +31,7 @@ import {
 } from '@/actions/ideaActionRegistry';
 import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
 
-import { EMPTY_SELECTION, type CanvasBgPattern } from '../ideaSelectionTypes';
+import { type CanvasBgPattern, EMPTY_SELECTION } from '../ideaSelectionTypes';
 import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { ToolbarBtn, ToolbarDropdown } from './WhiteboardToolbarPrimitives';
 
@@ -297,7 +297,8 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             id: 'shape_circle',
             label: t('myWork.whiteboard.shapes.circle'),
             icon: Circle,
-            onClick: () => runAction('idea.canvas.insert_shape_circle', () => onAddElement('shape_circle')),
+            onClick: () =>
+              runAction('idea.canvas.insert_shape_circle', () => onAddElement('shape_circle')),
           },
           {
             id: 'shape_diamond',

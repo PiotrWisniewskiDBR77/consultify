@@ -6,8 +6,8 @@ vi.mock('@/services/api', () => ({
   Api: { post: (...args: unknown[]) => post(...args) },
 }));
 
-import { approvePresentationTemplate } from '../presentationTemplateArchitect';
 import type { PresentationTemplate } from '../presentationTemplateArchitect';
+import { approvePresentationTemplate } from '../presentationTemplateArchitect';
 
 describe('approvePresentationTemplate', () => {
   beforeEach(() => vi.clearAllMocks());

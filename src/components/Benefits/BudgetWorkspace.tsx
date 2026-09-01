@@ -480,10 +480,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   );
   const projectionPeriods = activeScenario?.projections?.periods || [];
 
-  const fmtNumber = useMemo(
-    () => new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }),
-    []
-  );
+  const fmtNumber = useMemo(() => new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }), []);
 
   const baseScenario = useMemo(() => scenarios.find((s) => s.scenarioType === 'base'), [scenarios]);
 

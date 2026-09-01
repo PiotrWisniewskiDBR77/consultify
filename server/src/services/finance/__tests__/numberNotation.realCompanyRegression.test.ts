@@ -81,7 +81,9 @@ const CORPUS: Array<{
 
 /** The share of extracted values that carry a fractional part, as the RC-00 detector defines it. */
 const fractionalPct = (values: number[]): number =>
-  values.length === 0 ? 0 : Math.round((values.filter(hasFraction).length / values.length) * 1000) / 10;
+  values.length === 0
+    ? 0
+    : Math.round((values.filter(hasFraction).length / values.length) * 1000) / 10;
 
 const allValues = (doc: AuditDoc): number[] =>
   doc.targets.flatMap((t) => t.topMappedLines.map((l) => l.value));
@@ -204,9 +206,7 @@ describe('RC-00 regression — extractFinancialLines resolves notation per docum
     expect(result.numberNotation?.notation).toBe('en');
     expect(result.lines.length).toBeGreaterThanOrEqual(20);
     expect(fractionalPct(result.lines.map((l) => l.value))).toBeLessThan(5);
-    expect(
-      result.lines.find((l) => /^Total assets/i.test(l.originalLabel))?.value
-    ).toBe(100549);
+    expect(result.lines.find((l) => /^Total assets/i.test(l.originalLabel))?.value).toBe(100549);
   });
 
   it('reads BMW (European notation) as whole units', () => {

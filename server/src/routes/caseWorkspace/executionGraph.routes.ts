@@ -24,10 +24,10 @@ import { z } from 'zod';
 import * as svc from '../../services/caseWorkspace/executionGraphService.js';
 import * as runBindingSvc from '../../services/caseWorkspace/runBindingService.js';
 import { requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
-import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 import type { CaseWorkspaceActor } from './_shared/handler.js';
+import { caseWorkspaceHandler } from './_shared/handler.js';
+import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
 
@@ -171,7 +171,10 @@ router.get(
     const params = parseParams(nodeRunIdParams, req.params);
     const found = await svc.getNodeResultAcceptance(params.nodeRunId, actor.actorUserId);
     if (!found) {
-      throw toCaseWorkspaceAppError(new Error('node_result_acceptance_not_found'), actor.correlationId);
+      throw toCaseWorkspaceAppError(
+        new Error('node_result_acceptance_not_found'),
+        actor.correlationId
+      );
     }
     await requireCaseAccessForActor(actor, found.caseId);
     res.status(200).json({ data: found });
@@ -183,7 +186,10 @@ router.get(
   '/runs/:runId/node-result-acceptances',
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(runIdParams, req.params);
-    const query = parseQuery(z.object({ resultAcceptance: resultAcceptanceEnum.optional() }), req.query);
+    const query = parseQuery(
+      z.object({ resultAcceptance: resultAcceptanceEnum.optional() }),
+      req.query
+    );
     await requireCaseAccessForRun(actor, params.runId);
     const items = await svc.listNodeResultAcceptancesForRun(params.runId, query, actor.actorUserId);
     res.status(200).json({ data: items });

@@ -55,22 +55,21 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
-
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
-  toRoiBaseline,
-  toRoiCase,
   type RoiBaseline,
   type RoiBaselineRow,
   type RoiCase,
   type RoiCaseRow,
   type RoiCaseStatus,
+  toRoiBaseline,
+  toRoiCase,
 } from './roiTypes.js';
 
 /** Same pinned-client-per-call shape as `kpiRepository.ts`'s
@@ -131,7 +130,11 @@ export async function listRoiCases(params: ListRoiCasesParams): Promise<RoiCase[
     offset = 0,
   } = params;
 
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values];
   const filters: string[] = [];
 
@@ -200,9 +203,7 @@ export async function getRoiCase(params: GetRoiCaseParams): Promise<RoiCase | nu
   });
   const values = [...wrapped.values, caseId];
 
-  const rows = await withReadClient((client) =>
-    queryRows<RoiCaseRow>(client, wrapped.sql, values)
-  );
+  const rows = await withReadClient((client) => queryRows<RoiCaseRow>(client, wrapped.sql, values));
   const row = rows[0];
   return row ? toRoiCase(row) : null;
 }

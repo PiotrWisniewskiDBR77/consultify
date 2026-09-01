@@ -15,8 +15,8 @@ vi.mock('../auditsMethodApi', async () => {
   return { ...actual, listOutputs: vi.fn() };
 });
 
+import { type AuditOutputSummary, listOutputs } from '../auditsMethodApi';
 import { AuditOutputsTab } from '../tabs/AuditOutputsTab';
-import { listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
 
 const mockedListOutputs = vi.mocked(listOutputs);
 
@@ -40,7 +40,9 @@ describe('AuditOutputsTab', () => {
     mockedListOutputs.mockResolvedValue({ items: [output], total: 1 });
     render(<AuditOutputsTab isPolish={false} />);
 
-    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit — Output v1')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Q3 Compliance Audit — Output v1')).toBeInTheDocument()
+    );
     // Hash absent from the first-glance table.
     expect(screen.queryByText(output.contentHash!)).toBeNull();
 
@@ -56,7 +58,9 @@ describe('AuditOutputsTab', () => {
   it('adds a real Pack version column and a Current/Superseded status column', async () => {
     mockedListOutputs.mockResolvedValue({ items: [output], total: 1 });
     render(<AuditOutputsTab isPolish={false} />);
-    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit — Output v1')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Q3 Compliance Audit — Output v1')).toBeInTheDocument()
+    );
     expect(screen.getByText('v2')).toBeInTheDocument();
     expect(screen.getByText('Current')).toBeInTheDocument();
   });
@@ -82,7 +86,9 @@ describe('AuditOutputsTab', () => {
         userNameById={new Map([['u1', 'Ada Lovelace (resolved)']])}
       />
     );
-    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit (resolved)')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Q3 Compliance Audit (resolved)')).toBeInTheDocument()
+    );
     expect(screen.getByText('Ada Lovelace (resolved)')).toBeInTheDocument();
   });
 });

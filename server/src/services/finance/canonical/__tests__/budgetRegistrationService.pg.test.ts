@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from 'pg';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const REAL_PG =

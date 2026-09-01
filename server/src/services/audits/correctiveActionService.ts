@@ -14,18 +14,24 @@
  */
 
 import {
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
   toIso,
 } from './auditsDb.js';
 import { requireCapability } from './permissions.js';
-import type { ActionKind, ActionStatus, AuditActor, AuditCorrectiveAction, FindingTaxonomyEntry } from './types.js';
+import type {
+  ActionKind,
+  ActionStatus,
+  AuditActor,
+  AuditCorrectiveAction,
+  FindingTaxonomyEntry,
+} from './types.js';
 import { ACTION_KINDS } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -91,7 +97,7 @@ function rowToAction(row: ActionRow): AuditCorrectiveAction {
 async function loadActionRow(organizationId: string, id: string): Promise<ActionRow> {
   const row = await auditGet<ActionRow>(
     `SELECT * FROM audit_corrective_actions WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Działanie korygujące');
   return row;
@@ -117,14 +123,18 @@ const NEVER_NONCONFORMING = new Set([
   'not_applicable',
 ]);
 
-async function isFindingNonconforming(organizationId: string, programId: string, classification: string): Promise<boolean> {
+async function isFindingNonconforming(
+  organizationId: string,
+  programId: string,
+  classification: string
+): Promise<boolean> {
   if (NEVER_NONCONFORMING.has(classification)) return false;
   const row = await auditGet<{ finding_taxonomy: unknown }>(
     `SELECT pk.finding_taxonomy AS finding_taxonomy
        FROM audit_programs prog
        JOIN audit_packs pk ON pk.id = prog.pack_id
       WHERE prog.organization_id = $1 AND prog.id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   const taxonomy = parseJson<FindingTaxonomyEntry[]>(row?.finding_taxonomy, []);
   const entry = taxonomy.find((t) => t.key === classification);
@@ -149,12 +159,12 @@ export async function proposeAction(
   organizationId: string,
   actor: AuditActor,
   findingId: string,
-  input: ProposeActionInput,
+  input: ProposeActionInput
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const findingRow = await auditGet<{ program_id: string }>(
     `SELECT program_id FROM audit_program_findings WHERE organization_id = $1 AND id = $2`,
-    [organizationId, findingId],
+    [organizationId, findingId]
   );
   if (!findingRow) throw new AuditNotFoundError('Ustalenie');
   await requireCapability(act, findingRow.program_id, 'action.propose');
@@ -183,7 +193,7 @@ export async function proposeAction(
       input.dueDate ?? null,
       input.priority ?? null,
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -207,7 +217,7 @@ export async function proposeAction(
 export async function approveAction(
   organizationId: string,
   actor: AuditActor,
-  id: string,
+  id: string
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -215,22 +225,26 @@ export async function approveAction(
 
   if (row.status !== 'proposed') {
     throw new AuditStateError(
-      `Zatwierdzić można wyłącznie działanie w statusie „proposed" (obecny status: „${row.status}")`,
+      `Zatwierdzić można wyłącznie działanie w statusie „proposed" (obecny status: „${row.status}")`
     );
   }
 
   const findingRow = await auditGet<{ classification: string }>(
     `SELECT classification FROM audit_program_findings WHERE organization_id = $1 AND id = $2`,
-    [organizationId, row.finding_id],
+    [organizationId, row.finding_id]
   );
 
   if (findingRow) {
-    const nonconforming = await isFindingNonconforming(organizationId, row.program_id, findingRow.classification);
+    const nonconforming = await isFindingNonconforming(
+      organizationId,
+      row.program_id,
+      findingRow.classification
+    );
     if (nonconforming) {
       const siblings = await auditAll<{ action_kind: string }>(
         `SELECT action_kind FROM audit_corrective_actions
           WHERE organization_id = $1 AND finding_id = $2 AND status NOT IN ('rejected', 'cancelled')`,
-        [organizationId, row.finding_id],
+        [organizationId, row.finding_id]
       );
       const kinds = new Set(siblings.map((s) => s.action_kind));
       kinds.add(row.action_kind); // działanie właśnie zatwierdzane liczy się do planu
@@ -238,7 +252,7 @@ export async function approveAction(
         throw new AuditStateError(
           'Nie można zatwierdzić planu złożonego wyłącznie z korekcji/działań doraźnych ' +
             '(correction/containment) — korekcja usuwa SKUTEK, a niezgodność wymaga co najmniej ' +
-            'jednego działania korygującego (corrective_action), które usuwa PRZYCZYNĘ',
+            'jednego działania korygującego (corrective_action), które usuwa PRZYCZYNĘ'
         );
       }
     }
@@ -248,7 +262,7 @@ export async function approveAction(
     `UPDATE audit_corrective_actions
         SET status = 'approved', approved_by = $3, approved_at = NOW(), updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, actor.userId],
+    [organizationId, id, actor.userId]
   );
 
   await recordAuditEvent({
@@ -268,7 +282,7 @@ export async function rejectAction(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  reason: string,
+  reason: string
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -281,7 +295,7 @@ export async function rejectAction(
     `UPDATE audit_corrective_actions
         SET status = 'rejected', rejected_reason = $3, updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, reasonText],
+    [organizationId, id, reasonText]
   );
 
   await recordAuditEvent({
@@ -314,7 +328,7 @@ export async function updateAction(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  patch: UpdateActionInput,
+  patch: UpdateActionInput
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -339,7 +353,7 @@ export async function updateAction(
   const params = [organizationId, id, ...updates.map(([, v]) => v)];
   await auditRun(
     `UPDATE audit_corrective_actions SET ${setSql}, updated_at = NOW() WHERE organization_id = $1 AND id = $2`,
-    params,
+    params
   );
 
   await recordAuditEvent({
@@ -376,7 +390,7 @@ export interface AuditCorrectiveActionListResult {
 
 export async function listActions(
   organizationId: string,
-  filter: ListActionsFilter,
+  filter: ListActionsFilter
 ): Promise<AuditCorrectiveActionListResult> {
   const clauses = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -396,17 +410,20 @@ export async function listActions(
 
   const rows = await auditAll<ActionRow>(
     `SELECT * FROM audit_corrective_actions WHERE ${where} ORDER BY created_at ASC LIMIT ${limit} OFFSET ${offset}`,
-    params,
+    params
   );
   const countRow = await auditGet<{ c: number }>(
     `SELECT COUNT(*)::int AS c FROM audit_corrective_actions WHERE ${where}`,
-    params,
+    params
   );
 
   return { items: rows.map(rowToAction), total: countRow ? Number(countRow.c) : rows.length };
 }
 
-export async function getAction(organizationId: string, id: string): Promise<AuditCorrectiveAction> {
+export async function getAction(
+  organizationId: string,
+  id: string
+): Promise<AuditCorrectiveAction> {
   return fetchAction(organizationId, id);
 }
 
@@ -423,7 +440,7 @@ export async function reportImplementation(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: ReportImplementationInput,
+  input: ReportImplementationInput
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -431,7 +448,7 @@ export async function reportImplementation(
 
   if (!['approved', 'in_progress', 'overdue'].includes(row.status)) {
     throw new AuditStateError(
-      `Wdrożenie można zgłosić tylko dla działania zatwierdzonego lub w toku (obecny status: „${row.status}")`,
+      `Wdrożenie można zgłosić tylko dla działania zatwierdzonego lub w toku (obecny status: „${row.status}")`
     );
   }
 
@@ -440,7 +457,7 @@ export async function reportImplementation(
         SET status = 'implemented', implemented_by = $3, implemented_at = NOW(),
             implementation_evidence_id = $4, implementation_note = $5, updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, actor.userId, input.evidenceId ?? null, input.note ?? null],
+    [organizationId, id, actor.userId, input.evidenceId ?? null, input.note ?? null]
   );
 
   await recordAuditEvent({
@@ -461,12 +478,14 @@ export async function reportImplementation(
 // markOverdueActions — zadanie porządkowe, bez aktora
 // ---------------------------------------------------------------------------
 
-export async function markOverdueActions(organizationId: string): Promise<{ updatedIds: string[] }> {
+export async function markOverdueActions(
+  organizationId: string
+): Promise<{ updatedIds: string[] }> {
   const rows = await auditAll<{ id: string; program_id: string; title: string }>(
     `SELECT id, program_id, title FROM audit_corrective_actions
       WHERE organization_id = $1 AND status IN ('approved', 'in_progress')
         AND due_date IS NOT NULL AND due_date < CURRENT_DATE`,
-    [organizationId],
+    [organizationId]
   );
   if (rows.length === 0) return { updatedIds: [] };
 
@@ -475,7 +494,7 @@ export async function markOverdueActions(organizationId: string): Promise<{ upda
         SET status = 'overdue', updated_at = NOW()
       WHERE organization_id = $1 AND status IN ('approved', 'in_progress')
         AND due_date IS NOT NULL AND due_date < CURRENT_DATE`,
-    [organizationId],
+    [organizationId]
   );
 
   for (const r of rows) {
@@ -500,7 +519,7 @@ export async function linkToTask(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  taskId: string,
+  taskId: string
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -511,7 +530,7 @@ export async function linkToTask(
 
   await auditRun(
     `UPDATE audit_corrective_actions SET task_id = $3, updated_at = NOW() WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, value],
+    [organizationId, id, value]
   );
 
   await recordAuditEvent({
@@ -531,7 +550,7 @@ export async function linkToInitiative(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  initiativeId: string,
+  initiativeId: string
 ): Promise<AuditCorrectiveAction> {
   const act = scoped(actor, organizationId);
   const row = await loadActionRow(organizationId, id);
@@ -542,7 +561,7 @@ export async function linkToInitiative(
 
   await auditRun(
     `UPDATE audit_corrective_actions SET initiative_id = $3, updated_at = NOW() WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, value],
+    [organizationId, id, value]
   );
 
   await recordAuditEvent({

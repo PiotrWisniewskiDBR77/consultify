@@ -229,7 +229,6 @@
  */
 
 import { createHash, randomUUID } from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -239,16 +238,15 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { getCorrelationId } from '../../utils/RequestStore.js';
-
-import { createPlanDraftOnClient } from './casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from './casePlanVersionService.js';
-import { publishEvent, redact } from './eventOutboxService.js';
+import { createPlanDraftOnClient } from './casePlanVersionService.js';
 import {
   CaseWorkspaceAuthError,
   requireCaseAccess,
   requireOrgMember,
   requireOrgRole,
 } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -377,7 +375,11 @@ export interface ProcessDefinitionListPage {
 // Constants
 // ---------------------------------------------------------------------------
 
-const VISIBILITY_VALUES: readonly ProcessDefinitionVisibility[] = ['PRIVATE', 'TEAM', 'ORGANIZATION'];
+const VISIBILITY_VALUES: readonly ProcessDefinitionVisibility[] = [
+  'PRIVATE',
+  'TEAM',
+  'ORGANIZATION',
+];
 const VISIBILITY_RANK: Record<ProcessDefinitionVisibility, number> = {
   PRIVATE: 0,
   TEAM: 1,
@@ -659,7 +661,10 @@ async function loadVersionForUpdate(
  * that would make shareProcessDefinition's authorization requirement vacuous
  * (every creator already owns their own private draft).
  */
-export async function isAuthorizedPublisher(actorUserId: string, organizationId: string): Promise<boolean> {
+export async function isAuthorizedPublisher(
+  actorUserId: string,
+  organizationId: string
+): Promise<boolean> {
   const userId = requireNonBlank(actorUserId, 'process_actor_required');
   const orgId = requireNonBlank(organizationId, 'process_organization_id_required');
   try {
@@ -689,10 +694,19 @@ export async function createProcessDefinition(input: {
   ownerActorId: string;
   createdByActorId: string;
 }): Promise<ProcessDefinition> {
-  const organizationId = requireNonBlank(input.organizationId, 'process_definition_organization_id_required');
+  const organizationId = requireNonBlank(
+    input.organizationId,
+    'process_definition_organization_id_required'
+  );
   const name = requireNonBlank(input.name, 'process_definition_name_required');
-  const ownerActorId = requireNonBlank(input.ownerActorId, 'process_definition_owner_actor_required');
-  const createdByActorId = requireNonBlank(input.createdByActorId, 'process_definition_created_by_actor_required');
+  const ownerActorId = requireNonBlank(
+    input.ownerActorId,
+    'process_definition_owner_actor_required'
+  );
+  const createdByActorId = requireNonBlank(
+    input.createdByActorId,
+    'process_definition_created_by_actor_required'
+  );
 
   await requireOrgMember(createdByActorId, organizationId);
 
@@ -711,7 +725,16 @@ export async function createProcessDefinition(input: {
          owner_actor_id, created_by_actor_id, version, created_at, updated_at
        ) VALUES (?, ?, ?, ?, 'PRIVATE', ?, ?, 1, ?, ?)
        RETURNING *`,
-      [processDefinitionId, organizationId, name, input.description ?? null, ownerActorId, createdByActorId, now, now]
+      [
+        processDefinitionId,
+        organizationId,
+        name,
+        input.description ?? null,
+        ownerActorId,
+        createdByActorId,
+        now,
+        now,
+      ]
     );
     const row = inserted.rows[0];
     if (!row) throw new Error('process_definition_insert_failed');
@@ -805,7 +828,9 @@ export async function listProcessDefinitions(
 
   if (filters?.visibility) {
     conditions.push('visibility = ?');
-    params.push(requireEnum(filters.visibility, VISIBILITY_VALUES, 'process_definition_visibility_invalid'));
+    params.push(
+      requireEnum(filters.visibility, VISIBILITY_VALUES, 'process_definition_visibility_invalid')
+    );
   }
   if (filters?.ownerActorId) {
     conditions.push('owner_actor_id = ?');
@@ -853,13 +878,19 @@ export async function shareProcessDefinition(
 ): Promise<ProcessDefinition> {
   const id = requireNonBlank(processDefinitionId, 'process_definition_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'process_actor_required');
-  requireEnum(targetVisibility, ['TEAM', 'ORGANIZATION'] as const, 'process_definition_target_visibility_invalid');
+  requireEnum(
+    targetVisibility,
+    ['TEAM', 'ORGANIZATION'] as const,
+    'process_definition_target_visibility_invalid'
+  );
 
   return withPgTransaction(async (client) => {
     const row = await loadDefinitionForUpdate(client, id);
 
     if (VISIBILITY_RANK[targetVisibility] <= VISIBILITY_RANK[row.visibility]) {
-      throw new Error(`process_definition_share_not_a_widening:${row.visibility}->${targetVisibility}`);
+      throw new Error(
+        `process_definition_share_not_a_widening:${row.visibility}->${targetVisibility}`
+      );
     }
 
     const authorized = await isAuthorizedPublisher(actorUserId, row.organization_id);
@@ -870,7 +901,8 @@ export async function shareProcessDefinition(
          WHERE process_definition_id = ? AND status = 'PUBLISHED' LIMIT 1`,
       [id]
     );
-    if (!publishedResult.rows[0]) throw new Error('process_definition_share_requires_published_version');
+    if (!publishedResult.rows[0])
+      throw new Error('process_definition_share_requires_published_version');
 
     const now = new Date().toISOString();
     const updated = await client.query<ProcessDefinitionRow>(
@@ -931,8 +963,14 @@ export async function createProcessVersionDraft(input: {
   changeReason?: string | null;
   createdByActorId: string;
 }): Promise<ProcessVersion> {
-  const processDefinitionId = requireNonBlank(input.processDefinitionId, 'process_version_definition_id_required');
-  const createdByActorId = requireNonBlank(input.createdByActorId, 'process_version_created_by_actor_required');
+  const processDefinitionId = requireNonBlank(
+    input.processDefinitionId,
+    'process_version_definition_id_required'
+  );
+  const createdByActorId = requireNonBlank(
+    input.createdByActorId,
+    'process_version_created_by_actor_required'
+  );
   const semanticGraph = requireGraph(input.semanticGraph, 'process_version_semantic_graph_invalid');
 
   return withPgTransaction(async (client) => {
@@ -1031,7 +1069,8 @@ export async function updateProcessVersionDraft(
   const actorUserId = requireNonBlank(actor?.actorUserId, 'process_actor_required');
   const semanticGraph = requireGraph(input.semanticGraph, 'process_version_semantic_graph_invalid');
   const expectedVersion = input.expectedVersion;
-  if (typeof expectedVersion !== 'number') throw new Error('process_version_expected_version_required');
+  if (typeof expectedVersion !== 'number')
+    throw new Error('process_version_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
@@ -1269,7 +1308,12 @@ export async function reviewProcessVersion(
       const changeReason = requireNonBlank(reason, 'process_version_review_reason_required');
       const nextHistory = [
         ...parseReviewHistory(row.review_history),
-        { event: 'CHANGES_REQUESTED' as const, actorId: actorUserId, at: now, reason: changeReason },
+        {
+          event: 'CHANGES_REQUESTED' as const,
+          actorId: actorUserId,
+          at: now,
+          reason: changeReason,
+        },
       ];
 
       const updated = await client.query<ProcessVersionRow>(

@@ -120,7 +120,10 @@ export const PROVISION_TENANT_INFIX = '-session-run-';
  * demoService reclamation, the operator cleanup script).
  */
 export function makeProvisionTenantOrgId(baseOrgId: string, runId: string): string {
-  const compact = String(runId).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'run';
+  const compact =
+    String(runId)
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase() || 'run';
   return `${baseOrgId}${PROVISION_TENANT_INFIX}${compact}`;
 }
 
@@ -209,11 +212,7 @@ export interface ProvisionDeps {
     tenantOrgId: string;
   }) => Promise<void>;
   /** Seeds and records the isolated tenant under the id THIS run owns. */
-  startSession: (
-    userId: string,
-    locale: string,
-    tenantOrgId: string
-  ) => Promise<DemoSessionRecord>;
+  startSession: (userId: string, locale: string, tenantOrgId: string) => Promise<DemoSessionRecord>;
   issueTokens: (user: {
     id: string;
     email: string;
@@ -293,7 +292,13 @@ const realDeps: ProvisionDeps = {
     if (!row?.id) throw new Error('membership row missing after insert');
   },
 
-  recordLegalAcceptance: async ({ userId, demoOrgId: orgId, acceptedLegalDocs, ipAddress, userAgent }) => {
+  recordLegalAcceptance: async ({
+    userId,
+    demoOrgId: orgId,
+    acceptedLegalDocs,
+    ipAddress,
+    userAgent,
+  }) => {
     // legalService writes one acceptance row per document, so a failure on the
     // second document leaves the first behind. Compensated unconditionally.
     await legalService.acceptDocuments(
@@ -425,10 +430,9 @@ export async function provisionPublicDemoAccount(
       step: 'insert_membership',
       undo: () => deps.deleteRows(`DELETE FROM organization_members WHERE user_id = ?`, [userId]),
       verify: async () =>
-        (await deps.countRows(
-          `SELECT COUNT(*) as c FROM organization_members WHERE user_id = ?`,
-          [userId]
-        )) === 0,
+        (await deps.countRows(`SELECT COUNT(*) as c FROM organization_members WHERE user_id = ?`, [
+          userId,
+        ])) === 0,
     });
     await deps.insertMembership({ userId, demoOrgId: orgId });
 
@@ -441,9 +445,10 @@ export async function provisionPublicDemoAccount(
         undo: () =>
           deps.deleteRows(`DELETE FROM legal_document_acceptances WHERE user_id = ?`, [userId]),
         verify: async () =>
-          (await deps.countRows(`SELECT COUNT(*) as c FROM legal_document_acceptances WHERE user_id = ?`, [
-            userId,
-          ])) === 0,
+          (await deps.countRows(
+            `SELECT COUNT(*) as c FROM legal_document_acceptances WHERE user_id = ?`,
+            [userId]
+          )) === 0,
       });
       try {
         await deps.recordLegalAcceptance({
@@ -540,7 +545,10 @@ export async function provisionPublicDemoAccount(
     };
   } catch (error: unknown) {
     const message = (error as Error)?.message || String(error);
-    logger.error('[DemoProvisioning] signup failed, unwinding', { step: currentStep, error: message });
+    logger.error('[DemoProvisioning] signup failed, unwinding', {
+      step: currentStep,
+      error: message,
+    });
     const compensation = await unwind(compensations);
     if (!compensation.complete) {
       // Loud on purpose: an unverified unwind means the address is likely stuck

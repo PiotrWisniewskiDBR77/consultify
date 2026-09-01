@@ -33,30 +33,34 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import logger from '../../../utils/Logger.js';
-
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  resolveConsumerGroups,
-  EVENT_INSERT_SQL,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  EVENT_INSERT_SQL,
   type ExistingEventRow,
+  resolveConsumerGroups,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-import { createObligation } from '../platform/obligations.js';
-import { VISIBILITY_CTE_PARAM_COUNT, wrapWithVisibilityScope } from '../platform/visibilityScopedQuery.js';
-
-import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
-import { OKR_SET_RESOURCE_TYPE, OkrSetValidationError } from './okrSetCommands.js';
-import type { OkrSetRow } from './okrSetTypes.js';
 import {
-  toOkrReview,
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
+import { createObligation } from '../platform/obligations.js';
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
+import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
+import {
   type OkrReview,
   type OkrReviewComment,
   type OkrReviewCommentLevel,
   type OkrReviewRow,
   type OkrReviewType,
+  toOkrReview,
 } from './okrReviewTypes.js';
+import { OKR_SET_RESOURCE_TYPE, OkrSetValidationError } from './okrSetCommands.js';
+import type { OkrSetRow } from './okrSetTypes.js';
 
 // ==========================================
 // SHARED CONSTANTS
@@ -88,8 +92,14 @@ export const OKR_REVIEW_CAPABILITIES = {
 export class OkrManagerReviewSelfApprovalDeniedError extends Error {
   code = 'MANAGER_REVIEW_SELF_APPROVAL_DENIED';
   details: Record<string, unknown>;
-  constructor(setId: string, actorUserId: string, reasonField: 'submitted_by' | 'owner_user_id' | 'created_by') {
-    super(`User ${actorUserId} may not approve the manager review for OKR Set ${setId}: matches its own ${reasonField}`);
+  constructor(
+    setId: string,
+    actorUserId: string,
+    reasonField: 'submitted_by' | 'owner_user_id' | 'created_by'
+  ) {
+    super(
+      `User ${actorUserId} may not approve the manager review for OKR Set ${setId}: matches its own ${reasonField}`
+    );
     this.name = 'OkrManagerReviewSelfApprovalDeniedError';
     this.details = { setId, actorUserId, reasonField };
   }
@@ -100,7 +110,9 @@ export class OkrSetManagerReviewRequiredError extends Error {
   code = 'MANAGER_REVIEW_REQUIRED';
   details: Record<string, unknown>;
   constructor(setId: string) {
-    super(`OKR Set ${setId} cannot close: an approved manager review is required by Program policy`);
+    super(
+      `OKR Set ${setId} cannot close: an approved manager review is required by Program policy`
+    );
     this.name = 'OkrSetManagerReviewRequiredError';
     this.details = { setId };
   }
@@ -146,7 +158,11 @@ export class OkrReviewValidationError extends Error {
 // SHARED HELPERS
 // ==========================================
 
-async function lockOkrSetRow(client: PoolClient, setId: string, organizationId: string): Promise<OkrSetRow> {
+async function lockOkrSetRow(
+  client: PoolClient,
+  setId: string,
+  organizationId: string
+): Promise<OkrSetRow> {
   const result = await client.query<OkrSetRow>(
     `SELECT * FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
     [setId, organizationId]
@@ -187,30 +203,33 @@ async function writeReviewEvent(
   client: PoolClient,
   eventInput: AtomicEventInput
 ): Promise<WriteReviewEventResult> {
-  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
-    eventInput.schemaVersion,
-    eventInput.eventType,
-    eventInput.aggregateType,
-    eventInput.aggregateId,
-    eventInput.organizationId,
-    eventInput.actorUserId,
-    eventInput.actorEffectiveRole,
-    eventInput.commandId,
-    eventInput.correlationId,
-    eventInput.causationId,
-    eventInput.occurredAt,
-    eventInput.policyVersion,
-    eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
-    eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
-    eventInput.stateHash,
-    eventInput.reason,
-    JSON.stringify(eventInput.evidenceRefs ?? []),
-    eventInput.source,
-    eventInput.idempotencyKey,
-    eventInput.expectedVersion,
-    eventInput.resultingVersion,
-    JSON.stringify(eventInput.payload ?? {}),
-  ]);
+  const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+    EVENT_INSERT_SQL,
+    [
+      eventInput.schemaVersion,
+      eventInput.eventType,
+      eventInput.aggregateType,
+      eventInput.aggregateId,
+      eventInput.organizationId,
+      eventInput.actorUserId,
+      eventInput.actorEffectiveRole,
+      eventInput.commandId,
+      eventInput.correlationId,
+      eventInput.causationId,
+      eventInput.occurredAt,
+      eventInput.policyVersion,
+      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+      eventInput.stateHash,
+      eventInput.reason,
+      JSON.stringify(eventInput.evidenceRefs ?? []),
+      eventInput.source,
+      eventInput.idempotencyKey,
+      eventInput.expectedVersion,
+      eventInput.resultingVersion,
+      JSON.stringify(eventInput.payload ?? {}),
+    ]
+  );
   const inserted = eventResult.rows[0];
   if (!inserted) {
     const existingResult = await client.query<ExistingEventRow>(
@@ -223,7 +242,11 @@ async function writeReviewEvent(
         `[writeReviewEvent] idempotency conflict on (${eventInput.organizationId}, ${eventInput.idempotencyKey}) but existing event row not found`
       );
     }
-    return { outcome: 'duplicate', eventId: existing.event_id, resultingVersion: existing.resulting_version };
+    return {
+      outcome: 'duplicate',
+      eventId: existing.event_id,
+      resultingVersion: existing.resulting_version,
+    };
   }
   const consumerGroups = resolveConsumerGroups(eventInput.eventType);
   if (consumerGroups.length > 0) {
@@ -233,7 +256,11 @@ async function writeReviewEvent(
       [inserted.event_id, consumerGroups]
     );
   }
-  return { outcome: 'applied', eventId: inserted.event_id, resultingVersion: inserted.resulting_version };
+  return {
+    outcome: 'applied',
+    eventId: inserted.event_id,
+    resultingVersion: inserted.resulting_version,
+  };
 }
 
 // ==========================================
@@ -903,7 +930,13 @@ export async function recordOkrSetReviewComment(
       );
     }
 
-    const newComment: OkrReviewComment = { level, targetId, text, createdAt: new Date().toISOString(), createdBy: actorUserId };
+    const newComment: OkrReviewComment = {
+      level,
+      targetId,
+      text,
+      createdAt: new Date().toISOString(),
+      createdBy: actorUserId,
+    };
     const comments: OkrReviewComment[] = [...(existingRow.comments ?? []), newComment];
 
     const beforeState = { review: toOkrReview(existingRow) };
@@ -984,7 +1017,11 @@ export async function listOkrSetReviews(params: ListOkrSetReviewsParams): Promis
        AND r.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY r.review_type ASC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, setId];
   const client = await acquirePgClient();
   try {

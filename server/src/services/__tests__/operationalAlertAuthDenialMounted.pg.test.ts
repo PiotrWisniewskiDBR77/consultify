@@ -1,10 +1,12 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
 import config from '../../config/Config.js';
 import {
   flushPendingOperationalAuthDenialIntents,
@@ -140,9 +142,7 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
     expect(rows.rows.filter((row) => row.actor_id === active)).toHaveLength(4);
     expect(rows.rows.filter((row) => row.actor_id === revoked)).toHaveLength(1);
     expect(
-      rows.rows.some(
-        (row) => row.correlation_id === missingHeaderDenied.headers['x-request-id']
-      )
+      rows.rows.some((row) => row.correlation_id === missingHeaderDenied.headers['x-request-id'])
     ).toBe(true);
     expect(rows.rows.some((row) => row.correlation_id === `${p}-ok`)).toBe(false);
   });

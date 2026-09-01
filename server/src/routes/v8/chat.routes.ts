@@ -6,29 +6,29 @@ import { z, ZodError } from 'zod';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { validateOrgMembership } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
-import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 import { TARGET_KINDS } from '../../services/artifactHandoff/handoffSpineService.js';
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import { ChatHandoffError } from '../../services/chatHandoff/chatHandoffService.js';
 import * as chatHandoffService from '../../services/chatHandoff/chatHandoffService.js';
-import { GovernedSnapshotBindingError } from '../../services/organizationContext/governedSnapshotConsumerBindingService.js';
-import {
-  ChatTargetOwnerIngressError,
-  claimNextChatOwnerIngress,
-  claimChatOwnerIngress,
-  completeChatOwnerIngress,
-  deliverApprovedChatProposal,
-} from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
 import {
   ChatTargetMappingError,
   materializeClaimedChatTarget,
 } from '../../services/chatHandoff/chatTargetMappingService.js';
+import {
+  ChatTargetOwnerIngressError,
+  claimChatOwnerIngress,
+  claimNextChatOwnerIngress,
+  completeChatOwnerIngress,
+  deliverApprovedChatProposal,
+} from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
+import { GovernedSnapshotBindingError } from '../../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 
 const router = Router();
 

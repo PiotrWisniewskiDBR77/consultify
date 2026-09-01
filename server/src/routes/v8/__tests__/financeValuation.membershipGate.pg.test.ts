@@ -157,7 +157,12 @@ describe.sequential('finance-valuation.routes.ts — zero-writer lock-in (real P
     app = express();
     app.use(express.json());
     app.use((req: any, _res, next) => {
-      req.v8Context = { organizationId: org, userId: noMembershipUser, userRole: 'ADMIN', isSuperAdmin: false };
+      req.v8Context = {
+        organizationId: org,
+        userId: noMembershipUser,
+        userRole: 'ADMIN',
+        isSuperAdmin: false,
+      };
       next();
     });
     // Direct v8Context stub (not the full verifyToken chain) — same reasoning
@@ -234,7 +239,7 @@ describe.sequential('finance-valuation.routes.ts — zero-writer lock-in (real P
     expect(res.body?.data?.simulation).toBeDefined();
   });
 
-  it('exercising this file\'s handlers writes ZERO rows to financial_models / financial_analyses / value_baselines', async () => {
+  it("exercising this file's handlers writes ZERO rows to financial_models / financial_analyses / value_baselines", async () => {
     const countRows = async () => {
       const result = await pool.query<{ n: string }>(
         `SELECT

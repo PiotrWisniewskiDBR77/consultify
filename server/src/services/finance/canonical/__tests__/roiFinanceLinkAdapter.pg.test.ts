@@ -73,14 +73,16 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
     roiCaseCommands = await import('../../../resultsVnext/roi/roiCaseCommands.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'ROI Finance-link Adapter Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'ROI Finance-link Adapter Test Org',
+      ])
     );
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO initiatives (id, organization_id, status, name) VALUES (?, ?, 'DRAFT', ?)`, [
-        initiativeId,
-        orgId,
-        'ROI Finance-link Adapter Test Initiative',
-      ])
+      tx.queryRun(
+        `INSERT INTO initiatives (id, organization_id, status, name) VALUES (?, ?, 'DRAFT', ?)`,
+        [initiativeId, orgId, 'ROI Finance-link Adapter Test Initiative']
+      )
     );
     // ROI-E001 §5 / RN-G1 §B.3: createRoiCase fails closed without an active
     // domain='roi' visibility policy for the org — provision one directly
@@ -111,9 +113,10 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
   afterAll(async () => {
     if (createdLinkIds.length > 0) {
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`DELETE FROM rvn_roi_finance_links WHERE link_id IN (${createdLinkIds.map(() => '?').join(',')})`, [
-          ...createdLinkIds,
-        ])
+        tx.queryRun(
+          `DELETE FROM rvn_roi_finance_links WHERE link_id IN (${createdLinkIds.map(() => '?').join(',')})`,
+          [...createdLinkIds]
+        )
       );
     }
   });
@@ -122,7 +125,10 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
    * the way to APPROVED — same T2->T4->approve happy path
    * `canonicalServices.pg.test.ts` already proves, reused here as a fixture
    * builder rather than restated as its own separate assertion set. */
-  async function driveToApproved(businessVersionId: string, startingVersion: number): Promise<number> {
+  async function driveToApproved(
+    businessVersionId: string,
+    startingVersion: number
+  ): Promise<number> {
     let version = startingVersion;
 
     const submitted = await artifactVersionService.transition({
@@ -133,7 +139,8 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
       role: 'preparer',
       expectedVersion: version,
     });
-    if (!submitted.ok) throw new Error(`fixture setup: submit_for_review failed: ${submitted.message}`);
+    if (!submitted.ok)
+      throw new Error(`fixture setup: submit_for_review failed: ${submitted.message}`);
     version = submitted.businessVersion.version;
 
     const started = await artifactVersionService.transition({
@@ -151,9 +158,10 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
     // requires CURRENT (WP-B02 §5.1) — force it directly, same as
     // canonicalServices.pg.test.ts's own fixture setup.
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [
-        businessVersionId,
-      ])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [businessVersionId]
+      )
     );
 
     const approved = await artifactVersionService.approveVersion({
@@ -216,7 +224,9 @@ describe.skipIf(!REAL_PG)('roiFinanceLinkAdapter — real PostgreSQL', () => {
     // Clean-error, not a dirty SQL error from the other side: no
     // rvn_roi_finance_links row was created for the fake id.
     const leaked = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne(`SELECT link_id FROM rvn_roi_finance_links WHERE finance_version_id = ?`, [fakeVersionId])
+      tx.queryOne(`SELECT link_id FROM rvn_roi_finance_links WHERE finance_version_id = ?`, [
+        fakeVersionId,
+      ])
     );
     expect(leaked).toBeNull();
   });

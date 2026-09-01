@@ -127,7 +127,11 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
   const tier: 'healthy' | 'needs-work' | 'empty' =
     score >= 70 ? 'healthy' : score >= 30 ? 'needs-work' : 'empty';
   const color =
-    tier === 'healthy' ? 'var(--c-success)' : tier === 'needs-work' ? 'var(--c-warning)' : 'var(--c-danger)';
+    tier === 'healthy'
+      ? 'var(--c-success)'
+      : tier === 'needs-work'
+        ? 'var(--c-warning)'
+        : 'var(--c-danger)';
   const label = t('ideas.mindmap.branchHealthLabel', 'Zdrowie gałęzi: {{score}}%', { score });
   const ringWidth = tier === 'healthy' ? 0 : tier === 'needs-work' ? 1 : 2;
   return (

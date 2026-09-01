@@ -37,8 +37,10 @@ const DESCRIPTION: Record<AssessmentSaveIndicatorState, string> = {
   SAVING: 'Trwa zapis na serwerze.',
   SAVED: 'Serwer właśnie potwierdził ten zapis.',
   OFFLINE: 'Brak połączenia z serwerem. Praca nie ginie — jest kolejkowana lokalnie.',
-  RECOVERY_DRAFT: 'Masz niezapisane lokalne zmiany, jeszcze niepotwierdzone przez serwer. To NIE jest źródło prawdy.',
-  CONFLICT: 'Sesja zmieniła się na serwerze. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.',
+  RECOVERY_DRAFT:
+    'Masz niezapisane lokalne zmiany, jeszcze niepotwierdzone przez serwer. To NIE jest źródło prawdy.',
+  CONFLICT:
+    'Sesja zmieniła się na serwerze. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.',
   RECONNECTING: 'Próba ponownego połączenia z serwerem w toku.',
   RECOVERED: 'Połączenie i dane zostały przywrócone i potwierdzone przez serwer.',
 };
@@ -75,7 +77,10 @@ export interface AssessmentSaveStateIndicatorProps {
   readonly detail?: string;
 }
 
-export const AssessmentSaveStateIndicator: React.FC<AssessmentSaveStateIndicatorProps> = ({ state, detail }) => (
+export const AssessmentSaveStateIndicator: React.FC<AssessmentSaveStateIndicatorProps> = ({
+  state,
+  detail,
+}) => (
   <span
     data-testid="assessment-save-state-indicator"
     data-save-state={state}

@@ -53,8 +53,8 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/runLifecycleService.js';
 import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
+import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { parseBody, parseParams } from './_shared/validate.js';
 
 const router = Router();
@@ -175,8 +175,11 @@ router.post(
     const params = parseParams(runIdParams, req.params);
     const body = parseBody(cancelRunBody, req.body);
     const run = await executeGovernedCaseAction({
-      actor, actionId: 'case.run.cancel', targetId: params.runId,
-      operation: () => svc.cancelRun(params.runId, actor.actorUserId, body.expectedVersion, body.reason),
+      actor,
+      actionId: 'case.run.cancel',
+      targetId: params.runId,
+      operation: () =>
+        svc.cancelRun(params.runId, actor.actorUserId, body.expectedVersion, body.reason),
     });
     res.status(200).json({ data: run });
   })

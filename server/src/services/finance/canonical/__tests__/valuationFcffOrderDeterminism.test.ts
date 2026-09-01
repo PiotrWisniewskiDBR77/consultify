@@ -23,7 +23,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { sumFlow, type CellRow } from '../valuationFcffService.js';
+import { type CellRow, sumFlow } from '../valuationFcffService.js';
 
 /** Real values captured from `docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`'s
  *  full-chain reproduction — 12 monthly EBIT values for GoldCo FY2026, PARENT entity, as actually
@@ -31,18 +31,29 @@ import { sumFlow, type CellRow } from '../valuationFcffService.js';
  *  one of 10 independent runs — this fixture is about ARRAY ORDER, not about these values ever
  *  changing). */
 const REAL_MONTHLY_EBIT = [
-  '2041666.6666666665', '2040493.2950191572', '2039326.666886863', '2038166.7435139501',
-  '2037013.486367318', '2035866.857135322', '2034726.8177264985', '2033593.3302683001',
-  '2032466.3571058386', '2031345.8608006327', '2030231.8041293647', '2029124.150082644',
+  '2041666.6666666665',
+  '2040493.2950191572',
+  '2039326.666886863',
+  '2038166.7435139501',
+  '2037013.486367318',
+  '2035866.857135322',
+  '2034726.8177264985',
+  '2033593.3302683001',
+  '2032466.3571058386',
+  '2031345.8608006327',
+  '2030231.8041293647',
+  '2029124.150082644',
 ];
-const CANONICAL_PERIOD_IDS = REAL_MONTHLY_EBIT.map((_, i) => `per-2026-${String(i + 1).padStart(2, '0')}`);
+const CANONICAL_PERIOD_IDS = REAL_MONTHLY_EBIT.map(
+  (_, i) => `per-2026-${String(i + 1).padStart(2, '0')}`
+);
 /** A genuine permutation (not a simple reversal — reversal happens to sum identically for this
  *  particular smooth series, verified separately) of the same 12 periods, captured from a targeted
  *  search that reproduces a DIFFERENT bit pattern than the canonical-order sum — this is real
  *  evidence the reordering channel is not a corner case, not an invented worst case. */
-const SHUFFLED_PERIOD_ORDER = [
-  4, 5, 9, 3, 2, 1, 8, 7, 0, 11, 6, 10,
-].map((i) => CANONICAL_PERIOD_IDS[i]);
+const SHUFFLED_PERIOD_ORDER = [4, 5, 9, 3, 2, 1, 8, 7, 0, 11, 6, 10].map(
+  (i) => CANONICAL_PERIOD_IDS[i]
+);
 
 function makeCells(order: readonly string[]): CellRow[] {
   const valueByPeriod = new Map(CANONICAL_PERIOD_IDS.map((pid, i) => [pid, REAL_MONTHLY_EBIT[i]]));
@@ -61,7 +72,9 @@ describe('valuationFcffService.sumFlow — order-independent FCFF summation', ()
   it('NEGATIVE CONTROL: summing the raw (SQL-order) array directly, without sorting to canonical period order, IS order-dependent — proves this test can detect the bug the fix closes', () => {
     const canonicalOrderCells = makeCells(CANONICAL_PERIOD_IDS);
     const shuffledOrderCells = makeCells(SHUFFLED_PERIOD_ORDER);
-    expect(shuffledOrderCells.map((c) => c.period_id)).not.toEqual(canonicalOrderCells.map((c) => c.period_id)); // fixture sanity
+    expect(shuffledOrderCells.map((c) => c.period_id)).not.toEqual(
+      canonicalOrderCells.map((c) => c.period_id)
+    ); // fixture sanity
 
     const rawSumCanonical = canonicalOrderCells.reduce((s, c) => s + Number(c.value_decimal), 0);
     const rawSumShuffled = shuffledOrderCells.reduce((s, c) => s + Number(c.value_decimal), 0);

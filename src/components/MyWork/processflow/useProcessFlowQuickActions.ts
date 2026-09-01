@@ -6,7 +6,11 @@
 import { useEffect, useRef } from 'react';
 import type { Node } from 'reactflow';
 
-import { emitQuickActionAck, isQuickActionOutcome, type LaneOpOutcome } from '@/actions/quickActionAck';
+import {
+  emitQuickActionAck,
+  isQuickActionOutcome,
+  type LaneOpOutcome,
+} from '@/actions/quickActionAck';
 
 export interface ProcessFlowQuickActionHandlers {
   addNode: (shape: any, overrides?: { label?: string }) => void;
@@ -176,8 +180,7 @@ function runLaneOp(
   handlers: ProcessFlowQuickActionHandlers
 ): void {
   const ackId = typeof detail?.ackId === 'string' ? detail.ackId : undefined;
-  const laneId =
-    typeof detail?.laneId === 'string' && detail.laneId ? detail.laneId : undefined;
+  const laneId = typeof detail?.laneId === 'string' && detail.laneId ? detail.laneId : undefined;
   if (!laneId) {
     emitQuickActionAck(ackId, { ok: false, reason: 'unknown_lane' });
     return;
@@ -189,7 +192,10 @@ function runLaneOp(
       return;
     }
     const outcome = fn();
-    emitQuickActionAck(ackId, isQuickActionOutcome(outcome) ? outcome : { ok: false, reason: 'no_handler' });
+    emitQuickActionAck(
+      ackId,
+      isQuickActionOutcome(outcome) ? outcome : { ok: false, reason: 'no_handler' }
+    );
   };
 
   if (action === 'pf_lane_rename') {

@@ -22,9 +22,13 @@
  * module (WP-C02 report section 2's design goal for that file, applied here).
  */
 
-import type { FinanceRole } from '../canonical/lifecycleService.js';
 import type { FinanceValue } from '../../../types/finance/financeValueSemantics.js';
-import { operationTargets, type Operation, type FinanceValueInput } from '../../../types/finance/Operation.js';
+import {
+  type FinanceValueInput,
+  type Operation,
+  operationTargets,
+} from '../../../types/finance/Operation.js';
+import type { FinanceRole } from '../canonical/lifecycleService.js';
 
 // ---------------------------------------------------------------------------
 // Depth — configurable, not hardcoded, default satisfies the task brief's
@@ -189,7 +193,10 @@ export class OperationStack {
     options: { maxDepth?: number; cursor?: number } = {}
   ): OperationStack {
     const stack = new OperationStack({ maxDepth: options.maxDepth });
-    const bounded = entries.length > stack.maxDepth ? entries.slice(entries.length - stack.maxDepth) : entries.slice();
+    const bounded =
+      entries.length > stack.maxDepth
+        ? entries.slice(entries.length - stack.maxDepth)
+        : entries.slice();
     stack.entries = bounded;
     const requestedCursor = options.cursor ?? bounded.length;
     stack.cursor = Math.max(0, Math.min(requestedCursor, bounded.length));

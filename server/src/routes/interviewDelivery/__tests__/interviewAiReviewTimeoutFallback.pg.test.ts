@@ -22,7 +22,7 @@ import { randomUUID } from 'node:crypto';
 import express, { type Express } from 'express';
 import type { Pool } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB =
@@ -96,34 +96,6 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
       [assignmentId, orgId, userId, sessionId]
     );
 
-    // The "hung provider": resolves long after our bound, with a well-formed
-    // payload (proves the FALLBACK path, not a malformed-response path).
-    mockLlmCall.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(
-            () =>
-              resolve({
-                object: {
-                  questionEvaluations: [
-                    {
-                      questionId,
-                      rubric: ['concreteness', 'evidence', 'depth', 'measurability', 'coherence'].map(
-                        (criterion) => ({ criterion, score: 4, justification: 'late but real' })
-                      ),
-                      feedback: 'late response',
-                      fixType: null,
-                    },
-                  ],
-                  recommendations: [],
-                },
-                usage: {},
-              }),
-            PROVIDER_DELAY_MS
-          );
-        })
-    );
-
     const { InterviewController } = await import('../../../controllers/InterviewController.js');
     app = express();
     app.use(express.json());
@@ -136,6 +108,46 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
       (InterviewController as any).evaluateSessionAnswers
     );
   }, 60000);
+
+  // ★ DAY211 — the global setup clears chained mock implementations between
+  // tests. Reinstall the cheap provider stub after that global beforeEach.
+  beforeEach(() => {
+    // The "hung provider": resolves long after our bound, with a well-formed
+    // payload (proves the FALLBACK path, not a malformed-response path).
+    mockLlmCall.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                object: {
+                  questionEvaluations: [
+                    {
+                      questionId,
+                      rubric: [
+                        'concreteness',
+                        'evidence',
+                        'depth',
+                        'measurability',
+                        'coherence',
+                      ].map((criterion) => ({
+                        criterion,
+                        score: 4,
+                        justification: 'late but real',
+                      })),
+                      feedback: 'late response',
+                      fixType: null,
+                    },
+                  ],
+                  recommendations: [],
+                },
+                usage: {},
+              }),
+            PROVIDER_DELAY_MS
+          );
+        })
+    );
+  });
 
   afterAll(async () => {
     if (!pool) return;
@@ -155,9 +167,7 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     const { getRequestMetrics } = await import('../../../middleware/metrics.middleware.js');
     const metricsBefore = getRequestMetrics().aiTimeouts;
     const startedAt = Date.now();
-    const res = await request(app).post(
-      `/api/interview/sessions/${sessionId}/evaluate-answers`
-    );
+    const res = await request(app).post(`/api/interview/sessions/${sessionId}/evaluate-answers`);
     const elapsedMs = Date.now() - startedAt;
 
     // Must return well before the (deliberately much longer) provider delay —
@@ -174,7 +184,9 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     expect(res.body.recommendations).toEqual([]);
     expect(getRequestMetrics().aiTimeouts).toBe(metricsBefore + 1);
 
-    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [questionId]);
+    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
+      questionId,
+    ]);
     expect(row.rows[0].answer_text).toBe("the user's already-persisted answer");
 
     const persisted = await pool.query(
@@ -225,7 +237,11 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
         [sessionId, orgId]
       );
       expect(audit.rows).toHaveLength(1);
-      expect(audit.rows[0]).toMatchObject({ result: 'failure', resource_id: sessionId, organization_id: orgId });
+      expect(audit.rows[0]).toMatchObject({
+        result: 'failure',
+        resource_id: sessionId,
+        organization_id: orgId,
+      });
       const metadata =
         typeof audit.rows[0].metadata === 'string'
           ? JSON.parse(audit.rows[0].metadata)

@@ -307,7 +307,9 @@ export async function assignCriterion(
 }
 
 export async function submitAuditeeResponse(id: string, text: string): Promise<WorkspaceCriterion> {
-  const res = await Api.post(`/audits/criteria/${encodeURIComponent(id)}/auditee-response`, { text });
+  const res = await Api.post(`/audits/criteria/${encodeURIComponent(id)}/auditee-response`, {
+    text,
+  });
   return unwrapEnvelope(res) as WorkspaceCriterion;
 }
 
@@ -353,7 +355,13 @@ export const EVIDENCE_KINDS = [
 ] as const;
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
-export const EVIDENCE_REQUEST_STATUSES = ['open', 'responded', 'fulfilled', 'overdue', 'cancelled'] as const;
+export const EVIDENCE_REQUEST_STATUSES = [
+  'open',
+  'responded',
+  'fulfilled',
+  'overdue',
+  'cancelled',
+] as const;
 export type EvidenceRequestStatus = (typeof EVIDENCE_REQUEST_STATUSES)[number];
 
 export interface WorkspaceEvidence {
@@ -420,7 +428,10 @@ export interface ReviewEvidenceInput {
   rejectionReason?: string | null;
 }
 
-export async function reviewEvidence(id: string, input: ReviewEvidenceInput): Promise<WorkspaceEvidence> {
+export async function reviewEvidence(
+  id: string,
+  input: ReviewEvidenceInput
+): Promise<WorkspaceEvidence> {
   const res = await Api.post(`/audits/evidence/${encodeURIComponent(id)}/review`, input);
   return unwrapEnvelope(res) as WorkspaceEvidence;
 }
@@ -512,7 +523,12 @@ export interface WorkspaceFinding {
   updatedAt: string;
 }
 
-export const RESPONSE_POSITIONS = ['accept', 'partially_accept', 'reject', 'request_clarification'] as const;
+export const RESPONSE_POSITIONS = [
+  'accept',
+  'partially_accept',
+  'reject',
+  'request_clarification',
+] as const;
 export type ResponsePosition = (typeof RESPONSE_POSITIONS)[number];
 
 export interface WorkspaceManagementResponse {
@@ -525,7 +541,12 @@ export interface WorkspaceManagementResponse {
   status: 'draft' | 'submitted' | 'accepted' | 'returned';
 }
 
-export const ACTION_KINDS = ['correction', 'containment', 'corrective_action', 'preventive_action'] as const;
+export const ACTION_KINDS = [
+  'correction',
+  'containment',
+  'corrective_action',
+  'preventive_action',
+] as const;
 export type ActionKind = (typeof ACTION_KINDS)[number];
 
 export const ACTION_STATUSES = [
@@ -558,7 +579,12 @@ export interface WorkspaceCorrectiveAction {
 export const VERIFICATION_KINDS = ['implementation', 'effectiveness'] as const;
 export type VerificationKind = (typeof VERIFICATION_KINDS)[number];
 
-export const VERIFICATION_RESULTS = ['effective', 'partially_effective', 'not_effective', 'inconclusive'] as const;
+export const VERIFICATION_RESULTS = [
+  'effective',
+  'partially_effective',
+  'not_effective',
+  'inconclusive',
+] as const;
 export type VerificationResult = (typeof VERIFICATION_RESULTS)[number];
 
 export interface WorkspaceVerification {
@@ -622,7 +648,10 @@ export interface UpdateFindingInput {
   ownerUserId?: string | null;
 }
 
-export async function updateFinding(id: string, patch: UpdateFindingInput): Promise<WorkspaceFinding> {
+export async function updateFinding(
+  id: string,
+  patch: UpdateFindingInput
+): Promise<WorkspaceFinding> {
   const res = await Api.patch(`/audits/findings/${encodeURIComponent(id)}`, patch);
   return unwrapEnvelope(res) as WorkspaceFinding;
 }
@@ -632,7 +661,10 @@ export interface ReviewFindingInput {
   note?: string | null;
 }
 
-export async function reviewFinding(id: string, input: ReviewFindingInput): Promise<WorkspaceFinding> {
+export async function reviewFinding(
+  id: string,
+  input: ReviewFindingInput
+): Promise<WorkspaceFinding> {
   const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/review`, input);
   return unwrapEnvelope(res) as WorkspaceFinding;
 }
@@ -712,7 +744,9 @@ export interface PlanVerificationInput {
   plannedDate?: string | null;
 }
 
-export async function planVerification(input: PlanVerificationInput): Promise<WorkspaceVerification> {
+export async function planVerification(
+  input: PlanVerificationInput
+): Promise<WorkspaceVerification> {
   const res = await Api.post('/audits/actions/verifications', input);
   return unwrapEnvelope(res) as WorkspaceVerification;
 }
@@ -727,7 +761,10 @@ export async function performVerification(
   id: string,
   input: PerformVerificationInput
 ): Promise<WorkspaceVerification> {
-  const res = await Api.post(`/audits/actions/verifications/${encodeURIComponent(id)}/perform`, input);
+  const res = await Api.post(
+    `/audits/actions/verifications/${encodeURIComponent(id)}/perform`,
+    input
+  );
   return unwrapEnvelope(res) as WorkspaceVerification;
 }
 
@@ -743,10 +780,21 @@ export const AI_INTENTS = [
 ] as const;
 export type AiIntent = (typeof AI_INTENTS)[number];
 
-export const AI_TARGET_TYPES = ['criterion', 'evidence_request', 'finding', 'corrective_action'] as const;
+export const AI_TARGET_TYPES = [
+  'criterion',
+  'evidence_request',
+  'finding',
+  'corrective_action',
+] as const;
 export type AiTargetType = (typeof AI_TARGET_TYPES)[number];
 
-export const AI_PROPOSAL_STATUSES = ['pending', 'accepted', 'rejected', 'superseded', 'expired'] as const;
+export const AI_PROPOSAL_STATUSES = [
+  'pending',
+  'accepted',
+  'rejected',
+  'superseded',
+  'expired',
+] as const;
 export type AiProposalStatus = (typeof AI_PROPOSAL_STATUSES)[number];
 
 export interface WorkspaceAiProposal {
@@ -816,7 +864,10 @@ export interface WorkspaceDomainEvent {
 }
 
 /** Pełna historia jednego obiektu (rosnąco chronologicznie) — `GET /trail/history`. */
-export async function getEntityHistory(entityType: string, entityId: string): Promise<WorkspaceDomainEvent[]> {
+export async function getEntityHistory(
+  entityType: string,
+  entityId: string
+): Promise<WorkspaceDomainEvent[]> {
   const res = await Api.get(
     `/audits/trail/history?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
   );

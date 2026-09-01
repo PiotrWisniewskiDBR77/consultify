@@ -15,7 +15,9 @@ import type { LineageEdgeDto } from '@/services/api/financeV2.types';
 
 import { RelatedArtifactsSection } from '../RelatedArtifactsSection';
 
-function edge(overrides: Partial<LineageEdgeDto> & { edgeId: string; targetVersionId: string }): LineageEdgeDto {
+function edge(
+  overrides: Partial<LineageEdgeDto> & { edgeId: string; targetVersionId: string }
+): LineageEdgeDto {
   return {
     sourceVersionId: 'bv-statement-pack-1',
     sourceArtifactType: 'STATEMENT_PACK',
@@ -64,9 +66,21 @@ describe('RelatedArtifactsSection', () => {
       <RelatedArtifactsSection
         sourceBusinessVersionId="bv-1"
         descendants={[
-          edge({ edgeId: 'e1', targetVersionId: 'bv-analysis-1', targetArtifactType: 'HISTORICAL_ANALYSIS' }),
-          edge({ edgeId: 'e2', targetVersionId: 'bv-analysis-2', targetArtifactType: 'HISTORICAL_ANALYSIS' }),
-          edge({ edgeId: 'e3', targetVersionId: 'bv-model-1', targetArtifactType: 'BASELINE_MODEL' }),
+          edge({
+            edgeId: 'e1',
+            targetVersionId: 'bv-analysis-1',
+            targetArtifactType: 'HISTORICAL_ANALYSIS',
+          }),
+          edge({
+            edgeId: 'e2',
+            targetVersionId: 'bv-analysis-2',
+            targetArtifactType: 'HISTORICAL_ANALYSIS',
+          }),
+          edge({
+            edgeId: 'e3',
+            targetVersionId: 'bv-model-1',
+            targetArtifactType: 'BASELINE_MODEL',
+          }),
         ]}
         loading={false}
         loaded
@@ -74,9 +88,13 @@ describe('RelatedArtifactsSection', () => {
         onCreateNew={() => {}}
       />
     );
-    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent('2');
+    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent(
+      '2'
+    );
     expect(screen.getByTestId('related-artifacts-count-BASELINE_MODEL')).toHaveTextContent('1');
-    expect(screen.getByTestId('related-artifacts-count-PREDICTION_SCENARIO')).toHaveTextContent('0');
+    expect(screen.getByTestId('related-artifacts-count-PREDICTION_SCENARIO')).toHaveTextContent(
+      '0'
+    );
     expect(screen.getByTestId('related-artifacts-count-VALUATION_CASE')).toHaveTextContent('0');
   });
 
@@ -120,7 +138,11 @@ describe('RelatedArtifactsSection', () => {
   // (`transformationKind`) i dowodzimy, że relacja (targetVersionId, licznik)
   // pozostaje identyczna — bo klucz jest immutable ID, nie etykieta.
   it('NEGATIVE CONTROL — changing the only label-like field (transformationKind) does not change identity/count, because keys are immutable IDs', () => {
-    const before = edge({ edgeId: 'e1', targetVersionId: 'bv-analysis-1', transformationKind: 'analysis_from_statement' });
+    const before = edge({
+      edgeId: 'e1',
+      targetVersionId: 'bv-analysis-1',
+      transformationKind: 'analysis_from_statement',
+    });
     const { rerender } = render(
       <RelatedArtifactsSection
         sourceBusinessVersionId="bv-1"
@@ -131,10 +153,16 @@ describe('RelatedArtifactsSection', () => {
         onCreateNew={() => {}}
       />
     );
-    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent('1');
+    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent(
+      '1'
+    );
     expect(screen.getByTestId('related-artifacts-open-bv-analysis-1')).toBeInTheDocument();
 
-    const renamed = edge({ edgeId: 'e1', targetVersionId: 'bv-analysis-1', transformationKind: 'RENAMED_OR_DELETED_DOWNSTREAM_LABEL' });
+    const renamed = edge({
+      edgeId: 'e1',
+      targetVersionId: 'bv-analysis-1',
+      transformationKind: 'RENAMED_OR_DELETED_DOWNSTREAM_LABEL',
+    });
     rerender(
       <RelatedArtifactsSection
         sourceBusinessVersionId="bv-1"
@@ -146,7 +174,9 @@ describe('RelatedArtifactsSection', () => {
       />
     );
     // Relacja wciąż widoczna pod tym samym immutable ID, count niezmieniony.
-    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent('1');
+    expect(screen.getByTestId('related-artifacts-count-HISTORICAL_ANALYSIS')).toHaveTextContent(
+      '1'
+    );
     expect(screen.getByTestId('related-artifacts-open-bv-analysis-1')).toBeInTheDocument();
   });
 });

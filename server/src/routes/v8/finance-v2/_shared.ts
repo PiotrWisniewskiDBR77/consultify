@@ -53,6 +53,12 @@ export function readIdempotencyKey(req: AuthRequest): string | undefined {
 }
 
 /** Uniform error envelope for this package's new routes — `{error, code}`, matching `models.routes.ts`'s existing shape. */
-export function sendError(res: Response, status: number, code: string, message: string, extra?: Record<string, unknown>) {
+export function sendError(
+  res: Response,
+  status: number,
+  code: string,
+  message: string,
+  extra?: Record<string, unknown>
+) {
   return res.status(status).json({ error: message, code, ...(extra ?? {}) });
 }

@@ -10,11 +10,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  OrgSectionCard,
-  OrgSelectField,
-  OrgTextField,
-} from '../OrganizationCardPrimitives';
+import { OrgSectionCard, OrgSelectField, OrgTextField } from '../OrganizationCardPrimitives';
 
 describe('OrgSectionCard — Szczegóły techniczne', () => {
   it('nie renderuje bloku bez techDetails', () => {
