@@ -5,36 +5,57 @@
  * Renders the REAL `<IdeasTableContent>` (MyWork "Ideas → Table view" —
  * ResizableTable + built-in row detail flyout via `TableWithPreviewLayout`,
  * the same component `MyIdeasListContent` mounts in production) wrapped in
- * the REAL shared powłoka: `<TopBar>` (Menu 1) from `ExecutiveModuleShell` +
- * the canonical `<ArtifactRightPanel>` accordion (Akcje·Właściwości·
- * Powiązania·Źródła i założenia·Komentarze·Historia — SSOT order). No re-implementation:
- * `IdeasTableContent` is pure-presentational (all data + handlers via
- * props, no store/API), so it mounts standalone with a mocked `MyIdea[]`
- * array — the same pattern as `dev-render/screens/assessment-initiatives-table.tsx`.
+ * the REAL shared powłoka: `<TopBar>` (Menu 1) from `ExecutiveModuleShell`.
+ * No re-implementation: `IdeasTableContent` is pure-presentational (all data
+ * + handlers via props, no store/API), so it mounts standalone with a mocked
+ * `MyIdea[]` array — the same pattern as
+ * `dev-render/screens/assessment-initiatives-table.tsx`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * ★ 2026-09-01 — USUNIĘTY eksploracyjny `<ArtifactRightPanel>` (dyżur 175).
+ *
+ * POWÓD: właściciel TRZY RAZY zgłosił „preview z tej tabeli nie jest zgodny
+ * ze standardem/wzorem" (30.08, 01.09 ×2) i dwie naprawy nie trafiły, bo
+ * szukały defektu w produkcie. Zmierzone w żywym DOM (1440×900, oba ekrany
+ * mountują TEN SAM `IdeasTableContent`):
+ *
+ *   ?screen=idea-table-production → panel podglądu 403 px  ✔ kanon
+ *   ?screen=idea-table            → panel podglądu 340 px  ✘ dno clamp()
+ *
+ * Kanon §7.2 to `clamp(340px, 28%, 480px)`; przy 1440 px daje 403 px. Ten
+ * ekran dokładał z prawej `ArtifactRightPanel` (~440 px), więc 28% liczyło
+ * się z ~1000 px = 280 px i podgląd SPADAŁ NA DNO clamp (340 px). Skutkiem
+ * ubocznym ekran pokazywał DWA prawe panele obok siebie z powtórzonymi
+ * nagłówkami „POWIĄZANIA" i „AI" — w dodatku sprzecznymi („Brak powiązań"
+ * w podglądzie vs „1 inicjatywa promowana" w panelu, bo dane panelu były
+ * zmyślone TUTAJ, w harnessie).
+ *
+ * PRODUKCJA TEGO NIE MA: `MyIdeasListContent.tsx:1943` montuje
+ * `IdeasTableContent` jako JEDYNE dziecko kolumnowego flexa — zero trafień
+ * na `RightPanel` w całym pliku. Panel był „exploratory" (tak nazywał go
+ * własny komentarz tego pliku i docstring `idea-table-production.tsx`).
+ * Właściciel oceniał więc kompozycję, której w produkcie nie ma, a my trzy
+ * razy naprawialiśmy produkt, który był zgodny z kanonem. ZŁOTA REGUŁA nr 1
+ * (CLAUDE.md): weryfikuj REALNY runtime.
+ *
+ * OTWARTE PYTANIE PRODUKTOWE (nie rozstrzygam go po cichu): jeśli tabela ma
+ * kiedyś być artefaktem SPEC-A z własnym prawym panelem, to podgląd wiersza
+ * i panel artefaktu potrzebują reguły WZAJEMNEGO WYKLUCZANIA — inaczej dwa
+ * prawe panele zawsze zjadą podgląd na dno clamp(). Do decyzji właściciela.
+ * ─────────────────────────────────────────────────────────────────────────
  *
  * Exercises: sort/resize/filter header, row select → bulk affordance,
  * per-row kebab (convert/favorite/folder/delete), click-to-open row preview
- * (built into the component, right of the grid), PLUS the outer artefakt-
- * level right panel (properties of the TABLE itself, not a row). Light+dark
- * tokens, zero crimson on focus/status/selection.
+ * (built into the component, right of the grid). Light+dark tokens, zero
+ * crimson on focus/status/selection.
  */
-import { FileSpreadsheet, History as HistoryIcon, Plus, Sparkles, Tag } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { IdeasTableContent } from '@/components/MyWork/IdeasTableContent';
 import type { MyIdea, SortDir, SortField } from '@/components/MyWork/myIdeasTypes';
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
-import {
-  PreviewActionBar,
-  PreviewAIHintStrip,
-  PreviewMetaCard,
-  PreviewRelations,
-} from '@/components/shared/PreviewPane';
-import {
-  ArtifactRightPanel,
-  type ArtifactRightPanelSection,
-} from '@/components/standard/ArtifactRightPanel';
 import type { ColumnWidths, FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 
 const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
@@ -165,103 +186,6 @@ export function IdeaTableScreen(): React.ReactElement {
     [isPl]
   );
 
-  const rightSections: ArtifactRightPanelSection[] = useMemo(
-    () => [
-      {
-        id: 'actions',
-        label: isPl ? 'Akcje' : 'Actions',
-        children: (
-          <PreviewActionBar
-            rows={[
-              {
-                buttons: [
-                  {
-                    label: isPl ? 'Uzupełnij puste' : 'Fill empty',
-                    icon: Sparkles,
-                    colorScheme: 'neutral',
-                    onClick: () => {},
-                    flex: true,
-                  },
-                  {
-                    label: isPl ? 'Eksportuj arkusz' : 'Export sheet',
-                    icon: FileSpreadsheet,
-                    colorScheme: 'neutral',
-                    onClick: () => {},
-                    flex: true,
-                  },
-                ],
-              },
-            ]}
-          />
-        ),
-      },
-      {
-        id: 'properties',
-        label: isPl ? 'Właściwości' : 'Properties',
-        children: (
-          <PreviewMetaCard
-            pills={[
-              { label: isPl ? 'Wiersze' : 'Rows', value: String(ideas.length) },
-              { label: isPl ? 'Folder' : 'Folder', value: isPl ? 'Bez folderu' : 'No folder' },
-              { label: isPl ? 'Właściciel' : 'Owner', value: 'Piotr W.' },
-              {
-                label: isPl ? 'Widoczność' : 'Visibility',
-                value: isPl ? 'Zespół' : 'Team',
-                tone: 'info',
-              },
-            ]}
-          />
-        ),
-      },
-      {
-        id: 'relations',
-        label: isPl ? 'Powiązania' : 'Relations',
-        children: (
-          <PreviewRelations
-            items={[
-              {
-                id: 'r1',
-                label: isPl ? '1 inicjatywa promowana' : '1 promoted initiative',
-                icon: HistoryIcon,
-                type: 'initiative',
-              },
-              {
-                id: 'r2',
-                label: isPl ? 'Powiązana Mapa rekomendacji' : 'Linked Recommendation map',
-                icon: Tag,
-                type: 'mindmap',
-              },
-            ]}
-          />
-        ),
-      },
-      {
-        id: 'comments',
-        label: isPl ? 'Komentarze' : 'Comments',
-        isEmpty: true,
-        emptyLabel: isPl ? 'Brak komentarzy.' : 'No comments yet.',
-        children: null,
-      },
-      {
-        id: 'history',
-        // Nazwę sekcji kanonu narzuca `ArtifactRightPanel`
-        // (`ARTIFACT_PANEL_SECTION_LABELS`) — ta wartość jest ignorowana.
-        // Zostaje kanoniczna, żeby harness nie kłamał w kodzie.
-        label: isPl ? 'Historia' : 'History',
-        children: (
-          <PreviewAIHintStrip
-            hints={[
-              isPl ? 'Pogrupuj wg etapu' : 'Group by stage',
-              isPl ? 'Zaproponuj kolejny pomysł' : 'Suggest next idea',
-            ]}
-            onRunHint={() => {}}
-          />
-        ),
-      },
-    ],
-    [isPl, ideas.length]
-  );
-
   return (
     // IdeasTableContent's row-preview footer renders <ConvertToOutputMenu>, which
     // calls react-router-dom's useNavigate() — needs a Router ancestor even though
@@ -276,25 +200,22 @@ export function IdeaTableScreen(): React.ReactElement {
           backLabel={isPl ? 'Wróć do pomysłów' : 'Back to ideas'}
           onBack={() => {}}
         />
-        <div className="flex min-h-0 flex-1">
-          {/*
-            HARNESS-ONLY FIX (table-panel-clip, 2026-08-10): IdeasTableContent's
-            own root (`flex-1 min-h-0 bg-c-bg`, IdeasTableContent.tsx) has no
-            `min-w-0`, so as a flex ROW item its automatic minimum width is its
-            full min-content width (~1364px — sum of the fixed `table-fixed`
-            column widths). Production never hits this: MyIdeasListContent
-            mounts IdeasTableContent as the SOLE child of a COLUMN flex
-            (`flex flex-col flex-1 min-h-0`), where there is no sibling to
-            starve. This dev-render screen is the one place that puts
-            IdeasTableContent next to a shrink-0 sibling (the exploratory
-            "table as SPEC-A artefakt" ArtifactRightPanel below) in a ROW flex
-            — without this wrapper, IdeasTableContent refuses to shrink below
-            ~1364px and pushes the 320px panel off the right edge of the
-            viewport at 1440px (g4__table__baseline screenshots). Confined to
-            this harness composition; IdeasTableContent's production markup is
-            untouched.
-          */}
-          <div className="min-w-0 flex-1">
+        {/*
+          Montaż 1:1 jak produkcja (`MyIdeasListContent.tsx:1943`):
+          `IdeasTableContent` jest JEDYNYM dzieckiem KOLUMNOWEGO flexa.
+          Do 2026-09-01 stał tu flex WIERSZOWY z eksploracyjnym
+          `ArtifactRightPanel` obok — i to ta kompozycja (nie produkt)
+          ściskała podgląd wiersza z kanonicznych 403 px na dno clamp
+          (340 px). Szczegóły i pomiar: docstring na górze pliku.
+
+          Uwaga na przyszłość: poprzedni wariant potrzebował opakowania
+          `min-w-0`, bo root `IdeasTableContent` (`flex-1 min-h-0 bg-c-bg`)
+          nie ma `min-w-0` i jako element flexa WIERSZOWEGO nie schodził
+          poniżej ~1364 px. W kolumnowym flexie problem nie istnieje —
+          dlatego opakowanie znika razem z panelem, zamiast zostać jako
+          martwy ślad po nieistniejącym sąsiedzie.
+        */}
+        <div className="flex min-h-0 flex-1 flex-col">
             <IdeasTableContent
               ideas={ideas}
             isPolish={isPl}
@@ -346,11 +267,6 @@ export function IdeaTableScreen(): React.ReactElement {
               onDeleteIdea={() => {}}
               onRefresh={() => {}}
             />
-          </div>
-          <ArtifactRightPanel
-            sections={rightSections}
-            ariaLabel={isPl ? 'Szczegóły tabeli pomysłów' : 'Idea table details'}
-          />
         </div>
       </div>
     </MemoryRouter>
