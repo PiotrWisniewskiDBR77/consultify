@@ -43,6 +43,7 @@ const {
   requireTableAccess,
   requireFieldAccess,
   requireRecordAccess,
+  requireFormAccess,
   requireViewAccess,
   requireGovernedModelAccess,
   requireRoles,
@@ -2835,7 +2836,7 @@ router.get('/tables/:tableId/forms', requireTableAccess, async (req: Request, re
   }
 });
 
-router.get('/forms/:formId', async (req: Request, res: Response) => {
+router.get('/forms/:formId', requireFormAccess, async (req: Request, res: Response) => {
   try {
     const { formId } = req.params;
     if (!formId) return res.status(400).json({ error: 'formId is required' });
@@ -2847,7 +2848,7 @@ router.get('/forms/:formId', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/forms/:formId', async (req: Request, res: Response) => {
+router.patch('/forms/:formId', requireFormAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { formId } = req.params;
@@ -2865,7 +2866,7 @@ router.patch('/forms/:formId', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/forms/:formId', async (req: Request, res: Response) => {
+router.delete('/forms/:formId', requireFormAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { formId } = req.params;
