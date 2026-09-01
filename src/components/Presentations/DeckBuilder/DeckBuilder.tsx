@@ -1274,10 +1274,16 @@ export const DeckBuilder: React.FC = () => {
   const setChatModuleIntent = useAppStore((s) => s.setChatModuleIntent);
   const clearChatModuleIntent = useAppStore((s) => s.clearChatModuleIntent);
   useEffect(() => {
-    if (!deck?.deck_id) return;
+    // Strażnik na `typeof === 'function'`: atrapy `useAppStore` w testach bywają
+    // płaskie (`selector({ currentUser: null })`) i oddają `undefined` na każdy
+    // nowy setter. Rejestracja mostu nie może wywracać ekranu, którego test
+    // dotyczy czegoś zupełnie innego.
+    if (!deck?.deck_id || typeof setChatModuleIntent !== 'function') return;
     const owner = `deckBuilder:${deck.deck_id}`;
     setChatModuleIntent({ owner, handler: handleTeresaDeckIntent });
-    return () => clearChatModuleIntent(owner);
+    return () => {
+      if (typeof clearChatModuleIntent === 'function') clearChatModuleIntent(owner);
+    };
   }, [deck?.deck_id, handleTeresaDeckIntent, setChatModuleIntent, clearChatModuleIntent]);
 
   // R4 — Free-text per-slide rewrite. Uses the returned rebuilt `card` to

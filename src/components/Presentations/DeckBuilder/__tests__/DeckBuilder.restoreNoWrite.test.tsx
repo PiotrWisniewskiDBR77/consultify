@@ -80,7 +80,14 @@ vi.mock('@/services/presentationRuntimeEvents', () => ({
   deriveLastAgentActivity: vi.fn(() => null),
 }));
 vi.mock('@/store/useAppStore', () => ({
-  useAppStore: (selector: (s: unknown) => unknown) => selector({ currentUser: null }),
+  // Atrapa musi nieść settery „jednej Teresy" (2026-09-01) — ekran talii
+  // rejestruje w nich most „Teresa sama poprawia prezentację".
+  useAppStore: (selector: (s: unknown) => unknown) =>
+    selector({
+      currentUser: null,
+      setChatModuleIntent: vi.fn(),
+      clearChatModuleIntent: vi.fn(),
+    }),
 }));
 
 /**
