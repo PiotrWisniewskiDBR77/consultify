@@ -40,6 +40,25 @@ it('materializes typed template values and emits explicit Data required', () => 
  * mapping (both camelCase and snake_case DB shapes).
  */
 describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the row mapping', () => {
+  it('exposes colorTemplateId only when the day226 custom-save flag is enabled', () => {
+    const previous = process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE;
+    const row = {
+      id: 'tmpl-colors',
+      outline_json: '[]',
+      layout_policy_json: JSON.stringify({ colorTemplateId: 'burgundy' }),
+    };
+    try {
+      delete process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE;
+      expect(buildTemplateRuntimeFromRow(row)).not.toHaveProperty('colorTemplateId');
+
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE = 'true';
+      expect(buildTemplateRuntimeFromRow(row)?.colorTemplateId).toBe('burgundy');
+    } finally {
+      if (previous === undefined) delete process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE;
+      else process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE = previous;
+    }
+  });
+
   it('carries custom template version, theme and layout mapping into generation runtime', () => {
     const customTemplate = {
       version: 4,

@@ -168,7 +168,10 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
+import {
+  mapOutlineBlueprintToDeckSlides,
+  validatePresentationCustomTemplate,
+} from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -1563,8 +1566,17 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
-      req.body;
+    const {
+      name,
+      description,
+      audience,
+      goal,
+      theme,
+      outlineJson,
+      maxSlides,
+      colorTemplateId,
+      customTemplate,
+    } = req.body;
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1573,19 +1585,43 @@ router.put(
     // `colorTemplateId === undefined` means "field not sent, leave
     // untouched"; `null` or `''` means "explicitly cleared".
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined) {
-      let currentLayoutPolicy: Record<string, unknown> = {};
-      if (existing?.layout_policy_json) {
-        try {
-          currentLayoutPolicy = JSON.parse(existing.layout_policy_json) || {};
-        } catch {
-          currentLayoutPolicy = {};
+    if (colorTemplateId !== undefined || customTemplate !== undefined) {
+      const customSaveEnabled =
+        process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true';
+      let customTemplateUpdate: Record<string, unknown> = {};
+      if (customSaveEnabled && customTemplate !== undefined) {
+        if (customTemplate) {
+          const validation = validatePresentationCustomTemplate(customTemplate);
+          if (validation.ok === false) {
+            return res.status(400).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
+          }
+          customTemplateUpdate = { customTemplate: validation.value };
+        } else {
+          customTemplateUpdate = { customTemplate: customTemplate || null };
         }
       }
-      layoutPolicyJson = JSON.stringify({
-        ...currentLayoutPolicy,
-        colorTemplateId: colorTemplateId || null,
-      });
+
+      if (colorTemplateId !== undefined || (customSaveEnabled && customTemplate !== undefined)) {
+        let currentLayoutPolicy: Record<string, unknown> = {};
+        if (existing?.layout_policy_json) {
+          try {
+            currentLayoutPolicy = JSON.parse(existing.layout_policy_json) || {};
+          } catch {
+            currentLayoutPolicy = {};
+          }
+        }
+        layoutPolicyJson = JSON.stringify({
+          ...currentLayoutPolicy,
+          ...(colorTemplateId !== undefined
+            ? { colorTemplateId: colorTemplateId || null }
+            : {}),
+          ...customTemplateUpdate,
+        });
+      }
     }
 
     await dbRun(
