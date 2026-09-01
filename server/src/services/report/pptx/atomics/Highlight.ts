@@ -2,6 +2,7 @@
  * Atomic: Highlight
  * A colored box with bold text — used for key stats, impact callouts.
  */
+import { isDeckOverflowShrinkDisabled } from '../../../../config/FeatureFlags.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface HighlightProps {
@@ -40,7 +41,7 @@ export function Highlight(props: HighlightProps, tokens: DesignTokens): Rendered
         valign: 'middle',
         // Długie wartości (np. zakres wyceny) muszą zmieścić się w pasku bez
         // przelewania — kurcz do rozmiaru, jedna linia.
-        fit: 'shrink',
+        ...(isDeckOverflowShrinkDisabled() ? {} : { fit: 'shrink' as const }),
         wrap: false,
       });
     },

@@ -380,6 +380,7 @@ const Day228ImageStyleFieldScreen = React.lazy(
 const Day231KonspektZWiedzyScreen = React.lazy(
   () => import('./screens/day231-konspekt-z-wiedzy')
 );
+const Day230PrzepelnienieScreen = React.lazy(() => import('./screens/day230-przepelnienie'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -1663,6 +1664,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day231 — realny OutlineStep z widocznymi źródłami przy tezach; dane z propsów harnessu, nie z realnego przebiegu.',
     render: () => <Day231KonspektZWiedzyScreen />,
+  },
+  'day230-przepelnienie': {
+    label:
+      'Day230 — realny komponent ostrzeżenia przed eksportem; stan overflow/clean z propsów harnessu.',
+    render: () => <Day230PrzepelnienieScreen />,
   },
 };
 
