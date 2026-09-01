@@ -70,3 +70,41 @@ nie funkcjonalny.
 **Do tego czasu obowiązuje reguła z kształtu 22:** *zanim zacytujesz `plik:linia` jako dowód,
 sprawdź, czy ten plik ktoś importuje.* **Przy 41 pułapkach w jednym katalogu to nie jest
 przesadna ostrożność.**
+
+
+---
+
+# ★ SPROSTOWANIE (1.09, wieczór) — 39, nie 41. Mój pomiar miał ślepy punkt.
+
+Pisarz instrukcji 248 odtworzył populację **własną metodą** i obalił dwie pozycje z mojej listy:
+
+| Plik | Dlaczego NIE jest martwy |
+| --- | --- |
+| `health.routes.ts` | **montowany przez `server/src/index.ts:117`, całkowicie POZA `Gateway.ts`** |
+| `assessment-reports.routes.ts` | **import dynamiczny** w `healthProbeService.ts` |
+
+**Ślepy punkt mojego pomiaru:** kryterium życia liczyło **wyłącznie importy w `Gateway.ts`
+i `routes/index.ts`**. Nie obejmowało **drugiego punktu montowania** (`server/src/index.ts`)
+ani **importów dynamicznych**.
+
+**Zweryfikowane przeze mnie:** `grep -n "health.routes" server/src/index.ts` →
+linia **117**, `import dbHealthRoutes`. **Plik jest żywy.**
+
+## Dlaczego zapisuję to osobno, a nie poprawiam liczby po cichu
+Podałem właścicielowi **41** jako liczbę zmierzoną, **z opisem kontroli dodatniej** —
+i **kontrola dodatnia zadziałała poprawnie** (347 importów w bramie, polecenie działało).
+**Narzędzie nie skłamało. Skłamało KRYTERIUM.**
+
+> **Kontrola dodatnia sprawdza, czy polecenie się wykonało. Nie sprawdza, czy pytanie
+> było dobrze postawione.**
+
+To jest **nowa odmiana** dzisiejszej rodziny „brak pomiaru nie jest wynikiem": tam narzędzie
+nie mierzyło; **tu mierzyło poprawnie coś innego, niż myślałem, że mierzy.**
+
+**Praktycznie:** przy każdym pytaniu „czy X jest używany" **wypisz WSZYSTKIE drogi, którymi
+X może być używany** (import statyczny · import dynamiczny · **drugi punkt wejścia aplikacji** ·
+rejestr wtyczek), zanim uznasz brak trafień za dowód.
+
+**Skorygowana liczba: 39 martwych bliźniaków.** Dwa skasowane wcześniej dziś
+(`ai-settings.routes.ts`, `tasks.routes.ts`) były potwierdzone **osobnymi poleceniami**
+i pozostają poprawnie usunięte.
