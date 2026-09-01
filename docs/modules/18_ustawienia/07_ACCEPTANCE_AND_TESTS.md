@@ -53,6 +53,29 @@ last_updated: 2026-05-09
 | SET-15-ACC-08 | Legacy `/api/settings` root is blocked for non-superadmin users | `settings.routes.ts` | KEEP | `LEGACY_SETTINGS_SCOPE_BLOCKED` for non-superadmin root access | PASS |
 | SET-15-ACC-09 | No hidden policy writes through settings | hard rule, `06_PERMISSIONS_AND_SECURITY.md`, runtime evidence | KEEP | Contract disallows direct policy writes; full E2E mutation audit not done | PASS_WITH_NOT_DONE |
 
+## STAN ZMIERZONY 2026-09-01 (dyżur 238)
+
+**Obalone**: powyższy „Current Gate Expectation" i matryce nie wspominają, że
+karta modułu (`MODULE_ACCEPTANCE.md`) ma `G08`/`G09` `NOT_STARTED`, podczas
+gdy `docs/FUNCTIONAL_DOCUMENTATION.md:57` niesie `CLOSED_FINAL 2026-08-25` —
+**pierwszy przegląd wizualny nigdy się nie zaczął.** Sprzeczność między
+dwoma dokumentami tego samego stanu — nierozstrzygnięta tutaj.
+
+Zmierzone bezpośrednio: **37 sekcji w 10 grupach** (`SettingsSidebar.tsx`),
+z czego zwykły użytkownik widzi **4** (`PILOT_ALLOWED_SETTINGS_SECTIONS`,
+`src/utils/pilotAccess.ts:15-19`) — **33/37 (89%) usuwane z listy**, nie
+dekorowane. Przekierowanie z zablokowanej trasy jest ciche (brak wpisu do
+dziennika, `RouterSync.tsx:330-344`). Szczegóły bramki i test regresyjny:
+`06_PERMISSIONS_AND_SECURITY.md`, sekcja „STAN ZMIERZONY 2026-09-01".
+
+**Martwy kod zmierzony przy okazji**: `SidebarUsage.tsx` (`src/components/SidebarUsage.tsx:7-47`)
+nie ma produkcyjnego importera; sam importuje realny `UsageMeters.tsx` z
+`src/components/billing/`, nie z nieistniejącej ścieżki
+`src/components/settings/UsageMeters.tsx`. Nie usunięto (poza zakresem
+dyżuru 238).
+
+Pełny pomiar: `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`
