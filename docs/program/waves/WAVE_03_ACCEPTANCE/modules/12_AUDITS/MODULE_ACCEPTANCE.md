@@ -114,11 +114,11 @@ Evidence manifest: —
 
 | ID | Stan | Obserwacja | Adres w kodzie |
 |---|---|---|---|
-| `AUD-OR-20260829-001` | `OPEN` | Po ustawieniu języka polskiego nazwa modułu, nazwy pakietu, programu, kryterium, zakres i część wartości pozostają po angielsku. | `scripts/dev/seed-wave3-audits-owner-review.mjs:47`, `scripts/dev/seed-wave3-audits-owner-review.mjs:153`, `scripts/dev/seed-wave3-audits-owner-review.mjs:155` |
-| `AUD-OR-20260829-002` | `OPEN` | Karta programu pokazuje surowy identyfikator audytora zamiast nazwy człowieka. | `scripts/dev/seed-wave3-audits-owner-review.mjs:162` |
+| `AUD-OR-20260829-001` | `RESOLVED` | Day220: enumerowane wartości fixture są polskie; realny Postgres + ApiGateway/JWT/HTTP oraz SQL readback nie zawierają wskazanych angielskich literalów. Commit `64f106187f`; test `Day220 R1 — polski fixture odbiorowy Audytów`. | `src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx` |
+| `AUD-OR-20260829-002` | `RESOLVED` | Day220 zmierzył, że karta Sesji już rozwiązuje ID przez `userNameById`; render nie ujawnia `w3-aud-*-v1`. Mutacja pustej mapy czerwieni kontrakt. Commit `64f106187f`; test `Day220 R2 — karta Sesji nie ujawnia surowego ID audytora`. | `src/components/Audit/method/__tests__/day220-audyty-rejestr.r2.test.tsx` |
 | `AUD-OR-20260829-003` | `EVIDENCE_MISSING` | Nie ma dowodu pustego i pełnego wariantu każdego z sześciu ekranów na realnych danych; fixture dostarcza po jednym naturalnym stanie, a zadanie zabrania zmiany seederów i kodu. | `scripts/dev/seed-wave3-audits-owner-review.mjs:139` |
 | `AUD-OR-20260829-004` | `OPEN` | Day109 potwierdził, że realny produkt jest tabelarycznym hubem i nie odtwarza zaakceptowanego dev-renderu „warsztat overview” (łańcuch 18 ogniw / 4 fazy / prawy panel). Wymaga decyzji właściciela, czy obecny hub jest właściwą powierzchnią odbiorową. | `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY109_AUDYTY_OWNER_REPORT.md` |
-| `AUD-OR-20260829-005` | `OPEN` | Pełne `Sesje`, `Raporty` i `Ustalenia` ucinają wartości; `Sesje` pokazują progress jako samo `/`, a dane nadal ujawniają surowe identyfikatory użytkowników. | `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY109_AUDYTY_OWNER_REPORT.md` |
+| `AUD-OR-20260829-005` | `RESOLVED` | Day220: sześć wskazanych wartości ma pełną treść dostępną przez `title`; resolver usuwa surowe ID; realny HTTP fixture zwraca postęp `1/1`, więc „goły /” był nieaktualny. Commit `64f106187f`; test `Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel`. | `src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx` |
 
 ## Dziennik budowy pakietu 2026-08-29
 
