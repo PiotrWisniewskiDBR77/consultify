@@ -151,3 +151,50 @@ zrobić jawnym i nazwanym** (osobny parametr „świadomie bez markera, powód: 
 > **Sprawdź nie tylko, co narzędzie robi przy braku pomiaru — ale też, co robi,
 > gdy nikt go o pomiar nie poprosił. Wartość domyślna bezpiecznika to też zachowanie
 > bezpiecznika.**
+
+---
+
+# SZÓSTA REGUŁA — kontrola dodatnia obok każdego pomiaru negatywnego
+
+> **Przesiew, który zwrócił ZERO trafień, jest ważny dopiero wtedy, gdy TO SAMO polecenie
+> zwróciło niezerowy wynik na wzorcu, o którym wiadomo, że istnieje.**
+>
+> **Powód: „nie znalazłem" i „nie szukałem" wyglądają identycznie.**
+
+## Zmierzony przypadek — i sprostowanie naszego własnego zapisu
+Program miał zapisane: *„`grep --include` w tej powłoce zwraca pustkę zamiast wyników"*.
+**To było błędne przypisanie przyczyny.** Tor grafiki zdiagnozował to poprawnie:
+
+**Powłoka próbuje rozwinąć niecytowane `*.ts` jako wzorzec plików w katalogu bieżącym,
+nie znajduje dopasowania i PRZERYWA CAŁE POLECENIE. Grep w ogóle się nie uruchamia.**
+
+```
+grep -rn "wzorzec" katalog/ --include=*.ts    → no matches found · PUSTO · kod 0
+grep -rn "wzorzec" katalog/ --include='*.ts'  → realne trafienia          · kod 0
+```
+
+**Obie wersje wyglądają identycznie w oczach czytającego raport i różnią się wyłącznie
+prawdziwością. Nie da się ich odróżnić po wyniku — tylko po poleceniu.**
+
+U toru grafiki kod sukcesu bierze się z ostatniego ogniwa potoku (`| head`, `| wc -l`).
+**W naszym środowisku kod 0 wraca nawet BEZ potoku** — sygnał błędu jest jeszcze słabszy.
+
+**Trzy zgodne sygnały nieprawdy naraz: pusty wynik · kod sukcesu · komunikat ginący w szumie.**
+Ta sama trójka co przy pustym zapisie ustawień AI: *„zapisano" · „zmieniono 1 wiersz" ·
+świeży znacznik czasu*.
+
+## Dlaczego zapisujemy to jako regułę, a nie jako pułapkę narzędzia
+Bo **wiedza o pułapce nie wystarcza**. Tor grafiki **dwukrotnie tego samego dnia ostrzegał
+przed nią robotników w instrukcjach — i sam wszedł w nią godzinę później**, sprawdzając,
+który plik ustawień AI jest żywy. Uratował go przypadek: akurat nie było potoku, więc
+zobaczył komunikat. **Z potokiem uznałby, że plik nie ma importerów** — czyli popełniłby
+dokładnie ten błąd, który u nas skończył się **zacommitowanym fałszem**.
+
+> **Uważność nie skaluje. Kontrola dodatnia skaluje.**
+
+## Zastosowanie
+Każdy pomiar kończący się zdaniem „nie znaleziono", „zero wystąpień", „brak wołaczy"
+**musi być podany razem z dowodem, że narzędzie w ogóle działało** — niezerowym wynikiem
+tego samego polecenia na czymś znanym.
+
+**Bez tego wynik negatywny nie jest wynikiem.**
