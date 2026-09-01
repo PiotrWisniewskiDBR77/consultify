@@ -93,6 +93,53 @@ nieporównywalności:
 Naprawa idzie do wspólnej powłoki, nie do `idea-table`. Ta rodzina była w mapie
 z 30.08 jako K10 „do naprawy" — właściciel 01.09 potwierdził, że nie została naprawiona.
 
+#### ★ SPROSTOWANIE 2026-09-01 (dyżur 175) — dla `idea-table` powyższa diagnoza była BŁĘDNA
+
+**NIE DOTYKAJ `PreviewPaneShell` z powodu `idea-table`.** Zmierzone w żywym DOM
+(1440×900, `[data-preview-pane]`), oba ekrany montują TEN SAM `IdeasTableContent`:
+
+| ekran | szerokość podglądu | werdykt |
+| --- | --- | --- |
+| `idea-table-production` | **403 px** | = kanon §7.2 `clamp(340px, 28%, 480px)` przy 1440 px |
+| `idea-table` (przed naprawą) | **340 px** | dno `clamp()` |
+
+Kolejność bloków, ramki, typografia nagłówka (16px/600), padding (12px) i
+`border-left: 0px` były **identyczne** na obu. Różniła się WYŁĄCZNIE szerokość.
+
+**Przyczyna nie była w produkcie ani we wspólnej powłoce, tylko w przyrządzie:**
+`dev-render/screens/idea-table.tsx` dokładał z prawej **eksploracyjny**
+`ArtifactRightPanel` (~440 px), więc 28% liczyło się z ~1000 px = 280 px i podgląd
+spadał na dno `clamp()`. Skutek uboczny: ekran pokazywał DWA prawe panele obok
+siebie z powtórzonymi nagłówkami „POWIĄZANIA" i „AI", w dodatku sprzecznymi
+(„Brak powiązań" w podglądzie vs „1 inicjatywa promowana" w panelu — dane panelu
+były zmyślone w harnessie).
+
+**Produkcja tej kompozycji NIE MA:** `MyIdeasListContent.tsx:1943` montuje
+`IdeasTableContent` jako jedyne dziecko kolumnowego flexa — zero trafień na
+`RightPanel` w całym pliku. Właściciel trzy razy oceniał kompozycję, której w
+produkcie nie ma, a my dwa razy naprawialiśmy produkt zgodny z kanonem.
+To jest ten sam kształt awarii co „przyrząd kłamie" — patrz `--klik`, `--przewin`,
+`--klawisze` w `scripts/dev/grafika-zrzuty.mjs`.
+
+Naprawiono usunięciem eksploracyjnego panelu z ekranu harnessu (403 px po zmianie;
+zrzuty PRZED/PO: `evidence/grafika/175-preview-wzor/`). Zero zmian w `src/`.
+
+**Dwie rzeczy zostają otwarte i wymagają decyzji, nie kodu:**
+1. **SPEC-A vs podgląd wiersza.** Jeśli tabela ma być artefaktem SPEC-A z własnym
+   prawym panelem, to panel artefaktu i podgląd wiersza potrzebują reguły
+   **wzajemnego wykluczania** — inaczej dwa prawe panele ZAWSZE zjadą podgląd na
+   dno `clamp()`. To jest realne pytanie produktowe, które ta eksploracja odsłoniła.
+2. **Skill `consultify-preview` jest NIEAKTUALNY.** Podaje „blok 4 = Co dalej,
+   blok 5 = Akcje" (Co dalej PRZED akcjami). Normatywny `TABLE_AND_PREVIEW_CANON.md`
+   §7.0 poprawiono 2026-08-02 na **AI → Relations → Akcje → Co dalej** (Co dalej
+   poza numeracją, na końcu) — zgodnie z `StandardPreview.tsx`. Skill trzeba
+   zrównać z normą, zanim wyśle kogoś w złą stronę.
+
+Pozostałe pięć ekranów rodziny R1 (`assessment-five-surfaces`,
+`interview-preview-canon`, `preview-4-zakladki`, `drd-library-entry`,
+`idea-table-timeline-stuck`) **nie były przedmiotem tego pomiaru** — nie zakładaj,
+że mają tę samą przyczynę. Zmierz każdy osobno, tym samym sposobem.
+
 ---
 
 ### R2 · „Cały ten prawy panel jest do przepracowania" — 6 ekranów
