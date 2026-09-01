@@ -175,3 +175,17 @@ Evidence manifest: —
 - G09 pozostaje nienaprawione: trasa notes czyta `meeting_notes`, a decision-records deleguje do selektu wyłącznie z `meeting_decisions` (`server/src/routes/meeting.routes.ts:656-668`; `server/src/routes/meeting.routes.ts:1039-1055`; `server/src/services/meetingService.ts:640-650`; `server/src/services/meetingBoundary/meetingBoundaryService.ts:321-345`).
 - Żywy przebieg przez `ApiGateway`, podpisany JWT i PostgreSQL zwrócił `200` z zatwierdzoną decyzją dla notes oraz `200 {"decisions":[]}` dla decision-records; pełny log i SQL readback są poza repo w `/private/tmp/cx-day237-spotkania-artefakty/g09-http-proof.log` (`server/src/routes/meeting.routes.ts:656-668`; `server/src/routes/meeting.routes.ts:1039-1055`).
 - Korekta zakresu G09: split backendowy nadal istnieje, ale obecny `MeetingObjectPage` składa do widoku także decyzje z zatwierdzonych notes, więc teza „Decisions & actions renderuje 0” nie jest już prawdziwa dla tego konsumenta (`src/components/Meeting/MeetingObjectPage.tsx:563-572`; `src/components/Meeting/MeetingObjectPage.tsx:829-846`).
+
+## Dzień 262 — trzecia bramka pilota: dwa warianty + pomiar wymiaru serwerowego
+
+Stan na `df7f13056f`: `MODULE_MEETING` jest `open` w obu kopiach statusu, `/meetings` jest dozwolonym prefiksem trasy pilota, lecz `MODULE_MEETING` nie należy do `PILOT_VISIBLE_MENU_IDS`. Realny `Sidebar` zachowuje pozycję i dekoruje ją `isLocked: true`. Zatem menu pokazuje kłódkę, mimo że bezpośrednia trasa jest dozwolona.
+
+| Wariant | Koszt | Ryzyko / skutek |
+| --- | --- | --- |
+| A — dodać `MODULE_MEETING` do `PILOT_VISIBLE_MENU_IDS` | Jedna linia w `src/utils/pilotAccess.ts` oraz obowiązkowe przepisanie pary regresyjnej w `Sidebar.pilotMeetingLock.test.tsx`, aby pilot i owner widzieli pozycję bez `aria-disabled`. | Ujednolica trzy bramki. Ryzyko techniczne ocenione jako zerowe w granicach pomiaru, ale decyzja produktowa pozostaje u właściciela. |
+| B — pozostawić kłódkę | Zero zmian kodu. | Zachowuje jawnie niespójny affordance: użytkownik widzi odmowę w menu, lecz może wejść przez otrzymany lub odgadnięty adres `/meetings`. |
+| Status quo z adnotacją | Zero zmian kodu poza trwałym zapisem niniejszej informacji. | Niespójność staje się znana i świadoma, lecz nie znika. |
+
+Rekomendacja audytora, **nie decyzja**: wariant A przywraca spójność trzech bramek; wyboru A/B nie dokonano.
+
+Pomiar serwerowy jest statyczny: `server/src/routes/meeting.routes.ts` nie importuje ani nie odwołuje się do `PILOT_VISIBLE_MENU_IDS`, `PILOT_ALLOWED_ROUTE_PREFIXES`, `isPilotRestrictedRole` ani innej koncepcji pilota. „Pilot” jest mechanizmem wyłącznie front-endowym rozdziału etapu rolloutu (co widać w menu/routerze), NIE jest bramką bezpieczeństwa na serwerze. Backend różnicuje dostęp do `/api/meeting/*` wyłącznie po organizacji i roli domenowej (member/admin/owner) — nie po statusie „pilot”. To nie jest dziura bezpieczeństwa: organizacja i autoryzacja domenowa działają niezależnie od front-endowego gejtu. Dowodu żywego parity dwóch ról nie wykonywano; instrukcja uznaje dowód statyczny za wystarczający dla R2b.

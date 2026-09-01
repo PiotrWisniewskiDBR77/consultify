@@ -239,3 +239,15 @@ Na markerze `d3d36cd5f5` lokalny `cx-day177-pg` przeszedł 869 migracji (drugi p
 ## Day177 — wznowienie i realny przejazd G08 (2026-08-30)
 
 Po autoryzowanej zmianie nazwy DB na `consultify_w3_partner_owner_cx177` pełny łańcuch przeszedł: 869 migracji (drugi przebieg 0), seeder i readback, kanoniczny runtime health/ready/frontend 200, realny login fixture (`Password valid: true`, `ENABLE_TEST_AUTH_BYPASS=false`) oraz 25/25 sekcji w polskim Light i Dark. Finalny pakiet ma 50/50 zrzutów z walidacją active+lang+theme. Wyniki per sekcja: `17 renderuje się / 7 błąd / 1 pusty`. `PRT-D62-005` POTWIERDZONY (earnings-summary HTTP 500), `PRT-D62-006` POTWIERDZONY (`uuid = text`, a UI Projects pokazuje fałszywe zero), `PRT-D62-007` POTWIERDZONY na `23/25` sekcji; komunikat blokady economics jest dziś po polsku. Materiał jest `EVIDENCE_PACKAGE_READY_WITH_DEFECTS / OWNER_PENDING`; żadnej bramki G08–G20 nie podniesiono do PASS. Pełny raport i ścieżki/hash artefaktów: `../../codex/CODEX_DAY177_PARTNER_REPORT.md`.
+## Dzień 263 — retest sześciu sekcji błędnych (30.08 → 1.09)
+
+Wynik jest częściowy i fail-closed: realny `ApiGateway` + podpisany JWT + fixture tenantowa + PostgreSQL potwierdziły HTTP `200` dla wszystkich readerów sześciu sekcji, ale kanoniczny runtime odrzucił literalną bazę `cx263` wymaganą przez instrukcję. Bez runtime nie wykonano dowodu UI Light/Dark ani mobile 375 px, dlatego nie przypisano dzisiejszej kategorii `renderuje się / błąd / pusta` i nie zmieniono mianownika `17 renderuje się / 7 błąd / 1 pusta`.
+
+| Sekcja | Stan 30.08 | Stan dziś | HTTP dziś | Zmiana | Dowód mobile |
+|---|---|---|---|---|---|
+| `dashboard` | błąd | `UI NOT_PROVEN` | `200, 200, 200` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `statements` | błąd | `UI NOT_PROVEN` | `200 × 4` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `payouts` | błąd | `UI NOT_PROVEN` | `200 × 4` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `payout-settings` | błąd | `UI NOT_PROVEN` | `200 × 5` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `organizations` | błąd | `UI NOT_PROVEN` | `200`; fixture odczytany | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `projects` | błąd | `UI NOT_PROVEN` | `200` | błąd `uuid = text` nie wystąpił; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |

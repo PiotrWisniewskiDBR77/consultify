@@ -130,3 +130,19 @@ Zasłonięcie treści następuje po nawigacji przez przekierowanie do `/settings
 Karta nadal zapisuje G08 i G09 jako `NOT_STARTED` (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-36`), podczas gdy spis funkcjonalny zapisuje `CLOSED_FINAL 2026-08-25` i tag `final-02-settings` (`docs/FUNCTIONAL_DOCUMENTATION.md:57`).
 
 Ten dopisek nie rozstrzyga, czy `CLOSED_FINAL` oznacza zamrożenie zakresu, odbiór 21 zrzutów opisany niżej, czy pełny guided replay; stan warstw pozostaje jawnie rozbieżny (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-37`; `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:106-110`).
+
+## Dzień 244 — ograniczona próbka dowodowa (2026-09-01)
+
+Artefakty leżą w efemerycznym `/private/tmp/cx-day244-organizacja-ustawienia-artefakty`; manifest wszystkich PNG to `day244-screenshots.sha256` (SHA-256 `d2afaf251b877ea326bc2cf0eccfb3062c4f12539864a63399d8ded46ef91eb6`). Wszystkie wykonane pary light/dark przekroczyły próg `mean_luma > 150` (zakres różnic dla siedmiu nazwanych tras `227,4–232,6`).
+
+| Sekcja | Dostępność | Dowód i ograniczenie |
+|---|---|---|
+| `profile` | MEMBER dozwolony | `day244-settings-profile-{light,dark}.png`; realny `ProfileSettings`. |
+| `auth-access` | MEMBER dozwolony | `day244-settings-auth-access-{light,dark}.png`; Sidebar i nagłówek wskazują trasę, lecz odziedziczony harness renderuje treść `ProfileSettings`, więc panel sekcji pozostaje `EVIDENCE_MISSING`. |
+| `language` | MEMBER dozwolony | `day244-settings-language-{light,dark}.png`; Sidebar i nagłówek wskazują trasę, lecz odziedziczony harness renderuje treść `ProfileSettings`, więc panel sekcji pozostaje `EVIDENCE_MISSING`. |
+| `theme` | MEMBER dozwolony | `day244-settings-theme-{light,dark}.png`; realny `ThemeSettings`. |
+| `data-controls` | MEMBER niedozwolony; OWNER dozwolony | Realny `DataControlsSettings`; `day244-settings-proof-data-controls-member-{light,dark}.png` pokazuje `/settings/profile`, a wariant OWNER `/settings/data-controls`. |
+| `billing` | MEMBER niedozwolony; OWNER dozwolony | `day244-settings-billing-{light,dark}.png`; realny `BillingSettings`; osobny żywy dowód MEMBER/OWNER pozostaje `NOT_PROVEN`, bo harness dowodu ma na stałe wejście `data-controls`. |
+| `developer` | MEMBER niedozwolony; OWNER dozwolony | `day244-settings-developer-{light,dark}.png`; realny `SettingsHistory`; osobny żywy dowód MEMBER/OWNER pozostaje `NOT_PROVEN` z tego samego powodu. |
+
+Pozostałe 30 z 37 sekcji NIE zostały objęte tym dyżurem — to jest policzony, opisany dług, nie ukryty. Także w obrębie próbki pełne panele `auth-access` i `language` oraz dwa z trzech indywidualnych dowodów przekierowania nie zostały udowodnione; pakiet nie stanowi decyzji właściciela.

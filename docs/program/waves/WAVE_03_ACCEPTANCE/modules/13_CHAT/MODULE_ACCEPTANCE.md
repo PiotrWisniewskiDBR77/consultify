@@ -128,3 +128,6 @@ Na kandydacie `d1262f3416` potwierdzono w kanonicznym runtime, że wiadomość
 kompozytor są widoczne w obu motywach. PNG, SHA-256 i różnica `mean_luma=224,9`
 są udokumentowane w `CODEX_DAY223_CZAT_RENDER_REPORT.md`; nie jest to izolowany
 dev-render/storybook.
+## Dzień 260 — warianty rozstrzygnięcia 8 typów akcji bez producenta
+
+Niezależny pomiar na `df7f13056f` potwierdził 14 typów katalogowych: 6 z rzeczywistym producentem akcji czatu i 8 bez producenta. Pełna tabela `typ → powód → trzy warianty → koszt`, wraz z ograniczeniami metody i dowodami, znajduje się w [`CODEX_DAY260_CZAT_AKCJE_REPORT.md`](../../codex/CODEX_DAY260_CZAT_AKCJE_REPORT.md#r2--warianty-decyzyjne). Żaden wariant nie został wdrożony; wybór należy do właściciela.
