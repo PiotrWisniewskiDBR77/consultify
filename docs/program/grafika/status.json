@@ -3661,8 +3661,8 @@
         {
           "id": "preview-4-zakladki",
           "nazwa": "Podglad — cztery zakladki",
-          "ocena": "A",
-          "co": "Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
+          "ocena": "C",
+          "co": "PRZEKLASYFIKOWANO 2026-09-01 (audyt przyrządu, tor grafiki): ekran sam siebie opisuje w komentarzu jako „EKRAN PORÓWNAWCZY podglądów, NIE jest ekranem produktu, jest przyrządem pomiarowym” (cztery podglądy obok siebie do porównania, nie realny widok aplikacji). Wcześniejsza ocena A — jeśli to nieporozumienie, zweryfikuj z właścicielem. Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Element wspólny (kanon) — panel podglądu z prawej strony, używany w wielu modułach — wariant z czterema zakładkami obok siebie."
