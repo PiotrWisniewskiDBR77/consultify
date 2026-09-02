@@ -56,6 +56,7 @@ import {
   removeSection,
   reorderSection,
 } from './templateStructureOps';
+import { normalizeTemplateFormattingSchema } from './types';
 import type {
   DocumentTemplate,
   DocumentTypeKey,
@@ -228,8 +229,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       selectedTemplate ? selectedTemplate.sectionBlueprint.map((s) => ({ ...s })) : []
     );
     setEditColorTemplateId(selectedTemplate?.formattingSchema?.colorTemplateId ?? '');
+    // P0 fix (2026-09-02, zgłoszenie #42) — normalize, don't trust the raw
+    // record: a template's `formattingSchema` can be partial (e.g. just
+    // `{ colorTemplateId: 'ocean' }`), and the editor below dereferences
+    // `.headers`/`.footers`/`.fonts` directly. See types.ts for the contract.
     setEditFormatting(
-      selectedTemplate ? JSON.parse(JSON.stringify(selectedTemplate.formattingSchema)) : null
+      selectedTemplate
+        ? normalizeTemplateFormattingSchema(selectedTemplate.formattingSchema)
+        : null
     );
     setRequiredInputsText((selectedTemplate?.requiredInputs ?? []).join('\n'));
   }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
@@ -247,8 +254,12 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const hasUnsavedChanges = structureDirty || colorPatternDirty;
   const wordSettingsDirty = useMemo(() => {
     if (!selectedTemplate || !editFormatting) return false;
+    // Compare against the normalized baseline (not the raw, possibly-partial
+    // record) — otherwise a template with an incomplete formattingSchema
+    // would show as "dirty" the instant it's selected, before any edit.
     return (
-      JSON.stringify(editFormatting) !== JSON.stringify(selectedTemplate.formattingSchema) ||
+      JSON.stringify(editFormatting) !==
+        JSON.stringify(normalizeTemplateFormattingSchema(selectedTemplate.formattingSchema)) ||
       requiredInputsText !== selectedTemplate.requiredInputs.join('\n')
     );
   }, [editFormatting, requiredInputsText, selectedTemplate]);
@@ -940,8 +951,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                             setEditColorTemplateId(
                               selectedTemplate.formattingSchema?.colorTemplateId ?? ''
                             );
+                            // P0 fix (2026-09-02, zgłoszenie #42) — same
+                            // normalization as the load effect above; the raw
+                            // record can be a partial formattingSchema.
                             setEditFormatting(
-                              JSON.parse(JSON.stringify(selectedTemplate.formattingSchema))
+                              normalizeTemplateFormattingSchema(selectedTemplate.formattingSchema)
                             );
                             setRequiredInputsText(selectedTemplate.requiredInputs.join('\n'));
                           }}

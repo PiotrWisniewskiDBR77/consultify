@@ -436,6 +436,61 @@ export interface DocumentTemplateFormattingSchema {
   colorTemplateId?: string | null;
 }
 
+/**
+ * P0 fix (2026-09-02, zgłoszenie #42) — canonical default mirroring the
+ * server's `DEFAULT_CONSULTING_FORMATTING_SCHEMA`. Some template records
+ * (legacy drafts, or ones patched via the "wzorzec kolorów" colorTemplateId
+ * flow — see N31 above) persist a PARTIAL `formattingSchema`, e.g. only
+ * `{ colorTemplateId: 'ocean' }` with no `headers`/`footers`/`fonts`. The
+ * Template Architect's Word-layout editor dereferences those nested fields
+ * directly (`.headers.enabled`, `.footers.pageNumbering`, `.fonts.body`, …),
+ * so selecting such a record crashed the whole screen. Fix the contract at
+ * its single entry point — `normalizeTemplateFormattingSchema` below — rather
+ * than scattering `?.` across every render call site.
+ */
+export const DEFAULT_TEMPLATE_FORMATTING_SCHEMA: DocumentTemplateFormattingSchema = {
+  fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
+  headingStyles: { h1: '16pt bold numbered', h2: '13pt bold numbered', h3: '11pt bold' },
+  tableStyles: { default: 'consultify_clean_table' },
+  listStyles: { bullet: 'consultify_bullet', numbered: 'consultify_numbered' },
+  page: { size: 'A4', marginsCm: { top: 2.0, bottom: 2.0, left: 2.3, right: 2.3 } },
+  headers: { enabled: true },
+  footers: { enabled: true, pageNumbering: true, confidentialityLabel: true },
+  toc: true,
+  coverPage: true,
+  appendixStyle: 'lettered',
+  citationStyle: 'inline_marker',
+};
+
+/**
+ * Fills in any missing top-level or nested (`headers`/`footers`/`fonts`)
+ * fields of a possibly-partial `formattingSchema` with the canonical
+ * defaults, so every consumer can rely on the full
+ * `DocumentTemplateFormattingSchema` shape without optional chaining.
+ * Always returns a full object — call sites decide separately whether to
+ * show/hide the editor when no template is selected at all.
+ */
+export function normalizeTemplateFormattingSchema(
+  schema: DocumentTemplateFormattingSchema | null | undefined
+): DocumentTemplateFormattingSchema {
+  const base = DEFAULT_TEMPLATE_FORMATTING_SCHEMA;
+  return {
+    ...base,
+    ...schema,
+    fonts: { ...base.fonts, ...schema?.fonts },
+    headingStyles: { ...base.headingStyles, ...schema?.headingStyles },
+    tableStyles: { ...base.tableStyles, ...schema?.tableStyles },
+    listStyles: { ...base.listStyles, ...schema?.listStyles },
+    page: {
+      ...base.page,
+      ...schema?.page,
+      marginsCm: { ...base.page.marginsCm, ...schema?.page?.marginsCm },
+    },
+    headers: { ...base.headers, ...schema?.headers },
+    footers: { ...base.footers, ...schema?.footers },
+  };
+}
+
 export interface DocumentTemplate {
   templateId: string;
   organizationId: string;
