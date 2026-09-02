@@ -44,7 +44,7 @@ export type RootCausesBlockersSection = 'rootcause' | 'blockers';
 
 export const ROOT_CAUSES_BLOCKERS_SECTIONS: Array<{ id: RootCausesBlockersSection; label: string }> = [
   { id: 'rootcause', label: 'Przyczyny źródłowe' },
-  { id: 'blockers', label: 'Blockery' },
+  { id: 'blockers', label: 'Blokery' },
 ];
 
 const ROOT_CAUSE_QUESTIONS = [
@@ -250,13 +250,13 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
       )}
 
       {showField('activeBlockers') && (
-        <OrgSectionCard id="blockers" title="Blockery" icon={Lock}>
+        <OrgSectionCard id="blockers" title="Blokery" icon={Lock}>
           <div className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
-            <p className={cn(ORG_L1, 'mb-2')}>Gotowe blockery — dodaj jednym kliknięciem</p>
+            <p className={cn(ORG_L1, 'mb-2')}>Gotowe blokery — dodaj jednym kliknięciem</p>
             <div
               data-testid="org-blocker-gallery"
               role="group"
-              aria-label="Gotowe blockery"
+              aria-label="Gotowe blokery"
               className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4"
             >
               {COMMON_BLOCKERS.map((preset) => {
@@ -295,7 +295,7 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
           </div>
           <OrgRecordList
             columns={[
-              { key: 'title', label: 'Nazwa blockera', placeholder: 'np. Lęk przed porażką' },
+              { key: 'title', label: 'Nazwa blokera', placeholder: 'np. Lęk przed porażką' },
               { key: 'type', label: 'Typ', type: 'select', options: BLOCKER_TYPE_OPTIONS },
               { key: 'desc', label: 'Opis i wpływ', type: 'textarea', placeholder: 'Opisz przeszkodę i jej wpływ…' },
             ]}
@@ -303,7 +303,7 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
             onAdd={blockerHandlers.onAdd}
             onUpdate={blockerHandlers.onUpdate}
             onRemove={blockerHandlers.onRemove}
-            addLabel="Dodaj blocker"
+            addLabel="Dodaj bloker"
           />
         </OrgSectionCard>
       )}

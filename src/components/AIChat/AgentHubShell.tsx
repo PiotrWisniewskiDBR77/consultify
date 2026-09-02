@@ -149,6 +149,7 @@ import {
   type AgentFolder,
   type AgentPlan,
   type AgentPlanStatus,
+  type AgentPlanStepStatus,
   cancelAgentPlan,
   createAgentFolder,
   createAgentPlan,
@@ -307,6 +308,34 @@ function planStatusLabel(status: AgentPlanStatus, isPolish: boolean): string {
 }
 
 /**
+ * ★ Znalezisko 203-polski (2026-09-02): lista „Kroki i bramki" (poniżej,
+ * `plan.steps.map`) renderowała SUROWY `step.status` ('pending' × N dla
+ * świeżo zaplanowanego biegu) — angielskie słowo na polskim ekranie.
+ * `planStatusLabel` (wyżej) jest bliźniakiem PL/EN dla statusu CAŁEGO planu;
+ * to jest ten sam wzorzec dla statusu POJEDYNCZEGO kroku (`AgentPlanStepStatus`
+ * z `services/api/agentPlan.api.ts`).
+ */
+function stepStatusLabel(status: AgentPlanStepStatus, isPolish: boolean): string {
+  const pl: Record<AgentPlanStepStatus, string> = {
+    pending: 'Oczekuje',
+    awaiting_approval: 'Czeka na akceptację',
+    running: 'W toku',
+    completed: 'Zakończony',
+    failed: 'Nieudany',
+    skipped: 'Pominięty',
+  };
+  const en: Record<AgentPlanStepStatus, string> = {
+    pending: 'Pending',
+    awaiting_approval: 'Awaiting approval',
+    running: 'Running',
+    completed: 'Completed',
+    failed: 'Failed',
+    skipped: 'Skipped',
+  };
+  return (isPolish ? pl : en)[status];
+}
+
+/**
  * Podgląd planu — reużywany w preview (StandardPreview.details/meta) I w
  * karcie towarzyszącej obok AgentPlanWorkspace (punkt 9). Jeden komponent,
  * dwa miejsca użycia (gestosc: reuse, nie duplikacja).
@@ -358,7 +387,9 @@ const PlanSummaryCard: React.FC<{
                 </span>
               ) : null}
             </span>
-            <span className="shrink-0 text-c-text-muted">{step.status}</span>
+            <span className="shrink-0 text-c-text-muted">
+              {stepStatusLabel(step.status, isPolish)}
+            </span>
           </li>
         ))}
       </ol>

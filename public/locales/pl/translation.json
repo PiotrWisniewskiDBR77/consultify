@@ -907,6 +907,10 @@
         "providers": "Dostawcy",
         "status": "Status"
       }
+    },
+    "settlements": {
+      "title": "Rozliczenia z partnerami",
+      "subtitle": "Przegląd historycznej ekonomii partnerów"
     }
   },
   "dynamicTabBar": {
@@ -2589,7 +2593,7 @@
       "convertedBadge": "Skonwertowano"
     },
     "notebook": {
-      "title": "Notebook",
+      "title": "Notatnik",
       "new": "Nowa strona",
       "searchHint": "Użyj głównego wyszukiwania u góry",
       "empty": "Brak stron",
@@ -21714,7 +21718,7 @@
         }
       },
       "legal-hold": {
-        "title": "Legal hold",
+        "title": "Wstrzymanie prawne",
         "description": "Stan faktycznego wstrzymania dla całej organizacji — tylko odczyt.",
         "loading": "Ładowanie stanu legal hold…",
         "status": {
@@ -42991,7 +42995,17 @@
     "assigned": "Przypisane",
     "not_started": "Nierozpoczęte",
     "todo": "Do zrobienia",
-    "unknown": "Nieznany"
+    "unknown": "Nieznany",
+    "applied": "Zastosowane",
+    "suggested": "Zasugerowane",
+    "staging": "Staging",
+    "canary": "Canary",
+    "rolled_back": "Wycofane",
+    "modified": "Zmodyfikowane",
+    "completed_with_errors": "Zakończone z błędami",
+    "skipped": "Pominięte",
+    "deprecated": "Wycofane z użycia",
+    "paid": "Wypłacone"
   },
   "state": {
     "save": {

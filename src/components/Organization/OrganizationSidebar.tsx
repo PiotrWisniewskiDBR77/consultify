@@ -117,7 +117,7 @@ export const ORGANIZATION_MODULES: DomainNavigationModule<
     children: [
       { id: 'declared-challenges', label: 'Zadeklarowane wyzwania', icon: ShieldAlert },
       { id: 'root-causes', label: 'Przyczyny źródłowe', icon: Route },
-      { id: 'goal-blockers', label: 'Blockery celów', icon: AlertTriangle },
+      { id: 'goal-blockers', label: 'Blokery celów', icon: AlertTriangle },
       { id: 'evidence', label: 'Dowody', icon: FileCheck2 },
     ],
   },

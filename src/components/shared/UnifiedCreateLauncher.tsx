@@ -64,7 +64,12 @@ const CHOICES: Array<{
   {
     type: 'insight',
     icon: Lightbulb,
-    title: { pl: 'Insight', en: 'Insight' },
+    // ★ Znalezisko 203-polski (2026-09-02): `pl: 'Insight'` było angielskim
+    // słowem podanym za polskie — reszta aplikacji nazywa ten typ obiektu
+    // „Wniosek" (patrz `DiscoveryTools/KnownToolDetailView.tsx` chip
+    // `{ en: 'Insight', pl: 'Wniosek' }`). Krok 0 launchera pokazywał
+    // „Insight" obok poprawnie przetłumaczonych „Inicjatywa"/„Decyzja".
+    title: { pl: 'Wniosek', en: 'Insight' },
     hint: {
       pl: 'Wniosek AI z wywiadów i sesji',
       en: 'AI-generated finding from interviews & sessions',

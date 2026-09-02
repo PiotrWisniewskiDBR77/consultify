@@ -49,6 +49,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
@@ -145,11 +146,17 @@ type TabType = 'commissions' | 'payouts' | 'attribution' | 'expiring' | 'analyti
 const NEUTRAL_CHIP =
   'inline-flex items-center gap-1.5 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-xs font-medium text-c-text-secondary';
 
-const ATTRIBUTION_STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'EXPIRED', label: 'Expired' },
-];
+// ★ Znalezisko 203-polski (partner-settlements-view, 2026-09-02): CAŁY ekran
+// nie miał żadnej infrastruktury PL/EN poza tytułem zakładki — kolumny,
+// pigułki Menu 2, karty podsumowania, stany puste i panele podglądu były na
+// sztywno po angielsku. Wartości SUROWE statusów (ACTIVE/PENDING/EXPIRED…)
+// przechodzą teraz przez `statusChipLabel` (kanoniczny słownik
+// `EntityStatusChip`/`public/locales/pl/translation.json:statusChip`) — ten
+// sam mechanizm co domyślne renderowanie kolumny status w StandardTable, więc
+// jeden SSOT zamiast osobnego tłumaczenia na tym ekranie. Etykiety KOLUMN
+// (label:) i stały tekst UI idą przez proste ternary `isPolish ? … : …`,
+// zgodnie z lokalnym idiomem wielu innych ekranów tej apki.
+const ATTRIBUTION_STATUS_VALUES = ['ACTIVE', 'PENDING', 'EXPIRED'];
 
 const formatDate = (value?: string): string => {
   if (!value) return '—';
@@ -175,7 +182,8 @@ const unwrapApiData = <T,>(res: any): T | undefined => {
 };
 
 export const PartnerSettlementsView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<TabType>('commissions');
   const [summary, setSummary] = useState<SettlementsSummary | null>(null);
   const [commissions, setCommissions] = useState<PendingCommission[]>([]);
@@ -289,7 +297,7 @@ export const PartnerSettlementsView: React.FC = () => {
     () => [
       {
         id: 'partnerName',
-        label: 'Partner',
+        label: isPolish ? 'Partner' : 'Partner',
         sortable: true,
         render: (row: TableRow) => (
           <div className="flex items-center gap-2">
@@ -300,7 +308,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'organizationName',
-        label: 'Customer',
+        label: isPolish ? 'Klient' : 'Customer',
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-c-text-secondary">{row.organizationName as string}</span>
@@ -308,7 +316,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'transactionType',
-        label: 'Type',
+        label: isPolish ? 'Typ' : 'Type',
         width: '120px',
         sortable: true,
         render: (row: TableRow) => (
@@ -325,7 +333,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'grossAmount',
-        label: 'Amount',
+        label: isPolish ? 'Kwota' : 'Amount',
         width: '120px',
         align: 'right',
         sortable: true,
@@ -337,7 +345,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'commissionAmount',
-        label: 'Commission',
+        label: isPolish ? 'Prowizja' : 'Commission',
         width: '140px',
         align: 'right',
         sortable: true,
@@ -352,7 +360,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'transactionDate',
-        label: 'Date',
+        label: isPolish ? 'Data' : 'Date',
         width: '120px',
         sortable: true,
         render: (row: TableRow) => (
@@ -360,7 +368,7 @@ export const PartnerSettlementsView: React.FC = () => {
         ),
       },
     ],
-    []
+    [isPolish]
   );
 
   const commissionRowMenu = useCallback((row: TableRow): StandardRowMenu => {
@@ -398,7 +406,7 @@ export const PartnerSettlementsView: React.FC = () => {
     () => [
       {
         id: 'organizationName',
-        label: 'Organization',
+        label: isPolish ? 'Organizacja' : 'Organization',
         sortable: true,
         render: (row: TableRow) => (
           <span className="font-medium text-c-text">
@@ -421,7 +429,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'attributionType',
-        label: 'Type',
+        label: isPolish ? 'Typ' : 'Type',
         width: '140px',
         sortable: true,
         render: (row: TableRow) => (
@@ -432,7 +440,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'referralCodeUsed',
-        label: 'Code Used',
+        label: isPolish ? 'Użyty kod' : 'Code Used',
         width: '130px',
         render: (row: TableRow) =>
           row.referralCodeUsed ? (
@@ -443,12 +451,15 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'status',
-        label: 'Status',
+        label: isPolish ? 'Status' : 'Status',
         width: '110px',
         align: 'center',
         sortable: true,
         filterable: true,
-        filterOptions: ATTRIBUTION_STATUS_OPTIONS,
+        filterOptions: ATTRIBUTION_STATUS_VALUES.map((value) => ({
+          value,
+          label: statusChipLabel(value, t),
+        })),
         render: (row: TableRow) => (
           <span
             className={cn(
@@ -458,13 +469,13 @@ export const PartnerSettlementsView: React.FC = () => {
               row.status === 'EXPIRED' && 'bg-c-surface-raised text-c-text-secondary'
             )}
           >
-            {String(row.status || '').toLowerCase()}
+            {statusChipLabel(row.status as string, t)}
           </span>
         ),
       },
       {
         id: 'attributedAt',
-        label: 'Date',
+        label: isPolish ? 'Data' : 'Date',
         width: '120px',
         sortable: true,
         render: (row: TableRow) => (
@@ -474,7 +485,7 @@ export const PartnerSettlementsView: React.FC = () => {
         ),
       },
     ],
-    []
+    [isPolish, t]
   );
 
   const attributionRowMenu = useCallback((row: TableRow): StandardRowMenu => {
@@ -503,7 +514,7 @@ export const PartnerSettlementsView: React.FC = () => {
     () => [
       {
         id: 'organizationName',
-        label: 'Organization',
+        label: isPolish ? 'Organizacja' : 'Organization',
         sortable: true,
         render: (row: TableRow) => (
           <span>
@@ -526,14 +537,16 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'discountPercent',
-        label: 'Discount',
+        label: isPolish ? 'Zniżka' : 'Discount',
         width: '110px',
         align: 'center',
         sortable: true,
         render: (row: TableRow) =>
           row.discountPercent ? (
             <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
-              {row.discountPercent as number}% off
+              {isPolish
+                ? `${row.discountPercent as number}% zniżki`
+                : `${row.discountPercent as number}% off`}
             </span>
           ) : (
             <span className="text-c-text-muted">—</span>
@@ -541,7 +554,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'daysRemaining',
-        label: 'Expires In',
+        label: isPolish ? 'Wygasa za' : 'Expires In',
         width: '110px',
         align: 'center',
         sortable: true,
@@ -558,14 +571,14 @@ export const PartnerSettlementsView: React.FC = () => {
                     : 'bg-c-surface-raised text-c-text-secondary'
               )}
             >
-              {days} days
+              {isPolish ? `${days} dni` : `${days} days`}
             </span>
           );
         },
       },
       {
         id: 'lifetimeValue',
-        label: 'Lifetime Value',
+        label: isPolish ? 'Wartość życiowa' : 'Lifetime Value',
         width: '140px',
         align: 'right',
         sortable: true,
@@ -577,7 +590,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'totalCommissionEarned',
-        label: 'Commission Earned',
+        label: isPolish ? 'Zarobiona prowizja' : 'Commission Earned',
         width: '150px',
         align: 'right',
         sortable: true,
@@ -588,7 +601,7 @@ export const PartnerSettlementsView: React.FC = () => {
         ),
       },
     ],
-    []
+    [isPolish]
   );
 
   const expiringRowMenu = useCallback((row: TableRow): StandardRowMenu => {
@@ -614,7 +627,7 @@ export const PartnerSettlementsView: React.FC = () => {
     () => [
       {
         id: 'referralCode',
-        label: 'Code',
+        label: isPolish ? 'Kod' : 'Code',
         sortable: true,
         render: (row: TableRow) => (
           <code className={`${NEUTRAL_CHIP} font-mono`}>{row.referralCode as string}</code>
@@ -630,7 +643,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'totalClicks',
-        label: 'Clicks',
+        label: isPolish ? 'Kliknięcia' : 'Clicks',
         width: '90px',
         align: 'center',
         sortable: true,
@@ -640,7 +653,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'totalSignups',
-        label: 'Signups',
+        label: isPolish ? 'Rejestracje' : 'Signups',
         width: '90px',
         align: 'center',
         sortable: true,
@@ -650,7 +663,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'conversionRate',
-        label: 'Conv. Rate',
+        label: isPolish ? 'Konwersja' : 'Conv. Rate',
         width: '100px',
         align: 'center',
         sortable: true,
@@ -674,7 +687,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'activeAttributions',
-        label: 'Active Orgs',
+        label: isPolish ? 'Aktywne organizacje' : 'Active Orgs',
         width: '110px',
         align: 'center',
         sortable: true,
@@ -686,7 +699,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'totalRevenue',
-        label: 'Revenue',
+        label: isPolish ? 'Przychód' : 'Revenue',
         width: '120px',
         align: 'right',
         sortable: true,
@@ -698,7 +711,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'totalCommissions',
-        label: 'Commissions',
+        label: isPolish ? 'Prowizje' : 'Commissions',
         width: '130px',
         align: 'right',
         sortable: true,
@@ -709,7 +722,7 @@ export const PartnerSettlementsView: React.FC = () => {
         ),
       },
     ],
-    []
+    [isPolish]
   );
 
   const analyticsRowMenu = useCallback((row: TableRow): StandardRowMenu => {
@@ -742,15 +755,18 @@ export const PartnerSettlementsView: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
-          Refresh
+          {isPolish ? 'Odśwież' : 'Refresh'}
         </button>
       </div>
 
       <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-        <p className="font-medium text-c-text">Partner economics are read-only</p>
+        <p className="font-medium text-c-text">
+          {isPolish ? 'Ekonomia partnerów jest tylko do odczytu' : 'Partner economics are read-only'}
+        </p>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Commission, attribution, accrual and payout mutations are unavailable under
-          AMD-PRT-ECONOMICS-002.
+          {isPolish
+            ? 'Zmiany prowizji, atrybucji, naliczeń i wypłat są niedostępne pod AMD-PRT-ECONOMICS-002.'
+            : 'Commission, attribution, accrual and payout mutations are unavailable under AMD-PRT-ECONOMICS-002.'}
         </p>
       </div>
 
@@ -761,11 +777,13 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="p-2 rounded-lg bg-c-warning/20">
               <Clock className="w-5 h-5 text-c-warning" />
             </div>
-            <span className="text-sm text-c-text-secondary">Pending Commissions</span>
+            <span className="text-sm text-c-text-secondary">
+              {isPolish ? 'Prowizje oczekujące' : 'Pending Commissions'}
+            </span>
           </div>
           <p className="text-2xl font-bold text-c-text">{summary?.totalPendingCommissions}</p>
           <p className="text-sm text-c-text-muted mt-1">
-            €{summary?.pendingCommissionAmount.toLocaleString()} total
+            €{summary?.pendingCommissionAmount.toLocaleString()} {isPolish ? 'łącznie' : 'total'}
           </p>
         </div>
 
@@ -774,11 +792,13 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="p-2 rounded-lg bg-c-info/20">
               <Banknote className="w-5 h-5 text-c-info" />
             </div>
-            <span className="text-sm text-c-text-secondary">Pending Payouts</span>
+            <span className="text-sm text-c-text-secondary">
+              {isPolish ? 'Wypłaty oczekujące' : 'Pending Payouts'}
+            </span>
           </div>
           <p className="text-2xl font-bold text-c-text">{summary?.totalPendingPayouts}</p>
           <p className="text-sm text-c-text-muted mt-1">
-            €{summary?.pendingPayoutAmount.toLocaleString()} total
+            €{summary?.pendingPayoutAmount.toLocaleString()} {isPolish ? 'łącznie' : 'total'}
           </p>
         </div>
 
@@ -787,7 +807,9 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="p-2 rounded-lg bg-c-success/20">
               <TrendingUp className="w-5 h-5 text-c-success" />
             </div>
-            <span className="text-sm text-c-text-secondary">This Month Commissions</span>
+            <span className="text-sm text-c-text-secondary">
+              {isPolish ? 'Prowizje w tym miesiącu' : 'This Month Commissions'}
+            </span>
           </div>
           <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthCommissions.toLocaleString()}
@@ -798,7 +820,9 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="p-2 rounded-lg bg-c-surface-raised w-fit mb-3">
             <DollarSign className="w-5 h-5 text-c-text-secondary" />
           </div>
-          <span className="text-sm text-c-text-secondary">This Month Payouts</span>
+          <span className="text-sm text-c-text-secondary">
+            {isPolish ? 'Wypłaty w tym miesiącu' : 'This Month Payouts'}
+          </span>
           <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthPayouts.toLocaleString()}
           </p>
@@ -808,15 +832,22 @@ export const PartnerSettlementsView: React.FC = () => {
       {/* MENU 2 — pigulki zakladek (Commissions/Payouts/Attribution/Expiring/Analytics) */}
       <StandardModuleBar
         tabs={[
-          { id: 'commissions', label: 'Pending Commissions' },
-          { id: 'payouts', label: 'Pending Payouts' },
-          { id: 'attribution', label: 'Attribution Manager' },
+          {
+            id: 'commissions',
+            label: isPolish ? 'Prowizje oczekujące' : 'Pending Commissions',
+          },
+          { id: 'payouts', label: isPolish ? 'Wypłaty oczekujące' : 'Pending Payouts' },
+          { id: 'attribution', label: isPolish ? 'Menedżer atrybucji' : 'Attribution Manager' },
           {
             id: 'expiring',
-            label: 'Expiring',
+            label: isPolish ? 'Wygasające' : 'Expiring',
             icon: <AlertTriangle className="w-4 h-4" />,
           },
-          { id: 'analytics', label: 'Code Analytics', icon: <BarChart3 className="w-4 h-4" /> },
+          {
+            id: 'analytics',
+            label: isPolish ? 'Analityka kodów' : 'Code Analytics',
+            icon: <BarChart3 className="w-4 h-4" />,
+          },
         ]}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabType)}
@@ -843,16 +874,16 @@ export const PartnerSettlementsView: React.FC = () => {
                 onChange={(e) => setExpiringDays(Number(e.target.value))}
                 className="h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text"
               >
-                <option value={7}>Next 7 days</option>
-                <option value={14}>Next 14 days</option>
-                <option value={30}>Next 30 days</option>
-                <option value={60}>Next 60 days</option>
-                <option value={90}>Next 90 days</option>
+                <option value={7}>{isPolish ? 'Następne 7 dni' : 'Next 7 days'}</option>
+                <option value={14}>{isPolish ? 'Następne 14 dni' : 'Next 14 days'}</option>
+                <option value={30}>{isPolish ? 'Następne 30 dni' : 'Next 30 days'}</option>
+                <option value={60}>{isPolish ? 'Następne 60 dni' : 'Next 60 days'}</option>
+                <option value={90}>{isPolish ? 'Następne 90 dni' : 'Next 90 days'}</option>
               </select>
               <button
                 onClick={fetchData}
                 className="p-2 text-c-text-secondary hover:text-c-text border border-c-border-subtle rounded-lg"
-                title="Refresh"
+                title={isPolish ? 'Odśwież' : 'Refresh'}
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -861,7 +892,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <button
               onClick={fetchData}
               className="p-2 text-c-text-secondary hover:text-c-text border border-c-border-subtle rounded-lg"
-              title="Refresh"
+              title={isPolish ? 'Odśwież' : 'Refresh'}
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -897,7 +928,9 @@ export const PartnerSettlementsView: React.FC = () => {
               data={commissionRows}
               empty={{
                 icon: CheckCircle,
-                title: 'No pending commissions to approve',
+                title: isPolish
+                  ? 'Brak prowizji oczekujących na zatwierdzenie'
+                  : 'No pending commissions to approve',
               }}
               selectedRowId={previewCommissionId}
               onRowClick={(row) => setPreviewCommissionId(String(row.id))}
@@ -922,7 +955,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         .replace(/_/g, ' '),
                       tone: 'neutral',
                     },
-                    { label: previewCommission.status, tone: 'neutral' },
+                    { label: statusChipLabel(previewCommission.status, t), tone: 'neutral' },
                   ],
                   trailing: (
                     <span className="text-xs text-c-text-secondary">
@@ -931,11 +964,17 @@ export const PartnerSettlementsView: React.FC = () => {
                   ),
                 }}
                 details={{
-                  text: [
-                    `Customer: ${previewCommission.organizationName || '—'}`,
-                    `Gross amount: €${previewCommission.grossAmount.toLocaleString()}`,
-                    `Commission: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
-                  ].join('\n\n'),
+                  text: isPolish
+                    ? [
+                        `Klient: ${previewCommission.organizationName || '—'}`,
+                        `Kwota brutto: €${previewCommission.grossAmount.toLocaleString()}`,
+                        `Prowizja: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
+                      ].join('\n\n')
+                    : [
+                        `Customer: ${previewCommission.organizationName || '—'}`,
+                        `Gross amount: €${previewCommission.grossAmount.toLocaleString()}`,
+                        `Commission: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
+                      ].join('\n\n'),
                   onCopy: () => {
                     void navigator.clipboard?.writeText(previewCommission.id);
                   },
@@ -975,8 +1014,9 @@ export const PartnerSettlementsView: React.FC = () => {
                       {payout.partnerName}
                     </p>
                     <p className="text-sm text-c-text-secondary">
-                      {payout.transactionCount} transactions • {payout.periodStart} to{' '}
-                      {payout.periodEnd}
+                      {isPolish
+                        ? `${payout.transactionCount} transakcji • ${payout.periodStart} do ${payout.periodEnd}`
+                        : `${payout.transactionCount} transactions • ${payout.periodStart} to ${payout.periodEnd}`}
                     </p>
                   </div>
                 </div>
@@ -986,12 +1026,15 @@ export const PartnerSettlementsView: React.FC = () => {
                       €{payout.netAmount.toLocaleString()}
                     </p>
                     <p className="text-xs text-c-text-muted">
-                      Gross: €{payout.grossAmount.toLocaleString()} • Fees: €
-                      {payout.fees.toLocaleString()}
+                      {isPolish
+                        ? `Brutto: €${payout.grossAmount.toLocaleString()} • Opłaty: €${payout.fees.toLocaleString()}`
+                        : `Gross: €${payout.grossAmount.toLocaleString()} • Fees: €${payout.fees.toLocaleString()}`}
                     </p>
                   </div>
                   <span className="rounded-full bg-c-surface-raised px-3 py-1 text-xs text-c-text-muted">
-                    Historical read-only · economics unavailable
+                    {isPolish
+                      ? 'Dane historyczne, tylko do odczytu · ekonomia niedostępna'
+                      : 'Historical read-only · economics unavailable'}
                   </span>
                 </div>
               </div>
@@ -1001,7 +1044,9 @@ export const PartnerSettlementsView: React.FC = () => {
           {payouts.length === 0 && (
             <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-12 text-center">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-c-text-secondary">No pending payouts to process</p>
+              <p className="text-c-text-secondary">
+                {isPolish ? 'Brak wypłat oczekujących na przetworzenie' : 'No pending payouts to process'}
+              </p>
             </div>
           )}
         </div>
@@ -1016,8 +1061,10 @@ export const PartnerSettlementsView: React.FC = () => {
               data={attributionRows}
               empty={{
                 icon: Link2,
-                title: 'No attributions found',
-                description: 'Create a new attribution to link an organization with a partner',
+                title: isPolish ? 'Nie znaleziono atrybucji' : 'No attributions found',
+                description: isPolish
+                  ? 'Utwórz nową atrybucję, aby połączyć organizację z partnerem'
+                  : 'Create a new attribution to link an organization with a partner',
               }}
               selectedRowId={previewAttributionId}
               onRowClick={(row) => setPreviewAttributionId(String(row.id))}
@@ -1040,7 +1087,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       tone: 'neutral',
                     },
                     {
-                      label: previewAttribution.status,
+                      label: statusChipLabel(previewAttribution.status, t),
                       tone:
                         previewAttribution.status === 'ACTIVE'
                           ? 'success'
@@ -1056,12 +1103,20 @@ export const PartnerSettlementsView: React.FC = () => {
                   ),
                 }}
                 details={{
-                  text: [
-                    `Partner: ${previewAttribution.partnerName || previewAttribution.partnerOrgId}`,
-                    previewAttribution.referralCodeUsed
-                      ? `Referral code: ${previewAttribution.referralCodeUsed}`
-                      : '',
-                  ]
+                  text: (isPolish
+                    ? [
+                        `Partner: ${previewAttribution.partnerName || previewAttribution.partnerOrgId}`,
+                        previewAttribution.referralCodeUsed
+                          ? `Kod polecający: ${previewAttribution.referralCodeUsed}`
+                          : '',
+                      ]
+                    : [
+                        `Partner: ${previewAttribution.partnerName || previewAttribution.partnerOrgId}`,
+                        previewAttribution.referralCodeUsed
+                          ? `Referral code: ${previewAttribution.referralCodeUsed}`
+                          : '',
+                      ]
+                  )
                     .filter(Boolean)
                     .join('\n\n'),
                   onCopy: () => {
@@ -1084,7 +1139,9 @@ export const PartnerSettlementsView: React.FC = () => {
               data={expiringRows}
               empty={{
                 icon: CheckCircle,
-                title: 'No expiring discounts in the selected timeframe',
+                title: isPolish
+                  ? 'Brak wygasających zniżek w wybranym okresie'
+                  : 'No expiring discounts in the selected timeframe',
               }}
               selectedRowId={previewExpiringId}
               onRowClick={(row) => setPreviewExpiringId(String(row.id))}
@@ -1101,24 +1158,41 @@ export const PartnerSettlementsView: React.FC = () => {
                 meta={{
                   pills: [
                     previewExpiring.discountPercent
-                      ? { label: `${previewExpiring.discountPercent}% off`, tone: 'success' }
-                      : { label: 'No discount', tone: 'neutral' },
+                      ? {
+                          label: isPolish
+                            ? `${previewExpiring.discountPercent}% zniżki`
+                            : `${previewExpiring.discountPercent}% off`,
+                          tone: 'success',
+                        }
+                      : { label: isPolish ? 'Brak zniżki' : 'No discount', tone: 'neutral' },
                   ],
                   trailing: (
                     <span className="text-xs text-c-text-secondary">
-                      {previewExpiring.daysRemaining} days left
+                      {isPolish
+                        ? `Pozostało ${previewExpiring.daysRemaining} dni`
+                        : `${previewExpiring.daysRemaining} days left`}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `Partner: ${previewExpiring.partnerName}`,
-                    previewExpiring.referralCodeUsed
-                      ? `Referral code: ${previewExpiring.referralCodeUsed}`
-                      : '',
-                    `Lifetime value: €${previewExpiring.lifetimeValue.toLocaleString()}`,
-                    `Commission earned: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
-                  ]
+                  text: (isPolish
+                    ? [
+                        `Partner: ${previewExpiring.partnerName}`,
+                        previewExpiring.referralCodeUsed
+                          ? `Kod polecający: ${previewExpiring.referralCodeUsed}`
+                          : '',
+                        `Wartość życiowa: €${previewExpiring.lifetimeValue.toLocaleString()}`,
+                        `Zarobiona prowizja: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
+                      ]
+                    : [
+                        `Partner: ${previewExpiring.partnerName}`,
+                        previewExpiring.referralCodeUsed
+                          ? `Referral code: ${previewExpiring.referralCodeUsed}`
+                          : '',
+                        `Lifetime value: €${previewExpiring.lifetimeValue.toLocaleString()}`,
+                        `Commission earned: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
+                      ]
+                  )
                     .filter(Boolean)
                     .join('\n\n'),
                 }}
@@ -1137,7 +1211,9 @@ export const PartnerSettlementsView: React.FC = () => {
               data={analyticsRows}
               empty={{
                 icon: BarChart3,
-                title: 'No code analytics data available',
+                title: isPolish
+                  ? 'Brak danych analitycznych dla kodów'
+                  : 'No code analytics data available',
               }}
               selectedRowId={previewAnalyticsCode}
               onRowClick={(row) => setPreviewAnalyticsCode(String(row.id))}
@@ -1155,18 +1231,28 @@ export const PartnerSettlementsView: React.FC = () => {
                   pills: [{ label: previewAnalytics.partnerName, tone: 'neutral' }],
                   trailing: (
                     <span className="text-xs text-c-text-secondary">
-                      {previewAnalytics.conversionRate}% conv.
+                      {isPolish
+                        ? `${previewAnalytics.conversionRate}% konw.`
+                        : `${previewAnalytics.conversionRate}% conv.`}
                     </span>
                   ),
                 }}
                 details={{
-                  text: [
-                    `Clicks: ${previewAnalytics.totalClicks.toLocaleString()}`,
-                    `Signups: ${previewAnalytics.totalSignups.toLocaleString()}`,
-                    `Active orgs: ${previewAnalytics.activeAttributions}`,
-                    `Revenue: €${previewAnalytics.totalRevenue.toLocaleString()}`,
-                    `Commissions: €${previewAnalytics.totalCommissions.toLocaleString()}`,
-                  ].join('\n\n'),
+                  text: isPolish
+                    ? [
+                        `Kliknięcia: ${previewAnalytics.totalClicks.toLocaleString()}`,
+                        `Rejestracje: ${previewAnalytics.totalSignups.toLocaleString()}`,
+                        `Aktywne organizacje: ${previewAnalytics.activeAttributions}`,
+                        `Przychód: €${previewAnalytics.totalRevenue.toLocaleString()}`,
+                        `Prowizje: €${previewAnalytics.totalCommissions.toLocaleString()}`,
+                      ].join('\n\n')
+                    : [
+                        `Clicks: ${previewAnalytics.totalClicks.toLocaleString()}`,
+                        `Signups: ${previewAnalytics.totalSignups.toLocaleString()}`,
+                        `Active orgs: ${previewAnalytics.activeAttributions}`,
+                        `Revenue: €${previewAnalytics.totalRevenue.toLocaleString()}`,
+                        `Commissions: €${previewAnalytics.totalCommissions.toLocaleString()}`,
+                      ].join('\n\n'),
                   onCopy: () => {
                     void navigator.clipboard?.writeText(previewAnalytics.referralCode);
                   },
