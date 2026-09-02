@@ -321,3 +321,64 @@ Waga „Wysoka" i waga „Krytyczna" dostają ten sam kolor `text-c-danger` —
 dwa różne poziomy ryzyka są dziś nieodróżnialne kolorem na ekranie
 `admin-command-dlp`. Wymaga rozdzielenia semantyki kolorów (np. `c-warning`
 dla „Wysoka", `c-danger` zarezerwowane dla „Krytyczna").
+
+---
+
+## ★ 2026-09-02 — DWANAŚCIE EKRANÓW ZBUDOWANYCH I NIEPODŁĄCZONYCH (jedna sprawa, dwanaście przypadków)
+
+**Charakter ustalenia: POMIAR, nie hipoteza.** Dla każdego komponentu policzyłem
+pliki w `src/`, które renderują go w JSX, **odejmując plik jego własnej definicji
+i wszystkie pliki testów**. Wynik dla całej dwunastki: **zero wołaczy produkcyjnych**.
+Polecenie odtwarzające: `grep -rl "<Nazwa[ />]" src --include="*.tsx" | grep -v __tests__`.
+
+**Dlaczego to jest pilne, a nie kosmetyczne.** Właściciel postawił ocenę A lub B
+na każdym z tych dwunastu ekranów i powiedział „tak". Ekrany wyglądają dobrze —
+i słusznie je przyjął. Ale **użytkownik nie ma jak do nich dojść**: nie prowadzi
+do nich żadne miejsce w aplikacji. To dług „zbudowane, ale niepodłączone" —
+brakuje ostatniego przewodu, nie funkcji. Dopóki go nie ma, akcept właściciela
+dotyczy czegoś, czego klient nie zobaczy.
+
+**Zastrzeżenie dla wykonawcy — dwa kroki, nie jeden.** Zanim dopiszesz wołacza,
+sprawdź, czy komponent nie został świadomie wycofany (jak stary hub Wyników,
+wycofany 24.08). Wpis „zero wołaczy" mówi, że nikt go nie renderuje — **nie
+mówi, że powinien**. Propozycja miejsca w nawigacji poniżej to sugestia toru
+grafiki wywiedziona z tego, co ekran pokazuje, nie decyzja produktowa.
+
+**Eksport przez plik zbiorczy NIE jest wołaczem.** `AuditsHub` i
+`AssessmentPresentationView` są wyeksportowane przez `index.ts` swoich katalogów,
+ale z tego eksportu nikt nie korzysta. To ta sama pułapka co „klucz i18n istnieje,
+ale trzyma angielskie słowo": obecność nie jest użyciem.
+
+| # | Ekran (harness) | Komponent — plik:linia | Gdzie użytkownik powinien do niego dojść (propozycja toru grafiki) |
+| --- | --- | --- | --- |
+| 24 | `teresa-chipy-panel-artefaktu` | `src/components/shared/NModeLayout/AIConsultantPanel.tsx:160` | Prawy panel każdego artefaktu (karta inicjatywy, karta wniosku, dokument) — jako treść pozycji „Zapytaj Teresę", która dziś jest samym przyciskiem bez panelu. |
+| 25 | `unified-create-launcher` | `src/components/shared/UnifiedCreateLauncher.tsx:87` | Przycisk „Nowy" w pasku modułu — wspólny wybór rodzaju obiektu (Wniosek / Inicjatywa / Decyzja) zamiast osobnych ścieżek per moduł. |
+| 26 | `assessment-initiatives-table` | `src/components/assessment/InitiativesTable.tsx:148` | Ocena → zakładka „Inicjatywy strategiczne" (lista inicjatyw wyprowadzonych z oceny). |
+| 27 | `assessment-output-report` | `src/components/assessment/report/AssessmentReportView.tsx:45` | Ocena → Raporty → otwarcie pojedynczego raportu z tabeli raportów. |
+| 28 | `assessment-presentation-view` | `src/components/assessment/presentation/AssessmentPresentationView.tsx:74` | Ocena → Raporty → akcja „Pokaż jako prezentację" na raporcie (9 slajdów). |
+| 29 | `assessment-reports-table` | `src/components/assessment/ReportsTable.tsx:198` | Ocena → zakładka „Raporty" (rejestr raportów z oceny) — wejście do #27 i #28. |
+| 30 | `results-vnext-legacy-archive` | `src/components/ResultsVNext/legacy/ResultsVNextLegacyArchivePanel.tsx:77` | Wyniki → Ustawienia/Archiwum — podgląd historycznych tabel KPI/OKR/ROI. Ekran świadomie tylko do odczytu („Zapis: Zablokowany"). |
+| 31 | `audyty-drd-report` | `src/components/Audit/AuditsHub.tsx:101` | Audyty → wejście modułu. **Sprawdź najpierw, czy moduł Audytów nie ma dziś innego, nowszego wejścia** — hub o 101 liniach może być poprzednikiem. |
+| 32 | `audyty-warsztat-kryterium` | `src/components/Audit/method/workspace/CriterionWorkspaceGate.tsx:21` | Audyty → wiersz kryterium → „Otwórz warsztat". To wzorcowy ekran warsztatu kryterium. |
+| 33 | `rn-g3-class-l-record-shell` | `src/components/shared/states/TeresaState.tsx:49` (`TeresaUnavailableNotice`) | Stan awaryjny panelu Teresy — powinien pokazywać się wszędzie tam, gdzie Teresa jest niedostępna, zamiast pustego panelu. |
+| 34 | `finance-model-workspace` | `src/components/Finance/FinancialModelWorkspace.tsx:412` | Finanse → zakładka „Model finansowy”. |
+| 35 | `finance-prediction-workspace` | `src/components/Finance/Prediction/PredictionWorkspace.tsx:98` | Finanse → zakładka „Prognoza”. |
+
+**Kontrprzykład, który dowodzi, że pomiar jest wiarygodny:** w tej samej rundzie
+sprawdziłem `FinanceHub` (`src/components/Economics/FinanceHub.tsx`) i `PlatformGridView`
+(`src/components/MyWork/table/ViewRouter.tsx:152`) — **oba MAJĄ realnych wołaczy**
+(`src/views/EconomicsView.tsx:19` oraz `ViewRouter.tsx:1547`) i dlatego ich tu nie ma,
+mimo że bezpiecznik parytetu je zgłaszał. Pomiar, który zgłasza wszystko, nie jest pomiarem.
+
+### 36. [P1] `finance-baseline-workspace` — brak dodawania założeń i usuwania linii
+
+**Słowa właściciela (01.09, decyzja „poprawka" w bazie odbioru):** *„dalej nie mam
+przycisku dodawania założeń i możliwości usuwania linii"*. Słowo „dalej" znaczy,
+że zgłasza to nie pierwszy raz.
+
+To **brak funkcji, nie wygląd** — na ekranie Bazy porównania nie ma czym dodać
+założenia ani usunąć linii, więc tor grafiki nie ma czego stylować. Karta zostaje
+otwarta w odbiorze (`docs/program/grafika/reszta-odbioru.json`), żeby sprawa nie
+zniknęła po cichu. Do zamknięcia potrzebne są dwie operacje zapisu (dodanie
+założenia, usunięcie linii) wraz z ich powierzchnią; wygląd tej powierzchni wraca
+wtedy do toru grafiki.
