@@ -11,6 +11,7 @@ import { StatusChip } from '@/components/ui/primitives';
 import { HonestValueCell } from '../HonestValue';
 import { LifecycleLockBadge } from '../LifecycleLockBadge';
 import type { OkrKeyResultDto } from './okrObjectiveApi';
+import type { OkrMemberNameResolver } from './okrRegistryPresenters';
 import {
   canCancelKeyResultStatus,
   formatOkrDate,
@@ -32,7 +33,11 @@ import {
 // Table columns
 // ==========================================
 
-export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: string): TableColumn[] {
+export function buildOkrKeyResultColumns(
+  isPolish: boolean,
+  parentSetStatus: string,
+  resolveMemberName: OkrMemberNameResolver = () => null
+): TableColumn[] {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   return [
     {
@@ -128,11 +133,17 @@ export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: str
       id: 'owner',
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
-      render: (row: OkrKeyResultDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
-          {shortOkrId(row.ownerUserId)}
-        </span>
-      ),
+      render: (row: OkrKeyResultDto) => {
+        const name = resolveMemberName(row.ownerUserId);
+        return (
+          <span
+            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
+            title={row.ownerUserId}
+          >
+            {name || shortOkrId(row.ownerUserId)}
+          </span>
+        );
+      },
     },
     {
       id: 'updatedAt',
@@ -196,6 +207,8 @@ export function buildOkrKeyResultRowMenu(
 
 export interface OkrKeyResultPreviewDeps {
   isPolish: boolean;
+  /** Nazwisko zamiast identyfikatora — ten sam kontrakt co rejestr zestawow. */
+  resolveMemberName?: OkrMemberNameResolver;
   parentSetStatus: string;
   onClose: () => void;
   onOpenCheckIns: (row: OkrKeyResultDto) => void;
@@ -211,7 +224,12 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
   const outOfRangeDistance = parseOkrNumericField(row.outOfRangeDistance);
 
   const properties = [
-    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+    {
+      id: 'owner',
+      label: isPolish ? 'Właściciel' : 'Owner',
+      value: deps.resolveMemberName?.(row.ownerUserId) || row.ownerUserId,
+      mono: !deps.resolveMemberName?.(row.ownerUserId),
+    },
     { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
     { id: 'measurementType', label: isPolish ? 'Typ pomiaru' : 'Measurement type', value: okrKeyResultMeasurementTypeLabel(row.measurementType, isPolish) },
     { id: 'direction', label: isPolish ? 'Geometria' : 'Geometry', value: okrKeyResultDirectionLabel(row.direction, isPolish) },

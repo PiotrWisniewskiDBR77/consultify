@@ -83,6 +83,35 @@ import type { OkrCycleDto, OkrProgramDto } from '../../src/components/ResultsVNe
 import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
 import { ROUTES } from '../../src/routes/routeConfig';
+import { OrganizationApi } from '../../src/services/api/organizations.api';
+import { useAppStore } from '../../src/store/useAppStore';
+
+/**
+ * ATRAPA LISTY CZŁONKÓW ORGANIZACJI (2026-09-02) — wzorzec przejęty ze
+ * `results-vnext-attention.tsx:41`, gdzie dodano go 26.08 z tego samego powodu.
+ *
+ * PO CO: rejestr zestawów OKR JUŻ dziś rozwiązuje identyfikator na nazwisko
+ * (`okrRegistryPresenters.tsx:108`, przez `resolveMemberName` z realnej listy
+ * członków). W stanowisku podglądowym nie było czego rozwiązywać — pobranie
+ * członków leciało do prawdziwego serwera, którego tu nie ma, resolver uczciwie
+ * spadał do skróconego identyfikatora i kolumna pokazywała „user-ann…".
+ * To była wada PRZYRZĄDU udająca wadę produktu.
+ *
+ * Kształt odpowiedzi jest kształtem SERWERA (`OrganizationMemberResponse`:
+ * `userId · email · name · role · status`), nie kształtem wygodnym dla ekranu —
+ * inaczej atrapa potwierdzałaby nieprawdę (reguła 21).
+ *
+ * Nazwiska celowo z polskimi znakami („Wiśniewski"), bo tylko dane mogą je
+ * wnieść — żadna zamiana znaków po stronie prezentera ich nie odtworzy.
+ */
+useAppStore.setState({ currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' } as any });
+OrganizationApi.getOrganizationMembers = (async () => [
+  { userId: 'user-anna-kowalska', email: 'anna.kowalska@firma-demo.pl', name: 'Anna Kowalska', role: 'member', status: 'active' },
+  { userId: 'user-tomasz-nowak', email: 'tomasz.nowak@firma-demo.pl', name: 'Tomasz Nowak', role: 'member', status: 'active' },
+  { userId: 'user-piotr-wisniewski', email: 'piotr.wisniewski@firma-demo.pl', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
+  { userId: 'user-piotr-demo', email: 'piotr.demo@firma-demo.pl', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
+]) as typeof OrganizationApi.getOrganizationMembers;
+
 
 // Odbiór grafiki 2026-08-30 (Piotr) — "Nowy OKR" quick-create needs a
 // signed-in `currentUser`/`currentOrganization` (`OkrSetDraftFormModal`
