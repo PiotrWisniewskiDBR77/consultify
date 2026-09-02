@@ -31,6 +31,7 @@ import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalM
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
+  executionReviewPeople,
   getExecutionReviewCase,
   getExecutionReviewMilestones,
   getExecutionReviewWork,
@@ -89,11 +90,26 @@ const workStatusLabel: Record<string, string> = {
   ACHIEVED: 'Osiągnięty',
   UNKNOWN: 'Brak danych',
 };
+/**
+ * Nazwisko osoby — z KATALOGU OSÓB, nie z zamiany myślnika na spację.
+ *
+ * Do 2026-09-02 ta funkcja robiła `value.replaceAll('-', ' ')`, więc kolumna
+ * „Właściciel / Osoba decyzyjna" pisała `anna kowalska` z małej litery, a panel
+ * podglądu OBOK, na tym samym ekranie, pisał `Anna Kowalska` (bo używa
+ * `businessLabel`, który podnosi pierwsze litery). Ten sam człowiek, dwa zapisy,
+ * jeden kadr. Diakrytyków (`Wiśniewski`, `Wójcik`) żadna zamiana znaków nie
+ * odtworzy — dlatego źródłem jest katalog w danych, a zamiana została wyłącznie
+ * jako ostatnia deska ratunku dla identyfikatora spoza katalogu.
+ *
+ * Wzorzec przejęty z `ExecutionResourcesSurface.businessLabel` (naprawiony
+ * 01.09 dokładnie na tym defekcie) — granica po Unicode `\p{L}`, bez
+ * `toLowerCase`, żeby „Wójcik" i „McKenzie" zostały, jak są.
+ */
 const actorLabel = (value: string) =>
-  ({
-    'execution-manager': 'Execution Manager',
-    'controls-engineer': 'Controls Engineer',
-  })[value] ?? value.replaceAll('-', ' ');
+  executionReviewPeople[value] ??
+  value
+    .replace(/[-_]+/g, ' ')
+    .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());
 const cols: TableColumn[] = [
   { id: 'title', label: 'Element pracy', sortable: true, width: '240px' },
   {
@@ -144,10 +160,13 @@ const formatDateTime = (value: string | null | undefined) => {
 };
 const businessLabel = (value: string | null | undefined, fallback: string) => {
   if (!value) return fallback;
+  // Osoba ma nazwisko w katalogu; `\b\w` nie podnosi liter spoza ASCII, więc
+  // granica liczona po Unicode (ten sam kontrakt co `actorLabel` wyżej).
+  if (executionReviewPeople[value]) return executionReviewPeople[value];
   return value
     .replace(/^(task|decision|case|initiative)[-_:]/i, '')
     .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());
 };
 export const ExecutionWorkSurface = ({
   activePreset,

@@ -21,6 +21,7 @@ import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalM
 import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
+  executionReviewPeople,
   executionReviewSignals,
 } from './executionLocalReviewData';
 
@@ -115,16 +116,48 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
-const actorBusinessLabel = (value: string | null | undefined, fallback: string) =>
-  value
-    ? value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-    : fallback;
+/**
+ * Nazwisko osoby — z KATALOGU OSÓB (`executionLocalReviewData.ts`), nie z zamiany
+ * myślnika na spację. `\b\w` nie podnosi liter spoza ASCII i żadna zamiana znaków
+ * nie odtworzy `Wiśniewski` z `wisniewski` — diakrytyk musi przyjść z danych.
+ * Zamiana zostaje wyłącznie jako ostatnia deska ratunku dla identyfikatora
+ * spoza katalogu (granica po Unicode, bez `toLowerCase`).
+ */
+const actorBusinessLabel = (value: string | null | undefined, fallback: string) => {
+  if (!value) return fallback;
+  return (
+    executionReviewPeople[value] ??
+    value
+      .replace(/[-_]+/g, ' ')
+      .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase())
+  );
+};
 const interventionBusinessTitle = (intervention: any) =>
   intervention.title ||
   intervention.options?.find((option: any) => option.optionId === intervention.selectedOptionId)
     ?.label ||
   intervention.hypotheses?.[0] ||
   `Interwencja operacyjna · ${intervention.interventionId}`;
+/**
+ * Etykieta WYBRANEJ opcji interwencji — nazwa, nie identyfikator (2026-09-02).
+ *
+ * Do dziś pigułka rekomendacji w podglądzie składała `Wybrana opcja:
+ * ${selectedOptionId}` i wypisywała na ekran surowy klucz („parallel-validation").
+ * To ta sama rodzina co wyciek `undefined:` w POWIĄZANIA naprawiony wcześniej
+ * tego dnia: prezenter bierze pole techniczne i pokazuje je klientowi.
+ * Wyszukanie opcji po `optionId` istniało już 770 linii wyżej
+ * (`interventionBusinessTitle`) — brakowało go tylko tutaj.
+ *
+ * Gdy opcji o tym identyfikatorze nie ma w kolekcji (dane starsze niż kontrakt),
+ * pokazujemy identyfikator jako ostatnią deskę ratunku — brak nazwany jest
+ * lepszy niż pusta pigułka.
+ */
+const selectedOptionLabel = (intervention: any): string | null => {
+  const id = intervention?.selectedOptionId;
+  if (!id) return null;
+  const option = intervention.options?.find((o: any) => o.optionId === id);
+  return option?.label || String(id);
+};
 const interventionStatusLabel = (value: string) =>
   ({
     DRAFT: 'Szkic',
@@ -887,8 +920,8 @@ export const ExecutionControlSurface = ({
               pills: [
                 { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
               ],
-              recommendation: r.source.selectedOptionId
-                ? `Wybrana opcja: ${r.source.selectedOptionId}`
+              recommendation: selectedOptionLabel(r.source)
+                ? `Wybrana opcja: ${selectedOptionLabel(r.source)}`
                 : 'Wymaga wyboru ograniczonej interwencji',
             }}
             details={{

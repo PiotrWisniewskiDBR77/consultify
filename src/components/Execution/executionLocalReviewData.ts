@@ -8,6 +8,35 @@
 export const executionLocalReviewEnabled =
   import.meta.env.DEV && import.meta.env.MODE !== 'test';
 
+/**
+ * KATALOG OSÓB — dane demo są twarzą produktu (CLAUDE.md), a właściciel pokazuje
+ * te ekrany klientom.
+ *
+ * Dlaczego katalog, a nie poprawka w prezenterze: rekordy niosą IDENTYFIKATORY
+ * (`anna-kowalska`, `piotr-wisniewski`) i to jest poprawne — identyfikator nie
+ * ma prawa mieć polskich znaków. Cztery powierzchnie Realizacji robiły z niego
+ * nazwisko WŁASNĄ zamianą myślnika na spację, każda inaczej: tabela „Praca"
+ * pisała `anna kowalska` z małej litery, a panel obok — na TYM SAMYM ekranie —
+ * `Anna Kowalska`. I żadna zamiana znaków nie odtworzy `Wiśniewski` z
+ * `wisniewski` ani `Wójcik` z `wojcik`: diakrytyk MUSI przyjść z danych.
+ *
+ * Dowód, że to jest właściwe miejsce: `assigneeName: 'Katarzyna Wójcik'` istniało
+ * w tym pliku już wcześniej — ale tylko przy trzech osobach i tylko na jednym
+ * typie rekordu, więc reszta ekranów go nie widziała. Ten katalog domyka komplet.
+ */
+export const executionReviewPeople: Record<string, string> = {
+  'anna-kowalska': 'Anna Kowalska',
+  'marek-nowak': 'Marek Nowak',
+  'ewa-nowicka': 'Ewa Nowicka',
+  'piotr-wisniewski': 'Piotr Wiśniewski',
+  'katarzyna-wojcik': 'Katarzyna Wójcik',
+  'tomasz-lewandowski': 'Tomasz Lewandowski',
+  'omar-haddad': 'Omar Haddad',
+  'lena-meyer': 'Lena Meyer',
+  'execution-manager': 'Execution Manager',
+  'controls-engineer': 'Controls Engineer',
+};
+
 export const executionReviewCases = [
   {
     executionCaseId: 'review-exec-supply-chain',
