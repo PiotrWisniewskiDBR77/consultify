@@ -284,7 +284,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Moon size={14} className="text-c-accent" />
+                <Moon size={14} className="text-c-text-secondary" />
                 {t('settings.availability.dnd', 'Do Not Disturb')}
               </h4>
               <p className="text-xs text-c-text-muted mb-4">
@@ -306,7 +306,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     onClick={handleDisableDnd}
                     className="p-1.5 hover:bg-c-accent-soft rounded-lg transition-colors"
                   >
-                    <X size={14} className="text-c-accent" />
+                    <X size={14} className="text-c-text-secondary" />
                   </button>
                 </div>
               )}
@@ -354,7 +354,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <BellOff size={14} className="text-c-accent" />
+                <BellOff size={14} className="text-c-text-secondary" />
                 {t('settings.availability.quietHours', 'Scheduled Quiet Hours')}
               </h4>
 
@@ -389,7 +389,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Schedule */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <Clock size={14} className="text-c-accent" />
+                      <Clock size={14} className="text-c-text-secondary" />
                       {t('settings.availability.schedule', 'Schedule')}
                     </h5>
                     <div className="grid grid-cols-2 gap-4 mb-5">
@@ -460,7 +460,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Exceptions */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <AlertTriangle size={14} className="text-c-accent" />
+                      <AlertTriangle size={14} className="text-c-text-secondary" />
                       {t('settings.availability.exceptions', 'Exceptions')}
                     </h5>
                     <p className="text-xs text-c-text-muted mb-4">
@@ -507,7 +507,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Auto Reply */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <MessageCircle size={14} className="text-c-accent" />
+                      <MessageCircle size={14} className="text-c-text-secondary" />
                       {t('settings.availability.autoReply', 'Auto Reply')}
                     </h5>
                     <SettingsToggle

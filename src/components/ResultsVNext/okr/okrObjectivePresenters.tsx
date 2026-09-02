@@ -273,7 +273,10 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           : { id: 'edit', variant: 'neutral', label: isPolish ? 'Edytuj' : 'Edit', onClick: () => onEdit(row) },
         {
           id: 'cancel',
-          variant: 'destructive',
+          // KANON KOLORU (CLAUDE.md UI#3): „Anuluj" zatrzymuje cykl życia obiektu,
+          // nie kasuje danych — to nie jest semantyka krytyczna. Wariant `destructive`
+          // (czerwony tint `PreviewActionButton`) zostaje dla „Usuń"/„Odrzuć".
+          variant: 'neutral',
           label: isPolish ? 'Anuluj' : 'Cancel',
           onClick: () => onCancel(row),
           disabled: !!childLock || !cancelEligible,

@@ -227,7 +227,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Mail size={14} className="text-c-accent" />
+                <Mail size={14} className="text-c-text-secondary" />
                 {t('settings.emailDigest.categories', 'Email Categories')}
               </h4>
 

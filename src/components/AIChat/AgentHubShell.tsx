@@ -121,7 +121,7 @@ import { useHubBarSlot } from '@/components/shared/HubBarSlots';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
 import {
-  MENU_3_ACTION_DANGER,
+  MENU_3_ACTION_NEUTRAL,
   MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
@@ -1066,7 +1066,11 @@ export const AgentHubShell: React.FC = () => {
                     )
                   : undefined
               }
-              className={`${MENU_3_ACTION_DANGER} disabled:cursor-not-allowed disabled:opacity-40`}
+              // KANON KOLORU: „Anuluj zaznaczone" zatrzymuje proces, nie kasuje danych —
+              // to nie jest semantyka krytyczna, więc pastylka jest NEUTRALNA.
+              // Czerwień w Menu 3 zostaje wyłącznie przy „Usuń" (MyWork/Audyty/Finanse/Vault).
+              // Potwierdzenie niesie okno `window.confirm` w `handleBulkCancelPlans`.
+              className={`${MENU_3_ACTION_NEUTRAL} disabled:cursor-not-allowed disabled:opacity-40`}
             >
               <XCircle size={12} />
               {bulkCancelling
@@ -1196,7 +1200,10 @@ export const AgentHubShell: React.FC = () => {
             return (
               <div className="grid grid-cols-2 gap-2">
                 <PreviewActionButton
-                  variant="destructive"
+                  // KANON KOLORU: „Anuluj" zatrzymuje przebieg agenta, nie kasuje
+                  // danych — czerwony tint `destructive` zostaje dla „Usuń"/„Odrzuć".
+                  // Potwierdzenie niesie `handleCancelPlan`, nie kolor przycisku.
+                  variant="neutral"
                   label={t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel')}
                   icon={XCircle}
                   onClick={() => void handleCancelPlan(previewPlan.id)}

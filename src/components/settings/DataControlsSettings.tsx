@@ -605,7 +605,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Consent Management ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Shield size={14} className="text-c-accent" />
+                <Shield size={14} className="text-c-text-secondary" />
                 {t('settings.data.consentsTitle', 'Consent Management')}
               </h4>
               <p className="text-xs text-c-text-muted mb-4">
@@ -645,7 +645,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Retention ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Clock size={14} className="text-c-accent" />
+                <Clock size={14} className="text-c-text-secondary" />
                 {t('settings.data.retentionTitle', 'Data Retention')}
               </h4>
               <p className="text-xs text-c-text-muted mb-4">
@@ -686,7 +686,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Portability ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Download size={14} className="text-c-accent" />
+                <Download size={14} className="text-c-text-secondary" />
                 {t('settings.data.portabilityTitle', 'Data Portability')}
               </h4>
               <div className={cardClass}>
@@ -932,7 +932,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Sample / Demo Data ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <FlaskConical size={14} className="text-c-accent" />
+                <FlaskConical size={14} className="text-c-text-secondary" />
                 {t('settings.data.sampleWorkspace', 'Sample Workspace')}
               </h4>
               <div className={cardClass}>
@@ -971,7 +971,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Legal Documents ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <FileText size={14} className="text-c-accent" />
+                <FileText size={14} className="text-c-text-secondary" />
                 {t('settings.data.relatedDocs', 'Legal Documents')}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">

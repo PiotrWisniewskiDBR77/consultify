@@ -426,7 +426,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               {/* Generation Parameters */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <Sparkles size={14} className="text-c-accent" />
+                  <Sparkles size={14} className="text-c-text-secondary" />
                   {t('settings.ai.generationParams', 'Generation Parameters')}
                 </h4>
 
