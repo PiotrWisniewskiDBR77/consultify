@@ -310,6 +310,62 @@ async function run(): Promise<void> {
     };
   }
 
+  // ── OBSERWACJE (mierzymy, NIE naprawiamy) ────────────────────────────────
+  // Siostrzane powierzchnie tych samych zamkniętych modułów. Zapisujemy stan
+  // do rejestru; decyzja o bramce należy do nadzorcy (część z nich ma własne
+  // ściany autoryzacyjne, część nie ma żadnego uprawnionego wołacza z JWT).
+  const OBSERVED: Array<{ id: string; method: string; path: string; body?: Json }> = [
+    { id: 'v8-finance-digitization-read', method: 'GET', path: '/api/v8/finance/digitization-analyses' },
+    {
+      id: 'v8-finance-digitization-write',
+      method: 'POST',
+      path: '/api/v8/finance/digitization-analyses',
+      body: { name: `GateProbe OBS ${nonce}` },
+    },
+    { id: 'finance-statements-read', method: 'GET', path: '/api/finance-statements/' },
+    { id: 'finance-v4-read', method: 'GET', path: '/api/finance-v4/overview' },
+    {
+      id: 'webhooks-case-workspace',
+      method: 'POST',
+      path: '/api/webhooks/case-workspace/probe/deliveries',
+      body: { eventId: `obs-${nonce}`, eventType: 'probe.test', organizationId: 'x', payload: {} },
+    },
+    { id: 'case-workspace-subtree-read', method: 'GET', path: '/api/v8/case-workspace/cases' },
+    { id: 'economics-read', method: 'GET', path: '/api/economics/analyses' },
+    { id: 'conclusions-read', method: 'GET', path: '/api/conclusions' },
+    // Reszta rodziny MODULE_CASE_WORKSPACE: intake Case'a z powierzchni CHATU
+    // i TERESY (osobne prefiksy, poza mountem /case-workspace). Mierzymy
+    // wyłącznie osiągalność (brak BETA_LOCKED) — naprawa wymaga własnej pary
+    // dowodów na pełnym przepływie intake, więc zostaje w rejestrze.
+    {
+      id: 'chat-case-intake',
+      method: 'POST',
+      path: '/api/v8/chat/conversations/gateprobe-x/case-intake/turn',
+      body: { message: 'probe' },
+    },
+    {
+      id: 'teresa-case-intake',
+      method: 'POST',
+      path: '/api/v8/teresa/case-intake/conversations/gateprobe-x/confirm',
+      body: {},
+    },
+    // Kontrola ANTY-WYGASZENIOWA: powierzchnie modułów OTWARTYCH, które
+    // sąsiadują z naprawionymi mountami, muszą dalej działać dla roli USER.
+    { id: 'anti-extinction-artifact-conversions', method: 'GET', path: '/api/artifact-conversions' },
+    { id: 'anti-extinction-my-work', method: 'GET', path: '/api/my-work/inbox' },
+  ];
+  out.observations = {};
+  for (const o of OBSERVED) {
+    const asUser = await requestJson(o.method, o.path, { token: user.token, body: o.body });
+    const asOwner = await requestJson(o.method, o.path, { token: owner.token, body: o.body });
+    out.observations[o.id] = {
+      path: `${o.method} ${o.path}`,
+      user: { status: asUser.status, code: asUser.body?.code ?? null },
+      owner: { status: asOwner.status, code: asOwner.body?.code ?? null },
+      userReachesModule: asUser.status !== 403 || asUser.body?.code !== 'BETA_LOCKED',
+    };
+  }
+
   out.verdict = {
     pass: Object.values(out.positions).every((p: any) => p.pass),
     failing: Object.entries(out.positions)
