@@ -32,7 +32,7 @@ Artefakt: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r1-migrate-full.log`
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
 
-## Korekty wobec instrukcji
+## KOREKTY wobec instrukcji
 
 - Teza o 208 wystąpieniach `CREATE TABLE IF NOT EXISTS` w serwisach zgadza się z pomiarem.
 - Teza o sześciu plikach serwisowych z `DATETIME` zgadza się z pomiarem.
@@ -55,11 +55,24 @@ Pułapki (a)–(e): Vitest nie został użyty, więc globalny mock `fetch` nie d
 
 Zakres zmiany jest ograniczony do `server/src/services/emailVerificationService.ts` i nowej migracji `server/migrations/20261911_email_verification_tokens.sql`. Typy runtime DDL zmieniono z `DATETIME` na `TIMESTAMPTZ`; nieudane DDL jest teraz logowane jako `error`, wynik każdej operacji jest sprawdzany, a `ensured` nie blokuje ponowienia po błędzie. Nowa migracja tworzy tabelę i oba indeksy. Jawny przebieg jednej migracji na lokalnej bazie przeszedł; schema readback potwierdził siedem kolumn i trzy indeksy. Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r4-migration-only.log`, SHA-256 `962c19de7e5c6d8f0daf3a696e143b1b4b209b4f1be8277905673a3b88bc2500`.
 
-## Twierdzenia niezweryfikowane
+## R5 — pełne odtworzenie po naprawie
 
-- Idempotencja drugiego przebiegu po naprawie — R5 jeszcze niewykonane.
+Własny kontener został usunięty wraz z wolumenem i utworzony ponownie. Świeży pełny przebieg zastosował 883 migracje, w tym nową migrację, i zakończył sukcesem. Rejestracja przez realny `ApiGateway` na 5249 zwróciła HTTP `200` z `emailVerificationSent:true`. Readback wykazał użytkownika oraz jeden ważny, nieużyty token. Drugi pełny przebieg zgłosił `Applying migrations: 0`.
+
+Artefakty: `r5-migrate-fresh.log` (`0f79607528aed81e48fcbc65b3a6675b44dba12e3f3f92fb51ad88f3a436d046`), `r5-registration-after.log` (`8903494c2bbda6730c1fbfbd29726b690c1bf7d8f5098c0ecade9bf92b49de7b`), `r5-migrate-second.log` (`4e465022de0a6c7a8d2e796aa3e1d16be83ba49d99a151180128cf868e18095a`).
+
+Pułapki (a)–(e): użyto tego samego samodzielnego harnessu bez Vitest; komplet env wskazywał wyłącznie lokalną bazę. `DB_IDENTITY` potwierdził `127.0.0.1:6268/cx281`. Odpowiedź została uzyskana bez retry. Po odpowiedzi własny proces zakończono ręcznie, ponieważ otwarta pula DB utrzymywała event loop; nie zmienia to zapisanej odpowiedzi ani niezależnego readbacku.
+
+## Pomiar nazw przypadków §0.4a
+
+`przed-nazwy.txt` i `po-nazwy.txt` zawierają te same trzy pełne nazwy. `diff -u` nie zwrócił żadnej linii; żadna nazwa nie zniknęła ani nie została dodana. Oba pliki mają SHA-256 `6618352b19e28b16a142864cdbde0a81bda062a25f036484ab703873f988bade`.
+
+## TWIERDZENIA NIEZWERYFIKOWANE
+
 - Dla wpisów oznaczonych `UNKNOWN` nie rozstrzygnięto nazwy tabeli ani migracji bez wykonania dynamicznego kodu.
+- Pięć pozostałych plików z runtime `DATETIME` nie zostało wykonanych na ich realnych ścieżkach HTTP/jobów.
+- 52 statycznie nazwane runtime DDL bez wykrytej migracji wymagają osobnych pomiarów osiągalności; inwentarz nie dowodzi, że każda ścieżka jest aktywna.
 
 ## Stan
 
-R1–R4 wykonane. R5–R6 pozostają otwarte.
+R1–R6 wykonane. Gałąź oczekuje na niezależny odbiór nadzorcy; nie została scalona ani wdrożona.

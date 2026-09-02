@@ -253,8 +253,21 @@ Uwagi metodologiczne:
 - Jawny przebieg `--only 20261911_email_verification_tokens.sql` utworzył tabelę, siedem kolumn o typach PostgreSQL i trzy indeksy.
 - Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r4-migration-only.log`, SHA-256 `962c19de7e5c6d8f0daf3a696e143b1b4b209b4f1be8277905673a3b88bc2500`.
 
+### Zielony dowód R5 po naprawie
+
+- Po usunięciu własnego kontenera z wolumenem świeża baza zastosowała 883 migracje i zakończyła pełny przebieg sukcesem.
+- Realne `POST /api/auth/register` przez `ApiGateway` na porcie 5249 zwróciło HTTP `200` i `emailVerificationSent: true`.
+- Readback wykazał użytkownika oraz dokładnie jeden token: hash obecny, termin przyszły, `used_at IS NULL`.
+- Drugi pełny przebieg migracji zgłosił `Applying migrations: 0` i zakończył sukcesem.
+- Poczta działała jako `Mock (Console)`; Slack pominięto dla domeny `local.test`.
+- Artefakty i SHA-256:
+  - `r5-migrate-fresh.log`: `0f79607528aed81e48fcbc65b3a6675b44dba12e3f3f92fb51ad88f3a436d046`;
+  - `r5-registration-after.log`: `8903494c2bbda6730c1fbfbd29726b690c1bf7d8f5098c0ecade9bf92b49de7b`;
+  - `r5-migrate-second.log`: `4e465022de0a6c7a8d2e796aa3e1d16be83ba49d99a151180128cf868e18095a`.
+
 ## D. Otwarte pozycje
 
 - `email_verification_tokens` nie jest tworzona przez żadną migrację.
 - Rejestracja pozostawia częściowy stan użytkownika i organizacji przed awarią tokenu weryfikacyjnego.
-- Pełne odtworzenie i rejestracja po naprawie pozostają do R5.
+- Pięć plików nadal zawiera runtime DDL z `DATETIME`: `integrationHubService.ts`, `notificationOutboxService.ts`, `ai/llmConfigService.ts`, `aiSettingsService.ts`, `demoTrialTelemetryService.ts`. Nie zostały uruchomione na mierzonej ścieżce rejestracji i zgodnie z `Z40` nie były masowo przepisywane.
+- 52 statycznie nazwane runtime DDL nie mają wykrytej migracji; 12 wpisów pozostało `UNKNOWN`. Wymagają osobnych, ścieżkowych pomiarów przed zmianą.
