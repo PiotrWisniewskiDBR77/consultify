@@ -1,0 +1,128 @@
+{
+  "fixtureId": "W3-EXECUTION-OWNER-v1",
+  "fixture": "W3-EXECUTION-OWNER-v1",
+  "ownershipState": "FINAL",
+  "databaseName": "consultify_w3_execution_owner_20260902",
+  "ownershipNonce": "cd62a1ab6f25668609cedb224c5e36c4ee71077711c219227161ec43114d23ee",
+  "marker": {
+    "table": "wave3_owner_fixture_markers",
+    "fixtureId": "W3-EXECUTION-OWNER-v1",
+    "ownershipNonce": "cd62a1ab6f25668609cedb224c5e36c4ee71077711c219227161ec43114d23ee"
+  },
+  "productionWrites": false,
+  "legacyWritersInvoked": "linkInitiativeToExecutionCase (not retired; no RUNTIME_V1 alias exists for the legacy pair used here)",
+  "aiGenerationInvoked": false,
+  "personas": [
+    {
+      "id": "06000000-0000-4000-8000-000000000011",
+      "org": "06000000-0000-4000-8000-000000000001",
+      "email": "w3.execution.owner@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Piotr",
+      "lastName": "Wisniewski",
+      "purpose": "allowed: governed close, distinct evidence submitter"
+    },
+    {
+      "id": "06000000-0000-4000-8000-000000000012",
+      "org": "06000000-0000-4000-8000-000000000001",
+      "email": "w3.execution.admin@local.test",
+      "role": "ADMIN",
+      "membership": "ACTIVE",
+      "firstName": "Anna",
+      "lastName": "Kowalska",
+      "purpose": "allowed: distinct evidence approver, budget delete actor"
+    },
+    {
+      "id": "06000000-0000-4000-8000-000000000013",
+      "org": "06000000-0000-4000-8000-000000000001",
+      "email": "w3.execution.member@local.test",
+      "role": "MEMBER",
+      "membership": "ACTIVE",
+      "firstName": "Marek",
+      "lastName": "Nowak",
+      "purpose": "denied: MEMBER for governed mutation (insufficient_org_role)"
+    },
+    {
+      "id": "06000000-0000-4000-8000-000000000014",
+      "org": "06000000-0000-4000-8000-000000000001",
+      "email": "w3.execution.inactive@local.test",
+      "role": "ADMIN",
+      "membership": "REVOKED",
+      "firstName": "Nieaktywny",
+      "lastName": "Uzytkownik",
+      "purpose": "denied: inactive/revoked member (not_org_member)"
+    },
+    {
+      "id": "06000000-0000-4000-8000-000000000015",
+      "org": "06000000-0000-4000-8000-000000000002",
+      "email": "w3.execution.foreign@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Obcy",
+      "lastName": "Wlasciciel",
+      "purpose": "denied: foreign tenant (stale_or_not_found / not_org_member)"
+    }
+  ],
+  "journey": [
+    "lineage A: accept candidateA -> canonical DRAFT initiative (runtime-v1 read model IN_EXECUTION)",
+    "lineage A: ie_aggregate_state execution_case ACTIVE + INITIATIVE_EXECUTION_CASE relation",
+    "lineage A: linkRuntimeInitiativeToExecutionCase -> RUNTIME_V1 execution_case_links (replay + collision + stale + foreign boundaries)",
+    "lineage B: accept candidateB -> canonical DRAFT initiative",
+    "lineage B: caseCoreService.createCase on the same project -> case_core row",
+    "lineage B: linkInitiativeToExecutionCase -> LEGACY_CASE_CORE execution_case_links",
+    "lineage B: recordExecutionSpine (work/resource/control/report refs, CAS)",
+    "lineage B: linkArtifactToCase (EVIDENCE) + pinArtifactRevision",
+    "lineage B: submitDeliveryEvidence (owner) -> approveDeliveryEvidence (admin, distinct approver)",
+    "lineage B: closeExecutionAndEmitResultsSignal -> immutable execution_results_signal_outbox row (replay converges)",
+    "lineage B: executeBudgetDeleteCommand governed action (MEMBER denied, inactive denied, foreign denied, stale CAS denied, then SUCCEEDED; receipt append-only)",
+    "requireImplementedExecutionAction: HIDDEN action + unregistered action both denied execution_action_hidden_or_unregistered",
+    "HTTP layer: GET /execution-bvp/links/:linkId with a real owner JWT succeeds; a JWT forged with the wrong secret is rejected 401 before any route logic runs"
+  ],
+  "boundaries": {
+    "memberGovernedMutation": "insufficient_org_role (budget delete DENIED receipt)",
+    "inactiveMember": "not_org_member (CaseWorkspaceAuthError)",
+    "foreignTenant": "not_org_member / execution_runtime_initiative_stale_or_not_found",
+    "forgedJwt": "HTTP 401 before route logic runs (wrong-secret signature)",
+    "staleCasWriter": "execution_link_stale_or_not_found / budget_entry_version_conflict / execution_authority_version_conflict",
+    "hiddenOrUnregisteredAction": "execution_action_hidden_or_unregistered",
+    "linkReplayCollision": "execution_idempotency_payload_conflict",
+    "evidenceSelfApproveNotModeled": "approveDeliveryEvidence enforces submitted_by<>approved_by structurally (owner submits, admin approves)"
+  },
+  "dynamic": {
+    "initiativeA": "3c7ae8f1-81cf-4129-a41c-ddcc92f5808c",
+    "projectA": "87d4fbf6-58d1-4cc9-9bde-5e345b0b56a4",
+    "handoffLinkId": "696f4e61-4833-484f-8185-3bf7be270b56",
+    "initiativeB": "8ecdb117-bc3e-45f0-9068-1b9edbb2a7a3",
+    "projectB": "87d4fbf6-58d1-4cc9-9bde-5e345b0b56a4",
+    "caseB": "case-a5ca577b-23c4-4acb-a155-a3a20fac4e50",
+    "legacyLinkId": "b2e21b5f-ddee-4f1c-9bd9-6076219a47d4",
+    "evidenceId": "305ac2a2-2a39-4c86-b755-e9bfd55cad6b",
+    "resultsSignalId": "3dee286d-0444-483e-978c-cd4149bbf11b",
+    "budgetEntryId": "4f2fb598-0f55-4d14-b3d6-f5d4aa9480e0",
+    "budgetDeleteReceiptId": "dc528903-0917-414b-a085-77012741c666",
+    "httpProof": {
+      "ownerStatus": 200,
+      "forgedJwtStatus": 401,
+      "anonymousStatus": 401
+    }
+  },
+  "readback": {
+    "personas": 5,
+    "runtime_handoff_links": 1,
+    "closed_legacy_links": 1,
+    "runtime_initiatives": 1,
+    "runtime_execution_cases": 1,
+    "runtime_relations": 1,
+    "distinct_approved_evidence": 1,
+    "results_signals": 1,
+    "succeeded_budget_deletes": 1,
+    "denied_budget_deletes": 1,
+    "conflict_budget_deletes": 1,
+    "remaining_budget_entries": 0,
+    "hidden_actions": 4,
+    "budget_delete_policy": 1,
+    "ownership_nonce": "cd62a1ab6f25668609cedb224c5e36c4ee71077711c219227161ec43114d23ee",
+    "successful_migrations": 883
+  }
+}

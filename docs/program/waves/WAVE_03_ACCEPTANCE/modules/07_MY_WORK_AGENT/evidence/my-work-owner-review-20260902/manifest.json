@@ -1,0 +1,117 @@
+{
+  "fixtureId": "W3-MY-WORK-OWNER-v1",
+  "fixture": "W3-MY-WORK-OWNER-v1",
+  "ownershipState": "FINAL",
+  "databaseName": "consultify_w3_my_work_owner_20260902",
+  "ownershipNonce": "9c1938b6523814ee425fb8e5d437d38f7d5b341aec0564beffe2d4beb8572b55",
+  "marker": {
+    "table": "wave3_owner_fixture_markers",
+    "fixtureId": "W3-MY-WORK-OWNER-v1",
+    "ownershipNonce": "9c1938b6523814ee425fb8e5d437d38f7d5b341aec0564beffe2d4beb8572b55"
+  },
+  "productionWrites": false,
+  "legacyWritersInvoked": false,
+  "legacyTasksRouteRetired": "POST /api/tasks returns 409; this fixture never calls it",
+  "aiGenerationInvoked": false,
+  "personas": [
+    {
+      "id": "07000000-0000-4000-8000-000000000011",
+      "org": "07000000-0000-4000-8000-000000000001",
+      "email": "w3.mywork.owner@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Piotr",
+      "lastName": "Wisniewski",
+      "purpose": "allowed: inbox owner; distinct OWNER approver for restricted materialization"
+    },
+    {
+      "id": "07000000-0000-4000-8000-000000000012",
+      "org": "07000000-0000-4000-8000-000000000001",
+      "email": "w3.mywork.requester@local.test",
+      "role": "ADMIN",
+      "membership": "ACTIVE",
+      "firstName": "Ewa",
+      "lastName": "Nowicka",
+      "purpose": "allowed: active requester owning the source Agent plan (ADMIN, so the self-approval boundary is reachable)"
+    },
+    {
+      "id": "07000000-0000-4000-8000-000000000013",
+      "org": "07000000-0000-4000-8000-000000000001",
+      "email": "w3.mywork.colleague@local.test",
+      "role": "MEMBER",
+      "membership": "ACTIVE",
+      "firstName": "Marek",
+      "lastName": "Nowak",
+      "purpose": "denied: body-identity spoof (active, but does not own the source plan)"
+    },
+    {
+      "id": "07000000-0000-4000-8000-000000000014",
+      "org": "07000000-0000-4000-8000-000000000001",
+      "email": "w3.mywork.inactive@local.test",
+      "role": "ADMIN",
+      "membership": "REVOKED",
+      "firstName": "Nieaktywny",
+      "lastName": "Uzytkownik",
+      "purpose": "denied: inactive/revoked membership"
+    },
+    {
+      "id": "07000000-0000-4000-8000-000000000015",
+      "org": "07000000-0000-4000-8000-000000000002",
+      "email": "w3.mywork.foreign@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Obcy",
+      "lastName": "Wlasciciel",
+      "purpose": "denied: foreign tenant / tenant-invalid worker job"
+    }
+  ],
+  "journey": [
+    "requester owns one Agent plan (ai_agent_plans, deterministic plan_json)",
+    "createMaterializationProposal x3 (task/decision/notebook targets) by requester",
+    "boundary: idempotency replay, idempotency payload collision, source drift",
+    "boundary: body-identity spoof (colleague claims a plan they do not own)",
+    "boundary: inactive/revoked requester, foreign-tenant requester",
+    "boundary: stale/colliding decision (wrong expectedStateVersion)",
+    "boundary: requester self-approval forbidden",
+    "decideMaterializationProposal: owner APPROVEs task+decision proposals, REJECTs the notebook proposal",
+    "materializeApprovedProposal: task -> TaskService.createTask, decision -> decisionService.createDecision (canonical writers, not the retired /api/tasks route)",
+    "boundary: materialize replay converges on the same receipt",
+    "boundary: tenant-invalid worker job (materialize called with the wrong organizationId)",
+    "boundary: reviewer-forbidden materialize (actor is not the recorded approver)"
+  ],
+  "boundaries": {
+    "inactiveOrRevokedMembership": "MYW_AGENT_ACTIVE_MEMBERSHIP_REQUIRED",
+    "foreignTenant": "MYW_AGENT_SOURCE_NOT_FOUND (cross-org plan invisible) / MYW_AGENT_PROPOSAL_NOT_FOUND (cross-org materialize)",
+    "requesterSelfApproval": "MYW_AGENT_SELF_APPROVAL_FORBIDDEN",
+    "bodyIdentitySpoof": "MYW_AGENT_SOURCE_NOT_FOUND (claimed plan not owned by the calling identity)",
+    "staleOrCollidingCaller": "MYW_AGENT_PROPOSAL_STALE / MYW_AGENT_MATERIALIZATION_STALE / MYW_AGENT_IDEMPOTENCY_COLLISION",
+    "tenantInvalidWorkerJob": "MYW_AGENT_PROPOSAL_NOT_FOUND (materialize scoped to the wrong organization)",
+    "reviewerForbidden": "MYW_AGENT_REVIEWER_FORBIDDEN"
+  },
+  "dynamic": {
+    "planId": "07000000-0000-4000-8000-000000000021",
+    "taskProposalId": "389e4f5f-8130-4c10-9562-291a2f62a11d",
+    "decisionProposalId": "bb4d14b0-21a5-4664-b660-d2d1e72c8f28",
+    "notebookProposalId": "4c3db8ea-2051-40f4-8fe4-8d83043c0897",
+    "taskTargetId": "f17df525-ba60-41a2-a6c4-49f56a8b8769",
+    "decisionTargetId": "decision-dcf2db36-5bd0-47c5-8d24-80a1708e0553"
+  },
+  "readback": {
+    "personas": 5,
+    "source_plans": 1,
+    "proposals": 3,
+    "materialized_proposals": 2,
+    "rejected_proposals": 1,
+    "pending_proposals": 0,
+    "approvals": 3,
+    "distinct_approver_approvals": 3,
+    "succeeded_receipts": 2,
+    "task_receipts": 1,
+    "decision_receipts": 1,
+    "materialized_tasks": 1,
+    "materialized_decisions": 1,
+    "foreign_plans_visible_cross_tenant": 0,
+    "ownership_nonce": "9c1938b6523814ee425fb8e5d437d38f7d5b341aec0564beffe2d4beb8572b55",
+    "successful_migrations": 883
+  }
+}
