@@ -500,7 +500,12 @@ export const AssessmentLibraryTab: React.FC = () => {
                   text: `${isPolish ? item.description.pl : item.description.en}\n\n${item.whatYouGet
                     .map((value) => `• ${isPolish ? value.pl : value.en}`)
                     .join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
-                  showWordCount: false,
+                  /* ★ 2026-09-02 — było `showWordCount: false`. Kanon §7.3 pkt 3
+                     mówi: licznik słów widoczny, gdy treść > 0. Wyłączenie go
+                     TU i tylko tu sprawiało, że podgląd Biblioteki różnił się
+                     od wzorca jednym elementem bloku 3 — dokładnie ta klasa
+                     rozjazdu, którą właściciel nazwał „tabela preview nie
+                     trzyma się opisanego standardu" (30.08). */
                   properties: [
                     {
                       id: 'area',

@@ -64,7 +64,10 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
   const closeEditor = useCallback(() => setEditingIdx(null), []);
 
   return (
-    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+    <div
+      data-preview-block="meta"
+      className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3"
+    >
       {title ? (
         <div className="mb-2">
           <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>

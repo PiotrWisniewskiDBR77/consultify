@@ -281,9 +281,24 @@ const SectionRow: React.FC<{
     </div>
   );
 
+  /*
+   * `data-artifact-section` — znacznik POMIAROWY, nie styl.
+   *
+   * Kanon kolejności prawego pasa (`ARTIFACT_PANEL_SECTION_ORDER`: Akcje ·
+   * Właściwości · Powiązania · Źródła i założenia · Rezultaty · Komentarze ·
+   * Historia) do dziś dawało się sprawdzić tylko czytaniem kodu albo oczami na
+   * zrzucie. Właściciel zgłosił rozjazd prawego pasa DWA RAZY (01.09 R2 na
+   * sześciu ekranach, 02.09 na czterech), a odpowiedzią za każdym razem była
+   * opinia. Ten atrybut pozwala zmierzyć kolejność z żywego DOM-u
+   * (`scripts/dev/measure-right-panel-canon.mjs`) i porównać dwa ekrany
+   * liczbami, a nie wrażeniem.
+   */
   if (!collapsible) {
     return (
-      <section className="border-b border-c-border-subtle last:border-b-0">
+      <section
+        data-artifact-section={section.id}
+        className="border-b border-c-border-subtle last:border-b-0"
+      >
         <div className="flex items-center h-11 px-4">{header}</div>
         {body}
       </section>
@@ -291,7 +306,10 @@ const SectionRow: React.FC<{
   }
 
   return (
-    <section className="border-b border-c-border-subtle last:border-b-0">
+    <section
+      data-artifact-section={section.id}
+      className="border-b border-c-border-subtle last:border-b-0"
+    >
       <button
         type="button"
         onClick={onToggle}

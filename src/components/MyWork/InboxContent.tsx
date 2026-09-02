@@ -78,6 +78,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import {
   type RowAction,
   type RowActionSection,
@@ -4244,7 +4245,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Preview Pane (A3) */}
         {previewItem && (
-          <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
+          <div
+            data-preview-pane
+            className="shrink-0 bg-c-bg p-3"
+            style={{ width: PREVIEW_PANE_WIDTH }}
+          >
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}

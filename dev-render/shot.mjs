@@ -14,6 +14,7 @@
  *   --eval=<js>             wykonaj JS w stronie po akcjach
  *   --dump=<selektor>       wypisz outerHTML (skrót) do stdout
  *   --key=<klawisz>         page.keyboard.press (Tab/Shift+Tab/Enter/Space/Escape...)
+ *   --bez-chrome            ukryj kontrolki harnessu ([data-dev-render-chrome])
  *
  * Zawsze na stdout: KONSOLA-BLEDY (wszystkie, nie ucięte do 8) i SIEC-4XX5XX
  * (każda odpowiedź >=400 z hosta localhost, do re-weryfikacji interaktywnej
@@ -146,6 +147,24 @@ import { chromium } from 'playwright';
       .evaluate((el) => el.outerHTML)
       .catch((e) => 'BRAK: ' + String(e).split('\n')[0]);
     console.log(`DUMP ${sel}:\n${html.slice(0, 4000)}\n`);
+  }
+
+  // --bez-chrome: chowa kontrolki HARNESSU (`[data-dev-render-chrome]`) tuż
+  // przed migawką. Powód (CLAUDE.md §7c „zrzut czysty" + lekcja „Przyrząd
+  // kłamie, a oko przywyka"): paski wyjaśniające flagi i przyciski nawigacji
+  // przyrządu wchodziły w kadr odbioru i właściciel oceniał kompozycję, której
+  // w produkcie nie ma. `grafika-zrzuty.mjs` robił to od dawna — `shot.mjs` nie,
+  // więc ten sam ekran wychodził czysty albo brudny zależnie od zrzutownika.
+  if (rest.includes('--bez-chrome')) {
+    const ile = await page.evaluate(() => {
+      const el = Array.from(document.querySelectorAll('[data-dev-render-chrome]'));
+      el.forEach((e) => {
+        e.style.display = 'none';
+      });
+      return el.length;
+    });
+    console.log(`BEZ-CHROME: ukryto ${ile} elementow przyrzadu`);
+    await page.waitForTimeout(150);
   }
 
   const clip = opt('clip', null);

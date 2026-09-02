@@ -32,6 +32,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 // Not re-exported from the standard/ barrel (index.ts) yet — import directly.
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
@@ -166,7 +167,7 @@ const TableAndPreviewDemo: React.FC = () => {
       </div>
       <div
         className="h-[420px] shrink-0 overflow-y-auto rounded-token-md bg-c-surface-raised p-3"
-        style={{ width: 'clamp(340px, 28%, 480px)' }}
+        style={{ width: PREVIEW_PANE_WIDTH }}
       >
         {selectedRow ? (
           <div className="rounded-token-xl border border-c-border/70 bg-c-surface/70 backdrop-blur">

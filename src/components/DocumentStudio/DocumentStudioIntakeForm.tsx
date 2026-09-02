@@ -11,7 +11,10 @@ import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Button from '@/components/ui/primitives/Button';
+import {
+  MENU_1_PRIMARY_CTA,
+  MENU_3_ACTION_NEUTRAL,
+} from '@/components/shared/ModuleMenu3';
 import { useAppStore } from '@/store/useAppStore';
 
 import type {
@@ -285,7 +288,11 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         <button
           type="button"
           onClick={onBackToModes}
-          className="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-c-text-secondary transition-colors hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          /* ★ 2026-09-02 — było gołe słowo ze strzałką (bez ramki, bez tła,
+             bez wysokości kanonu). Właściciel o tym ekranie: „Przyciski, żeby
+             były zgodne ze standardem... nic tu nie poprawiłeś" (30.08).
+             Teraz kształt bierze się z kanonu paska modułu, nie z literału. */
+          className={`w-fit ${MENU_3_ACTION_NEUTRAL}`}
         >
           <ArrowLeft size={14} aria-hidden />
           {t('documentStudio.intake.backToModes', 'Wybór trybu')}
@@ -633,11 +640,18 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
               )
             : ''}
         </span>
-        <Button
+        {/* ★ 2026-09-02 — CTA bierze geometrię z `MENU_1_PRIMARY_CTA` (h-9,
+            rounded-lg, px-4) — dokładnie tę samą, którą ma główny przycisk
+            `StandardModuleBar` w każdym module. `Button variant="primary"
+            size="md"` dawał 40 px wysokości i inny padding, więc ten sam
+            „główny przycisk ekranu" miał tu inny rozmiar niż w reszcie
+            aplikacji. Warunek odbioru z rejestru mówi wprost: te same
+            wysokości i promienie co StandardModuleBar. */}
+        <button
           type="submit"
-          variant="primary"
           disabled={!isValid}
           data-testid="docstudio-generate-btn"
+          className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -651,7 +665,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           ) : (
             t('documentStudio.intake.submitPlan', 'Plan document')
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );

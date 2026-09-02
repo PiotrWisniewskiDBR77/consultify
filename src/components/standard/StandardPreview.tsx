@@ -38,6 +38,7 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
+  PreviewWhatsNextCard,
   type RelationItem,
   SKELETON_LINE_1,
   SKELETON_LINE_2,
@@ -371,7 +372,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
 
         {/* Blok 6 — pełny blok akcji na dole */}
         {actionRows.length > 0 ? (
-          <div className="space-y-2.5 py-1">
+          <div data-preview-block="actions" className="space-y-2.5 py-1">
             {actionRows.map((row, idx) => (
               <ActionGridRow key={idx} actions={row} />
             ))}
@@ -381,10 +382,17 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
         {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
             tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
         {whatsNext ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
-            </div>
+          /* Ramka bloku „Co dalej" mieszka w JEDNYM miejscu w aplikacji —
+             `PreviewWhatsNextCard`. Do 2026-09-02 `StandardPreview` trzymał tu
+             WŁASNĄ kopię tej ramki (te same klasy, osobny literał), przez co
+             fasada kanonu i wołacze spoza niej (np. `IdeaPreview`) mogły się
+             rozjechać bez śladu w kodzie. Powłoka deklaruje treść, ramkę
+             narzuca komponent. */
+          <PreviewWhatsNextCard
+            label={whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
+            isPolish={isPolish}
+            note={whatsNext.note}
+          >
             <div className="flex flex-wrap gap-1.5">
               {whatsNext.items.map((item) => {
                 const Icon = item.icon;
@@ -402,10 +410,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                 );
               })}
             </div>
-            {whatsNext.note ? (
-              <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
-            ) : null}
-          </div>
+          </PreviewWhatsNextCard>
         ) : null}
       </div>
     ) : undefined;

@@ -248,11 +248,30 @@ export function PrawyPanelSzynaIkonScreen(): React.ReactElement {
   const tools = buildDemoTools();
 
   // Kolumna PRZED — zamrożona kopia starego (zepsutego) zachowania, stanowe.
-  const [legacyCollapsed, setLegacyCollapsed] = useState(false);
+  /*
+   * ★ 2026-09-02 — STAN DOMYŚLNY = ZWINIĘTY (`collapsed=true`).
+   *
+   * Warunek odbioru z rejestru (poz. 34): „Jeden kadr PRZED/PO pokazuje, co
+   * szyna ikon dodaje względem wariantu bez szyny; jeśli nie dodaje nic,
+   * wraca wariant poprzedni."
+   *
+   * Do dziś oba warianty startowały ROZWINIĘTE — a rozwinięte wyglądają
+   * IDENTYCZNIE, bo cała różnica siedzi w gałęzi `collapsed`. Właściciel
+   * oglądał więc kadr, na którym z definicji nie było czego porównać,
+   * i napisał dokładnie to: „Nie wiem, czy to jest naprawdę jakaś poprawa,
+   * szczerze powiedziawszy". Miał rację co do KADRU, nie co do zmiany.
+   *
+   * Start w stanie zwiniętym pokazuje różnicę bez ani jednego kliknięcia:
+   * po lewej 16-px pasek z samą strzałką (stary wariant — ikony znikają,
+   * nie wiadomo, co panel w ogóle miał), po prawej 56-px szyna z kompletem
+   * ikon i odznakami. Przyciski „Zwiń/Rozwiń" zostają, żeby dało się
+   * sprawdzić także stan przeciwny.
+   */
+  const [legacyCollapsed, setLegacyCollapsed] = useState(true);
   const [legacyActiveId, setLegacyActiveId] = useState<string | null>('blocks');
 
   // Kolumna PO — REALNY <RightRail> z src/ (naprawiony), stanowe.
-  const [fixedCollapsed, setFixedCollapsed] = useState(false);
+  const [fixedCollapsed, setFixedCollapsed] = useState(true);
   const [fixedActiveId, setFixedActiveId] = useState<string | null>('blocks');
 
   return (

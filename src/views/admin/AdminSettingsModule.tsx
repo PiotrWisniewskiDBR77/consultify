@@ -596,7 +596,22 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
 
           <ScrollArea className="flex-1">
-            <div className="admin-domain-content mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
+            {/*
+              ★ 2026-09-02 — zdjety `max-w-[1280px]`.
+
+              Wlasciciel o ekranie `admin-command-attention-queue`:
+              „to ni jest szerokoś strony :(" (01.09) — i mial racje literalnie:
+              tresc modulu Administracji byla JEDYNA w calej aplikacji zaciskana
+              do 1280 px. Zmierzone: InitiativesHub, ExecutionHub, AssessmentHub
+              i FinanceHub nie maja ZADNEGO ograniczenia szerokosci (0 trafien
+              max-w-[1280px]/7xl/6xl/5xl w kazdym z nich), wiec tabela w Adminie
+              konczyla sie 320 px przed krawedzia strony przy oknie 1600 px,
+              a w kazdym innym module dochodzila do konca.
+
+              Padding responsywny zostaje — to odstep od krawedzi, nie sufit
+              szerokosci.
+            */}
+            <div className="admin-domain-content w-full space-y-6 p-4 sm:p-5 lg:p-6">
               {content}
             </div>
           </ScrollArea>
