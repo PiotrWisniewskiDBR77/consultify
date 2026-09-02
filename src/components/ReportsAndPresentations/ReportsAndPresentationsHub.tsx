@@ -35,7 +35,6 @@ import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
-import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -92,14 +91,12 @@ interface TemplatesNewSplitButtonProps {
   label: string;
   onNewTemplate: () => void;
   onOpenDeckArchitect?: () => void;
-  onOpenWorkbookTemplates?: () => void;
 }
 
 const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
   label,
   onNewTemplate,
   onOpenDeckArchitect,
-  onOpenWorkbookTemplates,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -117,7 +114,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
   const ctaBase =
     'inline-flex h-9 items-center gap-2 px-4 text-sm font-medium text-white transition-colors duration-150 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]';
 
-  if (!onOpenDeckArchitect && !onOpenWorkbookTemplates) {
+  if (!onOpenDeckArchitect) {
     return (
       <button
         type="button"
@@ -172,22 +169,6 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
               <Wand2 size={14} className="shrink-0 text-c-text-muted" />
               <span>
                 {t('rap.templatesLauncher.openDeckArchitect', 'Architekt szablonów (Prezentacja)')}
-              </span>
-            </button>
-          )}
-          {onOpenWorkbookTemplates && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                onOpenWorkbookTemplates();
-              }}
-              data-testid="templates-open-workbook-templates"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              <FileSpreadsheet size={14} className="shrink-0 text-c-text-muted" />
-              <span>
-                {t('rap.templatesLauncher.openWorkbookTemplates', 'Generator szablonów (Arkusz)')}
               </span>
             </button>
           )}
@@ -358,11 +339,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         label: t('rap.tabs.templates', 'Template Library'),
         icon: <BookTemplate size={16} />,
       },
-      // Kanon 2026-07-26: Architekt szablonów (Deck) i Generator szablonów
-      // (Excel) NIE są zakładkami Menu 1 — niezależnie od stanu
-      // isDeckArchitectEnabled()/isWorkbookTemplatesEnabled(). Otwierają się
-      // wewnątrz zakładki "Szablony" (patrz `templatesView` + TemplatesNewSplitButton
+      // Kanon 2026-07-26: Architekt szablonów (Deck) NIE jest zakładką Menu 1 —
+      // niezależnie od stanu isDeckArchitectEnabled(). Otwiera się wewnątrz
+      // zakładki "Szablony" (patrz `templatesView` + TemplatesNewSplitButton
       // poniżej), zgodnie z docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md §3.
+      // 2026-09-02 (owner decyzja „nie" na gen-excel-templates-tab, 08-30):
+      // zdjęty zdublowany wpis "Generator szablonów (Arkusz)" z tego menu —
+      // isWorkbookTemplatesEnabled() był domyślnie OFF wszędzie i nawet ON
+      // wołał dokładnie ten sam handler co kafel "Excel" w "Nowy szablon"
+      // (handleTemplateLauncherSelect('spreadsheet', 'blank')). Ekran końcowy
+      // kreatora (`templatesView === 'workbookTemplates'`, ExceleParametricTemplates)
+      // ZOSTAJE — to żywy landing po zapisie szablonu i cel `resolveTemplateUsePath`
+      // dla sheet_template. Szczegóły: docs/program/grafika/ANALIZA_ODRZUCONE_20260901.md §1.
     ],
     [t]
   );
@@ -1503,33 +1491,25 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     }
   };
 
-  // "New template" CTA gains a secondary menu (Architekt szablonów / Generator
-  // szablonów) whenever at least one of the two architect flags is ON — the
-  // ONLY way to reach either architect now (kanon: no Menu 1 siblings). Reuses
-  // `handleTemplateLauncherSelect`'s existing navigation (sets `?tab=...`,
-  // which `initialTemplatesView` resolves into the embedded view) instead of
-  // duplicating navigation logic. `undefined` outside the Templates library
-  // view — ModuleHub then falls back to its plain `onNewItem` button.
+  // "New template" CTA gains a secondary menu (Architekt szablonów) when the
+  // deck architect flag is ON — the ONLY way to reach it now (kanon: no Menu 1
+  // siblings). Reuses `handleTemplateLauncherSelect`'s existing navigation
+  // (sets `?tab=...`, which `initialTemplatesView` resolves into the embedded
+  // view) instead of duplicating navigation logic. `undefined` outside the
+  // Templates library view — ModuleHub then falls back to its plain
+  // `onNewItem` button.
+  // 2026-09-02: dropped the "Generator szablonów (Arkusz)" entry — see the
+  // kanon note above `tabs` for why (owner decyzja „nie" on gen-excel-templates-tab).
   const templatesLibraryCta =
     activeTab === 'templates' && templatesView === 'library'
       ? (() => {
           const showDeckArchitect = isDeckArchitectEnabled();
-          const showWorkbookTemplates = isWorkbookTemplatesEnabled();
-          if (!showDeckArchitect && !showWorkbookTemplates) return undefined;
+          if (!showDeckArchitect) return undefined;
           return (
             <TemplatesNewSplitButton
               label={ctaLabels.templates}
               onNewTemplate={handleNewItem}
-              onOpenDeckArchitect={
-                showDeckArchitect
-                  ? () => handleTemplateLauncherSelect('presentation', 'blank')
-                  : undefined
-              }
-              onOpenWorkbookTemplates={
-                showWorkbookTemplates
-                  ? () => handleTemplateLauncherSelect('spreadsheet', 'blank')
-                  : undefined
-              }
+              onOpenDeckArchitect={() => handleTemplateLauncherSelect('presentation', 'blank')}
             />
           );
         })()

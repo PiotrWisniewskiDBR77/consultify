@@ -26,9 +26,14 @@ export type RapTab =
   // — konflikt do rozstrzygnięcia przez Piotra, nie zmieniaj defaultu bez
   // jego słowa); przy OFF hub bez zmian względem pre-flag.
   | 'template_architect'
-  // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela —
-  // zakładka widoczna TYLKO przy fladze isWorkbookTemplatesEnabled() (default
-  // OFF); przy OFF hub bez zmian.
+  // Gen. Excel nav (2026-07-22): rejestr parametrycznych szablonów Excela
+  // (ExceleParametricTemplates) — NIE osobna zakładka menu (2026-09-02: zdjęty
+  // zdublowany wpis "Generator szablonów (Arkusz)" z CTA "Nowy szablon",
+  // flaga isWorkbookTemplatesEnabled() skasowana, była domyślnie OFF wszędzie
+  // i nawet ON wołała ten sam handler co kafel "Excel"). Ta wartość zostaje
+  // WYŁĄCZNIE jako cel embedded view: landing po zapisie w kreatorze
+  // (TemplateBuilderFlow.onSaved) i deep link `?tab=workbook_templates` dla
+  // `resolveTemplateUsePath` (sheet_template) — patrz ReportsAndPresentationsHub.tsx.
   | 'workbook_templates';
 // NOTE (#83a): 'outputs_data' retired as a top-level Menu 2 tab — Data Sources
 // moved to a sub-tab inside Sheets (SheetsTabContent). Legacy `?tab=data` deep
