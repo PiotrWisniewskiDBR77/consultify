@@ -9,6 +9,7 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import mfaService from '../services/MFAService.js';
+import { issueMfaEnrollmentTicket } from '../services/mfaEnrollmentTicket.js';
 import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_EXPIRED_USER_STATUS,
@@ -425,11 +426,31 @@ export const login = async (
         });
         return;
       }
-    } else if (!mfaStatus.enabled && mfaStatus.enforced) {
+    } else if (!mfaStatus.enabled && mfaStatus.enforced && !mfaStatus.graceActive) {
+      // WAY OUT, NOT A WALL (2026-09-02).
+      // The enforced organisation's grace period is spent and this account has
+      // no second factor. Refusing here is correct — but refusing with NOTHING
+      // was a closed loop: enrolling a factor lives behind the very login being
+      // refused, so the account could never satisfy the condition. The password
+      // has just been verified, so we hand back a scoped, 15-minute ticket that
+      // opens exactly three enrollment endpoints and nothing else
+      // (/api/auth/mfa-enrollment; see mfaEnrollmentTicket.ts). It is not a
+      // session: `verifyToken` refuses it on every other route.
+      const enrollmentTicket = issueMfaEnrollmentTicket({
+        id: user.id,
+        organization_id: user.organization_id,
+        email: user.email,
+      });
       res.status(403).json({
         error: 'Your organization requires two-factor authentication. Please set up MFA first.',
+        code: 'MFA_SETUP_REQUIRED',
         mfaSetupRequired: true,
-        gracePeriodRemaining: mfaStatus.gracePeriodRemaining,
+        gracePeriodRemaining: 0,
+        gracePeriodDays: mfaStatus.gracePeriodDays,
+        graceDeadline: mfaStatus.graceDeadline,
+        mfaSetupToken: enrollmentTicket.token,
+        mfaSetupTokenExpiresIn: enrollmentTicket.expiresIn,
+        mfaSetupEndpoint: '/api/auth/mfa-enrollment',
       });
       return;
     }
@@ -545,11 +566,26 @@ export const login = async (
 
     logger.info('[AuthController] Sending response with res.send');
 
+    // The member is inside the organisation's MFA grace period: the login
+    // PASSES (that is the whole point of a grace period) and the response
+    // carries the explicit deadline so the UI can lead them to enrollment with
+    // a real "N days left" instead of a silent countdown to a locked door.
+    const mfaEnrollmentNotice =
+      mfaStatus.enforced && !mfaStatus.enabled && mfaStatus.graceActive
+        ? {
+            required: true,
+            daysRemaining: mfaStatus.gracePeriodRemaining,
+            deadline: mfaStatus.graceDeadline,
+            gracePeriodDays: mfaStatus.gracePeriodDays,
+          }
+        : null;
+
     res.status(200).send({
       user: safeUser,
       token: tokenPair.accessToken,
       refreshToken: tokenPair.refreshToken,
       expiresIn: tokenPair.expiresIn,
+      mfaEnrollment: mfaEnrollmentNotice,
       demoSession: activeDemoSession
         ? {
             id: activeDemoSession.id,

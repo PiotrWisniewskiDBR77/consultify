@@ -17,6 +17,7 @@ import { HelpToggleButton } from '../components/Help/HelpToggleButton';
 // import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
 import { DemoModeBanner } from '../components/layout/DemoModeBanner';
 import GlobalAccessBanners from '../components/layout/GlobalAccessBanners';
+import MfaEnrollmentBanner from '../components/layout/MfaEnrollmentBanner';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
@@ -338,6 +339,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onContactSales={() => window.open('https://consultify.io/contact', '_blank')}
             />
             <AIFreezeBanner />
+            <MfaEnrollmentBanner />
 
             <div className="relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
               <div className="flex items-center gap-3">
