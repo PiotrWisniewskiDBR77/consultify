@@ -358,3 +358,102 @@ kolumna WŁAŚCICIEL pokazuje `user-ann…`, `user-tom…`, `user-pio…`, a pan
 `user-piotr-wisniewski` i `user-anna-kowalska`. Katalog osób, który zrobiłem, obsługuje dane demo
 Realizacji — Wyniki mają własne źródło, więc to osobne zadanie. Wpisane jako wyjątek na obu
 kartach, żeby nie zniknęło; ocen tych kart NIE zmieniałem (nie moje zlecenie).
+
+---
+
+## DOPISEK 17:00 — separator jednostki + ZATRZYMANE nazwiska w Wynikach
+
+### 1. „8dni" — naprawione u źródła, dla całej rodziny
+
+**Pomiar PRZED, uczciwie w dwóch liczbach:** surowy grep po sklejeniu wartości z jednostką dał
+**25 trafień**. Po przejrzeniu każdego z osobna realnych defektów jest **8, w 3 plikach**. Różnica
+nie jest szumem — to dwie różne rzeczy pod jednym kształtem składni:
+
+| co to naprawdę było | ile | werdykt |
+| --- | --- | --- |
+| liczba + **jednostka miary** bez separatora | **8** | DEFEKT — naprawione |
+| przyrostek TEKSTOWY (`(kopia)`, `" (w toku)"`, ` — 3 slajdy`, przyrostek klucza uprawnień, identyfikator) | 11 | nie ta rodzina |
+| jednostka, która może być **wyłącznie `%`** (`suffix = isPercent ? '%' : ''`) | 4 | poprawne — spacja byłaby błędem |
+| wołacz wpisuje spację **do samej wartości** (`unit=" MB"`, `` unit={` ${…}`} ``) | 2 | poprawne — naprawa dałaby podwójną spację |
+
+Naprawione 8 miejsc: `RolloutTab` 6 (3 w szablonie + 3 w kartach KPI), `LiveDashboard` 2.
+
+**Rozstrzygnięcie:** wspólny pomocnik `src/utils/jednostka.ts`. Jednostka zaczynająca się od
+LITERY jest osobnym wyrazem i dostaje spację (`8 dni`, `120 zł`, `4 h`, `3 µm`); jednostka będąca
+SYMBOLEM przykleja się (`74%`, `20°`, `3×`). Funkcja **przycina jednostkę przed decyzją**, więc
+jest odporna na drugą konwencję żyjącą w repozytorium (spacja wpisana do wartości) i można ją
+tam bezpiecznie podłączyć później — `zJednostka(512, ' MB')` daje `512 MB`, nie `512  MB`.
+
+**Bezpiecznik:** `src/utils/__tests__/jednostka.test.ts`, 6 grup. **Dowód mutacyjny na OBU
+gałęziach reguły:** odebranie spacji słowu → 3 czerwone; dodanie spacji symbolowi → 3 czerwone;
+stan poprawny → 6/6 zielonych. Żadna pojedyncza mutacja nie przechodzi. Test pilnuje też pułapki
+`falsy`: `zJednostka(0, 'dni')` = `0 dni`, bo zero jest wartością, nie brakiem.
+
+**Dowód w obrazie:** `execution-tab-rollout__PO__{light,dark}.png` — w jednym kadrze widać OBIE
+gałęzie reguły naraz: „8 dni · 12 dni · 6 dni" ze spacją i „74% · 62% · 90%" bez niej.
+
+**★ Ograniczenie dowodu, nazwane wprost:** z 8 naprawionych miejsc **6 mam na zrzucie**
+(`RolloutTab`). Pozostałe 2 (`LiveDashboard`) **nie mają dowodu w obrazie** — ten komponent nie
+ma ekranu w stanowisku podglądowym ani karty w odbiorze, więc nie ma czym zrobić zdjęcia.
+Naprawa jest identyczna i pokryta testem jednostkowym, ale nie twierdzę, że ją zobaczyłem.
+
+**Odmiana „1 dzień" odłożona** z uzasadnieniem i gotową drogą wyjścia — `ODLOZONE.md`.
+
+### 2. Nazwiska w Wynikach — ZATRZYMANE, i to jest właściwy wynik
+
+Reguła zatrzymania ze zlecenia uruchomiła się z zapasem: **źródeł jest 49, nie trzy**
+(22 różne identyfikatory osób). Ale zatrzymuję się z **mocniejszego powodu niż liczba**:
+
+**★ Moduł Wyniki MA JUŻ POPRAWNY MECHANIZM — i nie jest nim katalog atrap.** `resolveMemberName`
+(`ResultsAttentionPage.tsx:112`, `ResultsRoiHub.tsx:275`) mapuje identyfikator na nazwisko
+z **REALNEJ listy członków organizacji**, danych już pobranych, i uczciwie spada do skróconego
+identyfikatora, gdy członka nie ma. Komentarz przy `attentionPresenters.tsx:83` opisuje wprost tę
+samą lukę „surowe id zamiast nazwy". To jest rodzeństwo z gotową poprawką — trzeci raz dzisiaj ten
+sam trop. **Zbudowanie obok niego katalogu atrap byłoby naprawą w złą stronę.**
+
+To znaczy, że polecenie „katalog osób w źródle danych Wyników" prowadziłoby do gorszego stanu —
+tak jak wcześniejsza premisa o nazwiskach w danych demo Realizacji. Różnica między modułami:
+Realizacja czyta lokalny zestaw przeglądowy, który **nie ma** listy członków organizacji, więc
+katalog był tam właściwy; Wyniki taką listę mają.
+
+**I powód, który przeważa nad oboma:** `OkrObjectivesView` nie ma dostępu do organizacji
+(0 wystąpień `currentOrganization`), a **stanowisko podglądowe nie atrapuje pobrania członków
+organizacji** dla żadnego z dwóch ekranów OKR. Poprawnie wykonana naprawa **nie zmieniłaby nic na
+zrzucie** — nazwiska dalej byłyby skrócone, właściciel zobaczyłby to samo, a ja zameldowałbym
+naprawę bez dowodu w obrazie. To kształt „zamknięte przez wygaszenie": zielono, bo kontekst nie
+dociera. Kolejność wyjścia (najpierw atrapa, potem kod) zapisana w `ODLOZONE.md`.
+
+**Zasięg na przyszłość:** 29 plików w Wynikach dotyka `ownerUserId`, **6 renderuje go surowo**.
+
+### 3. Reguła 22 — sprawdziłem NA SOBIE i miałem 23 wady
+
+Scalenie przyniosło REGUŁĘ NR 22 (do właściciela w drugiej osobie) i bramkę językową. Reguła
+dotyczy KAŻDEGO tekstu, który czyta właściciel — więc także moich zdań w kartach. Puściłem po
+swoich wpisach tę samą listę wad, którą stosuje bramka: **23 trafienia w moich własnych zdaniach
+z dzisiaj.** Poprawione wszystkie 20 wpisów:
+
+- **20 × data skrótem** — „02.09:" → „2 września:";
+- **1 × ścieżka** — nazwa pliku zrzutu w karcie Rolloutu → „Pokazuję Ci to na zdjęciu z
+  zaznaczonymi trzema komórkami";
+- **2 × trzecia osoba** — patrz niżej, to fałszywe trafienie bramki, ale i tak przepisałem.
+
+**ZGŁOSZENIE O SAMEJ BRAMCE:** wzorzec `TRZECIA_OSOBA` (`/\bwłaścicie/`) trafia w **nazwę kolumny
+produktu**. Zdanie „kolumna WŁAŚCICIEL pokazuje identyfikatory" jest poprawne i nie mówi o Piotrze
+w trzeciej osobie — mówi o nagłówku, który tak się nazywa na ekranie. Obszedłem to („kolumna
+z osobą odpowiedzialną"), ale bramka będzie karać poprawny tekst za każdym razem, gdy trzeba
+nazwać tę kolumnę. Wart rozważenia wyjątek na WERSALIKI albo na nazwę w cudzysłowie.
+
+### ZGŁASZAM (z tej rundy)
+
+1. **Bramka `bramka-jezyk-kart.mjs` jest CZERWONA: 79 z 89 zdań.** Sprawdzone mutacyjnie —
+   podstawiłem `status.json` prosto z linii i wynik jest **identyczny (79/89)**, więc to nie moje
+   zdania. Bramka weszła dziś razem z długiem, którego jeszcze nie spełnia.
+2. **`src/utils/__tests__` ma czerwone testy zastane**, m.in. `chatV9FeatureFlags` („resolver file
+   count (104) does not match registry length (40)"). Sprawdzone mutacyjnie: **liczba 104 jest
+   identyczna z moim nowym plikiem w `src/utils` i bez niego** — mój plik nie rusza tego licznika.
+   Pozostałe czerwone (`artifactStudioTelemetry`, `orgRedesignFlag`, `DbPromise.timeout`) są
+   w plikach, których nie dotykałem.
+3. **Drugi raz tego dnia trafiłem we własną pułapkę** przy dodawaniu importu: warunek „nie dodawaj
+   importu, jeśli nazwa modułu już występuje w pliku" trafił na **mój własny komentarz**
+   zawierający tę nazwę, więc import się nie dodał. Rano to samo przy `results-zestawienia`.
+   Za każdym razem złapane sprawdzeniem po fakcie, nigdy uważnością — warto, żeby następny wiedział.

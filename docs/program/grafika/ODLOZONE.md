@@ -598,3 +598,83 @@ wspólnym pliku i obejmuje wszystkie 23 karty naraz — tanio i bez ryzyka rozja
 
 **Jak przywrócić / gdzie patrzeć:** zrzut `evidence/grafika/217-trzy-rodziny/ustawienia-dane-prywatnosc__PO__light.png`,
 lewy górny róg karty „Kontrola danych" — to jedyna czerwień, jaka na tym ekranie została.
+
+---
+
+## Grupa: odmiana jednostki przy liczbie („1 dzień" vs „1 dni") — wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`
+
+**Zrobione dzisiaj (nie odkładam):** separator. Jednostka będąca SŁOWEM dostaje spację
+(`8 dni`, `120 zł`), jednostka będąca SYMBOLEM przykleja się (`74%`, `20°`). Wspólny pomocnik
+`src/utils/jednostka.ts` + test z dowodem mutacyjnym na OBU gałęziach reguły.
+
+**Co ZOSTAJE i dlaczego to NIE jest zaniechanie.** Przy wartości `1` poprawne jest „1 dzień",
+a nie „1 dni". Separator tego nie załatwi i **nie powinien**: jednostka przychodzi z danych jako
+GOTOWY NAPIS w jednym polu `unit: 'dni'`. Odmiana wymaga trzech form (`dzień · dni · dni`),
+czyli **zmiany kontraktu wskaźnika**, a nie poprawki w prezenterze. Zrobienie tego po stronie
+prezentera oznaczałoby zgadywanie odmiany ze skróconego napisu — dokładnie ten rodzaj
+„inteligentnej" heurystyki, który w tym repozytorium już raz wyprodukował `Wiśniewski` z
+`wisniewski` (się nie da) i `1 pozycji` zamiast `1 pozycja`.
+
+**Skala:** dziś w danych demo Rolloutu jest JEDEN wskaźnik z jednostką-słowem
+(`Czas realizacji zamówienia`, `unit: 'dni'`). Pozostałe mają `%`, którego problem nie dotyczy.
+Defekt odmiany zobaczy się dopiero, gdy któryś wskaźnik osiągnie wartość `1`.
+
+**Jak to zrobić, gdy przyjdzie kolej — droga sprawdzona dziś na 19 kluczach i18n:**
+zamienić `unit: string` na `unit: string | [string, string, string]` w kontrakcie wskaźnika
+(`RolloutTab.tsx` typ `unit` linia 64 + odpowiadające pole w danych), a w `zJednostka()` dodać
+gałąź: tablica trzech form → `liczebnik(wartosc, formy)` (`src/utils/liczebnik.ts`, już istnieje
+i ma testy). Napis pojedynczy dalej działa bez zmian — zgodność wsteczna dla wszystkich
+wskaźników z `%`. **Nie wprowadzać czwartego mechanizmu odmiany** (są już: `_one/_few/_many`
+i18next, `liczebnik()`, oraz dwie stare lokalne funkcje wymienione we wpisie z 30.08).
+
+---
+
+## Grupa: nazwiska w module Wyniki — ZATRZYMANE PRZED NAPRAWĄ (wpis 2026-09-02)
+
+**Zlecenie brzmiało:** „katalog osób w źródle danych Wyników plus prezentery, które go czytają —
+tak samo jak w Realizacji". **Nie wykonałem i uważam, że wykonać nie należy.** Trzy pomiary,
+każdy osobno wystarczający, żeby się zatrzymać:
+
+**1. Źródeł jest 49, nie trzy.** Reguła zatrzymania ze zlecenia („jeśli źródeł jest więcej niż
+trzy — zatrzymaj się") uruchomiła się z zapasem. Pomiar:
+`grep -rlE "'user-(anna|marek|piotr|katarzyna|tomasz|…)[a-z-]*'"` → **49 plików, 22 różne
+identyfikatory osób**. Katalog per moduł oznaczałby kilkanaście katalogów i tę samą osobę pod
+różnymi nazwiskami w różnych modułach — stan GORSZY niż dzisiejszy.
+
+**2. Wszystkie 49 plików leży w `dev-render/`, ZERO w `src/`.** To nie są dane produktu, tylko
+atrapy harnessu. W danych już dziś widać dryf tożsamości: `user-anna` (56×), `user-anna-kowalska`
+(50×), `user-anna-kowalczyk` (10×), `user-anna-demo` (9×), `user-anna-k` (1×) — pięć
+identyfikatorów, których przypisanie do osób jest DECYZJĄ TREŚCIOWĄ, nie techniczną.
+
+**3. ★ Moduł Wyniki MA JUŻ POPRAWNY MECHANIZM — i nie jest nim katalog atrap.**
+`resolveMemberName` (`ResultsAttentionPage.tsx:112`, `ResultsRoiHub.tsx:275`) mapuje identyfikator
+na nazwisko z **REALNEJ listy członków organizacji** (`OrganizationApi.getOrganizationMembers`,
+dane już pobrane, bez nowego wywołania serwera) i uczciwie spada do skróconego identyfikatora,
+gdy członka nie ma. Komentarz przy `attentionPresenters.tsx:83` opisuje wprost tę samą lukę
+„surowe id zamiast nazwy". **To jest rodzeństwo z gotową poprawką** — dokładnie ten trop, który
+dziś zadziałał już dwa razy. Właściwą naprawą jest PODPIĘCIE istniejącego resolvera do
+prezenterów OKR, nie zbudowanie obok niego katalogu atrap.
+
+**Dlaczego mimo to nie podpiąłem tego dzisiaj — powód, który jest ważniejszy od powyższych:**
+`OkrObjectivesView.tsx` nie ma `currentOrganization` (0 wystąpień), więc podpięcie wymaga
+przeprowadzenia resolvera przez drzewo widoków OKR. A **harness OKR nie atrapuje
+`getOrganizationMembers`** — sprawdzone: w `results-vnext-okr-objectives.tsx` i
+`results-vnext-okr-registry.tsx` nie ma ani jednego mocka tego wywołania. Skutek: poprawnie
+wykonana naprawa **nie zmieniłaby nic na zrzucie** — resolver spadłby do skróconego
+identyfikatora, właściciel zobaczyłby to samo, a ja zameldowałbym naprawę bez dowodu w obrazie.
+To jest kształt „zamknięte przez wygaszenie": zielono, bo kontekst nie dociera.
+
+**Zasięg, gdy przyjdzie kolej:** 29 plików w `ResultsVNext` dotyka `ownerUserId`; **6 miejsc
+renderuje go surowo** jako komórkę właściciela (`okrObjectivePresenters.tsx:224`,
+`okrKeyResultPresenters.tsx:214`, `OkrSetOverviewView.tsx:105` + 3 dalsze).
+
+**Kolejność naprawy, gdy zapadnie decyzja:** (1) dopisz mock `getOrganizationMembers` do dwóch
+ekranów harnessu OKR — inaczej nie ma czym udowodnić; (2) pokaż, że ekran psuje się WIDOCZNIE
+(nazwiska nadal surowe mimo mocka) — dopiero to dowodzi, że defekt jest w prezenterze;
+(3) przeprowadź `resolveMemberName` do widoków OKR wzorem `ResultsAttentionPage`;
+(4) zrzut PO. Kolejność „najpierw atrapa, potem kod" — reguła 21.
+
+**Decyzja projektowa do podjęcia przez nadzorcę/właściciela:** czy `executionReviewPeople`
+(katalog 8 osób, który zrobiłem dziś dla Realizacji, bo tamten fixture nie ma listy członków
+organizacji) ma się docelowo rozpuścić w jednym wspólnym katalogu atrap harnessu, czy zostać
+lokalny. Nie rozstrzygam tego sam — to dotyka wszystkich 49 plików.
