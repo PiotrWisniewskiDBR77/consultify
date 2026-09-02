@@ -21,6 +21,7 @@ import {
 } from '../../../services/enterpriseComplianceApi';
 import { formatListDateTime } from '../../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../../standard';
+import { statusChipLabel } from '../../ui/primitives/chips/EntityStatusChip';
 
 const inputClass =
   'rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus focus:outline-none focus:ring-1 focus:ring-c-focus';
@@ -133,7 +134,16 @@ export const CommandCenterAgentTraceTab: React.FC = () => {
           const decision = row.userDecision as string | null;
           return (
             <span className={`text-sm font-medium ${decisionTone(decision)}`}>
-              {decision || t('commandCenter.agentTrace.pending', 'Pending')}
+              {decision
+                ? // ★ Znalezisko 203-polski (2026-09-02): `{decision}` renderował
+                  // SUROWĄ wartość backendu (ACCEPTED/REJECTED/MODIFIED) bez
+                  // żadnego tłumaczenia — kolumna WYNIK mieszała angielskie
+                  // wartości z polskim „Oczekuje" (fallback niżej, już przez
+                  // t()). `statusChipLabel` to kanoniczny słownik statusów
+                  // (public/locales/pl/translation.json:statusChip), już
+                  // uzupełniony o klucz `modified` w tym samym dyżurze.
+                  statusChipLabel(decision, t)
+                : t('commandCenter.agentTrace.pending', 'Pending')}
             </span>
           );
         },

@@ -365,12 +365,71 @@ interface CatalogApp {
   id: string;
   name: string;
   category: CatalogCategory;
+  /** EN description (canonical fallback — see `descriptionPl` for the PL rendering). */
   description: string;
+  /**
+   * ★ Znalezisko 203-polski (2026-09-02, ustawienia-integracje): `description`
+   * i `features` (niżej) były renderowane surowo (linie ~1205/~1208), bez
+   * ŻADNEGO mechanizmu i18n — cały katalog integracji mówił po angielsku w
+   * polskim UI, dla wszystkich 20 aplikacji. `descriptionPl` dopisuje polski
+   * wariant per aplikacja; `features` zostaje kanonicznym kluczem EN i
+   * przechodzi przez wspólny słownik `FEATURE_LABELS_PL` (wiele aplikacji
+   * dzieli te same cechy — "Email sync", "File sync"… — jeden słownik, nie
+   * duplikat na aplikację).
+   */
+  descriptionPl: string;
   features: string[];
   icon: React.FC;
   authType: 'oauth2' | 'api_key' | 'token' | 'basic';
   configFields: string[];
 }
+
+/** Polski słownik cech (`features`) — kanoniczny klucz EN → etykieta PL. */
+const FEATURE_LABELS_PL: Record<string, string> = {
+  'Email sync': 'Synchronizacja e-maili',
+  'Contact import': 'Import kontaktów',
+  'Label mapping': 'Mapowanie etykiet',
+  'Folder mapping': 'Mapowanie folderów',
+  'Real-time notifications': 'Powiadomienia na żywo',
+  'Interactive actions': 'Akcje interaktywne',
+  'Channel sync': 'Synchronizacja kanałów',
+  'Adaptive cards': 'Karty adaptacyjne',
+  'Meeting sync': 'Synchronizacja spotkań',
+  'Channel notifications': 'Powiadomienia kanałów',
+  'Event sync': 'Synchronizacja wydarzeń',
+  Reminders: 'Przypomnienia',
+  'Shared calendars': 'Kalendarze współdzielone',
+  Availability: 'Dostępność',
+  'Room booking': 'Rezerwacja sal',
+  'CalDAV sync': 'Synchronizacja CalDAV',
+  'Scheduling sync': 'Synchronizacja terminarza',
+  'Event types': 'Typy wydarzeń',
+  'Issue sync': 'Synchronizacja zgłoszeń',
+  'Sprint tracking': 'Śledzenie sprintów',
+  'Status mapping': 'Mapowanie statusów',
+  'Task sync': 'Synchronizacja zadań',
+  'Project mapping': 'Mapowanie projektów',
+  Portfolios: 'Portfolia',
+  'Board sync': 'Synchronizacja tablic',
+  'Card mapping': 'Mapowanie kart',
+  Checklists: 'Listy kontrolne',
+  'Space mapping': 'Mapowanie przestrzeni',
+  Goals: 'Cele',
+  'Item mapping': 'Mapowanie elementów',
+  Automations: 'Automatyzacje',
+  'Database sync': 'Synchronizacja baz danych',
+  'Page import': 'Import stron',
+  'Task lists': 'Listy zadań',
+  Labels: 'Etykiety',
+  'Cycle tracking': 'Śledzenie cykli',
+  'File sync': 'Synchronizacja plików',
+  'Shared drives': 'Dyski współdzielone',
+  Search: 'Wyszukiwanie',
+  SharePoint: 'SharePoint',
+  Sharing: 'Udostępnianie',
+  Workflows: 'Przepływy pracy',
+  Governance: 'Zarządzanie zgodnością',
+};
 
 const CATEGORY_META: Record<CatalogCategory, { labelKey: string; fallback: string }> = {
   email: { labelKey: 'settings.integrations.cat.email', fallback: 'Email & Communication' },
@@ -386,6 +445,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Gmail',
     category: 'email',
     description: 'Sync emails, contacts and labels from your Gmail account',
+    descriptionPl: 'Synchronizuj e-maile, kontakty i etykiety z konta Gmail',
     features: ['Email sync', 'Contact import', 'Label mapping'],
     icon: GmailIcon,
     authType: 'oauth2',
@@ -396,6 +456,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Microsoft Outlook',
     category: 'email',
     description: 'Connect your Outlook mailbox for email and contact sync',
+    descriptionPl: 'Połącz skrzynkę Outlook do synchronizacji e-maili i kontaktów',
     features: ['Email sync', 'Contact import', 'Folder mapping'],
     icon: OutlookIcon,
     authType: 'oauth2',
@@ -406,6 +467,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Slack',
     category: 'email',
     description: 'Receive notifications and create tasks directly from Slack',
+    descriptionPl: 'Odbieraj powiadomienia i twórz zadania bezpośrednio ze Slacka',
     features: ['Real-time notifications', 'Interactive actions', 'Channel sync'],
     icon: SlackIcon,
     authType: 'oauth2',
@@ -416,6 +478,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Microsoft Teams',
     category: 'email',
     description: 'Get notified in Teams and sync meeting data',
+    descriptionPl: 'Otrzymuj powiadomienia w Teams i synchronizuj dane spotkań',
     features: ['Adaptive cards', 'Meeting sync', 'Channel notifications'],
     icon: TeamsIcon,
     authType: 'oauth2',
@@ -428,6 +491,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Google Calendar',
     category: 'calendar',
     description: 'Two-way sync of events, reminders and shared calendars',
+    descriptionPl: 'Dwukierunkowa synchronizacja wydarzeń, przypomnień i kalendarzy współdzielonych',
     features: ['Event sync', 'Reminders', 'Shared calendars'],
     icon: GoogleCalendarIcon,
     authType: 'oauth2',
@@ -438,6 +502,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Outlook Calendar',
     category: 'calendar',
     description: 'Sync your Outlook calendar events and availability',
+    descriptionPl: 'Synchronizuj wydarzenia i dostępność kalendarza Outlook',
     features: ['Event sync', 'Availability', 'Room booking'],
     icon: OutlookCalendarIcon,
     authType: 'oauth2',
@@ -448,6 +513,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Apple Calendar (iCal)',
     category: 'calendar',
     description: 'Connect via CalDAV for iCloud calendar sync',
+    descriptionPl: 'Połącz przez CalDAV, aby zsynchronizować kalendarz iCloud',
     features: ['CalDAV sync', 'Reminders'],
     icon: AppleCalendarIcon,
     authType: 'basic',
@@ -458,6 +524,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Calendly',
     category: 'calendar',
     description: 'Import scheduled meetings and availability windows',
+    descriptionPl: 'Importuj zaplanowane spotkania i okna dostępności',
     features: ['Scheduling sync', 'Availability', 'Event types'],
     icon: CalendlyIcon,
     authType: 'oauth2',
@@ -470,6 +537,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Jira',
     category: 'task_management',
     description: 'Bi-directional sync of issues, sprints and boards',
+    descriptionPl: 'Dwukierunkowa synchronizacja zgłoszeń, sprintów i tablic',
     features: ['Issue sync', 'Sprint tracking', 'Status mapping'],
     icon: JiraIcon,
     authType: 'oauth2',
@@ -480,6 +548,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Asana',
     category: 'task_management',
     description: 'Sync tasks, projects and portfolios with Asana',
+    descriptionPl: 'Synchronizuj zadania, projekty i portfolia z Asaną',
     features: ['Task sync', 'Project mapping', 'Portfolios'],
     icon: AsanaIcon,
     authType: 'oauth2',
@@ -490,6 +559,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Trello',
     category: 'task_management',
     description: 'Sync boards, lists and cards with Trello',
+    descriptionPl: 'Synchronizuj tablice, listy i karty z Trello',
     features: ['Board sync', 'Card mapping', 'Checklists'],
     icon: TrelloIcon,
     authType: 'token',
@@ -500,6 +570,7 @@ const CATALOG: CatalogApp[] = [
     name: 'ClickUp',
     category: 'task_management',
     description: 'Connect tasks, spaces and goals from ClickUp',
+    descriptionPl: 'Połącz zadania, przestrzenie i cele z ClickUp',
     features: ['Task sync', 'Space mapping', 'Goals'],
     icon: ClickUpIcon,
     authType: 'oauth2',
@@ -510,6 +581,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Monday.com',
     category: 'task_management',
     description: 'Sync boards, items and workspaces from Monday',
+    descriptionPl: 'Synchronizuj tablice, elementy i obszary robocze z Monday',
     features: ['Board sync', 'Item mapping', 'Automations'],
     icon: MondayIcon,
     authType: 'api_key',
@@ -520,6 +592,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Notion',
     category: 'task_management',
     description: 'Sync databases, pages and task lists from Notion',
+    descriptionPl: 'Synchronizuj bazy danych, strony i listy zadań z Notion',
     features: ['Database sync', 'Page import', 'Task lists'],
     icon: NotionIcon,
     authType: 'oauth2',
@@ -530,6 +603,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Todoist',
     category: 'task_management',
     description: 'Sync tasks, projects and labels from Todoist',
+    descriptionPl: 'Synchronizuj zadania, projekty i etykiety z Todoist',
     features: ['Task sync', 'Project mapping', 'Labels'],
     icon: TodoistIcon,
     authType: 'oauth2',
@@ -540,6 +614,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Linear',
     category: 'task_management',
     description: 'Sync issues, projects and cycles from Linear',
+    descriptionPl: 'Synchronizuj zgłoszenia, projekty i cykle z Linear',
     features: ['Issue sync', 'Cycle tracking', 'Project mapping'],
     icon: LinearIcon,
     authType: 'oauth2',
@@ -552,6 +627,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Google Drive',
     category: 'cloud_storage',
     description: 'Access and sync files, folders and shared drives',
+    descriptionPl: 'Uzyskaj dostęp i synchronizuj pliki, foldery i dyski współdzielone',
     features: ['File sync', 'Shared drives', 'Search'],
     icon: GoogleDriveIcon,
     authType: 'oauth2',
@@ -562,6 +638,7 @@ const CATALOG: CatalogApp[] = [
     name: 'OneDrive',
     category: 'cloud_storage',
     description: 'Connect your OneDrive for file sync and sharing',
+    descriptionPl: 'Połącz OneDrive do synchronizacji i udostępniania plików',
     features: ['File sync', 'SharePoint', 'Sharing'],
     icon: OneDriveIcon,
     authType: 'oauth2',
@@ -572,6 +649,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Dropbox',
     category: 'cloud_storage',
     description: 'Sync files and folders from your Dropbox account',
+    descriptionPl: 'Synchronizuj pliki i foldery z konta Dropbox',
     features: ['File sync', 'Folder mapping', 'Sharing'],
     icon: DropboxIcon,
     authType: 'oauth2',
@@ -582,6 +660,7 @@ const CATALOG: CatalogApp[] = [
     name: 'Box',
     category: 'cloud_storage',
     description: 'Enterprise file sync with Box workflows',
+    descriptionPl: 'Firmowa synchronizacja plików z przepływami pracy Box',
     features: ['File sync', 'Workflows', 'Governance'],
     icon: BoxIcon,
     authType: 'oauth2',
@@ -608,7 +687,8 @@ interface ConnectedAppsSettingsProps {
 }
 
 export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ className = '' }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const [selectedCategory, setSelectedCategory] = useState<'all' | CatalogCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [connectModalApp, setConnectModalApp] = useState<CatalogApp | null>(null);
@@ -681,7 +761,12 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     const q = searchQuery.trim().toLowerCase();
     return CATALOG.filter((app) => {
       if (selectedCategory !== 'all' && app.category !== selectedCategory) return false;
-      if (q && !app.name.toLowerCase().includes(q) && !app.description.toLowerCase().includes(q))
+      if (
+        q &&
+        !app.name.toLowerCase().includes(q) &&
+        !app.description.toLowerCase().includes(q) &&
+        !app.descriptionPl.toLowerCase().includes(q)
+      )
         return false;
       return true;
     });
@@ -1050,7 +1135,9 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           {connectedCount > 0 && (
             <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2.5 py-1 rounded-full">
               <Check size={12} />
-              {connectedCount} connected
+              {isPolish
+                ? `${connectedCount} ${connectedCount === 1 ? 'połączona' : 'połączone'}`
+                : `${connectedCount} connected`}
             </span>
           )}
           <button
@@ -1202,7 +1289,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                               )}
                             </div>
                             <p className="text-xs text-c-text-muted mt-0.5 line-clamp-2">
-                              {app.description}
+                              {isPolish ? app.descriptionPl : app.description}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {app.features.map((f) => (
@@ -1210,7 +1297,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                   key={f}
                                   className="text-[10px] text-c-text-muted bg-c-surface-raised px-1.5 py-0.5 rounded"
                                 >
-                                  {f}
+                                  {isPolish ? FEATURE_LABELS_PL[f] || f : f}
                                 </span>
                               ))}
                               <span

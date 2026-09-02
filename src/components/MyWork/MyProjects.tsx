@@ -47,6 +47,7 @@ import {
 import { Api } from '@/services/api';
 import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeholders.api';
 import { ROUTES } from '@/routes/routeConfig';
+import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
@@ -887,7 +888,16 @@ export const MyProjects: React.FC = () => {
                 onClose={() => setProgramPreviewId(null)}
                 meta={{
                   pills: [
-                    { label: String(previewProgramListRow.status || 'active'), tone: 'neutral' },
+                    {
+                      // ★ Znalezisko 203-polski (zwornik-projects, 2026-09-02):
+                      // ta pill czytała SUROWY status ('active') podczas gdy
+                      // ta sama wartość w kolumnie tabeli obok (domyślny
+                      // render EntityStatusChip → statusChip.active) mówi
+                      // „Aktywne". `statusChipLabel` to ten sam mechanizm
+                      // bez powłoki chipa — jeden SSOT dla obu miejsc.
+                      label: statusChipLabel(previewProgramListRow.status || 'active', t),
+                      tone: 'neutral',
+                    },
                     {
                       label: `${programRollup?.projectCount ?? 0} ${t('myWork.projects.projects2', 'projects')}`,
                       tone: 'neutral',
@@ -1112,7 +1122,11 @@ export const MyProjects: React.FC = () => {
                 onTogglePin={() => setPreviewPinned((v) => !v)}
                 meta={{
                   pills: [
-                    { label: String(previewProject.status || 'active'), tone: 'neutral' },
+                    {
+                      // ★ Ten sam znalezisko 203-polski co pill programu wyżej.
+                      label: statusChipLabel(previewProject.status || 'active', t),
+                      tone: 'neutral',
+                    },
                     {
                       label: `${previewProject.memberCount ?? 0} ${t('myWork.projects.members2', 'members')}`,
                       tone: 'neutral',

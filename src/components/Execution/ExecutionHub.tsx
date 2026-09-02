@@ -84,7 +84,11 @@ import {
 } from '@/services/api/v8/execution-control';
 import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import {
+  getLocalizedStatusLabel,
+  getStatusesForModule,
+  STATUS_METADATA,
+} from '@/services/initiativeLifecycle';
 import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi';
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
@@ -2264,23 +2268,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const meta = STATUS_METADATA[status];
           return {
             value: status,
-            label:
-              isPolish && status === InitiativeStatus.EXECUTING
-                ? 'W realizacji'
-                : meta?.label || String(status),
+            // ★ Znalezisko 203-polski (2026-09-02): poprzedni kod tłumaczył
+            // WYŁĄCZNIE EXECUTING na sztywno ('W realizacji'), więc każdy inny
+            // status (Scheduled/Blocked/Done…) spadał na `meta.label`
+            // angielski — kolumna statusu mieszała języki MIĘDZY WIERSZAMI.
+            // `getLocalizedStatusLabel` to kanoniczna PL/EN etykieta (CB-06 /
+            // RB-035, `services/initiativeLifecycle.ts`) — czyta klucz
+            // `initiativeStatus.<status>` z i18n, zawsze poprawnie dla
+            // WSZYSTKICH statusów, nie tylko jednego.
+            label: getLocalizedStatusLabel(status, t),
             color: meta?.dotColor || 'bg-slate-400',
           };
         }),
         render: (row) => {
-          const meta = STATUS_METADATA[row.status as InitiativeStatus];
+          const status = row.status as InitiativeStatus;
           return (
             <EntityStatusChip
               status={String(row.status)}
-              label={
-                isPolish && row.status === InitiativeStatus.EXECUTING
-                  ? 'W realizacji'
-                  : meta?.label || String(row.status)
-              }
+              label={getLocalizedStatusLabel(status, t)}
             />
           );
         },
@@ -5659,9 +5664,14 @@ Please return:
                   meta={{
                     pills: [
                       {
-                        label:
-                          STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label ||
-                          String(selectedRow.status),
+                        // ★ Ten sam znalezisko 203-polski co kolumna statusu
+                        // wyżej: `STATUS_METADATA[...].label` jest zawsze
+                        // angielski — pill podglądu pokazywał np. "Blocked"
+                        // podczas gdy tabela obok mówiła po polsku.
+                        label: getLocalizedStatusLabel(
+                          selectedRow.status as InitiativeStatus,
+                          t
+                        ),
                         tone: statusChipTone(String(selectedRow.status)),
                       },
                       {
