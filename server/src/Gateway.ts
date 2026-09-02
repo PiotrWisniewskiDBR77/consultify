@@ -3,11 +3,7 @@ import type { Express, RequestHandler } from 'express';
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
-import {
-  betaGate,
-  createBetaGate,
-  createModuleGate,
-} from './middleware/betaGate.middleware.js';
+import { betaGate, createBetaGate, createModuleGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { requireCanonicalExecutionWriter } from './middleware/executionSpineLegacyReadOnly.middleware.js';
@@ -117,7 +113,6 @@ import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
-import signalsFeedRoutes from './routes/signals.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
 import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
@@ -289,7 +284,6 @@ import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.ro
 // /api/results* surface above (see kpi.routes.ts's own header comment:
 // "not aliases for new commands", plan §7).
 import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
-import resultsVnextSearchRoutes from './routes/resultsVnext/search.routes.js';
 // KPI-E003 Deviation Closed Loop — mounted at the MORE SPECIFIC
 // `/api/vnext/results/kpi/deviation-cases` prefix and registered BEFORE
 // resultsVnextKpiRoutes below (see kpiDeviation.routes.ts's own "MOUNT-ORDER
@@ -360,6 +354,7 @@ import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyA
 // the KPI-E005 precedent's ordering convention above, not because
 // correctness depends on it here.
 import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
+import resultsVnextSearchRoutes from './routes/resultsVnext/search.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -371,6 +366,7 @@ import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import shareRoutes from './routes/share.routes.js';
+import signalsFeedRoutes from './routes/signals.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
 import slackInboundRoutes from './routes/slack/slackInbound.routes.js';
 import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
