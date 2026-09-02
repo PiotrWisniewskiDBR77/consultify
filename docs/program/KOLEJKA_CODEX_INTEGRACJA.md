@@ -62,6 +62,22 @@ wyłącznie `requireAuth`, **zero flagi frontendowej**. Znalezione defekty, potw
 ★ **`G07`-`G12` tego modułu NIE zostały zamknięte i nie wolno ich zamknąć bez oczu właściciela** —
 to jedyny moduł, którego nigdy nie widział. Zrzuty są gotowe do jego przeglądu.
 
+### 283c · Alias `brand` — DRUGA nazwa na ten sam crimson
+`tailwind.config.js` ma stary alias **`brand` przepięty na crimson `#85182F`**. Czyli obok
+`primary-*` i `crimson-*` istnieje **trzecia nazwa tego samego czerwonego**, niewidoczna dla
+każdego, kto grepuje po dwóch pierwszych. Użyta w kilkunastu miejscach samego Partnera
+i **prawdopodobnie szeroko w całej aplikacji** — nie zmierzone.
+
+★ To jest ta sama pułapka, która dziś trafiła nadzorcę **dwa razy z rzędu** przy pomiarze
+Partnera: pierwsza miara pomijała `crimson-*`, druga pomijała podkatalog `sections/`. Rodzina
+ma trzy nazwy, a każdy pomiar po jednej z nich zaniża wynik.
+
+Zakres dyżuru: zmierzyć wszystkie trzy nazwy naraz w całym `src/`, wydać rejestr per moduł
+(ile dekoracyjnych, ile semantycznych), **nie naprawiać hurtem** — naprawa idzie modułami,
+z rozstrzygnięciem per wystąpienie, wzorem dyżuru Partnera (97 wystąpień, wszystkie okazały
+się dekoracyjne). Bezpieczniki `check-list-canon.sh`, `check-artefakt.sh`, `check-triada.sh`
+muszą przechodzić po każdym module.
+
 ### 284 · Cykl napraw `G13`–`G16` z rejestrów 279, 280 i 282
 Cztery bramki po zero na szesnaście. **Nie da się ich wydać przed 279/280/282** — ich treścią jest
 analiza wpływu, naprawa z tropem do commita, self-QA i pakiet przed/po dla znalezisk, których
