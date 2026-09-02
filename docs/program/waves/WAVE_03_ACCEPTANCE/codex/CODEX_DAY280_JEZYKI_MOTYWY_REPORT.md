@@ -2,7 +2,7 @@
 
 ## Stan
 
-Wynik bieżący: **PARTIAL / G06 NIEPODNIESIONE**. R1 i R2 wykonane. R3–R5 jeszcze niewykonane.
+Wynik bieżący: **PARTIAL / G06 NIEPODNIESIONE**. R1–R3 wykonane. R4–R5 jeszcze niewykonane.
 
 ## Baza i marker — wyniki dosłowne
 
@@ -36,6 +36,10 @@ To nie zamyka G06. Wykryto ekrany z identycznym renderowanym tekstem PL/EN oraz 
 
 Pułapki §0.2d (a)–(e): przebieg nie używa Vitest ani `tests/setup.ts`; działa przez Playwright przeciw lokalnemu dev-render. Nie jest dowodem RealPG/ApiGateway i nie jest tak przedstawiany. HTTP pochodzi z realnych odpowiedzi lokalnego harnessu; globalny fetch Vitest nie uczestniczy. Świeży kontekst per zrzut eliminuje przenoszenie stanu motywu/języka.
 
+## R3 — moduły 05–08
+
+Zmierzono 56/56 ekranów A/B, 448 zrzutów w pełnej macierzy. Wyniki per ekran dopisano do rejestru. Werdykty pozostają PARTIAL/NOT_PROVEN według tych samych ograniczeń dowodowych co R2.
+
 ## Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -46,9 +50,8 @@ Brak licencjonowanego pakietu Vitest w instrukcji (literalne `brak testów vites
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-Wszystkie ekrany modułów 05–16 (R3–R5) pozostają niewykonane na tym etapie. Dla R2 niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął.
+Wszystkie ekrany modułów 09–16 (R4–R5) pozostają niewykonane na tym etapie. Dla R2–R3 niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął.
 
 ## Artefakty
 
 `/private/tmp/cx-day280-jezyki-motywy-artefakty`. Sumy SHA-256 zostaną dołączone w R6.
-
