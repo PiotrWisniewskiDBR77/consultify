@@ -2353,7 +2353,10 @@
         "noLibrary": "Biblioteka jest pusta"
       },
       "selection": {
-        "elementsSelected": "{{count}} elementów zaznaczonych",
+        "elementsSelected_one": "{{count}} element zaznaczony",
+        "elementsSelected_few": "{{count}} elementy zaznaczone",
+        "elementsSelected_many": "{{count}} elementów zaznaczonych",
+        "elementsSelected_other": "{{count}} elementów zaznaczonych",
         "alignLeft": "Wyrównaj do lewej",
         "alignCenter": "Wyrównaj do środka",
         "alignRight": "Wyrównaj do prawej",

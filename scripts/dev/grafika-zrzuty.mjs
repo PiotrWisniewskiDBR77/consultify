@@ -119,6 +119,21 @@ const KLAWISZE = arg('klawisze', '')
  */
 const KLIK = arg('klik', '').split(',').map((s) => s.trim()).filter(Boolean);
 /**
+ * `--klik-sila=1` — kliknij POMIMO elementu przykrywajacego (Playwright `force`).
+ *
+ * POWOD ISTNIENIA (korpus poz. 8, 2026-09-02): na kanwach (`whiteboard-canvas`,
+ * kanwy Idei) srodek wezla bywa PRZYKRYTY plywajacym paskiem stylu, wiec zwykly
+ * `click()` czeka na „stabilny, klikalny" cel i pada po 5 s. Zrzut wychodzil
+ * wtedy BEZ zaznaczonego elementu — czyli nie pokazywal tego, co mial pokazac
+ * (pasek funkcji pojawia sie DOPIERO po zaznaczeniu). To ten sam ksztalt awarii
+ * co `--przewin` i `--klawisze`: narzedzie po cichu mierzy niewlasciwa rzecz.
+ *
+ * SWIADOMIE opt-in: `force` pomija kontrole trafialnosci, wiec wlaczony na slepo
+ * ukrylby realny defekt „przycisk jest zaslonięty i uzytkownik go nie kliknie".
+ * Wlaczamy go tam, gdzie przykrycie jest WLASNOSCIA kanwy, nie usterka.
+ */
+const KLIK_SILA = arg('klik-sila', '0') === '1';
+/**
  * DOMYŚLNY KLIK W WIERSZ — bez potrzeby wpisywania `--klik` per ekran (dyżur
  * 192, zadanie 1+3).
  *
@@ -277,7 +292,7 @@ for (const ekran of EKRANY) {
           klikBrak.push(sel);
           continue;
         }
-        await cel.click({ timeout: 5000 }).catch(() => klikBrak.push(sel));
+        await cel.click({ timeout: 5000, force: KLIK_SILA }).catch(() => klikBrak.push(sel));
         await page.waitForTimeout(500);
       }
       if (KLIK.length > 0) await page.waitForTimeout(400);

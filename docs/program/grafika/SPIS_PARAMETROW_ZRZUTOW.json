@@ -56,7 +56,10 @@
       "zrodlo": "selectedId, useState<string|null>(initialSelectedId) — src/components/AIChat/signalsFeed/ChatSignalsFeed.tsx:34 (POTWIERDZONE zrzutem 144-runda-pelna/chat-signals-feed__PO__light.png: sama tabela, brak podgladu; initialSelectedId domyslnie null w tym harnessie — nie sprawdzono URL-param nadpisania)"
     },
     "whiteboard-canvas": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": ".react-flow__node",
+      "klik-sila": "1",
+      "powod_klika": "Poziomy pasek funkcji pojawia sie DOPIERO po zaznaczeniu elementu — bez klikniecia zrzut nie pokazuje tego, co ma pokazac (korpus poz. 8). Wymaga --klik-sila=1, bo srodek wezla jest PRZYKRYTY plywajacym paskiem stylu i zwykly click() pada po 5 s; przykrycie jest wlasnoscia kanwy, nie usterka."
     },
     "whiteboard-workshop": {
       "wejscie": "screen",

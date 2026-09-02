@@ -64,7 +64,19 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
 
   return (
     <div
-      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-c-surface backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
+      /**
+       * PASEK NIE MOZE PRZEROSNAC KANWY (2026-09-02). Wlasciciel: „jak zaznaczam
+       * element otwiera sie pasek poziomy funkcji i on sie nie miesci w pasie —
+       * sa ikony ktore wygladaja poza okno. tutaj opisy trzeba skrocic albo wywalic."
+       * Zmierzone przed naprawa: pasek 1100 px w kanwie 1064 px — wystawal po 18 px
+       * z KAZDEJ strony, bo `left-1/2 -translate-x-1/2` centruje, ale nic nie
+       * ogranicza szerokosci, a 13 przyciskow renderowalo podpisy od 640 px wzwyz.
+       * Dwa zamki naraz: `max-w` przycina do kanwy, `iconOnly` zdejmuje podpisy
+       * (nazwy zostaja w dymku i dla czytnika ekranu). `overflow-x-auto` jest
+       * ostatnia deska ratunku przy bardzo waskiej kanwie — lepiej przewijac pasek
+       * niz chowac ikony poza oknem.
+       */
+      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 max-w-[calc(100%-1.5rem)] overflow-x-auto bg-c-surface backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
       role="toolbar"
       aria-label={t('myWork.whiteboard.selectionBar.ariaLabel')}
     >
@@ -72,6 +84,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         {t('myWork.whiteboard.selection.elementsSelected', { count: selectedCount })}
       </span>
       <ToolbarBtn
+        iconOnly
         icon={Link2}
         label={t('myWork.whiteboard.selectionBar.attach')}
         ariaLabel={t('myWork.whiteboard.selectionBar.attach')}
@@ -85,6 +98,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         disabled={locked}
       />
       <ToolbarBtn
+        iconOnly
         icon={ExternalLink}
         label={t('myWork.whiteboard.selectionBar.linked')}
         ariaLabel={t('myWork.whiteboard.selectionBar.linked')}
@@ -97,6 +111,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         }
       />
       <ToolbarBtn
+        iconOnly
         icon={Rocket}
         label={t('myWork.whiteboard.selectionBar.convertDecision')}
         ariaLabel={t('myWork.whiteboard.selectionBar.convertDecision')}
@@ -114,6 +129,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         disabled={locked}
       />
       <ToolbarBtn
+        iconOnly
         icon={CheckSquare}
         label={t('myWork.whiteboard.selectionBar.convertAction')}
         ariaLabel={t('myWork.whiteboard.selectionBar.convertAction')}
@@ -134,6 +150,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
       <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarDropdown
+        iconOnly
         icon={AlignCenter}
         label={t('myWork.whiteboard.selectionBar.align')}
         disabled={locked || selectedCount < 2}
@@ -178,6 +195,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         onMainClick={() => onAlignNodes('left')}
       />
       <ToolbarDropdown
+        iconOnly
         icon={ArrowLeftRight}
         label={t('myWork.whiteboard.selectionBar.distribute')}
         disabled={locked || selectedCount < 3}
@@ -201,6 +219,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
       <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarBtn
+        iconOnly
         icon={Group}
         label={t('myWork.whiteboard.selection.group')}
         onClick={onGroupSelected}
@@ -208,6 +227,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         ariaLabel={t('myWork.whiteboard.selection.group')}
       />
       <ToolbarBtn
+        iconOnly
         icon={Ungroup}
         label={t('myWork.whiteboard.selection.ungroup')}
         onClick={onUngroupSelected}
@@ -215,6 +235,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         ariaLabel={t('myWork.whiteboard.selection.ungroup')}
       />
       <ToolbarBtn
+        iconOnly
         icon={Copy}
         label={t('myWork.whiteboard.selection.duplicate')}
         onClick={onDuplicateSelected}
@@ -222,6 +243,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         ariaLabel={t('myWork.whiteboard.selection.duplicate')}
       />
       <ToolbarBtn
+        iconOnly
         icon={Lock}
         label={t('myWork.whiteboard.selection.lock')}
         onClick={onLockSelected}
@@ -229,6 +251,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         ariaLabel={t('myWork.whiteboard.selection.lock')}
       />
       <ToolbarBtn
+        iconOnly
         icon={Trash2}
         label={t('myWork.whiteboard.selection.delete')}
         onClick={onDeleteSelected}

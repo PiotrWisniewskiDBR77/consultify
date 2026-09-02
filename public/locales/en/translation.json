@@ -3064,7 +3064,8 @@
         "noLibrary": "Library is empty"
       },
       "selection": {
-        "elementsSelected": "{{count}} elements selected",
+        "elementsSelected_one": "{{count}} element selected",
+        "elementsSelected_other": "{{count}} elements selected",
         "alignLeft": "Align left",
         "alignCenter": "Align center",
         "alignRight": "Align right",
