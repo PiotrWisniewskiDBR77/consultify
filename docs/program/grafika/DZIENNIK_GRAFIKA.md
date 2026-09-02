@@ -18,6 +18,63 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-09-02
 
+### Z-47 · Poprawka dokumentu, który jest ŁADOWANY, jest skuteczna dopiero w miejscu ładowania
+**Co sie stalo:** skill `consultify-preview` poprawiono 01.09 (dyzur 175) — kolejnosc blokow stopki
+doprowadzona do zgodnosci z norma. Dzis robotnik naprawiajacy podglad Idei zameldowal, ze skill NADAL
+mowi co innego niz norma. Sprawdzilem: poprawka lezy na galezi `codex/m03-admin-20260824`, a sesje
+agentow laduja skille z KATALOGU GLOWNEGO repozytorium
+(`/Users/piotrwisniewski/Developer/Consultify/.claude/skills/`), stojacego na innej galezi — gdzie
+lezy wersja sprzed poprawki. Poprawka nie dziala od doby i nikt tego nie zauwazyl.
+
+**Dlaczego wazne:** to trzeci raz, gdy ten sam skill wysyla wykonawce w zla strone, i pierwszy, gdy
+znamy przyczyne: naprawialismy KOPIE. Dodatkowo moj wlasny wycinek katalogow roboczych nie zawieral
+`.claude/`, wiec robotnik nie mogl nawet siegnac po wersje z galezi — dostawal wylacznie te
+nieaktualna. Dwa niezalezne bledy zlozyly sie na jeden skutek.
+
+**Co z tego wynika:** (a) katalogi robocze dostaja `.claude` i `docs/ui-standards` w wycinku —
+poprawione w `scripts/dev/grafika-worktree.sh`; (b) sprawa wpisana do `KOORDYNACJA.md` jako decyzja
+dla obu torow: albo katalog glowny dostaje poprawke osobnym commitem, albo skille przestaja zyc
+w dwoch miejscach; (c) regula ogolna: **zanim uznasz dokument-instrukcje za poprawiony, sprawdz,
+z ktorego miejsca narzedzie go czyta.**
+
+### Z-46 · Uczciwy kadr natychmiast odslania defekty, ktore rysunek ukrywal — i to jest cena, ktora warto placic
+**Co sie stalo:** szesc ekranow harnessu przerobiono tak, zeby montowaly realny produkt zamiast
+wlasnej kompozycji. W tej samej godzinie wyszly TRZY defekty produktu, ktorych wczesniej nie bylo
+widac, bo obrazek byl przerysowany: menu trzech kropek kanwy miesza jezyki w jednym menu (naglowki
+grup po polsku, pozycje w srodku po angielsku, a w jednej grupie angielskie „VERSIONING" nad polskim
+„Historia wersji"); podglad OKR pokazuje surowe wartosci techniczne (`quarterly`, `zero_to_one`,
+`equal_average`, `OPEN_ORG`); ekran `results-vnext-okr-admin` renderowal WYLACZNIE komunikat
+„jeszcze nie wlaczone" — wlasciciel ocenil kadr, w ktorym nie bylo czego oceniac.
+
+**Dlaczego wazne:** przez miesiac te karty mialy ocene A i akcept wlasciciela. Ocena byla prawdziwa —
+tylko dotyczyla rysunku. Liczba kart z ocena A/B stojacych na nieprawdziwym obrazie nie byla miara
+dlugu graficznego, tylko miara tego, ILE JESZCZE NIE WIEMY.
+
+**Co z tego wynika:** naprawa przyrzadu ZWIEKSZA liczbe znanych defektow i to jest sygnal zdrowia,
+nie porazki. Nie meldowac „naprawilismy 6 ekranow" bez dopisania, ile defektow to odslonilo.
+I nie pokazywac wlascicielowi swiezo uczciwego kadru, zanim sie go nie obejrzy — bo pierwszy uczciwy
+obraz bywa gorszy niz ostatni nieuczciwy.
+
+### Z-45 · Popelnilem dokladnie ten blad, ktory godzine wczesniej wytknalem bramce
+**Co sie stalo:** rano zmierzylem, ze 12 ekranow pokazuje komponenty, ktorych nic w produkcie nie
+renderuje, i zglosilem je do toru funkcji jako dlug „zbudowane, ale niepodlaczone". Szukalem wolaczy
+wzorcem `<Nazwa`. Dwa z tych dwunastu — `finance-model-workspace` i `finance-prediction-workspace` —
+SA renderowane, tylko przez otoczki `lazy()` wewnatrz `FinanceHub.tsx`. Czyli przegapilem dokladnie
+to samo, co godzine wczesniej wytknalem bramce parytetu w osobnym akapicie tego samego dokumentu.
+
+**Dlaczego wazne:** zlapal to robotnik naprawiajacy bramke — bo zlecenie kazalo mu **sprawdzic moja
+liczbe zamiast przyjac ja na wiare**. To trzecia sytuacja w tym programie, gdy jedno zdanie
+„zweryfikuj moja liczbe sam" w instrukcji zwrocilo sie natychmiast. Koszt tego zdania: zero.
+
+**Co z tego wynika:** (a) zgloszenia 34 i 35 wykreslone z jawnym sprostowaniem, nie skasowane —
+widac, ze byly i dlaczego padly; (b) powstalo narzedzie `scripts/dev/grafika-wolacze.mjs`, ktore
+liczy wolaczy razem z otoczkami `lazy()` i **nie przechodzi przez powloke** — dwie wczesniejsze
+wersje, pisane przez `grep` w `execSync`, meldowaly „BRAK WOLACZA" nawet dla komponentu recznie
+potwierdzonego jako renderowany, bo cytowanie w `zsh` zjadalo wzorce; (c) zasada: **narzedzie
+pomiarowe napisane w pospiechu klamie tak samo jak to, ktore krytykujesz** — kontrola dodatnia
+(pokaz, ze wykrywa rzecz, o ktorej wiesz, ze istnieje) jest obowiazkowa takze dla wlasnych skryptow.
+
+
 ### Z-44 · Dwa źródła prawdy o kolorze mówiły co innego — i wykonawcy słuchali tego bliższego
 **Co się stało:** przy naprawie rodziny „crimson na treści neutralnej" robotnik zgłosił
 sprzeczność, której nikt wcześniej nie nazwał: `tailwind.config.js` (~linia 150) opisywał
