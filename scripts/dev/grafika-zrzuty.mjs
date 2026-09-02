@@ -24,6 +24,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 
 import { checkScreenshotPairState } from './lib/checkScreenshotPairState.mjs';
 import { meanLuma } from './lib/meanLuma.mjs';
@@ -42,6 +43,10 @@ const SZEROKOSC = Number(arg('szerokosc', '1440'));
 const WYSOKOSC = Number(arg('wysokosc', '900'));
 const OSIAD = Number(arg('osiad', '2500')); // ile ms po networkidle — ekrany dociągają dane po kolei
 const JEZYK = arg('jezyk', 'pl');
+// Dyżur 280: opt-in zapis dowodów poza repo oraz maszynowo czytelny wynik.
+// Domyślne zachowanie i konwencja dotychczasowych wywołań pozostają bez zmian.
+const WYJSCIE = arg('wyjscie', '');
+const WYNIK_JSON = arg('wynik-json', '');
 /**
  * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
  *
@@ -214,8 +219,28 @@ if (!['PRZED', 'PO'].includes(FAZA)) {
   process.exit(1);
 }
 
-const OUT = path.resolve(process.cwd(), 'evidence/grafika', KATALOG);
+const OUT = WYJSCIE
+  ? path.resolve(WYJSCIE, KATALOG)
+  : path.resolve(process.cwd(), 'evidence/grafika', KATALOG);
 fs.mkdirSync(OUT, { recursive: true });
+
+async function porownajPiksele(lightPath, darkPath) {
+  const light = await sharp(lightPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const dark = await sharp(darkPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  if (light.info.width !== dark.info.width || light.info.height !== dark.info.height) {
+    return { procentRoznychPikseli: null, powod: 'rozne wymiary obrazow' };
+  }
+  let rozne = 0;
+  const piksele = light.info.width * light.info.height;
+  for (let i = 0; i < light.data.length; i += light.info.channels) {
+    let inne = false;
+    for (let c = 0; c < Math.min(light.info.channels, dark.info.channels); c++) {
+      if (light.data[i + c] !== dark.data[i + c]) { inne = true; break; }
+    }
+    if (inne) rozne++;
+  }
+  return { procentRoznychPikseli: (rozne / piksele) * 100, powod: null };
+}
 
 const browser = await chromium.launch();
 const wyniki = [];
@@ -235,6 +260,7 @@ for (const ekran of EKRANY) {
     });
     const page = await context.newPage();
     const bledy = [];
+    const httpBledy = [];
     const przewinBrak = [];
     const klikBrak = [];
     const wynikBrak = [];
@@ -246,6 +272,9 @@ for (const ekran of EKRANY) {
     let podgladDomyslnyBrak = false;
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
+    });
+    page.on('response', (response) => {
+      if (response.status() >= 400) httpBledy.push({ status: response.status(), url: response.url() });
     });
     /**
      * `uwagi=0` — WYCINA panel uwag właściciela z kadru.
@@ -268,7 +297,7 @@ for (const ekran of EKRANY) {
       WEJSCIE === 'html'
         ? `${BASE}/${ekran}.html?lang=${JEZYK}&theme=${motyw}&uwagi=0${PARAMETRY ? `&${PARAMETRY}` : ''}`
         : `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}&uwagi=0${PARAMETRY ? `&${PARAMETRY}` : ''}`;
-    const plik = path.join(OUT, `${ekran}__${FAZA}__${motyw}.png`);
+    const plik = path.join(OUT, `${ekran}__${FAZA}__${JEZYK}__${SZEROKOSC}__${motyw}.png`);
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
       if (WYNIK_SELEKTOR.length === 0) {
@@ -354,13 +383,13 @@ for (const ekran of EKRANY) {
       // różnić: np. element dojdzie tuż PO timeoucie waitFor, ale ZANIM
       // zrobiliśmy zrzut — wtedy evaluate go złapie, mimo wpisu w wynikBrak).
       let hasResultMarker = null;
-      let obrazJasnosc = null;
+      const obrazJasnosc = await meanLuma(plik);
+      const tekst = await page.locator('body').innerText().catch(() => '');
       if (WYNIK_SELEKTOR.length > 0) {
         hasResultMarker = await page.evaluate(
           (sels) => sels.every((s) => document.querySelector(s) !== null),
           WYNIK_SELEKTOR
         );
-        obrazJasnosc = await meanLuma(plik);
         const zapis = paryZapis.get(ekran) || {};
         zapis[motyw] = { hasResultMarker, obrazJasnosc };
         paryZapis.set(ekran, zapis);
@@ -372,6 +401,9 @@ for (const ekran of EKRANY) {
         szer,
         wys,
         bledy: bledy.length,
+        bledyKonsoli: bledy,
+        httpBledy,
+        tekst,
         wynikSelektor: WYNIK_SELEKTOR.length > 0 ? WYNIK_SELEKTOR : undefined,
         hasResultMarker,
         obrazJasnosc,
@@ -420,6 +452,16 @@ for (const ekran of EKRANY) {
       }
     }
   }
+  const light = wyniki.find((w) => w.ekran === ekran && w.motyw === 'light' && w.plik !== '—');
+  const dark = wyniki.find((w) => w.ekran === ekran && w.motyw === 'dark' && w.plik !== '—');
+  if (light && dark) {
+    const piksele = await porownajPiksele(light.plik, dark.plik);
+    wszystkiePary.push({
+      ekran,
+      roznicaLuminancji: Math.abs(light.obrazJasnosc - dark.obrazJasnosc),
+      ...piksele,
+    });
+  }
 }
 
 await browser.close();
@@ -457,6 +499,12 @@ if (BEZ_KLIKA_DOMYSLNEGO) {
     `Domyślny klik w wiersz (${DOMYSLNY_KLIK_SELEKTOR}): ${probowane.length - bezPodgladu}/${probowane.length} zrzutów kliknęło wiersz przed zrzutem; ` +
       `${bezPodgladu} sfotografowano BEZ próby otwarcia podglądu (nie znaleziono wiersza do kliknięcia — ekran może nie być listowy, tabela może być pusta).`
   );
+}
+if (WYNIK_JSON) {
+  if (!path.isAbsolute(WYNIK_JSON)) throw new Error('--wynik-json musi być ścieżką absolutną');
+  fs.mkdirSync(path.dirname(WYNIK_JSON), { recursive: true });
+  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, wyniki, pary: wszystkiePary }, null, 2));
+  console.log(`Wynik JSON → ${WYNIK_JSON}`);
 }
 
 if (WYNIK_SELEKTOR.length > 0) {
