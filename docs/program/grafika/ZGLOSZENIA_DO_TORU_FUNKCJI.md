@@ -461,3 +461,41 @@ Obie wykryte oczami, nie przez bramkę — czyli bramka meldowała CZYSTO na rea
 Obie ślepoty są tego samego rodzaju co dwie naprawione dziś rano (`React.lazy`, wołacz
 w pliku definicji): **bramka rozpoznaje wzorzec zapisu, nie rzecz.** Dopóki tak jest,
 każdy nowy sposób zapisania tego samego będzie dawał fałszywy alarm albo fałszywy spokój.
+
+### 40. [P1] Podgląd pokazuje surowy identyfikator zamiast nazwy — cztery ekrany Wyników
+
+**Charakter ustalenia: WIDZIANE NA ŚWIEŻYCH ZRZUTACH** (02.09, komplet 38 zdjęć modułu Wyniki
+zrobionych po kliknięciu w wiersz).
+
+W panelu podglądu, w polu, które ma pokazywać powiązany obiekt, widnieje surowy identyfikator
+techniczny zamiast nazwy:
+
+| Ekran | Pole | Co widać | Co powinno być |
+| --- | --- | --- | --- |
+| `results-vnext-roi-full-tool` | Inicjatywa | `init-mes-1` | nazwa inicjatywy |
+| `results-vnext-roi-pir-outcomes` | Inicjatywa | `init-104` | j.w. |
+| `results-vnext-roi-registry` | Inicjatywa | `init-101` | j.w. |
+| `results-vnext-teresa-kpi-deviation` | KPI | `kpi-1` | nazwa wskaźnika |
+
+**Dlaczego to nie jest sprawa wyglądu.** Nazwa powiązanego obiektu nie dojeżdża do widoku —
+podgląd dostaje sam identyfikator i uczciwie go pokazuje. Tor grafiki nie ma czego stylować;
+zamiana identyfikatora na nazwę wymaga dociągnięcia tej nazwy w danych.
+
+**Dlaczego P1, a nie kosmetyka.** To jest pole POWIĄZANIA — cała wartość tych ekranów polega na
+tym, że pokazują, z czym dana sprawa ROI albo odchylenie KPI jest związane. `init-104` nie mówi
+konsultantowi nic. Na pokazie klient zapyta, co to znaczy — i będzie miał rację.
+
+**Wzorzec, nie cztery przypadki:** ta sama rzecz wychodzi na czterech niezależnych ekranach
+w dwóch różnych rodzinach (ROI i KPI), więc naprawa ma dotyczyć sposobu, w jaki podgląd dostaje
+powiązania, a nie czterech wywołań.
+
+### 41. [P2] `results-vnext-attention` — tabela ma jedną kolumnę, panel jedno pole
+
+**Widziane na świeżym zrzucie** (02.09, oba motywy identycznie). Ekran „Panel uwagi" z filtrem
+„Brak właściciela" pokazuje 2 wiersze, ale tabela ma **jedną kolumnę: KOD KPI**, a panel podglądu
+ma **jeden wiersz szczegółów** (Kod KPI). Bez nazwy wskaźnika i bez powodu, dla którego pozycja
+trafiła do kolejki uwagi.
+
+**Dlaczego zgłaszam zamiast poprawiać wygląd:** ekran nazywa się „uwaga" i ma kierować do działania.
+Z samym kodem `DPMO-002` nie da się nic zrobić — brakuje danych, nie stylu. Do ustalenia, czy to
+niedokończony zakres danych, czy świadome minimum.
