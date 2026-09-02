@@ -76,6 +76,7 @@ import {
   formatRoiDate,
   getRoiCaseLockInfo,
   humanizeActionType,
+  roiGranularityLabel,
   roiStatusLabel,
 } from './roiRegistryMappers';
 
@@ -266,7 +267,7 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
             { id: 'status', label: 'Status', value: roiStatusLabel(roiCase.status, isPolish) },
             { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: roiCase.ownerUserId },
             { id: 'currency', label: isPolish ? 'Waluta' : 'Currency', value: roiCase.currency },
-            { id: 'granularity', label: isPolish ? 'Ziarno analizy' : 'Granularity', value: roiCase.granularity },
+            { id: 'granularity', label: isPolish ? 'Ziarno analizy' : 'Granularity', value: roiGranularityLabel(roiCase.granularity, isPolish) },
             {
               id: 'window',
               label: isPolish ? 'Okres analizy' : 'Analysis window',

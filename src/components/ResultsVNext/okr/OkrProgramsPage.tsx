@@ -31,9 +31,69 @@ import {
   OKR_VISIBILITY_DEFAULTS,
   OkrAdminApiError,
   publishOkrProgram,
+  type OkrCheckinFrequency,
+  type OkrConfidenceModel,
+  type OkrCycleModel,
+  type OkrObjectiveConfidenceModel,
+  type OkrObjectiveRollupModel,
   type OkrProgramDto,
   type OkrProgramPolicyFields,
+  type OkrScoringModel,
+  type OkrVisibilityDefault,
 } from './okrAdminApi';
+
+// #211 (rewizja 2026-09-02) — słownik etykiet warstwy prezentacji dla
+// technicznych wartości polityki programu (`quarterly`, `zero_to_one`,
+// `equal_average`, `OPEN_ORG`, ...). Wartość techniczna zostaje w danych
+// (DTO, <option value>); to tłumaczy WYŁĄCZNIE to, co widzi użytkownik.
+// Jedno miejsce, użyte w tabeli, panelu podglądu i formularzu — żadna z
+// tych trzech renderek nie tłumaczy osobno.
+function okrLabel<T extends string>(dict: Record<T, { pl: string; en: string }>, value: T, isPolish: boolean): string {
+  return isPolish ? dict[value].pl : dict[value].en;
+}
+
+const OKR_CYCLE_MODEL_LABEL: Record<OkrCycleModel, { pl: string; en: string }> = {
+  quarterly: { pl: 'Kwartalny', en: 'Quarterly' },
+  trimester: { pl: 'Trymestralny', en: 'Trimester' },
+  half_year: { pl: 'Półroczny', en: 'Half-year' },
+  annual: { pl: 'Roczny', en: 'Annual' },
+  custom: { pl: 'Niestandardowy', en: 'Custom' },
+};
+const OKR_CHECKIN_FREQUENCY_LABEL: Record<OkrCheckinFrequency, { pl: string; en: string }> = {
+  weekly: { pl: 'Co tydzień', en: 'Weekly' },
+  biweekly: { pl: 'Co dwa tygodnie', en: 'Biweekly' },
+  monthly: { pl: 'Co miesiąc', en: 'Monthly' },
+  custom: { pl: 'Niestandardowa', en: 'Custom' },
+};
+const OKR_SCORING_MODEL_LABEL: Record<OkrScoringModel, { pl: string; en: string }> = {
+  zero_to_one: { pl: 'Skala 0–1', en: 'Zero to one' },
+  percentage: { pl: 'Procentowy', en: 'Percentage' },
+  categories: { pl: 'Kategorie', en: 'Categories' },
+  custom: { pl: 'Niestandardowy', en: 'Custom' },
+};
+const OKR_OBJECTIVE_ROLLUP_MODEL_LABEL: Record<OkrObjectiveRollupModel, { pl: string; en: string }> = {
+  equal_average: { pl: 'Średnia równa', en: 'Equal average' },
+  weighted_average: { pl: 'Średnia ważona', en: 'Weighted average' },
+  manual: { pl: 'Ręczny', en: 'Manual' },
+  none: { pl: 'Brak', en: 'None' },
+};
+const OKR_CONFIDENCE_MODEL_LABEL: Record<OkrConfidenceModel, { pl: string; en: string }> = {
+  high_medium_low: { pl: 'Wysoka / średnia / niska', en: 'High / medium / low' },
+  numeric: { pl: 'Liczbowy', en: 'Numeric' },
+  custom: { pl: 'Niestandardowy', en: 'Custom' },
+};
+const OKR_OBJECTIVE_CONFIDENCE_MODEL_LABEL: Record<OkrObjectiveConfidenceModel, { pl: string; en: string }> = {
+  lowest_kr: { pl: 'Najniższy KR', en: 'Lowest KR' },
+  owner_selected: { pl: 'Wybór właściciela', en: 'Owner selected' },
+  custom: { pl: 'Niestandardowy', en: 'Custom' },
+};
+const OKR_VISIBILITY_DEFAULT_LABEL: Record<OkrVisibilityDefault, { pl: string; en: string }> = {
+  OPEN_ORG: { pl: 'Cała organizacja', en: 'Open org' },
+  SCOPE: { pl: 'Zakres', en: 'Scope' },
+  MANAGEMENT_CHAIN: { pl: 'Łańcuch zarządzania', en: 'Management chain' },
+  PRIVATE: { pl: 'Prywatna', en: 'Private' },
+  RESTRICTED_ACL: { pl: 'Ograniczona (ACL)', en: 'Restricted (ACL)' },
+};
 
 const PROGRAM_STATUS_TONE: Record<OkrProgramDto['status'], 'neutral' | 'success' | 'warning' | 'danger'> = {
   draft: 'neutral',
@@ -157,8 +217,8 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
       filterOptions: (['draft', 'active', 'suspended', 'retired'] as const).map((s) => ({ value: s, label: isPolish ? PROGRAM_STATUS_LABEL[s].pl : PROGRAM_STATUS_LABEL[s].en })),
       render: (r: OkrProgramDto) => <StatusChip label={isPolish ? PROGRAM_STATUS_LABEL[r.status].pl : PROGRAM_STATUS_LABEL[r.status].en} tone={PROGRAM_STATUS_TONE[r.status]} />,
     },
-    { id: 'cycleModel', label: isPolish ? 'Model cyklu' : 'Cycle model', width: '140px', render: (r: OkrProgramDto) => <span className="text-sm text-c-text-secondary">{r.cycleModel}</span> },
-    { id: 'scoringModel', label: isPolish ? 'Model oceny' : 'Scoring model', width: '150px', render: (r: OkrProgramDto) => <span className="text-sm text-c-text-secondary">{r.scoringModel}</span> },
+    { id: 'cycleModel', label: isPolish ? 'Model cyklu' : 'Cycle model', width: '140px', render: (r: OkrProgramDto) => <span className="text-sm text-c-text-secondary">{okrLabel(OKR_CYCLE_MODEL_LABEL, r.cycleModel, isPolish)}</span> },
+    { id: 'scoringModel', label: isPolish ? 'Model oceny' : 'Scoring model', width: '150px', render: (r: OkrProgramDto) => <span className="text-sm text-c-text-secondary">{okrLabel(OKR_SCORING_MODEL_LABEL, r.scoringModel, isPolish)}</span> },
     { id: 'krMinRequired', label: isPolish ? 'Min. KR' : 'Min KR', width: '90px', align: 'right', render: (r: OkrProgramDto) => <span className="tabular-nums text-sm text-c-text">{r.krMinRequired}</span> },
   ];
 
@@ -209,13 +269,13 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
                   propertyLabel: isPolish ? 'Właściwość' : 'Property',
                   valueLabel: isPolish ? 'Wartość' : 'Value',
                   properties: [
-                    { id: 'cycleModel', label: isPolish ? 'Model cyklu' : 'Cycle model', value: selected.cycleModel },
-                    { id: 'checkinFrequency', label: isPolish ? 'Częstość check-in' : 'Check-in frequency', value: selected.checkinFrequency },
+                    { id: 'cycleModel', label: isPolish ? 'Model cyklu' : 'Cycle model', value: okrLabel(OKR_CYCLE_MODEL_LABEL, selected.cycleModel, isPolish) },
+                    { id: 'checkinFrequency', label: isPolish ? 'Częstość check-in' : 'Check-in frequency', value: okrLabel(OKR_CHECKIN_FREQUENCY_LABEL, selected.checkinFrequency, isPolish) },
                     { id: 'krMinRequired', label: isPolish ? 'Min. Kluczowych Rezultatów' : 'Min Key Results', value: selected.krMinRequired },
-                    { id: 'scoringModel', label: isPolish ? 'Model oceny' : 'Scoring model', value: selected.scoringModel },
-                    { id: 'objectiveRollupModel', label: isPolish ? 'Model agregacji celu' : 'Objective rollup model', value: selected.objectiveRollupModel },
-                    { id: 'confidenceModel', label: isPolish ? 'Model pewności' : 'Confidence model', value: selected.confidenceModel },
-                    { id: 'visibilityDefault', label: isPolish ? 'Domyślna widoczność' : 'Default visibility', value: selected.visibilityDefault },
+                    { id: 'scoringModel', label: isPolish ? 'Model oceny' : 'Scoring model', value: okrLabel(OKR_SCORING_MODEL_LABEL, selected.scoringModel, isPolish) },
+                    { id: 'objectiveRollupModel', label: isPolish ? 'Model agregacji celu' : 'Objective rollup model', value: okrLabel(OKR_OBJECTIVE_ROLLUP_MODEL_LABEL, selected.objectiveRollupModel, isPolish) },
+                    { id: 'confidenceModel', label: isPolish ? 'Model pewności' : 'Confidence model', value: okrLabel(OKR_CONFIDENCE_MODEL_LABEL, selected.confidenceModel, isPolish) },
+                    { id: 'visibilityDefault', label: isPolish ? 'Domyślna widoczność' : 'Default visibility', value: okrLabel(OKR_VISIBILITY_DEFAULT_LABEL, selected.visibilityDefault, isPolish) },
                     { id: 'approvalRequired', label: isPolish ? 'Wymaga akceptacji' : 'Approval required', value: selected.approvalRequired ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No') },
                     { id: 'managerReviewRequired', label: isPolish ? 'Wymaga oceny managera' : 'Manager review required', value: selected.managerReviewRequired ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No') },
                     { id: 'selfReviewRequired', label: isPolish ? 'Wymaga samooceny' : 'Self-review required', value: selected.selfReviewRequired ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No') },
@@ -273,15 +333,15 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                ['cycleModel', isPolish ? 'Model cyklu' : 'Cycle model', OKR_CYCLE_MODELS],
-                ['checkinFrequency', isPolish ? 'Częstość check-in' : 'Check-in frequency', OKR_CHECKIN_FREQUENCIES],
-                ['scoringModel', isPolish ? 'Model oceny' : 'Scoring model', OKR_SCORING_MODELS],
-                ['objectiveRollupModel', isPolish ? 'Model agregacji celu' : 'Objective rollup model', OKR_OBJECTIVE_ROLLUP_MODELS],
-                ['confidenceModel', isPolish ? 'Model pewności' : 'Confidence model', OKR_CONFIDENCE_MODELS],
-                ['objectiveConfidenceModel', isPolish ? 'Model pewności celu' : 'Objective confidence model', OKR_OBJECTIVE_CONFIDENCE_MODELS],
-                ['visibilityDefault', isPolish ? 'Domyślna widoczność' : 'Default visibility', OKR_VISIBILITY_DEFAULTS],
+                ['cycleModel', isPolish ? 'Model cyklu' : 'Cycle model', OKR_CYCLE_MODELS, OKR_CYCLE_MODEL_LABEL],
+                ['checkinFrequency', isPolish ? 'Częstość check-in' : 'Check-in frequency', OKR_CHECKIN_FREQUENCIES, OKR_CHECKIN_FREQUENCY_LABEL],
+                ['scoringModel', isPolish ? 'Model oceny' : 'Scoring model', OKR_SCORING_MODELS, OKR_SCORING_MODEL_LABEL],
+                ['objectiveRollupModel', isPolish ? 'Model agregacji celu' : 'Objective rollup model', OKR_OBJECTIVE_ROLLUP_MODELS, OKR_OBJECTIVE_ROLLUP_MODEL_LABEL],
+                ['confidenceModel', isPolish ? 'Model pewności' : 'Confidence model', OKR_CONFIDENCE_MODELS, OKR_CONFIDENCE_MODEL_LABEL],
+                ['objectiveConfidenceModel', isPolish ? 'Model pewności celu' : 'Objective confidence model', OKR_OBJECTIVE_CONFIDENCE_MODELS, OKR_OBJECTIVE_CONFIDENCE_MODEL_LABEL],
+                ['visibilityDefault', isPolish ? 'Domyślna widoczność' : 'Default visibility', OKR_VISIBILITY_DEFAULTS, OKR_VISIBILITY_DEFAULT_LABEL],
               ] as const
-            ).map(([field, label, options]) => (
+            ).map(([field, label, options, labelDict]) => (
               <div key={field}>
                 <label className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">{label}</label>
                 <select
@@ -291,7 +351,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
                 >
                   {options.map((o) => (
                     <option key={o} value={o}>
-                      {o}
+                      {okrLabel(labelDict as Record<string, { pl: string; en: string }>, o, isPolish)}
                     </option>
                   ))}
                 </select>

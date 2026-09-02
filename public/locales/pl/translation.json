@@ -30246,7 +30246,16 @@
         "editReplacementLabel": "Zamiennik zaznaczenia",
         "editReplacementPlaceholder": "Wpisz tutaj zamienny tekst Markdown...",
         "previewEdit": "Podgląd zmiany",
-        "clear": "Wyczyść"
+        "clear": "Wyczyść",
+        "title": "AI na zaznaczeniu",
+        "empty": "Zaznacz fragment tekstu, aby użyć akcji AI.",
+        "selected": "Zaznaczenie",
+        "expand": "Rozwiń pomysł",
+        "shorten": "Skróć",
+        "rewrite": "Przepisz",
+        "suggest": "Zasugeruj",
+        "promptPlaceholder": "Instrukcja dla Teresy dotycząca zaznaczonego fragmentu...",
+        "preview": "Podgląd zmiany AI"
       },
       "manualEdit": {
         "title": "Ręczna edycja",
@@ -30300,7 +30309,9 @@
         "collapse": "Zwiń pasek (link pozostaje aktywny)"
       },
       "source": {
-        "note": "Źródło: notatka"
+        "note": "Źródło: notatka",
+        "backToNote": "Powrót do notatki źródłowej",
+        "backToNoteTitled": "Powrót do notatki „{{title}}”"
       },
       "newCanvas": "Nowy Canvas",
       "workspaceDestinations": {
@@ -30348,7 +30359,9 @@
         "saving": "Zapisywanie",
         "failed": "Zapis nieudany",
         "unsaved": "Niezapisane zmiany",
-        "saved": "Zapisano"
+        "saved": "Zapisano",
+        "at": "o",
+        "conflict": "Zmieniono gdzie indziej — nie zapisano"
       },
       "capability": {
         "real": "Realne",
@@ -30388,7 +30401,7 @@
         "running": "W toku",
         "idle": "Bezczynny",
         "capability": "Możliwość",
-        "researchSession": "ResearchSession"
+        "researchSession": "Sesja badawcza"
       },
       "workflowTemplate": "Szablon przepływu pracy",
       "groups": {
@@ -30397,6 +30410,16 @@
         "file": "Plik, eksport i workspace",
         "diagnostics": "Diagnostyka i workflow",
         "advanced": "Zaawansowane"
+      },
+      "versioning": {
+        "title": "Wersjonowanie"
+      },
+      "conflict": {
+        "title": "Ten dokument zmienił się gdzie indziej",
+        "detected": "Ten dokument zmienił się gdzie indziej. Twoje zmiany nie zostały jeszcze zapisane.",
+        "body": "Ktoś inny zapisał ten dokument, gdy go edytowano. Nic nie zostało nadpisane — wybierz, jak kontynuować.",
+        "keepMine": "Zapisz moją wersję jako nową",
+        "loadTheirs": "Odrzuć moją wersję, wczytaj tamtą"
       }
     },
     "aiStream": {

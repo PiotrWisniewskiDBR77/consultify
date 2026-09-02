@@ -6,7 +6,7 @@
  * silently drifting.
  */
 import type { HonestValue } from '../types';
-import type { RoiCalculationRunSummary, RoiCaseStatus, RoiIrrStatus } from './roiApi';
+import type { RoiCalculationRunSummary, RoiCaseGranularity, RoiCaseStatus, RoiIrrStatus } from './roiApi';
 
 // ==========================================
 // Status labels (PL/EN) — literal 13-state machine, ROI_E001_DESIGN.md L104-109.
@@ -32,6 +32,20 @@ export const ROI_STATUS_LABELS: Record<RoiCaseStatus, { pl: string; en: string }
 
 export function roiStatusLabel(status: RoiCaseStatus, isPolish: boolean): string {
   return isPolish ? ROI_STATUS_LABELS[status].pl : ROI_STATUS_LABELS[status].en;
+}
+
+// #211 (rewizja 2026-09-02) — słownik etykiet dla `RoiCaseGranularity`
+// (`monthly`/`annual`), technicznej wartości, która trafiała na ekran
+// surowa w `RoiCaseFullTool.tsx`'s "Ziarno analizy" property. Ta sama
+// zasada co `ROI_STATUS_LABELS` powyżej: jedno miejsce, wartość techniczna
+// zostaje w danych.
+export const ROI_GRANULARITY_LABELS: Record<RoiCaseGranularity, { pl: string; en: string }> = {
+  monthly: { pl: 'Miesięczna', en: 'Monthly' },
+  annual: { pl: 'Roczna', en: 'Annual' },
+};
+
+export function roiGranularityLabel(granularity: RoiCaseGranularity, isPolish: boolean): string {
+  return isPolish ? ROI_GRANULARITY_LABELS[granularity].pl : ROI_GRANULARITY_LABELS[granularity].en;
 }
 
 export type RoiStatusTone = 'neutral' | 'info' | 'warning' | 'success' | 'danger';
