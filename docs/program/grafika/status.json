@@ -133,7 +133,8 @@
           "ocena": "B",
           "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kolumny dostawały szerokość 26px zamiast 26% (parsePx zjadał znak procentu) — słowa łamały się w środku: „Krytyczn/y\", „Wykona…\". Naprawione U ŹRÓDŁA w FilterableTable + 12 plikach konsumentów. POZOSTAJE: „Ostrzeżenie\" i „Interpretacja\" nadal łamią się w środku — luka w samym mechanizmie klamrowania, poza bezpiecznym zakresem tej naprawy (2026-09-02)"
           ],
           "wyjatki": [
             "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
@@ -632,7 +633,9 @@
           "nazwa": "Kalendarz (widok bazowy)",
           "ocena": "B",
           "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
-          "naprawione": [],
+          "naprawione": [
+            "Tytuły wydarzeń ucinały się bez wielokropka („1(\" zamiast „10:00\") — FullCalendar ma domyślnie text-overflow: clip. Dodany wielokropek i pełny tekst w podpowiedzi po najechaniu. SPROSTOWANIE: „Mene[dżer]\" NIE jest ucięciem — to świadomie przewijalny pasek zakładek, tekst jest pełny (2026-09-02)"
+          ],
           "wyjatki": [
             "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
           ],
@@ -1128,7 +1131,9 @@
           "ocena": "B",
           "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy. Kolumny Rola/Zespol, Rodzaj, Presja ucinaja tekst w polowie slowa - StandardTable/FilterableTable za waskie kolumny. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Ucięcie w środku słowa pochodzi z luki we wspólnym mechanizmie klamrowania: text-overflow:ellipsis nie działa dla pojedynczego długiego słowa w wielolinijkowej, rosnącej komórce. Naprawa wymaga przeprojektowania komponentu współdzielonego przez dziesiątki ekranów (2026-09-02)"
+          ],
           "gdzie": "Inicjatywy → zakładka „Obciążenie\" — obciążenie zespołu, wszędzie z jednostką (FTE-tydzień, procenty, zakresy)."
         },
         {
@@ -1399,7 +1404,8 @@
             "Angielskie N/A zamiast N.D."
           ],
           "wyjatki": [
-            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
+            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie",
+            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)"
           ],
           "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → zakładka „Cele\" — pięć celów z kluczowymi rezultatami."
         },
@@ -1475,7 +1481,9 @@
           "naprawione": [
             "Pigulka ucinana w kolumnie UWAGA"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)"
+          ],
           "gdzie": "Wyniki → OKR → rejestr zestawów celów (POZIOM 1) — dziewięć zestawów, tabela ośmiu kolumn."
         },
         {
@@ -1591,7 +1599,8 @@
           ],
           "wyjatki": [
             "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
-            "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
+            "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)",
+            "Ekran istnieje WYŁĄCZNIE w harnessie (dev-render), nie ma odpowiednika w produkcie — to prototyp. Łamane „wskaźnik/i\" jest realne, ale naprawa w harnessie byłaby naprawą przyrządu, nie produktu (2026-09-02)"
           ],
           "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy) — sześć zestawień z okresem rozliczeniowym, właścicielem i liczbą wskaźników w środku.",
           "warianty": [
