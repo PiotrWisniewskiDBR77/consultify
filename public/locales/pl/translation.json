@@ -31496,8 +31496,7 @@
       },
       "field": {
         "backToAutoFit": "Wróć do auto-dopasowania"
-      },
-      "legacyLocalOnlyNotice": "Komentarze, alternatywy i ryzyka na tym ekranie zapisują się na serwerze i są widoczne dla zespołu. Przypomnienia, reguły eskalacji, powiązane elementy i notatki kontekstowe nadal zapisują się wyłącznie w tej przeglądarce."
+      }
     }
   },
   "discovery": {

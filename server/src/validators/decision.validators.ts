@@ -204,6 +204,17 @@ export const RemindDecisionSchema = z.object({
   message: z.string().max(500).optional(),
 });
 
+const DecisionEnhancementJsonObjectSchema = z.record(z.string(), z.unknown());
+const DecisionEnhancementJsonArraySchema = z.array(DecisionEnhancementJsonObjectSchema).max(200);
+
+export const ReplaceDecisionEnhancementsSchema = z.object({
+  reminders: DecisionEnhancementJsonArraySchema,
+  escalationRules: DecisionEnhancementJsonArraySchema,
+  linkedItems: DecisionEnhancementJsonArraySchema,
+  contextDetails: z.string().max(20000),
+  consequenceScenarios: DecisionEnhancementJsonObjectSchema.nullable(),
+});
+
 // ==========================================
 // QUERY SCHEMAS
 // ==========================================
@@ -232,3 +243,4 @@ export type UpdateDecisionAlternativeRequest = z.infer<typeof UpdateDecisionAlte
 export type CreateDecisionRiskRequest = z.infer<typeof CreateDecisionRiskSchema>;
 export type UpdateDecisionRiskRequest = z.infer<typeof UpdateDecisionRiskSchema>;
 export type ReplaceDecisionStakeholdersRequest = z.infer<typeof ReplaceDecisionStakeholdersSchema>;
+export type ReplaceDecisionEnhancementsRequest = z.infer<typeof ReplaceDecisionEnhancementsSchema>;

@@ -2326,6 +2326,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setLinkedItems(
         apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? getDemoLinkedItems(isPolish) : []
       );
+      if (typeof decision.contextDetails === 'string') setContextDetails(decision.contextDetails);
+      if (decision.consequenceScenarios) setConsequenceScenarios(decision.consequenceScenarios);
       setSourceType(decision.sourceType || decision.source_type || null);
       setSourceId(decision.sourceId || decision.source_id || null);
 
@@ -2440,24 +2442,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           const local = JSON.parse(raw);
           if (Array.isArray(local.attachments))
             setAttachments((current) => selectDecisionAttachments(current, local.attachments));
-          if (Array.isArray(local.linkedItems) && local.linkedItems.length > 0)
-            setLinkedItems(local.linkedItems);
-          if (Array.isArray(local.reminders) && local.reminders.length > 0)
-            setReminders(
-              local.reminders.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule))
-            );
           if (local.escalation) setEscalation(local.escalation);
-          if (Array.isArray(local.escalationRules) && local.escalationRules.length > 0) {
-            setEscalationRules(
-              local.escalationRules.map((rule: EscalationRuleWithConfig) =>
-                normalizeEscalationRule(rule)
-              )
-            );
-          }
           if (typeof local.description === 'string' && local.description.trim())
             setDescription(local.description);
-          if (typeof local.contextDetails === 'string') setContextDetails(local.contextDetails);
-          if (local.consequenceScenarios) setConsequenceScenarios(local.consequenceScenarios);
         }
       } catch {
         // ignore broken local cache
@@ -2486,13 +2473,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           schemaVersion: 1,
           savedAt: new Date().toISOString(),
           attachments,
-          linkedItems,
-          reminders,
           escalation,
-          escalationRules,
           description,
-          contextDetails,
-          consequenceScenarios,
         })
       );
     } catch {
@@ -2504,13 +2486,38 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     currentUser?.id,
     currentUser?.organizationId,
     attachments,
-    linkedItems,
-    reminders,
     escalation,
-    escalationRules,
     description,
+  ]);
+
+  useEffect(() => {
+    if (!isLocalHydrated || !decisionId) return;
+    const timer = setTimeout(() => {
+      Api.put(`/decisions/${decisionId}/enhancements`, {
+        reminders,
+        escalationRules,
+        linkedItems,
+        contextDetails,
+        consequenceScenarios,
+      }).catch((error) => {
+        console.error('[DecisionDetailView] Failed to persist decision enhancements', error);
+        toast.error(
+          isPolish
+            ? 'Nie udało się zapisać danych karty decyzji na serwerze.'
+            : 'Decision card data could not be saved to the server.'
+        );
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    isLocalHydrated,
+    decisionId,
+    reminders,
+    escalationRules,
+    linkedItems,
     contextDetails,
     consequenceScenarios,
+    isPolish,
   ]);
 
   useEffect(() => {
@@ -6182,36 +6189,6 @@ Use userId only from this list:
                  informacje, delegowanie — żyją w sekcji AKCJE prawego panelu
                  (`rightPanelSections[0]`), pionowo i bez duplikatów. */
             />
-
-            {/* MW-DEC-001 (coordination note 2026-08-30): comments,
-                alternatives and risks on this screen now persist for real —
-                POST/PUT/DELETE against server/src/routes/pmo/decisions.routes.ts
-                (decision_comments / decision_alternatives / decision_risks),
-                read back from GET /:id/detail's `comments` /
-                `dossierAlternatives` / `dossierRisks`. The earlier notice here
-                said the OPPOSITE (local-browser-only) — that was true before
-                this fix and is not any more; leaving stale wording after the
-                behavior changed would be its own lie. What genuinely still
-                lives only in `localStorage['consultify-decision-enhancements:
-                <id>']` on this screen: reminders, escalation rules, linked
-                items, and the free-text context/consequence-scenario notes —
-                see the "Hydrate local enhancements" block in loadDecision
-                above (comments/alternatives/risks/rationale were removed from
-                both sides of that block by this fix). Neutral tokens only
-                (CANON: crimson is reserved for critical semantics) — this is
-                an honest capability notice, not an error. */}
-            <div
-              role="status"
-              className="mb-3 flex items-start gap-2 rounded-md border border-c-border bg-c-surface-2 px-3 py-2.5 text-xs text-c-text-muted"
-            >
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                {t(
-                  'decisions.detail.legacyLocalOnlyNotice',
-                  'Comments, alternatives and risks on this screen are saved on the server and shared with your team. Reminders, escalation rules, linked items and context notes are still saved only in this browser.'
-                )}
-              </span>
-            </div>
 
             {!decisionId && (
               <div className="mb-3 rounded-md border border-c-border bg-c-surface px-3 py-3">

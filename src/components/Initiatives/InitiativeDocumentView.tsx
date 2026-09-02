@@ -763,6 +763,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, [densityMode, setDensityMode]);
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
+  const [wholeCardAiBusy, setWholeCardAiBusy] = useState(false);
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
   // Drops section ids from the nav until restored ("Restore defaults").
@@ -9701,6 +9702,54 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [runSectionAi, activeNSection]
   );
 
+  const runWholeCardAi = useCallback(async () => {
+    const candidates = orderedNModeSectionsWithContent.filter(
+      (section) =>
+        !SECTION_AI_NOOP_IDS.has(section.id) && buildSectionBody(section.id).trim().length === 0
+    );
+    if (candidates.length === 0) {
+      toast.success(isPolish ? 'Karta nie ma pustych sekcji.' : 'The card has no empty sections.');
+      return;
+    }
+    setWholeCardAiBusy(true);
+    const failures: string[] = [];
+    const progressToast = toast.loading(
+      isPolish ? `Uzupełnianie 0 z ${candidates.length} sekcji…` : `Filling 0 of ${candidates.length} sections…`
+    );
+    try {
+      for (const [index, section] of candidates.entries()) {
+        toast.loading(
+          isPolish
+            ? `Uzupełnianie ${index + 1} z ${candidates.length}: ${section.label.pl}`
+            : `Filling ${index + 1} of ${candidates.length}: ${section.label.en}`,
+          { id: progressToast }
+        );
+        try {
+          await runSectionAi(section.id);
+        } catch (error) {
+          failures.push(
+            `${isPolish ? section.label.pl : section.label.en}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+    } finally {
+      toast.dismiss(progressToast);
+      setWholeCardAiBusy(false);
+    }
+    if (failures.length > 0) {
+      toast.error(
+        `${isPolish ? 'Nie uzupełniono' : 'Not filled'}: ${failures.join('; ')}`,
+        { duration: 10000 }
+      );
+    } else {
+      toast.success(
+        isPolish
+          ? `Uzupełniono ${candidates.length} pustych sekcji.`
+          : `Filled ${candidates.length} empty sections.`
+      );
+    }
+  }, [buildSectionBody, isPolish, orderedNModeSectionsWithContent, runSectionAi]);
+
   // Kontekst CAŁEJ inicjatywy (tytuł + każda sekcja z treścią, w kolejności
   // nawigacji) — ten sam builder co Smart Export, więc Teresa widzi dokładnie
   // to samo SSOT co eksport. BYŁO `useMemo` bramkowane `aiPanelOpen`; po
@@ -9747,8 +9796,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'fill-empty',
         label: isPolish ? 'Uzupełnij puste' : 'Fill empty',
         icon: <Wand2 size={13} />,
-        onClick: () => void runActiveSectionAi(),
-        busy: sectionBusy,
+        onClick: () => void runWholeCardAi(),
+        busy: wholeCardAiBusy,
       },
       {
         id: 'synthesize',
@@ -9790,8 +9839,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
     openChatWithContext,
     runActiveSectionAi,
+    runWholeCardAi,
     setChatContextActions,
     setChatSystemPrompt,
+    wholeCardAiBusy,
   ]);
 
   // Sprzątanie: komendy inicjatywy nie mogą wyciekać do innych modułów
@@ -11488,7 +11539,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   <Menu2AIButton
                                     isPolish={isPolish}
                                     label={isPolish ? 'Wypełnij z AI' : 'Fill with AI'}
-                                    disabled={!canUseAi}
+                                    busy={wholeCardAiBusy}
+                                    disabled={!canUseAi || wholeCardAiBusy}
                                     onClick={() => {
                                       if (!canUseAi) {
                                         toast.error(
@@ -11496,7 +11548,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         );
                                         return;
                                       }
-                                      openInitiativeTeresa();
+                                      void runWholeCardAi();
                                     }}
                                   />
                                   <Menu2AIButton

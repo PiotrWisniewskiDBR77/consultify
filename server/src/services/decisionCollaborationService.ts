@@ -87,13 +87,14 @@ export class DecisionValidationError extends Error {
 // ==========================================
 
 /** Collaboration sections of the decision dossier, keyed by backing table. */
-export type DecisionSectionKey = 'comments' | 'alternatives' | 'risks' | 'links';
+export type DecisionSectionKey = 'comments' | 'alternatives' | 'risks' | 'links' | 'enhancements';
 
 const SECTION_TABLES: Record<DecisionSectionKey, string> = {
   comments: 'decision_comments',
   alternatives: 'decision_alternatives',
   risks: 'decision_risks',
   links: 'link_graph_edges',
+  enhancements: 'decision_enhancements',
 };
 
 /**
@@ -818,6 +819,71 @@ export async function listDecisionLinks(
 // AGGREGATE READ (single call for GET /api/decisions/:id/detail)
 // ==========================================
 
+export interface DecisionEnhancementsInput {
+  reminders: Array<Record<string, unknown>>;
+  escalationRules: Array<Record<string, unknown>>;
+  linkedItems: Array<Record<string, unknown>>;
+  contextDetails: string;
+  consequenceScenarios: Record<string, unknown> | null;
+}
+
+export async function replaceDecisionEnhancements(input: {
+  decisionId: string;
+  organizationId: string;
+  actorId: string;
+  enhancements: DecisionEnhancementsInput;
+}): Promise<DecisionEnhancementsInput> {
+  await getDecisionForOrgOrThrow(input.decisionId, input.organizationId);
+  await assertSectionAvailable('enhancements');
+  const value = input.enhancements;
+  await queryHelpers.queryRun(
+    `INSERT INTO decision_enhancements
+       (decision_id, organization_id, reminders, escalation_rules, linked_items,
+        context_details, consequence_scenarios, updated_by, created_at, updated_at)
+     VALUES (?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, NOW(), NOW())
+     ON CONFLICT (decision_id) DO UPDATE SET
+       reminders = EXCLUDED.reminders,
+       escalation_rules = EXCLUDED.escalation_rules,
+       linked_items = EXCLUDED.linked_items,
+       context_details = EXCLUDED.context_details,
+       consequence_scenarios = EXCLUDED.consequence_scenarios,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW()
+     WHERE decision_enhancements.organization_id = EXCLUDED.organization_id`,
+    [
+      input.decisionId,
+      input.organizationId,
+      JSON.stringify(value.reminders),
+      JSON.stringify(value.escalationRules),
+      JSON.stringify(value.linkedItems),
+      value.contextDetails,
+      JSON.stringify(value.consequenceScenarios),
+      input.actorId,
+    ]
+  );
+  return value;
+}
+
+async function getDecisionEnhancements(
+  decisionId: string,
+  organizationId: string
+): Promise<DecisionEnhancementsInput | null> {
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT reminders, escalation_rules, linked_items, context_details, consequence_scenarios
+       FROM decision_enhancements
+      WHERE decision_id = ? AND organization_id = ?`,
+    [decisionId, organizationId]
+  );
+  if (!row) return null;
+  return {
+    reminders: row.reminders ?? [],
+    escalationRules: row.escalation_rules ?? [],
+    linkedItems: row.linked_items ?? [],
+    contextDetails: row.context_details ?? '',
+    consequenceScenarios: row.consequence_scenarios ?? null,
+  };
+}
+
 export async function getDecisionAggregateExtras(decisionId: string, organizationId: string) {
   // Existence/org-scope is re-verified by the caller (DecisionController
   // already loads the core decision row); these run in parallel since none
@@ -831,18 +897,19 @@ export async function getDecisionAggregateExtras(decisionId: string, organizatio
   // individually and an unavailable one is REPORTED in `degradedSections`,
   // never silently downgraded to "no data": the client must be able to tell
   // "nobody commented yet" apart from "comments are unavailable here".
-  const sections: DecisionSectionKey[] = ['comments', 'alternatives', 'risks', 'links'];
+  const sections: DecisionSectionKey[] = ['comments', 'alternatives', 'risks', 'links', 'enhancements'];
   const availability = await Promise.all(sections.map((s) => isDecisionSectionAvailable(s)));
   const available = new Set(sections.filter((_, i) => availability[i]));
   const degradedSections = sections.filter((s) => !available.has(s));
 
-  const [comments, alternatives, risks, links] = await Promise.all([
+  const [comments, alternatives, risks, links, enhancements] = await Promise.all([
     available.has('comments') ? listDecisionComments(decisionId, organizationId) : [],
     available.has('alternatives') ? listDecisionAlternatives(decisionId, organizationId) : [],
     available.has('risks') ? listDecisionRisks(decisionId, organizationId) : [],
     available.has('links') ? listDecisionLinks(decisionId, organizationId) : [],
+    available.has('enhancements') ? getDecisionEnhancements(decisionId, organizationId) : null,
   ]);
-  return { comments, alternatives, risks, links, degradedSections };
+  return { comments, alternatives, risks, links, enhancements, degradedSections };
 }
 
 // ==========================================
