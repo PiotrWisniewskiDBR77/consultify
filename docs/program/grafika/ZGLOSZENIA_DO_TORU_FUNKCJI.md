@@ -499,3 +499,51 @@ trafiła do kolejki uwagi.
 **Dlaczego zgłaszam zamiast poprawiać wygląd:** ekran nazywa się „uwaga" i ma kierować do działania.
 Z samym kodem `DPMO-002` nie da się nic zrobić — brakuje danych, nie stylu. Do ustalenia, czy to
 niedokończony zakres danych, czy świadome minimum.
+
+### 42. [P0-widoczny] `gen-word-content-hints` — kliknięcie w wiersz wywala aplikację
+
+**Charakter ustalenia: ZOBACZONE NA ŻYWYM EKRANIE** (02.09, przegląd modułu Materiały,
+oba motywy identycznie).
+
+Architekt szablonów Word: lista szablonów renderuje się poprawnie. **Kliknięcie w pierwszy wiersz
+(„Raport zarządczy (miesięczny)") powoduje pełny crash Reacta** zamiast otwarcia edytora:
+
+```
+TypeError: Cannot read properties of undefined (reading 'enabled')
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx:1210
+```
+
+**Dlaczego P0 mimo że to nie bezpieczeństwo:** to nie jest brzydki ekran ani zły kolor — to
+**pusty biały ekran zamiast produktu, po jednym kliknięciu, na ścieżce, którą właściciel pokazuje
+klientom**. Żaden inny defekt z dzisiejszego przeglądu nie zatrzymuje użytkownika całkowicie.
+
+**Dlaczego zgłaszam zamiast naprawiać:** to błąd komponentu (odczyt pola z obiektu, którego nie ma),
+nie wygląd. Naprawa w torze grafiki byłaby zgadywaniem, które pole ma być domyślne.
+
+**Kontrola dodatnia, żeby nie było wątpliwości, że to produkt, a nie przyrząd:** lista BEZ kliknięcia
+renderuje się czysto w obu motywach; crash pojawia się dopiero po kliknięciu i pochodzi z pliku
+produkcyjnego (`src/components/DocumentStudio/…`), nie z `dev-render/`.
+
+### 43. [P2] Nazwa modułu „Document Studio" nieprzetłumaczona na SZEŚCIU ekranach
+
+Klucz `documentStudio.view.moduleLabel` trzyma wartość **„Document Studio" zarówno w `pl`,
+jak i w `en`** — czyli klucz istnieje, więc każdy audyt po obecności klucza melduje
+„przetłumaczone". Skutek: ścieżka nawigacji u góry mówi po angielsku na ekranach
+`document-studio-resume-error`, `document-studio-template-resolve-error`, `document-artifact`,
+`document-studio-menu-pliku`, `document-studio-nowy-dokument-martwe-przyciski`,
+`document-studio-streaming-honesty-n3`.
+
+**Jeden klucz, sześć ekranów** — to najtańsza naprawa w całym dzisiejszym przeglądzie.
+Wymaga decyzji o polskiej nazwie modułu (np. „Studio dokumentów"), więc zostawiam ją
+świadomie, zamiast wymyślać nazwę produktu za właściciela.
+
+### 44. [P2] Dwa ekrany Materiałów pokazują użytkownikowi tekst inżynierski zamiast opisu
+
+`materialy-template-library-slice` i `materialy-draft-template-visibledraft-fix`: pole SZCZEGÓŁY
+w panelu podglądu zawiera dosłowną notatkę dewelopera zamiast opisu obiektu — m.in.
+„TemplateItem nie niesie żadnego pola struktury dla arkuszy (mapCanonicalTemplateArtifact nigdy
+nie ustawia licznika dla type=sheet)…" oraz „PO NAPRAWIE: świeżo utworzony przez właściciela
+szablon… wcześniej ten wiersz nie pojawiał się WCALE…".
+
+To dane demo, nie etykieta interfejsu — dlatego nie ruszam ich w torze grafiki. Ale **na pokazie
+klient to przeczyta**. Do wyczyszczenia razem z resztą danych demonstracyjnych.
