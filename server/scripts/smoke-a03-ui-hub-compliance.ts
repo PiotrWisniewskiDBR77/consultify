@@ -28,7 +28,6 @@ function main(): void {
 
   const discoveryHub = read(path.join(root, 'src/components/Discovery/DiscoveryToolsHub.tsx'));
   const initiativesHub = read(path.join(root, 'src/components/Initiatives/InitiativesHub.tsx'));
-  const resultsHub = read(path.join(root, 'src/components/Results/ResultsHub.tsx'));
   const reportsHub = read(path.join(root, 'src/components/Reports/Management/ReportsHub.tsx'));
   const reportsEntryRouter = read(path.join(root, 'src/components/Reports/ReportsEntryRouter.tsx'));
   const presentationsHub = read(path.join(root, 'src/components/Presentations/PresentationsHub.tsx'));
@@ -58,10 +57,12 @@ function main(): void {
     ]),
   });
 
-  checks.push({
-    name: 'A03 Results hub uses ModuleHub + canonical subset order (table→grid)',
-    pass: includesAll(resultsHub, ['<ModuleHub', "availableViewModes={['table', 'grid']}"]),
-  });
+  // A03 Results: the hub this check read (src/components/Results/ResultsHub.tsx)
+  // was deleted together with its whole subtree — unreachable from any route
+  // since 8df1cd413d (2026-08-24). The canonical Results surface is
+  // src/components/ResultsVNext/ResultsKpiRegistryPage.tsx, reached through the
+  // `/results` redirect in ResultsOwnerReviewEntry.tsx; its route binding is
+  // guarded by scripts/dev/__tests__/verifyCanonical16Bindings.test.mjs.
 
   checks.push({
     name: 'A03 Reports hub uses ModuleHub + app-table table mode',

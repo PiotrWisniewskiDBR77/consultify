@@ -1,12 +1,14 @@
 /**
  * RN-G2 — Results Next registry feature flags (default OFF, live-safe).
  *
- * Deliberately a SEPARATE file from `src/components/Results/resultsFeatureFlags.ts`
- * (that file's flags are about the legacy V8 cockpit — m14Handoff/valueDriverTree/
- * threePairs/...; mixing brand-new registry flags into that enum would invite the
- * exact "conflate old and new" risk the master plan's §12 cutover plan is designed
- * to avoid — see docs/product/results-vnext/RN_G2_UI_SCOPE.md §F). A separate file
- * also makes the eventual flag-removal-at-cutover a clean deletion.
+ * Historically a deliberately SEPARATE file from
+ * `src/components/Results/resultsFeatureFlags.ts`, whose flags belonged to the
+ * legacy V8 cockpit (m14Handoff/valueDriverTree/threePairs/...) — mixing the two
+ * enums would have invited the exact "conflate old and new" risk the master
+ * plan's §12 cutover plan was designed to avoid (docs/product/results-vnext/
+ * RN_G2_UI_SCOPE.md §F). That separation paid off: on 2026-09-02 the legacy file
+ * was deleted with the whole retired ResultsHub subtree and this one was not
+ * touched. It remains the only Results flag file.
  *
  * Resolution order (first wins): URL query (`?ff_x=1`) → localStorage
  * (`ff.results_vnext_x`) → Vite build env (`VITE_RESULTS_VNEXT_X_ENABLED`) →

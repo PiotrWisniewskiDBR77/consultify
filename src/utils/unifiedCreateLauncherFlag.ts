@@ -8,7 +8,10 @@
  * Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md §6 Faza 0.
  *
  * Resolution order (first wins): URL query → localStorage → Vite build env →
- * default true. Mirrors src/components/Results/resultsFeatureFlags.ts (one system).
+ * default true. Same system as `assessmentOutputArtifactsFlag.ts` and
+ * `MyWork/mindmap/mindmapExportFlags.ts`. (Do 2026-09-02 wskazywalo tu
+ * `src/components/Results/resultsFeatureFlags.ts` — plik usuniety razem
+ * z wygaszonym poddrzewem ResultsHub.)
  * Opt-out: `?ff_unifiedCreateLauncher=0` / localStorage `ff.unified_create_launcher=0`.
  */
 

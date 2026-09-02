@@ -58,7 +58,6 @@ const gates = [
     'src/components/ResultsVNext/attention/ResultsAttentionPage.tsx',
     "isResultsVNextFlagEnabled('okrRegistry')",
   ],
-  ['src/components/Results/ResultsHub.tsx', "isResultsVNextFlagEnabled('kpiRegistry')"],
 ] as const;
 
 describe('Results VNext flag-gate enumeration', () => {
@@ -80,10 +79,6 @@ describe('Results VNext flag-gate enumeration', () => {
   // no longer exists.
   it('keeps the historical scorecards bypass mechanism isolated, unrouted, and prop-free', () => {
     const routes = readFileSync(path.join(repoRoot, 'src/routes/AppRoutes.tsx'), 'utf8');
-    const historicalAdapter = readFileSync(
-      path.join(repoRoot, 'src/components/Results/ResultsKpiScorecardsView.tsx'),
-      'utf8'
-    );
     const registryPage = readFileSync(
       path.join(repoRoot, 'src/components/ResultsVNext/ResultsKpiRegistryPage.tsx'),
       'utf8'
@@ -92,12 +87,16 @@ describe('Results VNext flag-gate enumeration', () => {
       .map(([file]) => readFileSync(path.join(repoRoot, file), 'utf8'))
       .join('\n');
 
+    // The historical adapter (src/components/Results/ResultsKpiScorecardsView.tsx)
+    // no longer exists — it was deleted with the retired ResultsHub subtree, so
+    // the "bypass prop must be absent from it" half of this guard is satisfied by
+    // the file's absence. What still needs pinning is the canonical side: the
+    // retired prop must not come back anywhere, and the route must not mount
+    // either retired component.
     expect(routes).not.toContain('<ResultsHub');
     expect(routes).not.toContain('<ResultsKpiScorecardsView');
-    expect(historicalAdapter).not.toContain('canonicalCutoverMount');
     expect(registryPage).not.toContain('canonicalCutoverMount');
     expect(allSources).not.toContain('canonicalCutoverMount');
-    expect(historicalAdapter).toContain('initialTab="scorecards"');
     expect(registryPage).toContain("initialTab === 'scorecards'");
   });
 });

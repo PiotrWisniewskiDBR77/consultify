@@ -8,7 +8,9 @@
  * `PptxPipelineService.generateFromUnifiedJson` for a real BCG-grade .pptx.
  *
  * Resolution order (first wins): URL query → localStorage → Vite build env → default false.
- * Mirrors src/components/Results/resultsFeatureFlags.ts (one system).
+ * Same system as `src/utils/unifiedCreateLauncherFlag.ts`. (Do 2026-09-02
+ * wskazywalo tu `src/components/Results/resultsFeatureFlags.ts` — plik
+ * usuniety razem z wygaszonym poddrzewem ResultsHub.)
  */
 
 const QUERY_KEY = 'ff_mindmapPptxNative';

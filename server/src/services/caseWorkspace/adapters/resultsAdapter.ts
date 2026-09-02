@@ -46,9 +46,12 @@
  * data)` and read back via `getScorecard(organizationId, scorecardId)` — the
  * exact same "org-scoped create, then org-scoped read by id" shape as
  * `financialModelingService.createModel`/`getModel`. It is REAL and already
- * has a production frontend caller: `src/services/api/v8/results.ts`'s
- * `resultsApi.createScorecard`/`getScorecards`, consumed by
- * `src/components/Results/ResultsKpiScorecardsView.tsx`.
+ * has a frontend client: `src/services/api/v8/results.ts`'s
+ * `resultsApi.createScorecard`/`getScorecards`. SPROSTOWANIE 2026-09-02: the
+ * consumer named here, `src/components/Results/ResultsKpiScorecardsView.tsx`,
+ * was deleted with the retired ResultsHub subtree — it had been unreachable
+ * since 2026-08-24. The live scorecard surface is
+ * `src/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage.tsx`.
  *
  * ============================================================================
  * TENANCY — ALREADY THE STRICTEST OF THE FOUR EXISTING ADAPTERS' WRAPPED

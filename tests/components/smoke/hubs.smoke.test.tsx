@@ -11,6 +11,11 @@
  * primary hubs, so a broken shared dependency (a store, a context, a barrel
  * import) fails fast here instead of silently white-screening in production.
  *
+ * Results nie ma tu wpisu: `ResultsHub` zostal usuniety wraz z calym
+ * poddrzewem `src/components/Results/` (nieosiagalny z zadnej trasy od
+ * 8df1cd413d, 2026-08-24). Trasy `/results` pilnuje
+ * `src/components/Results/__tests__/ResultsOwnerReviewEntry.test.tsx`.
+ *
  * Shared mocks (i18n / router / ModuleHub / fetch) live in ./hubSmokeHarness.
  */
 import { screen, waitFor } from '@testing-library/react';
@@ -64,14 +69,6 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     renderHub(<FinanceHub />, '/finance');
     await waitFor(() => {
       expect(screen.getByText('Statements')).toBeInTheDocument();
-    });
-  });
-
-  it('Results (ResultsHub) renders with the Initiatives tab', async () => {
-    const { ResultsHub } = await import('@/components/Results/ResultsHub');
-    renderHub(<ResultsHub />, '/results');
-    await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
     });
   });
 

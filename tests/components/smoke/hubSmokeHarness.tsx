@@ -96,13 +96,6 @@ vi.mock('@/components/MyWork/NotebookContent', () => ({
 vi.mock('@/components/Initiatives/InitiativeDocumentView', () => ({
   InitiativeDocumentView: () => <div data-testid="stub-initiative-document-view" />,
 }));
-// Results ValueDriverTree self-fetches and eagerly iterates payload.nodes; it's a
-// leaf viz, not part of the hub-shell contract. Stub it to avoid the async render.
-vi.mock('@/components/Results/ValueDriverTree', () => ({
-  __esModule: true,
-  default: () => <div data-testid="stub-value-driver-tree" />,
-}));
-
 // ── useAppStore: superset mock ────────────────────────────────────────────────
 // tests/setup.ts installs a global useAppStore mock with only a handful of fields.
 // Several hubs (notably MyWorkHub) destructure the whole store and call many

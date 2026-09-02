@@ -78,7 +78,20 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     status: 'OBSERVED',
     observationSite: 'observeWriter() after each successful write (6 call sites)',
     reason:
-      'Legacy KPI CRUD + measurement surface with live production UI callers (KPICreateModal, KPITimeSeriesDrawer, KpiSignalSheetView, ResultsHub).',
+      // SPROSTOWANIE 2026-09-02 (ciecie ResultsHub). Poprzednia tresc brzmiala:
+      // "...with live production UI callers (KPICreateModal, KPITimeSeriesDrawer,
+      // KpiSignalSheetView, ResultsHub)". To bylo nieprawda od 2026-08-24
+      // (8df1cd413d): ResultsHub przestal byc osiagalny z jakiejkolwiek trasy,
+      // a wraz z nim KPITimeSeriesDrawer i KpiSignalSheetView. Wszystkie trzy
+      // zostaly usuniete z repo 2026-09-02. KPICreateModal nigdy nie lezal w tym
+      // katalogu (jest w src/components/Benefits/KPICreateModal.tsx) i nie ma
+      // ANI JEDNEGO importera — to osobna sierota, poza zakresem tego ciecia.
+      // Stan po pomiarze: writery tego mounta (POST/PUT/DELETE) nie maja zadnego
+      // wolacza w UI. Jedyne, co zostalo w src/, to dwa ODCZYTY
+      // Api.get('/benefits/kpi-mappings') w Benefits/FinancialMappingPanel.tsx
+      // i Benefits/KPIAttributionPanel.tsx. Kanoniczny nastepca zapisow:
+      // /api/vnext/results/kpi.
+      'Legacy KPI CRUD + measurement surface. NO UI writer callers remain (the four named legacy callers were retired 2026-08-24 and deleted 2026-09-02); only two read-only /benefits/kpi-mappings GETs survive in Benefits/. Kept observed because the endpoints are still mounted.',
     ownerBlocker: null,
   },
   {
@@ -92,7 +105,13 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     status: 'OBSERVED',
     observationSite: 'observeWriter() after createSnapshot / refreshSnapshot',
     reason:
-      'KPI report snapshot create + refresh, both with a live UI caller (ResultsKpiReportsView).',
+      // SPROSTOWANIE 2026-09-02: ResultsKpiReportsView.tsx (1248 L) byl osiagalny
+      // wylacznie przez ResultsHub i zostal usuniety razem z nim. Zaden komponent
+      // w src/ nie wola juz createKpiReportSnapshot/refreshKpiReportSnapshot —
+      // funkcje zostaly tylko w kliencie src/services/api/v8/results.ts.
+      // ResultsVNext nie ma odpowiednika tego ekranu (funkcja znika z produktu
+      // swiadoma decyzja wlasciciela; serwer nadal wystawia endpointy).
+      'KPI report snapshot create + refresh. Endpoints still mounted, but the only UI caller (ResultsKpiReportsView) was deleted 2026-09-02 with the retired ResultsHub subtree; no ResultsVNext replacement exists.',
     ownerBlocker: null,
   },
   {
