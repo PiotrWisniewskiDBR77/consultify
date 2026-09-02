@@ -17,12 +17,15 @@ export class BaselineContextError extends Error {
   }
 }
 
-export interface BaselineForecastPeriod {
+export interface BaselinePeriodMeta {
   periodId: string;
   label: string;
   periodStart: string;
   periodEnd: string;
 }
+
+/** Zachowana nazwa historyczna — kształt identyczny z `BaselinePeriodMeta`. */
+export type BaselineForecastPeriod = BaselinePeriodMeta;
 
 export interface BaselineWorkspaceContext {
   businessVersionId: string;
@@ -30,7 +33,24 @@ export interface BaselineWorkspaceContext {
   sourceAnalysisVersionId: string;
   entityId: string;
   openingBalanceSheetPeriodId: string;
-  forecastPeriods: BaselineForecastPeriod[];
+  /**
+   * ★ Dyżur 279 (rozszerzenie kontraktu): kontekst zwracał wyłącznie SUROWE
+   * `openingBalanceSheetPeriodId`, a mapa etykiet UI powstawała tylko z
+   * `forecastPeriods` — kolumna „Okres bazowy" pokazywała właścicielowi
+   * `per-2025-12` zamiast `12/2025`. Etykieta i daty idą z
+   * `finance_stmt_periods` (kolumna `label` jest NOT NULL), nigdy z parsowania
+   * napisu `per-…`.
+   */
+  openingBalanceSheetPeriod: BaselinePeriodMeta;
+  /**
+   * ★ Dyżur 279: `finance_baseline_assumptions.base_period_id` to DOWOLNY
+   * okres pakietu sprawozdań („what the history is anchored to",
+   * `20260809_finance_v3_d05_baseline_01_tables.sql:140`) — nie musi być ani
+   * okresem otwarcia, ani okresem prognozy. Bez tej listy kolumna „Okres
+   * bazowy" pokazywałaby surowe ID dla każdego innego zakotwiczenia.
+   */
+  assumptionBasePeriods: BaselinePeriodMeta[];
+  forecastPeriods: BaselinePeriodMeta[];
   assumptionRowOrder: Array<{
     scheduleType: string;
     driverCode: string;
@@ -180,18 +200,77 @@ async function readContextTx(
     );
   }
 
+  // ★ Dyżur 279 — okres otwarcia + zakotwiczenia historii z ETYKIETAMI z bazy.
+  // Osobne zapytanie (nie poszerzenie SELECT-a prognoz), żeby nie ruszyć
+  // niezmiennika `periods.length !== periodIds.length` ani `DISTINCT`
+  // budującego `assumptionRowOrder`.
+  const basePeriodRows = await tx.queryAll<{ base_period_id: string }>(
+    `SELECT DISTINCT base_period_id
+       FROM finance_baseline_assumptions
+      WHERE organization_id = ? AND business_version_id = ? AND entity_id = ?
+        AND base_period_id IS NOT NULL
+      ORDER BY base_period_id`,
+    [organizationId, businessVersionId, row.entity_id]
+  );
+  const forecastById = new Map(periods.map((period) => [period.period_id, period]));
+  const extraPeriodIds = Array.from(
+    new Set([
+      row.opening_balance_sheet_period_id,
+      ...basePeriodRows.map((base) => base.base_period_id),
+    ])
+  ).filter((periodId) => !forecastById.has(periodId));
+  const extraPeriods = await tx.queryAll<{
+    period_id: string;
+    label: string;
+    period_start: string;
+    period_end: string;
+  }>(
+    `SELECT period_id, label, period_start::text, period_end::text
+       FROM finance_stmt_periods
+      WHERE organization_id = ? AND period_id = ANY(?)
+      ORDER BY period_start, period_id`,
+    [organizationId, extraPeriodIds]
+  );
+  const periodMetaById = new Map([
+    ...forecastById,
+    ...extraPeriods.map((period) => [period.period_id, period] as const),
+  ]);
+  const toMeta = (period: {
+    period_id: string;
+    label: string;
+    period_start: string;
+    period_end: string;
+  }): BaselinePeriodMeta => ({
+    periodId: period.period_id,
+    label: period.label,
+    periodStart: period.period_start,
+    periodEnd: period.period_end,
+  });
+  const openingPeriod = periodMetaById.get(row.opening_balance_sheet_period_id);
+  if (!openingPeriod) {
+    // FK gwarantuje istnienie wiersza w `finance_stmt_periods`, ale nie jego
+    // przynależność do TEJ organizacji — brak trafienia to anomalia
+    // międzynajemcowa, więc zamykamy się fail-closed zamiast zgadywać.
+    throw new BaselineContextError(
+      'BASELINE_CONTEXT_INVALID',
+      409,
+      'Opening balance sheet period metadata is unavailable'
+    );
+  }
+  const assumptionBasePeriods = basePeriodRows
+    .map((base) => periodMetaById.get(base.base_period_id))
+    .filter((period): period is NonNullable<typeof period> => Boolean(period))
+    .map(toMeta);
+
   return {
     businessVersionId: row.business_version_id,
     sourceStatementVersionId: row.source_statement_version_id,
     sourceAnalysisVersionId: row.source_analysis_version_id,
     entityId: row.entity_id,
     openingBalanceSheetPeriodId: row.opening_balance_sheet_period_id,
-    forecastPeriods: ordered.map((period) => ({
-      periodId: period!.period_id,
-      label: period!.label,
-      periodStart: period!.period_start,
-      periodEnd: period!.period_end,
-    })),
+    openingBalanceSheetPeriod: toMeta(openingPeriod),
+    assumptionBasePeriods,
+    forecastPeriods: ordered.map((period) => toMeta(period!)),
     assumptionRowOrder: assumptions.map((row) => ({
       scheduleType: row.schedule_type,
       driverCode: row.driver_code,
