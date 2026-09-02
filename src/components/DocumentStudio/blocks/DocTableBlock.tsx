@@ -20,7 +20,7 @@ export interface DocTableBlockProps {
   content: NarrowedTableContent;
 }
 
-const BORDER = '1px solid #e2e8f0';
+const BORDER = '1px solid var(--c-border)';
 const CELL_PADDING = '8px 12px';
 
 /** Risk level → background/foreground. Keeps the textual label (never replaces). */
@@ -62,7 +62,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
     return (
       <div
         className="doc-table-block__empty"
-        style={{ padding: '16px 0', color: '#64748b', fontSize: 13 }}
+        style={{ padding: '16px 0', color: 'var(--c-text-secondary)', fontSize: 13 }}
       >
         {t('documentStudio.blocks.noTableData', 'No table data available')}
       </div>
@@ -89,8 +89,8 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
                   style={{
                     textAlign: 'left',
                     fontWeight: 700,
-                    background: '#f1f5f9',
-                    color: '#1e293b',
+                    background: 'var(--c-surface-hover)',
+                    color: 'var(--c-text)',
                     border: BORDER,
                     padding: CELL_PADDING,
                   }}
@@ -103,7 +103,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
         )}
         <tbody>
           {rows.map((row, rIdx) => (
-            <tr key={rIdx} style={{ background: rIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
+            <tr key={rIdx} style={{ background: rIdx % 2 === 1 ? 'var(--c-surface-raised)' : 'var(--c-surface)' }}>
               {(columns.length > 0 ? columns : row).map((_, cIdx) => {
                 const value = row[cIdx] ?? '';
                 const risk = riskColIndexes.has(cIdx) ? riskCellStyle(value) : undefined;
@@ -113,7 +113,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
                     style={{
                       border: BORDER,
                       padding: CELL_PADDING,
-                      color: '#334155',
+                      color: 'var(--c-text)',
                       ...risk,
                     }}
                   >
@@ -128,7 +128,7 @@ export const DocTableBlock: React.FC<DocTableBlockProps> = ({ content }) => {
       {caption && (
         <figcaption
           className="doc-table-block__caption"
-          style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}
+          style={{ fontSize: 12, color: 'var(--c-text-secondary)', marginTop: 6 }}
         >
           {caption}
         </figcaption>

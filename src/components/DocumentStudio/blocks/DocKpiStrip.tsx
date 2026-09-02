@@ -38,7 +38,7 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
     return (
       <div
         className="doc-kpi-strip__empty"
-        style={{ padding: '16px 0', color: '#64748b', fontSize: 13 }}
+        style={{ padding: '16px 0', color: 'var(--c-text-secondary)', fontSize: 13 }}
       >
         {t('documentStudio.blocks.noKpiData', 'No KPIs available')}
       </div>
@@ -60,17 +60,17 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
             key={idx}
             className="doc-kpi-strip__card"
             style={{
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--c-border)',
               borderRadius: 8,
               padding: '12px 14px',
-              background: '#ffffff',
+              background: 'var(--c-surface)',
             }}
           >
             <div
               className="doc-kpi-strip__label"
               style={{
                 fontSize: 12,
-                color: '#64748b',
+                color: 'var(--c-text-secondary)',
                 textTransform: 'uppercase',
                 letterSpacing: 0.4,
                 marginBottom: 4,
@@ -80,7 +80,7 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
             </div>
             <div
               className="doc-kpi-strip__value"
-              style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', lineHeight: 1.1 }}
+              style={{ fontSize: 24, fontWeight: 700, color: 'var(--c-text)', lineHeight: 1.1 }}
             >
               {item.value || '—'}
             </div>
@@ -103,7 +103,7 @@ export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {
       {narrowed.caption && (
         <figcaption
           className="doc-kpi-strip__caption"
-          style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}
+          style={{ fontSize: 12, color: 'var(--c-text-secondary)', marginTop: 6 }}
         >
           {narrowed.caption}
         </figcaption>
