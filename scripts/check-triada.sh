@@ -68,7 +68,44 @@ ALLOWLIST="$SCRIPT_DIR/triada-allowlist.txt"
 # / "off-brand" / "tenant-branding" w komentarzach i identyfikatorach (realnie
 # wystepujace w repo). Filtr `c-accent-soft` jest osobno w find_violations/
 # count_violations_full (accent_viol), patrz nizej.
-VIOL_RE='primary-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|focus:(ring|border)-primary([^0-9]|$)|crimson-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|brand-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|(bg|text|border|ring|from|shadow)-brand([^0-9a-zA-Z-]|$)'
+#
+# VF6 (2026-09-02, audyt nadzorcy przy naprawie check-artefakt.sh bliźniaczej
+# luki): dwie z czterech zgłoszonych luk potwierdzone i naprawione tutaj —
+# (1) odcień `950` nigdzie nie był w enumeracji 50-900 mimo że
+# tailwind.config.js DEFINIUJE `primary-950`/`crimson-950`/`brand-950` (patrz
+# linie ok. 178-190 configu — pełny zestaw crimson idzie do 950, nie do 900);
+# zmierzone (2026-09-02, src/components+src/views): 15 plikow / 24 linie z
+# `-950` w scope — DELTA BASELINE = 0, bo kazda z tych linii ma na tej samej
+# linii inny juz-lapany odcien tej samej klasy compound (np.
+# `bg-crimson-50 ... dark:bg-crimson-950/40`), wiec byla juz liczona przez
+# stary regex jako naruszenie linii — rozszerzenie zamyka TYLKO teoretyczna
+# przyszla luke (linia z WYLACZNIE `-950`, bez zadnego innego odcienia, dzis
+# takiej nie ma). (2) prefiksy BEZ-numerowego `brand` rozszerzone o
+# to-/via-/divide-/outline-/fill-/stroke-/accent-/caret-/decoration-/
+# placeholder-/ring-offset- (obok istniejacych bg-/text-/border-/ring-/from-/
+# shadow-) — zmierzone: ZERO obecnych wystapien tych kombinacji w repo (ani
+# realnych, ani falszywie-pozytywnych typu "on-brand"), wiec rozszerzenie jest
+# czysto prewencyjne, bez wplywu na baseline.
+# NIE naprawiono (swiadomie zostawione): gole `bg-primary`/`text-primary`/
+# `border-primary` BEZ numeru odcienia (realny przypadek:
+# src/components/ui/progress.tsx:19, src/components/ui/slider.tsx:46,58 —
+# 3 linie kodu). Powod: w SCOPIE (src/components/**, src/views/**) ten sam
+# string tekstowy pojawia sie tez w KOMENTARZACH i asercjach testowych, ktore
+# NAZYWAJA zakazana klase zeby jej BRAK potwierdzic — np.
+# src/components/shared/__tests__/rowActionsMenu.r01.test.tsx:230
+# `expect(button.className).not.toContain('text-primary')` i
+# src/components/Organization/redesign/__tests__/OrganizationScenariosBriefScreen.test.tsx:72
+# `it('zero crimson: karty nie uzywaja klas bg-primary/text-primary', ...)`.
+# Regex tego pliku nie ma filtra "linia to komentarz/string-literal w tescie"
+# (grep -cE na calej tresci, patrz count_violations_full nizej) — dodanie
+# goleg bg-/text-/border-primary bez takiego filtra oznaczaloby, ze KAZDY
+# przyszly test/komentarz potwierdzajacy BRAK crimsona zostalby zablokowany
+# jako "nowe naruszenie" (SCAN/HOOK mode patrzy na NOWO DODANE linie — dokladnie
+# taka linia testu jest tym, co ktos dopisze). To jest wlasnie lawina falszywych
+# alarmow, przed ktora ostrzega zlecenie — wymagaloby to osobnego mechanizmu
+# wykluczania komentarzy/stringow-testowych, nie prostego rozszerzenia regexu.
+# Do naprawienia OSOBNO, swiadomie, z tym mechanizmem — nie w tym dyzurze.
+VIOL_RE='primary-(50|100|200|300|400|500|600|700|800|900|950)([^0-9]|$)|focus:(ring|border)-primary([^0-9]|$)|crimson-(50|100|200|300|400|500|600|700|800|900|950)([^0-9]|$)|brand-(50|100|200|300|400|500|600|700|800|900|950)([^0-9]|$)|(bg|text|border|ring|from|shadow|to|via|divide|outline|fill|stroke|accent|caret|decoration|placeholder|ring-offset)-brand([^0-9a-zA-Z-]|$)'
 
 is_scope_file() {
   # Tylko frontend TS/TSX w src/components lub src/views (jak oryginał).
