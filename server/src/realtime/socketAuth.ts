@@ -33,6 +33,7 @@ import {
 } from '../services/organizationSuspensionGuard.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { hasScopedPurposeClaim } from '../utils/scopedTokenClaims.js';
 import { evaluateRealtimeAccess, trackRealtimeConnection } from './demoRealtimeGuard.js';
 
 interface DecodedSocketUser {
@@ -118,6 +119,12 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void
     if (err || !decoded || typeof decoded !== 'object') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       logger.debug?.('[socketAuth] token verification failed', { error: (err as any)?.message });
+      next(new Error('unauthorized'));
+      return;
+    }
+    // A scoped ticket (e.g. the MFA enrollment ticket) is signed with the same
+    // secret but is not a session: it must never open a realtime channel.
+    if (hasScopedPurposeClaim(decoded)) {
       next(new Error('unauthorized'));
       return;
     }

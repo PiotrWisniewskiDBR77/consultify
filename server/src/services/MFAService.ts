@@ -13,6 +13,8 @@ import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
+import { evaluateMfaGrace } from './mfaGracePolicy.js';
+
 function generateTOTP(secret: string, window = 0): string {
   const time = Math.floor(Date.now() / 1000 / 30) + window;
   const hmac = crypto.createHmac('sha1', Buffer.from(secret, 'base64'));
@@ -51,9 +53,12 @@ const mfaService = {
       method: string | null;
       mfa_required: boolean;
       mfa_grace_period_days: number | null;
+      mfa_required_since: string | Date | null;
+      user_created_at: string | Date | null;
     }>(
       `SELECT COALESCE(m.enabled, false) AS enabled, m.method,
-              COALESCE(o.mfa_required, 0) AS mfa_required, o.mfa_grace_period_days
+              COALESCE(o.mfa_required, 0) AS mfa_required, o.mfa_grace_period_days,
+              o.mfa_required_since, u.created_at AS user_created_at
          FROM users u
          JOIN organizations o ON o.id = u.organization_id
          LEFT JOIN user_mfa m ON m.user_id = u.id
@@ -61,11 +66,28 @@ const mfaService = {
       [userId],
       { fallback: false }
     );
+    const enabled = Boolean(row?.enabled);
+    const enforced = Boolean(row?.mfa_required);
+    // `gracePeriodRemaining` used to be the organisation's static configuration
+    // echoed back inside a 403. It is now an actual countdown (see
+    // mfaGracePolicy.ts) so the login path can let a member through while the
+    // runway lasts instead of walling them out of the only screen that can
+    // clear the requirement.
+    const grace = evaluateMfaGrace({
+      enforced,
+      enabled,
+      requiredSince: row?.mfa_required_since ?? null,
+      userCreatedAt: row?.user_created_at ?? null,
+      gracePeriodDays: row?.mfa_grace_period_days ?? null,
+    });
     return {
-      enabled: Boolean(row?.enabled),
+      enabled,
       methods: row?.method ? [row.method] : [],
-      enforced: Boolean(row?.mfa_required),
-      gracePeriodRemaining: Number(row?.mfa_grace_period_days ?? 0),
+      enforced,
+      gracePeriodDays: grace.gracePeriodDays,
+      graceActive: grace.graceActive,
+      gracePeriodRemaining: grace.daysRemaining,
+      graceDeadline: grace.deadline,
     };
   },
 

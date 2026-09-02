@@ -5,10 +5,12 @@
 import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { verifyMfaEnrollmentToken } from '../middleware/mfaEnrollmentToken.middleware.js';
 import { requireActiveTenantMembershipOrUnavailable } from '../middleware/auditsStrictMembership.middleware.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
+import mfaService from '../services/MFAService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -99,7 +101,7 @@ function verifyTOTP(secret: string, token: string): boolean {
  * GET /api/mfa/status
  * Get MFA status for current user
  */
-router.get('/status', async (req: Request, res: Response) => {
+async function handleMfaStatus(req: Request, res: Response) {
   try {
     const userId = (req as any).user?.id;
 
@@ -116,11 +118,21 @@ router.get('/status', async (req: Request, res: Response) => {
       last_verified_at: string;
     } | null;
 
+    // The organisation-level requirement and the remaining grace period travel
+    // with the personal status so the UI has ONE live source for "you must
+    // enroll, N days left" instead of a value frozen at login time.
+    const orgStatus = await mfaService.getMFAStatus(userId);
+
     res.json({
       enabled: mfaConfig?.enabled || false,
       method: mfaConfig?.method || null,
       backupCodesRemaining: mfaConfig?.backup_codes_count || 0,
       lastVerified: mfaConfig?.last_verified_at || null,
+      enforced: orgStatus.enforced,
+      graceActive: orgStatus.graceActive,
+      gracePeriodDays: orgStatus.gracePeriodDays,
+      graceDaysRemaining: orgStatus.gracePeriodRemaining,
+      graceDeadline: orgStatus.graceDeadline,
     });
   } catch (error: any) {
     logger.error('[MFA] Failed to get MFA status:', {
@@ -132,13 +144,13 @@ router.get('/status', async (req: Request, res: Response) => {
       code: 'MFA_STATUS_FAILED',
     });
   }
-});
+}
 
 /**
  * POST /api/mfa/setup
  * Initialize MFA setup - generates secret and QR code data
  */
-router.post('/setup', async (req: Request, res: Response) => {
+async function handleMfaSetup(req: Request, res: Response) {
   try {
     const userId = (req as any).user?.id;
     const user = (await db.get('SELECT email FROM users WHERE id = ?', [userId])) as {
@@ -198,13 +210,13 @@ router.post('/setup', async (req: Request, res: Response) => {
       code: 'MFA_SETUP_FAILED',
     });
   }
-});
+}
 
 /**
  * POST /api/mfa/verify-setup
  * Verify setup by checking first TOTP code
  */
-router.post('/verify-setup', async (req: Request, res: Response) => {
+async function handleMfaVerifySetup(req: Request, res: Response) {
   try {
     const userId = (req as any).user?.id;
     const { token } = req.body;
@@ -285,7 +297,11 @@ router.post('/verify-setup', async (req: Request, res: Response) => {
       code: 'MFA_VERIFY_SETUP_FAILED',
     });
   }
-});
+}
+
+router.get('/status', handleMfaStatus);
+router.post('/setup', handleMfaSetup);
+router.post('/verify-setup', handleMfaVerifySetup);
 
 /**
  * POST /api/mfa/verify
@@ -564,5 +580,22 @@ router.post('/regenerate-backup-codes', async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * ENROLLMENT-ONLY ROUTER (mounted at /api/auth/mfa-enrollment)
+ * ------------------------------------------------------------------
+ * The way out of a spent MFA grace period. Reached with the scoped ticket
+ * minted by AuthController after a VALID password, never with a session token:
+ * `verifyMfaEnrollmentToken` accepts only `purpose: 'mfa_enrollment'`, and
+ * `verifyToken` on every other route refuses that same claim. The surface is
+ * deliberately the three enrollment handlers above and nothing else — no
+ * organisation data, no member data, no other tenant state is reachable with
+ * this credential.
+ */
+export const mfaEnrollmentRouter = Router();
+mfaEnrollmentRouter.use(verifyMfaEnrollmentToken, requireActiveTenantMembershipOrUnavailable);
+mfaEnrollmentRouter.get('/status', handleMfaStatus);
+mfaEnrollmentRouter.post('/setup', handleMfaSetup);
+mfaEnrollmentRouter.post('/verify-setup', handleMfaVerifySetup);
 
 export default router;

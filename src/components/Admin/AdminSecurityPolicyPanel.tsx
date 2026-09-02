@@ -42,6 +42,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
   const [policy, setPolicy] = useState<SecurityPolicyState>(DEFAULT_POLICY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -66,8 +67,25 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
     try {
       setSaving(true);
       await Api.updateAdminSecurityPolicy(policy);
+      setBlockedReason(null);
       toast.success(t('admin.security.policyPanel.toasts.saved', 'Security policy saved'));
     } catch (error: any) {
+      // Serwer blokuje włączenie wymogu w organizacji, w której nikt nie ma
+      // drugiego składnika — inaczej po karencji nie zostałoby ani jedno konto
+      // zdolne się zalogować. Powód musi być widoczny przy przełączniku, nie
+      // tylko w znikającym tousta.
+      const code = String(error?.data?.code || error?.code || '');
+      if (code === 'MFA_ENFORCE_NO_ENROLLED_ACCOUNTS') {
+        const message = t(
+          'admin.security.policyPanel.mfa.errors.noEnrolledAccounts',
+          'Nie można wymagać drugiego składnika: żadne konto w tej organizacji go nie ma. Skonfiguruj drugi składnik na co najmniej jednym koncie, zanim włączysz wymóg.'
+        );
+        setBlockedReason(message);
+        setPolicy((prev) => ({ ...prev, mfaRequired: false }));
+        toast.error(message);
+        return;
+      }
+      setBlockedReason(null);
       toast.error(
         error?.message ||
           t('admin.security.policyPanel.errors.save', 'Failed to save security policy')
@@ -107,6 +125,15 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
               }
             />
           </label>
+          {blockedReason && (
+            <p
+              role="alert"
+              data-testid="mfa-enforce-blocked"
+              className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+            >
+              {blockedReason}
+            </p>
+          )}
           <label className="mt-4 block text-sm text-slate-600 dark:text-slate-300">
             {t('admin.security.policyPanel.mfa.gracePeriod', 'Grace period (days)')}
             <input

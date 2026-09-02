@@ -19293,7 +19293,10 @@
           "title": "MFA enforcement",
           "description": "Require multi-factor authentication across the workspace.",
           "enabled": "Enabled",
-          "gracePeriod": "Grace period (days)"
+          "gracePeriod": "Grace period (days)",
+          "errors": {
+            "noEnrolledAccounts": "Two-factor cannot be required: no account in this organisation has it. Set a second factor up on at least one account before enforcing it."
+          }
         },
         "sso": {
           "title": "SSO posture",
@@ -30179,6 +30182,26 @@
     "setup": {
       "next": "next",
       "done": "Done"
+    },
+    "setupRequired": {
+      "title": "Your organisation requires a second factor",
+      "body": "The grace period is over. Set the second factor up here — it is the only thing this limited session allows.",
+      "secretLabel": "Key for your authenticator app",
+      "codeLabel": "Code from the app",
+      "confirm": "Confirm and enable",
+      "badCode": "Enter the 6-digit code from your app.",
+      "startFailed": "Setup could not be started. Sign in again to get a fresh link.",
+      "verifyFailed": "The code was not accepted. Try a current one.",
+      "preparing": "Preparing setup…",
+      "doneTitle": "Your second factor is set up",
+      "doneBody": "Sign in again — we will ask for the code from your authenticator app.",
+      "backToLogin": "Back to sign in"
+    },
+    "graceBanner": {
+      "remaining": "Your organisation requires two-factor sign-in. {{count}} days left to set it up.",
+      "remaining_one": "Your organisation requires two-factor sign-in. {{count}} day left to set it up.",
+      "expired": "Your organisation requires two-factor sign-in. The grace period is over — set it up now.",
+      "action": "Set up"
     }
   },
   "tour": {

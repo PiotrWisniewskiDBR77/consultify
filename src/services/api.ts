@@ -1417,6 +1417,34 @@ const listAssessmentsLegacy = async (params?: {
 };
 
 export const Api = {
+  /**
+   * Way out of a spent MFA grace period. Both calls carry ONLY the scoped
+   * enrollment ticket returned by the 403 login refusal — never the session
+   * token, which does not exist yet at this point.
+   */
+  mfaEnrollmentStart: async (
+    ticket: string
+  ): Promise<{ secret: string; otpauthUrl: string; qrCodeData: string }> => {
+    const res = await fetch(`${API_URL}/auth/mfa-enrollment/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ticket}` },
+      body: JSON.stringify({}),
+    });
+    return handleResponse(res, 'Nie udało się rozpocząć konfiguracji drugiego składnika');
+  },
+
+  mfaEnrollmentVerify: async (
+    ticket: string,
+    code: string
+  ): Promise<{ success: boolean; backupCodes?: string[] }> => {
+    const res = await fetch(`${API_URL}/auth/mfa-enrollment/verify-setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ticket}` },
+      body: JSON.stringify({ token: code }),
+    });
+    return handleResponse(res, 'Nie udało się potwierdzić drugiego składnika');
+  },
+
   // --- AUTH ---
   login: async (
     email: string,
