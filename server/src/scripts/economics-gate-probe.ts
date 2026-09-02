@@ -173,7 +173,11 @@ interface Position {
   mount: string;
   moduleId: string;
   /** Zapis wykonywany przez wskazaną tożsamość. */
-  write: (who: Identity, marker: string, projectId: string) => Promise<{ status: number; body: Json }>;
+  write: (
+    who: Identity,
+    marker: string,
+    projectId: string
+  ) => Promise<{ status: number; body: Json }>;
   /** Liczba wierszy widzianych NA ZIMNO po zapisie. */
   cold: (who: Identity, marker: string) => Promise<number>;
   /** Status oznaczający sukces zapisu. */
@@ -284,7 +288,8 @@ async function run(): Promise<void> {
     const posWrite = await position.write(owner, posMarker, ownerProject);
     const posCold = await position.cold(owner, posMarker);
 
-    const blocked = negWrite.status === 403 && negWrite.body?.code === 'BETA_LOCKED' && negCold === 0;
+    const blocked =
+      negWrite.status === 403 && negWrite.body?.code === 'BETA_LOCKED' && negCold === 0;
     const allowed = posWrite.status === position.okStatus && posCold === 1;
 
     out.positions[position.id] = {
@@ -315,7 +320,11 @@ async function run(): Promise<void> {
   // do rejestru; decyzja o bramce należy do nadzorcy (część z nich ma własne
   // ściany autoryzacyjne, część nie ma żadnego uprawnionego wołacza z JWT).
   const OBSERVED: Array<{ id: string; method: string; path: string; body?: Json }> = [
-    { id: 'v8-finance-digitization-read', method: 'GET', path: '/api/v8/finance/digitization-analyses' },
+    {
+      id: 'v8-finance-digitization-read',
+      method: 'GET',
+      path: '/api/v8/finance/digitization-analyses',
+    },
     {
       id: 'v8-finance-digitization-write',
       method: 'POST',
@@ -351,7 +360,11 @@ async function run(): Promise<void> {
     },
     // Kontrola ANTY-WYGASZENIOWA: powierzchnie modułów OTWARTYCH, które
     // sąsiadują z naprawionymi mountami, muszą dalej działać dla roli USER.
-    { id: 'anti-extinction-artifact-conversions', method: 'GET', path: '/api/artifact-conversions' },
+    {
+      id: 'anti-extinction-artifact-conversions',
+      method: 'GET',
+      path: '/api/artifact-conversions',
+    },
     { id: 'anti-extinction-my-work', method: 'GET', path: '/api/my-work/inbox' },
   ];
   out.observations = {};
@@ -399,17 +412,13 @@ async function main(): Promise<void> {
   const { ApiGateway } = await import('../Gateway.js');
   ApiGateway.getInstance().initializeRoutes(app);
   app.use(
-    (
-      error: any,
-      _req: express.Request,
-      res: express.Response,
-      _next: express.NextFunction
-    ) => {
+    (error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       console.error('[gate-probe] unhandled route error', error?.message || error);
       const status = Number(error?.statusCode || error?.status || 500);
-      res
-        .status(Number.isFinite(status) && status >= 400 && status < 600 ? status : 500)
-        .json({ error: error?.code || 'gate_probe_harness_error', detail: String(error?.message || error) });
+      res.status(Number.isFinite(status) && status >= 400 && status < 600 ? status : 500).json({
+        error: error?.code || 'gate_probe_harness_error',
+        detail: String(error?.message || error),
+      });
     }
   );
   const server = app.listen(port, '127.0.0.1');
