@@ -235,14 +235,18 @@ function strona() {
     // zrzut SPRZED naprawy i właściciel oceniłby nieaktualny obraz.
     const wersja = popr ? `?v=${encodeURIComponent(popr.kiedy)}` : '';
     const r = reszta[e.id];
+    // Karta „czeka na budowę" nie jest do oceny: właściciel ma ją widzieć, ale
+    // nie ma czego akceptować, bo gotowość nie zależy od wyglądu. Zamiast
+    // przycisków dostaje jedno zdanie, co ją blokuje.
+    const rKlik = r && r.klikalna;
     const btn = (kod, etykieta) =>
       `<button class="b ${kod} ${d.decyzja === kod ? 'on' : ''}" data-id="${esc(e.id)}" data-d="${kod}">${etykieta}</button>`;
-    return `<article class="k${swieze ? ' swieza' : ''}${r ? ' reszta' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}" data-reszta="${r ? '1' : ''}">
+    return `<article class="k${swieze ? ' swieza' : ''}${rKlik ? ' reszta' : ''}${r && !rKlik ? ' czeka' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}" data-reszta="${rKlik ? '1' : ''}" data-czeka="${r && !rKlik ? '1' : ''}">
   <header>
     <h3>${esc(e.nazwa)}</h3>
     <span class="o o${esc(e.ocena)}">${esc(e.ocena)}</span>
   </header>
-  ${r ? `<div class="dlaczego"><b>${esc(r.grupa)}</b><span>${esc(r.powod)}</span></div>` : ''}
+  ${r ? `<div class="dlaczego${rKlik ? '' : ' blok'}"><b>${esc(r.grupa)}</b><span>${esc(r.powod)}</span>${r.czeka ? `<span class="czeka-txt">${esc(r.czeka)}</span>` : ''}</div>` : ''}
   <div class="popr-slot">${
     swieze
       ? `<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span>${esc(popr.opis)}</span><time>${esc(new Date(popr.kiedy).toLocaleString('pl-PL'))}</time></div>`
@@ -262,9 +266,7 @@ function strona() {
     ${dark ? `<figure><figcaption>ciemny</figcaption><a href="/png/${esc(dark)}${wersja}" target="_blank"><img loading="lazy" src="/png/${esc(dark)}${wersja}" alt=""></a></figure>` : ''}
   </div>
   <div class="akcje">
-    ${btn('ok', 'Akceptuję')}
-    ${btn('poprawka', 'Do poprawki')}
-    ${btn('nie', 'Odrzucam')}
+    ${rKlik || !r ? `${btn('ok', 'Akceptuję')}${btn('poprawka', 'Do poprawki')}${btn('nie', 'Odrzucam')}` : '<span class="niedo">Nie oceniaj tej karty — czeka na budowę, nie na wygląd</span>'}
     <a class="zywo" href="${HARNESS}/?screen=${encodeURIComponent(e.id)}&lang=pl&theme=light" target="_blank">otwórz na żywo</a>
   </div>
   <input class="uw" data-id="${esc(e.id)}" placeholder="uwaga (opcjonalnie) — zapisuje się sama" value="${esc(d.uwaga || '')}">
@@ -354,6 +356,11 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .filtry button[data-f=swieze].on{background:var(--ok);border-color:var(--ok)}
 .filtry button[data-f=reszta].on{background:var(--nieb);border-color:var(--nieb)}
 .k.reszta{border-color:var(--nieb);box-shadow:inset 3px 0 0 var(--nieb)}
+.k.czeka{border-color:#cbd5e1;background:#fbfcfd;box-shadow:inset 3px 0 0 #94a3b8}
+.dlaczego.blok{background:#f8fafc;border-color:#e2e8f0}
+.dlaczego.blok b{color:#334155}.dlaczego.blok span{color:#475569}
+.czeka-txt{font-weight:600;color:#334155 !important}
+.niedo{font-size:12.5px;color:var(--drugi);font-style:italic}
 .dlaczego{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:8px 11px;margin-bottom:9px;display:flex;flex-direction:column;gap:3px}
 .dlaczego b{color:#1e3a8a;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 .dlaczego span{color:#1e40af;font-size:13px}
@@ -373,6 +380,7 @@ th{background:#f1f5f9;font-size:12px;text-transform:uppercase;letter-spacing:.04
   <span class="stan" id="stan">gotowe</span>
   <span class="filtry">
     <button data-f="reszta" class="on">★ Zostało do obejrzenia</button>
+    <button data-f="czeka">Czeka na budowę</button>
     <button data-f="wszystkie">Wszystkie</button>
     <button data-f="nierozstrzygniete">Nierozstrzygnięte</button>
     <button data-f="swieze">Poprawione dla Ciebie</button>
@@ -466,6 +474,8 @@ document.addEventListener('click', (ev) => {
       const pokaz =
         tryb === 'reszta'
           ? k.dataset.reszta === '1'
+          : tryb === 'czeka'
+          ? k.dataset.czeka === '1'
           : tryb === 'wszystkie'
           ? true
           : tryb === 'nierozstrzygniete'
