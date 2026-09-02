@@ -7980,6 +7980,12 @@
       "initiatives": "Pakiet inicjatyw",
       "note": "Wykorzystuje tę ocenę jako źródło."
     },
+    "outputs": {
+      "rowMenu": {
+        "openReport": "Pokaż raport",
+        "openPresentation": "Pokaż jako prezentację"
+      }
+    },
     "emptyState": {
       "title": "Brak assessmentów",
       "createFirst": "Utwórz pierwszy assessment",
@@ -26208,6 +26214,7 @@
     "sampleData": {
       "banner": "Dane przykładowe — nie z bazy"
     },
+    "legacyArchiveTab": "Archiwum",
     "moduleName": "Rezultaty",
     "hub": {
       "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",

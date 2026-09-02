@@ -79,6 +79,8 @@ export const ROUTES = {
     OVERVIEW: '/assessment/overview',
     SUMMARY: '/assessment/summary',
     AUDITS: '/assessment/audits',
+    OUTPUT_REPORT: '/assessment/outputs/:outputId/report',
+    OUTPUT_PRESENTATION: '/assessment/outputs/:outputId/presentation',
   },
 
   // Context Builder

@@ -37,9 +37,10 @@
  * mirroring the existing `TableTabStrip` pattern used elsewhere in this repo
  * for in-surface tab strips.
  */
-import { FileText, GitBranch, Lightbulb, Package } from 'lucide-react';
+import { FileText, GitBranch, Lightbulb, Package, Presentation } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import {
   getOutput,
@@ -48,13 +49,19 @@ import {
   type MethodOutputListItem,
   type MethodOutputSummary,
 } from '@/method-core/api/methodCoreApi';
+import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { PreviewPaneAside } from '../shared/PreviewPane';
 import { EmptyState } from '../shared/states';
-import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
+import {
+  type MetaPill,
+  StandardPreview,
+  type StandardPreviewAction,
+} from '../standard/StandardPreview';
 import {
   type StandardRowMenu,
+  type StandardRowMenuAction,
   StandardTable,
   type TableColumn,
   type TableRow,
@@ -85,6 +92,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
   const onCountChangeRef = useRef(onCountChange);
 
   useEffect(() => {
@@ -295,23 +303,49 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   const rowMenu = useCallback(
     (row: TableRow): StandardRowMenu => {
       const sessionId = typeof row.sessionId === 'string' ? row.sessionId : null;
+      const rowId = String(row.id);
+      const primary: StandardRowMenuAction[] = [];
+      if (sessionId) {
+        primary.push({
+          id: 'view-lineage',
+          label: t('assessment.outputs.rowMenu.viewLineage', 'View lineage'),
+          icon: GitBranch,
+          onClick: () => setLineageSessionId(sessionId),
+        });
+      }
+      // Flag-gated (default OFF) — see src/utils/assessmentOutputArtifactsFlag.ts:
+      // the entry point onto AssessmentReportView / AssessmentPresentationView
+      // has not been shown to Piotr yet (CLAUDE.md #7).
+      if (isAssessmentOutputArtifactsEnabled()) {
+        primary.push(
+          {
+            id: 'open-report',
+            label: t(
+              'assessment.outputs.rowMenu.openReport',
+              isPolish ? 'Pokaż raport' : 'Show report'
+            ),
+            icon: FileText,
+            onClick: () => navigate(`/assessment/outputs/${rowId}/report`),
+          },
+          {
+            id: 'open-presentation',
+            label: t(
+              'assessment.outputs.rowMenu.openPresentation',
+              isPolish ? 'Pokaż jako prezentację' : 'Show as presentation'
+            ),
+            icon: Presentation,
+            onClick: () => navigate(`/assessment/outputs/${rowId}/presentation`),
+          }
+        );
+      }
       return {
-        primary: sessionId
-          ? [
-              {
-                id: 'view-lineage',
-                label: t('assessment.outputs.rowMenu.viewLineage', 'View lineage'),
-                icon: GitBranch,
-                onClick: () => setLineageSessionId(sessionId),
-              },
-            ]
-          : undefined,
+        primary: primary.length ? primary : undefined,
         universalHandlers: {
           preview: () => setSelectedOutputId(String(row.id)),
         },
       };
     },
-    [t]
+    [t, isPolish, navigate]
   );
 
   const showLineage = lineageSessionId !== null;
@@ -476,17 +510,46 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                 },
               ]}
               actions={{
-                informational: selectedRow.sessionId
-                  ? [
+                informational: (() => {
+                  const informational: StandardPreviewAction[] = [];
+                  if (selectedRow.sessionId) {
+                    informational.push({
+                      id: 'view-lineage',
+                      variant: 'neutral',
+                      label: t('assessment.outputs.actions.viewLineage', 'View lineage'),
+                      icon: GitBranch,
+                      onClick: () => setLineageSessionId(selectedRow.sessionId as string),
+                    });
+                  }
+                  // Flag-gated (default OFF) — see
+                  // src/utils/assessmentOutputArtifactsFlag.ts.
+                  if (isAssessmentOutputArtifactsEnabled()) {
+                    const rowId = String(selectedRow.id);
+                    informational.push(
                       {
-                        id: 'view-lineage',
+                        id: 'open-report',
                         variant: 'neutral',
-                        label: t('assessment.outputs.actions.viewLineage', 'View lineage'),
-                        icon: GitBranch,
-                        onClick: () => setLineageSessionId(selectedRow.sessionId as string),
+                        label: t(
+                          'assessment.outputs.rowMenu.openReport',
+                          isPolish ? 'Pokaż raport' : 'Show report'
+                        ),
+                        icon: FileText,
+                        onClick: () => navigate(`/assessment/outputs/${rowId}/report`),
                       },
-                    ]
-                  : undefined,
+                      {
+                        id: 'open-presentation',
+                        variant: 'neutral',
+                        label: t(
+                          'assessment.outputs.rowMenu.openPresentation',
+                          isPolish ? 'Pokaż jako prezentację' : 'Show as presentation'
+                        ),
+                        icon: Presentation,
+                        onClick: () => navigate(`/assessment/outputs/${rowId}/presentation`),
+                      }
+                    );
+                  }
+                  return informational.length ? informational : undefined;
+                })(),
               }}
             />
           </PreviewPaneAside>

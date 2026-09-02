@@ -31,6 +31,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
@@ -549,6 +550,22 @@ const AuditReportDocumentView = lazyWithRetry(
   () => import('@/components/Audit/method/AuditReportDocumentView')
 );
 
+// Assessment Output artifact screens (tor "wołacze" 2026-09-02): two
+// components built and visually accepted by Piotr but previously reachable
+// by ZERO routes (props `{ outputId: string | null }`, both read-only
+// against the frozen method-core Output — GET /api/method/outputs/:id).
+// Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF) — see
+// src/utils/assessmentOutputArtifactsFlag.ts for why: the SCREENS have an
+// accept, the ENTRY POINT (kebab row in AssessmentOutputsTab + these
+// routes) has not yet been shown to Piotr on a dev-render screenshot
+// (CLAUDE.md #7).
+const AssessmentOutputReportView = lazyWithRetry(
+  () => import('@/components/assessment/report/AssessmentReportView')
+);
+const AssessmentOutputPresentationView = lazyWithRetry(
+  () => import('@/components/assessment/presentation/AssessmentPresentationView')
+);
+
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = lazyWithRetry(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
@@ -802,6 +819,42 @@ const AuditReportDocumentRoute: React.FC = () => {
     return <Navigate to="/audit-programs?tab=reports" replace />;
   }
   return <AuditReportDocumentView reportId={params.reportId} />;
+};
+
+/**
+ * Assessment module entry for the Output report screen (tor "wołacze"
+ * 2026-09-02). Reads `:outputId` from the URL and mounts
+ * `AssessmentReportView`, which fetches the frozen method-core Output
+ * itself (`GET /api/method/outputs/:id`, contract:
+ * src/components/assessment/report/AssessmentReportView.tsx). The SAME
+ * outputId that identifies a row in `AssessmentOutputsTab.tsx` (Assessment
+ * → zakładka "Wnioski"/Outputs) — that table's kebab is the intended
+ * entry point.
+ * Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF): OFF →
+ * redirects to the Outputs tab so the route is a no-op for every user
+ * until Piotr accepts the visual on a dev-render screenshot (canon: "Piotr
+ * nigdy nie jest pierwszym testerem wizualnym").
+ */
+export const AssessmentOutputReportRoute: React.FC = () => {
+  const params = useParams<{ outputId: string }>();
+  if (!isAssessmentOutputArtifactsEnabled()) {
+    return <Navigate to="/assessment?tab=outputs" replace />;
+  }
+  return <AssessmentOutputReportView outputId={params.outputId ?? null} />;
+};
+
+/**
+ * Assessment module entry for the Output presentation screen — same
+ * contract and flag as `AssessmentOutputReportRoute` above, but mounts
+ * `AssessmentPresentationView` (contract:
+ * src/components/assessment/presentation/AssessmentPresentationView.tsx).
+ */
+export const AssessmentOutputPresentationRoute: React.FC = () => {
+  const params = useParams<{ outputId: string }>();
+  if (!isAssessmentOutputArtifactsEnabled()) {
+    return <Navigate to="/assessment?tab=outputs" replace />;
+  }
+  return <AssessmentOutputPresentationView outputId={params.outputId ?? null} />;
 };
 
 const LegacyAuditCriterionRedirect: React.FC = () => {
@@ -2231,6 +2284,18 @@ export const AppRoutes: React.FC = () => {
                       <Route
                         path=":framework/:assessmentId"
                         element={<AssessmentSessionEditorView />}
+                      />
+                      {/* Output artifact screens (tor "wołacze" 2026-09-02) —
+                          flag-gated entry points onto AssessmentReportView /
+                          AssessmentPresentationView, see
+                          AssessmentOutputReportRoute above. */}
+                      <Route
+                        path="outputs/:outputId/report"
+                        element={<AssessmentOutputReportRoute />}
+                      />
+                      <Route
+                        path="outputs/:outputId/presentation"
+                        element={<AssessmentOutputPresentationRoute />}
                       />
                       {/* Main Assessment Hub - unified view */}
                       <Route index element={<AssessmentHub />} />
