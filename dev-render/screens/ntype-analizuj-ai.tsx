@@ -13,16 +13,29 @@
  * różnica przed/po, stany zastosowano/odrzucono, blokada „Zastosuj" gdy pole
  * nie jest zapisywalne), a nie kondycję klucza API.
  *
+ * ★ NAPRAWA PARYTETU 2026-09-02 (reguła 17 `00_ZASADY_PRACY.md`, bramka R2).
+ *
+ * Ekran stawiał w menu 2 przycisk „How to" (`Menu2HowToButton` w slocie
+ * `howToButton`). Pomiar: slot `howToButton` istnieje w kontrakcie
+ * `NModeMenu2.tsx:257`, ale **żaden plik w `src/` go nie wypełnia** — jedyne
+ * produkcyjne użycie `Menu2HowToButton` to `KnownToolDetailView.tsx:2518`,
+ * i to w `inlineActions` MENU 1, nie w menu 2. Właściciel oceniał więc pasek
+ * z przyciskiem, którego w menu 2 nie zobaczy nikt. Slot ZDJĘTY.
+ *
+ * W to miejsce wchodzi to, co produkcja w menu 2 stawia NAPRAWDĘ: picker
+ * „Sekcje" w lewej strefie (`SectionsManagerMenu`) — 1:1 z wołaczem
+ * `src/components/MyWork/TaskDetailView.tsx:5792`, który podaje
+ * `sectionsMenu` + `readMode`/`onReadModeChange` + `aiButton` i renderuje
+ * `NCardAIAnalysisPanel` (linia 6066) w tej samej karcie.
+ *
  * URL: ?screen=ntype-analizuj-ai[&theme=light|dark][&lang=pl|en]
  */
 import React, { useState } from 'react';
 
 import { NCardAIAnalysisPanel } from '../../src/components/shared/NModeLayout/NCardAIAnalysisPanel';
-import {
-  Menu2AIButton,
-  Menu2HowToButton,
-  NModeMenu2,
-} from '../../src/components/shared/NModeLayout/NModeMenu2';
+import { SectionsManagerMenu } from '../../src/components/shared/NModeLayout/NModeCardManager';
+import { Menu2AIButton, NModeMenu2 } from '../../src/components/shared/NModeLayout/NModeMenu2';
+import { useCardLayout } from '../../src/components/shared/NModeLayout/useCardLayout';
 import type { CardAnalysisChange, CardAnalysisResult } from '../../src/services/cardAnalysis';
 
 const MOCK: CardAnalysisResult = {
@@ -127,6 +140,10 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
   const [open, setOpen] = useState(true);
   const [readMode, setReadMode] = useState(false);
   const [applied, setApplied] = useState<string[]>([]);
+  // Lewa strefa menu 2 należy do pickera „Sekcje" u KAŻDEGO wołacza
+  // produkcyjnego (`TaskDetailView.tsx:5792`). `useCardLayout` czyta
+  // `DEFAULT_CARD_SETS['task']` — stała modułowa, zero API.
+  const cardLayout = useCardLayout({ artifactType: 'task' });
 
   const handleApply = (change: CardAnalysisChange): boolean => {
     if (readMode) return false;
@@ -147,7 +164,7 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
           isPolish={isPolish}
           readMode={readMode}
           onReadModeChange={setReadMode}
-          howToButton={<Menu2HowToButton variant="howTo" isPolish={isPolish} />}
+          sectionsMenu={<SectionsManagerMenu layout={cardLayout} isPolish={isPolish} />}
           aiButton={
             <Menu2AIButton
               isPolish={isPolish}

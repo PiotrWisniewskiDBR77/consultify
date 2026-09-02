@@ -22,6 +22,7 @@ import { DocumentToggleButton } from '../../src/components/documents/DocumentTog
 import { FeedbackToggleButton } from '../../src/components/Feedback/FeedbackToggleButton';
 import { HelpToggleButton } from '../../src/components/Help/HelpToggleButton';
 import { PreviewActionBar } from '../../src/components/shared/PreviewPane/PreviewActionBar';
+import { PREVIEW_PANE_WIDTH } from '../../src/components/shared/PreviewPane/previewGeometry';
 import type { TableColumn, TableRow } from '../../src/components/standard/StandardTable';
 import { StandardTable } from '../../src/components/standard/StandardTable';
 
@@ -69,7 +70,14 @@ const FabRailKebabScreen: React.FC = () => {
       <main
         className={`flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 ${mainReserve}`}
       >
-        <div className="h-12 shrink-0 border-b border-c-border-subtle flex items-center px-3 text-sm text-c-text-secondary">
+        {/* ★ PARYTET 2026-09-02 (reguła 12): pasek „PRZED/PO" to OPIS PRZYRZĄDU,
+            a nie element produktu — do tej pory szedł na każdy zrzut jako treść
+            ekranu. `data-dev-render-chrome` sprawia, że narzędzie zrzutowe go
+            chowa; w rozmowie stan rozróżnia parametr `?fix=off`, nie kadr. */}
+        <div
+          data-dev-render-chrome="true"
+          className="h-12 shrink-0 border-b border-c-border-subtle flex items-center px-3 text-sm text-c-text-secondary"
+        >
           {fixOff
             ? 'PRZED naprawą — rail na right-4 nad tabelą'
             : 'PO naprawie — rail we własnym pasie'}
@@ -90,10 +98,16 @@ const FabRailKebabScreen: React.FC = () => {
             })}
           />
         </div>
-        {/* Szerokość ograniczona, żeby trigger „…" nie chował się pod przyciskami
-            panelu odbioru harnessu (prawy dolny róg) — w aplikacji stopka podglądu
-            ma szerokość panelu, tu odtwarzamy tę samą sytuację przy dolnej krawędzi. */}
-        <div className="shrink-0 border-t border-c-border-subtle px-3 py-2 bg-c-surface max-w-[560px]">
+        {/* ★ PARYTET 2026-09-02: było `max-w-[560px]` — liczba wzięta z sufitu,
+            uzasadniona w komentarzu PRZYRZĄDEM („żeby trigger … nie chował się
+            pod przyciskami panelu odbioru harnessu"), nie produktem. Kanon
+            podglądu §6 mówi `clamp(340px, 28%, 480px)` i jest złożony w
+            `previewGeometry.ts` jako `PREVIEW_PANE_WIDTH` — stopka dostaje
+            DOKŁADNIE tę szerokość, którą ma panel podglądu w aplikacji. */}
+        <div
+          className="shrink-0 border-t border-c-border-subtle px-3 py-2 bg-c-surface"
+          style={{ width: PREVIEW_PANE_WIDTH }}
+        >
           <PreviewActionBar
             rows={[
               {
