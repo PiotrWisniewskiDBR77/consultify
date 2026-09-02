@@ -68,8 +68,17 @@ function SessionScreen() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const item = { ...mockSession, title: mockSession.name };
 
+  /*
+   * ★ 2026-09-02 — zdjęty `p-4` z korzenia ekranu. Produkt
+   * (`InterviewHub.tsx:6992`) montuje `TableWithPreviewLayout` w
+   * `<div className="h-full overflow-hidden">`, BEZ marginesu bocznego.
+   * Harness dokładał 2×16 px, więc `28%` liczyło się od 1568 px i panel
+   * wychodził 439 px zamiast produkcyjnych 448 px. Właściciel oceniał
+   * szerokość dokładnie na tym kadrze („Nie umiem ocenić, czy szerokość
+   * tego jest wystarczająca") — mierzył przyrząd, nie produkt.
+   */
   return (
-    <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
+    <div className="h-screen w-screen bg-slate-50 dark:bg-navy-950">
       {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
           od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
           więc 28% wypadało poniżej dolnej granicy i panel renderował się na
@@ -158,8 +167,17 @@ function InitiativeScreen() {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const item = { ...mockInitiative, title: mockInitiative.title };
 
+  /*
+   * ★ 2026-09-02 — zdjęty `p-4` z korzenia ekranu. Produkt
+   * (`InterviewHub.tsx:6992`) montuje `TableWithPreviewLayout` w
+   * `<div className="h-full overflow-hidden">`, BEZ marginesu bocznego.
+   * Harness dokładał 2×16 px, więc `28%` liczyło się od 1568 px i panel
+   * wychodził 439 px zamiast produkcyjnych 448 px. Właściciel oceniał
+   * szerokość dokładnie na tym kadrze („Nie umiem ocenić, czy szerokość
+   * tego jest wystarczająca") — mierzył przyrząd, nie produkt.
+   */
   return (
-    <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
+    <div className="h-screen w-screen bg-slate-50 dark:bg-navy-950">
       {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
           od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
           więc 28% wypadało poniżej dolnej granicy i panel renderował się na

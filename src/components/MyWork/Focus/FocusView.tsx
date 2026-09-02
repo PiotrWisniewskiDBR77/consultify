@@ -69,6 +69,7 @@ import { renderIconNode } from '@/components/shared/renderIconNode';
 import { LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -1844,7 +1845,11 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </div>
 
           {showAIPlan ? (
-            <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
+            <div
+              data-preview-pane
+              className="shrink-0 bg-c-bg p-3"
+              style={{ width: PREVIEW_PANE_WIDTH }}
+            >
               <PreviewPaneShell
                 title={t('myWork.focus.aiPlan', 'AI Plan')}
                 onClose={() => setShowAIPlan(false)}
@@ -1853,7 +1858,11 @@ export const FocusView: React.FC<FocusViewProps> = ({
               </PreviewPaneShell>
             </div>
           ) : previewOpen && selectedItem ? (
-            <div className="shrink-0 bg-c-bg p-3" style={{ width: 'clamp(340px, 28%, 480px)' }}>
+            <div
+              data-preview-pane
+              className="shrink-0 bg-c-bg p-3"
+              style={{ width: PREVIEW_PANE_WIDTH }}
+            >
               <PreviewPaneShell
                 title={selectedItem.title}
                 onClose={() => {

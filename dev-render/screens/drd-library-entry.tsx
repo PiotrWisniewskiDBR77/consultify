@@ -24,7 +24,7 @@
  *     właściwości (respondent, sesje wywiadu, oś DRD, następny krok) i akcją
  *     „Otwórz proces".
  */
-import { Activity, ExternalLink, FolderKanban } from 'lucide-react';
+import { Activity, FolderKanban } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { PreviewPaneAside } from '../../src/components/shared/PreviewPane';
@@ -82,7 +82,13 @@ const ROWS: DrdRow[] = [
   },
 ];
 
-export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }> = ({ onOpen }) => {
+export /** `2026-08-13` → `13.08.2026` — ten sam zapis, co kolumna tabeli obok. */
+const formatujDate = (iso: string) => {
+  const [r, m, d] = String(iso).slice(0, 10).split('-');
+  return r && m && d ? `${d}.${m}.${r}` : String(iso);
+};
+
+const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }> = ({ onOpen }) => {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const selectedRow = ROWS.find((row) => row.id === selectedRowId) ?? null;
 
@@ -145,7 +151,11 @@ export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }>
                 ],
                 trailing: (
                   <span className="text-[11px] font-semibold text-c-text-secondary">
-                    {selectedRow.updatedAt}
+                    {/* Ta sama data co w kolumnie „Zaktualizowano" obok — do
+                        2026-09-02 podgląd pokazywał surowe „2026-08-13", a
+                        tabela „13.08.2026": jedna data, dwa zapisy, jeden kadr
+                        (ta sama klasa defektu co N-94 w AssessmentHub). */}
+                    {formatujDate(selectedRow.updatedAt)}
                   </span>
                 ),
               }}
@@ -164,18 +174,13 @@ export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }>
                 ],
               }}
               relations={[]}
-              actions={{
-                informational: [
-                  {
-                    id: 'open-process',
-                    variant: 'neutral',
-                    label: 'Otwórz proces',
-                    icon: ExternalLink,
-                    shortcut: 'O',
-                    onClick: () => onOpen?.(selectedRow.id),
-                  },
-                ],
-              }}
+              /* ★ 2026-09-02 — usunięta akcja „Otwórz proces" ze stopki.
+                 Kanon podglądu (§7.3 pkt 1 + lista odbioru): „dokładnie jedno
+                 «Otwórz» w całym podglądzie, w nagłówku; zero duplikacji
+                 export/otwórz w pasku akcji". Ten sam napis stał w nagłówku
+                 (`openLabel`) i w stopce — na jednym kadrze dwa przyciski
+                 robiące dokładnie to samo. Blok akcji bez pozycji ukrywa się
+                 sam (kanon: „blok bez danych = ukryty, nie pusty box"). */
             />
           </PreviewPaneAside>
         ) : null}

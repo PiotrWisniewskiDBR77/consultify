@@ -28,6 +28,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { useUserIntegrations } from '@/hooks/useUserIntegrations';
@@ -809,7 +810,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
 
   if (!decisionId) {
     return (
-      <aside className="w-[clamp(340px,28%,480px)] flex-shrink-0 bg-c-bg h-full p-3">
+      <aside
+        data-preview-pane
+        className="flex-shrink-0 bg-c-bg h-full p-3"
+        style={{ width: PREVIEW_PANE_WIDTH }}
+      >
         <PreviewPaneShell
           kicker={t('myWork.decisionPreview.kicker', 'Preview')}
           title={t('myWork.decisionPreview.title', 'Decision')}
@@ -826,7 +831,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
   }
 
   return (
-    <aside className="w-[clamp(340px,28%,480px)] flex-shrink-0 bg-c-bg h-full p-3 overflow-hidden">
+    <aside
+      data-preview-pane
+      className="flex-shrink-0 bg-c-bg h-full p-3 overflow-hidden"
+      style={{ width: PREVIEW_PANE_WIDTH }}
+    >
       <PreviewPaneShell
         kicker={
           mode === 'requests_pending'

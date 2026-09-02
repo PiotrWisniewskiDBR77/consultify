@@ -247,7 +247,7 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({
   const ostatniIdx = resolvedRows.length - 1;
 
   return (
-    <div className="space-y-2.5 py-1">
+    <div data-preview-block="actions" className="space-y-2.5 py-1">
       {resolvedRows.map((row, rowIdx) => {
         const isGrid = row.columns && row.columns > 1;
         const containerClass = isGrid

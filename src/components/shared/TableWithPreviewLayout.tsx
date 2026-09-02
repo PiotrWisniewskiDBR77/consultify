@@ -25,6 +25,7 @@ import {
   PREVIEW_HEADER_ICON_SIZE,
   PREVIEW_HEADER_OPEN_BUTTON,
 } from '@/components/shared/PreviewPane/previewStyles';
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
@@ -558,7 +559,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
               data-preview-pane
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
+              style={{ width: PREVIEW_PANE_WIDTH }}
             >
               <PreviewPaneShell
                 title={t('common.batchOperations', 'Batch Operations')}
@@ -577,7 +578,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
               data-preview-pane
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
+              style={{ width: PREVIEW_PANE_WIDTH }}
             >
               <PreviewPaneShell
                 title={selectedItem.title}

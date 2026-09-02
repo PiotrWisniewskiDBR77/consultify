@@ -102,7 +102,10 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
      * więc jej miejsce jest tu. Wołacze NIE opakowują — opakowanie u wołacza
      * daje podwójną ramkę.
      */
-    <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+    <div
+      data-preview-block="ai"
+      className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+    >
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
           <Sparkles size={12} />

@@ -17,7 +17,7 @@ import {
   ArtifactPropertiesTable,
   type ArtifactPropertyRow,
 } from '@/components/standard/ArtifactPropertiesTable';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,6 +71,21 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
   const last = formatListDate(session.lastActivityAt);
 
   const pills: MetaPill[] = [
+    /**
+     * ★ 2026-09-02 — status wjeżdża do KARTY META (blok 2), zamiast stać nad
+     * nią jako luźny chip.
+     *
+     * Kanon (§7.0/§7.3 pkt 2) mówi: blok 2 to KARTA meta — status, typ, data —
+     * i nic poza kartą. Do dziś ten podgląd rysował `EntityStatusChip` W OSOBNYM
+     * wierszu NAD kartą, więc na kadrze porównawczym czterech podglądów
+     * (`preview-4-zakladki`) Wywiad miał o jeden element więcej niż wzorzec —
+     * dokładnie ten rodzaj różnicy, który właściciel nazwał „podglądy są
+     * nieporównywalne, a powinny być takie same" (30.08).
+     */
+    {
+      label: t(`interview.hub.sessionStatusLabel.${session.status}`, statusConfig.label.en),
+      tone: statusChipTone(session.status),
+    },
     {
       label: t('interview.sessionPreview.session'),
       className: 'bg-c-info/10 text-[var(--c-info)] border-c-info/20',
@@ -150,13 +165,6 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
 
   return (
     <div className="space-y-4">
-      {/* canon §4.1: status via EntityStatusChip (statusChipTone → c.*) */}
-      <div className="flex items-center gap-2">
-        <EntityStatusChip
-          status={session.status}
-          label={t(`interview.hub.sessionStatusLabel.${session.status}`, statusConfig.label.en)}
-        />
-      </div>
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection
         label={t('interview.sessionPreview.propertiesLabel', isPolish ? 'Przebieg' : 'Progress')}

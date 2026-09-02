@@ -408,6 +408,7 @@ const Kolumna: React.FC<{ opis: OpisPodgladu }> = ({ opis }) => {
         </div>
       </div>
       <div
+        data-preview-pane
         className="h-[880px] shrink-0 bg-slate-50 p-3 dark:bg-navy-950"
         style={{ width: SZEROKOSC_PODGLADU }}
       >
@@ -447,7 +448,12 @@ export const Preview4ZakladkiScreen: React.FC = () => {
   return (
     <MemoryRouter initialEntries={['/my-work']}>
       <div className="min-h-screen bg-c-surface p-6">
-        <div className="mx-auto w-fit">
+        {/* `w-fit` (do 2026-09-02) kazał kontenerowi urosnąć do naturalnej
+            szerokości czterech kolumn — strona rozjeżdżała się w bok, a na
+            zrzucie 1440/1600 px czwarta kolumna (Decisions) była ucięta.
+            Teraz kontener bierze szerokość okna, a wiersz skaluje się
+            jednorodnie do kadru (`WierszCzterechKolumn`). */}
+        <div className="mx-auto w-full">
           <header className="mb-5">
             <h1 className="text-lg font-semibold text-c-text-primary">
               Podglądy — cztery zakładki My Work obok siebie
@@ -482,11 +488,7 @@ export const Preview4ZakladkiScreen: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="flex flex-nowrap items-start gap-4">
-            {PODGLADY.map((opis) => (
-              <Kolumna key={opis.zakladka} opis={opis} />
-            ))}
-          </div>
+          <WierszCzterechKolumn />
 
           <footer className="mt-6 rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3">
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -524,6 +526,66 @@ export const Preview4ZakladkiScreen: React.FC = () => {
         </div>
       </div>
     </MemoryRouter>
+  );
+};
+
+
+/**
+ * ODSTĘP MIĘDZY KOLUMNAMI — z kanonu, nie z oka. `gap-4` = 16 px.
+ */
+const ODSTEP_KOLUMN = 16;
+
+/**
+ * Wiersz czterech kolumn — mieści się W KADRZE przy każdej szerokości okna.
+ *
+ * ── CO BYŁO ZMIERZONE (2026-09-02) ─────────────────────────────────────────
+ * Cztery kolumny w szerokości kanonicznej to 4 × `SZEROKOSC_PODGLADU`
+ * + 3 × 16 px odstępu. Przy oknie 1440–1600 px (tyle ma ekran właściciela)
+ * czwarta kolumna — Decisions — wychodziła poza kadr i na zrzucie było ją
+ * widać do połowy. Warunek odbioru z rejestru brzmi „WSZYSTKIE CZTERY podglądy
+ * W KADRZE mają te same sześć bloków... i tę samą szerokość", więc obcięta
+ * czwarta kolumna sama w sobie łamie warunek — niezależnie od tego, jak
+ * wygląda pod spodem.
+ *
+ * Zwężenie kolumn byłoby fałszem pomiaru (mierzylibyśmy inną szerokość niż
+ * produkt), dlatego wiersz jest SKALOWANY JEDNORODNIE: każda kolumna zachowuje
+ * tę samą, kanoniczną szerokość względem pozostałych, a całość mieści się
+ * w oknie. Przy oknie >= wymaganej szerokości skala wynosi 1 i nic się nie
+ * dzieje.
+ */
+const WierszCzterechKolumn: React.FC = () => {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [skala, setSkala] = React.useState(1);
+  const wymagana = PODGLADY.length * SZEROKOSC_PODGLADU + (PODGLADY.length - 1) * ODSTEP_KOLUMN;
+
+  React.useEffect(() => {
+    const policz = () => {
+      const dostepna = ref.current?.getBoundingClientRect().width ?? wymagana;
+      setSkala(dostepna > 0 ? Math.min(1, dostepna / wymagana) : 1);
+    };
+    policz();
+    window.addEventListener('resize', policz);
+    return () => window.removeEventListener('resize', policz);
+  }, [wymagana]);
+
+  return (
+    <div ref={ref} className="w-full overflow-hidden">
+      <div
+        className="flex flex-nowrap items-start gap-4"
+        style={{
+          width: wymagana,
+          transform: `scale(${skala})`,
+          transformOrigin: 'top left',
+          // Bez tego skalowanie zostawia pod wierszem pustkę wysokości
+          // oryginału — kadr rósłby w dół tak, jakby nic nie zeskalowano.
+          marginBottom: skala < 1 ? -(1 - skala) * 940 : 0,
+        }}
+      >
+        {PODGLADY.map((opis) => (
+          <Kolumna key={opis.zakladka} opis={opis} />
+        ))}
+      </div>
+    </div>
   );
 };
 

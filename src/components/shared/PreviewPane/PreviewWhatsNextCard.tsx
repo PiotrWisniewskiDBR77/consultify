@@ -40,7 +40,10 @@ export const PreviewWhatsNextCard: React.FC<PreviewWhatsNextCardProps> = ({
   note,
   children,
 }) => (
-  <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+  <div
+    data-preview-block="whatsnext"
+    className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+  >
     <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
       {label ?? (isPolish ? 'Co dalej' : "What's next")}
     </div>

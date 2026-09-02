@@ -46,7 +46,10 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
     >
       {/* Panel Header (KANON v3 / Golden Standard §6.10a) — sticky top-0 z-10 per canon §7.3 */}
       {!embedded ? (
-        <div className="sticky top-0 z-10 shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
+        <div
+          data-preview-block="header"
+          className="sticky top-0 z-10 shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur"
+        >
           <div className="min-w-0 flex items-center gap-2">
             <div
               className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"

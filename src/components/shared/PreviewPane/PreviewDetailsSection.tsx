@@ -177,7 +177,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
     : 0;
 
   return (
-    <div className="space-y-2">
+    <div data-preview-block="details" className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           {title ?? label ?? t('sharedComponents.previewDetailsSection.details')}
