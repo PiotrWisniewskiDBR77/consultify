@@ -308,8 +308,11 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error('[g01-environment-qualification] FAILED', error);
-  removeOwnContainer();
-  process.exit(1);
-});
+main().then(
+  () => process.exit(0),
+  (error) => {
+    console.error('[g01-environment-qualification] FAILED', error);
+    removeOwnContainer();
+    process.exit(1);
+  }
+);
