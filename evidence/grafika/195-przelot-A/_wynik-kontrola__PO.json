@@ -1,0 +1,46 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"presentation-deck\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "assessment-presentation-view",
+      "motyw": "light",
+      "plik": "/private/tmp/m03/evidence/grafika/195-przelot-A/assessment-presentation-view__PO__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"presentation-deck\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 246.90683659394287,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "assessment-presentation-view",
+      "motyw": "dark",
+      "plik": "/private/tmp/m03/evidence/grafika/195-przelot-A/assessment-presentation-view__PO__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"presentation-deck\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 18.894473275462964,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "assessment-presentation-view",
+      "ok": true,
+      "reasons": []
+    }
+  ]
+}

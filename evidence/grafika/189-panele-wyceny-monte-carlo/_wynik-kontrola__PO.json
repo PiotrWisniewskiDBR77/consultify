@@ -1,0 +1,42 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"mc-histogram\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "finance-value-panels",
+      "motyw": "light",
+      "plik": "/private/tmp/m03/evidence/grafika/189-panele-wyceny-monte-carlo/finance-value-panels__PO__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"mc-histogram\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 245.27401978067127,
+      "status": "OK"
+    },
+    {
+      "ekran": "finance-value-panels",
+      "motyw": "dark",
+      "plik": "/private/tmp/m03/evidence/grafika/189-panele-wyceny-monte-carlo/finance-value-panels__PO__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"mc-histogram\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 22.82878717361111,
+      "status": "OK"
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "finance-value-panels",
+      "ok": true,
+      "reasons": []
+    }
+  ]
+}

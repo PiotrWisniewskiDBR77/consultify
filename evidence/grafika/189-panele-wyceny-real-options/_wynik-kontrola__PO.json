@@ -1,0 +1,42 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"ro-defer-result\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "finance-value-panels",
+      "motyw": "light",
+      "plik": "/private/tmp/m03/evidence/grafika/189-panele-wyceny-real-options/finance-value-panels__PO__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"ro-defer-result\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 249.7532522193287,
+      "status": "OK"
+    },
+    {
+      "ekran": "finance-value-panels",
+      "motyw": "dark",
+      "plik": "/private/tmp/m03/evidence/grafika/189-panele-wyceny-real-options/finance-value-panels__PO__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"ro-defer-result\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 17.407761852816357,
+      "status": "OK"
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "finance-value-panels",
+      "ok": true,
+      "reasons": []
+    }
+  ]
+}
