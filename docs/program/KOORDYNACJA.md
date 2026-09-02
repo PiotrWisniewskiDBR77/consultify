@@ -89,6 +89,18 @@ kandydata SWOT z zatwierdzonym wynikiem narzędzia. Ekran nie może obiecywać,
 | `src/components/MyWork/shared/**` · `TaskDetailView` · `DecisionDetailView` | funkcje (dyżur 133) | 2026-08-30 |
 | `src/components/Initiatives/InitiativesHub.tsx` | funkcje (dyżur 134) | 2026-08-30 |
 
+### 2026-09-02 · TOR GRAFIKI DOTKNĄŁ PLIKU SPOZA SWOJEGO ZAKRESU (wpis wg zasady styku nr 2)
+
+`tailwind.config.js` — **zmiana wyłącznie w komentarzu**, zero zmian w wartościach
+tokenów, zero wpływu na budowanie. Powód: komentarz w linii ~150 mówił, że
+`c-accent` (crimson) służy do „brand/CTA/**selected**", co jest wprost sprzeczne
+z prawem nadrzędnym w `CLAUDE.md` (reguła UI 3: „CTA/stany aktywne = neutralne;
+fokus = niebieski `c-focus`"). Wykonawcy czytali dwa źródła prawdy i wybierali
+bliższe — tak powstała rodzina „crimson na treści neutralnej" naprawiana dziś.
+Rozstrzygnięcie nadzorcy toru grafiki: wiąże `CLAUDE.md`; komentarz poprawiony
+i opatrzony datą sprostowania. **Jeśli tor funkcji uważa inaczej — proszę o wpis
+tutaj, nie o cichą zmianę z powrotem.**
+
 ### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: kanon dat napisany i nieużyty
 
 **Pomiar, nie hipoteza.** `src/utils/listDateFormat.ts` powstał 27.07 po przeglądzie

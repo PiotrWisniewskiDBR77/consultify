@@ -382,3 +382,21 @@ otwarta w odbiorze (`docs/program/grafika/reszta-odbioru.json`), żeby sprawa ni
 zniknęła po cichu. Do zamknięcia potrzebne są dwie operacje zapisu (dodanie
 założenia, usunięcie linii) wraz z ich powierzchnią; wygląd tej powierzchni wraca
 wtedy do toru grafiki.
+
+### 37. [P2] `AdminGuestsPanel.tsx:63` — przetłumaczony napis podawany jako wartość statusu
+
+**Charakter ustalenia: POMIAR w kodzie** (znalezione 02.09 przy naprawie rodziny
+„czerwień na treści neutralnej").
+
+Panel podaje do pigułki statusu **już przetłumaczony napis** (`t('...status.expired')`
+→ „Wygasł") zamiast wartości technicznej. `statusChipTone()` normalizuje status po
+**angielskim kluczu**, więc polski napis nie pasuje do żadnej gałęzi i wpada w tier
+`neutral` **przypadkiem**, nie z decyzji.
+
+**Dlaczego to zgłaszam mimo że ekran wygląda dobrze.** Przy przeglądzie 01.09 ten
+ekran posłużył za KONTRPRZYKŁAD („tu ten sam stan »wygasło« jest pokolorowany
+poprawnie") — czyli defekt mechaniki został wzięty za wzorzec projektowy. Ta sama
+ścieżka ukryje w przyszłości stan **krytyczny**: dowolny status przetłumaczony
+przed kolorowaniem będzie szary, niezależnie od wagi.
+
+Naprawa: przekazywać wartość techniczną do pigułki, a tłumaczyć dopiero etykietę.
