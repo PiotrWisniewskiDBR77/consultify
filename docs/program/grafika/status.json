@@ -1,6 +1,6 @@
 {
   "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-09-01",
+  "_zaktualizowano": "2026-09-02",
   "moduly": [
     {
       "katalog": "01-czat",
@@ -32,7 +32,8 @@
           "co": "'Proces wdrożenia nowego klienta' — SPRAWDZONE na świeżym zrzucie 151-processflow-typy (2026-08-31, oba motywy): krawędź łącząca 'Poproś o uzupełnienie danych' z węzłem decyzyjnym 'Dane kompletne?' NIE przechodzi już przez etykietę węzła 'Klient składa zgłoszenie' — trasa biegnie czystym korytarzem między wierszami torów 'Klient' i 'Zespół wdrożenia'. Zgłoszony defekt (krawędź wyglądająca jak przekreślenie) NAPRAWIONY, zgodne z commitem 'fix(processflow): poprawny import reactflow'.",
           "naprawione": [
             "Tekst wylewał się poza romb decyzyjny i nachodził na etykietę 'Tak' — naprawione wcześniej.",
-            "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach."
+            "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach.",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -83,7 +84,9 @@
           "nazwa": "Mala mapa mysli",
           "ocena": "B",
           "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.",
-          "naprawione": [],
+          "naprawione": [
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
+          ],
           "wyjatki": [],
           "warianty": [
             "b2-template-gallery",
@@ -101,7 +104,8 @@
           "ocena": "B",
           "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Angielski przycisk Apply"
+            "Angielski przycisk Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -142,7 +146,8 @@
           "ocena": "B",
           "co": "Tablica z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Ten sam angielski Apply"
+            "Ten sam angielski Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -161,7 +166,8 @@
           "ocena": "B",
           "co": "Tablica oddalona, szesc elementow. Ta sama pastylka SEL po angielsku, widoczne nawet przy 25% zoom. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Ten sam angielski Apply"
+            "Ten sam angielski Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -531,7 +537,8 @@
           "ocena": "B",
           "co": "Pasek gorny Mojej pracy z otwarta idea: pigulki dokumentow, menu modulu i mapa mysli.",
           "naprawione": [
-            "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami."
+            "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami.",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [
             "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
@@ -2694,7 +2701,8 @@
           "co": "'Zaproszenia' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy teraz w pełni po polsku ('Oczekujące', 'Błąd', 'Wygasło', 'Cofnięto', 'Zaakceptowane' — poprzednio 'expired'/'revoked' po angielsku), daty w formacie DD/MM/RRRR ('10/09/2026 14:00'). Oba wcześniej zgłoszone defekty NAPRAWIONE.",
           "naprawione": [
             "Statusy expired/revoked były po angielsku — teraz przetłumaczone (Wygasło/Cofnięto).",
-            "Daty były w formacie US — teraz DD/MM/RRRR."
+            "Daty były w formacie US — teraz DD/MM/RRRR.",
+            "Statusy „Wygasło\"/„Cofnięto\" były czerwone jak awaria — to zwykły stan cyklu życia; naprawione we wspólnej mapie statusów, nie w tym jednym ekranie (2026-09-02)"
           ],
           "wyjatki": [],
           "gdzie": "Administracja → Zespół (team) → zakładka „Zaproszenia”. Zrzuty: evidence/grafika/146-admin-team/."
@@ -3205,7 +3213,9 @@
           "nazwa": "DLP",
           "ocena": "B",
           "co": "DLP.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna „Waga\" malowała „Krytyczna\" i „Wysoka\" tą samą czerwienią — czterostopniowa skala czytała się jak dwustopniowa; „Wysoka\" jest teraz bursztynowa (2026-09-02)"
+          ],
           "wyjatki": [
             "Waga „Wysoka” tym samym text-c-danger co „Krytyczna” (CommandCenterDlpTab.tsx:244) — dwa poziomy nieodróżnialne kolorem — zob. zgłoszenie #23 do toru funkcji."
           ],
@@ -3404,7 +3414,8 @@
           "co": "SPRAWDZONE: nagłówek 'Ryzyka i szanse', baner 'Logika oceny ryzyka — Na podstawie 0 zadeklarowanych wyzwań oraz 0 aktywnych ograniczeń, zidentyfikowaliśmy poniższe ryzyka.', sekcja 'Ukryte ryzyka i zagrożenia', nagłówki tabeli 'RYZYKO / ZAGROŻENIE / DLACZEGO (PRZYCZYNA ŹRÓDŁOWA) / WAGA / STRATEGIA OGRANICZANIA / AKCJE', menu boczne zawiera już 'Podsumowanie dla zarządu' (było 'Executive brief'). Treść w pełni przetłumaczona.",
           "naprawione": [
             "Cała treść (baner, tabela, nagłówki) przetłumaczona na polski.",
-            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'."
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
+            "Baner „Logika oceny ryzyka\" był czerwony mimo neutralnej treści — teraz spokojny pas informacyjny; bliźniaczy baner szans w tym samym pliku był już poprawnie zielony (2026-09-02)"
           ],
           "wyjatki": [
             "Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny."
@@ -3417,7 +3428,8 @@
           "ocena": "B",
           "co": "SPRAWDZONE (dowód PRZED/PO w evidence/grafika/156-organizacja-i18n): wszystkie sześć kart scenariuszy przetłumaczone — 'Fundament cyfrowy' ('Najpierw fundamenty, potem tempo.'), 'Rewolucja doświadczenia klienta', 'Doskonałość operacyjna', 'Transformacja napędzana AI', 'Innowacja modelu biznesowego', 'Organizacja oparta na danych'; baner 'Rekomendowany scenariusz transformacji — Na podstawie 0 zadeklarowanych wyzwań rekomendowany kierunek to Fundament cyfrowy.'; wskaźniki TEMPO/AMBICJA/RYZYKO. PRZED: całość po angielsku (Digital Foundation, Recommended).",
           "naprawione": [
-            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO)."
+            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO).",
+            "Baner rekomendowanego scenariusza i odznaka REKOMENDOWANY były czerwone — teraz zielone (2026-09-02)"
           ],
           "wyjatki": [
             "Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny."
@@ -3443,7 +3455,8 @@
           "naprawione": [
             "Realny profil organizacji ('Atelier Toys Sp. z o.o.', branża, liczba pracowników) zamiast niepodstawionego placeholdera 'Company Name'.",
             "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
-            "Treść karty w pełni przetłumaczona."
+            "Treść karty w pełni przetłumaczona.",
+            "W ciemnym motywie cała karta danych firmy miała czerwone tło: autor napisał dark:from-primary-900 nie wiedząc, że primary = crimson; naprawione razem z CTA „Eksportuj PDF\" i wartością „Docelowa dojrzałość\" (2026-09-02)"
           ],
           "wyjatki": [
             "Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.",
@@ -3911,7 +3924,9 @@
           "nazwa": "Ustawienia — Dane i prywatność (kontrola danych)",
           "ocena": "B",
           "co": "Kontrola danych: 5 przełączników zgód (Analityka użycia ON, Personalizacja ON, Komunikacja marketingowa OFF, Udostępnianie danych stronom trzecim OFF, Trenowanie modeli AI OFF) + pigułki retencji danych (30 dni / 90 dni / 6 miesięcy / 1 rok wybrane / Bezterminowo).",
-          "naprawione": [],
+          "naprawione": [
+            "Baner „Zgodność z GDPR\" (treść pozytywna) był czerwony — teraz zielony; zaznaczony okres retencji przestał mieć czerwoną ramkę w ciemnym motywie (2026-09-02)"
+          ],
           "wyjatki": [
             "ZNANE ZGŁOSZENIE: crimson dekoracyjny — baner 'Zgodność z GDPR' i kilka ikon sekcji (tarcza, zegar) w kolorze crimson, mimo że to treść informacyjna, nie stan krytyczny."
           ],
