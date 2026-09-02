@@ -29,6 +29,7 @@ import React, { useMemo } from 'react';
 
 import type { TableColumn } from '../standard/StandardTable';
 import StandardTable from '../standard/StandardTable';
+import { liczebnik } from '../../utils/liczebnik';
 
 // ── Modele danych (kształty 1:1 z ExecutiveAggregateSnapshot + actionCenter) ──
 export interface OneLookHealth {
@@ -368,7 +369,9 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
         align: 'right',
         render: (row: any) => (
           <span className="text-sm tabular-nums text-c-text-secondary">
-            {row.ageDays != null ? `${row.ageDays} ${tr('dni', 'd')}` : '—'}
+            {row.ageDays != null
+              ? `${row.ageDays} ${tr(liczebnik(row.ageDays, ['dzień', 'dni', 'dni']), 'd')}`
+              : '—'}
           </span>
         ),
       },

@@ -156,7 +156,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
             Number(health?.summary?.failed ?? health?.failed ?? 0) > 0 ? 'critical' : 'info',
           href: '/admin/health/service-status',
           detail: t('admin.command.attention-queue.signals.healthDetail', {
-            v0: Number(health?.summary?.failed ?? health?.failed ?? 0),
+            count: Number(health?.summary?.failed ?? health?.failed ?? 0),
           }),
         });
       const rank = {
