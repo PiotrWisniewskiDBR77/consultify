@@ -557,13 +557,28 @@ window.addEventListener('pagehide', () => {
   });
 });
 /**
- * Stan startowy = filtr „★ Zostało do obejrzenia".
- * Powód (02.09): właściciel przekliknął już wszystkie 253 karty. Gdyby strona
- * otwierała się na pełnej liście, te 22, które naprawdę czekają, utonęłyby
- * w zaakceptowanych — a on prosił wprost, żeby „skończyć odbiór", nie zaczynać
- * go od nowa. Przycisk „Wszystkie" jest obok i wraca do pełnego widoku.
+ * Stan startowy — DWA przypadki, w tej kolejności (02.09, druga tura).
+ *
+ * 1. Jeśli są karty Świeżo poprawione (zielona ramka „Poprawione — obejrzyj
+ *    ponownie"), strona otwiera się NA NICH. Powód: 02.09 wypuściliśmy 69 kart
+ *    naraz, a strona otwierała się na fitrze „Zostało do obejrzenia", który ich
+ *    NIE POKAZUJE — właściciel widziałby trzy pozycje i uznał, że nic się nie
+ *    zmieniło. Poprawka bez tego kroku jest niewidoczna, czyli nie istnieje.
+ * 2. W przeciwnym razie — filtr „★ Zostało do obejrzenia" jak dotychczas:
+ *    właściciel przekliknął już wszystkie karty i prosił, żeby „skończyć odbiór",
+ *    nie zaczynać go od nowa.
+ *
+ * Oba dotychczasowe filtry zostają nietknięte — zmienia się wyłącznie to, który
+ * jest wybrany przy wejściu.
  */
-document.querySelector('.filtry button[data-f=reszta]')?.click();
+const swiezychNaStart = document.querySelectorAll('.k[data-swieza="1"]').length;
+if (swiezychNaStart) {
+  const b = document.querySelector('.filtry button[data-f=swieze]');
+  if (b) b.textContent = 'Poprawione dla Ciebie (' + swiezychNaStart + ')';
+  b?.click();
+} else {
+  document.querySelector('.filtry button[data-f=reszta]')?.click();
+}
 licz();
 
 /**
