@@ -512,3 +512,89 @@ Znalezione też dwie starsze, lokalne funkcje odmiany: `odmienNapiecia()`
 (`src/toolOutputs/buildSwotOutput.ts:203`) i `polskaOdmianaKolumn()`
 (`src/components/assessment/drd/DRDMatrixReadOnly.tsx:55`) — kandydaci do zastąpienia
 przy okazji, żeby nie zostały cztery sposoby na tę samą rzecz.
+
+---
+
+## Grupa: liczebnik — klasa B po domknięciu klasy A (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Sprostowanie liczby z wpisu powyżej.** Tamten wpis mówił „156 kluczy w `translation.json`
+z `{{count}}` przy rzeczowniku" i „207 kluczy używa `_one/_few/_many/_other`". Zmierzone dziś
+własnym skryptem przechodzącym CAŁY plik `pl/translation.json`: **kluczy do naprawy było 314,
+nie 156**, a kluczy z natywnym mechanizmem było **285, nie 207**. Nie podważam tamtej roboty —
+podaję liczby, bo na 156 partia wygląda na jednodniową, a na 314 nie.
+
+**Zrobione dzisiaj (nie odkładam):** cała **klasa A — 16 kluczy z protezą w nawiasie**
+(`harmonogram(ów)`, `reguł(y)`, `blok(ów)`, `task(ów)`, `zależnoś(ć)`, `program(ów)`, `karta(y)`,
+`uwag(a)`, `cykl(i)`, `element(y)`, `wiersz(y)`, `plik(ów)`, `komentarz(y)`, `ostrzeżenie(a)` ×2,
+`reguł(y)` ×2). Nawias to był sygnał, że autor **wiedział** o problemie i go ominął — dlatego
+poszedł pierwszy. **Po naprawie klasa A = 0.**
+
+| co zostaje | ile |
+| --- | --- |
+| klucze `{{count}} + rzeczownik` bez rodziny `_one/_few/_many/_other` | **296** |
+| klucze, które JUŻ mają rodzinę mnogą (stan po dzisiejszej partii) | **361** |
+| klucze z nawiasem RODZAJU (`Podpisał(a)`, `Zatwierdził(a)`, `Zgłosił(a)`, `utworzył(a)`, `zaktualizował(a)`, `Rozwiązał(a)`) | 6 — **NIE są defektem**, to poprawna polska konwencja; nie ruszać |
+
+**Dlaczego martwe / czemu odłożone:** żaden z 296 nie jest widoczny na 12 ekranach zlecenia
+„trzy rodziny". Zmiana dotyka dwóch plików zbiorczych (`pl` + `en` `translation.json`), a każdy
+klucz wymaga decyzji o trzech formach — to partia mierzalna, nie doklejka.
+
+**Co niosły wartościowego:** komplet jest policzalny i sprawdzalny jednym poleceniem, więc partia
+ma twardą bramkę wejścia i wyjścia (296 → 0).
+
+**Jak przywrócić / jak to zrobić:** skrypt pomiarowy, którym zmierzono te liczby, jest w raporcie
+`docs/program/grafika/TRZY_RODZINY_20260902.md` (klasa A = regex nawiasu przy zmiennej,
+klasa B = `{{count|value|totalItems}} + [a-ząćęłńóśźż]{3,}` bez rodzeństwa z sufiksem).
+Kolejność naprawy sprawdzona dziś na 19 kluczach: (1) w `pl` zamień klucz na cztery
+`_one/_few/_many/_other`, (2) w `en` na dwa `_one/_other`, (3) **sprawdź wołacza — i18next
+pluralizuje WYŁĄCZNIE po zmiennej `count`**; wołacz przekazujący `{{totalItems}}`/`{{warnings}}`
+musi dostać `count` (dwa takie były: `CalendarView.tsx`, `TemplateBuilder.tsx`).
+
+**Trzeci mechanizm — jeden usunięty, dwa zostają.** `pluralizeWskaznik()` w
+`dev-render/screens/results-zestawienia.tsx` (lokalna kopia reguły CLDR) została dziś zastąpiona
+wywołaniem `liczebnik()`. Nadal żyją: `odmienNapiecia()` (`src/toolOutputs/buildSwotOutput.ts:203`)
+i `polskaOdmianaKolumn()` (`src/components/assessment/drd/DRDMatrixReadOnly.tsx:55`).
+
+---
+
+## Grupa: kolumny węższe niż podłoga czytelności (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Zmierzone: 180 kolumn w 76 plikach** (`src/` + `dev-render/`) deklaruje `width` poniżej
+`FIT_MIN_COLUMN_WIDTH` (112 px) — rozkład: 82 × 110 px, 40 × 100 px, 34 × 90 px, 8 × 80 px,
+4 × 70 px, 4 × 60 px oraz pojedyncze 18/26/44/48 px.
+
+**Dlaczego NIE podniesione hurtem — decyzja, nie zaniechanie.** Kanon mówi wprost, w komentarzu
+przy `FIT_MIN_COLUMN_WIDTH`: *„podłoga nigdy nie ROZPYCHA, tylko ogranicza kurczenie"*. Podniesienie
+tych 180 kolumn do 112 px przepchnęłoby dziesiątki tabel ponad realny obszar, `columnFit` skalowałby
+je proporcjonalnie w dół, a skutkiem byłaby regresja na ekranach z akceptem właściciela. Cena jest
+wyższa niż zysk.
+
+**Co niosło wartościowego:** ta lista jest gotowym rankingiem ryzyka „tekst nie mieści się w
+kolumnie" — kolumny 18/26/44/48 px to niemal na pewno defekty, a nie decyzje projektowe, i warto
+je obejrzeć w pierwszej kolejności.
+
+**Jak przywrócić:** pomiar jednym poleceniem —
+`grep -rhoE "width: '[0-9]{1,3}px'" src/ dev-render/ | grep -oE '[0-9]+' | awk '$1<112' | sort -n | uniq -c`.
+Po naprawie z 02.09 (warstwa `CELL_ELEMENT_WRAP_CLASS` w `FilterableTable`) wąska kolumna
+**nie rozrywa już wyrazu** — najgorszym skutkiem jest zawinięcie na spacji, więc sprawa przestała
+być pilna i może iść ekran po ekranie, z akceptem.
+
+---
+
+## Grupa: crimson w ikonie nagłówka karty ustawień (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+`src/components/settings/shared/SettingsSection.tsx:141-142` rysuje kafelek ikony
+(`bg-c-accent-soft` + `text-c-accent` = Harvard Crimson `#85182f`) w nagłówku **każdej** karty
+ustawień — **23 pliki** modułu ustawień.
+
+**Dlaczego odłożone, a nie naprawione razem z 21 ikonami podsekcji:** właściciel zgłosił „ikony
+zwykłych sekcji (Zarządzanie zgodami, Retencja danych)" — czyli podnagłówki, i te są naprawione.
+Kafelek nagłówka KARTY to element marki stosowany konsekwentnie w całym module; jego zdjęcie to
+restyling, którego nikt nie zlecił (REGUŁA NR 16 — reguła dopuszcza stan zastany czy nakazuje
+zmianę?). To jest pytanie „podoba się / nie podoba" na zrzucie, czyli pytanie do właściciela.
+
+**Co niesie wartościowego:** jeśli właściciel powie „zdjąć", naprawa to DWIE linie w jednym
+wspólnym pliku i obejmuje wszystkie 23 karty naraz — tanio i bez ryzyka rozjazdu.
+
+**Jak przywrócić / gdzie patrzeć:** zrzut `evidence/grafika/217-trzy-rodziny/ustawienia-dane-prywatnosc__PO__light.png`,
+lewy górny róg karty „Kontrola danych" — to jedyna czerwień, jaka na tym ekranie została.

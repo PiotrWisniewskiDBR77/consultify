@@ -1,0 +1,258 @@
+---
+doc_id: grafika-trzy-rodziny-20260902
+status: canonical
+truth_type: repair-report
+established: 2026-09-02
+galaz: grafika/trzy-rodziny-20260902
+zrzuty: evidence/grafika/217-trzy-rodziny/
+---
+
+# Trzy niedokończone rodziny + defekt `execution-tab-control` — domknięcie u przyczyny
+
+Zlecenie: `POPRAWIONE_20260902.md` § „NAJWAŻNIEJSZE ZNALEZISKO DNIA". Oględziny 196 zrzutów
+wykazały, że z jedenastu meldowanych rodzin **trzy żyją dalej** — poprzedni wykonawcy naprawili
+punkt, nie rodzinę (REGUŁA NR 20). Ten dokument zamyka je u przyczyny, z dowodem w obrazie.
+
+**Pierwsza liczba, zgodnie z regułą 13: obejrzałem 24 świeże zrzuty (12 ekranów × 2 motywy),
+wszystkie zrobione PO naprawie, wszystkie we własnym katalogu `evidence/grafika/217-trzy-rodziny/`.**
+
+---
+
+## RODZINA 1 — odmiana liczebnika
+
+### Zasięg zmierzony (własnym poleceniem, nie z cudzego meldunku)
+
+Narzędzie pomiarowe: skrypt przechodzący `public/locales/pl/translation.json` w całości, dzielący
+znaleziska na dwie klasy. Wynik PRZED naprawą:
+
+| klasa | liczba |
+| --- | --- |
+| **A — proteza w nawiasie** (`harmonogram(ów)`, `reguł(y)`, `blok(ów)`) przy zmiennej liczbowej | **16 kluczy** |
+| A2 — proteza w nawiasie WEWNĄTRZ istniejącej rodziny mnogiej | 0 |
+| **B — `{{count}} + rzeczownik` bez rodziny `_one/_few/_many/_other`** | **314 kluczy** |
+| kluczy, które JUŻ używały natywnego mechanizmu i18next | 285 |
+
+Poprzedni pomiar mówił „~68 wystąpień w ~46 plikach i 156 kluczy". **Ta liczba była zaniżona
+w klasie B (314, nie 156) i zawyżona w klasie A** — protez w nawiasie z liczebnikiem jest 16,
+a nie 68; pozostałe wystąpienia nawiasu to jednostki (`(dni)`, `(h)`, `(cron)`) i formy rodzaju
+(`Podpisał(a)`, `Zatwierdził(a)`), które **nie są** defektem odmiany liczebnika.
+
+★ Trop z reguły 20 potwierdzony dosłownie: `ExecutionSummaryOneLook.tsx` **już miał** poprawne
+`liczebnik(row.ageDays, ['dzień','dni','dni'])` w linii 373 — a pięć liczników niżej w tym samym
+pliku nie miało nic. Istniejąca poprawna implementacja obok była najsilniejszym sygnałem.
+
+### Co naprawione
+
+**Mechanizm: żadnego trzeciego.** Klucze i18n → natywne `_one/_few/_many/_other` i18next
+(285 kluczy już tak działało). Twarde ciągi w TSX → wspólna funkcja `liczebnik()`
+(`src/utils/liczebnik.ts`, test 11 przypadków). Trzeci mechanizm — lokalną kopię reguły CLDR
+w `dev-render/screens/results-zestawienia.tsx` — **usunięto** na rzecz `liczebnik()`.
+
+| miejsce | było | jest |
+| --- | --- | --- |
+| **16 protez w nawiasie** (pl + en, po 4 / po 2 formy) | `5 harmonogram(ów)`, `0 reguł(y)`, `{{count}} blok(ów)` … | rodziny mnogie; **klasa A = 0** |
+| `myWork.calendarView.partialLoadSuggestion` + `heavyLoadSuggestion` + `calendarCreateEvent.itemsOnThisDay` | `Wybrany dzień ma 1 pozycji.` | `…ma 1 pozycję.` |
+| `ExecutionSummaryOneLook.tsx` — **cały plik, 5 liczników** | `1 pozycji`, `1 blokery`, `0 ryzyko`, `0 wolne`, `0 osób` | `1 pozycja`, `1 bloker`, `0 ryzyk`, `0 wolnych`, `0 osób` |
+| `ExecutionWorkSurface.tsx:741` | `1 powiązanych dowodów` | `1 powiązany dowód` |
+| `results-zestawienia.tsx` | własna `pluralizeWskaznik` (trzeci mechanizm) | delegacja do `liczebnik()` |
+
+Wołacze, które musiały zacząć przekazywać `count` (i18next pluralizuje WYŁĄCZNIE po `count`):
+`CalendarView.tsx` (2×, `totalItems` → `count`), `TemplateBuilder.tsx` (`warnings` → `count`).
+Pozostałe 16 wołaczy sprawdzono jeden po drugim — już przekazywały `count`.
+
+**Pomiar PO naprawie: klasa A = 0 · klasa B = 296 · kluczy z rodziną mnogą = 361 (+76).**
+
+### Co odłożone — z liczbą
+
+**296 kluczy klasy B** (`{{count}} + rzeczownik` bez rodziny mnogiej). Wpis w `ODLOZONE.md`.
+Powód odłożenia: to nie jest defekt widoczny na żadnym z 12 ekranów tego zlecenia, a naprawa
+dotyka 296 kluczy w dwóch plikach zbiorczych — idzie osobną, mierzalną partią. Formy rodzaju
+(`Podpisał(a)`, `utworzył(a)`, `Rozwiązał(a)`, `Zatwierdził(a)`, `zaktualizował(a)` — 6 kluczy)
+NIE są objęte: nawias rodzaju to poprawna polska konwencja, nie proteza.
+
+---
+
+## RODZINA 2 — łamanie wyrazu w połowie
+
+### Zasięg zmierzony i PRZYCZYNA, której poprzednia naprawa nie ruszyła
+
+Poprawka `parsePx` z 02.09 (procent nie udaje pikseli) **zamknęła zapadanie kolumny do 10 px** —
+sprawdzone: w definicjach `TableColumn` w `src/` i `dev-render/` zostało **0 szerokości
+procentowych**. Ale defekt wizualny żył dalej, bo przyczyna jest **piętro niżej i nie ma z
+procentami nic wspólnego**:
+
+> `td` w `FilterableTable.tsx` nosi `break-words` (= `overflow-wrap: break-word`) jako ostatnią
+> deskę ratunku. Ta reguła jest **dziedziczona**. Treść, którą moduł zwraca z `render` jako GOŁY
+> tekst, była chroniona warstwą `CELL_TEXT_CLAMP_CLASS` od 30.08. Treść zwracana jako **WŁASNE
+> ELEMENTY** (`<div>`, `<span>`, dwie linie, chip) nie była chroniona niczym — siedziała
+> bezpośrednio pod `td` i dziedziczyła `break-word`, czyli rozrywanie wyrazu.
+
+Oba zgłoszone przypadki to dokładnie ta gałąź: `chat-signals-feed` (kolumna Sygnał zwraca
+dwuliniowy `<div>`), `results-zestawienia` (kolumna Wskaźniki zwraca `<span>`).
+
+### Rozstrzygnięcie u źródła (decyzja nadzorcy wg reguły 0)
+
+Kanon tabel już rozstrzyga tę sprawę — komentarz przy `CELL_TEXT_CLAMP_CLASS`: **„granica wyrazu,
+nigdy środek wyrazu"**. Wybrałem więc egzekwowanie istniejącej reguły, nie nową:
+
+1. **Naprawa RODZINY, w jądrze:** nowa stała `CELL_ELEMENT_WRAP_CLASS = 'min-w-0 break-normal'`
+   opakowuje KAŻDĄ treść elementową w `td`. Zbija dziedziczone `overflow-wrap` do `normal`
+   (łamanie tylko na spacji) na **każdym ekranie listowym zbudowanym na `StandardTable`**,
+   nie na dwóch zgłoszonych.
+2. **Świadomie BEZ `overflow-hidden`** na tej warstwie — z tego samego powodu, dla którego nie ma
+   go `td`: komórki renderują popovery bez portalu (`PMO/StatusTransitionDropdown.tsx` w
+   `assessment/InitiativesTable.tsx`), a przycięcie obcięłoby je do szerokości kolumny.
+3. **ODRZUCONE: podniesienie podłogi szerokości globalnie.** Zmierzone: **180 kolumn w 76 plikach**
+   deklaruje szerokość poniżej `FIT_MIN_COLUMN_WIDTH` (112 px). Kanon mówi wprost — „podłoga nigdy
+   nie ROZPYCHA, tylko ogranicza kurczenie". Podniesienie ich hurtem przepchnęłoby dziesiątki
+   już odebranych tabel w nadmiar → `columnFit` skalowałby wszystko w dół → regresja na ekranach
+   z akceptem. Nie wchodzę w to.
+4. **Punktowo, tam gdzie kolumna była poniżej podłogi czytelności:** `results-zestawienia`
+   `itemCount` 90 → 120 px (po odjęciu `px-4` zostawało 58 px, a odmieniony wyraz ma ~65 px).
+   Budżet odzyskany z `owner` i `updatedAt` (po −10 px), żeby suma nie wypchnęła tabeli poza
+   realny obszar z otwartym podglądem (~981 px). Zero zmiany dla pozostałych kolumn.
+
+### Bezpiecznik mechaniczny, nie uważność
+
+Nowy test `src/components/shared/ModuleHub/__tests__/FilterableTable.cellWordBreak.test.tsx`
+(4 przypadki). **Dowód mutacyjny wykonany:** usunięcie `CELL_ELEMENT_WRAP_CLASS` z gałęzi
+elementowej → test 1 czerwony; przywrócenie → 4/4 zielone. Test celuje w ZABEZPIECZENIE
+(brak `break-all`, brak `overflow-hidden` na warstwie elementowej), nie w mechanizm renderowania.
+
+---
+
+## RODZINA 3 — czerwień poza semantyką krytyczną
+
+### Zasięg zmierzony — trzy podrodziny, nie jedna
+
+`--c-accent: #85182f` (`src/index.css:68`) to Harvard Crimson. Zmierzone:
+
+| podrodzina | zmierzone | naprawione | zostawione ŚWIADOMIE |
+| --- | --- | --- | --- |
+| **przycisk z pełnym czerwonym wypełnieniem + biały tekst** | 21 | 1 (`Wykonaj retencję teraz`) | 20 — to potwierdzenia usunięcia („Usuń", „Delete"), gdzie właściciel czerwień **przyjął** (`finance-saved-views-panel`, 02.09) |
+| **pastylka Menu 3 `MENU_3_ACTION_DANGER`** | 10 na realnych przyciskach | 1 (`Anuluj zaznaczone` w agent-hub → `MENU_3_ACTION_NEUTRAL`) | 8 × „Usuń" + 1 × „Odrzuć" |
+| **`PreviewActionButton variant="destructive"` z etykietą Anuluj/Cancel** | 3 | **3** (agent-hub + OKR cel + OKR kluczowy rezultat) | — |
+| **ikona nagłówka zwykłej sekcji ustawień** (`size={14} text-c-accent`) | 21 w 8 plikach | **21** → `text-c-text-secondary` | — |
+
+### Rozstrzygnięcie dla `Wykonaj retencję teraz` (zgodnie z poleceniem)
+
+Akcja jest nieodwracalna, ale **nie jest stanem krytycznym**. Ostrzeżenie już istnieje i jest
+właściwym wzorcem: `handleExecute` woła `confirm({ …, variant: 'danger' })` z jawnym tekstem
+„This permanently deletes data… This cannot be undone.". **Ostrzeżenie niesie okno potwierdzenia,
+nie kolor przycisku.** Przycisk zneutralizowany, potwierdzenie nietknięte.
+
+### Co zostawione świadomie — i dlaczego to jest pytanie do właściciela, nie do mnie
+
+`src/components/settings/shared/SettingsSection.tsx:141-142` rysuje **crimsonowy kafelek ikony
+w nagłówku KAŻDEJ karty ustawień** (`bg-c-accent-soft` + `text-c-accent`) — jeden wspólny
+komponent, **23 pliki** ustawień. Właściciel zgłosił „ikony zwykłych sekcji", czyli podnagłówki
+(te naprawiłem, 21 sztuk). Kafelek nagłówka karty jest elementem MARKI stosowanym konsekwentnie
+na wszystkich kartach ustawień — jego zdjęcie to restyling całego modułu, którego nikt nie zlecił
+(REGUŁA NR 16: reguła dopuszcza czy nakazuje?). **Widać go na zrzucie `ustawienia-dane-prywatnosc`
+w lewym górnym rogu karty. To jedyna czerwień, jaka na tym ekranie została.** Decyzja: pytanie
+do właściciela na zrzucie, nie zmiana bez zlecenia.
+
+---
+
+## DEFEKT PRODUKTOWY — `execution-tab-control`: literalne `undefined:`
+
+### Przyczyna (znaleziona w danych i prezenterze, nie załatana napisem)
+
+Panel POWIĄZANIA składał etykietę jako `` `${option.kind}: ${option.label}` `` bez żadnej osłony.
+Pole `kind` **istnieje w kontrakcie serwera** —
+`server/src/domain/initiatives-execution/managementIntervention.ts:32`,
+`InterventionOption.kind: 'DO_NOTHING' | 'ACTION'`. **Nie ma go w atrapie danych**
+(`executionLocalReviewData.ts:250-251`). To NIE jest luka kontraktu → **żadnego STOP-u do toru
+funkcji nie zgłaszam.**
+
+To jest podręcznikowa REGUŁA NR 21: *atrapa miała kształt wygodny dla frontu, nie kształt serwera*.
+Poza brakiem `kind` atrapa niosła też `reversibility: 'HIGH' | 'MEDIUM'`, czego słownik kontraktu
+(`REVERSIBLE | PARTIALLY_REVERSIBLE | IRREVERSIBLE | UNKNOWN`) w ogóle nie zna, oraz
+`impacts: string[]` zamiast `Array<{targetRef, effect}>`.
+
+★ I znowu trop z reguły 20: poprawny wzorzec stał **80 linii wyżej w tym samym module** —
+`ExecutionControlSurface.tsx:462` buduje opcje z `kind: 'DO_NOTHING'` / `kind: 'ACTION'`.
+
+### Naprawa — dwie warstwy, w kolejności z reguły 21 (najpierw atrapa)
+
+1. **Atrapa doprowadzona do kształtu serwera:** `kind`, słownikowe `reversibility`, `impacts`
+   w kształcie `{targetRef, effect}`.
+2. **Prezenter uodporniony:** `optionKindLabel` / `confidenceLabel` / `reversibilityLabel` —
+   `undefined` nie może wyciec NIGDY (przy braku `kind` przedrostek jest pomijany, nie zastępowany
+   napisem), a kody są tłumaczone na polski zamiast trafiać na ekran surowe.
+
+Efekt na zrzucie: `undefined: Nie zmieniaj planu` → **`Bez zmian: Nie zmieniaj planu`**,
+a wartość `HIGH · HIGH` → **`Wysoka pewność · Odwracalna`**.
+
+---
+
+## Dowód — 12 ekranów, 24 zrzuty PO, obejrzane oczami
+
+`evidence/grafika/217-trzy-rodziny/<ekran>__PO__<light|dark>.png`. Jedno zdanie o tym, co widać:
+
+| ekran | co widać na zrzucie PO (light i dark identyczny stan) | gotowy do zapalenia |
+| --- | --- | --- |
+| `execution-tab-summary` | kafel DO ROZSTRZYGNIĘCIA mówi **„1 pozycja"** i **„1 bloker"** (było „1 pozycji", „1 blokery"), kafel NA CZAS **„0 ryzyk"**, OBŁOŻENIE **„0 osób"** | **TAK** |
+| `execution-tab-work` | w podglądzie wiersz Dowody mówi **„1 powiązany dowód"** (było „1 powiązanych dowodów") | **TAK** |
+| `execution-tab-control` | POWIĄZANIA: **„Bez zmian: Nie zmieniaj planu — Wysoka pewność · Odwracalna"** i **„Działanie: Równoległa walidacja obu źródeł — Średnia pewność · Częściowo odwracalna"**; słowa `undefined` nie ma | **TAK** |
+| `admin-command-overview` | kafel RETENCJA mówi **„5 harmonogramów"** (było „5 harmonogram(ów)") | **TAK** |
+| `admin-command-center-panel` | ten sam kafel, ta sama poprawna forma **„5 harmonogramów"** | **TAK** |
+| `admin-command-ai-policy` | „Niestandardowe reguły bezpieczeństwa — **skonfigurowano 0 reguł.**" (było „0 reguł(y)") | **TAK** |
+| `mw-007-calendar-narrow-viewport` | podpowiedź mówi **„Wybrany dzień ma 1 pozycję."** (było „1 pozycji") | **B** — patrz uwaga niżej |
+| `results-zestawienia` | kolumna WSKAŹNIKI szeroka na **120 px**, wartości **„10 wskaźników", „3 wskaźniki", „1 wskaźnik"** — wyraz łamie się na spacji, po liczbie, nigdy w środku (było „3 wskaźnik / i") | **TAK** |
+| `chat-signals-feed` | kolumna ŹRÓDŁO pokazuje **„Interpretacja / AI"** — całe słowo, złamane na spacji (było „Interpretac / ja AI"); WAGA pokazuje całe „Ostrzeżenie" (było „Ostrzeżeni / e") | **TAK** |
+| `admin-command-retention` | przycisk **„Wykonaj retencję teraz" jest neutralny** — jasne tło, cienka szara ramka, ciemny tekst, identycznie jak sąsiedni „Zainicjuj harmonogramy"; na ekranie nie ma ani jednego czerwonego piksela | **TAK** |
+| `agent-hub` | przycisk **„Anuluj" w stopce podglądu jest neutralny** — białe tło z szarą ramką (było różowe tło + czerwony tekst) | **B** — patrz uwaga niżej |
+| `ustawienia-dane-prywatnosc` | ikony nagłówków **„Zarządzanie zgodami"** (tarcza) i **„Retencja danych"** (zegar) są **szare**, nie malinowe | **B** — patrz uwaga niżej |
+
+### Trzy oceny B — wyjątki NAZWANE PRZED spojrzeniem właściciela
+
+- `mw-007-calendar-narrow-viewport` — odmiana naprawiona, ale **drugi zgłoszony defekt tego ekranu
+  ZOSTAJE**: podpis wydarzenia „Internal" po angielsku (kafelek „Warsztat z zespołem op… / Internal").
+  To defekt językowy, nie moja rodzina.
+- `agent-hub` — czerwień naprawiona, ale **zgłoszone ucięcia ZOSTAJĄ**: trzy nagłówki
+  („ZAPLANOW…NA", „OSTATNIE URUCHOMI…", „CZAS WYKONANIA") i pięć wartości statusu
+  („Planow…", „Zaplan…", „Zakońc…", „Nieuda…", „Czeka …") kończą się wielokropkiem. To kanon
+  (wielokropek, nie rozdarcie), ale pięć nieczytelnych statusów to osobna sprawa do rozstrzygnięcia.
+- `ustawienia-dane-prywatnosc` — podnagłówki naprawione, ale **crimsonowy kafelek ikony nagłówka
+  karty ZOSTAJE** (wspólny `SettingsSection`, 23 pliki — patrz Rodzina 3, sekcja „zostawione
+  świadomie"). To jedyna czerwień na tym ekranie i jest to pytanie do właściciela.
+
+---
+
+## ZGŁASZAM (czytać pierwsze, nie ostatnie)
+
+1. **Bramka `check-dev-render-parytet.mjs` jest CZERWONA na tej gałęzi — 31 nowych naruszeń R1/R2.
+   NIE są moje.** Sprawdzone mutacyjnie: po przywróceniu wersji `results-zestawienia.tsx` z HEAD
+   wynik jest identyczny (31). Żaden z moich 12 ekranów nie występuje w liście naruszeń.
+   Winowajcy: `day200-finance-panels` (13), `day238-ustawienia` (10 × R2), `day221-audyty-warsztat`,
+   `day233-finanse-rejestry` i 5 innych. **Reguła 17 mówi, że partia nie idzie do odbioru, dopóki
+   bramka nie da CZYSTO — to zablokuje odbiór KAŻDEJ partii, nie tylko tej.** Wymaga osobnego
+   dyżuru: albo naprawa tych 9 ekranów, albo wpisy z POWODEM do
+   `scripts/check-dev-render-parytet.baseline.txt`.
+2. **`src/components/shared/__tests__/standardPreview.r03.test.tsx` — 2 czerwone testy, zastane.**
+   Sprawdzone mutacyjnie tą samą metodą (HEAD-owa wersja `FilterableTable.tsx` → te same 2 czerwone).
+   Nie moje, ale nikt ich chyba nie widzi.
+3. **`execution-tab-work` i `execution-tab-control`: nazwiska w danych demo są z małej litery i bez
+   polskich znaków** — „anna kowalska", „piotr wisniewski", „katarzyna wojcik". Dane demo są twarzą
+   produktu. Poza moim zleceniem, ale właściciel to zobaczy.
+4. **`execution-tab-control`: „Wybrana opcja: parallel-validation"** — surowy identyfikator zamiast
+   etykiety opcji. Ta sama rodzina co naprawione `undefined:`, ale inne miejsce w pliku; nie ruszałem,
+   bo nie było w zleceniu. Naprawa to jedna linia (mapowanie `selectedOptionId` → `option.label`).
+5. **`execution-tab-rollout` („8dni", brak spacji) NIE naprawiony** — nie znalazłem tego ciągu w
+   `src/components/Execution/`; wymaga zrzutu z podświetleniem elementu, nie grepa.
+6. **Zmieniłem kolor „Anuluj" na dwóch ekranach OKR** (`okrObjectivePresenters`,
+   `okrKeyResultPresenters`), których właściciel mógł już widzieć z czerwienią. To była świadoma
+   decyzja z reguły 20 (rodzina, nie punkt) — ale jeśli te karty mają akcept, wymagają ponownego
+   zrzutu przed awansem (reguła 15).
+
+## Bramki
+
+| bramka | wynik |
+| --- | --- |
+| `npx vite build` | ✓ zbudowane w 36 s |
+| `scripts/check-list-canon.sh` | ✓ naruszeń 394, baseline 394 — dług nie rośnie |
+| `scripts/dev/check-devrender-main.sh` | ✓ kod wyjścia 0, 266 ekranów |
+| `vitest` — Execution + AIChat | ✓ 375/375 |
+| `vitest` — nowy test rodziny 2 | ✓ 4/4, dowód mutacyjny wykonany |
+| `check-dev-render-parytet.mjs` | ✗ CZERWONA — 31 naruszeń zastanych, patrz ZGŁASZAM #1 |
