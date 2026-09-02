@@ -312,7 +312,7 @@ class ManagementReportsService {
     for (const [rawName, section] of Object.entries(content)) {
       let name =
         String(rawName)
-          .replace(/[\\/*?:\[\]]/g, '_')
+          .replace(/[\\/*?:[\]]/g, '_')
           .slice(0, 31) || 'Section';
       let suffix = 1;
       while (used.has(name)) name = `${name.slice(0, 27)}_${suffix++}`;
