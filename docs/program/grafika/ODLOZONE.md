@@ -475,3 +475,40 @@ per-wywołanie w tym repozytorium już raz odrosła po ośmiu tygodniach w dwuna
 
 **Dlaczego warto mimo niskiego priorytetu technicznego:** to jest dokładnie ten rodzaj
 drobiazgu, po którym właściciel mówi „grafika jak sprzed pięciu lat". Kosztuje jeden dyżur.
+
+
+---
+
+## 2026-09-02 · ODMIANA LICZEBNIKA — reszta rodziny, osobny dyżur (zmierzona, nie oszacowana)
+
+**Co już zrobione:** funkcja `liczebnik(n, [forma1, forma2, forma3])` w `src/utils/liczebnik.ts`
+z testem `tests/unit/utils/liczebnik.test.ts` (11 przypadków: 1, 2, 5, 12, 22, 25, 0, 101, 112
+plus wartości niecałkowite i NaN — wszystkie przechodzą). Naprawione dwa ekrany:
+„1 dni" → „1 dzień" (`exec-summary-onelook`), „1 testów nieudanych" → „1 test nieudany"
+(`admin-command-attention-queue`).
+
+**Co zostaje — LICZBY z pomiaru całego zbioru, nie z próbki:**
+
+| | |
+| --- | --- |
+| Wystąpień w kodzie (`src/**/*.ts(x)`) | **~68** (z ~70 znalezionych, 2 naprawione) |
+| Plików | **~46** |
+| Kluczy w `public/locales/pl/translation.json` z `{{count}}`/`{{v0}}` przy rzeczowniku | **156** |
+| Różnych rzeczowników | kilkanaście (dni, elementów, kroków, wierszy, inicjatyw, decyzji, kolumn, zmian, ryzyk…) |
+| Moduły objęte | `MyWork` (9 plików), `Organization`, `Reports`, `Finance`, `Execution`, `Initiatives`, `Interview`, `Assessment`, `SuperAdmin` |
+
+**Dlaczego NIE zrobione dziś, mimo że mechanizm jest gotowy:** zbiór jest zbyt zróżnicowany
+(kilkanaście rzeczowników, dwie konwencje wywołania `v0` vs `count`), żeby zmienić go bezpiecznie
+i obejrzeć każdy ekran na własne oczy w jednym dyżurze. Podmiana bez dowodu wzrokowego per ekran
+to dokładnie ta operacja, która w tym repozytorium raz już zniszczyła działającą treść.
+
+**★ Ustalenie, które oszczędzi następnemu dyżurowi pół dnia:** poprawny wzorzec **już istnieje
+i jest natywny dla i18next** — **207 kluczy** w `translation.json` używa sufiksów
+`_one/_few/_many/_other` (np. `linkedArtifactsCount`). Dla stringów przechodzących przez `t()`
+używaj TEGO, nie owijania w dodatkową funkcję JS. `liczebnik()` jest dla miejsc, gdzie tekst
+składany jest w kodzie, poza `t()`. **Nie wprowadzaj trzeciego mechanizmu.**
+
+Znalezione też dwie starsze, lokalne funkcje odmiany: `odmienNapiecia()`
+(`src/toolOutputs/buildSwotOutput.ts:203`) i `polskaOdmianaKolumn()`
+(`src/components/assessment/drd/DRDMatrixReadOnly.tsx:55`) — kandydaci do zastąpienia
+przy okazji, żeby nie zostały cztery sposoby na tę samą rzecz.

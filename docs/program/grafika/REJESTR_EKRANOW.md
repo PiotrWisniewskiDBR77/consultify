@@ -5,7 +5,10 @@ truth_type: work-register
 established: 2026-08-30
 ---
 
-# Rejestr ekranów — jeden wiersz na ekran
+# ARCHIWUM — Rejestr ekranów (nieaktualizowany od 2026-08-30)
+
+> **Stan pracy nad wyglądem żyje WYŁĄCZNIE w `status.json`. Ten plik nie jest aktualizowany i nie wolno opierać na nim żadnej liczby.** Decyzja nadzorcy toru, 2026-09-02: jedno źródło prawdy, koniec dwóch rejestrów.
+
 
 > ## ★ SPROSTOWANIE 2026-09-02 — TEN PLIK NIE JEST JUŻ ŹRÓDŁEM STANU
 >
