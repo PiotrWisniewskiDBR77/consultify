@@ -76,6 +76,10 @@ import {
 } from '@/utils/presentationState';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import {
+  createInitiativeRegisterColumns,
+  createInitiativeRegisterRowMenu,
+} from '../Initiatives/initiativeRegisterColumns.shared';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
 import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
@@ -918,14 +922,44 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           render: (row) => {
             if (row._isImported) {
               const importStatusConfig: Record<string, { label: string; tone: StatusTone }> = {
-                pending: { label: t('assessment.hub.table.importStatus.pending', 'Uploaded'), tone: 'neutral' },
-                detecting: { label: t('assessment.hub.table.importStatus.detecting', 'Detecting...'), tone: 'warning' },
-                extracting: { label: t('assessment.hub.table.importStatus.extracting', 'Extracting...'), tone: 'warning' },
-                ready_for_review: { label: t('assessment.hub.table.importStatus.readyForReview', 'Ready for review'), tone: 'success' },
-                assessment_created: { label: t('assessment.hub.table.importStatus.assessmentCreated', 'Assessment created'), tone: 'info' },
-                initiatives_created: { label: t('assessment.hub.table.importStatus.initiativesCreated', 'Initiatives created'), tone: 'info' },
-                completed: { label: t('assessment.hub.table.importStatus.completed', 'Completed'), tone: 'success' },
-                failed: { label: t('assessment.hub.table.importStatus.failed', 'Failed'), tone: 'danger' },
+                pending: {
+                  label: t('assessment.hub.table.importStatus.pending', 'Uploaded'),
+                  tone: 'neutral',
+                },
+                detecting: {
+                  label: t('assessment.hub.table.importStatus.detecting', 'Detecting...'),
+                  tone: 'warning',
+                },
+                extracting: {
+                  label: t('assessment.hub.table.importStatus.extracting', 'Extracting...'),
+                  tone: 'warning',
+                },
+                ready_for_review: {
+                  label: t('assessment.hub.table.importStatus.readyForReview', 'Ready for review'),
+                  tone: 'success',
+                },
+                assessment_created: {
+                  label: t(
+                    'assessment.hub.table.importStatus.assessmentCreated',
+                    'Assessment created'
+                  ),
+                  tone: 'info',
+                },
+                initiatives_created: {
+                  label: t(
+                    'assessment.hub.table.importStatus.initiativesCreated',
+                    'Initiatives created'
+                  ),
+                  tone: 'info',
+                },
+                completed: {
+                  label: t('assessment.hub.table.importStatus.completed', 'Completed'),
+                  tone: 'success',
+                },
+                failed: {
+                  label: t('assessment.hub.table.importStatus.failed', 'Failed'),
+                  tone: 'danger',
+                },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return <StatusChip label={cfg.label} tone={cfg.tone} />;
@@ -940,74 +974,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     }
 
     if (activeTab === 'initiatives') {
-      return [
-        frameworkCol,
-        nameCol,
-        {
-          id: 'sourceReport',
-          label: t('assessment.hub.table.sourceReport', 'Source Report'),
-          width: '200px',
-          render: (row) => (
-            <span
-              className="text-xs text-c-text-muted truncate block max-w-[180px]"
-              title={row.sourceReport || ''}
-            >
-              {row.sourceReport || '—'}
-            </span>
-          ),
-        },
-        {
-          id: 'status',
-          label: t('assessment.hub.table.status', 'Status'),
-          width: '140px',
-          filterable: true,
-          filterOptions: [
-            { value: 'DRAFT', label: t('assessment.hub.table.initiativeStatus.draft', 'Draft'), color: 'bg-c-text-muted' },
-            { value: 'REVIEW', label: t('assessment.hub.table.initiativeStatus.review', 'In Review'), color: 'bg-amber-500' },
-            { value: 'PLANNING', label: t('assessment.hub.table.initiativeStatus.planning', 'Planning'), color: 'bg-blue-500' },
-            { value: 'APPROVED', label: t('assessment.hub.table.initiativeStatus.approved', 'Approved'), color: 'bg-emerald-500' },
-            { value: 'EXECUTING', label: t('assessment.hub.table.initiativeStatus.executing', 'Executing'), color: 'bg-blue-500' },
-            { value: 'CANCELLED', label: t('assessment.hub.table.initiativeStatus.cancelled', 'Cancelled'), color: 'bg-danger-500' },
-          ],
-        },
-        {
-          id: 'priority',
-          label: t('assessment.hub.table.priority', 'Priority'),
-          width: '100px',
-          filterable: true,
-          filterOptions: [
-            { value: 'critical', label: t('assessment.hub.table.priorityLevel.critical', 'Critical'), color: 'bg-danger-500' },
-            { value: 'high', label: t('assessment.hub.table.priorityLevel.high', 'High'), color: 'bg-amber-500' },
-            { value: 'medium', label: t('assessment.hub.table.priorityLevel.medium', 'Medium'), color: 'bg-blue-500' },
-            { value: 'low', label: t('assessment.hub.table.priorityLevel.low', 'Low'), color: 'bg-c-text-muted' },
-          ],
-          render: (row) => {
-            const levels: Record<string, PriorityLevel> = {
-              critical: 'urgent',
-              high: 'high',
-              medium: 'medium',
-              low: 'low',
-            };
-            const level = levels[row.priority] || 'medium';
-            // 2026-08-26 assessment cleanup: this used to pass the RAW enum
-            // (`row.priority` — 'critical'/'high'/'medium'/'low', lowercase)
-            // straight through as the display label, so the visual dot said
-            // "urgent" (derived from `level`) while the text next to it said
-            // "critical" — a raw backend value on the client's face, and
-            // internally inconsistent with its own icon. Localized label
-            // keyed off the SAME `level` the dot already uses.
-            const priorityLabels: Record<PriorityLevel, string> = {
-              urgent: t('assessment.hub.table.priorityLevel.critical', 'Critical'),
-              high: t('assessment.hub.table.priorityLevel.high', 'High'),
-              medium: t('assessment.hub.table.priorityLevel.medium', 'Medium'),
-              low: t('assessment.hub.table.priorityLevel.low', 'Low'),
-            };
-            return <PriorityChip level={level} label={priorityLabels[level]} />;
-          },
-        },
-        authorCol,
-        updatedCol,
-      ];
+      return createInitiativeRegisterColumns();
     }
 
     // Default: assessment list
@@ -2425,29 +2392,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 actionLabel: t('assessment.initiatives.emptyState.generate', 'Initiative Pack'),
                 onAction: () => setShowInitiativesWizard(true),
               }}
-              rowMenu={(row): StandardRowMenu => ({
-                primary: [
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    onClick: () => handleOpenDocument(row as any),
-                  },
-                  {
-                    id: 'duplicate',
-                    label: t('common.duplicate', 'Duplicate'),
-                    icon: Copy,
-                    onClick: () => void handleRowAction('duplicate', row as any),
-                  },
-                ],
-                universalHandlers: {
-                  preview: () => setSelectedInitiativeRowId(String((row as any).id)),
-                  edit: () => handleOpenDocument(row as any),
-                },
-                destructive: {
-                  onClick: () => void handleRowAction('delete', row as any),
-                },
-              })}
+              rowMenu={(row) =>
+                createInitiativeRegisterRowMenu({
+                  row: row as any,
+                  onOpen: (initiative) => handleOpenDocument(initiative),
+                  onPreview: (initiative) => setSelectedInitiativeRowId(String(initiative.id)),
+                })
+              }
             />
           </div>
 
