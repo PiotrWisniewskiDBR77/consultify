@@ -22,9 +22,20 @@
  * 2026-08-30 ekran mówi to CZYTELNIKOWI wprost, na górze panelu, i prowadzi
  * do macierzy linkiem — zamiast zostawiać właściciela z tym pytaniem.
  */
-import { AlertTriangle, CheckCircle2, Grid3x3, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Grid3x3,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import {
+  type DRDEditorAnswers,
+  DRDMatrixGrid,
+} from '@/components/assessment/drd/DRDAssessmentEditor';
 import type { TableColumn, TableRow } from '@/components/standard/StandardTable';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
@@ -51,6 +62,11 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
   const [scoring, setScoring] = useState<V8AssessmentDerivedScoring | null>(null);
   const [reviews, setReviews] = useState<V8AssessmentReviewRecord[]>([]);
   const [report, setReport] = useState<V8AssessmentAcceptedReport | null>(null);
+  const [matrixValue, setMatrixValue] = useState<DRDEditorAnswers>();
+  const [selectedMatrixCell, setSelectedMatrixCell] = useState<{
+    areaId: string;
+    level: number;
+  } | null>(null);
 
   const [axisId, setAxisId] = useState<string>(String(DRD_STRUCTURE[0]?.id ?? '1'));
   const [areaId, setAreaId] = useState<string>(DRD_STRUCTURE[0]?.areas[0]?.id ?? '');
@@ -126,10 +142,13 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
     setLoading(true);
     setLoadError(null);
     try {
-      const [evidenceRes, reviewRes] = await Promise.all([
+      const [assessmentRes, evidenceRes, reviewRes] = await Promise.all([
+        V8AssessmentApi.getAssessment(assessmentId),
         V8AssessmentApi.listEvidence(assessmentId),
         V8AssessmentApi.listReviewHistory(assessmentId),
       ]);
+      const answers = assessmentRes.assessment.answers as { drd?: DRDEditorAnswers } | undefined;
+      setMatrixValue(answers?.drd);
       setEvidence(evidenceRes.evidence || []);
       setScoring(evidenceRes.scoring || null);
       setReviews(reviewRes.reviews || []);
@@ -223,15 +242,18 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           Przegląd jakości oceny
         </h3>
         <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
-          Ten ekran sprawdza <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong>{' '}
-          gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
+          Ten ekran sprawdza{' '}
+          <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong> gotowej
+          oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
           Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.
         </p>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          <strong className="font-semibold text-navy-900 dark:text-white">To nie jest macierz oceny</strong>{' '}
-          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się
-          poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do
-          średniej per oś.
+          <strong className="font-semibold text-navy-900 dark:text-white">
+            To nie jest macierz oceny
+          </strong>{' '}
+          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia
+          się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku,
+          zwiniętym do średniej per oś.
         </p>
         <a
           href={`/assessment/drd/${assessmentId}`}
@@ -254,6 +276,42 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         </p>
         {scoring ? (
           <>
+            {selectedAxis ? (
+              <div className="mb-4 rounded-xl border border-slate-200 dark:border-navy-700 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-navy-900 dark:text-white">
+                      Macierz oceny DRD · oś {selectedAxis.id}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Kliknij komórkę, aby wybrać obszar i poziom do przeglądu. Poziomy zmienia się
+                      w sesji oceny.
+                    </p>
+                  </div>
+                  {selectedMatrixCell ? (
+                    <span className="shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 px-2.5 py-1.5 text-xs font-medium text-navy-900 dark:text-white">
+                      {selectedMatrixCell.areaId} · poziom {selectedMatrixCell.level}
+                    </span>
+                  ) : null}
+                </div>
+                <DRDMatrixGrid
+                  areas={selectedAxis.areas}
+                  levelCount={selectedAxis.levelCount}
+                  value={matrixValue}
+                  compact
+                  columnMinPx={150}
+                  rowHint="Kliknij, aby wybrać do przeglądu"
+                  selectedCell={selectedMatrixCell}
+                  onCellClick={(nextAreaId, level) => {
+                    setAreaId(nextAreaId);
+                    setSelectedMatrixCell({ areaId: nextAreaId, level });
+                  }}
+                  onAreaClick={(nextAreaId) => setAreaId(nextAreaId)}
+                  areaStripLabel="Area"
+                  overflowHint={(hidden) => `Jeszcze ${hidden} kolumn po prawej — przewiń w bok.`}
+                />
+              </div>
+            ) : null}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="p-3 rounded-lg border border-slate-200 dark:border-navy-700">
                 <div className="text-xs text-slate-500 dark:text-slate-400">Kompletność</div>

@@ -137,6 +137,26 @@ const EVIDENCE_MIXED = [
   },
 ];
 
+const ASSESSMENT = {
+  id: ASSESSMENT_ID,
+  assessment_type: 'DRD',
+  answers: {
+    drd: {
+      areas: {
+        '1A': { achievedLevel: 4, targetLevel: 4 },
+        '1B': { achievedLevel: 1, targetLevel: 3 },
+        '1C': { achievedLevel: 0, targetLevel: 3 },
+        '1D': { achievedLevel: 2, targetLevel: 4 },
+        '1E': { achievedLevel: 3, targetLevel: 5 },
+        '1F': { achievedLevel: 2, targetLevel: 4 },
+        '1G': { achievedLevel: 3, targetLevel: 5 },
+        '1H': { achievedLevel: 2, targetLevel: 4 },
+        '1I': { achievedLevel: 2, targetLevel: 4 },
+      },
+    },
+  },
+};
+
 const REVIEWS_MIXED = [
   {
     id: 'rev-1',
@@ -238,6 +258,9 @@ if (!g.__ASM_QUALITY_REVIEW_FETCH__) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const method = (init?.method || 'GET').toUpperCase();
     try {
+      if (url.endsWith(`/assessment/${ASSESSMENT_ID}`) && method === 'GET') {
+        return jsonResponse({ data: { assessment: ASSESSMENT }, meta: {} });
+      }
       if (url.includes(`/assessment/${ASSESSMENT_ID}/evidence`) && method === 'GET') {
         return jsonResponse({ data: { evidence: data.evidence, scoring: data.scoring }, meta: {} });
       }
