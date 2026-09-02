@@ -48,7 +48,7 @@ bramek modułowych i 45 realnych defektów z jego korpusu uwag.
 
 | Co | Wartość |
 | --- | --- |
-| Linia grafiki | `github-backup/grafika/m03-20260902` @ `2af2bd2669` (113 commitów dziś) |
+| Linia grafiki | `github-backup/grafika/m03-20260902` @ `14fe8c3c84` (117 commitów dziś) |
 | Kandydat wdrożeniowy | `github-backup/kandydat/staging-20260902d` @ `0eff12615b` |
 | `origin/develop` = staging | `0eff12615b` — potwierdzone `gitSha` z `/api/health` |
 | `origin/demo` | `f3237e9423` (14.08), nietknięte |
@@ -90,8 +90,10 @@ dodatnia i ujemna z dowodem mutacyjnym) · bramka języka kart · `jednostka.ts`
 
 1. **Wysokość podglądu** — świeża uwaga właściciela: panel nie sięga do dołu strony; zlecone jako
    RODZINA z pomiarem na żywym DOM. Gałąź `grafika/wysokosc-podgladu-20260902`.
-2. **11 pozycji z korpusu** (9, 11, 19, 20, 22, 23, 25, 35, 36, 44, 45) — gałąź `grafika/trzy-rodziny-20260902`.
-   Zrobione 3 z 15, poz. 4 zatrzymana świadomie (patrz §7).
+2. **11 pozycji z korpusu** (9, 11, 19, 20, 22, 23, 25, 35, 36, 44, 45) — gałąź `grafika/trzy-rodziny-20260902`,
+   **SCALONA do linii 02.09 wieczorem** (`14fe8c3c84`; budowa EXIT 0, odbiór CZYSTO, parytet CZYSTO).
+   Zrobione 3 z 15 (poz. 3 przyrząd, 5 produkt, 8 pasek kanwy + liczebnik), poz. 4 zatrzymana świadomie
+   (patrz §7). **Pozostałe 11 pozycji przechodzi do następcy jako pierwsze zadanie toru grafiki.**
 3. **Karty modułowe** na stronie odbioru — 16 kart, tekst przepisywany na język właściciela.
 4. **Dyżury 274-278 u Codexa** — wydane, worktree `cx-day274…278` aktywne.
 
