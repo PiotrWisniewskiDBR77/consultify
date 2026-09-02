@@ -190,7 +190,20 @@ export function isResultsVNextFlagEnabled(
   profileSource?: DemoAcceptanceProfileSource
 ): boolean {
   if (isResultsOwnerReviewModeEnabled()) return true;
-  if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
+  // ★ 2026-09-02 (tor funkcji, wołacze) — `resultsLegacyArchive` jest WYJĘTY
+  // spod zbiorczego profilu demo. Powód, zmierzony a nie przypuszczony:
+  // `VITE_DEMO_ACCEPTANCE` jest ustawione na demo (patrz notatka toru grafiki
+  // w `docs/program/grafika/status.json`: „ŻYWE NA DEMO — VITE_DEMO_ACCEPTANCE
+  // włącza wszystkie trzy rejestry"), więc bez tego wyjątku nowa zakładka
+  // „Archiwum" pojawiłaby się na demo NATYCHMIAST, mimo `defaultValue` OFF —
+  // czyli właściciel zobaczyłby ją pierwszy, wprost wbrew CLAUDE.md #7.
+  // To dokładnie rodzina „flaga OFF w kodzie ≠ flaga wyłączona": wczesny
+  // `return true` omija cały łańcuch rozstrzygania. Tryb owner-review WYŻEJ
+  // zostaje nietknięty — to jest właśnie ścieżka, którą właściciel ma
+  // obejrzeć ekran świadomie. Po akcepcie: skasować ten wyjątek jednym
+  // commitem (i wtedy zakładka wejdzie na demo razem z resztą profilu).
+  const wyjetyZProfiluDemo = flag === 'resultsLegacyArchive';
+  if (!wyjetyZProfiluDemo && isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
   if (fromQuery !== null) {

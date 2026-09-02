@@ -171,3 +171,20 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
     });
   });
 });
+
+/**
+ * ★ Blok dopisany przez nadzorcę 2026-09-02 po ZMIERZENIU, że sam
+ * `defaultValue: false` NIE wystarcza w tej rodzinie flag: `isResultsVNextFlagEnabled`
+ * ma na początku dwa wczesne `return true` (owner-review i zbiorczy profil demo
+ * `VITE_DEMO_ACCEPTANCE`), a ten drugi JEST ustawiony na demo. Bez wyjątku nowa
+ * zakładka „Archiwum" trafiłaby na demo od razu — właściciel zobaczyłby ją pierwszy,
+ * wbrew CLAUDE.md #7. Ten test broni wyjątku; skasowanie go musi zapalić czerwone.
+ */
+describe('Archiwum — profil demo NIE włącza zakładki przed akceptem', () => {
+  it('VITE_DEMO_ACCEPTANCE=1 włącza inne flagi Wyników, ale NIE resultsLegacyArchive', async () => {
+    const mod = await import('../resultsVNextFeatureFlags');
+    const demo = { env: { VITE_DEMO_ACCEPTANCE: '1' }, hostname: 'demo.consultify.ai' };
+    expect(mod.isResultsVNextFlagEnabled('resultsSearch', demo)).toBe(true);
+    expect(mod.isResultsVNextFlagEnabled('resultsLegacyArchive', demo)).toBe(false);
+  });
+});
