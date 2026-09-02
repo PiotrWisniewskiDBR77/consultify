@@ -31,14 +31,30 @@ export const CommentsSection: React.FC<InitiativeSectionProps> = ({
   return (
     <SharedCommentsSection
       comments={comments}
-      onAddComment={handleAddComment}
+      onAddComment={async (content, parentId) => {
+        // Initiative comments (context's handleAddComment) don't support
+        // threaded replies — same contract TaskDetailView.handleAddComment
+        // uses for the same limitation.
+        if (parentId) {
+          return { ok: false, error: new Error('Initiative comment replies are not supported') };
+        }
+        try {
+          await handleAddComment(content);
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error };
+        }
+      }}
       onDeleteComment={async (id) => {
+        // Optimistic, best-effort: local state always updates; server
+        // failure is swallowed (pre-existing behaviour, kept as-is).
         setComments((prev) => prev.filter((c) => c.id !== id));
         try {
           await Api.delete(`/initiatives/${initiativeId}/comments/${id}`);
         } catch {
           // best-effort
         }
+        return { ok: true };
       }}
       onLikeComment={async (id) => {
         setComments((prev) =>
@@ -52,6 +68,7 @@ export const CommentsSection: React.FC<InitiativeSectionProps> = ({
               : c
           )
         );
+        return { ok: true };
       }}
       onGenerateAIComment={() => handleGenerateAI('comments')}
       isGeneratingAI={isGeneratingAI === 'comments'}

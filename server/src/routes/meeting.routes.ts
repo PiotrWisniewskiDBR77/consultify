@@ -99,6 +99,7 @@ function statusForSpineErrorCode(code: string): number {
     // failure (rejected/pending proposal, or a materialized one with no
     // failed attempt on record) — a conflict with current state, not a
     // server error.
+    // falls through
     case 'RETRY_NOT_ALLOWED':
       return 409;
     case 'NOT_A_HUMAN_ACTOR':
