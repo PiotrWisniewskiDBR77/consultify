@@ -93,18 +93,6 @@
       "klikalna": false,
       "czeka": "Przekazane do budowy — zgłoszenie #33 w rejestrze dla toru funkcji."
     },
-    "finance-model-workspace": {
-      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
-      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera.",
-      "klikalna": false,
-      "czeka": "Przekazane do budowy — zgłoszenie #34 w rejestrze dla toru funkcji."
-    },
-    "finance-prediction-workspace": {
-      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
-      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera.",
-      "klikalna": false,
-      "czeka": "Przekazane do budowy — zgłoszenie #35 w rejestrze dla toru funkcji."
-    },
     "ntype-analizuj-ai": {
       "grupa": "3 — układ, którego aplikacja nie tworzy",
       "powod": "Elementy są prawdziwe, ale aplikacja nigdy nie stawia ich obok siebie w tym układzie. Kadr do poprawienia, zanim ocena będzie coś znaczyła.",

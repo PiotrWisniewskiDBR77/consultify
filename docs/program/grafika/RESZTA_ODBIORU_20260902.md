@@ -35,7 +35,28 @@ poprosił o poprawkę, albo obraz, na który patrzył, nie pokazywał produktu.
 
 ---
 
-## LISTA DO PRZEKLIKANIA DZIŚ — **22 karty**
+## ★ SPROSTOWANIE TEGO DOKUMENTU (02.09, kilka godzin po pierwszym pomiarze)
+
+**Liczba 22 spadła do 20, a lista niepodłączonych z 12 do 10.** `finance-model-workspace`
+i `finance-prediction-workspace` **są osiągalne w produkcie** — renderuje je `FinanceHub.tsx`
+(`:3585` oraz `:340` przez otoczkę `FinanceV3PredictionWorkspace`), a `FinanceHub` ma
+wołacza w `src/views/EconomicsView.tsx:19`.
+
+Mój pierwszy pomiar szukał wołaczy wzorcem `<Nazwa` i przegapił te ukryte za
+`const Alias = lazy(() => import(...).then(m => ({ default: m.Nazwa })))` — czyli
+popełniłem **tę samą ślepotę, którą w tym samym dokumencie wytknąłem bramce parytetu**.
+Wykrył to robotnik, bo zlecenie kazało mu sprawdzić moją liczbę zamiast przyjąć ją na wiarę.
+Narzędzie liczące poprawnie: `node scripts/dev/grafika-wolacze.mjs`.
+
+Zastrzeżenie: `PredictionWorkspace` jest montowany **za flagą**
+(`useFinancePredictionWorkspaceFlag`) — osiągalny, ale nie dla każdego.
+
+**Po naprawie bramki** (ten sam dzień) linia bazowa spadła ze 112 do 103 pozycji,
+a R1 z 41 do 32 ekranów: dziewięć oskarżeń było fałszywych.
+
+---
+
+## LISTA DO PRZEKLIKANIA DZIŚ — **20 kart** (9 do oceny, 11 czeka na budowę)
 
 Trzy grupy. Pierwsza jest najkrótsza i najważniejsza.
 

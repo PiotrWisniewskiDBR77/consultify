@@ -361,8 +361,30 @@ ale trzyma angielskie słowo": obecność nie jest użyciem.
 | 31 | `audyty-drd-report` | `src/components/Audit/AuditsHub.tsx:101` | Audyty → wejście modułu. **Sprawdź najpierw, czy moduł Audytów nie ma dziś innego, nowszego wejścia** — hub o 101 liniach może być poprzednikiem. |
 | 32 | `audyty-warsztat-kryterium` | `src/components/Audit/method/workspace/CriterionWorkspaceGate.tsx:21` | Audyty → wiersz kryterium → „Otwórz warsztat". To wzorcowy ekran warsztatu kryterium. |
 | 33 | `rn-g3-class-l-record-shell` | `src/components/shared/states/TeresaState.tsx:49` (`TeresaUnavailableNotice`) | Stan awaryjny panelu Teresy — powinien pokazywać się wszędzie tam, gdzie Teresa jest niedostępna, zamiast pustego panelu. |
-| 34 | `finance-model-workspace` | `src/components/Finance/FinancialModelWorkspace.tsx:412` | Finanse → zakładka „Model finansowy”. |
-| 35 | `finance-prediction-workspace` | `src/components/Finance/Prediction/PredictionWorkspace.tsx:98` | Finanse → zakładka „Prognoza”. |
+| ~~34~~ | ~~`finance-model-workspace`~~ | — | **WYCOFANE 02.09 — patrz sprostowanie niżej. Ten ekran JEST osiągalny.** |
+| ~~35~~ | ~~`finance-prediction-workspace`~~ | — | **WYCOFANE 02.09 — patrz sprostowanie niżej. Ten ekran JEST osiągalny (za flagą).** |
+
+### ★ SPROSTOWANIE MOJEGO WŁASNEGO POMIARU (2026-09-02, tego samego dnia)
+
+**Pozycje 34 i 35 były BŁĘDNE i zostają wycofane.** `FinancialModelWorkspace` i
+`PredictionWorkspace` **są renderowane w produkcie** — oba przez `FinanceHub.tsx`
+(`:3585` bezpośrednio; `:340` przez otoczkę `FinanceV3PredictionWorkspace`), a sam
+`FinanceHub` ma wołacza w `src/views/EconomicsView.tsx:19`. Użytkownik może do nich dojść.
+
+**Jak popełniłem ten błąd.** Szukałem wołaczy wzorcem `<Nazwa` i przegapiłem te schowane
+za `const Alias = lazy(() => import('...').then(m => ({ default: m.Nazwa })))` — czyli
+popełniłem **dokładnie tę samą ślepotę, którą godzinę wcześniej wytknąłem bramce parytetu**.
+Złapał to robotnik naprawiający bramkę, bo zlecenie kazało mu sprawdzić moją liczbę, a nie
+przyjąć ją na wiarę.
+
+**Zastrzeżenie do 35:** `PredictionWorkspace` jest montowany warunkowo, za flagą
+(`useFinancePredictionWorkspaceFlag`). Jest osiągalny, ale nie dla każdego — to inny stan
+niż „niepodłączony" i inny niż „gotowy".
+
+**Wniosek dla następnego pomiaru:** licząc wołaczy, ZAWSZE uwzględniaj otoczki `lazy()`.
+Narzędzie, które to robi poprawnie i nie przechodzi przez powłokę (dwie wcześniejsze wersje
+kłamały przez cytowanie w `zsh`): `node scripts/dev/grafika-wolacze.mjs`. Po tym sprostowaniu
+lista niepodłączonych liczy **10 ekranów, nie 12**.
 
 **Kontrprzykład, który dowodzi, że pomiar jest wiarygodny:** w tej samej rundzie
 sprawdziłem `FinanceHub` (`src/components/Economics/FinanceHub.tsx`) i `PlatformGridView`
