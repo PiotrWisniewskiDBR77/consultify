@@ -81,6 +81,13 @@ export interface BaselineWorkspaceProps {
   /** Wyłącznie testowy adapter starszych testów komponentowych. Produkcyjny mount zawsze pobiera autorytatywny context z API. */
   forecastPeriods?: PeriodMeta[];
   openingBalanceSheetPeriodId?: string;
+  /**
+   * ★ Dyżur 279 — etykiety okresów SPOZA horyzontu prognozy (okres otwarcia i
+   * zakotwiczenia `base_period_id`), pochodzące z kontekstu serwera. Bez nich
+   * kolumna „Okres bazowy" pokazywała surowe ID (`per-2025-12`). Nigdy nie
+   * wyprowadzamy etykiety z napisu ID.
+   */
+  additionalPeriodLabels?: Record<string, string>;
   assumptionRowOrder?: AssumptionRowSpec[];
   contextValues: Partial<Record<WorkspaceBarContextField, string>>;
   onNavigateBack: () => void;
@@ -138,6 +145,7 @@ function BaselineWorkspaceContextLoader(props: BaselineWorkspaceProps): React.Re
         entityId: string;
         forecastPeriods: PeriodMeta[];
         openingBalanceSheetPeriodId: string;
+        additionalPeriodLabels: Record<string, string>;
         assumptionRowOrder: AssumptionRowSpec[];
       }
   >({ kind: 'loading' });
@@ -148,10 +156,20 @@ function BaselineWorkspaceContextLoader(props: BaselineWorkspaceProps): React.Re
     getBaselineWorkspaceContext(props.businessVersionId)
       .then((context) => {
         if (cancelled) return;
+        const additionalPeriodLabels: Record<string, string> = {};
+        for (const period of [
+          ...(context.openingBalanceSheetPeriod ? [context.openingBalanceSheetPeriod] : []),
+          ...(context.assumptionBasePeriods ?? []),
+        ]) {
+          // `label` w `finance_stmt_periods` jest NOT NULL, ale pusty napis
+          // byłby gorszy od ID — wtedy zostawiamy ID (Z23: zero wyprowadzania).
+          if (period.label) additionalPeriodLabels[period.periodId] = period.label;
+        }
         setState({
           kind: 'ready',
           entityId: context.entityId,
           openingBalanceSheetPeriodId: context.openingBalanceSheetPeriodId,
+          additionalPeriodLabels,
           forecastPeriods: context.forecastPeriods.map((period) => ({
             periodId: period.periodId,
             label: period.label,
@@ -206,6 +224,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
     forecastPeriods,
     openingBalanceSheetPeriodId,
     assumptionRowOrder,
+    additionalPeriodLabels,
     readOnly = false,
   } = props;
 
@@ -253,8 +272,14 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
   const periodLabelById = useMemo(() => {
     const m: Record<string, string> = {};
     for (const p of forecastPeriods) m[p.periodId] = p.label;
+    // ★ Dyżur 279 — okres otwarcia i zakotwiczenia historii mają etykiety w
+    // `finance_stmt_periods`, ale nie są okresami prognozy; bez nich kolumna
+    // „Okres bazowy" renderowała surowe ID.
+    for (const [periodId, label] of Object.entries(additionalPeriodLabels ?? {})) {
+      m[periodId] = label;
+    }
     return m;
-  }, [forecastPeriods]);
+  }, [forecastPeriods, additionalPeriodLabels]);
 
   const editor = useBaselineAssumptionsEditor(businessVersionId, { entityId });
   const outputsHook = useBaselineOutputs(businessVersionId, { entityId });

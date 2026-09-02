@@ -72,7 +72,23 @@ const FORECAST_PERIODS: PeriodMeta[] = [
   { periodId: 'per-2026-02', label: '02/2026', yearMonth: '2026-02' },
   { periodId: 'per-2026-03', label: '03/2026', yearMonth: '2026-03' },
 ];
-const OPENING_BS_PERIOD_ID = 'per-2025-12';
+// ★ Dyżur 279 — okres otwarcia ma w `finance_stmt_periods` własny wiersz z
+// `label`/`period_start`/`period_end`; harness odwzorowuje TEN kształt 1:1 z
+// rozszerzonym kontraktem `baselineContextService.readContextTx`
+// (`openingBalanceSheetPeriod`). Dowód, że etykieta realnie idzie z bazy, jest
+// osobny: `server/src/scripts/baselineContextOpeningPeriodRealDbProof.ts`.
+const OPENING_BS_PERIOD: {
+  periodId: string;
+  label: string;
+  periodStart: string;
+  periodEnd: string;
+} = {
+  periodId: 'per-2025-12',
+  label: '12/2025',
+  periodStart: '2025-12-01',
+  periodEnd: '2025-12-31',
+};
+const OPENING_BS_PERIOD_ID = OPENING_BS_PERIOD.periodId;
 
 // ── Założenia — jedno na typ harmonogramu (7), pełny grid (V-5: brak martwej
 // przestrzeni — realistyczna liczba wierszy z realnym źródłem/jakością). ──
@@ -352,6 +368,30 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
         businessVersionId: BV_ID,
         entityId: ENTITY_ID,
         openingBalanceSheetPeriodId: OPENING_BS_PERIOD_ID,
+        openingBalanceSheetPeriod: OPENING_BS_PERIOD,
+        assumptionBasePeriods: Array.from(
+          new Set(
+            assumptionsState
+              .map((a) => a.basePeriodId)
+              .filter((id): id is string => typeof id === 'string' && id.length > 0)
+          )
+        )
+          .map((id) =>
+            id === OPENING_BS_PERIOD_ID
+              ? OPENING_BS_PERIOD
+              : (() => {
+                  const forecast = FORECAST_PERIODS.find((p) => p.periodId === id);
+                  return forecast
+                    ? {
+                        periodId: forecast.periodId,
+                        label: forecast.label,
+                        periodStart: `${forecast.yearMonth}-01`,
+                        periodEnd: `${forecast.yearMonth}-28`,
+                      }
+                    : null;
+                })()
+          )
+          .filter((p): p is NonNullable<typeof p> => p !== null),
         forecastPeriods: FORECAST_PERIODS.map((p) => ({
           periodId: p.periodId,
           label: p.label,
