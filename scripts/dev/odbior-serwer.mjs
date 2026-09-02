@@ -34,6 +34,15 @@ const HARNESS = process.env.HARNESS || 'http://127.0.0.1:3020';
 const STATUS = path.join(ROOT, 'docs/program/grafika/status.json');
 const DECYZJE = path.join(ROOT, 'docs/program/grafika/ODBIOR_DECYZJE.json');
 const BAZA = path.join(ROOT, 'docs/program/grafika/odbior.sqlite');
+/**
+ * RESZTA ODBIORU (2026-09-02). Właściciel przekliknął wszystkie 253 karty A/B —
+ * ani jedna nie została bez decyzji. To, co zostaje, to karty do PONOWNEGO
+ * spojrzenia: albo poprosił o poprawkę, albo obraz, na który patrzył, nie
+ * pokazywał produktu (reguła 17). Bez tego pliku strona wystawiałaby mu 253
+ * karty od nowa i utopiłaby te 22, które naprawdę czekają.
+ * Opis pomiaru: docs/program/grafika/RESZTA_ODBIORU_20260902.md
+ */
+const RESZTA = path.join(ROOT, 'docs/program/grafika/reszta-odbioru.json');
 const EVID = path.join(ROOT, 'evidence/grafika');
 
 const esc = (s) =>
@@ -202,6 +211,9 @@ function strona() {
   const zrzuty = indeksZrzutow();
   const decyzje = czytajDecyzje();
   const poprawki = czytajPoprawki();
+  // Brak pliku = brak filtra, nie awaria strony: odbiór ma działać także wtedy,
+  // gdy lista reszty jeszcze nie powstała albo została świadomie usunięta.
+  const reszta = fs.existsSync(RESZTA) ? (JSON.parse(fs.readFileSync(RESZTA, 'utf8')).ekrany || {}) : {};
 
   const doOdbioru = [];
   const niepokazane = [];
@@ -222,13 +234,15 @@ function strona() {
     // Znacznik czasu poprawki w adresie obrazka — bez tego przeglądarka pokazałaby
     // zrzut SPRZED naprawy i właściciel oceniłby nieaktualny obraz.
     const wersja = popr ? `?v=${encodeURIComponent(popr.kiedy)}` : '';
+    const r = reszta[e.id];
     const btn = (kod, etykieta) =>
       `<button class="b ${kod} ${d.decyzja === kod ? 'on' : ''}" data-id="${esc(e.id)}" data-d="${kod}">${etykieta}</button>`;
-    return `<article class="k${swieze ? ' swieza' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}">
+    return `<article class="k${swieze ? ' swieza' : ''}${r ? ' reszta' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}" data-reszta="${r ? '1' : ''}">
   <header>
     <h3>${esc(e.nazwa)}</h3>
     <span class="o o${esc(e.ocena)}">${esc(e.ocena)}</span>
   </header>
+  ${r ? `<div class="dlaczego"><b>${esc(r.grupa)}</b><span>${esc(r.powod)}</span></div>` : ''}
   <div class="popr-slot">${
     swieze
       ? `<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span>${esc(popr.opis)}</span><time>${esc(new Date(popr.kiedy).toLocaleString('pl-PL'))}</time></div>`
@@ -338,6 +352,11 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .popr span{color:#166534;font-size:12.5px}
 .popr time{color:#3f6212;font-size:11px}
 .filtry button[data-f=swieze].on{background:var(--ok);border-color:var(--ok)}
+.filtry button[data-f=reszta].on{background:var(--nieb);border-color:var(--nieb)}
+.k.reszta{border-color:var(--nieb);box-shadow:inset 3px 0 0 var(--nieb)}
+.dlaczego{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:8px 11px;margin-bottom:9px;display:flex;flex-direction:column;gap:3px}
+.dlaczego b{color:#1e3a8a;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.dlaczego span{color:#1e40af;font-size:13px}
 .zapis{font-size:11.5px;margin-top:6px;min-height:15px;color:var(--drugi)}
 .zapis.jest{color:var(--ok)}
 .zapis.czeka{color:var(--drugi)}
@@ -353,7 +372,8 @@ th{background:#f1f5f9;font-size:12px;text-transform:uppercase;letter-spacing:.04
   <span class="lic" id="lic"></span>
   <span class="stan" id="stan">gotowe</span>
   <span class="filtry">
-    <button data-f="wszystkie" class="on">Wszystkie</button>
+    <button data-f="reszta" class="on">★ Zostało do obejrzenia</button>
+    <button data-f="wszystkie">Wszystkie</button>
     <button data-f="nierozstrzygniete">Nierozstrzygnięte</button>
     <button data-f="swieze">Poprawione dla Ciebie</button>
     <button data-f="ok">Zaakceptowane</button>
@@ -444,7 +464,9 @@ document.addEventListener('click', (ev) => {
     const tryb = f.dataset.f;
     document.querySelectorAll('.k').forEach((k) => {
       const pokaz =
-        tryb === 'wszystkie'
+        tryb === 'reszta'
+          ? k.dataset.reszta === '1'
+          : tryb === 'wszystkie'
           ? true
           : tryb === 'nierozstrzygniete'
             ? !k.dataset.stan
@@ -454,8 +476,18 @@ document.addEventListener('click', (ev) => {
       k.classList.toggle('ukryta', !pokaz);
     });
     document.querySelectorAll('.m').forEach((m) => {
-      const widoczne = [...m.querySelectorAll('.k')].some((k) => !k.classList.contains('ukryta'));
-      if (m.querySelector('.k')) m.classList.toggle('ukryta', !widoczne);
+      const karty = [...m.querySelectorAll('.k')];
+      const widoczne = karty.filter((k) => !k.classList.contains('ukryta'));
+      if (m.querySelector('.k')) m.classList.toggle('ukryta', !widoczne.length);
+      /* Licznik przy nazwie modułu musi liczyć to, co WIDAĆ. Bez tego nagłówek
+         mówił „Czat 15", a pod nim stało 5 kart — właściciel liczyłby rozbieżność
+         zamiast oglądać ekrany. Zapamiętujemy liczbę pełną, żeby dało się wrócić. */
+      const licznik = m.querySelector('h2 small');
+      if (licznik) {
+        if (!licznik.dataset.pelna) licznik.dataset.pelna = licznik.textContent.trim();
+        licznik.textContent =
+          tryb === 'wszystkie' ? licznik.dataset.pelna : widoczne.length + ' z ' + licznik.dataset.pelna;
+      }
     });
   }
 });
@@ -514,6 +546,14 @@ window.addEventListener('pagehide', () => {
     navigator.sendBeacon('/decyzja', new Blob([cialo], { type: 'application/json' }));
   });
 });
+/**
+ * Stan startowy = filtr „★ Zostało do obejrzenia".
+ * Powód (02.09): właściciel przekliknął już wszystkie 253 karty. Gdyby strona
+ * otwierała się na pełnej liście, te 22, które naprawdę czekają, utonęłyby
+ * w zaakceptowanych — a on prosił wprost, żeby „skończyć odbiór", nie zaczynać
+ * go od nowa. Przycisk „Wszystkie" jest obok i wraca do pełnego widoku.
+ */
+document.querySelector('.filtry button[data-f=reszta]')?.click();
 licz();
 
 /**

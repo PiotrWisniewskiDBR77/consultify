@@ -1,0 +1,94 @@
+{
+  "_opis": "Karty, które właściciel ma obejrzeć PONOWNIE — pomiar 02.09, opis w RESZTA_ODBIORU_20260902.md. Strona odbioru (:3030) używa tego pliku do filtra „★ Reszta do przeklikania\". Karty spoza tej listy właściciel już rozstrzygnął i nie ma potrzeby ich pokazywać drugi raz.",
+  "_zaktualizowano": "2026-09-02",
+  "ekrany": {
+    "idea-table": {
+      "grupa": "1 — prosiłeś o poprawkę",
+      "powod": "Powiedziałeś: „Preview nie jest zgodny z wzorem\". Podgląd poprawiony do kanonu — obejrzyj ponownie."
+    },
+    "admin-command-attention-queue": {
+      "grupa": "1 — prosiłeś o poprawkę",
+      "powod": "Powiedziałeś: „to nie jest szerokość strony\". Szerokość poprawiona — obejrzyj ponownie."
+    },
+    "finance-baseline-workspace": {
+      "grupa": "1 — prosiłeś o poprawkę (czeka na funkcję, nie na wygląd)",
+      "powod": "Powiedziałeś, że brakuje przycisku dodawania założeń i usuwania linii. To brakująca funkcja, nie wygląd — przekazane do budowy. Karta zostaje otwarta, żeby nie zniknęła."
+    },
+    "canvas-kebab-restructure": {
+      "grupa": "3 — obraz nie pokazywał produktu",
+      "powod": "Ten obraz to stary dowód techniczny, nie ekran aplikacji: nie ma na nim ani jednego elementu z produktu. Twoja poprzednia ocena nie dotyczyła więc tego, co widzi klient."
+    },
+    "canvas-toolbar-md-history": {
+      "grupa": "3 — obraz nie pokazywał produktu",
+      "powod": "Jak wyżej — stary dowód techniczny, zero elementów produktu w kadrze."
+    },
+    "teresa-confirm-chip": {
+      "grupa": "3 — obraz nie pokazywał produktu",
+      "powod": "Kadr zbudowany ręcznie na potrzeby pokazu, bez komponentów z aplikacji."
+    },
+    "teresa-chipy-panel-artefaktu": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Wygląda dobrze i słusznie go przyjąłeś — ale w aplikacji nie ma dziś żadnego miejsca, z którego ten panel się otwiera. Brakuje ostatniego połączenia."
+    },
+    "unified-create-launcher": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "assessment-initiatives-table": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "assessment-output-report": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "assessment-presentation-view": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "assessment-reports-table": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "results-vnext-legacy-archive": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "audyty-drd-report": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "audyty-warsztat-kryterium": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "rn-g3-class-l-record-shell": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "finance-model-workspace": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "finance-prediction-workspace": {
+      "grupa": "3 — ekran istnieje, ale nie da się do niego dojść",
+      "powod": "Jak wyżej: ekran zbudowany, żadne miejsce w aplikacji go nie otwiera."
+    },
+    "ntype-analizuj-ai": {
+      "grupa": "3 — układ, którego aplikacja nie tworzy",
+      "powod": "Elementy są prawdziwe, ale aplikacja nigdy nie stawia ich obok siebie w tym układzie. Kadr do poprawienia, zanim ocena będzie coś znaczyła."
+    },
+    "results-vnext-okr-admin": {
+      "grupa": "3 — układ, którego aplikacja nie tworzy",
+      "powod": "Jak wyżej — dwa ekrany zestawione w jednym kadrze, choć w aplikacji są osobno."
+    },
+    "excele-jeden-widok-materialy": {
+      "grupa": "3 — układ, którego aplikacja nie tworzy",
+      "powod": "Jak wyżej — dwa widoki zestawione w jednym kadrze."
+    },
+    "fab-rail-kebab": {
+      "grupa": "3 — układ, którego aplikacja nie tworzy",
+      "powod": "Kadr zestawia elementy, które w aplikacji nie występują razem, i dodatkowo zwęża go do 560 px, czego w produkcie nie ma."
+    }
+  }
+}
