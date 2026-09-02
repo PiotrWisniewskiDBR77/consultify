@@ -187,3 +187,136 @@ dotykający tych komponentów.
 To nie są wołacze produktu — to strażnicy asertujący *treść* pliku (np. „hub nie woła już
 `V8ResultsApi.createKpi`"). Każde cięcie **musi** iść w parze z ich zdjęciem, inaczej CI padnie
 na `ENOENT`, a nie na regresji produktu.
+
+---
+
+## K4 — Rekomendacja w trzech grupach
+
+### Grupa 1 — można ciąć od razu, bez ryzyka dla produktu (3 pliki, 44 linie)
+
+| Plik | L | Dlaczego bez ryzyka |
+|---|---:|---|
+| `src/components/Results/index.ts` | 8 | barrel bez ani jednego importera; jego jedyna funkcja to utrzymywanie ResultsHub przy życiu w oczach czytelnika |
+| `src/components/Results/ResultsSummaryView.tsx` | 26 | stub sam deklarujący, że funkcja przeniesiona; jedyny konsument to test tego stuba |
+| `src/components/Results/OperationalAnalysisView.tsx` | 10 | j.w. |
+
+Koszt operacji: zdjąć 2 pliki testowe testujące stuby. Zysk: symboliczny (44 linie), ale
+**usuwa ostatni nie-testowy odnośnik do nazwy `ResultsHub` w kodzie produkcyjnym** — po tym
+cięciu grep na `ResultsHub` w `src/` zwraca wyłącznie komentarze.
+
+### Grupa 2 — wymaga decyzji właściciela (39 plików, ~22 365 linii, ~863 KB)
+
+To cała reszta. Decyzja nie jest techniczna („czy da się usunąć" — da się), tylko produktowa:
+**czy funkcje bez odpowiednika w VNext mają zniknąć razem z hubem.**
+
+**2a. Ma dobry odpowiednik w VNext, cięcie = czysta redukcja długu** (~15 000 linii):
+KPI: `ResultsKPITable`, `KpiOverviewView`, `KpiSignalSheetView`, `KpiQueueView`,
+`ResultsScorecardsTable`, `ResultsKpiScorecardsView`, `KPITimeSeriesDrawer`, `RecoveryCardPanel`;
+ROI: `ROIAnalysisView`, `ROITrackingView`, `ROIDetailDrawer`, `ROIOpenModal`,
+`ROIAssumptionEditor`, `PostInvestmentActualForm`, `PostInvestmentReviewPanel`,
+`ResultsRoiReviewsTable`, `ReconciliationPanel`;
+OKR: `ResultsOkrSetsTable`, `OkrCheckInModal`, `OkrObjectiveModal`, `OkrKeyResultModal`;
+oraz warstwa danych: `kpiDomain`, `kpiRuntime`, `kpiSignalSheetTypes`, `resultsLineage`,
+`resultsShowcaseData`, `resultsFeatureFlags`, `ResultsUIPrimitives`.
+
+**★ Uwaga do „aktywnego rozwoju".** Zlecenie zakładało, że diagnostyka odchyleń i karta
+naprawcza są w aktywnym, osobno flagowanym rozwoju i dlatego trzeba je oszczędzić.
+Pomiar mówi co innego:
+- `RecoveryCardPanel` (82,8 KB) jest **nieosiągalny z produktu** — droga to
+  `ResultsHub → KPITimeSeriesDrawer → RecoveryCardPanel`, a pierwszy człon nie istnieje na żadnej
+  trasie. Flaga `recoveryCard` jest domyślnie OFF **na każdym hoście** (jawny early-return
+  w `resultsFeatureFlags.ts`), więc nawet gdyby hub żył, panel byłby niewidoczny.
+- Nowocześniejszy odpowiednik **już jest żywy i osiągalny**: trasa
+  `/results/kpi/:kpiId/deviation-cases/:caseId` → `kpiTool/KpiDeviationCaseSubview.tsx` (1260 linii),
+  a `kpiTool/kpiDeviationApi.ts` obsługuje pełny cykl (`recovery-observation`,
+  `effectiveness-verifications`, eskalacja, zamknięcie) — to samo, co panel legacy.
+- Ostatnie commity legacy (`2026-08-19`) to `cut over … commands` / `retire legacy … writers`,
+  czyli **prace migracyjne**, nie rozwój funkcji. Ostatni commit funkcjonalny: `2026-08-01`.
+
+Nie oznacza to „ciąć na pewno" — oznacza, że argument „to jest w aktywnym rozwoju" nie broni
+tych plików. Jeśli mają zostać, powodem musi być coś innego niż rozwój.
+
+**2b. NIE ma odpowiednika w VNext — cięcie kasuje funkcję** (~4 000 linii). Tu potrzebna
+świadoma zgoda właściciela, bo znikną możliwości, nie tylko kod:
+| Co znika | L | Uwaga |
+|---|---:|---|
+| `ResultsReportingEnterpriseViews` — konektory KPI, harmonogramy raportów, wallboardy | 1388 | zero śladu w VNext (sprawdzone gres|em po `wallboard`/`reportSchedule`/`kpiConnector`) |
+| `ResultsKpiReportsView` — raporty KPI ze snapshotami | 1248 | serwer nadal wystawia `/api/results` snapshot create+refresh |
+| `ResultsInitiativesView` — inicjatywy w kontekście wyników | 700 | inicjatywy mają własny moduł, ale nie ten przekrój |
+| `AIInsightsPanel` | 374 | |
+| `ValueDriverTree` | 281 | |
+| `TransformationScorecard` | 231 | |
+| `StrategicLayerPanel` | 1187 | `okr/OkrAlignmentsView` pokrywa tylko część |
+| `PortfolioInsightsPanel` | 551 | `attention/ResultsAttentionPage` pokrywa tylko część |
+| `M14HandoffInbox` | 197 | |
+
+**2c. `src/components/Execution/CorrectiveActions.tsx` (548 L).** Leży w katalogu Execution,
+ale `ExecutionHub` go nie woła — jedynym wołaczem jest `ResultsHub`. Osobna pozycja, bo łatwo
+ją przeoczyć przy cięciu „katalogu Results".
+
+**Warunek techniczny dla całej Grupy 2:** każde cięcie musi zdjąć razem odpowiednich
+**strażników plikowych** z tabeli w K3 — inaczej CI wywali się na `ENOENT`, co wygląda jak
+regresja produktu, a jest tylko martwym testem czytającym nieistniejący plik.
+
+### Grupa 3 — zostaje bezwarunkowo (2 pliki, 62 linie)
+
+| Plik | Dlaczego |
+|---|---|
+| `ResultsOwnerReviewEntry.tsx` | to jest trasa `/results` — usunięcie wywala moduł Wyniki |
+| `resultsOwnerReviewMode.ts` | czyta go **żywy** `ResultsVNext/resultsVNextFeatureFlags.ts` |
+
+Oraz — poza katalogiem — `src/components/Initiatives/InitiativeDocumentView.tsx`: hub go ładuje
+leniwie, ale ma 7 innych wołaczy. Nie tykać.
+
+---
+
+## Co mnie zaskoczyło
+
+1. **Nie ma tu „częściowo martwego" huba — cały katalog jest martwy poza dwoma plikami.**
+   Spodziewałem się mieszanki. `src/components/Results/` ma 43 pliki; **41 z nich prowadzi
+   wyłącznie do ResultsHub albo donikąd.** Dwa żywe zajmują 62 linie z 21 923.
+
+2. **„Aktywny rozwój" okazał się migracją.** Teza zlecenia (nie ruszać diagnostyki odchyleń
+   i karty naprawczej, bo trwa nad nimi praca) nie broni się przy pomiarze: nowa wersja żyje
+   w VNext na własnej trasie, a commity z sierpnia na plikach legacy to wygaszanie writerów.
+   To najważniejsza korekta w tym rejestrze.
+
+3. **`RecoveryCardPanel` nie jest dzieckiem ResultsHub, tylko wnukiem.** Zlecenie wymieniało
+   go wśród komponentów montowanych przez hub. To ma praktyczne znaczenie: nie da się go
+   usunąć bez ruszania `KPITimeSeriesDrawer`.
+
+4. **Flagi tej rodziny nie są OFF, mimo komentarza „default OFF, live-safe".**
+   `isResultsFlagEnabled` kończy się `return !isPublicProductionHost(...)` — na demo, stage
+   i dev **wszystkie** flagi Results (poza `recoveryCard`, który ma jawny early-return)
+   czytają jako **ON**. Nagłówek pliku mówi „default false". Tu akurat nie ma skutku, bo hub
+   się nie renderuje, ale wzorzec jest ten sam, który już raz kosztował sesję.
+
+5. **Produkt ma dwa mechaniczne bezpieczniki pilnujące, żeby ResultsHub nie wrócił**
+   (`verifyCanonical16Bindings`, `flagGateEnumeration`) — a mimo to plik i całe jego drzewo
+   stoją w repo. Bramka broni trasy, nikt nie bronił kodu.
+
+6. **Serwerowy rejestr writerów kłamie o tym kodzie.**
+   `server/src/services/results/resultsWriterInventory.ts:81` opisuje `/api/benefits` jako
+   „Legacy KPI CRUD … with **live production UI callers** (KPICreateModal, KPITimeSeriesDrawer,
+   KpiSignalSheetView, ResultsHub)". Od 2026-08-24 żaden z tych czterech nie jest osiągalny
+   z produktu, a `KPICreateModal` **nie istnieje w tym katalogu** — leży w
+   `src/components/Benefits/`. Rejestr wymaga sprostowania niezależnie od decyzji o cięciu.
+
+7. **Dwa artefakty po nieistniejącym pliku.** `tests/components/Results/KPICreateModal.v8-write.test.tsx`
+   importuje `src/components/Results/KPICreateModal` — takiego pliku nie ma. Ten sam duch
+   siedzi w `scripts/a11y-jsx.baseline.json:292` i `scripts/hardcoded-colors.baseline.json:1205`.
+   Ślad po wcześniejszym, niedokończonym sprzątaniu.
+
+8. **Mój własny przyrząd skłamał dwa razy** i oba razy w stronę „to żyje":
+   wzorzec importu dla pliku o nazwie `index` łapał każde `from './index'` w repo (11 fałszywych
+   wołaczy barrelu), a dopasowanie po ścieżce myliło wzmiankę w komentarzu z importem.
+   Obie kolumny przeliczone drugą metodą; liczby w rejestrze są po korekcie.
+
+---
+
+## Czego ten rejestr NIE dowodzi
+
+- Nie uruchamiałem aplikacji ani bazy — to pomiar statyczny na kodzie z `6fe16e2bd4`.
+- Przypisania „odpowiednik w VNext" oznaczone **NIEPEWNE** to moja ocena z lektury, nie pomiar
+  parytetu funkcji. Przed cięciem pozycji z Grupy 2b ktoś musi zobaczyć oba ekrany obok siebie.
+- Nie sprawdzałem, czy ResultsHub bywa osiągalny na innych gałęziach niż ta.
