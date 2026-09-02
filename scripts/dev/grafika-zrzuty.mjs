@@ -24,6 +24,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { chromium } from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
 import sharp from 'sharp';
 
 import { checkScreenshotPairState } from './lib/checkScreenshotPairState.mjs';
@@ -47,6 +48,11 @@ const JEZYK = arg('jezyk', 'pl');
 // Domyślne zachowanie i konwencja dotychczasowych wywołań pozostają bez zmian.
 const WYJSCIE = arg('wyjscie', '');
 const WYNIK_JSON = arg('wynik-json', '');
+// Dyżur 284: oba pomiary są jawnie opt-in, aby nie zmieniać historycznych
+// wywołań narzędzia. Sekcje rozwijamy po interakcjach i przed zrzutem;
+// dostępność mierzymy na dokładnie tym samym, rozwiniętym DOM-ie.
+const ROZWIN_SEKCJE = arg('rozwin-sekcje', '0') === '1';
+const A11Y = arg('a11y', '0') === '1';
 /**
  * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
  *
@@ -366,6 +372,47 @@ for (const ekran of EKRANY) {
         // — ten sam wzorzec co day233 (linia ~133).
         await page.waitForTimeout(300);
       }
+      let sekcjeRozwiniete = 0;
+      let sekcjeNadalZwiniete = [];
+      if (ROZWIN_SEKCJE) {
+        // Kilka rund jest konieczne, bo rozwinięcie rodzica może odsłonić
+        // kolejne accordiony. Klikamy wyłącznie semantyczne kontrolki ze
+        // stanem aria-expanded=false; natywne <details> otwieramy właściwością.
+        for (let runda = 0; runda < 8; runda++) {
+          const kontrolki = page.locator('[aria-expanded="false"]');
+          const ile = await kontrolki.count();
+          if (ile === 0) break;
+          let postep = 0;
+          for (let i = 0; i < ile; i++) {
+            const kontrolka = kontrolki.nth(i);
+            if (!(await kontrolka.isVisible().catch(() => false))) continue;
+            await kontrolka.click({ timeout: 3000 }).then(() => { postep++; }).catch(() => {});
+          }
+          sekcjeRozwiniete += postep;
+          if (postep === 0) break;
+          await page.waitForTimeout(150);
+        }
+        sekcjeRozwiniete += await page.locator('details:not([open])').evaluateAll((elementy) => {
+          for (const element of elementy) element.open = true;
+          return elementy.length;
+        });
+        sekcjeNadalZwiniete = await page.locator('[aria-expanded="false"]:visible').evaluateAll(
+          (elementy) => elementy.map((element) => (element.textContent || element.getAttribute('aria-label') || element.tagName).trim().slice(0, 120))
+        );
+        if (sekcjeNadalZwiniete.length > 0) {
+          wynikBrak.push(`zwinięte sekcje: ${sekcjeNadalZwiniete.join(' / ')}`);
+        }
+      }
+      let a11yNaruszenia = [];
+      if (A11Y) {
+        const wynikA11y = await new AxeBuilder({ page }).analyze();
+        a11yNaruszenia = wynikA11y.violations.map((naruszenie) => ({
+          id: naruszenie.id,
+          impact: naruszenie.impact,
+          nodes: naruszenie.nodes.length,
+          help: naruszenie.help,
+        }));
+      }
       // Chrome harnessu wycina `uwagi=0` w adresie (patrz komentarz wyżej).
       // Ta reguła zostaje jako PAS BEZPIECZEŃSTWA dla ekranów, które oznaczają
       // własne elementy harnessu atrybutem `data-dev-render-chrome` — robi tak
@@ -407,6 +454,9 @@ for (const ekran of EKRANY) {
         wynikSelektor: WYNIK_SELEKTOR.length > 0 ? WYNIK_SELEKTOR : undefined,
         hasResultMarker,
         obrazJasnosc,
+        sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
+        sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
+        a11yNaruszenia: A11Y ? a11yNaruszenia : undefined,
         status: [
           klikBrak.length > 0 ? `klik BRAK: ${klikBrak.join(' ')}` : '',
           przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : '',
