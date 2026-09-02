@@ -520,6 +520,12 @@ klientom**. Żaden inny defekt z dzisiejszego przeglądu nie zatrzymuje użytkow
 **Dlaczego zgłaszam zamiast naprawiać:** to błąd komponentu (odczyt pola z obiektu, którego nie ma),
 nie wygląd. Naprawa w torze grafiki byłaby zgadywaniem, które pole ma być domyślne.
 
+**★ POTWIERDZONE PRZEZ NADZORCĘ NA WŁASNYM ZRZUCIE (02.09):** odtworzyłem to sam, nie przyjąłem
+z meldunku. Dowód: `evidence/grafika/213-crash-weryfikacja/gen-word-content-hints__PO__light.png`
+i `__dark.png` — **cały kadr to czerwony zrzut błędu Reacta**, ten sam komunikat i ta sama linia
+(`DocumentStudioTemplateArchitectView.tsx:1210:51`). Nie „coś się zepsuło" — użytkownik zostaje
+z czerwoną ścianą tekstu programistycznego zamiast ekranu.
+
 **Kontrola dodatnia, żeby nie było wątpliwości, że to produkt, a nie przyrząd:** lista BEZ kliknięcia
 renderuje się czysto w obu motywach; crash pojawia się dopiero po kliknięciu i pochodzi z pliku
 produkcyjnego (`src/components/DocumentStudio/…`), nie z `dev-render/`.
