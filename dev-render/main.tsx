@@ -417,6 +417,16 @@ const IdeaTableToolSortFilterScreen = React.lazy(
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
 const IdeaTableProductionScreen = React.lazy(() => import('./screens/idea-table-production'));
+// GRAFIKA (2026-09-02, grafika/logowanie-i18n-20260902): pre-login screen
+// family had NO harness entry at all — the login-screen i18n bug was found
+// on a live staging screenshot, not through this harness. Registering the
+// family here per CLAUDE.md #7 (owner never sees a raw/unvetted screen).
+const AuthLoginScreen = React.lazy(() => import('./screens/auth-login'));
+const AuthRegisterScreen = React.lazy(() => import('./screens/auth-register'));
+const AuthCodeEntryScreen = React.lazy(() => import('./screens/auth-code-entry'));
+const AuthForgotPasswordScreen = React.lazy(() => import('./screens/auth-forgot-password'));
+const AuthResetPasswordScreen = React.lazy(() => import('./screens/auth-reset-password'));
+const AuthVerifyEmailScreen = React.lazy(() => import('./screens/auth-verify-email'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
@@ -2357,6 +2367,36 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day267 — realny ReportsAndPresentationsHub; &tab=outputs_all|outputs_documents|presentations|outputs_sheets|templates &state=ready|empty|loading|error',
     render: () => <Day267MaterialyHubZrzutyScreen />,
+  },
+  'auth-login': {
+    label:
+      'LOGOWANIE — REALNY <AuthView initialStep=LOGIN> w <AuthLayout> (kompozycja /login z AppRoutes.tsx). &lang=pl|en &theme=light|dark',
+    render: () => <AuthLoginScreen />,
+  },
+  'auth-register': {
+    label:
+      'REJESTRACJA — REALNY <AuthView initialStep=REGISTER> w <AuthLayout> (kompozycja /register). &lang=pl|en &theme=light|dark',
+    render: () => <AuthRegisterScreen />,
+  },
+  'auth-code-entry': {
+    label:
+      'ZAPROSZENIE DO ORGANIZACJI — REALNY <AuthView initialStep=CODE_ENTRY> (krok "Wpisz kod dostępu" z /login lub /register). &lang=pl|en &theme=light|dark',
+    render: () => <AuthCodeEntryScreen />,
+  },
+  'auth-forgot-password': {
+    label:
+      'ODZYSKIWANIE HASŁA — REALNY <ForgotPasswordView> w <AuthLayout> (kompozycja /forgot-password). &lang=pl|en &theme=light|dark',
+    render: () => <AuthForgotPasswordScreen />,
+  },
+  'auth-reset-password': {
+    label:
+      'ZMIANA HASŁA Z LINKU — REALNY <ResetPasswordView> w <AuthLayout> (kompozycja /reset-password, ?token= obecny). &lang=pl|en &theme=light|dark',
+    render: () => <AuthResetPasswordScreen />,
+  },
+  'auth-verify-email': {
+    label:
+      'WERYFIKACJA E-MAIL — REALNY <VerifyEmail> (UWAGA: martwy komponent, brak trasy w AppRoutes.tsx — patrz komentarz w pliku ekranu). &lang=pl|en &theme=light|dark',
+    render: () => <AuthVerifyEmailScreen />,
   },
 };
 

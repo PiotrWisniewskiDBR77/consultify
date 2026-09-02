@@ -80,6 +80,50 @@ zero innych kebabów dotkniętych. Test `WorkCanvasDocumentPanel.test.tsx` (3184
 ustawia flagę ON w `beforeEach`, więc nic nowego nie zepsuł — baseline miał już 10/38 czerwonych testów
 (niepowiązana usterka `switchView`/„Markdown view" sprzed tej zmiany, zmierzone przez `git stash` przed/po).
 
+### Z-48 · Pierwszy ekran polskiego produktu był po angielsku — nie brak tłumaczenia, tylko brak KLUCZA w JSON
+**Co się stało:** zmierzono zrzut z żywego stagingu (`evidence/staging-20260902/01-logowanie.png`,
+gałąź `github-backup/koord/polaczenie-20260902`) — ekran logowania w 100% po angielsku, dwa
+odnośniki nawigacyjne („Forgot password?", „Create one") crimson. Pomiar RODZINY (nie jednego
+ekranu) objął 6 pozycji: logowanie, rejestracja, kod organizacji/zaproszenie, odzyskiwanie hasła,
+zmiana hasła z linku, weryfikacja e-mail. Wynik zaskoczył: logowanie/rejestracja/kod organizacji
+JUŻ używały `t()` z realnymi kluczami PL w `translation.json` — bug tam był w DOMYŚLNYM JĘZYKU
+(fallback `en`, brak polskiego przełącznika na tych ekranach) i w dwóch linkach twardo pomalowanych
+tokenem marki `c-accent` (= crimson `#85182F`, kanon: „TYLKO marka/nic-UI"). Ale odzyskiwanie hasła
+i zmiana hasła z linku miały GORSZY defekt: wołały `t('auth.forgotPassword.title', ...)` itp., a
+KLUCZE TE NIE ISTNIAŁY W ŻADNYM z dwóch plików JSON (ani en, ani pl) — więc renderowały się
+WYŁĄCZNIE angielskim fallbackiem zaszytym w kodzie, dla KAŻDEGO języka, zawsze. Do tego doszła
+kolizja nazw: `auth.forgotPassword` już istniał jako STRING („Zapomniałeś hasła?" — etykieta linku
+na ekranie logowania), więc `auth.forgotPassword.title` nie mógł w ogóle zadziałać strukturalnie
+(string nie ma dzieci w JSON) — nawet gdyby ktoś dopisał klucz pod starą nazwą, nadal by nie
+zadziałało. Pełny przegląd pliku `AuthView.tsx` (1439 linii) ujawnił kaskadę: 43 klucze `t()` bez
+wpisu w JSON (błędy logowania, MFA, PIN szybkiego dostępu, panel zaproszenia, zgoda prawna) + kolejne
+~15 stringów bez ŻADNEGO wywołania `t()` (ekran „Access Pending", panel „Code accepted", etykiety roli
+zaproszenia) — bo dwie funkcje pomocnicze (`mapPublicAuthError`, `formatInviteRoleLabel`) żyły POZA
+komponentem i nie miały dostępu do `t`.
+
+**Dlaczego ważne:** to nowy wariant znanego kształtu „klucz istnieje ≠ przetłumaczony" — tu klucz w
+KODZIE istniał, ale nie istniał w SŁOWNIKU, więc nie był wołaczem-bez-implementacji, tylko implementacją-
+bez-danych. `grep` po `t('klucz'` w kodzie nic by nie wykrył jako defekt — trzeba było przeciąć kod
+przez oba pliki JSON i policzyć różnicę zbiorów (117 realnych kluczy w rodzinie, 76 brakujących w co
+najmniej jednym języku). Dodatkowo: `fallbackLng.default` w `src/i18n.ts` był `['en']` — ostateczny
+bezpiecznik dla NIEWYKRYTEGO języka (brak `navigator`, nietrafiony kod) lądował po angielsku na
+polskim produkcie zero-switcherowym (żaden ekran przed-logowaniem nie ma przełącznika języka).
+
+**Co z tego wynika:** (a) `fallbackLng.default` → `['pl']`, `index.html lang="pl"` — kolejność
+`detection.order` (localStorage → navigator → htmlTag) NIETKNIĘTA, więc jawny wybór albo realny
+język przeglądarki nadal wygrywa, zmienia się tylko ostatnia deska ratunku; (b) 76 brakujących kluczy
+dopisanych do OBU plików z prawdziwym polskim tekstem (nie kopią angielskiego); (c) kolizja
+`auth.forgotPassword` rozwiązana przez nową przestrzeń `auth.forgotPasswordPage.*`; (d)
+`mapPublicAuthError`/`formatInviteRoleLabel` przyjmują teraz `t` jako parametr; (e) `c-accent`
+zamieniony na `c-focus-solid` (niebieski) na WSZYSTKICH odnośnikach/CTA rodziny (nie tylko dwóch
+zgłoszonych) — zostawiony tylko tam, gdzie kanon go dopuszcza (dekoracja: tło-gradient, ikona,
+spinner — nieinteraktywne, zgodne z „TYLKO marka/nic-UI"); (f) `VerifyEmail.tsx` — osobne ODKRYCIE:
+komponent kompletny tekstowo i już bez crimson, ale MARTWY (zero importów, brak trasy w
+`AppRoutes.tsx`) — zmierzony i zaraportowany, nie naprawiany dalej (nie ma czego naprawiać na
+nieosiągalnym ekranie); (g) reguła na przyszłość: audyt i18n ekranu nie kończy się na `grep t(` w
+kodzie — musi przeciąć wynik przez oba pliki `translation.json`, inaczej „klucz jest" i „tekst się
+pokazuje" to dwa różne twierdzenia.
+
 ### Z-47 · Poprawka dokumentu, który jest ŁADOWANY, jest skuteczna dopiero w miejscu ładowania
 **Co sie stalo:** skill `consultify-preview` poprawiono 01.09 (dyzur 175) — kolejnosc blokow stopki
 doprowadzona do zgodnosci z norma. Dzis robotnik naprawiajacy podglad Idei zameldowal, ze skill NADAL

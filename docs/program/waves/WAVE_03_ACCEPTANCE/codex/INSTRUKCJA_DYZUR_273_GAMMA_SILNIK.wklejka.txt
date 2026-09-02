@@ -1,0 +1,21 @@
+NOWY — DYŻUR 273
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/instrukcje/270-273-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_273_GAMMA_SILNIK.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 273.
+
+★★ UWAGA — pierwsza realna komenda po przeczytaniu ma być `which soffice`
+(§A.4 zależy od tego wyniku). Prototyp wynikowy (.pptx/.pdf) idzie do
+evidence/day273/ w repo — to jedyny wyjątek od zakazu nowych plików poza
+kodem i raportem.
+
+Marker: 444d789363 (gałąź bazowa: integracja/20260902)
+Zasoby wyłączne: baza 6286, runtime 5266 i 5267.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

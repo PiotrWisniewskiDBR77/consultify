@@ -30,7 +30,7 @@ export const ResetPasswordView: React.FC = () => {
               onClick={() => navigate('/forgot-password')}
               className="mt-6 w-full rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-surface shadow-sm hover:opacity-90 transition-colors"
             >
-              {t('auth.forgotPassword.title', 'Reset your password')}
+              {t('auth.forgotPasswordPage.title', 'Reset your password')}
             </button>
           </div>
         </div>
@@ -176,7 +176,7 @@ export const ResetPasswordView: React.FC = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="text-sm text-c-accent hover:underline"
+              className="text-sm text-c-focus-solid hover:underline"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>

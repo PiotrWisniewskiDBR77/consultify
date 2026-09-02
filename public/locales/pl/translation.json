@@ -539,7 +539,8 @@
     "list": "Lista",
     "closeDocumentNamed": "Zamknij {{name}}",
     "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})",
-    "sampleData": "PRZYKŁADOWE DANE"
+    "sampleData": "PRZYKŁADOWE DANE",
+    "verifying": "Weryfikowanie…"
   },
   "superadmin": {
     "confirm": {
@@ -13270,7 +13271,87 @@
       "verifying": "Weryfikujemy Twój adres e-mail…"
     },
     "privacyLink": "Polityka prywatności",
-    "termsLink": "Regulamin"
+    "termsLink": "Regulamin",
+    "accessCodeLabel": "Kod dostępu:",
+    "changeAccessCode": "Zmień kod dostępu",
+    "codeAccepted": "Kod zaakceptowany",
+    "confirmPassword": "Potwierdź hasło",
+    "demoModeDescriptionSigned": "Zarejestruj się lub zaloguj, aby wypróbować wersję demo. Skontaktujemy się z Tobą.",
+    "emailPlaceholder": "ty@firma.pl",
+    "enterAccessCodeCta": "Wpisz kod dostępu",
+    "errors": {
+      "demoSignupFailed": "Rejestracja do wersji demo jest chwilowo niedostępna. Spróbuj ponownie.",
+      "emailPasswordRequired": "E-mail i hasło są wymagane",
+      "enterAccessCode": "Wpisz kod dostępu otrzymany od administratora",
+      "invalidAccessCode": "Nieprawidłowy lub wygasły kod dostępu",
+      "invalidCredentials": "Nieprawidłowy e-mail lub hasło.",
+      "inviteVerifyFailed": "Nie udało się zweryfikować kodu dostępu. Spróbuj ponownie.",
+      "loginFailed": "Logowanie nie powiodło się. Spróbuj ponownie.",
+      "loginRetryFailed": "Logowanie nie powiodło się. Sprawdź połączenie i spróbuj ponownie.",
+      "membershipRevoked": "Twój dostęp do tej organizacji został cofnięty.",
+      "mfaCodeRequired": "Wpisz 6-cyfrowy kod uwierzytelniający.",
+      "mfaInvalidOrExpired": "Kod uwierzytelniający jest nieprawidłowy lub wygasł. Wpisz aktualny kod.",
+      "mfaVerificationFailed": "Weryfikacja się nie powiodła. Kod nie został zaakceptowany — spróbuj ponownie.",
+      "pendingApproval": "Twoje konto oczekuje na zatwierdzenie.",
+      "quickAccessFailed": "Szybki dostęp jest chwilowo niedostępny. Zaloguj się na swoje konto.",
+      "registrationFailed": "Rejestracja nie powiodła się. Spróbuj ponownie."
+    },
+    "forgotPasswordPage": {
+      "checkEmail": "Sprawdź swoją skrzynkę e-mail",
+      "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
+      "sendLink": "Wyślij link resetujący",
+      "sentMessage": "Jeśli konto o tym adresie e-mail istnieje, wysłaliśmy link do zresetowania hasła. Sprawdź skrzynkę odbiorczą i folder spam.",
+      "subtitle": "Podaj swój adres e-mail, a wyślemy Ci link do zresetowania hasła.",
+      "title": "Zresetuj hasło"
+    },
+    "haveAccessCodePrompt": "Masz kod organizacji?",
+    "invitePlaceholder": "WPISZ KOD (np. ABCD1234)",
+    "joinWorkspaceDescription": "Uzupełnij swoje dane, a połączymy Cię z przestrzenią, do której zostałeś zaproszony.",
+    "joinWorkspaceTitle": "Utwórz konto uczestnika",
+    "joiningOrg": "Dołączasz do {{org}}",
+    "joiningWorkspaceGeneric": "Dołączasz do zaproszonej przestrzeni",
+    "legalCenterLink": "Centrum prawne",
+    "legalConsentAnd": "i",
+    "legalConsentPrefix": "Akceptuję",
+    "legalConsentRequired": "Potwierdź akceptację Regulaminu i Polityki prywatności, aby kontynuować.",
+    "legalReviewDivider": "lub odwiedź",
+    "legalReviewNote": "Zapoznaj się z cennikiem i materiałami prawnymi w",
+    "logInForDemo": "Zaloguj się do wersji demo",
+    "newPassword": "Nowe hasło",
+    "pending": {
+      "description": "Twoja organizacja oczekuje obecnie na ręczne zatwierdzenie. Otrzymasz e-mail, gdy tylko dostęp zostanie przyznany.",
+      "title": "Dostęp oczekuje na zatwierdzenie"
+    },
+    "plannedRole": "Planowana rola: {{role}}",
+    "quickAccessFooter": "Wpisz swój PIN. Aby ukryć to pole, kliknij dwukrotnie logo lub naciśnij Ctrl+Shift+K.",
+    "quickAccessLogoAria": "Otwórz szybkie logowanie PIN-em (dwuklik)",
+    "quickAccessLogoHint": "Kliknij dwukrotnie logo (lub Ctrl+Shift+K / Cmd+Shift+K), aby wpisać 4-cyfrowy PIN.",
+    "quickAccessPinAria": "Czterocyfrowy PIN szybkiego dostępu",
+    "resetPassword": {
+      "errorGeneric": "Nie udało się zresetować hasła. Link mógł wygasnąć.",
+      "invalidToken": "Nieprawidłowy lub brakujący token resetu",
+      "passwordMismatch": "Hasła nie są identyczne.",
+      "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków.",
+      "requestNew": "Poproś o nowy link do resetowania hasła.",
+      "submit": "Zresetuj hasło",
+      "subtitle": "Wpisz poniżej nowe hasło.",
+      "successMessage": "Hasło zostało pomyślnie zresetowane. Możesz teraz zalogować się nowym hasłem.",
+      "successTitle": "Hasło zaktualizowane",
+      "title": "Ustaw nowe hasło"
+    },
+    "roleAfterRegistration": "Rola po rejestracji: {{role}}",
+    "roles": {
+      "admin": "Administrator",
+      "guest": "Gość",
+      "manager": "Kierownik",
+      "owner": "Właściciel",
+      "participant": "Uczestnik"
+    },
+    "signUpForDemo": "Zarejestruj się do wersji demo",
+    "subscriptionLink": "Warunki subskrypcji",
+    "verifyingCode": "Weryfikowanie kodu...",
+    "workspaceAutoSelect": "Przestrzeń robocza zostanie wybrana automatycznie po rejestracji.",
+    "workspaceNamed": "Przestrzeń robocza: {{name}}"
   },
   "help": {
     "onboarding": {
@@ -32577,7 +32658,12 @@
   "mfa": {
     "challenge": {
       "failed": "Błąd",
-      "error": "Błąd"
+      "error": "Błąd",
+      "codeLabel": "Kod uwierzytelniający",
+      "enterTotp": "Wpisz kod z aplikacji uwierzytelniającej",
+      "title": "Uwierzytelnianie dwuskładnikowe",
+      "trustDevice": "Zaufaj temu urządzeniu przez 30 dni",
+      "verify": "Zweryfikuj"
     },
     "setup": {
       "next": "następne",
@@ -43382,6 +43468,32 @@
       "previous": "Poprzedni slajd",
       "goToSlide": "Przejdź do slajdu {{n}}",
       "next": "Następny slajd"
+    }
+  },
+  "meta": {
+    "login": {
+      "title": "Logowanie",
+      "description": "Zaloguj się do swojej przestrzeni roboczej Consultify."
+    },
+    "register": {
+      "title": "Utwórz konto",
+      "description": "Utwórz konto Consultify i uruchom swoją przestrzeń roboczą."
+    },
+    "demo": {
+      "title": "Demo",
+      "description": "Wypróbuj Consultify na realistycznych danych demonstracyjnych. Bez rejestracji."
+    },
+    "trialStart": {
+      "title": "Rozpocznij okres próbny",
+      "description": "Rozpocznij darmowy okres próbny Consultify."
+    },
+    "forgotPassword": {
+      "title": "Reset hasła",
+      "description": "Zresetuj hasło do swojego konta Consultify."
+    },
+    "resetPassword": {
+      "title": "Ustaw nowe hasło",
+      "description": "Ustaw nowe hasło do swojego konta Consultify."
     }
   }
 }

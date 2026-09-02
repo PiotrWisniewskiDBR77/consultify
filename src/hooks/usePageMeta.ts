@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 const BRAND = 'Consultify';
@@ -7,6 +8,22 @@ interface PageMeta {
   title: string;
   description: string;
 }
+
+// Pre-login screen family (grafika/logowanie-i18n-20260902): the document
+// title/description for these routes come from i18next (`meta.<key>.*`)
+// instead of the static English-only ROUTE_META table below, so a Polish
+// session sees a Polish browser-tab title on the very first screen instead
+// of "Sign In — Consultify". Scoped deliberately to this family only — the
+// rest of ROUTE_META (docs, pricing, my-work, ...) is untouched and stays a
+// separate, larger effort.
+const PRE_LOGIN_META_KEYS: Record<string, string> = {
+  '/login': 'login',
+  '/register': 'register',
+  '/demo': 'demo',
+  '/trial/start': 'trialStart',
+  '/forgot-password': 'forgotPassword',
+  '/reset-password': 'resetPassword',
+};
 
 const ROUTE_META: Record<string, PageMeta> = {
   '/': {
@@ -52,14 +69,6 @@ const ROUTE_META: Record<string, PageMeta> = {
     title: `Changelog — ${BRAND}`,
     description: 'Track all updates and improvements to Consultify.',
   },
-  '/login': {
-    title: `Sign In — ${BRAND}`,
-    description: 'Sign in to your Consultify workspace.',
-  },
-  '/demo': {
-    title: `Demo — ${BRAND}`,
-    description: 'Experience Consultify with realistic demo data. No signup required.',
-  },
   '/chat': {
     title: `AI Chat — ${BRAND}`,
     description: 'Teresa AI workspace for guided execution and decisions.',
@@ -82,7 +91,15 @@ const ROUTE_META: Record<string, PageMeta> = {
   },
 };
 
-function getMetaForPath(path: string): PageMeta {
+function getMetaForPath(path: string, t: (key: string, defaultValue?: string) => string): PageMeta {
+  const preLoginKey = PRE_LOGIN_META_KEYS[path];
+  if (preLoginKey) {
+    return {
+      title: `${t(`meta.${preLoginKey}.title`)} — ${BRAND}`,
+      description: t(`meta.${preLoginKey}.description`),
+    };
+  }
+
   if (ROUTE_META[path]) return ROUTE_META[path];
 
   if (path.startsWith('/docs/')) {
@@ -155,12 +172,16 @@ function setMetaTag(name: string, content: string, property = false) {
 
 export const usePageMeta = () => {
   const location = useLocation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
-    const meta = getMetaForPath(location.pathname);
+    const meta = getMetaForPath(location.pathname, t);
     document.title = meta.title;
     setMetaTag('description', meta.description);
     setMetaTag('og:title', meta.title, true);
     setMetaTag('og:description', meta.description, true);
-  }, [location.pathname]);
+    // i18n.language dependency: the pre-login family's title/description are
+    // now translated, so a language switch must retitle the tab without
+    // needing a navigation.
+  }, [location.pathname, t, i18n.language]);
 };
