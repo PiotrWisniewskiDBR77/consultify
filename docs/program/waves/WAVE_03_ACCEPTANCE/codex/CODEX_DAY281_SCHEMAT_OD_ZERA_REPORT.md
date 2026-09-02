@@ -76,3 +76,26 @@ Pułapki (a)–(e): użyto tego samego samodzielnego harnessu bez Vitest; komple
 ## Stan
 
 R1–R6 wykonane. Gałąź oczekuje na niezależny odbiór nadzorcy; nie została scalona ani wdrożona.
+
+## Handoff
+
+Commity dyżuru przed finalizacją raportu:
+
+```text
+1acd592fa4 docs(day281): prove fresh rebuild and idempotence
+5b5c0e3849 fix(auth): make email verification schema reproducible
+92232b6c18 docs(day281): capture registration 42704 proof
+bc95b2145d docs(day281): inventory runtime schema DDL
+54cee6e23a docs(day281): record fresh schema baseline
+```
+
+Pliki zmienione względem `eeb253c3ec`:
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_SCHEMAT_OD_ZERA_20260902.md
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY281_SCHEMAT_OD_ZERA_REPORT.md
+server/migrations/20261911_email_verification_tokens.sql
+server/src/services/emailVerificationService.ts
+```
+
+Po pomiarach kontener `cx-day281-pg` usunięto wraz z wolumenem (`docker rm -fv`). Port 6268 jest wolny. Dane testowe nie są odzyskiwalne z usuniętego efemerycznego wolumenu; dowody pozostają wyłącznie w zahashowanych artefaktach poza repo.
