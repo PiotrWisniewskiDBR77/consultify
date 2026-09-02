@@ -581,6 +581,16 @@ Na 52 zmierzonych zdaniach trzecia osoba była wadą częstszą niż żargon.
 **CYTAT WŁAŚCICIELA JEST NIETYKALNY — znak w znak, także z literówkami.** To jego słowa i mają
 zostać jego słowami. Reguła dotyczy wyłącznie **naszego** tekstu obok cytatu.
 
+**NAZWA ELEMENTU PRODUKTU PISANA WERSALIKAMI NIE JEST MÓWIENIEM O WŁAŚCICIELU** (dopisane
+2026-09-02, po fałszywym trafieniu bramki). Zdanie „kolumna WŁAŚCICIEL pokazuje wewnętrzne
+identyfikatory" opisuje **nagłówek, który tak się nazywa na ekranie** — nie streszcza Piotra
+w trzeciej osobie. Bramka ma karać „Właściciel żąda…", a nie „kolumna WŁAŚCICIEL".
+
+Rozstrzyganie jest mechaniczne, żeby nie wracać do uważności: **całe słowo WERSALIKAMI** (albo
+nazwa w cudzysłowie drukarskim, np. „Właściciel") to nazwa elementu i przechodzi; słowo pisane
+normalnie — nie przechodzi. Powód, dla którego to nie jest furtka: żeby obejść regułę tą drogą,
+trzeba by napisać „WŁAŚCICIEL ŻĄDA", co widać z odległości metra.
+
 **Rozdział źródeł, żeby te dwa języki się nie mieszały:** kolumna `uzasadnienie` w korpusie uwag
 tłumaczy klasyfikację **nam** i słusznie powołuje się na zrzuty, flagi i katalogi dowodowe —
 zostaje jak jest. Zdanie dla właściciela mieszka osobno, w `CO_DOMYKA_<data>.json`, i ma
