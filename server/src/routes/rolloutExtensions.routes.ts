@@ -16,7 +16,9 @@
  *   - /cutover          cutover runbooks + steps      (cutoverRunbookService)
  *   - /gate/evaluate    stage-boundary go/no-go gate  (rolloutGateService, pure)
  *
- * NOT mounted in Gateway.ts here — wiring is done separately.
+ * Mounted in `Gateway.ts` at `/api/rollout-ext`.
+ * Corrected on 2026-09-01 by duty 254 after the earlier pre-wiring comment
+ * was checked against the current import and `app.use` registration.
  */
 import { Response, Router } from 'express';
 import { z } from 'zod';

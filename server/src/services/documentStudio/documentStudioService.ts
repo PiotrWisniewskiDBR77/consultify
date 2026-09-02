@@ -22,8 +22,10 @@
 import { randomUUID } from 'node:crypto';
 
 import logger from '../../utils/Logger.js';
+import { isArtifactKnowledgeIndexEnabled } from '../../config/FeatureFlags.js';
 import { getCurrentPgTransactionClient } from '../../utils/queryHelpers.js';
 import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
+import { indexDocumentArtifactForKnowledge } from '../knowledge/artifactKnowledgeIndexer.js';
 import {
   buildWave5ExportManifest,
   createWave5Artifact,
@@ -1256,6 +1258,23 @@ export async function materializeDocumentArtifact(
     orderedSections.forEach((section, index) => {
       safeInvokeHook(() => params.hooks!.onSection!(section, index, total), 'onSection');
     });
+  }
+
+  if (isArtifactKnowledgeIndexEnabled()) {
+    void indexDocumentArtifactForKnowledge({
+      artifactId,
+      organizationId: params.organizationId,
+      ownerId: params.userId,
+      projectId: params.projectId ?? null,
+      title: finalSchema.title,
+      contentMd: markdown,
+      confidentiality: finalSchema.confidentiality,
+    }).catch((err: any) =>
+      logger.warn(
+        '[artifactKnowledgeIndex] document hook failed (ignored):',
+        err?.message || err
+      )
+    );
   }
 
   return {

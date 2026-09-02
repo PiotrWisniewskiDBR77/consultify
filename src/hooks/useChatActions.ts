@@ -16,7 +16,10 @@ import { type ChatActionPayload } from '@/types/domain/chatActions';
 
 export type ChatAction = NavigateAction | ChatActionPayload;
 
-export function useChatActions() {
+export function useChatActions(options: {
+  projectId?: string;
+  initiativeId?: string;
+} = {}) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [lastError, setLastError] = useState<string | null>(null);
@@ -60,7 +63,19 @@ export function useChatActions() {
 
       const payload = action as ChatActionPayload;
 
-      const deps: ActionHandlerDeps = { navigate, context: {} };
+      const deps: ActionHandlerDeps = {
+        navigate,
+        context: {
+          projectId: options.projectId,
+          initiativeId: options.initiativeId,
+        },
+        onOpenReportBuilder: () => navigate('/document-studio'),
+        onOpenPresentationWizard: (params) => {
+          const template = String(params?.templateId || '').trim();
+          navigate(template ? `/prezentacje?templateArtifactId=${encodeURIComponent(template)}` : '/prezentacje');
+        },
+        onOpenKpiDrawer: (kpiId) => navigate(`/results/kpi/${encodeURIComponent(kpiId)}`),
+      };
       const result = await handleChatAction(payload, deps);
 
       if (result.success) {
@@ -70,7 +85,7 @@ export function useChatActions() {
         toast.error(result.error ?? t('chat.action.failed', 'Action failed'), { duration: 3000 });
       }
     },
-    [handleNavigate, navigate, t]
+    [handleNavigate, navigate, options.initiativeId, options.projectId, t]
   );
 
   return {

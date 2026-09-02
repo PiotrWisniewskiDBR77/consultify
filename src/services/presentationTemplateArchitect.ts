@@ -194,6 +194,8 @@ export interface UpdatePresentationTemplateInput {
   /** Fala 1 (2026-07-28) — see `PresentationTemplate.color_template_id`. `null` clears it. */
   colorTemplateId?: string | null;
   customTemplate?: PresentationCustomTemplateDefinition | null;
+  /** Day 228 — see `PresentationTemplate.layout_policy_json.imageStylePrompt`. `null` clears it. */
+  imageStylePrompt?: string | null;
 }
 
 // ---------------------------------------------------------------------------

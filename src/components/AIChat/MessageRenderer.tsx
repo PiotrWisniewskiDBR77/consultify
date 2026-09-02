@@ -52,6 +52,7 @@ import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { GovernedChatHandoffCard } from './GovernedChatHandoffCard';
+import { GovernedInitiativeHandoffCard } from './GovernedInitiativeHandoffCard';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { ReasoningTrace } from './Messages/ReasoningTrace';
@@ -59,6 +60,8 @@ import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { TeresaProposalCard } from './TeresaProposalCard';
+import { ToolStepList } from './ToolStepList';
+import { hasDeepResearchProgress } from './toolSteps';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
@@ -323,6 +326,12 @@ export interface MessageRendererProps {
   >;
   governedHandoffErrorById?: Record<string, string | undefined>;
   governedHandoffTargetById?: Record<string, string | undefined>;
+  initiativeHandoffByMessageId?: Record<
+    string,
+    { initiativeId: string; title?: string | null }
+  >;
+  onOpenInitiativeHandoff?: (initiativeId: string) => void;
+  onInitiativeHandoffAdopted?: (initiativeId: string) => void;
   onCreateGovernedDocument?: (msg: ChatMessage) => void;
   onApproveGovernedHandoff?: (proposalId: string) => void;
   onRejectGovernedHandoff?: (proposalId: string) => void;
@@ -456,6 +465,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   governedHandoffBusyById = {},
   governedHandoffErrorById = {},
   governedHandoffTargetById = {},
+  initiativeHandoffByMessageId = {},
+  onOpenInitiativeHandoff,
+  onInitiativeHandoffAdopted,
   onCreateGovernedDocument,
   onApproveGovernedHandoff,
   onRejectGovernedHandoff,
@@ -504,6 +516,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
   const governedHandoff = governedHandoffByMessageId[msg.id];
+  const initiativeHandoff =
+    initiativeHandoffByMessageId[msg.id] ||
+    ((msg as any)?.metadata?.initiativeHandoff as
+      | { initiativeId: string; title?: string | null }
+      | undefined);
   const [showCompactActions, setShowCompactActions] = useState(false);
   const [showSourcesDetails, setShowSourcesDetails] = useState(false);
 
@@ -795,7 +812,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </div>
               )}
 
-              {(msg as any).metadata?.researchProgress && (
+              {hasDeepResearchProgress((msg as any).metadata?.researchProgress) && (
                 <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
                   {((msg as any).metadata?.researchProgress?.error as string | undefined) && (
                     <div className="mb-2 text-[11px] text-amber-600 dark:text-amber-400">
@@ -813,6 +830,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   />
                 </div>
               )}
+
+              {/* FIX-206 (pkt 4): kroki narzedzi maja WLASNY slot metadanych.
+                  Wczesniej jechaly w `researchProgress`, wiec kazda tura z
+                  narzedziem zapalala panel „Deep Research" powyzej. */}
+              {Array.isArray((msg as any).metadata?.toolSteps) &&
+                (msg as any).metadata.toolSteps.length > 0 && (
+                  <ToolStepList steps={(msg as any).metadata.toolSteps} />
+                )}
 
               {msg.role === 'ai' &&
                 (msg as any).metadata?.proposal &&
@@ -1971,6 +1996,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           onApprove={() => onApproveGovernedHandoff?.(governedHandoff.proposalId)}
           onReject={() => onRejectGovernedHandoff?.(governedHandoff.proposalId)}
           onMaterialize={() => onMaterializeGovernedHandoff?.(governedHandoff.proposalId)}
+        />
+      ) : null}
+
+      {msg.role === 'ai' && initiativeHandoff ? (
+        <GovernedInitiativeHandoffCard
+          initiativeId={initiativeHandoff.initiativeId}
+          title={initiativeHandoff.title}
+          onOpenInitiative={(initiativeId) => onOpenInitiativeHandoff?.(initiativeId)}
+          onAdopted={(initiativeId) => onInitiativeHandoffAdopted?.(initiativeId)}
         />
       ) : null}
 

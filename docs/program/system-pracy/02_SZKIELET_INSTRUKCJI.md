@@ -223,11 +223,30 @@ zabrania. Zgłoszone niezależnie przez dyżury **133 i 134**. Autor instrukcji
 **wybiera jedno** i usuwa drugie z wydanego dokumentu. Domyślnie dla dyżurów
 odbieranych przez nadzorcę: **nie pushuje wykonawca, pushuje nadzorca po odbiorze**.
 
-### (3) `Z24` odsyła do nieistniejącego `§0.4a`
+### (3) `Z24` odsyła do `§0.4a` — NAPRAWIONE 2026-08-30 (sekcja niżej)
 
-Zgłoszone przez dyżury **130, 133 i 134**. Albo wklejasz sekcję `§0.4a` z pomiarem
-pełnych nazw testów, albo **usuwasz odwołanie z `Z24`**. Odsyłacz do sekcji,
-której nie ma, kosztuje wykonawcę czas i produkuje pozorną korektę.
+Zgłaszane przez dyżury **130, 133, 134, 175, 178**. Od teraz część A ZAWIERA
+gotowy `§0.4a` (blok A.1-TER poniżej) — autor instrukcji kopiuje go dosłownie
+razem z resztą części A. Odwołania z `Z24` są znów prawdziwe.
+
+## A.1-TER. `§0.4a` — POMIAR ZASIĘGU TESTÓW (kopiuj dosłownie)
+
+```markdown
+### §0.4a — pomiar zasięgu testów (warunek oddania raportu, patrz `Z24`)
+
+Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie liczbami:
+
+1. PRZED zmianami produktu: uruchom pakiet(y) testów wskazane w licencji z
+   `--reporter=json` (albo zapisz listę `describe/it` z wyjścia) i zapisz do
+   artefaktów plik `przed-nazwy.txt` — po jednej PEŁNEJ nazwie testu na wiersz.
+2. PO zmianach: to samo do `po-nazwy.txt`.
+3. Do raportu wchodzi: `diff przed-nazwy.txt po-nazwy.txt` — nazwy DODANE (twoje
+   nowe testy) i nazwy ZNIKNIĘTE (każda zniknięta = wyjaśnienie albo STOP).
+   `N passed` bez nazw NIE jest pomiarem. „Ta sama liczba" przy innym składzie
+   nazw to fałszywa zieleń (Z37).
+4. Przepisanie liczby z instrukcji, cudzego raportu albo rejestru = zawyżenie
+   i podstawa odrzucenia raportu. Liczysz sam, u siebie, na swojej bazie.
+```
 
 ### (4) Licencja musi obejmować **typy przechodnie**, nie tylko pliki
 

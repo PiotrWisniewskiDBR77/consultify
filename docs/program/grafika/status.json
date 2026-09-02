@@ -53,9 +53,13 @@
           "nazwa": "Kanwa — menu trzech kropek",
           "ocena": "A",
           "co": "Zapis przebudowy menu.",
-          "naprawione": [],
+          "naprawione": [
+            "2026-09-02 (Z-48): badge Możliwość=REALNE/CZĘŚCIOWE + notatki \"...are backed\" + MD file properties + ResearchSession id + ledger współpracy schowane za flagą VITE_DEV_DIAGNOSTICS (domyślnie OFF, src/utils/canvasDevDiagnosticsFlag.ts); grupa przemianowana z \"Diagnostyka i workflow\" na \"Przepływy pracy\"; selektor szablonu + \"Start workflow\" -> \"Uruchom przepływ\" z i18n (real caller Api.workCanvasCreateWorkflow, nie atrapa); \"Send to Document/Table Studio\" -> \"Wyślij do Studio Dokumentów\"/\"Wyślij do Tabele Studio\" (nazwy z sidebar.documentStudio/sidebar.tabele).",
+            "2026-09-02 (Z-49, poprawka po odbiorze nadzorcy): Z-48 byl polowiczny — rozwiniete domyslnie \"EDYCJA I AI\"/\"WERSJONOWANIE\" zostaly po angielsku, i renderCapabilityBadge mial 5 wywolan w pliku, nie 1 (Z-48 zgasil tylko 2). Naprawione: canvas.panel.selection.* (9 kluczy i18n), canvas.panel.versioning.title, 3 kolejne wywolania badge REALNE/CZESCIOWE zagate'owane (Szablony startowe w kebabie + lista \"Z szablonu\" w OSOBNYM menu \"+\" flaga ON domyslnie + jego legacy fallback), canvas.panel.advanced.* (Retry projection/Reset/Version history/Show changes/diffSummary), zdublowane \"Dataset ready\"/\"Deterministic Canvas analysis\" (2 miejsca). Harness rozwija teraz WSZYSTKIE sekcje przed zrzutem — nowy standard dla tego ekranu."
+          ],
           "wyjatki": [
-            "Stary dowod inzynierski, starszy niz stan produktu"
+            "Stary dowod inzynierski, starszy niz stan produktu",
+            "Ledger wspolpracy workflow (Reviewer/Send to review/Mark approved) dalej po angielsku, tylko przeniesiony za te sama flage dev — osobny dyzur (task_732519fb)"
           ],
           "gdzie": "Kanwa dokumentu roboczego (otwierana z Czatu/Mojej pracy) → menu „⋯\" w prawym górnym rogu — zapis PRZED/PO przebudowy tego menu (dowód historyczny z przeszłej naprawy, starszy niż dzisiejszy stan produktu)."
         },

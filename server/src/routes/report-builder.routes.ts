@@ -1920,6 +1920,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId, organizationId } = getAuthContext(req);
     const { sourceType, sourceId, sourceName, title, description, templateId, config } = req.body;
+    // FIX-215 pkt 1: `confidentiality` musi być wyciągnięta jako osobne pole
+    // najwyższego poziomu z req.body — inaczej ginie (nigdy nie trafiała do
+    // `createReport`), a `hasV3Configuration` w reportBuilderService zawsze
+    // widziała `undefined` i kolumna zostawała na DEFAULT 'internal'
+    // niezależnie od wyboru użytkownika. Patrz ODBIÓR_215.md, luka poufności.
+    const { confidentiality } = req.body;
 
     if (!sourceType || !sourceId || !title) {
       return res.status(400).json({ error: 'sourceType, sourceId, and title are required' });
@@ -1936,6 +1942,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         config && typeof config === 'object' ? (config as Record<string, unknown>) : undefined,
       createdBy: userId,
       templateId,
+      confidentiality:
+        typeof confidentiality === 'string' && confidentiality.trim().length > 0
+          ? confidentiality
+          : undefined,
     });
 
     logger.info('[ReportBuilder] Report created', { reportId: result.report.id, userId });

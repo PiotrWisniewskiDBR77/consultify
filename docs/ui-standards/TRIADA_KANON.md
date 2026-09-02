@@ -172,6 +172,13 @@ Czerwień = wyłącznie semantyka krytyczna (overdue/error/blocked/delete). Akty
 > Referencyjna implementacja: `src/components/AIChat/UnifiedChatPanel.tsx`
 > (kontener wiadomości, `role="log" aria-live="polite"`).
 
+## B.11 — PROTOKÓŁ FOTOGRAFOWANIA PODGLĄDU
+
+- Zrzut ekranu listowego dołączany do wyniku listy czekowania **MUSI być wykonany PO kliknięciu w wiersz**, z otwartym podglądem. Dla standardowego panelu bocznego wymagane są dwa zrzuty: jasny i ciemny. Cztery zrzuty — jasny i ciemny z podglądem zamkniętym oraz jasny i ciemny z podglądem otwartym — są wymagane **TYLKO**, gdy podgląd jest nakładką zasłaniającą tabelę.
+- Klasyfikację „panel boczny / nakładka” ustala się mechanicznie dla komponentu faktycznie montowanego przez badany ekran: przez sprawdzenie jego pozycjonowania (`fixed`, `absolute`, `inset-0`, wysoki `z-index` lub równoważny styl). Nie wolno rozstrzygać z pamięci ani przez założenie, że każdy moduł korzysta z tego samego wariantu.
+- Nie wymaga się przefotografowania istniejącego archiwum wstecz. Każdy wcześniejszy wpis odbiorowy, którego kadr nie pokazuje podglądu, musi jednak dostać adnotację wymieniającą z nazwy elementy nieobecne w kadrze, np. „brak w kadrze: blok AI, relacje, akcje”; samo określenie „niepełny” nie wystarcza.
+- Uzasadnienie i historia decyzji: [`ZNALEZISKO_PODGLAD_NIGDY_NIE_FOTOGRAFOWANY.md`](../program/funkcje/ZNALEZISKO_PODGLAD_NIGDY_NIE_FOTOGRAFOWANY.md).
+
 ---
 # CZĘŚĆ C — SPECYFIKACJA TECHNICZNA (wartości mierzalne, z kodu My Work)
 > Twarde liczby: kolory, rozmiary, ramki, odstępy. Źródło: `src/index.css` (tokeny), `tailwind.config.js` (radius/cień), `ModuleMenu3.tsx` + `MyTasksListContent.tsx` (klasy). To jest kontrakt — implementacja MUSI dać te wartości.

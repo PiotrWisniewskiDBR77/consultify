@@ -9,6 +9,18 @@ last_updated: 2026-05-09
 
 # Changelog — Meeting
 
+## 2026-09-01
+
+- **Obalone**: `07_ACCEPTANCE_AND_TESTS.md` opisywał `/meeting` jako
+  placeholder (`ME_MEETING_PLACEHOLDER` → `V4ComingSoonView`) — pomiar
+  dyżuru 237 potwierdził, że kod montuje realny `MeetingHub` na `/meetings`,
+  moduł jest `open`. Zapis „placeholder" zostaje jako historia z adnotacją
+  „obalone 1.09" w `07_ACCEPTANCE_AND_TESTS.md`.
+- Dopisano zmierzony stan trzech bramek dostępu pilota (moduł otwarty, trasa
+  dozwolona, menu z kłódką) i ograniczenie dowodu zrzutu (bitowo identyczny
+  ze zrzutem zwykłej listy). Pełny pomiar:
+  `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
+
 ## 2026-05-10
 
 - Added function-first contract layer for module 13 (`2/2` functions).

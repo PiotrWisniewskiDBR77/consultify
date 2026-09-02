@@ -8,7 +8,9 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { isUUID } from '../../utils/typeGuards.js';
 import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
+import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // ==========================================
 // TOOL DEFINITIONS (OpenAI Function Calling format)
@@ -82,7 +84,7 @@ export const AI_TOOLS: ToolDefinition[] = [
           vault_project_id: {
             type: 'string',
             description:
-              'Project id for vault_scope="project". When omitted, falls back to the projects the caller is a member of.',
+              'Project id for vault_scope="project" — the internal UUID (format: 8-4-4-4-12 hex, e.g. "3fa85f64-5717-4562-b3fc-2c963f66afa6"), NOT the project\'s display name. Read it from the project record already in context (its "id" field) — never invent or guess one. If you only know the project by its name and no id is available in context, pass the exact name as a fallback: it is matched by name within the caller\'s own organization when it is not a valid UUID, and returns no results if the name is unknown or ambiguous. When omitted entirely, falls back to the projects the caller is a member of.',
           },
           // ★ VLT-FOLDERS — drugi, opcjonalny select klocka "Vault-kontekst":
           // folder WEWNĄTRZ wybranego sejfu. Gdy podane, `executeKBSearch`
@@ -564,6 +566,14 @@ export interface ToolExecutionContext {
   sessionId?: string;
   conversationId?: string;
   contextSnapshotId?: string;
+  /**
+   * FIX-206 (pkt 2) — tryb prywatny rozmowy. Ścieżka czatu ustawia go w
+   * `pipelineRequest.context/options`; pętla narzędziowa MUSI go donieść aż
+   * tutaj, bo to on decyduje (przez chatPolicyGateway.resolveScope) czy
+   * retrieval widzi zakresy `org_shared`/`public_kb`, czy tylko prywatne
+   * dokumenty wołającego.
+   */
+  privateMode?: boolean;
 }
 
 /**
@@ -874,15 +884,21 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 }
 
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
+  // FIX-206 (pkt 2): zakresy retrievalu wynikają z decyzji polityki, nie z
+  // domysłu wywołującego. `orgScopeAllowed=false` (tryb prywatny) MUSI realnie
+  // odciąć dokumenty organizacji — inaczej `privateMode` byłby tylko etykietą.
+  let orgScopeAllowed = true;
   try {
     const policyResult = await evaluateRetrievalPolicyDecision({
       consumerClass: 'agent',
       query: args.query,
       organizationId: ctx.organizationId || 'system',
       userId: ctx.userId || 'tool:kb_search',
+      privateMode: Boolean(ctx.privateMode),
     });
+    orgScopeAllowed = policyResult.decision.scopeResolution.allowedScopes.includes('org_shared');
     logger.info(
-      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}, scopes=[${policyResult.decision.scopeResolution.allowedScopes.join(',')}]`
     );
     if (!policyResult.decision.allowed) {
       return JSON.stringify({
@@ -907,7 +923,13 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     const ragService = (ragMod.default || ragMod) as {
       hybridSearch?: (
         query: string,
-        opts?: { organizationId?: string; limit?: number; documentIds?: string[] }
+        opts?: {
+          organizationId?: string;
+          userId?: string;
+          limit?: number;
+          documentIds?: string[];
+          projectIds?: string[];
+        }
       ) => Promise<
         Array<{
           content?: string;
@@ -984,6 +1006,53 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     let folderName: string | undefined;
     let effectiveVaultScope = vaultScope;
     let effectiveProjectId = explicitProjectId;
+
+    // FIX-217 (moduł 17, ODBIOR_217.md, DROGA B) — `vault_project_id` bywa
+    // NAZWĄ projektu, nie identyfikatorem: dyżur 217 dowiódł na żywym modelu
+    // że ono samo sięga po to narzędzie, ale podało
+    // `vault_project_id: "Day217 R3 project"`. `executeKBSearch` się wtedy
+    // zachował poprawnie fail-closed (pusty wynik), ale to zostawiało model
+    // bez realnej odpowiedzi mimo trafnego pytania. Rozpoznaj nazwę → id
+    // WYŁĄCZNIE w obrębie organizacji wołającego (`ctx.organizationId` — ta
+    // sama granica co reszta tej funkcji; NIGDY inna organizacja, nawet przy
+    // identycznej nazwie — to dokładnie granica zamknięta w dyżurach 206/210,
+    // nie otwieramy jej z powrotem). Folder (jeśli podany) jest autorytatywny
+    // i tak nadpisze `effectiveProjectId` niżej, więc pomijamy rozpoznawanie
+    // gdy `requestedFolderId` jest ustawione — nie ma po co odpytywać.
+    if (
+      effectiveVaultScope === 'project' &&
+      effectiveProjectId &&
+      !requestedFolderId &&
+      !isUUID(effectiveProjectId)
+    ) {
+      // Fail-closed na błędzie odczytu: awaria samego rozpoznawania nazwy
+      // (DB niedostępna, itp.) NIE może wywrócić całego wywołania narzędzia
+      // — `effectiveProjectId` zostaje nierozpoznaną wartością, dokładnie
+      // jak przed FIX-217, i gałąź `documentIds.length === 0` niżej i tak
+      // zwróci pusty wynik dla nieznanego `project_id`.
+      try {
+        const { all: dbAllProjectsByName } = await import('../../utils/DbPromise.js');
+        const nameMatches = await dbAllProjectsByName<{ id: string }>(
+          `SELECT id FROM projects WHERE organization_id = ? AND lower(name) = lower(?)`,
+          [ctx.organizationId, effectiveProjectId]
+        );
+        const uniqueMatchIds = Array.from(
+          new Set((nameMatches || []).map((r: any) => String(r.id)).filter(Boolean))
+        );
+        // Dokładnie jedno trafienie → rozpoznane. Zero LUB więcej niż jedno
+        // (niejednoznaczna nazwa) → `effectiveProjectId` zostaje
+        // nierozpoznaną nazwą — fail-closed samo z siebie, nie zgadujemy
+        // między wieloma trafieniami.
+        if (uniqueMatchIds.length === 1) {
+          effectiveProjectId = uniqueMatchIds[0];
+        }
+      } catch (nameLookupErr: any) {
+        logger.warn(
+          `[executeKBSearch] vault_project_id name-resolution failed (fail-closed to unresolved value): ${nameLookupErr?.message || String(nameLookupErr)}`
+        );
+      }
+    }
+
     if (requestedFolderId) {
       const folder = KnowledgeService.getFolderById
         ? await KnowledgeService.getFolderById(ctx.organizationId, requestedFolderId)
@@ -1008,6 +1077,25 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       folderName = folder.name;
       effectiveVaultScope = folder.scope;
       effectiveProjectId = folder.scope === 'project' ? folder.project_id || null : null;
+    }
+
+    // FIX-206 (pkt 2) — egzekucja trybu prywatnego. Polityka (resolveScope)
+    // odcięła `org_shared`/`public_kb`, więc retrieval nie może dotknąć
+    // dokumentów organizacji ani projektów: albo zawężamy do prywatnego sejfu
+    // wołającego, albo — gdy user/klocek jawnie zażądał sejfu org/projektu —
+    // odmawiamy fail-closed (żaden dokument org nie może wejść w prywatną turę).
+    if (!orgScopeAllowed) {
+      if (effectiveVaultScope && effectiveVaultScope !== 'user') {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          privateMode: true,
+          results: [],
+          note: 'Tryb prywatny: sejf organizacji/projektu jest poza zakresem tej rozmowy',
+        });
+      }
+      effectiveVaultScope = 'user';
+      effectiveProjectId = null;
     }
 
     if (effectiveVaultScope) {
@@ -1050,10 +1138,33 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       }
     }
 
+    // FIX-2 (dyżur 210): `documentIds` above is already the caller's
+    // owner-filtered Vault allow-list (KnowledgeService.getDocuments —
+    // scope='user' requires owner_id === ctx.userId). But
+    // `ragService.appendKnowledgeDocAccessFilter` ALSO applies its own
+    // trailing `scope != 'user'` exclusion unconditionally when no `userId`
+    // is passed — so even a document already correctly allow-listed as the
+    // caller's own private doc was silently stripped a second time. Thread
+    // `ctx.userId` (the real, per-request identity — never fabricated) so
+    // that second filter's owner exception can fire.
+    //
+    // FIX-213-6: the SAME thing happens to `scope='project'` docs, and for
+    // the same reason — `buildKnowledgeDocAccessFilter` (inside hybridSearch)
+    // re-applies its own project-membership check on top of the already
+    // project-filtered `documentIds` allow-list, and without `projectIds` its
+    // `scope = 'project'` branch never matches, so those docs get excluded a
+    // second time even for a project member. `memberProjectIds` (queried from
+    // `project_members` for `ctx.userId` above — the same request context
+    // `organizationId`/`userId` come from, no new source invented) already
+    // carries exactly the projects the caller may see; `effectiveProjectId`
+    // narrows that to one project when a specific Vault/folder was selected.
+    const projectIdsForSearch = effectiveProjectId ? [effectiveProjectId] : memberProjectIds;
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
+      userId: ctx.userId,
       limit: 5,
       documentIds,
+      projectIds: projectIdsForSearch,
     });
     return JSON.stringify({
       source: 'knowledge_base',
@@ -1138,11 +1249,13 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const { get: dbGet, all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
+    // FIX-206 (P0): jak wyzej — fail-closed bez kontekstu organizacji.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'assessment', note: 'No organization context' });
 
     const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
-       FROM maturity_assessments WHERE project_id = ? ORDER BY created_at DESC LIMIT 1`,
-      [projectId]
+       FROM maturity_assessments WHERE project_id = ? AND organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [projectId, ctx.organizationId]
     )) as any;
 
     if (!assessment) return JSON.stringify({ source: 'assessment', note: 'No assessment found' });
@@ -1248,20 +1361,24 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     const { all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'initiatives', note: 'No active project' });
+    // FIX-206 (P0, ODBIOR_205_206.md): bez organizacji z kontekstu nie wolno czytac
+    // NICZEGO — audytor zmierzyl wyciek cross-org (org-A + cudzy projectId z ciala
+    // zadania -> nazwa/status/ROI inicjatywy org-B). Fail-closed.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
 
     if (args.initiative_id) {
       const initiative = await dbAll(
         `SELECT id, name, status, priority, progress, cost_capex, cost_opex, expected_roi, start_date, end_date
-         FROM initiatives WHERE id = ? AND project_id = ?`,
-        [args.initiative_id, projectId]
+         FROM initiatives WHERE id = ? AND project_id = ? AND organization_id = ?`,
+        [args.initiative_id, projectId, ctx.organizationId]
       );
       return JSON.stringify({ source: 'initiatives', data: initiative });
     }
 
     const initiatives = await dbAll(
       `SELECT id, name, status, priority, progress, cost_capex, expected_roi
-       FROM initiatives WHERE project_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
-      [projectId]
+       FROM initiatives WHERE project_id = ? AND organization_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
+      [projectId, ctx.organizationId]
     );
 
     return JSON.stringify({
@@ -1366,4 +1483,17 @@ export function getAvailableTools(options?: {
   }
 
   return tools;
+}
+
+/** Day206: model-visible READ-only subset. WRITE tools remain proposals for 17-C. */
+export function getReadToolDefinitions(): Array<{
+  name: string;
+  description: string;
+  parameters: ToolDefinition['function']['parameters'];
+}> {
+  return AI_TOOLS.filter((tool) => !SIDE_EFFECT_TOOLS.has(tool.function.name)).map((tool) => ({
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters,
+  }));
 }

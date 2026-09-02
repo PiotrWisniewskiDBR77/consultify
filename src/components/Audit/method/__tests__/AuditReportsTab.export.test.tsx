@@ -8,6 +8,9 @@
  * w kebabie bloku Details podglądu listy Raportów, za tą samą flagą co
  * reszta łańcucha (`ff_audits_report_chain`), którą test włącza jawnie —
  * bez dotykania domyślnego stanu produkcyjnego (OFF).
+ *
+ * FIX-187: bliźniak PDF (`export.pdf`) obok DOCX — kanoniczny drugi slot
+ * `details.extraActions` (patrz `StandardPreview.tsx`), ta sama flaga.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -60,7 +63,7 @@ async function openDetailsKebab() {
   fireEvent.click(trigger);
 }
 
-describe('AuditReportsTab DOCX export (FIX-1)', () => {
+describe('AuditReportsTab DOCX/PDF export (FIX-1, FIX-187)', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn());
     vi.stubGlobal('URL', {
@@ -105,7 +108,24 @@ describe('AuditReportsTab DOCX export (FIX-1)', () => {
     await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
   });
 
-  it('flag ON: a backend error surfaces inline in the preview panel, not as alert()', async () => {
+  it('flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187)', async () => {
+    flag(true);
+    vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['%PDF']), { status: 200 }));
+    await openReportPreview();
+    await openDetailsKebab();
+
+    const downloadItem = await screen.findByText('Download PDF');
+    fireEvent.click(downloadItem);
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith('/api/audits/reports/rep-41/export.pdf', {
+        headers: {},
+      })
+    );
+    await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
+  });
+
+  it('flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX)', async () => {
     flag(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
@@ -117,6 +137,23 @@ describe('AuditReportsTab DOCX export (FIX-1)', () => {
     await openReportPreview();
     await openDetailsKebab();
     fireEvent.click(await screen.findByText('Download DOCX'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
+    expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it('flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187)', async () => {
+    flag(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    await openReportPreview();
+    await openDetailsKebab();
+    fireEvent.click(await screen.findByText('Download PDF'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
     expect(alertSpy).not.toHaveBeenCalled();

@@ -1,0 +1,16 @@
+NOWY — DYŻUR 227
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_227_GAMMA_GEOMETRIA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 227.
+
+Marker: 142686b772
+Zasoby wyłączne: baza 6171, runtime 5130 i 5131.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

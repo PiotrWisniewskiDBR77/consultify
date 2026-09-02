@@ -172,7 +172,12 @@ router.get(
         ? req.params.projectId[0]
         : req.params.projectId;
       if (!projectId) return res.status(400).json({ error: 'projectId is required' });
-      const escalations = await service.getEscalations(projectId, status as string | undefined);
+      const organizationId = req.organizationId || req.user?.organizationId || '';
+      const escalations = await service.getEscalations(
+        projectId,
+        organizationId,
+        status as string | undefined
+      );
       return res.json(escalations);
     } catch (err: any) {
       // Enrichment read (project escalations panel) — degrade to safe default instead of 500.
@@ -209,7 +214,8 @@ router.post(
         ? req.params.projectId[0]
         : req.params.projectId;
       if (!projectId) return res.status(400).json({ error: 'projectId is required' });
-      const result = await service.runAutoEscalation(projectId);
+      const organizationId = req.organizationId || req.user?.organizationId || '';
+      const result = await service.runAutoEscalation(projectId, organizationId);
       return res.json(result);
     } catch (err: any) {
       // Write (triggers escalation actions) — never fail-soft.

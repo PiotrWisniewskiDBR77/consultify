@@ -14,7 +14,6 @@ import {
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { ActionContext, ChatActionPayload } from '@/types/domain/chatActions';
 import { getArtifactPath } from '@/utils/artifactLinks';
-import { initiativeDocumentPath } from '@/utils/initiativeLinks';
 
 import { validateActionPayload } from './chatActionRegistry';
 
@@ -112,58 +111,6 @@ export async function handleChatAction(
         };
       }
 
-      case 'CREATE_TASK': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Task title is required' };
-        }
-        await Api.post('/tasks', {
-          title,
-          description: String(params.description || ''),
-          priority: String(params.priority || 'medium'),
-          status: 'todo',
-          dueDate: params.dueDate || null,
-          initiativeId: params.initiativeId || deps.context.initiativeId || null,
-        });
-        return { success: true };
-      }
-
-      case 'CREATE_DECISION': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Decision title is required' };
-        }
-        await Api.post('/decisions', {
-          title,
-          description: String(params.description || ''),
-          priority: String(params.priority || 'medium'),
-          status: 'pending',
-          dueDate: params.dueDate || null,
-          initiativeId: params.initiativeId || deps.context.initiativeId || null,
-        });
-        return { success: true };
-      }
-
-      case 'CREATE_INITIATIVE': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Initiative title is required' };
-        }
-        const created = (await Api.post('/initiatives', {
-          title,
-          description: String(params.description || ''),
-          templateId: params.templateId || undefined,
-          projectId: deps.context.projectId,
-        })) as { id?: string; initiative?: { id?: string } } | undefined;
-        // M13 flow redesign: chat-created initiative lands the user straight
-        // in its DOCUMENT (canonical deep link), not in a list/staging view.
-        const createdId = String(created?.id || created?.initiative?.id || '').trim();
-        if (createdId) {
-          deps.navigate(initiativeDocumentPath(createdId));
-        }
-        return { success: true, data: createdId ? { createdId } : undefined };
-      }
-
       case 'GENERATE_REPORT': {
         if (deps.onOpenReportBuilder) {
           deps.onOpenReportBuilder({
@@ -172,9 +119,7 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
-          deps.navigate(
-            `/reports/builder?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}${params.templateId ? `&templateId=${params.templateId}` : ''}`
-          );
+          deps.navigate('/document-studio');
         }
         return { success: true };
       }
@@ -187,8 +132,11 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
+          const templateId = String(params.templateId || '').trim();
           deps.navigate(
-            `/presentations?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}`
+            templateId
+              ? `/prezentacje?templateArtifactId=${encodeURIComponent(templateId)}`
+              : '/prezentacje'
           );
         }
         return { success: true };
@@ -287,7 +235,7 @@ export async function handleChatAction(
         if (deps.onOpenKpiDrawer) {
           deps.onOpenKpiDrawer(kpiId, params.initiativeId as string | undefined);
         } else {
-          deps.navigate(`/benefits?kpi=${encodeURIComponent(kpiId)}`);
+          deps.navigate(`/results/kpi/${encodeURIComponent(kpiId)}`);
         }
         return { success: true };
       }
@@ -338,7 +286,7 @@ export async function handleChatAction(
         const qs = new URLSearchParams({ tab: 'templates' });
         if (params.templateType) qs.set('type', String(params.templateType));
         if (params.category) qs.set('category', String(params.category));
-        deps.navigate(`/presentations?${qs.toString()}`);
+        deps.navigate(`/prezentacje?${qs.toString()}`);
         return { success: true };
       }
 

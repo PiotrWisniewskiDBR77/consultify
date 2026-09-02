@@ -8,6 +8,27 @@ last_updated: 2026-07-29
 
 # Chat — AS-IS
 
+> ### ★ AKTUALIZACJA 2026-09-01 (dyżur 223) — governed proposal potwierdzona na realnej ścieżce
+>
+> Pełny pomiar: `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §2.
+> Realny render (nie dev-render, nie storybook): wiadomość `execution_proposal`
+> przechodzi przez prawdziwy `UnifiedChatPanel` i `MessageRenderer.tsx` na
+> `/chat/:conversationId`; DOM potwierdził kartę „Governed execution proposal",
+> wiadomość użytkownika i kompozytor, light/dark. **Nie klikano**
+> Approve/Reject/View run — to dowód renderu, nie wykonania cyklu życia.
+>
+> **Sprostowanie liczby „widm" akcji czatu:** brief wcześniej mówił o „~10";
+> zmierzona liczba to **11**. Po wygaszeniu trzech (`CREATE_TASK`,
+> `CREATE_DECISION`, `CREATE_INITIATIVE` — dostały realnych producentów przez
+> governed `CREATE_DRAFT_*`) zostało **8 z 14** zadeklarowanych typów akcji bez
+> żadnego producenta w UI: `START_TOOL`, `OPEN_PREVIEW`, `ASSIGN_INTERVIEW`,
+> `START_ARTIFACT_REVIEW`, `CHECK_TRUST_STATE`, `ANALYZE_STATEMENT`,
+> `REVIEW_MODEL`, `CHECK_LANE_STATUS` — każdy wymaga osobnej decyzji
+> właściciela, nie jest to luka techniczna do domknięcia bez rozstrzygnięcia.
+>
+> Canvas **bez zmiany** — pozostaje `NO_GO` (patrz niżej), dyżur 223 nie
+> dotyczył Canvas.
+
 > ### ★ WEJŚCIE DO CANVAS — PYTANIE ZAMKNIĘTE, ALE NIEWYKREŚLONE (2026-08-29)
 >
 > `00_META.md` §Open Questions nadal pyta, które wejście uruchamia Canvas —

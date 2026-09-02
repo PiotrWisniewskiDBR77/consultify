@@ -334,3 +334,16 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+
+## Day 239 — pomiar dwóch magazynów zadań (2026-09-01)
+
+Stan: `MEASURED_FOR_OWNER_DECISION`; bez migracji i bez naprawy. Pełny raport: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY239_REALIZACJA_REPORT.md`.
+
+- Świeży marker po pełnym łańcuchu 880 migracji tworzy `tasks` z 80 kolumnami; `owner_id` pochodzi z późniejszej migracji (`server/migrations/20260127_pmo_task_fields.sql:6`).
+- Kanoniczny `ExecutionTask` ma 17 pól najwyższego poziomu w `payload_json JSONB`, nie osobną znormalizowaną tabelę (`server/src/domain/initiatives-execution/executionWork.ts:25-50`; `server/migrations/932_initiatives_execution_material_commands.sql:33-40`).
+- Zwykłe mutacje legacy są odcinane kodem `409` przed handlerami (`server/src/middleware/executionSpineLegacyReadOnly.middleware.ts:24-41`; montaż `server/src/routes/pmo/tasks.routes.ts:67`), podczas gdy GET-y pozostają osiągalne przez `server/src/Gateway.ts:903`.
+- Front czyta oba magazyny: legacy m.in. przez `src/services/api/tasks.api.ts:85-181`, a kanon przez `src/services/initiatives-execution/runtimeApi.ts:24-46`; Execution Hub importuje kanoniczny reader (`src/components/Execution/ExecutionHub.tsx:88`).
+- Własny log realnego PostgreSQL potwierdził, że jedno `execution.task.create` zapisuje w jednej transakcji pięć tabel: stan, relacje, audyt, outbox i paragon. Raport podaje zewnętrzny artefakt i sumę SHA-256.
+- Klasyfikacja Day 239 wskazuje 64 z 80 kolumn legacy bez prostego odpowiednika kanonicznego oraz osobne komentarze bez pola kanonicznego; jest to promień możliwej utraty, nie liczba niepustych wartości na realnej bazie (`executionWork.ts:25-50`; `server/migrations/000_initdb_core_tables.sql:234-241`).
+- Jedyna liczba realnego środowiska pozostaje historycznym, cudzym pomiarem z 31.08: 467 zadań legacy, 411 bez ownera, 265 bez inicjatywy, 49 bez wykonawcy, 195 bez terminu i 467 bez SLA (`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY197_MIGRACJA_E1_REPORT.md:253-259`). Nie została odświeżona z powodu zakazu dostępu do demo/staging.
+- Decyzja A/B/C pozostaje `PENDING`: legacy-only zachowuje szerokość danych, canonical-only zachowuje kontrolowany Runtime-v1 kosztem niezamapowanych danych, a jawne współistnienie zachowuje oba kosztem rosnącego uzgodnienia i konfliktów. Szczegóły nieodwracalności audytu: `server/migrations/932_initiatives_execution_material_commands.sql:82-115`.

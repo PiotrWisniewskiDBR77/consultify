@@ -1447,6 +1447,21 @@
       "avgProjectDuration": "Avg. Project Duration",
       "performanceScore": "Performance Score",
       "scoreBreakdown": "Score Breakdown",
+      "vsLastQuarter": "vs last quarter",
+      "newClients": "+{{count}} new",
+      "thisQuarter": "this quarter",
+      "months": "{{count}} months",
+      "good": "Good",
+      "slow": "Slow",
+      "average": "average",
+      "responses": "{{count}} responses",
+      "governedRuntime": "governed runtime",
+      "stable": "stable",
+      "governedRuntimeSnapshot": "Governed runtime snapshot",
+      "calculating": "Calculating...",
+      "clientAcquisition": "Client Acquisition",
+      "projectDelivery": "Project Delivery",
+      "certificationProgress": "Certification Progress",
       "freshHint": "Your data will appear here after your first referrals and commission transactions."
     },
     "certification": {
@@ -1462,7 +1477,49 @@
       "deadline": "Deadline",
       "issued": "Issued",
       "validUntil": "Valid until",
-      "certificateUnavailable": "Certificate unavailable"
+      "certificateUnavailable": "Certificate unavailable",
+      "learningPathDesc": "Complete courses to earn certifications",
+      "noCertificates": "Complete courses and pass exams to earn certificates",
+      "modulesProgress": "{{completed}}/{{total}} modules",
+      "hideModules": "Hide modules",
+      "viewModules": "View modules",
+      "openGuide": "Open guide",
+      "minutes": "{{count}} min",
+      "reviewRequired": "Review required",
+      "openArticle": "Open article",
+      "completePrevious": "Complete previous courses to unlock",
+      "courseExam": "{{name}} exam",
+      "takeExam": "Take exam",
+      "examStatus": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "available": "Available to take",
+        "completeAcademy": "Complete academy first"
+      },
+      "score": "Score",
+      "apiStatus": {
+        "completed": "Completed",
+        "in_progress": "In progress",
+        "in-progress": "In progress",
+        "not_started": "Not started",
+        "locked": "Locked",
+        "not_required": "Not required",
+        "prerequisite_incomplete": "Prerequisite incomplete",
+        "academy_incomplete": "Academy incomplete"
+      },
+      "status": {
+        "completed": "Completed",
+        "inProgress": "In progress",
+        "locked": "Locked",
+        "notRequired": "Not required",
+        "prerequisiteIncomplete": "Prerequisite incomplete",
+        "academyIncomplete": "Academy incomplete",
+        "unknown": "Unknown status"
+      },
+      "examMode": {
+        "review": "Operator review",
+        "exam": "Exam-based"
+      }
     },
     "clients": {
       "organizations": "Organizations",
@@ -1474,19 +1531,28 @@
       "users": "Team Members",
       "usersDesc": "People in your partner organization",
       "usersEmpty": "No team members yet",
+      "usersCount": "{{count}} users",
+      "targetDate": "Target",
+      "industryUnspecified": "Unspecified",
       "col": {
         "organization": "Organization",
         "assessment": "Assessment",
         "status": "Status"
       },
       "status": {
-        "active": "Active"
+        "active": "Active",
+        "onboarding": "Onboarding",
+        "inactive": "Inactive",
+        "unknown": "Unknown status"
       }
     },
     "resources": {
       "desc": "Download partner toolkit resources",
       "empty": "No resources available in this category",
-      "downloadError": "Couldn't download the resource."
+      "downloadError": "Couldn't download the resource.",
+      "canonicalDocs": "Canonical partner docs",
+      "academyStatus": "Academy status",
+      "openGuide": "Open supporting guide"
     },
     "profile": {
       "companyInfo": "Company Info",
@@ -1496,7 +1562,19 @@
       "regions": "Regions",
       "regionsDesc": "Select the regions you operate in",
       "publicListing": "Public Listing",
-      "publicListingDesc": "Control your visibility in the partner directory"
+      "publicListingDesc": "Control your visibility in the partner directory",
+      "contactEmail": "Contact email",
+      "phone": "Phone",
+      "website": "Website",
+      "saveSpecializations": "Save specializations",
+      "saveRegions": "Save regions",
+      "directoryVisibility": "Directory visibility",
+      "directoryVisibilityDesc": "Show your profile in the public partner directory",
+      "preview": "Preview",
+      "yourCompany": "Your company",
+      "partnerTier": "Partner",
+      "noRegions": "No regions selected",
+      "noSpecializations": "No specializations selected"
     },
     "home": {
       "title": "Home",
@@ -1655,6 +1733,9 @@
       "v8ThisMonth": "Governed this month",
       "v8Pending": "Governed pending",
       "v8ReadyForPayout": "Governed ready for payout",
+      "transactionsPeriod": "{{count}} transactions • {{from}} to {{to}}",
+      "completedAt": "Completed {{date}}",
+      "reference": "Ref",
       "col": {
         "customer": "Customer",
         "type": "Type",
@@ -1666,7 +1747,12 @@
       "status": {
         "paid": "Paid",
         "approved": "Approved",
-        "pending": "Pending"
+        "pending": "Pending",
+        "completed": "Completed",
+        "processing": "Processing",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "unknown": "Unknown status"
       }
     },
     "payouts": {
@@ -1692,7 +1778,15 @@
       }
     },
     "referrals": {
-      "deleteFailed": "Failed to delete deck"
+      "deleteFailed": "Failed to delete deck",
+      "campaignName": "Campaign Name",
+      "utmSource": "UTM Source",
+      "utmMedium": "UTM Medium",
+      "utmCampaign": "UTM Campaign",
+      "tipLinkedIn": "Share your link on LinkedIn with a compelling message about digital transformation",
+      "tipCampaigns": "Use campaign links to track which channels perform best",
+      "tipSignature": "Add your referral code to your email signature",
+      "tipCaseStudies": "Share case studies alongside your referral link for higher trust"
     },
     "canonicalRuntime": {
       "title": "Current partner programme status",
@@ -1729,7 +1823,8 @@
       }
     },
     "common": {
-      "comingSoon": "Coming soon"
+      "comingSoon": "Coming soon",
+      "progress": "Progress"
     }
   },
   "common": {
@@ -2457,6 +2552,16 @@
     "knowledge": "Knowledge Base",
     "organization": "Organization",
     "adminPanel": "Admin Panel",
+    "adminSection": {
+      "overview": "Overview",
+      "people": "People & Access",
+      "security": "Security & Identity",
+      "billing": "Billing & FinOps",
+      "ai": "AI Governance & Operations",
+      "integrations": "Integrations & Sync",
+      "audit": "Audit, Compliance & Risk",
+      "operations": "Organization Operations"
+    },
     "logOut": "Log Out",
     "chat": "AI Chat",
     "aiChat": "Chat",
@@ -20314,9 +20419,15 @@
         "unknown": "Unknown",
         "reviewState": "Review state: {{state}}",
         "notAvailable": "n/a",
-        "modelPosture": "Model posture",
-        "budget": "Budget: {{status}}",
+        "unavailable": "Unavailable (check failed)",
+        "modelPosture": "AI controls",
+        "internetEnabled": "Internet enabled",
+        "internetDisabled": "Internet disabled",
+        "audit": "Audit: {{status}}",
+        "required": "required",
+        "notRequired": "not required",
         "contextControls": "Context controls",
+        "externalContext": "External context: {{status}}",
         "externalContextAllowed": "External context allowed",
         "externalContextRestricted": "External context restricted",
         "title": "AI Governance & AI Operations",
@@ -26219,7 +26330,13 @@
       },
       "startNew": "Start new",
       "emptyRecent": "No recent documents",
-      "emptySaved": "No saved documents"
+      "emptySaved": "No saved documents",
+      "briefModal": {
+        "title": "What should this presentation be about?",
+        "placeholder": "Describe the goal, audience, key facts, dates, and numbers.",
+        "next": "Next",
+        "skip": "Skip"
+      }
     },
     "preview": {
       "provenance": {
@@ -27038,6 +27155,10 @@
     "operatorBriefUnavailable": "No operator brief is available.",
     "emptyState": {
       "description": "Schedule your first meeting to start tracking agendas and follow-ups."
+    },
+    "preview": {
+      "propertyLabel": "Property",
+      "valueLabel": "Value"
     },
     "bulk": {
       "confirmDeleteTitle": "Delete selected meetings?",
@@ -27933,7 +28054,16 @@
         "editReplacementLabel": "Selection edit replacement",
         "editReplacementPlaceholder": "Write the replacement Markdown here...",
         "previewEdit": "Preview edit",
-        "clear": "Clear"
+        "clear": "Clear",
+        "title": "AI on selection",
+        "selected": "Selection",
+        "empty": "Select a fragment of text to use AI actions.",
+        "expand": "Expand idea",
+        "shorten": "Shorten",
+        "rewrite": "Rewrite",
+        "suggest": "Suggest",
+        "promptPlaceholder": "Instruction for Teresa on the selected fragment...",
+        "preview": "Preview AI edit"
       },
       "manualEdit": {
         "title": "Manual editing",
@@ -27997,7 +28127,8 @@
         "untitled": "Untitled",
         "seedBlank": "I am starting a blank document from scratch. Ask me questions to nail down the goal, context, and a first draft direction.",
         "seedFromTemplate": "I started a new document \"{{title}}\" from a template. Help me develop it — suggest what to fill in first.",
-        "seedFromCanvas": "I started this new document from an existing canvas (\"{{title}}\"). Help me develop it further from here."
+        "seedFromCanvas": "I started this new document from an existing canvas (\"{{title}}\"). Help me develop it further from here.",
+        "legacyFromTemplate": "New Canvas from template"
       },
       "menuAria": "Canvas menu",
       "save": "Save",
@@ -28068,12 +28199,51 @@
         "researchSession": "ResearchSession"
       },
       "workflowTemplate": "Workflow template",
+      "workflowTemplates": {
+        "market_research_to_report": {
+          "label": "Market research to report",
+          "description": "Research narrative, evidence map and report output."
+        },
+        "meeting_note_to_initiatives": {
+          "label": "Meeting note to initiatives",
+          "description": "Decisions, owners, initiative shortlist and brief."
+        },
+        "kpi_review_to_dashboard": {
+          "label": "KPI review to dashboard",
+          "description": "KPI signals, dashboard plan and table output."
+        },
+        "client_proposal_to_deck": {
+          "label": "Client proposal to deck",
+          "description": "Proposal storyline, deck outline and presentation output."
+        },
+        "decision_memo_to_execution_plan": {
+          "label": "Decision memo to execution plan",
+          "description": "Decision logic, milestones and execution plan."
+        }
+      },
+      "startWorkflow": "Start workflow",
+      "startingWorkflow": "Starting...",
+      "finalizeResearchReport": "Finalize research report",
+      "finalizingResearchReport": "Finalizing...",
       "groups": {
         "view": "View",
         "edit": "Edit & AI",
         "file": "File, export & workspace",
-        "diagnostics": "Diagnostics & workflow",
+        "workflow": "Workflow",
         "advanced": "Advanced"
+      },
+      "versioning": {
+        "title": "Versioning"
+      },
+      "advanced": {
+        "retryProjection": "Retry projection",
+        "reset": "Reset",
+        "showChanges": "Show changes",
+        "diffSummary": "{{added}} lines added, {{removed}} lines removed"
+      },
+      "dataset": {
+        "analysisNote": "Deterministic Canvas analysis. No code execution.",
+        "readyPrefix": "Dataset ready:"
       }
     },
     "aiStream": {
@@ -28247,7 +28417,9 @@
       "unknown": "unknown"
     },
     "action": {
-      "reject": "Reject"
+      "approve": "Approve",
+      "reject": "Reject",
+      "inspect": "View run"
     }
   },
   "focusMode": {

@@ -48,10 +48,10 @@ tests/
 /odpowiedzi/
 /public/videos/
 /public/videos/**
-/public/images/
-/public/images/**
-/public/assets/
-/public/assets/**
+# public/images + public/assets: POTRZEBNE frontendowi (hero, logotypy, grafiki UI).
+# Wykluczenie ich powodowalo 404 na stagingu (deploy przez `railway up` respektuje ten plik,
+# demo buduje sie prosto z repo i defektu nie widzialo). 2026-08-31.
+# Filmy (/public/videos, 26 MB) zostaja wykluczone — nie sa uzywane w UI.
 /public/screenshots/
 /public/screenshots/**
 /public/demo/

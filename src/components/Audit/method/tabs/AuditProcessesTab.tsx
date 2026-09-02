@@ -207,14 +207,21 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       id: 'pack',
       label: isPolish ? 'Pakiet' : 'Pack',
       width: '180px',
-      render: (row: AuditProgramSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[160px]">
-          {packTitleById.get(row.packId) ||
+      render: (row: AuditProgramSummary) => {
+        const packTitle =
+          packTitleById.get(row.packId) ||
             (row.packTitle
               ? `${row.packTitle}${row.packVersion ? ` v${row.packVersion}` : ''}`
-              : '—')}
-        </span>
-      ),
+              : '—');
+        return (
+          <span
+            className="text-xs text-c-text-secondary truncate block max-w-[160px]"
+            title={packTitle === '—' ? undefined : packTitle}
+          >
+            {packTitle}
+          </span>
+        );
+      },
     },
     {
       id: 'lifecycleState',
@@ -268,7 +275,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
         // wewnętrzny padding) — działa dla KAŻDEGO nazwiska, nie tylko tego
         // najdłuższego w dzisiejszych danych demo.
         return (
-          <span className="text-sm text-c-text truncate block max-w-[140px]">
+          <span
+            className="text-sm text-c-text truncate block max-w-[140px]"
+            title={name || undefined}
+          >
             {name || <span className="text-slate-400">—</span>}
           </span>
         );

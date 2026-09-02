@@ -127,6 +127,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { buildExecutionSourceRelations } from './executionSourceRelations';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
@@ -5598,6 +5599,13 @@ Please return:
       // all chrome comes from the Standard* facades.
       const selectedRow = selectedSummaryInitiative;
       const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
+      const sourceRelations = buildExecutionSourceRelations(
+        {
+          sourceType: previewModel?.sourceType,
+          sourceFramework: (selectedRow as any)?.sourceFramework,
+        },
+        t('common.source', 'Source')
+      );
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5723,11 +5731,7 @@ Please return:
                     ],
                     onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
                   }}
-                  relations={
-                    previewModel.sourceType
-                      ? [{ label: `${t('common.source', 'Source')}: ${previewModel.sourceType}` }]
-                      : []
-                  }
+                  relations={sourceRelations}
                   actions={listPreviewActions}
                 />
               </aside>

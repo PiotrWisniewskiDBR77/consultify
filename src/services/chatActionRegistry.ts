@@ -116,10 +116,6 @@ export function checkCapability(
   if (action === 'RECORD_KPI' && !context.projectId) {
     return { action, allowed: false, reason: 'Project context required' };
   }
-  if (action === 'CREATE_INITIATIVE' && !context.projectId) {
-    return { action, allowed: false, reason: 'Project context required' };
-  }
-
   return { action, allowed: true };
 }
 

@@ -41,6 +41,12 @@ owner/admin action, stale proposal, duplicate prevention and foreign tenant.
 
 ## Day 100 current-state packet — 2026-08-29
 
+**Day 222 — 2026-09-01.** Na markerze `9fb7942a01` podłączono komentarz generowany
+przez AI do istniejącego zapisu komentarza zadania (POST, następnie GET readback) oraz
+usunięto bezcelową akcję pobierania z wiersza RACI, którego typ `Stakeholder` nie ma
+załącznika. Gate modułu pozostaje bez zmian (`NOT_ACCEPTED`). Dowody, ograniczenia i
+commity: `../../codex/CODEX_DAY222_MOJAPRACA_REPORT.md`.
+
 Status: `PARTIAL / OWNER_REVIEW_POSSIBLE_FOR_INBOX_TASKS_DECISIONS / NOT_ACCEPTED`.
 
 On exact marker `8c7a853a6cb82c9b498210049c5487ea033caa9b`, an owned local
@@ -250,3 +256,30 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+
+## Dzień 261 — koszt wariantów `005`/`008` i domknięcie kreatora formularzy
+
+Pomiar na `df7f13056f` obalił zapisany w `MYW-CV-REC-005` fakt o zerowej liczbie
+wywołań `Api.createVaultFolder`: `src/views/vault/VaultFoldersTable.tsx:140`
+wywołuje tę metodę, a `ClientDocumentsVault.tsx:273` montuje tabelę na poziomie
+listy w trybie `folders`. Nie zmieniam historycznych wierszy ani klasyfikacji
+`FALA_4_OWNER_DECISION`; poniżej zapisuję aktualny koszt dwóch interpretacji.
+
+| Wariant | Co dokładnie | Koszt i uzasadnienie | Ryzyko | Migracja / nowy endpoint |
+| --- | --- | --- | --- | --- |
+| (a) `008` obowiązuje wewnątrz otwartego sejfu, a `005` dotyczy listy | Zachować brak tworzenia w toolbarze otwartego sejfu i uznać istniejący przycisk `Nowy folder` w `VaultFoldersTable` za realizację prośby na poziomie listy. Endpoint `POST /vault-folders` przyjmuje opcjonalny `parentFolderId` i wymagany `scope`; istniejący konsument wywołuje go bez wymuszenia rodzica. | **Mały (dokumentacyjny):** kod, endpoint i konsument już istnieją; pozostaje decyzja właściciela, czy widok `folders` jest zamierzonym znaczeniem „this level”, oraz korekta statusu historycznego w osobnym, autoryzowanym kroku. | Błędne utożsamienie listy folderów z listą sejfów może ukryć nadal niezrealizowaną intencję dotyczącą tworzenia sejfu. | **Nie**, dla obecnego zachowania. Tworzenie nowego sejfu nadal wymagałoby osobnego kontraktu backendowego i prawdopodobnie migracji. |
+| (b) regresja `008` jest zbyt szeroka | Po decyzji właściciela rozluźnić zamknięty kontrakt `VaultDocumentsView.openedToolbar.ownerFeedback.test.ts`, ponownie wpiąć `FolderCreateDialog` w toolbar otwartego sejfu i zachować automatyczne odświeżanie. Historia wskazuje `d3160e86c2` jako istniejący punkt odniesienia dla wspólnego dialogu, ale nie zawiera gotowego commitu z tym wiringiem w `VaultDocumentsView`. | **Średni:** komponent, API i wzorzec istnieją, lecz potrzebna jest świadoma zmiana decyzji `CLOSED`, implementacja UI oraz regresja zachowania na ekranie. | Ponowne złamanie zaakceptowanego braku tworzenia na tym poziomie i niespójność z dosłowną uwagą `008`. | **Nie**, jeżeli obecny `POST /vault-folders` i jego `parentFolderId` odpowiadają wybranej semantyce. |
+
+**Status quo (bez kosztu implementacyjnego):** pozostawić tworzenie folderu w
+widoku listy folderów i brak tworzenia w otwartym sejfie, bez twierdzenia, że
+rozstrzyga to sprzeczne intencje właściciela. Do samodzielnego rozstrzygnięcia
+zabrakło wskazania, czy „this level” oznacza listę sejfów, listę folderów, czy
+toolbar wnętrza sejfu.
+
+| ID | Data odkrycia | Status | Dowód |
+| --- | --- | --- | --- |
+| `MYW-FORMBUILDER-001` | 2026-09-01 | `ZROBIONE_W_KODZIE` | Commit `d0ef02897b` jest przodkiem `df7f13056f`. Własna mutacja do wersji `d0ef02897b~1` dała 2 czerwone i 1 zielony przypadek kontraktu `IdeaTableTool.formBuilderWiring.contract.test.ts`; po przywróceniu bieżącego pliku wszystkie 3 przypadki przeszły, a `git diff -- IdeaTableTool.tsx` był pusty. Pięć zmierzonych wywołań `setPlatformTab('forms')` prowadzi do istniejącego `FormsIndex`, bez starego modala z literałem formularza. |
+
+Bramka modułu pozostaje bez zmian:
+`DAY100_PARTIAL_OWNER_PACKET / 3_OF_5_SURFACES_HAVE_FULL_STATE /
+CORE_DESIGN_TASKS_REQUIRED / NOT_ACCEPTED`.

@@ -541,6 +541,32 @@
       "port": 3354
     },
     {
+      "name": "fix214-adopt-draft-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "6353",
+        "--strictPort"
+      ],
+      "port": 6353
+    },
+    {
+      "name": "day232-a3-agent-decku",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "6822",
+        "--strictPort"
+      ],
+      "port": 6822
+    },
+    {
       "name": "triada-153-crimson-naprawa",
       "runtimeExecutable": "npx",
       "runtimeArgs": [

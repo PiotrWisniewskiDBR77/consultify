@@ -8,6 +8,25 @@ last_reviewed: 2026-07-31
 
 # Organization — aktualny kontrakt funkcjonalny
 
+> ### ★ STAN ZMIERZONY 2026-09-01 (dyżur 236) — pełny pomiar: `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`
+>
+> **Obalone 1.09.** `docs/FUNCTIONAL_DOCUMENTATION.md:55` nosi zapis
+> **„CLOSED_FINAL 2026-08-25"**. To zamknięcie opierało się na akcepcie
+> **prototypu** (`DEC-2026-08-26-78`), nie na odbiorze realnego builda —
+> `DEC-2026-08-25-74` nazywa to wzorcem *RUNTIME-IDENTITY-MISMATCH*. Odbiór
+> wizualny realnego builda **nigdy nie wrócił do rejestru jako akcept
+> właściciela**.
+>
+> **Flaga `orgRedesignV1` (`src/utils/orgRedesignFlag.ts:86-93`) ma realny
+> default OFF**, mimo że nagłówek pliku (linia 19, odnosząc się do linii 35)
+> mówi „DEFAULT ON". To nie jest sprzeczność ukryta — ten sam plik w
+> komentarzu przy `readEnvFlag()` (linie 54-58) tłumaczy świadome cofnięcie
+> **29.08 do czasu odbioru wizualnego**. Skutek: Organizacja renderuje dziś
+> **21 pozycji w 6 grupach** (stary układ), a **11 przeprojektowanych ekranów
+> jest nieosiągalnych** bez ręcznego przełączenia flagi. Stan pozostaje
+> `OWNER_NOT_REVIEWED`. Dwa zastałe testy (`src/utils/__tests__/orgRedesignFlag.test.ts:36`
+> i sąsiedni) nadal oczekują starej wartości ON i realnie się nie powodzą.
+
 ## Cel
 
 Organization jest kanoniczną, kontrolowaną pamięcią biznesową firmy. Utrzymuje
@@ -28,7 +47,7 @@ limity, domeny i konfiguracja należą do Admin Panel albo Settings.
 | `ORG-F-004` | Strategia, decyzje i założenia | AS-IS / partial |
 | `ORG-F-005` | Wiedza, źródła i Knowledge Graph | AS-IS / partial |
 | `ORG-F-006` | Typy twierdzeń, konflikty, aktualność i snapshot | AS-IS / partial |
-| `ORG-F-007` | Przegląd UI/UX i nawigacji według kanonu sekcji 2026 | TO-BE / P2 |
+| `ORG-F-007` | Przegląd UI/UX i nawigacji według kanonu sekcji 2026 | ZBUDOWANE, dziś ZA FLAGĄ OFF (11 ekranów; zmierzone 2026-09-01, patrz adnotacja wyżej) |
 
 ## Przepływ, dane i governance
 

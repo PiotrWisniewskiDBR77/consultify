@@ -49,3 +49,12 @@ policy_not_found). Warunki twarde przed flagą:
 dyżur 180; (6) decyzja właściciela o fail-open dla 3 serwisów; (7) brak timeoutu
 kroku (F6, świadomie poza zakresem — włączać tylko z monitoringiem); (8) pomiar
 przypadku (b) krok>60s — dyżur 180.
+
+## ★★ ZAOSTRZENIE (autor instrukcji 180, zweryfikowane w kodzie)
+Trasa `POST /api/ai/agent-plan` W OGÓLE nie przekazuje `canonicalRunId` — jedyny
+wołacz z tym polem to skrypt dowodowy. **Każdy plan w produkcie ma
+`canonical_run_id = NULL`, więc WSZYSTKIE dowody limitów z dyżuru 174 dotyczą
+ścieżki, której produkt nie używa.** Warunek K6 (3) jest twardszy, niż zapisano:
+bez dyżuru 180 limity agenta to biblioteka bez wywołania. Do tego okno (b) dzieli
+przeciek dzierżawy z a2 (heartbeat-error zapamiętywany i rzucany po powrocie
+narzędzia — gałąź cancelled z FIX-174 martwa w tym oknie).

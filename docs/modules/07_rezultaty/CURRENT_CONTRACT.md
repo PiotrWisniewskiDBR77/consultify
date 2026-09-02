@@ -66,6 +66,21 @@ kompatybilnego przekierowania do docelowego `/results`.
 API V8 Results istnieje. Moduł jest oznaczony w menu jako beta, a dokumentacja
 nie ma jeszcze kompletnego dowodu lifecycle KPI i ROI.
 
+**Pomiar 2026-09-01** (pełne cytaty:
+`docs/functional/POMIAR_2026-09-01_FINANSE_WYNIKI_MATERIALY.md`, sekcja 2):
+★ na realnym `demo.consultify.ai` KPI, OKR i ROI **SĄ widoczne** — zmienna
+środowiskowa `VITE_DEMO_ACCEPTANCE` działa jako wczesny `return true`, który
+omija logikę flag (potwierdził właściciel w Railway 28.08,
+`DEC-2026-08-28-216`; ta sama zmienna omija też 5 rodzin flag w obszarze
+pomysłów/studia artefaktów). Na gołym kodzie bez zmiennych `24/33` elementów
+jest nieosiągalnych; na realnym demo `0/33`. Wcześniejsze twierdzenie
+„OKR i ROI niewidoczne na demo, ~22/33" jest **obalone 1.09** — pełne
+sprostowanie: `docs/program/funkcje/SPROSTOWANIE_WIDOCZNOSC_WYNIKOW.md`.
+Mianownik pokrycia tras `135` jest wycofany (nieodtwarzalny); reprodukowalne
+są `130`/`146`/`152` zależnie od metody liczenia — kanoniczny wybór między
+146 a 152 pozostaje otwarty. Mechanizm crosswalk/backfill KPI ma dziś zero
+wołaczy produktowych (biblioteka bez wywołania).
+
 ## TO-BE i luki
 
 Wiarygodny rejestr efektów z provenance każdego pomiaru, jawną jakością danych,

@@ -43,6 +43,29 @@ const respondFeatureUnavailable = (res: Response, _detail?: string) =>
   });
 
 /**
+ * A projectId alone carries no org context — without this check, any
+ * authenticated caller who knows (or guesses) a projectId belonging to
+ * another organization could read, add (including as ADMIN), update, or
+ * remove members of that project via GET/POST/PUT/DELETE
+ * /project-members/:projectId(/:memberId), bypassing the org boundary
+ * entirely. Returns false (caller responds 404, not 403 — do not reveal
+ * whether the project exists) when the project is missing or belongs to a
+ * different organization.
+ */
+const projectBelongsToOrg = async (
+  projectId: string,
+  organizationId: string | undefined
+): Promise<boolean> => {
+  if (!projectId || !organizationId) return false;
+  const project = await dbGet(
+    'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
+    [projectId, organizationId],
+    { fallback: false }
+  );
+  return !!project;
+};
+
+/**
  * GET /api/pmo/project-members/:projectId
  * Get all members of a project
  */
@@ -54,6 +77,10 @@ router.get(
     const { projectId } = req.params;
 
     try {
+      if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
       const members = await dbAll(
         `
     SELECT pm.id, pm.user_id, pm.project_role AS role, pm.permissions, pm.created_at AS joined_at,
@@ -100,6 +127,10 @@ router.post(
     }
 
     try {
+      if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
       // Check if user exists
       const user = await dbGet(
         'SELECT id, first_name, last_name FROM users WHERE id = ?',
@@ -163,6 +194,10 @@ router.put(
     const { role, permissions } = req.body;
 
     try {
+      if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
       const existing = await dbGet(
         `
     SELECT id FROM project_members WHERE id = ? AND project_id = ?
@@ -229,6 +264,10 @@ router.delete(
     const { projectId, memberId } = req.params;
 
     try {
+      if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
       const existing = await dbGet(
         `
     SELECT id, user_id FROM project_members WHERE id = ? AND project_id = ?
@@ -300,6 +339,10 @@ router.post(
     }
 
     try {
+      if (!(await projectBelongsToOrg(projectId, req.user?.organizationId))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
       // Check if user exists
       const existingUser = (await dbGet('SELECT id FROM users WHERE email = ?', [email], {
         fallback: false,

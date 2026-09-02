@@ -284,6 +284,14 @@ async function loadWorkerDocs(
 async function searchScoped(query: string, docs: IndexedDoc[], limit: number): Promise<RagHit[]> {
   if (docs.length === 0) return [];
   const docById = new Map(docs.map((doc) => [doc.id, doc]));
+  // FIX-2 (dyżur 210): deliberately NOT threading a userId here. Virtual
+  // workers run under a synthetic identity (`buildWorkerKnowledgeContext`
+  // above calls the policy gateway with `userId: 'worker:' + workerSlug`),
+  // not a real human requester — the card explicitly forbids fabricating an
+  // identity to fill this slot. The docs searched here always come from
+  // `WHERE source_type IN ('product_pill', 'tool_pack')` — never
+  // `scope='user'` Vault-private documents — so there is nothing for the
+  // owner-aware exception in `appendKnowledgeDocAccessFilter` to unlock here.
   const results = await ragService.searchRelevantChunks(query, {
     limit,
     minSimilarity: 0.15,

@@ -73,6 +73,19 @@ export interface AggregateRelationClaim {
   payload: unknown;
 }
 
+export interface LegacyTaskCutoverLedgerEntry {
+  organizationId: string;
+  legacyTaskId: string;
+  batchId: string;
+  status: 'MIGRATED';
+  clientRequestId: string;
+  canonicalId: string;
+  caseVersionBefore: number;
+  caseVersionAfter: number;
+  actorId: string;
+  checksum: string;
+}
+
 export interface SourceProposalSnapshot {
   id: string;
   organizationId: string;
@@ -190,6 +203,7 @@ export interface MaterialCommandTransaction {
     mutation: TMutation
   ): Promise<void>;
   claimRelation(claim: AggregateRelationClaim): Promise<void>;
+  appendLegacyTaskCutoverLedgerEntry(entry: LegacyTaskCutoverLedgerEntry): Promise<void>;
   getSourceProposalForUpdate(
     organizationId: string,
     proposalId: string

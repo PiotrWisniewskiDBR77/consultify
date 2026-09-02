@@ -8,6 +8,8 @@
  *
  * v1 is deterministic (no LLM call). v2 can swap planner to LLM.
  */
+import { featureFlags } from '../config/FeatureFlags.js';
+import { PRODUCT_BRAND_PRIMARY } from './report/pptx/productBrandTokens.js';
 import type {
   SlideIntent,
   SlideVisualSlot,
@@ -251,7 +253,7 @@ export function planDeckVisuals(params: {
 
 /** Map a B1 paletteId (catalog of 13) → a brand hex the visual specs can use. */
 const B1_PALETTE_PRIMARY_HEX: Record<string, string> = {
-  harvard: 'A41034',
+  harvard: featureFlags.ENABLE_PPTX_CANONICAL_GEOMETRY ? PRODUCT_BRAND_PRIMARY.slice(1) : 'A41034',
   ocean: '0A6EBD',
   slate: '475569',
   forest: '166534',

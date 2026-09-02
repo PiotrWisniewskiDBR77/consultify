@@ -16,7 +16,7 @@ function invoke(role: string) {
   return { response, next };
 }
 
-describe('Meeting closed-beta API boundary', () => {
+describe('Meeting open-beta API boundary', () => {
   it.each(['OWNER', 'ADMIN', 'administrator', 'SUPERADMIN'])(
     'keeps the client admin exemption for the post-auth role %s',
     (role) => {
@@ -26,11 +26,11 @@ describe('Meeting closed-beta API boundary', () => {
     }
   );
 
-  it.each(['MEMBER', 'USER', ''])('denies a direct API caller with role %s', (role) => {
+  it.each(['MEMBER', 'USER', ''])('allows a direct API caller with role %s', (role) => {
     const { response, next } = invoke(role);
-    expect(next).not.toHaveBeenCalled();
-    expect(response.status).toHaveBeenCalledWith(403);
-    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'BETA_LOCKED' }));
+    expect(next).toHaveBeenCalledOnce();
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).not.toHaveBeenCalled();
   });
 
   it('mounts authentication and the closed gate exactly once inside the Meeting router', () => {

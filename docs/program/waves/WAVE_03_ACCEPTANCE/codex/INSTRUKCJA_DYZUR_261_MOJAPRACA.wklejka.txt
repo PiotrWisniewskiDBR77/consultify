@@ -1,0 +1,16 @@
+NOWY — DYŻUR 261
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_261_MOJAPRACA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 261.
+
+Marker: df7f13056f
+Zasoby wyłączne: baza 6262, runtime 5242 i 5243.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

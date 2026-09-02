@@ -136,6 +136,37 @@ linkiem oraz wysłać jako link albo załącznik z potwierdzeniem użytkownika.
 - nowszy `origin/demo` zawiera program „jeden edytowalny Excel”,
 - stan poszczególnych generatorów wymaga odbioru format po formacie.
 
+### Pomiar 2026-09-01 — szablony, trzy realne pliki, przyczyna źródłowa
+
+Pełne cytaty i metoda: `docs/functional/POMIAR_2026-09-01_FINANSE_WYNIKI_MATERIALY.md`
+(sekcja 3); źródła: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY235_MATERIALY_REPORT.md`,
+`docs/program/funkcje/DOWOD_TRZY_PLIKI_2026-09-01.md`.
+
+- `real`: szablonów Excel jest **9, nie 8**. **Obalone 1.09**: poprzedni
+  pomiar liczył 8, bo wzorzec dopasowywał tylko litery (`[a-zA-Z]*`), a jedna
+  nazwa klucza zawiera cyfry (`cashflow12m`) i nie pasowała do regexu.
+- ★★ Pierwszy pełny realny przebieg (Postgres od zera, realny `Gateway`,
+  podpisany token, realne trasy produkcyjne — nie test) wyprodukował trzy
+  pliki: **arkusz XLSX DZIAŁA** (formuły realne, przeliczone niezależnie,
+  zgodne; własna kontrola 100/100), **dokument DOCX słaby, ale eksport
+  ZABLOKOWANY przez bramkę jakości** (plik powstał dopiero po świadomym,
+  audytowanym obejściu bramki), **prezentacja PPTX najgorsza — ani jeden
+  zaszczepiony fakt, slajd 10 twierdzi fałszywie „0 inicjatyw i 0 ryzyk"
+  mimo realnych źródeł, a mimo to własna kontrola dała 99/100 i PRZEPUSZCZIŁA
+  eksport.** Bramki jakości nie są dziś spójne między formatami — gorszy
+  artefakt (prezentacja) dostał wyższą ocenę niż słabszy, ale zablokowany
+  dokument.
+- ★★ **Przyczyna źródłowa tego pomiaru: w środowisku nie było klucza do
+  modelu językowego.** Logi pokazują realne, nieudane wywołania (brak klucza
+  → pięć błędów → bezpiecznik → „brak dostępnego modelu"), co jest zarazem
+  dowodem, że kod jest prawdziwy, nie atrapą. **Dokument i prezentacja NIE
+  BYŁY oceniane — oceniane były ich awaryjne zastępniki.** Arkusz nie
+  ucierpiał, bo jego silnik jest deterministyczny i niezależny od modelu
+  językowego — to dowodzi, że produkt POTRAFI wyprodukować dobry artefakt,
+  gdy nie zależy od LLM. **To unieważnia część wcześniejszych wniosków o
+  „słabych generatorach"; dopóki pomiar nie zostanie powtórzony z realnym
+  kluczem, żadna ocena jakości dokumentu i prezentacji nie jest wiążąca.**
+
 ## TO-BE
 
 Nadrzędne źródła:
@@ -155,3 +186,16 @@ Nadrzędne źródła:
 6. Zbudować macierz import/edycja/eksport dla DOCX/XLSX/PPTX/PDF.
 7. Oznaczyć dokumenty historyczne jako supporting lub superseded.
 8. Domknąć generatory oraz lifecycle szablonów Excel/Table.
+9. **Powtórzyć pomiar trzech generatorów (dokument, arkusz, prezentacja) z
+   realnym kluczem do modelu językowego** — pomiar 2026-09-01 oceniał
+   wyłącznie awaryjne zastępniki dla dokumentu i prezentacji (patrz AS-IS
+   wyżej), więc dotychczasowa ocena jakości tych dwóch formatów nie jest
+   wiążąca.
+10. Wyrównać bramki jakości eksportu między formatami — dziś dokument ze
+    słabą treścią jest blokowany, a prezentacja z jawnie fałszywym zdaniem
+    przechodzi z oceną 99/100.
+11. Naprawić syntezę slajdu podsumowania (`deckConclusionSlide.ts:179-180`),
+    żeby widziała źródła tekstowe, nie tylko tablice strukturalne.
+12. Rozwiązać trwałą blokadę eksportu po pierwszym niepowodzeniu
+    (`materialExportReceiptService.ts:109`) i kolizję klucza unikalnego przy
+    rejestracji artefaktu (`document-studio.routes.ts:832`).

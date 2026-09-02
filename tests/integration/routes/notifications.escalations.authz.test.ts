@@ -45,6 +45,8 @@ describe('Notifications escalations authz (no placeholder logic)', () => {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS decisions (
         id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        title TEXT,
         project_id TEXT,
         status TEXT,
         deadline TEXT,
@@ -56,11 +58,46 @@ describe('Notifications escalations authz (no placeholder logic)', () => {
       );
     `);
 
+    // Security fix (2026-09-01, AUDYT_RODZINY_TRAS_UPRAWNIENIA.md family #3):
+    // GET/POST /notifications/escalations/:projectId(/run) now verify the
+    // projectId belongs to the caller's organization before touching
+    // `decisions` — seed a matching `projects` row so the existing
+    // role-gating assertions below (unrelated to the org-boundary check)
+    // keep passing. The org-boundary itself is covered against a real
+    // Postgres database in notifications.escalations.idor.realdb.test.ts.
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS organizations (
+        id TEXT PRIMARY KEY,
+        name TEXT
+      );
+    `);
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT
+      );
+    `);
+    // On a real (non-sqlite) database these tables already exist with a real
+    // schema/FK — CREATE TABLE IF NOT EXISTS is then a no-op, so `projects`
+    // still enforces organization_id -> organizations(id). Seed the parent
+    // row too, regardless of backend.
+    await db.run(`INSERT OR REPLACE INTO organizations (id, name) VALUES (?, ?)`, [
+      'o-1',
+      'Escalations Authz Test Org',
+    ]);
+    await db.run(`INSERT OR REPLACE INTO projects (id, organization_id) VALUES (?, ?)`, [
+      'p-1',
+      'o-1',
+    ]);
+
     const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    // organization_id included (in addition to project_id) so this insert
+    // also succeeds against a real (non-sqlite) `decisions` table, where the
+    // column is NOT NULL with no default.
     await db.run(
-      `INSERT OR REPLACE INTO decisions (id, project_id, status, deadline, priority, impact, escalation_level)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ['d-1', 'p-1', 'pending', tenDaysAgo, null, null, null]
+      `INSERT OR REPLACE INTO decisions (id, organization_id, title, project_id, status, deadline, priority, impact, escalation_level)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['d-1', 'o-1', 'Escalations Authz Test Decision', 'p-1', 'pending', tenDaysAgo, null, null, null]
     );
 
     router = (await import('../../../server/src/routes/notifications/notifications.routes.ts')).default;

@@ -60,20 +60,22 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import config from '../../../server/src/config/Config.js';
+import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
+// Z31: this suite used to pin `enabled` to a database NAME
+// (`consultify_accesscodes_idor_test`), which made it silently `describe.skip`
+// on any other disposable database name — the 7th occurrence of this pattern.
+// The gate below only checks the generic preconditions (same shape as every
+// other `*.pg.test.ts` / `*.realdb.test.ts` in this repo); the hard,
+// no-silent-skip check now lives in `assertRealPostgresTestEnvironment()`
+// (called with no arguments — no assertion on DATABASE_URL, port, or database
+// name) inside `beforeAll`, which THROWS instead of skipping when the
+// environment is misconfigured.
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const databaseName = (() => {
-  try {
-    return new URL(databaseUrl).pathname.replace(/^\//, '');
-  } catch {
-    return '';
-  }
-})();
 const enabled =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  databaseUrl.startsWith('postgres') &&
-  databaseName.startsWith('consultify_accesscodes_idor_test');
+  /^postgres(?:ql)?:/.test(databaseUrl);
 
 describe.skipIf(!enabled).sequential('mounted access-codes cross-org escalation (IDOR fix)', () => {
   const suffix = randomUUID().slice(0, 8);
@@ -113,6 +115,7 @@ describe.skipIf(!enabled).sequential('mounted access-codes cross-org escalation 
     createHash('sha256').update(String(code).trim()).digest('hex');
 
   beforeAll(async () => {
+    await assertRealPostgresTestEnvironment();
     pool = new pg.Pool({ connectionString: databaseUrl });
 
     for (const [org, label] of [

@@ -24,16 +24,20 @@ export const taskOverdueRule: SignalRule = {
           AND lower(coalesce(status, '')) NOT IN ('done', 'completed', 'cancelled')`,
       [ctx.organizationId, ctx.now.toISOString()]
     );
-    return rows.map((row) => ({
-      subjectId: row.id,
-      projectId: row.project_id,
-      observedValue: Math.max(
+    return rows.map((row) => {
+      const observedValue = Math.max(
         1,
         Math.floor((ctx.now.getTime() - new Date(row.due_date).getTime()) / 86_400_000)
-      ),
-      observedAt: ctx.now.toISOString(),
-      data: { assigneeId: row.assignee_id },
-    }));
+      );
+      return {
+        subjectId: row.id,
+        projectId: row.project_id,
+        observedValue,
+        observedAt: ctx.now.toISOString(),
+        data: { assigneeId: row.assignee_id },
+        bodyParams: { value: observedValue },
+      };
+    });
   },
   dedupeKey: (hit) => `exec.task.overdue:${hit.subjectId}`,
   evidence: (hit) => [

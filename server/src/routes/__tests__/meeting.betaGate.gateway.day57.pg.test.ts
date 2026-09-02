@@ -31,12 +31,12 @@ describe('Day 57 Meeting beta gate — real Gateway state', () => {
     ApiGateway.getInstance().initializeRoutes(app);
   });
 
-  it('MEMBER is denied by the real closed beta gate', async () => {
+  it('MEMBER reaches the real handler through the open beta gate', async () => {
     const response = await request(app)
       .get('/api/meeting')
       .set('Authorization', `Bearer ${token('w3-mtg-member-user-v1', 'MEMBER')}`);
-    expect(response.status).toBe(403);
-    expect(response.body).toMatchObject({ code: 'BETA_LOCKED' });
+    expect(response.status).toBe(200);
+    expect(response.body.code).not.toBe('BETA_LOCKED');
   });
 
   it('ADMIN is exempt and reaches the real handler', async () => {

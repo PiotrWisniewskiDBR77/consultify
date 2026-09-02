@@ -480,18 +480,16 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             {
               label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
               value: formatCurrency(
-                programStatus?.balances.availableToPayout ??
-                  v8Summary.readyForPayout ??
-                  0,
+                programStatus?.balances.availableToPayout ?? v8Summary.readyForPayout ?? 0,
                 programStatus?.balances.currency ?? v8Summary.currency
               ),
               detail:
                 programStatus?.hold && programStatus.hold.amount > 0
                   ? t('partner.earnings.heldAmount', 'Wstrzymane: {{amount}}', {
-                    amount: formatCurrency(
-                      programStatus.hold.amount,
-                      programStatus.balances.currency ?? v8Summary.currency
-                    ),
+                      amount: formatCurrency(
+                        programStatus.hold.amount,
+                        programStatus.balances.currency ?? v8Summary.currency
+                      ),
                     })
                   : t('partner.earnings.lastMonthAmount', 'Poprzedni miesiąc: {{amount}}', {
                       amount: formatCurrency(v8Summary.lastMonth, v8Summary.currency),
@@ -581,10 +579,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" />
             <div>
               <h2 className="font-semibold text-c-text">
-                {t(
-                  'partner.earnings.policyUnavailableTitle',
-                  'Partner economics unavailable'
-                )}
+                {t('partner.earnings.policyUnavailableTitle', 'Partner economics unavailable')}
               </h2>
               <p className="mt-1 text-sm text-c-text-secondary">
                 {t(
@@ -969,8 +964,15 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           {formatCurrency(payout.netAmount, payout.currency)}
                         </p>
                         <p className="text-sm text-c-text-secondary">
-                          {payout.transactionCount} transactions • {fmtDate(payout.periodStart)} to{' '}
-                          {fmtDate(payout.periodEnd)}
+                          {t(
+                            'partner.earnings.transactionsPeriod',
+                            '{{count}} transactions • {{from}} to {{to}}',
+                            {
+                              count: payout.transactionCount,
+                              from: fmtDate(payout.periodStart),
+                              to: fmtDate(payout.periodEnd),
+                            }
+                          )}
                         </p>
                       </div>
                     </div>
@@ -983,11 +985,16 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
                         )}
                       >
-                        {payout.status.toLowerCase()}
+                        {t(
+                          `partner.earnings.status.${payout.status.toLowerCase()}`,
+                          t('partner.earnings.status.unknown', 'Nieznany status')
+                        )}
                       </span>
                       {payout.completedAt && (
                         <p className="text-xs text-c-text-muted mt-1">
-                          Completed {fmtDate(payout.completedAt)}
+                          {t('partner.earnings.completedAt', 'Completed {{date}}', {
+                            date: fmtDate(payout.completedAt),
+                          })}
                         </p>
                       )}
                     </div>
@@ -1059,8 +1066,15 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         {formatCurrency(payout.netAmount, payout.currency)}
                       </p>
                       <p className="text-sm text-c-text-secondary">
-                        {payout.transactionCount} transactions • {payout.periodStart} to{' '}
-                        {payout.periodEnd}
+                        {t(
+                          'partner.earnings.transactionsPeriod',
+                          '{{count}} transactions • {{from}} to {{to}}',
+                          {
+                            count: payout.transactionCount,
+                            from: payout.periodStart,
+                            to: payout.periodEnd,
+                          }
+                        )}
                       </p>
                     </div>
                   </div>
@@ -1073,15 +1087,22 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
                       )}
                     >
-                      {payout.status.toLowerCase()}
+                      {t(
+                        `partner.earnings.status.${payout.status.toLowerCase()}`,
+                        t('partner.earnings.status.unknown', 'Nieznany status')
+                      )}
                     </span>
                     {payout.completedAt && (
                       <p className="text-xs text-c-text-muted mt-1">
-                        Completed {payout.completedAt}
+                        {t('partner.earnings.completedAt', 'Completed {{date}}', {
+                          date: payout.completedAt,
+                        })}
                       </p>
                     )}
                     {payout.payoutReference && (
-                      <p className="text-xs text-c-text-muted">Ref: {payout.payoutReference}</p>
+                      <p className="text-xs text-c-text-muted">
+                        {t('partner.earnings.reference', 'Ref')}: {payout.payoutReference}
+                      </p>
                     )}
                   </div>
                 </div>

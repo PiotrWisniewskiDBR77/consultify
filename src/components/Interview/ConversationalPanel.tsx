@@ -52,7 +52,7 @@ interface Question {
 interface ConversationalPanelProps {
   sessionId: string;
   questions: Question[];
-  onQuestionAnswered?: (questionId: string, answerText: string) => void;
+  onQuestionAnswered?: (questionId: string, answerText: string) => Promise<void>;
   locked?: boolean;
 }
 
@@ -67,6 +67,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [applyingMappings, setApplyingMappings] = useState(false);
   const [draftMappings, setDraftMappings] = useState<AnswerMapping[] | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -179,21 +180,43 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
     }
   }, [messages, sessionId, questions, t]);
 
-  const applyDraftMappings = useCallback(() => {
-    if (!draftMappings) return;
+  const applyDraftMappings = useCallback(async () => {
+    if (!draftMappings || applyingMappings) return;
 
     const accepted = draftMappings.filter((m) => m.accepted);
-    for (const mapping of accepted) {
-      onQuestionAnswered?.(mapping.questionId, mapping.answerText);
+    setApplyingMappings(true);
+    try {
+      const results = await Promise.allSettled(
+        accepted.map((mapping) =>
+          onQuestionAnswered
+            ? onQuestionAnswered(mapping.questionId, mapping.answerText)
+            : Promise.reject(new Error('Answer saving is unavailable'))
+        )
+      );
+      const failedMappings = accepted.filter((_, index) => results[index]?.status === 'rejected');
+      const savedCount = accepted.length - failedMappings.length;
+
+      trackFunnelEvent('interview_ai_parse_applied', {
+        sessionId,
+        totalMappings: draftMappings.length,
+        accepted: accepted.length,
+        saved: savedCount,
+        failed: failedMappings.length,
+      });
+
+      if (failedMappings.length > 0) {
+        setDraftMappings(failedMappings);
+        toast.error(
+          `Saved ${savedCount} of ${accepted.length} answers. ${failedMappings.length} failed; review and retry.`
+        );
+      } else {
+        setDraftMappings(null);
+        toast.success(`Applied ${savedCount} answers`);
+      }
+    } finally {
+      setApplyingMappings(false);
     }
-    trackFunnelEvent('interview_ai_parse_applied', {
-      sessionId,
-      totalMappings: draftMappings.length,
-      accepted: accepted.length,
-    });
-    setDraftMappings(null);
-    toast.success(`Applied ${accepted.length} answers`);
-  }, [draftMappings, sessionId, onQuestionAnswered]);
+  }, [draftMappings, sessionId, onQuestionAnswered, applyingMappings]);
 
   const toggleMapping = (index: number) => {
     setDraftMappings((prev) =>
@@ -318,9 +341,14 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
           </div>
           <button
             onClick={applyDraftMappings}
+            disabled={applyingMappings}
             className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-token-md bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
           >
-            <Check className="w-4 h-4" />
+            {applyingMappings ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
             {t('interview.conversational.acceptAnswer')} ({acceptedDraftCount})
           </button>
         </div>

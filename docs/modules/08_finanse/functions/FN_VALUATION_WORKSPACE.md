@@ -96,3 +96,21 @@ last_updated: 2026-05-11
 
 ## 12. Open Risks and Change Log
 - Risk: valuation outputs can still be over-trusted if dedicated valuation regression evidence remains unresolved (`FN-VLU-P2-001`).
+
+### Runtime measurement — 2026-09-01
+
+Full evidence and citations: `docs/functional/POMIAR_2026-09-01_FINANSE_WYNIKI_MATERIALY.md`
+(section 1); source: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY233_FINANSE_REPORT.md`.
+
+- `18/21` valuation panels call a real backend endpoint (full `ApiGateway` +
+  signed JWT + real Postgres, `2xx` with non-empty `body.data`). Three panels
+  are intentionally client-side/prop-driven, not a gap: `DriverPlannerPanel`
+  (local computation), `EvBasketFootballField` (renders from props),
+  `ValuationVisualsPanel` (renders from props).
+- Earlier claim of `5/21` is **refuted 2026-09-01** — it referenced a file
+  that does not exist in the repository.
+- `25/26` finance module screens are closed behind feature flags by default —
+  this is the intended controlled visual rollout, not a defect.
+- A "management report" export for valuation does not exist in code today;
+  `ExportStep.tsx` is an honest placeholder. Whether this ships inside or
+  outside MVP is an open owner decision.

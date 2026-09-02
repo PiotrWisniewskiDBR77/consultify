@@ -58,6 +58,7 @@ import {
   starterIdToCanvasKind,
 } from '@/utils/canvas/canvasDraftAdapter';
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
+import { isCanvasDevDiagnosticsEnabled } from '@/utils/canvasDevDiagnosticsFlag';
 import { isCanvasNewDocOptionsEnabled } from '@/utils/canvasNewDocOptionsFlag';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
@@ -68,8 +69,8 @@ import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
-import { CanvasViewModeControl } from './CanvasViewModeControl';
 import { CanvasPresentationView } from './CanvasPresentationView';
+import { CanvasViewModeControl } from './CanvasViewModeControl';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
 
@@ -256,7 +257,8 @@ Write the situation, goal, constraints, and audience here.
     id: 'research',
     label: 'Zrób research',
     title: 'Market Research Brief',
-    description: 'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
+    description:
+      'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
     capability: 'partial',
     capabilityNote:
       'Research brief creates a linked ResearchSession; evidence execution remains partial.',
@@ -1539,7 +1541,13 @@ function WorkCanvasMarkdownDocumentPanel({
     return () => {
       cancelled = true;
     };
-  }, [authOrganizationId, authUserId, conversationId, currentCapabilityAuthScope, isAuthInitializing]);
+  }, [
+    authOrganizationId,
+    authUserId,
+    conversationId,
+    currentCapabilityAuthScope,
+    isAuthInitializing,
+  ]);
 
   React.useEffect(() => {
     persistCanvasMode(mode);
@@ -3543,7 +3551,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(template.capability)}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(template.capability)
+                          : null}
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {template.description}
@@ -3589,7 +3599,7 @@ function WorkCanvasMarkdownDocumentPanel({
             ) : isNewCanvasMenuOpen ? (
               <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  New Canvas from template
+                  {t('canvas.panel.newMenu.legacyFromTemplate', 'New Canvas from template')}
                 </div>
                 <div className="mt-1 space-y-1">
                   {starterTemplates.map((template) => (
@@ -3608,7 +3618,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(template.capability)}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(template.capability)
+                          : null}
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {template.description}
@@ -3713,10 +3725,13 @@ function WorkCanvasMarkdownDocumentPanel({
               data-testid="canvas-dataset-actions"
             >
               <div className="font-semibold text-slate-900 dark:text-white">
-                Dataset ready: {pendingDataset.filename}
+                {t('canvas.panel.dataset.readyPrefix', 'Dataset ready:')} {pendingDataset.filename}
               </div>
               <div className="mt-1 text-slate-500 dark:text-slate-400">
-                Deterministic Canvas analysis. No code execution.
+                {t(
+                  'canvas.panel.dataset.analysisNote',
+                  'Deterministic Canvas analysis. No code execution.'
+                )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {datasetArtifactActions.map((action) => (
@@ -4121,10 +4136,12 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(
-                          template.capability,
-                          `canvas-template-capability-${template.id}`
-                        )}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(
+                              template.capability,
+                              `canvas-template-capability-${template.id}`
+                            )
+                          : null}
                       </div>
                       <div className="mt-0.5 truncate text-[11px] leading-4 opacity-75">
                         {template.description}
@@ -4204,10 +4221,14 @@ function WorkCanvasMarkdownDocumentPanel({
                   {pendingDataset ? (
                     <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Dataset ready: {pendingDataset.filename}
+                        {t('canvas.panel.dataset.readyPrefix', 'Dataset ready:')}{' '}
+                        {pendingDataset.filename}
                       </div>
                       <div className="mt-1 text-slate-500 dark:text-slate-400">
-                        Deterministic Canvas analysis. No code execution.
+                        {t(
+                          'canvas.panel.dataset.analysisNote',
+                          'Deterministic Canvas analysis. No code execution.'
+                        )}
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {datasetArtifactActions.map((action) => (
@@ -4416,111 +4437,127 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                 </details>
 
-                {/* #87d — grupa DIAGNOSTYKA I WORKFLOW: MD file properties +
-                    Capabilities/workflow + ledger. */}
+                {/* #87d — grupa PRZEPŁYWY PRACY: dla klienta tylko szablon +
+                    uruchomienie (realny wołacz Api.workCanvasCreateWorkflow).
+                    MD file properties + Capability badge/note + ResearchSession id
+                    + ledger współpracy = diagnostyka inżynierska, ukryta za
+                    `VITE_DEV_DIAGNOSTICS` (domyślnie OFF) — pomiar 2026-09-02,
+                    zobacz src/utils/canvasDevDiagnosticsFlag.ts. */}
                 <details className="group mt-3 border-b border-slate-200 pb-1 dark:border-white/10">
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.diagnostics', 'Diagnostyka i workflow')}</span>
+                    <span>{t('canvas.panel.groups.workflow', 'Przepływy pracy')}</span>
                     <ChevronDown
                       size={14}
                       className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
                     />
                   </summary>
 
-                  <div className="mt-1 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsMdPropertiesOpen((open) => !open)}
-                      className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
-                      aria-expanded={isMdPropertiesOpen}
-                    >
-                      <span className="font-medium">
-                        {t('canvas.panel.mdProps.title', 'MD file properties')}
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {isMdPropertiesOpen
-                          ? t('canvas.panel.mdProps.hide', 'Hide')
-                          : t('canvas.panel.mdProps.show', 'Show')}
-                      </span>
-                    </button>
-                    {isMdPropertiesOpen ? (
-                      <div className="mt-2 space-y-2 rounded-xl bg-slate-100/80 p-2.5 text-slate-700 dark:bg-white/10 dark:text-slate-200">
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{t('canvas.panel.diagnostics.format', 'Format')}</span>
-                          <strong className="font-semibold">
-                            {t('canvas.panel.diagnostics.markdownCanonical', 'Markdown canonical')}
-                          </strong>
+                  {isCanvasDevDiagnosticsEnabled() ? (
+                    <div className="mt-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsMdPropertiesOpen((open) => !open)}
+                        className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                        aria-expanded={isMdPropertiesOpen}
+                      >
+                        <span className="font-medium">
+                          {t('canvas.panel.mdProps.title', 'MD file properties')}
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {isMdPropertiesOpen
+                            ? t('canvas.panel.mdProps.hide', 'Hide')
+                            : t('canvas.panel.mdProps.show', 'Show')}
+                        </span>
+                      </button>
+                      {isMdPropertiesOpen ? (
+                        <div className="mt-2 space-y-2 rounded-xl bg-slate-100/80 p-2.5 text-slate-700 dark:bg-white/10 dark:text-slate-200">
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{t('canvas.panel.diagnostics.format', 'Format')}</span>
+                            <strong className="font-semibold">
+                              {t(
+                                'canvas.panel.diagnostics.markdownCanonical',
+                                'Markdown canonical'
+                              )}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{t('canvas.panel.diagnostics.save', 'Save')}</span>
+                            <strong
+                              className="font-semibold"
+                              data-testid="canvas-diagnostics-save-state"
+                            >
+                              {saveStateLabel(documentState.saveState, t)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{t('canvas.panel.diagnostics.projection', 'Projection')}</span>
+                            <strong
+                              className="font-semibold"
+                              data-testid="canvas-projection-status"
+                            >
+                              {isProjectionRefreshing
+                                ? t('canvas.panel.projection.refreshing', 'Projection refreshing')
+                                : projectionLabel(documentState.markdownProjectionStatus, t)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{t('canvas.panel.diagnostics.lifecycle', 'Lifecycle')}</span>
+                            <strong className="font-semibold">
+                              {lifecycleLabel(documentState.lifecycleState, t)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{t('canvas.panel.diagnostics.action', 'Action')}</span>
+                            <strong
+                              className="font-semibold"
+                              data-testid="canvas-diagnostics-action-state"
+                            >
+                              {activeActionId
+                                ? t('canvas.panel.diagnostics.running', 'Running')
+                                : t('canvas.panel.diagnostics.idle', 'Idle')}
+                            </strong>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{t('canvas.panel.diagnostics.save', 'Save')}</span>
-                          <strong
-                            className="font-semibold"
-                            data-testid="canvas-diagnostics-save-state"
-                          >
-                            {saveStateLabel(documentState.saveState, t)}
-                          </strong>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{t('canvas.panel.diagnostics.projection', 'Projection')}</span>
-                          <strong className="font-semibold" data-testid="canvas-projection-status">
-                            {isProjectionRefreshing
-                              ? t('canvas.panel.projection.refreshing', 'Projection refreshing')
-                              : projectionLabel(documentState.markdownProjectionStatus, t)}
-                          </strong>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{t('canvas.panel.diagnostics.lifecycle', 'Lifecycle')}</span>
-                          <strong className="font-semibold">
-                            {lifecycleLabel(documentState.lifecycleState, t)}
-                          </strong>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{t('canvas.panel.diagnostics.action', 'Action')}</span>
-                          <strong
-                            className="font-semibold"
-                            data-testid="canvas-diagnostics-action-state"
-                          >
-                            {activeActionId
-                              ? t('canvas.panel.diagnostics.running', 'Running')
-                              : t('canvas.panel.diagnostics.idle', 'Idle')}
-                          </strong>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-slate-600 dark:border-white/10 dark:text-slate-300">
-                    <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                      {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
-                    </div>
-                    <div className="flex items-start justify-between gap-3 px-2.5">
-                      <span>{t('canvas.panel.diagnostics.capability', 'Capability')}</span>
-                      <div className="min-w-0 text-right">
-                        {renderCapabilityBadge(
-                          activeTemplate.capability,
-                          'canvas-capability-status'
-                        )}
-                        <div
-                          className="mt-1 max-w-[200px] text-[10px] leading-3 text-slate-500 dark:text-slate-400"
-                          data-testid="canvas-capability-note"
-                        >
-                          {activeTemplate.capabilityNote}
+                    {isCanvasDevDiagnosticsEnabled() ? (
+                      <>
+                        <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                          {t('canvas.panel.capabilities.title', 'Capabilities and workflow')}
                         </div>
-                      </div>
-                    </div>
-                    {documentState.researchSessionId ? (
-                      <div className="flex items-center justify-between gap-3 px-2.5">
-                        <span>
-                          {t('canvas.panel.diagnostics.researchSession', 'ResearchSession')}
-                        </span>
-                        <strong
-                          className="max-w-[180px] truncate font-semibold"
-                          data-testid="canvas-research-session-id"
-                          title={documentState.researchSessionId}
-                        >
-                          {documentState.researchSessionId}
-                        </strong>
-                      </div>
+                        <div className="flex items-start justify-between gap-3 px-2.5">
+                          <span>{t('canvas.panel.diagnostics.capability', 'Capability')}</span>
+                          <div className="min-w-0 text-right">
+                            {renderCapabilityBadge(
+                              activeTemplate.capability,
+                              'canvas-capability-status'
+                            )}
+                            <div
+                              className="mt-1 max-w-[200px] text-[10px] leading-3 text-slate-500 dark:text-slate-400"
+                              data-testid="canvas-capability-note"
+                            >
+                              {activeTemplate.capabilityNote}
+                            </div>
+                          </div>
+                        </div>
+                        {documentState.researchSessionId ? (
+                          <div className="flex items-center justify-between gap-3 px-2.5">
+                            <span>
+                              {t('canvas.panel.diagnostics.researchSession', 'ResearchSession')}
+                            </span>
+                            <strong
+                              className="max-w-[180px] truncate font-semibold"
+                              data-testid="canvas-research-session-id"
+                              title={documentState.researchSessionId}
+                            >
+                              {documentState.researchSessionId}
+                            </strong>
+                          </div>
+                        ) : null}
+                      </>
                     ) : null}
                     <div className="flex flex-wrap items-center gap-2 px-2.5">
                       <label className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
@@ -4539,7 +4576,10 @@ function WorkCanvasMarkdownDocumentPanel({
                         >
                           {workflowTemplateOptions.map((template) => (
                             <option key={template.id} value={template.id}>
-                              {template.label}
+                              {t(
+                                `canvas.panel.workflowTemplates.${template.id}.label`,
+                                template.label
+                              )}
                             </option>
                           ))}
                         </select>
@@ -4554,18 +4594,29 @@ function WorkCanvasMarkdownDocumentPanel({
                             : 'inline-flex items-center gap-1 rounded-full bg-c-text px-2.5 py-1 font-semibold text-c-bg hover:bg-c-text-secondary'
                         }
                       >
-                        {isStartingWorkflow ? 'Starting...' : 'Start workflow'}
+                        {isStartingWorkflow
+                          ? t('canvas.panel.startingWorkflow', 'Starting...')
+                          : t('canvas.panel.startWorkflow', 'Start workflow')}
                       </button>
                     </div>
                     <div className="px-2.5 text-[11px] text-slate-500 dark:text-slate-400">
                       <div className="flex items-center gap-2">
-                        {renderCapabilityBadge(
-                          selectedWorkflowTemplateOption.capability,
-                          'canvas-workflow-capability-status'
-                        )}
-                        <span>{selectedWorkflowTemplateOption.description}</span>
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(
+                              selectedWorkflowTemplateOption.capability,
+                              'canvas-workflow-capability-status'
+                            )
+                          : null}
+                        <span>
+                          {t(
+                            `canvas.panel.workflowTemplates.${selectedWorkflowTemplateOption.id}.description`,
+                            selectedWorkflowTemplateOption.description
+                          )}
+                        </span>
                       </div>
-                      <div className="mt-1">{selectedWorkflowTemplateOption.capabilityNote}</div>
+                      {isCanvasDevDiagnosticsEnabled() ? (
+                        <div className="mt-1">{selectedWorkflowTemplateOption.capabilityNote}</div>
+                      ) : null}
                     </div>
                     {documentState.kind === 'research' ? (
                       <div className="px-2.5">
@@ -4580,12 +4631,12 @@ function WorkCanvasMarkdownDocumentPanel({
                           }
                         >
                           {isFinalizingResearchReport
-                            ? 'Finalizing...'
-                            : 'Finalize research report'}
+                            ? t('canvas.panel.finalizingResearchReport', 'Finalizing...')
+                            : t('canvas.panel.finalizeResearchReport', 'Finalize research report')}
                         </button>
                       </div>
                     ) : null}
-                    {documentState.workflowRuns?.length ? (
+                    {isCanvasDevDiagnosticsEnabled() && documentState.workflowRuns?.length ? (
                       <div
                         className="mt-1 max-h-72 space-y-2 overflow-auto border-t border-slate-200 px-2.5 pt-3 dark:border-white/10"
                         data-testid="canvas-workflow-ledger"
@@ -4855,7 +4906,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-700 dark:text-amber-300"
                       >
                         <RefreshCw size={12} />
-                        Retry projection
+                        {t('canvas.panel.advanced.retryProjection', 'Retry projection')}
                       </button>
                     ) : null}
                     <button
@@ -4864,7 +4915,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
                       <RefreshCw size={12} />
-                      Reset
+                      {t('canvas.panel.advanced.reset', 'Reset')}
                     </button>
                     {/* #87d — dawny przycisk otwierał DRUGI, prymitywny podgląd
                         wersji (usunięty jako duplikat). Teraz kieruje do JEDYNEGO
@@ -4876,19 +4927,23 @@ function WorkCanvasMarkdownDocumentPanel({
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
                       <History size={12} />
-                      Version history
+                      {t('canvas.versionHistory.title', 'Version history')}
                     </button>
                     <button
                       type="button"
                       onClick={showChangesFromLatestVersion}
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
-                      Show changes
+                      {t('canvas.panel.advanced.showChanges', 'Show changes')}
                     </button>
                     {latestDiff ? (
                       <div className="w-full rounded-xl bg-slate-100 p-2 text-[11px] dark:bg-white/10">
                         <div className="font-semibold text-slate-700 dark:text-slate-100">
-                          {latestDiff.summary}
+                          {t('canvas.panel.advanced.diffSummary', {
+                            defaultValue: '{{added}} lines added, {{removed}} lines removed',
+                            added: latestDiff.addedLines,
+                            removed: latestDiff.removedLines,
+                          })}
                         </div>
                       </div>
                     ) : null}

@@ -344,7 +344,7 @@ const TabeleView = lazyWithRetry(() =>
   }))
 );
 // Excel engine (real .xlsx z formułami) — odsłaniany pod /excele za flagą
-// isExceleEngineEnabled (default OFF → redirect jak dziś). Audyt 2026-07-22.
+// isExceleEngineEnabled (default ON od fb119cefe8, akcept Piotra 2026-07-22).
 const ExceleView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({
     default: m.default,
@@ -725,7 +725,7 @@ const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
  * (Harvard/wdrozenie-100/_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md,
  * "DO SCALENIA" #1). `PresentationWizard` był osierocony z nawigacji (zero
  * linków w UI) i żył tylko z deep-linków tworzonych przez
- * artifactNavigation.ts / chatActionHandler.ts / useActionHandler.ts /
+ * artifactNavigation.ts / chatActionHandler.ts / useChatActions.ts /
  * server `artifacts.routes.ts` (openPath dla `presentation_template`) — te
  * cztery miejsca zostały przepięte na kanoniczne cele (Teresa /prezentacje
  * dla generacji, Architekt szablonów dla edycji/klonu). Ta trasa zostaje
@@ -1839,8 +1839,8 @@ export const AppRoutes: React.FC = () => {
         {/* Legacy Excele/Tables route -> canonical Table Studio. */}
         {/*
           Excel engine (real .xlsx z formułami — WorkbookGeneratorService).
-          Za flagą isExceleEngineEnabled (default OFF): ON → montuje ExceleView
-          (realny silnik), OFF → dokładnie dzisiejszy redirect na Table Studio
+          Za flagą isExceleEngineEnabled (default ON od fb119cefe8): ON → montuje
+          ExceleView (realny silnik), OFF → redirect na Table Studio
           (zero regresji na /tabele). Audyt _AUDYT_DOKUMENTY_2026-07-22 — silnik
           formuł był osierocony z UI. Flaga jest bramką (bez BetaGate MODULE_TABELE,
           bo to inny moduł).

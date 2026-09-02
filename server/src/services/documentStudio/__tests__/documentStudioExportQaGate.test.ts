@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 /**
  * Document Studio — Export QA gate tests (MVP-3 hardening).
  *
@@ -19,6 +21,9 @@
  *     audit entry before throwing.
  */
 
+import { writeFile } from 'node:fs/promises';
+
+import { PDFParse } from 'pdf-parse';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DocumentSchema } from '../documentStudioTypes.js';
@@ -113,10 +118,6 @@ vi.mock('../documentDocxRenderer.js', () => ({
   renderDocumentSchemaToDocxBuffer: vi.fn(async () => Buffer.from('docx-bytes')),
 }));
 
-vi.mock('../documentPdfRenderer.js', () => ({
-  renderDocumentSchemaToPdfBuffer: vi.fn(async () => Buffer.from('pdf-bytes')),
-}));
-
 import { QaBlockingError, QaOverrideUnauthorizedError } from '../documentQaService.js';
 import { exportDocumentArtifact, listDocumentAuditEntries } from '../documentStudioService.js';
 
@@ -141,6 +142,20 @@ describe('Export QA gate — non-approval-gated types', () => {
     const result = await exportDocumentArtifact('artifact-export-qa-1', 'org-A', 'pdf');
     expect(result.format).toBe('pdf');
     expect(result.contentBase64).toBeDefined();
+    const buffer = Buffer.from(result.contentBase64 ?? '', 'base64');
+    const parser = new PDFParse({ data: buffer });
+    const info = await parser.getInfo();
+    const text = await parser.getText();
+    await parser.destroy();
+    expect(info.total).toBe(1);
+    expect(text.pages).toHaveLength(1);
+    expect(text.pages[0]?.text).toContain('Executive Summary');
+    expect(text.pages[0]?.text).toContain('internal');
+    expect(text.pages[0]?.text).toContain('1 / 1');
+
+    if (process.env.DAY191_MATERIALS_EXPORT_PATH) {
+      await writeFile(process.env.DAY191_MATERIALS_EXPORT_PATH, buffer);
+    }
   });
 });
 
@@ -151,12 +166,10 @@ describe('Export QA gate — approval-gated types', () => {
 
   it('allows an explicitly requested draft export and marks its filename and manifest', async () => {
     setSchema({ documentType: 'board_report' });
-    const result = await exportDocumentArtifact(
-      'artifact-export-qa-1',
-      'org-A',
-      'markdown',
-      { userId: 'user-draft-1', mode: 'draft' }
-    );
+    const result = await exportDocumentArtifact('artifact-export-qa-1', 'org-A', 'markdown', {
+      userId: 'user-draft-1',
+      mode: 'draft',
+    });
 
     expect(result.filename).toContain('_DRAFT.markdown');
     expect(result.manifest).toMatchObject({

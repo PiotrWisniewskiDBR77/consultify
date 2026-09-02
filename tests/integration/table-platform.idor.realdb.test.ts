@@ -727,3 +727,261 @@ describe('M28 — dependency-config / recalculate / fields-reorder IDOR fix (rea
     expect(res.status).toBe(404);
   });
 });
+
+// ---------------------------------------------------------------------------
+// M-forms — IDOR fix for GET/PATCH/DELETE /forms/:formId (real Postgres).
+//
+// Live probe (2026-09-01, kreator formularzy incident): a form id alone
+// carried no org context on these three routes — `requireTableAccess` was
+// wired on create/list (`POST`/`GET /tables/:tableId/forms`) but NOT on
+// `GET|PATCH|DELETE /forms/:formId`. Any authenticated user who knew (or
+// guessed) another organization's formId could read, silently overwrite, or
+// permanently delete that organization's form. Confirmed live: an org-B
+// token issued a real GET (200, full config leaked) and a real DELETE (204,
+// row destroyed) against an org-A form. Fix: `PermissionsService.requireFormAccess`
+// (formId -> table_id -> requireTableAccess, mirroring requireRecordAccess/
+// requireFieldAccess/requireViewAccess) wired onto all three routes.
+// ---------------------------------------------------------------------------
+
+interface FormHarness {
+  client: Client;
+  orgAId: string;
+  orgBId: string;
+  userAId: string;
+  userBId: string;
+  baseId: string;
+  tableId: string;
+  formId: string;
+  cleanup: () => Promise<void>;
+}
+
+const FORM_REQUIRED_TABLES = ['tp_bases', 'tp_tables', 'tp_forms', 'organizations', 'users'] as const;
+
+async function setupFormHarness(): Promise<FormHarness | null> {
+  if (!(await pgReachable())) return null;
+  const config = buildClientConfig();
+  if (!config) return null;
+
+  const client = new Client(config);
+  try {
+    await client.connect();
+  } catch {
+    return null;
+  }
+
+  try {
+    if (!(await tablesExist(client, FORM_REQUIRED_TABLES))) {
+      await client.end().catch(() => {});
+      return null;
+    }
+  } catch {
+    await client.end().catch(() => {});
+    return null;
+  }
+
+  const tag = suffix();
+  const orgAId = `org_formidor_a_${tag}`;
+  const orgBId = `org_formidor_b_${tag}`;
+  const userAId = `user_formidor_a_${tag}`;
+  const userBId = `user_formidor_b_${tag}`;
+  // Owned by neither test user — see the comment on `createdBy` in
+  // setupHarness() above; the only path to `allowed === true` is the
+  // organization_id match, which is exactly what requireFormAccess enforces.
+  const createdBy = `user_formidor_creator_${tag}`;
+
+  await client.query(
+    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'Form IDOR RealDB Org A', 'enterprise', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [orgAId]
+  );
+  await client.query(
+    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, 'Form IDOR RealDB Org B', 'enterprise', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [orgBId]
+  );
+
+  const baseRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_bases (workspace_id, organization_id, name, created_by)
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [`ws_formidor_${tag}`, orgAId, 'Form IDOR RealDB Base (org A)', createdBy]
+  );
+  const baseId = baseRes.rows[0].id;
+
+  const tableRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_tables (base_id, name, created_by) VALUES ($1, $2, $3) RETURNING id`,
+    [baseId, 'Form IDOR RealDB Table (org A)', createdBy]
+  );
+  const tableId = tableRes.rows[0].id;
+
+  // tp_forms.created_by is a real `uuid` column (unlike tp_bases/tp_tables'
+  // free-text created_by) — left NULL here since requireFormAccess only
+  // resolves formId -> table_id -> base.organization_id, never created_by.
+  const formRes = await client.query<{ id: string }>(
+    `INSERT INTO tp_forms (table_id, name, slug, config) VALUES ($1, $2, $3, $4::jsonb) RETURNING id`,
+    [tableId, 'Form IDOR RealDB Form (org A)', `form-idor-${tag}`, JSON.stringify({ fields: [] })]
+  );
+  const formId = formRes.rows[0].id;
+
+  const cleanup = async () => {
+    try {
+      await client.query(`DELETE FROM tp_forms WHERE table_id = $1`, [tableId]);
+      await client.query(`DELETE FROM tp_tables WHERE id = $1`, [tableId]);
+      await client.query(`DELETE FROM tp_bases WHERE id = $1`, [baseId]);
+      await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
+      await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
+    } catch {
+      // Leaking a few rows is acceptable; a hung/throwing cleanup is not.
+    }
+    try {
+      await client.end();
+    } catch {
+      // ignore
+    }
+  };
+
+  return { client, orgAId, orgBId, userAId, userBId, baseId, tableId, formId, cleanup };
+}
+
+describe('M-forms — GET/PATCH/DELETE /forms/:formId IDOR fix (real Postgres)', () => {
+  let harness: FormHarness | null = null;
+  let skipMessageEmitted = false;
+
+  function emitSkipOnce(): void {
+    if (skipMessageEmitted) return;
+    skipMessageEmitted = true;
+    // eslint-disable-next-line no-console
+    console.error(
+      '[skip] Postgres not reachable (or schema incomplete) — form IDOR realdb tests skipped. ' +
+        'See table-platform.idor.realdb.test.ts header for local setup.'
+    );
+  }
+
+  beforeAll(async () => {
+    harness = await setupFormHarness();
+    if (!harness) emitSkipOnce();
+  }, 30_000);
+
+  afterAll(async () => {
+    if (harness) {
+      await harness.cleanup();
+      harness = null;
+    }
+  });
+
+  const itDB = (name: string, fn: (h: FormHarness) => Promise<void>, timeoutMs = 20_000) =>
+    it(
+      name,
+      async () => {
+        if (!harness) {
+          expect(true).toBe(true);
+          return;
+        }
+        await fn(harness);
+      },
+      timeoutMs
+    );
+
+  itDB('GET /forms/:formId — 403 for a real user in a different real org (cross-org attack)', async (h) => {
+    const app = buildApp();
+    const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+
+    const res = await request(app)
+      .get(`/api/table-platform/forms/${h.formId}`)
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body?.error).toMatch(/access denied/i);
+  });
+
+  itDB('GET /forms/:formId — succeeds (no 403) for a real user in the SAME real org', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+
+    const res = await request(app)
+      .get(`/api/table-platform/forms/${h.formId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).not.toBe(403);
+    expect(res.status).toBe(200);
+    expect(res.body?.id).toBe(h.formId);
+  });
+
+  itDB(
+    'PATCH /forms/:formId — owner (same org) gets 200 and the config is actually persisted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+
+      const res = await request(app)
+        .patch(`/api/table-platform/forms/${h.formId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ name: 'Renamed by owner', is_published: true });
+
+      expect(res.status).toBe(200);
+      expect(res.body?.name).toBe('Renamed by owner');
+      expect(res.body?.is_published).toBe(true);
+
+      const row = await h.client.query('SELECT name, is_published FROM tp_forms WHERE id = $1', [h.formId]);
+      expect(row.rows[0]?.name).toBe('Renamed by owner');
+      expect(row.rows[0]?.is_published).toBe(true);
+    }
+  );
+
+  itDB(
+    'PATCH /forms/:formId — cross-org attacker gets 403 and the victim row is provably unchanged',
+    async (h) => {
+      const before = await h.client.query('SELECT name, config FROM tp_forms WHERE id = $1', [h.formId]);
+
+      const app = buildApp();
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const res = await request(app)
+        .patch(`/api/table-platform/forms/${h.formId}`)
+        .set('Authorization', `Bearer ${attackerToken}`)
+        .send({ name: 'HACKED_BY_org_B_attacker' });
+
+      expect(res.status).toBe(403);
+
+      const after = await h.client.query('SELECT name, config FROM tp_forms WHERE id = $1', [h.formId]);
+      expect(after.rows[0]?.name).toBe(before.rows[0]?.name);
+      expect(after.rows[0]?.name).not.toBe('HACKED_BY_org_B_attacker');
+    }
+  );
+
+  itDB(
+    'DELETE /forms/:formId — cross-org attacker gets 403 and the victim row provably still exists',
+    async (h) => {
+      const app = buildApp();
+      const attackerToken = makeE2EToken(h.userBId, h.orgBId);
+      const res = await request(app)
+        .delete(`/api/table-platform/forms/${h.formId}`)
+        .set('Authorization', `Bearer ${attackerToken}`);
+
+      expect(res.status).toBe(403);
+
+      const after = await h.client.query('SELECT id FROM tp_forms WHERE id = $1', [h.formId]);
+      expect(after.rows.length).toBe(1);
+    }
+  );
+
+  itDB('GET /forms/:formId — nonexistent formId gets 404 (not a 403/500 leak)', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const res = await request(app)
+      .get(`/api/table-platform/forms/00000000-0000-0000-0000-000000000000`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(res.status).toBe(404);
+  });
+
+  itDB('DELETE /forms/:formId — owner (same org) gets 204 and the row is actually gone', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const res = await request(app)
+      .delete(`/api/table-platform/forms/${h.formId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(204);
+
+    const after = await h.client.query('SELECT id FROM tp_forms WHERE id = $1', [h.formId]);
+    expect(after.rows.length).toBe(0);
+  });
+});

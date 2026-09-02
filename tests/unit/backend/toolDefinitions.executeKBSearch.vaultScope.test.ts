@@ -73,6 +73,21 @@ const FAKE_DOCS: FakeDoc[] = [
     project_id: 'proj-99',
     folder_id: 'folder-proj99-specs',
   },
+  // ★ SEDNO-2 (31.08) — dokument projektu proj-99 ZLOZONY w folderze projektu
+  // proj-42. Nic w schemacie nie wymusza zgodnosci folder.project_id z
+  // document.project_id, wiec taki wiersz jest realnie mozliwy — i jest
+  // wektorem, dla ktorego istnieje linia autorytetu folderu
+  // (toolDefinitions.ts:1077-1078). Bez niej wolajacy, ktory legalnie widzi
+  // folder proj-42, dostaje przez spreparowany `vault_project_id` dokumenty
+  // proj-99, w ktorym NIE jest czlonkiem.
+  {
+    id: 'doc-proj-99-in-42-folder',
+    organization_id: 'org-1',
+    scope: 'project',
+    owner_id: null,
+    project_id: 'proj-99',
+    folder_id: 'folder-proj42-specs',
+  },
 ];
 
 interface FakeFolder {
@@ -129,12 +144,23 @@ const FAKE_FOLDERS: FakeFolder[] = [
 
 const hybridSearchCalls = vi.hoisted(() => ({ calls: [] as Array<Record<string, unknown>> }));
 
-vi.mock('../../../server/src/services/ai/chatPolicyGateway.js', () => ({
-  evaluateRetrievalPolicyDecision: async () => ({
-    decision: { id: 'decision-1', allowed: true, outcome: 'allowed' },
-    sanitizedQuery: 'query',
-  }),
-}));
+// UWAGA (31.08): `chatPolicyGateway` NIE jest tu atrapowany — celowo.
+// Poprzednia atrapa zwracala recznie sklecony ksztalt decyzji
+// (`{ id, allowed, outcome }`) BEZ pola `scopeResolution`. Gdy FIX-206 (commit
+// ae70377533) dodal w `executeKBSearch` odczyt
+// `policyResult.decision.scopeResolution.allowedScopes` (server/src/services/ai/
+// toolDefinitions.ts:899), atrapa zaczela rzucac TypeError, ktory wpadal w
+// `catch` fail-closed (tamze :910) i WYGASZAL cala funkcje dla WSZYSTKICH
+// przypadkow — kazde wywolanie zwracalo `{ results: [], note: 'Blocked by
+// policy gateway' }`. Skutek: 7 przypadkow "obcy NIE widzi" swiecilo na zielono
+// z zupelnie niewlasciwego powodu (nikt nie widzial NICZEGO), a 11 przypadkow
+// "wlasciciel WIDZI" czerwienialo.
+// Realny gateway jest czysty (bez DB — jedyna zewnetrzna zaleznosc,
+// `enterpriseSecurity.scanAndSanitize`, jest owinieta w try/catch w
+// chatPolicyGateway.ts:561-567), wiec uzywamy GO, nie jego kopii. Dzieki temu
+// atrapa nie moze sie juz rozjechac z kontraktem produkcyjnym.
+// Dla ctx bez `privateMode` realny `resolveScope` daje
+// allowedScopes=['user_private','org_shared','public_kb'] → orgScopeAllowed=true.
 
 vi.mock('../../../server/src/services/ragService.js', () => ({
   default: {
@@ -423,6 +449,12 @@ describe('executeKBSearch — Vault-kontekst FOLDER narrowing (★ VLT-FOLDERS)'
 
     expect(result.results).toEqual([]);
     expect(hybridSearchCalls.calls).toHaveLength(0);
+    // ★ DODANE 31.08 (bramka mutacyjna): sam pusty wynik NIE dowodzi, ze zadzialal
+    // check widocznosci folderu — gdy go usunac, wynik jest pusty tak samo, bo
+    // drugą warstwą łapie owner-filter w `KnowledgeService.getDocuments`. `note`
+    // rozroznia "odmowiono, bo nie twoj" od "wpuszczono, ale akurat pusto",
+    // wiec dopiero ona pokazuje, ze pierwsza warstwa zyje.
+    expect(result.note).toBe('Folder Vault nie istnieje lub jest niewidoczny');
   });
 
   it('★ FAIL-CLOSED: folder scope=project w projekcie, w którym wołający NIE jest członkiem — pusty wynik', async () => {
@@ -464,6 +496,13 @@ describe('executeKBSearch — Vault-kontekst FOLDER narrowing (★ VLT-FOLDERS)'
 
     expect(result.results).toEqual([]);
     expect(hybridSearchCalls.calls).toHaveLength(0);
+    // ★ DODANE 31.08 (bramka mutacyjna). Pomiar pokazal, ze ten przypadek NIE
+    // dociska linii autorytetu folderu (toolDefinitions.ts:1077-1078), tylko
+    // WCZESNIEJSZY check widocznosci (:1067) — sciezka konczy sie zanim
+    // autorytet w ogole zostanie policzony. Bez tej asercji przypadek
+    // przechodzil takze po usunieciu checku widocznosci (pusto z innego
+    // powodu). Sama linie autorytetu dociska osobny przypadek "SEDNO-2" nizej.
+    expect(result.note).toBe('Folder Vault nie istnieje lub jest niewidoczny');
   });
 
   it('★ SEDNO — folder wygrywa nad BRAKIEM vault_scope: samo vault_folder_id wystarcza do poprawnego zawężenia', async () => {
@@ -479,5 +518,73 @@ describe('executeKBSearch — Vault-kontekst FOLDER narrowing (★ VLT-FOLDERS)'
 
     expect(result.vaultScope).toBe('user');
     expect(titles).toEqual(['doc-piotr-private']);
+  });
+
+  // ★ SEDNO-2 (dopisane 31.08) — poprzednie dwa przypadki "SEDNO" NIE dowodzily
+  // linii autorytetu folderu (toolDefinitions.ts:1077-1078): oba zatrzymywaly sie
+  // wczesniej, na checku widocznosci (:1067), wiec mutacja usuwajaca autorytet
+  // przechodzila bez czerwieni. Tu folder jest WIDOCZNY legalnie (wolajacy jest
+  // czlonkiem proj-42), a spreparowany jest `vault_project_id` — dopiero to
+  // dociska sama linie autorytetu.
+  it('★ SEDNO-2 — folder wygrywa nad spreparowanym vault_project_id: widoczny folder proj-42 NIE jest przepustka do proj-99', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      {
+        query: 'specyfikacja',
+        vault_scope: 'project',
+        vault_project_id: 'proj-99', // ★ spreparowane: wolajacy NIE jest czlonkiem proj-99
+        vault_folder_id: 'folder-proj42-specs', // widoczny legalnie (czlonek proj-42)
+      },
+      ctxFor('user-piotr')
+    );
+    const result = JSON.parse(raw);
+    const titles = result.results.map((r: any) => r.documentTitle);
+
+    // Para dowodowa, strona "wlasciciel WIDZI": zawezenie dziala, nie gasi funkcji.
+    expect(titles).toEqual(['doc-proj-42-a']);
+    // Strona "obcy NIE widzi": dokument proj-99 zlozony w TYM folderze nie wchodzi.
+    expect(titles).not.toContain('doc-proj-99-in-42-folder');
+    // FIX-213-6 — `projectIds` docierajace do retrievalu tez musza pochodzic z
+    // folderu (proj-42), nie ze spreparowanego pola. Bez tej asercji przeprowadzenie
+    // `projectIds` nie ma w tym pakiecie zadnej bramki.
+    expect(hybridSearchCalls.calls).toHaveLength(1);
+    expect(hybridSearchCalls.calls[0].projectIds).toEqual(['proj-42']);
+  });
+});
+
+// FIX-206 pkt 2 (commit ae70377533) — egzekucja trybu prywatnego w
+// `executeKBSearch` (toolDefinitions.ts:1085-1097). To wlasnie ta zmiana
+// wywrocila caly ten plik (patrz komentarz przy atrapach na gorze), a sama nie
+// miala tu ANI JEDNEGO przypadku. Dopisane 31.08 wraz z para dowodowa.
+describe('executeKBSearch — tryb prywatny (FIX-206 pkt 2)', () => {
+  beforeEach(() => {
+    hybridSearchCalls.calls.length = 0;
+  });
+
+  it('privateMode: jawnie zazadany sejf ORGANIZACJI jest odciety, hybridSearch NIE jest wolane', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'polityka', vault_scope: 'organization' },
+      { ...ctxFor('user-piotr'), privateMode: true }
+    );
+    const result = JSON.parse(raw);
+
+    expect(result.results).toEqual([]);
+    expect(result.privateMode).toBe(true);
+    expect(hybridSearchCalls.calls).toHaveLength(0);
+  });
+
+  it('privateMode: WLASNY sejf prywatny nadal dziala (para dowodowa — odciecie nie gasi funkcji)', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'kontekst', vault_scope: 'user' },
+      { ...ctxFor('user-piotr'), privateMode: true }
+    );
+    const result = JSON.parse(raw);
+    const titles = result.results.map((r: any) => r.documentTitle);
+
+    expect(titles).toContain('doc-piotr-private');
+    expect(titles).not.toContain('doc-org-1');
+    expect(titles).not.toContain('doc-anna-private');
   });
 });

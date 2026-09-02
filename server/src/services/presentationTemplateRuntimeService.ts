@@ -192,6 +192,8 @@ export interface PresentationTemplateRuntime {
     showConfidentiality: boolean;
   };
   customTemplate?: PresentationCustomTemplateDefinition;
+  imageStylePrompt: string | null;
+  colorTemplateId?: string | null;
 }
 
 const FAMILY_BY_DECK_TYPE: Record<string, TemplateFamily> = {
@@ -448,6 +450,13 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
         throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
       return validation.value;
     })(),
+    imageStylePrompt:
+      typeof layoutPolicy?.imageStylePrompt === 'string' && layoutPolicy.imageStylePrompt.trim()
+        ? layoutPolicy.imageStylePrompt.trim()
+        : null,
+    ...(process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true'
+      ? { colorTemplateId: layoutPolicy?.colorTemplateId ?? null }
+      : {}),
   };
 }
 
@@ -594,6 +603,7 @@ export function buildSystemTemplateRuntime(family: TemplateFamily): Presentation
       showPageNumbers: true,
       showConfidentiality: true,
     },
+    imageStylePrompt: null,
   };
 }
 

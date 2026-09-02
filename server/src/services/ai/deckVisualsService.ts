@@ -15,8 +15,49 @@ import { exportsDir } from '../../utils/storagePaths.js';
 import { routeImage } from '../deliverables/imageRouter.js';
 import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
 import type { SlideVisualSpec, UnifiedReportMeta } from '../report/pptx/types.js';
+import {
+  createVisionFaceDetector,
+  detectTextInGeneratedImage,
+  type FaceDetector,
+} from './deckImageSafetyGates.js';
 
 type VisualPriority = 'quality' | 'cost';
+
+export type ImageStylePreset =
+  | 'corporate_photography'
+  | 'abstract_geometric'
+  | 'flat_illustration'
+  | 'data_focused'
+  | 'industry_realistic'
+  | 'minimal_no_images';
+
+export const IMAGE_STYLE_PRESET_PROMPTS: Partial<Record<ImageStylePreset, string>> = {
+  corporate_photography:
+    'Premium corporate photography, authentic business environment, natural light, no people and no human faces.',
+  abstract_geometric:
+    'Large-scale abstract composition, soft organic forms, refined geometric balance and generous negative space.',
+  flat_illustration:
+    'Editorial flat illustration, clean vector-like shapes, restrained detail and a coherent limited palette.',
+  industry_realistic:
+    'Realistic industrial photography, credible machinery and materials, cinematic natural light, no people and no human faces.',
+};
+
+export function buildImageStyleAppendix(
+  imageStylePrompt?: string | null,
+  imageStylePreset?: string | null
+): string | undefined {
+  const theme = String(imageStylePrompt || '').trim();
+  const preset = IMAGE_STYLE_PRESET_PROMPTS[imageStylePreset as ImageStylePreset] || '';
+  return [theme, preset].filter(Boolean).join(' ') || undefined;
+}
+
+type ImageGenerationDependencies = {
+  selection?: ImageProviderSelection | null;
+  generate?: (provider: string, prompt: string) => Promise<Buffer>;
+  detectText?: (image: Buffer) => Promise<{ hasText: boolean }>;
+  detectFace?: FaceDetector;
+  stockFallback?: typeof tryStockFallback;
+};
 
 type ProviderRow = {
   id: string;
@@ -596,7 +637,7 @@ async function tryStockFallback(params: {
   }
 }
 
-async function generateImageVisual(params: {
+export async function generateImageVisual(params: {
   deckId: string;
   organizationId: string;
   meta: UnifiedReportMeta;
@@ -604,37 +645,50 @@ async function generateImageVisual(params: {
   slot: SlideVisualSpec['slot'];
   label: string;
   prompt: string;
+  styleAppendix?: string;
   styleHint?: string;
   brandColor?: string;
   priority: VisualPriority;
   dataClass?: 'no_pii' | 'pii' | 'confidential';
   filenamePrefix: string;
+  dependencies?: ImageGenerationDependencies;
 }): Promise<{ visual?: SlideVisualSpec; warning?: string }> {
   const priority = params.priority || 'quality';
   const dataClass = params.dataClass || 'no_pii';
 
   // DB-driven purpose assignment first; else env-default chain (gemini→…).
-  const dbSelection = await selectProviderForPurpose({
-    organizationId: params.organizationId,
-    purpose: params.purpose,
-    priority,
-    dataClass,
-  });
-  const selection: ImageProviderSelection | null = dbSelection
-    ? {
-        provider: dbSelection.provider,
-        apiKey: dbSelection.apiKey,
-        modelId: dbSelection.modelId,
-      }
-    : resolveDefaultImageProvider();
+  const hasInjectedSelection = !!params.dependencies && 'selection' in params.dependencies;
+  const dbSelection = hasInjectedSelection
+    ? null
+    : await selectProviderForPurpose({
+        organizationId: params.organizationId,
+        purpose: params.purpose,
+        priority,
+        dataClass,
+      });
+  const selection: ImageProviderSelection | null = hasInjectedSelection
+    ? (params.dependencies!.selection ?? null)
+    : dbSelection
+      ? {
+          provider: dbSelection.provider,
+          apiKey: dbSelection.apiKey,
+          modelId: dbSelection.modelId,
+        }
+      : resolveDefaultImageProvider();
+
+  const imageStyleEnabled = process.env.ENABLE_PRESENTATION_IMAGE_STYLE === 'true';
+  const finalPrompt = imageStyleEnabled
+    ? [params.prompt, params.styleAppendix].filter(Boolean).join(' ')
+    : params.prompt;
+  const stockFallback = params.dependencies?.stockFallback || tryStockFallback;
 
   const stockQuery = String(params.styleHint || params.label || params.prompt || '').slice(0, 200);
 
   if (!selection) {
     // No AI provider configured/available — try stock before giving up.
-    const stock = await tryStockFallback({
+    const stock = await stockFallback({
       deckId: params.deckId,
-      prompt: params.prompt,
+      prompt: finalPrompt,
       query: stockQuery || params.prompt,
       slot: params.slot,
       purpose: params.purpose,
@@ -653,40 +707,93 @@ async function generateImageVisual(params: {
     const size: '1024x1024' | '1792x1024' = priority === 'quality' ? '1792x1024' : '1024x1024';
     const providerName = String(selection.provider.provider || '').toLowerCase();
 
-    let buf: Buffer;
-    if (providerName === 'openai') {
-      buf = await generateWithOpenAI({
+    const generateOnce = async (): Promise<Buffer> => {
+      if (params.dependencies?.generate)
+        return params.dependencies.generate(providerName, finalPrompt);
+      if (providerName === 'openai') {
+        return generateWithOpenAI({
+          apiKey: selection.apiKey,
+          endpoint: selection.provider.endpoint,
+          model: selection.modelId,
+          prompt: finalPrompt,
+          size,
+        });
+      } else if (providerName === 'google' || providerName === 'gemini') {
+        const apiKey = selection.apiKey || process.env.GEMINI_API_KEY || '';
+        if (!apiKey.trim()) {
+          throw new Error('No Gemini API key configured (GEMINI_API_KEY).');
+        }
+        // Gemini returns square images; size hint is ignored (tolerant).
+        return generateWithGemini({
+          apiKey,
+          endpoint: selection.provider.endpoint,
+          model: selection.modelId,
+          prompt: finalPrompt,
+        });
+      } else if (providerName === 'replicate') {
+        const token =
+          selection.apiKey ||
+          process.env.REPLICATE_API_TOKEN ||
+          process.env.REPLICATE_API_KEY ||
+          '';
+        if (!token.trim())
+          throw new Error('No Replicate API token configured (REPLICATE_API_TOKEN).');
+        return generateWithReplicate({
+          apiToken: token,
+          endpoint: selection.provider.endpoint,
+          model: selection.modelId,
+          prompt: finalPrompt,
+        });
+      }
+      throw new Error(`Unsupported image provider adapter: ${providerName}`);
+    };
+
+    const detectText = params.dependencies?.detectText || detectTextInGeneratedImage;
+    const detectFace =
+      params.dependencies?.detectFace ||
+      createVisionFaceDetector({
+        provider: providerName,
         apiKey: selection.apiKey,
         endpoint: selection.provider.endpoint,
-        model: selection.modelId,
-        prompt: params.prompt,
-        size,
       });
-    } else if (providerName === 'google' || providerName === 'gemini') {
-      const apiKey = selection.apiKey || process.env.GEMINI_API_KEY || '';
-      if (!apiKey.trim()) {
-        throw new Error('No Gemini API key configured (GEMINI_API_KEY).');
+    let buf: Buffer | null = null;
+    let rejection = '';
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const candidate = await generateOnce();
+      if (!imageStyleEnabled) {
+        buf = candidate;
+        break;
       }
-      // Gemini returns square images; size hint is ignored (tolerant).
-      buf = await generateWithGemini({
-        apiKey,
-        endpoint: selection.provider.endpoint,
-        model: selection.modelId,
-        prompt: params.prompt,
+      const textResult = await detectText(candidate);
+      const faceResult = await detectFace(candidate);
+      if (!textResult.hasText && !faceResult.hasFace) {
+        buf = candidate;
+        break;
+      }
+      rejection = [textResult.hasText ? 'text' : '', faceResult.hasFace ? 'face' : '']
+        .filter(Boolean)
+        .join('+');
+      logger.warn(
+        `[DeckVisuals] Safety gate rejected generated image (${rejection}), attempt ${attempt}/3`
+      );
+    }
+
+    if (!buf) {
+      const stock = await stockFallback({
+        deckId: params.deckId,
+        prompt: finalPrompt,
+        query: stockQuery || finalPrompt,
+        slot: params.slot,
+        purpose: params.purpose,
+        label: params.label,
+        styleHint: params.styleHint,
+        brandColor: params.brandColor,
+        filenamePrefix: params.filenamePrefix,
       });
-    } else if (providerName === 'replicate') {
-      const token =
-        selection.apiKey || process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '';
-      if (!token.trim())
-        throw new Error('No Replicate API token configured (REPLICATE_API_TOKEN).');
-      buf = await generateWithReplicate({
-        apiToken: token,
-        endpoint: selection.provider.endpoint,
-        model: selection.modelId,
-        prompt: params.prompt,
-      });
-    } else {
-      throw new Error(`Unsupported image provider adapter: ${providerName}`);
+      if (stock) return { visual: stock };
+      return {
+        warning: `Generated image rejected by safety gates after 3 attempts (${rejection}); stock fallback unavailable.`,
+      };
     }
 
     const fs = await import('fs');
@@ -700,7 +807,7 @@ async function generateImageVisual(params: {
       slot: params.slot,
       purpose: params.purpose,
       label: params.label,
-      prompt: params.prompt,
+      prompt: finalPrompt,
       styleHint: params.styleHint,
       palette: params.brandColor ? { primary: params.brandColor.replace('#', '') } : undefined,
       aspect: '16:9',
@@ -717,9 +824,9 @@ async function generateImageVisual(params: {
       `[DeckVisuals] Image generation failed (${params.purpose}/${params.slot}): ${err.message} — trying stock fallback`
     );
     // AI generation failed → fall back to stock (Unsplash) before warning.
-    const stock = await tryStockFallback({
+    const stock = await stockFallback({
       deckId: params.deckId,
-      prompt: params.prompt,
+      prompt: finalPrompt,
       query: stockQuery || params.prompt,
       slot: params.slot,
       purpose: params.purpose,
@@ -859,6 +966,8 @@ export async function materializePlannedVisual(params: {
   brandColor?: string;
   priority: VisualPriority;
   dataClass?: 'no_pii' | 'pii' | 'confidential';
+  styleAppendix?: string;
+  dependencies?: ImageGenerationDependencies;
 }): Promise<{ visual?: SlideVisualSpec; warning?: string }> {
   const v = params.visual;
   if (!v?.purpose || !v?.slot) return { warning: 'Invalid planned visual (missing purpose/slot).' };
@@ -885,11 +994,13 @@ export async function materializePlannedVisual(params: {
     slot: v.slot,
     label: v.label || `AI visual (${v.purpose}/${v.slot})`,
     prompt,
+    styleAppendix: params.styleAppendix,
     styleHint: v.styleHint,
     brandColor: params.brandColor,
     priority: params.priority,
     dataClass: params.dataClass,
     filenamePrefix,
+    dependencies: params.dependencies,
   });
 
   if (warning) return { warning };

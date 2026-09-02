@@ -14,6 +14,7 @@ import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
+import { buildKnowledgeDocAccessFilter as buildSharedKnowledgeDocAccessFilter } from './knowledgeDocAccessFilter.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -30,8 +31,10 @@ type EmbeddingChunk = {
 type EmbeddingSearchOptions = {
   limit?: number;
   organizationId?: string;
+  userId?: string;
   minSimilarity?: number;
   sourceType?: string;
+  projectIds?: string[];
 };
 
 type EmbeddingRow = {
@@ -63,6 +66,19 @@ const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
     return fallback;
   }
 };
+
+// FIX-4 (dyżur 210): `buildKnowledgeDocAccessFilter`'s "no `scope` column"
+// branch is fail-closed (excludes the entire knowledge base, not just
+// private docs — see ODBIÓR_210.md §2), which is the RIGHT call for
+// security, but it used to do so in total silence. `PostgresDatabase.initDb()`
+// creates `knowledge_docs` WITHOUT `scope` (it only arrives via a runtime
+// ALTER in `KnowledgeService.ts`/`ContextDocumentService.ts`), so an
+// unlucky bootstrap order can go fully dark with zero signal in the logs.
+// Module-level (not per-instance) so this fires ONCE per process regardless
+// of how many `EmbeddingService` instances exist, instead of on every single
+// search — `buildKnowledgeDocAccessFilter` re-queries `information_schema`
+// per call (FIX-9, left as debt), so a naive per-call warn would flood logs.
+let missingScopeColumnWarned = false;
 
 export class EmbeddingService {
   private openaiConfigured: boolean;
@@ -211,15 +227,29 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, userId, projectIds, minSimilarity = 0.5 } = options;
 
-    let sql = `SELECT * FROM ai_knowledge_embeddings`;
+    // FIX-1 (dyżur 210): `e.*` alone never populated `EmbeddingRow.content` — the
+    // real (Postgres-only, see Database.ts header) `ai_knowledge_embeddings`
+    // schema names the column `chunk_text`, not `content`, so every caller
+    // reading `row.content` off this branch silently got `undefined` regardless
+    // of access filtering. Alias it exactly like `searchPg` does, so this branch
+    // actually returns usable content (surfaced by writing the day210 mutation
+    // gate test for this path — the assertion was vacuously true before this fix,
+    // since an always-undefined `content` can never "contain" anything).
+    let sql = `SELECT e.*, e.chunk_text as content FROM ai_knowledge_embeddings e`;
     const params: Array<string | number> = [];
+    const where: string[] = [];
 
     if (organizationId) {
-      sql += ` WHERE organization_id = ?`;
+      where.push(`e.organization_id = ?`);
       params.push(organizationId);
     }
+
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1, projectIds);
+    where.push(accessFilter.sql);
+    params.push(...accessFilter.params);
+    if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
 
     const rows = await DbPromise.all<EmbeddingRow>(sql, params, { fallback: false });
     if (!rows || rows.length === 0) {
@@ -253,7 +283,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId } = options;
+    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId, projectIds } = options;
     const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
     let sql = `
@@ -265,8 +295,8 @@ export class EmbeddingService {
                 metadata,
                 source_type,
                 1 - (embedding <=> $1::vector) as similarity
-            FROM ai_knowledge_embeddings
-            WHERE 1 - (embedding <=> $1::vector) > $2
+            FROM ai_knowledge_embeddings e
+            WHERE 1 - (e.embedding <=> $1::vector) > $2
         `;
     const params: Array<string | number> = [vectorLiteral, minSimilarity];
     let paramIndex = 3;
@@ -280,12 +310,17 @@ export class EmbeddingService {
     // Tenant-owned chunks must match the caller. Only explicitly classified
     // internal knowledge sources are global; missing ownership is fail-closed.
     if (organizationId) {
-      sql += ` AND (organization_id = $${paramIndex} OR (organization_id IS NULL AND source_type IN ('tool_pack', 'methodology', 'product_pill')))`;
+      sql += ` AND (e.organization_id = $${paramIndex} OR (e.organization_id IS NULL AND e.source_type IN ('tool_pack', 'methodology', 'product_pill')))`;
       params.push(organizationId);
       paramIndex++;
     }
 
-    sql += ` ORDER BY embedding <=> $1::vector LIMIT $${paramIndex}`;
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex, projectIds);
+    sql += ` AND ${accessFilter.sql}`;
+    params.push(...accessFilter.params);
+    paramIndex += accessFilter.params.length;
+
+    sql += ` ORDER BY e.embedding <=> $1::vector LIMIT $${paramIndex}`;
     params.push(limit);
 
     try {
@@ -303,6 +338,65 @@ export class EmbeddingService {
       logger.error('[EmbeddingService] PostgreSQL search error:', err.message);
       throw err;
     }
+  }
+
+  private async buildKnowledgeDocAccessFilter(
+    embeddingAlias: string,
+    userId: string | undefined,
+    isPg: boolean,
+    firstParamIndex: number,
+    projectIds?: string[]
+  ): Promise<{ sql: string; params: string[] }> {
+    // FIX-213-2: the old shape returned inside each `try` branch, so the log
+    // below was only reachable when the `information_schema`/`PRAGMA` query
+    // itself threw — never for the actual scenario it exists for (the query
+    // succeeds, `scope` is just genuinely absent). Now `columns` is computed
+    // once, the warn check runs unconditionally against it, and there is a
+    // single `return` that delegates the fail-closed decision to the shared
+    // filter (which already treats a missing `scope`/`ai_visibility`/
+    // `sensitivity` column as fail-closed) — so the log and the SQL it
+    // describes can no longer disagree about which branch ran.
+    let columns = new Set<string>();
+    try {
+      if (isPg) {
+        const result = await getDatabase().query<{ column_name: string }>(
+          `SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id', 'project_id', 'ai_visibility', 'sensitivity')`
+        );
+        columns = new Set(result.rows.map((row) => row.column_name));
+      } else {
+        const rows = await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
+          fallback: false,
+        });
+        columns = new Set((rows || []).map((row) => String(row.name || '')));
+      }
+    } catch {
+      // Missing/unreadable provenance (e.g. table not created yet) resolves
+      // fail-closed below — `columns` stays empty, which the warn check and
+      // the shared filter both treat the same as "scope column missing".
+    }
+
+    if (!columns.has('scope') && !missingScopeColumnWarned) {
+      missingScopeColumnWarned = true;
+      logger.error(
+        '[EmbeddingService] knowledge_docs.scope column is missing — the entire ' +
+          'knowledge base (not just private Vault docs) is being excluded from ' +
+          'embedding search fail-closed. This is expected only immediately after a ' +
+          'fresh migration, before KnowledgeService/ContextDocumentService run their ' +
+          'runtime ALTER TABLE. If this persists, retrieval is silently dark; run the ' +
+          'ALTER (or the equivalent migration) against knowledge_docs.'
+      );
+    }
+
+    return buildSharedKnowledgeDocAccessFilter({
+      columns,
+      dialect: isPg ? 'postgres' : 'question',
+      firstParamIndex,
+      documentAlias: 'd',
+      embeddingAlias,
+      userId,
+      projectIds,
+    });
   }
 
   /**

@@ -26,7 +26,13 @@ on:
         type: choice
         options:
           - staging
+          - demo
           - production
+      confirm_demo:
+        description: 'Type yes to promote the staging-deployed tag to demo'
+        required: false
+        default: 'no'
+        type: string
       confirm_production:
         description: 'Type yes to allow production deployment'
         required: false
@@ -105,6 +111,7 @@ jobs:
       - name: Deploy app to staging
         run: |
           DEPLOY_MESSAGE="staging app ${GITHUB_SHA}"
+          railway variables --set "APP_BUILD_SHA=${GITHUB_SHA}" --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --skip-deploys
           railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
           attempt=0
           while [ "$attempt" -lt 120 ]; do
@@ -194,6 +201,155 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git tag -f "$STAGING_TAG" "$GITHUB_SHA"
           git push origin -f "refs/tags/$STAGING_TAG"
+
+  # ===========================================================================
+  # promote-demo — the ONLY way code reaches demo.consultify.ai since 2026-08-31.
+  #
+  # Demo is the showcase, staging is the building site. This job never builds
+  # from a branch: it checks out the exact commit the tag `staging-deployed`
+  # points at (written by the deploy-staging job above, only after that deploy
+  # went green) and deploys THAT. A branch can move between the check and the
+  # upload; a tag SHA, pinned to a detached HEAD here, cannot.
+  # ===========================================================================
+  promote-demo:
+    name: Promote staging-deployed to Demo
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo' && github.event.inputs.confirm_demo == 'yes'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: demo
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_DEMO_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_DEMO_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_DEMO_ENVIRONMENT }}
+      APP_SERVICE: ${{ vars.RAILWAY_DEMO_APP_SERVICE }}
+      API_HEALTH_URL: ${{ vars.DEMO_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.DEMO_FRONTEND_URL }}
+      STAGING_TAG: staging-deployed
+    steps:
+      - name: Install git (required for checkout + tag resolution)
+        run: |
+          apk add --no-cache git >/dev/null
+
+      # fetch-depth 0 so the tag's commit is present in the clone before the
+      # detached checkout below; a shallow clone cannot check it out.
+      - uses: actions/checkout@v5.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install bash (required by gate scripts)
+        run: |
+          apk add --no-cache bash >/dev/null
+
+      # Resolves the immutable source and MOVES THE WORKING TREE ONTO IT. Every
+      # later step — the guard, `railway up` (which uploads the working tree) —
+      # therefore operates on the staged SHA and not on the dispatch branch.
+      - name: Resolve immutable promotion source (tag staging-deployed)
+        id: source
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --force --tags origin
+          if ! git show-ref --verify --quiet "refs/tags/$STAGING_TAG"; then
+            echo "Demo promotion blocked: tag '$STAGING_TAG' does not exist." >&2
+            echo "Demo only ever receives a SHA that a staging deploy already proved." >&2
+            echo "Deploy to staging (push to develop) first; that job writes the tag." >&2
+            exit 1
+          fi
+          source_sha="$(git rev-parse "refs/tags/${STAGING_TAG}^{commit}")"
+          git checkout --detach "$source_sha"
+          if [ "$(git rev-parse HEAD)" != "$source_sha" ]; then
+            echo "Demo promotion blocked: HEAD is not the tagged commit $source_sha." >&2
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Demo promotion blocked: working tree is not clean at $source_sha." >&2
+            git status --porcelain >&2
+            exit 1
+          fi
+          echo "promoting $STAGING_TAG = $source_sha"
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Validate demo configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$APP_SERVICE"
+          test -n "$FRONTEND_URL"
+
+      # See the staging step for why the guard's inputs are handed to it here
+      # and not set in the Railway panel. GIT_REF is the tag ref, which is what
+      # the demo case of the guard now demands — a branch ref is refused.
+      - name: Validate demo target mapping
+        env:
+          DEPLOY_ENVIRONMENT: demo
+          GIT_REF: refs/tags/staging-deployed
+          DEPLOY_TARGET_GUARD_ENFORCE: ${{ vars.DEPLOY_TARGET_GUARD_ENFORCE }}
+          DEMO_DB_HOST_FINGERPRINT: ${{ vars.DEMO_DB_HOST_FINGERPRINT }}
+          RELEASE_TARGET_DB_HOST_FINGERPRINT: ${{ vars.DEMO_RELEASE_TARGET_DB_HOST_FINGERPRINT }}
+          APP_DATABASE_URL: ${{ secrets.DEMO_APP_DATABASE_URL }}
+          MIGRATION_DATABASE_URL: ${{ secrets.DEMO_MIGRATION_DATABASE_URL }}
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
+
+      - name: Deploy promoted SHA to demo
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          DEPLOY_MESSAGE="demo promotion ${SOURCE_SHA}"
+          railway variables --set "APP_BUILD_SHA=${SOURCE_SHA}" --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --skip-deploys
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
+          attempt=0
+          while [ "$attempt" -lt 120 ]; do
+            deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "demo deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 120 ] || (echo "Timed out waiting for demo deployment" >&2; exit 1)
+
+      - name: Verify demo deployment
+        run: |
+          if ! command -v curl >/dev/null 2>&1; then
+            apk add --no-cache curl >/dev/null
+          fi
+          fetch_url() {
+            url="$1"
+            attempt=0
+            while [ "$attempt" -lt 12 ]; do
+              if curl -fsSL "$url" >/dev/null; then
+                return 0
+              fi
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+            echo "Healthcheck failed for $url" >&2
+            return 1
+          }
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            fetch_url "$API_HEALTH_URL"
+          fi
+          fetch_url "$FRONTEND_URL"
+
+      - name: Dump demo runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true
 
   deploy-production:
     name: Deploy Production

@@ -32,6 +32,10 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_TERESA_ADOPT_CHAT_DRAFT: z.boolean().default(false),
+  ENABLE_TERESA_TOOL_LOOP: z.boolean().default(false),
+  ENABLE_TERESA_TOOL_LOOP_WRITE: z.boolean().default(false),
+  ENABLE_TERESA_DECK_EDIT: z.boolean().default(false),
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   // Krok C (rozdział flagi-długu): funkcja B (retrieval search_org_mindmaps)
   // wydzielona z ENABLE_TERESA_MINDMAP na WŁASNĄ flagę. Default OFF. Realne
@@ -45,10 +49,24 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
+  ENABLE_PPTX_CANONICAL_GEOMETRY: z.boolean().default(false),
+  ENABLE_PRESENTATION_IMAGE_STYLE: z.boolean().default(false),
+  ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
+  ENABLE_DECK_OVERFLOW_WARNING: z.boolean().default(false),
+  // FIX-230 F6: split from ENABLE_DECK_OVERFLOW_WARNING. That flag used to
+  // control BOTH the preflight/UI warning AND whether the PPTX renderer's
+  // `fit:'shrink'` auto-shrink ran in 5 atomics — so turning the warning ON
+  // silently made the exported file worse (no more auto-shrink) at the same
+  // time it started warning about it. Two independent decisions, two flags.
+  // Default OFF: unchanged rendering behavior until explicitly opted in.
+  ENABLE_DECK_OVERFLOW_DISABLE_SHRINK: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
   ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
+  ENABLE_ARTIFACT_KNOWLEDGE_INDEX: z.boolean().default(false),
+  ENABLE_DECK_FROM_KNOWLEDGE: z.boolean().default(false),
+  ENABLE_AUDITS_WORKSHOP: z.boolean().default(false),
   // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
   // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
   // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
@@ -145,6 +163,13 @@ export function loadFeatureFlags(): FeatureFlags {
     // locate notes, insights and initiatives the user references by topic.
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
+    ENABLE_TERESA_ADOPT_CHAT_DRAFT: process.env.ENABLE_TERESA_ADOPT_CHAT_DRAFT === 'true',
+    ENABLE_TERESA_TOOL_LOOP: process.env.ENABLE_TERESA_TOOL_LOOP === 'true',
+
+    // Day207 / 17-C: model WRITE calls become governed ai_actions proposals.
+    // Kept separate from the READ tool loop and opt-in until owner visual acceptance.
+    ENABLE_TERESA_TOOL_LOOP_WRITE: process.env.ENABLE_TERESA_TOOL_LOOP_WRITE === 'true',
+    ENABLE_TERESA_DECK_EDIT: process.env.ENABLE_TERESA_DECK_EDIT === 'true',
 
     // Teresa mind-map deliverable creation (ff_teresaMindmap / M06 Fala 2):
     // generate_deliverable(type:'mindmap') handler self-gate — mounts a real
@@ -194,6 +219,34 @@ export function loadFeatureFlags(): FeatureFlags {
     // background generation; this registry entry is the SSOT/documentation.
     ENABLE_DECK_CONCLUSION_SLIDE: process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true',
 
+    // Day 227 — opt-in parity between the canonical PPTX pipeline and DeckStyler.
+    // The same gate also aligns the named Harvard palette with the product brand token.
+    ENABLE_PPTX_CANONICAL_GEOMETRY: process.env.ENABLE_PPTX_CANONICAL_GEOMETRY === 'true',
+
+    // Day 228 — opt-in image style prompt + mandatory OCR/face safety gates.
+    // Read at call time by deckVisualsService; this registry is the SSOT.
+    ENABLE_PRESENTATION_IMAGE_STYLE: process.env.ENABLE_PRESENTATION_IMAGE_STYLE === 'true',
+
+    // Day 226: opt-in persistence and runtime exposure for Presentation
+    // Template Architect custom theme contracts. Default OFF until owner
+    // acceptance so legacy save/read behavior remains unchanged.
+    ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE:
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true',
+
+    // Day 230: honest, non-blocking pre-export slide overflow warning.
+    // Default OFF until owner acceptance of the measured detector and UI.
+    // FIX-230 F6: this flag now controls ONLY the preflight endpoint +
+    // DeckOverflowWarning banner. It no longer touches renderer shrink
+    // behavior — see ENABLE_DECK_OVERFLOW_DISABLE_SHRINK below.
+    ENABLE_DECK_OVERFLOW_WARNING: process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true',
+
+    // FIX-230 F6: independent flag for disabling the PPTX renderer's
+    // `fit:'shrink'` auto-shrink (SlideTitle/KpiValue/Highlight/Badge +
+    // PptxPipelineService). Default OFF — shrink stays on, matching
+    // today's exported-file behavior, regardless of
+    // ENABLE_DECK_OVERFLOW_WARNING's state.
+    ENABLE_DECK_OVERFLOW_DISABLE_SHRINK: process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK === 'true',
+
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
     // read/write and server-persisted WS graph_patch. Default ON (2026-07-06,
@@ -230,6 +283,19 @@ export function loadFeatureFlags(): FeatureFlags {
     // (Tasks / Decisions). Default ON; set to 'false' to omit both tools.
     ENABLE_TERESA_RECORD_CREATE: process.env.ENABLE_TERESA_RECORD_CREATE !== 'false',
 
+    // Day 209 / 17-J: generated Studio documents and decks may be indexed into
+    // the Knowledge Vault after their owner write succeeds. Opt-in only: the
+    // materialization hooks check this flag before importing or invoking the
+    // indexer, so OFF is a true no-op rather than a failed indexing attempt.
+    ENABLE_ARTIFACT_KNOWLEDGE_INDEX: process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
+
+    // Day231: organization-grounded outline generation. Opt-in until owner
+    // accepts the review UI and the content gate on real data.
+    ENABLE_DECK_FROM_KNOWLEDGE: process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true',
+    // Day221 / D-5: scaffold for the future Audits Workshop implementation.
+    // Declaration only; no production caller exists before owner visual acceptance.
+    ENABLE_AUDITS_WORKSHOP: process.env.ENABLE_AUDITS_WORKSHOP === 'true',
+
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.
     ENABLE_TERESA_IDEA_ACTIONS: process.env.ENABLE_TERESA_IDEA_ACTIONS !== 'false',
@@ -257,4 +323,21 @@ export function loadFeatureFlags(): FeatureFlags {
 // ==========================================
 
 export const featureFlags = loadFeatureFlags();
+
+export function isArtifactKnowledgeIndexEnabled(): boolean {
+  return process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true';
+}
+
+export function isDeckFromKnowledgeEnabled(): boolean {
+  return process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true';
+}
+
+export function isDeckOverflowWarningEnabled(): boolean {
+  return process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true';
+}
+
+export function isDeckOverflowShrinkDisabled(): boolean {
+  return process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK === 'true';
+}
+
 export default featureFlags;

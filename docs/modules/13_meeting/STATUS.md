@@ -21,6 +21,11 @@ last_updated: 2026-07-30
 
 - Route exists, but behavior can diverge if imports are present and not mounted.
 - Documentation must track mounted runtime, not planned/RAW target-state behavior.
+- **Zmierzone 2026-09-01 (dyżur 237):** trzy niezależne bramki dostępu pilota;
+  dwie otwarte (moduł `open`, trasa dozwolona), trzecia (widoczność w menu)
+  nie — menu pokazuje pozycję z kłódką, URL wprost przechodzi. Decyzja
+  właściciela otwarta. Pełny pomiar:
+  `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
 
 ## Next Contract Work (without changing scope)
 

@@ -807,6 +807,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
+  const teresaAdoptChatDraftEnabled = isEnabled('ENABLE_TERESA_ADOPT_CHAT_DRAFT');
 
   const routeInfo = useMemo(
     () => ({
@@ -897,7 +898,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
 
   const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
-  const { handleAction: handleChatAction } = useChatActions();
+  const { handleAction: handleChatAction } = useChatActions({
+    projectId: workspaceContext?.projectId || undefined,
+    initiativeId:
+      workspaceContext?.type === 'initiative' ? workspaceContext.entityId || undefined : undefined,
+  });
 
   // B3 patch-mode — useCanvasAIStream reports the outcome of a surgical
   // canvas patch via 'canvas-patch-result' (it has no chat access). Reply
@@ -1112,6 +1117,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   >({});
   const [governedHandoffTargetById, setGovernedHandoffTargetById] = useState<
     Record<string, string | undefined>
+  >({});
+  const [initiativeHandoffByMessageId, setInitiativeHandoffByMessageId] = useState<
+    Record<string, { initiativeId: string; title?: string | null }>
   >({});
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
@@ -1636,6 +1644,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     memoryCandidate,
     teresaProposal,
     researchProgress,
+    toolSteps,
     researchVisibility,
     deepThinkingState,
     deepThinkingHint,
@@ -1648,6 +1657,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     streamStartedAt,
     streamCompletedSignal,
   } = useAIStream({
+    onExecutionProposal: (proposal) => {
+      useProposalLifecycleStore.getState().patchLifecycle(proposal.proposalId, {
+        lifecycleState: 'pending_review',
+        actionType: proposal.actionType,
+        latestMessageType: 'execution_proposal',
+      });
+      addChatMessage({
+        id: `execution-proposal-${proposal.proposalId}`,
+        role: 'ai',
+        content:
+          proposal.toolName === 'create_decision'
+            ? 'Decision proposal awaiting approval.'
+            : 'Task proposal awaiting approval.',
+        timestamp: new Date(),
+        type: 'execution_proposal',
+        metadata: {
+          executionProposal: {
+            proposalId: proposal.proposalId,
+            lifecycleState: proposal.lifecycleState,
+            actionType: proposal.actionType,
+            risk: 'low',
+            stepCount: 1,
+          },
+        },
+      } as any);
+    },
     onStreamDone: async (fullText, thinking, artifacts, meta) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
@@ -2256,10 +2291,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // initiative) is already persisted; deep-link into the Initiatives module
       // to open it. Falls back to the module list when no id is present.
       if (payloadKind === 'initiative') {
+        const initiativeId = String(
+          (payload as any)?.initiativeId || payload?.draftId || payload?.generationId || ''
+        ).trim();
+        if (teresaAdoptChatDraftEnabled && initiativeId) {
+          const handoff = { initiativeId, title: payload.title || null };
+          const liveConversationId =
+            useConversationStore.getState().activeConversationId || activeConversationId;
+          if (liveConversationId) {
+            void addMessageToConversation({
+              conversationId: liveConversationId,
+              role: 'ai',
+              content: t(
+                'chat.initiativeHandoff.createdDraft',
+                'The initiative draft is ready. Review it before passing it to execution.'
+              ),
+              messageType: 'text',
+              metadata: { initiativeHandoff: handoff },
+            }).then((saved) => {
+              const messageId = String((saved as any)?.id || '').trim();
+              if (!messageId) return;
+              setInitiativeHandoffByMessageId((previous) => ({
+                ...previous,
+                [messageId]: handoff,
+              }));
+            });
+          }
+          toast.success(t('myWork.initiatives.createdFromChatToast', 'Initiative created from chat'));
+          return;
+        }
         try {
-          const initiativeId = String(
-            (payload as any)?.initiativeId || payload?.draftId || payload?.generationId || ''
-          ).trim();
           navigateToRoute(
             initiativeId
               ? `/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`
@@ -2666,6 +2727,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           metadata: {
             deepThinkingState,
             researchProgress,
+            // FIX-206 (pkt 4): wlasny slot kroków narzedzi — nie mieszamy ich z
+            // postepem Deep Research, bo panel badania otwieral sie bez badania.
+            toolSteps,
             researchVisibility,
             policyDecision,
             policyNotices,
@@ -2687,6 +2751,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     thinkingSteps,
     deepThinkingState,
     researchProgress,
+    toolSteps,
     researchVisibility,
     policyDecision,
     policyNotices,
@@ -2816,6 +2881,57 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           action: { type: 'NAVIGATE', targetModule: 'interview' },
         }
       );
+    }
+
+    const projectId = workspaceContext?.projectId || undefined;
+    const entityData = (workspaceContext as any)?.entityData || {};
+    const templateArtifactId = String(entityData.templateArtifactId || '').trim();
+    const kpiId = String(entityData.kpiId || '').trim();
+    if (projectId) {
+      items.push(
+        {
+          id: 'generate-report',
+          label: t('chat.suggestions.generateReport', 'Create document'),
+          type: 'generic',
+          action: { type: 'GENERATE_REPORT', version: '1.0', params: { projectId } },
+        },
+        {
+          id: 'generate-presentation',
+          label: t('chat.suggestions.generatePresentation', 'Create presentation'),
+          type: 'generic',
+          action: { type: 'GENERATE_PRESENTATION', version: '1.0', params: { projectId } },
+        },
+        {
+          id: 'browse-templates',
+          label: t('chat.suggestions.browseTemplates', 'Browse templates'),
+          type: 'generic',
+          action: { type: 'BROWSE_TEMPLATES', version: '1.0', params: {} },
+        }
+      );
+      if (templateArtifactId) {
+        items.unshift({
+          id: 'use-template',
+          label: t('chat.suggestions.useTemplate', 'Use this template'),
+          type: 'generic',
+          action: {
+            type: 'USE_TEMPLATE',
+            version: '1.0',
+            params: { templateArtifactId, outputType: 'presentation' },
+          },
+        });
+      }
+      if (kpiId) {
+        items.unshift({
+          id: 'record-kpi',
+          label: t('chat.suggestions.recordKpi', 'Record KPI value'),
+          type: 'results',
+          action: {
+            type: 'RECORD_KPI',
+            version: '1.0',
+            params: { kpiId, initiativeId: workspaceContext?.entityId || undefined },
+          },
+        });
+      }
     }
 
     // Removed always-on "Open Tools hub" / "View Results" nav chips (declutter —
@@ -6287,6 +6403,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         governedHandoffBusyById={governedHandoffBusyById}
         governedHandoffErrorById={governedHandoffErrorById}
         governedHandoffTargetById={governedHandoffTargetById}
+        initiativeHandoffByMessageId={initiativeHandoffByMessageId}
+        onOpenInitiativeHandoff={(initiativeId) =>
+          navigateToRoute(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`)
+        }
+        onInitiativeHandoffAdopted={(initiativeId) =>
+          navigateToRoute(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`)
+        }
         onCreateGovernedDocument={handleCreateGovernedDocument}
         onApproveGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'approve')}
         onRejectGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'reject')}

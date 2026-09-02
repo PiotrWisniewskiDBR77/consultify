@@ -1,0 +1,16 @@
+NOWY — DYŻUR 180
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_180_AGENT_LIMITY.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 180.
+
+Marker: 18661cc6a0
+Zasoby wyłączne: baza 6089, runtime 5030 i 5031.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

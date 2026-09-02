@@ -139,11 +139,11 @@ resolved or consciously accepted before G07.
 
 ## Owner verdict
 
-Decision: `PENDING`
-Accepted SHA: —
+Decision: ~~`PENDING`~~ → `CLOSED_FINAL` — patrz „CLOSED_FINAL — 2026-08-25” poniżej (Werdykt właściciela: DEC-2026-08-24-11, DEC-2026-08-24-15; Final SHA `b5aa07a28f`; tag `final-01-organization`). Ten wiersz niósł stan sprzed odbioru właściciela; poprawka dyżuru 196, 2026-08-31.
+Accepted SHA: ~~—~~ `b5aa07a28f`
 Date: —
 Accepted-out/deferred: —
-Evidence manifest: —
+Evidence manifest: ~~—~~ `evidence-m01-20260824/`
 
 ## CLOSED_FINAL — 2026-08-25
 
@@ -158,3 +158,31 @@ pisarz saveNow, dowód cold readback „Cele i mierniki" OK), wgrywacz dokument�
 i galeria blockerów przywrócone. Dowody: evidence-m01-20260824/ (komplet 22
 zrzutów + cold readbacki). Zamknięte znaczy zamknięte: nowe pomysły → backlog
 po-MVP z nowym ID; ponowne otwarcie wyłącznie nową jawną decyzją właściciela.
+
+## Dzień 236 — pomiar flagi i routingu redesignu (2026-09-01)
+
+- Flaga `orgRedesignV1` istnieje na bieżącej bazie m03 i jest rozwiązywana w kolejności query → localStorage → env/default (`src/utils/orgRedesignFlag.ts:70-93`); zdanie DEC-2026-08-25-74 „na m03 flagi w ogóle brak” jest więc dziś nieaktualne (`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md:126`).
+- Realny default pozostaje `OFF`, ponieważ `readEnvFlag()` zwraca `false`, gdy env nie zawiera poprawnej wartości (`src/utils/orgRedesignFlag.ts:50-60`); część DEC-2026-08-25-74 o niewidocznym domyślnie redesignie nadal opisuje dzisiejszy runtime (`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md:126`).
+- Mapa redesignu zawiera 6 grup i 11 ekranów, policzonych z dzieci `ORGANIZATION_REDESIGN_MODULES` (`src/components/Organization/redesign/organizationRedesignNav.ts:41-101,163-167`).
+- Routing jest zagnieżdżony jako para `{module, screen}` i wybiera osobną mapę dla flagi ON/OFF (`src/views/OrganizationView.tsx:94-118`); stare identyfikatory ekranów są kierowane przez jawne `REDESIGN_SCREEN_REDIRECTS` (`src/components/Organization/redesign/organizationRedesignNav.ts:126-144`).
+- Zrzuty Day236 są dowodem technicznym do odbioru, nie decyzją właściciela: `OWNER_NOT_REVIEWED` pozostaje bez zmiany do jawnego werdyktu (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md:72-74`).
+
+## Dzień 244 — odtworzony pakiet do `GUIDED_OWNER_REPLAY` (2026-09-01)
+
+Pakiet techniczny powstał ponownie w `/private/tmp/cx-day244-organizacja-ustawienia-artefakty`; jest efemeryczny i wymaga skopiowania przed zamknięciem sesji. Pełny manifest 22 PNG: `day244-screenshots.sha256` (SHA-256 manifestu `d2afaf251b877ea326bc2cf0eccfb3062c4f12539864a63399d8ded46ef91eb6`). Każda para light/dark ma różnicę `mean_luma > 150` (zmierzony zakres `229,6–234,3`). Materiał nie jest decyzją właściciela.
+
+| Ekran | Pliki light / dark i skróty SHA-256 | Opis |
+|---|---|---|
+| Tożsamość i model działania | `day244-org-profile-identity-scale-{light,dark}.png` · `fda917bf9291` / `3134b02d4281` | Profil, skala, model dostawy i rynki z panelem stanu. |
+| Kierunek i ograniczenia | `day244-org-profile-position-direction-{light,dark}.png` · `acf4d6dce548` / `8d48d1e107a9` | Kierunek strategiczny i ograniczenia organizacji. |
+| Cele i mierniki | `day244-org-goals-strategic-intent-{light,dark}.png` · `0f58fa4e9b8d` / `f8b7b2b6a163` | Uczciwie pusty stan dziedziczony po seederze. |
+| Zakres i tryb współpracy | `day244-org-goals-stakeholder-expectations-{light,dark}.png` · `e0d088628932` / `2b725ca22fef` | Oczekiwania interesariuszy i tryb współpracy. |
+| Wyzwania i dowody | `day244-org-challenges-declared-challenges-{light,dark}.png` · `5a040454c898` / `413d4a8458c9` | Uczciwie pusty stan dziedziczony po seederze. |
+| Przyczyny i blockery | `day244-org-challenges-root-causes-{light,dark}.png` · `91c7e27df1d6` / `ab68b34c930b` | Przyczyny źródłowe i blokery. |
+| Ryzyka i szanse | `day244-org-strategy-risks-opportunities-{light,dark}.png` · `4d0f4683c984` / `2fb42a8368e6` | Uczciwie pusty stan rodziny syntezy strategicznej. |
+| Scenariusze i brief | `day244-org-strategy-executive-brief-{light,dark}.png` · `d7509f79521e` / `aeb7f079b0c1` | Scenariusze oraz brief zarządczy. |
+| Źródła i twierdzenia | `day244-org-sources-claims-sources-{light,dark}.png` · `730d6b4e357d` / `da701172f14c` | Rejestr źródeł, twierdzeń i konfliktów. |
+| Graf wiedzy | `day244-org-sources-knowledge-graph-{light,dark}.png` · `c6e526c82f4e` / `1861fa449448` | Powiązania wiedzy i stan grafu. |
+| Gotowość organizacji | `day244-org-readiness-summary-{light,dark}.png` · `7393aa275ef7` / `a494cc75fb34` | Podsumowanie gotowości i nadzoru. |
+
+Seeder na lokalnym PostgreSQL zwrócił 4 persony, 27 zatwierdzonych twierdzeń, 1 snapshot i zgodny hash; manifest seedera: `organization-owner-manifest.json` (`6dea9c2b32a9…`). Globalny default `orgRedesignV1` nie został zmieniony i pozostał `OFF`; ekran udostępniono tylko parametrem query harnessu.

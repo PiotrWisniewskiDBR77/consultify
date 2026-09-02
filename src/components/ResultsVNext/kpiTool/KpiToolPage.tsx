@@ -20,9 +20,7 @@
  * used unmodified, satisfying CLAUDE.md rule #6's "powłoka wspólna" without
  * touching the closed registry.
  *
- * Sections (plan `02_KPI_IMPLEMENTATION_PLAN.md` §6.8, 8 named — this
- * package builds the 6 that have a real backend read surface; the other 2
- * are honestly disclosed as unavailable, never fabricated):
+ * Sections (plan `02_KPI_IMPLEMENTATION_PLAN.md` §6.8, 8 named):
  *   1. Performance         — real (latest measurement + KPI-level lifecycle)
  *   2. Contract             — PARTIAL: no GET anywhere returns the joined
  *                             `rvn_kpi_definition_versions` row (name/unit/
@@ -50,17 +48,8 @@
  *                             `GET /kpi/:kpiId/initiative-impacts` + the
  *                             full propose/commit/review/supersede command
  *                             set.
- *   7. Scorecards and contexts — UNAVAILABLE: grepped
- *                             `kpiScorecard.routes.ts` in full — only
- *                             `GET /:scorecardId/items` (forward, scorecard
- *                             -> items) exists; no `kpi -> scorecards`
- *                             reverse route anywhere. Honest "not available"
- *                             notice, never a fabricated list.
- *   8. History / Lineage    — UNAVAILABLE: no `GET .../history` or
- *                             `GET .../events` route exists anywhere in
- *                             `kpi.routes.ts`/`kpiDeviation.routes.ts`/
- *                             `kpiScorecard.routes.ts` (grepped). Honest
- *                             "not available" notice.
+ *   7. Scorecards and contexts — real reverse lookup by KPI.
+ *   8. History / Lineage    — real immutable KPI event history.
  *
  * D07 (scorecard snapshot payload filtering) does not apply to this screen —
  * it never renders `snapshot_payload`; that's `kpiScorecardPresenters.tsx`'s
@@ -105,13 +94,19 @@ import {
   archiveKpi,
   getKpi,
   getKpiCurrentDefinitionVersion,
+  getKpiHistory,
   listKpiMeasurements,
   suspendKpi,
   type KpiDefinitionDto,
   type KpiDefinitionVersionDto,
+  type KpiHistoryEntryDto,
   type KpiMeasurementDto,
   type KpiStatus,
 } from '../kpiApi';
+import {
+  listKpiScorecardsForKpi,
+  type KpiScorecardDto,
+} from '../kpiScorecards/kpiScorecardApi';
 import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
 import {
   KPI_DATA_QUALITY_STATUS_TONE,
@@ -318,6 +313,10 @@ export const KpiToolPage: React.FC = () => {
   const [definitionVersion, setDefinitionVersion] = useState<KpiDefinitionVersionDto | null | 'loading'>('loading');
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
+  const [scorecards, setScorecards] = useState<KpiScorecardDto[] | 'loading'>('loading');
+  const [scorecardsError, setScorecardsError] = useState<string | null>(null);
+  const [historyEntries, setHistoryEntries] = useState<KpiHistoryEntryDto[] | 'loading'>('loading');
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [impactBusy, setImpactBusy] = useState(false);
 
   // "Record reviewed attribution" dialog (replaces `window.prompt` — RN-G3
@@ -402,6 +401,30 @@ export const KpiToolPage: React.FC = () => {
     if (!enabled) return;
     loadInitiativeImpacts();
   }, [enabled, loadInitiativeImpacts]);
+
+  useEffect(() => {
+    if (!enabled || !kpiId) return;
+    setScorecards('loading');
+    setScorecardsError(null);
+    listKpiScorecardsForKpi(kpiId)
+      .then(setScorecards)
+      .catch((err) => {
+        setScorecards([]);
+        setScorecardsError(toUserFacingErrorMessage(err, isPolish));
+      });
+  }, [enabled, isPolish, kpiId]);
+
+  useEffect(() => {
+    if (!enabled || !kpiId) return;
+    setHistoryEntries('loading');
+    setHistoryError(null);
+    getKpiHistory(kpiId)
+      .then((page) => setHistoryEntries(page.entries))
+      .catch((err) => {
+        setHistoryEntries([]);
+        setHistoryError(toUserFacingErrorMessage(err, isPolish));
+      });
+  }, [enabled, isPolish, kpiId]);
 
   const submitReviewedAttribution = useCallback(
     (value: number) => {
@@ -1008,37 +1031,65 @@ export const KpiToolPage: React.FC = () => {
     ),
   };
 
-  // ── Section 7: Scorecards and contexts — UNAVAILABLE (see file header) ──
+  // ── Section 7: Scorecards and contexts ──
   const scorecardsSection: NModeSection = {
     id: 'scorecards',
     icon: LayoutGrid,
     label: { pl: 'Karty wyników i konteksty', en: 'Scorecards and contexts' },
-    hasData: false,
+    hasData: Array.isArray(scorecards) && scorecards.length > 0,
     alwaysShow: true,
     component: (
-      <GapNotice>
-        {t(
-          'Brak odwrotnego endpointu kpi -> karty wyników (kpiScorecard.routes.ts ma wyłącznie GET /:scorecardId/items, nigdy w drugą stronę). Ta sekcja celowo nie pokazuje żadnej listy zamiast zmyślać.',
-          'No reverse kpi -> scorecards endpoint exists (kpiScorecard.routes.ts only has GET /:scorecardId/items, never the reverse). This section intentionally shows no list rather than fabricating one.'
-        )}
-      </GapNotice>
+      scorecards === 'loading' ? (
+        <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
+      ) : scorecardsError ? (
+        <EmptyState variant="error" icon={AlertTriangle} title={t('Nie udało się wczytać kart wyników', 'Could not load scorecards')} description={scorecardsError} compact />
+      ) : scorecards.length === 0 ? (
+        <EmptyState variant="new" icon={LayoutGrid} title={t('Brak kart wyników', 'No scorecards')} description={t('Ten KPI nie należy jeszcze do żadnej widocznej karty wyników.', 'This KPI does not belong to any visible scorecard yet.')} compact />
+      ) : (
+        <ul className="space-y-2" data-testid="kpi-tool-scorecards-list">
+          {scorecards.map((scorecard) => (
+            <li key={scorecard.scorecardId} className="rounded-xl border border-c-border-subtle p-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-sm font-medium text-c-text">{scorecard.name}</span>
+                <StatusChip label={scorecard.lifecycleStatus} tone="neutral" />
+              </div>
+              <p className="mt-1 text-[11px] text-c-text-muted">{scorecard.description ?? t('Brak opisu', 'No description')}</p>
+            </li>
+          ))}
+        </ul>
+      )
     ),
   };
 
-  // ── Section 8: History / Lineage — UNAVAILABLE (see file header) ──
+  // ── Section 8: History / Lineage ──
   const historySection: NModeSection = {
     id: 'history',
     icon: FileText,
     label: { pl: 'Historia / rodowód', en: 'History / lineage' },
-    hasData: false,
+    hasData: Array.isArray(historyEntries) && historyEntries.length > 0,
     alwaysShow: true,
     component: (
-      <GapNotice>
-        {t(
-          'Brak GET dla historii/eventów KPI w całej domenie (sprawdzono kpi.routes.ts, kpiDeviation.routes.ts, kpiScorecard.routes.ts) — eventy istnieją w rvn_platform_events, ale żaden route ich nie czyta.',
-          'No GET exists for KPI history/events anywhere in the domain (checked kpi.routes.ts, kpiDeviation.routes.ts, kpiScorecard.routes.ts) — events exist in rvn_platform_events, but no route reads them.'
-        )}
-      </GapNotice>
+      historyEntries === 'loading' ? (
+        <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
+      ) : historyError ? (
+        <EmptyState variant="error" icon={AlertTriangle} title={t('Nie udało się wczytać historii KPI', 'Could not load KPI history')} description={historyError} compact />
+      ) : historyEntries.length === 0 ? (
+        <EmptyState variant="new" icon={FileText} title={t('Brak historii KPI', 'No KPI history')} description={t('Dla tego KPI nie zapisano jeszcze zdarzeń domenowych.', 'No domain events have been recorded for this KPI yet.')} compact />
+      ) : (
+        <ul className="space-y-2" data-testid="kpi-tool-history-list">
+          {historyEntries.map((entry) => (
+            <li key={entry.entryId} className="rounded-xl border border-c-border-subtle p-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-medium text-c-text">{entry.summaryCode}</span>
+                <StatusChip label={entry.kind} tone="neutral" />
+              </div>
+              <p className="mt-1 text-[11px] text-c-text-muted">
+                {formatDate(entry.occurredAt, isPolish)} · {t('wersja', 'version')} {entry.sourceVersion}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )
     ),
   };
 

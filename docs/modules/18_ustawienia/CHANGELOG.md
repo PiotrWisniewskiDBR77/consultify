@@ -9,6 +9,19 @@ last_updated: 2026-05-09
 
 # Changelog — Ustawienia
 
+## 2026-09-01
+
+- **Obalone**: `docs/FUNCTIONAL_DOCUMENTATION.md:57` niesie `CLOSED_FINAL
+  2026-08-25`; karta modułu ma bramki `G08`/`G09` `NOT_STARTED` — pierwszy
+  przegląd wizualny nigdy się nie zaczął. Sprzeczność nazwana, nie
+  rozstrzygnięta.
+- **Obalone**: poprzedni pomiar liczył 47 sekcji; zmierzone bezpośrednio na
+  `SettingsSidebar.tsx` — **37 sekcji w 10 grupach** (47 liczyło nagłówki
+  grup razem z pozycjami).
+- Dopisano zmierzony mechanizm widoczności sekcji dla pilota (4/37 dozwolone,
+  33/37 usuwane z listy) i ciche przekierowanie bez wpisu do dziennika.
+  Pełny pomiar: `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
+
 ## 2026-05-10
 
 - Added function-first contract layer for module 18 (`2/2` functions).

@@ -8906,16 +8906,6 @@ Use userId only from this list:
                                       </td>
                                       <td className="py-2 text-right">
                                         <button
-                                          onClick={() => handleDownloadAttachment(a)}
-                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-info transition-colors"
-                                          title={t(
-                                            'myWork.attachments.downloadFile',
-                                            'Download file'
-                                          )}
-                                        >
-                                          <Download size={13} />
-                                        </button>
-                                        <button
                                           disabled={isDecisionStageLocked}
                                           onClick={() =>
                                             setStakeholders(

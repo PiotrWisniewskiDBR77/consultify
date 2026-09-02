@@ -92,8 +92,8 @@ ID-control note: the intake source and the separate owner-direction record both 
 
 ## Owner verdict
 
-Decision: `OWNER_UI_DIRECTION_ACCEPTED / TECHNICAL_BROWSER_FINDINGS_OPEN`
-Accepted SHA: —
+Decision: ~~`OWNER_UI_DIRECTION_ACCEPTED / TECHNICAL_BROWSER_FINDINGS_OPEN`~~ → `CLOSED_FINAL` — patrz „CLOSED_FINAL — 2026-08-25” poniżej (Werdykt właściciela: DEC-2026-08-25-16; Final SHA `d5a1b6a99e`; tag `final-02-settings`). Ten wiersz niósł stan sprzed odbioru właściciela; poprawka dyżuru 196, 2026-08-31.
+Accepted SHA: ~~—~~ `d5a1b6a99e`
 Date: 2026-08-21
 Accepted-out/deferred: Destructive deletion and external OAuth activation remain OFF pending later policy/release authorization. MFA enrollment UI is deferred; backend capability is not represented as an owner-complete flow.
 Evidence manifest: —
@@ -116,3 +116,33 @@ Usunięto 62/62 bezspornie martwych wrapperów/stubów tras. Korpus uwag właśc
 ## STAN PO DYŻURZE 124 — 2026-08-29
 
 Na markerze `a1265154b73f` uruchomiono kanoniczny runtime na lokalnej bazie `consultify_w3_settings_owner_day124` (`863` migracje) i wykonano świeży pakiet `5 powierzchni × 2 persony × 2 emulacje motywu`. Powstało `20 z 20` plików, lecz tylko `12 z 20` jest semantycznie zgodnych: MEMBER na czterech z pięciu tras wraca bez komunikatu do Profilu. Ocena pięciu cech daje łącznie `13 z 25`, żadna powierzchnia nie osiąga `5 z 5`; dwa realne motywy nie są udowodnione. Stan pozostaje `PARTIAL`, bez zmiany decyzji `CLOSED_FINAL`, accepted SHA lub tagu. Pełny raport: `../../codex/CODEX_DAY124_USTAWIENIA_OWNER_REPORT.md`.
+
+## Dzień 238 — skala zasłoniętych sekcji i sprzeczność `CLOSED_FINAL`
+
+Pomiar na markerze `e014ba0d8b` daje 37 liści w 10 grupach nawigacyjnych, a nie 11 grup: nagłówki grup są zadeklarowane w `src/components/settings/SettingsSidebar.tsx:167-450`, a liście pod nimi w `src/components/settings/SettingsSidebar.tsx:168-482`.
+
+Rola pilotażowa ma cztery dozwolone sekcje (`profile`, `auth-access`, `language`, `theme`), więc 33 z 37 sekcji, czyli 89%, pozostają poza allowlistą (`src/utils/pilotAccess.ts:15-20`).
+
+Zasłonięcie treści następuje po nawigacji przez przekierowanie do `/settings/profile` w `RouterSync`, a nie przez ukrycie pozycji „Ustawienia” w menu (`src/components/RouterSync.tsx:330-342`; `src/utils/pilotAccess.ts:6-13`; `src/utils/pilotAccess.ts:144-146`).
+
+Łańcuch `SidebarUsage` → `UsageMeters` nie ma produkcyjnego importera poza własnym plikiem: `SidebarUsage` importuje miernik w `src/components/SidebarUsage.tsx:7-47`, natomiast pełny grep `src/**/*.{ts,tsx}` nie znalazł importu `SidebarUsage`; sam miernik żyje w `src/components/billing/UsageMeters.tsx:21-183`, nie we wskazanym wcześniej katalogu `src/components/settings`.
+
+Karta nadal zapisuje G08 i G09 jako `NOT_STARTED` (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-36`), podczas gdy spis funkcjonalny zapisuje `CLOSED_FINAL 2026-08-25` i tag `final-02-settings` (`docs/FUNCTIONAL_DOCUMENTATION.md:57`).
+
+Ten dopisek nie rozstrzyga, czy `CLOSED_FINAL` oznacza zamrożenie zakresu, odbiór 21 zrzutów opisany niżej, czy pełny guided replay; stan warstw pozostaje jawnie rozbieżny (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-37`; `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:106-110`).
+
+## Dzień 244 — ograniczona próbka dowodowa (2026-09-01)
+
+Artefakty leżą w efemerycznym `/private/tmp/cx-day244-organizacja-ustawienia-artefakty`; manifest wszystkich PNG to `day244-screenshots.sha256` (SHA-256 `d2afaf251b877ea326bc2cf0eccfb3062c4f12539864a63399d8ded46ef91eb6`). Wszystkie wykonane pary light/dark przekroczyły próg `mean_luma > 150` (zakres różnic dla siedmiu nazwanych tras `227,4–232,6`).
+
+| Sekcja | Dostępność | Dowód i ograniczenie |
+|---|---|---|
+| `profile` | MEMBER dozwolony | `day244-settings-profile-{light,dark}.png`; realny `ProfileSettings`. |
+| `auth-access` | MEMBER dozwolony | `day244-settings-auth-access-{light,dark}.png`; Sidebar i nagłówek wskazują trasę, lecz odziedziczony harness renderuje treść `ProfileSettings`, więc panel sekcji pozostaje `EVIDENCE_MISSING`. |
+| `language` | MEMBER dozwolony | `day244-settings-language-{light,dark}.png`; Sidebar i nagłówek wskazują trasę, lecz odziedziczony harness renderuje treść `ProfileSettings`, więc panel sekcji pozostaje `EVIDENCE_MISSING`. |
+| `theme` | MEMBER dozwolony | `day244-settings-theme-{light,dark}.png`; realny `ThemeSettings`. |
+| `data-controls` | MEMBER niedozwolony; OWNER dozwolony | Realny `DataControlsSettings`; `day244-settings-proof-data-controls-member-{light,dark}.png` pokazuje `/settings/profile`, a wariant OWNER `/settings/data-controls`. |
+| `billing` | MEMBER niedozwolony; OWNER dozwolony | `day244-settings-billing-{light,dark}.png`; realny `BillingSettings`; osobny żywy dowód MEMBER/OWNER pozostaje `NOT_PROVEN`, bo harness dowodu ma na stałe wejście `data-controls`. |
+| `developer` | MEMBER niedozwolony; OWNER dozwolony | `day244-settings-developer-{light,dark}.png`; realny `SettingsHistory`; osobny żywy dowód MEMBER/OWNER pozostaje `NOT_PROVEN` z tego samego powodu. |
+
+Pozostałe 30 z 37 sekcji NIE zostały objęte tym dyżurem — to jest policzony, opisany dług, nie ukryty. Także w obrębie próbki pełne panele `auth-access` i `language` oraz dwa z trzech indywidualnych dowodów przekierowania nie zostały udowodnione; pakiet nie stanowi decyzji właściciela.

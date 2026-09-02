@@ -133,6 +133,26 @@ export async function reserveAgentResource(input: {
     invocationIdempotencyKey: string;
     inputDigest: string;
   };
+  /**
+   * FIX-180 / F1 — opt-in, OFF by default so every existing caller keeps
+   * today's answers byte for byte.
+   *
+   * A `denied` row records a refusal, NOT work: the tool was never invoked, so
+   * nothing about it is idempotency-worthy. Replaying it forever turns one
+   * momentary concurrency peak into a permanently dead step — the caller can
+   * never get past it, because retries and resumes rebuild the same key. With
+   * this flag the prior refusal is re-judged against the CURRENT usage and the
+   * same row is updated in place (no second row, no double counting): if the
+   * peak has passed the call is admitted, and if the ceiling is still full it
+   * is denied again with a fresh reason.
+   *
+   * Safe by construction for a denial, and ONLY for a denial: `reserved`,
+   * `settled` and `released` all mean the tool may have run, so those replays
+   * are untouched. Callers that deliberately treat a refusal as durable
+   * (wave8, multi-agent work manager, adapter orchestrator, the A09 proofs)
+   * simply do not pass this flag.
+   */
+  recomputeDeniedAdmission?: boolean;
 }): Promise<AgentResourceReservationDecision> {
   const organizationId = requireNonBlank(input.organizationId, 'resource_organization_required');
   const projectId = requireNonBlank(input.projectId, 'resource_project_required');
@@ -173,26 +193,32 @@ export async function reserveAgentResource(input: {
       if (Number(prior.estimated_cost_usd) !== estimatedCostUsd) {
         throw new Error('resource_idempotency_cost_mismatch');
       }
-      if (prior.status !== 'released') return mapDecision(prior, true);
-      if (!input.releasedRetry) return mapDecision(prior, true);
+      const readmitDenial = prior.status === 'denied' && input.recomputeDeniedAdmission === true;
+      if (prior.status !== 'released' && !readmitDenial) return mapDecision(prior, true);
+      if (prior.status === 'released' && !input.releasedRetry) return mapDecision(prior, true);
 
-      const invocation = await client.query<{ status: string; input_digest: string }>(
-        `SELECT status, input_digest FROM v8_agent_adapter_invocations
-          WHERE organization_id = ? AND canonical_run_id = ? AND adapter_key = ?
-            AND idempotency_key = ? FOR UPDATE`,
-        [
-          organizationId,
-          runId,
-          input.releasedRetry.adapterKey,
-          input.releasedRetry.invocationIdempotencyKey,
-        ]
-      );
-      const failed = invocation.rows[0];
-      if (!failed || failed.status !== 'failed') {
-        throw new Error('resource_reclaim_failed_invocation_required');
-      }
-      if (failed.input_digest !== input.releasedRetry.inputDigest) {
-        throw new Error('resource_reclaim_payload_conflict');
+      // A `released` prior may only be reclaimed against a recorded FAILED
+      // invocation (unchanged A09 contract). A readmitted denial has no
+      // invocation to check — nothing ever ran.
+      if (prior.status === 'released') {
+        const invocation = await client.query<{ status: string; input_digest: string }>(
+          `SELECT status, input_digest FROM v8_agent_adapter_invocations
+            WHERE organization_id = ? AND canonical_run_id = ? AND adapter_key = ?
+              AND idempotency_key = ? FOR UPDATE`,
+          [
+            organizationId,
+            runId,
+            input.releasedRetry!.adapterKey,
+            input.releasedRetry!.invocationIdempotencyKey,
+          ]
+        );
+        const failed = invocation.rows[0];
+        if (!failed || failed.status !== 'failed') {
+          throw new Error('resource_reclaim_failed_invocation_required');
+        }
+        if (failed.input_digest !== input.releasedRetry!.inputDigest) {
+          throw new Error('resource_reclaim_payload_conflict');
+        }
       }
     }
 
@@ -274,23 +300,35 @@ export async function reserveAgentResource(input: {
         ? new Date(Date.parse(now) + leaseSeconds * 1000).toISOString()
         : null;
     if (prior) {
-      const reclaimed = await client.query<ReservationRow>(
+      // Two ways to land here, and they differ in what the prior row means:
+      // `released` = the tool ran and failed (reclaim, gated on the failed
+      // invocation record above), `denied` = the tool never ran (FIX-180
+      // readmission — a fresh decision, never a replay).
+      const readmitting = prior.status === 'denied';
+      const updated = await client.query<ReservationRow>(
         `UPDATE v8_agent_resource_reservations
             SET status = ?, decision_reason = ?, lease_expires_at = ?, updated_at = ?
-          WHERE reservation_id = ? AND organization_id = ? AND project_id = ? AND status = 'released'
+          WHERE reservation_id = ? AND organization_id = ? AND project_id = ? AND status = ?
           RETURNING *`,
         [
-          status === 'reserved' ? 'reserved' : 'released',
-          status === 'reserved' ? 'resource_reclaimed_after_failed_invocation' : reason,
+          readmitting ? status : status === 'reserved' ? 'reserved' : 'released',
+          readmitting
+            ? reason
+            : status === 'reserved'
+              ? 'resource_reclaimed_after_failed_invocation'
+              : reason,
           leaseExpiresAt,
           now,
           reservationId,
           organizationId,
           projectId,
+          readmitting ? 'denied' : 'released',
         ]
       );
-      if (!reclaimed.rows[0]) throw new Error('resource_reclaim_lost');
-      return mapDecision(reclaimed.rows[0], status !== 'reserved');
+      if (!updated.rows[0]) {
+        throw new Error(readmitting ? 'resource_readmission_lost' : 'resource_reclaim_lost');
+      }
+      return mapDecision(updated.rows[0], readmitting ? false : status !== 'reserved');
     }
     const row = await insertDecision(client, {
       reservationId,
@@ -383,6 +421,8 @@ export async function executeWithAgentResourceReservation<T>(input: {
   estimatedCostUsd?: number | null;
   now?: string;
   leaseSeconds?: number;
+  /** See `reserveAgentResource` — opt-in, forwarded untouched. */
+  recomputeDeniedAdmission?: boolean;
   execute: () => Promise<T>;
 }): Promise<{
   allowed: boolean;

@@ -41,13 +41,14 @@ router.get('/documents', verifyToken, async (req: AuthRequest, res: Response) =>
 router.get('/documents/:id', verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'default';
     const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const document = await studioService.getDocument(id, userId);
+    const document = await studioService.getDocument(id, userId, organizationId);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
@@ -109,6 +110,7 @@ router.post('/documents', verifyToken, async (req: AuthRequest, res: Response) =
 router.put('/documents/:id', verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'default';
     const { id } = req.params;
 
     if (!userId) {
@@ -131,7 +133,7 @@ router.put('/documents/:id', verifyToken, async (req: AuthRequest, res: Response
       snapshotReason,
     } = req.body;
 
-    const document = await studioService.updateDocument(id, userId, {
+    const document = await studioService.updateDocument(id, userId, organizationId, {
       name,
       description,
       type,
@@ -165,13 +167,14 @@ router.put('/documents/:id', verifyToken, async (req: AuthRequest, res: Response
 router.delete('/documents/:id', verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'default';
     const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const deleted = await studioService.deleteDocument(id);
+    const deleted = await studioService.deleteDocument(id, userId, organizationId);
 
     if (!deleted) {
       return res.status(404).json({ error: 'Document not found' });
@@ -191,13 +194,14 @@ router.delete('/documents/:id', verifyToken, async (req: AuthRequest, res: Respo
 router.get('/documents/:id/snapshots', verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'default';
     const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const snapshots = await studioService.getSnapshots(id);
+    const snapshots = await studioService.getSnapshots(id, userId, organizationId);
     res.json(snapshots);
   } catch (error: any) {
     logger.error('[Studio] GET /documents/:id/snapshots error:', error);
@@ -212,6 +216,7 @@ router.get('/documents/:id/snapshots', verifyToken, async (req: AuthRequest, res
 router.post('/documents/:id/snapshots', verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'default';
     const { id } = req.params;
     const { reason } = req.body;
 
@@ -219,7 +224,12 @@ router.post('/documents/:id/snapshots', verifyToken, async (req: AuthRequest, re
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const snapshotId = await studioService.createSnapshot(id, userId, reason || 'manual');
+    const snapshotId = await studioService.createSnapshot(
+      id,
+      userId,
+      organizationId,
+      reason || 'manual'
+    );
     res.status(201).json({ id: snapshotId });
   } catch (error: any) {
     logger.error('[Studio] POST /documents/:id/snapshots error:', error);
@@ -237,13 +247,14 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user?.id;
+      const organizationId = req.user?.organizationId || 'default';
       const { snapshotId } = req.params;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const document = await studioService.restoreSnapshot(snapshotId, userId);
+      const document = await studioService.restoreSnapshot(snapshotId, userId, organizationId);
 
       if (!document) {
         return res.status(404).json({ error: 'Snapshot not found' });

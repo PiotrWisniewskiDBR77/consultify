@@ -1898,7 +1898,17 @@
     "portfolioRoadmap": "Portfolio i Roadmapa",
     "mcpIris": "MCP IRIS",
     "mcpMarketplace": "MCP Marketplace",
-    "agentPlan": "Uruchom agenta"
+    "agentPlan": "Uruchom agenta",
+    "adminSection": {
+      "overview": "Przegląd",
+      "people": "Użytkownicy i dostęp",
+      "security": "Bezpieczeństwo i tożsamość",
+      "billing": "Rozliczenia i FinOps",
+      "ai": "Nadzór i operacje AI",
+      "integrations": "Integracje i synchronizacja",
+      "audit": "Audyt, zgodność i ryzyko",
+      "operations": "Operacje organizacji"
+    }
   },
   "widgets": {
     "help": {
@@ -17681,7 +17691,22 @@
       "avgProjectDuration": "Śr. czas trwania projektu",
       "performanceScore": "Wynik wydajności",
       "scoreBreakdown": "Rozkład wyniku",
-      "freshHint": "Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych."
+      "freshHint": "Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.",
+      "vsLastQuarter": "względem poprzedniego kwartału",
+      "newClients": "+{{count}} nowych",
+      "thisQuarter": "w tym kwartale",
+      "months": "{{count}} mies.",
+      "good": "Dobrze",
+      "slow": "Wolno",
+      "average": "średnio",
+      "responses": "{{count}} odpowiedzi",
+      "governedRuntime": "dane kontrolowane",
+      "stable": "stabilnie",
+      "governedRuntimeSnapshot": "Migawka danych kontrolowanych",
+      "calculating": "Obliczanie…",
+      "clientAcquisition": "Pozyskiwanie klientów",
+      "projectDelivery": "Realizacja projektów",
+      "certificationProgress": "Postęp certyfikacji"
     },
     "certification": {
       "learningPath": "Ścieżka nauki",
@@ -17698,7 +17723,47 @@
       "validUntil": "Ważny do",
       "certificateUnavailable": "Certyfikat jest niedostępny",
       "learningPathDesc": "Ukończ kursy, aby zdobywać certyfikaty",
-      "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty"
+      "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty",
+      "modulesProgress": "{{completed}}/{{total}} modułów",
+      "hideModules": "Ukryj moduły",
+      "viewModules": "Pokaż moduły",
+      "openGuide": "Otwórz przewodnik",
+      "minutes": "{{count}} min",
+      "reviewRequired": "Wymagana ocena",
+      "openArticle": "Otwórz artykuł",
+      "completePrevious": "Ukończ wcześniejsze kursy, aby odblokować",
+      "courseExam": "Egzamin: {{name}}",
+      "takeExam": "Rozpocznij egzamin",
+      "examStatus": {
+        "passed": "Zdano",
+        "failed": "Nie zdano",
+        "available": "Dostępny",
+        "completeAcademy": "Najpierw ukończ akademię"
+      },
+      "score": "Wynik",
+      "apiStatus": {
+        "completed": "Ukończono",
+        "in_progress": "W toku",
+        "in-progress": "W toku",
+        "not_started": "Nierozpoczęto",
+        "locked": "Zablokowano",
+        "not_required": "Niewymagane",
+        "prerequisite_incomplete": "Nieukończony warunek wstępny",
+        "academy_incomplete": "Nieukończona akademia"
+      },
+      "status": {
+        "completed": "Ukończono",
+        "inProgress": "W toku",
+        "locked": "Zablokowano",
+        "notRequired": "Niewymagane",
+        "prerequisiteIncomplete": "Nieukończony warunek wstępny",
+        "academyIncomplete": "Nieukończona akademia",
+        "unknown": "Nieznany status"
+      },
+      "examMode": {
+        "review": "Ocena operatora",
+        "exam": "Egzamin"
+      }
     },
     "clients": {
       "technicalId": "Identyfikator",
@@ -17724,8 +17789,12 @@
       "status": {
         "active": "Aktywny",
         "inactive": "Nieaktywny",
-        "onboarding": "W trakcie uruchamiania"
-      }
+        "onboarding": "W trakcie uruchamiania",
+        "unknown": "Nieznany status"
+      },
+      "usersCount": "{{count}} użytkowników",
+      "targetDate": "Termin",
+      "industryUnspecified": "Nie określono"
     },
     "resources": {
       "desc": "Pobierz zasoby pakietu partnerskiego",
@@ -17733,7 +17802,10 @@
       "downloadError": "Nie udało się pobrać zasobu.",
       "retry": "Spróbuj ponownie",
       "degradedDescription": "Nie udało się odczytać katalogu, dlatego liczba dostępnych materiałów jest nieznana.",
-      "degradedTitle": "Biblioteka materiałów jest chwilowo niedostępna"
+      "degradedTitle": "Biblioteka materiałów jest chwilowo niedostępna",
+      "canonicalDocs": "Dokumentacja programu partnerskiego",
+      "academyStatus": "Status akademii",
+      "openGuide": "Otwórz materiał pomocniczy"
     },
     "profile": {
       "companyInfo": "Dane firmy",
@@ -17745,7 +17817,19 @@
       "regions": "Regiony",
       "regionsDesc": "Wybierz regiony, w których działasz",
       "publicListing": "Wizytówka publiczna",
-      "publicListingDesc": "Steruj swoją widocznością w katalogu partnerów"
+      "publicListingDesc": "Steruj swoją widocznością w katalogu partnerów",
+      "contactEmail": "E-mail kontaktowy",
+      "phone": "Telefon",
+      "website": "Strona internetowa",
+      "saveSpecializations": "Zapisz specjalizacje",
+      "saveRegions": "Zapisz regiony",
+      "directoryVisibility": "Widoczność w katalogu",
+      "directoryVisibilityDesc": "Pokaż profil w publicznym katalogu partnerów",
+      "preview": "Podgląd",
+      "yourCompany": "Twoja firma",
+      "partnerTier": "Partner",
+      "noRegions": "Nie wybrano regionów",
+      "noSpecializations": "Nie wybrano specjalizacji"
     },
     "home": {
       "title": "Start",
@@ -17920,8 +18004,16 @@
       "status": {
         "paid": "Wypłacone",
         "approved": "Zatwierdzone",
-        "pending": "Oczekujące"
-      }
+        "pending": "Oczekujące",
+        "completed": "Zakończono",
+        "processing": "Przetwarzanie",
+        "failed": "Nieudana",
+        "cancelled": "Anulowana",
+        "unknown": "Nieznany status"
+      },
+      "transactionsPeriod": "{{count}} transakcji • {{from}}–{{to}}",
+      "completedAt": "Zakończono {{date}}",
+      "reference": "Nr ref."
     },
     "payouts": {
       "title": "Historia wypłat",
@@ -18022,7 +18114,15 @@
       "v8ReferredOrganizationsRuntimeTitle": "Podsumowanie pozyskanych klientów",
       "v8ReferredOrganizationsRuntimeSubtitle": "Rejestracje, okresy próbne i przejścia do płatnej usługi wśród poleconych klientów.",
       "v8Signups": "Rejestracje",
-      "v8TotalClicks": "Łączna liczba kliknięć"
+      "v8TotalClicks": "Łączna liczba kliknięć",
+      "campaignName": "Nazwa kampanii",
+      "utmSource": "Źródło UTM",
+      "utmMedium": "Medium UTM",
+      "utmCampaign": "Kampania UTM",
+      "tipLinkedIn": "Udostępnij link na LinkedIn z konkretnym opisem transformacji cyfrowej",
+      "tipCampaigns": "Używaj linków kampanii, aby porównywać skuteczność kanałów",
+      "tipSignature": "Dodaj kod polecający do podpisu e-mail",
+      "tipCaseStudies": "Udostępniaj studia przypadków razem z linkiem polecającym"
     },
     "canonicalRuntime": {
       "title": "Aktualny stan programu partnerskiego",
@@ -18065,7 +18165,8 @@
       }
     },
     "common": {
-      "comingSoon": "Wkrótce"
+      "comingSoon": "Wkrótce",
+      "progress": "Postęp"
     },
     "program": {
       "truthBoundary": "Informacje handlowe oraz dostępne możliwości zależą od potwierdzonego statusu programu i obowiązującej umowy."
@@ -18377,7 +18478,33 @@
       "sent": "Zgłoszenie wysłane do przeglądu.",
       "failed": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
     },
-    "conversationLandmark": "Rozmowa"
+    "conversationLandmark": "Rozmowa",
+    "governedHandoff": {
+      "state": {
+        "pending": "Oczekuje na weryfikację",
+        "materializable": "Gotowe do utworzenia",
+        "working": "W toku",
+        "materialized": "Utworzono",
+        "rejected": "Odrzucono",
+        "failed": "Operacja nie powiodła się",
+        "approved": "Zatwierdzono"
+      },
+      "title": "Kontrolowana propozycja dokumentu",
+      "provenance": "Przypięto do tej wiadomości i jej zweryfikowanego na serwerze skrótu treści.",
+      "citations_one": "Zachowano {{count}} odwołanie do źródła.",
+      "citations_few": "Zachowano {{count}} odwołania do źródeł.",
+      "citations_many": "Zachowano {{count}} odwołań do źródeł.",
+      "citations_other": "Zachowano {{count}} odwołania do źródła.",
+      "noCitations": "Nie znaleziono odwołań do źródeł.",
+      "source": "Źródło",
+      "hash": "Skrót",
+      "version": "Wersja",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "createDocument": "Utwórz dokument",
+      "created": "Dokument utworzony",
+      "rejected": "Propozycja odrzucona"
+    }
   },
   "aiChat": {
     "archivedBanner": "Ta rozmowa jest zarchiwizowana. Cofnij archiwizację, aby kontynuować.",
@@ -21522,7 +21649,14 @@
         "externalContextAllowed": "Kontekst zewnętrzny dozwolony",
         "externalContextRestricted": "Kontekst zewnętrzny ograniczony",
         "title": "Zarządzanie AI i operacje AI",
-        "description": "Polityka AI organizacji, kontrola ryzyka, postawa modelu i narzędzia operacyjne AI działają teraz w głównej powłoce administracyjnej."
+        "description": "Polityka AI organizacji, kontrola ryzyka, postawa modelu i narzędzia operacyjne AI działają teraz w głównej powłoce administracyjnej.",
+        "unavailable": "Niedostępne (błąd sprawdzania)",
+        "internetEnabled": "Internet włączony",
+        "internetDisabled": "Internet wyłączony",
+        "audit": "Audyt: {{status}}",
+        "required": "wymagany",
+        "notRequired": "niewymagany",
+        "externalContext": "Kontekst zewnętrzny: {{status}}"
       }
     },
     "ai": {
@@ -27726,7 +27860,13 @@
       },
       "startNew": "Zacznij nowy",
       "emptyRecent": "Brak ostatnich dokumentów",
-      "emptySaved": "Brak zapisanych dokumentów"
+      "emptySaved": "Brak zapisanych dokumentów",
+      "briefModal": {
+        "title": "O czym ma być ta prezentacja?",
+        "placeholder": "Opisz cel, odbiorców, kluczowe fakty, daty i liczby.",
+        "next": "Dalej",
+        "skip": "Pomiń"
+      }
     },
     "preview": {
       "provenance": {
@@ -29294,7 +29434,11 @@
       "confirmDeleteDesc": "Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.",
       "deletedNoun": "usunięto"
     },
-    "project": "Projekt"
+    "project": "Projekt",
+    "preview": {
+      "propertyLabel": "Właściwość",
+      "valueLabel": "Wartość"
+    }
   },
   "manager": {
     "col": {
@@ -30250,11 +30394,11 @@
         "title": "AI na zaznaczeniu",
         "empty": "Zaznacz fragment tekstu, aby użyć akcji AI.",
         "selected": "Zaznaczenie",
-        "expand": "Rozwiń pomysł",
+        "expand": "Rozwiń myśl",
         "shorten": "Skróć",
-        "rewrite": "Przepisz",
-        "suggest": "Zasugeruj",
-        "promptPlaceholder": "Instrukcja dla Teresy dotycząca zaznaczonego fragmentu...",
+        "rewrite": "Przeredaguj",
+        "suggest": "Zaproponuj",
+        "promptPlaceholder": "Polecenie dla Teresy dotyczące zaznaczonego fragmentu…",
         "preview": "Podgląd zmiany AI"
       },
       "manualEdit": {
@@ -30331,7 +30475,8 @@
         "untitled": "Bez tytułu",
         "seedBlank": "Zaczynam czysty dokument od zera. Zadaj mi pytania, żeby ustalić cel, kontekst i kierunek pierwszego szkicu.",
         "seedFromTemplate": "Zaczęłam/em nowy dokument „{{title}}” z szablonu. Pomóż mi go rozwinąć — zaproponuj, co uzupełnić w pierwszej kolejności.",
-        "seedFromCanvas": "Zaczęłam/em ten nowy dokument na bazie innego canvasu („{{title}}”). Pomóż mi go stąd dalej rozwinąć."
+        "seedFromCanvas": "Zaczęłam/em ten nowy dokument na bazie innego canvasu („{{title}}”). Pomóż mi go stąd dalej rozwinąć.",
+        "legacyFromTemplate": "Nowy Canvas z szablonu"
       },
       "menuAria": "Menu Canvas",
       "save": "Zapisz",
@@ -30409,7 +30554,8 @@
         "edit": "Edycja i AI",
         "file": "Plik, eksport i workspace",
         "diagnostics": "Diagnostyka i workflow",
-        "advanced": "Zaawansowane"
+        "advanced": "Zaawansowane",
+        "workflow": "Przepływy pracy"
       },
       "versioning": {
         "title": "Wersjonowanie"
@@ -30420,6 +30566,42 @@
         "body": "Ktoś inny zapisał ten dokument, gdy go edytowano. Nic nie zostało nadpisane — wybierz, jak kontynuować.",
         "keepMine": "Zapisz moją wersję jako nową",
         "loadTheirs": "Odrzuć moją wersję, wczytaj tamtą"
+      },
+      "workflowTemplates": {
+        "market_research_to_report": {
+          "label": "Research rynkowy → raport",
+          "description": "Narracja badawcza, mapa dowodów i gotowy raport."
+        },
+        "meeting_note_to_initiatives": {
+          "label": "Notatka ze spotkania → inicjatywy",
+          "description": "Decyzje, właściciele, lista inicjatyw i brief."
+        },
+        "kpi_review_to_dashboard": {
+          "label": "Przegląd KPI → dashboard",
+          "description": "Sygnały KPI, plan dashboardu i tabela wynikowa."
+        },
+        "client_proposal_to_deck": {
+          "label": "Propozycja dla klienta → prezentacja",
+          "description": "Fabuła propozycji, konspekt prezentacji i gotowy deck."
+        },
+        "decision_memo_to_execution_plan": {
+          "label": "Notatka decyzyjna → plan realizacji",
+          "description": "Logika decyzji, kamienie milowe i plan realizacji."
+        }
+      },
+      "startWorkflow": "Uruchom przepływ",
+      "startingWorkflow": "Uruchamianie…",
+      "finalizeResearchReport": "Sfinalizuj raport z researchu",
+      "finalizingResearchReport": "Finalizowanie…",
+      "advanced": {
+        "retryProjection": "Ponów projekcję",
+        "reset": "Resetuj",
+        "showChanges": "Pokaż zmiany",
+        "diffSummary": "{{added}} dodanych linii, {{removed}} usuniętych linii"
+      },
+      "dataset": {
+        "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
+        "readyPrefix": "Zbiór danych gotowy:"
       }
     },
     "aiStream": {
@@ -30593,7 +30775,9 @@
       "unknown": "nieznana"
     },
     "action": {
-      "reject": "Odrzuć"
+      "reject": "Odrzuć",
+      "approve": "Zatwierdź",
+      "inspect": "Zobacz przebieg"
     }
   },
   "focusMode": {

@@ -34,7 +34,25 @@ drugi tor o tym nie wie.
 
 ## Tablica bieżąca
 
+### Tor FUNKCJE — kandydaci integracyjni
+
+| Data | Kandydat | SHA | Bramka budowy | Raport |
+| --- | --- | --- | --- | --- |
+| 2026-09-02 | `integracja/20260902` (m03 + batch241-269 + `origin/develop` + kreator formularzy + 4 z 8 cherry-picków bramek) | kod `444d789363`, tip = tag `integracja-2026-09-02` | **ZIELONA** — klient `npm run build` EXIT=0 (53 s); serwer `tsc --build` 0 błędów, `dist/` powstaje; `check-list-canon.sh` EXIT=0 (394/394, dług nie rośnie); 9 plików / 22 testy z manifestu batcha PASS przy `--retry=0`. Otwarte: lint nieuruchamiany (odrzucony masowy autofix) i **26 zastanych** błędów typów frontu (0 wniesionych przez scalenie, dowód w raporcie). | `funkcje/INTEGRACJA_20260902.md` |
+
+Kandydat jest ścisłym **nadzbiorem** wszystkich czterech linii — `origin/develop` ma wobec niego
+**0** commitów przewagi. OOM z dyżuru 163 potwierdzony i usunięty: przyczyną było wciąganie
+`server/` do sprawdzania typów frontu (882 → 26 błędów, szczyt pamięci 9,9 → 6,8 GB).
+
+
 ### Blokady zgłoszone przez grafikę do toru funkcji
+
+★ **WPIS TORU FUNKCJI 2026-08-30 noc — PARTNER, materiał z przejazdu G08 (dyżur 177):**
+komplet 50 zrzutów w `/private/tmp/cx-day177-partner-artefakty` (SHA w manifeście).
+**NIE pokazywać właścicielowi bez poprawek:** learning-path (surowe enumy jako pigułki),
+metrics (ang. KPI), rozliczenia (ang. breadcrumb nad polskim banerem). KAŻDY z 25 ekranów
+ma ang. breadcrumb — i18n Partnera pójdzie dyżurem funkcji (189), oględziny/kanon = grafika.
+Do sprawdzenia przez grafikę: czerwona kropka `Model ▾` w topbarze (crimson poza semantyką?).
 
 ★ **ODPOWIEDŹ TORU FUNKCJI 2026-08-30 wieczór (dyżur 171, scalony po odbiorze):**
 blokady „kwoty bez waluty" i „wskaźniki bez jednostki" ZDJĘTE na linii integracyjnej —
@@ -54,6 +72,42 @@ scalony — przycisk pisze realnym PATCH przez governed gate).
 | 2026-08-30 | **Harness nie ma atrapy jednego wywołania Bazy porównania** — ekran zawsze wpada w błąd, więc jego treści nie da się odebrać wizualnie. | Uzupełnienie atrapy to praca po stronie danych. |
 
 ### Blokady zgłoszone przez funkcje do toru grafiki
+
+★★ **PILNE 31.08 (D-17): DZIŚ WIECZOREM pierwsze posiedzenie werdyktowe właściciela
+— Partner + Czat + Admin.** Tor funkcji składa pakiety dowodowe (zrzuty z dyżurów
+177/189, 179/182/192, day111-118 + świeże braki); tor grafiki proszony o przegląd
+kanonu tych trzech modułów PRZED wieczorem i zgłoszenie tu blokerów. CLOSED_FINAL
+= SHA + hash zrzutów + tag final-XX.
+
+**2026-08-31 · dyżur 200 — komplet zrzutów dla rejestru 21 paneli finansów (dopełnienie dyżuru 135).**
+Dyżur 135 podpiął rejestr `FinanceValuePanelsSurface.tsx` do 21 paneli za flagą
+`ff.finance_value_panels` (domyślnie OFF), ale wydany wtedy harness obsługiwał tylko
+7/21 paneli (`value`, `driver`, `monte-carlo`, `real-options`, `frontier`, `sensitivity`,
+`scenarios`) — reszta była `EVIDENCE_MISSING`. Dyżur 200 dostał wąską licencję na
+dedykowany harness `dev-render/screens/day200-finance-panels.tsx` (obok istniejącego
+`finance-value-panels.tsx`, bez zmiany paneli/`FinanceHub`/flagi) i dopiął pozostałych
+14 paneli: `bankingValue`, `cashForecast`, `driverTree`, `extendedRatios`,
+`headcountPlanner`, `investmentAppraisal`, `rollingForecast`, `valuationVisuals`,
+`valueAttribution`, `valueCapture`, `valueLedger`, `varianceBridge`,
+`varianceNarration`, `evBasket`.
+
+**Co jest gotowe:** komplet 42/42 zrzutów (21 paneli × jasny/ciemny) — 14 z dyżuru 135
+plus 28 nowych z dyżuru 200, oba komplety w `/private/tmp/cx-day200-panele-finansow-artefakty/`
+(SHA-256 w manifestach `zrzuty-sha256.txt` i `zrzuty-day200-14paneli-sha256.txt`). Każdy
+panel renderuje się realnym komponentem prezentacyjnym z wstrzykniętym `fetcher`
+(mock-dane realistyczne, skala DBR77) — bez logowania, bez żywej bazy. Własny przegląd
+wzrokowy 8/28 nowych zrzutów (oba motywy, kilka archetypów: formularz+KPI, wykres słupkowy,
+heatmapa wrażliwości, football-field): zero crimson poza semantyką krytyczną, zero NaN.
+Przy przeglądzie znaleziono i naprawiono w harnessie (nie w panelach) dwa błędy skali
+mock-danych — `InvestmentAppraisalPanel.irr/mirr` i `VarianceNarrationPanel` `pct`/`sharePct`
+oczekują liczby już w procentach (0–100), nie ułamka (0–1); dobra okazja do zapamiętania
+tej konwencji przy odbiorze wizualnym innych ekranów finansowych.
+
+**Co z tego wynika dla grafiki:** materiał kroku (b) reguły 7 jest KOMPLETNY dla całego
+rejestru 21 paneli. **Odbiór wizualny i ewentualne poprawki wyglądu należą do toru
+grafiki, nie do funkcji — flagi `ff.finance_value_panels` nie wolno włączyć nigdzie
+przed akceptem Piotra na tych zrzutach**, jeden po drugim (reguła 9, zakaz masowego
+włączania).
 
 **2026-08-30 · dyżur 135 — panele wyceny finansowej.** Tor funkcji podpina 19 gotowych
 paneli z `src/components/Economics/panels/` do trasy Finansów **za flagą domyślnie
@@ -612,3 +666,6 @@ Kolumna `measurement_frequency_days` (częstotliwość pomiaru wskaźnika) **ist
 w bazie**, jest chroniona triggerem i czytana do liczenia zaległości — ale **nie ma
 jej w żadnym schemacie zapisu** (`CreateKpiDraftSchema`, `EditKpiDraftSchema`).
 Zawsze zostanie pusta. Jedno pole do dopisania w dwóch schematach.
+## Moduł 12 Audyty — warsztat D-5 (Day221)
+
+Prototyp warsztatu odbioru jest w `dev-render/screens/day221-audyty-warsztat.tsx` (`?screen=day221-audyty-warsztat`). Status: oczekuje akceptu właściciela na zrzutach jasny/ciemny; nie jest podłączony do produktu. Zarezerwowana flaga przyszłej budowy: `ENABLE_AUDITS_WORKSHOP`, default OFF.
