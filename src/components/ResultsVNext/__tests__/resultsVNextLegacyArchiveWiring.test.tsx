@@ -57,7 +57,7 @@ vi.mock('@/store/useAppStore', () => ({
     selector({ currentUser: { id: 'user-piotr-demo', firstName: 'Piotr', lastName: 'W', role: 'ADMIN' } }),
 }));
 
-const apiGet = vi.fn(async () => ({ kpis: [] }));
+const apiGet = vi.fn(async (..._args: unknown[]) => ({ kpis: [] }));
 vi.mock('@/services/api', () => ({
   Api: { get: (...a: unknown[]) => apiGet(...a), post: vi.fn(), put: vi.fn() },
 }));

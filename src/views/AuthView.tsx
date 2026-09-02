@@ -13,6 +13,13 @@ import { adoptDemoSession, bindUserToDemoSession } from '@/services/demoSessionA
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
+import type { TFunction } from 'i18next';
+
+// Wąski kształt tłumacza, jakiego potrzebują te funkcje pomocnicze.
+// `TFunction` z i18next ma przeciążenia, których ten zapis nie obejmował —
+// stąd błąd typów po scaleniu dwóch niezależnych poprawek tego pliku.
+type TranslatorFn = TFunction;
+
 
 // Helper to check if email is allowed for full access
 // NOTE: Domain restriction removed on 2026-01-07 to allow all users to login
@@ -46,7 +53,7 @@ type PublicAuthErrorContext =
 // component's useTranslation() — keeps every public auth error translated
 // instead of stuck on its English fallback (2026-09-02, i18n audit).
 function mapPublicAuthError(
-  t: (key: string, defaultValue?: string) => string,
+  t: TranslatorFn,
   error: unknown,
   context: PublicAuthErrorContext
 ): string {
@@ -159,7 +166,7 @@ export function isQuickAccessEnabledHost(hostname: string): boolean {
 }
 
 function formatInviteRoleLabel(
-  t: (key: string, defaultValue?: string) => string,
+  t: TranslatorFn,
   role?: string
 ): string {
   const normalized = String(role || '')

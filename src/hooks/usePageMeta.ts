@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import type { TFunction } from 'i18next';
+
+// Wąski kształt tłumacza, jakiego potrzebują te funkcje pomocnicze.
+// `TFunction` z i18next ma przeciążenia, których ten zapis nie obejmował —
+// stąd błąd typów po scaleniu dwóch niezależnych poprawek tego pliku.
+type TranslatorFn = TFunction;
+
 
 const BRAND = 'Consultify';
 
@@ -91,7 +98,7 @@ const ROUTE_META: Record<string, PageMeta> = {
   },
 };
 
-function getMetaForPath(path: string, t: (key: string, defaultValue?: string) => string): PageMeta {
+function getMetaForPath(path: string, t: TranslatorFn): PageMeta {
   const preLoginKey = PRE_LOGIN_META_KEYS[path];
   if (preLoginKey) {
     return {
