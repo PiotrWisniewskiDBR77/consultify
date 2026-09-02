@@ -415,13 +415,26 @@ export const ExecutionResourcesSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Resources" className="p-4">
+    <section aria-label="Execution Resources" className="flex h-full min-h-0 flex-col p-4">
       {state === 'READY' && items.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych przydziałów zasobów w dostępnych realizacjach.
         </div>
       ) : state === 'READY' ? (
-        <div className="mt-4">
+        /*
+         * `flex-1 min-h-0` + `flex h-full min-h-0 flex-col` na <section> wyzej.
+         * POWOD (pomiar 02.09, scripts/dev/measure-preview-canon.mjs --wysokosc):
+         * `TableWithPreviewLayout` ma root `h-full`, czyli `height:100%`, a to
+         * rozwiazuje sie TYLKO wzgledem rodzica o definitywnej wysokosci. Tutaj
+         * lancuch przerywaly dwa pudelka o wysokosci `auto` (<section className="p-4">
+         * i <div className="mt-4">), wiec `h-full` cichutko degradowalo do `auto`
+         * i panel podgladu konczyl sie na swojej tresci - zmierzone 693 px przy
+         * 863 px dostepnej przestrzeni (luka 170 px). Ekrany, ktore dzialaly
+         * poprawnie (idea-table, drd-library-entry, luka 0 px), maja dokladnie
+         * ten ksztalt przodkow: flex item z `flex-1 min-h-0`. Odtwarzamy go tutaj,
+         * zamiast wpisywac wysokosc w pikselach.
+         */
+        <div className="mt-4 flex-1 min-h-0">
           <TableWithPreviewLayout<any>
             selectedId={selected?.allocationId ?? null}
             selectedItem={selected}

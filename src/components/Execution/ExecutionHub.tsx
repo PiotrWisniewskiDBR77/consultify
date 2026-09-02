@@ -51,6 +51,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -5204,7 +5205,7 @@ Please return:
             </div>
 
             {selectedReport ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <PreviewPaneAside>
                 <StandardPreview
                   title={selectedReport.title}
                   onClose={() => setReportPreviewId(null)}
@@ -5253,7 +5254,7 @@ Please return:
                       content beyond the 6 canon blocks, canon A7 `children`). */}
                   {renderReportPreviewBody(selectedReport)}
                 </StandardPreview>
-              </aside>
+              </PreviewPaneAside>
             ) : null}
           </div>
         </div>
@@ -5664,7 +5665,7 @@ Please return:
             </div>
 
             {selectedRow && previewModel ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              <PreviewPaneAside>
                 <StandardPreview
                   title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
                   onClose={() => setSummaryPreviewInitiativeId(null)}
@@ -5734,7 +5735,7 @@ Please return:
                   relations={sourceRelations}
                   actions={listPreviewActions}
                 />
-              </aside>
+              </PreviewPaneAside>
             ) : null}
           </div>
         </div>
@@ -5772,13 +5773,21 @@ Please return:
       );
     if (activeTab === ('control' as ModuleTab))
       return (
-        <div className="min-h-0 flex-1 overflow-auto p-4">
-          <ExecutionControlSurface
-            activePreset={canonicalMenu3Preset.control}
-            onCountsChange={menu3CountHandlers.control}
-            onRegisterFilterControl={setControlFilterControl}
-          />
-        </div>
+        /*
+         * Zakladka 'control' jako JEDYNA opakowywala swoja powierzchnie w
+         * dodatkowe <div className="min-h-0 flex-1 overflow-auto p-4">.
+         * Rodzic tego diva ma `display:block`, wiec `flex-1` bylo MARTWE i
+         * pudelko zwijalo sie do wysokosci tresci - panel podgladu konczyl sie
+         * 190 px nad dolem strony (pomiar: measure-preview-canon.mjs --wysokosc).
+         * Do tego `p-4` dublowalo `p-4`, ktore ExecutionControlSurface ma u siebie.
+         * Pozostale zakladki (resources/work/reports) zwracaja powierzchnie
+         * wprost - i dlatego byly poprawne. Wyrownujemy do nich.
+         */
+        <ExecutionControlSurface
+          activePreset={canonicalMenu3Preset.control}
+          onCountsChange={menu3CountHandlers.control}
+          onRegisterFilterControl={setControlFilterControl}
+        />
       );
     if (activeTab === 'reports')
       return (

@@ -551,7 +551,7 @@ export const ExecutionReportsSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Reports" className="p-4">
+    <section aria-label="Execution Reports" className="flex h-full min-h-0 flex-col p-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-semibold">Raporty</h2>
@@ -602,8 +602,17 @@ export const ExecutionReportsSurface = ({
       </div>
       {state === 'LOADING' && <p role="status">Ładowanie raportów…</p>}
       {registerMode === 'DEFINITIONS' && (
-        <section aria-label="Report Definitions" className="mt-4">
+        <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
           <h3 className="font-semibold">Definicje raportów</h3>
+        /*
+         * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
+         * `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
+         * tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
+         * o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
+         * na wlasnej tresci. Zmierzone narzedziem
+         * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
+         */
+          <div className="flex min-h-0 flex-1 flex-col">
           <TableWithPreviewLayout<DefinitionRow>
             selectedId={selectedDefinitionId}
             selectedItem={selectedDefinition}
@@ -715,6 +724,7 @@ export const ExecutionReportsSurface = ({
               }}
             />
           </TableWithPreviewLayout>
+          </div>
           {showDefinitionEditor && (
             <section
               aria-label="Report Definition Workbench"
