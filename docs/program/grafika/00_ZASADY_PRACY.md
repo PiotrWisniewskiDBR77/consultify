@@ -105,6 +105,7 @@ Wiążąca jest **powłoka** i — ważniejsze — **język uczciwości**:
   - „**BRAKUJĄCE — NAZWANE**, nie «brak danych»"
   - „**liczba 0 nie oznacza braku działań**" tam, gdzie widok jest ograniczony
   - uprawnienia jako **Możesz / Nie możesz** z zamkami
+  - **druga osoba, nigdy trzecia** — pełna zasada w REGULE NR 22
 - kolor: neutralny; **crimson wyłącznie semantyka krytyczna**; fokus niebieski
 
 ## ★★ REGUŁA NR 0 — NADRZĘDNA NAD WSZYSTKIMI (2026-08-30, słowa właściciela)
@@ -547,3 +548,40 @@ od warunku, więc przy defekcie „zapis jest pusty" potwierdzała udany zapis, 
 **Wniosek praktyczny:** atrapa danych ma mieć kształt SERWERA, nie kształt wygodny dla frontu.
 Kolejność naprawy: najpierw popraw atrapę, pokaż, że ekran psuje się widocznie, dopiero potem
 napraw kod — inaczej naprawa jest deklaracją.
+
+## ★★ REGUŁA NR 22 — do właściciela piszemy w DRUGIEJ OSOBIE, nigdy o nim w trzeciej (2026-09-02)
+
+Każdy tekst, który czyta właściciel — zdanie „co to domyka" na karcie modułu, powód pominięcia
+ekranu, komunikat pustego stanu — pisany jest **do niego**, w drugiej osobie. Nigdy **o nim**,
+w trzeciej.
+
+**Zakazane:** „Właściciel żąda, by wynik Oceny kończył się draftami w tabeli Inicjatyw."
+**Wymagane:** „Prosiłeś, żeby wynik Oceny kończył się gotowymi wpisami w zwykłej tabeli
+Inicjatyw — to zostaje do zrobienia."
+
+**Powód (zmierzony 2026-09-02):** na karcie modułu nasze zdanie stoi **tuż obok jego własnego
+cytatu**. Streszczanie mu w trzeciej osobie tego, co przed chwilą sam napisał, jest podwójnie
+bezużyteczne: nie wnosi informacji i brzmi jak protokół z posiedzenia o nim. Zdanie na karcie
+ma odpowiadać **wyłącznie na pytanie „co z tym dalej"** — jednym zdaniem, w drugiej osobie.
+Na 52 zmierzonych zdaniach trzecia osoba była wadą częstszą niż żargon.
+
+### Trzy zakazy szczegółowe w tekstach dla właściciela
+
+1. **Bez żargonu.** „za flagą domyślnie wyłączoną" → „ten widok jest gotowy, ale nie jest
+   jeszcze włączony dla użytkowników i czeka na Twoją zgodę". Dalej: i18n → „tłumaczenie";
+   wołacz/montowanie → „nic tego w aplikacji nie otwiera"; harness → „nasze stanowisko
+   podglądowe"; kanon → „nasz wzorzec wyglądu".
+2. **Bez ścieżek i nazw plików.** „(evidence/grafika/90-szerokosc-tabel/)" → „sprawdzone na
+   zdjęciu z 30 sierpnia". Data słownie, nigdy `30.08` ani katalog.
+3. **Z polskimi znakami.** Tekst bez diakrytyków czyta się jak wyciąg z logu, nie jak zdanie
+   napisane do człowieka.
+
+### Co jest wyjęte spod tej reguły
+
+**CYTAT WŁAŚCICIELA JEST NIETYKALNY — znak w znak, także z literówkami.** To jego słowa i mają
+zostać jego słowami. Reguła dotyczy wyłącznie **naszego** tekstu obok cytatu.
+
+**Rozdział źródeł, żeby te dwa języki się nie mieszały:** kolumna `uzasadnienie` w korpusie uwag
+tłumaczy klasyfikację **nam** i słusznie powołuje się na zrzuty, flagi i katalogi dowodowe —
+zostaje jak jest. Zdanie dla właściciela mieszka osobno, w `CO_DOMYKA_<data>.json`, i ma
+pierwszeństwo przy renderowaniu karty. To dwa teksty do dwóch odbiorców, nie duplikat.
