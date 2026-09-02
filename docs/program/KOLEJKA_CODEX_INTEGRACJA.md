@@ -84,14 +84,46 @@ analiza wpływu, naprawa z tropem do commita, self-QA i pakiet przed/po dla znal
 jeszcze nie mamy spisanych. Wydać **natychmiast po** powrocie tamtych trzech rejestrów, wąsko,
 po jednej rodzinie defektów na dyżur. Nie robić jednego wielkiego.
 
-### 285 · `ResultsHub` — martwy rodzic
-Zmierzone 2026-09-02: `ResultsHub.tsx` **nie ma wpisu w żadnej trasie** (od `8df1cd413d`, 24.08);
-`/results` montuje `ResultsOwnerReviewEntry.tsx:12`, która przekierowuje dalej. Montuje kilka
-tysięcy linii: `KPITimeSeriesDrawer` (104 KB), `RecoveryCardPanel` (83 KB), `StrategicLayerPanel`,
-`AIInsightsPanel`, `PortfolioInsightsPanel`, `TransformationScorecard`, `ValueDriverTree`,
-`M14HandoffInbox`. **Wymaga decyzji właściciela przed usunięciem** — część (diagnostyka odchyleń,
-karta naprawcza) jest w aktywnym, osobno flagowanym rozwoju. Dyżur ma najpierw **wypisać, co żywe,
-a co martwe**, dopiero potem ciąć.
+### 285 · `ResultsHub` — WYKONANY POMIAR, czeka na decyzję właściciela
+Rejestr: `waves/WAVE_03_ACCEPTANCE/REJESTR_RESULTSHUB_20260902.md` (322 linie).
+
+**Zmierzone: 42 pliki, 22 409 linii, 863 KB martwego kodu** (plus 39 plików testowych,
+5 654 linie). `ResultsOwnerReviewEntry.tsx` to 13 linii bezwarunkowego `Navigate` — zero flag
+mimo nazwy; `<ResultsHub` nie występuje w żadnym pliku produkcyjnym; barrel eksportuje hub,
+ale **nikt tego barrelu nie importuje**. Dwa mechaniczne bezpieczniki blokują powrót huba na trasę.
+
+★ **SPROSTOWANIE POPRZEDNIEJ WERSJI TEJ POZYCJI.** Pisałem tu, że cięcia nie wolno tknąć,
+bo „część tej wtyczki jest w aktywnym, osobno flagowanym rozwoju". **To była migracja, nie rozwój.**
+Karta naprawcza i diagnostyka odchyleń mają żywy, osiągalny odpowiednik pod trasą
+`/results/kpi/:kpiId/deviation-cases/:caseId` → `ResultsVNext/kpiTool/KpiDeviationCaseSubview.tsx`
+(1260 linii, pełny cykl w `kpiDeviationApi.ts`). Sierpniowe commity na plikach legacy to
+`cut over` i `retire legacy writers`; ostatni funkcjonalny to 2026-08-01.
+
+**Trzy grupy do decyzji:**
+- **Bez ryzyka od razu** — 3 pliki, 44 linie (ślepy `index.ts` + dwa stuby).
+- **2a: ~15 000 linii z odpowiednikiem w VNext** — czysta redukcja długu, nic nie ginie.
+- **2b: ~4 000 linii BEZ odpowiednika** — wallboardy i harmonogramy KPI, konektory, raporty KPI
+  ze snapshotami, `StrategicLayerPanel`, `AIInsightsPanel`, `ValueDriverTree`,
+  `TransformationScorecard`, `M14HandoffInbox`. **Tu cięcie kasuje funkcję, nie tylko kod.**
+
+**Warunek techniczny każdego cięcia:** pięć miejsc czyta te pliki przez `readFileSync`
+(m.in. `resultsCutover.registry.test.ts` w sześciu punktach). Bez zdjęcia ich razem z plikami
+CI padnie na `ENOENT` — co wygląda jak regresja, a jest martwym strażnikiem.
+
+**Pułapka nazwy katalogu:** `src/components/Execution/CorrectiveActions.tsx` (548 linii) leży
+w katalogu Realizacji, ale jedynym wołaczem jest `ResultsHub`. Przy cięciu „katalogu Results"
+zostanie przeoczony.
+
+**Dwa błędy dokumentacyjne do sprostowania niezależnie od decyzji:**
+`server/src/services/results/resultsWriterInventory.ts:81` opisuje ResultsHub i trzy inne jako
+„live production UI callers" — nieprawda od 24.08, a `KPICreateModal` w tym katalogu nie istnieje
+(jest w `Benefits/`). `tests/components/Results/KPICreateModal.v8-write.test.tsx` importuje
+nieistniejącą ścieżkę; ten sam duch siedzi w dwóch plikach baseline.
+
+★ **Znalezisko poboczne, ale rodzinne:** `isResultsFlagEnabled` kończy się
+`return !isPublicProductionHost(...)`, więc mimo nagłówka „default OFF, live-safe" **wszystkie
+flagi tej rodziny czytają jako ON na demo, stage i dev**. Tu bez skutku, bo hub się nie renderuje
+— ale to ten sam wzorzec, który już raz kosztował sesję.
 
 ### 286 · Rodzina `TableWithPreviewLayout` — około 48 konsumentów bez poprawki wysokości
 Poprawka wysokości podglądu objęła **pięć zakładek Realizacji** (zmierzone: luka 154 px → 0 px).
