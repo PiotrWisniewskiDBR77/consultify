@@ -935,8 +935,9 @@ export const TABLE_SURFACE_REGISTER: Readonly<Record<TableSurfaceId, TableSurfac
     entity: 'objective',
     // R15 — repaired: rows are real Objectives from GET
     // /results-strategic/:projectId/okr (id/label/rollupScore/keyResults[])
-    // — the same endpoint StrategicLayerPanel.tsx and ResultsHub's
-    // three-pairs widget already use, not a fictional "okr-set" merge. No
+    // — the endpoint the retired StrategicLayerPanel.tsx / ResultsHub
+    // three-pairs widget used before both were deleted (2026-09-02), not a
+    // fictional "okr-set" merge. No
     // owner/period/dueDate fields exist on this response.
     adapter: 'register',
     ownerPackage: 'R15',

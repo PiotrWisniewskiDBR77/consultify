@@ -11,8 +11,8 @@
  * calls the real router push to the Deviation Case subview route -> error
  * state with Retry -> forbidden (404) state.
  *
- * `Api.get`/`Api.post` are mocked at the module boundary (same convention as
- * `tests/components/Results/ResultsKpiReadSurfaces.v8-catalog.test.tsx`) —
+ * `Api.get`/`Api.post` are mocked at the module boundary (the convention the
+ * retired legacy Results tests used; those were deleted 2026-09-02) —
  * this is a real component render exercising real fetch/state wiring, not a
  * snapshot of hand-built props.
  */

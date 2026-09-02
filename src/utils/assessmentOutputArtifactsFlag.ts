@@ -27,8 +27,9 @@
  * `ff.assessment_output_artifacts=1`.
  *
  * Resolution order (first wins): URL query → localStorage → Vite build env →
- * default false. Ten sam system co `unifiedCreateLauncherFlag.ts` /
- * `src/components/Results/resultsFeatureFlags.ts`.
+ * default false. Ten sam system co `unifiedCreateLauncherFlag.ts`.
+ * (Do 2026-09-02 wskazywalo tu tez `src/components/Results/resultsFeatureFlags.ts`
+ * — plik usuniety razem z wygaszonym poddrzewem ResultsHub.)
  */
 
 const QUERY_KEY = 'ff_assessmentOutputArtifacts';
