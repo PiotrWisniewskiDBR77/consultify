@@ -1310,7 +1310,8 @@
           "co": "ExecutionWorkSurface, StandardTable, bogate dane review.",
           "naprawione": [
             "01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/).",
-            "02.09: w panelu po prawej stoi „1 powiązany dowód\" zamiast „1 powiązanych dowodów\"."
+            "02.09: w panelu po prawej stoi „1 powiązany dowód\" zamiast „1 powiązanych dowodów\".",
+            "02.09: nazwiska pisane jak nazwiska — „Anna Kowalska\", „Piotr Wiśniewski\", „Katarzyna Wójcik\" z polskimi znakami i z wielkiej litery. Wcześniej tabela pisała „anna kowalska\", a panel obok „Anna Kowalska\" — ten sam człowiek, dwa zapisy, jeden ekran."
           ],
           "wyjatki": [],
           "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
@@ -1336,7 +1337,9 @@
           "naprawione": [
             "01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/).",
             "02.09: w sekcji Powiązania zniknęło słowo „undefined\", które wyciekało zamiast nazwy. Stoi tam teraz „Bez zmian: Nie zmieniaj planu\" i „Działanie: Równoległa walidacja obu źródeł\".",
-            "02.09: przy każdej opcji pisze po polsku, jak bardzo jest pewna i czy da się ją cofnąć — „Wysoka pewność · Odwracalna\" zamiast „HIGH · HIGH\"."
+            "02.09: przy każdej opcji pisze po polsku, jak bardzo jest pewna i czy da się ją cofnąć — „Wysoka pewność · Odwracalna\" zamiast „HIGH · HIGH\".",
+            "02.09: nazwiska pisane jak nazwiska — „Piotr Wiśniewski\" z polskim znakiem, a nie „piotr wisniewski\". Ten sam człowiek wyglądał inaczej w tabeli niż w panelu obok.",
+            "02.09: pigułka pod tytułem pisze „Wybrana opcja: Równoległa walidacja obu źródeł\" zamiast wewnętrznego kodu „parallel-validation\"."
           ],
           "wyjatki": [],
           "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
@@ -1350,7 +1353,8 @@
             "01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/)."
           ],
           "wyjatki": [
-            "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji)."
+            "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji).",
+            "ZMIERZONE 02.09, wskazane palcem: w tabeli „Śledzenie KPI\", w wierszu „Czas realizacji zamówienia (dni)\", trzy komórki piszą „8dni\", „12dni\", „6dni\" — brakuje spacji między liczbą a jednostką. Wiersze z procentami są poprawne, bo „%\" spacji nie potrzebuje. Zrzut z podświetleniem: evidence/grafika/217-trzy-rodziny/execution-tab-rollout__DIAGNOZA-8dni__light.png. NIE naprawione — czeka na decyzję nadzorcy."
           ],
           "gdzie": "Realizacja → „Rollout” (chromeless, deep-link). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Wyjatek RolloutTab.tsx:987 (blad sieci gasi zakladke) NIE jest mozliwy do zweryfikowania na statycznym zrzucie — pozostaje jako niepotwierdzony, nienaprawiony."
         },
@@ -1436,11 +1440,13 @@
           "ocena": "A",
           "co": "Piec celow z kluczowymi rezultatami.",
           "naprawione": [
-            "Angielskie N/A zamiast N.D."
+            "Angielskie N/A zamiast N.D.",
+            "02.09: przycisk „Anuluj\" w panelu po prawej przestał być różowy. Anulowanie celu to nie skasowanie danych, więc przycisk wygląda tak samo jak „Edytuj\" obok."
           ],
           "wyjatki": [
             "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie",
-            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)"
+            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)",
+            "ZMIERZONE 02.09: kolumna WŁAŚCICIEL pokazuje wewnętrzne identyfikatory („user-ann…\", „user-tom…\"), a panel po prawej „user-anna-kowalska\" zamiast nazwiska. To ten sam defekt, który naprawiono dziś w Realizacji — tutaj siedzi w innym źródle danych, więc idzie osobno."
           ],
           "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → zakładka „Cele\" — pięć celów z kluczowymi rezultatami."
         },
@@ -1522,7 +1528,8 @@
             "Pigulka ucinana w kolumnie UWAGA"
           ],
           "wyjatki": [
-            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)"
+            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)",
+            "ZMIERZONE 02.09: kolumna WŁAŚCICIEL pokazuje wewnętrzne identyfikatory („user-pio…\", „user-ann…\"), a panel po prawej „user-piotr-wisniewski\" i „user-anna-kowalska\" zamiast nazwisk. Ten sam defekt co w Realizacji, inne źródło danych — idzie osobno."
           ],
           "gdzie": "Wyniki → OKR → rejestr zestawów celów (POZIOM 1) — dziewięć zestawów, tabela ośmiu kolumn."
         },

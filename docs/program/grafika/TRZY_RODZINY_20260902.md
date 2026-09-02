@@ -256,3 +256,105 @@ a wartość `HIGH · HIGH` → **`Wysoka pewność · Odwracalna`**.
 | `vitest` — Execution + AIChat | ✓ 375/375 |
 | `vitest` — nowy test rodziny 2 | ✓ 4/4, dowód mutacyjny wykonany |
 | `check-dev-render-parytet.mjs` | ✗ CZERWONA — 31 naruszeń zastanych, patrz ZGŁASZAM #1 |
+
+---
+
+## DOPISEK 15:30 — trzy zadania z odbioru meldunku
+
+### 1. Zapalone 12 ekranów (`status.json`)
+
+Przed dotknięciem pliku: `--ff-only` **było niemożliwe** — gałęzie rozeszły się o 6 commitów,
+a m03 ruszył DOKŁADNIE ten plik (widok „Odbiór modułowy", filtr „Poproszony przegląd"). Zapis
+z własnej pamięci skasowałby cudzą pracę, więc najpierw `merge --no-ff` (bez konfliktów),
+dopiero potem edycja. Zakres zmiany: 39 linii, wyłącznie pola `naprawione` / `wyjatki` /
+`ocena` / `co` moich kart. Baza `odbior.sqlite` i serwery nietknięte.
+
+Dwa opisy **poprawione, bo przestały być prawdą**: `admin-command-retention` miał w polu `co`
+zdanie „Crimson poprawny (akcja nieodwracalna)" — przycisk jest już neutralny;
+`chat-signals-feed` miał wyjątek „tytuły łamią się" bez rozróżnienia — teraz mówi wprost, że
+zawijają się na spacjach, nigdy w środku wyrazu.
+
+`mw-007-calendar` **obniżony z A na B** — angielskie „Internal" zostaje, a wyjątek ma być
+widoczny przed spojrzeniem, nie po.
+
+### 2. Dwie naprawy ze zgłoszeń
+
+**Surowy identyfikator.** `Wybrana opcja: parallel-validation` → `Wybrana opcja: Równoległa
+walidacja obu źródeł`. To była ta sama rodzina co `undefined:`: prezenter brał pole techniczne
+i pokazywał je klientowi. Wyszukanie opcji po `optionId` **istniało już 770 linii wyżej**
+w tym samym pliku (`interventionBusinessTitle`) — brakowało go tylko w pigułce rekomendacji.
+
+**Nazwiska w danych demo — sprostowanie premisy zlecenia.** Zlecenie mówiło „popraw w źródle
+danych demo, nie w prezenterze". Pomiar pokazał, że **dane są poprawne**: rekordy niosą
+IDENTYFIKATORY (`anna-kowalska`, `piotr-wisniewski`), a identyfikator nie ma prawa mieć polskich
+znaków. Defekt siedział w **czterech prezenterach jednego modułu**, z których każdy robił własną
+zamianę myślnika na spację:
+
+| plik | co robił | skutek |
+| --- | --- | --- |
+| `ExecutionWorkSurface.actorLabel` | `replaceAll('-', ' ')` | `anna kowalska` — z małej litery |
+| `ExecutionWorkSurface.businessLabel` | `\b\w` → wielka litera | `Anna Kowalska` — **ten sam człowiek, ten sam ekran, inny zapis** |
+| `ExecutionControlSurface.actorBusinessLabel` | `\b\w` → wielka litera | `Piotr Wisniewski` — bez `ś` |
+| `ExecutionResourcesSurface.businessLabel` | granica po Unicode `\p{L}` | **poprawny — naprawiony 01.09 dokładnie na tym defekcie** |
+
+★ Znowu REGUŁA 20 i jej najsilniejszy trop: **rodzeństwo, które JUŻ ma poprawkę.** Komentarz przy
+`ExecutionResourcesSurface` wymienia wprost „Wójcik" jako przypadek testowy — ktoś naprawił jedną
+powierzchnię i nie objął pozostałych trzech.
+
+**Ale sama poprawka prezentera nie wystarczy i tu zlecenie miało rację co do kierunku:** żadna
+zamiana znaków nie odtworzy `Wiśniewski` z `wisniewski` ani `Wójcik` z `wojcik`. Diakrytyk MUSI
+przyjść z danych. Dlatego naprawa jest w OBU warstwach: **katalog osób w źródle danych demo**
+(`executionReviewPeople`, 8 osób z poprawną pisownią) + trzy prezentery, które go czytają, z
+zamianą znaków zostawioną wyłącznie jako ostatnia deska ratunku dla identyfikatora spoza katalogu.
+
+Dowód, że katalog trafił we właściwe miejsce: `assigneeName: 'Katarzyna Wójcik'` **istniało w tym
+pliku już wcześniej** — ale tylko przy trzech osobach i tylko na jednym typie rekordu, więc reszta
+ekranów go nie widziała.
+
+### 3. `execution-tab-rollout` („8dni") — ZLOKALIZOWANE, nie zgadnięte
+
+Grep nie znajdował, bo ciąg **nie istnieje w kodzie** — powstaje ze sklejenia dwóch pól w czasie
+renderowania. Zlokalizowane przyrządem, który pytał samą stronę o styk cyfry z literą.
+
+**★ Pierwszy pomiar był FAŁSZYWIE ZIELONY i złapałem to tylko dlatego, że spojrzałem na zrzut:**
+sonda zameldowała „0 styków cyfra-litera", a zrzut pokazywał „Ładowanie ekranu…". Przyrząd
+zmierzył pustą stronę i nazwał to czystością. Dopiero czekanie na warunek („tekst przestał mówić
+Ładowanie ORAZ ma ponad 200 znaków") dało pomiar. To jest dokładnie „brak pomiaru nie jest
+wynikiem" — i drugi raz tego dnia narzędzie skłamało na korzyść.
+
+**Gdzie to siedzi — dokładnie:**
+
+| warstwa | miejsce | co robi |
+| --- | --- | --- |
+| ekran | zakładka **Rollout → tabela „Śledzenie KPI"**, wiersz **„Czas realizacji zamówienia (dni)"** | trzy komórki: `8dni`, `12dni`, `6dni` |
+| prezenter | `src/components/Execution/RolloutTab.tsx:708-710` | `` `${k.current_value}${k.unit}` `` — **zero separatora** |
+| to samo, 3 kolejne wystąpienia | `RolloutTab.tsx:1395`, `:1403`, `:1408` | ta sama skleja w kartach KPI |
+| źródło danych | `dev-render/screens/execution-tab.tsx:105` | `unit: 'dni'` |
+
+**Dlaczego widać to tylko w jednym wierszu:** pozostałe KPI mają `unit: '%'`, a `74%` jest
+poprawne — procent spacji nie potrzebuje. Defekt odsłania się wyłącznie wtedy, gdy jednostka
+jest SŁOWEM.
+
+**Naprawa, której NIE zrobiłem (zlecenie mówiło „wróć z tym, gdzie to siedzi"):** separator
+warunkowy w prezenterze — jednostka zaczynająca się od litery dostaje spację, symbol (`%`, `°`)
+nie. Cztery miejsca w jednym pliku, obejmuje każdą przyszłą jednostkę (`h`, `szt.`, `PLN`).
+**Uwaga do decyzji:** przy wartości `1` poprawne jest „1 dzień", a nie „1 dni" — ale jednostka
+przychodzi z danych jako gotowy napis, więc odmiana wymaga zmiany kontraktu KPI, nie separatora.
+
+Zrzut z podświetleniem trzech komórek:
+`evidence/grafika/217-trzy-rodziny/execution-tab-rollout__DIAGNOZA-8dni__light.png`.
+
+### Świeże zrzuty przed zapaleniem (jak zapowiedziane)
+
+`execution-tab-work`, `execution-tab-control`, `execution-tab-rollout`,
+`results-vnext-okr-registry`, `results-vnext-okr-objectives` — 10 zrzutów, oba motywy, wszystkie
+po dzisiejszych zmianach. Obejrzane: nazwiska poprawne w tabeli I w panelu, „Wybrana opcja"
+po polsku, „Anuluj" na OKR neutralny obok „Edytuj".
+
+### ZGŁASZAM (nowe, z tej rundy)
+
+**Ta sama rodzina nazwisk żyje w module Wyniki, w innym źródle danych.** Na obu ekranach OKR
+kolumna WŁAŚCICIEL pokazuje `user-ann…`, `user-tom…`, `user-pio…`, a panel po prawej pełne
+`user-piotr-wisniewski` i `user-anna-kowalska`. Katalog osób, który zrobiłem, obsługuje dane demo
+Realizacji — Wyniki mają własne źródło, więc to osobne zadanie. Wpisane jako wyjątek na obu
+kartach, żeby nie zniknęło; ocen tych kart NIE zmieniałem (nie moje zlecenie).
