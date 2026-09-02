@@ -147,6 +147,18 @@ export function naprawioneDzis(root, data = '2026-09-02') {
 }
 
 /**
+ * Nasze zdanie „co to domyka", pisane DO WŁAŚCICIELA.
+ *
+ * Nadpisuje kolumnę uzasadnienia z korpusu, która jest pisana DO NAS (powołuje się
+ * na zrzuty, flagi i katalogi dowodowe — słusznie, bo to zapis pomiaru). Cytatu
+ * właściciela ten plik NIE dotyka i dotykać nie może.
+ */
+export function coDomyka(root) {
+  const p = path.join(root, 'docs/program/grafika/CO_DOMYKA_20260902.json');
+  return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')).ekrany || {} : {};
+}
+
+/**
  * Ekrany C/D z nazwą dla właściciela i JEDNYM ZDANIEM powodu.
  * Ekran, dla którego nie dało się ustalić powodu bez zgadywania, NIE ma tu wpisu
  * — karta powie wtedy wprost „powód dopisuję", zamiast podać wymyślony.
@@ -192,7 +204,7 @@ const PELNY = (id) => `/png/216-poprawione-dzis/${id}__PO__light.png`;
  * otwarte · czego moduł NIE obejmuje · decyzja.
  */
 export function kartaModulu(s, ctx) {
-  const { naprawione, wstrz, nazwy, kor, poza = {}, decyzja = {} } = ctx;
+  const { naprawione, wstrz, nazwy, kor, poza = {}, domyka = {}, decyzja = {} } = ctx;
   const idy = new Set(s.ekrany.map((e) => e.id));
   const okno = ctx.okno;
 
@@ -250,7 +262,8 @@ export function kartaModulu(s, ctx) {
    */
   const zKorpusu = [];
   for (const e of s.ekrany) for (const k of (kor.wg[e.id] || [])) {
-    zKorpusu.push({ nazwa: nazwy[e.id] || e.id, cytat: k.uwaga, domyka: k.domyka, klasa: k.klasa, kiedy: k.kiedy });
+    // Nasze zdanie ma pierwszeństwo; uzasadnienie z korpusu to zapas, nie wybór.
+    zKorpusu.push({ nazwa: nazwy[e.id] || e.id, cytat: k.uwaga, domyka: domyka[e.id] || k.domyka, klasa: k.klasa, kiedy: k.kiedy });
   }
   // Ekrany wstrzymane dziś przeze mnie to też otwarta sprawa — z moim powodem, nie jego cytatem.
   for (const e of wstrzymaneTu) {

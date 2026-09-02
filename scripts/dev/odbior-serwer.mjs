@@ -59,7 +59,7 @@ const POPROSZONE = path.join(ROOT, 'docs/program/grafika/poproszony-przeglad.jso
 const ODBIOR_MODULOW = path.join(ROOT, 'docs/program/grafika/ODBIOR_MODULOW.json');
 const EVID = path.join(ROOT, 'evidence/grafika');
 
-import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyzji, kartaModulu, pozaOdbiorem } from './lib/kartyModulow.mjs';
+import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyzji, kartaModulu, pozaOdbiorem, coDomyka } from './lib/kartyModulow.mjs';
 import { STYL_MODULOW } from './lib/stylModulow.mjs';
 
 /**
@@ -296,7 +296,7 @@ const czekaNaPonowne = (popr, dec) => !!popr && (!dec?.kiedy || popr.kiedy > dec
  */
 function stronaModulow() {
   const mapa = czytajMape(ROOT).filter((m) => /^[0-9]/.test(m.kod));
-  const ctx = { naprawione: naprawioneDzis(ROOT), wstrz: wstrzymane(ROOT), nazwy: nazwyEkranow(ROOT), kor: korpus(ROOT), poza: pozaOdbiorem(ROOT) };
+  const ctx = { naprawione: naprawioneDzis(ROOT), wstrz: wstrzymane(ROOT), nazwy: nazwyEkranow(ROOT), kor: korpus(ROOT), poza: pozaOdbiorem(ROOT), domyka: coDomyka(ROOT) };
   const dec = czytajDecyzjeModulow();
   const wg = new Map(mapa.map((m) => [m.kod, m]));
   const uporzadkowane = [
