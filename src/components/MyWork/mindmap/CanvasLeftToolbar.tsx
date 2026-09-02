@@ -1304,12 +1304,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     >
       <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
         {effectiveMode === 'pan'
-          ? 'PAN'
+          ? t('ideas.mindmap.pan', 'PRZESUWANIE')
           : effectiveMode === 'draw'
-            ? t('ideas.mindmap.drw', 'DRW')
+            ? t('ideas.mindmap.drw', 'RYSOWANIE')
             : effectiveMode === 'connect'
-              ? t('ideas.mindmap.lnk', 'LNK')
-              : t('ideas.mindmap.sel', 'SEL')}
+              ? t('ideas.mindmap.lnk', 'ŁĄCZENIE')
+              : t('ideas.mindmap.sel', 'ZAZNACZANIE')}
       </span>
     </div>
   ) : null;
