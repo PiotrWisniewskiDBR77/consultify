@@ -90,7 +90,7 @@
     },
     "ntype-analizuj-ai": {
       "grupa": "Naprawione dziś — obejrzyj ponownie",
-      "powod": "NAPRAWIONE: menu ekranu odtwarza układ, który aplikacja naprawdę tworzy (wybór sekcji, Edycja/Podgląd, Analizuj z AI). Wcześniej stały tam obok siebie przyciski, których produkt nigdy nie stawia razem.",
+      "powod": "NAPRAWIONE: menu odtwarza teraz układ, który aplikacja naprawdę tworzy (wybór sekcji, Edycja/Podgląd, Analizuj z AI) — wcześniej stały tam obok siebie przyciski, których produkt nigdy nie stawia razem. UPRZEDZAM PRZED SPOJRZENIEM: lewa kolumna jest pusta celowo — pokazujemy Ci sam panel analizy, nie całą kartę. Pełną kartę oglądasz osobno jako Kartę zadania.",
       "klikalna": true
     },
     "results-vnext-okr-admin": {

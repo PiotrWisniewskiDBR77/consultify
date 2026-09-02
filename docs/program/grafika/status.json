@@ -10,10 +10,12 @@
         {
           "id": "ntype-analizuj-ai",
           "nazwa": "Analizuj z AI — wynik",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "ROZSTRZYGNIĘTE 2026-09-02: lewa kolumna jest pusta, bo ten ekran pokazuje WYŁĄCZNIE panel analizy AI, a nie całą kartę. To własność przyrządu, nie defekt produktu — w aplikacji ten sam panel stoi wewnątrz pełnej karty (TaskDetailView:6066, DecisionDetailView, NotificationDetailView), gdzie lewą kolumnę wypełniają sekcje karty. Pełną kartę właściciel ogląda na osobnym ekranie (karta-task). Ocena obniżona z A na B, bo kadr nie pokazuje ekranu w całości."
+          ],
           "gdzie": "Wiele miejsc w aplikacji (Moja praca → karta Zadania/Decyzji/Powiadomienia, Inicjatywy → karta inicjatywy, Wywiad → karta Wniosku, Narzędzia → karta narzędzia) → przycisk „Analizuj z AI\" w prawym pasku karty — pokazuje braki, ryzyka i sugestie AI; to ocena doradcza, nic nie blokuje."
         },
         {
