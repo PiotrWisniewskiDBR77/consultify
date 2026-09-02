@@ -193,7 +193,7 @@ import meetingRoutes from './routes/meeting.routes.js';
 import megatrendRoutes from './routes/megatrend.routes.js';
 import methodCoreRoutes from './routes/method-core.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
-import mfaRoutes from './routes/mfa.routes.js';
+import mfaRoutes, { mfaEnrollmentRouter } from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import moduleAccessRoutes from './routes/module-access.routes.js';
 import moduleInterestRoutes from './routes/module-interest.routes.js';
@@ -1380,6 +1380,10 @@ export class ApiGateway {
         'auditRoutes'
       );
       app.use('/api/mfa', mfaRoutes);
+      // Way out of a spent MFA grace period: enrollment-only, scoped-ticket
+      // mount. See routes/mfa.routes.ts (mfaEnrollmentRouter) and
+      // services/mfaEnrollmentTicket.ts.
+      app.use('/api/auth/mfa-enrollment', mfaEnrollmentRouter);
       app.use('/api/raid', raidRoutes);
       app.use(
         '/api/execution-control',

@@ -26,6 +26,7 @@ import {
   type WsOrgContext,
 } from '../realtime/wsOrgContext.js';
 import logger from '../utils/Logger.js';
+import { hasScopedPurposeClaim } from '../utils/scopedTokenClaims.js';
 import {
   isOrganizationSuspended,
   writeOrgSuspendedUpgradeRefusal,
@@ -377,6 +378,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
     try {
       decoded = jwt.verify(token, jwtSecret);
     } catch {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    if (hasScopedPurposeClaim(decoded)) {
+      // Scoped tickets (MFA enrollment) are not sessions — never a collab peer.
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;

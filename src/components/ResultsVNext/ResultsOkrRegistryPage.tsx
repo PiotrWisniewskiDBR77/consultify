@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/states';
 
+import { ResultsVNextLegacyArchivePanel } from './legacy/ResultsVNextLegacyArchivePanel';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import { ResultsOkrHub } from './okr/ResultsOkrHub';
 
@@ -27,7 +28,16 @@ export const ResultsOkrRegistryPage: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const title = isPolish ? 'Rejestr OKR' : 'OKR registry';
+  // 2026-09-02 (wołacze duty) — "Archiwum" bypass, same shape as
+  // `ResultsRoiRegistryPage.tsx`/`ResultsKpiRegistryPage.tsx`: default OFF
+  // (`resultsLegacyArchive`), reachable independently of `okrRegistry`.
+  const legacyArchiveMode =
+    isResultsVNextFlagEnabled('resultsLegacyArchive') &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('resultsView') === 'legacy';
   const enabled = isResultsVNextFlagEnabled('okrRegistry');
+
+  if (legacyArchiveMode) return <ResultsVNextLegacyArchivePanel domain="okr" />;
 
   if (!enabled) {
     return (

@@ -143,6 +143,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         ttsVoice: 'default',
         ttsRate: 1.0,
         ttsPitch: 1.0,
+        // Default ON — matches chatSlice's initial aiConfig (D-104).
+        chatSuggestionsEnabled: true,
       },
 
       // Project/Session Reset

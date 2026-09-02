@@ -8015,6 +8015,12 @@
       "initiatives": "Pakiet inicjatyw",
       "note": "Wykorzystuje tę ocenę jako źródło."
     },
+    "outputs": {
+      "rowMenu": {
+        "openReport": "Pokaż raport",
+        "openPresentation": "Pokaż jako prezentację"
+      }
+    },
     "emptyState": {
       "title": "Brak assessmentów",
       "createFirst": "Utwórz pierwszy assessment",
@@ -13384,7 +13390,19 @@
     "subscriptionLink": "Warunki subskrypcji",
     "verifyingCode": "Weryfikowanie kodu...",
     "workspaceAutoSelect": "Przestrzeń robocza zostanie wybrana automatycznie po rejestracji.",
-    "workspaceNamed": "Przestrzeń robocza: {{name}}"
+    "workspaceNamed": "Przestrzeń robocza: {{name}}",
+    "resetPasswordPage": {
+      "title": "Ustaw nowe hasło",
+      "subtitle": "Wpisz poniżej swoje nowe hasło.",
+      "submit": "Zresetuj hasło",
+      "successTitle": "Hasło zmienione",
+      "successMessage": "Twoje hasło zostało zresetowane. Możesz teraz zalogować się nowym hasłem.",
+      "invalidToken": "Nieprawidłowy lub brakujący token resetu",
+      "requestNew": "Poproś o nowy link do zresetowania hasła.",
+      "passwordMismatch": "Hasła nie są takie same.",
+      "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków.",
+      "errorGeneric": "Nie udało się zresetować hasła. Link mógł wygasnąć."
+    }
   },
   "help": {
     "onboarding": {
@@ -20530,7 +20548,10 @@
           "title": "Wymuszanie MFA",
           "description": "Wymagaj uwierzytelniania wieloskładnikowego w całej przestrzeni roboczej.",
           "enabled": "Włączone",
-          "gracePeriod": "Okres karencji (dni)"
+          "gracePeriod": "Okres karencji (dni)",
+          "errors": {
+            "noEnrolledAccounts": "Nie można wymagać drugiego składnika: żadne konto w tej organizacji go nie ma. Skonfiguruj drugi składnik na co najmniej jednym koncie, zanim włączysz wymóg."
+          }
         },
         "sso": {
           "title": "Postawa SSO",
@@ -26462,6 +26483,7 @@
     "sampleData": {
       "banner": "Dane przykładowe — nie z bazy"
     },
+    "legacyArchiveTab": "Archiwum",
     "moduleName": "Rezultaty",
     "hub": {
       "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",
@@ -32707,6 +32729,28 @@
     "setup": {
       "next": "następne",
       "done": "Zrobione"
+    },
+    "setupRequired": {
+      "title": "Twoja organizacja wymaga drugiego składnika",
+      "body": "Okres przejściowy minął. Skonfiguruj tu drugi składnik — ten krok jest jedyną rzeczą, na którą pozwala ta ograniczona sesja.",
+      "secretLabel": "Klucz do aplikacji uwierzytelniającej",
+      "codeLabel": "Kod z aplikacji",
+      "confirm": "Potwierdź i włącz",
+      "badCode": "Wpisz 6-cyfrowy kod z aplikacji.",
+      "startFailed": "Nie udało się rozpocząć konfiguracji. Zaloguj się ponownie, aby dostać nowy link.",
+      "verifyFailed": "Kod nie został przyjęty. Spróbuj z aktualnym kodem.",
+      "preparing": "Przygotowuję konfigurację…",
+      "doneTitle": "Drugi składnik jest już skonfigurowany",
+      "doneBody": "Zaloguj się ponownie — poprosimy o kod z aplikacji uwierzytelniającej.",
+      "backToLogin": "Wróć do logowania"
+    },
+    "graceBanner": {
+      "remaining": "Twoja organizacja wymaga drugiego składnika logowania. Zostało {{count}} dni na jego skonfigurowanie.",
+      "remaining_one": "Twoja organizacja wymaga drugiego składnika logowania. Został {{count}} dzień na jego skonfigurowanie.",
+      "remaining_few": "Twoja organizacja wymaga drugiego składnika logowania. Zostały {{count}} dni na jego skonfigurowanie.",
+      "remaining_many": "Twoja organizacja wymaga drugiego składnika logowania. Zostało {{count}} dni na jego skonfigurowanie.",
+      "expired": "Twoja organizacja wymaga drugiego składnika logowania. Okres przejściowy minął — skonfiguruj go teraz.",
+      "action": "Skonfiguruj"
     }
   },
   "tour": {

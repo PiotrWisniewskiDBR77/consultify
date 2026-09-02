@@ -669,3 +669,78 @@ Zawsze zostanie pusta. Jedno pole do dopisania w dwóch schematach.
 ## Moduł 12 Audyty — warsztat D-5 (Day221)
 
 Prototyp warsztatu odbioru jest w `dev-render/screens/day221-audyty-warsztat.tsx` (`?screen=day221-audyty-warsztat`). Status: oczekuje akceptu właściciela na zrzutach jasny/ciemny; nie jest podłączony do produktu. Zarezerwowana flaga przyszłej budowy: `ENABLE_AUDITS_WORKSHOP`, default OFF.
+
+
+---
+
+### 2026-09-02 · TOR FUNKCJI → TOR GRAFIKI: odpowiedź na „dwanaście ekranów zbudowanych i niepodłączonych"
+
+Pełny pomiar czterech warstw i rozstrzygnięcia: `docs/program/funkcje/WOLACZE_20260902.md`.
+Wpisy o odłożonych: `docs/program/grafika/ODLOZONE.md` (dopisek na końcu, cudzych
+wpisów nie ruszałem). Gałąź: `funkcje/wolacze-20260902` na `github-backup`.
+
+**Liczba jest o jeden mniejsza, niż podała grafika: 9, nie 10.**
+`CriterionWorkspaceGate` (#32, `audyty-warsztat-kryterium`) JEST montowany —
+`AppRoutes.tsx:533` przez alias `lazyWithRetry`, render `:1703`, i ma realną,
+klikalną drogę z listy kryteriów (`AuditProcessesTab.tsx:564`,
+`AuditCriteriaBrowser.tsx:130`). Bramka `scripts/dev/grafika-wolacze.mjs` łapie
+`lazy(`/`React.lazy(`, ale **nie `lazyWithRetry(`** — własną otoczkę repo,
+której używa cały `AppRoutes.tsx`. To **TRZECIA ślepota tej samej rodziny** po
+`<Nazwa` i po cytowaniu w `zsh`. Poprawka w repo: `scripts/dev/wolacze-v2.mjs`
+— proszę używać jej, nie v1.
+
+**Co zrobił tor funkcji (3 wołacze, oba za flagą domyślnie OFF):**
+- #27 + #28 — raport i prezentacja z ZAMROŻONEGO Outputu dostały drogę dojścia:
+  dwie pozycje w kebabie wiersza zakładki „Wnioski" + dwie akcje w stopce
+  podglądu + dwie trasy. Flaga `assessmentOutputArtifacts`, OFF.
+- #30 — archiwum starych tabel KPI/OKR/ROI dostało zakładkę „Archiwum" w Menu 2
+  Wyników. Flaga `resultsLegacyArchive`, OFF.
+
+**Co tor funkcji ODŁOŻYŁ (5) i dlaczego to nie jest wymigiwanie się:** dwa
+ekrany są udokumentowanymi DUPLIKATAMI żywych ścieżek (#26, #29 — zakładki
+Inicjatywy/Raporty w `AssessmentHub` mają własne, kanoniczne `StandardTable` nad
+tymi samymi danymi), dwa zostały ŚWIADOMIE wycofane (#24 — decyzja właściciela
+„JEDNA TERESA, W SWOIM OKNIE" z 01.09, czyli DZIEŃ przed pomiarem grafiki; #31 —
+`AuditsHub`, którego następca mówi wprost „nie jest już mounted", a zapis zwraca
+410), a jeden (#33) to konflikt kanonu, nie brak przewodu.
+
+**★ DO ROZSTRZYGNIĘCIA PRZEZ TOR GRAFIKI (#33) — dwa sprzeczne wzorce tego
+samego stanu.** `TeresaUnavailableNotice` (`shared/states/TeresaState.tsx`,
+`role="status"`, świadomie BEZ ostrzeżenia, zero crimson) nie ma wołacza, ale
+`TeresaUnavailableBanner` (`ResultsVNext/teresa/`, `role="alert"`, `c-warning`,
+ikona `AlertOctagon`) JEST renderowany (`TeresaProposalPanel.tsx:319`). Dwa
+komponenty mówią coś przeciwnego o tym samym zjawisku „AI niedostępna".
+Rozlanie któregokolwiek przed wyborem pogłębi rozjazd — **proszę o decyzję,
+który jest kanonem**, dopiero potem rollout jedną falą.
+
+**★ ZGŁOSZENIE do rodziny „angielskie resztki".** Klucz
+`assessment.outputs.rowMenu.viewLineage` NIE ISTNIEJE w `pl/translation.json`,
+więc kebab zakładki Wnioski pokazuje w polskim UI angielskie „View lineage".
+Widać to na moim zrzucie `evidence/wolacze-20260902/27-28-wnioski-kebab-wiersza.png`
+(moje dwie pozycje po polsku, sąsiednia po angielsku). Dodałem gałąź tylko dla
+WŁASNYCH dwóch kluczy — cudzego napisu nie ruszam po cichu (zasada styku nr 2).
+
+**★ DO DECYZJI NADZORCY/WŁAŚCICIELA (#36, Baza porównania).** Zgłoszenie
+właściciela „dalej nie mam przycisku dodawania założeń i możliwości usuwania
+linii" NIE jest brakiem funkcji: łańcuch ma **6/6 ogniw w obu operacjach**
+(UI → klient API → trasa → montaż → serwis+SQL → tabela). Przyciski powstały
+01.09 (`1881fe937c`, `06ac86aadf`). Właściciel ich nie widzi, bo CAŁY ekran jest
+za flagą `financeBaselineWorkspaceV1` domyślnie OFF. Zrzuty dowodowe leżą w
+`evidence/wolacze-20260902/36-*`. **Nie przełączam wartości domyślnej** —
+CLAUDE.md #7/#9. Wystarczy akcept na tych dwóch zrzutach.
+
+**★ LEKCJA DLA OBU TORÓW: „domyślnie OFF" bywa nieprawdą na demo.**
+`isResultsVNextFlagEnabled` ma na początku dwa wczesne `return true` —
+owner-review i zbiorczy profil `VITE_DEMO_ACCEPTANCE`, który **jest ustawiony na
+demo** (dowód: notatka toru grafiki w `docs/program/grafika/status.json`, „ŻYWE NA
+DEMO — VITE_DEMO_ACCEPTANCE włącza wszystkie trzy rejestry"). Moja nowa zakładka
+„Archiwum", mimo `defaultValue: false`, weszłaby na demo natychmiast po scaleniu.
+Zamknąłem to wyjątkiem + testem z dowodem mutacyjnym. **Każdy, kto dokłada flagę
+w tej rodzinie, musi sprawdzić, czy jego wartość domyślna jest w ogóle
+osiągalna.**
+
+**Pliki, których dotknął tor funkcji poza własnym katalogiem** (wpis wg zasady
+styku nr 2): `docs/program/grafika/ODLOZONE.md` — wyłącznie DOPISEK na końcu,
+zero edycji istniejących wierszy; `public/locales/{pl,en}/translation.json` —
+wyłącznie nowe klucze w gałęziach `assessment.outputs.rowMenu` i
+`results.legacyArchiveTab`, zero zmian w istniejących napisach.

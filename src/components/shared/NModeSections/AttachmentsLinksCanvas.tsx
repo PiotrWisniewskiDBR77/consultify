@@ -45,7 +45,7 @@ import { useCloudIntegrations } from '@/hooks/useCloudIntegrations';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 
-import type { Attachment } from '../../MyWork/shared/AttachmentsSection';
+import type { Attachment, MutationResult } from '../../MyWork/shared/AttachmentsSection';
 import type { LinkedItem, LinkRelationType } from '../../MyWork/shared/LinkedItemsSection';
 import { ArtifactPermalinkButton } from '../ArtifactPermalinkButton';
 
@@ -54,14 +54,19 @@ import { ArtifactPermalinkButton } from '../ArtifactPermalinkButton';
 export interface AttachmentsLinksCanvasProps {
   /* ── Attachments ─────────────────────────────────────── */
   attachments: Attachment[];
-  onUploadAttachments: (files: FileList) => Promise<void>;
-  onDeleteAttachment: (id: string) => Promise<void>;
+  // Both call shapes are live: TaskDetailView's handlers return MutationResult
+  // (shared with AttachmentsSection/LinkedItemsSection elsewhere in the same
+  // view), DecisionDetailView's return void. Neither result is read here
+  // (calls are `await`ed or `void`d, see below) — only the type needs to
+  // cover both callers.
+  onUploadAttachments: (files: FileList) => Promise<void | MutationResult>;
+  onDeleteAttachment: (id: string) => Promise<void | MutationResult>;
   onEditAttachment?: (id: string, patch: Partial<Attachment>) => void;
 
   /* ── Linked items ────────────────────────────────────── */
   linkedItems: LinkedItem[];
-  onAddLinkedItem: (item: LinkedItem) => Promise<void>;
-  onRemoveLinkedItem: (item: Pick<LinkedItem, 'id' | 'type'>) => Promise<void>;
+  onAddLinkedItem: (item: LinkedItem) => Promise<void | MutationResult>;
+  onRemoveLinkedItem: (item: Pick<LinkedItem, 'id' | 'type'>) => Promise<void | MutationResult>;
   onEditLinkedItem?: (key: string, patch: Partial<LinkedItem>) => void;
   onNavigateLinkedItem?: (item: LinkedItem) => void;
   searchLinkedItems?: (query: string) => Promise<LinkedItem[]>;

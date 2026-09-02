@@ -2554,12 +2554,16 @@ router.post(
         to: user.email,
         subject: 'Consultify — Password Reset',
         html: buildPasswordResetEmailHtml(resetLink),
+        // Never treat a console-only / rejected send as a delivered reset link.
+        requireDelivery: true,
       });
       if (!delivered) {
-        logger.warn('[Auth] Password reset email was not delivered', {
-          userId: user.id,
-          email: user.email,
-        });
+        logger.error(
+          `[Auth] Password reset email was NOT delivered (userId=${user.id}). ` +
+            'Check SMTP_HOST/SMTP_USER/EMAIL_FROM and the provider response above.'
+        );
+      } else {
+        logger.info(`[Auth] Password reset email delivered (userId=${user.id})`);
       }
     } catch (err) {
       logger.error('[Auth] Failed to send password reset email:', err);
@@ -2631,7 +2635,13 @@ router.post(
       hashedPassword,
       resetData.user_id,
     ]);
-    if (!updateResult.success) {
+    // A driver-level "success" with zero affected rows means the password was
+    // NOT written. Reporting 200 in that case is how a dead reset flow looks alive.
+    const changedRows = Number(updateResult.changes ?? 0);
+    if (!updateResult.success || changedRows < 1) {
+      logger.error(
+        `[Auth] Password reset write affected ${changedRows} rows for user ${resetData.user_id}`
+      );
       return res.status(500).json({ error: 'Failed to update password' });
       return;
     }

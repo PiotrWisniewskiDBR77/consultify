@@ -8639,6 +8639,12 @@
       "initiatives": "Initiative pack",
       "note": "Uses this assessment as the source."
     },
+    "outputs": {
+      "rowMenu": {
+        "openReport": "Show report",
+        "openPresentation": "Show as presentation"
+      }
+    },
     "emptyState": {
       "title": "No assessments yet",
       "createFirst": "Create First Assessment",
@@ -13942,7 +13948,19 @@
     "subscriptionLink": "Subscription Terms",
     "verifyingCode": "Verifying code...",
     "workspaceAutoSelect": "Workspace will be selected automatically after registration.",
-    "workspaceNamed": "Workspace: {{name}}"
+    "workspaceNamed": "Workspace: {{name}}",
+    "resetPasswordPage": {
+      "title": "Set new password",
+      "subtitle": "Enter your new password below.",
+      "submit": "Reset password",
+      "successTitle": "Password updated",
+      "successMessage": "Your password has been reset successfully. You can now log in with your new password.",
+      "invalidToken": "Invalid or missing reset token",
+      "requestNew": "Please request a new password reset link.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "errorGeneric": "Failed to reset password. The link may have expired."
+    }
   },
   "help": {
     "onboarding": {
@@ -19286,7 +19304,10 @@
           "title": "MFA enforcement",
           "description": "Require multi-factor authentication across the workspace.",
           "enabled": "Enabled",
-          "gracePeriod": "Grace period (days)"
+          "gracePeriod": "Grace period (days)",
+          "errors": {
+            "noEnrolledAccounts": "Two-factor cannot be required: no account in this organisation has it. Set a second factor up on at least one account before enforcing it."
+          }
         },
         "sso": {
           "title": "SSO posture",
@@ -25039,6 +25060,7 @@
     "sampleData": {
       "banner": "Sample data — not from the database"
     },
+    "legacyArchiveTab": "Archive",
     "moduleName": "Results",
     "hub": {
       "failedToLoadKpis": "Failed to load KPI catalog.",
@@ -28323,7 +28345,8 @@
         "edit": "Edit & AI",
         "file": "File, export & workspace",
         "workflow": "Workflow",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "diagnostics": "Diagnostics & workflow"
       },
       "versioning": {
         "title": "Versioning"
@@ -30172,6 +30195,26 @@
     "setup": {
       "next": "next",
       "done": "Done"
+    },
+    "setupRequired": {
+      "title": "Your organisation requires a second factor",
+      "body": "The grace period is over. Set the second factor up here — it is the only thing this limited session allows.",
+      "secretLabel": "Key for your authenticator app",
+      "codeLabel": "Code from the app",
+      "confirm": "Confirm and enable",
+      "badCode": "Enter the 6-digit code from your app.",
+      "startFailed": "Setup could not be started. Sign in again to get a fresh link.",
+      "verifyFailed": "The code was not accepted. Try a current one.",
+      "preparing": "Preparing setup…",
+      "doneTitle": "Your second factor is set up",
+      "doneBody": "Sign in again — we will ask for the code from your authenticator app.",
+      "backToLogin": "Back to sign in"
+    },
+    "graceBanner": {
+      "remaining": "Your organisation requires two-factor sign-in. {{count}} days left to set it up.",
+      "remaining_one": "Your organisation requires two-factor sign-in. {{count}} day left to set it up.",
+      "expired": "Your organisation requires two-factor sign-in. The grace period is over — set it up now.",
+      "action": "Set up"
     }
   },
   "tour": {

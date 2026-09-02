@@ -75,7 +75,7 @@ export interface ParsedStatementNumber {
 }
 
 /** Whitespace variants used as thousands separators in PL/FR/CH typesetting, plus the CH apostrophe. */
-const GROUPING_WHITESPACE = /[\s    ٬']/g;
+const GROUPING_WHITESPACE = /[\s\u00A0\u202F\u2009\u2007\u066C']/g;
 
 /**
  * Locale families. Only notation matters here, not the full locale:
@@ -124,7 +124,7 @@ const EN_DECIMAL_RE = /(?<![\d.,])\d+\.(?:\d{1,2}|\d{4,})(?![\d.,])/g;
 /** `12,5`, `0,75`, `12,3456` — a comma tail that is not a three-digit group. */
 const EU_DECIMAL_RE = /(?<![\d.,])\d+,(?:\d{1,2}|\d{4,})(?![\d.,])/g;
 /** `1 234 567` — space grouping (diagnostic only). */
-const SPACE_GROUPING_RE = /(?<![\d.,])\d{1,3}(?:[    ]\d{3})+(?![\d., ])/g;
+const SPACE_GROUPING_RE = /(?<![\d.,])\d{1,3}(?:[ \u00A0\u202F\u2009]\d{3})+(?![\d., ])/g;
 /** `1,234` or `267.732` — a single separator with exactly three trailing digits. */
 const AMBIGUOUS_SHAPE_RE = /(?<![\d.,])\d{1,3}[.,]\d{3}(?![\d.,])/g;
 

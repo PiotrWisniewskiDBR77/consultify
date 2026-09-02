@@ -369,8 +369,16 @@ async function main(): Promise<void> {
         },
       });
     } catch (error) {
+      // Never `throw` from inside a `finally` (no-unsafe-finally): this whole
+      // block runs inside the OUTER `finally` (line ~344) — a throw here would
+      // silently REPLACE whatever real error the outer try already produced
+      // (main().catch() below would report this cleanup failure instead of
+      // the actual perf-gate failure). Surface it without masking instead.
       await pool.query('ROLLBACK').catch(() => undefined);
-      throw error;
+      extendCheckpoint({
+        cleanupError: error instanceof Error ? error.message : String(error),
+      });
+      console.error('[NFR-PERF-001] fixture cleanup failed:', error);
     } finally {
       await pool.end();
     }

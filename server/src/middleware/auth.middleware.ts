@@ -13,6 +13,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { hasScopedPurposeClaim } from '../utils/scopedTokenClaims.js';
 import {
   type ActiveDemoSession,
   DEMO_SESSION_EXPIRED_CODE,
@@ -1307,6 +1308,20 @@ const checkTokenRevocation = async (
 /**
  * Verify JWT token and attach user to request
  */
+/**
+ * A session token never carries a `purpose` claim. Scoped tickets (today: the
+ * MFA enrollment ticket) do, and must not be usable as a session anywhere.
+ * Returns true when the response has already been terminated.
+ */
+// NOTE: these must read the RAW verified payload. `sanitizeJwtPayload` is a
+// whitelist and silently drops `purpose`, so checking the sanitized object
+// would always see `undefined` and wave every ticket through as a session.
+function rejectScopedPurposeToken(decoded: unknown, res: Response): boolean {
+  if (!hasScopedPurposeClaim(decoded)) return false;
+  res.status(401).json({ error: 'Unauthorized', code: 'SCOPED_TOKEN_NOT_A_SESSION' });
+  return true;
+}
+
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!isTestEnv()) {
@@ -1483,6 +1498,9 @@ export const verifyToken = asyncHandler(
           // Mark this request specifically as the unsigned E2E bypass. Routes
           // must not infer bypass identity from the process-wide E2E_MODE flag:
           // the same runtime also serves normally signed, DB-backed users.
+          if (rejectScopedPurposeToken(decodedClaims, res)) {
+            return;
+          }
           req.isE2EAuthBypass = true;
           // Attach without signature verification / revocation checks
           await attachUser(normalizedDecoded, req, next, res);
@@ -1542,6 +1560,18 @@ export const verifyToken = asyncHandler(
         return;
       }
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedId };
+
+      // DEFAULT-DENY ON SCOPED TICKETS (2026-09-02, zamkniete kolo MFA).
+      // Recovering from a spent MFA grace period requires handing the user a
+      // signed token BEFORE they hold a session. That ticket is signed with the
+      // same JWT secret, so the main door must refuse it explicitly: a token
+      // carrying any `purpose` claim is not a session token and never becomes
+      // one here. Only the dedicated enrollment middleware accepts it. Access
+      // tokens minted by RefreshTokenService carry no `purpose` claim at all,
+      // so this rejects tickets without touching normal logins.
+      if (rejectScopedPurposeToken(decoded, res)) {
+        return;
+      }
 
       if (process.env.SESSION_IDLE_ENFORCEMENT === 'true') {
         const decodedClaims = normalizedDecoded as unknown as Record<string, unknown>;
@@ -1650,6 +1680,10 @@ export const optionalAuth = asyncHandler(
       return next();
     }
     if (!isPlainJwtPayload(decoded)) {
+      return next();
+    }
+    if (hasScopedPurposeClaim(decoded)) {
+      // A scoped ticket is not an identity: optional auth continues anonymous.
       return next();
     }
     const sanitizedDecoded = sanitizeJwtPayload(decoded);

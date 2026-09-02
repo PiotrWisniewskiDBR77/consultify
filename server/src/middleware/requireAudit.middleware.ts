@@ -15,6 +15,10 @@ import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 declare global {
+  // Standard TS declaration-merging idiom for augmenting Express's global
+  // Request type — there is no non-namespace way to do this in a regular
+  // .ts file (only .d.ts files are exempted by eslint.config.js's ignores).
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       emitAuditEvent?: (

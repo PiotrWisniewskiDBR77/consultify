@@ -2596,6 +2596,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // AI Comment handler
   const generateAIComment = async () => {
+    if (!taskId) {
+      // Mirrors handleAddComment's guard — addTaskCommentAndReload below
+      // needs a persisted task id.
+      toast.error(
+        isPolish ? 'Zapisz zadanie, aby dodać komentarz' : 'Save the task first to add a comment'
+      );
+      return;
+    }
     setIsGeneratingAIComment(true);
     try {
       const recentComments = comments
@@ -7166,7 +7174,18 @@ Return ONLY the final comment text.`;
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onLikeComment={handleLikeComment}
-              onGenerateAIComment={generateAIComment}
+              onGenerateAIComment={async () => {
+                // generateAIComment() itself stays void-returning — it's also
+                // wired to CommentsCanvas.onAIEnhance above (a different,
+                // void contract) — this adapts it to SharedCommentsSection's
+                // MutationResult contract without touching that other caller.
+                try {
+                  await generateAIComment();
+                  return { ok: true as const };
+                } catch (error) {
+                  return { ok: false as const, error };
+                }
+              }}
               isGeneratingAI={isGeneratingAIComment}
               currentUserId="current-user"
               expanded={expandedSections.has('comments')}

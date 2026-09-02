@@ -7,6 +7,7 @@
 import { Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { denyUnsafeMfaEnforcement } from '../services/mfaEnforcementGuard.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -89,10 +90,32 @@ router.put(
     const denial = await requireOrgAdmin(req);
     if (denial) return res.status(403).json(denial);
 
-    await dbRun(`UPDATE organizations SET mfa_required = ? WHERE id = ?`, [
-      body.require2fa ? 1 : 0,
+    // Sibling of PUT /api/admin/security (adminP32.routes.ts). Both write the
+    // same column, so both carry the same two obligations: never schedule a
+    // total lockout, and stamp the anchor the grace period counts from.
+    const nextRequire2fa = Boolean(body.require2fa);
+    const currentOrg = await dbGet<{ mfa_required?: number }>(
+      `SELECT mfa_required FROM organizations WHERE id = ?`,
+      [orgId],
+      { fallback: false }
+    );
+    const unsafeEnforcement = await denyUnsafeMfaEnforcement(
       orgId,
-    ]);
+      Number(currentOrg?.mfa_required ?? 0) === 1,
+      nextRequire2fa
+    );
+    if (unsafeEnforcement) return res.status(409).json(unsafeEnforcement);
+
+    await dbRun(
+      `UPDATE organizations
+          SET mfa_required = ?,
+              mfa_required_since = CASE
+                WHEN ? = 1 THEN COALESCE(mfa_required_since, CURRENT_TIMESTAMP)
+                ELSE NULL
+              END
+        WHERE id = ?`,
+      [nextRequire2fa ? 1 : 0, nextRequire2fa ? 1 : 0, orgId]
+    );
     await dbRun(
       `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
        VALUES (?, 'security', ?, datetime('now'))`,

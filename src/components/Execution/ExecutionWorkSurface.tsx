@@ -578,62 +578,6 @@ export const ExecutionWorkSurface = ({
     });
     await load(caseId);
   };
-  if (state === 'ERROR')
-    return (
-      <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
-        <p>Nie udało się załadować kanonicznego rejestru pracy.</p>
-        <button
-          type="button"
-          className="btn-secondary mt-3"
-          onClick={() => (caseId ? void load(caseId) : void loadCases())}
-        >
-          Spróbuj ponownie
-        </button>
-      </div>
-    );
-  const fieldLabels: Record<string, string> = {
-    title: 'Tytuł',
-    description: 'Opis i oczekiwany rezultat',
-    assigneeId: 'Osoba realizująca',
-    ownerId: 'Właściciel',
-    authorityId: 'Osoba decyzyjna',
-    dueAt: 'Termin',
-    slaAt: 'Termin reakcji (SLA)',
-    evidenceRefs: 'Dowody / załączniki',
-    blockers: 'Blokujące decyzje',
-    dependencies: 'Zależności',
-    milestoneIds: 'Powiązane kamienie milowe',
-    rationale: 'Uzasadnienie',
-    conditions: 'Warunki decyzji',
-  };
-  const visibleFields =
-    toolMode === 'TASK'
-      ? [
-          'title',
-          'description',
-          'assigneeId',
-          'ownerId',
-          'dueAt',
-          'slaAt',
-          'evidenceRefs',
-          'blockers',
-          'dependencies',
-          'milestoneIds',
-        ]
-      : [
-          'title',
-          'description',
-          'authorityId',
-          'dueAt',
-          'rationale',
-          'conditions',
-          ...(selected?.kind === 'DECISION' && selected.status === 'PENDING'
-            ? (['assigneeId', 'ownerId', 'slaAt', 'evidenceRefs'] as const)
-            : []),
-        ];
-  // Menu 2 (prawa strona) — filtr realizacji + akcje "Nowe…". Patrz komentarz
-  // propa `onRegisterFilterControl` powyżej. Rejestruje `null` w widoku
-  // dokumentu (documentId) — tam nie ma listy do filtrowania.
   useEffect(() => {
     if (!onRegisterFilterControl) return;
     if (documentId) {
@@ -692,6 +636,63 @@ export const ExecutionWorkSurface = ({
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterFilterControl, documentId, caseId, cases]);
+
+  if (state === 'ERROR')
+    return (
+      <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
+        <p>Nie udało się załadować kanonicznego rejestru pracy.</p>
+        <button
+          type="button"
+          className="btn-secondary mt-3"
+          onClick={() => (caseId ? void load(caseId) : void loadCases())}
+        >
+          Spróbuj ponownie
+        </button>
+      </div>
+    );
+  const fieldLabels: Record<string, string> = {
+    title: 'Tytuł',
+    description: 'Opis i oczekiwany rezultat',
+    assigneeId: 'Osoba realizująca',
+    ownerId: 'Właściciel',
+    authorityId: 'Osoba decyzyjna',
+    dueAt: 'Termin',
+    slaAt: 'Termin reakcji (SLA)',
+    evidenceRefs: 'Dowody / załączniki',
+    blockers: 'Blokujące decyzje',
+    dependencies: 'Zależności',
+    milestoneIds: 'Powiązane kamienie milowe',
+    rationale: 'Uzasadnienie',
+    conditions: 'Warunki decyzji',
+  };
+  const visibleFields =
+    toolMode === 'TASK'
+      ? [
+          'title',
+          'description',
+          'assigneeId',
+          'ownerId',
+          'dueAt',
+          'slaAt',
+          'evidenceRefs',
+          'blockers',
+          'dependencies',
+          'milestoneIds',
+        ]
+      : [
+          'title',
+          'description',
+          'authorityId',
+          'dueAt',
+          'rationale',
+          'conditions',
+          ...(selected?.kind === 'DECISION' && selected.status === 'PENDING'
+            ? (['assigneeId', 'ownerId', 'slaAt', 'evidenceRefs'] as const)
+            : []),
+        ];
+  // Menu 2 (prawa strona) — filtr realizacji + akcje "Nowe…". Patrz komentarz
+  // propa `onRegisterFilterControl` powyżej. Rejestruje `null` w widoku
+  // dokumentu (documentId) — tam nie ma listy do filtrowania.
   return (
     <section aria-label="Execution Work" className="flex h-full min-h-0 flex-col p-4">
       {documentId && (

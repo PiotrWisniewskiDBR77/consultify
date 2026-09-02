@@ -1659,6 +1659,10 @@ export async function initDb(): Promise<void> {
             -- MFA enforcement settings (enterprise feature)
             mfa_required INTEGER DEFAULT 0,
             mfa_grace_period_days INTEGER DEFAULT 7,
+            -- Anchor for the grace period: when enforcement was switched on.
+            -- Without it the grace period is a number with nothing to count
+            -- from, which is exactly how the 2026-09-02 login dead end arose.
+            mfa_required_since TIMESTAMP,
             -- Trial Fields
             trial_started_at TIMESTAMP,
             trial_expires_at TIMESTAMP,
@@ -3442,6 +3446,10 @@ export async function initDb(): Promise<void> {
             IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
                             WHERE table_name = 'organizations' AND column_name = 'mfa_grace_period_days') THEN
                 ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 7;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'mfa_required_since') THEN
+                ALTER TABLE organizations ADD COLUMN mfa_required_since TIMESTAMP;
             END IF;
             IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
                             WHERE table_name = 'organizations' AND column_name = 'discount_percent') THEN

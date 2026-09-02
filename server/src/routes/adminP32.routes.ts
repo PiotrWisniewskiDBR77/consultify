@@ -7,6 +7,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import AccessCodeService from '../services/accessCodeService.js';
 import adminAuditService from '../services/adminAuditService.js';
+import { denyUnsafeMfaEnforcement } from '../services/mfaEnforcementGuard.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import {
   insertScimGroupMapping,
@@ -697,11 +698,26 @@ async function writeSecuritySettings(
     ssoProtocol: 'saml' | 'oidc';
   }
 ) {
-  await dbRun(`UPDATE organizations SET mfa_required = ?, mfa_grace_period_days = ? WHERE id = ?`, [
-    next.mfaRequired ? 1 : 0,
-    next.mfaGracePeriodDays,
-    orgId,
-  ]);
+  // The grace period needs a date to count from. Switching enforcement ON
+  // stamps the anchor; switching it OFF clears it so a later re-enable starts a
+  // fresh runway instead of reusing a year-old one (that missing anchor is what
+  // made the grace period a dead number until 2026-09-02).
+  await dbRun(
+    `UPDATE organizations
+        SET mfa_required = ?,
+            mfa_grace_period_days = ?,
+            mfa_required_since = CASE
+              WHEN ? = 1 THEN COALESCE(mfa_required_since, CURRENT_TIMESTAMP)
+              ELSE NULL
+            END
+      WHERE id = ?`,
+    [
+      next.mfaRequired ? 1 : 0,
+      next.mfaGracePeriodDays,
+      next.mfaRequired ? 1 : 0,
+      orgId,
+    ]
+  );
 
   await dbRun(
     `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
@@ -2343,6 +2359,14 @@ async function handleUpdateSecurityPolicy(req: AuthRequest, res: Response) {
   const current = await readSecuritySettings(orgId);
   const { errors, next } = validateSecuritySettingsUpdate(req.body, current);
   if (errors.length) return sendValidationError(res, errors);
+
+  // Never let an organisation reach a state where no account can log in.
+  const unsafeEnforcement = await denyUnsafeMfaEnforcement(
+    orgId,
+    current.mfaRequired,
+    next.mfaRequired
+  );
+  if (unsafeEnforcement) return res.status(409).json(unsafeEnforcement);
 
   await writeSecuritySettings(orgId, actorId, next);
   await adminAuditService.logAction({

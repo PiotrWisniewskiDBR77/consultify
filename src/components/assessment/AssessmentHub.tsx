@@ -1569,7 +1569,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           activeTab !== 'outputs'
             ? knownPresentation(statusCounts[opt.id] ?? 0)
             : outputsCount === null
-              ? unknownPresentation(
+              ? // Explicit <number>: unknownPresentation<T> can't infer T from its
+                // single string arg, and this branch feeds the same numeric-count
+                // badge/tooltip as its `knownPresentation`/`partialPresentation`
+                // sibling branches below.
+                unknownPresentation<number>(
                   t('presentationState.outputsUnavailableReason', 'output count is unavailable')
                 )
               : opt.id === 'all'

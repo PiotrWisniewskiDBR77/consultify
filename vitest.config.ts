@@ -42,6 +42,14 @@ export default defineConfig({
         find: '@aws-sdk/client-s3',
         replacement: path.resolve(__dirname, './tests/__mocks__/aws-sdk-client-s3.js'),
       },
+      // `tesseract.js` is dynamically imported by deckImageSafetyGates.ts but is
+      // not a declared dependency and is not installed, so Vite could not
+      // resolve the module graph of any suite that mounts the full Gateway.
+      // The stub only makes resolution possible — it throws when called.
+      {
+        find: 'tesseract.js',
+        replacement: path.resolve(__dirname, './tests/__mocks__/tesseract-js.js'),
+      },
       // highlight.js has no `exports` map; the inlined tiptap lowlight extension's
       // bare `highlight.js/lib/core` import is unresolvable under Vite's transform
       // without pointing at the concrete .js file (M04 notebook code highlight).

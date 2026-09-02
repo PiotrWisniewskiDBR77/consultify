@@ -615,15 +615,36 @@ describe('mounted MFA auth wall contract', () => {
     expect(source).not.toContain('const isAuthenticated = verifyToken');
 
     for (const route of [
-      "router.get('/status', async",
-      "router.post('/setup', async",
-      "router.post('/verify-setup', async",
+      "router.get('/status', handleMfaStatus)",
+      "router.post('/setup', handleMfaSetup)",
+      "router.post('/verify-setup', handleMfaVerifySetup)",
       "router.post('/verify', async",
       "router.post('/disable', async",
     ]) {
       expect(source).toContain(route);
     }
     expect(source).not.toMatch(/router\.(?:get|post)\([^\n]+verifyToken/);
+
+    // 2026-09-02: drugi mount — wyjście z wyczerpanej karencji MFA. Ma własny,
+    // WĘŻSZY strażnik (tylko bilet o purpose 'mfa_enrollment') i wystawia
+    // WYŁĄCZNIE trzy trasy konfiguracji. Gdyby przeciekła tu /verify,
+    // /disable albo /regenerate-backup-codes, bilet przestałby być
+    // ograniczoną sesją.
+    expect(source).toContain(
+      'mfaEnrollmentRouter.use(verifyMfaEnrollmentToken, requireActiveTenantMembershipOrUnavailable)'
+    );
+    expect(
+      source.match(
+        /mfaEnrollmentRouter\.use\(verifyMfaEnrollmentToken, requireActiveTenantMembershipOrUnavailable\)/g
+      )
+    ).toHaveLength(1);
+    expect(source).not.toMatch(/mfaEnrollmentRouter\.use\(verifyToken/);
+    const enrollmentRoutes = source.match(/mfaEnrollmentRouter\.(?:get|post)\('([^']+)'/g) || [];
+    expect(enrollmentRoutes.sort()).toEqual([
+      "mfaEnrollmentRouter.get('/status'",
+      "mfaEnrollmentRouter.post('/setup'",
+      "mfaEnrollmentRouter.post('/verify-setup'",
+    ]);
   });
 
   function responseRecorder() {

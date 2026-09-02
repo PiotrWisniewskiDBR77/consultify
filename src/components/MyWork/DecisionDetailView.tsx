@@ -341,15 +341,32 @@ export const riskToServerInput = (
   contingency: r.contingency?.trim() || undefined,
 });
 
-export const mapDecisionServerRisk = (dto: any): RiskItem => ({
-  id: String(dto.id),
-  title: String(dto.description || ''),
-  probability: String(dto.likelihood || 'MEDIUM').toLowerCase() as RiskItem['probability'],
-  impact: String(dto.severity || 'MEDIUM').toLowerCase() as RiskItem['impact'],
-  category: String(dto.category || 'business'),
-  mitigation: String(dto.mitigation || ''),
-  contingency: String(dto.contingency || ''),
-});
+const RISK_CATEGORIES: RiskItem['category'][] = [
+  'technical',
+  'business',
+  'operational',
+  'financial',
+  'legal',
+  'other',
+];
+
+export const mapDecisionServerRisk = (dto: any): RiskItem => {
+  const category = String(dto.category || 'business').toLowerCase();
+  return {
+    id: String(dto.id),
+    title: String(dto.description || ''),
+    probability: String(dto.likelihood || 'MEDIUM').toLowerCase() as RiskItem['probability'],
+    impact: String(dto.severity || 'MEDIUM').toLowerCase() as RiskItem['impact'],
+    // Validated against the real union (same pattern as TaskDetailView's AI
+    // risk mapper), not a blind cast — an unrecognised server value falls
+    // back to 'business' rather than silently mistyping the field.
+    category: (RISK_CATEGORIES as string[]).includes(category)
+      ? (category as RiskItem['category'])
+      : 'business',
+    mitigation: String(dto.mitigation || ''),
+    contingency: String(dto.contingency || ''),
+  };
+};
 
 export async function replaceDecisionStakeholdersOnServer(
   api: Pick<typeof Api, 'put'>,
@@ -2284,9 +2301,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       // Demo-fallback items are intentionally NOT seeded here — they have no
       // server id yet, so editing one for real creates a genuine row instead
       // of silently pretending demo content is already persisted.
-      altServerIdRef.current = new Map(mappedAlternatives.map((a) => [a.id, a.id]));
+      altServerIdRef.current = new Map(mappedAlternatives.map((a: Alternative) => [a.id, a.id]));
       altLastSyncedRef.current = new Map(
-        mappedAlternatives.map((a) => [a.id, JSON.stringify(alternativeToServerInput(a))])
+        mappedAlternatives.map((a: Alternative) => [a.id, JSON.stringify(alternativeToServerInput(a))])
       );
       altSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
       altSyncTimerRef.current = new Map();
@@ -2318,9 +2335,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const mappedRisks = dossierRisks.map(mapDecisionServerRisk);
       const nextRisks = mappedRisks.length > 0 ? mappedRisks : isDemo ? DEMO_RISKS : [];
       setRisks(nextRisks);
-      riskServerIdRef.current = new Map(mappedRisks.map((r) => [r.id, r.id]));
+      riskServerIdRef.current = new Map(mappedRisks.map((r: RiskItem) => [r.id, r.id]));
       riskLastSyncedRef.current = new Map(
-        mappedRisks.map((r) => [r.id, JSON.stringify(riskToServerInput(r))])
+        mappedRisks.map((r: RiskItem) => [r.id, JSON.stringify(riskToServerInput(r))])
       );
       riskSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
       riskSyncTimerRef.current = new Map();
@@ -9332,7 +9349,18 @@ Use userId only from this list:
                           onAddComment={handleAddComment}
                           onDeleteComment={handleDeleteComment}
                           onLikeComment={handleLikeComment}
-                          onGenerateAIComment={generateAIComment}
+                          onGenerateAIComment={async () => {
+                            // generateAIComment() stays void-returning — it's
+                            // also wired as a plain onClick handler above —
+                            // this adapts it to SharedCommentsSection's
+                            // MutationResult contract for this call site only.
+                            try {
+                              await generateAIComment();
+                              return { ok: true as const };
+                            } catch (error) {
+                              return { ok: false as const, error };
+                            }
+                          }}
                           isGeneratingAI={isGeneratingAIComment}
                           currentUserId={currentUser?.id}
                           expanded

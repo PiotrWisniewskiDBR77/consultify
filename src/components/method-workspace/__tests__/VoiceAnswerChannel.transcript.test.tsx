@@ -50,6 +50,11 @@ class FakeMediaRecorder {
     public stream: { getTracks: () => Array<{ stop: () => void }> },
     public opts: unknown
   ) {
+    // Not the classic "var self = this" workaround this rule targets — this
+    // self-registers the constructed fake into the module-level capture slot
+    // so the test can reach the instance the production code creates via
+    // `new MediaRecorder(...)` (there's no other handle to it).
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     lastRecorder = this;
   }
   start(_timesliceMs?: number): void {

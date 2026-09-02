@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, ChevronLeft, Lock, Sparkles, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, ChevronLeft, Lock, ShieldCheck, Sparkles, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,13 @@ import { adoptDemoSession, bindUserToDemoSession } from '@/services/demoSessionA
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
+import type { TFunction } from 'i18next';
+
+// Wąski kształt tłumacza, jakiego potrzebują te funkcje pomocnicze.
+// `TFunction` z i18next ma przeciążenia, których ten zapis nie obejmował —
+// stąd błąd typów po scaleniu dwóch niezależnych poprawek tego pliku.
+type TranslatorFn = TFunction;
+
 
 // Helper to check if email is allowed for full access
 // NOTE: Domain restriction removed on 2026-01-07 to allow all users to login
@@ -46,7 +53,7 @@ type PublicAuthErrorContext =
 // component's useTranslation() — keeps every public auth error translated
 // instead of stuck on its English fallback (2026-09-02, i18n audit).
 function mapPublicAuthError(
-  t: (key: string, defaultValue?: string) => string,
+  t: TranslatorFn,
   error: unknown,
   context: PublicAuthErrorContext
 ): string {
@@ -159,7 +166,7 @@ export function isQuickAccessEnabledHost(hostname: string): boolean {
 }
 
 function formatInviteRoleLabel(
-  t: (key: string, defaultValue?: string) => string,
+  t: TranslatorFn,
   role?: string
 ): string {
   const normalized = String(role || '')
@@ -326,6 +333,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
     trustDevice: boolean;
     error: string | null;
     submitting: boolean;
+  } | null>(null);
+  // Wyjście z wyczerpanej karencji MFA: jednorazowy, ograniczony bilet z
+  // odmowy logowania otwiera WYŁĄCZNIE konfigurację drugiego składnika.
+  const [mfaSetup, setMfaSetup] = useState<{
+    ticket: string;
+    secret: string | null;
+    otpauthUrl: string | null;
+    code: string;
+    error: string | null;
+    submitting: boolean;
+    done: boolean;
   } | null>(null);
 
   const applyInviteCode = React.useCallback(
@@ -633,6 +651,51 @@ export const AuthView: React.FC<AuthViewProps> = ({
             error: null,
             submitting: false,
           });
+          return;
+        }
+
+        if (
+          String(err?.data?.code || '').toUpperCase() === 'MFA_SETUP_REQUIRED' &&
+          typeof err?.data?.mfaSetupToken === 'string'
+        ) {
+          const ticket = String(err.data.mfaSetupToken);
+          setFormData((current) => ({ ...current, password: '' }));
+          setError(null);
+          setMfaSetup({
+            ticket,
+            secret: null,
+            otpauthUrl: null,
+            code: '',
+            error: null,
+            submitting: true,
+            done: false,
+          });
+          try {
+            const started = await Api.mfaEnrollmentStart(ticket);
+            setMfaSetup((current) =>
+              current
+                ? {
+                    ...current,
+                    secret: started.secret,
+                    otpauthUrl: started.otpauthUrl,
+                    submitting: false,
+                  }
+                : current
+            );
+          } catch {
+            setMfaSetup((current) =>
+              current
+                ? {
+                    ...current,
+                    submitting: false,
+                    error: t(
+                      'mfa.setupRequired.startFailed',
+                      'Nie udało się rozpocząć konfiguracji. Zaloguj się ponownie, aby dostać nowy link.'
+                    ),
+                  }
+                : current
+            );
+          }
           return;
         }
 
@@ -1239,6 +1302,169 @@ export const AuthView: React.FC<AuthViewProps> = ({
     </div>
   );
 
+  const submitMfaSetup = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaSetup || mfaSetup.submitting || !mfaSetup.secret) return;
+    if (!/^\d{6}$/.test(mfaSetup.code)) {
+      setMfaSetup((current) =>
+        current
+          ? {
+              ...current,
+              error: t('mfa.setupRequired.badCode', 'Wpisz 6-cyfrowy kod z aplikacji.'),
+            }
+          : current
+      );
+      return;
+    }
+    setMfaSetup((current) => (current ? { ...current, submitting: true, error: null } : current));
+    try {
+      await Api.mfaEnrollmentVerify(mfaSetup.ticket, mfaSetup.code);
+      setMfaSetup((current) =>
+        current ? { ...current, submitting: false, done: true, code: '' } : current
+      );
+    } catch {
+      setMfaSetup((current) =>
+        current
+          ? {
+              ...current,
+              submitting: false,
+              code: '',
+              error: t(
+                'mfa.setupRequired.verifyFailed',
+                'Kod nie został przyjęty. Spróbuj z aktualnym kodem.'
+              ),
+            }
+          : current
+      );
+    }
+  };
+
+  const renderMfaSetupRequired = () => {
+    if (!mfaSetup) return null;
+    if (mfaSetup.done) {
+      return (
+        <div className="space-y-6 text-center" data-testid="login-mfa-setup-done">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-c-border bg-c-surface">
+            <ShieldCheck className="text-c-text" size={24} aria-hidden="true" />
+          </div>
+          <h2 className="text-2xl font-bold text-c-text">
+            {t('mfa.setupRequired.doneTitle', 'Drugi składnik jest już skonfigurowany')}
+          </h2>
+          <p className="text-sm text-c-text-muted">
+            {t(
+              'mfa.setupRequired.doneBody',
+              'Zaloguj się ponownie — poprosimy o kod z aplikacji uwierzytelniającej.'
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setMfaSetup(null);
+              setError(null);
+            }}
+            className="w-full rounded-lg bg-c-text py-2.5 text-sm font-semibold text-c-bg shadow-lg transition-opacity hover:opacity-90"
+          >
+            {t('mfa.setupRequired.backToLogin', 'Wróć do logowania')}
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-6" data-testid="login-mfa-setup-required">
+        <div className="space-y-2 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-c-border bg-c-surface">
+            <ShieldCheck className="text-c-text" size={24} aria-hidden="true" />
+          </div>
+          <h2 className="text-2xl font-bold text-c-text">
+            {t('mfa.setupRequired.title', 'Twoja organizacja wymaga drugiego składnika')}
+          </h2>
+          <p className="text-sm text-c-text-muted">
+            {t(
+              'mfa.setupRequired.body',
+              'Okres przejściowy minął. Skonfiguruj tu drugi składnik — ten krok jest jedyną rzeczą, na którą pozwala ta ograniczona sesja.'
+            )}
+          </p>
+        </div>
+
+        {mfaSetup.secret ? (
+          <form onSubmit={submitMfaSetup} className="space-y-4">
+            <div className="rounded-lg border border-c-border bg-c-surface-raised p-3">
+              <div className="text-xs font-medium text-c-text-secondary">
+                {t('mfa.setupRequired.secretLabel', 'Klucz do aplikacji uwierzytelniającej')}
+              </div>
+              <div className="mt-1 break-all font-mono text-sm text-c-text">{mfaSetup.secret}</div>
+            </div>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-c-text-secondary">
+                {t('mfa.setupRequired.codeLabel', 'Kod z aplikacji')}
+              </span>
+              <input
+                autoFocus
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={mfaSetup.code}
+                onChange={(event) => {
+                  const code = event.target.value.replace(/\D/g, '').slice(0, 6);
+                  setMfaSetup((current) => (current ? { ...current, code, error: null } : current));
+                }}
+                className="w-full rounded-lg border border-c-border bg-c-surface-raised px-3 py-3 text-center font-mono text-2xl tracking-[0.45em] text-c-text outline-none transition-colors focus:border-c-focus-solid"
+              />
+            </label>
+            {mfaSetup.error && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="flex items-center gap-2 rounded border border-c-border bg-c-surface p-3 text-sm text-c-text-secondary"
+              >
+                <AlertCircle size={16} />
+                {mfaSetup.error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={mfaSetup.submitting}
+              className="w-full rounded-lg bg-c-text py-2.5 text-sm font-semibold text-c-bg shadow-lg transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+            >
+              {mfaSetup.submitting
+                ? t('common.verifying', 'Sprawdzam…')
+                : t('mfa.setupRequired.confirm', 'Potwierdź i włącz')}
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            {mfaSetup.error && (
+              <div
+                role="alert"
+                className="flex items-center gap-2 rounded border border-c-border bg-c-surface p-3 text-sm text-c-text-secondary"
+              >
+                <AlertCircle size={16} />
+                {mfaSetup.error}
+              </div>
+            )}
+            {!mfaSetup.error && (
+              <p className="text-center text-sm text-c-text-muted">
+                {t('mfa.setupRequired.preparing', 'Przygotowuję konfigurację…')}
+              </p>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setMfaSetup(null);
+            setError(null);
+          }}
+          className="w-full text-sm font-medium text-c-text-muted hover:text-c-text"
+        >
+          {t('mfa.setupRequired.backToLogin', 'Wróć do logowania')}
+        </button>
+      </div>
+    );
+  };
+
   const renderMfaChallenge = () => {
     if (!mfaChallenge) return null;
     return (
@@ -1446,8 +1672,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
           !showDemoRedirect &&
           step === AuthStep.LOGIN &&
           !mfaChallenge &&
+          !mfaSetup &&
           renderLogin()}
         {!isDemoLoading && !isPending && !showDemoRedirect && mfaChallenge && renderMfaChallenge()}
+        {!isDemoLoading && !isPending && !showDemoRedirect && !mfaChallenge && mfaSetup &&
+          renderMfaSetupRequired()}
         {isPending && renderPending()}
         {showDemoRedirect && renderDemoRedirect()}
       </div>

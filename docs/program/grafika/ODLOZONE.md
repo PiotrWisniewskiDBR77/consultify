@@ -710,3 +710,30 @@ osoba, czy dwie), nie technicznym. Wymaga decyzji nadzorcy albo właściciela.
 (8 osób, Realizacja) i atrapa listy członków organizacji w dwóch ekranach OKR (4 osoby, kształt
 serwera `userId · email · name · role · status`). Wspólny zestaw powinien wchłonąć oba, a nie
 stanąć obok nich jako trzeci.
+
+## 2026-09-02 · TOR FUNKCJI: pięć z dziewięciu ekranów „zbudowanych i niepodłączonych" ODŁOŻONE
+
+Dopisek toru funkcji (nie edytuję niczyjego wpisu wyżej). Podstawa: zgłoszenie
+grafiki `ZGLOSZENIA_DO_TORU_FUNKCJI.md` §„DWANAŚCIE EKRANÓW…"; pełny pomiar
+czterech warstw: `docs/program/funkcje/WOLACZE_20260902.md`.
+
+Grafika słusznie zastrzegła: *„wpis »zero wołaczy« mówi, że nikt go nie
+renderuje — nie mówi, że powinien"*. Dla pięciu z dziewięciu odpowiedź brzmi:
+nie powinien — z pięciu różnych powodów.
+
+| Ekran / plik | Dlaczego odłożony | Co niósł wartościowego | Jak przywrócić |
+| --- | --- | --- | --- |
+| `teresa-chipy-panel-artefaktu` — `src/components/shared/NModeLayout/AIConsultantPanel.tsx` | **świadomie wycofany**: odpięty 2026-09-01 decyzją właściciela „JEDNA TERESA, W SWOIM OKNIE" (`InitiativeDocumentView.tsx:160-168`, `:9700-9707`; wcześniej to samo w `InsightViewer`/D17). Podłączenie cofnęłoby decyzję sprzed jednego dnia. | Powłoka panelu z pięciopunktowym menu akcji AI nad `UnifiedChatPanel` — gotowy wzorzec, gdyby kiedyś wrócił czat osadzony w artefakcie. | Tylko przez odwrócenie decyzji właściciela o jednej Teresie. Dzisiejsza droga: `TeresaEntryButton` → dokowane okno Teresy. |
+| `unified-create-launcher` — `src/components/shared/UnifiedCreateLauncher.tsx` | **za flagą bez decyzji + zakres**: flaga `isUnifiedCreateLauncherEnabled()` jest domyślnie ON od 2026-07-14, ale nikt jej nie odczytuje. Podłączenie = podmiana `primaryCta` w SZEŚCIU żywych ścieżkach tworzenia naraz (Inicjatywy `InitiativesHub.tsx:2427`, Spotkania `MeetingHub.tsx:848`, Audyty `AuditsMethodHub.tsx:489`, …) — wprost zakazane przez CLAUDE.md #9. | Jeden krok wyboru rodzaju obiektu (Wniosek/Inicjatywa/Decyzja) delegujący do NIEZMIENIONYCH generatorów — bezpieczna Faza 0 planu `Harvard/wdrozenie-100/_PLAN_I1-I3_UNIFIKACJA_KREATOROW.md`. | Faza 1+ tego planu, JEDEN moduł na raz, każdy z osobnym akceptem na zrzucie. Nie hurtem. |
+| `assessment-initiatives-table` — `src/components/assessment/InitiativesTable.tsx` | **duplikat istniejącej drogi**: zakładka „Inicjatywy" w `AssessmentHub.tsx:2408` renderuje kanoniczny `StandardTable` nad tymi samymi danymi; trzeci ślad tej listy żyje w `InitiativesManagementPanel`. | Osobny, samodzielny komponent tabeli inicjatyw z oceny (kanon `StandardTable`) — kandydat, gdyby ktoś chciał ZASTĄPIĆ wklejoną tabelę w hubie wspólnym komponentem. | Nie jako druga droga, tylko jako refaktor: podmienić wklejoną tabelę w `AssessmentHub` na ten komponent, bez nowej pozycji menu. |
+| `assessment-reports-table` — `src/components/assessment/ReportsTable.tsx` | **duplikat istniejącej drogi**: zakładka „Raporty" w `AssessmentHub.tsx:2288` czyta ten sam `Api.get('/report-builder')` własnym `StandardTable`. | j.w. — samodzielna, kanoniczna tabela raportów z importem (`ImportReportModal`). | j.w. — refaktor podmienny, nie nowe wejście. |
+| `audyty-drd-report` — `src/components/Audit/AuditsHub.tsx` | **martwy poprzednik, udokumentowany**: `AuditsMethodHub.tsx:10` — *„Dawny równoległy `AuditsHub` nad `/api/audit` nie jest już mounted; jego write endpoints pozostają wycofane po stronie serwera"*. Zapis zwraca 410 (`audit-programs.routes.ts:45-84`). | Zakładka „Raporty DRD" (za `isDrdReportEnabled`, OFF) — sama zdolność żyje dalej: `DRDAuditReportView` MA własną trasę w `AppRoutes.tsx` (`DRDAuditReportRoute`). | Nie reanimować pliku. Odzyskanie funkcji idzie przez `AuditsMethodHub` (zakładka `reports`/`findings`). |
+| `rn-g3-class-l-record-shell` — `src/components/shared/states/TeresaState.tsx` (`TeresaUnavailableNotice`) | **konflikt kanonu, nie brak przewodu**: w repo żyją DWA sprzeczne wzorce tego samego stanu — informacyjny `TeresaUnavailableNotice` (`role="status"`, świadomie bez ostrzeżenia) i JUŻ RENDEROWANY `TeresaUnavailableBanner` (`ResultsVNext/teresa/`, `role="alert"`, `c-warning`, montowany w `TeresaProposalPanel.tsx:319`). Rozlanie któregokolwiek przed wyborem pogłębi rozjazd. | Spójny, nieostrzegawczy stan „AI niedostępna, praca ręczna działa dalej" — gotowy do rolloutu w miejscu jednorazowych toastów (`DecisionsPanelContent.tsx:1150,1209`, `DecisionPreviewPanel.tsx:683,702`). | Najpierw rozstrzygnięcie toru grafiki/właściciela: KTÓRY z dwóch wzorców jest kanonem. Potem rollout jedną falą, z akceptem na zrzucie. |
+
+**Uwaga do samego ekranu harnessu `rn-g3-class-l-record-shell`:** jego nagłówek
+mówi wprost, że jest SYNTETYCZNĄ demonstracją przepisu powłoki klasy L, a nie
+hostem realnego komponentu („żaden z trzech torów domenowych KPI/ROI/OKR nie
+zbudował jeszcze pełnostronicowego widoku rekordu"). To ta sama sytuacja co
+`results-zestawienia` wyżej — ekran istnieje w przyrządzie, produkt go nie ma.
+Zgłoszenie „zero wołaczy" dla `TeresaUnavailableNotice` jest prawdziwe, ale
+dotyczy JEDNEGO klocka z tej demonstracji, nie całej powłoki.
