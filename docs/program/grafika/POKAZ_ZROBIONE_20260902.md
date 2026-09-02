@@ -257,7 +257,7 @@ Zrzuty: `UW-09-10__results-vnext-search-registry__light.png` / `__dark.png`.
 
 ### 10_FINANCE
 
-**`UW-10-01` finance-analysis-workspace`**
+**`UW-10-01` finance-analysis-workspace**
 Zgłaszał: *„Nie mam jak tego zatwierdzić, nic tu nie widać, nic z tego nie
 można wyciągnąć."*
 Widać teraz: wszystkie 11 nagłówków tabeli wskaźników widoczne w pełni (bez
@@ -279,7 +279,7 @@ Widać teraz: ten sam, zaakceptowany ekran — nic do poprawy, zrzut jako
 potwierdzenie stanu.
 Zrzuty: `UW-11-01__template-builder-doc__light.png` / `__dark.png`.
 
-**`UW-11-02` template-library-new-entry`**
+**`UW-11-02` template-library-new-entry**
 Zgłaszał (potwierdzająco): *„No, tak jak rozumiem, to jest normalna tabela,
 bo przecież to jest po prostu tabela, w której mamy w menu funkcję pod
 tytułem „wzorzec", czyli template."*
@@ -304,7 +304,7 @@ Widać teraz: dokładnie to — ekran tłumaczy własne przeznaczenie tak samo, 
 je opisał.
 Zrzuty: `UW-11-06__gen-word-content-hints__light.png` / `__dark.png`.
 
-**`UW-11-08` excele-edytowalna-siatka`**
+**`UW-11-08` excele-edytowalna-siatka**
 Zgłaszał: *„Znacznie lepiej jest - zamieńmy teraz słowa na typowe dla excela
 ikony - każdy chyba już na świecie je zna. I będziemy blisko."*
 Widać teraz: pasek narzędzi ma ikony ($, %, B, ikony wiersza/kolumny, #)
@@ -317,7 +317,7 @@ Widać teraz: stan błędu wyśrodkowany na ekranie, z ikoną w okrągłym tle,
 tytułem, komunikatem i przyciskiem powrotu.
 Zrzuty: `UW-11-09__document-studio-resume-error__light.png` / `__dark.png`.
 
-**`UW-11-10` document-studio-template-resolve-error`**
+**`UW-11-10` document-studio-template-resolve-error**
 Zgłaszał: *„Napisz to jakoś ładniej na środku ekranu, z ładniejszą grafiką."*
 Widać teraz: ten sam, już wyśrodkowany wzorzec błędu co w `UW-11-09`.
 Zrzuty: `UW-11-10__document-studio-template-resolve-error__light.png` / `__dark.png`.
