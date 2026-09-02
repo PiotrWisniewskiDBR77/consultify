@@ -236,9 +236,16 @@ Uwagi metodologiczne:
 
 ## C. Naprawy i dowody
 
-Do uzupełnienia w R4–R5.
+### Czerwony dowód R3 przed naprawą
+
+- Realne `POST /api/auth/register` przez `ApiGateway.getInstance().initializeRoutes(app)` na `127.0.0.1:5248` połączyło się z `127.0.0.1:6268/cx281` (`DB_IDENTITY` w logu).
+- Runtime DDL dla `email_verification_tokens` zakończyło się PostgreSQL `42704`, `type "datetime" does not exist`.
+- Proces zakończył się przed zapisaniem statusu HTTP z powodu nieobsłużonego odrzucenia.
+- Readback wykazał częściowy zapis: użytkownik i organizacja powstały, tabela `email_verification_tokens` nie powstała.
+- Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r3-registration-before.log`.
+- SHA-256: `16d88412ae72274ad3593cee030625b1d4775bfc6abeec9c56be73fb089620eb`.
 
 ## D. Otwarte pozycje
 
 - `email_verification_tokens` nie jest tworzona przez żadną migrację.
-- Pełny inwentarz runtime DDL pozostaje do wykonania w R2.
+- Rejestracja pozostawia częściowy stan użytkownika i organizacji przed awarią tokenu weryfikacyjnego.

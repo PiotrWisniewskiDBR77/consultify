@@ -43,12 +43,19 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 Literalny mianownik wynosi 208 trafień w 100 plikach. Inwentarz obejmuje wszystkie trafienia: 22 instrukcje z `DATETIME`, 52 statycznie nazwane instrukcje bez wykrytej migracji oraz 12 nazw `UNKNOWN`. Pełna tabela jest w rejestrze. Artefakt: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r2-runtime-ddl-inventory.md`, SHA-256 `c059371f8492775708ec9d351b2ed4ed5e61f85275d0f3f4874392412aa6f520`.
 
+## R3 — czerwony dowód mutacyjny
+
+Samodzielny harness `npx tsx` zamontował realny `ApiGateway`, nasłuchiwał na `127.0.0.1:5248` i wykonał realne `POST /api/auth/register`. Log potwierdził `DB_TYPE=postgres` oraz `DB_IDENTITY ... 127.0.0.1:6268/cx281`. Runtime DDL zakończyło się błędem PostgreSQL `42704: type "datetime" does not exist`; proces zakończył się przed zapisaniem statusu HTTP. Readback wykazał częściowy zapis użytkownika i organizacji oraz brak tabeli `email_verification_tokens`.
+
+Artefakt: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r3-registration-before.log`, SHA-256 `16d88412ae72274ad3593cee030625b1d4775bfc6abeec9c56be73fb089620eb`.
+
+Pułapki (a)–(e): Vitest nie został użyty, więc globalny mock `fetch` nie działał; `RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawny lokalny `DATABASE_URL` i `JWT_SECRET` były w tej samej linii. Brak error middleware w `Gateway.ts` został skompensowany lokalnym middleware harnessu, ale awaria nastąpiła jako nieobsłużone odrzucenie wcześniej; pełny wyjątek jest w logu. Nie było retry.
+
 ## Twierdzenia niezweryfikowane
 
-- Realna rejestracja przez `ApiGateway` przed naprawą — R3 jeszcze niewykonane.
 - Idempotencja drugiego przebiegu po naprawie — R5 jeszcze niewykonane.
 - Dla wpisów oznaczonych `UNKNOWN` nie rozstrzygnięto nazwy tabeli ani migracji bez wykonania dynamicznego kodu.
 
 ## Stan
 
-R1–R2 wykonane. R3–R6 pozostają otwarte.
+R1–R3 wykonane. R4–R6 pozostają otwarte.
