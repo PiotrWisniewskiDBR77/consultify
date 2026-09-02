@@ -8,6 +8,8 @@ import React from 'react';
 
 import { formatFinanceValueForDisplay, type FinanceValueStatus } from '@/services/api/financeV2.types';
 
+import { CANONICAL_LINE_META } from '@/components/Finance/baseline/baselineLabels';
+
 import {
   computeCovenantHeadroom,
   computeLiquidityHeadroom,
@@ -32,6 +34,25 @@ export interface ScenarioResultsViewProps {
 function toDisplay(value: number | null) {
   const status: FinanceValueStatus = value === null ? 'MISSING' : value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO';
   return formatFinanceValueForDisplay({ status, valueDecimal: value === null ? null : String(value) });
+}
+
+// #211 (rewizja 2026-09-02) — kolumna „Linia" renderowała `cell.lineCode`
+// wprost (REVENUE/CASH/LONG_TERM_DEBT/EBITDA...), ten sam kanoniczny kod co
+// `CANONICAL_LINE_META` w baseline (`baselineLabels.ts`) — użyto TEGO
+// SAMEGO słownika zamiast drugiej kopii etykiet. `lineCode` tu jest
+// wpisany jako `string` (nie ścisła unia), stąd bezpieczny fallback na
+// surowy kod, gdyby doszła linia spoza 31 kanonicznych.
+function lineLabel(code: string): string {
+  return (CANONICAL_LINE_META as Record<string, { labelPl: string }>)[code]?.labelPl ?? code;
+}
+
+// Sentinel okresu używany przez ten widok do wyliczeń covenant/płynność
+// (`EBITDA::latest` itd., patrz niżej) — jedyny NIENUMERYCZNY periodId, jaki
+// się tu pojawia, więc jedyny bezpieczny do ręcznego tłumaczenia bez
+// zgadywania formatu. Realne periodId (`p-2026-03`...) NIE mają tu jeszcze
+// formatera człowieko-czytelnego — zostają nietknięte, patrz meldunek.
+function periodLabel(periodId: string): string {
+  return periodId === 'latest' ? 'Najnowszy' : periodId;
 }
 
 const STATUS_LABEL: Record<MaterialStatus, string> = { clean: 'Czysty', conditional: 'Warunkowy', provisional: 'Tymczasowy (Provisional)' };
@@ -111,8 +132,8 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
             <tbody>
               {comparison.map((cell) => (
                 <tr key={`${cell.lineCode}::${cell.periodId}`} className="border-t border-c-border-subtle">
-                  <td className="px-3 py-2">{cell.lineCode}</td>
-                  <td className="px-3 py-2">{cell.periodId}</td>
+                  <td className="px-3 py-2">{lineLabel(cell.lineCode)}</td>
+                  <td className="px-3 py-2">{periodLabel(cell.periodId)}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{toDisplay(cell.scenarioValue).text}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{toDisplay(cell.baselineValue).text}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{toDisplay(cell.absoluteDelta).text}</td>
