@@ -1,25 +1,16 @@
 import { Copy, ExternalLink, Lightbulb } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import {
-  StandardPreview,
-  type StandardRowMenu,
-  StandardTable,
-  type TableColumn,
-} from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
-import type { PortfolioInitiative } from '@/types';
-import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
+import { StandardPreview, StandardTable } from '@/components/standard';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import {
-  INITIATIVE_GATE_NAME_LABELS,
-  INITIATIVE_GATE_READINESS_LABELS,
-  INITIATIVE_HEALTH_STATE_LABELS,
-  INITIATIVE_IMPACT_CONFIDENCE_LABELS,
-  INITIATIVE_LIFECYCLE_LABELS,
-  INITIATIVE_SOURCE_FRESHNESS_LABELS,
-} from './initiativeRegisterProjection';
+  createInitiativeRegisterColumns,
+  createInitiativeRegisterRowMenu,
+  INITIATIVE_REGISTER_COLUMN_IDS,
+  type InitiativeRegisterRow,
+} from './initiativeRegisterColumns.shared';
+import { INITIATIVE_SOURCE_FRESHNESS_LABELS } from './initiativeRegisterProjection';
 
 /**
  * "Planowane okno" w danych demo/rejestrze jest jednym stringiem
@@ -29,42 +20,9 @@ import {
  * rozdziela parę i renderuje ją jako jedną linię „od — do" zamiast surowych
  * znaczników ISO łamanych na kilka linii (defekt zgłoszony w audycie 2026-08-31).
  */
-const formatPlannedWindow = (raw: unknown): string => {
-  const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value) return '—';
-  const [start, end] = value.split('/').map((part) => part.trim());
-  const startLabel = formatListDate(start, '');
-  const endLabel = formatListDate(end, '');
-  if (!startLabel && !endLabel) return '—';
-  if (!endLabel) return startLabel;
-  if (!startLabel) return endLabel;
-  return `${startLabel} — ${endLabel}`;
-};
-
-export const CANONICAL_INITIATIVE_REGISTER_COLUMN_IDS = [
-  'name',
-  'status',
-  'gateName',
-  'gateReadiness',
-  'owner',
-  'nextAction',
-  'expectedImpact',
-  'plannedWindow',
-  'healthState',
-  'updatedAt',
-] as const;
-
-type CanonicalInitiativeRow = PortfolioInitiative & {
-  canonicalVersion?: number;
-  gateName?: string;
-  gateReadiness?: string;
-  nextAction?: string;
-  expectedImpact?: string;
-  impactConfidence?: string;
-  plannedWindow?: string | null;
-  healthState?: string;
-  sourceFreshness?: string;
-};
+export const CANONICAL_INITIATIVE_REGISTER_COLUMN_IDS = INITIATIVE_REGISTER_COLUMN_IDS;
+export const createCanonicalInitiativeRegisterColumns = createInitiativeRegisterColumns;
+type CanonicalInitiativeRow = InitiativeRegisterRow;
 
 export interface CanonicalInitiativeRegisterProps {
   rows: CanonicalInitiativeRow[];
@@ -81,175 +39,6 @@ export interface CanonicalInitiativeRegisterProps {
   onResetFilters?: () => void;
   relationForRow?: (row: CanonicalInitiativeRow) => Array<{ label: string; onClick?: () => void }>;
 }
-
-const statusDotClass = (status: string): string => {
-  const tone = statusChipTone(status);
-  return tone === 'info'
-    ? 'bg-c-info'
-    : tone === 'warning'
-      ? 'bg-c-warning'
-      : tone === 'success'
-        ? 'bg-c-success'
-        : tone === 'danger'
-          ? 'bg-c-danger'
-          : 'bg-c-text-muted';
-};
-
-export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
-  {
-    id: 'name',
-    label: 'Inicjatywa',
-    width: '220px',
-    render: (raw) => {
-      const row = raw as CanonicalInitiativeRow;
-      return (
-        <div className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-c-text">{row.name}</span>
-          <span className="block truncate text-xs text-c-text-muted">
-            {row.summary || 'Brak opisu problemu'}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    id: 'status',
-    label: 'Cykl życia',
-    width: '170px',
-    filterable: true,
-    filterOptions: Object.entries(INITIATIVE_LIFECYCLE_LABELS).map(([value, label]) => ({
-      value,
-      label,
-    })),
-    render: (raw) => {
-      const row = raw as CanonicalInitiativeRow;
-      const lifecycle = String(row.displayStatus || 'UNKNOWN');
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary">
-          <span
-            className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(row.status)}`}
-          />
-          {INITIATIVE_LIFECYCLE_LABELS[lifecycle] || 'UNKNOWN'}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'gateName',
-    label: 'Następna bramka',
-    width: '175px',
-    render: (raw) => {
-      const value = String((raw as CanonicalInitiativeRow).gateName || '');
-      const label = value ? INITIATIVE_GATE_NAME_LABELS[value] || value : '—';
-      return (
-        <span className="block truncate text-xs text-c-text-secondary" title={label}>
-          {label}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'gateReadiness',
-    label: 'Gotowość',
-    width: '150px',
-    render: (raw) => {
-      const readiness = String((raw as CanonicalInitiativeRow).gateReadiness || 'UNKNOWN');
-      const label = INITIATIVE_GATE_READINESS_LABELS[readiness] || readiness.replaceAll('_', ' ');
-      return (
-        <span className="block truncate text-xs font-medium text-c-text-secondary" title={label}>
-          {label}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'owner',
-    label: 'Właściciel',
-    width: '150px',
-    render: (raw) => {
-      const row = raw as CanonicalInitiativeRow;
-      const owner = row.ownerBusiness || row.ownerExecution;
-      const name = owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || '—' : '—';
-      return <span className="block truncate text-xs text-c-text-secondary">{name}</span>;
-    },
-  },
-  {
-    id: 'nextAction',
-    label: 'Następne działanie',
-    width: '160px',
-    render: (raw) => (
-      <span className="text-xs font-medium text-c-text">
-        {String((raw as CanonicalInitiativeRow).nextAction || 'UNKNOWN')}
-      </span>
-    ),
-  },
-  {
-    id: 'expectedImpact',
-    label: 'Oczekiwany efekt',
-    width: '160px',
-    render: (raw) => {
-      const row = raw as CanonicalInitiativeRow;
-      const confidence = String(row.impactConfidence || 'UNKNOWN');
-      return (
-        <div className="min-w-0 text-xs">
-          <span className="block truncate text-c-text-secondary">
-            {String(row.expectedImpact || 'UNKNOWN')}
-          </span>
-          <span className="text-c-text-muted">
-            Pewność: {INITIATIVE_IMPACT_CONFIDENCE_LABELS[confidence] || confidence}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    id: 'plannedWindow',
-    label: 'Planowane okno',
-    width: '215px',
-    render: (raw) => {
-      const label = formatPlannedWindow((raw as CanonicalInitiativeRow).plannedWindow);
-      return (
-        <span className="block truncate text-xs text-c-text-muted" title={label}>
-          {label}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'healthState',
-    label: 'Kondycja',
-    width: '110px',
-    render: (raw) => {
-      const value = String((raw as CanonicalInitiativeRow).healthState || 'N/A');
-      const label = INITIATIVE_HEALTH_STATE_LABELS[value] || value;
-      return (
-        <span className="block truncate text-xs text-c-text-muted" title={label}>
-          {label}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'updatedAt',
-    label: 'Aktualizacja',
-    width: '220px',
-    align: 'right',
-    sortable: true,
-    sortAccessor: (raw) => {
-      const value = (raw as CanonicalInitiativeRow).updatedAt;
-      return value ? new Date(value).getTime() : 0;
-    },
-    render: (raw) => {
-      const value = (raw as CanonicalInitiativeRow).updatedAt;
-      const relative = formatRelativeHint(value, new Date());
-      return (
-        <span className="text-xs tabular-nums text-c-text-muted" title={formatListDate(value, '')}>
-          {relative || '—'}
-        </span>
-      );
-    },
-  },
-];
 
 export const CanonicalInitiativeRegister = ({
   rows,
@@ -400,19 +189,13 @@ export const CanonicalInitiativeRegister = ({
           actionLabel: onResetFilters ? 'Wyczyść filtry' : undefined,
           onAction: onResetFilters,
         }}
-        rowMenu={(raw): StandardRowMenu => {
-          const row = raw as CanonicalInitiativeRow;
-          return {
-            primary: [
-              { id: 'open', label: 'Otwórz', icon: ExternalLink, onClick: () => onOpen(row) },
-            ],
-            universalHandlers: {
-              preview: () => onSelect(row),
-              archiveNote:
-                'Zmiany lifecycle i archiwizacja są wykonywane w kontrolowanym procesie.',
-            },
-          };
-        }}
+        rowMenu={(raw) =>
+          createInitiativeRegisterRowMenu({
+            row: raw as CanonicalInitiativeRow,
+            onOpen,
+            onPreview: onSelect,
+          })
+        }
       />
     </TableWithPreviewLayout>
   );
