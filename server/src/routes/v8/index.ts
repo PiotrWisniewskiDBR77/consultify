@@ -52,6 +52,7 @@ import retrievalRoutes from './retrieval.routes.js';
 import syncRoutes from './sync.routes.js';
 import teresaRoutes from './teresa.routes.js';
 import transformationCaseRoutes from './transformation-cases.routes.js';
+import { createModuleGate } from '../../middleware/betaGate.middleware.js';
 
 const v8Router = Router();
 
@@ -102,7 +103,16 @@ v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 v8Router.use('/calendar', calendarRoutes);
 v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
-v8Router.use('/case-workspace', caseWorkspaceRoutes);
+// Zlecenia (Case Workspace E7/E8) — `MODULE_CASE_WORKSPACE` = 'closed' w SSOT
+// (`server/src/sharedRuntime/utils/betaMenuStatus.ts`). Po stronie klienta
+// stoją tu DWIE bramki (`BetaGate` + `isCaseWorkspaceEnabled()`), ale API do
+// 2026-09-02 nie miało żadnej: zmierzone — rola USER robiła
+// `POST /api/v8/case-workspace/cases` -> 201 i wiersz w `case_core` (odczyt
+// na zimno, osobny klient pg). Jedyną bramką był globalny `v8FeatureGate`,
+// który mówi o wdrożeniu V8, a nie o statusie tego modułu.
+// ★ `verifyToken` stoi wyżej na całym `v8Router` (linia z `v8Router.use(verifyToken)`),
+// więc bramka widzi realną rolę i nie wygasza modułu dla właściciela.
+v8Router.use('/case-workspace', createModuleGate('MODULE_CASE_WORKSPACE'), caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', requireCanonicalExecutionWriter, executionControlRoutes);
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
