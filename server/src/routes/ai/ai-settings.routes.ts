@@ -146,7 +146,13 @@ const ORG_SETTINGS_FIELD_MAP: Record<string, string> = {
   audit_policy_changes: 'auditPolicyChanges',
 };
 
-const transformOrgSettingsToCamelCase = (settings: any) => ({
+// Jawny typ zwracany: rozlozenie wyniku mapKeys() w literale obiektu GUBI jego
+// sygnature indeksowa, wiec wnioskowany typ to samo { organizationId }. Wolacz
+// nizej czyta orgSettings.defaultProactivityMode (limit proaktywnosci organizacji)
+// i bez tej adnotacji nie kompiluje sie CALY serwer.
+const transformOrgSettingsToCamelCase = (
+  settings: any
+): Record<string, any> & { organizationId: any } => ({
   organizationId: settings?.organization_id,
   ...mapKeys(settings, ORG_SETTINGS_FIELD_MAP),
 });
