@@ -1,0 +1,48 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"presentation-artifact-status\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "deck-artifact",
+      "motyw": "light",
+      "plik": "/private/tmp/g-przeglad/evidence/grafika/206-przeglad-09-10/deck-artifact__PRZED__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"presentation-artifact-status\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 202.37954658699843,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "deck-artifact",
+      "motyw": "dark",
+      "plik": "/private/tmp/g-przeglad/evidence/grafika/206-przeglad-09-10/deck-artifact__PRZED__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"presentation-artifact-status\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 84.08423604166666,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "deck-artifact",
+      "ok": false,
+      "reasons": [
+        "[ksztalt-13] deck-artifact: różnica jasności 118.3 < próg 150 — para wygląda jak duplikat."
+      ]
+    }
+  ]
+}

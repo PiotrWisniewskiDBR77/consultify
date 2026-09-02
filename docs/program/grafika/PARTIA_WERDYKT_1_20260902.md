@@ -57,8 +57,8 @@ Zdjęcia: `evidence/grafika/206-przeglad-09-10/` — każdy ekran jako `<nazwa>_
 i `<nazwa>__PRZED__dark.png`. Wszystkie zrobione dziś. Ekrany listowe — po kliknięciu w wiersz,
 czyli z otwartym panelem po prawej.
 
-**Skrót wyniku: 8 ekranów bez zastrzeżeń · 3 z defektem do naprawy · 1 do rozstrzygnięcia
-· 1 czeka na budowę.**
+**Skrót wyniku: 9 ekranów bez zastrzeżeń · 3 z defektem do naprawy · 1 do rozstrzygnięcia.**
+(26 obejrzanych obrazów: 18 bez zastrzeżeń · 6 do poprawy · 2 do rozstrzygnięcia. Liczba poprawiona po tym, jak robotnik wykrył grepem własny błąd w ręcznym liczeniu — pierwsza wersja mówiła 16/6/4.)
 
 **★ Ważne o tym module:** kontrola prawdziwości obrazu daje dla Finansów **zero zastrzeżeń** —
 wszystkie 13 ekranów pokazuje prawdziwą aplikację. Wcześniejszy audyt twierdził, że cztery panele
@@ -159,7 +159,74 @@ powstaje naprawdę, albo karta schodzi z odbioru.
 
 ## MATERIAŁY — 36 ekranów
 
-<!-- WYPEŁNIANE -->
+Zdjęcia: `evidence/grafika/206-przeglad-09-10/`. Najliczniejszy moduł w tej partii i pierwszy raz
+oglądany w całości.
+
+**Skrót wyniku: 72 obejrzane obrazy — 45 bez zastrzeżeń · 23 do poprawy · 4 do rozstrzygnięcia.**
+
+To jest moduł z **największą liczbą defektów w całej partii** i nie chcę tego zmiękczać. Poniżej
+pięć rzeczy, które musisz zobaczyć, zanim spojrzysz na cokolwiek innego.
+
+### ★ Pięć rzeczy, o których musisz wiedzieć
+
+**1. Jedno kliknięcie wywala aplikację.** W Architekcie szablonów Word (`gen-word-content-hints`)
+lista renderuje się poprawnie, ale **kliknięcie w wiersz „Raport zarządczy (miesięczny)" daje pusty
+biały ekran zamiast edytora**. To nie jest brzydki wygląd — to zatrzymanie użytkownika na ścieżce,
+którą pokazujesz klientom. Zgłoszone do budowy z najwyższym priorytetem (sprawa #42). Sprawdziliśmy
+kontrolnie: bez kliknięcia lista jest czysta, a błąd pochodzi z pliku produktu, nie z naszego
+narzędzia podglądowego.
+
+**2. Cała sekcja edytora szablonu prezentacji jest po angielsku.** W `gen-deck-content-hints`, po
+otwarciu istniejącego szablonu, blok „WŁASNY MOTYW I WZORCE SLAJDÓW POWERPOINT" oraz cała sekcja
+„TEMPLATE VARIABLES" mają angielskie etykiety pól (`titleFont`, `bodyFont`, `primaryColor`,
+`logoDataUri (optional)`), angielski przycisk „Add variable" i angielskie „0 version(s)". To
+największy nieprzetłumaczony blok w całym dzisiejszym przeglądzie — i widać go dopiero po kliknięciu,
+więc wcześniejsze przeglądy go nie łapały.
+
+**3. Nazwa modułu w ścieżce nawigacji mówi „Document Studio" po angielsku — na sześciu ekranach.**
+Jedna wartość tłumaczenia, sześć ekranów. **To najtańsza naprawa w całym przeglądzie**, ale wymaga
+Twojej decyzji: jak ten moduł ma się nazywać po polsku. Nie wymyślam nazwy produktu za Ciebie.
+
+**4. W ciemnym motywie cztery kafle zostają białe.** Na ekranie `document-artifact` kafle
+„BUDŻET WYKORZYSTANY", „KAMIENIE MILOWE", „RYZYKA WYSOKIE", „POZIOM PEWNOŚCI" pozostają białymi
+kartami na ciemnym tle — jedyny blok ekranu, który nie przełączył się na ciemny motyw.
+
+**5. Na dwóch ekranach Excela w ciemnym motywie widać szew.** Tło treści i tło strony to dwa różne
+odcienie granatu sklejone bez przejścia, mniej więcej w połowie wysokości ekranu. W jasnym motywie
+niewidoczne, bo oba odcienie są prawie białe.
+
+### Co jest w porządku (45 z 72 obrazów)
+
+Artefakty (Dokument, Arkusz, Deck, Raport) renderują się z pełną treścią i policzonymi kaflami;
+rejestr Materiałów pokazuje trzy rodzaje plików ze statusem „Gotowy"; galeria wzorców, kreator
+szablonów i menu „Plik" działają po polsku; stany błędu mówią uczciwym językiem („Nie udało się
+otworzyć dokumentu" z przyciskiem powrotu, zamiast wiszącego kółka).
+
+### Drobniejsze, ale widoczne
+
+| Ekran | Co jest nie tak |
+| --- | --- |
+| `materials-registry` | Pigułka „STAN ZAUFANIA" mówi „Organization" po angielsku, choć ta sama wartość w kolumnie obok brzmi „Organizacja". |
+| `report-builder-library-template` | Etykieta pola i podpowiedź mówią „Assessment", choć moduł nazywa się u nas „Ocena". |
+| `excele-jeden-widok-recent` | Status wiersza to zwykły tekst „draft" po angielsku, nie pigułka „Szkic". |
+| `document-studio-streaming-honesty-n3` | Plan dokumentu pokazuje surowe angielskie opisy: „Rejestr: executive", „Styl: formal", „SHORT"/„LONG". |
+
+### Do rozstrzygnięcia — tekst dla programisty w polu opisu
+
+Na dwóch ekranach (`materialy-template-library-slice`, `materialy-draft-template-visibledraft-fix`)
+pole SZCZEGÓŁY zawiera **dosłowną notatkę dewelopera** zamiast opisu obiektu — np. „PO NAPRAWIE:
+świeżo utworzony przez właściciela szablon… wcześniej ten wiersz nie pojawiał się WCALE…".
+To dane demonstracyjne, nie etykieta programu, więc nie ruszam ich w torze wyglądu. Ale **na pokazie
+klient to przeczyta** — do wyczyszczenia razem z resztą danych demo (sprawa #44).
+
+### Czego nie obejrzeliśmy i mówię o tym wprost
+
+- `excele-jeden-widok-pusty` — kliknięcie w kartę „Czysto" wywala nasze narzędzie podglądowe (brak
+  jednego elementu konfiguracji), więc pusta siatka **nie została obejrzana**. To awaria pomiaru,
+  nie produktu — ale nie udaję, że widziałem.
+- `prezentacje-template-states` — obejrzany tylko w stanie domyślnym; nazwa sugeruje więcej stanów,
+  do których nie mieliśmy adresu.
+
 
 ---
 
