@@ -18,6 +18,85 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-09-02
 
+### Z-51 · `vite build` przewraca się na braku pamięci, a EXIT 134 wygląda jak awaria kodu
+**Co się stało:** przy bramce budowy przed oddaniem partii kart modułowych `npx vite build` zakończył się
+kodem **134** z komunikatem `FATAL ERROR: Ineffective mark-compacts near heap limit — JavaScript heap out of
+memory`. Commit, którego dotyczyła bramka, **nie zawierał ani jednego pliku z `src/`** (sprawdzone:
+`git show --stat HEAD | grep -c '^ src/'` = 0), więc budowa nie mogła paść przez tę zmianę. Powtórka
+z `NODE_OPTIONS=--max-old-space-size=8192` → **EXIT 0, „✓ built in 36.98s"**.
+
+**Dlaczego ważne:** kod 134 to SIGABRT i w logu CI wygląda dokładnie jak realna awaria budowy. Bramka,
+która pada z tego powodu, uczy zespołu najgorszego możliwego odruchu — „budowa czasem pada, puść jeszcze
+raz" — a wtedy prawdziwa regresja przejdzie tą samą ścieżką i nikt jej nie odróżni. To jest ten sam kształt
+co „brak pomiaru nie jest wynikiem": narzędzie nie powiedziało „kod jest zły", tylko „nie dałem rady
+zmierzyć", a my czytamy to jako werdykt o kodzie.
+
+**Co z tego wynika — reguła, nie notatka:**
+1. **Każde uruchomienie budowy w tym repozytorium wymaga `NODE_OPTIONS=--max-old-space-size=8192`.**
+   Bez tego wynik bramki jest nieinformatywny — ani nie potwierdza, ani nie obala poprawności kodu.
+2. **EXIT 134 (albo `heap out of memory` w logu) czytaj jako BRAK PAMIĘCI, nie jako błąd kodu.** Zanim
+   zaczniesz szukać winnego w diffie, powtórz z podniesioną stertą. Dopiero powtórka, która znowu padnie,
+   jest sygnałem o kodzie.
+3. **Kontrola, która kosztuje jedno polecenie:** `git show --stat HEAD | grep -c '^ src/'`. Jeśli commit
+   nie rusza `src/`, a budowa pada — to prawie na pewno środowisko, nie zmiana.
+4. Docelowo `NODE_OPTIONS` należy wpisać do skryptu `build` w `package.json` albo do konfiguracji CI, żeby
+   nie zależało to od tego, kto pamięta. **Świadomie tego dziś NIE robię** — `package.json` jest plikiem
+   współdzielonym przez oba tory, a w katalogu pracuje równolegle kilku wykonawców (reguła nr 14). Zgłaszam
+   to nadzorcy jako osobną decyzję, zamiast wchodzić w cudzy plik przy okazji innej roboty.
+
+**Skąd wiadomo:** pomiar 2026-09-02 przy commicie `419b2915e7` (karty modułowe), dwa przebiegi
+tej samej komendy różniące się wyłącznie zmienną `NODE_OPTIONS`.
+
+### Z-50 · Graf importów zalicza 283 ekrany z 313 — automatyczne zaliczenie przez hub jest liczbą bez wartości
+**Co się stało:** właściciel polecił 02.09 oznaczyć jako „poprawione" KAŻDY ekran, którego dotknęły
+dzisiejsze zmiany. Zbudowałem `scripts/dev/grafika-dotkniete.mjs` — przechodzi PRZECHODNIO graf importów
+każdego z 313 ekranów rejestru, od wpisu w `dev-render/main.tsx` (także przez `lazy(() => import(...))`,
+którego grep po `<Nazwa` nie widzi) w głąb `src/`, i przecina go z 63 plikami zmienionymi tego dnia oraz
+162 zmienionymi kluczami słownika. Pierwszy przelot dał **283 ekrany z 313**. To nie był sukces pomiaru,
+tylko jego awaria: **cztery pliki-huby odpowiadały prawie za cały wynik** — `src/i18n.ts` trafiał w 274
+ekrany, `EntityStatusChip.tsx` w 219, `FilterableTable.tsx` w 162, `useConversationStore.ts` w 105.
+Odpowiedź „283 z 313" jest formalnie prawdziwa i całkowicie bezużyteczna: właściciel dostałby 283 karty
+do obejrzenia, z których większość wygląda dokładnie tak samo jak wczoraj.
+
+**Dlaczego ważne:** to jest ta sama rodzina co „wołacz istnieje ≠ renderuje się", ale o piętro wyżej.
+Tam pytanie brzmiało „czy komponent jest w ogóle renderowany". Tu brzmi: **„czy TA konkretna zmiana w tym
+pliku jest widoczna na TYM ekranie"** — i graf importów na to nie odpowiada, bo nie wie, co się w pliku
+zmieniło. Osiągalność w grafie to warunek KONIECZNY widoczności, nigdy WYSTARCZAJĄCY. Im bardziej
+podstawowy plik, tym bardziej bezwartościowe jest jego trafienie: hub trafia wszędzie właśnie dlatego,
+że jest hubem.
+
+Drugi wariant tej samej pułapki, zmierzony tego samego dnia: **powłoka zakładek**. Ekran `ustawienia-*`
+montuje JEDNĄ zakładkę, ale plik powłoki importuje wszystkie dziesięć. Graf zaliczył 10 ekranów Ustawień,
+gdy zmieniły się dwie zakładki (`ConnectedAppsSettings`, `DataControlsSettings`). Osiem kart byłoby
+kłamstwem o zakresie naprawy — nie o tym, czy plik jest osiągalny, tylko o tym, czy właściciel coś zobaczy.
+
+**Co z tego wynika — reguła na przyszłość, nie notatka z dzisiaj.**
+
+1. **Każdy plik trafiający w więcej niż ~30% rejestru jest HUBEM i nie zalicza ekranu automatycznie.**
+   Dostaje JAWNY, wypisany warunek widoczności, a warunek wyprowadza się z DIFFA tego pliku, nie z faktu
+   trafienia. Cztery warunki zastosowane 02.09, dla porządku:
+   - `src/i18n.ts` (274) — **ODRZUCONY**. Zmieniono ostateczny fallback języka dla gościa, którego przeglądarki
+     nie umiemy rozpoznać. Widoczne WYŁĄCZNIE na ekranach przed zalogowaniem — a te i tak są w partii osobno.
+   - `src/store/useConversationStore.ts` (105) — **ODRZUCONY**. Dopisane pole TYPU. Zero zmiany na ekranie.
+   - `EntityStatusChip.tsx` (219) — **PRZYJĘTY WARUNKOWO**: tylko tam, gdzie ekran naprawdę pokazuje stan
+     cyklu życia, któremu zdjęto czerwień (anulowane/wygasłe/cofnięte).
+   - `FilterableTable.tsx` (162) — **PRZYJĘTY WARUNKOWO**: tylko tam, gdzie zmienił się także WŁASNY plik
+     ekranu. Sama lista konsumentów wspólnej tabeli nie jest listą ekranów zmienionych widocznie.
+2. **Powłoka zakładek nie zalicza sióstr.** Zmiana w jednej zakładce oznacza JEJ ekran, nie wszystkie
+   zakładki, które powłoka importuje. Sprawdzenie: czy wpis w `main.tsx` przekazuje tej zakładce parametr
+   (`<UstawieniaGrupyScreen grupa="integracje" />`) — jeśli tak, siostry są fałszywym trafieniem.
+3. **Liczba, która obejmuje prawie cały rejestr, jest sygnałem awarii pomiaru, nie sukcesu.** Zanim ją
+   zameldujesz, policz, ile ekranów zalicza NAJCZĘSTSZY pojedynczy plik. Jeśli jeden plik odpowiada za
+   większość wyniku — pomiar odpowiedział na inne pytanie, niż zadano.
+4. **To działa w drugą stronę i to jest cenniejsze:** ten sam pomiar wykazał 11 zmienionych plików, których
+   NIE osiąga żaden ekran harnessu (6 kolejek decyzyjnych Mojej Pracy, 4 widoki Wyników, `SystemSettings`).
+   Naprawa tam jest w kodzie i jest niepokazywalna. Graf importów jest bezużyteczny jako dowód „widać",
+   ale jest mocnym dowodem „NIE MA JAK ZOBACZYĆ" — i w tej roli należy go używać bez zastrzeżeń.
+
+**Skąd wiadomo:** `scripts/dev/grafika-dotkniete.mjs`, pomiar i tabela per ekran w
+`docs/program/grafika/POPRAWIONE_20260902.md`. Wynik po nałożeniu warunków: **92 ekrany rejestru**
+(+ 6 ekranów logowania dopisanych do rejestru), nie 283.
+
 ### Z-49 · Zwinięta sekcja nie jest dowodem, że w środku jest polski — Z-48 był połowiczny, rodzina badge'u REALNE/CZĘŚCIOWE miała 5 wystąpień, nie 1
 **Co się stało:** nadzorca obejrzał zrzut Z-48 własnymi oczami (nie „testy przeszły") i złapał to, czego pomiar
 nie objął: rozwinięta domyślnie sekcja „EDYCJA I AI" była CAŁA po angielsku (AI ON SELECTION, Expand idea/

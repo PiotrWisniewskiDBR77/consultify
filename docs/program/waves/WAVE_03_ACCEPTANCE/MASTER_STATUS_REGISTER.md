@@ -1,6 +1,6 @@
 # Wave 3 — master status register
 
-Last updated: `2026-08-24`
+Last updated: `2026-09-02`
 
 Current controlled product-source integration checkpoint is
 `3549e1752bb1ddd2382223157b38cbdcc9337f86` on
@@ -8,8 +8,9 @@ Current controlled product-source integration checkpoint is
 does not change that product tree. The structural package verifier passes
 `16/16` modules with exactly `21/21` gates per module and `16/16` master rows.
 Across the atomic registers this is `336/336` structurally present gate rows;
-`103/336` currently carry the literal status `NOT_STARTED`. The other `233`
-rows include historical passes as well as precise partial, policy, provider,
+`103/336` carried the literal status `NOT_STARTED` until 2026-09-02; after the owner
+card review closure that number is `86/336` (measured, not estimated). The remaining
+`250` rows include historical passes as well as precise partial, policy, provider,
 browser-retest and owner-review states; they are not implicitly accepted. This
 is the current control denominator, not a completion claim.
 
@@ -61,6 +62,31 @@ WIP passed one literal signed five-workspace test on an isolated `831/831`
 PostgreSQL chain. Statements cold-read canonical read-only data; Baseline,
 Prediction, Analysis and Valuation persisted writes and cold-read them in new
 signed contexts. Full G06 state/a11y coverage and owner replay remain open.
+
+## 2026-09-02 — owner card review recorded as the module review
+
+The owner clicked through the acceptance page and decided **265 screens: 262 `ok`,
+2 `nie`, 1 `poprawka`** (`docs/program/grafika/ODBIOR_DECYZJE.json`). Asked directly, he
+chose to treat that card review as the module review. Of those 265, **260 were decided
+screen by screen and 5 pre-login screens were covered by a collective accept** without
+being viewed one by one; those 5 sit outside all 16 modules, so no module closure rests
+on them.
+
+Machine-measured mapping of the 319 registry screens onto the 16 modules is
+`MAPA_GRAFIKA_MODULY_20260902.md`; the closure report with the counter is
+`ZAMKNIECIE_MODULOW_20260902.md`. Effect on the gate rows: `G07–G12` moved to `PASS` in
+15 modules (Partner has no `/partner` screen in the registry, so it stays open), `G17`
+is `PASS` only in Organization and Meetings, and `G18` is `PASS` with a checkpoint tag in
+those two modules only. Closed gate rows moved `31 → 125` of 336; fully closed modules
+remain `0`, because `G13–G16` and `G19–G20` are untouched.
+
+**Finally closed modules: 2 of 16** — `01_ORGANIZATION`
+(tag `modul-01-organizacja-final-20260902`) and `08_MEETINGS`
+(tag `modul-08-spotkania-final-20260902`), both on graphics-line SHA
+`316bce9dd9aeff1bde71e368968b851467e93411`. The other 14 keep an open `G17`: 78 cards
+were decided `ok` while carrying a substantive owner remark with no retest decision, plus
+the three explicit non-`ok` items (Materials `gen-excel-templates-tab`, Results
+`results-three-pairs`, Finance `finance-baseline-workspace`).
 
 | Order | ID     | Module          | Current gate                                                    | Product SHA                                                                                         | Owner register                                                                                                                                                                   | Open P0 | Open P1 | Open P2 | Open P3 | Owner verdict                                                                                                                                          | Regression                                                            |
 | ----: | ------ | --------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------: | ------: | ------: | ------: | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |

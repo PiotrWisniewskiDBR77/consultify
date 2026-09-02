@@ -36,7 +36,7 @@
             "Tekst wylewał się poza romb decyzyjny i nachodził na etykietę 'Tak' — naprawione wcześniej.",
             "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach.",
             "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)",
-            "2026-09-02: Menu pod trzema kropkami na kanwie mowi teraz po polsku. Znikly napisy w rodzaju REALNE i CZESCIOWE oraz angielskie koncowki — to byl jezyk inzyniera, nie jezyk klienta. Narzedzia po lewej stronie mapy mysli tez sa po polsku."
+            "2026-09-02: Menu pod trzema kropkami na kanwie mówi teraz po polsku. Znikły napisy w rodzaju REALNE i CZĘŚCIOWE oraz angielskie końcówki — to był język inżyniera, nie język klienta. Narzędzia po lewej stronie mapy myśli też są po polsku."
           ],
           "wyjatki": [],
           "warianty": [
@@ -93,7 +93,7 @@
           "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)",
-            "2026-09-02: Menu pod trzema kropkami na kanwie mowi teraz po polsku. Znikly napisy w rodzaju REALNE i CZESCIOWE oraz angielskie koncowki — to byl jezyk inzyniera, nie jezyk klienta. Narzedzia po lewej stronie mapy mysli tez sa po polsku."
+            "2026-09-02: Menu pod trzema kropkami na kanwie mówi teraz po polsku. Znikły napisy w rodzaju REALNE i CZĘŚCIOWE oraz angielskie końcówki — to był język inżyniera, nie język klienta. Narzędzia po lewej stronie mapy myśli też są po polsku."
           ],
           "wyjatki": [],
           "warianty": [
@@ -114,7 +114,7 @@
           "naprawione": [
             "Angielski przycisk Apply",
             "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)",
-            "2026-09-02: Menu pod trzema kropkami na kanwie mowi teraz po polsku. Znikly napisy w rodzaju REALNE i CZESCIOWE oraz angielskie koncowki — to byl jezyk inzyniera, nie jezyk klienta. Narzedzia po lewej stronie mapy mysli tez sa po polsku."
+            "2026-09-02: Menu pod trzema kropkami na kanwie mówi teraz po polsku. Znikły napisy w rodzaju REALNE i CZĘŚCIOWE oraz angielskie końcówki — to był język inżyniera, nie język klienta. Narzędzia po lewej stronie mapy myśli też są po polsku."
           ],
           "wyjatki": [],
           "warianty": [
@@ -400,7 +400,7 @@
         },
         {
           "id": "ideas-preview-overlay",
-          "nazwa": "Podglad pomyslu",
+          "nazwa": "Podgląd pomysłu",
           "ocena": "A",
           "co": "Overlay bez przeskoku ukladu.",
           "naprawione": [],
@@ -427,7 +427,7 @@
           "naprawione": [
             "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji.",
             "Pigułka statusu w podglądzie mówiła „active\", a ta sama wartość w tabeli obok „Aktywne\" — podgląd omijał istniejący mechanizm tłumaczenia (2026-09-02)",
-            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjete zostaly panele i szerokosci, ktorych w produkcie nie ma."
+            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma."
           ],
           "wyjatki": [],
           "gdzie": "Moja praca → zakładka „Projekty\" w głównym menu huba (MyWorkHub.tsx, obok Zadań/Decyzji) — lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie. Historia problemu (BRAK DROGI WEJŚCIA, pomyłkowa akcja Command Palette) opisana w poprzednich wpisach dziennika/rejestru z 30.08 rano — rozwiązana tego samego dnia wieczorem, patrz pole „naprawione\"."
@@ -539,7 +539,7 @@
           "co": "Piec pytan zarzadczych, jedna odpowiedz na spojrzenie. Wszystkie liczby z jednostka: 71/100, 67%, 1,3 mln PLN, 88%.",
           "naprawione": [
             "Ekran nie byl podlaczony do harnessu",
-            "2026-09-02: Liczby odmieniaja sie po polsku: 1 dzien zamiast 1 dni, 2 dni, 5 dni. Wczesniej kazda liczba dostawala te sama koncowke."
+            "2026-09-02: Liczby odmieniają się po polsku: „1 dzień\" zamiast „1 dni\", „2 dni\", „5 dni\". Wcześniej każda liczba dostawała tę samą końcówkę."
           ],
           "wyjatki": [
             "Kolumny POZIOM i TYP ucinane na prawej krawedzi — Przetern, Do decy"
@@ -554,7 +554,7 @@
           "naprawione": [
             "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami.",
             "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)",
-            "2026-09-02: Podglad Idei dostal brakujacy blok Szczegoly — tabele Wlasciwosc i Wartosc. Wczesniej pod jednym zdaniem opisu zostawala pustka. Idea miala tez dwie rozjechane wersje podgladu (z tabeli i z listy) — teraz jest jedna."
+            "2026-09-02: Podgląd Idei dostał brakujący blok „Szczegóły\" — tabelę Właściwość i Wartość. Wcześniej pod jednym zdaniem opisu zostawała pustka. Idea miała też dwie rozjechane wersje podglądu (z tabeli i z listy) — teraz jest jedna."
           ],
           "wyjatki": [
             "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
@@ -639,7 +639,7 @@
           "ocena": "B",
           "co": "StandardTable (ff_m03InboxStandardTable ON), 9 pozycji.",
           "naprawione": [
-            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjete zostaly panele i szerokosci, ktorych w produkcie nie ma."
+            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma."
           ],
           "wyjatki": [
             "Powłoka MyWorkHub ma ~87 surowych klas navy-*/slate-* — dług systemowy całego huba, nie tylko tego ekranu.",
@@ -654,7 +654,7 @@
           "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
           "naprawione": [
             "Tytuły wydarzeń ucinały się bez wielokropka („1(\" zamiast „10:00\") — FullCalendar ma domyślnie text-overflow: clip. Dodany wielokropek i pełny tekst w podpowiedzi po najechaniu. SPROSTOWANIE: „Mene[dżer]\" NIE jest ucięciem — to świadomie przewijalny pasek zakładek, tekst jest pełny (2026-09-02)",
-            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjete zostaly panele i szerokosci, ktorych w produkcie nie ma."
+            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma."
           ],
           "wyjatki": [
             "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
@@ -679,12 +679,12 @@
         },
         {
           "id": "unified-create-launcher",
-          "nazwa": "Nowy — wybor rodzaju",
+          "nazwa": "Nowy — wybór rodzaju",
           "ocena": "A",
           "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
           "naprawione": [
             "Karta typu obiektu nazywała się „Insight\" obok polskich „Inicjatywa\"/„Decyzja\" — teraz „Wniosek\", spójnie z resztą aplikacji (2026-09-02)",
-            "2026-09-02: Czerwien zostala tylko tam, gdzie cos naprawde wymaga reakcji. Stany typu anulowane, wygasle i cofniete przestaly straszyc czerwienia — to nie sa awarie, tylko naturalny koniec zycia pozycji."
+            "2026-09-02: Czerwień została tylko tam, gdzie coś naprawdę wymaga reakcji. Stany typu „anulowane\", „wygasłe\" i „cofnięte\" przestały straszyć czerwienią — to nie są awarie, tylko naturalny koniec życia pozycji."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
@@ -693,7 +693,7 @@
         },
         {
           "id": "interview-preview-canon",
-          "nazwa": "Podglad sesji wywiadu",
+          "nazwa": "Podgląd sesji wywiadu",
           "ocena": "A",
           "co": "Panel podgladu. Ucinany tytul to kanoniczne zachowanie z podpowiedzia, nie defekt.",
           "naprawione": [],
@@ -787,7 +787,7 @@
         },
         {
           "id": "karta-tool",
-          "nazwa": "Karta narzedzia",
+          "nazwa": "Karta narzędzia",
           "ocena": "A",
           "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
           "naprawione": [
@@ -801,7 +801,7 @@
         },
         {
           "id": "tools-outputs-insights-tab",
-          "nazwa": "Narzedzia — zakladka wnioskow",
+          "nazwa": "Narzędzia — zakładka wniosków",
           "ocena": "B",
           "co": "Tabela kanoniczna, statusy i daty po polsku.",
           "naprawione": [
@@ -847,7 +847,7 @@
         },
         {
           "id": "tools-sesja-wyjscie",
-          "nazwa": "Narzedzia — wyjscie z sesji",
+          "nazwa": "Narzędzia — wyjście z sesji",
           "ocena": "A",
           "co": "Powloka artefaktu z sesja, pytania po polsku.",
           "naprawione": [
@@ -866,7 +866,7 @@
         },
         {
           "id": "tool-outputs-panel",
-          "nazwa": "Narzedzia — panel rezultatow",
+          "nazwa": "Narzędzia — panel rezultatów",
           "ocena": "C",
           "co": "Lista rezultatow sesji z wersjami.",
           "naprawione": [
@@ -1072,7 +1072,7 @@
         },
         {
           "id": "assessment-manage-panel",
-          "nazwa": "Panel zarzadzania ocena",
+          "nazwa": "Panel zarządzania oceną",
           "ocena": "B",
           "co": "Mechanika solidna: postep procesu, tabela etapow bramek. Domyslna zakladka Przeplyw jest dzis w 100% polska - wyrazna poprawa od poprzedniego wpisu; pozostale 4 zakladki (Zespol/Raporty/Inicjatywy/Dziennik) nie zostaly jeszcze zweryfikowane. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
@@ -1295,7 +1295,7 @@
           "co": "StandardTable + demo-fallback.",
           "naprawione": [
             "Kolumna statusu mieszała angielskie „Scheduled\"/„Blocked\" z polskim „W realizacji\" — ExecutionHub czytał mapę statusów wprost, zamiast wołać istniejącą funkcję tłumaczącą (2026-09-02)",
-            "2026-09-02: Liczby odmieniaja sie po polsku (1 dzien, 2 dni, 5 dni), a tabela nie jest juz sztucznie zwezana ani zaslaniana przez przypieta kolumne z ikonami po prawej."
+            "2026-09-02: Liczby odmieniają się po polsku („1 dzień\", „2 dni\", „5 dni\"), a tabela nie jest już sztucznie zwężana ani zasłaniana przez przypiętą kolumnę z ikonami po prawej."
           ],
           "wyjatki": [
             "Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217)."
@@ -1321,7 +1321,7 @@
           "naprawione": [
             "01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/).",
             "01.09 (fala 174): wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski; poprawiona kapitalizacja polskich nazwisk (np. „WóJcik” → „Wójcik”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png).",
-            "2026-09-02: Liczby odmieniaja sie po polsku (1 dzien, 2 dni, 5 dni), a tabela nie jest juz sztucznie zwezana ani zaslaniana przez przypieta kolumne z ikonami po prawej."
+            "2026-09-02: Liczby odmieniają się po polsku („1 dzień\", „2 dni\", „5 dni\"), a tabela nie jest już sztucznie zwężana ani zasłaniana przez przypiętą kolumnę z ikonami po prawej."
           ],
           "wyjatki": [],
           "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Zrzuty naprawy 01.09 (fala 174): evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png — UNKNOWN → Nieznane, WóJcik → Wójcik potwierdzone."
@@ -1419,7 +1419,7 @@
           "ocena": "A",
           "co": "Tabela archiwum tylko do odczytu. Zero rekordow to stan faktyczny tabeli, nie licznik trybu widoku — regula nagiego zera nie ma tu zastosowania.",
           "naprawione": [
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [],
           "gdzie": "Wyniki → archiwum starych wskaźników (sprzed przebudowy Wyniki vNext) — tabela tylko do odczytu."
@@ -1455,14 +1455,14 @@
           "ocena": "B",
           "co": "Baza porownania i polityka kalkulacji. Kolumna PEWNOSC ucieta przez prawy panel (widoczne tylko PEW); wlasciwosc Ziarno analizy pokazuje surowe monthly zamiast etykiety, mimo ze etykieta pola jest po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [],
           "gdzie": "Wyniki → ROI → wejście w sprawę ROI (POZIOM 3, pełne narzędzie) — baza porównania i polityka kalkulacji."
         },
         {
           "id": "results-vnext-kpi-tool",
-          "nazwa": "Narzedzie wskaznika",
+          "nazwa": "Narzędzie wskaźnika",
           "ocena": "C",
           "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami. Naglowek H1 calego ekranu to surowy kod OEE-LINIA-PAKOWANIA bez nazwy i bez podpisu wyjasniajacego - najgorszy wariant defektu braku nazwy KPI w calym zakresie. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
@@ -1473,12 +1473,12 @@
         },
         {
           "id": "results-vnext-roi-full-tool",
-          "nazwa": "Pelne narzedzie ROI",
+          "nazwa": "Pełne narzędzie ROI",
           "ocena": "A",
           "co": "Rejestr spraw ROI plus pelne narzedzie: cztery fazy, szesc wierszy budowy sprawy.",
           "naprawione": [
             "Pelne narzedzie bylo NIEOSIAGALNE — kebab nie robil nic, bo w harnessie brakowalo routingu. Nikt tego ekranu nigdy nie widzial.",
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [
             "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
@@ -1491,7 +1491,7 @@
           "ocena": "A",
           "co": "Uczciwy stan: funkcja jeszcze nie wlaczona.",
           "naprawione": [
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [
             "To prawdziwy stan flagi, nie defekt"
@@ -1527,7 +1527,7 @@
           "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
           "naprawione": [
             "Angielskie naglowki podgladu",
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [],
           "gdzie": "Wyniki → ROI → rejestr spraw ROI (POZIOM 1) — siedem spraw z nazwiskami i statusami."
@@ -1538,7 +1538,7 @@
           "ocena": "B",
           "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem. Wszystkie 5 wierszy rejestru KPI pokazuje surowy kod jako glowna etykiete (z uczciwym podpisem Kod KPI (brak nazwy)) - defekt kontraktu danych KPI, nie grafiki. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [],
           "gdzie": "Wyniki → KPI → rejestr wskaźników (POZIOM 1) — pełna tabela ze statusami, filtrami i kebabem."
@@ -1605,7 +1605,7 @@
           "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
           "naprawione": [
             "Angielskie naglowki podgladu",
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [
             "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
@@ -1619,7 +1619,7 @@
           "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
           "naprawione": [
             "Surowe statusy i nazwy pol dopasowania",
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Wyszukiwarka przed zapytaniem — uczciwie pusta. Z zapytaniem pokazuje trzy trafienia."
@@ -1803,7 +1803,7 @@
           "co": "Budowa scenariuszy z paskiem statusu.",
           "naprawione": [
             "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo",
-            "2026-09-02: Polskie nazwy kolumn i wartosci zamiast angielskich resztek — miedzy innymi Linia i Okres w tabeli porownania scenariuszy oraz surowe wartosci techniczne w kartach ROI i OKR."
+            "2026-09-02: Polskie nazwy kolumn i wartości zamiast angielskich resztek — między innymi „Linia\" i „Okres\" w tabeli porównania scenariuszy oraz surowe wartości techniczne w kartach ROI i OKR."
           ],
           "wyjatki": [
             "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
@@ -1887,7 +1887,7 @@
       "ekrany": [
         {
           "id": "sheet-artifact",
-          "nazwa": "Arkusz (podglad)",
+          "nazwa": "Arkusz (podgląd)",
           "ocena": "A",
           "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Podglad arkusza kalkulacyjnego.",
           "naprawione": [
@@ -1911,7 +1911,7 @@
           "ocena": "A",
           "co": "Tabela wzorcow z uczciwymi statusami. Piec pozornych odchylen to swiadome decyzje wlasciciela.",
           "naprawione": [
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [],
           "gdzie": "Materiały → zakładka „Biblioteka wzorców\" — tabela wzorców z uczciwymi statusami."
@@ -1935,7 +1935,7 @@
           "ocena": "A",
           "co": "Cytat: Nie znaleziono tego dokumentu. Mogl zostac usuniety albo odnosnik prowadzi do innego typu materialu. Plus przycisk Wroc do Materialow. Mowi co sie stalo i co zrobic. Zero kodu bledu.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
@@ -1953,7 +1953,7 @@
           "ocena": "A",
           "co": "Cytat: Nie znaleziono zrodla tego wzorca. Plus przycisk Wroc do biblioteki wzorcow. Krotszy niz sasiedni, ale ludzki i z jasna akcja.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
@@ -2002,7 +2002,7 @@
           "naprawione": [
             "Ekran w ogole sie nie renderowal — brak nawigacji w harnessie",
             "Angielskie etykiety w danych testowych",
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [],
           "warianty": [
@@ -2136,7 +2136,7 @@
           "co": "Galeria wzorcow.",
           "naprawione": [
             "Angielskie 0 nodes na karcie galezi",
-            "2026-09-02: Menu pod trzema kropkami na kanwie mowi teraz po polsku. Znikly napisy w rodzaju REALNE i CZESCIOWE oraz angielskie koncowki — to byl jezyk inzyniera, nie jezyk klienta. Narzedzia po lewej stronie mapy mysli tez sa po polsku."
+            "2026-09-02: Menu pod trzema kropkami na kanwie mówi teraz po polsku. Znikły napisy w rodzaju REALNE i CZĘŚCIOWE oraz angielskie końcówki — to był język inżyniera, nie język klienta. Narzędzia po lewej stronie mapy myśli też są po polsku."
           ],
           "wyjatki": [],
           "warianty": [
@@ -2156,7 +2156,7 @@
           "co": "Formularz z AI wlaczonym domyslnie, zgodnie z decyzja DEC-317.",
           "naprawione": [
             "Ucinany tekst bez wielokropka w pieciu polach wyboru",
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [],
           "gdzie": "Materiały → „Nowy\" → Dokument → formularz startowy — pomoc AI włączona domyślnie (decyzja DEC-317), żeby nie trzeba było jej włączać ręcznie za każdym razem."
@@ -2168,7 +2168,7 @@
           "co": "Formularz w calosci po polsku.",
           "naprawione": [
             "Kolumna TYP pokazywala surowy kod zamiast nazwy",
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [],
           "gdzie": "Materiały → „Nowy\" → Dokument → kreator szablonów dokumentów (Word) — formularz w całości po polsku."
@@ -2265,7 +2265,7 @@
           "ocena": "A",
           "co": "Formularz z chipem kontekstu organizacji.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [],
           "gdzie": "Materiały → „Nowy\" → Dokument → formularz startowy Document Studio → chip kontekstu organizacji — przypomnienie, dla jakiej firmy/klienta powstaje dokument."
@@ -2277,7 +2277,7 @@
           "co": "Nowy, Otworz, Zapisz, Zapisz jako, Zrob z tego wzorzec.",
           "naprawione": [
             "Crash silnika edytora blokowal render calego ekranu",
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [],
           "warianty": [
@@ -2295,7 +2295,7 @@
           "co": "Tytul klikalny, przyciski zywe.",
           "naprawione": [
             "Ten sam crash silnika edytora",
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [],
           "warianty": [
@@ -2312,7 +2312,7 @@
           "ocena": "A",
           "co": "Puste stany po polsku i angielsku.",
           "naprawione": [
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Ekran ISTNIEJE po to, zeby pokazac puste stany po polsku. Pustka to jego temat."
@@ -2326,7 +2326,7 @@
           "co": "Sciezka z dokumentu do wzorca.",
           "naprawione": [
             "Ten sam crash silnika edytora",
-            "2026-09-02: Kafle z liczbami i tabela w tresci dokumentu przelaczaja sie na ciemny motyw. Wczesniej malowaly sobie biale tlo niezaleznie od tego, jaki motyw byl wlaczony."
+            "2026-09-02: Kafle z liczbami i tabela w treści dokumentu przełączają się na ciemny motyw. Wcześniej malowały sobie białe tło niezależnie od tego, jaki motyw był włączony."
           ],
           "wyjatki": [],
           "warianty": [
@@ -2355,7 +2355,7 @@
           "ocena": "A",
           "co": "Szkic widoczny z pigulka Szkic.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [],
           "gdzie": "Materiały → Biblioteka wzorców → szkic szablonu w trakcie tworzenia — widoczny z pigułką „Szkic\"."
@@ -2366,7 +2366,7 @@
           "ocena": "A",
           "co": "Panel kontroli jakosci z odznaka fabrykacji.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Przed uruchomieniem kontroli jakosci nie ma czego pokazac."
@@ -2427,7 +2427,7 @@
           "ocena": "B",
           "co": "Tryb, w ktorym system pokazuje plan zanim zacznie pisac.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [
             "Nie sprawdzono zachowania w trakcie pisania na zywo, tylko stan poczatkowy"
@@ -2445,7 +2445,7 @@
           "ocena": "B",
           "co": "Czat Teresy w studiu dokumentow, bez formularza.",
           "naprawione": [
-            "2026-09-02: Klikniecie w szablon nie wywraca juz calego ekranu na czerwony komunikat awarii. Szablony z niepelnymi ustawieniami otwieraja sie normalnie."
+            "2026-09-02: Kliknięcie w szablon nie wywraca już całego ekranu na czerwony komunikat awarii. Szablony z niepełnymi ustawieniami otwierają się normalnie."
           ],
           "wyjatki": [
             "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
@@ -2596,7 +2596,7 @@
           "naprawione": [
             "Ekran nie byl podlaczony do harnessu",
             "W motywie ciemnym przelacznik wlaczony byl nieodrozninalny od wylaczonego",
-            "2026-09-02: Nazwy funkcji integracji sa po polsku: Synchronizacja e-maili, Import kontaktow, Synchronizacja spotkan zamiast angielskich odpowiednikow."
+            "2026-09-02: Nazwy funkcji integracji są po polsku: „Synchronizacja e-maili\", „Import kontaktów\", „Synchronizacja spotkań\" zamiast angielskich odpowiedników."
           ],
           "wyjatki": [],
           "gdzie": "Ustawienia → Synchronizacja kalendarza — trzej dostawcy (np. Google/Outlook/inny) z przełącznikami."
@@ -3238,7 +3238,7 @@
           "naprawione": [
             "01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -> KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/).",
             "01.09 (fala 174): przywrócona strzałka nawigacyjna przy „Uwadze” i akcja „Otwórz ekran kanoniczny” w kebabie każdego wiersza (zgubione przy zamianie kart na tabelę we wcześniejszej fali) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/).",
-            "2026-09-02: Liczby odmieniaja sie po polsku: 1 dzien zamiast 1 dni, 2 dni, 5 dni. Wczesniej kazda liczba dostawala te sama koncowke."
+            "2026-09-02: Liczby odmieniają się po polsku: „1 dzień\" zamiast „1 dni\", „2 dni\", „5 dni\". Wcześniej każda liczba dostawała tę samą końcówkę."
           ],
           "wyjatki": [
             "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji. Dyżur 174 naprawił tylko brakujący link, nie ten błąd — nadal nienaprawione.",
@@ -3253,7 +3253,7 @@
           "ocena": "A",
           "co": "Koszt i pojemność.",
           "naprawione": [
-            "2026-09-02: Liczby odmieniaja sie po polsku: 1 dzien zamiast 1 dni, 2 dni, 5 dni. Wczesniej kazda liczba dostawala te sama koncowke."
+            "2026-09-02: Liczby odmieniają się po polsku: „1 dzień\" zamiast „1 dni\", „2 dni\", „5 dni\". Wcześniej każda liczba dostawała tę samą końcówkę."
           ],
           "wyjatki": [
             "Drobne: koszty bez separatora tysięcy/waluty (2490.00)."
@@ -3355,12 +3355,12 @@
       "ekrany": [
         {
           "id": "org-identity-operating",
-          "nazwa": "Profil organizacji — tozsamosc i skala",
+          "nazwa": "Profil organizacji — tożsamość i skala",
           "ocena": "A",
           "co": "Profil organizacji z podpowiedzia Teresy.",
           "naprawione": [
             "CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
@@ -3386,7 +3386,7 @@
           "ocena": "A",
           "co": "Profil organizacji, kompletność 60%. Sekcja 'Model operacyjny' oraz pigułki 'Główne systemy' (SAP ERP, Salesforce CRM i in. zaznaczone), sekcja 'Rynek i konkurencja' — 'Główne rynki: Polska, DACH'.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Profil organizacji → Model działania (wariant domyślny, flaga orgRedesignV1 OFF). Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
@@ -3397,7 +3397,7 @@
           "ocena": "A",
           "co": "Sekcja 'Pozycja strategiczna': Pozycja konkurencyjna 'Pretendent', Etap rozwoju 'Skalowanie', Priorytety strategiczne 'Skalowanie praktyki konsultingowej, Wejście na rynek DACH'.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Profil organizacji → Pozycja i kierunek. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
@@ -3408,7 +3408,7 @@
           "ocena": "A",
           "co": "Sekcja 'Technologie i cyfryzacja': pola Dojrzałość cyfrowa (1–7), Wykorzystanie chmury, Stos technologiczny (placeholder 'np. AWS, React, Python, SAP'), Budżet cyfrowy; sekcja 'Komunikacja i preferencje AI'.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Profil organizacji → Technologia, kultura i ograniczenia. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
@@ -3420,7 +3420,7 @@
           "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n (2026-08-31, oba motywy): ekran w całości po polsku. Nagłówek 'Intencja strategiczna', pole 'Cel główny (gwiazda północna)' z przykładem 'Np. Zostać liderem rynku w produkcji na zamówienie, skracając czas realizacji o 50%...', pole 'Cele drugorzędne', sekcja 'Najważniejsze priorytety (wybierz maks. 3)' z sześcioma opcjami PL: 'Efektywność / Redukcja kosztów', 'Wzrost / Zwiększenie sprzedaży', 'Innowacje / Nowe produkty', 'Jakość / Zgodność', 'Szybkość / Zwinność', 'Doświadczenie klienta'. Wcześniej cały formularz był po angielsku ('Primary Objective (North Star)', 'Top Priorities').",
           "naprawione": [
             "Cały formularz 'Intencja strategiczna' przetłumaczony na polski (był w całości po angielsku).",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Cele i oczekiwania → Intencja strategiczna. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3432,7 +3432,7 @@
           "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n: nagłówek 'Mierniki sukcesu (KPI)', opis 'Zdefiniuj mierzalne wskaźniki śledzące sukces. Użyj „Dodaj pozycję”, aby dodać nowe KPI.', kolumny tabeli 'NAZWA KPI / WARTOŚĆ BAZOWA / CEL / HORYZONT CZASU / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'. Wcześniej cała tabela była po angielsku ('Success Metrics (KPIs)', 'KPI NAME'/'BASELINE'/'TARGET', 'No items yet. Add one!').",
           "naprawione": [
             "Nagłówki tabeli i opisy przetłumaczone z angielskiego na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Cele i oczekiwania → Mierniki sukcesu. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3444,7 +3444,7 @@
           "co": "SPRAWDZONE: dwie kolumny 'W zakresie (uwzględnione)' i 'Poza zakresem (wykluczone)', nagłówki tabel 'POZYCJA / OBSZAR / NOTATKI / AKCJE' oraz 'POZYCJA / OBSZAR / POWÓD / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!' w obu kolumnach. Wcześniej: 'In Scope (Included)' / 'Out of Scope (Excluded)' po angielsku.",
           "naprawione": [
             "Obie kolumny (nagłówki + puste stany) przetłumaczone na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Cele i oczekiwania → Zakres i granice. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3456,7 +3456,7 @@
           "co": "SPRAWDZONE: trzy karty 'Archetyp transformacji', 'Współpraca człowiek-AI', 'Sterowanie i nadzór' z pełnym opisowym tekstem po polsku, np. 'Pilotaż i skalowanie (Agile)' — 'Szybkie prototypowanie, MVP, krótkie pętle informacji zwrotnej. Najlepsze przy dużej niepewności.', 'Doradca strategiczny' — 'AI kwestionuje założenia i dostarcza benchmarki. Ty decydujesz.'. Wcześniej całe karty ('Transformation Archetype' itd.) były po angielsku.",
           "naprawione": [
             "Wszystkie trzy kolumny kart (9 opcji) przetłumaczone z angielskiego na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Cele i oczekiwania → Oczekiwania interesariuszy. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3468,7 +3468,7 @@
           "co": "SPRAWDZONE: nagłówek 'Zadeklarowane wyzwania', badge 'DLA: ZADEKLAROWANE WYZWANIA' (był 'DLA: DECLARED CHALLENGES'), opis 'Oficjalne problemy zgłoszone przez klienta (objawy).', nagłówki tabeli 'WYZWANIE / OBJAW / OBSZAR FUNKCJONALNY / WAGA / NOTATKI / KONTEKST / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
           "naprawione": [
             "Badge i nagłówki tabeli przetłumaczone na polski (były w całości po angielsku mimo polskiego menu bocznego).",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Wyzwania → Zadeklarowane wyzwania. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3480,25 +3480,25 @@
           "co": "SPRAWDZONE: nagłówek 'Przyczyny źródłowe', baner 'Pytania diagnostyczne: Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.', cztery pytania po polsku: 'Gdzie utykają decyzje?', 'Gdzie jest najsilniejszy opór wobec zmiany?', 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?', 'Czy istnieje rozdźwięk między wizją zarządu a rzeczywistością?' z polskimi przykładami (np. 'Obawy kadry średniego szczebla, brak danych...'). Wcześniej całość po angielsku.",
           "naprawione": [
             "Baner i cztery pytania diagnostyczne (z przykładami) przetłumaczone na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Wyzwania → Przyczyny źródłowe. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-goal-blockers",
-          "nazwa": "Organizacja — Blockery celów",
+          "nazwa": "Organizacja — Blokery celów",
           "ocena": "B",
           "co": "SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.",
           "naprawione": [
             "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego.",
             "Nagłówek ujednolicony z treścią ekranu. SPROSTOWANIE: forma „Blokery\" ZOSTAJE — pierwsza wersja naprawy zmieniła ją na „Blokady\", ale zrzut pokazał, że pięć innych plików używa ustalonej formy „bloker/blokery\"; cofnięte (2026-09-02)",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu)."
           ],
-          "gdzie": "Organizacja → Wyzwania → Blockery celów. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+          "gdzie": "Organizacja → Wyzwania → Blokery celów. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-evidence",
@@ -3507,7 +3507,7 @@
           "co": "SPRAWDZONE: nagłówek 'Dowody', badge 'DLA: DOWODY', nagłówek sekcji 'Dowody i punkty danych', nagłówki tabeli 'WSKAŹNIK / PUNKT DANYCH / OBJAW / OBSERWACJA / SYSTEM ŹRÓDŁOWY / DOKUMENT / LINK / ODWOŁANIE / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
           "naprawione": [
             "Badge i nagłówki tabeli przetłumaczone na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Wyzwania → Dowody. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3521,7 +3521,7 @@
             "Cała treść (baner, tabela, nagłówki) przetłumaczona na polski.",
             "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
             "Baner „Logika oceny ryzyka\" był czerwony mimo neutralnej treści — teraz spokojny pas informacyjny; bliźniaczy baner szans w tym samym pliku był już poprawnie zielony (2026-09-02)",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny."
@@ -3536,7 +3536,7 @@
           "naprawione": [
             "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO).",
             "Baner rekomendowanego scenariusza i odznaka REKOMENDOWANY były czerwone — teraz zielone (2026-09-02)",
-            "2026-09-02: Boczne menu ma poprawione literowki (Blokery celow, Przyczyny i blokery), a plakietka REKOMENDOWANY nad kartą scenariusza przestala byc czerwona — rekomendacja to dobra wiadomosc, nie alarm."
+            "2026-09-02: Boczne menu ma poprawione literówki („Blokery celów\", „Przyczyny i blokery\"), a plakietka REKOMENDOWANY nad kartą scenariusza przestała być czerwona i jest zielona — rekomendacja to dobra wiadomość, nie alarm."
           ],
           "wyjatki": [
             "Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny."
@@ -3550,7 +3550,7 @@
           "co": "SPRAWDZONE: nagłówek 'Rekomendacja', baner (zielony, nie crimson) 'Przewagi strategiczne — Na podstawie profilu firmy i celów zidentyfikowaliśmy te kluczowe mocne strony i szanse rynkowe.', sekcja 'Mocne strony i szanse', nagłówki tabeli 'MOCNA STRONA / SZANSA / DOWÓD / GDZIE ZAOBSERWOWANO / JAK WYKORZYSTAĆ / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
           "naprawione": [
             "Baner i tabela przetłumaczone na polski.",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Synteza strategiczna → Rekomendacja. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3565,7 +3565,7 @@
             "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
             "Treść karty w pełni przetłumaczona.",
             "W ciemnym motywie cała karta danych firmy miała czerwone tło: autor napisał dark:from-primary-900 nie wiedząc, że primary = crimson; naprawione razem z CTA „Eksportuj PDF\" i wartością „Docelowa dojrzałość\" (2026-09-02)",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.",
@@ -3579,7 +3579,7 @@
           "ocena": "A",
           "co": "'Pliki organizacji', badge 'NIEZWERYFIKOWANE', komunikat: 'Obecna ekstrakcja dokumentu tworzy wyłącznie propozycje pól. Nie potwierdzono trwałej, wersjonowanej kolekcji plików, dlatego ekran nie pokazuje fikcyjnej listy ani przycisku upload.' — w pełni po polsku, uczciwe komunikowanie stanu funkcji zamiast fikcyjnych danych.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Źródła i wiedza → Pliki. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
@@ -3591,7 +3591,7 @@
           "co": "SPRAWDZONE: nagłówek 'Twierdzenia i źródła', sekcja 'Nadzorowany kontekst organizacji', 'Źródła (2)' pokazuje 'Wywiad' / 'Dokument' (było 'interview'/'document' małymi literami), 'Konflikty (0)' — 'Brak sprzecznych wartości w widocznych twierdzeniach.', 'Twierdzenia (2)' z kartami 'Opis firmy' (było 'item-1') i 'Branża', treść 'Niezależna firma doradcza z sektora handlu i produkcji.', metadane 'Wywiad · 86% · Cała organizacja' (było 'interview · 86% · organization'), status 'Zatwierdzone' / 'Oczekuje na decyzję' (było 'approved').",
           "naprawione": [
             "Surowe wartości 'interview'/'document'/'organization'/'approved'/'item-1' zamienione na polskie etykiety ('Wywiad', 'Dokument', 'Cała organizacja', 'Zatwierdzone', opisowe nazwy pól).",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Źródła i wiedza → Twierdzenia i źródła. Zrzuty: evidence/grafika/156-organizacja-i18n/"
@@ -3603,7 +3603,7 @@
           "co": "SPRAWDZONE: identyczna naprawa jak 'Twierdzenia i źródła' (ten sam widok renderuje się pod pozycją menu 'Konflikty źródeł') — surowe wartości ('interview'/'item-1'/'organization'/'approved') zamienione na polskie etykiety.",
           "naprawione": [
             "Surowe wartości techniczne zamienione na etykiety PL (jak w 'Twierdzenia i źródła').",
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Ekran nie różni się treścią od 'Twierdzenia i źródła' — możliwe, że to celowy wspólny widok; do potwierdzenia, nieblokujące dla i18n."
@@ -3616,7 +3616,7 @@
           "ocena": "B",
           "co": "'Graf wiedzy' — pigułki liczników po polsku (ENCJE 38, RELACJE 74, ŚR. PEWNOŚĆ 79%, NIEAKTUALNE 2, ZREDAGOWANE 0), ale etykiety typów encji po angielsku: 'Process (18)', 'Person (9)', 'System (6)', 'Organization (1)'. Pusty stan wyszukiwania 'Wyszukaj encje aby zobaczyć graf wiedzy' po polsku.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [
             "Etykiety typów encji (Process/Person/System/Organization) nieprzetłumaczone, reszta ekranu po polsku."
@@ -3629,7 +3629,7 @@
           "ocena": "A",
           "co": "'Gotowość organizacji' — '1 blokada wymaga działania', 4 kafle (Zatwierdzone fakty 1, Otwarte konflikty 0, Oczekuje na decyzję 1, Opublikowana wersja v3), 'Ostatnia publikacja 31.08.2026' (poprawny format DD.MM.RRRR). W pełni po polsku, czytelnie w obu motywach.",
           "naprawione": [
-            "2026-09-02: Boczne menu modulu ma poprawione dwie literowki: Blokery celow i Przyczyny i blokery (bylo Blockery). To samo menu stoi na kazdym ekranie Organizacji."
+            "2026-09-02: Boczne menu modułu ma poprawione dwie literówki: „Blokery celów\" i „Przyczyny i blokery\" (było „Blockery\"). To samo menu stoi na każdym ekranie Organizacji."
           ],
           "wyjatki": [],
           "gdzie": "Organizacja → Gotowość i nadzór → Gotowość organizacji. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
@@ -3797,7 +3797,7 @@
         },
         {
           "id": "preview-4-zakladki",
-          "nazwa": "Podglad — cztery zakladki",
+          "nazwa": "Podgląd — cztery zakładki",
           "ocena": "C",
           "co": "PRZEKLASYFIKOWANO 2026-09-01 (audyt przyrządu, tor grafiki): ekran sam siebie opisuje w komentarzu jako „EKRAN PORÓWNAWCZY podglądów, NIE jest ekranem produktu, jest przyrządem pomiarowym” (cztery podglądy obok siebie do porównania, nie realny widok aplikacji). Wcześniejsza ocena A — jeśli to nieporozumienie, zweryfikuj z właścicielem. Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
           "naprawione": [],
@@ -3830,7 +3830,7 @@
         },
         {
           "id": "fab-rail-kebab",
-          "nazwa": "Szyna narzedzi i menu trzech kropek",
+          "nazwa": "Szyna narzędzi i menu trzech kropek",
           "ocena": "B",
           "co": "Tabela kanoniczna z realna szyna narzedzi.",
           "naprawione": [
@@ -4035,7 +4035,7 @@
           "co": "Połączone aplikacje: karty (Gmail, Kalendarz, Slack i in.) z opisami funkcji i tagami (np. 'Email sync', 'Contact import', 'Label mapping').",
           "naprawione": [
             "Opisy i tagi 20 integracji oraz licznik „2 connected\" były po angielsku mimo polskiej powłoki — przetłumaczone (2026-09-02)",
-            "2026-09-02: Nazwy funkcji integracji sa po polsku: Synchronizacja e-maili, Import kontaktow, Synchronizacja spotkan zamiast angielskich odpowiednikow."
+            "2026-09-02: Nazwy funkcji integracji są po polsku: „Synchronizacja e-maili\", „Import kontaktów\", „Synchronizacja spotkań\" zamiast angielskich odpowiedników."
           ],
           "wyjatki": [
             "Opisy kart integracji i tagi funkcji (np. 'Sync emails, contacts and labels from your Gmail account', 'Email sync', 'Contact import') renderują się po angielsku mimo polskich nagłówków sekcji — dev-render (connected-apps) wskazuje surowy window.fetch z pominięciem warstwy Api/i18n dla treści kart."
@@ -4097,7 +4097,7 @@
           "ocena": "A",
           "co": "Ekran logowania: e-mail, haslo, przycisk Zaloguj sie, odzyskiwanie hasla, zalozenie konta i wejscie kodem organizacji.",
           "naprawione": [
-            "2026-09-02: Caly ekran mowi po polsku, takze dla goscia, ktory jeszcze nie ma konta — wczesniej anonimowy odwiedzajacy dostawal angielski. Odnosniki przestaly byc ciemnoczerwone i sa niebieskie, jak w reszcie aplikacji."
+            "2026-09-02: Cały ekran mówi po polsku, także dla gościa, który jeszcze nie ma konta — wcześniej anonimowy odwiedzający dostawał angielski. Odnośniki przestały być ciemnoczerwone i są niebieskie, jak w reszcie aplikacji."
           ],
           "wyjatki": [],
           "gdzie": "Pierwszy ekran po wejsciu na adres aplikacji, zanim ktokolwiek sie zaloguje."
@@ -4108,7 +4108,7 @@
           "ocena": "A",
           "co": "Formularz zalozenia konta wraz ze zgodami prawnymi i odnosnikami do regulaminu.",
           "naprawione": [
-            "2026-09-02: Caly ekran mowi po polsku, takze dla goscia, ktory jeszcze nie ma konta — wczesniej anonimowy odwiedzajacy dostawal angielski. Odnosniki przestaly byc ciemnoczerwone i sa niebieskie, jak w reszcie aplikacji."
+            "2026-09-02: Cały ekran mówi po polsku, także dla gościa, który jeszcze nie ma konta — wcześniej anonimowy odwiedzający dostawał angielski. Odnośniki przestały być ciemnoczerwone i są niebieskie, jak w reszcie aplikacji."
           ],
           "wyjatki": [],
           "gdzie": "Ekran logowania → odnosnik \"Utworz je\" pod formularzem."
@@ -4119,7 +4119,7 @@
           "ocena": "A",
           "co": "Krok, w ktorym zaproszony wpisuje kod dostepu do przestrzeni swojej organizacji.",
           "naprawione": [
-            "2026-09-02: Caly ekran mowi po polsku, takze dla goscia, ktory jeszcze nie ma konta — wczesniej anonimowy odwiedzajacy dostawal angielski. Odnosniki przestaly byc ciemnoczerwone i sa niebieskie, jak w reszcie aplikacji."
+            "2026-09-02: Cały ekran mówi po polsku, także dla gościa, który jeszcze nie ma konta — wcześniej anonimowy odwiedzający dostawał angielski. Odnośniki przestały być ciemnoczerwone i są niebieskie, jak w reszcie aplikacji."
           ],
           "wyjatki": [],
           "gdzie": "Ekran logowania → przycisk \"Wpisz kod dostepu\"."
@@ -4130,7 +4130,7 @@
           "ocena": "A",
           "co": "Prosba o link do zmiany hasla wyslany na e-mail, wraz z potwierdzeniem wyslania.",
           "naprawione": [
-            "2026-09-02: Caly ekran mowi po polsku, takze dla goscia, ktory jeszcze nie ma konta — wczesniej anonimowy odwiedzajacy dostawal angielski. Odnosniki przestaly byc ciemnoczerwone i sa niebieskie, jak w reszcie aplikacji."
+            "2026-09-02: Cały ekran mówi po polsku, także dla gościa, który jeszcze nie ma konta — wcześniej anonimowy odwiedzający dostawał angielski. Odnośniki przestały być ciemnoczerwone i są niebieskie, jak w reszcie aplikacji."
           ],
           "wyjatki": [],
           "gdzie": "Ekran logowania → odnosnik \"Zapomniales hasla?\"."
@@ -4141,7 +4141,7 @@
           "ocena": "A",
           "co": "Ustawienie nowego hasla po klinieciu w link z wiadomosci e-mail.",
           "naprawione": [
-            "2026-09-02: Caly ekran mowi po polsku, takze dla goscia, ktory jeszcze nie ma konta — wczesniej anonimowy odwiedzajacy dostawal angielski. Odnosniki przestaly byc ciemnoczerwone i sa niebieskie, jak w reszcie aplikacji."
+            "2026-09-02: Cały ekran mówi po polsku, także dla gościa, który jeszcze nie ma konta — wcześniej anonimowy odwiedzający dostawał angielski. Odnośniki przestały być ciemnoczerwone i są niebieskie, jak w reszcie aplikacji."
           ],
           "wyjatki": [],
           "gdzie": "Link w wiadomosci e-mail o zmianie hasla."

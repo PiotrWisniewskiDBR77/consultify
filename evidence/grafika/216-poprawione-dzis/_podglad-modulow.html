@@ -1,0 +1,169 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karty modułów — podgląd</title><style>
+:root{--tlo:#f7f8fa;--karta:#fff;--tekst:#0f172a;--drugi:#475569;--kres:#e2e8f0;--ok:#15803d;--nieb:#1d4ed8;--zolty:#b45309}
+*{box-sizing:border-box}
+body{margin:0;background:var(--tlo);color:var(--tekst);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.pasek{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--kres);padding:12px 20px;display:flex;gap:18px;align-items:baseline;flex-wrap:wrap}
+.pasek h1{font-size:16px;margin:0;font-weight:650}
+.pasek .lic{color:var(--drugi);font-size:13.5px}
+.mkarty{padding:20px;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.mk{background:var(--karta);border:1px solid var(--kres);border-radius:14px;padding:20px 22px}
+.mk[data-stan=zamykam]{border-color:var(--ok);box-shadow:0 0 0 2px #bbf7d0 inset}
+.mk header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.mk h3{font-size:20px;margin:0;font-weight:650;letter-spacing:-.01em}
+.plom{font-size:12px;padding:3px 11px;border-radius:999px;background:#f1f5f9;color:var(--drugi);font-weight:600}
+.plom.zam{background:#dcfce7;color:#14532d}
+.plom.jesz{background:#fef3c7;color:#92400e}
+.doczego{color:var(--drugi);font-size:14.5px;margin:7px 0 0;max-width:84ch}
+.liczby{display:flex;gap:18px;flex-wrap:wrap;margin:13px 0 4px;padding:10px 0;border-top:1px solid #eef1f6;border-bottom:1px solid #eef1f6}
+.liczby span{font-size:13.5px;color:var(--drugi)}
+.liczby b{color:var(--tekst);font-size:17px;font-variant-numeric:tabular-nums;margin-right:4px}
+.liczby i{font-style:normal;font-size:12.5px;color:#94a3b8}
+.liczby .uw b{color:var(--zolty)}
+.mblok{margin-top:16px}
+.mblok h4{font-size:14px;margin:0 0 9px;font-weight:650;display:flex;align-items:center;gap:8px}
+.mblok h4 .licz{background:var(--tekst);color:#fff;border-radius:999px;font-size:11.5px;padding:1px 8px;font-variant-numeric:tabular-nums}
+.mblok.pusto p{color:#64748b;font-size:13.5px;margin:0;font-style:italic}
+.mblok.szary{background:#f8fafc;border:1px solid #eef1f6;border-radius:10px;padding:12px 14px}
+.mblok.szary p{color:var(--drugi);font-size:13px;margin:0 0 7px}
+.grupa{margin-bottom:16px}
+.gopis{font-size:13.5px;color:var(--drugi);margin:0 0 9px;max-width:88ch;line-height:1.55}
+.gile{display:inline-block;margin-left:7px;background:#eef2ff;color:#3730a3;border-radius:999px;font-size:11.5px;font-weight:650;padding:1px 9px;white-space:nowrap}
+.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mini figure{margin:0;background:#fbfcfd;border:1px solid #eef1f6;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.mini img{width:100%;display:block;border-bottom:1px solid #eef1f6;background:#fff}
+.mini figcaption{padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.mini figcaption{font-size:12.5px;font-weight:600;color:var(--tekst);padding:7px 10px}
+.otwarte{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.otwarte li{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;display:flex;flex-direction:column;gap:4px}
+.otwarte b{font-size:13px;color:#78350f}
+.otwarte q{font-size:13.5px;color:#92400e;font-style:italic}
+.otwarte .domyka{font-size:12.5px;color:#57534e}
+.otwarte .kl{align-self:flex-start;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:5px;padding:1px 6px;background:#e7e5e4;color:#57534e}
+.otwarte .kl-ZROBIONE{background:#dcfce7;color:#14532d}
+.otwarte .kl-DO_NAPRAWY{background:#fee2e2;color:#7f1d1d}
+.otwarte .kl-BACKLOG{background:#e0e7ff;color:#3730a3}
+.brakkorpusu{font-size:12.5px;color:var(--drugi);margin:0 0 9px;font-style:italic}
+.poza{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+.poza li{background:#fff;border:1px solid var(--kres);border-radius:7px;padding:3px 9px;font-size:12.5px;color:var(--drugi)}
+.poza .o{font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;margin-left:4px}
+.poza .oC{background:#fee2e2;color:#991b1b}.poza .oD{background:#e2e8f0;color:#475569}
+.makcje{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.mb{border:1px solid var(--kres);background:#fff;border-radius:9px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--tekst);font-family:inherit}
+.mb:hover{background:#f1f5f9}
+.mb.zamykam.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.mb.jeszcze.on{background:var(--zolty);border-color:var(--zolty);color:#fff}
+.mb.link{margin-left:auto;font-weight:500;color:var(--nieb);border-color:transparent;background:transparent;text-decoration:underline}
+.mpowod{width:100%;margin-top:9px;border:1px solid var(--kres);border-radius:9px;padding:7px 11px;font-size:13.5px;font-family:inherit}
+.mzapis{font-size:12px;color:#94a3b8;margin-top:6px;min-height:15px}
+</style></head><body>
+<div class="pasek"><h1>Odbiór modułowy — 2 z 16</h1>
+<span class="lic">Jedna karta na moduł. Jedno kliknięcie na moduł. To jest Twoje ostatnie przejście, nie kolejny przegląd ekranów.</span></div>
+<main class="mkarty"><article class="mk" id="m-01_ORGANIZATION" data-modul="01_ORGANIZATION" data-stan="">
+  <header>
+    <h3>Organizacja</h3>
+    <span class="plom">czeka na Twoją decyzję</span>
+  </header>
+  <p class="doczego">Tu zbierasz i porządkujesz wiedzę o kliencie: kim jest, dokąd zmierza, co go blokuje i skąd to wiesz — zanim cokolwiek mu zaproponujesz.</p>
+  <div class="liczby">
+    <span><b>21</b> ekranów do odbioru</span>
+    <span><b>21</b> z Twoją decyzją <i>— przyjęte 02.09, 12:44</i></span>
+    
+  </div>
+  <div class="mblok">
+        <h4>Co się w tym module zmieniło dzisiaj <span class="licz">21</span></h4>
+        
+          <div class="grupa">
+            <p class="gopis">Boczne menu modułu ma poprawione dwie literówki: „Blokery celów&quot; i „Przyczyny i blokery&quot; (było „Blockery&quot;). To samo menu stoi na każdym ekranie Organizacji.
+              <span class="gile">na 20 ekranach</span></p>
+            <div class="mini">
+              <figure><a href="./org-claims-sources__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-claims-sources__PO__light.png" alt=""></a>
+              <figcaption>Twierdzenia i źródła</figcaption></figure>
+              <figure><a href="./org-declared-challenges__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-declared-challenges__PO__light.png" alt=""></a>
+              <figcaption>Zadeklarowane wyzwania</figcaption></figure>
+              <figure><a href="./org-evidence__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-evidence__PO__light.png" alt=""></a>
+              <figcaption>Dowody</figcaption></figure>
+              <figure><a href="./org-executive-brief__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-executive-brief__PO__light.png" alt=""></a>
+              <figcaption>Executive brief</figcaption></figure>
+              <figure><a href="./org-files__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-files__PO__light.png" alt=""></a>
+              <figcaption>Pliki</figcaption></figure>
+              <figure><a href="./org-goal-blockers__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-goal-blockers__PO__light.png" alt=""></a>
+              <figcaption>Blokery celów</figcaption></figure>
+              <figure><a href="./org-identity-operating__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-identity-operating__PO__light.png" alt=""></a>
+              <figcaption>Profil organizacji — tożsamość i skala</figcaption></figure>
+              <figure><a href="./org-knowledge-graph__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-knowledge-graph__PO__light.png" alt=""></a>
+              <figcaption>Graf wiedzy</figcaption></figure>
+              <figure><a href="./org-operating-model__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-operating-model__PO__light.png" alt=""></a>
+              <figcaption>Model działania</figcaption></figure>
+              <figure><a href="./org-position-direction__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-position-direction__PO__light.png" alt=""></a>
+              <figcaption>Pozycja i kierunek</figcaption></figure>
+              <figure><a href="./org-recommendation__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-recommendation__PO__light.png" alt=""></a>
+              <figcaption>Rekomendacja</figcaption></figure>
+              <figure><a href="./org-risks-opportunities__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-risks-opportunities__PO__light.png" alt=""></a>
+              <figcaption>Ryzyka i szanse</figcaption></figure>
+              <figure><a href="./org-root-causes__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-root-causes__PO__light.png" alt=""></a>
+              <figcaption>Przyczyny źródłowe</figcaption></figure>
+              <figure><a href="./org-scope-boundaries__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-scope-boundaries__PO__light.png" alt=""></a>
+              <figcaption>Zakres i granice</figcaption></figure>
+              <figure><a href="./org-source-conflicts__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-source-conflicts__PO__light.png" alt=""></a>
+              <figcaption>Konflikty źródeł</figcaption></figure>
+              <figure><a href="./org-stakeholder-expectations__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-stakeholder-expectations__PO__light.png" alt=""></a>
+              <figcaption>Oczekiwania interesariuszy</figcaption></figure>
+              <figure><a href="./org-strategic-intent__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-strategic-intent__PO__light.png" alt=""></a>
+              <figcaption>Intencja strategiczna</figcaption></figure>
+              <figure><a href="./org-success-metrics__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-success-metrics__PO__light.png" alt=""></a>
+              <figcaption>Mierniki sukcesu</figcaption></figure>
+              <figure><a href="./org-summary__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-summary__PO__light.png" alt=""></a>
+              <figcaption>Gotowość organizacji</figcaption></figure>
+              <figure><a href="./org-technology-culture-constraints__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-technology-culture-constraints__PO__light.png" alt=""></a>
+              <figcaption>Technologia, kultura i ograniczenia</figcaption></figure>
+            </div>
+          </div>
+          <div class="grupa">
+            <p class="gopis">Boczne menu ma poprawione literówki („Blokery celów&quot;, „Przyczyny i blokery&quot;), a plakietka REKOMENDOWANY nad kartą scenariusza przestała być czerwona i jest zielona — rekomendacja to dobra wiadomość, nie alarm.
+              <span class="gile">na 1 ekranie</span></p>
+            <div class="mini">
+              <figure><a href="./org-scenarios__PO__light.png" target="_blank"><img loading="lazy" src="./mini-org-scenarios__PO__light.png" alt=""></a>
+              <figcaption>Scenariusze</figcaption></figure>
+            </div>
+          </div>
+        </div>
+  <div class="mblok pusto"><h4>Co w tym module zostaje otwarte</h4>
+        <p>Nic. Nie zostawiłeś tu żadnej uwagi, której byśmy nie domknęli.</p></div>
+  <div class="mblok szary"><h4>Czego ten moduł nie obejmuje <span class="licz">1</span></h4>
+        <p>Te ekrany nie szły do odbioru — świadomie ich nie pokazywaliśmy. Zamknięcie modułu ich nie dotyczy:</p>
+        <ul class="poza"><li>Organizacja — redesign 21→11, komplet <span class="o oD">D</span></li></ul></div>
+  <div class="makcje">
+    <button class="mb zamykam " data-m="01_ORGANIZATION" data-d="zamykam">Zamykam moduł</button>
+    <button class="mb jeszcze " data-m="01_ORGANIZATION" data-d="jeszcze">Jeszcze nie — powód</button>
+    <a class="mb link" href="/?modul=01_ORGANIZATION" target="_blank">Pokaż wszystkie ekrany modułu</a>
+  </div>
+  <input class="mpowod" data-m="01_ORGANIZATION" placeholder="powód, jeśli jeszcze nie — zapisuje się sam" value="">
+  <div class="mzapis"></div>
+</article>
+<article class="mk" id="m-08_MEETINGS" data-modul="08_MEETINGS" data-stan="">
+  <header>
+    <h3>Spotkania</h3>
+    <span class="plom">czeka na Twoją decyzję</span>
+  </header>
+  <p class="doczego">Tu umawiasz i prowadzisz spotkania z klientem, razem ze stroną, przez którą klient sam rezerwuje termin.</p>
+  <div class="liczby">
+    <span><b>2</b> ekranów do odbioru</span>
+    <span><b>2</b> z Twoją decyzją <i>— przyjęte 02.09, 12:44</i></span>
+    
+  </div>
+  <div class="mblok pusto"><h4>Co się w tym module zmieniło dzisiaj</h4>
+        <p>Nic. Ten moduł przyjąłeś wcześniej i dzisiejsze naprawy go nie dotknęły — oglądasz dokładnie to, co zatwierdziłeś.</p></div>
+  <div class="mblok pusto"><h4>Co w tym module zostaje otwarte</h4>
+        <p>Nic. Nie zostawiłeś tu żadnej uwagi, której byśmy nie domknęli.</p></div>
+  <div class="mblok szary pusto"><h4>Czego ten moduł nie obejmuje</h4>
+        <p>Nic nie zostało poza odbiorem — wszystkie ekrany tego modułu były Ci pokazane.</p></div>
+  <div class="makcje">
+    <button class="mb zamykam " data-m="08_MEETINGS" data-d="zamykam">Zamykam moduł</button>
+    <button class="mb jeszcze " data-m="08_MEETINGS" data-d="jeszcze">Jeszcze nie — powód</button>
+    <a class="mb link" href="/?modul=08_MEETINGS" target="_blank">Pokaż wszystkie ekrany modułu</a>
+  </div>
+  <input class="mpowod" data-m="08_MEETINGS" placeholder="powód, jeśli jeszcze nie — zapisuje się sam" value="">
+  <div class="mzapis"></div>
+</article></main></body></html>
