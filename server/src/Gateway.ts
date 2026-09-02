@@ -882,7 +882,22 @@ export class ApiGateway {
       });
 
       // Core API routes
-      app.use('/api/conclusions', conclusionsRoutes);
+      // CONCLUSION_LAYER — `MODULE_CONCLUSIONS` = 'closed' w SSOT
+      // (`server/src/sharedRuntime/utils/betaMenuStatus.ts`; wpis nawigacyjny
+      // usunięty z menuConfig 2026-07-04 decyzją właściciela). Do 2026-09-02
+      // ten mount nie miał ŻADNEJ bramki modułu: zmierzone — rola USER robiła
+      // `POST /api/conclusions` -> 201 i wiersz w `conclusions` (odczyt na
+      // zimno, osobny klient pg poza pulą aplikacji).
+      // ★ `gatewayVerifyToken` MUSI stać PRZED bramką: `verifyToken` jest tu
+      // deklarowany wewnątrz routera (`conclusions.routes.ts` → `router.use`),
+      // więc bez tego bramka widziałaby pustą rolę i 403 dostałby też
+      // właściciel (wygaszenie modułu dla wszystkich).
+      app.use(
+        '/api/conclusions',
+        gatewayVerifyToken,
+        createModuleGate('MODULE_CONCLUSIONS'),
+        conclusionsRoutes
+      );
       app.use('/api/artifact-conversions', artifactConversionsRoutes);
       app.use('/api/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
       // Zwornik Delta A (Z95/#78): org/project stakeholder registry.
