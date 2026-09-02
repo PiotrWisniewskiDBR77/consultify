@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "module": "03_TOOLS",
+  "result": "PASS",
+  "gitSha": "29745c31546708a37f1ab8196969e0f5b57d5ab1",
+  "clientStarted": false,
+  "server": {
+    "gateway": "ApiGateway.getInstance().initializeRoutes(app)",
+    "host": "127.0.0.1",
+    "port": 5288
+  },
+  "database": {
+    "image": "pgvector/pgvector:pg16",
+    "imageDigest": "sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b",
+    "port": 6284,
+    "name": "cx283"
+  },
+  "migrations": {
+    "applied": 883,
+    "secondRunApplied": 0
+  },
+  "http": {
+    "registration": 200,
+    "signedJwtLogin": 200,
+    "coldRead": 200,
+    "matched": true
+  },
+  "reproductionCommand": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce CI=true DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6284/cx283 JWT_SECRET=day283-test-secret-do-not-reuse npx tsx server/src/scripts/g01-environment-qualification.ts --module 03_TOOLS --port 5288"
+}
