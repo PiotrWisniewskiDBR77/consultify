@@ -16,7 +16,6 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { RouterSync } from '../../src/components/RouterSync';
 import { SettingsHistory } from '../../src/components/settings/advanced/SettingsHistory';
 import { AIBehaviorSettings } from '../../src/components/settings/AIBehaviorSettings';
-import { BillingSettings } from '../../src/components/settings/BillingSettings';
 import { ConnectedAppsSettings } from '../../src/components/settings/ConnectedAppsSettings';
 import { DataControlsSettings } from '../../src/components/settings/DataControlsSettings';
 import { NotificationSettings } from '../../src/components/settings/NotificationSettings';
@@ -27,7 +26,6 @@ import SettingsSidebar, {
   type SettingsSection,
 } from '../../src/components/settings/SettingsSidebar';
 import { ThemeSettings } from '../../src/components/settings/ThemeSettings';
-import { AccessPolicyProvider } from '../../src/contexts/AccessPolicyContext';
 import { Api } from '../../src/services/api';
 import { SettingsApi } from '../../src/services/api/settings.api';
 import { useAppStore } from '../../src/store/useAppStore';
@@ -237,11 +235,13 @@ function Panel({ section }: { section: SettingsSection }): React.ReactElement {
     case 'data-controls':
       return <DataControlsSettings currentUser={owner} onUpdateUser={() => undefined} />;
     case 'billing':
-      return (
-        <AccessPolicyProvider>
-          <BillingSettings currentUser={owner} />
-        </AccessPolicyProvider>
-      );
+      // Parytet z produkcją (src/views/SettingsView.tsx, case 'billing'): organization
+      // billing jest własnością Admina, route-level resolver od razu przekierowuje tam
+      // uprawnionych — legacy `BillingSettings` NIE jest montowany, dopóki to przekierowanie
+      // się nie ustabilizuje. Bramka `check-dev-render-parytet.mjs` złapała tę rozbieżność
+      // 2026-09-02 (harness montował `<BillingSettings>`, którego produkcja nigdzie nie
+      // renderuje) — naprawione tu, żeby zrzut pokazywał to samo puste, co realny ekran.
+      return null;
     case 'theme':
       return <ThemeSettings />;
     case 'developer':

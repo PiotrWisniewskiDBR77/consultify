@@ -12,19 +12,29 @@
 #
 # Regeneruj TYLKO gdy dług ŚWIADOMIE SPADŁ. Nigdy żeby uciszyć nową regresję.
 # WYGENEROWANO: 2026-09-02 (node scripts/check-dev-render-parytet.mjs --update)
-# RAZEM: 103 pozycji
+# RAZEM: 111 pozycji
+# DŁUG ŚWIADOMIE SPADŁ (2026-09-02, odbiór bramki, patrz BRAMKA_PARYTETU_20260902.md):
+# usunięto `angielskie-resztki-i18n R1 MonteCarloNpvPanel` — naprawiona bramka (wzorzec
+# mapy komponentów `{klucz: lazy(...)}`) teraz poprawnie widzi wołacz tego komponentu
+# przez `FinanceValuePanelsSurface.tsx`, zweryfikowane ręcznie: `angielskie-resztki-i18n.tsx`
+# montuje realny `<MonteCarloNpvPanel fetcher={fetcher} />` z `@/components/Economics/panels/MonteCarloNpvPanel`.
 accent-soft-token-fix	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 accent-soft-token-fix	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 admin-health	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 agent-plan-canvas	R3	max-w-5xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-5xl, którego nie ma ani u wołacza, ani w komponencie
 agent-plan-view	R1	AgentPlanView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AgentPlanView>, którego żaden plik src/ nie renderuje
-angielskie-resztki-i18n	R1	MonteCarloNpvPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <MonteCarloNpvPanel>, którego żaden plik src/ nie renderuje
 assessment-initiatives-table	R1	InitiativesTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <InitiativesTable>, którego żaden plik src/ nie renderuje
 assessment-output-report	R1	AssessmentReportView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentReportView>, którego żaden plik src/ nie renderuje
 assessment-presentation-view	R1	AssessmentPresentationView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentPresentationView>, którego żaden plik src/ nie renderuje
 assessment-reports-table	R1	ReportsTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <ReportsTable>, którego żaden plik src/ nie renderuje
 audyty-drd-report	R1	AuditsHub	dług zastany 2026-09-01 (audyt przyrządu): montuje <AuditsHub>, którego żaden plik src/ nie renderuje
 audyty-warsztat-kryterium	R1	CriterionWorkspaceGate	dług zastany 2026-09-01 (audyt przyrządu): montuje <CriterionWorkspaceGate>, którego żaden plik src/ nie renderuje
+auth-code-entry	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: ta sama kompozycja co auth-login (src/routes/AppRoutes.tsx:844-851), inny initialStep. Dowod jak wyzej.
+auth-forgot-password	R2	AuthLayout+ForgotPasswordView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:1476-1480 (trasa /forgot-password: <AuthLayout><Suspense><ForgotPasswordView /></Suspense></AuthLayout>).
+auth-login	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:844-851 (<AuthLayout><AuthView initialStep=... /></AuthLayout>). Bramka tego nie widzi, bo kompozycja stoi w elemencie trasy, a AuthView wchodzi przez lazyWithRetry(...).then(m => ({default: m.AuthView})). To SZOSTA slepota tej bramki — dopisana swiadomie, nie po cichu.
+auth-register	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: ta sama kompozycja co auth-login (src/routes/AppRoutes.tsx:844-851), inny initialStep. Dowod jak wyzej.
+auth-reset-password	R2	AuthLayout+ResetPasswordView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:1488-1492 (trasa /reset-password: <AuthLayout><Suspense><ResetPasswordView /></Suspense></AuthLayout>).
+auth-verify-email	R1	VerifyEmail	PRAWDZIWE naruszenie, przyjete swiadomie: <VerifyEmail> nie ma zadnego wolacza w src/ — do tego ekranu nie prowadzi zadna trasa. Dlatego ekran ma w rejestrze ocene D i NIE JEST pokazywany wlascicielowi. Zostaje w rejestrze, zeby nie zginal (regula nr 5).
 canvas-kebab-restructure	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 canvas-toolbar-md-history	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 capability-gate-demo	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
@@ -35,6 +45,8 @@ crimson-mywork-wave2	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrzą
 crimson-wave-chrome-2026-07-26	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 crimson-wave-chrome-2026-07-26	PODPIS	tekst:PRZED/PO etykieta	przyrząd pomiarowy, nie ekran produktu (klasyfikacja 2026-09-01, robotnik toru grafiki — dyptyk/gallery/proof, patrz docs/program/grafika/status.json ocena C gdzie dotyczy)
 crimson-wave-chrome-2026-07-26	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+day221-audyty-warsztat	PODPIS	naglowek	EKRAN_DO_WYCOFANIA (odbior bramki 2026-09-02, patrz BRAMKA_PARYTETU_20260902.md): patrz wpis R1 nizej, ten sam ekran.
+day221-audyty-warsztat	R1	(brak montażu)	EKRAN_DO_WYCOFANIA, zweryfikowane 2026-09-02: caly plik (dev-render/screens/day221-audyty-warsztat.tsx, 58 linii) to rekopisany od zera markup — zero importow z src/, tylko lucide-react. Realny modul Audytow ISTNIEJE (src/components/Audit/AuditsHub.tsx, AuditsMethodHub.tsx, AuditOrchestratorWizard.tsx) i ma juz POPRAWNIE zmontowane harnessy (dev-render/screens/audyty-piec-powierzchni.tsx, day220-audyty-rejestr.tsx), ale zaden z nich nie ma widoku "mapa warsztatu 18 krokow w 4 fazach" ktory ten ekran wymysla — AuditOrchestratorWizard to 4-krokowy kreator PROGRAMU audytu (objective/templates/assignees/review), nie mapa WYKONANIA audytu z krokami/dowodami. Zaden komponent produkcyjny nie odpowiada tej kompozycji. Do wycofania z rejestru odbioru, nie do naprawy tym dyzurem (nie ma czego zamontowac — trzeba by NAJPIERW zbudowac funkcje, ktorej dzis nie ma).
 deck-quality-badge	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
 drd-embedded-matrix-axis-levels	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 drd-embedded-matrix-axis-levels	R3	max-w-5xl	ŚWIADOMIE: produkcja też centruje dokument, tylko innym tokenem (audyt 2026-09-01: ZGODNY)
@@ -87,7 +99,7 @@ prawy-pas-jedna-formula	R3	max-w-[640px]	dług zastany 2026-09-01 (audyt przyrz�
 prawy-pas-jedna-formula	R3	w-[640px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[640px], którego nie ma ani u wołacza, ani w komponencie
 preview-4-zakladki	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 results-vnext-legacy-archive	R1	ResultsVNextLegacyArchivePanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ResultsVNextLegacyArchivePanel>, którego żaden plik src/ nie renderuje
-results-vnext-okr-admin	R2	OkrCyclesPage+OkrProgramsPage	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <OkrCyclesPage> i <OkrProgramsPage>; produkcja nigdy ich razem nie renderuje
+results-vnext-okr-admin	R2	OkrCyclesPage+OkrProgramsPage	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: harness renderuje JEDNA z tych stron, nie obie — dev-render/screens/results-vnext-okr-admin.tsx:135 to TERNARY (page === 'cycles' ? <OkrCyclesPage /> : <OkrProgramsPage />), sterowany parametrem &page=. Bramka widzi dwie nazwy komponentow w jednym pliku i zaklada wspolrenderowanie; wyrazenie warunkowe jest z definicji WYKLUCZAJACE. To SIODMA slepota tej bramki. Ma znaczenie praktyczne: gdyby harness naprawde stawial obie strony obok siebie, kazda dostalaby polowe szerokosci i wlasciciel nie moglby na tym kadrze oceniac szerokosci kolumn — a wlasnie o to zostal poproszony 02.09.
 rn-g3-class-l-record-shell	R1	TeresaUnavailableNotice	dług zastany 2026-09-01 (audyt przyrządu): montuje <TeresaUnavailableNotice>, którego żaden plik src/ nie renderuje
 rn-g3-class-l-record-shell	R2	ArtifactBreadcrumb+SaveStateIndicator	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <ArtifactBreadcrumb> i <SaveStateIndicator>; produkcja nigdy ich razem nie renderuje
 rose-danger-token-parity	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
@@ -117,10 +129,3 @@ wave4-choices-crimson	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrz�
 wave5-internal-crimson	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 wave5-internal-crimson	PODPIS	tekst:PRZED/PO etykieta	przyrząd pomiarowy, nie ekran produktu (klasyfikacja 2026-09-01, robotnik toru grafiki — dyptyk/gallery/proof, patrz docs/program/grafika/status.json ocena C gdzie dotyczy)
 word-quality-badge	R3	max-w-md	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-md, którego nie ma ani u wołacza, ani w komponencie
-auth-login	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:844-851 (<AuthLayout><AuthView initialStep=... /></AuthLayout>). Bramka tego nie widzi, bo kompozycja stoi w elemencie trasy, a AuthView wchodzi przez lazyWithRetry(...).then(m => ({default: m.AuthView})). To SZOSTA slepota tej bramki — dopisana swiadomie, nie po cichu.
-auth-register	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: ta sama kompozycja co auth-login (src/routes/AppRoutes.tsx:844-851), inny initialStep. Dowod jak wyzej.
-auth-code-entry	R2	AuthLayout+AuthView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: ta sama kompozycja co auth-login (src/routes/AppRoutes.tsx:844-851), inny initialStep. Dowod jak wyzej.
-auth-forgot-password	R2	AuthLayout+ForgotPasswordView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:1476-1480 (trasa /forgot-password: <AuthLayout><Suspense><ForgotPasswordView /></Suspense></AuthLayout>).
-auth-reset-password	R2	AuthLayout+ResetPasswordView	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: produkcja renderuje te dwa razem w src/routes/AppRoutes.tsx:1488-1492 (trasa /reset-password: <AuthLayout><Suspense><ResetPasswordView /></Suspense></AuthLayout>).
-auth-verify-email	R1	VerifyEmail	PRAWDZIWE naruszenie, przyjete swiadomie: <VerifyEmail> nie ma zadnego wolacza w src/ — do tego ekranu nie prowadzi zadna trasa. Dlatego ekran ma w rejestrze ocene D i NIE JEST pokazywany wlascicielowi. Zostaje w rejestrze, zeby nie zginal (regula nr 5).
-results-vnext-okr-admin	R2	OkrCyclesPage+OkrProgramsPage	FALSZYWY ALARM BRAMKI, zweryfikowany 2026-09-02: harness renderuje JEDNA z tych stron, nie obie — dev-render/screens/results-vnext-okr-admin.tsx:135 to TERNARY (page === 'cycles' ? <OkrCyclesPage /> : <OkrProgramsPage />), sterowany parametrem &page=. Bramka widzi dwie nazwy komponentow w jednym pliku i zaklada wspolrenderowanie; wyrazenie warunkowe jest z definicji WYKLUCZAJACE. To SIODMA slepota tej bramki. Ma znaczenie praktyczne: gdyby harness naprawde stawial obie strony obok siebie, kazda dostalaby polowe szerokosci i wlasciciel nie moglby na tym kadrze oceniac szerokosci kolumn — a wlasnie o to zostal poproszony 02.09.
