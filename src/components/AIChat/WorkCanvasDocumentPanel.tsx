@@ -69,8 +69,8 @@ import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
-import { CanvasViewModeControl } from './CanvasViewModeControl';
 import { CanvasPresentationView } from './CanvasPresentationView';
+import { CanvasViewModeControl } from './CanvasViewModeControl';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
 
@@ -257,7 +257,8 @@ Write the situation, goal, constraints, and audience here.
     id: 'research',
     label: 'Zrób research',
     title: 'Market Research Brief',
-    description: 'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
+    description:
+      'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
     capability: 'partial',
     capabilityNote:
       'Research brief creates a linked ResearchSession; evidence execution remains partial.',
@@ -1540,7 +1541,13 @@ function WorkCanvasMarkdownDocumentPanel({
     return () => {
       cancelled = true;
     };
-  }, [authOrganizationId, authUserId, conversationId, currentCapabilityAuthScope, isAuthInitializing]);
+  }, [
+    authOrganizationId,
+    authUserId,
+    conversationId,
+    currentCapabilityAuthScope,
+    isAuthInitializing,
+  ]);
 
   React.useEffect(() => {
     persistCanvasMode(mode);
@@ -3544,7 +3551,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(template.capability)}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(template.capability)
+                          : null}
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {template.description}
@@ -3590,7 +3599,7 @@ function WorkCanvasMarkdownDocumentPanel({
             ) : isNewCanvasMenuOpen ? (
               <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  New Canvas from template
+                  {t('canvas.panel.newMenu.legacyFromTemplate', 'New Canvas from template')}
                 </div>
                 <div className="mt-1 space-y-1">
                   {starterTemplates.map((template) => (
@@ -3609,7 +3618,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(template.capability)}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(template.capability)
+                          : null}
                       </div>
                       <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {template.description}
@@ -3714,10 +3725,13 @@ function WorkCanvasMarkdownDocumentPanel({
               data-testid="canvas-dataset-actions"
             >
               <div className="font-semibold text-slate-900 dark:text-white">
-                Dataset ready: {pendingDataset.filename}
+                {t('canvas.panel.dataset.readyPrefix', 'Dataset ready:')} {pendingDataset.filename}
               </div>
               <div className="mt-1 text-slate-500 dark:text-slate-400">
-                Deterministic Canvas analysis. No code execution.
+                {t(
+                  'canvas.panel.dataset.analysisNote',
+                  'Deterministic Canvas analysis. No code execution.'
+                )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {datasetArtifactActions.map((action) => (
@@ -4122,10 +4136,12 @@ function WorkCanvasMarkdownDocumentPanel({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{template.label}</span>
-                        {renderCapabilityBadge(
-                          template.capability,
-                          `canvas-template-capability-${template.id}`
-                        )}
+                        {isCanvasDevDiagnosticsEnabled()
+                          ? renderCapabilityBadge(
+                              template.capability,
+                              `canvas-template-capability-${template.id}`
+                            )
+                          : null}
                       </div>
                       <div className="mt-0.5 truncate text-[11px] leading-4 opacity-75">
                         {template.description}
@@ -4205,10 +4221,14 @@ function WorkCanvasMarkdownDocumentPanel({
                   {pendingDataset ? (
                     <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
                       <div className="font-semibold text-slate-900 dark:text-white">
-                        Dataset ready: {pendingDataset.filename}
+                        {t('canvas.panel.dataset.readyPrefix', 'Dataset ready:')}{' '}
+                        {pendingDataset.filename}
                       </div>
                       <div className="mt-1 text-slate-500 dark:text-slate-400">
-                        Deterministic Canvas analysis. No code execution.
+                        {t(
+                          'canvas.panel.dataset.analysisNote',
+                          'Deterministic Canvas analysis. No code execution.'
+                        )}
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {datasetArtifactActions.map((action) => (
@@ -4886,7 +4906,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-700 dark:text-amber-300"
                       >
                         <RefreshCw size={12} />
-                        Retry projection
+                        {t('canvas.panel.advanced.retryProjection', 'Retry projection')}
                       </button>
                     ) : null}
                     <button
@@ -4895,7 +4915,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
                       <RefreshCw size={12} />
-                      Reset
+                      {t('canvas.panel.advanced.reset', 'Reset')}
                     </button>
                     {/* #87d — dawny przycisk otwierał DRUGI, prymitywny podgląd
                         wersji (usunięty jako duplikat). Teraz kieruje do JEDYNEGO
@@ -4907,19 +4927,23 @@ function WorkCanvasMarkdownDocumentPanel({
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
                       <History size={12} />
-                      Version history
+                      {t('canvas.versionHistory.title', 'Version history')}
                     </button>
                     <button
                       type="button"
                       onClick={showChangesFromLatestVersion}
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
                     >
-                      Show changes
+                      {t('canvas.panel.advanced.showChanges', 'Show changes')}
                     </button>
                     {latestDiff ? (
                       <div className="w-full rounded-xl bg-slate-100 p-2 text-[11px] dark:bg-white/10">
                         <div className="font-semibold text-slate-700 dark:text-slate-100">
-                          {latestDiff.summary}
+                          {t('canvas.panel.advanced.diffSummary', {
+                            defaultValue: '{{added}} lines added, {{removed}} lines removed',
+                            added: latestDiff.addedLines,
+                            removed: latestDiff.removedLines,
+                          })}
                         </div>
                       </div>
                     ) : null}

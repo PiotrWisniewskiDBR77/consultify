@@ -100,6 +100,29 @@ export default function CanvasKebabRestructureScreen(): React.ReactElement {
     return () => window.clearInterval(timer);
   }, []);
 
+  // ★ NAPRAWA 2026-09-02 (odbiór nadzorcy po Z-48): zwinięta sekcja NIE jest
+  // dowodem, że w środku jest polski — trzeba zmierzyć każdą. Rozwijamy
+  // WSZYSTKIE natywne `<details>` akordeonu wewnątrz kebaba (każda grupa menu
+  // jest zwykłym `<details>/<summary>`, bez React-owego stanu open/close —
+  // ustawienie `.open = true` na elemencie DOM jest więc 1:1 z kliknięciem
+  // użytkownika w nagłówek grupy), żeby zrzut pokazywał TREŚĆ każdej sekcji,
+  // nie tylko jej zwinięty nagłówek.
+  React.useEffect(() => {
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const menu = document.querySelector<HTMLElement>('[data-testid="canvas-diagnostics-menu"]');
+      if (menu) {
+        menu.querySelectorAll<HTMLDetailsElement>('details').forEach((details) => {
+          details.open = true;
+        });
+        window.clearInterval(timer);
+        return;
+      }
+      if (++tries > 60) window.clearInterval(timer);
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <MemoryRouter initialEntries={['/chat']}>
       <div className="h-screen w-screen overflow-hidden bg-c-bg">

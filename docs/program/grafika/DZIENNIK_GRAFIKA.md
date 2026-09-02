@@ -18,6 +18,41 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-09-02
 
+### Z-49 · Zwinięta sekcja nie jest dowodem, że w środku jest polski — Z-48 był połowiczny, rodzina badge'u REALNE/CZĘŚCIOWE miała 5 wystąpień, nie 1
+**Co się stało:** nadzorca obejrzał zrzut Z-48 własnymi oczami (nie „testy przeszły") i złapał to, czego pomiar
+nie objął: rozwinięta domyślnie sekcja „EDYCJA I AI" była CAŁA po angielsku (AI ON SELECTION, Expand idea/
+Shorten/Rewrite/Suggest, Instruction for Teresa..., Preview AI edit) i „VERSIONING" też — mimo że Z-48 mówił
+o naprawie tego samego menu. Nakaz: rozwiń KAŻDĄ sekcję i sprawdź każdą tak samo. Po rozwinięciu wszystkich
+akordeonów (nowy krok harnessu: `details.open = true` na każdym `<details>` w dropdownie, 1:1 z kliknięciem)
+wyszło DRUGIE, poważniejsze odkrycie: `renderCapabilityBadge`/badge Możliwość=REALNE/CZĘŚCIOWE miał w tym
+pliku **5 wywołań**, nie jedno — Z-48 zgasił tylko 2 (te w „Diagnostyka"/„Przepływy pracy"). Trzy zostały
+zapalone i niewidoczne w zwiniętym zrzucie: (1) sekcja „Szablony startowe" w tym samym kebabie, (2) lista
+„Z szablonu" w OSOBNYM menu „+" (nowy dokument, `canvas-new-menu-v2`, flaga `VITE_CANVAS_NEW_DOC_OPTIONS`
+domyślnie ON — więc to jest to, co widzi KAŻDY użytkownik klikający „+"), (3) legacy fallback tego samego
+menu (flaga OFF path, dziś martwy kodem, ale wciąż osiągalny) — plus angielski nagłówek „New Canvas from
+template" tam. Dodatkowo cztery inne niezwiązane z badge'em angielskie stringi bez `t()` w ogóle: „Retry
+projection"/„Reset"/„Version history"/„Show changes" w „Zaawansowane", `latestDiff.summary` („X lines added,
+Y lines removed"), i zdublowane „Dataset ready: {filename}" / „Deterministic Canvas analysis. No code
+execution." (dwa miejsca, floating popover + sekcja Plik/eksport).
+
+**Dlaczego ważne:** greppowanie po NAZWIE FUNKCJI (`renderCapabilityBadge`) potwierdziło że kod żyje tylko
+w jednym pliku — ale nie sprawdziło ILE RAZY funkcja jest WOŁANA i czy KAŻDE wołanie jest zagate'owane.
+„Zero innych plików" ≠ „zero innych wystąpień". To wariant kształtu „próbka zamiast zbioru": zmierzyłem
+przynależność do rodziny, nie policzyłem członków rodziny.
+
+**Co z tego wynika:** wszystkie 5 wywołań `renderCapabilityBadge` teraz za `isCanvasDevDiagnosticsEnabled()`
+(3 nowe: linie ~3548, ~3615, ~4132). Nowe klucze i18n: `canvas.panel.selection.*` (9 kluczy — AI na
+zaznaczeniu/Rozwiń myśl/Skróć/Przeredaguj/Zaproponuj/placeholder/Podgląd zmiany AI/Zaznaczenie/pusty stan),
+`canvas.panel.versioning.title`, `canvas.panel.advanced.*` (retryProjection/reset/showChanges/diffSummary),
+`canvas.panel.dataset.readyPrefix`+`analysisNote`, `canvas.panel.newMenu.legacyFromTemplate`. Pułapka
+techniczna po drodze: mock `react-i18next` w `tests/setup.ts` robi naiwną zamianę POJEDYNCZEGO nawiasu
+(`{var}`), więc prawdziwe i18next-owe `{{var}}` zostawia sierotę-nawias w testach — istniejący dług (linie
+2291/2303 tego samego pliku mają ten sam wzorzec, nigdy nietestowany więc nigdy niezłapany); dla dwóch
+nowych miejsc z realną asercją tekstu ominięto to, dzieląc string na statyczny prefiks przez `t()` + goły
+JS dla nazwy pliku (nazwy plików i tak nie są tłumaczalne). Harness `canvas-kebab-restructure` rozwija
+teraz WSZYSTKIE sekcje przed zrzutem — nowy standard dla tego ekranu, żeby ten kształt się nie powtórzył.
+Zrzuty PO (rozwinięte, 3600px wysokości): `evidence/grafika/214-kebab-diagnostyka/`.
+
 ### Z-48 · Menu „⋯" kanwy pokazywało każdemu klientowi surowy żargon audytu wdrożenia (REALNE/CZĘŚCIOWE, „…are backed") — nie flaga, nie atrapa, realny komponent produkcyjny
 **Co się stało:** pomiar właściciela na zrzucie karty `canvas-kebab-restructure` potwierdzony w kodzie:
 `WorkCanvasDocumentPanel.tsx` (montowany produkcyjnie przez `UnifiedChatPanel.tsx`, bez żadnej flagi

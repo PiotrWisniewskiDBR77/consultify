@@ -28054,7 +28054,16 @@
         "editReplacementLabel": "Selection edit replacement",
         "editReplacementPlaceholder": "Write the replacement Markdown here...",
         "previewEdit": "Preview edit",
-        "clear": "Clear"
+        "clear": "Clear",
+        "title": "AI on selection",
+        "selected": "Selection",
+        "empty": "Select a fragment of text to use AI actions.",
+        "expand": "Expand idea",
+        "shorten": "Shorten",
+        "rewrite": "Rewrite",
+        "suggest": "Suggest",
+        "promptPlaceholder": "Instruction for Teresa on the selected fragment...",
+        "preview": "Preview AI edit"
       },
       "manualEdit": {
         "title": "Manual editing",
@@ -28118,7 +28127,8 @@
         "untitled": "Untitled",
         "seedBlank": "I am starting a blank document from scratch. Ask me questions to nail down the goal, context, and a first draft direction.",
         "seedFromTemplate": "I started a new document \"{{title}}\" from a template. Help me develop it — suggest what to fill in first.",
-        "seedFromCanvas": "I started this new document from an existing canvas (\"{{title}}\"). Help me develop it further from here."
+        "seedFromCanvas": "I started this new document from an existing canvas (\"{{title}}\"). Help me develop it further from here.",
+        "legacyFromTemplate": "New Canvas from template"
       },
       "menuAria": "Canvas menu",
       "save": "Save",
@@ -28221,6 +28231,19 @@
         "file": "File, export & workspace",
         "workflow": "Workflow",
         "advanced": "Advanced"
+      },
+      "versioning": {
+        "title": "Versioning"
+      },
+      "advanced": {
+        "retryProjection": "Retry projection",
+        "reset": "Reset",
+        "showChanges": "Show changes",
+        "diffSummary": "{{added}} lines added, {{removed}} lines removed"
+      },
+      "dataset": {
+        "analysisNote": "Deterministic Canvas analysis. No code execution.",
+        "readyPrefix": "Dataset ready:"
       }
     },
     "aiStream": {

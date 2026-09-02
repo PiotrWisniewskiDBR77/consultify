@@ -30389,7 +30389,16 @@
         "editReplacementLabel": "Zamiennik zaznaczenia",
         "editReplacementPlaceholder": "Wpisz tutaj zamienny tekst Markdown...",
         "previewEdit": "Podgląd zmiany",
-        "clear": "Wyczyść"
+        "clear": "Wyczyść",
+        "title": "AI na zaznaczeniu",
+        "selected": "Zaznaczenie",
+        "empty": "Zaznacz fragment tekstu, aby użyć akcji AI.",
+        "expand": "Rozwiń myśl",
+        "shorten": "Skróć",
+        "rewrite": "Przeredaguj",
+        "suggest": "Zaproponuj",
+        "promptPlaceholder": "Polecenie dla Teresy dotyczące zaznaczonego fragmentu…",
+        "preview": "Podgląd zmiany AI"
       },
       "manualEdit": {
         "title": "Ręczna edycja",
@@ -30463,7 +30472,8 @@
         "untitled": "Bez tytułu",
         "seedBlank": "Zaczynam czysty dokument od zera. Zadaj mi pytania, żeby ustalić cel, kontekst i kierunek pierwszego szkicu.",
         "seedFromTemplate": "Zaczęłam/em nowy dokument „{{title}}” z szablonu. Pomóż mi go rozwinąć — zaproponuj, co uzupełnić w pierwszej kolejności.",
-        "seedFromCanvas": "Zaczęłam/em ten nowy dokument na bazie innego canvasu („{{title}}”). Pomóż mi go stąd dalej rozwinąć."
+        "seedFromCanvas": "Zaczęłam/em ten nowy dokument na bazie innego canvasu („{{title}}”). Pomóż mi go stąd dalej rozwinąć.",
+        "legacyFromTemplate": "Nowy Canvas z szablonu"
       },
       "menuAria": "Menu Canvas",
       "save": "Zapisz",
@@ -30566,6 +30576,19 @@
         "file": "Plik, eksport i workspace",
         "workflow": "Przepływy pracy",
         "advanced": "Zaawansowane"
+      },
+      "versioning": {
+        "title": "Wersjonowanie"
+      },
+      "advanced": {
+        "retryProjection": "Ponów projekcję",
+        "reset": "Resetuj",
+        "showChanges": "Pokaż zmiany",
+        "diffSummary": "{{added}} dodanych linii, {{removed}} usuniętych linii"
+      },
+      "dataset": {
+        "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
+        "readyPrefix": "Zbiór danych gotowy:"
       }
     },
     "aiStream": {
