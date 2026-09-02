@@ -15111,7 +15111,11 @@
       },
       "vip": {
         "empty": "No presentations yet."
-      }
+      },
+      "watchNotifyPrefix": "Notify",
+      "watchNotifyAll": "All updates",
+      "watchNotifyMentions": "Mentions only",
+      "watchNotifyStatusChanges": "Status changes only"
     },
     "integrations": {
       "title": "Integrations",
