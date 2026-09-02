@@ -20,6 +20,59 @@
  *
  * Użycie (harness dev-render musi już działać):
  *   node scripts/dev/measure-preview-canon.mjs --port=3350 [--w=1600]
+ *
+ * TRYB WYSOKOSCI (opt-in, --wysokosc)
+ * ----------------------------------------------------------------------
+ * Wlasciciel zglosil 02.09 DWA RAZY tego samego dnia (ekran
+ * `execution-tab-resources`, 14:16 i 16:35): podglad nie siega do dolu.
+ * Szerokosc i kolejnosc blokow tego NIE lapaly - panel moze miec kanoniczne
+ * 448 px szerokosci i kanoniczna kolejnosc blokow, a mimo to konczyc sie
+ * w polowie kadru. Dlatego OSOBNY, WLACZANY tryb:
+ *   node scripts/dev/measure-preview-canon.mjs --port=3352 --wysokosc
+ *
+ * CO MIERZY (z zywego DOM, nie z klas CSS):
+ *   karta   - dolna krawedz WIDOCZNEJ karty (dziecko `[data-preview-pane]`,
+ *             czyli root `PreviewPaneShell`). To widzi wlasciciel.
+ *   wrapper - dolna krawedz `[data-preview-pane]`. Rozdzielenie karty od
+ *             wrappera jest ISTOTA tego pomiaru: wrapper bywa pelnej
+ *             wysokosci (flex stretch), a karta w srodku krotka - wtedy
+ *             naiwny pomiar mowi 'panel jest wysoki', a na ekranie zieje
+ *             pustka. Przyrzad ma pokazywac produkt, nie wrapper.
+ *   obszar  - dol okna (viewport) minus gora obszaru tabeli. Tabela zaczyna
+ *             sie tuz pod Menu 3 (kanon; potwierdzone uwaga wlasciciela
+ *             z 01.09 o pasku miedzy Menu 3 a tabela), wiec to jest
+ *             dokladnie 'przestrzen od menu 3 do dolu strony'.
+ *   luka    - dolOkna - dolKarty. Ta liczba ma byc 0.
+ *
+ * TOLERANCJA 2 px - ta sama, ktora tryb szerokosci juz stosuje dla
+ * zaokragen subpikselowych `getBoundingClientRect`. Wiecej = realna dziura.
+ */
+import { chromium } from 'playwright';
+
+const arg = (n, d) => {
+  const hit = process.argv.slice(2).find((a) => a.startsWith(`--${n}=`));
+  return hit ? hit.slice(n.length + 3) : d;
+};
+
+const PORT = arg('port', '3350');
+const W = parseInt(arg('w', '1600'), 10);
+const H = parseInt(arg('h', '1000'), 10);
+
+/** Kolejność z `CANON_PREVIEW_BLOCK_ORDER` (src/contracts/tableSurface/canon.ts). */
+const CANON_ORDER = ['header', 'meta', 'details', 'ai', 'relations', 'actions', 'whatsnext'];
+
+/** Ekrany rodziny „podgląd" z rejestru KORPUS_UWAG_20260902.md (poz. 26-30). */
+const SCREENS = [
+  { id: 'idea-table', wiersz: 'Automatyzacja raportowania OEE' },
+  { id: 'interview-preview-canon' },
+  { id: 'interview-preview-canon', variant: 'initiative', extra: '&variant=initiative' },
+  { id: 'drd-library-entry', wiersz: 'DBR77' },
+  { id: 'preview-4-zakladki' },
+  { id: 'assessment-five-surfaces', wariantOpisu: 'Biblioteka', klik: [300, 224] },
+  { id: 'assessment-five-surfaces', wariantOpisu: 'Procesy', zakladka: 'Procesy', klik: [300, 224] },
+];
+
+const CANON = { min: 340, ratio: 0.28, max: 480 };
 
 /** Tryb wysokosci wlaczany jawnie; domyslnie skrypt zachowuje sie jak dotad. */
 const TRYB_WYSOKOSCI = process.argv.slice(2).includes('--wysokosc');
@@ -158,8 +211,6 @@ async function zmierzWysokosc(page, PORT, W, H, ekran) {
       : r.abort();
   });
 
-<<<<<<< HEAD
-=======
   if (TRYB_WYSOKOSCI) {
     console.log(`# Pomiar WYSOKOSCI podgladu - viewport ${W}x${H}px, tolerancja ${TOLERANCJA_PX}px\n`);
     console.log('| ekran | obszar tresci (menu3->dol) | panel (wrapper) | karta widoczna | luka | wlasny scroll | werdykt |');
@@ -194,7 +245,6 @@ async function zmierzWysokosc(page, PORT, W, H, ekran) {
     process.exit(zle === 0 ? 0 : 1);
   }
 
->>>>>>> github-backup/grafika/wysokosc-podgladu-20260902
   let bledy = 0;
   console.log(`# Pomiar kanonu podglądu — viewport ${W}px, oczekiwana szerokość panelu: ${oczekiwanaSzerokosc(W)}px\n`);
 
