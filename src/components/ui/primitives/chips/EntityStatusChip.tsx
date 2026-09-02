@@ -65,17 +65,23 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   succeeded: 'success',
   resolved: 'success',
 
-  // danger — needs attention
+  // danger — needs attention. Kanon czerwieni (CLAUDE.md UI#3): czerwien
+  // wylacznie dla semantyki krytycznej, czyli stanu, ktory ZADA REAKCJI.
   sent_back: 'danger',
   rejected: 'danger',
   failed: 'danger',
   blocked: 'danger',
-  cancelled: 'danger',
   overdue: 'danger',
-  expired: 'danger',
-  revoked: 'danger',
 
-  // neutral — terminal-inert or unassigned (explicit, not accidental fallback)
+  // neutral — terminal-inert or unassigned (explicit, not accidental fallback).
+  // `expired` / `revoked` / `cancelled` to stany CYKLU ZYCIA, nie awarie:
+  // nic sie nie zepsulo i nikt nie musi reagowac — pozycja po prostu wypadla
+  // z obiegu. To ta sama klasa co archived/inactive. Zgodne z wczesniejszym
+  // kanonem `src/constants/statusColors.ts`, ktory CANCELLED trzyma w tierze
+  // NEUTRAL i wypelnienie alarmowe zostawia tylko dla BLOCKED/REJECTED.
+  expired: 'neutral',
+  revoked: 'neutral',
+  cancelled: 'neutral',
   archived: 'neutral',
   deprecated: 'neutral',
   trashed: 'neutral',

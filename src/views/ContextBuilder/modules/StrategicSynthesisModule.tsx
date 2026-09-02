@@ -1,9 +1,9 @@
 import {
-  AlertOctagon,
   AlertTriangle,
   BrainCircuit,
   FileText,
   GitMerge,
+  Info,
   TrendingUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -148,8 +148,14 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
         {/* TAB 1: RISKS */}
         {activeTab === 'risks' && (
           <div className="space-y-6 relative">
-            <div className="bg-danger-50 dark:bg-danger-900/10 p-4 rounded-xl border border-danger-100 dark:border-danger-900/30 flex gap-3 text-danger-800 dark:text-danger-300">
-              <AlertOctagon size={20} className="shrink-0 mt-0.5" />
+            {/* Kanon czerwieni (CLAUDE.md UI#3): to baner METODYCZNY — tlumaczy,
+                z czego policzono liste ryzyk. Nie jest awaria ani przekroczonym
+                progiem, wiec nie moze byc czerwony (przy zerze ryzyk malowal
+                alarm o niczym). Blizniaczy baner zakladki „Szanse" (nizej w tym
+                pliku) jest zielony; paleta `c-info` to ta sama, ktorej uzywa
+                <Banner variant="info">. */}
+            <div className="bg-c-info/[0.08] dark:bg-c-info/[0.08] p-4 rounded-xl border border-c-info/25 flex gap-3 text-c-text">
+              <Info size={20} className="shrink-0 mt-0.5 text-c-info" />
               <div className="text-sm">
                 <p className="font-bold mb-1">
                   {t('organization.synthesis.risks.bannerTitle', 'Risk Assessment Logic')}
