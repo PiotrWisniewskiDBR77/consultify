@@ -1,0 +1,46 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"canvas-new-menu-v2\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "canvas-new-doc",
+      "motyw": "light",
+      "plik": "/private/tmp/m03/evidence/grafika/216-poprawione-dzis/canvas-new-doc__PO__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 2,
+      "wynikSelektor": [
+        "[data-testid=\"canvas-new-menu-v2\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 249.23684569502316,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "canvas-new-doc",
+      "motyw": "dark",
+      "plik": "/private/tmp/m03/evidence/grafika/216-poprawione-dzis/canvas-new-doc__PO__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 2,
+      "wynikSelektor": [
+        "[data-testid=\"canvas-new-menu-v2\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.044338056327156,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "canvas-new-doc",
+      "ok": true,
+      "reasons": []
+    }
+  ]
+}
