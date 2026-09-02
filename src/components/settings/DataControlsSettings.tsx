@@ -582,10 +582,15 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         {!loadError && (
           <>
             {/* GDPR Compliance Banner */}
-            <div className="p-4 bg-c-accent-soft border border-c-accent rounded-lg flex items-start gap-3">
-              <Shield size={18} className="text-c-accent flex-shrink-0 mt-0.5" />
+            {/* Kanon czerwieni (CLAUDE.md UI#3): tresc jest czysto pozytywna
+                (potwierdzenie zgodnosci), wiec baner nie moze uzywac brandowego
+                crimsona `c-accent` — pelnowymiarowy kolorowy baner czyta sie
+                jako alarm. Paleta `c-success` jest ta sama, ktorej uzywa
+                <Banner variant="success">. */}
+            <div className="p-4 bg-c-success/[0.08] border border-c-success/25 rounded-lg flex items-start gap-3">
+              <Shield size={18} className="text-c-success flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-c-accent">
+                <p className="text-sm font-medium text-c-text">
                   {t('settings.data.gdprTitle', 'GDPR Compliant')}
                 </p>
                 <p className="text-xs text-c-text-secondary mt-0.5">
@@ -659,7 +664,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     className={cn(
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
-                        ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:border-c-accent'
+                        ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:border-white/25'
                         : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                     )}
                   >

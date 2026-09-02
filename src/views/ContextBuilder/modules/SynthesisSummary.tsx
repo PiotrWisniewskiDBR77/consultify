@@ -96,7 +96,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           <button
             onClick={handleExportPDF}
             disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-primary-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-navy-700 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <FileDown size={16} />
             {isExporting
@@ -116,7 +116,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
 
       {/* Company Overview Card */}
       <div className="bg-c-surface rounded-xl shadow-lg border border-c-border-subtle overflow-hidden">
-        <div className="bg-gradient-to-r from-navy-900 to-navy-800 dark:from-primary-900 dark:to-primary-800 p-6">
+        {/* Kanon czerwieni (CLAUDE.md UI#3): `primary-*` KAZDY numer = crimson.
+            Wariant `dark:` malowal cala karte danych firmowych (nazwa/branza/
+            liczba pracownikow — zero bledu) na czerwono, gdy light miał granat.
+            To pomylka mapowania tokenu dla dark, nie semantyka. */}
+        <div className="bg-gradient-to-r from-navy-900 to-navy-800 dark:from-navy-800 dark:to-navy-900 p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-c-surface/10 rounded-xl flex items-center justify-center">
               <Building2 className="text-white" size={32} />
@@ -173,7 +177,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
               {t('organization.synthesis.executiveBrief.targetMaturity', 'Target Maturity')}
             </div>
-            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+            <div className="text-2xl font-bold text-navy-900 dark:text-white">
               {companyProfile.targetMaturityLevel ||
                 t('organization.synthesis.executiveBrief.maturityNoData', 'No data')}
             </div>

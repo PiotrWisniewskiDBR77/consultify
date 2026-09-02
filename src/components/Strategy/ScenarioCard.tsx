@@ -55,8 +55,10 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
                 }
             `}
     >
+      {/* Kanon czerwieni (CLAUDE.md UI#3): „REKOMENDOWANY" to stan POZYTYWNY,
+          nie alarm — brandowy crimson `c-accent` malowal go na czerwono. */}
       {isRecommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-accent text-white text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-black/20 flex items-center gap-1 z-20 whitespace-nowrap border border-c-accent">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-success text-white text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-black/20 flex items-center gap-1 z-20 whitespace-nowrap border border-c-success">
           <BrainCircuit size={12} />
           {recommendedText}
         </div>
