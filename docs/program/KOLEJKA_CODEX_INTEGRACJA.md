@@ -129,8 +129,25 @@ flagi tej rodziny czytają jako ON na demo, stage i dev**. Tu bez skutku, bo hub
 Rejestr: `waves/WAVE_03_ACCEPTANCE/REJESTR_PODGLAD_RODZINA_20260902.md`.
 Zrzuty PO: `evidence/grafika/podglad-naprawa-20260902/`.
 
-**Zmierzone: 51 plików rozpada się na 29 żywych właścicieli layoutu, 13 martwego kodu
-i ~9 komponentów treści.** Z 29 żywych zmierzono 20; sześć miało lukę.
+**Zmierzone: 51 plików rozpada się na 29 żywych właścicieli layoutu, 13 „martwego kodu"
+i ~9 komponentów treści.**
+
+★★★ **SPROSTOWANIE Z 2026-09-02 WIECZOREM: z tych 13 martwe były DWA, nie trzynaście.**
+Dwanaście „osieroconych kolejek decyzyjnych" w `src/components/MyWork/*Queue.tsx` **ma żywego
+wołacza** — każda ma dedykowany, zielony test jednostkowy w `tests/unit/initiatives-execution/`
+(18/18 PASS), a `tests/unit/**` jest w `include` konfiguracji vitest, więc realnie wchodzi do CI.
+Dziesięć z nich jest dodatkowo renderowanych w harnessie e2e
+`tests/e2e/fixtures/initiatives-execution-aco.tsx` z własnym configiem Playwrighta.
+Zweryfikowane niezależnie przez nadzorcę: 62 pliki testowe w tym katalogu, `tests/unit` w linii 231
+`vitest.config.ts`, 22 odwołania do kolejek w harnessie.
+
+**Skąd wziął się błąd:** test `MyWorkHub.decisionsOwnerFeedback.test.ts` asercją `not.toContain`
+dowodzi, że **produkcyjny `MyWorkHub` ich nie montuje** — i to zostało odczytane jako dowód
+martwoty. Dowodzi tylko tego, co mówi. **„Nie renderuje się w produkcji" to nie to samo co
+„martwy"**; obok produkcji istnieje pełna, żywa powierzchnia testowa.
+
+Realnie usunięte: `Benefits/BenefitsHub.tsx` (884 linie) i `Benefits/KPICreateModal.tsx`
+(465 linii) — **1349 linii, zero importerów, potwierdzone `git grep` po całym repo**. Z 29 żywych zmierzono 20; sześć miało lukę.
 
 ★★★ **SPROSTOWANIE, KTÓRE ZMIENIA SPOSÓB CZYTANIA KAŻDEJ NASZEJ LICZBY:**
 **trzy z sześciu „defektów produktu" to był kłamiący przyrząd, nie produkt.**
