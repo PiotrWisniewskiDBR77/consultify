@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Api } from '@/services/api';
 
 import { AppView, FullSession, InitiativeStatus } from '../../types';
+import { zJednostka } from '@/utils/jednostka';
 
 interface LiveDashboardProps {
   session: FullSession;
@@ -150,12 +151,12 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                   trend?: string;
                 }) => ({
                   label: k.name || 'KPI',
-                  value: k.actual != null ? `${k.actual}${k.unit || ''}` : '—',
+                  value: zJednostka(k.actual, k.unit),
                   trend: (k.trend === 'UP' ? 'good' : k.trend === 'DOWN' ? 'bad' : 'neutral') as
                     | 'good'
                     | 'bad'
                     | 'neutral',
-                  baseline: k.target != null ? `${k.target}${k.unit || ''}` : '—',
+                  baseline: zJednostka(k.target, k.unit),
                 })
               )
           );
