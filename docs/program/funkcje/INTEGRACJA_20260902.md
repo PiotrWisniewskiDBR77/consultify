@@ -1,6 +1,9 @@
 # Integracja 2026-09-02 — jeden kandydat z czterech rozjechanych linii
 
-Gałąź: `integracja/20260902` · tip **`444d789363`** · baza `codex/m03-admin-20260824` (`f5ffe8fa22`)
+Gałąź: `integracja/20260902` · baza `codex/m03-admin-20260824` (`f5ffe8fa22`)
+Ostatni commit KODU: **`444d789363`** — wszystkie pomiary niżej dotyczą tego drzewa.
+Tip gałęzi to trzy commity dokumentacyjne wyżej i wskazuje go tag **`integracja-2026-09-02`**;
+między `444d789363` a tagiem nie ma zmian w kodzie (tylko `docs/`).
 Worktree pomiarowy: `/private/tmp/int-0902` · skarbiec: `consultify-recovery-vault-20260820.git`
 
 Cel: **zielony sygnał budowy**, którego program nie miał od tygodnia (dyżur 163 zgłaszał OOM przy `tsc`).
