@@ -34,6 +34,17 @@ drugi tor o tym nie wie.
 
 ## Tablica bieżąca
 
+### Tor FUNKCJE — kandydaci integracyjni
+
+| Data | Kandydat | SHA | Bramka budowy | Raport |
+| --- | --- | --- | --- | --- |
+| 2026-09-02 | `integracja/20260902` (m03 + batch241-269 + `origin/develop` + kreator formularzy + 4 z 8 cherry-picków bramek) | `72050cec1c` | **ZIELONA** — klient `npm run build` EXIT=0 (53 s); serwer `tsc --build` 0 błędów, `dist/` powstaje; `check-list-canon.sh` EXIT=0 (394/394, dług nie rośnie); 9 plików / 22 testy z manifestu batcha PASS przy `--retry=0`. Otwarte: lint nieuruchamiany (odrzucony masowy autofix) i **26 zastanych** błędów typów frontu (0 wniesionych przez scalenie, dowód w raporcie). | `funkcje/INTEGRACJA_20260902.md` |
+
+Kandydat jest ścisłym **nadzbiorem** wszystkich czterech linii — `origin/develop` ma wobec niego
+**0** commitów przewagi. OOM z dyżuru 163 potwierdzony i usunięty: przyczyną było wciąganie
+`server/` do sprawdzania typów frontu (882 → 26 błędów, szczyt pamięci 9,9 → 6,8 GB).
+
+
 ### Blokady zgłoszone przez grafikę do toru funkcji
 
 ★ **WPIS TORU FUNKCJI 2026-08-30 noc — PARTNER, materiał z przejazdu G08 (dyżur 177):**
