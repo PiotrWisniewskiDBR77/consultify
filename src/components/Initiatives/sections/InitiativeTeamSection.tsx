@@ -334,6 +334,20 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       .filter((u: PanelOrgUser) => !!u.id);
   }, [users]);
 
+  // AI team proposals (add/update/remove) carry only `userId`. Resolve a display
+  // name from the already-loaded org directory / current project members so the
+  // panel never shows a raw user id where a name is available client-side.
+  const resolveUserLabel = useCallback(
+    (userId: string): string => {
+      const fromOrg = orgUsers.find((u) => u.id === userId);
+      if (fromOrg?.name) return fromOrg.name;
+      const fromMember = members.find((m) => String(m.userId) === userId);
+      if (fromMember?.userName) return fromMember.userName;
+      return userId;
+    },
+    [orgUsers, members]
+  );
+
   const onSearchUsers = useCallback(
     async (query: string): Promise<PanelOrgUser[]> => {
       const q = String(query || '')
@@ -741,7 +755,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                           }
                         />
                         <span className="min-w-0">
-                          <span className="font-semibold">{r.userId}</span>
+                          <span className="font-semibold">{resolveUserLabel(r.userId)}</span>
                           {r.reason ? <span className="text-slate-500"> — {r.reason}</span> : null}
                         </span>
                       </label>
@@ -772,7 +786,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                           }
                         />
                         <span className="min-w-0">
-                          <span className="font-semibold">{a.userId}</span>
+                          <span className="font-semibold">{resolveUserLabel(a.userId)}</span>
                           <span className="text-slate-500"> — {a.role}</span>
                           {a.reason ? <span className="text-slate-500"> — {a.reason}</span> : null}
                         </span>
@@ -804,7 +818,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
                           }
                         />
                         <span className="min-w-0">
-                          <span className="font-semibold">{u.userId}</span>
+                          <span className="font-semibold">{resolveUserLabel(u.userId)}</span>
                           <span className="text-slate-500"> — {u.role}</span>
                           {u.reason ? <span className="text-slate-500"> — {u.reason}</span> : null}
                         </span>

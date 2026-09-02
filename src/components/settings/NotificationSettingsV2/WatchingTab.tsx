@@ -28,8 +28,23 @@ const TYPE_LABELS: Record<string, string> = {
   project: 'Project',
 };
 
+// `notifyOn` is a closed enum ('all' | 'mentions' | 'status_changes') — never
+// render the raw value, it must always go through a human label.
+const NOTIFY_ON_LABEL_KEYS: Record<string, { key: string; fallback: string }> = {
+  all: { key: 'settings.notifications.watchNotifyAll', fallback: 'All updates' },
+  mentions: { key: 'settings.notifications.watchNotifyMentions', fallback: 'Mentions only' },
+  status_changes: {
+    key: 'settings.notifications.watchNotifyStatusChanges',
+    fallback: 'Status changes only',
+  },
+};
+
 const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRemoveWatcher }) => {
   const { t } = useTranslation();
+  const notifyOnLabel = (notifyOn: string) => {
+    const entry = NOTIFY_ON_LABEL_KEYS[notifyOn];
+    return entry ? t(entry.key, entry.fallback) : notifyOn;
+  };
 
   // Group watchers by type
   const grouped = watchers.reduce(
@@ -86,7 +101,10 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
                         <Icon size={16} className="text-c-text-secondary" />
                         <div>
                           <p className="text-sm font-medium text-c-text">{watcher.objectId}</p>
-                          <p className="text-xs text-c-text-muted">Notify: {watcher.notifyOn}</p>
+                          <p className="text-xs text-c-text-muted">
+                            {t('settings.notifications.watchNotifyPrefix', 'Notify')}:{' '}
+                            {notifyOnLabel(watcher.notifyOn)}
+                          </p>
                         </div>
                       </div>
 
