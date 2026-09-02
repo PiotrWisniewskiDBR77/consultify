@@ -15,16 +15,17 @@ let lastWorkbookTemplateId: string | null | undefined;
 let lastWorkbookId: string | null | undefined;
 
 // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
-// §3): Menu 1 must stay at exactly 5 tabs REGARDLESS of these flags — the
-// architects moved from Menu 1 siblings to an embedded mode inside "Szablony".
-// Force both ON here to prove the tab list is flag-independent (see the test
+// §3): Menu 1 must stay at exactly 5 tabs REGARDLESS of this flag — the
+// architect moved from a Menu 1 sibling to an embedded mode inside "Szablony".
+// Force it ON here to prove the tab list is flag-independent (see the test
 // below); this has no bearing on the other tests since the mocked ModuleHub
-// below ignores `primaryCta` (the only thing that reads these flags now).
+// below ignores `primaryCta` (the only thing that reads this flag now).
+// 2026-09-02: dropped the sibling `workbookTemplatesFlag` mock — the module
+// it targeted was deleted along with the dead "Generator szablonów (Arkusz)"
+// CTA entry (owner decyzja „nie" on gen-excel-templates-tab, 08-30). See the
+// kanon comment above `tabs` in ReportsAndPresentationsHub.tsx.
 vi.mock('../../../src/utils/deckArchitectFlag', () => ({
   isDeckArchitectEnabled: () => true,
-}));
-vi.mock('../../../src/utils/workbookTemplatesFlag', () => ({
-  isWorkbookTemplatesEnabled: () => true,
 }));
 
 vi.mock('react-i18next', async () => {
@@ -314,13 +315,14 @@ describe('ReportsAndPresentationsHub', () => {
     );
   });
 
-  // Kanon 2026-07-26: Architekt szablonów (Deck) i Generator szablonów (Excel)
-  // przestały być zakładkami Menu 1 — otwierają się wewnątrz "Szablony".
-  // isDeckArchitectEnabled/isWorkbookTemplatesEnabled są mockowane na ON u
-  // góry pliku właśnie po to, by ten test udowodnił, że mimo obu flag ON
+  // Kanon 2026-07-26: Architekt szablonów (Deck) przestał być zakładką Menu 1
+  // — otwiera się wewnątrz "Szablony". isDeckArchitectEnabled jest mockowane
+  // na ON u góry pliku właśnie po to, by ten test udowodnił, że mimo flagi ON
   // Menu 1 MA dokładnie 5 pozycji i nie zawiera 'template_architect' /
-  // 'workbook_templates' jako osobnych id.
-  it('keeps Menu 1 at exactly 5 tabs with both architect flags ON, no template_architect/workbook_templates siblings', () => {
+  // 'workbook_templates' jako osobnych id. (2026-09-02: 'workbook_templates'
+  // nigdy nie był bramkowany osobną flagą jako Menu 1 tab — sprawdzamy to
+  // nadal, bo to wartość embedded `templatesView`, nie martwy stan.)
+  it('keeps Menu 1 at exactly 5 tabs with the deck architect flag ON, no template_architect/workbook_templates siblings', () => {
     render(
       <MemoryRouter initialEntries={['/presentations']}>
         <ReportsAndPresentationsHub />
@@ -483,6 +485,25 @@ describe('ReportsAndPresentationsHub', () => {
       });
 
       expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=template_architect');
+    });
+
+    // Regresja (2026-09-02, owner decyzja „nie" 08-30 na gen-excel-templates-tab
+    // — „To samo nie wiem, po co on jest."): "Generator szablonów (Arkusz)" był
+    // zdublowany wpis w tym samym menu, wołający dokładnie ten sam handler co
+    // kafel "Excel" w launcherze "Nowy szablon". Dowód, że nie wraca.
+    it('never shows the retired "Generator szablonów (Arkusz)" entry in the split menu', () => {
+      render(
+        <MemoryRouter initialEntries={['/presentations?tab=templates']}>
+          <ReportsAndPresentationsHub />
+        </MemoryRouter>
+      );
+
+      act(() => {
+        screen.getByTestId('templates-new-split-toggle').click();
+      });
+
+      expect(screen.queryByTestId('templates-open-workbook-templates')).not.toBeInTheDocument();
+      expect(screen.queryByText('Generator szablonów (Arkusz)')).not.toBeInTheDocument();
     });
   });
 });
