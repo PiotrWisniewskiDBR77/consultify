@@ -87,7 +87,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
     >
       <div className={`flex ${compact ? 'flex-col gap-4' : 'flex-col gap-6'}`}>
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary-200/80 dark:border-primary-500/20 bg-primary-50 dark:bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
+          <div className="inline-flex items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
             <ShieldCheck size={14} />
             Partner lifecycle canon
           </div>
@@ -124,7 +124,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
                         className={`flex h-9 w-9 items-center justify-center rounded-full ${
                           step.completed
                             ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
-                            : 'bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300'
+                            : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
                         }`}
                       >
                         <Icon size={18} />
@@ -178,14 +178,14 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
               ))}
             </div>
 
-            <div className="mt-4 rounded-xl border border-dashed border-primary-200 dark:border-primary-500/20 bg-primary-50/70 dark:bg-primary-500/10 p-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
+            <div className="mt-4 rounded-xl border border-dashed border-c-border bg-c-surface-raised p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
                 Lifecycle progress
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <div className="h-2 flex-1 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500"
+                    className="h-full rounded-full bg-gradient-to-r from-navy-900 to-blue-600"
                     style={{ width: `${progress}%` }}
                   />
                 </div>

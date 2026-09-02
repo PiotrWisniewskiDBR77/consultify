@@ -30,8 +30,8 @@ interface AcademyProgressProps {
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
   METHODOLOGY: {
-    bg: 'bg-primary-100 dark:bg-primary-500/20',
-    text: 'text-primary-700 dark:text-primary-400',
+    bg: 'bg-slate-200 dark:bg-slate-500/20',
+    text: 'text-slate-700 dark:text-slate-300',
     icon: <BookOpen size={14} />,
   },
   SALES: {
@@ -118,11 +118,11 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Overview */}
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-50 to-indigo-50 p-6 dark:border-navy-700 dark:from-primary-500/10 dark:to-indigo-500/10">
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-c-surface to-c-surface-raised p-6 dark:border-navy-700">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-navy-900">
-              <GraduationCap size={24} className="text-primary-600" />
+              <GraduationCap size={24} className="text-c-text" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -169,7 +169,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
         <div>
           <div className="mb-2 flex items-center justify-between text-xs">
             <span className="text-slate-600 dark:text-slate-300">Overall Progress</span>
-            <span className="font-semibold text-primary-600 dark:text-primary-400">
+            <span className="font-semibold text-navy-900 dark:text-white">
               {stats.progressPercent}%
             </span>
           </div>
@@ -263,8 +263,8 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
 
       {/* CTA for Certification */}
       {!stats.certificationReady && (
-        <div className="rounded-xl border border-dashed border-primary-300 bg-primary-50/50 p-6 text-center dark:border-primary-500/30 dark:bg-primary-500/5">
-          <Lock size={32} className="mx-auto mb-3 text-primary-400" />
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-6 text-center dark:border-navy-600 dark:bg-navy-900/40">
+          <Lock size={32} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
           <h4 className="font-semibold text-navy-900 dark:text-white">
             Unlock Consultify Certification
           </h4>
@@ -334,7 +334,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
               {module.title}
             </span>
             {module.requiredForCertification && (
-              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/20 dark:text-primary-400">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-300">
                 Required
               </span>
             )}

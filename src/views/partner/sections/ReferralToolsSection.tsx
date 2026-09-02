@@ -458,7 +458,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-navy-900 dark:border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -489,11 +489,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       </div>
 
       {v8Analytics && (
-        <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-900/40 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
               <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary-500" />
+                <TrendingUp className="w-5 h-5 text-c-text-secondary" />
                 {pageCopy.runtimeTitle}
               </h3>
               <p className="text-sm text-c-text-muted mt-1">{pageCopy.runtimeSubtitle}</p>
@@ -524,7 +524,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             ].map((card) => (
               <div
                 key={card.label}
-                className="rounded-xl border border-primary-200/70 dark:border-primary-900/30 bg-primary-50/50 dark:bg-primary-950/20 p-4"
+                className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-4"
               >
                 <div className="text-xs uppercase tracking-wide text-c-text-muted">
                   {card.label}
@@ -540,7 +540,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       {subsection === 'referred-organizations' && (
         <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-primary-400" />
+            <Users className="w-5 h-5 text-c-text-secondary" />
             <div>
               <h3 className="text-lg font-semibold text-c-text">
                 {t('partner.referrals.referredCustomersList', 'Referred customers')}
@@ -675,8 +675,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         {/* Referral Code */}
         <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 rounded-lg bg-primary-500/20">
-              <Link2 className="w-5 h-5 text-primary-400" />
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <Link2 className="w-5 h-5 text-blue-400" />
             </div>
             <span className="text-sm text-c-text-secondary">
               {t('partner.referrals.yourCode', 'Your Referral Code')}
@@ -734,7 +734,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <button
               type="button"
               onClick={() => handleGetQrCode()}
-              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+              className="text-xs text-c-text-secondary hover:text-c-text flex items-center gap-1"
             >
               <QrCode className="w-3 h-3" />
               {t('partner.referrals.getQR', 'Get QR Code')}
@@ -742,7 +742,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <button
               type="button"
               onClick={() => handlePreview()}
-              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+              className="text-xs text-c-text-secondary hover:text-c-text flex items-center gap-1"
             >
               <ExternalLink className="w-3 h-3" />
               {t('partner.referrals.preview', 'Preview')}
@@ -775,7 +775,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
         {/* New Campaign Form */}
         {showNewCampaign && (
-          <div className="mb-4 p-4 bg-c-surface-raised/50 rounded-lg border border-primary-500/30">
+          <div className="mb-4 p-4 bg-c-surface-raised/50 rounded-lg border border-c-border">
             <h4 className="text-sm font-medium text-c-text mb-3">
               {t('partner.referrals.createCampaign', 'Create Campaign Link')}
             </h4>
@@ -790,7 +790,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   value={newCampaign.name}
                   onChange={(e) => setNewCampaign((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., LinkedIn Q1"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -804,7 +804,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmSource: e.target.value }))
                   }
                   placeholder="e.g., linkedin"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -818,7 +818,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmMedium: e.target.value }))
                   }
                   placeholder="e.g., social"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
               <div>
@@ -832,7 +832,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     setNewCampaign((prev) => ({ ...prev, utmCampaign: e.target.value }))
                   }
                   placeholder="e.g., partner-q1-2026"
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus"
                 />
               </div>
             </div>
@@ -846,7 +846,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               <button
                 onClick={handleCreateCampaign}
                 disabled={creating}
-                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
               >
                 {creating && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -949,32 +949,32 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       </div>
 
       {/* Tips Section */}
-      <div className="bg-gradient-to-br from-primary-900/30 to-primary-800/20 rounded-xl border border-primary-500/20 p-4">
-        <h4 className="text-sm font-semibold text-primary-300 mb-3 flex items-center gap-2">
+      <div className="bg-c-info/10 rounded-xl border border-c-info/20 p-4">
+        <h4 className="text-sm font-semibold text-c-info mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
           {t('partner.referrals.tips', 'Tips for Better Conversions')}
         </h4>
         <ul className="space-y-2 text-sm text-c-text-secondary">
           <li className="flex items-start gap-2">
-            <span className="text-primary-400">•</span>
+            <span className="text-c-info">•</span>
             {t(
               'partner.referrals.tipLinkedIn',
               'Share your link on LinkedIn with a compelling message about digital transformation'
             )}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary-400">•</span>
+            <span className="text-c-info">•</span>
             {t(
               'partner.referrals.tipCampaigns',
               'Use campaign links to track which channels perform best'
             )}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary-400">•</span>
+            <span className="text-c-info">•</span>
             {t('partner.referrals.tipSignature', 'Add your referral code to your email signature')}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary-400">•</span>
+            <span className="text-c-info">•</span>
             {t(
               'partner.referrals.tipCaseStudies',
               'Share case studies alongside your referral link for higher trust'
