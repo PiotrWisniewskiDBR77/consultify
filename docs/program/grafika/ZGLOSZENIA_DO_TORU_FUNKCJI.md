@@ -553,3 +553,71 @@ szablon… wcześniej ten wiersz nie pojawiał się WCALE…".
 
 To dane demo, nie etykieta interfejsu — dlatego nie ruszam ich w torze grafiki. Ale **na pokazie
 klient to przeczyta**. Do wyczyszczenia razem z resztą danych demonstracyjnych.
+
+### 45. [P2] Jedenaście plików naprawionych 02.09 nie ma ŻADNEGO ekranu w harnessie — naprawa jest niepokazywalna
+
+**Charakter ustalenia:** potwierdzone mechanicznie (`scripts/dev/grafika-dotkniete.mjs` + kontrolny
+grep po `dev-render/screens/` i `dev-render/main.tsx`), nie hipoteza z lektury kodu.
+
+Pomiar zakresu partii „poprawione dziś" wykazał, że jedenaście plików zmienionych 02.09 nie jest
+osiągalnych z **żadnego** z 313 ekranów rejestru grafiki ani z żadnego innego ekranu harnessu:
+
+| plik | co w nim naprawiono 02.09 |
+| --- | --- |
+| `src/components/MyWork/AnalysisDecisionQueue.tsx` | szerokość kolumny `'30%'` → `'240px'` |
+| `src/components/MyWork/DefinitionDecisionQueue.tsx` | j.w. (procent → piksele) |
+| `src/components/MyWork/DefinitionRemediationQueue.tsx` | j.w. |
+| `src/components/MyWork/GateSignoffQueue.tsx` | j.w. |
+| `src/components/MyWork/PortfolioDecisionQueue.tsx` | j.w. |
+| `src/components/MyWork/ScheduleDecisionQueue.tsx` | j.w. |
+| `src/components/Results/KpiQueueView.tsx` | j.w. |
+| `src/components/Results/ReconciliationPanel.tsx` | j.w. |
+| `src/components/Results/ResultsKpiReportsView.tsx` | j.w. |
+| `src/components/Results/ResultsReportingEnterpriseViews.tsx` | j.w. |
+| `src/views/superadmin/SystemSettings.tsx` | szerokość kolumny `'33%'` → `'260px'` |
+
+Kontrola: `KpiQueueView` pada w jednym pliku harnessu (`ui-foundation-focus-01-evidence.tsx`), ale
+ten ekran nie ma wpisu w rejestrze i nie jest o tej kolumnie. Pozostałych dziesięciu nie ma nigdzie.
+
+**Dlaczego to nie jest drobiazg.** Naprawa dotyczy realnego defektu: `FilterableTable` ma kontrakt
+„tylko piksele", a procent przechodził przez `.replace(/[^\d.]/g,'')` i `'26%'` stawało się `26px` —
+kolumna zapadała się do kilkunastu pikseli. To znaczy, że **na tych jedenastu powierzchniach defekt
+był realny i realnie zniknął**, ale nikt tego nie zobaczył ani przed, ani po. Nie ma zrzutu PRZED,
+nie ma zrzutu PO, nie da się postawić oceny — więc te ekrany nigdy nie wejdą do odbioru właściciela
+i nie ma jak wykryć, gdyby naprawa coś popsuła. Reguła 15 (awans karty wymaga obrazu zrobionego PO
+naprawie) jest tu strukturalnie niewykonalna.
+
+**REKOMENDACJA TORU GRAFIKI — rozdzielić na dwie grupy, nie dorabiać wszystkiego:**
+
+- **DOROBIĆ wejścia (10 powierzchni, warte kosztu):** sześć kolejek decyzyjnych Mojej Pracy
+  (`*DecisionQueue`, `GateSignoffQueue`, `DefinitionRemediationQueue`) i cztery widoki Wyników
+  to powierzchnie, na które **klient patrzy w codziennej pracy** — kolejki decyzji i przeglądy
+  wskaźników, czyli rdzeń modułu, nie ekrany administracyjne. Zmierzone: wszystkie sześć kolejek
+  montuje `StandardTable` i dzieli trzon kolumn (`title`, `initiativeId`, `dueAt`), różniąc się
+  tylko środkiem — czyli to jeden archetyp w sześciu wariantach. Wystarczy JEDEN plik harnessu
+  z parametrem `?kolejka=<nazwa>`, dokładnie jak działający już `dev-render/screens/ustawienia-grupy.tsx`
+  — koszt jednego ekranu, pokrycie sześciu. Wyniki analogicznie.
+  **Warunek:** ekran harnessu musi montować REALNY komponent i nie dokładać własnej powłoki
+  (reguła 17 / bramka `check-dev-render-parytet.mjs`) — inaczej dorobimy sobie nowy dług zamiast
+  pokrycia.
+- **ZOSTAWIĆ bez pokrycia wizualnego (1):** `SystemSettings` (superadmin). To konsola wewnętrzna
+  dbr77, nie powierzchnia klienta; właściciel nie odbiera tych ekranów i nie planujemy tego zmieniać.
+  Zmiana szerokości kolumny wystarczy tam pokryć testem jednostkowym kontraktu `parsePx`, który już
+  powstał 02.09.
+
+**SPROSTOWANIE WŁASNEGO TROPU — zmierzone, nie zgadnięte.** Napisałem najpierw, że skoro jedenaście
+plików deklarowało kolumny w procentach, to „prawie na pewno nie są jedyne", i zaleciłem przelot po
+`src/`. **Zmierzyłem i to nieprawda.** Wzorzec „obiekt definicji kolumny zawierający `id:` oraz
+`width: '<liczba>%'`" daje dziś w całym `src/` **zero wystąpień** — rodzina procentów w definicjach
+kolumn została 02.09 domknięta w całości. Pozostałe 55 trafień na goły `width: '<liczba>%'` to
+`<col style={{ width: '22%' }} />` w `<colgroup>` zwykłych tabel HTML oraz procenty w wykresach
+i węzłach kanwy — legalne użycie, którego kontrakt `parsePx` w ogóle nie dotyczy. **Nie wysyłajcie
+nikogo na ten przelot.**
+
+(Przy okazji tego pomiaru wyszło coś innego, czego tu nie podejmuję i zgłaszam jako obserwację, nie
+zlecenie: `Initiatives/sections/ResourcesSection.tsx` i `TasksMilestonesSection.tsx` budują WŁASNE
+`<table>` z `<colgroup>` zamiast używać `StandardTable`. To jest sprawa kanonu list — CLAUDE.md UI#9 —
+a nie kontraktu szerokości, i należy do toru grafiki, nie do Was.)
+
+**Zgłasza:** tor grafiki, 2026-09-02, przy partii „poprawione dziś"
+(`docs/program/grafika/POPRAWIONE_20260902.md`, sekcja „Co ZOSTAŁO POZA partią").
