@@ -63,9 +63,9 @@ export const ResourcesView: React.FC = () => {
             <button
               key={item.title}
               onClick={item.action}
-              className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/60 p-6 text-left hover:border-primary-500 transition-colors"
+              className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/60 p-6 text-left hover:border-slate-400 dark:hover:border-navy-600 transition-colors"
             >
-              <item.icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              <item.icon className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
                 {item.title}
               </h2>

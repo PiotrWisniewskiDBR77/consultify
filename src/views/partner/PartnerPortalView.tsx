@@ -2210,8 +2210,8 @@ const CertificationSection: React.FC<{
               className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-c-border transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-crimson-600 dark:bg-crimson-700 flex items-center justify-center">
-                  <Award className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-c-surface-raised flex items-center justify-center">
+                  <Award className="w-6 h-6 text-c-text" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-c-text">{cert.name}</h4>

@@ -428,11 +428,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     if (!v8Summary) return null;
 
     return (
-      <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-900/40 p-6">
+      <div className="bg-c-surface rounded-xl border border-c-border p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-500" />
+              <TrendingUp className="w-5 h-5 text-c-text-secondary" />
               {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
             </h3>
             <p className="text-sm text-c-text-muted mt-1">
@@ -442,7 +442,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               )}
             </p>
             {programStatus && (
-              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-300">
+              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-c-text-secondary">
                 {t(
                   `partner.canonicalRuntime.lifecycle.${programStatus.lifecyclePhase.toLowerCase()}`,
                   programStatus.lifecyclePhase
@@ -558,7 +558,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-navy-900 dark:border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -681,7 +681,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'statements'
-                  ? 'text-c-text border-primary-500'
+                  ? 'text-c-text border-c-text'
                   : 'text-c-text-secondary border-transparent hover:text-c-text dark:hover:text-white'
               )}
             >
@@ -692,7 +692,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'payments'
-                  ? 'text-c-text border-primary-500'
+                  ? 'text-c-text border-c-text'
                   : 'text-c-text-secondary border-transparent hover:text-c-text dark:hover:text-white'
               )}
             >
@@ -765,8 +765,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
           <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary-500/20">
-                <TrendingUp className="w-5 h-5 text-primary-400" />
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
               </div>
               <span className="text-sm text-c-text-secondary">
                 {t('partner.earnings.thisMonth', 'W tym miesiącu')}
@@ -832,7 +832,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300"
+                className="flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-text"
               >
                 <Download className="w-4 h-4" />
                 {t('common.exportCSV', 'Export CSV')}

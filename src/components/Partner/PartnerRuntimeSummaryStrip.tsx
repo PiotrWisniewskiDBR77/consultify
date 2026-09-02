@@ -108,7 +108,7 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-            <Sparkles className="h-5 w-5 text-primary-500" />
+            <Sparkles className="h-5 w-5 text-slate-500 dark:text-slate-400" />
             {t('partner.metrics.runtimeTitle', 'Partner Runtime Summary')}
           </h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

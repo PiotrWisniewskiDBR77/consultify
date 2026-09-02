@@ -146,7 +146,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
   return (
     <div className="space-y-6">
       {/* AI Insights Header */}
-      <div className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/5 to-primary-500/5 p-6 dark:from-brand/10 dark:to-primary-500/10">
+      <div className="rounded-xl border border-c-ai/20 bg-gradient-to-br from-c-ai/5 to-c-surface-raised p-6 dark:from-c-ai/10 dark:to-c-surface-raised">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10">
             <Brain size={20} className="text-brand" />
@@ -363,7 +363,7 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
     REGISTERED: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     QUALIFIED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
     PROPOSAL: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-    NEGOTIATION: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400',
+    NEGOTIATION: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
   };
 
   return (

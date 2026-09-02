@@ -356,7 +356,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+      count: 'bg-c-surface-raised text-c-text-secondary',
       new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       warning: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
