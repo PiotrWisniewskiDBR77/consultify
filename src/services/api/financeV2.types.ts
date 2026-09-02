@@ -1852,6 +1852,18 @@ export interface BaselineWorkspaceContextDto {
   businessVersionId: string;
   entityId: string;
   openingBalanceSheetPeriodId: string;
+  /**
+   * ★ Dyżur 279 — okres otwarcia z ETYKIETĄ i datami (źródło:
+   * `finance_stmt_periods` przez `baselineContextService.readContextTx`).
+   * Wcześniej kontekst niósł wyłącznie surowe ID, przez co kolumna
+   * „Okres bazowy" renderowała `per-2025-12`. Pole opcjonalne wyłącznie
+   * dlatego, że replay starego paragonu idempotencji
+   * (`finance_baseline_context_command_receipts.response_json` zapisany przed
+   * tą zmianą) zwraca kształt sprzed rozszerzenia; realny GET zwraca je zawsze.
+   */
+  openingBalanceSheetPeriod?: BaselineWorkspacePeriodDto;
+  /** ★ Dyżur 279 — metadane okresów zakotwiczenia historii (`base_period_id`). */
+  assumptionBasePeriods?: BaselineWorkspacePeriodDto[];
   forecastPeriods: BaselineWorkspacePeriodDto[];
   assumptionRowOrder: Array<{
     scheduleType: BaselineScheduleType;

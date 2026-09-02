@@ -41,7 +41,10 @@ afterEach(() => {
 });
 
 describe('BaselineWorkspace — canonical context loader', () => {
-  it('does not fetch context while the workspace flag is OFF', () => {
+  // ★ DYŻUR 279: default flagi to teraz ON, więc bramkę sprawdzamy jawnym
+  // override OFF (ścieżka cofania) — inaczej ten test przestałby czegokolwiek bronić.
+  it('does not fetch context while the workspace flag is explicitly OFF', () => {
+    setFeatureFlagOverrides({ financeBaselineWorkspaceV1: false });
     const { container } = render(<BaselineWorkspace {...props} />);
     expect(container).toBeEmptyDOMElement();
     expect(apiMocks.getBaselineWorkspaceContext).not.toHaveBeenCalled();
@@ -53,6 +56,21 @@ describe('BaselineWorkspace — canonical context loader', () => {
       businessVersionId: 'bv-context',
       entityId: 'entity-source',
       openingBalanceSheetPeriodId: 'period-opening',
+      // ★ DYŻUR 279 — rozszerzony kontrakt kontekstu.
+      openingBalanceSheetPeriod: {
+        periodId: 'period-opening',
+        label: '12/2026',
+        periodStart: '2026-12-01',
+        periodEnd: '2026-12-31',
+      },
+      assumptionBasePeriods: [
+        {
+          periodId: 'period-opening',
+          label: '12/2026',
+          periodStart: '2026-12-01',
+          periodEnd: '2026-12-31',
+        },
+      ],
       forecastPeriods: [
         {
           periodId: 'period-forecast',
@@ -71,6 +89,24 @@ describe('BaselineWorkspace — canonical context loader', () => {
       ],
       version: 1,
     });
+    apiMocks.listBaselineAssumptions.mockResolvedValue([
+      {
+        assumptionId: 'a-1',
+        scheduleType: 'revenue_pvm',
+        driverCode: 'REVENUE_GROWTH_YOY',
+        entityId: 'entity-source',
+        periodId: 'period-forecast',
+        basePeriodId: 'period-opening',
+        rule: 'GROWTH_RATE',
+        value: { status: 'PRESENT_NONZERO', valueDecimal: '0.12', unit: 'PCT' },
+        rangeLow: null,
+        rangeHigh: null,
+        quality: 'CONFIRMED',
+        createdBy: 'u',
+        createdAt: '2026-08-01T09:00:00.000Z',
+        updatedAt: '2026-08-01T09:00:00.000Z',
+      },
+    ]);
 
     render(<BaselineWorkspace {...props} />);
     expect(apiMocks.listBaselineAssumptions).not.toHaveBeenCalled();
@@ -80,6 +116,12 @@ describe('BaselineWorkspace — canonical context loader', () => {
         entityId: 'entity-source',
       })
     );
+
+    // ★ DYŻUR 279 — kolumna „Okres bazowy" pokazuje ETYKIETĘ okresu otwarcia
+    // z kontekstu, nie surowe ID (`period-opening`). To jest zgłoszenie
+    // właściciela „`per-2025-12`" w postaci testu.
+    await waitFor(() => expect(screen.getByText('12/2026')).toBeInTheDocument());
+    expect(screen.queryByText('period-opening')).not.toBeInTheDocument();
 
     apiMocks.computeBaseline.mockResolvedValue({
       jobId: 'job-1',

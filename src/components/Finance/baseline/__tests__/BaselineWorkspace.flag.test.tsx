@@ -2,15 +2,18 @@
  * @vitest-environment jsdom
  *
  * `BaselineWorkspace` — AP_MOUNT §A: the component reads its OWN flag
- * (`financeBaselineWorkspaceV1`, default OFF) and gates on it BEFORE
- * mounting `useBaselineAssumptionsEditor`/`useBaselineOutputs`/
- * `useBaselineCompute` — the three hooks that fetch
- * `/api/v8/finance-v2/baseline/*` on mount.
+ * (`financeBaselineWorkspaceV1`) and gates on it BEFORE mounting
+ * `useBaselineAssumptionsEditor`/`useBaselineOutputs`/`useBaselineCompute` —
+ * the three hooks that fetch `/api/v8/finance-v2/baseline/*` on mount.
+ *
+ * ★ DYŻUR 279: default przełączony na ON (warunkowy akcept właściciela
+ * spełniony). Bramka MUSI dalej działać w drugą stronę, więc test odwrócono:
  *
  * Proves:
- *   - flag OFF (no override, i.e. real production default): renders nothing
- *     AND never calls any of the three baseline network functions.
- *   - flag ON (local override): mounts the real bar + Założenia view.
+ *   - no override (i.e. real production default, now ON): mounts the real bar
+ *     + Założenia view.
+ *   - explicit local override OFF: renders nothing AND never calls any of the
+ *     three baseline network functions (ścieżka cofania z `_RUNBOOK_COFANIA.md`).
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -67,7 +70,8 @@ afterEach(() => {
 });
 
 describe('BaselineWorkspace — flag gate (AP_MOUNT §A)', () => {
-  it('OFF (default): renders nothing and calls zero baseline network functions', () => {
+  it('explicit override OFF: renders nothing and calls zero baseline network functions', () => {
+    setFeatureFlagOverrides({ financeBaselineWorkspaceV1: false });
     const { container } = render(<BaselineWorkspace {...baseProps()} />);
     expect(container).toBeEmptyDOMElement();
     expect(apiMocks.listBaselineAssumptions).not.toHaveBeenCalled();
@@ -75,7 +79,15 @@ describe('BaselineWorkspace — flag gate (AP_MOUNT §A)', () => {
     expect(apiMocks.computeBaseline).not.toHaveBeenCalled();
   });
 
-  it('ON (local override): mounts the real bar and Założenia view', async () => {
+  it('default (no override, ON od dyżuru 279): mounts the real bar and Założenia view', async () => {
+    apiMocks.listBaselineAssumptions.mockResolvedValue([]);
+    apiMocks.listBaselineOutputs.mockResolvedValue([]);
+    render(<BaselineWorkspace {...baseProps()} />);
+    expect(screen.getByTestId('baseline-workspace')).toBeInTheDocument();
+    expect(await screen.findByRole('tablist')).toBeInTheDocument();
+  });
+
+  it('ON (jawny local override): mounts the real bar and Założenia view', async () => {
     apiMocks.listBaselineAssumptions.mockResolvedValue([]);
     apiMocks.listBaselineOutputs.mockResolvedValue([]);
     setFeatureFlagOverrides({ financeBaselineWorkspaceV1: true });
