@@ -53,7 +53,50 @@ narzędzie, nie karty.
 
 ## FINANSE — 13 ekranów
 
-<!-- WYPEŁNIANE: tabela per ekran ze ścieżką zrzutu jasny/ciemny, jednym zdaniem i oceną -->
+Zdjęcia: `evidence/grafika/206-przeglad-09-10/` — każdy ekran jako `<nazwa>__PRZED__light.png`
+i `<nazwa>__PRZED__dark.png`. Wszystkie zrobione dziś. Ekrany listowe — po kliknięciu w wiersz,
+czyli z otwartym panelem po prawej.
+
+**Skrót wyniku: 8 ekranów bez zastrzeżeń · 3 z defektem do naprawy · 1 do rozstrzygnięcia
+· 1 czeka na budowę.**
+
+**★ Ważne o tym module:** kontrola prawdziwości obrazu daje dla Finansów **zero zastrzeżeń** —
+wszystkie 13 ekranów pokazuje prawdziwą aplikację. Wcześniejszy audyt twierdził, że cztery panele
+Finansów są tu pokazane jako osobne kartki, choć w produkcie to jedna szuflada z zakładkami.
+To okazało się **błędem narzędzia kontrolnego**, nie ekranów — poprawiliśmy narzędzie.
+
+### Gotowe — pokazuję bez zastrzeżeń (8 ekranów, ocena A)
+
+| Ekran | Co na nim widać |
+| --- | --- |
+| Komentarze — `finance-comments-panel` | Baner „Są nierozwiązane komentarze blokujące" (czerwony zasadnie — zatwierdzenie jest realnie wstrzymane), dwa komentarze z autorami i pigułką „Blokujący". |
+| Nawigator pochodzenia — `finance-lineage-navigator` | Łańcuch pięciu kroków od „Pakiet sprawozdań FY2025 v3" do „Wycena DBR77 v1"; sekcja „Dzieci 0" ma wyjaśnienie „Brak bezpośrednich dzieci" — uczciwe zero, nie gołe zero. |
+| Pasek tożsamości — `finance-workspace-bar` | „DBR77 — Model bazowy FY2026" z czterema zakładkami (Założenia GOTOWE / Zdarzenia / Wyliczenia GOTOWE / Walidacja). Treść pod paskiem jest jawnie oznaczona jako poza zakresem — pustka jest tu zamierzona i nazwana. |
+| Zapisane widoki — `finance-saved-views-panel` | Sekcje „Zespołowe (1)" i „Osobiste (1)" z realnymi nazwami; „Usuń" na czerwono (usuwanie jest nieodwracalne — zasadnie). |
+| Eksport i import — `finance-export-import-panel` | Po wgraniu pliku i kliknięciu „Podgląd różnic" widać **policzony wynik**, nie sam formularz: dodane 0, zmienione 2, wyczyszczone 0, bez zmian 370. |
+| Modele — `finance-model-workspace` | „Źródło i wartości bazowe" z realnymi liczbami (przychody 12 400 000, koszt własny 7 100 000, nakłady 560 000) i paskiem „OPARTE NA FY2025 · Zatwierdzony". |
+| Pakiet sprawozdań — `finance-statement-pack-workspace-v2` | Sześć linii z kwotami (przychody 8 200 000 → 9 400 000) i pigułką „KOREKTA"; prawy panel z powiązanymi artefaktami. |
+| Porównanie okresów — `finance-compare-panel` | Siedem wierszy w pełni policzonych (przychody 420 000 → 431 000, +2,6%; wynik netto 58 563 → 60 426, +3,2%); czerwień tylko przy ujemnych zmianach kosztów. |
+| Wycena przedsiębiorstw — `finance-valuation-workspace` | Łańcuch pochodzenia w czterech krokach z datami i uczciwym wymogiem: wersja musi wskazywać zatwierdzoną, a nie „najnowszą". |
+
+### Z defektem, który nazywam PRZED Twoim spojrzeniem (3 ekrany, ocena B)
+
+| Ekran | Co jest nie tak | Stan |
+| --- | --- | --- |
+| **Analiza** — `finance-analysis-workspace` | **Najgorszy w tym module.** W kolumnie KOMENTARZ, w wierszu „Marża brutto", tekst tnie się w środku słowa w każdej z sześciu linii: „Marż / rośni / dzięk / niższ / koszt / mate" zamiast „Marża rośnie dzięki niższym kosztom materiałów". Nie ma nawet wielokropka. | ZNANY BRAK — luka we wspólnym mechanizmie skracania tekstu; naprawa dotyka dziesiątek już odebranych ekranów, więc idzie osobną rundą (`ODLOZONE.md`) |
+| **Wejście do Finansów** — `finance-hub` | Ten sam status w dwóch językach na jednym ekranie: wiersz tabeli mówi „Szkic", a panel obok „DRAFT". | DO NAPRAWY — to samo, co naprawiliśmy dziś w Projektach; tu wychodzi kolejne wystąpienie |
+| **Prognoza** — `finance-prediction-workspace` | Kolumna LINIA pokazuje kody zamiast nazw: `CASH`, `EBITDA`, `LONG_TERM_DEBT`, `REVENUE`. Kolumna OKRES pokazuje `latest`. Poza tym ekran jest policzony: EBITDA 312 000 wobec 298 000 w scenariuszu bazowym, +4,7%. | NAPRAWIANE DZIŚ |
+
+### Do rozstrzygnięcia (1 ekran)
+
+**Model bazowy — `finance-baseline-workspace`.** Dziewięć założeń wypełnionych i czytelnych
+(wzrost przychodów 8% → 12%, stawka podatku 19%), ale kolumna OKRES BAZOWY pokazuje `per-2025-12`
+zamiast „grudzień 2025" — w każdym z dziewięciu wierszy. Naprawiane dziś razem z Prognozą.
+
+**Ten sam ekran ma Twoją otwartą uwagę:** *„dalej nie mam przycisku dodawania założeń
+i możliwości usuwania linii"*. Tego przycisku po prostu nie ma w programie — przekazane do budowy
+jako sprawa #36. Karta zostaje otwarta, żeby nie zniknęła.
+
 
 ---
 
