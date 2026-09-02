@@ -2,39 +2,39 @@
  "karta-insight": {
   "decyzja": "ok",
   "uwaga": "Tutaj problemem jest to. W oknie centralnym mamy trzy kolumny; jest to zaciągnięte. Zróbmy to w trzech dużych wierszach z trzema kolorami, aby było czytelne od góry do dołu. ",
-  "kiedy": "2026-09-02T14:35:36.237Z"
+  "kiedy": "2026-09-02T16:17:14.052Z"
  },
  "karta-decision": {
   "decyzja": "ok",
   "uwaga": "Tutaj ważne jest to, że mamy w górnym pasku przycisk „AI”, a później w pasku dalszego arkusza mamy „Analizuj z AI”. Pamiętaj, że to są dwie różne funkcjonalności. Górny pasek AI dotyczy wypełnienia całego narzędzia, a dolny pasek dotyczy danej karty. ",
-  "kiedy": "2026-09-02T14:35:36.234Z"
+  "kiedy": "2026-09-02T16:17:14.049Z"
  },
  "karta-task": {
   "decyzja": "ok",
   "uwaga": "OK",
-  "kiedy": "2026-09-02T14:35:36.239Z"
+  "kiedy": "2026-09-02T16:17:14.053Z"
  },
  "karta-tool": {
   "decyzja": "ok",
   "uwaga": "Zobacz tutaj w karcie ostatniej w przykładzie. Mieliśmy usunąć dwa przykłady, bo mieliśmy trzy. Został jeden, ale w postaci jednej kolumny. To wygląda bez sensu. No i w tym narzędziu nie mam, jak przeklikać samego wypełniania dokumentu. ",
-  "kiedy": "2026-09-02T14:35:36.335Z"
+  "kiedy": "2026-09-02T16:17:14.093Z"
  },
  "karta-notification": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.235Z"
+  "kiedy": "2026-09-02T16:17:14.058Z"
  },
  "decision-record": {
   "decyzja": "ok",
   "uwaga": "Tam jest jakiś komentarz – zobacz na tym screenie, że informacje przekazane nie są wysyłane do serwera, tylko zostają w pamięci przeglądarki. Mam nadzieję, że to jest jakiś błąd, nie? Tak, weźmy to pod uwagę, aby oczywiście ta karta była połączona z całym systemem. ",
-  "kiedy": "2026-09-02T14:35:36.271Z"
+  "kiedy": "2026-09-02T16:17:14.078Z"
  },
  "results-vnext-kpi-registry": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.411Z"
+  "kiedy": "2026-09-02T16:17:14.167Z"
  },
  "results-vnext-kpi-scorecards": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.392Z"
+  "kiedy": "2026-09-02T16:17:14.155Z"
  },
  "results-vnext-kpi-tool": {
   "decyzja": "ok",
@@ -43,200 +43,200 @@
  "results-vnext-roi-registry": {
   "decyzja": "ok",
   "uwaga": "Super ok ",
-  "kiedy": "2026-09-02T14:35:36.401Z"
+  "kiedy": "2026-09-02T16:17:14.165Z"
  },
  "results-vnext-roi-full-tool": {
   "decyzja": "ok",
   "uwaga": "Wiesz co, wydaje mi się, że mamy do poprawki, bo ROI to jedna analiza i powinna mieć formułę N‑karty. Tak jak teraz, gdy tworzysz to w menu poziomym, nie mamy możliwości ułożenia tego w strukturze dokumentu. To musi być n‑karta, gdzie będziemy mieli z nowej strony te zakładki, które teraz masz w menu, bo to menu, które teraz masz, już się nie wciśnie – byłoby to czwarte menu, a to byłoby zupełnie niepotrzebne. Dlatego musi być n‑karta. Każda jedna analiza RI, łącznie z modelem, to jest po prostu jedna karta. ",
-  "kiedy": "2026-09-02T14:35:36.403Z"
+  "kiedy": "2026-09-02T16:17:14.158Z"
  },
  "results-vnext-roi-model": {
   "decyzja": "ok",
   "uwaga": "Tutaj muszę to odrzucić, bo wniosek jest dokładnie taki, jak wcześniej opisałem. Musimy przenieść to do jednej n‑karty. ",
-  "kiedy": "2026-09-02T14:35:36.393Z"
+  "kiedy": "2026-09-02T16:17:14.156Z"
  },
  "results-vnext-roi-pir-outcomes": {
   "decyzja": "ok",
   "uwaga": "I to jest, jak rozumiem, konsekwencja poprzednich, czyli to jest kolejna N‑karta w jednym ROI‑u. ",
-  "kiedy": "2026-09-02T14:35:36.409Z"
+  "kiedy": "2026-09-02T16:17:14.174Z"
  },
  "results-vnext-okr-registry": {
   "decyzja": "ok",
   "uwaga": "Dobrze, tutaj zgłaszałem, ja już to się zapisało. W prawym, głównym rogu powinien być przycisk „Nowe dodawanie OKR”, a teraz są jakieś inne niepotrzebne przyciski. ",
-  "kiedy": "2026-09-02T14:35:36.400Z"
+  "kiedy": "2026-09-02T16:17:14.163Z"
  },
  "finance-model-workspace": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.423Z"
+  "kiedy": "2026-09-02T16:17:14.193Z"
  },
  "finance-analysis-workspace": {
   "decyzja": "ok",
   "uwaga": "Nie mam jak tego zatwierdzić, nic tu nie widać, nic z tego nie można wyciągnąć. ",
-  "kiedy": "2026-09-02T14:35:36.421Z"
+  "kiedy": "2026-09-02T16:17:14.189Z"
  },
  "finance-valuation-workspace": {
   "decyzja": "ok",
   "uwaga": "Dobrze, słuchaj, to jak merytorycznie pewnie wygląda, to dobrze. Popracuj trochę nad grafiką. Zobacz, przyciski u góry są po prostu słowami, nie przyciskami okrągłymi. Popraw je graficznie, żeby wyglądały tak jak reszta naszego dokumentu. Układ merytoryczny i przepływ informacji są super. ",
-  "kiedy": "2026-09-02T14:35:36.428Z"
+  "kiedy": "2026-09-02T16:17:14.200Z"
  },
  "finance-compare-panel": {
   "decyzja": "ok",
   "uwaga": "A moze całą szerokość dostpenego ekranu wykrzystajmy ",
-  "kiedy": "2026-09-02T14:35:36.426Z"
+  "kiedy": "2026-09-02T16:17:14.205Z"
  },
  "finance-statement-pack-workspace-v2": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.431Z"
+  "kiedy": "2026-09-02T16:17:14.195Z"
  },
  "finance-prediction-workspace": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.427Z"
+  "kiedy": "2026-09-02T16:17:14.198Z"
  },
  "finance-export-import-panel": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.422Z"
+  "kiedy": "2026-09-02T16:17:14.191Z"
  },
  "finance-saved-views-panel": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.419Z"
+  "kiedy": "2026-09-02T16:17:14.196Z"
  },
  "finance-comments-panel": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.414Z"
+  "kiedy": "2026-09-02T16:17:14.180Z"
  },
  "finance-lineage-navigator": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.415Z"
+  "kiedy": "2026-09-02T16:17:14.181Z"
  },
  "finance-workspace-bar": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.416Z"
+  "kiedy": "2026-09-02T16:17:14.184Z"
  },
  "idea-table": {
   "decyzja": "ok",
   "uwaga": "OK - teraz jest ok ",
-  "kiedy": "2026-09-02T14:35:36.270Z"
+  "kiedy": "2026-09-02T16:17:14.084Z"
  },
  "idea-table-tool-empty-filter": {
   "decyzja": "ok",
   "uwaga": "Wiedziałem, że mamy taką tabelę w ogóle. ",
-  "kiedy": "2026-09-02T14:35:36.254Z"
+  "kiedy": "2026-09-02T16:17:14.071Z"
  },
  "idea-table-tool-grouping": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.230Z"
+  "kiedy": "2026-09-02T16:17:14.047Z"
  },
  "idea-table-tool-kebab": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.243Z"
+  "kiedy": "2026-09-02T16:17:14.056Z"
  },
  "idea-table-tool-sortfilter": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.255Z"
+  "kiedy": "2026-09-02T16:17:14.066Z"
  },
  "idea-table-tool-paste": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.262Z"
+  "kiedy": "2026-09-02T16:17:14.077Z"
  },
  "idea-table-record-templates": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.268Z"
+  "kiedy": "2026-09-02T16:17:14.076Z"
  },
  "idea-templates-catalog": {
   "decyzja": "ok",
   "uwaga": "to jest moje marzenie aby to wszytko działało dobrze",
-  "kiedy": "2026-09-02T14:35:36.241Z"
+  "kiedy": "2026-09-02T16:17:14.055Z"
  },
  "ideas-preview-overlay": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.248Z"
+  "kiedy": "2026-09-02T16:17:14.060Z"
  },
  "idea-confidentiality-control": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.250Z"
+  "kiedy": "2026-09-02T16:17:14.062Z"
  },
  "mywork-idea-topbar": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.267Z"
+  "kiedy": "2026-09-02T16:17:14.075Z"
  },
  "notatnik-centrum-mysli": {
   "decyzja": "ok",
   "uwaga": "To byłoby zajebiste, żeby to tak działało. ",
-  "kiedy": "2026-09-02T14:35:36.225Z"
+  "kiedy": "2026-09-02T16:17:14.050Z"
  },
  "notatnik-osierocone-graf": {
   "decyzja": "ok",
   "uwaga": "Jak robimy takie nody notatek to moze zrob ja na całym ekranie jedną bo kilka na jedym eraknie nie daje komortu pracy. ",
-  "kiedy": "2026-09-02T14:35:36.227Z"
+  "kiedy": "2026-09-02T16:17:14.045Z"
  },
  "vault-sejf-wnetrze": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.264Z"
+  "kiedy": "2026-09-02T16:17:14.072Z"
  },
  "vault-safes-table": {
   "decyzja": "ok",
   "uwaga": "Ja mam takie wrażenie, że tabela tego SEF‑u jest dziwnie wąska. Nie rozciąga się na całą szerokość tabeli. Pracuj nad tym, żeby wiersze mieściły się w jednej linii, a nie rozkładały się na cztery wiersze – żeby każdy wiersz był jedną linią, jak w tabeli. Układ jest okej, nie?  Tylko mogę uznać to za wąskie. ",
-  "kiedy": "2026-09-02T14:35:36.260Z"
+  "kiedy": "2026-09-02T16:17:14.069Z"
  },
  "vault-folder-block-proof": {
   "decyzja": "ok",
   "uwaga": "I tutaj co do zasady jestem ok z grafiką ale cała funcjonalność agenta powinna być duzo bardziej rozwinieta niz nasz obecny stan tego okna. ale te komponetny nodów są ok",
-  "kiedy": "2026-09-02T14:35:36.221Z"
+  "kiedy": "2026-09-02T16:17:14.041Z"
  },
  "template-builder-doc": {
   "decyzja": "ok",
   "uwaga": "To jest super!!!!!!! proste i czytelne - brawo ",
-  "kiedy": "2026-09-02T14:35:36.456Z"
+  "kiedy": "2026-09-02T16:17:14.240Z"
  },
  "template-builder-deck": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.453Z"
+  "kiedy": "2026-09-02T16:17:14.236Z"
  },
  "template-builder-table": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.454Z"
+  "kiedy": "2026-09-02T16:17:14.238Z"
  },
  "template-create-wizard": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.464Z"
+  "kiedy": "2026-09-02T16:17:14.242Z"
  },
  "template-library-new-entry": {
   "decyzja": "ok",
   "uwaga": "No, tak jak rozumiem, to jest normalna tabela, bo przecież to jest po prostu tabela, w której mamy w menu funkcję pod tytułem „wzorzec”, czyli template. To jest normalna tabela, ale już przyciski – przycisk dodawania, … ",
-  "kiedy": "2026-09-02T14:35:36.433Z"
+  "kiedy": "2026-09-02T16:17:14.207Z"
  },
  "materialy-launcher": {
   "decyzja": "ok",
   "uwaga": "Magicznie jest w porządku, tylko mogłoby być trochę bardziej seksowne. ",
-  "kiedy": "2026-09-02T14:35:36.458Z"
+  "kiedy": "2026-09-02T16:17:14.256Z"
  },
  "materialy-template-library-slice": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.432Z"
+  "kiedy": "2026-09-02T16:17:14.214Z"
  },
  "materialy-draft-template-visibledraft-fix": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.469Z"
+  "kiedy": "2026-09-02T16:17:14.262Z"
  },
  "document-studio-menu-pliku": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.470Z"
+  "kiedy": "2026-09-02T16:17:14.254Z"
  },
  "document-studio-nowy-dokument-martwe-przyciski": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.465Z"
+  "kiedy": "2026-09-02T16:17:14.266Z"
  },
  "document-studio-save-as-template": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.468Z"
+  "kiedy": "2026-09-02T16:17:14.260Z"
  },
  "document-studio-blocks-i18n": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.467Z"
+  "kiedy": "2026-09-02T16:17:14.258Z"
  },
  "document-studio-context-chip": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.462Z"
+  "kiedy": "2026-09-02T16:17:14.252Z"
  },
  "deck-quality-badge": {
   "decyzja": "ok",
@@ -244,175 +244,175 @@
  },
  "word-quality-badge": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.477Z"
+  "kiedy": "2026-09-02T16:17:14.264Z"
  },
  "b2-template-gallery": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.448Z"
+  "kiedy": "2026-09-02T16:17:14.229Z"
  },
  "document-studio-ai-teresa": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.484Z"
+  "kiedy": "2026-09-02T16:17:14.276Z"
  },
  "document-studio-streaming-honesty-n3": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.476Z"
+  "kiedy": "2026-09-02T16:17:14.273Z"
  },
  "audyty-warsztat-kryterium": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.478Z"
+  "kiedy": "2026-09-02T16:17:14.287Z"
  },
  "assessment-five-surfaces": {
   "decyzja": "ok",
   "uwaga": "Niestety, tutaj tabela preview nie trzyma się opisanego standardu. ",
-  "kiedy": "2026-09-02T14:35:36.358Z"
+  "kiedy": "2026-09-02T16:17:14.119Z"
  },
  "assessment-output-report": {
   "decyzja": "ok",
   "uwaga": "No dobra, i teraz tak: jeśli chodzi o raporty z oceny, trochę to pomieszaliśmy, nie? Audyt i oceny to dwie różne historie. Oceny mają swój framework i raporty. Jeżeli chodzi o DRD, mamy konkretną formułę, w której znajdują się wszystkie poszczególne osie. Dla każdej osi określony jest obszar analityczny, więc musimy zbudować raport o dosyć sformalizowanej strukturze:  1. Wstęp z opisem, jak było prowadzone badanie.   2. Siedem osi – dla każdej z nich opisujemy najpierw samą oś, a następnie obszar.   3. Opisujemy odpowiedzi oraz wstępną paletę wniosków.   4. Na koniec podsumowanie.  Tak więc raport jest znacznie bardziej sformalizowany.  Podobnie w przypadku Siri – istnieje dokument opisujący, jak ma wyglądać raport.    W audytach jest nieco większa dowolność, ale również trzeba przejść przez wnioski audytowe w kolejności, w jakiej audyt jest realizowany. ",
-  "kiedy": "2026-09-02T14:35:36.346Z"
+  "kiedy": "2026-09-02T16:17:14.106Z"
  },
  "assessment-quality-review-panel": {
   "decyzja": "ok",
   "uwaga": "Znowu taki wniosek: taka tabela jest możliwa, tylko pamiętaj, że w asesmencie mamy macierz odpowiedzi i ona jest ważna, bo jest narzędziem. To nie jest tylko prezentacja, to jest narzędzie, które sprawia, że wchodzimy w interakcję. Nie wiem, czy to, co mi tu pokazujesz, ma zastąpić macierz. Jeśli tak, to nie działa w ten sposób.  Jeśli chcesz mieć oddzielną taką tabelę, to super, tylko to nie jest macierz. Dobrze, przejrzałem wszystkie karty. Nigdzie nie znalazłem macierzy. Macierz jest przedstawieniem graficznym na wszystkich osiach ze zmiennymi osiami. Poszukaj tego dokładnie. To w kodzie istnieje. To jest super ważne, bo ta macierz później wchodzi do raportu i wizualizuje poziomy oraz następne kroki. To jest jakby wizualizacja z głównym narzędziem tutaj. ",
-  "kiedy": "2026-09-02T14:35:36.345Z"
+  "kiedy": "2026-09-02T16:17:14.105Z"
  },
  "assessment-reports-table": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.348Z"
+  "kiedy": "2026-09-02T16:17:14.108Z"
  },
  "assessment-artifacts-restart": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.350Z"
+  "kiedy": "2026-09-02T16:17:14.110Z"
  },
  "assessment-menu3-status-chips": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.340Z"
+  "kiedy": "2026-09-02T16:17:14.101Z"
  },
  "drd-http-workspace": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.283Z"
+  "kiedy": "2026-09-02T16:17:14.088Z"
  },
  "method-workspace": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.341Z"
+  "kiedy": "2026-09-02T16:17:14.102Z"
  },
  "audyty-piec-powierzchni": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.480Z"
+  "kiedy": "2026-09-02T16:17:14.280Z"
  },
  "audyty-raport-dokument": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.482Z"
+  "kiedy": "2026-09-02T16:17:14.281Z"
  },
  "audyty-drd-report": {
   "decyzja": "ok",
   "uwaga": "Znowu nie wiem, gdzie to jest, ale to nie wygląda jak pełna tabela. To muszą być raporty, które są po prostu pełną tabelą na pełną szerokość. ",
-  "kiedy": "2026-09-02T14:35:36.483Z"
+  "kiedy": "2026-09-02T16:17:14.283Z"
  },
  "assessment-list": {
   "decyzja": "ok",
   "uwaga": "To samo rozumiem, że to ma być tabela na całą szerokość ekranu, a nie jakaś fragmentaryczna. ",
-  "kiedy": "2026-09-02T14:35:36.354Z"
+  "kiedy": "2026-09-02T16:17:14.114Z"
  },
  "assessment-presentation-view": {
   "decyzja": "ok",
   "uwaga": "Ciagle nie wiem dlaczego nie uzywsz mojej maciezy DRD - nie mam juz siły serio !! moja maciez jest serio ładna - juz ja znalazłęśc przeciez  (zobacz mam to na ekranie Macierz oceny DRD — obszary x poziomy)",
-  "kiedy": "2026-09-02T14:35:36.357Z"
+  "kiedy": "2026-09-02T16:17:14.118Z"
  },
  "assessment-reports-panel": {
   "decyzja": "ok",
   "uwaga": "No, to jest normalna tabela na pełną szerokość, jak rozumiem. ",
-  "kiedy": "2026-09-02T14:35:36.355Z"
+  "kiedy": "2026-09-02T16:17:14.116Z"
  },
  "assessment-initiatives-table": {
   "decyzja": "ok",
   "uwaga": "No, już to jest po prostu pełna tabela na pełną szerokość, a to wygląda, jakby to był jakiś raport w raporcie albo nie wiem co, nie? To ma być normalna tabela inicjatyw. Na koniec inicjatywy, na koniec każdej oceny, czy na koniec assessmentu, to są po prostu drafty inicjatywy, a normalnie w tabeli inicjatyw. ",
-  "kiedy": "2026-09-02T14:35:36.365Z"
+  "kiedy": "2026-09-02T16:17:14.131Z"
  },
  "siri-workspace": {
   "decyzja": "ok",
   "uwaga": "Ty, nie wiesz, co rozumiem, że okej, więc zobaczymy, jak to będzie, jak to wyjdzie. Ja nie znam Sir, więc trudno mi to ocenić. ",
-  "kiedy": "2026-09-02T14:35:36.360Z"
+  "kiedy": "2026-09-02T16:17:14.122Z"
  },
  "chat-split-teresa-right": {
   "decyzja": "ok",
   "uwaga": "ok",
-  "kiedy": "2026-09-02T14:35:36.195Z"
+  "kiedy": "2026-09-02T16:17:14.022Z"
  },
  "teresa-confirm-chip": {
   "decyzja": "ok",
   "uwaga": "A zaproponujmy może trochę bardziej delikatną formułę graficzną tego okna, bo ono teraz jest takie duże i trochę toporne, a dzisiaj standardy tego typu konwersacji są już bardziej delikatne. Jak na przykład to robi właśnie Claude. ",
-  "kiedy": "2026-09-02T14:35:36.219Z"
+  "kiedy": "2026-09-02T16:17:14.040Z"
  },
  "teresa-chipy-panel-artefaktu": {
   "decyzja": "ok",
   "uwaga": "Love it",
-  "kiedy": "2026-09-02T14:35:36.216Z"
+  "kiedy": "2026-09-02T16:17:14.044Z"
  },
  "teresa-chipy-sugestii": {
   "decyzja": "ok",
   "uwaga": "A możemy gdzieś jakoś kontekstowo to włączać, wyłączać, bo ja generalnie jestem przeciwnikiem, ale pewnie są tacy, którzy dzięki temu rozumieją, co mają zrobić. Także wyrzucenie tego całkiem nie jest okej, ale w sobie tego nie lubię. Może tam, gdzie mamy plus, w nie wiem, zaproponuj coś – wiemy coś fajnego. ",
-  "kiedy": "2026-09-02T14:35:36.217Z"
+  "kiedy": "2026-09-02T16:17:14.038Z"
  },
  "ntype-analizuj-ai": {
   "decyzja": "ok",
   "uwaga": "Potwierdziam ok. Będe wpisywał dalej tylko ok jako ponowne potwierdznie",
-  "kiedy": "2026-09-02T14:35:36.192Z"
+  "kiedy": "2026-09-02T16:17:13.956Z"
  },
  "mindmap-i18n-smoke": {
   "decyzja": "ok",
   "uwaga": "OK",
-  "kiedy": "2026-09-02T14:35:36.207Z"
+  "kiedy": "2026-09-02T16:17:14.033Z"
  },
  "whiteboard-canvas": {
   "decyzja": "ok",
   "uwaga": "tutaj jest tylko problem taki ze jak zanaczam element otweira sie pasek poziomy funkcji i on sie nie mieści w pasu - sa ikony które wygladają poza okno. tutaj opisy trzeba skrócić albo wywalić. ",
-  "kiedy": "2026-09-02T14:35:36.211Z"
+  "kiedy": "2026-09-02T16:17:14.036Z"
  },
  "whiteboard-workshop": {
   "decyzja": "ok",
   "uwaga": "ok",
-  "kiedy": "2026-09-02T14:35:36.213Z"
+  "kiedy": "2026-09-02T16:17:14.037Z"
  },
  "processflow-canvas": {
   "decyzja": "ok",
   "uwaga": "Generalnie okno jest ok. Tutaj wielkim wyzwaniem jest ten panel boczny. na tym obrazie jak go nie mogę ocnić ",
-  "kiedy": "2026-09-02T14:35:36.197Z"
+  "kiedy": "2026-09-02T16:17:14.024Z"
  },
  "melscanvas-workspace": {
   "decyzja": "ok",
   "uwaga": "OK",
-  "kiedy": "2026-09-02T14:35:36.204Z"
+  "kiedy": "2026-09-02T16:17:14.030Z"
  },
  "canvas-new-doc": {
   "decyzja": "ok",
   "uwaga": "ok",
-  "kiedy": "2026-09-02T14:35:36.200Z"
+  "kiedy": "2026-09-02T16:17:14.027Z"
  },
  "canvas-kebab-restructure": {
   "decyzja": "ok",
   "uwaga": "Wiesz nie wiem czy to docelowo będzie ok. Tutaj nagle wielkie funkcje sa pod pojedynczymi słowami.  Nie wiem co to efektywnie zorbi. Moze warto byłoby zrobić z nich przyciski w delikatnych ramkach i połokrągłe. Zobaczmy co z tego będzie. To bardzo ważna zmiana bo dotyczy ona wszsytkich idea. ",
-  "kiedy": "2026-09-02T14:35:36.198Z"
+  "kiedy": "2026-09-02T16:17:14.026Z"
  },
  "canvas-toolbar-md-history": {
   "decyzja": "ok",
   "uwaga": "ok ",
-  "kiedy": "2026-09-02T14:35:36.202Z"
+  "kiedy": "2026-09-02T16:17:14.029Z"
  },
  "agent-plan-canvas": {
   "decyzja": "ok",
   "uwaga": "To jest wielka praca do zrobienia - ten ekran ktory mi pokazujesz niestety nie pokazuje wiele zobac jak jest zrobiony. - tutaj trzeba bardziej wypracować mozliwość pracy jak komponentami klockami które przekładamy i układamy jak flow w N8N - oczywicie to musi być lekko bardziej poważne ale przesuwalnosc klocków bardzo by pomogała. i oczywiści AI buduje sam klocki tez",
-  "kiedy": "2026-09-02T14:35:36.572Z"
+  "kiedy": "2026-09-02T16:17:14.415Z"
  },
  "agent-warsztat": {
   "decyzja": "ok",
   "uwaga": "Słuchaj, prokuruję tutaj narzędzia, jak na przykład dodanie, zrównoleglenie procesów. Merytorycznie ten agent jest jeszcze do wypracowania. Na tym poziomie myślę, że graficznie nam to pasuje – naprawdę za małe są te elementy. ",
-  "kiedy": "2026-09-02T14:35:36.576Z"
+  "kiedy": "2026-09-02T16:17:14.405Z"
  },
  "ev-football-field": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.368Z"
+  "kiedy": "2026-09-02T16:17:14.134Z"
  },
  "agent-plan-view": {
   "decyzja": "ok",
@@ -421,159 +421,159 @@
  "plan-scenario-d1": {
   "decyzja": "ok",
   "uwaga": "Tabela niestety dalej nie wygląda jak kompletna tabela. Tu jest większy problem. Problem polega na tym, że narzędzie otwiera tę wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem, jak to działa. ",
-  "kiedy": "2026-09-02T14:35:36.367Z"
+  "kiedy": "2026-09-02T16:17:14.132Z"
  },
  "capacity-advisor-a3": {
   "decyzja": "ok",
   "uwaga": "  Dobrze, to jeszcze raz, bo już to opisywałem wiele razy. Słuchaj, jest tak: tutaj powinna być tabela, w której mamy na dany moment stworzony raport, czyli przycisk „Tworzy raport”. Raport jest generowany na bieżąco, na konkretną chwilę.  Obecnie, albo po jego wygenerowaniu, w tym momencie tworzono jest zestawienie, ile osób jest w danym projekcie albo ile osób jest we wszystkich projektach, oraz ich analiza obciążenia zgodnie z planem. A teraz nie wiadomo, czemu otwiera się to w ramach tej karty. Nic tu nie zostało zmienione w ramach tej naprawy. ",
-  "kiedy": "2026-09-02T14:35:36.372Z"
+  "kiedy": "2026-09-02T16:17:14.128Z"
  },
  "assessment-report-contract": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.351Z"
+  "kiedy": "2026-09-02T16:17:14.111Z"
  },
  "idea-financial-case-persistence": {
   "decyzja": "ok",
   "uwaga": "Tak, to nawet nie wiem, co to jest i do czego to przypiąć. ",
-  "kiedy": "2026-09-02T14:35:36.223Z"
+  "kiedy": "2026-09-02T16:17:14.042Z"
  },
  "idea-table-timeline-stuck": {
   "decyzja": "ok",
   "uwaga": "Tutaj, tak samo jak we wszystkich innych IDEach, wraca kwestia prawego menu. ",
-  "kiedy": "2026-09-02T14:35:36.259Z"
+  "kiedy": "2026-09-02T16:17:14.068Z"
  },
  "drd-library-entry": {
   "decyzja": "ok",
   "uwaga": "Znowu dałeś mi coś bez analizy własnej. Tutaj nie ma żadnego podglądu; z całą pewnością kolumny nie są wystarczające. To nie jest dobra statystyka tego, co powinno być w tej tabeli. Do powtórki. ",
-  "kiedy": "2026-09-02T14:35:36.353Z"
+  "kiedy": "2026-09-02T16:17:14.113Z"
  },
  "zwornik-projects": {
   "decyzja": "ok",
   "uwaga": "Słuchaj, wiesz co, znowu nie wiem, gdzie to się uruchamia. Natomiast, jeśli mamy przyciski „dodaj i projekt” oraz coś tam drugiego, nie ma pełnej, dobrej nawigacji. ",
-  "kiedy": "2026-09-02T14:35:36.252Z"
+  "kiedy": "2026-09-02T16:17:14.063Z"
  },
  "tools-swot-report": {
   "decyzja": "ok",
   "uwaga": "Oczywiście wygląda to dobrze, jakby treść była w porządku, z tym że żaden słod nie będzie tylko tak małą analizą, nie? Ale generalnie wygląda ok. ",
-  "kiedy": "2026-09-02T14:35:36.330Z"
+  "kiedy": "2026-09-02T16:17:14.096Z"
  },
  "tools-swot-initiative-proposal": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.337Z"
+  "kiedy": "2026-09-02T16:17:14.098Z"
  },
  "prompt-registry-tab": {
   "decyzja": "ok",
   "uwaga": "Znowuż nie mam pojęcia, gdzie to jest, tak szczerze powiedziawszy, i do czego to ma służyć. ",
-  "kiedy": "2026-09-02T14:35:36.343Z"
+  "kiedy": "2026-09-02T16:17:14.103Z"
  },
  "admin-command-center-panel": {
   "decyzja": "ok",
   "uwaga": "Znowu nie mam pojęcia, co to jest. ",
-  "kiedy": "2026-09-02T14:35:36.489Z"
+  "kiedy": "2026-09-02T16:17:14.290Z"
  },
  "admin-sso-self-service-card": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.490Z"
+  "kiedy": "2026-09-02T16:17:14.293Z"
  },
  "public-booking-widget": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.491Z"
+  "kiedy": "2026-09-02T16:17:14.285Z"
  },
  "execution-report-day11": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.379Z"
+  "kiedy": "2026-09-02T16:17:14.138Z"
  },
  "superadmin-platform-operations-day15": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.497Z"
+  "kiedy": "2026-09-02T16:17:14.295Z"
  },
  "org-identity-operating": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.541Z"
+  "kiedy": "2026-09-02T16:17:14.369Z"
  },
  "partner-settlements-view": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.492Z"
+  "kiedy": "2026-09-02T16:17:14.307Z"
  },
  "model-catalog-table": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.494Z"
+  "kiedy": "2026-09-02T16:17:14.299Z"
  },
  "exe-002-004-ui-audit": {
   "decyzja": "ok",
   "uwaga": "Trzeci raz dajesz mi tę kartę do akceptacji. ",
-  "kiedy": "2026-09-02T14:35:36.374Z"
+  "kiedy": "2026-09-02T16:17:14.146Z"
  },
  "interview-creator-shell": {
   "decyzja": "ok",
   "uwaga": "To jest do poprawy wielkość ścianek, też już to zgłaszałem. Wilka z czcionek, obrazków – to nie wygląda jak sekcja tech, nie? Wszystkie elementy są w porządku, jest to w miarę czytelne, ale nie wygląda ładnie. ",
-  "kiedy": "2026-09-02T14:35:36.275Z"
+  "kiedy": "2026-09-02T16:17:14.082Z"
  },
  "interview-preview-canon": {
   "decyzja": "ok",
   "uwaga": "Nie umiem ocenić, czy szerokość tego jest wystarczająca, ale pamiętaj, że mamy opisane, jak ma to wyglądać. Wszystkie przewidywania muszą być opisane zgodnie ze standardem. To jest komponent. ",
-  "kiedy": "2026-09-02T14:35:36.279Z"
+  "kiedy": "2026-09-02T16:17:14.085Z"
  },
  "interview-sessions-status": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.280Z"
+  "kiedy": "2026-09-02T16:17:14.087Z"
  },
  "meetings-module": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.486Z"
+  "kiedy": "2026-09-02T16:17:14.297Z"
  },
  "unified-create-launcher": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.277Z"
+  "kiedy": "2026-09-02T16:17:14.091Z"
  },
  "calendar-sync-settings": {
   "decyzja": "ok",
   "uwaga": " Dodaj tutaj Outlooka i zmień to jabłuszko na jakieś normalne, a nie takie jabłko. ",
-  "kiedy": "2026-09-02T14:35:36.487Z"
+  "kiedy": "2026-09-02T16:17:14.289Z"
  },
  "notebook-quick-capture": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.257Z"
+  "kiedy": "2026-09-02T16:17:14.067Z"
  },
  "report-artifact": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.461Z"
+  "kiedy": "2026-09-02T16:17:14.250Z"
  },
  "excele-jeden-widok-recent": {
   "decyzja": "ok",
   "uwaga": "Nie rozumiem, po co to ma być tutaj w ogóle, nie? Jak otwieramy arkusz, to pierwsze – nowy – to pierwsze, co on nas pyta, czy chcemy otworzyć go z szablonów, czy otworzyć go jako czysty, czy otworzyć go z teresą. To omawialiśmy. I teraz, jeśli wybierzemy któryś z tych przycisków, uruchamia się odpowiedni wątek.  Nie potrzebny w ogóle ten narkusz. Z pozostałością w ogóle pierwszych jakichś prób. ",
-  "kiedy": "2026-09-02T14:35:36.446Z"
+  "kiedy": "2026-09-02T16:17:14.227Z"
  },
  "excele-jeden-widok-materialy": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.440Z"
+  "kiedy": "2026-09-02T16:17:14.217Z"
  },
  "excele-jeden-widok-pusty": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.445Z"
+  "kiedy": "2026-09-02T16:17:14.234Z"
  },
  "excele-engine-reveal": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.450Z"
+  "kiedy": "2026-09-02T16:17:14.223Z"
  },
  "excele-reopen-verify": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.441Z"
+  "kiedy": "2026-09-02T16:17:14.219Z"
  },
  "prezentacje-template-states": {
   "decyzja": "ok",
   "uwaga": "nie otwiera mi sie nic :(",
-  "kiedy": "2026-09-02T14:35:36.459Z"
+  "kiedy": "2026-09-02T16:17:14.246Z"
  },
  "gen-word-content-hints": {
   "decyzja": "ok",
   "uwaga": "Wiem, do czego ten ekran miałby służyć. Znowu, gdy mamy generator do wyboru, wybieramy „generuj tabelę template”, otwiera się generator szablonów, a potem mamy je w liście szablonów. Widzimy, po co jest ten ekran. ",
-  "kiedy": "2026-09-02T14:35:36.457Z"
+  "kiedy": "2026-09-02T16:17:14.232Z"
  },
  "gen-deck-content-hints": {
   "decyzja": "ok",
   "uwaga": "Samo, nie wiem, po co on w ogóle jest. ",
-  "kiedy": "2026-09-02T14:35:36.452Z"
+  "kiedy": "2026-09-02T16:17:14.244Z"
  },
  "gen-excel-templates-tab": {
   "decyzja": "nie",
@@ -583,20 +583,20 @@
  "excele-edytowalna-siatka": {
   "decyzja": "ok",
   "uwaga": "Znacznie lepiej jest - zamienmy teraz słowa na typowe dla excela ikony - kazdy chyba juz na swiecie je zna. i bedziemy blisko ",
-  "kiedy": "2026-09-02T14:35:36.472Z"
+  "kiedy": "2026-09-02T16:17:14.278Z"
  },
  "report-builder-library-template": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.473Z"
+  "kiedy": "2026-09-02T16:17:14.269Z"
  },
  "materials-registry": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.474Z"
+  "kiedy": "2026-09-02T16:17:14.271Z"
  },
  "standard-module-bar-children": {
   "decyzja": "ok",
   "uwaga": "Nie mam pojęcia, co to w ogóle jest. ",
-  "kiedy": "2026-09-02T14:35:36.582Z"
+  "kiedy": "2026-09-02T16:17:14.421Z"
  },
  "preview-4-zakladki": {
   "decyzja": "ok",
@@ -606,52 +606,52 @@
  "prawy-panel-szyna-ikon": {
   "decyzja": "ok",
   "uwaga": "Nie wiem, czy to jest naprawdę jakaś poprawa, szczerze powiedział. ",
-  "kiedy": "2026-09-02T14:35:36.590Z"
+  "kiedy": "2026-09-02T16:17:14.423Z"
  },
  "standard-grid-card": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.580Z"
+  "kiedy": "2026-09-02T16:17:14.419Z"
  },
  "fab-rail-kebab": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.586Z"
+  "kiedy": "2026-09-02T16:17:14.428Z"
  },
  "rn-g3-class-l-record-shell": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.584Z"
+  "kiedy": "2026-09-02T16:17:14.437Z"
  },
  "document-studio-resume-error": {
   "decyzja": "ok",
   "uwaga": "Napisz to ładniej, wyśrodkuj na ekranie. ",
-  "kiedy": "2026-09-02T14:35:36.435Z"
+  "kiedy": "2026-09-02T16:17:14.209Z"
  },
  "document-studio-template-resolve-error": {
   "decyzja": "ok",
   "uwaga": "Napisz to jakoś ładniej na środku ekranu, z ładniejszą grafiką. ",
-  "kiedy": "2026-09-02T14:35:36.436Z"
+  "kiedy": "2026-09-02T16:17:14.211Z"
  },
  "word-intake-uselm-default": {
   "decyzja": "ok",
   "uwaga": "Też można poprawić grafiki, nie? W wielu miejscach można poprawić je na ładniejszy styl, troszeczkę. Przyciski, żeby były zgodne ze standardem. Wiem, że to nie jest super ważne, ale nic tu nie poprawiłeś. ",
-  "kiedy": "2026-09-02T14:35:36.449Z"
+  "kiedy": "2026-09-02T16:17:14.230Z"
  },
  "mw-007-calendar-narrow-viewport": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.579Z"
+  "kiedy": "2026-09-02T16:17:14.417Z"
  },
  "results-vnext-legacy-archive": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.388Z"
+  "kiedy": "2026-09-02T16:17:14.160Z"
  },
  "results-vnext-teresa-okr-reflection": {
   "decyzja": "ok",
   "uwaga": "Grafika tego jest fatalna, po prostu stara. ",
-  "kiedy": "2026-09-02T14:35:36.398Z"
+  "kiedy": "2026-09-02T16:17:14.161Z"
  },
  "standard-kanban-card": {
   "decyzja": "ok",
   "uwaga": "Super, wybierzmy ten standard jeden. To jest dobry pomysł. ",
-  "kiedy": "2026-09-02T14:35:36.587Z"
+  "kiedy": "2026-09-02T16:17:14.430Z"
  },
  "tools-swot-live": {
   "decyzja": "ok",
@@ -659,125 +659,125 @@
  },
  "tools-swot-library-detail": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.331Z"
+  "kiedy": "2026-09-02T16:17:14.097Z"
  },
  "tools-outputs-insights-tab": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.328Z"
+  "kiedy": "2026-09-02T16:17:14.094Z"
  },
  "chat-signals-feed": {
   "decyzja": "ok",
   "uwaga": "Nie wiem, gdzie to jest, ale to jest w ogóle super mądre. ",
-  "kiedy": "2026-09-02T14:35:36.209Z"
+  "kiedy": "2026-09-02T16:17:14.034Z"
  },
  "tools-swot-session-workspace": {
   "decyzja": "ok",
   "uwaga": "Jest jakaś prehistoryczna karta jeszcze za tym, zanim przerobiliśmy to. ",
-  "kiedy": "2026-09-02T14:35:36.333Z"
+  "kiedy": "2026-09-02T16:17:14.092Z"
  },
  "exec-summary-onelook": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.265Z"
+  "kiedy": "2026-09-02T16:17:14.073Z"
  },
  "tools-sesja-wyjscie": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.338Z"
+  "kiedy": "2026-09-02T16:17:14.099Z"
  },
  "mywork-inbox": {
   "decyzja": "ok",
   "uwaga": "OK ",
-  "kiedy": "2026-09-02T14:35:36.273Z"
+  "kiedy": "2026-09-02T16:17:14.080Z"
  },
  "mywork-calendar": {
   "decyzja": "ok",
   "uwaga": "SUPER",
-  "kiedy": "2026-09-02T14:35:36.274Z"
+  "kiedy": "2026-09-02T16:17:14.081Z"
  },
  "drd-macierz-oceny": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.364Z"
+  "kiedy": "2026-09-02T16:17:14.126Z"
  },
  "cel-jedna-karta": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.384Z"
+  "kiedy": "2026-09-02T16:17:14.148Z"
  },
  "wskaznik-jedna-karta": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.385Z"
+  "kiedy": "2026-09-02T16:17:14.150Z"
  },
  "roi-jedna-karta": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.394Z"
+  "kiedy": "2026-09-02T16:17:14.151Z"
  },
  "results-vnext-okr-objectives": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.390Z"
+  "kiedy": "2026-09-02T16:17:14.154Z"
  },
  "results-zestawienia": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.412Z"
+  "kiedy": "2026-09-02T16:17:14.187Z"
  },
  "finance-hub": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.424Z"
+  "kiedy": "2026-09-02T16:17:14.186Z"
  },
  "agent-hub": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.573Z"
+  "kiedy": "2026-09-02T16:17:14.409Z"
  },
  "prawy-pas-jedna-formula-notatka-artefakt": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.578Z"
+  "kiedy": "2026-09-02T16:17:14.425Z"
  },
  "karta-interview": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.326Z"
+  "kiedy": "2026-09-02T16:17:14.089Z"
  },
  "assessment-initiatives-panel": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.361Z"
+  "kiedy": "2026-09-02T16:17:14.123Z"
  },
  "assessment-manage-panel": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.362Z"
+  "kiedy": "2026-09-02T16:17:14.125Z"
  },
  "execution-tab-list": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.375Z"
+  "kiedy": "2026-09-02T16:17:14.140Z"
  },
  "execution-tab-work": {
   "decyzja": "ok",
   "uwaga": "Zobacz pomiedzy menu 3 a tabelą dołozyłeś dodatkowy element on moze spokojnie być z prawej strony menu 2. W całej aplikacji mamy standard ze tabela zaczyna się pod menu 3. I dzieki temu tez preview będie wygladało tak jak powinno ",
-  "kiedy": "2026-09-02T14:35:36.376Z"
+  "kiedy": "2026-09-02T16:17:14.141Z"
  },
  "execution-tab-resources": {
   "decyzja": "poprawka",
   "uwaga": "Zobacz, karta podglądu w tym momencie nie zajmuje całej wysokości, jaką mogłaby mieć. Karta podglądu powinna być tak wysoka, jak tabela. Tabela, prawda, powinna być nieco bliżej trzeciego menu, ponieważ ta przestrzeń nie jest regulaminowa, nie jest kanonicznie wysoka. Generalnie karta podglądu musi mieć wysokość od góry do dołu – od trzeciego menu do dolnej części ekranu. ",
-  "kiedy": "2026-09-02T14:35:36.378Z"
+  "kiedy": "2026-09-02T16:17:14.143Z"
  },
  "execution-tab-control": {
   "decyzja": "ok",
   "uwaga": "Zobacz pomiedzy menu 3 a tabelą dołozyłeś dodatkowy element on moze spokojnie być z prawej strony menu 2. W całej aplikacji mamy standard ze tabela zaczyna się pod menu 3. I dzieki temu tez preview będie wygladało tak jak powinno ",
-  "kiedy": "2026-09-02T14:35:36.387Z"
+  "kiedy": "2026-09-02T16:17:14.144Z"
  },
  "execution-tab-rollout": {
   "decyzja": "ok",
   "uwaga": "tutaj wcale te słowa pomiędzy tabelą a menu 3 nie sa potrzebne ",
-  "kiedy": "2026-09-02T14:35:36.381Z"
+  "kiedy": "2026-09-02T16:17:14.152Z"
  },
  "execution-tab-summary": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.382Z"
+  "kiedy": "2026-09-02T16:17:14.147Z"
  },
  "results-vnext-okr-admin": {
   "decyzja": "ok",
   "uwaga": "Brak przycisków w dolnym pasku Preview - no chyba ze ich nie ma tutaj ",
-  "kiedy": "2026-09-02T14:35:36.397Z"
+  "kiedy": "2026-09-02T16:17:14.169Z"
  },
  "results-vnext-teresa-kpi-deviation": {
   "decyzja": "ok",
   "uwaga": "Tutaj zrobiłęś grafikę jak z przez 5 lat. zoabcz to nie jest spójne z naszyą formą UI/UX",
-  "kiedy": "2026-09-02T14:35:36.404Z"
+  "kiedy": "2026-09-02T16:17:14.178Z"
  },
  "results-three-pairs": {
   "decyzja": "nie",
@@ -787,383 +787,383 @@
  "results-vnext-attention": {
   "decyzja": "ok",
   "uwaga": "tu sa tylko dwa przyciski w menu 2",
-  "kiedy": "2026-09-02T14:35:36.406Z"
+  "kiedy": "2026-09-02T16:17:14.171Z"
  },
  "results-vnext-okr-workspace": {
   "decyzja": "ok",
   "uwaga": "To miało być w N-type karcie ",
-  "kiedy": "2026-09-02T14:35:36.407Z"
+  "kiedy": "2026-09-02T16:17:14.172Z"
  },
  "results-vnext-search-registry": {
   "decyzja": "ok",
   "uwaga": "generalnie układ menu i tabele sa ok ale tutaj wiele nie ma do akcpetacji ",
-  "kiedy": "2026-09-02T14:35:36.417Z"
+  "kiedy": "2026-09-02T16:17:14.176Z"
  },
  "finance-baseline-workspace": {
   "decyzja": "poprawka",
   "uwaga": "dalej nie mam przycisku dodawania założeń i mozlwosći usuwania lini",
-  "kiedy": "2026-09-02T14:35:36.430Z"
+  "kiedy": "2026-09-02T16:17:14.201Z"
  },
  "admin-billing-seats-licences": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.495Z"
+  "kiedy": "2026-09-02T16:17:14.301Z"
  },
  "admin-billing-plan-history": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.496Z"
+  "kiedy": "2026-09-02T16:17:14.303Z"
  },
  "admin-team-members": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.503Z"
+  "kiedy": "2026-09-02T16:17:14.305Z"
  },
  "admin-team-invitations": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.498Z"
+  "kiedy": "2026-09-02T16:17:14.318Z"
  },
  "admin-team-roles-permissions": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.500Z"
+  "kiedy": "2026-09-02T16:17:14.309Z"
  },
  "admin-team-teams": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.501Z"
+  "kiedy": "2026-09-02T16:17:14.311Z"
  },
  "admin-team-guests-external": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.502Z"
+  "kiedy": "2026-09-02T16:17:14.313Z"
  },
  "admin-team-access-requests": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.510Z"
+  "kiedy": "2026-09-02T16:17:14.316Z"
  },
  "admin-team-access-reviews": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.505Z"
+  "kiedy": "2026-09-02T16:17:14.328Z"
  },
  "admin-team-ownership": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.506Z"
+  "kiedy": "2026-09-02T16:17:14.320Z"
  },
  "admin-security-sessions": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.507Z"
+  "kiedy": "2026-09-02T16:17:14.322Z"
  },
  "admin-security-domains": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.509Z"
+  "kiedy": "2026-09-02T16:17:14.324Z"
  },
  "admin-security-service-accounts": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.516Z"
+  "kiedy": "2026-09-02T16:17:14.326Z"
  },
  "admin-security-break-glass": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.511Z"
+  "kiedy": "2026-09-02T16:17:14.337Z"
  },
  "admin-audit-integrity": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.512Z"
+  "kiedy": "2026-09-02T16:17:14.330Z"
  },
  "admin-audit-legal-hold": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.514Z"
+  "kiedy": "2026-09-02T16:17:14.331Z"
  },
  "admin-audit-export-history": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.515Z"
+  "kiedy": "2026-09-02T16:17:14.333Z"
  },
  "admin-health-dependencies": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.523Z"
+  "kiedy": "2026-09-02T16:17:14.335Z"
  },
  "admin-health-incident-history": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.518Z"
+  "kiedy": "2026-09-02T16:17:14.346Z"
  },
  "admin-health-queues-jobs": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.519Z"
+  "kiedy": "2026-09-02T16:17:14.339Z"
  },
  "admin-health-sla-slo": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.520Z"
+  "kiedy": "2026-09-02T16:17:14.341Z"
  },
  "admin-ai-personas": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.522Z"
+  "kiedy": "2026-09-02T16:17:14.343Z"
  },
  "admin-ai-quality-evaluations": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.529Z"
+  "kiedy": "2026-09-02T16:17:14.345Z"
  },
  "admin-ai-ai-incidents": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.524Z"
+  "kiedy": "2026-09-02T16:17:14.355Z"
  },
  "admin-ai-configuration-versions": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.525Z"
+  "kiedy": "2026-09-02T16:17:14.348Z"
  },
  "admin-command-overview": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.526Z"
+  "kiedy": "2026-09-02T16:17:14.350Z"
  },
  "admin-command-attention-queue": {
   "decyzja": "ok",
   "uwaga": "to ni jest szerokoś strony :( ",
-  "kiedy": "2026-09-02T14:35:36.527Z"
+  "kiedy": "2026-09-02T16:17:14.352Z"
  },
  "admin-command-cost-capacity": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.535Z"
+  "kiedy": "2026-09-02T16:17:14.353Z"
  },
  "admin-command-organization-defaults": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.530Z"
+  "kiedy": "2026-09-02T16:17:14.363Z"
  },
  "admin-command-agent-trace": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.531Z"
+  "kiedy": "2026-09-02T16:17:14.357Z"
  },
  "admin-command-audit": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.532Z"
+  "kiedy": "2026-09-02T16:17:14.359Z"
  },
  "admin-command-dlp": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.533Z"
+  "kiedy": "2026-09-02T16:17:14.360Z"
  },
  "admin-command-residency": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.542Z"
+  "kiedy": "2026-09-02T16:17:14.362Z"
  },
  "admin-command-retention": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.536Z"
+  "kiedy": "2026-09-02T16:17:14.372Z"
  },
  "admin-command-ai-policy": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.538Z"
+  "kiedy": "2026-09-02T16:17:14.365Z"
  },
  "admin-command-benchmark": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.539Z"
+  "kiedy": "2026-09-02T16:17:14.367Z"
  },
  "org-operating-model": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.550Z"
+  "kiedy": "2026-09-02T16:17:14.370Z"
  },
  "org-position-direction": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.544Z"
+  "kiedy": "2026-09-02T16:17:14.380Z"
  },
  "org-technology-culture-constraints": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.546Z"
+  "kiedy": "2026-09-02T16:17:14.373Z"
  },
  "org-strategic-intent": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.547Z"
+  "kiedy": "2026-09-02T16:17:14.375Z"
  },
  "org-success-metrics": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.549Z"
+  "kiedy": "2026-09-02T16:17:14.377Z"
  },
  "org-scope-boundaries": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.557Z"
+  "kiedy": "2026-09-02T16:17:14.379Z"
  },
  "org-stakeholder-expectations": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.552Z"
+  "kiedy": "2026-09-02T16:17:14.389Z"
  },
  "org-declared-challenges": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.553Z"
+  "kiedy": "2026-09-02T16:17:14.382Z"
  },
  "org-root-causes": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.554Z"
+  "kiedy": "2026-09-02T16:17:14.384Z"
  },
  "org-goal-blockers": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.556Z"
+  "kiedy": "2026-09-02T16:17:14.386Z"
  },
  "org-evidence": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.564Z"
+  "kiedy": "2026-09-02T16:17:14.388Z"
  },
  "org-risks-opportunities": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.559Z"
+  "kiedy": "2026-09-02T16:17:14.398Z"
  },
  "org-scenarios": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.560Z"
+  "kiedy": "2026-09-02T16:17:14.391Z"
  },
  "org-recommendation": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.561Z"
+  "kiedy": "2026-09-02T16:17:14.393Z"
  },
  "org-executive-brief": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.562Z"
+  "kiedy": "2026-09-02T16:17:14.394Z"
  },
  "org-files": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.570Z"
+  "kiedy": "2026-09-02T16:17:14.396Z"
  },
  "org-claims-sources": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.565Z"
+  "kiedy": "2026-09-02T16:17:14.407Z"
  },
  "org-source-conflicts": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.566Z"
+  "kiedy": "2026-09-02T16:17:14.399Z"
  },
  "org-knowledge-graph": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.567Z"
+  "kiedy": "2026-09-02T16:17:14.401Z"
  },
  "org-summary": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.569Z"
+  "kiedy": "2026-09-02T16:17:14.403Z"
  },
  "prawy-pas-jedna-formula-idea-teresa": {
   "decyzja": "ok",
   "uwaga": "Dobra tego nie rozumiem - tutaj zobacz jest okno teresy w panelu tego okna ale przecież teresa ma okno swoje. ",
-  "kiedy": "2026-09-02T14:35:36.574Z"
+  "kiedy": "2026-09-02T16:17:14.410Z"
  },
  "prawy-pas-jedna-formula-idea-artefakt": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.575Z"
+  "kiedy": "2026-09-02T16:17:14.412Z"
  },
  "prawy-pas-jedna-formula-notatka-teresa": {
   "decyzja": "ok",
   "uwaga": "ta sama mysl - nie wiem dlaczego teresa jet w oknie narezia soro jest osobna teresa",
-  "kiedy": "2026-09-02T14:35:36.583Z"
+  "kiedy": "2026-09-02T16:17:14.414Z"
  },
  "aios-memory": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.588Z"
+  "kiedy": "2026-09-02T16:17:14.432Z"
  },
  "aios-connectors": {
   "decyzja": "ok",
   "uwaga": "Dodaj tutaj także wersję w liście. Bo jak będzie dużo pozycji do dołączenia, to może być trudniej zarządzać, czyli zmiany widoków. ",
-  "kiedy": "2026-09-02T14:35:36.597Z"
+  "kiedy": "2026-09-02T16:17:14.435Z"
  },
  "aios-agents": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.592Z"
+  "kiedy": "2026-09-02T16:17:14.447Z"
  },
  "aios-outcomes": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.593Z"
+  "kiedy": "2026-09-02T16:17:14.439Z"
  },
  "ustawienia-personalne": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.594Z"
+  "kiedy": "2026-09-02T16:17:14.442Z"
  },
  "ustawienia-workflow": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.596Z"
+  "kiedy": "2026-09-02T16:17:14.444Z"
  },
  "ustawienia-ai-automatyzacja": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.604Z"
+  "kiedy": "2026-09-02T16:17:14.446Z"
  },
  "ustawienia-powiadomienia": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.599Z"
+  "kiedy": "2026-09-02T16:17:14.459Z"
  },
  "ustawienia-integracje": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.600Z"
+  "kiedy": "2026-09-02T16:17:14.450Z"
  },
  "ustawienia-dane-prywatnosc": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.601Z"
+  "kiedy": "2026-09-02T16:17:14.452Z"
  },
  "ustawienia-zaawansowane": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.611Z"
+  "kiedy": "2026-09-02T16:17:14.456Z"
  },
  "ustawienia-wyglad": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.603Z"
+  "kiedy": "2026-09-02T16:17:14.454Z"
  },
  "mindmap-canvas": {
   "decyzja": "ok",
   "uwaga": "OK",
-  "kiedy": "2026-09-02T14:35:36.206Z"
+  "kiedy": "2026-09-02T16:17:14.031Z"
  },
  "mywork-idea-inspector-lekki": {
   "decyzja": "ok",
   "uwaga": "Nie wiem, nie mam pojęcia, gdzie ten plik, gdzie ten ekran jest, szczerze mówiąc. Domyślam się, że może tak wyglądać, bo jest techniczny, ale nie wiem, do czego służy. ",
-  "kiedy": "2026-09-02T14:35:36.232Z"
+  "kiedy": "2026-09-02T16:17:14.048Z"
  },
  "ideas-teresa-panel": {
   "decyzja": "ok",
   "uwaga": "Dobra, przeanalizowałem i teraz tak: cały ten prawy panel jest ewidentnie do przepracowania. Zarówno w ujęciu graficznym, kolejności myśli, jak i merytorsnym, co się tutaj musi wydarzyć. Koniecznie trzeba wrzucić to do backlogu, aby przeanalizować, jak ten panel powinien być zorganizowany, żeby był w pełni pomocny i użyteczny. Jednocześnie grafiki, które tutaj mamy, rozwiązania graficzne, też nie są przeanalizowane przez Ciebie i nie są zgodne ze standardem grafik, tylko tak, jak zostały przekonane przeze mnie dawno temu automatycznie. To jest słabe. ",
-  "kiedy": "2026-09-02T14:35:36.245Z"
+  "kiedy": "2026-09-02T16:17:14.064Z"
  },
  "mywork-notebook-rail-speca": {
   "decyzja": "ok",
   "uwaga": "Teraz tak: on jest generalnie dużo lepszy niż to, co jest w Idea. Natomiast te dra‑meni, moim zdaniem, powinny wyglądać tak samo, mieć te same elementy albo prawie zbliżone, ale na pewno rządzić się tymi samymi zasadami. Więc jeśli tam zrobiliśmy informację, że idzie to do backlogu i trzeba to koniecznie przerobić gruntownie, myślę, że tutaj ta informacja powinna być powiązana z tym, co jest tam. ",
-  "kiedy": "2026-09-02T14:35:36.247Z"
+  "kiedy": "2026-09-02T16:17:14.059Z"
  },
  "initiative-record": {
   "decyzja": "ok",
   "uwaga": "Inicjatywę oceniałem już wcześniej, raz. Nie wiem, czemu to jest inna tabela inicjatyw. Czy to pomyłka, czy celowo – powinniśmy mieć jedną tabelę inicjatyw. ",
-  "kiedy": "2026-09-02T14:35:36.371Z"
+  "kiedy": "2026-09-02T16:17:14.137Z"
  },
  "karta-initiative": {
   "decyzja": "ok",
   "uwaga": "Tutaj będę robił jeszcze więcej przeglądów, jak załadujesz je danymi. Natomiast na ten moment widzę, że nie ma przycisku AI w górnym pasku, który będzie odpowiadał za wypełnienie karty. Poza tym wygląda zajebiście. ",
-  "kiedy": "2026-09-02T14:35:36.369Z"
+  "kiedy": "2026-09-02T16:17:14.135Z"
  },
  "sheet-artifact": {
   "decyzja": "ok",
   "uwaga": "Tutaj mamy niestety trochę do poprawy. Słuchaj, tak jak tabela w Excelu, sama tabela powinna zaczynać się od samej góry, więc powinniśmy mieć małe menu potencjalnych funkcjonalności. Poniżej powinniśmy mieć już tylko nazwę kolumn i samą tabelę. Teraz, jedna trzecia ekranu jest zużyta zupełnie niepotrzebnie na informacje albo funkcje, które mogłyby być w panelu bocznym rozwijanym. Mamy, rzeczywiście, upodobnić się tutaj do narzędzi tabelarycznych, takich jak Excel. ",
-  "kiedy": "2026-09-02T14:35:36.437Z"
+  "kiedy": "2026-09-02T16:17:14.203Z"
  },
  "deck-artifact": {
   "decyzja": "ok",
   "uwaga": "Dobrze, jeśli chodzi o układ graficzny – pełna zgoda, ekran jest super. Do przepracowania mamy prawy panel. Nie, i nie widzę nigdzie, gdzie mogę edytować, nie? Czyli narzędzia do edycji ręcznej też nie widzę. Podobnie, zresztą, jak w Excelu. ",
-  "kiedy": "2026-09-02T14:35:36.444Z"
+  "kiedy": "2026-09-02T16:17:14.213Z"
  },
  "document-artifact": {
   "decyzja": "ok",
-  "kiedy": "2026-09-02T14:35:36.439Z"
+  "kiedy": "2026-09-02T16:17:14.225Z"
  },
  "excele-prawy-panel-standard": {
   "decyzja": "ok",
   "uwaga": "To już zgłaszałem, tak? Tutaj musimy usunąć więcej niepotrzebnego panelu, aby tabela zajmowała całą centralną część ekranu. No i wielki problem polega na tym, że nie mam tutaj w ogóle narzędzia Excelowego. Zmiany, jakbym chciał zmienić coś w tych tabelach, jak w Excelu, jakbym chciał nim pracować, to nie mogę. W Wordzie mogę, w PowerPoincie też nie mogę – to trzeba dorobić. ",
-  "kiedy": "2026-09-02T14:35:36.442Z"
+  "kiedy": "2026-09-02T16:17:14.221Z"
  },
  "auth-login": {
   "decyzja": "ok",
   "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
-  "kiedy": "2026-09-02T14:35:36.606Z"
+  "kiedy": "2026-09-02T16:17:14.470Z"
  },
  "auth-register": {
   "decyzja": "ok",
   "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
-  "kiedy": "2026-09-02T14:35:36.607Z"
+  "kiedy": "2026-09-02T16:17:14.461Z"
  },
  "auth-code-entry": {
   "decyzja": "ok",
   "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
-  "kiedy": "2026-09-02T14:35:36.608Z"
+  "kiedy": "2026-09-02T16:17:14.463Z"
  },
  "auth-forgot-password": {
   "decyzja": "ok",
   "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
-  "kiedy": "2026-09-02T14:35:36.610Z"
+  "kiedy": "2026-09-02T16:17:14.465Z"
  },
  "auth-reset-password": {
   "decyzja": "ok",
   "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
-  "kiedy": "2026-09-02T14:35:36.614Z"
+  "kiedy": "2026-09-02T16:17:14.468Z"
  }
 }
