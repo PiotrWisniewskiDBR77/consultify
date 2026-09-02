@@ -38,7 +38,10 @@
  * workspace to resolve `authorId` to a real name, so it stays labeled as an ID rather than being
  * dressed up as a name), just not the primary thing the reader's eye lands on.
  */
+import { ChevronRight } from 'lucide-react';
 import React from 'react';
+
+import { MENU_3_ACTION_NEUTRAL } from '@/components/shared/ModuleMenu3';
 
 import {
   financeArtifactTypeLabel,
@@ -127,8 +130,23 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
                 {financeLineageTransformationKindLabel(edge.transformationKind)}
               </p>
 
-              <details className="mt-3">
-                <summary className="cursor-pointer text-xs font-medium text-c-text-muted select-none hover:text-c-text">
+              {/* ★ 2026-09-02 — „Szczegóły techniczne" było gołym słowem
+                  z natywnym trójkącikiem `<summary>`: bez ramki, bez tła, bez
+                  wysokości z kanonu. Właściciel o tym ekranie: „przyciski
+                  u góry są po prostu słowami, nie przyciskami okrągłymi.
+                  Popraw je graficznie, żeby wyglądały tak jak reszta naszego
+                  dokumentu" (30.08). Teraz to pastylka z `MENU_3_ACTION_NEUTRAL`
+                  — ta sama wysokość (h-8) i promień (rounded-full) co akcje
+                  Menu 3 w każdym module. `[&::-webkit-details-marker]:hidden`
+                  + `list-none` zdejmują natywny trójkąt przeglądarki, który
+                  nie należy do żadnego kanonu. */}
+              <details className="mt-3 group">
+                <summary className={`w-fit cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden ${MENU_3_ACTION_NEUTRAL}`}>
+                  <ChevronRight
+                    size={13}
+                    aria-hidden
+                    className="transition-transform duration-150 group-open:rotate-90"
+                  />
                   Szczegóły techniczne
                 </summary>
                 <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
