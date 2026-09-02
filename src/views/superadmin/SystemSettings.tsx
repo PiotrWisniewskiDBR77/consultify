@@ -707,7 +707,7 @@ export const SystemSettings: React.FC = () => {
     {
       id: 'visual',
       label: 'Visual',
-      width: '33%',
+      width: '260px',
       render: (row: TableRow) => {
         const percent =
           storageStats?.totalSize > 0 ? ((row.size as number) / storageStats.totalSize) * 100 : 0;

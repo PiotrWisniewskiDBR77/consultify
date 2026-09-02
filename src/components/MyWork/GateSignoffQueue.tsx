@@ -27,7 +27,7 @@ interface GateRow extends TableRow {
 }
 
 const columns: TableColumn[] = [
-  { id: 'title', label: 'Sign-off', sortable: true, width: '25%' },
+  { id: 'title', label: 'Sign-off', sortable: true, width: '220px' },
   { id: 'gate', label: 'Gate', sortable: true, filterable: true },
   { id: 'initiativeId', label: 'Initiative', sortable: true },
   { id: 'profile', label: 'Policy profile', sortable: true, filterable: true },

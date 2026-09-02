@@ -176,12 +176,25 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       const lineageText = [projectName, provider === 'internal' ? 'Internal' : provider]
         .filter(Boolean)
         .join(' \u00B7 ');
+      // Rodzina "tekst uci\u0119ty w \u015Brodku s\u0142owa" (2026-09-02): kafelek dnia jest
+      // za w\u0105ski na czas + pe\u0142ny tytu\u0142, a `.fc-event-title`/`.fc-event-time`
+      // dostaj\u0105 teraz `text-overflow: ellipsis` (calendar-theme.css). Sam
+      // wielokropek bez pe\u0142nej warto\u015Bci w tytule to po\u0142owa naprawy \u2014 `title`
+      // wcze\u015Bniej ni\u00F3s\u0142 WY\u0141\u0104CZNIE `lineageText` (projekt/dostawca), wi\u0119c dla
+      // wi\u0119kszo\u015Bci wydarze\u0144 (brak projektu i dostawcy) hover nie pokazywa\u0142
+      // NIC. Pe\u0142ny tooltip = czas + tytu\u0142, z lineage doklejonym je\u015Bli jest.
+      const fullTooltip = [
+        [arg.timeText, arg.event.title].filter(Boolean).join(' '),
+        lineageText,
+      ]
+        .filter(Boolean)
+        .join(' \u00B7 ');
 
       return (
         <div
           className="fc-event-main-frame"
           style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}
-          title={lineageText || undefined}
+          title={fullTooltip || undefined}
         >
           {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
           <div className="fc-event-title-container">

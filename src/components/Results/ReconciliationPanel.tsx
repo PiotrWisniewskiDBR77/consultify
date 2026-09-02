@@ -261,7 +261,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'kpiName',
       label: t('results.reconciliation.col.kpi', 'KPI'),
-      width: '26%',
+      width: '260px',
       render: (row: TableRow) => (
         <div className="flex items-center gap-2">
           {row.hasMismatch && <AlertTriangle size={13} className="shrink-0 text-danger-400" />}
@@ -272,7 +272,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'reconciliationStatus',
       label: t('results.reconciliation.col.status', 'Status'),
-      width: '14%',
+      width: '140px',
       filterable: true,
       filterOptions: [
         {
@@ -306,7 +306,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'projectedValue',
       label: t('results.reconciliation.col.projected', 'Projected'),
-      width: '12%',
+      width: '120px',
       align: 'right',
       render: (row: TableRow) => (
         <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
@@ -317,7 +317,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'realizedValue',
       label: t('results.reconciliation.col.realized', 'Realized'),
-      width: '12%',
+      width: '120px',
       align: 'right',
       render: (row: TableRow) => (
         <span className="tabular-nums text-slate-700 dark:text-c-text-secondary">
@@ -328,7 +328,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
     {
       id: 'varianceAbsolute',
       label: t('results.reconciliation.col.variance', 'Variance'),
-      width: '14%',
+      width: '140px',
       align: 'right',
       render: (row: TableRow) => {
         const varianceTone =
@@ -356,7 +356,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
       // explanation on hover). Present only for engine-reconciled rows.
       id: 'postMortem',
       label: t('results.reconciliation.col.postmortem', 'Post-mortem'),
-      width: '22%',
+      width: '220px',
       render: (row: TableRow) => {
         const pm = row.postMortem as V8ReconciliationPostMortem | null;
         if (!pm) return <span className="text-xs text-c-text-muted">—</span>;

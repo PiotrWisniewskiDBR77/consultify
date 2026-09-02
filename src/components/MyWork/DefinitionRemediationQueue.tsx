@@ -26,7 +26,7 @@ interface WorkRow extends TableRow {
 }
 
 const columns: TableColumn[] = [
-  { id: 'title', label: 'Definition remediation', sortable: true, width: '28%' },
+  { id: 'title', label: 'Definition remediation', sortable: true, width: '230px' },
   { id: 'workType', label: 'Type', sortable: true, filterable: true },
   { id: 'initiativeId', label: 'Initiative', sortable: true },
   { id: 'findingId', label: 'Finding', sortable: true },

@@ -51,7 +51,7 @@ interface PortfolioRow extends TableRow {
 }
 
 const columns: TableColumn[] = [
-  { id: 'title', label: 'Decision', sortable: true, width: '26%' },
+  { id: 'title', label: 'Decision', sortable: true, width: '220px' },
   { id: 'initiativeId', label: 'Initiative', sortable: true },
   { id: 'scenario', label: 'Scenario snapshot', sortable: true },
   { id: 'disposition', label: 'Proposed disposition', sortable: true, filterable: true },

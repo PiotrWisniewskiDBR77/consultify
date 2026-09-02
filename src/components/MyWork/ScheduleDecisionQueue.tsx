@@ -56,7 +56,7 @@ interface DecisionRow extends TableRow {
 }
 
 const columns: TableColumn[] = [
-  { id: 'title', label: 'Decision', sortable: true, width: '26%' },
+  { id: 'title', label: 'Decision', sortable: true, width: '220px' },
   { id: 'initiativeId', label: 'Initiative', sortable: true },
   { id: 'plan', label: 'Plan', sortable: true },
   { id: 'capacity', label: 'Capacity', sortable: true },
