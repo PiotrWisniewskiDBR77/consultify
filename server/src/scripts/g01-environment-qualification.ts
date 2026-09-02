@@ -63,12 +63,14 @@ const REQUIRED_ENV: Record<string, string> = {
   ENABLE_TEST_AUTH_BYPASS: 'false',
   RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE: 'enforce',
   CI: 'true',
+  MOCK_REDIS: 'true',
   DATABASE_URL,
 };
 for (const [name, expected] of Object.entries(REQUIRED_ENV)) {
   assert.equal(process.env[name], expected, `${name} must equal ${expected}`);
 }
 assert.ok(process.env.JWT_SECRET, 'JWT_SECRET must be set');
+assert.ok(!process.env.REDIS_URL, 'REDIS_URL must stay unset in the isolated qualification');
 
 function run(command: string, args: string[], options: { capture?: boolean } = {}): string {
   const result = spawnSync(command, args, {
@@ -266,7 +268,7 @@ async function main(): Promise<void> {
       cwd: REPO,
       encoding: 'utf8',
     }).trim();
-    const command = `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce CI=true DATABASE_URL=${DATABASE_URL} JWT_SECRET=day283-test-secret-do-not-reuse npx tsx server/src/scripts/g01-environment-qualification.ts --module ${moduleName} --port ${port}`;
+    const command = `RUN_DB_TESTS=1 MOCK_DB=false MOCK_REDIS=true DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce CI=true DATABASE_URL=${DATABASE_URL} JWT_SECRET=day283-test-secret-do-not-reuse npx tsx server/src/scripts/g01-environment-qualification.ts --module ${moduleName} --port ${port}`;
     const manifest = {
       schemaVersion: 1,
       module: moduleName,
