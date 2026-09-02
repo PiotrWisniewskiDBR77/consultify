@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# ⚠️ WYCOFANY (od 2026-08-31): demo.consultify.ai dostaje kod WYŁĄCZNIE przez workflow
+# promote-demo, promujący niezmienny SHA z taga `staging-deployed` (patrz CLAUDE.md →
+# ŚRODOWISKA). Ten skrypt zostaje tylko na wypadek incydentu ręcznego.
+if [ "${ALLOW_LEGACY_DEMO_DEPLOY:-0}" != "1" ]; then
+  echo "BLOKADA: deploy-demo.sh jest WYCOFANY od 2026-08-31 — demo dostaje kod wyłącznie przez" >&2
+  echo "workflow promote-demo (promocja taga staging-deployed). Użyj tamtej ścieżki." >&2
+  echo "Świadome obejście (tylko incydent): ALLOW_LEGACY_DEMO_DEPLOY=1 ./scripts/deploy-demo.sh" >&2
+  exit 1
+fi
 # deploy-demo.sh — wypchnij aktualny Londyn branch na demo.consultify.ai
 # Użycie: ./scripts/deploy-demo.sh [commit-sha]
 #

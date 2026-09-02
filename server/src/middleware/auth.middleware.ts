@@ -212,6 +212,42 @@ const safeGetHeader = (req: AuthRequest, headerName: string): unknown => {
   }
 };
 
+/**
+ * Hosty, na których tenant użytkownika ma być rozstrzygany po stronie serwera
+ * (z profilu użytkownika), a NIE z klienckiego `x-org-context`.
+ *
+ * `demo.consultify.ai` — pojedyncza powierzchnia prezentacyjna; klient trzyma w
+ * localStorage identyfikator organizacji, który po przesiadce/reseedzie bazy
+ * bywa martwym aliasem i przepinał zalogowanego właściciela w losowy tenant.
+ *
+ * `staging.consultify.ai` — od 2026-08-31 osobna powierzchnia pracy z własną
+ * bazą (D-4). Ma dokładnie ten sam problem: token/localStorage z poprzedniego
+ * środowiska nadal wskazuje organizację, której w tej bazie nie ma. Host jest
+ * porównywany przez zbiór, żeby dołożenie kolejnego środowiska nie wymagało
+ * dotykania logiki.
+ *
+ * UWAGA: pominięcie `x-org-context` na tych hostach NIE psuje przełącznika
+ * organizacji — `POST /api/auth/switch-organization` utrwala wybór przez
+ * `UPDATE users SET organization_id = ?` (auth.routes.ts), a blok „prefer user
+ * primary organization" poniżej czyta dokładnie tę kolumnę.
+ */
+const CANONICAL_TENANT_HOSTS = new Set(['demo.consultify.ai', 'staging.consultify.ai']);
+
+/**
+ * Normalizuje nagłówek hosta do samej nazwy: bierze pierwszy wpis z listy
+ * `x-forwarded-host` (proxy Railway potrafi skleić kilka po przecinku) i obcina
+ * port.
+ */
+const normalizeRequestHost = (rawHost: unknown): string =>
+  String(rawHost ?? '')
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+
+const isCanonicalTenantHostname = (rawHost: unknown): boolean =>
+  CANONICAL_TENANT_HOSTS.has(normalizeRequestHost(rawHost));
+
 const safeRead = <T>(reader: () => T, fallback: T): T => {
   try {
     return reader();
@@ -650,6 +686,12 @@ const attachUser = async (
   );
   const isDemoHeader =
     normalizeOptionalStringClaim(safeGetHeader(req, 'X-Demo-Mode'))?.toLowerCase() === 'true';
+  const requestHost = normalizeRequestHost(
+    normalizeOptionalStringClaim(safeGetHeader(req, 'x-forwarded-host')) ||
+      normalizeOptionalStringClaim(safeGetHeader(req, 'host')) ||
+      ''
+  );
+  const isCanonicalDemoHost = isCanonicalTenantHostname(requestHost);
   const requestedOrgContextId =
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-org-context')) ||
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-organization-id')) ||
@@ -778,7 +820,7 @@ const attachUser = async (
       : isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
         ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
         : isDemoHeader
-          ? DEMO_ORG_ID
+          ? tokenOrganizationId || DEMO_ORG_ID
           : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||
@@ -807,7 +849,12 @@ const attachUser = async (
 
   // Respect the UI-selected organization when the user is a valid active member.
   let orgContextConfirmed = false;
-  if (!isDemoHeader && !publicDemo.isPublicDemoPrincipal && requestedOrgContextId) {
+  if (
+    !isDemoHeader &&
+    !isCanonicalDemoHost &&
+    !publicDemo.isPublicDemoPrincipal &&
+    requestedOrgContextId
+  ) {
     try {
       const membership = await dbGet<{ role?: string; status?: string }>(
         `SELECT role, status
@@ -829,6 +876,37 @@ const attachUser = async (
     }
   }
 
+  // The demo hostname sets X-Demo-Mode for both public demo principals and
+  // authenticated internal owners. Internal users may still carry a legacy
+  // active alias in their token (for example `dbr77`) alongside their canonical
+  // primary organization. When no explicit organization switch was confirmed,
+  // prefer the user's primary organization and its active membership.
+  if (
+    (isDemoHeader || isCanonicalDemoHost) &&
+    !publicDemo.isPublicDemoPrincipal &&
+    !orgContextConfirmed
+  ) {
+    try {
+      const primary = await dbGet<{ organization_id?: string; role?: string }>(
+        `SELECT u.organization_id, om.role
+         FROM users u
+         JOIN organization_members om
+           ON om.user_id = u.id AND om.organization_id = u.organization_id
+         WHERE u.id = ? AND UPPER(om.status) = 'ACTIVE'
+         LIMIT 1`,
+        [decodedUserId]
+      );
+      const primaryOrgId = normalizeBoundedOrgContextId(primary?.organization_id);
+      if (primaryOrgId) {
+        resolvedOrganizationId = primaryOrgId;
+        const primaryRole = normalizeRoleClaim(primary?.role);
+        if (primaryRole) resolvedUserRole = primaryRole;
+      }
+    } catch {
+      // Keep the token org; membership validation below remains authoritative.
+    }
+  }
+
   // QA-2026-06-08 (BUG-02/15): if the resolved org (the token org, or an unconfirmed
   // x-org-context) is NOT an ACTIVE membership for this user, fall back to the user's
   // actual current ACTIVE org instead of letting validateOrgMembership 403 with
@@ -847,7 +925,7 @@ const attachUser = async (
   // false for everything reading `req.organizationId`, and my own test missed it by
   // probing `/api/demo/organization`, which reads the session row directly and
   // never consults `req.organizationId`.
-  if (!isDemoHeader && !orgContextConfirmed && !publicDemo.isPublicDemoPrincipal) {
+  if (!orgContextConfirmed && !publicDemo.isPublicDemoPrincipal) {
     try {
       const resolvedMembership = resolvedOrganizationId
         ? await dbGet<{ status?: string }>(
@@ -860,10 +938,12 @@ const attachUser = async (
         !!resolvedMembership && String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
       if (!resolvedActive) {
         const fallback = await dbGet<{ organization_id?: string; role?: string }>(
-          `SELECT organization_id, role
-           FROM organization_members
-           WHERE user_id = ? AND UPPER(status) = 'ACTIVE'
-           ORDER BY created_at DESC
+          `SELECT om.organization_id, om.role
+           FROM organization_members om
+           LEFT JOIN users u ON u.id = om.user_id
+           WHERE om.user_id = ? AND UPPER(om.status) = 'ACTIVE'
+           ORDER BY CASE WHEN om.organization_id = u.organization_id THEN 0 ELSE 1 END,
+                    om.created_at DESC
            LIMIT 1`,
           [decodedUserId]
         );
@@ -1909,6 +1989,9 @@ export const __private__ = {
   parseRevokeAllTimestamp,
   readOptionalStringClaim,
   readBooleanTrueClaim,
+  normalizeRequestHost,
+  isCanonicalTenantHostname,
+  CANONICAL_TENANT_HOSTS,
 };
 
 // ==========================================

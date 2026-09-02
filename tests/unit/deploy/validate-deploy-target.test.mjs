@@ -100,7 +100,7 @@ test('an identical database NAME on different hosts is still a divergence', () =
   // The DEC-165 trap: three databases are all named `railway`.
   const result = runGuard({
     DEPLOY_ENVIRONMENT: 'demo',
-    GIT_REF: 'refs/heads/demo',
+    GIT_REF: 'refs/tags/staging-deployed',
     FRONTEND_URL: 'https://demo.consultify.ai',
     APP_DATABASE_URL: THOMAS,
     MIGRATION_DATABASE_URL: TROLLEY,
@@ -161,17 +161,44 @@ test('keeps production fail-closed and accepts only a matching declaration', () 
   assert.equal(result.stderr, '');
 });
 
-test('accepts the currently crossed demo environment domain', () => {
-  const result = runGuard({
-    DEPLOY_ENVIRONMENT: 'demo',
-    GIT_REF: 'refs/heads/demo',
-    FRONTEND_URL: 'https://stage.consultinity.ai',
-    APP_DATABASE_URL: TROLLEY,
-    MIGRATION_DATABASE_URL: TROLLEY,
-    DEMO_DB_HOST_FINGERPRINT: 'trolley',
-    DEPLOY_TARGET_GUARD_ENFORCE: '1',
-  });
+// ---------------------------------------------------------------------------
+// Demo since 2026-08-31: promotion of an IMMUTABLE TAG only.
+//
+// The environments are split (staging = building site, demo = showcase), so the
+// demo case no longer accepts a branch ref, and the crossed pre-split domain
+// `stage.consultinity.ai` is no longer a legal demo target.
+// ---------------------------------------------------------------------------
+
+/** Fully configured, armed demo promotion from the immutable tag. */
+const demo = {
+  DEPLOY_ENVIRONMENT: 'demo',
+  GIT_REF: 'refs/tags/staging-deployed',
+  FRONTEND_URL: 'https://demo.consultify.ai',
+  APP_DATABASE_URL: TROLLEY,
+  MIGRATION_DATABASE_URL: TROLLEY,
+  DEMO_DB_HOST_FINGERPRINT: 'trolley',
+  DEPLOY_TARGET_GUARD_ENFORCE: '1',
+};
+
+test('accepts a demo promotion carried by the staging-deployed tag', () => {
+  const result = runGuard(demo);
   assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, '');
+});
+
+test('MUTATION: demo refuses a branch ref, however well configured', () => {
+  // This is the whole point of the split: `refs/heads/demo` used to be the
+  // expected ref, so a branch could move code onto the showcase directly.
+  const result = runGuard({ ...demo, GIT_REF: 'refs/heads/demo' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /does not match demo branch list/);
+  assert.match(result.stderr, /refs\/tags\/staging-deployed/);
+});
+
+test('MUTATION: the crossed pre-split domain is no longer a demo target', () => {
+  const result = runGuard({ ...demo, FRONTEND_URL: 'https://stage.consultinity.ai' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /frontend host .* is not allowed for demo/);
 });
 
 // ---------------------------------------------------------------------------

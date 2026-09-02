@@ -126,7 +126,7 @@ const getTypeBadgeConfig = (t: TFunction, isSystem: boolean) => {
   if (isSystem) {
     return { label: getTypeLabel(t, true), icon: Building2, dot: 'bg-blue-400' };
   }
-  return { label: getTypeLabel(t, false), icon: Building2, dot: 'bg-c-accent-soft' };
+  return { label: getTypeLabel(t, false), icon: Building2, dot: 'bg-c-text-muted' };
 };
 
 const getSourceTypeBadgeConfig = (sourceType: string) => {
@@ -147,7 +147,7 @@ const getSourceTypeBadgeConfig = (sourceType: string) => {
 const getAudienceBadgeConfig = (t: TFunction, audience?: string) => {
   switch (audience?.toLowerCase()) {
     case 'executive':
-      return { dot: 'bg-c-accent-soft', label: getAudienceLabel(t, 'executive') };
+      return { dot: 'bg-c-text-muted', label: getAudienceLabel(t, 'executive') };
     case 'manager':
       return { dot: 'bg-blue-400', label: getAudienceLabel(t, 'manager') };
     case 'analyst':
@@ -613,7 +613,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 rounded-full border-2 border-c-accent border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-c-info border-t-transparent animate-spin" />
       </div>
     );
   }
