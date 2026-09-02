@@ -1427,7 +1427,20 @@ export class ApiGateway {
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes
       );
-      app.use('/api/financial-modeling', gatewayVerifyToken, betaGate, financialModelingRoutes);
+      // M16 Finance — TEN SAM moduł co `/api/economics` (`MODULE_ECONOMICS`
+      // = 'closed' w SSOT). Do 2026-09-02 stał tu wyłącznie `betaGate`, czyli
+      // atrapa (`betaGate.middleware.ts` — całe ciało to `next()`): zmierzone
+      // po naprawie Economics, rola USER robiła `POST /models` -> 201 i wiersz
+      // w `financial_models` (odczyt na zimno, osobny klient pg).
+      // ★ `gatewayVerifyToken` MUSI stać PRZED bramką — `verifyToken` jest w
+      // tym routerze deklarowany per-trasa, więc na gołym mouncie bramka
+      // widziałaby pustą rolę i wygasiłaby moduł także dla właściciela.
+      app.use(
+        '/api/financial-modeling',
+        gatewayVerifyToken,
+        createModuleGate('MODULE_ECONOMICS'),
+        financialModelingRoutes
+      );
       // FIN-06 — Finance approved source (Investment Case / Statement Pack /
       // Valuation Recommendation) -> canonical Candidate handoff
       // (initiative_candidates). Three separate routers (not edits to the
