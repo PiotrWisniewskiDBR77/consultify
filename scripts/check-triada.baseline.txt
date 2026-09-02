@@ -16,7 +16,12 @@
 # (zaobserwowany 2026-08-31 w kilku plikach edytowanych równolegle w tym worktree)
 # zostaje NIETKNIĘTY i nadal blokuje --all niezależnie od tej zmiany — to osobny dług,
 # nie wolno go tu po cichu zalegalizować.
-# RAZEM: 3559 naruszeń w 930 plikach
+# RAZEM: 3387 naruszeń w 892 plikach
+# GHOST-CLEANUP 2026-09-02 (grupa b — dług ZASTANY, po wcześniejszych kasowaniach
+# 08-26/08-27: refactor(execution) A7/DEC-120, chore(assessment) route duplicates,
+# chore(settings) A.3, chore(consultant-mode) a2 UI — patrz git log per plik). Nie jest
+# to spłata długu — te pliki już nie istnieją od DNI PRZED tym sprzątaniem, nikt dotąd
+# nie posprzątał ratcheta po nich.
 # GHOST-CLEANUP 2026-09-02 (grupa a — duchy po dzisiejszym cięciu ResultsHub/CorrectiveActions):
 # usunięto 10 wpisów / 27 naruszeń wskazujących na pliki skasowane dziś (warstwy 3-6
 # 'chore(results): warstwa N', patrz git log). Nie jest to spłata długu — te pliki
@@ -200,10 +205,8 @@
 3	src/components/Education/ToolVideoModal.tsx
 8	src/components/EmptyStates/EmptyStateWithActions.tsx
 2	src/components/Execution/ExecutionHub.tsx
-10	src/components/Execution/KPIDashboard.tsx
 2	src/components/Execution/Manager/AiRecommendationPanel.tsx
 1	src/components/Execution/Manager/ProblemPreview.tsx
-3	src/components/Execution/ReportCompactPanel.tsx
 9	src/components/Execution/ReportDocumentView.tsx
 1	src/components/Execution/RolloutRegisterEditModal.tsx
 6	src/components/Execution/RolloutTab.tsx
@@ -517,7 +520,6 @@
 5	src/components/SystemHealth.tsx
 5	src/components/TaskDropdown.tsx
 3	src/components/Team/MultiPerspectiveView.tsx
-6	src/components/Team/TeamExpansionTrigger.tsx
 1	src/components/Trial/TrialTransitionConfirmation.tsx
 5	src/components/access/AccessBlockedModal.tsx
 2	src/components/ai/ActionAuditTrail.tsx
@@ -528,39 +530,14 @@
 5	src/components/ai/PlaybookStepEvidence.tsx
 4	src/components/ai/ProactiveNudgeDisplay.tsx
 8	src/components/analytics/TokenUsageAnalytics.tsx
-24	src/components/assessment/AIAssessmentSidebar.tsx
-8	src/components/assessment/AISuggestionPanel.tsx
 6	src/components/assessment/ActivityLogPanel.tsx
-15	src/components/assessment/AssessmentAxisWorkspace.tsx
 2	src/components/assessment/AssessmentFrameworkPreviewV3.tsx
-6	src/components/assessment/AssessmentMatrixCard.tsx
-2	src/components/assessment/AssessmentModuleLayout.tsx
-7	src/components/assessment/AssessmentReportsWorkspace.tsx
 1	src/components/assessment/AssessmentSessionPreviewV3.tsx
-6	src/components/assessment/AssessmentStageGate.tsx
-4	src/components/assessment/AssessmentSummaryWorkspace.tsx
 4	src/components/assessment/AssessmentV8CanonPanel.tsx
-8	src/components/assessment/AssessmentVersionDiff.tsx
-9	src/components/assessment/AssessmentVersionHistory.tsx
-8	src/components/assessment/AssessmentWizard.tsx
-3	src/components/assessment/AxisCommentsPanel.tsx
-1	src/components/assessment/Breadcrumb.tsx
-2	src/components/assessment/DocumentTabsBar.tsx
-6	src/components/assessment/GeneratedInitiativeCard.tsx
 3	src/components/assessment/ImportedReportDetailView.tsx
-1	src/components/assessment/InitiativeEditor.tsx
 3	src/components/assessment/LevelAttachments.tsx
-9	src/components/assessment/LevelDetailCard.tsx
-3	src/components/assessment/LevelNavigator.tsx
-3	src/components/assessment/LevelSelector.tsx
-1	src/components/assessment/LockedFrameworkOverlay.tsx
-2	src/components/assessment/MyAssessmentsList.tsx
 7	src/components/assessment/NewAssessmentModal.tsx
-4	src/components/assessment/RapidLeanResultsCard.tsx
-2	src/components/assessment/RapidLeanWorkspace.tsx
 5	src/components/assessment/ReportEditor.tsx
-3	src/components/assessment/ReportEditorModal.tsx
-5	src/components/assessment/WorkflowStatusBar.tsx
 2	src/components/assessment/adma/ADMAAssessmentEditor.tsx
 1	src/components/assessment/manage/AssessmentManagePanel.tsx
 6	src/components/assessment/manage/InitiativesManagementPanel.tsx
@@ -571,14 +548,9 @@
 8	src/components/assessment/maps/DBR77LeanMap.tsx
 2	src/components/assessment/modals/GenerateInitiativesModal.tsx
 2	src/components/assessment/modals/InitiativeDetailsModal.tsx
-1	src/components/assessment/modals/MultiFrameworkStageGateModal.tsx
 1	src/components/assessment/modals/NewAssessmentReportModal.tsx
-1	src/components/assessment/modals/NewReportModal.tsx
 15	src/components/assessment/modals/ReportTemplatePickerModal.tsx
-1	src/components/assessment/modals/StageGateModal.tsx
-1	src/components/assessment/modals/SubmitForReviewModal.tsx
 2	src/components/assessment/modals/TransferToRoadmapModal.tsx
-2	src/components/assessment/panels/CommentsSidePanel.tsx
 7	src/components/assessment/panels/VersionHistoryPanel.tsx
 3	src/components/assessment/permissions/RequestAccessModal.tsx
 2	src/components/assessment/reports/ConclusionSummary.tsx
@@ -690,7 +662,6 @@
 1	src/components/settings/NotificationSettingsV2/DigestsTab.tsx
 2	src/components/settings/OrganizationProfileForm.tsx
 2	src/components/settings/OrganizationSettings.tsx
-1	src/components/settings/PasswordSecuritySettings.tsx
 2	src/components/settings/PerformanceSettings.tsx
 1	src/components/settings/PrivacyDataSettings.tsx
 1	src/components/settings/PrivacySettings.tsx
@@ -709,8 +680,6 @@
 6	src/components/settings/ResponseStyleSettings.tsx
 2	src/components/settings/SecurityDashboard.tsx
 2	src/components/settings/SecurityEventsSettings.tsx
-1	src/components/settings/SecurityOverviewSettings.tsx
-1	src/components/settings/SecuritySettings.tsx
 2	src/components/settings/SettingsOwnershipPanels.tsx
 2	src/components/settings/SettingsTaxonomyPanel.tsx
 1	src/components/settings/SocialLinksSection.tsx
@@ -879,8 +848,6 @@
 1	src/views/admin/TokenBillingManagementView.tsx
 1	src/views/auth/ForgotPasswordView.tsx
 1	src/views/auth/ResetPasswordView.tsx
-1	src/views/consultant/ConsultantInviteView.tsx
-1	src/views/consultant/ConsultantPanelView.tsx
 6	src/views/discovery-tools/DigitalToolsView.tsx
 2	src/views/discovery-tools/DiscoveryToolsView.tsx
 1	src/views/discovery-tools/ProcessAutomationView.tsx
