@@ -7,6 +7,29 @@ established: 2026-08-30
 
 # Rejestr ekranów — jeden wiersz na ekran
 
+> ## ★ SPROSTOWANIE 2026-09-02 — TEN PLIK NIE JEST JUŻ ŹRÓDŁEM STANU
+>
+> **Zmierzone:** ostatnia zmiana treści tego pliku to **2026-08-30**. Od tego czasu
+> stan pracy nad wyglądem żyje w `status.json` — to on jest czytany przez stronę
+> odbioru (:3030), to on niesie oceny A/B/C/D, listę napraw i wyjątków per ekran,
+> i to jego aktualizują wszystkie dyżury. Ten plik został z tyłu o trzy dni pracy
+> i **313 ekranów**.
+>
+> **Dlaczego to prostuję zamiast synchronizować:** przepisanie 313 wierszy ręcznie
+> wprowadziłoby drugie źródło prawdy, które zaraz znów się rozjedzie. Jedno kłamiące
+> źródło jest gorsze niż jedno źródło z jawnym wskazaniem gdzie indziej.
+>
+> **Gdzie patrzeć zamiast tutaj:**
+> - stan i ocena ekranu → `status.json` (maszynowe, aktualizowane per dyżur)
+> - decyzje właściciela → `odbior.sqlite` (tabele `decyzje`, `historia`, `poprawki`)
+> - co zostało do obejrzenia → `RESZTA_ODBIORU_20260902.md` + `reszta-odbioru.json`
+> - chronologia i kontekst → `DZIENNIK_GRAFIKA.md`
+>
+> **Co ten plik nadal niesie wartościowego:** słownik stanów poniżej i historyczne
+> adnotacje `CLOSED_FINAL` dla modułów domkniętych przed 30.08. Nie kasujemy go
+> (reguła 5), ale nie opieramy na nim żadnej liczby.
+
+
 **Zasady użycia w `00_ZASADY_PRACY.md`.** Ten plik jest jedynym miejscem, gdzie
 żyje stan pracy nad wyglądem. Oba tory (grafika i funkcje) piszą tutaj.
 
