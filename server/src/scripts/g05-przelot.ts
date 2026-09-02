@@ -416,7 +416,7 @@ async function runR4(): Promise<void> {
 }
 
 async function runR5(): Promise<void> {
-  const { emailA } = loadCreds();
+  const { emailA, userIdA } = loadCreds();
   const write = await login(emailA);
   const results: Json = {};
 
@@ -476,14 +476,32 @@ async function runR5(): Promise<void> {
         token: write.token,
         body: {},
       });
-      if (publish.status === 200 || publish.status === 201) {
+      // A rerun against a pack already published by a prior invocation gets
+      // a 409 "already published" — that is still a published pack, so
+      // check the pack's actual state rather than trusting this call's
+      // transitional status code.
+      const packState = await requestJson('GET', `/api/audits/packs/${packId}`, { token: write.token });
+      const isPublished =
+        publish.status === 200 ||
+        publish.status === 201 ||
+        String(packState.body?.data?.publicationStatus || '').toLowerCase() === 'published';
+      if (isPublished) {
         const progName = `G05 Audit Program ${Date.now()}`;
         program = await requestJson('POST', '/api/audits/programs', {
           token: write.token,
           body: { packId, name: progName },
         });
-        const programId = program.body?.data?.id;
+        const programId = program.body?.data?.program?.id || program.body?.data?.id;
         if (programId) {
+          // The program creator is auto-assigned 'program_owner', which does
+          // NOT carry 'finding.draft' (server/src/services/audits/
+          // permissions.ts ROLE_CAPABILITIES) — only lead_auditor/auditor/
+          // technical_expert do. Add self as lead_auditor to be able to
+          // draft a finding.
+          await requestJson('POST', `/api/audits/programs/${programId}/members`, {
+            token: write.token,
+            body: { userId: userIdA, memberRole: 'lead_auditor' },
+          });
           const statement = `G05 probe finding ${Date.now()}`;
           finding = await requestJson('POST', '/api/audits/findings', {
             token: write.token,
