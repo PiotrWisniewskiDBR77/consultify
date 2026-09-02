@@ -1,0 +1,373 @@
+{
+ "_opis": "Ekrany o ocenie C i D nalezace do 16 modulow Wave 3 — nazwa dla wlasciciela i JEDNO ZDANIE, dlaczego nie szly do odbioru. Zrodlo bloku 'Czego ten modul nie obejmuje' na kartach modulowych.",
+ "_zrodlo": "klasyfikacja z pol `wyjatki`/`co`/`gdzie` w status.json; 54 ekrany przejrzane, 11 zostawionych bez powodu jako WATPLIWE (patrz `_watpliwe`) — swiadomie NIE zmyslamy powodu na karcie, ktora wlasciciel czyta jako prawde",
+ "_kategorie": {
+  "PRZYRZAD": "nasze narzedzie pomiarowe albo ekran diagnostyczny, nie ekran produktu",
+  "NIEPODLACZONE": "zbudowane, ale w aplikacji nic tego nie otwiera",
+  "ANGIELSKI": "ekran jeszcze po angielsku albo bez tlumaczen",
+  "DUBLET": "powtarza inny ekran, ktory juz byl pokazany",
+  "TWOJA_DECYZJA": "czeka na decyzje wlasciciela, nie na naprawe",
+  "WYREJESTROWANY": "zdjety ze stanowiska podgladowego, plik zostal",
+  "HISTORYCZNY": "wpis ze starego odbioru, bez zrzutu do dzisiejszego potwierdzenia"
+ },
+ "ekrany": {
+  "org-redesign-v1-full-closed-final-20260825": {
+   "modul": "01_ORGANIZATION",
+   "ocena": "D",
+   "nazwa": "Profil organizacji — komplet ekranów",
+   "kategoria": "HISTORYCZNY",
+   "powod": "To wpis przeniesiony ze starego odbioru — nie ma zrzutu, którym dałoby się go dziś potwierdzić, a wszystkie ekrany Organizacji oglądasz teraz pojedynczo."
+  },
+  "insight-artifact": {
+   "modul": "02_INTERVIEW",
+   "ocena": "C",
+   "nazwa": "Wniosek z wywiadu",
+   "kategoria": "ANGIELSKI",
+   "powod": "Sama treść wniosku — streszczenie, ustalenia, tematy i ryzyka — jest jeszcze w całości po angielsku."
+  },
+  "tool-outputs-panel": {
+   "modul": "03_TOOLS",
+   "ocena": "C",
+   "nazwa": "Rezultaty pracy narzędzia",
+   "kategoria": "ANGIELSKI",
+   "powod": "Niemal cały ekran jest jeszcze po angielsku — po polsku są tylko statusy."
+  },
+  "tools-swot-live": {
+   "modul": "03_TOOLS",
+   "ocena": "C",
+   "nazwa": "Dynamiczny SWOT — pole robocze na żywo",
+   "kategoria": "NIEPODLACZONE",
+   "powod": "Ekran jest zbudowany, ale w aplikacji nic go jeszcze nie otwiera."
+  },
+  "assessment-matryca": {
+   "modul": "04_ASSESSMENT",
+   "ocena": "C",
+   "nazwa": "Matryca oceny",
+   "kategoria": "ANGIELSKI",
+   "powod": "Środek ekranu, czyli sama siatka poziomów, jest jeszcze w całości po angielsku."
+  },
+  "siri-tier": {
+   "modul": "04_ASSESSMENT",
+   "ocena": "C",
+   "nazwa": "Poziomy priorytetu SIRI",
+   "kategoria": "PRZYRZAD",
+   "powod": "To nie jest ekran produktu, tylko widok diagnostyczny dla inżyniera — w aplikacji taki ekran jeszcze nie istnieje."
+  },
+  "initiatives-portfolio-analysis": {
+   "modul": "05_INITIATIVES",
+   "ocena": "D",
+   "nazwa": "Analiza portfela inicjatyw",
+   "kategoria": "TWOJA_DECYZJA",
+   "powod": "Tej funkcji dziś w produkcie nie ma i czeka na Twoją decyzję, czy ma wrócić."
+  },
+  "execution-change-signals": {
+   "modul": "06_EXECUTION",
+   "ocena": "D",
+   "nazwa": "Sygnały zmiany w realizacji",
+   "kategoria": "WYREJESTROWANY",
+   "powod": "Zdjęliśmy ten ekran z naszego stanowiska podglądowego — w produkcie taka funkcja nie istnieje."
+  },
+  "execution-export-prezentacja": {
+   "modul": "06_EXECUTION",
+   "ocena": "D",
+   "nazwa": "Eksport realizacji do prezentacji",
+   "kategoria": "WYREJESTROWANY",
+   "powod": "Zdjęliśmy go ze stanowiska podglądowego, bo pokazywał starą drogę, z której produkt dawno zszedł."
+  },
+  "execution-tab-people_change": {
+   "modul": "06_EXECUTION",
+   "ocena": "C",
+   "nazwa": "Realizacja — Ludzie i zmiana",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nagłówki kolumn i komunikat na górze tej zakładki są jeszcze po angielsku, a liczby pokazują zera."
+  },
+  "agent-plan-view": {
+   "modul": "07_MY_WORK_AGENT",
+   "ocena": "C",
+   "nazwa": "Uruchomienie agenta",
+   "kategoria": "DUBLET",
+   "powod": "Ten widok powtarza warsztat agenta, który oglądasz w Agent Hubie — sam z siebie nie otwiera się już nigdzie w aplikacji."
+  },
+  "idea-table-production": {
+   "modul": "07_MY_WORK_AGENT",
+   "ocena": "D",
+   "nazwa": "Tabela pomysłów",
+   "kategoria": "PRZYRZAD",
+   "powod": "To nie ekran produktu, tylko nasze narzędzie pomiarowe do sprawdzania szerokości tabeli — tę samą tabelę widzisz w Mojej pracy."
+  },
+  "vault-scope-selector": {
+   "modul": "07_MY_WORK_AGENT",
+   "ocena": "C",
+   "nazwa": "Skarbiec dokumentów",
+   "kategoria": "ANGIELSKI",
+   "powod": "Cała obudowa ekranu jest jeszcze po angielsku, a tytuły dokumentów po polsku — jeden ekran w dwóch językach."
+  },
+  "results-three-pairs": {
+   "modul": "09_RESULTS",
+   "ocena": "D",
+   "nazwa": "Wyniki — trzy pary cel i wynik",
+   "kategoria": "DUBLET",
+   "powod": "To stara wersja Wyników, dziś w aplikacji nieosiągalna — to samo pokazują rejestry wskaźników, celów i zwrotu, które już oglądałeś."
+  },
+  "results-vnext-registry-shell": {
+   "modul": "09_RESULTS",
+   "ocena": "D",
+   "nazwa": "Wspólna rama rejestrów Wyników",
+   "kategoria": "PRZYRZAD",
+   "powod": "To nie ekran produktu, tylko nasze stanowisko sprawdzające wspólną ramę rejestrów wskaźników, celów i zwrotu."
+  },
+  "finance-focus-mode": {
+   "modul": "10_FINANCE",
+   "ocena": "D",
+   "nazwa": "Finanse — tryb skupienia",
+   "kategoria": "PRZYRZAD",
+   "powod": "To nie ekran produktu, tylko narzędzie diagnostyczne dla inżyniera."
+  },
+  "finance-id-bridge": {
+   "modul": "10_FINANCE",
+   "ocena": "D",
+   "nazwa": "Finanse — most identyfikatorów",
+   "kategoria": "PRZYRZAD",
+   "powod": "To nie ekran produktu, tylko narzędzie diagnostyczne dla inżyniera."
+  },
+  "finance-value-panels": {
+   "modul": "10_FINANCE",
+   "ocena": "C",
+   "nazwa": "Finanse — panele wartości",
+   "kategoria": "NIEPODLACZONE",
+   "powod": "Panele są zbudowane, ale w Finansach nie mają jeszcze swojego miejsca — nic ich w aplikacji nie otwiera."
+  },
+  "deck-quality-badge": {
+   "modul": "11_MATERIALS",
+   "ocena": "C",
+   "nazwa": "Ocena jakości prezentacji",
+   "kategoria": "DUBLET",
+   "powod": "To kopia z wycofanego kreatora — tę samą ocenę jakości pokazuje żywy kreator prezentacji, i to jego trzeba oglądać."
+  },
+  "document-studio-m1-share-primary": {
+   "modul": "11_MATERIALS",
+   "ocena": "D",
+   "nazwa": "Studio dokumentu — udostępnianie",
+   "kategoria": "DUBLET",
+   "powod": "To powtórka ekranu, który już widziałeś — to samo udostępnianie działa z menu Plik."
+  },
+  "gen-excel-templates-tab": {
+   "modul": "11_MATERIALS",
+   "ocena": "D",
+   "nazwa": "Generator szablonów arkusza",
+   "kategoria": "DUBLET",
+   "powod": "Sam zdjąłeś tę zakładkę jako niepotrzebną — powtarza kreator szablonów arkusza, do którego wchodzi się inną drogą."
+  },
+  "report-builder-block-types": {
+   "modul": "11_MATERIALS",
+   "ocena": "C",
+   "nazwa": "Rodzaje bloków raportu",
+   "kategoria": "ANGIELSKI",
+   "powod": "Cały ten ekran nie ma jeszcze żadnego tłumaczenia — jest w całości po angielsku."
+  },
+  "report-builder-templates": {
+   "modul": "11_MATERIALS",
+   "ocena": "C",
+   "nazwa": "Szablony raportów",
+   "kategoria": "ANGIELSKI",
+   "powod": "Cały ten ekran nie ma jeszcze żadnego tłumaczenia — jest w całości po angielsku."
+  },
+  "admin-ai-ai-audit": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — audyt",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nawigacja i nagłówki tej zakładki są jeszcze po angielsku."
+  },
+  "admin-ai-ai-limits-budgets": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — limity i budżety",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nawigacja tej zakładki jest jeszcze po angielsku."
+  },
+  "admin-ai-ai-operations": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — operacje",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nawigacja jest jeszcze po angielsku, a w polskich zdaniach zostały surowe angielskie słowa."
+  },
+  "admin-ai-data-privacy": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — dane i prywatność",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nawigacja tej zakładki jest jeszcze po angielsku."
+  },
+  "admin-ai-models-providers": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — modele i dostawcy",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nawigacja tej zakładki jest w całości po angielsku."
+  },
+  "admin-ai-policy-autonomy": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Sterowanie AI — polityka i autonomia",
+   "kategoria": "ANGIELSKI",
+   "powod": "Ta zakładka jest w stu procentach po angielsku."
+  },
+  "admin-audit-events": {
+   "modul": "14_ADMIN",
+   "ocena": "C",
+   "nazwa": "Dziennik audytu administratora",
+   "kategoria": "ANGIELSKI",
+   "powod": "W kolumnie z akcją widać jeszcze surowe angielskie nazwy zdarzeń zamiast czytelnego opisu po polsku."
+  },
+  "admin-audit-high-risk-changes": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Zmiany wysokiego ryzyka",
+   "kategoria": "DUBLET",
+   "powod": "Ta zakładka celowo pokazuje dokładnie to samo, co dziennik zdarzeń audytu."
+  },
+  "admin-audit-retention-export": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Retencja i eksport",
+   "kategoria": "DUBLET",
+   "powod": "Ta zakładka celowo pokazuje dokładnie to samo, co dziennik zdarzeń audytu."
+  },
+  "admin-billing-billing-details": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Dane rozliczeniowe",
+   "kategoria": "DUBLET",
+   "powod": "Ta zakładka pokazuje dokładnie to samo, co zakładka Budżety i alerty."
+  },
+  "admin-billing-budgets-alerts": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Budżety i alerty",
+   "kategoria": "ANGIELSKI",
+   "powod": "Napisy na tej zakładce są jeszcze po angielsku."
+  },
+  "admin-billing-invoices": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Faktury",
+   "kategoria": "ANGIELSKI",
+   "powod": "Nagłówki tabeli są jeszcze po angielsku, a kwoty nie mają podanej waluty."
+  },
+  "admin-billing-overview": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Rozliczenia — przegląd",
+   "kategoria": "ANGIELSKI",
+   "powod": "Karty na tym przeglądzie są jeszcze po angielsku, mimo ustawionego polskiego."
+  },
+  "admin-billing-payment-methods": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Metody płatności",
+   "kategoria": "ANGIELSKI",
+   "powod": "Ta zakładka jest w całości po angielsku."
+  },
+  "admin-billing-usage-costs": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Wykorzystanie i koszty",
+   "kategoria": "DUBLET",
+   "powod": "Ta zakładka wygląda co do piksela tak samo jak Przegląd rozliczeń — to ten sam ekran pod dwiema nazwami."
+  },
+  "admin-health-diagnostics": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Diagnostyka platformy",
+   "kategoria": "DUBLET",
+   "powod": "Ta zakładka pokazuje dokładnie to samo, co Stan usług."
+  },
+  "admin-security-api-access": {
+   "modul": "14_ADMIN",
+   "ocena": "D",
+   "nazwa": "Dostęp przez API",
+   "kategoria": "ANGIELSKI",
+   "powod": "Cały ten ekran jest jeszcze po angielsku."
+  },
+  "admin-security-security-alerts": {
+   "modul": "14_ADMIN",
+   "ocena": "C",
+   "nazwa": "Alerty bezpieczeństwa",
+   "kategoria": "ANGIELSKI",
+   "powod": "W kolumnach typu i dotkliwości widać jeszcze surowe angielskie oznaczenia zamiast opisu po polsku."
+  },
+  "admin-security-sso": {
+   "modul": "14_ADMIN",
+   "ocena": "C",
+   "nazwa": "Logowanie jednym kontem (SSO)",
+   "kategoria": "DUBLET",
+   "powod": "Ten ekran jest identyczny z zakładką Polityka bezpieczeństwa — nie pokazuje niczego własnego."
+  },
+  "settings-full-module-closed-final-20260825": {
+   "modul": "15_SETTINGS",
+   "ocena": "D",
+   "nazwa": "Ustawienia — komplet grup",
+   "kategoria": "HISTORYCZNY",
+   "powod": "To wpis przeniesiony ze starego odbioru, bez zrzutu, którym dałoby się go dziś potwierdzić — poszczególne grupy ustawień oglądasz teraz osobno."
+  }
+ },
+ "_watpliwe": [
+  {
+   "id": "inicjatywy-lista",
+   "modul": "05_INITIATIVES",
+   "czego_zabraklo": "Dwa sprzeczne powody w rejestrze: prototyp do decyzji kontra ekran wywracający się na błędzie przy wczytywaniu danych."
+  },
+  {
+   "id": "results-vnext-kpi-tool",
+   "modul": "09_RESULTS",
+   "czego_zabraklo": "Pole wyjątków puste; z opisu wynika tylko defekt (surowy kod wskaźnika zamiast nazwy), nie powód zdjęcia z odbioru."
+  },
+  {
+   "id": "admin-audit-compliance-evidence",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Powód to realny błąd danych (trzy puste kolumny), nie mieści się w żadnej z siedmiu kategorii."
+  },
+  {
+   "id": "admin-billing-plan-limits",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Treść poprawna po polsku; jedyny powód to czerwony kolor na zwykłym przycisku."
+  },
+  {
+   "id": "admin-health-platform-operations",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Zakładka celowo zablokowana; nie wiadomo, co konsultant miałby na niej widzieć."
+  },
+  {
+   "id": "admin-health-service-status",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Opisana jako zamierzona atrapa, która nigdy nie pyta serwera; nie wiadomo, czy to stan docelowy."
+  },
+  {
+   "id": "admin-security-risk-summary",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Zarzut dotyczy układu i jednego angielskiego słowa — nie jest to ekran po angielsku."
+  },
+  {
+   "id": "admin-security-scim-lifecycle",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Powód to wyłącznie układ: listy jako surowe wiersze zamiast tabeli w standardzie."
+  },
+  {
+   "id": "admin-security-security-policy",
+   "modul": "14_ADMIN",
+   "czego_zabraklo": "Powody to odstępstwa od standardu wyglądu, nie mieszczą się w siedmiu kategoriach."
+  },
+  {
+   "id": "ustawienia-bezpieczenstwo",
+   "modul": "15_SETTINGS",
+   "czego_zabraklo": "Powody to defekty wizualne: nieczytelna lista w jasnym motywie, data w formacie amerykańskim."
+  },
+  {
+   "id": "ustawienia-billing",
+   "modul": "15_SETTINGS",
+   "czego_zabraklo": "Pozycja pokazuje treść Profilu, bo rozliczenia należą do Administracji — pytanie produktowe, nie graficzne."
+  }
+ ]
+}

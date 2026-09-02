@@ -22,6 +22,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { ile, FORMY } from './liczebnik.mjs';
+
 export const esc = (s) =>
   String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -103,9 +105,25 @@ export function korpus(root) {
   if (!fs.existsSync(p)) return { jest: false, wg: {} };
   const txt = fs.readFileSync(p, 'utf8');
   const wg = {};
-  // Wiersz tabeli: | `ekran` | KLASA | ... | co domyka |
-  for (const w of txt.matchAll(/^\|\s*`([^`]+)`\s*\|\s*(ZROBIONE|DO_NAPRAWY|BACKLOG)\s*\|([^|]*)\|([^|]*)\|/gm)) {
-    (wg[w[1]] ??= []).push({ klasa: w[2], uwaga: w[3].trim(), domyka: w[4].trim() });
+  /*
+   * Wiersz korpusu ma SZEŚĆ kolumn:
+   * | `ekran` | cytat dosłowny | data | decyzja pierwotna | `KLASA` | uzasadnienie |
+   * Cytat bierzemy ZNAK W ZNAK — to są słowa właściciela i parafraza byłaby
+   * podmianą dowodu. Klasa stoi w odwrotnych apostrofach, stąd `?` przy nich.
+   */
+  for (const w of txt.matchAll(
+    /^\|\s*`([^`]+)`\s*\|([^|]*)\|([^|]*)\|([^|]*)\|\s*`?(ZROBIONE|DO_NAPRAWY|BACKLOG)`?\s*\|([^|]*)\|/gm
+  )) {
+    /* Tabela podsumowania na gorze korpusu ma ten sam ksztalt co rejestr i wpadala
+       tu jako "ekran" o nazwie ZROBIONE z liczbami w kolumnach. Identyfikator ekranu
+       jest z definicji malymi literami z myslnikami i nigdy nie jest nazwa klasy. */
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(w[1])) continue;
+    (wg[w[1]] ??= []).push({
+      klasa: w[5],
+      uwaga: w[2].trim().replace(/^[„"]|[”"]$/g, ''),
+      kiedy: w[3].trim(),
+      domyka: w[6].trim(),
+    });
   }
   return { jest: true, wg };
 }
@@ -126,6 +144,16 @@ export function naprawioneDzis(root, data = '2026-09-02') {
     if (wpis) out[e.id] = { nazwa: e.nazwa, opis: wpis.slice(data.length + 2) };
   }
   return out;
+}
+
+/**
+ * Ekrany C/D z nazwą dla właściciela i JEDNYM ZDANIEM powodu.
+ * Ekran, dla którego nie dało się ustalić powodu bez zgadywania, NIE ma tu wpisu
+ * — karta powie wtedy wprost „powód dopisuję", zamiast podać wymyślony.
+ */
+export function pozaOdbiorem(root) {
+  const p = path.join(root, 'docs/program/grafika/EKRANY_POZA_ODBIOREM_20260902.json');
+  return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')).ekrany || {} : {};
 }
 
 /** Ekrany, których zrzut ujawnił defekt — świadomie NIE poszły jako „poprawione". */
@@ -164,7 +192,7 @@ const PELNY = (id) => `/png/216-poprawione-dzis/${id}__PO__light.png`;
  * otwarte · czego moduł NIE obejmuje · decyzja.
  */
 export function kartaModulu(s, ctx) {
-  const { naprawione, wstrz, nazwy, kor, decyzja = {} } = ctx;
+  const { naprawione, wstrz, nazwy, kor, poza = {}, decyzja = {} } = ctx;
   const idy = new Set(s.ekrany.map((e) => e.id));
   const okno = ctx.okno;
 
@@ -200,7 +228,7 @@ export function kartaModulu(s, ctx) {
         ${grupy.map(([opis, lista]) => `
           <div class="grupa">
             <p class="gopis">${esc(opis)}
-              <span class="gile">${lista.length === 1 ? 'na 1 ekranie' : `na ${lista.length} ekranach`}</span></p>
+              <span class="gile">na ${esc(ile(lista.length, FORMY.ekranie))}</span></p>
             <div class="mini">${lista.map((e) => `
               <figure><a href="${PELNY(e.id)}" target="_blank"><img loading="lazy" src="${MINI(e.id)}" alt=""></a>
               <figcaption>${esc((nazwy[e.id] || e.id).replace(new RegExp('^' + s.nazwa + ' [—-] '), ''))}</figcaption></figure>`).join('')}
@@ -210,32 +238,68 @@ export function kartaModulu(s, ctx) {
     : `<div class="mblok pusto"><h4>Co się w tym module zmieniło dzisiaj</h4>
         <p>Nic. Ten moduł przyjąłeś wcześniej i dzisiejsze naprawy go nie dotknęły — oglądasz dokładnie to, co zatwierdziłeś.</p></div>`;
 
-  const pozycjeOtwarte = [];
-  for (const e of uwagi) {
-    const k = kor.jest ? (kor.wg[e.id] || []) : [];
-    const domyka = k.length ? k.map((x) => x.domyka).filter(Boolean).join(' · ') : null;
-    pozycjeOtwarte.push({ nazwa: nazwy[e.id] || e.id, cytat: e.uwaga, domyka, klasa: k[0]?.klasa || null });
+  /*
+   * CO ZOSTAJE OTWARTE — rozstrzygające dla decyzji właściciela.
+   *
+   * Korpus dzieli jego uwagi na trzy klasy i tylko JEDNA z nich blokuje zamknięcie:
+   *   DO_NAPRAWY — realna robota do zrobienia, moduł nie jest gotowy;
+   *   BACKLOG    — życzenie na później, NIE blokuje (przenosimy i zamykamy);
+   *   ZROBIONE   — już domknięte, pokazujemy, żeby wiedział, że nie zginęło.
+   * Karta ma powiedzieć wprost, ile z tego BLOKUJE — inaczej właściciel widzi
+   * listę uwag i zakłada najgorsze, choć większość to życzenia na później.
+   */
+  const zKorpusu = [];
+  for (const e of s.ekrany) for (const k of (kor.wg[e.id] || [])) {
+    zKorpusu.push({ nazwa: nazwy[e.id] || e.id, cytat: k.uwaga, domyka: k.domyka, klasa: k.klasa, kiedy: k.kiedy });
   }
+  // Ekrany wstrzymane dziś przeze mnie to też otwarta sprawa — z moim powodem, nie jego cytatem.
   for (const e of wstrzymaneTu) {
-    pozycjeOtwarte.push({ nazwa: nazwy[e.id] || e.id, cytat: null, domyka: wstrz[e.id], klasa: 'WSTRZYMANE' });
+    zKorpusu.push({ nazwa: nazwy[e.id] || e.id, cytat: null, domyka: wstrz[e.id], klasa: 'WSTRZYMANE', kiedy: null });
   }
+  // Uwagi z mapy, których korpus nie objął — nie gubimy ich w ciszy.
+  for (const e of uwagi) {
+    if ((kor.wg[e.id] || []).length) continue;
+    zKorpusu.push({ nazwa: nazwy[e.id] || e.id, cytat: e.uwaga, domyka: null, klasa: null, kiedy: null });
+  }
+  const RANGA = { DO_NAPRAWY: 0, WSTRZYMANE: 1, BACKLOG: 2, ZROBIONE: 3 };
+  zKorpusu.sort((a, b) => (RANGA[a.klasa] ?? 1.5) - (RANGA[b.klasa] ?? 1.5));
+  const blokuje = zKorpusu.filter((x) => x.klasa === 'DO_NAPRAWY' || x.klasa === 'WSTRZYMANE' || x.klasa === null).length;
 
-  const blokOtwarte = pozycjeOtwarte.length
+  const werdykt = zKorpusu.length === 0
+    ? '<p class="werdykt zielony">Nic tu nie zostało otwarte — możesz zamknąć ten moduł.</p>'
+    : blokuje === 0
+      ? `<p class="werdykt zielony">Nic z tego nie blokuje zamknięcia — ${esc(ile(zKorpusu.length, ['życzenie na później', 'życzenia na później', 'życzeń na później']))}. Przenosimy je do kolejki, a moduł możesz zamknąć.</p>`
+      : blokuje === zKorpusu.length
+        ? `<p class="werdykt zolty">Blokuje ${zKorpusu.length === 1 ? 'jedyna otwarta pozycja' : `wszystkie ${esc(ile(zKorpusu.length, FORMY.pozycja))}`} — ten moduł jeszcze nie jest gotowy do zamknięcia.</p>`
+        : `<p class="werdykt zolty">Blokuje ${esc(ile(blokuje, FORMY.pozycja))} z ${zKorpusu.length}. Reszta to życzenia na później, które nie stoją zamknięciu na drodze.</p>`;
+
+  const ETYK = { DO_NAPRAWY: 'do naprawy', BACKLOG: 'na później', ZROBIONE: 'już zrobione', WSTRZYMANE: 'wstrzymane przeze mnie' };
+  const blokOtwarte = zKorpusu.length
     ? `<div class="mblok">
-        <h4>Co w tym module zostaje otwarte <span class="licz">${pozycjeOtwarte.length}</span></h4>
-        ${!kor.jest && uwagi.length ? `<p class="brakkorpusu">Twoje uwagi cytuję dosłownie. Klasyfikacji („zrobione / do naprawy / na później") jeszcze nie ma — powstaje osobno i celowo jej tu nie wymyślam.</p>` : ''}
-        <ul class="otwarte">${pozycjeOtwarte.map((x) => `<li>
-          <b>${esc(x.nazwa)}</b>${x.klasa ? `<span class="kl kl-${esc(x.klasa)}">${esc(x.klasa === 'WSTRZYMANE' ? 'wstrzymane' : x.klasa.toLowerCase().replace('_', ' '))}</span>` : ''}
+        <h4>Co w tym module zostaje otwarte <span class="licz">${zKorpusu.length}</span></h4>
+        ${werdykt}
+        <ul class="otwarte">${zKorpusu.map((x) => `<li class="w-${esc(x.klasa || 'NIEZNANE')}">
+          <b>${esc(x.nazwa)}</b><span class="kl kl-${esc(x.klasa || 'NIEZNANE')}">${esc(ETYK[x.klasa] || 'bez klasyfikacji')}</span>
           ${x.cytat ? `<q>${esc(x.cytat)}</q>` : ''}
           ${x.domyka ? `<span class="domyka">${esc(x.domyka)}</span>` : ''}
         </li>`).join('')}</ul></div>`
     : `<div class="mblok pusto"><h4>Co w tym module zostaje otwarte</h4>
-        <p>Nic. Nie zostawiłeś tu żadnej uwagi, której byśmy nie domknęli.</p></div>`;
+        ${werdykt}</div>`;
 
+  const KAT = {
+    PRZYRZAD: 'nasze narzędzie pomiarowe', NIEPODLACZONE: 'jeszcze niepodłączone', ANGIELSKI: 'jeszcze po angielsku',
+    DUBLET: 'powtórka', TWOJA_DECYZJA: 'czeka na Twoją decyzję', WYREJESTROWANY: 'wycofane', HISTORYCZNY: 'wpis historyczny',
+  };
   const blokPoza = cd.length
     ? `<div class="mblok szary"><h4>Czego ten moduł nie obejmuje <span class="licz">${cd.length}</span></h4>
-        <p>Te ekrany nie szły do odbioru — świadomie ich nie pokazywaliśmy. Zamknięcie modułu ich nie dotyczy:</p>
-        <ul class="poza">${cd.map((e) => `<li>${esc(nazwy[e.id] || e.id)} <span class="o o${esc(e.ocena)}">${esc(e.ocena)}</span></li>`).join('')}</ul></div>`
+        <p>Te ekrany nie szły do odbioru — świadomie ich nie pokazywaliśmy. Zamknięcie modułu ich nie dotyczy. Przy każdym piszę, dlaczego:</p>
+        <ul class="pozalista">${cd.map((e) => {
+          const o = poza[e.id];
+          return `<li>
+            <b>${esc(o?.nazwa || nazwy[e.id] || e.id)}</b>${o ? `<span class="kat">${esc(KAT[o.kategoria] || o.kategoria)}</span>` : '<span class="kat brak">powód dopisuję</span>'}
+            ${o ? `<span class="ppowod">${esc(o.powod)}</span>` : '<span class="ppowod brak">Nie podaję powodu, dopóki nie jestem go pewien — wolę tu lukę niż zmyślone zdanie.</span>'}
+          </li>`;
+        }).join('')}</ul></div>`
     : `<div class="mblok szary pusto"><h4>Czego ten moduł nie obejmuje</h4>
         <p>Nic nie zostało poza odbiorem — wszystkie ekrany tego modułu były Ci pokazane.</p></div>`;
 
@@ -247,9 +311,9 @@ export function kartaModulu(s, ctx) {
   </header>
   <p class="doczego">${esc(DO_CZEGO[s.kod] || '')}</p>
   <div class="liczby">
-    <span><b>${s.doOdbioru}</b> ekranów do odbioru</span>
-    <span><b>${s.zDecyzja}</b> z Twoją decyzją${okno ? ` <i>${okno.od === okno.do ? `— przyjęte ${esc(okno.od)}` : `— od ${esc(okno.od)} do ${esc(okno.do)}`}</i>` : ''}</span>
-    ${s.nie || s.poprawka ? `<span class="uw"><b>${s.nie + s.poprawka}</b> odrzucone lub do poprawki</span>` : ''}
+    <span><b>${s.doOdbioru}</b> ${esc(ile(s.doOdbioru, FORMY.ekran).replace(String(s.doOdbioru) + ' ', ''))} do odbioru</span>
+    <span><b>${s.zDecyzja}</b> z nich przyjąłeś${okno ? ` <i>${okno.od === okno.do ? `— ${esc(okno.od)}` : `— od ${esc(okno.od)} do ${esc(okno.do)}`}</i>` : ''}</span>
+    ${s.nie || s.poprawka ? `<span class="uw"><b>${s.nie + s.poprawka}</b> ${esc(ile(s.nie + s.poprawka, ['odrzucony lub do poprawki', 'odrzucone lub do poprawki', 'odrzuconych lub do poprawki']).replace(String(s.nie + s.poprawka) + ' ', ''))}</span>` : ''}
   </div>
   ${blokZmian}
   ${blokOtwarte}
@@ -260,6 +324,6 @@ export function kartaModulu(s, ctx) {
     <a class="mb link" href="/?modul=${esc(s.kod)}" target="_blank">Pokaż wszystkie ekrany modułu</a>
   </div>
   <input class="mpowod" data-m="${esc(s.kod)}" placeholder="powód, jeśli jeszcze nie — zapisuje się sam" value="${esc(decyzja.powod || '')}">
-  <div class="mzapis">${decyzja.kiedy ? `w bazie: ${esc(decyzja.decyzja === 'zamykam' ? 'Zamykam moduł' : 'Jeszcze nie')} · ${esc(new Date(decyzja.kiedy).toLocaleString('pl-PL'))}` : ''}</div>
+  <div class="mzapis">${decyzja.kiedy && decyzja.decyzja ? `w bazie: ${esc(decyzja.decyzja === 'zamykam' ? 'Zamykam moduł' : 'Jeszcze nie')} · ${esc(new Date(decyzja.kiedy).toLocaleString('pl-PL'))}` : ''}</div>
 </article>`;
 }

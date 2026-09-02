@@ -18,6 +18,35 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-09-02
 
+### Z-51 · `vite build` przewraca się na braku pamięci, a EXIT 134 wygląda jak awaria kodu
+**Co się stało:** przy bramce budowy przed oddaniem partii kart modułowych `npx vite build` zakończył się
+kodem **134** z komunikatem `FATAL ERROR: Ineffective mark-compacts near heap limit — JavaScript heap out of
+memory`. Commit, którego dotyczyła bramka, **nie zawierał ani jednego pliku z `src/`** (sprawdzone:
+`git show --stat HEAD | grep -c '^ src/'` = 0), więc budowa nie mogła paść przez tę zmianę. Powtórka
+z `NODE_OPTIONS=--max-old-space-size=8192` → **EXIT 0, „✓ built in 36.98s"**.
+
+**Dlaczego ważne:** kod 134 to SIGABRT i w logu CI wygląda dokładnie jak realna awaria budowy. Bramka,
+która pada z tego powodu, uczy zespołu najgorszego możliwego odruchu — „budowa czasem pada, puść jeszcze
+raz" — a wtedy prawdziwa regresja przejdzie tą samą ścieżką i nikt jej nie odróżni. To jest ten sam kształt
+co „brak pomiaru nie jest wynikiem": narzędzie nie powiedziało „kod jest zły", tylko „nie dałem rady
+zmierzyć", a my czytamy to jako werdykt o kodzie.
+
+**Co z tego wynika — reguła, nie notatka:**
+1. **Każde uruchomienie budowy w tym repozytorium wymaga `NODE_OPTIONS=--max-old-space-size=8192`.**
+   Bez tego wynik bramki jest nieinformatywny — ani nie potwierdza, ani nie obala poprawności kodu.
+2. **EXIT 134 (albo `heap out of memory` w logu) czytaj jako BRAK PAMIĘCI, nie jako błąd kodu.** Zanim
+   zaczniesz szukać winnego w diffie, powtórz z podniesioną stertą. Dopiero powtórka, która znowu padnie,
+   jest sygnałem o kodzie.
+3. **Kontrola, która kosztuje jedno polecenie:** `git show --stat HEAD | grep -c '^ src/'`. Jeśli commit
+   nie rusza `src/`, a budowa pada — to prawie na pewno środowisko, nie zmiana.
+4. Docelowo `NODE_OPTIONS` należy wpisać do skryptu `build` w `package.json` albo do konfiguracji CI, żeby
+   nie zależało to od tego, kto pamięta. **Świadomie tego dziś NIE robię** — `package.json` jest plikiem
+   współdzielonym przez oba tory, a w katalogu pracuje równolegle kilku wykonawców (reguła nr 14). Zgłaszam
+   to nadzorcy jako osobną decyzję, zamiast wchodzić w cudzy plik przy okazji innej roboty.
+
+**Skąd wiadomo:** pomiar 2026-09-02 przy commicie `419b2915e7` (karty modułowe), dwa przebiegi
+tej samej komendy różniące się wyłącznie zmienną `NODE_OPTIONS`.
+
 ### Z-50 · Graf importów zalicza 283 ekrany z 313 — automatyczne zaliczenie przez hub jest liczbą bez wartości
 **Co się stało:** właściciel polecił 02.09 oznaczyć jako „poprawione" KAŻDY ekran, którego dotknęły
 dzisiejsze zmiany. Zbudowałem `scripts/dev/grafika-dotkniete.mjs` — przechodzi PRZECHODNIO graf importów
