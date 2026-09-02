@@ -240,7 +240,7 @@ tych plików. Jeśli mają zostać, powodem musi być coś innego niż rozwój.
 świadoma zgoda właściciela, bo znikną możliwości, nie tylko kod:
 | Co znika | L | Uwaga |
 |---|---:|---|
-| `ResultsReportingEnterpriseViews` — konektory KPI, harmonogramy raportów, wallboardy | 1388 | zero śladu w VNext (sprawdzone gres|em po `wallboard`/`reportSchedule`/`kpiConnector`) |
+| `ResultsReportingEnterpriseViews` — konektory KPI, harmonogramy raportów, wallboardy | 1388 | zero śladu w VNext (sprawdzone grepem po `wallboard`/`reportSchedule`/`kpiConnector`) |
 | `ResultsKpiReportsView` — raporty KPI ze snapshotami | 1248 | serwer nadal wystawia `/api/results` snapshot create+refresh |
 | `ResultsInitiativesView` — inicjatywy w kontekście wyników | 700 | inicjatywy mają własny moduł, ale nie ten przekrój |
 | `AIInsightsPanel` | 374 | |
