@@ -39,12 +39,16 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 - Teza, że pełny łańcuch migracji od zera sam się wywraca, nie potwierdziła się: na markerze pełny przebieg 882 migracji zakończył się sukcesem. Nie obala to osobnej tezy o rejestracji.
 - Gałąź bazowa zawiera nowsze commity niż marker; zgodnie z instrukcją nie zostały scalone ani rebazowane.
 
+## R2 — rejestr runtime DDL
+
+Literalny mianownik wynosi 208 trafień w 100 plikach. Inwentarz obejmuje wszystkie trafienia: 22 instrukcje z `DATETIME`, 52 statycznie nazwane instrukcje bez wykrytej migracji oraz 12 nazw `UNKNOWN`. Pełna tabela jest w rejestrze. Artefakt: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r2-runtime-ddl-inventory.md`, SHA-256 `c059371f8492775708ec9d351b2ed4ed5e61f85275d0f3f4874392412aa6f520`.
+
 ## Twierdzenia niezweryfikowane
 
 - Realna rejestracja przez `ApiGateway` przed naprawą — R3 jeszcze niewykonane.
 - Idempotencja drugiego przebiegu po naprawie — R5 jeszcze niewykonane.
-- Pełny rejestr tabel tworzonych poza migracjami — R2 w toku.
+- Dla wpisów oznaczonych `UNKNOWN` nie rozstrzygnięto nazwy tabeli ani migracji bez wykonania dynamicznego kodu.
 
 ## Stan
 
-R1 wykonane. R2–R6 pozostają otwarte.
+R1–R2 wykonane. R3–R6 pozostają otwarte.
