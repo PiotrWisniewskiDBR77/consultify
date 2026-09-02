@@ -21874,7 +21874,10 @@
           "billingTitle": "Alerty budżetowe",
           "billingDetail": "{{v0}} aktywnych alertów",
           "healthTitle": "Stan usług organizacji",
-          "healthDetail": "{{v0}} testów nieudanych",
+          "healthDetail_one": "{{count}} test nieudany",
+          "healthDetail_few": "{{count}} testy nieudane",
+          "healthDetail_many": "{{count}} testów nieudanych",
+          "healthDetail_other": "{{count}} testu nieudanego",
           "riskDetail": "{{count}} wysokiego ryzyka"
         },
         "allSourcesError": "Nie udało się odczytać żadnego źródła sygnałów.",
@@ -21939,7 +21942,10 @@
         },
         "source": "Źródło: GET /api/admin/{{source}}",
         "budgetAlerts": "Alerty budżetowe ({{count}})",
-        "healthStatus": "Stan: {{count}} nieudanych prób"
+        "healthStatus_one": "Stan: {{count}} nieudana próba",
+        "healthStatus_few": "Stan: {{count}} nieudane próby",
+        "healthStatus_many": "Stan: {{count}} nieudanych prób",
+        "healthStatus_other": "Stan: {{count}} nieudanej próby"
       },
       "organization-defaults": {
         "profile": {

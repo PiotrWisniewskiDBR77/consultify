@@ -20648,7 +20648,8 @@
           "billingTitle": "Budget alerts",
           "billingDetail": "{{v0}} active alerts",
           "healthTitle": "Organization service status",
-          "healthDetail": "{{v0}} failed checks",
+          "healthDetail_one": "{{count}} failed check",
+          "healthDetail_other": "{{count}} failed checks",
           "riskDetail": "{{count}} high-risk"
         },
         "allSourcesError": "None of the signal sources could be read.",
@@ -20713,7 +20714,8 @@
         },
         "source": "Source: GET /api/admin/{{source}}",
         "budgetAlerts": "Budget alerts ({{count}})",
-        "healthStatus": "Status: {{count}} failed checks"
+        "healthStatus_one": "Status: {{count}} failed check",
+        "healthStatus_other": "Status: {{count}} failed checks"
       },
       "organization-defaults": {
         "profile": {

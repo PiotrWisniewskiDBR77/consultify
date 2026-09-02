@@ -461,3 +461,89 @@ Obie wykryte oczami, nie przez bramkę — czyli bramka meldowała CZYSTO na rea
 Obie ślepoty są tego samego rodzaju co dwie naprawione dziś rano (`React.lazy`, wołacz
 w pliku definicji): **bramka rozpoznaje wzorzec zapisu, nie rzecz.** Dopóki tak jest,
 każdy nowy sposób zapisania tego samego będzie dawał fałszywy alarm albo fałszywy spokój.
+
+### 40. [P1] Podgląd pokazuje surowy identyfikator zamiast nazwy — cztery ekrany Wyników
+
+**Charakter ustalenia: WIDZIANE NA ŚWIEŻYCH ZRZUTACH** (02.09, komplet 38 zdjęć modułu Wyniki
+zrobionych po kliknięciu w wiersz).
+
+W panelu podglądu, w polu, które ma pokazywać powiązany obiekt, widnieje surowy identyfikator
+techniczny zamiast nazwy:
+
+| Ekran | Pole | Co widać | Co powinno być |
+| --- | --- | --- | --- |
+| `results-vnext-roi-full-tool` | Inicjatywa | `init-mes-1` | nazwa inicjatywy |
+| `results-vnext-roi-pir-outcomes` | Inicjatywa | `init-104` | j.w. |
+| `results-vnext-roi-registry` | Inicjatywa | `init-101` | j.w. |
+| `results-vnext-teresa-kpi-deviation` | KPI | `kpi-1` | nazwa wskaźnika |
+
+**Dlaczego to nie jest sprawa wyglądu.** Nazwa powiązanego obiektu nie dojeżdża do widoku —
+podgląd dostaje sam identyfikator i uczciwie go pokazuje. Tor grafiki nie ma czego stylować;
+zamiana identyfikatora na nazwę wymaga dociągnięcia tej nazwy w danych.
+
+**Dlaczego P1, a nie kosmetyka.** To jest pole POWIĄZANIA — cała wartość tych ekranów polega na
+tym, że pokazują, z czym dana sprawa ROI albo odchylenie KPI jest związane. `init-104` nie mówi
+konsultantowi nic. Na pokazie klient zapyta, co to znaczy — i będzie miał rację.
+
+**Wzorzec, nie cztery przypadki:** ta sama rzecz wychodzi na czterech niezależnych ekranach
+w dwóch różnych rodzinach (ROI i KPI), więc naprawa ma dotyczyć sposobu, w jaki podgląd dostaje
+powiązania, a nie czterech wywołań.
+
+### 41. [P2] `results-vnext-attention` — tabela ma jedną kolumnę, panel jedno pole
+
+**Widziane na świeżym zrzucie** (02.09, oba motywy identycznie). Ekran „Panel uwagi" z filtrem
+„Brak właściciela" pokazuje 2 wiersze, ale tabela ma **jedną kolumnę: KOD KPI**, a panel podglądu
+ma **jeden wiersz szczegółów** (Kod KPI). Bez nazwy wskaźnika i bez powodu, dla którego pozycja
+trafiła do kolejki uwagi.
+
+**Dlaczego zgłaszam zamiast poprawiać wygląd:** ekran nazywa się „uwaga" i ma kierować do działania.
+Z samym kodem `DPMO-002` nie da się nic zrobić — brakuje danych, nie stylu. Do ustalenia, czy to
+niedokończony zakres danych, czy świadome minimum.
+
+### 42. [P0-widoczny] `gen-word-content-hints` — kliknięcie w wiersz wywala aplikację
+
+**Charakter ustalenia: ZOBACZONE NA ŻYWYM EKRANIE** (02.09, przegląd modułu Materiały,
+oba motywy identycznie).
+
+Architekt szablonów Word: lista szablonów renderuje się poprawnie. **Kliknięcie w pierwszy wiersz
+(„Raport zarządczy (miesięczny)") powoduje pełny crash Reacta** zamiast otwarcia edytora:
+
+```
+TypeError: Cannot read properties of undefined (reading 'enabled')
+src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx:1210
+```
+
+**Dlaczego P0 mimo że to nie bezpieczeństwo:** to nie jest brzydki ekran ani zły kolor — to
+**pusty biały ekran zamiast produktu, po jednym kliknięciu, na ścieżce, którą właściciel pokazuje
+klientom**. Żaden inny defekt z dzisiejszego przeglądu nie zatrzymuje użytkownika całkowicie.
+
+**Dlaczego zgłaszam zamiast naprawiać:** to błąd komponentu (odczyt pola z obiektu, którego nie ma),
+nie wygląd. Naprawa w torze grafiki byłaby zgadywaniem, które pole ma być domyślne.
+
+**Kontrola dodatnia, żeby nie było wątpliwości, że to produkt, a nie przyrząd:** lista BEZ kliknięcia
+renderuje się czysto w obu motywach; crash pojawia się dopiero po kliknięciu i pochodzi z pliku
+produkcyjnego (`src/components/DocumentStudio/…`), nie z `dev-render/`.
+
+### 43. [P2] Nazwa modułu „Document Studio" nieprzetłumaczona na SZEŚCIU ekranach
+
+Klucz `documentStudio.view.moduleLabel` trzyma wartość **„Document Studio" zarówno w `pl`,
+jak i w `en`** — czyli klucz istnieje, więc każdy audyt po obecności klucza melduje
+„przetłumaczone". Skutek: ścieżka nawigacji u góry mówi po angielsku na ekranach
+`document-studio-resume-error`, `document-studio-template-resolve-error`, `document-artifact`,
+`document-studio-menu-pliku`, `document-studio-nowy-dokument-martwe-przyciski`,
+`document-studio-streaming-honesty-n3`.
+
+**Jeden klucz, sześć ekranów** — to najtańsza naprawa w całym dzisiejszym przeglądzie.
+Wymaga decyzji o polskiej nazwie modułu (np. „Studio dokumentów"), więc zostawiam ją
+świadomie, zamiast wymyślać nazwę produktu za właściciela.
+
+### 44. [P2] Dwa ekrany Materiałów pokazują użytkownikowi tekst inżynierski zamiast opisu
+
+`materialy-template-library-slice` i `materialy-draft-template-visibledraft-fix`: pole SZCZEGÓŁY
+w panelu podglądu zawiera dosłowną notatkę dewelopera zamiast opisu obiektu — m.in.
+„TemplateItem nie niesie żadnego pola struktury dla arkuszy (mapCanonicalTemplateArtifact nigdy
+nie ustawia licznika dla type=sheet)…" oraz „PO NAPRAWIE: świeżo utworzony przez właściciela
+szablon… wcześniej ten wiersz nie pojawiał się WCALE…".
+
+To dane demo, nie etykieta interfejsu — dlatego nie ruszam ich w torze grafiki. Ale **na pokazie
+klient to przeczyta**. Do wyczyszczenia razem z resztą danych demonstracyjnych.

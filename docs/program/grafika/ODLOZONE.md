@@ -448,3 +448,30 @@ produktu (reguła 17: harness ma pokazywać produkt, nie własną kompozycję).
 **Do rozstrzygnięcia:** albo rejestr zestawień okresowych powstaje w produkcie
 i wtedy ekran ma co pokazywać, albo karta schodzi z odbioru jako prototyp.
 **Nie zostawiać jej w odbiorze z oceną A** — właściciel ocenia wtedy rysunek.
+
+---
+
+## 2026-09-02 · RODZINA DO ZROBIENIA (nie odłożona — czeka na wolnego robotnika): odmiana liczebnika po polsku
+
+**Zgłoszenie punktowe, które jest próbką.** Na dwóch niezależnych ekranach widać ten sam błąd:
+`exec-summary-onelook` pokazuje w kolumnie WIEK **„1 dni"** zamiast „1 dzień";
+`admin-command-attention-queue` pokazuje **„1 testów nieudanych"** zamiast „1 test nieudany".
+
+**Dlaczego to rodzina, a nie dwie literówki.** Polski ma trzy formy liczby mnogiej
+(1 dzień · 2–4 dni · 5+ dni; 1 test · 2–4 testy · 5+ testów), angielski dwie. Kod pisany
+pod angielski wzorzec `${n} dni` daje poprawny wynik dla większości liczb i błędny dla 1 —
+czyli **defekt pokazuje się rzadko i wygląda jak przypadek**, a jest systemowy.
+
+**Pierwszy pomiar (dolna granica, nie zakres):** wzorzec `${...} dni` znaleziony m.in. w
+`src/components/Organization/OrgContextSummaryBanner.tsx:59`,
+`src/components/Organization/redesign/OrganizationDirectionConstraintsScreen.tsx:120`
+oraz w co najmniej ośmiu plikach `src/components/MyWork/*`. Zlecenie ma żądać pomiaru
+CAŁEGO zbioru (wszystkie miejsca, gdzie liczba jest sklejana z polskim rzeczownikiem),
+nie tych dwóch zgłoszonych.
+
+**Jak naprawić u przyczyny, nie per wywołanie:** jedna funkcja odmiany
+(`liczebnik(n, ['dzień','dni','dni'])`) w warstwie wspólnej i podmiana wywołań. Naprawa
+per-wywołanie w tym repozytorium już raz odrosła po ośmiu tygodniach w dwunastu plikach.
+
+**Dlaczego warto mimo niskiego priorytetu technicznego:** to jest dokładnie ten rodzaj
+drobiazgu, po którym właściciel mówi „grafika jak sprzed pięciu lat". Kosztuje jeden dyżur.

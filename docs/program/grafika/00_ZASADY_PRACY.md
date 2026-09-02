@@ -83,7 +83,8 @@ mierzone albo odebrane, ląduje w pliku w repo — w tej samej godzinie, nie na
 koniec dnia.** Rozmowa nie jest nośnikiem wiedzy.
 
 Pliki tego toru:
-- `REJESTR_EKRANOW.md` — jeden wiersz na ekran, stan i dowody
+- `status.json` — **żywy stan i ocena każdego z 313 ekranów** (czyta go strona odbioru); ★ 02.09: to ON jest źródłem, nie `REJESTR_EKRANOW.md`, który stanął 30.08
+- `REJESTR_EKRANOW.md` — słownik stanów i historyczne adnotacje CLOSED_FINAL; **nie opieraj na nim liczb**
 - `ODLOZONE.md` — katalog odłożonych
 - `KANON_Z_ODBIOROW.md` — reguły wywiedzione z odbiorów właściciela
 - `00_ZASADY_PRACY.md` — ten plik

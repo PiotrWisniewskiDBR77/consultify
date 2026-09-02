@@ -9,7 +9,7 @@
     },
     "admin-command-attention-queue": {
       "grupa": "1 — prosiłeś o poprawkę",
-      "powod": "Powiedziałeś: „to nie jest szerokość strony\". Szerokość poprawiona — obejrzyj ponownie.",
+      "powod": "NAPRAWIONE: powiedziałeś „to nie jest szerokość strony\". Ograniczenie 1200 px siedziało w narzędziu podglądowym, nie w produkcie — zdjęte na ośmiu ekranach Administracji naraz. UPRZEDZAM: liczebnik nadal odmienia się źle („1 testów nieudanych\"), wiersz z ryzykami wciąż pokazuje 0 (zgłoszony błąd danych), a daty mają inny format niż na pozostałych ekranach.",
       "klikalna": true
     },
     "finance-baseline-workspace": {
@@ -100,7 +100,7 @@
     },
     "fab-rail-kebab": {
       "grupa": "Naprawione dziś — obejrzyj ponownie",
-      "powod": "NAPRAWIONE: zdjęte sztuczne zwężenie do 560 px (było wklejką narzędzia podglądowego) i schowany deweloperski podpis PRZED/PO, który szedł na każdy zrzut jako treść ekranu.",
+      "powod": "NAPRAWIONE: zdjęte sztuczne zwężenie do 560 px i schowany deweloperski podpis PRZED/PO, który szedł na każdy zrzut jako treść ekranu. UPRZEDZAM: pasek Zatwierdź/Odrzuć unosi się nad ostatnim wierszem tabeli i go zasłania — w aplikacji stoi w panelu podglądu.",
       "klikalna": true
     }
   }
