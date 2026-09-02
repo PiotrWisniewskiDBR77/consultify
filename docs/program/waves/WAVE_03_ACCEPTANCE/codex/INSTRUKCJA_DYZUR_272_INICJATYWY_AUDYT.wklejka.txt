@@ -1,0 +1,20 @@
+NOWY — DYŻUR 272
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/instrukcje/270-273-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_272_INICJATYWY_AUDYT.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 272.
+
+★★ UWAGA — cztery z pięciu lokalizacji z pierwotnego brifu są już naprawione
+(INI-005, 2026-08-01). Ta instrukcja naprawia TYLKO LAZY_FIELDS + ograniczony
+sweep InitiativeController.ts. Przeczytaj sekcję „Sprostowania nadzorcy".
+
+Marker: 444d789363 (gałąź bazowa: integracja/20260902)
+Zasoby wyłączne: baza 6284, runtime 5264 i 5265.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

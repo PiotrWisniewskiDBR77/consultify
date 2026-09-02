@@ -1,0 +1,20 @@
+NOWY — DYŻUR 271
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/instrukcje/270-273-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_271_ASSESSMENT_PLAKIETKA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 271.
+
+★★ UWAGA — pierwotna decyzja właściciela nazwała tabelę `assessment_responses`,
+ale instrukcja mierzy realny łańcuch i ląduje na `assessment_axis_evidence`
+(v8). Przeczytaj tytuł instrukcji do końca zanim zaczniesz.
+
+Marker: 444d789363 (gałąź bazowa: integracja/20260902)
+Zasoby wyłączne: baza 6282, runtime 5262 i 5263.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
