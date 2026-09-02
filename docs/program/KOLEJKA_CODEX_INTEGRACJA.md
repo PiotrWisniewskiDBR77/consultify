@@ -125,13 +125,40 @@ nieistniejącą ścieżkę; ten sam duch siedzi w dwóch plikach baseline.
 flagi tej rodziny czytają jako ON na demo, stage i dev**. Tu bez skutku, bo hub się nie renderuje
 — ale to ten sam wzorzec, który już raz kosztował sesję.
 
-### 286 · Rodzina `TableWithPreviewLayout` — około 48 konsumentów bez poprawki wysokości
-Poprawka wysokości podglądu objęła **pięć zakładek Realizacji** (zmierzone: luka 154 px → 0 px).
-Poza nią zgrepowano **~48 innych konsumentów**: Moja praca (15 kolejek decyzyjnych), Inicjatywy,
-Wywiad, Finanse/Economics, Wyniki/ResultsVNext, Discovery, Benefits, AgentHub, ChatSignalsFeed,
-Vault i inne — **niezmierzonych**. Znany kształt: naprawa per-wywołanie odrasta.
-Narzędzie pomiarowe **już istnieje**: `scripts/dev/measure-preview-canon.mjs --wysokosc`.
-Dyżur: przejechać nim wszystkie konsumenty, wydać rejestr, dopiero potem naprawiać rodzinami.
+### 286 · Rodzina podglądu — WYKONANA, z dużym sprostowaniem
+Rejestr: `waves/WAVE_03_ACCEPTANCE/REJESTR_PODGLAD_RODZINA_20260902.md`.
+Zrzuty PO: `evidence/grafika/podglad-naprawa-20260902/`.
+
+**Zmierzone: 51 plików rozpada się na 29 żywych właścicieli layoutu, 13 martwego kodu
+i ~9 komponentów treści.** Z 29 żywych zmierzono 20; sześć miało lukę.
+
+★★★ **SPROSTOWANIE, KTÓRE ZMIENIA SPOSÓB CZYTANIA KAŻDEJ NASZEJ LICZBY:**
+**trzy z sześciu „defektów produktu" to był kłamiący przyrząd, nie produkt.**
+Hosty harnessu (`dev-render/screens/*.tsx`) miały korzeń `min-h-screen` albo `80vh` —
+czyli wyłącznie `min-height`, przy `height: auto`. Wysokość procentowa dziecka nie ma się
+wtedy do czego odnieść (CSS 2.1 §10.5) i layout zapada się do wysokości treści.
+**Łańcuch przodków w realnym produkcie był już poprawny.**
+
+- `FinanceHub` 263 px → **przyrząd**, produkt nietknięty
+- `ExecutionReportsSurface` 216 px → **przyrząd**; ta sama zakładka przez prawdziwe Menu 1 mierzy 0 px
+- `VaultSafesTable` 200 px → **przyrząd**, produkt nietknięty
+- `PlanScenarioSurface` 92 px → **realny defekt produktu**, naprawiony
+- `CapacityScenarioSurface` 67 px → **realny defekt produktu**, naprawiony
+- `ChatSignalsFeed` 58 px → **realny defekt produktu**, naprawiony; pozostałe 58 px w domyślnych
+  danych to przycisk „Pokaż starsze" (34 px) plus jego margines (24 px), nie luka —
+  potwierdzone drugim zestawem danych, gdzie wychodzi 0 px
+
+★ **Wykonawca NIE zmienił listy ekranów w kanonicznym skrypcie**, żeby wynik wyszedł zielony —
+jawnie napisał, że to wyglądałoby na naciąganie progu. To jest zachowanie, którego wymagamy.
+
+**Reguła do stosowania przy KAŻDYM przyszłym pomiarze wysokości:** zanim zgłosisz lukę jako
+defekt produktu, **porównaj łańcuch przodków w harnessie z łańcuchem w realnej trasie**.
+Jeśli host harnessu ma `min-h-*` albo `*vh` tam, gdzie produkt ma `h-full`, mierzysz przyrząd.
+
+**Pozycje otwarte:** `ResultsVNextRegistryShell` nie ma znacznika `data-preview-pane`, więc
+przyrząd go nie widzi mimo działającego podglądu. `DecisionsPanelContent` — produkcyjny ekran
+decyzji w Mojej Pracy — **nie ma żadnego ekranu w harnessie**, więc nigdy nie trafi do przeglądu.
+Zauważony przy okazji nakładający się tekst w kolumnie nazwy Sejfu (osobne zgłoszenie).
 
 ### 287 · Trzy dziury cross-org — weryfikacja, czy naprawdę zamknięte
 `SCIEZKA_WYJSCIA_V2.md` §A wymienia je jako blokujące odbiór: wnioski o uprawnienia, wideo,
