@@ -157,7 +157,7 @@ Każda egzekwowalna reguła wskazuje swój **jedyny** plik implementacji:
 | N-mode layout (cały kit) | `src/components/shared/NModeLayout/` | `01-shell-layout/presentation-modes.md` |
 | Motion (≤220ms, scoped, zero bounce) | `npm run lint:motion` / `:ci` (`server/scripts/check-motion-compliance.ts` + `.motion-baseline.json`) | `00-foundation/visual-language.md` §9 |
 | Kolor / light-mode (NIE grep-lint — patrz §18) | VISUAL SWEEP (`docs/qa/MASTER_VISUAL_QA_CATALOG.md`) + `scripts/audit-ui-compliance.js` | `00-foundation/light-mode-readability.md` §18 |
-| Fokus = `--c-focus`, nigdy `primary-*`/crimson | `npm run lint:focus` / `:ci` (`scripts/check-focus-canon.sh` + `.focus-baseline.json`) | `00-foundation/FOUNDATION_TOKEN_CONTRACT.md` §7 · `TRIADA_KANON.md` §A10 |
+| Fokus = `--c-focus`, nigdy `primary-*`/crimson | `npm run lint:focus` / `:ci` (`scripts/check-focus-canon.sh` + `scripts/check-focus-canon.baseline.txt`, ratchet PER PLIK) | `00-foundation/FOUNDATION_TOKEN_CONTRACT.md` §7 · `TRIADA_KANON.md` §A10 |
 | Rozbieżności doc↔kod (zmierzone) | `_DOC_CODE_DELTA_REGISTER.md` (wpis wymaga polecenia pomiaru + liczby) | `00-foundation/FOUNDATION_TOKEN_CONTRACT.md` §11 |
 
 **Reguła:** nowa egzekwowalna reguła w kanonie = musi wskazać (lub utworzyć) swój kod SSOT. Reguła bez bindingu jest tylko intencją.
