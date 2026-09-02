@@ -1,10 +1,108 @@
 {
- "_opis": "Trwala kopia decyzji modulowych wlasciciela (baza sqlite jest lokalna i ulotna).",
- "_wyeksportowano": "2026-09-02T12:52:23",
- "_podsumowanie": {
-  "zamkniete": 0,
-  "jeszcze_nie": 0,
-  "z_szesnastu": 16
- },
- "decyzje": []
+  "_opis": "Trwala kopia decyzji modulowych wlasciciela.",
+  "_wyeksportowano": "2026-09-02T16:38:32",
+  "_podsumowanie": {
+    "zamkniete": 16,
+    "jeszcze_nie": 0,
+    "z_szesnastu": 16
+  },
+  "_zastrzezenie": "Decyzje zapisane recznie z wiadomosci wlasciciela — strona nie zapisala jego klikniec.",
+  "decyzje": [
+    {
+      "modul": "01_ORGANIZATION",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "02_INTERVIEW",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "03_TOOLS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "04_ASSESSMENT",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "05_INITIATIVES",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "06_EXECUTION",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "07_MY_WORK_AGENT",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "08_MEETINGS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "09_RESULTS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "10_FINANCE",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "11_MATERIALS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "12_AUDITS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "13_CHAT",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "14_ADMIN",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "15_SETTINGS",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    },
+    {
+      "modul": "16_PARTNER",
+      "decyzja": "zamykam",
+      "powod": "DECYZJA WLASCICIELA przekazana W ROZMOWIE 2026-09-02, nie klikiem na stronie: \"Sprawdzilem wszystkie moduly i wszystkie sa OK. Zatem mozemy uznac, ze cala grafika jest zatwierdzona.\" Strona odbioru NIE zapisala jego klikniec (defekt narzedzia, dwa razy tego dnia; mechanizm zapisu zweryfikowany przez nadzorce wlasnym kliknieciem - dziala). Zrodlo tej decyzji to wiadomosc, nie interfejs.",
+      "kiedy": "2026-09-02T16:38:32"
+    }
+  ]
 }
