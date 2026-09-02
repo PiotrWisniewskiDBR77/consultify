@@ -108,9 +108,20 @@ list_scope_files() {
 }
 
 # Liczba naruszeń w pojedynczym pliku (primary-* KAŻDY numer, lub c-accent token).
+#
+# VF-CRIMSON3NAMES (2026-09-02, zgłoszenie nadzorcy): crimson #85182F ma w
+# repo TRZY nazwy (tailwind.config.js: primary/crimson/brand, wszystkie z
+# identycznym hexem na 600/DEFAULT) — ten filtr łapał WYŁĄCZNIE `primary-`
+# i c-accent, `crimson-*`/`brand-*` przechodziły bez ostrzeżenia mimo że to
+# ten sam zakazany kolor. scripts/check-triada.sh:71 był już naprawiony pod
+# ten sam problem (VF5, 2026-08-31) — wzorzec crimson-(50..900) i
+# brand-(50..900)/bare-brand-z-prefiksem wzięty stąd 1:1, żeby oba
+# bezpieczniki (lista i artefakty) zgadzały się co do definicji naruszenia.
+# `primary-` tu celowo zostaje NIEOGRANICZONE do enumeracji odcieni (szerszy
+# niż triada) — to zastany, szerszy zakres tego pliku, nie dotykamy go.
 count_violations() {
   local f="$1"
-  grep -nE 'primary-|bg-c-accent|text-c-accent|border-c-accent' "$f" 2>/dev/null \
+  grep -nE 'primary-|bg-c-accent|text-c-accent|border-c-accent|crimson-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|brand-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|(bg|text|border|ring|from|shadow)-brand([^0-9a-zA-Z-]|$)' "$f" 2>/dev/null \
     | grep -v 'crimson-ok' | grep -c . || true
 }
 
