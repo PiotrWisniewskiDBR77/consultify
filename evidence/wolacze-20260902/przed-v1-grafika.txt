@@ -1,0 +1,17 @@
+przeskanowanych plikow produkcji (bez testow): 4102 
+
+AIConsultantPanel                BRAK WOŁACZA
+UnifiedCreateLauncher            BRAK WOŁACZA
+InitiativesTable                 BRAK WOŁACZA
+AssessmentReportView             BRAK WOŁACZA
+AssessmentPresentationView       BRAK WOŁACZA
+ReportsTable                     BRAK WOŁACZA
+ResultsVNextLegacyArchivePanel   BRAK WOŁACZA
+AuditsHub                        BRAK WOŁACZA
+CriterionWorkspaceGate           BRAK WOŁACZA
+TeresaUnavailableNotice          BRAK WOŁACZA
+FinancialModelWorkspace          WOŁACZ JSX
+        src/components/Economics/FinanceHub.tsx
+        src/components/Economics/FinanceHub.tsx jako <FinancialModelWorkspace>
+PredictionWorkspace              WOŁACZ przez otoczkę lazy
+        src/components/Economics/FinanceHub.tsx jako <FinanceV3PredictionWorkspace>

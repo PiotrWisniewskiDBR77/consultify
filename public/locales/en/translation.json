@@ -8631,6 +8631,12 @@
       "initiatives": "Initiative pack",
       "note": "Uses this assessment as the source."
     },
+    "outputs": {
+      "rowMenu": {
+        "openReport": "Show report",
+        "openPresentation": "Show as presentation"
+      }
+    },
     "emptyState": {
       "title": "No assessments yet",
       "createFirst": "Create First Assessment",
@@ -25040,6 +25046,7 @@
     "sampleData": {
       "banner": "Sample data — not from the database"
     },
+    "legacyArchiveTab": "Archive",
     "moduleName": "Results",
     "hub": {
       "failedToLoadKpis": "Failed to load KPI catalog.",

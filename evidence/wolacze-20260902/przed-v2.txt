@@ -1,0 +1,13 @@
+przeskanowanych plikow produkcji (bez testow): 4102 
+
+AIConsultantPanel                BRAK WOŁACZA
+UnifiedCreateLauncher            BRAK WOŁACZA
+InitiativesTable                 BRAK WOŁACZA
+AssessmentReportView             BRAK WOŁACZA
+AssessmentPresentationView       BRAK WOŁACZA
+ReportsTable                     BRAK WOŁACZA
+ResultsVNextLegacyArchivePanel   BRAK WOŁACZA
+AuditsHub                        BRAK WOŁACZA
+CriterionWorkspaceGate           WOŁACZ (1)
+        lazyWithRetry jako <CriterionWorkspace>: src/routes/AppRoutes.tsx
+TeresaUnavailableNotice          BRAK WOŁACZA
