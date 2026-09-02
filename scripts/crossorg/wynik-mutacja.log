@@ -1,0 +1,63 @@
+  [setup projektu] HTTP=429 {"error":"Project limit reached (3). Upgrade to create more projects.","errorCode":"PROJECT_LIMIT_REACHED","code":"PROJECT_LIMIT_REACHED"} — biore istniejacy projekt org A
+[PROOF] projectA=139aee95-53a3-4672-91e0-fbfa57599c9e
+PASS | F1 permission-requests | setup | wniosek org A id=95d646c0-ba6a-4787-8050-8088f0038f67
+FAIL | F1 permission-requests | obcy PUT /:id/approve | HTTP=200 status_po_ataku=approved
+FAIL | F1 permission-requests | obcy PUT /:id/reject | HTTP=200 status_po_ataku=approved
+PASS | F1 permission-requests | wlasciciel PUT /:id/approve | HTTP=200 status_po=approved resolved_by=0227e462-d5ff-43c2-bddd-95859e04f487
+PASS | F1 permission-requests | wlasciciel PUT /:id/reject | HTTP=200 status_po=rejected
+FAIL | F2 videos | BRAK TABELI videos | tabela videos NIE ISTNIEJE po 882 migracjach; POST HTTP=201 (id=7d4e6332-4e35-4b5a-a31a-60b2be2a7c89, nic nie zapisano), obcy DELETE HTTP=200, WLASCICIEL DELETE HTTP=200, GET wlasciciela=[]
+FAIL | F3 kontekst AI | trasa POST /api/context (kanal tworzenia) | HTTP=201 zapisanych_wierszy=0 (fail-soft DbPromise maskuje blad kolumny user_id)
+PASS | F3 kontekst AI | setup (wprost w bazie, bo trasa tworzenia martwa) | kontekst org A id=ctx_mtkh7f3u_a
+FAIL | F3 kontekst AI | obcy PUT /:id (trasa 1) | HTTP=200 name_po_ataku=PWNED BY ORG B
+FAIL | F3 kontekst AI | obcy DELETE /:id (trasa 2) | HTTP=200 wiersz_istnieje=false
+FAIL | F3 kontekst AI | wlasciciel PUT /:id (trasa 1) | HTTP=200 name_po=undefined
+PASS | F3 kontekst AI | wlasciciel DELETE /:id (trasa 2) | HTTP=200 wiersz_po=0
+FAIL | F4 project-members | obcy GET /:projectId | HTTP=200
+FAIL | F4 project-members | obcy POST /:projectId (wstrzykniecie ADMIN) | HTTP=201 wstrzyknietych_wierszy=1
+PASS | F4 project-members | wlasciciel POST /:projectId | HTTP=201 wierszy=1 {"success":true,"id":"dfb82b9c-a9db-436d-a590-0034dbaa5373","userId":"3e6d9b25-f962-4e35-8e29-df3b840c386e","role":"MEMBER"}
+PASS | F4 project-members | wlasciciel GET /:projectId | HTTP=200 czlonkow=2
+FAIL | F4 project-members | obcy PUT /:projectId/:memberId | HTTP=200 rola_po=VIEWER
+FAIL | F4 project-members | obcy DELETE /:projectId/:memberId | HTTP=200 wiersz_istnieje=false
+FAIL | F4 project-members | wlasciciel DELETE /:projectId/:memberId | HTTP=404 wiersz_po=0
+PASS | F6 escalations | setup | decyzja org A id=dec_mtkh7f3u_a projekt=139aee95-53a3-4672-91e0-fbfa57599c9e
+FAIL | F6 escalations | obcy GET /escalations/:projectId | HTTP=200 wyciek_tytulu=true body=[{"id":"dec_mtkh4uen_a","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","project_id":"139aee95-53a3-4672-91e0-fbfa57599c9e","initiative_id":null,"task_
+FAIL | F6 escalations | obcy POST /escalations/:projectId/run | HTTP=200 przed=NORMAL/Sat Jul 04 2026 19:15:21 GMT+0200 (Central European Summer Time) po=red/Wed Sep 02 2026 19:15:21 GMT+0200 (Central European Summer Time) body={"projectId":"139aee95-53a3-4672-91e0-fbfa57599c9e","processed":3,"amberAlerts":0,"redAlerts":1,"escalated":1,"errors":0
+PASS | F6 escalations | wlasciciel GET /escalations/:projectId | HTTP=200 widzi_swoja_decyzje=true body=[{"id":"dec_mtkh4uen_a","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","project_id":"139aee95-53a3-4672-91e0-fbfa57599c9e","initiative_id":null,"task_id":null,"title":"OrgA Confidential Boar
+PASS | F6 escalations | wlasciciel POST /escalations/:projectId/run | HTTP=200 body={"projectId":"139aee95-53a3-4672-91e0-fbfa57599c9e","processed":3,"amberAlerts":0,"redAlerts":0,"escalated":0,"errors":0} poziom_po=red
+PASS | F5 studio | setup | dokument org A id=c0c3e3b3-36b1-409d-84ac-14f147ee1706
+FAIL | F5 studio | obcy GET /documents/:id | HTTP=200
+FAIL | F5 studio | obcy PUT /documents/:id | HTTP=200 name_po=PWNED BY ORG B
+PASS | F5 studio | wlasciciel POST /documents/:id/snapshots (baza) | HTTP=201 snapshotow_w_bazie=1
+PASS | F5 studio | wlasciciel GET /documents/:id/snapshots | HTTP=200 elementow=1
+FAIL | F5 studio | obcy GET /documents/:id/snapshots | HTTP=200 elementow=1 (u wlasciciela 1)
+FAIL | F5 studio | obcy POST /snapshots/:id/restore | HTTP=200 {"id":"c0c3e3b3-36b1-409d-84ac-14f147ee1706","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","name":"PWNED BY O
+PASS | F5 studio | wlasciciel POST /snapshots/:id/restore | HTTP=200 {"id":"c0c3e3b3-36b1-409d-84ac-14f147ee1706","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","name":"PWNED BY O
+FAIL | F5 studio | obcy DELETE /documents/:id | HTTP=200 wiersz_istnieje=false
+FAIL | F5 studio | wlasciciel GET /documents/:id | HTTP=404
+FAIL | F5 studio | wlasciciel PUT /documents/:id | HTTP=404 name_po=undefined
+FAIL | F5 studio | wlasciciel DELETE /documents/:id | HTTP=404 wiersz_po=0
+
+[PROOF] 14/36 PASS
+[PROOF] NIEZALICZONE:
+  - F1 permission-requests | obcy PUT /:id/approve | HTTP=200 status_po_ataku=approved
+  - F1 permission-requests | obcy PUT /:id/reject | HTTP=200 status_po_ataku=approved
+  - F2 videos | BRAK TABELI videos | tabela videos NIE ISTNIEJE po 882 migracjach; POST HTTP=201 (id=7d4e6332-4e35-4b5a-a31a-60b2be2a7c89, nic nie zapisano), obcy DELETE HTTP=200, WLASCICIEL DELETE HTTP=200, GET wlasciciela=[]
+  - F3 kontekst AI | trasa POST /api/context (kanal tworzenia) | HTTP=201 zapisanych_wierszy=0 (fail-soft DbPromise maskuje blad kolumny user_id)
+  - F3 kontekst AI | obcy PUT /:id (trasa 1) | HTTP=200 name_po_ataku=PWNED BY ORG B
+  - F3 kontekst AI | obcy DELETE /:id (trasa 2) | HTTP=200 wiersz_istnieje=false
+  - F3 kontekst AI | wlasciciel PUT /:id (trasa 1) | HTTP=200 name_po=undefined
+  - F4 project-members | obcy GET /:projectId | HTTP=200
+  - F4 project-members | obcy POST /:projectId (wstrzykniecie ADMIN) | HTTP=201 wstrzyknietych_wierszy=1
+  - F4 project-members | obcy PUT /:projectId/:memberId | HTTP=200 rola_po=VIEWER
+  - F4 project-members | obcy DELETE /:projectId/:memberId | HTTP=200 wiersz_istnieje=false
+  - F4 project-members | wlasciciel DELETE /:projectId/:memberId | HTTP=404 wiersz_po=0
+  - F6 escalations | obcy GET /escalations/:projectId | HTTP=200 wyciek_tytulu=true body=[{"id":"dec_mtkh4uen_a","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","project_id":"139aee95-53a3-4672-91e0-fbfa57599c9e","initiative_id":null,"task_
+  - F6 escalations | obcy POST /escalations/:projectId/run | HTTP=200 przed=NORMAL/Sat Jul 04 2026 19:15:21 GMT+0200 (Central European Summer Time) po=red/Wed Sep 02 2026 19:15:21 GMT+0200 (Central European Summer Time) body={"projectId":"139aee95-53a3-4672-91e0-fbfa57599c9e","processed":3,"amberAlerts":0,"redAlerts":1,"escalated":1,"errors":0
+  - F5 studio | obcy GET /documents/:id | HTTP=200
+  - F5 studio | obcy PUT /documents/:id | HTTP=200 name_po=PWNED BY ORG B
+  - F5 studio | obcy GET /documents/:id/snapshots | HTTP=200 elementow=1 (u wlasciciela 1)
+  - F5 studio | obcy POST /snapshots/:id/restore | HTTP=200 {"id":"c0c3e3b3-36b1-409d-84ac-14f147ee1706","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","name":"PWNED BY O
+  - F5 studio | obcy DELETE /documents/:id | HTTP=200 wiersz_istnieje=false
+  - F5 studio | wlasciciel GET /documents/:id | HTTP=404
+  - F5 studio | wlasciciel PUT /documents/:id | HTTP=404 name_po=undefined
+  - F5 studio | wlasciciel DELETE /documents/:id | HTTP=404 wiersz_po=0

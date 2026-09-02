@@ -1,0 +1,10 @@
+export NODE_ENV=test
+export RUN_DB_TESTS=1
+export CI=true
+export MOCK_DB=false
+export DB_TYPE=postgres
+export DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:6270/agcross
+export ENABLE_STUB_ROUTES=true
+export JWT_SECRET=agcrossorg-proof-secret-0123456789abcdef
+export JWT_REFRESH_SECRET=agcrossorg-proof-refresh-0123456789abcdef
+export PROOF_PORT=5262

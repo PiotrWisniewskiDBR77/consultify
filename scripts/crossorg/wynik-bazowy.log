@@ -1,0 +1,43 @@
+  [setup projektu] HTTP=429 {"error":"Project limit reached (3). Upgrade to create more projects.","errorCode":"PROJECT_LIMIT_REACHED","code":"PROJECT_LIMIT_REACHED"} — biore istniejacy projekt org A
+[PROOF] projectA=139aee95-53a3-4672-91e0-fbfa57599c9e
+PASS | F1 permission-requests | setup | wniosek org A id=c5937462-dc29-4d8d-9880-586c13584856
+PASS | F1 permission-requests | obcy PUT /:id/approve | HTTP=404 status_po_ataku=pending
+PASS | F1 permission-requests | obcy PUT /:id/reject | HTTP=404 status_po_ataku=pending
+PASS | F1 permission-requests | wlasciciel PUT /:id/approve | HTTP=200 status_po=approved resolved_by=3e6d9b25-f962-4e35-8e29-df3b840c386e
+PASS | F1 permission-requests | wlasciciel PUT /:id/reject | HTTP=200 status_po=rejected
+FAIL | F2 videos | BRAK TABELI videos | tabela videos NIE ISTNIEJE po 882 migracjach; POST HTTP=201 (id=c4cb24cf-0dda-4008-85ba-725e00acf4a9, nic nie zapisano), obcy DELETE HTTP=404, WLASCICIEL DELETE HTTP=404, GET wlasciciela=[]
+FAIL | F3 kontekst AI | trasa POST /api/context (kanal tworzenia) | HTTP=201 zapisanych_wierszy=0 (fail-soft DbPromise maskuje blad kolumny user_id)
+PASS | F3 kontekst AI | setup (wprost w bazie, bo trasa tworzenia martwa) | kontekst org A id=ctx_mtkh5fhb_a
+PASS | F3 kontekst AI | obcy PUT /:id (trasa 1) | HTTP=404 name_po_ataku=OrgA kontekst mtkh5fhb
+PASS | F3 kontekst AI | obcy DELETE /:id (trasa 2) | HTTP=404 wiersz_istnieje=true
+PASS | F3 kontekst AI | wlasciciel PUT /:id (trasa 1) | HTTP=200 name_po=OrgA zmieniony mtkh5fhb
+PASS | F3 kontekst AI | wlasciciel DELETE /:id (trasa 2) | HTTP=200 wiersz_po=0
+PASS | F4 project-members | obcy GET /:projectId | HTTP=404
+PASS | F4 project-members | obcy POST /:projectId (wstrzykniecie ADMIN) | HTTP=404 wstrzyknietych_wierszy=0
+PASS | F4 project-members | wlasciciel POST /:projectId | HTTP=201 wierszy=1 {"success":true,"id":"190e3367-dc25-4a2d-9e40-4c47e13f08f8","userId":"3e6d9b25-f962-4e35-8e29-df3b840c386e","role":"MEMBER"}
+PASS | F4 project-members | wlasciciel GET /:projectId | HTTP=200 czlonkow=1
+PASS | F4 project-members | obcy PUT /:projectId/:memberId | HTTP=404 rola_po=MEMBER
+PASS | F4 project-members | obcy DELETE /:projectId/:memberId | HTTP=404 wiersz_istnieje=true
+PASS | F4 project-members | wlasciciel DELETE /:projectId/:memberId | HTTP=200 wiersz_po=0
+PASS | F6 escalations | setup | decyzja org A id=dec_mtkh5fhb_a projekt=139aee95-53a3-4672-91e0-fbfa57599c9e
+PASS | F6 escalations | obcy GET /escalations/:projectId | HTTP=200 wyciek_tytulu=false body=[]
+PASS | F6 escalations | obcy POST /escalations/:projectId/run | HTTP=200 przed=NORMAL/Sat Jul 04 2026 19:13:48 GMT+0200 (Central European Summer Time) po=NORMAL/Sat Jul 04 2026 19:13:48 GMT+0200 (Central European Summer Time) body={"projectId":"139aee95-53a3-4672-91e0-fbfa57599c9e","processed":0,"amberAlerts":0,"redAlerts":0,"escalated":0,"errors":0
+PASS | F6 escalations | wlasciciel GET /escalations/:projectId | HTTP=200 widzi_swoja_decyzje=true body=[{"id":"dec_mtkh4uen_a","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","project_id":"139aee95-53a3-4672-91e0-fbfa57599c9e","initiative_id":null,"task_id":null,"title":"OrgA Confidential Boar
+PASS | F6 escalations | wlasciciel POST /escalations/:projectId/run | HTTP=200 body={"projectId":"139aee95-53a3-4672-91e0-fbfa57599c9e","processed":2,"amberAlerts":0,"redAlerts":1,"escalated":1,"errors":0} poziom_po=red
+PASS | F5 studio | setup | dokument org A id=6ceca49a-9d41-4f88-acbe-0b5a5e88ddb6
+PASS | F5 studio | obcy GET /documents/:id | HTTP=404
+PASS | F5 studio | obcy PUT /documents/:id | HTTP=404 name_po=OrgA Secret Canvas mtkh5fhb
+PASS | F5 studio | wlasciciel POST /documents/:id/snapshots (baza) | HTTP=201 snapshotow_w_bazie=1
+PASS | F5 studio | wlasciciel GET /documents/:id/snapshots | HTTP=200 elementow=1
+PASS | F5 studio | obcy GET /documents/:id/snapshots | HTTP=200 elementow=0 (u wlasciciela 1)
+PASS | F5 studio | obcy POST /snapshots/:id/restore | HTTP=404 {"error":"Snapshot not found"}
+PASS | F5 studio | wlasciciel POST /snapshots/:id/restore | HTTP=200 {"id":"6ceca49a-9d41-4f88-acbe-0b5a5e88ddb6","organization_id":"5557766b-5a6d-48ed-ba63-af023543509a","name":"OrgA Secre
+PASS | F5 studio | obcy DELETE /documents/:id | HTTP=404 wiersz_istnieje=true
+PASS | F5 studio | wlasciciel GET /documents/:id | HTTP=200
+PASS | F5 studio | wlasciciel PUT /documents/:id | HTTP=200 name_po=OrgA zmieniony mtkh5fhb
+PASS | F5 studio | wlasciciel DELETE /documents/:id | HTTP=200 wiersz_po=0
+
+[PROOF] 34/36 PASS
+[PROOF] NIEZALICZONE:
+  - F2 videos | BRAK TABELI videos | tabela videos NIE ISTNIEJE po 882 migracjach; POST HTTP=201 (id=c4cb24cf-0dda-4008-85ba-725e00acf4a9, nic nie zapisano), obcy DELETE HTTP=404, WLASCICIEL DELETE HTTP=404, GET wlasciciela=[]
+  - F3 kontekst AI | trasa POST /api/context (kanal tworzenia) | HTTP=201 zapisanych_wierszy=0 (fail-soft DbPromise maskuje blad kolumny user_id)
