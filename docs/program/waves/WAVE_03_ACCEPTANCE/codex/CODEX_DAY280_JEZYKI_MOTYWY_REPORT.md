@@ -2,7 +2,7 @@
 
 ## Stan
 
-Wynik bieżący: **PARTIAL / G06 NIEPODNIESIONE**. R1–R3 wykonane. R4–R5 jeszcze niewykonane.
+Wynik bieżący: **PARTIAL / G06 NIEPODNIESIONE**. R1–R4 wykonane. R5 jeszcze niewykonane.
 
 ## Baza i marker — wyniki dosłowne
 
@@ -40,6 +40,10 @@ Pułapki §0.2d (a)–(e): przebieg nie używa Vitest ani `tests/setup.ts`; dzia
 
 Zmierzono 56/56 ekranów A/B, 448 zrzutów w pełnej macierzy. Wyniki per ekran dopisano do rejestru. Werdykty pozostają PARTIAL/NOT_PROVEN według tych samych ograniczeń dowodowych co R2.
 
+## R4 — moduły 09–12
+
+Zmierzono 71/71 ekranów A/B, 568 zrzutów w pełnej macierzy. `materials-registry` użył osobnego wejścia HTML. Wyniki per ekran dopisano do rejestru.
+
 ## Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -50,7 +54,7 @@ Brak licencjonowanego pakietu Vitest w instrukcji (literalne `brak testów vites
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-Wszystkie ekrany modułów 09–16 (R4–R5) pozostają niewykonane na tym etapie. Dla R2–R3 niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął.
+Wszystkie ekrany modułów 13–16 (R5) pozostają niewykonane na tym etapie. Dla R2–R4 niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął.
 
 ## Artefakty
 
