@@ -246,9 +246,18 @@ export const executionReviewInterventions = [
     evidenceRefs: ['signal-demand-model-delay@2', 'forecast-source-comparison@1'],
     counterEvidenceRefs: [], unknowns: ['Czy dostawca danych usunie rozbieżność do 25 sierpnia?'],
     blastRadiusRefs: ['task-demand-model', 'milestone-pilot-ready'],
+    // KSZTAŁT SERWERA, nie kształt wygodny dla frontu (2026-09-02).
+    // Do dziś te dwie opcje NIE miały pola `kind`, a `reversibility` niosło
+    // wartości `'HIGH'`/`'MEDIUM'`, których kontrakt `InterventionOption`
+    // (server/src/domain/initiatives-execution/managementIntervention.ts:32)
+    // nie zna. Skutek widoczny na ekranie „Sterowanie": panel POWIĄZANIA
+    // składa etykietę jako `${option.kind}: ${option.label}` i wypisywał
+    // literalne „undefined: Nie zmieniaj planu". Poprawny wzorzec stał
+    // w TYM SAMYM module 80 linii wyżej (ExecutionControlSurface.tsx:462 —
+    // `kind: 'DO_NOTHING'` / `kind: 'ACTION'`); atrapa go nie miała.
     options: [
-      { optionId: 'do-nothing', label: 'Nie zmieniaj planu', impacts: ['Ryzyko opóźnienia pilotażu o 4–7 dni'], confidence: 'HIGH', reversibility: 'HIGH' },
-      { optionId: 'parallel-validation', label: 'Równoległa walidacja obu źródeł', impacts: ['Dodatkowe 10 h pracy', 'Skrócenie opóźnienia o 3 dni'], confidence: 'MEDIUM', reversibility: 'HIGH' },
+      { optionId: 'do-nothing', kind: 'DO_NOTHING', label: 'Nie zmieniaj planu', impacts: [{ targetRef: 'milestone-pilot-ready', effect: 'Ryzyko opóźnienia pilotażu o 4–7 dni' }], confidence: 'HIGH', reversibility: 'REVERSIBLE' },
+      { optionId: 'parallel-validation', kind: 'ACTION', label: 'Równoległa walidacja obu źródeł', impacts: [{ targetRef: 'task-demand-model', effect: 'Dodatkowe 10 h pracy' }, { targetRef: 'milestone-pilot-ready', effect: 'Skrócenie opóźnienia o 3 dni' }], confidence: 'MEDIUM', reversibility: 'PARTIALLY_REVERSIBLE' },
     ], selectedOptionId: 'parallel-validation',
   },
   {

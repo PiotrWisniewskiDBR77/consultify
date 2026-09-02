@@ -147,6 +147,25 @@ const verificationOutcomeLabel = (value: string) =>
     INEFFECTIVE: 'Nieskuteczna',
     NOT_VERIFIED: 'Niezweryfikowana',
   })[value] ?? value;
+/**
+ * Rodzaj opcji interwencji (kontrakt `InterventionOption.kind`) — po polsku.
+ * Zwraca `null`, gdy pola nie ma: przedrostek jest wtedy POMIJANY, zamiast
+ * wyciekać jako `undefined` albo surowy kod na ekran (defekt 2026-09-02).
+ */
+const optionKindLabel = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim()
+    ? (({ DO_NOTHING: 'Bez zmian', ACTION: 'Działanie' }) as Record<string, string>)[value] ?? value
+    : null;
+/** Pewność opcji — nazwana wprost, brak nazywany „Nieznana", nie `undefined`. */
+const confidenceLabel = (value: unknown): string =>
+  typeof value === 'string' && value.trim()
+    ? (({ HIGH: 'Wysoka pewność', MEDIUM: 'Średnia pewność', LOW: 'Niska pewność', UNKNOWN: 'Pewność nieznana' }) as Record<string, string>)[value] ?? value
+    : 'Pewność nieznana';
+/** Odwracalność opcji — słownik kontraktu, brak nazywany wprost. */
+const reversibilityLabel = (value: unknown): string =>
+  typeof value === 'string' && value.trim()
+    ? (({ REVERSIBLE: 'Odwracalna', PARTIALLY_REVERSIBLE: 'Częściowo odwracalna', IRREVERSIBLE: 'Nieodwracalna', UNKNOWN: 'Odwracalność nieznana' }) as Record<string, string>)[value] ?? value
+    : 'Odwracalność nieznana';
 const signalFieldLabels: Record<string, string> = {
   sourceId: 'Źródło sygnału',
   sourceVersionKey: 'Rodzaj wersji źródła',
@@ -891,8 +910,20 @@ export const ExecutionControlSurface = ({
                 label: `${signal.signalId} v${signal.signalVersion}`,
               })),
               ...(r.source.options ?? []).map((option: any) => ({
-                label: `${option.kind}: ${option.label}`,
-                value: `${option.confidence ?? 'UNKNOWN'} · ${option.reversibility ?? 'UNKNOWN'}`,
+                /**
+                 * JĘZYK UCZCIWOŚCI: brak ma być NAZWANY, nigdy nie może wyciec
+                 * jako `undefined`. Do 2026-09-02 etykieta była składana jako
+                 * `${option.kind}: ${option.label}` bez żadnej osłony, więc opcja
+                 * bez pola `kind` (atrapa `executionLocalReviewData.ts`, ale też
+                 * każda przyszła odpowiedź serwera sprzed tej wersji kontraktu)
+                 * dawała na ekranie literalne „undefined: Nie zmieniaj planu".
+                 * Rodzaj opcji pokazujemy PO POLSKU, nie surowym kodem, a gdy
+                 * go nie ma — nie pokazujemy przedrostka w ogóle.
+                 */
+                label: optionKindLabel(option.kind)
+                  ? `${optionKindLabel(option.kind)}: ${option.label}`
+                  : option.label,
+                value: `${confidenceLabel(option.confidence)} · ${reversibilityLabel(option.reversibility)}`,
               })),
             ]}
             relationsEmptyLabel="Brak powiązanych sygnałów"
