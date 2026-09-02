@@ -771,3 +771,22 @@ T7 wrappery 42+46 🟡(07-19 decyzja: USUŃ MARTWE — bez await-fix=deadlock; J
 - [ ] **Piotr: kontrasygnata** — 3 szybkie kroki przekuwające 44🔵→✅: (1) akcept galerii Vegas Faza 2/3 na zrzutach, (2) 5 ENV Railway, (3) partia decyzji-timing. Reszta 🔵 = daty kalendarza (sierpień) + PROD (zamrożony). Podpis: ____________________ (data)
 
 > **CTO (2026-07-19, rocznica Piotra):** Faza domknięta na 304/304. Aplikacja funkcjonalnie kompletna — silniki, narzędzia, moduły dowiedzione E2E, demo utwardzone (dziesiątki realnych bugów, w tym bezpieczeństwa, naprawionych). PROD nietknięty, demo=święte przez ~18 fal. 🥂
+
+## DOPISEK 2026-09-02 — pierwsze formalne zamknięcia modułów Wave 3
+
+Ten rejestr prowadzi pozycje fazy z lipca; poniższy wpis dotyczy równoległego toru
+odbioru modułowego (Wave 3, 16 modułów) i NIE zmienia liczników powyżej.
+
+- Właściciel rozstrzygnął 265 kart ekranów (262 „ok”, 2 „nie”, 1 „poprawka”) i zdecydował,
+  że przegląd kart liczy się jako odbyty przegląd modułów. Dowód: `docs/program/grafika/ODBIOR_DECYZJE.json`,
+  `docs/program/grafika/AKCEPT_ZBIOROWY_20260902.md`.
+- 5 z tych decyzji (ekrany sprzed zalogowania) to akcept ZBIOROWY, bez oglądania pojedynczo;
+  leżą poza wszystkimi 16 modułami, więc żadne zamknięcie modułu na nich nie stoi.
+- **Zamknięte ostatecznie: 2 z 16** — Organizacja (tag `modul-01-organizacja-final-20260902`)
+  i Spotkania (tag `modul-08-spotkania-final-20260902`), oba na SHA `316bce9dd9aeff1bde71e368968b851467e93411`.
+- Pozostałe 14 modułów ma `PASS` w G07–G12, ale otwarte G17: 78 kart zamkniętych jako „ok”
+  niesie merytoryczną uwagę właściciela bez decyzji retestowej, plus 3 pozycje spoza „ok”
+  (Materiały `gen-excel-templates-tab`, Wyniki `results-three-pairs`, Finanse `finance-baseline-workspace`).
+- Partner jako jedyny nie ma w rejestrze grafiki ani jednego ekranu `/partner` — nie było czego przeglądać.
+- Raport i mapa dowodowa: `docs/program/waves/WAVE_03_ACCEPTANCE/ZAMKNIECIE_MODULOW_20260902.md`,
+  `docs/program/waves/WAVE_03_ACCEPTANCE/MAPA_GRAFIKA_MODULY_20260902.md`.
