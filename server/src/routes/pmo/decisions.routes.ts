@@ -26,6 +26,7 @@ import {
   DecideSchema,
   EscalateDecisionSchema,
   RemindDecisionSchema,
+  ReplaceDecisionEnhancementsSchema,
   ReplaceDecisionStakeholdersSchema,
   UpdateDecisionAlternativeSchema,
   UpdateDecisionCommentSchema,
@@ -199,6 +200,13 @@ router.post('/:id/generate-section', DecisionController.generateSection);
  * client.
  */
 router.get('/:id/detail', DecisionController.getDecisionDetail);
+
+router.put(
+  '/:id/enhancements',
+  requireDecisionCapability('decision.update', { shadow: true }),
+  validateBody(ReplaceDecisionEnhancementsSchema),
+  DecisionController.replaceEnhancements
+);
 
 router.get('/:id/stakeholders', DecisionController.getStakeholders);
 

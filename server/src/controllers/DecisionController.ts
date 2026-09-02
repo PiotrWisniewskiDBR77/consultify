@@ -27,6 +27,7 @@ import {
   isPrivilegedRole,
   listDecisionStakeholders,
   replaceDecisionStakeholders,
+  replaceDecisionEnhancements,
   updateDecisionAlternative,
   updateDecisionComment,
   updateDecisionRisk,
@@ -65,6 +66,7 @@ import type {
   EscalateDecisionRequest,
   RemindDecisionRequest,
   ReplaceDecisionStakeholdersRequest,
+  ReplaceDecisionEnhancementsRequest,
   UpdateDecisionAlternativeRequest,
   UpdateDecisionCommentRequest,
   UpdateDecisionRequest,
@@ -2679,11 +2681,45 @@ export class DecisionController {
         dossierAlternatives: extras.alternatives,
         dossierRisks: extras.risks,
         links: extras.links,
+        ...(extras.enhancements || {
+          reminders: [],
+          escalationRules: [],
+          linkedItems: [],
+          contextDetails: '',
+          consequenceScenarios: null,
+        }),
         // M02-004: sections whose backing table is absent in this environment.
         // The arrays above are empty for these, so the client MUST read this
         // to tell "nothing here yet" apart from "unavailable here".
         degradedSections: extras.degradedSections,
       });
+    }
+  );
+
+  /** PUT /api/decisions/:id/enhancements */
+  static replaceEnhancements = asyncHandler(
+    async (
+      req: AuthenticatedRequest<ReplaceDecisionEnhancementsRequest>,
+      res: Response
+    ): Promise<void> => {
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
+      if (!userId || !organizationId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const enhancements = await replaceDecisionEnhancements({
+          decisionId: req.params.id,
+          organizationId,
+          actorId: userId,
+          enhancements: req.body,
+        });
+        res.json(enhancements);
+      } catch (err) {
+        if (respondToCollaborationError(res, err)) return;
+        throw err;
+      }
     }
   );
 
