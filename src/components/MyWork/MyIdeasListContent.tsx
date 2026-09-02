@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Copy,
   Edit2,
   ExternalLink,
   FileText,
@@ -38,17 +37,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
-import {
-  type ActionRow,
-  type MetaPill,
-  PreviewActionBar,
-  PreviewAIHintStrip,
-  PreviewDetailsSection,
-  PreviewMetaCard,
-  PreviewRelations,
-  PreviewWhatsNextCard,
-  type RelationItem,
-} from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -64,7 +52,6 @@ import { tokenService } from '@/services/tokenService';
 import { isIdeasPreviewOverlayEnabled } from '@/utils/ideasPreviewOverlayFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useRecentIdeas } from './hooks/useRecentIdeas';
@@ -75,6 +62,7 @@ import {
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
+import { IdeaPreviewBody, IdeaPreviewFooter } from './IdeaPreview';
 import { IdeasTableContent } from './IdeasTableContent';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type {
@@ -1303,132 +1291,32 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
   }, [sortedIdeas, previewIdeaId]);
 
-  const renderIdeaPreview = (idea: MyIdea) => {
-    const stage = (idea.stage || 'spark') as IdeaStage;
-    const tc = getToolConfig(idea.preferredTool);
-    const toolKey = String(idea.preferredTool || 'mindmap').toLowerCase() as CanvasToolType;
-    const metaPills: MetaPill[] = [
-      {
-        label: isPolish ? IDEA_STAGE_BUCKET_LABELS[stage].pl : IDEA_STAGE_BUCKET_LABELS[stage].en,
-        icon: tc.icon,
-      },
-      { label: getIdeaWorkspaceToolLabel(toolKey, isPolish), icon: tc.icon },
-    ];
-    const metaTrailing = (
-      <span className="text-[11px] font-medium text-c-text-muted">
-        {idea.updatedAt
-          ? formatListDate(idea.updatedAt)
-          : idea.createdAt
-            ? formatListDate(idea.createdAt)
-            : '—'}
-      </span>
-    );
-    return (
-      <div className="space-y-4">
-        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
-          {idea.tags?.length ? (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {idea.tags.map((tag) => (
-                <MetaChip key={tag} label={String(tag)} />
-              ))}
-            </div>
-          ) : null}
-        </PreviewMetaCard>
-        {/**
-         * P-4 (Piotr, OBR-07, 2026-07-27): „Nie ma tutaj tych kebabów/hamburgerów
-         * nad treścią, żeby uzupełniać czy tam przerabiać. Nie jest to dobre okno."
-         *
-         * Blok DETAILS dostawał sam `text`, bez ani jednej akcji — a kebab ⋮
-         * renderuje się dopiero, gdy jakaś jest (`hasMenu` w
-         * `PreviewDetailsSection`). Stąd Ideas był jedynym podglądem bez niego:
-         * Inbox, Tasks i Decisions swoje akcje podawały.
-         */}
-        <PreviewDetailsSection
-          text={idea.body || ''}
-          label={t('myWork.ideasList.label', 'Details')}
-          expanded={detailsExpanded}
-          onToggleExpanded={() => setDetailsExpanded((v) => !v)}
-          customActions={[
-            {
-              id: 'toggle',
-              label: detailsExpanded
-                ? t('myWork.ideasList.collapse', isPolish ? 'Zwiń' : 'Collapse')
-                : t('myWork.ideasList.expand', isPolish ? 'Rozwiń' : 'Expand'),
-              icon: ChevronDown,
-              onClick: () => setDetailsExpanded((v) => !v),
-            },
-            {
-              id: 'edit',
-              label: t('myWork.ideasList.editIdea', isPolish ? 'Edytuj' : 'Edit'),
-              icon: Edit2,
-              onClick: () => openIdea(idea.id, idea),
-            },
-            {
-              id: 'copy',
-              label: t('myWork.ideasList.copyContent', isPolish ? 'Kopiuj treść' : 'Copy content'),
-              icon: Copy,
-              onClick: () => {
-                void navigator.clipboard?.writeText(
-                  [idea.title, idea.body].filter(Boolean).join('\n\n')
-                );
-              },
-            },
-          ]}
-        />
-      </div>
-    );
-  };
+  /**
+   * Podglad karty/listy - kanon 7 realizuje wspolny `IdeaPreview`, ten sam,
+   * ktory osadza widok tabeli (`IdeasTableContent`). Do 2026-09-02 stala tu
+   * DRUGA kopia blokow 2-6: inne pigulki meta (bez badge etapu), inny zestaw
+   * kebaba bloku 3 i - jak w tabeli - jednolinijkowy `idea.body` bez tabeli
+   * wlasciwosci (naruszenie 7.3 pkt 3). Jedna kopia zamiast dwoch: naprawa
+   * podgladu Idei nie moze juz byc "poprawna w 1 z 2 widokow".
+   */
+  const renderIdeaPreview = (idea: MyIdea) => (
+    <IdeaPreviewBody
+      idea={idea}
+      isPolish={isPolish}
+      detailsExpanded={detailsExpanded}
+      onToggleDetailsExpanded={() => setDetailsExpanded((v) => !v)}
+      onEditIdea={(target) => openIdea(target.id, target)}
+    />
+  );
 
-  const renderIdeaPreviewFooter = (idea: MyIdea) => {
-    const aiHints = isPolish
-      ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
-      : ['Why urgent?', 'Action plan', 'Who can help?'];
-    const relationItems: RelationItem[] = [];
-    if ((idea as any).sourceType) {
-      relationItems.push({
-        label: `${t('myWork.ideasList.source', 'Source')}: ${(idea as any).sourceType}`,
-        tone: 'text-c-text-secondary',
-      });
-    }
-    const actionRows: ActionRow[] = [
-      {
-        columns: 2,
-        buttons: [
-          {
-            label: t('myWork.ideasList.label3', 'Open Flow'),
-            icon: Workflow,
-            onClick: () => openIdeaInProcessFlow(idea),
-            // Nawigacyjne, nic nie zamyka -> neutral (§7.3b), zgodnie z tym samym
-            // przyciskiem w IdeasTableContent.tsx. Bylo 'emerald', rozjechane.
-            colorScheme: 'neutral',
-          },
-        ],
-      },
-    ];
-    return (
-      <div className="space-y-2.5">
-        <PreviewAIHintStrip hints={aiHints} />
-        <PreviewRelations
-          items={relationItems}
-          emptyLabel={t('myWork.ideasList.emptyLabel', 'No linked documents')}
-        />
-        <PreviewActionBar rows={actionRows} />
-        {/* §7.3 pkt 4.4 — „Co dalej" ZAWSZE po bloku 6 (Akcje); ramka ze
-            wspólnego `PreviewWhatsNextCard`, ta sama co w `StandardPreview`.
-            Wcześniej: własny nagłówek + pozycja PRZED akcjami (druga kopia
-            tej samej pomyłki, obok `IdeasTableContent.tsx`). */}
-        <PreviewWhatsNextCard isPolish={isPolish}>
-          <ConvertToOutputMenu
-            sourceType="idea"
-            sourceId={idea.id}
-            sourceTitle={idea.title || ''}
-            onConvertComplete={() => fetchIdeas()}
-            variant="inline"
-          />
-        </PreviewWhatsNextCard>
-      </div>
-    );
-  };
+  const renderIdeaPreviewFooter = (idea: MyIdea) => (
+    <IdeaPreviewFooter
+      idea={idea}
+      isPolish={isPolish}
+      onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
+      onConvertComplete={() => fetchIdeas()}
+    />
+  );
 
   // Card ⋮ — canon §8.0: IDENTICAL sections/positions to the Ideas table row.
   const buildIdeaCardSections = (idea: MyIdea): RowActionSection[] => [

@@ -133,7 +133,35 @@ const Screen: React.FC = () => {
     },
   };
 
-  const Renderer = MessageRenderer as unknown as React.FC<Record<string, unknown>>;
+  /*
+   * MONTAZ WIDOCZNY DLA BRAMKI PARYTETU (naprawa przyrzadu 2026-09-02).
+   *
+   * Do dzis stalo tu `const Renderer = MessageRenderer as unknown as
+   * React.FC<Record<string, unknown>>` i JSX renderowal `<Renderer .../>`.
+   * Komponent produkcyjny byl montowany naprawde, ale
+   * `scripts/check-dev-render-parytet.mjs` szuka montazu przez nazwe znacznika
+   * (`renderowaneNazwy`: `/<([A-Z][A-Za-z0-9_]*)/`), wiec alias byl dla niej
+   * niewidzialny i ekran wisial w R1 jako "nie montuje ZADNEGO komponentu
+   * produkcyjnego - pokazuje wlasny markup". To byl FALSZYWY ALARM bramki:
+   * kontrolka Potwierdz/Anuluj istnieje w produkcie
+   * (`src/components/AIChat/MessageRenderer.tsx:871-915`) i ma realnego wolacza
+   * (`src/components/AIChat/UnifiedChatPanel.tsx:6314-6316` podaje
+   * `teresaPendingConfirm` / `onTeresaConfirmProceed` / `onTeresaConfirmCancel`).
+   *
+   * Rzutowanie zostaje (harness podaje no-opy dla propsow, ktorych ta sciezka
+   * nie dotyka), ale znacznik jest teraz nazwany wprost - bramka widzi to, co
+   * ekran naprawde renderuje.
+   */
+  const propsUzytkownik = {
+    ...commonProps,
+    msg: MSG_USER,
+    index: 0,
+  } as unknown as React.ComponentProps<typeof MessageRenderer>;
+  const propsPotwierdzenie = {
+    ...commonProps,
+    msg: MSG_CONFIRM,
+    index: 1,
+  } as unknown as React.ComponentProps<typeof MessageRenderer>;
   return (
     <div className="min-h-screen bg-c-bg text-c-text p-8">
       <div className="max-w-2xl mx-auto space-y-4">
@@ -143,8 +171,8 @@ const Screen: React.FC = () => {
             : 'F1-A · Teresa confirm chip (real MessageRenderer)'}
         </h1>
         <div className="rounded-xl border border-c-border bg-c-surface p-4 space-y-3">
-          <Renderer {...commonProps} msg={MSG_USER} index={0} />
-          <Renderer {...commonProps} msg={MSG_CONFIRM} index={1} />
+          <MessageRenderer {...propsUzytkownik} />
+          <MessageRenderer {...propsPotwierdzenie} />
         </div>
         <div
           className="text-xs text-c-text-muted border border-c-border-subtle rounded-lg px-3 py-2"
