@@ -133,6 +133,9 @@ const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
 // jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-team.tsx
 // (wzorzec 1:1 z admin-billing.tsx powyżej).
 const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
+// Moduł 16 „Partner" — pierwszy komplet zrzutów dla przeglądu właściciela
+// (dotąd ZERO ekranów w rejestrze grafiki). Patrz dev-render/screens/partner-portal.tsx.
+const PartnerPortalScreen = React.lazy(() => import('./screens/partner-portal'));
 // admin-ai (runda pełna) — 10 ekranów domeny ai z adminNavigation.ts, jeden
 // plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-ai.tsx
 // (wzorzec 1:1 z admin-billing.tsx powyżej).
@@ -2397,6 +2400,57 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'WERYFIKACJA E-MAIL — REALNY <VerifyEmail> (UWAGA: martwy komponent, brak trasy w AppRoutes.tsx — patrz komentarz w pliku ekranu). &lang=pl|en &theme=light|dark',
     render: () => <AuthVerifyEmailScreen />,
+  },
+  // Moduł 16 „Partner" (Partner Portal) — pierwszy komplet zrzutów, 2026-09-02.
+  // Realny <PartnerPortalViewNew /> spod /partner/* (AppRoutes.tsx:3494), dane
+  // przez window.fetch stub. Patrz dev-render/screens/partner-portal.tsx.
+  'partner-start-unconnected': {
+    label: 'Partner — Start, profil NIEPODŁĄCZONY (stan pusty). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="start-unconnected" />,
+  },
+  'partner-start-active': {
+    label: 'Partner — Start, partner AKTYWNY (kafle salda + następny krok). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="start-active" />,
+  },
+  'partner-start-error': {
+    label: 'Partner — Start, błąd ustalenia statusu połączenia. &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="start-error" />,
+  },
+  'partner-dashboard': {
+    label: 'Partner — Dashboard (przegląd: klienci, przychód, certyfikacja). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="dashboard" />,
+  },
+  'partner-referral-tools-filled': {
+    label: 'Partner — Polecenia / Moje linki i kody, tabela kampanii WYPEŁNIONA (kebab realny). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="referral-tools-filled" />,
+  },
+  'partner-referral-tools-empty': {
+    label: 'Partner — Polecenia / Moje linki i kody, tabela kampanii PUSTA. &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="referral-tools-empty" />,
+  },
+  'partner-organizations-filled': {
+    label: 'Partner — Klienci / Organizacje, FilterableTable WYPEŁNIONA (hideRowActions — brak kebaba). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="organizations-filled" />,
+  },
+  'partner-organizations-empty': {
+    label: 'Partner — Klienci / Organizacje, PUSTA lista. &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="organizations-empty" />,
+  },
+  'partner-earnings-filled': {
+    label: 'Partner — Prowizje (saldo + tabela transakcji, hideRowActions). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="earnings-filled" />,
+  },
+  'partner-academy-filled': {
+    label: 'Partner — Akademia / Ścieżka nauki (karty certyfikacji). &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="academy-filled" />,
+  },
+  'partner-resources-filled': {
+    label: 'Partner — Materiały / Dokumentacja. &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="resources-filled" />,
+  },
+  'partner-profile-filled': {
+    label: 'Partner — Profil / Informacje o firmie. &lang=pl|en &theme=light|dark',
+    render: () => <PartnerPortalScreen wariant="profile-filled" />,
   },
 };
 
