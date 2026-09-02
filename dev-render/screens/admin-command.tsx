@@ -581,13 +581,14 @@ export default function AdminCommandScreen(props: {
       szerokosc strony". Stal tu wlasny inline `maxWidth: 1200` - liczba,
       ktorej NIE MA u zadnego wolacza produkcyjnego. Realny wolacz kazdego
       z tych paneli to `src/views/admin/AdminSettingsModule.tsx:599`:
-      `mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6`. Harness
+      `w-full space-y-6 p-4 sm:p-5 lg:p-6` (od 2026-09-02 BEZ `max-w-[1280px]`
+      — sufit zdjety w produkcie, patrz nota tamze). Harness
       zwezal produkt o 80 px i gubil responsywny padding - defekt PRZYRZADU,
       nie produktu (ta sama klasa co Z-32b: `max-w-3xl` wklejony w harnessie
       Finansow). Bramka R3 tego nie zlapala, bo szuka klas `max-w-*`, a to
       byl inline `style`.
     */
-    <div className="mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
+    <div className="w-full space-y-6 p-4 sm:p-5 lg:p-6">
       <DebugBoundary>
         <MemoryRouter initialEntries={['/']}>{renderCommandScreen(adminScreen)}</MemoryRouter>
       </DebugBoundary>
