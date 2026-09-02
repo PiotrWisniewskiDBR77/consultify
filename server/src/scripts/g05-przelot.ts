@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import express, { type Express } from 'express';
+import { Client as PgClient } from 'pg';
 
 const REQUIRED_ENV: Record<string, string> = {
   RUN_DB_TESTS: '1',
@@ -18,25 +19,47 @@ const REQUIRED_ENV: Record<string, string> = {
 for (const [name, expected] of Object.entries(REQUIRED_ENV)) {
   assert.equal(process.env[name], expected, `${name} must equal ${expected}`);
 }
-assert.equal(
-  process.env.DATABASE_URL,
+// This harness is shared across several isolated dyżur worktrees, each with
+// its own disposable Postgres container/port. The original g05 dyżur used
+// 6274/cxg05; the G02 Czat/Administracja re-measurement (agent/g02-czat-admin,
+// 2026-09-02) added its own disposable database on 6282/cxg02 — never the
+// same live container as another concurrent dyżur.
+const ALLOWED_DATABASE_URLS = [
   'postgresql://cx:cx@127.0.0.1:6274/cxg05',
-  'DATABASE_URL must target the g05 disposable database'
+  'postgresql://cx:cx@127.0.0.1:6282/cxg02',
+];
+assert.ok(
+  ALLOWED_DATABASE_URLS.includes(process.env.DATABASE_URL || ''),
+  `DATABASE_URL must target one of this harness's disposable databases: ${ALLOWED_DATABASE_URLS.join(', ')}`
 );
 assert.ok(process.env.JWT_SECRET, 'JWT_SECRET must be set');
 
 const port = Number(process.env.PORT || '5276');
-assert.ok(port === 5276 || port === 5277, 'Harness may only use ports 5276 or 5277');
+assert.ok(
+  [5276, 5277, 5286, 5287].includes(port),
+  'Harness may only use ports 5276, 5277 (g05) or 5286, 5287 (g02-czat-admin)'
+);
 
 const CREDS_FILE = '/private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/b3755ab2-d353-4e48-8c39-5134ec500237/scratchpad/g05-creds.json';
+const G02_CREDS_FILE = '/private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/b3755ab2-d353-4e48-8c39-5134ec500237/scratchpad/g02-creds.json';
 const PASSWORD = 'G05-Local-Only-Password-1';
+
+async function withPg<T>(fn: (client: PgClient) => Promise<T>): Promise<T> {
+  const client = new PgClient({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  try {
+    return await fn(client);
+  } finally {
+    await client.end();
+  }
+}
 
 type Json = Record<string, any>;
 
 async function requestJson(
   method: string,
   path: string,
-  options: { token?: string; body?: Json } = {}
+  options: { token?: string; body?: Json; headers?: Record<string, string> } = {}
 ): Promise<{ status: number; body: Json }> {
   const response = await fetch(`http://127.0.0.1:${port}${path}`, {
     method,
@@ -45,6 +68,7 @@ async function requestJson(
       Connection: 'close',
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      ...(options.headers || {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
@@ -641,6 +665,391 @@ async function runR6(): Promise<void> {
   console.log(JSON.stringify({ phase: 'R6', results }, null, 2));
 }
 
+// ===========================================================================
+// G02 — Czat (13) i Administracja (14) re-measurement, agent/g02-czat-admin,
+// 2026-09-02. G02 for both modules was NOT_STARTED because the cited proof
+// leaned on a runtime claim ("database and receipt readback passed" for
+// Chat; "pinned PostgreSQL transactions" for Admin) that reading code alone
+// cannot verify. This section measures those exact claims with a live
+// PostgreSQL + real ApiGateway: same-key double-send (Chat) and a literal
+// parallel race (Admin) — not sequential calls, which prove nothing about
+// atomicity — plus a cross-org negative control for both.
+// ===========================================================================
+
+function loadG02Creds(): {
+  emailA: string;
+  emailB: string;
+  organizationA: string;
+  organizationB: string;
+  userIdA: string;
+  userIdB: string;
+} {
+  const raw = fs.readFileSync(G02_CREDS_FILE, 'utf8');
+  return JSON.parse(raw);
+}
+
+async function runG02Setup(): Promise<void> {
+  const nonce = Date.now();
+  const emailA = `g02+a-${nonce}@local.test`;
+  const emailB = `g02+b-${nonce}@local.test`;
+  const companyA = `G02 Organization A ${nonce}`;
+  const companyB = `G02 Organization B ${nonce}`;
+
+  const registeredA = await register(emailA, companyA);
+  const registeredB = await register(emailB, companyB);
+  const organizationA = registeredA.user.organizationId as string;
+  const organizationB = registeredB.user.organizationId as string;
+  assert.notEqual(organizationA, organizationB);
+
+  const loginA = await login(emailA);
+  const loginB = await login(emailB);
+
+  fs.mkdirSync(path.dirname(G02_CREDS_FILE), { recursive: true });
+  fs.writeFileSync(
+    G02_CREDS_FILE,
+    JSON.stringify(
+      {
+        emailA,
+        emailB,
+        organizationA,
+        organizationB,
+        userIdA: loginA.userId,
+        userIdB: loginB.userId,
+        companyA,
+        companyB,
+      },
+      null,
+      2
+    )
+  );
+
+  console.log(
+    JSON.stringify(
+      {
+        phase: 'G02-SETUP',
+        organizationA,
+        organizationB,
+        emailA,
+        emailB,
+      },
+      null,
+      2
+    )
+  );
+}
+
+/**
+ * K2 (Czat) — idempotency + lease/claim-token infra, measured with a live
+ * PostgreSQL, a real ApiGateway on the wire, and a fresh cold-read login.
+ * Chain: conversation -> message -> handoff-proposal (SAME idempotencyKey
+ * sent twice, sequentially — capturing BOTH raw responses, per the "retry
+ * heals its own defect" trap) -> approve -> owner-ingress (sent twice; its
+ * dedup key is the natural (organizationId, proposalId) pair, not a
+ * caller-supplied idempotencyKey — this IS the "lease/claim-token
+ * infrastructure" the prior NOT_STARTED proof cited from
+ * chatTargetOwnerIngressService.ts) -> cold read on a brand-new login.
+ * K4 (negative control) — org B's fresh token attempts the same reads AND
+ * the same write (proposal create against org A's conversationId/messageId)
+ * — must be refused, and the database must show no row created for org B.
+ */
+async function runG02Chat(): Promise<void> {
+  const { emailA, emailB, organizationA, organizationB } = loadG02Creds();
+  const writeA = await login(emailA);
+  const results: Json = {};
+
+  const conv = await requestJson('POST', '/api/conversations', {
+    token: writeA.token,
+    body: { title: `G02 Chat Conversation ${Date.now()}` },
+  });
+  assert.equal(conv.status, 201, `conversation create failed: ${JSON.stringify(conv.body)}`);
+  const conversationId = conv.body.id;
+  assert.ok(conversationId, `no conversation id: ${JSON.stringify(conv.body)}`);
+
+  const msg = await requestJson('POST', `/api/conversations/${conversationId}/messages`, {
+    token: writeA.token,
+    body: { role: 'user', content: `G02 probe message content ${Date.now()}` },
+  });
+  assert.equal(msg.status, 201, `message create failed: ${JSON.stringify(msg.body)}`);
+  const messageId = msg.body.id;
+  assert.ok(messageId, `no message id: ${JSON.stringify(msg.body)}`);
+
+  const idempotencyKey = `g02-chat-idem-${Date.now()}`;
+  const proposalBody = {
+    messageId,
+    targetKind: 'document',
+    note: 'G02 idempotency probe',
+    suggestedTitle: `G02 Proposal ${Date.now()}`,
+    idempotencyKey,
+  };
+
+  // --- K2: same idempotencyKey, sent twice, SEQUENTIALLY. Both raw
+  // responses are recorded — a defect that only "heals" on the second try
+  // must show up here, not be silently swallowed. ---
+  const firstSend = await requestJson(
+    'POST',
+    `/api/v8/chat/conversations/${conversationId}/handoff-proposals`,
+    { token: writeA.token, body: proposalBody }
+  );
+  const secondSend = await requestJson(
+    'POST',
+    `/api/v8/chat/conversations/${conversationId}/handoff-proposals`,
+    { token: writeA.token, body: proposalBody }
+  );
+  // The create route wraps the service result as { data: { proposal, replayed, citations } } —
+  // NOT { data: proposal } (that flat shape is only what GET/approve/reject return).
+  const proposalId = firstSend.body?.data?.proposal?.proposalId;
+  assert.equal(firstSend.status, 201, `first proposal create failed: ${JSON.stringify(firstSend.body)}`);
+  assert.ok(proposalId, `no proposalId in first create response: ${JSON.stringify(firstSend.body)}`);
+  assert.equal(firstSend.body?.data?.replayed, false, 'first send must not be marked replayed');
+  assert.equal(secondSend.status, 200, `second (replay) send unexpected status: ${JSON.stringify(secondSend.body)}`);
+  assert.equal(secondSend.body?.data?.replayed, true, 'second identical send must be marked replayed');
+  assert.equal(secondSend.body?.data?.proposal?.proposalId, proposalId, 'replay must return the SAME proposal id');
+
+  const dbProposalCount = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM artifact_handoff_proposals WHERE organization_id = $1 AND idempotency_key = $2`,
+      [organizationA, idempotencyKey]
+    )
+  );
+  const proposalRowCount = dbProposalCount.rows[0].n;
+
+  // --- Approve (self-approval is allowed by the spine; see self_approved
+  // flag) then exercise the owner-ingress lease/claim-token surface. Its
+  // dedup key is (organizationId, proposalId), not idempotencyKey — send it
+  // twice to prove that key works too. ---
+  const approve = await requestJson(
+    'POST',
+    `/api/v8/chat/handoff-proposals/${proposalId}/approve`,
+    { token: writeA.token, body: {} }
+  );
+  assert.equal(approve.status, 200, `approve failed: ${JSON.stringify(approve.body)}`);
+
+  const firstIngress = await requestJson(
+    'POST',
+    `/api/v8/chat/handoff-proposals/${proposalId}/owner-ingress`,
+    { token: writeA.token, body: {} }
+  );
+  const secondIngress = await requestJson(
+    'POST',
+    `/api/v8/chat/handoff-proposals/${proposalId}/owner-ingress`,
+    { token: writeA.token, body: {} }
+  );
+  assert.equal(firstIngress.status, 201, `first owner-ingress failed: ${JSON.stringify(firstIngress.body)}`);
+  assert.equal(firstIngress.body?.data?.replayed, false, 'first owner-ingress must not be replayed');
+  assert.equal(secondIngress.status, 200, `second owner-ingress unexpected status: ${JSON.stringify(secondIngress.body)}`);
+  assert.equal(secondIngress.body?.data?.replayed, true, 'second owner-ingress must be replayed');
+  assert.equal(
+    secondIngress.body?.data?.ingress?.ingressId,
+    firstIngress.body?.data?.ingress?.ingressId,
+    'replayed owner-ingress must return the SAME ingress (receipt) id'
+  );
+
+  const dbIngressCount = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM chat_handoff_owner_ingress WHERE organization_id = $1 AND proposal_id = $2`,
+      [organizationA, proposalId]
+    )
+  );
+  const ingressRowCount = dbIngressCount.rows[0].n;
+
+  // --- Cold read: brand-new login, brand-new connection. ---
+  const coldReadA = await coldRead(emailA, `/api/v8/chat/handoff-proposals/${proposalId}`);
+  results.coldReadback = {
+    status: coldReadA.status,
+    proposalId: coldReadA.body?.data?.proposalId,
+    state: coldReadA.body?.data?.state,
+    idempotencyKey: coldReadA.body?.data?.idempotencyKey,
+    match: coldReadA.status === 200 && coldReadA.body?.data?.proposalId === proposalId,
+  };
+
+  // --- K4: negative control. Org B's own fresh token, against org A's
+  // conversationId/messageId/proposalId. Must be refused; database must
+  // show zero rows for org B. ---
+  const loginB = await login(emailB);
+  const crossOrgRead = await requestJson('GET', `/api/v8/chat/handoff-proposals/${proposalId}`, {
+    token: loginB.token,
+  });
+  const crossOrgWriteAttempt = await requestJson(
+    'POST',
+    `/api/v8/chat/conversations/${conversationId}/handoff-proposals`,
+    {
+      token: loginB.token,
+      body: { ...proposalBody, idempotencyKey: `g02-chat-crossorg-${Date.now()}` },
+    }
+  );
+  const dbCrossOrgCount = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM artifact_handoff_proposals WHERE organization_id = $1`,
+      [organizationB]
+    )
+  );
+
+  results.idempotency = {
+    idempotencyKey,
+    firstSend: { status: firstSend.status, replayed: firstSend.body?.data?.replayed, proposalId },
+    secondSend: { status: secondSend.status, replayed: secondSend.body?.data?.replayed, proposalId: secondSend.body?.data?.proposal?.proposalId },
+    dbRowCountForKey: proposalRowCount,
+    onePhysicalObject: proposalRowCount === 1,
+  };
+  results.ownerIngressReceipt = {
+    firstIngress: { status: firstIngress.status, replayed: firstIngress.body?.data?.replayed, ingressId: firstIngress.body?.data?.ingress?.ingressId },
+    secondIngress: { status: secondIngress.status, replayed: secondIngress.body?.data?.replayed, ingressId: secondIngress.body?.data?.ingress?.ingressId },
+    dbRowCountForProposal: ingressRowCount,
+    onePhysicalReceipt: ingressRowCount === 1,
+    sameReceiptReturnedOnReplay: secondIngress.body?.data?.ingress?.ingressId === firstIngress.body?.data?.ingress?.ingressId,
+  };
+  results.negativeControl = {
+    crossOrgRead: { status: crossOrgRead.status, body: crossOrgRead.body },
+    crossOrgWriteAttempt: { status: crossOrgWriteAttempt.status, body: crossOrgWriteAttempt.body },
+    orgBProposalRowCountAfterAttempt: dbCrossOrgCount.rows[0].n,
+    refused: [403, 404].includes(crossOrgRead.status) && [403, 404].includes(crossOrgWriteAttempt.status),
+    databaseUntouched: dbCrossOrgCount.rows[0].n === 0,
+  };
+
+  console.log(JSON.stringify({ phase: 'G02-CHAT', results }, null, 2));
+}
+
+/**
+ * K3 (Administracja) — resolve the atomicity dispute for real: fire two
+ * POST requests with the SAME X-Idempotency-Key at the SAME time
+ * (Promise.all — not sequential, which proves nothing about a race) against
+ * the WIRED endpoint (`POST /api/organizations/:orgId/admin/invitations` ->
+ * `AdminIamController.command('CREATE')` -> `commandInvitation`
+ * in adminIamCommandService.ts, which the prior NOT_STARTED proof also
+ * cited). That function runs inside `withPinnedPostgresTransaction` and
+ * takes TWO `pg_advisory_xact_lock`s (org-level, then org+key-level) before
+ * checking for a replay row — a real explicit transaction, not a bare
+ * `INSERT ... ON CONFLICT`. `enqueueAdminIamJob` in
+ * adminIamOperationsService.ts (the ON CONFLICT DO NOTHING function the
+ * prior proof also cited) is checked separately below and found to have
+ * ZERO callers anywhere in server/src/routes or server/src/controllers —
+ * it is unreachable from any HTTP surface, so it cannot be what the wired
+ * journey's atomicity depends on.
+ * K4 (negative control) — org B's own OWNER token (passes the route's
+ * requireRole check, which only inspects the caller's OWN role claim, not
+ * org membership) attempts the same write against org A's orgId. Must be
+ * refused by the service-layer tenant check, and the database must show no
+ * second row.
+ */
+async function runG02Admin(): Promise<void> {
+  const { emailA, emailB, organizationA, organizationB } = loadG02Creds();
+  const writeA = await login(emailA);
+  const results: Json = {};
+
+  // --- Confirm enqueueAdminIamJob (the ON CONFLICT DO NOTHING path the
+  // prior proof cited) has no HTTP caller: grep server/src/routes and
+  // server/src/controllers for it. ---
+  const { execSync } = await import('node:child_process');
+  let enqueueCallerGrep = '';
+  try {
+    enqueueCallerGrep = execSync(
+      `grep -rn "enqueueAdminIamJob\\|adminIamOperationsService" server/src/routes server/src/controllers 2>/dev/null || true`,
+      { cwd: process.cwd(), encoding: 'utf8' }
+    ).trim();
+  } catch {
+    enqueueCallerGrep = '(grep failed)';
+  }
+
+  const nonce = Date.now();
+  const idempotencyKey = `g02-admin-idem-${nonce}`;
+  const inviteEmail = `g02-invite-${nonce}@local.test`;
+  const inviteBody = { email: inviteEmail, role: 'MEMBER' };
+
+  // --- K3: literal parallel race, same key. ---
+  const [raceA, raceB] = await Promise.all([
+    requestJson('POST', `/api/organizations/${organizationA}/admin/invitations`, {
+      token: writeA.token,
+      body: inviteBody,
+      headers: { 'X-Idempotency-Key': idempotencyKey },
+    }),
+    requestJson('POST', `/api/organizations/${organizationA}/admin/invitations`, {
+      token: writeA.token,
+      body: inviteBody,
+      headers: { 'X-Idempotency-Key': idempotencyKey },
+    }),
+  ]);
+
+  const dbCommandCount = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM admin_iam_invitation_commands WHERE organization_id = $1 AND idempotency_key = $2`,
+      [organizationA, idempotencyKey]
+    )
+  );
+  const dbInvitationCount = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM invitations WHERE organization_id = $1 AND LOWER(email) = LOWER($2)`,
+      [organizationA, inviteEmail]
+    )
+  );
+
+  const replayedFlags = [raceA.body?.replayed, raceB.body?.replayed].sort();
+  const invitationIds = [raceA.body?.invitation?.id, raceB.body?.invitation?.id];
+
+  results.raceTest = {
+    idempotencyKey,
+    responseA: { status: raceA.status, body: raceA.body },
+    responseB: { status: raceB.status, body: raceB.body },
+    dbCommandRowCount: dbCommandCount.rows[0].n,
+    dbInvitationRowCount: dbInvitationCount.rows[0].n,
+    exactlyOneWinnerExactlyOneReplay:
+      replayedFlags.length === 2 && replayedFlags[0] !== replayedFlags[1],
+    sameInvitationIdBothResponses: invitationIds[0] && invitationIds[0] === invitationIds[1],
+    onePhysicalObject: dbCommandCount.rows[0].n === 1 && dbInvitationCount.rows[0].n === 1,
+  };
+  results.atomicityMechanism = {
+    wiredEndpoint: 'POST /api/organizations/:orgId/admin/invitations -> AdminIamController.command -> commandInvitation (adminIamCommandService.ts)',
+    mechanism: 'withPinnedPostgresTransaction + pg_advisory_xact_lock(org) + pg_advisory_xact_lock(org:key), replay-checked inside the SAME transaction, plus a DB UNIQUE(organization_id, idempotency_key) constraint as a second line of defense',
+    priorProofClaim: 'adminIamOperationsService.ts INSERT ... ON CONFLICT DO NOTHING, no explicit transaction',
+    enqueueAdminIamJobCallerGrepInRoutesAndControllers: enqueueCallerGrep || '(no matches — zero callers)',
+    enqueueAdminIamJobIsWired: enqueueCallerGrep.length > 0,
+  };
+
+  // --- Cold read ---
+  const coldReadA = await coldRead(emailA, `/api/organizations/${organizationA}/admin/invitations`);
+  const foundInvitation = Array.isArray(coldReadA.body?.invitations)
+    ? coldReadA.body.invitations.find((i: any) => i.email === inviteEmail)
+    : null;
+  results.coldReadback = {
+    status: coldReadA.status,
+    found: !!foundInvitation,
+    email: foundInvitation?.email,
+    role: foundInvitation?.role,
+    match: foundInvitation?.email === inviteEmail && foundInvitation?.role === 'MEMBER',
+  };
+
+  // --- K4: negative control. Org B's own OWNER token against org A's orgId. ---
+  const loginB = await login(emailB);
+  const crossOrgAttempt = await requestJson(
+    'POST',
+    `/api/organizations/${organizationA}/admin/invitations`,
+    {
+      token: loginB.token,
+      body: { email: `g02-crossorg-${nonce}@local.test`, role: 'MEMBER' },
+      headers: { 'X-Idempotency-Key': `g02-admin-crossorg-idem-${nonce}` },
+    }
+  );
+  const dbInvitationCountAfterCrossOrg = await withPg((c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM invitations WHERE organization_id = $1 AND LOWER(email) = LOWER($2)`,
+      [organizationA, inviteEmail]
+    )
+  );
+  const dbCrossOrgInvitationCreated = await withPg((c) =>
+    c.query(`SELECT count(*)::int AS n FROM invitations WHERE organization_id = $1 AND LOWER(email) = $2`, [
+      organizationA,
+      `g02-crossorg-${nonce}@local.test`,
+    ])
+  );
+  results.negativeControl = {
+    crossOrgAttempt: { status: crossOrgAttempt.status, body: crossOrgAttempt.body },
+    refused: [401, 403, 404].includes(crossOrgAttempt.status),
+    databaseUntouched:
+      dbInvitationCountAfterCrossOrg.rows[0].n === 1 && dbCrossOrgInvitationCreated.rows[0].n === 0,
+  };
+
+  console.log(JSON.stringify({ phase: 'G02-ADMIN', results }, null, 2));
+}
+
 async function main(): Promise<void> {
   const app: Express = express();
   app.use(express.json({ limit: '2mb' }));
@@ -666,6 +1075,9 @@ async function main(): Promise<void> {
     else if (phase === 'R4') await runR4();
     else if (phase === 'R5') await runR5();
     else if (phase === 'R6') await runR6();
+    else if (phase === 'G02-SETUP') await runG02Setup();
+    else if (phase === 'G02-CHAT') await runG02Chat();
+    else if (phase === 'G02-ADMIN') await runG02Admin();
     else throw new Error(`unknown phase ${phase}`);
   } finally {
     await new Promise<void>((resolve, reject) => {
