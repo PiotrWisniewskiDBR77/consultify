@@ -44,23 +44,12 @@ const FLAGS = {
     localStorage: 'ff.results_portfolio_insights',
     env: 'VITE_RESULTS_PORTFOLIO_INSIGHTS_ENABLED',
   },
-  // #81/OC2 (2026-07-13): new ResultsHub mount (ResultsThreePairsView) — a new
-  // wired *screen*, not just a new panel. NOT covered by the D-D default-on
-  // fallback below (kanon rule #7: Piotr must see a dev-render screenshot
-  // first). Stays default OFF until that odbiór, then flip via env/localStorage.
-  threePairs: {
-    query: 'ff_resultsThreePairs',
-    localStorage: 'ff.results_three_pairs',
-    env: 'VITE_RESULTS_THREE_PAIRS_ENABLED',
-  },
   // #M15/OC2 (2026-07-15): wires the 3 previously orphaned engines
   // (kpiAnomalyService/kpiForecastService/deviationRcaSuggestService, added to
   // v8/results.routes.ts in fala 3) into the deviation-case panel of
   // KPITimeSeriesDrawer — anomaly badge, forecast projection, RCA hypothesis
   // suggestions. Default OFF (rule #7: dev-render + Piotr's odbiór on
-  // screenshots before any default flip). NOT part of the threePairs D-D
-  // default-on set above — this is a brand-new AI surface, not a
-  // verified-ready cockpit screen.
+  // screenshots before any default flip).
   deviationDiagnostics: {
     query: 'ff_deviationDiagnostics',
     localStorage: 'ff.results_deviation_diagnostics',
@@ -136,9 +125,6 @@ export function isResultsFlagEnabled(flag: ResultsFlag): boolean {
   // czysto, dark-safe, zero crimson w bramkowanym UI) → przeniesiony do zbioru
   // D-D default-on (demo/stage/dev ON, prod OFF via isPublicProductionHost).
   // Opt-out: ?ff_deviationDiagnostics=0.
-  // threePairs (#81/OC2): Piotr ZAAKCEPTOWAŁ redesign na zrzucie harness 07-13
-  // (CLAUDE.md rule #7 spełniona) → dołączony do D-D default-on (demo/stage/dev),
-  // prod pozostaje OFF. Opt-out: ?ff_resultsThreePairs=0.
   // D-D (2026-06-29): verified-ready M15 cockpit defaults ON everywhere EXCEPT
   // public production (consultify.ai). Demo/stage/dev → ON (Piotr's odbiór sees
   // the full cockpit without ?ff_ params); prod stays env-gated (D-G = no prod).
