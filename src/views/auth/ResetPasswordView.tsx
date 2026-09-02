@@ -21,16 +21,16 @@ export const ResetPasswordView: React.FC = () => {
         <div className="w-full max-w-md text-center">
           <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
             <h2 className="text-xl font-semibold text-danger-600">
-              {t('auth.resetPassword.invalidToken', 'Invalid or missing reset token')}
+              {t('auth.resetPasswordPage.invalidToken', 'Invalid or missing reset token')}
             </h2>
             <p className="mt-2 text-sm text-c-text-secondary">
-              {t('auth.resetPassword.requestNew', 'Please request a new password reset link.')}
+              {t('auth.resetPasswordPage.requestNew', 'Please request a new password reset link.')}
             </p>
             <button
               onClick={() => navigate('/forgot-password')}
               className="mt-6 w-full rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-surface shadow-sm hover:opacity-90 transition-colors"
             >
-              {t('auth.forgotPassword.title', 'Reset your password')}
+              {t('auth.forgotPasswordPage.title', 'Reset your password')}
             </button>
           </div>
         </div>
@@ -55,11 +55,11 @@ export const ResetPasswordView: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-c-text">
-              {t('auth.resetPassword.successTitle', 'Password updated')}
+              {t('auth.resetPasswordPage.successTitle', 'Password updated')}
             </h2>
             <p className="mt-2 text-sm text-c-text-secondary">
               {t(
-                'auth.resetPassword.successMessage',
+                'auth.resetPasswordPage.successMessage',
                 'Your password has been reset successfully. You can now log in with your new password.'
               )}
             </p>
@@ -80,13 +80,13 @@ export const ResetPasswordView: React.FC = () => {
     setErrorMsg('');
 
     if (newPassword !== confirmPassword) {
-      setErrorMsg(t('auth.resetPassword.passwordMismatch', 'Passwords do not match.'));
+      setErrorMsg(t('auth.resetPasswordPage.passwordMismatch', 'Passwords do not match.'));
       return;
     }
 
     if (newPassword.length < 8) {
       setErrorMsg(
-        t('auth.resetPassword.passwordTooShort', 'Password must be at least 8 characters.')
+        t('auth.resetPasswordPage.passwordTooShort', 'Password must be at least 8 characters.')
       );
       return;
     }
@@ -101,7 +101,7 @@ export const ResetPasswordView: React.FC = () => {
       setErrorMsg(
         err?.message ||
           t(
-            'auth.resetPassword.errorGeneric',
+            'auth.resetPasswordPage.errorGeneric',
             'Failed to reset password. The link may have expired.'
           )
       );
@@ -113,10 +113,10 @@ export const ResetPasswordView: React.FC = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-c-text">
-            {t('auth.resetPassword.title', 'Set new password')}
+            {t('auth.resetPasswordPage.title', 'Set new password')}
           </h2>
           <p className="mt-2 text-sm text-c-text-secondary">
-            {t('auth.resetPassword.subtitle', 'Enter your new password below.')}
+            {t('auth.resetPasswordPage.subtitle', 'Enter your new password below.')}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -169,7 +169,7 @@ export const ResetPasswordView: React.FC = () => {
             >
               {status === 'loading'
                 ? t('common.saving', 'Saving...')
-                : t('auth.resetPassword.submit', 'Reset password')}
+                : t('auth.resetPasswordPage.submit', 'Reset password')}
             </button>
           </form>
 

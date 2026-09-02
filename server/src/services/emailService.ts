@@ -176,18 +176,39 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     settings[r.key] = r.value;
   });
 
+  const smtpPort = parseInt(settings['smtp_port'] || process.env.SMTP_PORT || '587', 10);
+  const smtpUser = settings['smtp_user'] || process.env.SMTP_USER;
+
+  // Implicit TLS is required on 465; STARTTLS (secure=false) on 587/25.
+  // `SMTP_SECURE` / settings.smtp_secure override the port-derived default.
+  const secureRaw = settings['smtp_secure'] ?? process.env.SMTP_SECURE;
+  const smtpSecure =
+    secureRaw !== undefined && String(secureRaw).trim() !== ''
+      ? ['1', 'true', 'yes', 'on'].includes(String(secureRaw).trim().toLowerCase())
+      : smtpPort === 465;
+
+  // The envelope sender MUST be a mailbox the SMTP account is allowed to send
+  // as, otherwise providers reject every message (Hostinger:
+  // "553 5.7.1 Sender address rejected: not owned by user ..."). Deployments
+  // configure this as EMAIL_FROM; SMTP_FROM is the historical name. When
+  // neither is set, fall back to the authenticated mailbox — never to a
+  // hard-coded foreign domain.
+  const smtpFrom =
+    settings['smtp_from'] ||
+    process.env.SMTP_FROM ||
+    process.env.EMAIL_FROM ||
+    smtpUser ||
+    '"Consultify System" <system@consultify.com>';
+
   const smtpConfig: SMTPConfig = {
     host: settings['smtp_host'] || process.env.SMTP_HOST,
-    port: parseInt(settings['smtp_port'] || process.env.SMTP_PORT || '587', 10),
-    secure: false, // true for 465, false for other ports
+    port: smtpPort,
+    secure: smtpSecure,
     auth: {
-      user: settings['smtp_user'] || process.env.SMTP_USER,
+      user: smtpUser,
       pass: settings['smtp_pass'] || process.env.SMTP_PASS,
     },
-    from:
-      settings['smtp_from'] ||
-      process.env.SMTP_FROM ||
-      '"Consultify System" <system@consultify.com>',
+    from: smtpFrom,
   };
 
   // For logging and debugging
@@ -214,8 +235,14 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
       logger.info('[EMAIL SERVICE] Sent successfully via SMTP');
     } catch (e: unknown) {
       const error = e as Error;
-      logger.error('[EMAIL SERVICE] SMTP Failed:', error.message);
-      if (requireDelivery) return false;
+      logger.error(
+        `[EMAIL SERVICE] SMTP Failed (host=${smtpConfig.host} port=${smtpConfig.port} ` +
+          `secure=${smtpConfig.secure} from=${smtpConfig.from} to=${to}): ${error.message}`
+      );
+      // A configured provider that refuses the message is a real delivery
+      // failure. Reporting success here is what let a broken password-reset
+      // flow look healthy for months.
+      return false;
     }
   } else if (requireDelivery) {
     return false;

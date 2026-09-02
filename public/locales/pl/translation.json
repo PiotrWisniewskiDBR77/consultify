@@ -13270,7 +13270,30 @@
       "verifying": "Weryfikujemy Twój adres e-mail…"
     },
     "privacyLink": "Polityka prywatności",
-    "termsLink": "Regulamin"
+    "termsLink": "Regulamin",
+    "forgotPasswordPage": {
+      "title": "Zresetuj hasło",
+      "subtitle": "Podaj swój adres e-mail, a wyślemy Ci link do ustawienia nowego hasła.",
+      "sendLink": "Wyślij link resetujący",
+      "checkEmail": "Sprawdź skrzynkę",
+      "sentMessage": "Jeśli konto z tym adresem istnieje, wysłaliśmy link do zresetowania hasła. Sprawdź skrzynkę odbiorczą oraz folder spam.",
+      "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie."
+    },
+    "resetPasswordPage": {
+      "title": "Ustaw nowe hasło",
+      "subtitle": "Wpisz poniżej swoje nowe hasło.",
+      "submit": "Zresetuj hasło",
+      "successTitle": "Hasło zmienione",
+      "successMessage": "Twoje hasło zostało zresetowane. Możesz teraz zalogować się nowym hasłem.",
+      "invalidToken": "Nieprawidłowy lub brakujący token resetu",
+      "requestNew": "Poproś o nowy link do zresetowania hasła.",
+      "passwordMismatch": "Hasła nie są takie same.",
+      "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków.",
+      "errorGeneric": "Nie udało się zresetować hasła. Link mógł wygasnąć."
+    },
+    "emailPlaceholder": "twoj@email.pl",
+    "newPassword": "Nowe hasło",
+    "confirmPassword": "Powtórz hasło"
   },
   "help": {
     "onboarding": {

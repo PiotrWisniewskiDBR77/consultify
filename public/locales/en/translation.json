@@ -13850,7 +13850,30 @@
       "verifying": "Verifying your email…"
     },
     "privacyLink": "Privacy Policy",
-    "termsLink": "Terms of Service"
+    "termsLink": "Terms of Service",
+    "forgotPasswordPage": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email address and we'll send you a link to reset your password.",
+      "sendLink": "Send reset link",
+      "checkEmail": "Check your email",
+      "sentMessage": "If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.",
+      "errorGeneric": "Something went wrong. Please try again."
+    },
+    "resetPasswordPage": {
+      "title": "Set new password",
+      "subtitle": "Enter your new password below.",
+      "submit": "Reset password",
+      "successTitle": "Password updated",
+      "successMessage": "Your password has been reset successfully. You can now log in with your new password.",
+      "invalidToken": "Invalid or missing reset token",
+      "requestNew": "Please request a new password reset link.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "errorGeneric": "Failed to reset password. The link may have expired."
+    },
+    "emailPlaceholder": "you@company.com",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password"
   },
   "help": {
     "onboarding": {
