@@ -90,6 +90,26 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_attention_entry',
     env: 'VITE_RESULTS_VNEXT_ATTENTION_ENTRY_ENABLED',
   },
+  /**
+   * 2026-09-02 (wołacze duty) — gates a new "Archiwum"/"Archive" Menu 2 tab
+   * that wires the already-built, already read-only-verified
+   * `ResultsVNextLegacyArchivePanel` (`legacy/ResultsVNextLegacyArchivePanel.tsx`)
+   * into the KPI/ROI/OKR registry navigation. That panel had a working
+   * backend (`GET /api/vnext/results/{kpi,roi,okr}/legacy`, `denyMutations`
+   * mounted first) but ZERO caller anywhere in `src/` — its own file header
+   * said so explicitly ("deliberately NOT mounted"). This duty only adds
+   * the wire, not the look — the panel itself is untouched.
+   * Default OFF everywhere (CLAUDE.md reguła #7 — ta droga dojścia nie była
+   * jeszcze oglądana przez właściciela na zrzucie; reguła #9 — zakaz
+   * masowego włączania). OFF == byte-for-byte today's behaviour: no tab,
+   * no route, panel stays unreachable. Same shape as `resultsSearch` above
+   * — no D-D default-on set until a dev-render odbiór happens.
+   */
+  resultsLegacyArchive: {
+    query: 'ff_resultsVNextLegacyArchive',
+    localStorage: 'ff.results_vnext_legacy_archive',
+    env: 'VITE_RESULTS_VNEXT_LEGACY_ARCHIVE_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsVNextFlag = keyof typeof FLAGS;
@@ -192,6 +212,7 @@ export function isResultsVNextFlagEnabled(
   if (flag === 'resultsSearch') return false;
   if (flag === 'managementReportEntry') return false;
   if (flag === 'attentionEntry') return false;
+  if (flag === 'resultsLegacyArchive') return false;
   // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
   // dev) reads OFF until an explicit opt-in.
   return false;

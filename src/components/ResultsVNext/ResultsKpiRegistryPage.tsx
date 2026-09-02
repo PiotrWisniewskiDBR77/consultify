@@ -145,6 +145,7 @@ import {
 } from './resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import { ResultsSearchRegistry } from './ResultsSearchRegistry';
+import { ResultsVNextLegacyArchivePanel } from './legacy/ResultsVNextLegacyArchivePanel';
 import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
@@ -834,8 +835,17 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     isResultsVNextFlagEnabled('resultsSearch') &&
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('resultsView') === 'search';
+  // 2026-09-02 (wołacze duty) — "Archiwum" bypass, byte-for-byte the same
+  // shape as `searchMode` above: default OFF (`resultsLegacyArchive`), and
+  // when off this is always `false` — zero behavioural change today.
+  const legacyArchiveMode =
+    isResultsVNextFlagEnabled('resultsLegacyArchive') &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('resultsView') === 'legacy';
   const enabled =
-    !searchMode && (initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry'));
+    !searchMode &&
+    !legacyArchiveMode &&
+    (initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry'));
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
@@ -1385,6 +1395,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
 
   if (searchMode) return <ResultsSearchRegistry />;
 
+  if (legacyArchiveMode) return <ResultsVNextLegacyArchivePanel domain="kpi" />;
+
   if (!enabled) {
     return (
       <div
@@ -1444,7 +1456,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -1574,7 +1586,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],

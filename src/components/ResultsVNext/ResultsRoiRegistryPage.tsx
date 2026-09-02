@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/states';
 
+import { ResultsVNextLegacyArchivePanel } from './legacy/ResultsVNextLegacyArchivePanel';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import { ResultsRoiHub } from './roi/ResultsRoiHub';
 
@@ -25,7 +26,17 @@ export const ResultsRoiRegistryPage: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const title = isPolish ? 'Rejestr ROI' : 'ROI registry';
+  // 2026-09-02 (wołacze duty) — "Archiwum" bypass, same shape as
+  // `ResultsKpiRegistryPage.tsx`'s `searchMode`/`legacyArchiveMode`: default
+  // OFF (`resultsLegacyArchive`), reachable independently of `roiRegistry`
+  // (mirrors how KPI's search bypasses the `kpiRegistry` gate too).
+  const legacyArchiveMode =
+    isResultsVNextFlagEnabled('resultsLegacyArchive') &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('resultsView') === 'legacy';
   const enabled = isResultsVNextFlagEnabled('roiRegistry');
+
+  if (legacyArchiveMode) return <ResultsVNextLegacyArchivePanel domain="roi" />;
 
   if (!enabled) {
     return (
