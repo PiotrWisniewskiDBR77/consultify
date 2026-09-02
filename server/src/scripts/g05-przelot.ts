@@ -623,9 +623,18 @@ async function runR6(): Promise<void> {
       token: write.token,
       body: { name: 'G05 Partner Org', contactEmail: 'g05-partner@local.test' },
     });
+    // Canonical successor per the 410's own `successor` field — still
+    // expected to refuse, but for a different reason: this org has never
+    // been onboarded as a Partner (no partner_organizations/partner_users
+    // binding), which is a separate application/approval flow.
+    const v8Attempt = await requestJson('PUT', '/api/v8/partner/organization', {
+      token: write.token,
+      body: { contactPhone: '+48 000 000 000', website: 'https://g05.local.test' },
+    });
     results.partner = {
       legacyWriteAttempt: { status: legacyAttempt.status, body: legacyAttempt.body },
-      note: 'legacy /api/partners/* is wrapped in createLegacyCutoverGuard(PARTNERS_CUTOVER), server/src/routes/partners.routes.ts:278; PRT-W01/PRT-W02 (organization writers) are state:disabled in server/src/services/legacyCutover/registry.ts',
+      v8SuccessorAttempt: { status: v8Attempt.status, body: v8Attempt.body },
+      note: 'legacy /api/partners/* wrapped in createLegacyCutoverGuard(PARTNERS_CUTOVER), server/src/routes/partners.routes.ts:278, writer PRT-W04 state:disabled -> 410. Canonical /api/v8/partner/organization (server/src/routes/v8/partner.routes.ts:1368) requires a pre-existing partner_organizations binding (getBoundPartnerOrgId) that a freshly self-registered org does not have -> expected 403 PARTNER_ORG_REQUIRED, a separate application/approval flow outside this pass.',
     };
   }
 
