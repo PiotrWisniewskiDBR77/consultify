@@ -102,6 +102,7 @@ const queryClient = new QueryClient({
 
 export default function ExceleJedenWidokRecentScreen(): React.ReactElement {
   installMocks();
+  const capturePhase = new URLSearchParams(window.location.search).get('faza');
 
   // GRAFIKA (2026-08-31): `ArtifactModuleHome` domyślnie montuje się na tabie
   // "Templates" (`useState<HomeTab>('templates')` — nie ma propa/URL-a, który
@@ -124,7 +125,7 @@ export default function ExceleJedenWidokRecentScreen(): React.ReactElement {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/excele']}>
+      <MemoryRouter initialEntries={[capturePhase === 'przed' ? '/excele?view=home' : '/excele']}>
         <div className="h-screen w-full overflow-hidden bg-c-bg">
           <ExceleView />
         </div>

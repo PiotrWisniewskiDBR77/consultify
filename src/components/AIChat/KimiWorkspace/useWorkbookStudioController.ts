@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import type { ArtifactCommandContext } from '@/components/shared/ArtifactStudio';
 import { Api } from '@/services/api';
@@ -204,7 +205,14 @@ export function useWorkbookStudioController({
         clear ? 'xlsx.selection.clear' : 'xlsx.cell.edit',
         [{ type: clear ? 'clearCell' : 'setCell', ...payload }],
         { trackHistory: false }
-      ).then(() => undefined);
+      )
+        .then(() => undefined)
+        .catch((error: unknown) => {
+          toast.error(
+            'Nie udało się zapisać zmiany. Przywróciliśmy poprzednią wartość komórki — spróbuj ponownie.'
+          );
+          throw error;
+        });
     },
     [applyCommands]
   );

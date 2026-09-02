@@ -434,7 +434,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             : start === 'ai'
               ? '/excele?view=new&entry=ai'
               : // "Z szablonu" — jw., ekran wyboru szablonu Excela (ArtifactModuleHome).
-                '/excele'
+                '/excele?view=home'
         );
       }
     },

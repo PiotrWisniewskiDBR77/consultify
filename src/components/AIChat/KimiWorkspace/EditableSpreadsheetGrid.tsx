@@ -320,9 +320,56 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                   : Api.updateWorkbookCell(workbookId, payload).then(() => undefined)
               )
             ).then(() => undefined);
-        persistence.then(() => setSaveState('saved')).catch(() => setSaveState('error'));
+        persistence
+          .then(() => setSaveState('saved'))
+          .catch(() => {
+            // The grid is optimistic, but a rejected write must never remain
+            // visible as though it were persisted. Restore the exact pre-edit
+            // values and publish that authoritative rollback to the studio.
+            setLocalSheets((prev) => {
+              const clone = cloneSheets(prev);
+              const sheet = clone[activeSheetIndex];
+              if (!sheet?.rows) return prev;
+              for (const change of changes) {
+                const col = sheet.columns?.[change.colIndex];
+                const targetRow = sheet.rows[change.rowIndex];
+                if (!col || !targetRow) continue;
+                if (!targetRow.cells) targetRow.cells = {};
+                const currentCell = targetRow.cells[col.key] ?? {};
+                targetRow.cells[col.key] = {
+                  style: (currentCell as Record<string, unknown>).style,
+                  comment: (currentCell as Record<string, unknown>).comment,
+                  validation: (currentCell as Record<string, unknown>).validation,
+                  ...parseCellInput(change.before),
+                };
+              }
+              queueMicrotask(() => onSheetsChange?.(clone));
+              return clone;
+            });
+            const failedEntryIndex = undoStackRef.current.findLastIndex(
+              (entry) =>
+                entry.length === changes.length &&
+                entry.every((item, index) =>
+                  Object.entries(item).every(
+                    ([key, value]) => changes[index]?.[key as keyof CellChange] === value
+                  )
+                )
+            );
+            if (failedEntryIndex >= 0) undoStackRef.current.splice(failedEntryIndex, 1);
+            publishHistoryState();
+            setEditingValue(null);
+            setSaveState('error');
+          });
       },
-      [activeSheetIndex, localSheets, onSheetsChange, persistCell, persistCells, workbookId]
+      [
+        activeSheetIndex,
+        localSheets,
+        onSheetsChange,
+        persistCell,
+        persistCells,
+        publishHistoryState,
+        workbookId,
+      ]
     );
 
     const commit = useCallback(
