@@ -102,6 +102,49 @@ const EKRANY_WYSOKOSC = [
   { id: 'idea-table', opis: 'Moja praca / Tabela idei', wiersz: 'Automatyzacja raportowania OEE' },
   { id: 'interview-preview-canon', opis: 'Wywiad / Podglad kanoniczny' },
   { id: 'drd-library-entry', opis: 'Ocena / Wpis biblioteki DRD', wiersz: 'DBR77' },
+
+  // ── PRZEMIOT RODZINY 2026-09-02 (dyzur "podglad-rodzina") ──────────────
+  // Rozszerzenie na konsumentow TableWithPreviewLayout / PreviewPaneShell
+  // POZA piecioma zakladkami Realizacji, ktore juz przeszly ten pomiar.
+  // Kazdy wpis ponizej to plik ZYWY (ma realnego wolacza w src/), zmierzony
+  // przez REALNY ekran harnessu (bez re-implementacji). `extra` to opt-in
+  // parametr URL, potrzebny tam gdzie klik nie wystarcza (np. selected=<id>).
+  { id: 'agent-hub', opis: 'AIChat / AgentHubShell (Run agent)' },
+  { id: 'chat-signals-feed', opis: 'AIChat / ChatSignalsFeed' },
+  // Uwaga: `tools-sesja-wyjscie` z initialTab="sessions" wchodzi PROSTO w
+  // otwartą sesję (deep-link), nie w listę+podgląd — zle narzedzie do tego
+  // pomiaru. Zakladka 'Biblioteka' (activeTab==='library', DiscoveryToolsHub.tsx:3948)
+  // jest realna lista+podglad z TableWithPreviewLayout.
+  { id: 'tools-sesja-wyjscie', opis: 'Discovery / DiscoveryToolsHub (Biblioteka)', zakladka: 'Biblioteka' },
+  { id: 'finance-hub', opis: 'Economics / FinanceHub' },
+  // report=registry wymagane - domyslny report='work' to dashboard bez tabeli.
+  {
+    id: 'execution-report-day11',
+    opis: 'Realizacja / ExecutionReportsSurface (route standalone report=registry — UWAGA: host dev-render uzywa min-h-screen p-4 na korzeniu, nie h-full flex flex-col; mozliwy artefakt harnessu, nie produkcji - patrz tez "Realizacja / Raporty" przez prawdziwa zakladke Menu 1, ktora mierzy 0px)',
+    extra: '&report=registry',
+  },
+  { id: 'capacity-advisor-a3', opis: 'Inicjatywy / CapacityScenarioSurface' },
+  { id: 'inicjatywy-lista', opis: 'Inicjatywy / InitiativesHub (lista)' },
+  { id: 'plan-scenario-d1', opis: 'Inicjatywy / PlanScenarioSurface' },
+  { id: 'interview-sessions-status', opis: 'Wywiad / InterviewHub (zakladka Sesje)' },
+  { id: 'idea-table-production', opis: 'Moja praca / MyIdeasListContent (ksztalt produkcyjny)' },
+  { id: 'vault-safes-table', opis: 'Vault / VaultSafesTable' },
+  {
+    id: 'results-vnext-registry-shell',
+    opis: 'Wyniki vNext / ResultsVNextRegistryShell (domain=kpi)',
+    extra: '&domain=kpi&selected=kpi-1',
+  },
+  {
+    id: 'results-vnext-registry-shell',
+    opis: 'Wyniki vNext / ResultsVNextRegistryShell (domain=roi)',
+    extra: '&domain=roi&selected=roi-1',
+  },
+  {
+    id: 'results-vnext-registry-shell',
+    opis: 'Wyniki vNext / ResultsVNextRegistryShell (domain=okr)',
+    extra: '&domain=okr&selected=okr-1',
+  },
+  { id: 'mywork-inbox', opis: 'Moja praca / InboxContent (Skrzynka)' },
 ];
 
 const oczekiwanaSzerokosc = (viewport) =>
@@ -113,7 +156,7 @@ const oczekiwanaSzerokosc = (viewport) =>
  * bo rozjazd miedzy nimi jest dokladnie tym, na co skarzy sie wlasciciel.
  */
 async function zmierzWysokosc(page, PORT, W, H, ekran) {
-  const url = `http://localhost:${PORT}/?screen=${ekran.id}&lang=pl&theme=light&uwagi=0`;
+  const url = `http://localhost:${PORT}/?screen=${ekran.id}&lang=pl&theme=light&uwagi=0${ekran.extra || ''}`;
   await page.goto(url, { waitUntil: 'networkidle' }).catch(() => {});
   await page.waitForTimeout(1800);
   if (ekran.zakladka) {
