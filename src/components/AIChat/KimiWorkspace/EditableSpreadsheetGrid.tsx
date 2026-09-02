@@ -346,15 +346,20 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
               queueMicrotask(() => onSheetsChange?.(clone));
               return clone;
             });
-            const failedEntryIndex = undoStackRef.current.findLastIndex(
-              (entry) =>
-                entry.length === changes.length &&
-                entry.every((item, index) =>
-                  Object.entries(item).every(
-                    ([key, value]) => changes[index]?.[key as keyof CellChange] === value
-                  )
+            const matchesFailedChanges = (entry: CellChange[]): boolean =>
+              entry.length === changes.length &&
+              entry.every((item, index) =>
+                Object.entries(item).every(
+                  ([key, value]) => changes[index]?.[key as keyof CellChange] === value
                 )
-            );
+              );
+            let failedEntryIndex = -1;
+            for (let i = undoStackRef.current.length - 1; i >= 0; i -= 1) {
+              if (matchesFailedChanges(undoStackRef.current[i])) {
+                failedEntryIndex = i;
+                break;
+              }
+            }
             if (failedEntryIndex >= 0) undoStackRef.current.splice(failedEntryIndex, 1);
             publishHistoryState();
             setEditingValue(null);
