@@ -275,20 +275,99 @@ const WZORCE_PRZYRZADU = [
  * modułów aplikacji i R1 ogłaszałaby, że AssessmentHub, SettingsView czy
  * IdeaMapWorkspace nie mają wołacza — mimo że są renderowane w `<Route element>`.
  */
+const WZORCE_DEKLARACJI = [
+  /(?:^|\n)\s*(?:export\s+)?(?:const|let|var)\s+([A-Z][A-Za-z0-9_]*)\s*(?::[^=\n]*)?=\s*([^\n]*)/g,
+  /(?:^|\n)\s*(?:export\s+)?(?:default\s+)?function\s+([A-Z][A-Za-z0-9_]*)\s*[<(]/g,
+  /(?:^|\n)\s*(?:export\s+)?(?:default\s+)?class\s+([A-Z][A-Za-z0-9_]*)\b/g,
+];
+
 function deklarowaneNazwy(tekst) {
   const out = new Set();
-  const wzorce = [
-    /(?:^|\n)\s*(?:export\s+)?(?:const|let|var)\s+([A-Z][A-Za-z0-9_]*)\s*(?::[^=\n]*)?=\s*([^\n]*)/g,
-    /(?:^|\n)\s*(?:export\s+)?(?:default\s+)?function\s+([A-Z][A-Za-z0-9_]*)\s*[<(]/g,
-    /(?:^|\n)\s*(?:export\s+)?(?:default\s+)?class\s+([A-Z][A-Za-z0-9_]*)\b/g,
-  ];
-  for (const [i, w] of wzorce.entries()) {
+  for (const [i, w] of WZORCE_DEKLARACJI.entries()) {
     for (const m of tekst.matchAll(w)) {
       if (i === 0 && /^\s*(?:React\.)?lazy\w*\s*\(/.test(m[2] ?? '')) continue;
       out.add(m[1]);
     }
   }
   return out;
+}
+
+/**
+ * Offset końca bloku `{ … }` licząc od pierwszego `{` od `od` — automat stanów
+ * jak `bezKomentarzy` (komentarze są już wygaszone przez nią, ale stringi w
+ * tekście źródłowym wciąż są, więc `{`/`}` wewnątrz stringa nie mogą liczyć się
+ * do głębokości). Potrzebne do Wzorca 2 (patrz `deklaracjeZasiegi` niżej): żeby
+ * wyznaczyć ZASIĘG ciała deklaracji komponentu, a nie tylko jego początek.
+ */
+function znajdzKoniecBloku(tekst, od) {
+  const start = tekst.indexOf('{', od);
+  if (start === -1) return tekst.length;
+  let depth = 0;
+  let stan = 'code';
+  for (let i = start; i < tekst.length; i += 1) {
+    const c = tekst[i];
+    if (stan === 'code') {
+      if (c === "'") { stan = 'squote'; continue; }
+      if (c === '"') { stan = 'dquote'; continue; }
+      if (c === '`') { stan = 'template'; continue; }
+      if (c === '{') { depth += 1; continue; }
+      if (c === '}') { depth -= 1; if (depth === 0) return i + 1; continue; }
+      continue;
+    }
+    if (stan === 'squote' || stan === 'dquote') {
+      const q = stan === 'squote' ? "'" : '"';
+      if (c === '\\') { i += 1; continue; }
+      if (c === q) stan = 'code';
+      continue;
+    }
+    if (stan === 'template') {
+      if (c === '\\') { i += 1; continue; }
+      if (c === '`') stan = 'code';
+      continue;
+    }
+  }
+  return tekst.length;
+}
+
+/**
+ * Jak `deklarowaneNazwy`, ale zwraca też ZASIĘG każdej deklaracji (offset startu
+ * do końca jej bloku `{ … }`) — nazwa → lista [start, koniec].
+ *
+ * Wzorzec 2 (fałszywy alarm zmierzony 2026-09-02, `PlatformGridView` w
+ * `ViewRouter.tsx`): plik definicji przestaje być wykluczany BEZWARUNKOWO z
+ * wołaczy tej nazwy. Router, który definiuje widok w L152 i sam go montuje w
+ * L1547 (kawałek dalej, w INNYM komponencie tego samego pliku), pokazuje
+ * produkt — nie jest to komponent „wołający sam siebie". Bez zasięgu nie da
+ * się odróżnić tego przypadku od naiwnego dopasowania nazwy gdziekolwiek w
+ * pliku definiującym (patrz `czyUzyciePozaDeklaracja` niżej).
+ */
+function deklaracjeZasiegi(tekst) {
+  const out = new Map();
+  for (const [i, w] of WZORCE_DEKLARACJI.entries()) {
+    for (const m of tekst.matchAll(w)) {
+      if (i === 0 && /^\s*(?:React\.)?lazy\w*\s*\(/.test(m[2] ?? '')) continue;
+      const nazwa = m[1];
+      const zasieg = [m.index, znajdzKoniecBloku(tekst, m.index)];
+      if (!out.has(nazwa)) out.set(nazwa, []);
+      out.get(nazwa).push(zasieg);
+    }
+  }
+  return out;
+}
+
+/**
+ * Czy plik używa `<Nazwa` (granica: spacja/`/`/`>`/nowa linia — NIE kropka, więc
+ * `<Foo.Provider>` na kontekst nie liczy się jako montaż komponentu `Foo`) GDZIEŚ
+ * POZA zasięgiem własnej deklaracji tej nazwy. To jest R1/R2-liczący się „wołacz
+ * z pliku definicji" z Wzorca 2.
+ */
+function czyUzyciePozaDeklaracja(tekst, nazwa, zasiegi) {
+  const re = new RegExp(`<${nazwa}(?=[\\s/>\\n])`, 'g');
+  for (const m of tekst.matchAll(re)) {
+    const idx = m.index;
+    if (!zasiegi.some(([s, e]) => idx >= s && idx < e)) return true;
+  }
+  return false;
 }
 
 /**
@@ -357,6 +436,23 @@ function rozwinSciezke(spec, zPliku) {
 }
 
 /**
+ * Domyślny eksport pliku (nazwa) — używany gdy `React.lazy(() => import(spec))`
+ * w harnessu NIE ma `.then((m) => ({ default: m.X }))`: celem jest wtedy default
+ * export pliku wskazanego importem, nie nazwa zmiennej `lazy(...)` w harnessie.
+ * Rozpoznaje `export default function/class Nazwa` i `export default Nazwa;`
+ * (reeksport zmiennej zadeklarowanej gdzie indziej w pliku). Anonimowy
+ * `export default { ... }` / `export default () => ...` nie ma nazwy — null.
+ */
+function domyslnyEksport(tekst) {
+  if (!tekst) return null;
+  let m = tekst.match(/export\s+default\s+(?:function|class)\s+([A-Z][A-Za-z0-9_]*)/);
+  if (m) return m[1];
+  m = tekst.match(/export\s+default\s+([A-Z][A-Za-z0-9_]*)\s*;/);
+  if (m) return m[1];
+  return null;
+}
+
+/**
  * Zwraca komponenty produkcyjne zaimportowane przez ekran, jako
  * { lokalnaNazwa → { spec, plik } }. Importy `type` pomijamy — typ się nie renderuje.
  */
@@ -388,12 +484,31 @@ function importyProdukcyjne(tekst, sciezkaPliku) {
   }
 
   // React.lazy(() => import('@/…')) — trzeci wzorzec z audytu.
+  //
+  // NAPRAWA (Wzorzec 1, fałszywy alarm zmierzony 2026-09-02, `finance-hub`):
+  // ekran montuje `<FinanceHubLazy>` — nazwę OTOCZKI zdefiniowanej lokalnie w tym
+  // samym pliku harnessu. R1 sprawdzała wołacza DLA OTOCZKI (`FinanceHubLazy`),
+  // która z definicji nigdy nie ma wołacza nigdzie indziej — to lokalna zmienna
+  // JEDNEGO pliku. Realnym komponentem produkcyjnym jest cel importu
+  // (`FinanceHub`, ze ścieżki `../../src/components/Economics/FinanceHub`), i to
+  // JEGO wołacz ma znaczenie (`src/views/EconomicsView.tsx` renderuje `<FinanceHub>`).
+  // Rozwiń: cel = nazwa z `.then((m) => ({ default: m.X }))`, jeśli jest; inaczej
+  // domyślny eksport pliku wskazanego importem. Fallback na nazwę otoczki tylko
+  // gdy żadne z tych dwóch nic nie da (anonimowy default export) — R1 wtedy
+  // najwyżej wraca do starego (bezpieczniejszego, nie cichszego) zachowania.
   for (const m of tekst.matchAll(
-    /(?:const|let)\s+([A-Z][A-Za-z0-9_]*)\s*=\s*(?:React\.)?lazy\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]/g,
+    /(?:const|let)\s+([A-Z][A-Za-z0-9_]*)\s*=\s*(?:React\.)?lazy\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)(?:\s*\.then\(\s*\([^)]*\)\s*=>\s*\(?\s*\{\s*default:\s*[A-Za-z_$][\w$]*\.([A-Za-z_$][\w$]*)\s*,?\s*\}\s*\)?\s*\))?/g,
   )) {
-    const [, nazwa, spec] = m;
+    const [, nazwa, spec, celZThen] = m;
     if (!czySciezkaProdukcyjna(spec)) continue;
-    out.set(nazwa, { spec, plik: rozwinSciezke(spec, sciezkaPliku), zrodlo: nazwa, lazy: true });
+    const plik = rozwinSciezke(spec, sciezkaPliku);
+    let cel = celZThen;
+    if (!cel && plik) {
+      const tekstCelu = indeks.get(plik)?.tekst
+        ?? (fs.existsSync(plik) ? bezKomentarzy(fs.readFileSync(plik, 'utf8')) : '');
+      cel = domyslnyEksport(tekstCelu);
+    }
+    out.set(nazwa, { spec, plik, zrodlo: cel || nazwa, lazy: true });
   }
 
   return out;
@@ -423,7 +538,7 @@ console.error('… buduję indeks produkcji z src/ (co renderuje co)');
 
 const plikiSrc = zbierzPliki(SRC_DIR).filter(czyPlikProdukcyjny);
 
-/** plik → { renderowane:Set, deklarowane:Set, tekst } */
+/** plik → { renderowane:Set, deklarowane:Set, tekst, zasiegi:Map } */
 const indeks = new Map();
 /** nazwa → Set(pliki, które ją renderują i NIE definiują) = realni wołacze */
 const wolacze = new Map();
@@ -435,16 +550,30 @@ for (const p of plikiSrc) {
   const tekst = bezKomentarzy(surowy);
   const rend = renderowaneNazwy(tekst);
   const dekl = deklarowaneNazwy(tekst);
-  indeks.set(p, { rend, dekl, tekst });
+  const zasiegi = deklaracjeZasiegi(tekst);
+  indeks.set(p, { rend, dekl, tekst, zasiegi });
   for (const n of dekl) {
     if (!definicje.has(n)) definicje.set(n, new Set());
     definicje.get(n).add(p);
   }
 }
 
-for (const [p, { rend, dekl }] of indeks) {
+// NAPRAWA (Wzorzec 2, fałszywy alarm zmierzony 2026-09-02, `PlatformGridView`):
+// plik definicji przestaje być wykluczany BEZWARUNKOWO. `ViewRouter.tsx` definiuje
+// `PlatformGridView` w L152 i SAM go montuje w L1547 (inny komponent, ten sam
+// plik) — to jest realny wołacz, nie „komponent woła sam siebie". Naiwne
+// wykluczenie całego pliku dawało R1 zero wołaczy dla pięciu uczciwych ekranów
+// `idea-table-tool-*`. Warunek: licz plik jako wołacza nazwy `n`, jeśli w `rend`
+// (bo `<n` gdzieś w pliku) ORAZ znajdzie się użycie `<n` POZA zasięgiem własnej
+// deklaracji `n` w tym pliku (`czyUzyciePozaDeklaracja`) — to odróżnia „router
+// montuje widok, który sam definiuje" od starego ryzyka fałszywki (`<Foo.Provider>`
+// dla kontekstu nazwanego tak samo jak plik go definiujący; kropka nie jest
+// granicą dopasowania, więc to i tak by nie złapało — ale sam fakt bycia
+// zadeklarowanym gdzieś w pliku bez ŻADNEGO odrębnego użycia w JSX nadal NIE liczy
+// się jako wołacz, dokładnie jak wcześniej).
+for (const [p, { rend, dekl, tekst, zasiegi }] of indeks) {
   for (const n of rend) {
-    if (dekl.has(n)) continue; // sam siebie nie woła
+    if (dekl.has(n) && !czyUzyciePozaDeklaracja(tekst, n, zasiegi.get(n) ?? [])) continue;
     if (!wolacze.has(n)) wolacze.set(n, new Set());
     wolacze.get(n).add(p);
   }
