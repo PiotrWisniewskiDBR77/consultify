@@ -55,13 +55,15 @@ wstawał kilka minut, w czasie których właściciel mógł otworzyć stronę.
 | **Kart A/B bez decyzji właściciela** | **0** | — | `odbior.sqlite` |
 | Kart czekających na jego ponowne spojrzenie | **7 — KOMPLET, wszystkie ze świeżym zrzutem obejrzanym przeze mnie** | — | `reszta-odbioru.json` |
 | Kart czekających na budowę (nie do oceny) | 11 | — | j.w. |
-| Commitów w tej sesji | 40+ | — | `git log --since` |
-| Scaleń rodzin | 7 | — | `git log --merges` |
+| Commitów w tej sesji | **61** | — | `git log --since` |
+| Scaleń rodzin | **10** | — | `git log --merges` |
 | Plików produktu zmienionych | 42 (+1175 / −617) | — | `git diff --stat` |
-| Zrzutów dołożonych | 605 | — | `git diff --name-only -- evidence/` |
+| Zrzutów dołożonych | **782** | — | `git diff --name-only -- evidence/` |
 | Bramka parytetu: R1 | 32 ekrany (było 41) | **−9** | `check-dev-render-parytet.mjs` |
 | Bramka parytetu: linia bazowa | 103 pozycje (było 112) | −9 | j.w. |
 | Bramka odbioru | CZYSTO, 253 karty / 506 zdjęć | — | `odbior-kontrola.mjs` |
+| Bramka fokusa: linia bazowa | 114 plików / 232 wystąpienia (było 128 / 259) | **−14 / −27** | `check-focus-canon.sh` |
+| Budowa | `✓ built in 35.54s` | — | `NODE_OPTIONS=... npx vite build` |
 
 **Dwie obniżki oceny A→B są celowe i uczciwe:** `ntype-analizuj-ai` (kadr pokazuje sam panel
 analizy, nie całą kartę — własność przyrządu, nazwana wprost) oraz `fab-rail-kebab` i
@@ -83,7 +85,6 @@ Każda naprawiona **u przyczyny, nie per ekran**, każda z parą zrzutów PRZED/
 | **Parytet 6 ekranów** | harness pokazywał własną kompozycję zamiast produktu | 6 plików `dev-render/screens/` |
 | **Bramka parytetu** | oskarżała uczciwe ekrany | `check-dev-render-parytet.mjs` |
 | **Podgląd Idei + szerokość Admina** | brak bloku „Szczegóły"; zwężenie 1200 px było wklejką przyrządu | `IdeaPreview.tsx` (dwie kopie scalone) + 8 harnessów Admina |
-
 | **Odmiana liczebnika po polsku** | „1 dni", „1 testów nieudanych" — kod pisany pod angielski wzorzec daje zły wynik akurat dla liczby 1 | `src/utils/liczebnik.ts` + test (11 przypadków) + 2 ekrany; ~68 wystąpień w ~46 plikach i 156 kluczy **nazwane liczbowo** w `ODLOZONE.md` |
 | **Język menu kanwy i surowe wartości techniczne** | menu mieszało języki w jednej grupie; `monthly`, `quarterly`, `CASH`, `LONG_TERM_DEBT`, `OPEN_ORG` wychodziły na ekran | 19 kluczy kanwy + słownik OKR + etykiety ROI + linie finansowe; dwa punkty świadomie zostawione z namiarem plik:linia |
 
