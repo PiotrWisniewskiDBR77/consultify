@@ -19,18 +19,13 @@
       "czeka": "Przekazane do budowy — zgłoszenie #36 w rejestrze dla toru funkcji."
     },
     "canvas-kebab-restructure": {
-      "grupa": "3 — obraz nie pokazywał produktu",
-      "powod": "Ten obraz to stary dowód techniczny, nie ekran aplikacji: nie ma na nim ani jednego elementu z produktu. Twoja poprzednia ocena nie dotyczyła więc tego, co widzi klient.",
+      "grupa": "Naprawione dziś — obejrzyj ponownie",
+      "powod": "NAPRAWIONE: ekran pokazuje teraz realne menu kanwy z aplikacji, nie przerysowany obrazek. Wcześniejsza ocena dotyczyła rysunku — obejrzyj ponownie to, co widzi klient.",
       "klikalna": true
     },
     "canvas-toolbar-md-history": {
-      "grupa": "3 — obraz nie pokazywał produktu",
-      "powod": "Jak wyżej — stary dowód techniczny, zero elementów produktu w kadrze.",
-      "klikalna": true
-    },
-    "teresa-confirm-chip": {
-      "grupa": "3 — obraz nie pokazywał produktu",
-      "powod": "Kadr zbudowany ręcznie na potrzeby pokazu, bez komponentów z aplikacji.",
+      "grupa": "Naprawione dziś — obejrzyj ponownie",
+      "powod": "NAPRAWIONE: ekran pokazuje realny pasek narzędzi z aplikacji. Potwierdza się, że ikony Historii tam nie ma — ale teraz widać to na produkcie, nie na przerysowanym obrazku.",
       "klikalna": true
     },
     "teresa-chipy-panel-artefaktu": {
@@ -94,23 +89,18 @@
       "czeka": "Przekazane do budowy — zgłoszenie #33 w rejestrze dla toru funkcji."
     },
     "ntype-analizuj-ai": {
-      "grupa": "3 — układ, którego aplikacja nie tworzy",
-      "powod": "Elementy są prawdziwe, ale aplikacja nigdy nie stawia ich obok siebie w tym układzie. Kadr do poprawienia, zanim ocena będzie coś znaczyła.",
+      "grupa": "Naprawione dziś — obejrzyj ponownie",
+      "powod": "NAPRAWIONE: menu ekranu odtwarza układ, który aplikacja naprawdę tworzy (wybór sekcji, Edycja/Podgląd, Analizuj z AI). Wcześniej stały tam obok siebie przyciski, których produkt nigdy nie stawia razem.",
       "klikalna": true
     },
     "results-vnext-okr-admin": {
-      "grupa": "3 — układ, którego aplikacja nie tworzy",
-      "powod": "Jak wyżej — dwa ekrany zestawione w jednym kadrze, choć w aplikacji są osobno.",
-      "klikalna": true
-    },
-    "excele-jeden-widok-materialy": {
-      "grupa": "3 — układ, którego aplikacja nie tworzy",
-      "powod": "Jak wyżej — dwa widoki zestawione w jednym kadrze.",
+      "grupa": "Naprawione dziś — obejrzyj ponownie",
+      "powod": "NAPRAWIONE: wcześniej kadr pokazywał WYŁĄCZNIE komunikat o tym, że programy OKR nie są jeszcze włączone — nie było czego oceniać. Teraz widać realne programy OKR z danymi.",
       "klikalna": true
     },
     "fab-rail-kebab": {
-      "grupa": "3 — układ, którego aplikacja nie tworzy",
-      "powod": "Kadr zestawia elementy, które w aplikacji nie występują razem, i dodatkowo zwęża go do 560 px, czego w produkcie nie ma.",
+      "grupa": "Naprawione dziś — obejrzyj ponownie",
+      "powod": "NAPRAWIONE: zdjęte sztuczne zwężenie do 560 px (było wklejką narzędzia podglądowego) i schowany deweloperski podpis PRZED/PO, który szedł na każdy zrzut jako treść ekranu.",
       "klikalna": true
     }
   }
