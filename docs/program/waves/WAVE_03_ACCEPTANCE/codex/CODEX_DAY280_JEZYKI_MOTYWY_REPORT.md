@@ -2,7 +2,7 @@
 
 ## Stan
 
-Wynik bieżący: **PARTIAL / G06 NIEPODNIESIONE**. R1–R4 wykonane. R5 jeszcze niewykonane.
+Wynik końcowy: **PARTIAL / G06 NIEPODNIESIONE**. R1–R5 wykonane; R6 zamyka dokumentację.
 
 ## Baza i marker — wyniki dosłowne
 
@@ -44,6 +44,14 @@ Zmierzono 56/56 ekranów A/B, 448 zrzutów w pełnej macierzy. Wyniki per ekran 
 
 Zmierzono 71/71 ekranów A/B, 568 zrzutów w pełnej macierzy. `materials-registry` użył osobnego wejścia HTML. Wyniki per ekran dopisano do rejestru.
 
+## R5 — moduły 13–16
+
+Zmierzono 58/58 ekranów A/B, 464 zrzuty w pełnej macierzy. Moduł Partner ma 0 ekranów A/B w mapie. `chat-signals-feed` użył osobnego wejścia HTML.
+
+## Podsumowanie R2–R5
+
+Mapa 16 modułów zawiera 236 ekranów A/B (51 + 56 + 71 + 58), a pełny `status.json` ma 258 A/B, ponieważ obejmuje także sekcje WSPOLNE i POZA16. Wykonano 1888 zrzutów dla 236 ekranów modułowych. G06 nie podniesiono w żadnym module: pomiar wykrywa błędy językowe/konsolowe/HTTP, a dostępność, wszystkie stany i rozwinięte sekcje pozostają NOT_PROVEN.
+
 ## Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -54,7 +62,7 @@ Brak licencjonowanego pakietu Vitest w instrukcji (literalne `brak testów vites
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-Wszystkie ekrany modułów 13–16 (R5) pozostają niewykonane na tym etapie. Dla R2–R4 niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął.
+Dla wszystkich 236 ekranów modułowych niezweryfikowane są: dostępność, wszystkie stany interakcyjne oraz treść ukryta w sekcjach, których harness nie rozwinął. Poza zakresem 16 modułów pozostają 22 ekrany A/B z sekcji WSPOLNE i POZA16.
 
 ## Artefakty
 
