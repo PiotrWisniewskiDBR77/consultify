@@ -803,7 +803,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       </div>
     );
   return (
-    <section aria-label="Capacity scenarios" className="p-4">
+    <section aria-label="Capacity scenarios" className="flex h-full min-h-0 flex-col p-4">
       <header className="mb-3">
         <h2 className="font-semibold">Obciążenie</h2>
         <p className="text-xs text-c-text-muted">
@@ -894,7 +894,15 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           <Eye size={15} /> Otwórz narzędzia obciążenia
         </button>
       </div>
-      <TableWithPreviewLayout<(typeof constraintRows)[number]>
+      {/*
+       * `flex-1 min-h-0` — bez tego opakowania `TableWithPreviewLayout` (root
+       * `h-full`) siedzi jako zwykle dziecko `flex-col` bez `flex-grow`, wiec
+       * nie rosnie do reszty wysokosci sekcji (pomiar 02.09,
+       * scripts/dev/measure-preview-canon.mjs --wysokosc; wzorzec z
+       * ExecutionResourcesSurface.tsx:418-437).
+       */}
+      <div className="flex-1 min-h-0">
+        <TableWithPreviewLayout<(typeof constraintRows)[number]>
         selectedId={selectedConstraintId}
         selectedItem={visibleConstraintRows.find((row) => row.id === selectedConstraintId) ?? null}
         onSelect={setSelectedConstraintId}
@@ -1063,7 +1071,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             description: 'Zmień filtr albo otwórz narzędzia aktywnego wariantu obciążenia.',
           }}
         />
-      </TableWithPreviewLayout>
+        </TableWithPreviewLayout>
+      </div>
       {scenario && workspaceOpen && (
         <section
           aria-label="Capacity Scenario Workbench"
