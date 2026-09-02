@@ -8,8 +8,6 @@
  */
 
 import React, { useEffect } from 'react';
-import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -23,7 +21,6 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { t } = useTranslation();
   const { initiativeId, linkedItems, setLinkedItems } = useInitiativeContext();
 
   // Load persisted links on first expand.
@@ -56,6 +53,9 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
     <SharedLinkedItemsSection
       items={linkedItems}
       onAdd={async (item) => {
+        // Success/failure toasts are owned by SharedLinkedItemsSection (same
+        // contract as MyWork/TaskDetailView.handleAddLinkedItem) — toasting
+        // here too would double them up.
         try {
           const res: any = await Api.post(`/initiatives/${initiativeId}/linked-items`, {
             targetType: item.type,
@@ -64,9 +64,9 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
           });
           const saved = res?.item ?? res;
           setLinkedItems((prev) => [...prev, { ...item, id: String(saved?.id || item.id) }]);
-          toast.success(t('initiatives.linkedItemsSection.itemLinked'));
-        } catch {
-          toast.error(t('initiatives.linkedItemsSection.linkError', 'Nie udało się dodać linku'));
+          return { ok: true as const };
+        } catch (error) {
+          return { ok: false as const, error };
         }
       }}
       onRemove={async (id) => {
@@ -74,10 +74,10 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
         setLinkedItems((prev) => prev.filter((i) => i.id !== id));
         try {
           await Api.delete(`/initiatives/${initiativeId}/linked-items/${id}`);
-          toast.success(t('initiatives.linkedItemsSection.linkRemoved'));
-        } catch {
+          return { ok: true as const };
+        } catch (error) {
           setLinkedItems(prevItems); // rollback on failure
-          toast.error(t('initiatives.linkedItemsSection.linkError', 'Nie udało się usunąć linku'));
+          return { ok: false as const, error };
         }
       }}
       searchItems={async (query) => {
