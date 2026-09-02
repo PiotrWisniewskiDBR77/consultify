@@ -17,7 +17,6 @@ function main(): void {
   const checks: Check[] = [];
 
   const benefitsRoutes = read(root, 'server/src/routes/benefits.routes.ts');
-  const kpiDrawer = read(root, 'src/components/Results/KPITimeSeriesDrawer.tsx');
   const kpiDeviationTest = read(root, 'tests/unit/backend/results/kpiDeviationService.test.ts');
   const attributionService = read(root, 'server/src/services/kpiAttributionService.ts');
   const attributionPanel = read(root, 'src/components/Benefits/KPIAttributionPanel.tsx');
@@ -39,16 +38,12 @@ function main(): void {
     ]),
   });
 
-  checks.push({
-    name: 'H04 results drawer exposes full deviation closure workflow',
-    pass: includesAll(kpiDrawer, [
-      '/benefits/deviation-cases/${openCase.id}/actions/${action.id}',
-      '/benefits/deviation-cases/${openCase.id}/close',
-      'closeEvidenceText',
-      'closeEvidenceRef',
-      'closeResolutionNotes',
-    ]),
-  });
+  // H04 UI: the drawer this check read (src/components/Results/KPITimeSeriesDrawer.tsx)
+  // was deleted with the retired ResultsHub subtree. The live deviation-closure
+  // surface is src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview.tsx on
+  // /results/kpi/:kpiId/deviation-cases/:caseId, talking to kpiDeviationApi.ts —
+  // covered by src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts.
+  // The backend contract above (benefitsRoutes) is still asserted.
 
   checks.push({
     name: 'H04 backend deviation contract has a non-placeholder test',
