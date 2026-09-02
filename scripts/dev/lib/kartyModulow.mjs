@@ -302,6 +302,9 @@ export function kartaModulu(s, ctx) {
   const KAT = {
     PRZYRZAD: 'nasze narzędzie pomiarowe', NIEPODLACZONE: 'jeszcze niepodłączone', ANGIELSKI: 'jeszcze po angielsku',
     DUBLET: 'powtórka', TWOJA_DECYZJA: 'czeka na Twoją decyzję', WYREJESTROWANY: 'wycofane', HISTORYCZNY: 'wpis historyczny',
+    // Powód nazwany wprost, bez owijania — właściciel woli usłyszeć „wygląda źle"
+    // niż zobaczyć lukę, gdy powód jest nam doskonale znany.
+    WYGLAD: 'wygląda źle — poprawiamy',
   };
   const blokPoza = cd.length
     ? `<div class="mblok szary"><h4>Czego ten moduł nie obejmuje <span class="licz">${cd.length}</span></h4>
