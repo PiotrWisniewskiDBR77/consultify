@@ -182,6 +182,20 @@ async function run(): Promise<void> {
     };
   }
 
+  // --- OBSERWACJA (bez naprawy): siostrzany mount tego samego modułu Finance.
+  // `/api/financial-modeling` (Gateway.ts) też stoi za atrapą `betaGate`
+  // i jest wołany z `src/components/Economics/**`. Mierzymy, nie naprawiamy.
+  {
+    const sibling = await requestJson('GET', '/api/financial-modeling/models', { token: user.token });
+    out.siblingObservation = {
+      mount: '/api/financial-modeling',
+      role: user.role,
+      status: sibling.status,
+      code: sibling.body?.code ?? null,
+      stillOpenToNonAdmin: sibling.status !== 403,
+    };
+  }
+
   out.verdict = {
     unauthorizedBlocked: out.negative.blocked,
     authorizedAllowed: out.positive.allowed,
