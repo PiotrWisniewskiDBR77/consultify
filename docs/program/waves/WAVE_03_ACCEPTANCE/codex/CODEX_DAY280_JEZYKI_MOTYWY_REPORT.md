@@ -52,6 +52,8 @@ Zmierzono 58/58 ekranów A/B, 464 zrzuty w pełnej macierzy. Moduł Partner ma 0
 
 Mapa 16 modułów zawiera 236 ekranów A/B (51 + 56 + 71 + 58), a pełny `status.json` ma 258 A/B, ponieważ obejmuje także sekcje WSPOLNE i POZA16. Wykonano 1888 zrzutów dla 236 ekranów modułowych. G06 nie podniesiono w żadnym module: pomiar wykrywa błędy językowe/konsolowe/HTTP, a dostępność, wszystkie stany i rozwinięte sekcje pozostają NOT_PROVEN.
 
+Agregat: 47/236 ekranów dało identyczny wyrenderowany tekst PL i EN; 59/236 miało co najmniej jeden błąd konsoli; 56/236 co najmniej jedną odpowiedź 4xx/5xx. Jedyny poziomy overflow dokumentu przy 1024 px: `admin-command-audit` (1169 px PL, 1165 px EN). Zero par miało 0% różnych pikseli.
+
 ## Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -66,4 +68,8 @@ Dla wszystkich 236 ekranów modułowych niezweryfikowane są: dostępność, wsz
 
 ## Artefakty
 
-`/private/tmp/cx-day280-jezyki-motywy-artefakty`. Sumy SHA-256 zostaną dołączone w R6.
+`/private/tmp/cx-day280-jezyki-motywy-artefakty`: 1890 PNG (1888 R2–R5 + 2 R1), 29 JSON i dwa puste pliki nazw testów. Manifest: `SHA256SUMS.txt`, SHA-256 manifestu `06cb5a4d349c672a3f65c4287fa746256815ba829d3905af94bc63301c06f7b2`.
+
+## R6 — werdykt
+
+**PARTIAL / G06 pozostaje otwarte 0/16.** Rejestr ma 236 wierszy ekranów modułowych. Nie ma podstaw do wpisania VERIFIED: przebieg jest przekrojowym pomiarem renderu, nie pełnym dowodem dostępności i wszystkich stanów.
