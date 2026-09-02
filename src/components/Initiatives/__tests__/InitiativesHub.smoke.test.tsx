@@ -173,7 +173,7 @@ describe('InitiativesHub smoke', () => {
     const prompt = vi.spyOn(window, 'prompt');
     prompt.mockReturnValueOnce('classic-initiative-1').mockReturnValueOnce('candidate-1');
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: 'APPLIED' }), {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ status: 'APPLIED' }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     }));
