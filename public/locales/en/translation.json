@@ -2113,7 +2113,8 @@
     "list": "List",
     "closeDocumentNamed": "Close {{name}}",
     "moreOpenDocuments": "More open documents ({{count}})",
-    "sampleData": "SAMPLE DATA"
+    "sampleData": "SAMPLE DATA",
+    "verifying": "Verifying…"
   },
   "superadmin": {
     "confirm": {
@@ -13850,7 +13851,87 @@
       "verifying": "Verifying your email…"
     },
     "privacyLink": "Privacy Policy",
-    "termsLink": "Terms of Service"
+    "termsLink": "Terms of Service",
+    "accessCodeLabel": "Access code:",
+    "changeAccessCode": "Change access code",
+    "codeAccepted": "Code accepted",
+    "confirmPassword": "Confirm password",
+    "demoModeDescriptionSigned": "Sign up or log in to try the demo. We will follow up with you.",
+    "emailPlaceholder": "you@company.com",
+    "enterAccessCodeCta": "Enter access code",
+    "errors": {
+      "demoSignupFailed": "Demo signup is temporarily unavailable. Please try again.",
+      "emailPasswordRequired": "Email and password are required",
+      "enterAccessCode": "Enter the access code you received from the administrator",
+      "invalidAccessCode": "Invalid or expired access code",
+      "invalidCredentials": "Invalid email or password.",
+      "inviteVerifyFailed": "Failed to verify access code. Please try again.",
+      "loginFailed": "Login failed. Please try again.",
+      "loginRetryFailed": "Login failed. Please check your connection and try again.",
+      "membershipRevoked": "Your access to this organization has been revoked.",
+      "mfaCodeRequired": "Enter the 6-digit authentication code.",
+      "mfaInvalidOrExpired": "The authentication code is invalid or expired. Try a current code.",
+      "mfaVerificationFailed": "Verification could not be completed. Your code was not accepted; retry.",
+      "pendingApproval": "Your account is pending approval.",
+      "quickAccessFailed": "Quick access is temporarily unavailable. Please sign in with your account.",
+      "registrationFailed": "Registration failed. Please try again."
+    },
+    "forgotPasswordPage": {
+      "checkEmail": "Check your email",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "sendLink": "Send reset link",
+      "sentMessage": "If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.",
+      "subtitle": "Enter your email address and we'll send you a link to reset your password.",
+      "title": "Reset your password"
+    },
+    "haveAccessCodePrompt": "Have an organization code?",
+    "invitePlaceholder": "ENTER CODE (e.g. ABCD1234)",
+    "joinWorkspaceDescription": "Complete your personal details and we will connect you to the invited workspace.",
+    "joinWorkspaceTitle": "Create your participant account",
+    "joiningOrg": "Joining {{org}}",
+    "joiningWorkspaceGeneric": "Joining invited workspace",
+    "legalCenterLink": "Legal Center",
+    "legalConsentAnd": "and",
+    "legalConsentPrefix": "I agree to the",
+    "legalConsentRequired": "Please confirm that you accept the Terms of Service and Privacy Policy to continue.",
+    "legalReviewDivider": "or visit the",
+    "legalReviewNote": "Review pricing and legal materials in",
+    "logInForDemo": "Log in for Demo",
+    "newPassword": "New password",
+    "pending": {
+      "description": "Your organization is currently waiting for manual approval. You will receive an email once your access is granted.",
+      "title": "Access Pending"
+    },
+    "plannedRole": "Planned role: {{role}}",
+    "quickAccessFooter": "Enter your PIN. To hide this field, double-click the logo or press Ctrl+Shift+K.",
+    "quickAccessLogoAria": "Open quick PIN sign-in (double-click)",
+    "quickAccessLogoHint": "Double-click the logo (or Ctrl+Shift+K / Cmd+Shift+K) to enter a 4-digit PIN.",
+    "quickAccessPinAria": "Four-digit quick access PIN",
+    "resetPassword": {
+      "errorGeneric": "Failed to reset password. The link may have expired.",
+      "invalidToken": "Invalid or missing reset token",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "requestNew": "Please request a new password reset link.",
+      "submit": "Reset password",
+      "subtitle": "Enter your new password below.",
+      "successMessage": "Your password has been reset successfully. You can now log in with your new password.",
+      "successTitle": "Password updated",
+      "title": "Set new password"
+    },
+    "roleAfterRegistration": "Role after registration: {{role}}",
+    "roles": {
+      "admin": "Admin",
+      "guest": "Guest",
+      "manager": "Manager",
+      "owner": "Owner",
+      "participant": "Participant"
+    },
+    "signUpForDemo": "Sign up for Demo",
+    "subscriptionLink": "Subscription Terms",
+    "verifyingCode": "Verifying code...",
+    "workspaceAutoSelect": "Workspace will be selected automatically after registration.",
+    "workspaceNamed": "Workspace: {{name}}"
   },
   "help": {
     "onboarding": {
@@ -30019,7 +30100,12 @@
   "mfa": {
     "challenge": {
       "failed": "Failed",
-      "error": "Error"
+      "error": "Error",
+      "codeLabel": "Authentication code",
+      "enterTotp": "Enter the code from your authenticator app",
+      "title": "Two-Factor Authentication",
+      "trustDevice": "Trust this device for 30 days",
+      "verify": "Verify"
     },
     "setup": {
       "next": "next",
@@ -40737,6 +40823,32 @@
       "previous": "Previous slide",
       "goToSlide": "Go to slide {{n}}",
       "next": "Next slide"
+    }
+  },
+  "meta": {
+    "login": {
+      "title": "Sign In",
+      "description": "Sign in to your Consultify workspace."
+    },
+    "register": {
+      "title": "Create Account",
+      "description": "Create your Consultify account and start your workspace."
+    },
+    "demo": {
+      "title": "Demo",
+      "description": "Experience Consultify with realistic demo data. No signup required."
+    },
+    "trialStart": {
+      "title": "Start Trial",
+      "description": "Start your free Consultify trial."
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "description": "Reset the password for your Consultify account."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "description": "Set a new password for your Consultify account."
     }
   }
 }

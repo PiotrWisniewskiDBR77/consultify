@@ -33,15 +33,6 @@ type InviteCodeInfo = {
   role?: string;
 } | null;
 
-const AUTH_PUBLIC_ERROR_COPY = {
-  quickAccessFailed: 'Quick access is temporarily unavailable. Please sign in with your account.',
-  inviteVerifyFailed: 'Failed to verify access code. Please try again.',
-  demoSignupFailed: 'Demo signup is temporarily unavailable. Please try again.',
-  registrationFailed: 'Registration failed. Please try again.',
-  loginFailed: 'Login failed. Please try again.',
-  loginRetryFailed: 'Login failed. Please check your connection and try again.',
-} as const;
-
 type PublicAuthErrorContext =
   | 'quickAccess'
   | 'inviteVerify'
@@ -50,7 +41,15 @@ type PublicAuthErrorContext =
   | 'login'
   | 'loginRetry';
 
-function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): string {
+// `t` is threaded in explicitly (not read from a hook) because this helper is
+// module-scope, called from callbacks that already have `t` from the
+// component's useTranslation() — keeps every public auth error translated
+// instead of stuck on its English fallback (2026-09-02, i18n audit).
+function mapPublicAuthError(
+  t: (key: string, defaultValue?: string) => string,
+  error: unknown,
+  context: PublicAuthErrorContext
+): string {
   const raw = error as {
     code?: unknown;
     error?: { code?: unknown };
@@ -66,30 +65,39 @@ function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): st
           : null;
 
   if (code === 'AUTH_LOGIN_INVALID_CREDENTIALS' || code === 'AUTH_INVALID_CREDENTIALS') {
-    return 'Invalid email or password.';
+    return t('auth.errors.invalidCredentials', 'Invalid email or password.');
   }
   if (code === 'AUTH_PENDING_APPROVAL') {
-    return 'Your account is pending approval.';
+    return t('auth.errors.pendingApproval', 'Your account is pending approval.');
   }
   if (code === 'ORG_MEMBERSHIP_REVOKED') {
-    return 'Your access to this organization has been revoked.';
+    return t('auth.errors.membershipRevoked', 'Your access to this organization has been revoked.');
   }
 
   switch (context) {
     case 'quickAccess':
-      return AUTH_PUBLIC_ERROR_COPY.quickAccessFailed;
+      return t(
+        'auth.errors.quickAccessFailed',
+        'Quick access is temporarily unavailable. Please sign in with your account.'
+      );
     case 'inviteVerify':
-      return AUTH_PUBLIC_ERROR_COPY.inviteVerifyFailed;
+      return t('auth.errors.inviteVerifyFailed', 'Failed to verify access code. Please try again.');
     case 'demoSignup':
-      return AUTH_PUBLIC_ERROR_COPY.demoSignupFailed;
+      return t(
+        'auth.errors.demoSignupFailed',
+        'Demo signup is temporarily unavailable. Please try again.'
+      );
     case 'registration':
-      return AUTH_PUBLIC_ERROR_COPY.registrationFailed;
+      return t('auth.errors.registrationFailed', 'Registration failed. Please try again.');
     case 'login':
-      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+      return t('auth.errors.loginFailed', 'Login failed. Please try again.');
     case 'loginRetry':
-      return AUTH_PUBLIC_ERROR_COPY.loginRetryFailed;
+      return t(
+        'auth.errors.loginRetryFailed',
+        'Login failed. Please check your connection and try again.'
+      );
     default:
-      return AUTH_PUBLIC_ERROR_COPY.loginFailed;
+      return t('auth.errors.loginFailed', 'Login failed. Please try again.');
   }
 }
 
@@ -150,26 +158,29 @@ export function isQuickAccessEnabledHost(hostname: string): boolean {
   return !isProdPublic && isQuickAccessShortcutHost(hostname);
 }
 
-function formatInviteRoleLabel(role?: string): string {
+function formatInviteRoleLabel(
+  t: (key: string, defaultValue?: string) => string,
+  role?: string
+): string {
   const normalized = String(role || '')
     .trim()
     .toUpperCase();
 
   switch (normalized) {
     case 'OWNER':
-      return 'Owner';
+      return t('auth.roles.owner', 'Owner');
     case 'ADMIN':
-      return 'Admin';
+      return t('auth.roles.admin', 'Admin');
     case 'PROJECT_MANAGER':
     case 'MANAGER':
-      return 'Manager';
+      return t('auth.roles.manager', 'Manager');
     case 'GUEST':
-      return 'Guest';
+      return t('auth.roles.guest', 'Guest');
     case 'MEMBER':
     case 'USER':
-      return 'Participant';
+      return t('auth.roles.participant', 'Participant');
     default:
-      return 'Participant';
+      return t('auth.roles.participant', 'Participant');
   }
 }
 
@@ -273,7 +284,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       // A wrong PIN, a disabled endpoint and a server fault all land here with
       // the same non-leaking copy. Crucially it IS an error: the pre-FIX-2 path
       // failed silently, which is what made the dead shortcut invisible.
-      setError(mapPublicAuthError(err, 'quickAccess'));
+      setError(mapPublicAuthError(t, err, 'quickAccess'));
       setQuickCode('');
     } finally {
       setIsDemoLoading(false);
@@ -355,7 +366,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const verifyInviteCode = async () => {
     const normalizedCode = inviteCode.trim().toUpperCase();
     if (!normalizedCode) {
-      setError('Enter the access code you received from the administrator');
+      setError(t('auth.errors.enterAccessCode', 'Enter the access code you received from the administrator'));
       return;
     }
 
@@ -366,7 +377,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       const validation = await Api.verifyAccessCode(normalizedCode);
       if (!validation.valid) {
         setInviteCodeInfo(null);
-        setError(validation.reason || 'Invalid or expired access code');
+        setError(validation.reason || t('auth.errors.invalidAccessCode', 'Invalid or expired access code'));
         return;
       }
 
@@ -377,7 +388,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setStep(AuthStep.REGISTER);
     } catch (err: any) {
       setInviteCodeInfo(null);
-      setError(mapPublicAuthError(err, 'inviteVerify'));
+      setError(mapPublicAuthError(t, err, 'inviteVerify'));
     } finally {
       setIsVerifyingInviteCode(false);
     }
@@ -445,7 +456,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         // it is restated here so the guarantee does not depend on that.
         onAuthSuccess({ ...bindUserToDemoSession(user, demoSession), hasWorkspace: true } as any);
       } catch (err: any) {
-        setError(mapPublicAuthError(err, 'demoSignup'));
+        setError(mapPublicAuthError(t, err, 'demoSignup'));
 
         const ctx = readAnnaLpCtaContext();
         if (ctx && ctx.cta_type === 'demo') {
@@ -512,7 +523,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setIsPending(true);
         return;
       }
-      setError(mapPublicAuthError(err, 'registration'));
+      setError(mapPublicAuthError(t, err, 'registration'));
     }
   };
 
@@ -557,7 +568,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       passwordInput instanceof HTMLInputElement ? passwordInput.value : formData.password;
 
     if (!submittedEmail || !submittedPassword) {
-      setError('Email and password are required');
+      setError(t('auth.errors.emailPasswordRequired', 'Email and password are required'));
       return;
     }
 
@@ -575,7 +586,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         adoptDemoSession(session);
         onAuthSuccess({ ...bindUserToDemoSession(user, session), hasWorkspace: true } as any);
       } catch (err: any) {
-        setError(mapPublicAuthError(err, 'login'));
+        setError(mapPublicAuthError(t, err, 'login'));
       } finally {
         setIsDemoLoading(false);
       }
@@ -627,7 +638,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         if (String(err?.data?.code || '').toUpperCase() === 'ORG_MEMBERSHIP_REVOKED') {
           setFormData((current) => ({ ...current, password: '' }));
-          setError(mapPublicAuthError(err, 'login'));
+          setError(mapPublicAuthError(t, err, 'login'));
           return;
         }
 
@@ -647,7 +658,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             setIsPending(true);
             return;
           }
-          setError(mapPublicAuthError(err, 'login'));
+          setError(mapPublicAuthError(t, err, 'login'));
           return; // Don't retry auth errors
         }
 
@@ -662,9 +673,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     // All retries failed
     if (lastError) {
-      setError(mapPublicAuthError(lastError, 'loginRetry'));
+      setError(mapPublicAuthError(t, lastError, 'loginRetry'));
     } else {
-      setError(mapPublicAuthError(null, 'login'));
+      setError(mapPublicAuthError(t, null, 'login'));
     }
   };
 
@@ -684,7 +695,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (!mfaChallenge || mfaChallenge.submitting) return;
     if (!/^\d{6}$/.test(mfaChallenge.code)) {
       setMfaChallenge((current) =>
-        current ? { ...current, error: 'Enter the 6-digit authentication code.' } : current
+        current ? { ...current, error: t('auth.errors.mfaCodeRequired', 'Enter the 6-digit authentication code.') } : current
       );
       return;
     }
@@ -709,13 +720,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
       if (code === 'ORG_MEMBERSHIP_REVOKED') {
         setMfaChallenge(null);
         setFormData((current) => ({ ...current, password: '' }));
-        setError(mapPublicAuthError(err, 'login'));
+        setError(mapPublicAuthError(t, err, 'login'));
         return;
       }
       const message =
         err?.data?.mfaRequired === true || err?.status === 401
-          ? 'The authentication code is invalid or expired. Try a current code.'
-          : 'Verification could not be completed. Your code was not accepted; retry.';
+          ? t('auth.errors.mfaInvalidOrExpired', 'The authentication code is invalid or expired. Try a current code.')
+          : t(
+              'auth.errors.mfaVerificationFailed',
+              'Verification could not be completed. Your code was not accepted; retry.'
+            );
       setMfaChallenge((current) =>
         current ? { ...current, code: '', error: message, submitting: false } : current
       );
@@ -728,10 +742,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <Lock className="text-c-warning" size={32} />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-c-text mb-2">Access Pending</h2>
+        <h2 className="text-2xl font-bold text-c-text mb-2">{t('auth.pending.title', 'Access Pending')}</h2>
         <p className="text-c-text-muted text-sm max-w-xs mx-auto leading-relaxed">
-          Your organization is currently waiting for manual approval. You will receive an email once
-          your access is granted.
+          {t(
+            'auth.pending.description',
+            'Your organization is currently waiting for manual approval. You will receive an email once your access is granted.'
+          )}
         </p>
       </div>
       <button
@@ -739,9 +755,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setIsPending(false);
           setStep(AuthStep.LOGIN);
         }}
-        className="text-c-accent hover:opacity-80 font-medium hover:underline text-sm transition-colors"
+        className="text-c-focus-solid hover:opacity-80 font-medium hover:underline text-sm transition-colors"
       >
-        Back to Login
+        {t('auth.backToLogin')}
       </button>
     </div>
   );
@@ -765,14 +781,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDemoRedirectToForm}
-          className="w-full py-2.5 bg-c-accent hover:opacity-90 text-white font-semibold rounded-lg transition-colors shadow-lg flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-c-text hover:opacity-90 text-c-bg font-semibold rounded-lg transition-colors shadow-lg flex items-center justify-center gap-2"
         >
           {t('auth.signUpForDemo', 'Sign up for Demo')}
           <ArrowRight size={16} />
         </button>
         <button
           onClick={handleDemoRedirectToLogin}
-          className="w-full py-2.5 bg-c-surface border border-c-border text-c-text font-semibold rounded-lg hover:border-c-accent/30 transition-colors"
+          className="w-full py-2.5 bg-c-surface border border-c-border text-c-text font-semibold rounded-lg hover:border-c-border-strong transition-colors"
         >
           {t('auth.logInForDemo', 'Log in for Demo')}
         </button>
@@ -792,7 +808,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setFromDemoRedirect(false);
           setError(null);
         }}
-        className="text-c-accent hover:opacity-80 font-medium hover:underline text-sm transition-colors"
+        className="text-c-focus-solid hover:opacity-80 font-medium hover:underline text-sm transition-colors"
       >
         {t('auth.back', 'Back')}
       </button>
@@ -821,20 +837,27 @@ export const AuthView: React.FC<AuthViewProps> = ({
           type="text"
           value={inviteCode}
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-          placeholder="WPISZ KOD (np. ABCD1234)"
+          placeholder={t('auth.invitePlaceholder', 'WPISZ KOD (np. ABCD1234)')}
           autoComplete="off"
           className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-c-text focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus focus:bg-c-surface-raised outline-none transition-colors shadow-sm"
         />
         {inviteCodeInfo?.code && (
           <div className="rounded-lg border border-c-success/20 bg-c-success/10 px-3 py-3 text-xs text-c-success">
-            <div className="font-semibold">Code accepted</div>
+            <div className="font-semibold">{t('auth.codeAccepted', 'Code accepted')}</div>
             <div className="mt-1">
               {inviteCodeInfo.organizationName
-                ? `Workspace: ${inviteCodeInfo.organizationName}`
-                : 'Workspace will be selected automatically after registration.'}
+                ? t('auth.workspaceNamed', 'Workspace: {{name}}', {
+                    name: inviteCodeInfo.organizationName,
+                  })
+                : t(
+                    'auth.workspaceAutoSelect',
+                    'Workspace will be selected automatically after registration.'
+                  )}
             </div>
             <div className="mt-1">
-              Role after registration: {formatInviteRoleLabel(inviteCodeInfo.role)}
+              {t('auth.roleAfterRegistration', 'Role after registration: {{role}}', {
+                role: formatInviteRoleLabel(t, inviteCodeInfo.role),
+              })}
             </div>
           </div>
         )}
@@ -888,13 +911,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="rounded-lg border border-c-info/20 bg-c-info/10 px-3 py-3 text-xs leading-5 text-c-info">
             <div className="font-semibold">
               {inviteCodeInfo?.organizationName
-                ? `Joining ${inviteCodeInfo.organizationName}`
-                : 'Joining invited workspace'}
+                ? t('auth.joiningOrg', 'Joining {{org}}', { org: inviteCodeInfo.organizationName })
+                : t('auth.joiningWorkspaceGeneric', 'Joining invited workspace')}
             </div>
             <div className="mt-1">
-              Access code: <span className="font-mono">{formData.accessCode}</span>
+              {t('auth.accessCodeLabel', 'Access code:')}{' '}
+              <span className="font-mono">{formData.accessCode}</span>
             </div>
-            <div className="mt-1">Planned role: {formatInviteRoleLabel(inviteCodeInfo?.role)}</div>
+            <div className="mt-1">
+              {t('auth.plannedRole', 'Planned role: {{role}}', {
+                role: formatInviteRoleLabel(t, inviteCodeInfo?.role),
+              })}
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -903,7 +931,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               }}
               className="mt-2 text-xs font-medium text-c-info hover:underline"
             >
-              Change access code
+              {t('auth.changeAccessCode', 'Change access code')}
             </button>
           </div>
         )}
@@ -911,7 +939,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-c-text-secondary">
-              {t('auth.firstName')} <span className="text-c-accent">*</span>
+              {t('auth.firstName')} <span className="text-c-danger">*</span>
             </label>
             <input
               required
@@ -922,7 +950,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-c-text-secondary">
-              {t('auth.lastName')} <span className="text-c-accent">*</span>
+              {t('auth.lastName')} <span className="text-c-danger">*</span>
             </label>
             <input
               required
@@ -935,7 +963,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.email')} <span className="text-c-accent">*</span>
+            {t('auth.email')} <span className="text-c-danger">*</span>
           </label>
           <input
             type="email"
@@ -987,7 +1015,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-c-text-secondary">
-            {t('auth.password')} <span className="text-c-accent">*</span>
+            {t('auth.password')} <span className="text-c-danger">*</span>
           </label>
           <input
             type="password"
@@ -1016,15 +1044,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="checkbox"
               checked={hasAcceptedLegal}
               onChange={(e) => setHasAcceptedLegal(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-c-border text-c-accent focus:ring-c-focus"
+              className="mt-0.5 h-4 w-4 rounded border-c-border text-c-text focus:ring-c-focus"
             />
             <span>
               {t('auth.legalConsentPrefix', 'I agree to the')}{' '}
-              <a href={ROUTES.LEGAL.TERMS} className="font-medium text-c-accent hover:underline">
+              <a href={ROUTES.LEGAL.TERMS} className="font-medium text-c-focus-solid hover:underline">
                 {t('auth.termsLink', 'Terms of Service')}
               </a>{' '}
               {t('auth.legalConsentAnd', 'and')}{' '}
-              <a href={ROUTES.LEGAL.PRIVACY} className="font-medium text-c-accent hover:underline">
+              <a href={ROUTES.LEGAL.PRIVACY} className="font-medium text-c-focus-solid hover:underline">
                 {t('auth.privacyLink', 'Privacy Policy')}
               </a>
               .
@@ -1034,12 +1062,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {t('auth.legalReviewNote', 'Review pricing and legal materials in')}{' '}
             <a
               href={ROUTES.LEGAL.SUBSCRIPTION}
-              className="font-medium text-c-accent hover:underline"
+              className="font-medium text-c-focus-solid hover:underline"
             >
               {t('auth.subscriptionLink', 'Subscription Terms')}
             </a>{' '}
             {t('auth.legalReviewDivider', 'or visit the')}{' '}
-            <a href={ROUTES.LEGAL.CENTER} className="font-medium text-c-accent hover:underline">
+            <a href={ROUTES.LEGAL.CENTER} className="font-medium text-c-focus-solid hover:underline">
               {t('auth.legalCenterLink', 'Legal Center')}
             </a>
             .
@@ -1057,7 +1085,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {t('auth.haveAccount')}{' '}
           <button
             onClick={() => setStep(AuthStep.LOGIN)}
-            className="text-c-accent hover:opacity-80 font-medium hover:underline"
+            className="text-c-focus-solid hover:opacity-80 font-medium hover:underline"
           >
             {t('auth.logIn')}
           </button>
@@ -1123,7 +1151,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <button
               type="button"
               onClick={() => (window.location.href = '/forgot-password')}
-              className="text-xs text-c-accent hover:underline"
+              className="text-xs text-c-focus-solid hover:underline"
             >
               {t('auth.forgotPassword')}
             </button>
@@ -1165,7 +1193,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {t('auth.noAccount')}{' '}
         <button
           onClick={() => setStep(AuthStep.REGISTER)}
-          className="text-c-accent hover:opacity-80 font-medium hover:underline"
+          className="text-c-focus-solid hover:opacity-80 font-medium hover:underline"
         >
           {t('auth.createOne')}
         </button>
@@ -1189,21 +1217,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="text-center pt-3 border-t border-c-border">
         <a
           href={ROUTES.LEGAL.PRIVACY}
-          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-text transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
         <span className="text-c-text-muted mx-2">•</span>
         <a
           href={ROUTES.LEGAL.TERMS}
-          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-text transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
         </a>
         <span className="text-c-text-muted mx-2">•</span>
         <a
           href={ROUTES.LEGAL.CENTER}
-          className="text-xs text-c-text-muted hover:text-c-accent transition-colors"
+          className="text-xs text-c-text-muted hover:text-c-text transition-colors"
         >
           {t('auth.legalCenterLink', 'Legal Center')}
         </a>
@@ -1229,10 +1257,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <form onSubmit={submitMfaChallenge} className="space-y-4">
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-c-text-secondary">Authentication code</span>
+            <span className="text-xs font-medium text-c-text-secondary">{t('mfa.challenge.codeLabel', 'Authentication code')}</span>
             <input
               autoFocus
-              aria-label="Authentication code"
+              aria-label={t('mfa.challenge.codeLabel', 'Authentication code')}
               autoComplete="one-time-code"
               inputMode="numeric"
               pattern="[0-9]{6}"
@@ -1291,7 +1319,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             }}
             className="w-full text-sm font-medium text-c-text-muted hover:text-c-text"
           >
-            Back to login
+            {t('auth.backToLogin')}
           </button>
         </form>
       </div>
@@ -1428,7 +1456,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="mt-8 flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200 delay-100">
         <a
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-c-surface/50 border border-c-border rounded-lg text-c-text-secondary hover:text-c-accent hover:border-c-accent/30 text-sm transition-colors group"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface/50 border border-c-border rounded-lg text-c-text-secondary hover:text-c-text hover:border-c-border-strong text-sm transition-colors group"
         >
           <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           {t('auth.backToStart')}

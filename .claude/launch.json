@@ -2,6 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "logowanie-i18n-20260902",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4560",
+        "--strictPort"
+      ],
+      "port": 4560
+    },
+    {
       "name": "grafika-odbior-20260830",
       "runtimeExecutable": "npx",
       "runtimeArgs": [

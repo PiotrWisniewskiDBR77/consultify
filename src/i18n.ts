@@ -77,7 +77,16 @@ i18n
   .init({
     // Supported languages
     supportedLngs: SUPPORTED_LANGUAGES,
-    // Prefer per-language fallback chains (and always end with EN)
+    // Prefer per-language fallback chains.
+    // NOTE (2026-09-02, grafika/logowanie-i18n): `default` is the ultimate
+    // safety net when nothing usable was detected (unsupported navigator
+    // locale, no navigator at all, stale/invalid localStorage value). It used
+    // to be ['en'] — on a Polish-first product with no language switcher on
+    // the pre-login screens (login/register/forgot-password/reset-password),
+    // that silently defaulted anonymous visitors to English. Changed to
+    // ['pl']. This does NOT touch `detection.order` below: an explicit
+    // localStorage choice or a real navigator language (including 'en') is
+    // still detected and still wins — only the last-resort fallback changed.
     fallbackLng: {
       en: ['en'],
       pl: ['pl', 'en'],
@@ -85,7 +94,7 @@ i18n
       es: ['es', 'en'],
       ar: ['ar', 'en'],
       ja: ['ja', 'en'],
-      default: ['en'],
+      default: ['pl'],
     },
     // Use browser language like "pl-PL" -> "pl"
     load: 'languageOnly',

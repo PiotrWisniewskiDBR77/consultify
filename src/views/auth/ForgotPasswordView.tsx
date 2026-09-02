@@ -23,7 +23,7 @@ export const ForgotPasswordView: React.FC = () => {
       setStatus('error');
       setErrorMsg(
         err?.message ||
-          t('auth.forgotPassword.errorGeneric', 'Something went wrong. Please try again.')
+          t('auth.forgotPasswordPage.errorGeneric', 'Something went wrong. Please try again.')
       );
     }
   };
@@ -49,11 +49,11 @@ export const ForgotPasswordView: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-c-text">
-              {t('auth.forgotPassword.checkEmail', 'Check your email')}
+              {t('auth.forgotPasswordPage.checkEmail', 'Check your email')}
             </h2>
             <p className="mt-2 text-sm text-c-text-secondary">
               {t(
-                'auth.forgotPassword.sentMessage',
+                'auth.forgotPasswordPage.sentMessage',
                 'If an account with that email exists, we sent a password reset link. Please check your inbox and spam folder.'
               )}
             </p>
@@ -74,11 +74,11 @@ export const ForgotPasswordView: React.FC = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-c-text">
-            {t('auth.forgotPassword.title', 'Reset your password')}
+            {t('auth.forgotPasswordPage.title', 'Reset your password')}
           </h2>
           <p className="mt-2 text-sm text-c-text-secondary">
             {t(
-              'auth.forgotPassword.subtitle',
+              'auth.forgotPasswordPage.subtitle',
               "Enter your email address and we'll send you a link to reset your password."
             )}
           </p>
@@ -110,14 +110,14 @@ export const ForgotPasswordView: React.FC = () => {
             >
               {status === 'loading'
                 ? t('common.sending', 'Sending...')
-                : t('auth.forgotPassword.sendLink', 'Send reset link')}
+                : t('auth.forgotPasswordPage.sendLink', 'Send reset link')}
             </button>
           </form>
 
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="text-sm text-c-accent hover:underline"
+              className="text-sm text-c-focus-solid hover:underline"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>
