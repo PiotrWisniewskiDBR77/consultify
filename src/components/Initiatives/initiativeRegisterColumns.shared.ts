@@ -45,7 +45,7 @@ export type InitiativeRegisterRow = PortfolioInitiative & {
 
 const h = React.createElement;
 
-const formatPlannedWindow = (raw: unknown): string => {
+export const formatPlannedWindow = (raw: unknown): string => {
   const value = typeof raw === 'string' ? raw.trim() : '';
   if (!value) return '—';
   const [start, end] = value.split('/').map((part) => part.trim());

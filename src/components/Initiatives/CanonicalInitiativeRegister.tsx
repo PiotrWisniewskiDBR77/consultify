@@ -2,15 +2,22 @@ import { Copy, ExternalLink, Lightbulb } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import {
   createInitiativeRegisterColumns,
   createInitiativeRegisterRowMenu,
+  formatPlannedWindow,
   INITIATIVE_REGISTER_COLUMN_IDS,
   type InitiativeRegisterRow,
 } from './initiativeRegisterColumns.shared';
-import { INITIATIVE_SOURCE_FRESHNESS_LABELS } from './initiativeRegisterProjection';
+import {
+  INITIATIVE_GATE_NAME_LABELS,
+  INITIATIVE_GATE_READINESS_LABELS,
+  INITIATIVE_LIFECYCLE_LABELS,
+  INITIATIVE_SOURCE_FRESHNESS_LABELS,
+} from './initiativeRegisterProjection';
 
 /**
  * "Planowane okno" w danych demo/rejestrze jest jednym stringiem
