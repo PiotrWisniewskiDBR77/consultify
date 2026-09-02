@@ -1,0 +1,273 @@
+# Rejestr schematu od zera — 2026-09-02
+
+## A. Pełny przebieg migracji od zera
+
+- Marker: `eeb253c3ec13195a04b3848ef2566c5c07786e58`.
+- Lokalna baza: kontener `cx-day281-pg`, PostgreSQL `pgvector/pgvector:pg16`, port hosta `127.0.0.1:6268`, baza `cx281`.
+- Runner zgłosił `Applying migrations: 882`, wykonał pełny przebieg i zakończył `Postgres migrations complete`.
+- W pełnym logu nie znaleziono błędu ani ostrzeżenia. Trafienie słowa `exception` pochodzi wyłącznie z nazwy migracji `20260809_finance_v3_b05_exception_ledger.sql`.
+- `schema_migrations` po przebiegu: `882` wiersze.
+- `to_regclass('public.email_verification_tokens')` po migracjach: `NULL` — tabela nie powstała.
+- Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r1-migrate-full.log`.
+- SHA-256 logu: `c5fd75a05660423fff9f6a10345691417d9d5a661129f3d9d7abf1e25898334a`.
+
+## B. Tabele tworzone poza migracjami
+
+Pomiar wykrył **208** wystąpień `CREATE TABLE IF NOT EXISTS` w `server/src/services`.
+
+| Serwis | Plik:linia | Tabela | Typy PostgreSQL | Migracja tworząca tabelę |
+| --- | --- | --- | --- | --- |
+| `auditProgramService.e2e-sqlite.test.ts` | `server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts:137` | `audit_programs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260813_audits_method_core.sql |
+| `auditProgramService.e2e-sqlite.test.ts` | `server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts:156` | `organization_members` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260412_organization_switch_log.sql, server/migrations/727_beta_missing_tables.sql, server/migrations/never-ran/016_organization_skeleton.sql.sql |
+| `auditProgramService.e2e-sqlite.test.ts` | `server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts:159` | `interview_library_templates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/297_interview_library_templates.sql, server/migrations/727_beta_missing_tables.sql, server/migrations/never-ran/665_v6_interview_templates_foundation.sql |
+| `auditProgramService.e2e-sqlite.test.ts` | `server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts:162` | `interview_assignments` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/299_interview_assignments.sql, server/migrations/575_interview_sendback_missing_items.sql, server/migrations/727_beta_missing_tables.sql |
+| `executionActionRegistryService.pg.test.ts` | `server/src/services/__tests__/executionActionRegistryService.pg.test.ts:23` | `exe_action_uow_probe` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `integrationOwnershipService.test.ts` | `server/src/services/__tests__/integrationOwnershipService.test.ts:24` | `integration_ownership))` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `integrationsConnectorRuntimeShape21.realdb.test.ts` | `server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts:4` | `and` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260813_method_core_1_kernel.sql, server/migrations/20260813_method_core_2_outputs.sql, server/migrations/20261023_integrations_connector_runtime_shape.sql, server/migrations/934_initiative_closure_evidence_gate.sql |
+| `integrationsConnectorRuntimeShape21.realdb.test.ts` | `server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts:30` | `integrations` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260411_p01_workflow_policy.sql, server/migrations/20261023_integrations_connector_runtime_shape.sql, server/migrations/256_integrations_system.sql, server/migrations/727_beta_missing_tables.sql |
+| `integrationsConnectorRuntimeShape21.realdb.test.ts` | `server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts:338` | `integrations` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260411_p01_workflow_policy.sql, server/migrations/20261023_integrations_connector_runtime_shape.sql, server/migrations/256_integrations_system.sql, server/migrations/727_beta_missing_tables.sql |
+| `integrationsConnectorRuntimeShape21.realdb.test.ts` | `server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts:524` | `/` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `meetingService.test.ts` | `server/src/services/__tests__/meetingService.test.ts:85` | `meeting_notes` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260912_claude_c_meeting_boundary.sql |
+| `meetingService.test.ts` | `server/src/services/__tests__/meetingService.test.ts:97` | `artifact_handoff_proposals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260912_claude_c_handoff_spine.sql |
+| `meetingService.test.ts` | `server/src/services/__tests__/meetingService.test.ts:110` | `artifact_handoff_receipts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260912_claude_c_handoff_spine.sql |
+| `organizationSuspensionGuard.pg.test.ts` | `server/src/services/__tests__/organizationSuspensionGuard.pg.test.ts:17` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `statementOwnerAcceptance.pg.test.ts` | `server/src/services/__tests__/statementOwnerAcceptance.pg.test.ts:105` | `wave3_owner_fixture_markers` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiCostAlertsService.ts` | `server/src/services/ai/aiCostAlertsService.ts:54` | `ai_cost_alerts_sent` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiRoutingBootstrapService.ts` | `server/src/services/ai/aiRoutingBootstrapService.ts:42` | `ai_purposes` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/576_ai_enterprise_llm_registry.sql |
+| `aiRoutingBootstrapService.ts` | `server/src/services/ai/aiRoutingBootstrapService.ts:52` | `ai_purpose_assignments` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/576_ai_enterprise_llm_registry.sql |
+| `chatTraceService.ts` | `server/src/services/ai/chatTraceService.ts:41` | `ai_chat_runs` | NIE — zawiera DATETIME | NIE |
+| `chatTraceService.ts` | `server/src/services/ai/chatTraceService.ts:63` | `ai_chat_run_events` | NIE — zawiera DATETIME | NIE |
+| `documentGovernance.ts` | `server/src/services/ai/documentGovernance.ts:180` | `ai_doc_access_approvals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `embeddingService` | `server/src/services/ai/embeddingService:318` | `ai_knowledge_embeddings` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/init-pgvector.sql |
+| `embeddingService.ts` | `server/src/services/ai/embeddingService.ts:435` | `ai_knowledge_embeddings` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/init-pgvector.sql |
+| `evalHarnessService.ts` | `server/src/services/ai/evalHarnessService.ts:123` | `ai_eval_regression_gates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/659_v4_eval_harness.sql |
+| `evalHarnessService.ts` | `server/src/services/ai/evalHarnessService.ts:138` | `ai_eval_release_bundles` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `knowledgeGraphService.ts` | `server/src/services/ai/knowledgeGraphService.ts:432` | `knowledge_graph_entities` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/650_v4_unified_knowledge_graph.sql |
+| `knowledgeGraphService.ts` | `server/src/services/ai/knowledgeGraphService.ts:443` | `knowledge_graph_relations` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/650_v4_unified_knowledge_graph.sql |
+| `knowledgeIndexer.ts` | `server/src/services/ai/knowledgeIndexer.ts:271` | `knowledge_docs` | NIE — zawiera DATETIME | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `knowledgeIndexer.ts` | `server/src/services/ai/knowledgeIndexer.ts:287` | `knowledge_chunks` | NIE — zawiera DATETIME | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql, server/migrations/266_knowledge_rag.sql |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:449` | `llm_logs` | NIE — zawiera DATETIME | TAK — server/migrations/578_llm_logs_compat_columns.sql |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:470` | `llm_health_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:507` | `llm_providers` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql, server/migrations/251_llm_providers_demo_seed.sql |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:594` | `organization_llm_settings` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:607` | `llm_tier_assignments` | NIE — zawiera DATETIME | TAK — server/migrations/000_z_core_baseline.sql, server/migrations/20260402_llm_providers_vector_dbr77.sql, server/migrations/209_llm_tier_assignments.sql |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:621` | `ai_model_overrides` | NIE — zawiera DATETIME | NIE |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:635` | `organization_provider_settings` | NIE — zawiera DATETIME | TAK — server/migrations/576_ai_enterprise_llm_registry.sql |
+| `llmConfigService.ts` | `server/src/services/ai/llmConfigService.ts:649` | `tier_round_robin_state` | NIE — zawiera DATETIME | NIE |
+| `organizationMemoryStore.ts` | `server/src/services/ai/organizationMemoryStore.ts:119` | `organization_memory` | NIE — zawiera DATETIME | TAK — server/migrations/051_memory_system.sql |
+| `proactiveNudges.ts` | `server/src/services/ai/proactiveNudges.ts:80` | `ai_dismissed_nudges` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/520_ai_enterprise_tables.sql |
+| `proactiveNudges.ts` | `server/src/services/ai/proactiveNudges.ts:124` | `ai_nudge_activity` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `proactiveNudges.ts` | `server/src/services/ai/proactiveNudges.ts:170` | `ai_nudge_actions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `proactiveNudges.ts` | `server/src/services/ai/proactiveNudges.ts:192` | `ai_nudge_suppressions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `routingRulesService.ts` | `server/src/services/ai/routingRulesService.ts:84` | `llm_routing_rules` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/615_llm_routing_rules.sql |
+| `aiBudgetService.ts` | `server/src/services/aiBudgetService.ts:16` | `ai_budgets` | NIE — zawiera DATETIME | TAK — server/migrations/000_z_core_baseline.sql, server/migrations/037_ai_budgets_init.sql, server/migrations/20260719_red_ai_budgets_columns.sql, server/migrations/never-ran/200_security_mvp_enterprise.sql.sql |
+| `aiBudgetService.ts` | `server/src/services/aiBudgetService.ts:40` | `ai_spending_alerts` | NIE — zawiera DATETIME | TAK — server/migrations/never-ran/200_security_mvp_enterprise.sql.sql |
+| `aiBudgetService.ts` | `server/src/services/aiBudgetService.ts:59` | `ai_model_permissions` | NIE — zawiera DATETIME | TAK — server/migrations/never-ran/200_security_mvp_enterprise.sql.sql |
+| `aiGovernanceService.ts` | `server/src/services/aiGovernanceService.ts:84` | `ai_evaluations` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/652_v4_ai_governance.sql |
+| `aiGovernanceService.ts` | `server/src/services/aiGovernanceService.ts:105` | `ai_eval_datasets` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/652_v4_ai_governance.sql |
+| `aiGovernanceService.ts` | `server/src/services/aiGovernanceService.ts:121` | `ai_governance_policies` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/652_v4_ai_governance.sql |
+| `aiOperatorService.ts` | `server/src/services/aiOperatorService.ts:98` | `ai_operator_profiles` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiOperatorService.ts` | `server/src/services/aiOperatorService.ts:113` | `ai_operator_interventions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiOperatorService.ts` | `server/src/services/aiOperatorService.ts:129` | `ai_operator_communications` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiOperatorService.ts` | `server/src/services/aiOperatorService.ts:146` | `ai_operator_plans` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `aiRunLedgerService.ts` | `server/src/services/aiRunLedgerService.ts:155` | `ai_run_ledger` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave3_ai_run_ledger.sql |
+| `aiRunLedgerService.ts` | `server/src/services/aiRunLedgerService.ts:174` | `ai_run_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave3_ai_run_ledger.sql |
+| `aiSettingsService.ts` | `server/src/services/aiSettingsService.ts:163` | `ai_user_tiers` | NIE — zawiera DATETIME | NIE |
+| `ArtifactConversionService.ts` | `server/src/services/artifacts/ArtifactConversionService.ts:110` | `artifact_conversions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `AssessmentDefinitionService.ts` | `server/src/services/assessment/AssessmentDefinitionService.ts:59` | `assessment_definitions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260411_p28_definition_versions.sql |
+| `assessmentPermissionService.ts` | `server/src/services/assessmentPermissionService.ts:190` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `assessmentPermissionService.ts` | `server/src/services/assessmentPermissionService.ts:199` | `assessment_roles` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/502_assessment_permissions.sql |
+| `assessmentPermissionService.ts` | `server/src/services/assessmentPermissionService.ts:225` | `assessment_access_requests` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/502_assessment_permissions.sql |
+| `AuditLogger.ts` | `server/src/services/AuditLogger.ts:10` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `auditProgramService.ts` | `server/src/services/auditProgramService.ts:26` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `auditProgramService.ts` | `server/src/services/auditProgramService.ts:163` | `*` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `independenceScanCursor.realdb.test.ts` | `server/src/services/audits/__tests__/independenceScanCursor.realdb.test.ts:494` | `silently` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `backupService.ts` | `server/src/services/backupService.ts:203` | `backup_manifests` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `backupService.ts` | `server/src/services/backupService.ts:234` | `backup_access_audit` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260908_admin_backup_restore_integrity.sql |
+| `backupService.ts` | `server/src/services/backupService.ts:249` | `backup_run_receipts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260909_data_dr_backup_health.sql |
+| `backupService.ts` | `server/src/services/backupService.ts:262` | `backup_restore_receipts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260909_data_dr_backup_health.sql |
+| `backupService.ts` | `server/src/services/backupService.ts:273` | `backup_source_change_clock` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260909_data_dr_backup_health.sql |
+| `brandVoiceProfileService.ts` | `server/src/services/brandVoiceProfileService.ts:324` | `organization_brand_voice_profiles` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260823_runtime_ddl_schema_convergence.sql |
+| `canvasMaterialize.ts` | `server/src/services/canvasMaterialize.ts:202` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `assessmentAdapter.ts` | `server/src/services/caseWorkspace/adapters/assessmentAdapter.ts:30` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `ConclusionReadoutService.ts` | `server/src/services/conclusions/ConclusionReadoutService.ts:91` | `conclusion_readouts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ConclusionService.ts` | `server/src/services/conclusions/ConclusionService.ts:188` | `conclusions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ConclusionService.ts` | `server/src/services/conclusions/ConclusionService.ts:221` | `conclusion_source_packs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ConclusionService.ts` | `server/src/services/conclusions/ConclusionService.ts:236` | `artifact_conversion_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `deliverablesTelemetryService.ts` | `server/src/services/deliverables/deliverablesTelemetryService.ts:36` | `deliverables_generation_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `atelierFinanceLateWrite.pg.test.ts` | `server/src/services/demo/__tests__/atelierFinanceLateWrite.pg.test.ts:436` | `${FAULT_TABLE}` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `atelierFinancePinnedTransaction.pg.test.ts` | `server/src/services/demo/__tests__/atelierFinancePinnedTransaction.pg.test.ts:1136` | `${FAULT_TABLE}` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `atelierPresentationDeckSeed.test.ts` | `server/src/services/demo/__tests__/atelierPresentationDeckSeed.test.ts:159` | `presentation_decks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260314_presentation_decks_deck_json.sql, server/migrations/568_presentations_brand_kits_templates.sql, server/migrations/750_presentation_decks_00base.sql |
+| `atelierPresentationDeckSeedPostgres.test.ts` | `server/src/services/demo/__tests__/atelierPresentationDeckSeedPostgres.test.ts:144` | `presentation_decks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260314_presentation_decks_deck_json.sql, server/migrations/568_presentations_brand_kits_templates.sql, server/migrations/750_presentation_decks_00base.sql |
+| `demoSeedFailurePropagation.test.ts` | `server/src/services/demo/__tests__/demoSeedFailurePropagation.test.ts:132` | `presentation_decks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260314_presentation_decks_deck_json.sql, server/migrations/568_presentations_brand_kits_templates.sql, server/migrations/750_presentation_decks_00base.sql |
+| `demoSessionService.ts` | `server/src/services/demo/demoSessionService.ts:154` | `user_preferences` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_zz_core_baseline_producers_fresh_db_gap.sql, server/migrations/259_p31_settings_registry_cleanup.sql, server/migrations/never-ran/636_user_preferences.sql |
+| `demoSessionService.ts` | `server/src/services/demo/demoSessionService.ts:193` | `demo_sessions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_zz_core_baseline_producers_fresh_db_gap.sql |
+| `demoSessionService.ts` | `server/src/services/demo/demoSessionService.ts:223` | `demo_session_tenants` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_zz_core_baseline_producers_fresh_db_gap.sql |
+| `demoTrialTelemetryService.ts` | `server/src/services/demoTrialTelemetryService.ts:78` | `conversion_events` | NIE — zawiera DATETIME | TAK — server/migrations/230_superadmin_overview_production.sql |
+| `documentVersionLineage.pg.test.ts` | `server/src/services/documentStudio/__tests__/documentVersionLineage.pg.test.ts:306` | `pass,` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `effectiveAccessService.ts` | `server/src/services/effectiveAccessService.ts:598` | `project_role_templates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `effectiveAccessService.ts` | `server/src/services/effectiveAccessService.ts:617` | `project_role_overrides` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `effectiveAccessService.ts` | `server/src/services/effectiveAccessService.ts:634` | `role_change_audit_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260816_admin_iam_operations.sql |
+| `emailVerificationService.ts` | `server/src/services/emailVerificationService.ts:26` | `email_verification_tokens` | NIE — zawiera DATETIME | NIE |
+| `executiveAggregateService.ts` | `server/src/services/executiveAggregateService.ts:248` | `executive_aggregate_cache` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `executiveAggregateService.ts` | `server/src/services/executiveAggregateService.ts:274` | `workstreams` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/542_project_members_consultant_overlay_and_steering_board.sql, server/migrations/never-ran/042_pmo_roles_workstreams.sql.sql |
+| `executiveAggregateService.ts` | `server/src/services/executiveAggregateService.ts:296` | `initiative_milestones` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260801_exe002004_idempotency_keys.sql, server/migrations/293_initiative_milestones.sql |
+| `executiveInsightsService.ts` | `server/src/services/executiveInsightsService.ts:59` | `executive_insights_cache` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `budgetRegistrationService.pg.test.ts` | `server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts:1947` | `tp_migration_history` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `roiFinanceReconciliationAdapter.pg.test.ts` | `server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts:99` | `benefit_tracking` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/067_economics_initiative_integration.sql, server/migrations/946_benefit_tracking_fresh_install.sql |
+| `healthProbeService.ts` | `server/src/services/health/healthProbeService.ts:1074` | `health_probe_results` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:74` | `ini04_users` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:80` | `ini04_initiatives` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:86` | `ini04_initiative_stakeholders` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:195` | `users` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:201` | `initiatives` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:207` | `initiative_stakeholders` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/335_initiative_stakeholders.sql, server/migrations/727_beta_missing_tables.sql |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:217` | `users` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `initiativeCapabilityMatrix.pg.test.ts` | `server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:238` | `initiatives` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `initiativeWizardService.ts` | `server/src/services/initiative/initiativeWizardService.ts:100` | `initiative_wizard_sessions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/758_initiative_wizard_sessions.sql |
+| `initiativeWizardService.ts` | `server/src/services/initiative/initiativeWizardService.ts:118` | `initiative_wizard_candidates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/758_initiative_wizard_sessions.sql |
+| `initiativeWizardService.ts` | `server/src/services/initiative/initiativeWizardService.ts:157` | `initiative_wizard_audit_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/758_initiative_wizard_sessions.sql |
+| `suggestedChangesService.ts` | `server/src/services/initiative/suggestedChangesService.ts:11` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `suggestedChangesService.ts` | `server/src/services/initiative/suggestedChangesService.ts:58` | `initiative_suggested_changes` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `insightSourceBasketService.ts` | `server/src/services/insightSourceBasketService.ts:15` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `insightSourceBasketService.ts` | `server/src/services/insightSourceBasketService.ts:76` | `insight_source_baskets` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `integrationConnectionLogService.ts` | `server/src/services/integrationConnectionLogService.ts:22` | `integration_connection_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `integrationHubService.ts` | `server/src/services/integrationHubService.ts:688` | `w` | NIE — zawiera DATETIME | NIE |
+| `integrationOAuthEngine.ts` | `server/src/services/integrationOAuthEngine.ts:356` | `integration_oauth_tokens` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `integrationOwnershipService.ts` | `server/src/services/integrationOwnershipService.ts:11` | `integration_ownership` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `InterviewAssignmentService.ts` | `server/src/services/InterviewAssignmentService.ts:298` | `interview_assignments` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/299_interview_assignments.sql, server/migrations/575_interview_sendback_missing_items.sql, server/migrations/727_beta_missing_tables.sql |
+| `InterviewAssignmentService.ts` | `server/src/services/InterviewAssignmentService.ts:354` | `interview_assignment_members` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/303_interview_assignments_extended.sql |
+| `InterviewAssignmentService.ts` | `server/src/services/InterviewAssignmentService.ts:369` | `interview_notifications` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/303_interview_assignments_extended.sql |
+| `interviewCandidateExactlyOnce.pg.test.ts` | `server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts:576` | `initiative_candidates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260627_initiative_candidates.sql |
+| `interviewInsightReportPackService.ts` | `server/src/services/interviewInsightReportPackService.ts:346` | `interview_report_packs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/757_interview_insight_report_packs.sql |
+| `interviewInsightReportPackService.ts` | `server/src/services/interviewInsightReportPackService.ts:369` | `interview_report_pack_worksheets` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/757_interview_insight_report_packs.sql |
+| `interviewInsightReportPackService.ts` | `server/src/services/interviewInsightReportPackService.ts:396` | `interview_report_pack_revisions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/757_interview_insight_report_packs.sql |
+| `interviewInsightReportPackService.ts` | `server/src/services/interviewInsightReportPackService.ts:417` | `interview_insight_audit_log` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/753_p10_interview_insight_artifact.sql |
+| `InterviewInsightService.ts` | `server/src/services/InterviewInsightService.ts:1365` | `organization_context_lineage_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `KnowledgeService.ts` | `server/src/services/KnowledgeService.ts:102` | `knowledge_candidates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_z_core_baseline.sql, server/migrations/221_knowledge_base_tables.sql |
+| `KnowledgeService.ts` | `server/src/services/KnowledgeService.ts:125` | `global_strategies` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/221_knowledge_base_tables.sql |
+| `KnowledgeService.ts` | `server/src/services/KnowledgeService.ts:146` | `knowledge_docs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `KnowledgeService.ts` | `server/src/services/KnowledgeService.ts:195` | `vault_folders` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260728_vault_folders.sql |
+| `KnowledgeService.ts` | `server/src/services/KnowledgeService.ts:214` | `knowledge_chunks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql, server/migrations/266_knowledge_rag.sql |
+| `settings.ts` | `server/src/services/legacyCutover/registry/settings.ts:144` | `` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `templateProvenanceApproval19.realdb.test.ts` | `server/src/services/materialExport/__tests__/templateProvenanceApproval19.realdb.test.ts:266` | `/` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `meetingBoundaryService.ts` | `server/src/services/meetingBoundary/meetingBoundaryService.ts:238` | `meeting_notes` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260912_claude_c_meeting_boundary.sql |
+| `meetingService.ts` | `server/src/services/meetingService.ts:155` | `meetings` | NIE — zawiera DATETIME | TAK — server/migrations/20260623_meetings_baseline.sql |
+| `meetingService.ts` | `server/src/services/meetingService.ts:174` | `meeting_follow_ups` | NIE — zawiera DATETIME | TAK — server/migrations/20260623_meetings_baseline.sql |
+| `notebookService.ts` | `server/src/services/notebookService.ts:955` | `notebook_embeddings` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/651_v4_notebook_capture_pipeline.sql |
+| `notebookService.ts` | `server/src/services/notebookService.ts:974` | `notebook_ai_proposals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/never-ran/651_v4_notebook_capture_pipeline.sql |
+| `notificationOutboxService.ts` | `server/src/services/notificationOutboxService.ts:31` | `notification_outbox` | NIE — zawiera DATETIME | TAK — server/migrations/20260719_baseline_gap.sql, server/migrations/never-ran/025_ai_actions_complete.sql.sql |
+| `notificationService.ts` | `server/src/services/notificationService.ts:1254` | `notification_dedup` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2383` | `knowledge_docs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2419` | `knowledge_chunks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/000_z_core_baseline.sql, server/migrations/266_knowledge_rag.sql |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2434` | `organization_context_storage_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2452` | `organization_context_processing_jobs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2480` | `organization_context_lineage_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2501` | `organization_context_processing_attention_receipts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `ContextDocumentService.ts` | `server/src/services/organizationContext/ContextDocumentService.ts:2523` | `audit_log` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_zz_core_baseline_producers_fresh_db_gap.sql, server/migrations/259_audit_logging.sql |
+| `partnerApplicationIntakeService.ts` | `server/src/services/partnerApplicationIntakeService.ts:29` | `public_partner_applications` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/956_partner_operator_review_receipts.sql |
+| `partnerPayoutSettingsService.ts` | `server/src/services/partnerPayoutSettingsService.ts:116` | `partner_payout_accounts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/216_partner_referral_system.sql |
+| `partnerProgramLedgerService.ts` | `server/src/services/partnerProgramLedgerService.ts:256` | `partner_program_runtime` | NIE — zawiera DATETIME | TAK — server/migrations/20260331_p28_workbench_p29_partner_program_ledger.sql |
+| `partnerProgramLedgerService.ts` | `server/src/services/partnerProgramLedgerService.ts:269` | `partner_program_ledger` | NIE — zawiera DATETIME | TAK — server/migrations/20260331_p28_workbench_p29_partner_program_ledger.sql |
+| `partnerReferralService.ts` | `server/src/services/partnerReferralService.ts:438` | `partner_attributions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/216_partner_referral_system.sql |
+| `partnerReferralService.ts` | `server/src/services/partnerReferralService.ts:463` | `partner_commission_transactions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/216_partner_referral_system.sql |
+| `partnerReferralService.ts` | `server/src/services/partnerReferralService.ts:488` | `partner_payouts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/216_partner_referral_system.sql |
+| `partnerReferralService.ts` | `server/src/services/partnerReferralService.ts:519` | `partner_referral_clicks` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/216_partner_referral_system.sql, server/migrations/957_partner_public_referral_click_receipts.sql |
+| `partnerReferralService.ts` | `server/src/services/partnerReferralService.ts:542` | `partner_campaign_links` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/000_initdb_core_tables.sql, server/migrations/216_partner_referral_system.sql, server/migrations/957_partner_public_referral_click_receipts.sql |
+| `sqlChainChecksumPolicy.ts` | `server/src/services/releaseGate/sqlChainChecksumPolicy.ts:157` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `reportBuilderService.ts` | `server/src/services/reportBuilderService.ts:2620` | `report_exports` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/249_report_system.sql, server/migrations/934_report_exports_history.sql |
+| `researchSessionService.ts` | `server/src/services/researchSessionService.ts:224` | `research_sessions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave4_research_sessions.sql |
+| `researchSessionService.ts` | `server/src/services/researchSessionService.ts:248` | `research_session_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave4_research_sessions.sql |
+| `researchSessionService.ts` | `server/src/services/researchSessionService.ts:260` | `research_evidence_graph` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave4_research_sessions.sql |
+| `researchSessionService.ts` | `server/src/services/researchSessionService.ts:277` | `research_report_artifacts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave4_research_sessions.sql |
+| `roiLegacyArchiveRepository.ts` | `server/src/services/resultsVnext/roi/roiLegacyArchiveRepository.ts:38` | `...` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `securityIncidentService.ts` | `server/src/services/securityIncidentService.ts:31` | `security_incidents` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/236_security_module_extended.sql, server/migrations/900_prod_missing_tables_hotfix.sql |
+| `slackRouter.ts` | `server/src/services/slack/slackRouter.ts:147` | `slack_router_dedupe` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `supportTicketService.ts` | `server/src/services/supportTicketService.ts:84` | `support_tickets` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/015_enterprise_customers_module.sql, server/migrations/203_support_tickets.sql, server/migrations/255_help_system.sql |
+| `supportTicketService.ts` | `server/src/services/supportTicketService.ts:107` | `support_ticket_comments` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/015_enterprise_customers_module.sql |
+| `migrationIdentity.ts` | `server/src/services/tablePlatform/migrationIdentity.ts:128` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `migrationRunner.ts` | `server/src/services/tablePlatform/migrationRunner.ts:30` | `${MIGRATION_TABLE}` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `interviewInsightCandidateService.ts` | `server/src/services/v8/interviewInsightCandidateService.ts:115` | `interview_insight_candidates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/754_p10_interview_insight_candidates.sql |
+| `interviewInsightFindingsService.ts` | `server/src/services/v8/interviewInsightFindingsService.ts:306` | `interview_insight_findings` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/753_p10_interview_insight_artifact.sql |
+| `interviewInsightFindingsService.ts` | `server/src/services/v8/interviewInsightFindingsService.ts:349` | `interview_insight_evidence_pointers` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/753_p10_interview_insight_artifact.sql |
+| `interviewInsightFindingsService.ts` | `server/src/services/v8/interviewInsightFindingsService.ts:374` | `interview_insight_handoffs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/753_p10_interview_insight_artifact.sql |
+| `interviewInsightFindingsService.ts` | `server/src/services/v8/interviewInsightFindingsService.ts:391` | `interview_insight_audit_log` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/753_p10_interview_insight_artifact.sql |
+| `teresaCopilotService.ts` | `server/src/services/v8/teresaCopilotService.ts:247` | `teresa_proposals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `teresaCopilotService.ts` | `server/src/services/v8/teresaCopilotService.ts:263` | `teresa_audit_log` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | NIE |
+| `teresaCopilotService.ts` | `server/src/services/v8/teresaCopilotService.ts:278` | `teresa_handoff_results` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260814_rvn_teresa_kpi_handoff_results.sql |
+| `teresaCopilotService.ts` | `server/src/services/v8/teresaCopilotService.ts:420` | `ai_actions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/296_ai_actions_table.sql, server/migrations/728_beta_missing_tables_2.sql |
+| `valueLedgerService.ts` | `server/src/services/valueLedgerService.ts:87` | `value_baselines` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260624_value_ledger.sql |
+| `valueLedgerService.ts` | `server/src/services/valueLedgerService.ts:101` | `value_ledger_entries` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260624_value_ledger.sql |
+| `vaultDocumentVersionService.ts` | `server/src/services/vault/vaultDocumentVersionService.ts:34` | `+` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `wave5ArtifactRuntimeService.ts` | `server/src/services/wave5ArtifactRuntimeService.ts:368` | `wave5_artifacts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave5_artifact_runtime.sql |
+| `wave5ArtifactRuntimeService.ts` | `server/src/services/wave5ArtifactRuntimeService.ts:403` | `wave5_artifact_versions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave5_artifact_runtime.sql |
+| `wave5ArtifactRuntimeService.ts` | `server/src/services/wave5ArtifactRuntimeService.ts:428` | `wave5_mutation_proposals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave5_artifact_runtime.sql |
+| `wave6ContextLearningService.ts` | `server/src/services/wave6ContextLearningService.ts:190` | `wave6_context_snapshots` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave6_context_learning.sql |
+| `wave6ContextLearningService.ts` | `server/src/services/wave6ContextLearningService.ts:206` | `wave6_context_ledger` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave6_context_learning.sql |
+| `wave6ContextLearningService.ts` | `server/src/services/wave6ContextLearningService.ts:222` | `wave6_memory_candidates` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave6_context_learning.sql |
+| `wave6ContextLearningService.ts` | `server/src/services/wave6ContextLearningService.ts:243` | `wave6_memory_stewardship_decisions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave6_context_learning.sql |
+| `wave7ConnectorRuntimeService.ts` | `server/src/services/wave7ConnectorRuntimeService.ts:160` | `wave7_connectors` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave7_connector_runtime.sql |
+| `wave7ConnectorRuntimeService.ts` | `server/src/services/wave7ConnectorRuntimeService.ts:195` | `wave7_connector_runs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave7_connector_runtime.sql |
+| `wave8AgentRuntimeService.ts` | `server/src/services/wave8AgentRuntimeService.ts:470` | `wave8_agent_definitions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave8_agent_runtime.sql |
+| `wave8AgentRuntimeService.ts` | `server/src/services/wave8AgentRuntimeService.ts:492` | `wave8_agent_runs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave8_agent_runtime.sql |
+| `wave8AgentRuntimeService.ts` | `server/src/services/wave8AgentRuntimeService.ts:514` | `wave8_agent_notifications` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave8_agent_runtime.sql |
+| `wave8AgentRuntimeService.ts` | `server/src/services/wave8AgentRuntimeService.ts:525` | `wave8_agent_tool_governance_events` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260809_v8_wave8_agent_runtime_forward.sql |
+| `wave8AgentRuntimeService.ts` | `server/src/services/wave8AgentRuntimeService.ts:542` | `wave8_agent_schedules` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave8_agent_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:554` | `wave9_outcomes` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:584` | `wave9_evidence_registry` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:603` | `wave9_provider_health` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:616` | `wave9_eval_runs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:632` | `wave9_acceptance_runs` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:647` | `wave9_incidents` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `wave9OutcomeRuntimeService.ts` | `server/src/services/wave9OutcomeRuntimeService.ts:659` | `wave9_acceptance_decisions` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/20260425_wave9_outcome_runtime.sql |
+| `workbookCommandService.ts` | `server/src/services/workbook/workbookCommandService.ts:60` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `workbookSchemaGuard.ts` | `server/src/services/workbook/workbookSchemaGuard.ts:8` | `<UNPARSED>` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | UNKNOWN — nazwa dynamiczna/nieparsowalna |
+| `workCanvasService.ts` | `server/src/services/workCanvasService.ts:221` | `work_canvas_drafts` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/760_work_canvas_runtime.sql |
+| `workCanvasService.ts` | `server/src/services/workCanvasService.ts:278` | `work_canvas_proposals` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/760_work_canvas_runtime.sql |
+| `workCanvasService.ts` | `server/src/services/workCanvasService.ts:298` | `work_canvas_ideas` | BRAK wykrytego DATETIME; pełna zgodność NIEZWERYFIKOWANA | TAK — server/migrations/760_work_canvas_runtime.sql |
+
+Uwagi metodologiczne:
+
+- Mianownik obejmuje literalne trafienia zgodnie z komendą instrukcji, w tym pliki testowe i komentarze.
+- `BRAK wykrytego DATETIME` nie jest twierdzeniem o pełnej zgodności PostgreSQL; pełna zgodność pozostaje `NIEZWERYFIKOWANA`.
+- 12 nazw nie dało się statycznie sparsować i pozostało `UNKNOWN`.
+- 22 instrukcje zawierają `DATETIME`; są skupione w sześciu plikach wskazanych przez pomiar plikowy.
+- 52 statycznie nazwane instrukcje nie mają wykrytej migracji tworzącej tabelę.
+
+## C. Naprawy i dowody
+
+### Czerwony dowód R3 przed naprawą
+
+- Realne `POST /api/auth/register` przez `ApiGateway.getInstance().initializeRoutes(app)` na `127.0.0.1:5248` połączyło się z `127.0.0.1:6268/cx281` (`DB_IDENTITY` w logu).
+- Runtime DDL dla `email_verification_tokens` zakończyło się PostgreSQL `42704`, `type "datetime" does not exist`.
+- Proces zakończył się przed zapisaniem statusu HTTP z powodu nieobsłużonego odrzucenia.
+- Readback wykazał częściowy zapis: użytkownik i organizacja powstały, tabela `email_verification_tokens` nie powstała.
+- Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r3-registration-before.log`.
+- SHA-256: `16d88412ae72274ad3593cee030625b1d4775bfc6abeec9c56be73fb089620eb`.
+
+### Naprawa R4
+
+- Dodano nową migrację `server/migrations/20261911_email_verification_tokens.sql`; żadnego wydanego pliku migracji nie zmieniono.
+- Runtime DDL w `emailVerificationService.ts` używa teraz `TIMESTAMPTZ` zamiast `DATETIME`.
+- `ensureSchema()` sprawdza wyniki DDL, ustawia `ensured` dopiero po pełnym sukcesie, loguje błąd jako `error` i przekazuje go wyżej zamiast kontynuować po `warn`.
+- Jawny przebieg `--only 20261911_email_verification_tokens.sql` utworzył tabelę, siedem kolumn o typach PostgreSQL i trzy indeksy.
+- Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r4-migration-only.log`, SHA-256 `962c19de7e5c6d8f0daf3a696e143b1b4b209b4f1be8277905673a3b88bc2500`.
+
+### Zielony dowód R5 po naprawie
+
+- Po usunięciu własnego kontenera z wolumenem świeża baza zastosowała 883 migracje i zakończyła pełny przebieg sukcesem.
+- Realne `POST /api/auth/register` przez `ApiGateway` na porcie 5249 zwróciło HTTP `200` i `emailVerificationSent: true`.
+- Readback wykazał użytkownika oraz dokładnie jeden token: hash obecny, termin przyszły, `used_at IS NULL`.
+- Drugi pełny przebieg migracji zgłosił `Applying migrations: 0` i zakończył sukcesem.
+- Poczta działała jako `Mock (Console)`; Slack pominięto dla domeny `local.test`.
+- Artefakty i SHA-256:
+  - `r5-migrate-fresh.log`: `0f79607528aed81e48fcbc65b3a6675b44dba12e3f3f92fb51ad88f3a436d046`;
+  - `r5-registration-after.log`: `8903494c2bbda6730c1fbfbd29726b690c1bf7d8f5098c0ecade9bf92b49de7b`;
+  - `r5-migrate-second.log`: `4e465022de0a6c7a8d2e796aa3e1d16be83ba49d99a151180128cf868e18095a`.
+
+## D. Otwarte pozycje
+
+- `email_verification_tokens` nie jest tworzona przez żadną migrację.
+- Rejestracja pozostawia częściowy stan użytkownika i organizacji przed awarią tokenu weryfikacyjnego.
+- Pięć plików nadal zawiera runtime DDL z `DATETIME`: `integrationHubService.ts`, `notificationOutboxService.ts`, `ai/llmConfigService.ts`, `aiSettingsService.ts`, `demoTrialTelemetryService.ts`. Nie zostały uruchomione na mierzonej ścieżce rejestracji i zgodnie z `Z40` nie były masowo przepisywane.
+- 52 statycznie nazwane runtime DDL nie mają wykrytej migracji; 12 wpisów pozostało `UNKNOWN`. Wymagają osobnych, ścieżkowych pomiarów przed zmianą.

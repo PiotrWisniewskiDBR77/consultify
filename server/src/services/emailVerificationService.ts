@@ -19,32 +19,39 @@ function sha256Base64Url(input: string): string {
 
 async function ensureSchema(): Promise<void> {
   if (ensured) return;
-  ensured = true;
 
   try {
-    await DbPromise.exec(`
+    const tableResult = await DbPromise.exec(`
       CREATE TABLE IF NOT EXISTS email_verification_tokens (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         email TEXT NOT NULL,
         token_hash TEXT NOT NULL,
-        expires_at DATETIME NOT NULL,
-        used_at DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        expires_at TIMESTAMPTZ NOT NULL,
+        used_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    await DbPromise.exec(
+    if (!tableResult.success) throw new Error(tableResult.error || 'table creation failed');
+
+    const userIndexResult = await DbPromise.exec(
       `CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user ON email_verification_tokens(user_id);`
     );
-    await DbPromise.exec(
+    if (!userIndexResult.success)
+      throw new Error(userIndexResult.error || 'user index creation failed');
+
+    const hashIndexResult = await DbPromise.exec(
       `CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_hash ON email_verification_tokens(token_hash);`
     );
+    if (!hashIndexResult.success)
+      throw new Error(hashIndexResult.error || 'hash index creation failed');
+
+    ensured = true;
   } catch (e) {
-    // Best-effort: on PG some exec implementations may not like multi-statement.
-    // In that case, routes will still work if migrations created the table.
-    logger.warn('[EmailVerification] ensureSchema failed (continuing)', {
+    logger.error('[EmailVerification] ensureSchema failed', {
       error: (e as Error)?.message || e,
     });
+    throw e;
   }
 }
 
