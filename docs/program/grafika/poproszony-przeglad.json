@@ -1,0 +1,31 @@
+{
+  "_opis": "SZEŚĆ ekranów, które właściciel poprosił, żeby obejrzeć osobiście (2026-09-02). Resztę partii przyjął zbiorczo. Powód wyboru: dzisiejsza naprawa szerokości kolumn (procenty przestały udawać piksele) dotyka KAŻDEJ tabeli w aplikacji, więc ryzyko regresji układu jest realne — a tam jego oko jest warte więcej niż nasze. Po jednym ekranie z każdego RODZAJU tabeli, celowo nie sześć z jednego modułu.",
+  "_zrodlo": "polecenie właściciela przekazane przez nadzorcę, 2026-09-02",
+  "_czyta_to": "scripts/dev/odbior-serwer.mjs — filtr „★ Poproszony przegląd\", na którym strona się otwiera, dopóki lista nie jest pusta",
+  "ekrany": {
+    "idea-table": {
+      "rodzaj": "tabela z podglądem obok",
+      "czego_szukac": "Otwórz podgląd klikając w wiersz i popatrz, czy tabela po lewej nie zrobiła się za ciasna — czy kolumny mają sensowne szerokości, kiedy podgląd zabiera pół ekranu, i czy sam podgląd nie jest ściśnięty."
+    },
+    "mywork-inbox": {
+      "rodzaj": "najwięcej kolumn naraz",
+      "czego_szukac": "Tu jest najwięcej kolumn w całej aplikacji. Popatrz, czy żadna nie zapadła się do paska kilku pikseli i czy żaden nagłówek ani żadna wartość nie łamie się w połowie wyrazu."
+    },
+    "mywork-calendar": {
+      "rodzaj": "kalendarz — tu były ucięte tytuły",
+      "czego_szukac": "Tu wcześniej tytuły wydarzeń urywały się bez ostrzeżenia. Popatrz, czy tytuł, który się nie mieści, kończy się trzema kropkami, a nie w środku słowa albo w połowie godziny."
+    },
+    "execution-tab-resources": {
+      "rodzaj": "szerokie nazwiska i role",
+      "czego_szukac": "Popatrz na kolumnę z nazwiskami i rolami: czy dłuższe nazwisko mieści się w jednej linii, czy rozpycha wiersz na dwie–trzy linie albo łamie się w połowie."
+    },
+    "results-vnext-roi-registry": {
+      "rodzaj": "liczby i statusy",
+      "czego_szukac": "Popatrz, czy liczby i kwoty stoją równo i mieszczą się w całości, oraz czy pigułki statusu nie są ściśnięte ani przycięte przy prawej krawędzi tabeli."
+    },
+    "results-vnext-okr-admin": {
+      "rodzaj": "porównanie ze stanem z rana",
+      "czego_szukac": "Ten ekran oglądałeś dziś rano — popatrz, czy układ kolumn wygląda tak samo jak wtedy. Jeśli cokolwiek się przesunęło albo zwęziło, to jest właśnie to, czego szukam."
+    }
+  }
+}

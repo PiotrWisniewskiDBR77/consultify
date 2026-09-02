@@ -43,6 +43,19 @@ const BAZA = path.join(ROOT, 'docs/program/grafika/odbior.sqlite');
  * Opis pomiaru: docs/program/grafika/RESZTA_ODBIORU_20260902.md
  */
 const RESZTA = path.join(ROOT, 'docs/program/grafika/reszta-odbioru.json');
+/**
+ * POPROSZONY PRZEGLĄD (2026-09-02). Właściciel przyjął partię „poprawione dziś"
+ * zbiorczo, ale SZEŚĆ ekranów poprosił, żeby obejrzeć osobiście — po jednym
+ * z każdego RODZAJU tabeli. Powód jest merytoryczny, nie kaprys: dzisiejsza
+ * naprawa szerokości kolumn dotyka KAŻDEJ tabeli w aplikacji, więc ryzyko
+ * regresji układu jest realne, a on wyłapie ją szybciej niż my.
+ *
+ * Ta lista ma PIERWSZEŃSTWO przed wszystkimi innymi filtrami przy starcie
+ * strony — dopóki nie jest pusta, właściciel wchodzi prosto na te sześć kart
+ * i widzi przy każdej JEDNO ZDANIE, czego ma szukać. Brak pliku = brak filtra,
+ * nie awaria strony (tak samo jak RESZTA wyżej).
+ */
+const POPROSZONE = path.join(ROOT, 'docs/program/grafika/poproszony-przeglad.json');
 const EVID = path.join(ROOT, 'evidence/grafika');
 
 const esc = (s) =>
@@ -214,6 +227,7 @@ function strona() {
   // Brak pliku = brak filtra, nie awaria strony: odbiór ma działać także wtedy,
   // gdy lista reszty jeszcze nie powstała albo została świadomie usunięta.
   const reszta = fs.existsSync(RESZTA) ? (JSON.parse(fs.readFileSync(RESZTA, 'utf8')).ekrany || {}) : {};
+  const poproszone = fs.existsSync(POPROSZONE) ? (JSON.parse(fs.readFileSync(POPROSZONE, 'utf8')).ekrany || {}) : {};
 
   const doOdbioru = [];
   const niepokazane = [];
@@ -239,14 +253,16 @@ function strona() {
     // nie ma czego akceptować, bo gotowość nie zależy od wyglądu. Zamiast
     // przycisków dostaje jedno zdanie, co ją blokuje.
     const rKlik = r && r.klikalna;
+    const pop = poproszone[e.id];
     const btn = (kod, etykieta) =>
       `<button class="b ${kod} ${d.decyzja === kod ? 'on' : ''}" data-id="${esc(e.id)}" data-d="${kod}">${etykieta}</button>`;
-    return `<article class="k${swieze ? ' swieza' : ''}${rKlik ? ' reszta' : ''}${r && !rKlik ? ' czeka' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}" data-reszta="${rKlik ? '1' : ''}" data-czeka="${r && !rKlik ? '1' : ''}">
+    return `<article class="k${pop ? ' poproszona' : ''}${swieze ? ' swieza' : ''}${rKlik ? ' reszta' : ''}${r && !rKlik ? ' czeka' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}" data-reszta="${rKlik ? '1' : ''}" data-czeka="${r && !rKlik ? '1' : ''}" data-poproszona="${pop ? '1' : ''}">
   <header>
     <h3>${esc(e.nazwa)}</h3>
     <span class="o o${esc(e.ocena)}">${esc(e.ocena)}</span>
   </header>
   ${r ? `<div class="dlaczego${rKlik ? '' : ' blok'}"><b>${esc(r.grupa)}</b><span>${esc(r.powod)}</span>${r.czeka ? `<span class="czeka-txt">${esc(r.czeka)}</span>` : ''}</div>` : ''}
+  ${pop ? `<div class="prosba"><b>Poproszony przegląd — ${esc(pop.rodzaj)}</b><span>${esc(pop.czego_szukac)}</span></div>` : ''}
   <div class="popr-slot">${
     swieze
       ? `<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span>${esc(popr.opis)}</span><time>${esc(new Date(popr.kiedy).toLocaleString('pl-PL'))}</time></div>`
@@ -353,6 +369,12 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .popr b::before{content:"✔ ";font-weight:800}
 .popr span{color:#166534;font-size:12.5px}
 .popr time{color:#3f6212;font-size:11px}
+.filtry button[data-f=poproszone].on{background:#7c3aed;border-color:#7c3aed}
+.k.poproszona{border-color:#7c3aed;box-shadow:0 0 0 2px #ddd6fe inset}
+.prosba{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:9px;padding:9px 12px;margin-bottom:9px;display:flex;flex-direction:column;gap:3px}
+.prosba b{color:#5b21b6;font-size:12.5px}
+.prosba b::before{content:"★ ";font-weight:800}
+.prosba span{color:#6d28d9;font-size:13.5px;line-height:1.5}
 .filtry button[data-f=swieze].on{background:var(--ok);border-color:var(--ok)}
 .filtry button[data-f=reszta].on{background:var(--nieb);border-color:var(--nieb)}
 .k.reszta{border-color:var(--nieb);box-shadow:inset 3px 0 0 var(--nieb)}
@@ -379,6 +401,7 @@ th{background:#f1f5f9;font-size:12px;text-transform:uppercase;letter-spacing:.04
   <span class="lic" id="lic"></span>
   <span class="stan" id="stan">gotowe</span>
   <span class="filtry">
+    <button data-f="poproszone">★ Poproszony przegląd</button>
     <button data-f="reszta" class="on">★ Zostało do obejrzenia</button>
     <button data-f="czeka">Czeka na budowę</button>
     <button data-f="wszystkie">Wszystkie</button>
@@ -472,7 +495,9 @@ document.addEventListener('click', (ev) => {
     const tryb = f.dataset.f;
     document.querySelectorAll('.k').forEach((k) => {
       const pokaz =
-        tryb === 'reszta'
+        tryb === 'poproszone'
+          ? k.dataset.poproszona === '1'
+          : tryb === 'reszta'
           ? k.dataset.reszta === '1'
           : tryb === 'czeka'
           ? k.dataset.czeka === '1'
@@ -571,11 +596,22 @@ window.addEventListener('pagehide', () => {
  * Oba dotychczasowe filtry zostają nietknięte — zmienia się wyłącznie to, który
  * jest wybrany przy wejściu.
  */
+const poproszonychNaStart = document.querySelectorAll('.k[data-poproszona="1"]').length;
 const swiezychNaStart = document.querySelectorAll('.k[data-swieza="1"]').length;
 if (swiezychNaStart) {
   const b = document.querySelector('.filtry button[data-f=swieze]');
   if (b) b.textContent = 'Poprawione dla Ciebie (' + swiezychNaStart + ')';
+}
+if (poproszonychNaStart) {
+  /* Przypadek 0 — ma PIERWSZEŃSTWO nad wszystkim. Właściciel poprosił o te
+     konkretne ekrany; gdyby strona otworzyła się na pełnej partii, jego sześć
+     utonęłoby wśród kilkudziesięciu, a to jest dokładnie ten sam błąd, przez
+     który rano widział trzy pozycje zamiast sześćdziesięciu dziewięciu. */
+  const b = document.querySelector('.filtry button[data-f=poproszone]');
+  if (b) b.textContent = '★ Poproszony przegląd (' + poproszonychNaStart + ')';
   b?.click();
+} else if (swiezychNaStart) {
+  document.querySelector('.filtry button[data-f=swieze]')?.click();
 } else {
   document.querySelector('.filtry button[data-f=reszta]')?.click();
 }
