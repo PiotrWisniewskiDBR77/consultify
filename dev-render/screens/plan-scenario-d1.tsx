@@ -156,7 +156,13 @@ export default function PlanScenarioD1Screen() {
   const [otwartaKarta, setOtwartaKarta] = React.useState<string | null>(null);
   return (
     <AppProviders>
-      <div className="min-h-screen bg-c-background p-4 text-c-text">
+      {/*
+       * HARNESS-ONLY FIX (2026-09-02, pomiar --wysokosc): `min-h-screen`
+       * (tylko min-height) nie daje `PlanScenarioSurface` (h-full flex
+       * flex-col) definitywnej wysokosci — `h-screen` (definitywna,
+       * wzorzec dev-render/screens/execution-tab.tsx) to naprawia.
+       */}
+      <div className="h-screen bg-c-background p-4 text-c-text">
         <PlanScenarioSurface
           demoMode={false}
           initiatives={empty ? [] : initiatives}
