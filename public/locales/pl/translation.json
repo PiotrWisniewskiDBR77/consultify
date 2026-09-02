@@ -13351,7 +13351,19 @@
     "subscriptionLink": "Warunki subskrypcji",
     "verifyingCode": "Weryfikowanie kodu...",
     "workspaceAutoSelect": "Przestrzeń robocza zostanie wybrana automatycznie po rejestracji.",
-    "workspaceNamed": "Przestrzeń robocza: {{name}}"
+    "workspaceNamed": "Przestrzeń robocza: {{name}}",
+    "resetPasswordPage": {
+      "title": "Ustaw nowe hasło",
+      "subtitle": "Wpisz poniżej swoje nowe hasło.",
+      "submit": "Zresetuj hasło",
+      "successTitle": "Hasło zmienione",
+      "successMessage": "Twoje hasło zostało zresetowane. Możesz teraz zalogować się nowym hasłem.",
+      "invalidToken": "Nieprawidłowy lub brakujący token resetu",
+      "requestNew": "Poproś o nowy link do zresetowania hasła.",
+      "passwordMismatch": "Hasła nie są takie same.",
+      "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków.",
+      "errorGeneric": "Nie udało się zresetować hasła. Link mógł wygasnąć."
+    }
   },
   "help": {
     "onboarding": {

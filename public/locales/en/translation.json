@@ -13931,7 +13931,19 @@
     "subscriptionLink": "Subscription Terms",
     "verifyingCode": "Verifying code...",
     "workspaceAutoSelect": "Workspace will be selected automatically after registration.",
-    "workspaceNamed": "Workspace: {{name}}"
+    "workspaceNamed": "Workspace: {{name}}",
+    "resetPasswordPage": {
+      "title": "Set new password",
+      "subtitle": "Enter your new password below.",
+      "submit": "Reset password",
+      "successTitle": "Password updated",
+      "successMessage": "Your password has been reset successfully. You can now log in with your new password.",
+      "invalidToken": "Invalid or missing reset token",
+      "requestNew": "Please request a new password reset link.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "errorGeneric": "Failed to reset password. The link may have expired."
+    }
   },
   "help": {
     "onboarding": {
@@ -28311,7 +28323,8 @@
         "edit": "Edit & AI",
         "file": "File, export & workspace",
         "workflow": "Workflow",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "diagnostics": "Diagnostics & workflow"
       },
       "versioning": {
         "title": "Versioning"
