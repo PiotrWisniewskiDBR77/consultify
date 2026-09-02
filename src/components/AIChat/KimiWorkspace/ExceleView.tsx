@@ -93,7 +93,7 @@ export const ExceleView: React.FC = () => {
     !templateArtifactId &&
     !templatePrompt &&
     !hasPendingKickoff &&
-    viewParam !== 'new' &&
+    viewParam === 'home' &&
     !pipeline.currentRun &&
     !pipeline.isGenerating;
 
@@ -494,7 +494,7 @@ export const ExceleView: React.FC = () => {
   const showTriChooser =
     triMode &&
     entryMode === 'choose' &&
-    viewParam === 'new' &&
+    viewParam !== 'home' &&
     !artifactId &&
     !templateArtifactId &&
     !templatePrompt &&
@@ -523,7 +523,7 @@ export const ExceleView: React.FC = () => {
         }}
         onClean={handleCreateEmptyGrid}
         onAi={() => setEntryMode('ai')}
-        onTemplate={() => navigate('/excele')}
+        onTemplate={() => navigate('/excele?view=home')}
       />
     );
   }
