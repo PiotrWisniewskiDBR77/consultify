@@ -150,7 +150,7 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/settings/notifications/preferences', {
+      const response = await fetch('/api/settings/preferences/notifications', {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
@@ -211,7 +211,7 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
 
   // Update preferences API call
   const updatePreferencesApi = useCallback(async (updates: Partial<NotificationPreferences>) => {
-    const response = await fetch('/api/settings/notifications/preferences', {
+    const response = await fetch('/api/settings/preferences/notifications', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
