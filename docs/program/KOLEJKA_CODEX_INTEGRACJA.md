@@ -28,6 +28,8 @@ Kolejność jest ułożona wg **blokowania**, nie wg wielkości.
 | **281** | **P0** — schemat bazy od zera | POMIAR + wąska NAPRAWA | wydany, wklejka gotowa |
 | **282** | Sześć przepływów międzymodułowych | POMIAR | **w toku**, znalazł P0 z 281 |
 
+★ **283 wykonany przez robotnika nadzorcy 02.09** — zrzuty Partnera gotowe, sześć znalezisk niżej.
+
 Marker wszystkich czterech: `eeb253c3ec`. Gałąź odczytu: `github-backup/grafika/m03-20260902`.
 
 ## DO WYDANIA — kolejka fazy trzeciej
@@ -39,6 +41,26 @@ w Administracji wg pola `gdzie`). Zakres: ustalić, co realnie renderuje się po
 (uwaga na kształt „wołacz istnieje ≠ renderuje się”), zrobić komplet zrzutów jasny/ciemny,
 pusty/pełny, opisać językiem właściciela. **Jeśli portal praktycznie nie istnieje — to jest wynik.**
 *W chwili pisania robi to robotnik nadzorcy; jeśli nie dowiezie, wydać jako dyżur.*
+
+### 283b · Partner — sześć znalezisk z przeglądu 02.09
+Zrzuty zrobione (**25 sztuk**, `evidence/grafika/16-partner/`, para jasny/ciemny sprawdzona:
+różnica luminancji 213-228 przy progu 150, 99,1-100% różnych pikseli). Inwentarz i opisy:
+`docs/program/grafika/PRZEGLAD_16_PARTNER_20260902.md`. Portal **istnieje i renderuje się**:
+`/partner/*` montowane w `src/routes/AppRoutes.tsx:3494` jako `PartnerPortalViewNew`, gate to
+wyłącznie `requireAuth`, **zero flagi frontendowej**. Znalezione defekty, potwierdzone w źródle:
+
+1. **Zero ekranów listowych z podglądem po kliknięciu w wiersz** — w całym module.
+2. **Kebab wiersza działa tylko w tabeli kampanii**; pozostałe trzy tabele mają `hideRowActions`.
+3. **`projects` i `users` w Zarządzaniu klientami to bespoke karty**, nie `FilterableTable`
+   ani `StandardTable` — naruszenie kanonu list z CLAUDE.md §9.
+4. **Crimson (`primary-*`) jako kolor dekoracyjny w 5 plikach, 45+ wystąpień** — pułapka nr 1
+   z CLAUDE.md; czerwień wolno wyłącznie dla semantyki krytycznej.
+5. **Twardy znak € w Pulpicie** (`PartnerPortalView.tsx:345`) obok PLN na tym samym ekranie.
+6. **Cztery miejsca z twardo wpisanym angielskim tekstem w polskim UI** — m.in. nagłówek
+   „Documentation" obok okruszka „Dokumentacja", surowy enum „Subscription Renewal".
+
+★ **`G07`-`G12` tego modułu NIE zostały zamknięte i nie wolno ich zamknąć bez oczu właściciela** —
+to jedyny moduł, którego nigdy nie widział. Zrzuty są gotowe do jego przeglądu.
 
 ### 284 · Cykl napraw `G13`–`G16` z rejestrów 279, 280 i 282
 Cztery bramki po zero na szesnaście. **Nie da się ich wydać przed 279/280/282** — ich treścią jest
