@@ -678,3 +678,35 @@ ekranów harnessu OKR — inaczej nie ma czym udowodnić; (2) pokaż, że ekran 
 (katalog 8 osób, który zrobiłem dziś dla Realizacji, bo tamten fixture nie ma listy członków
 organizacji) ma się docelowo rozpuścić w jednym wspólnym katalogu atrap harnessu, czy zostać
 lokalny. Nie rozstrzygam tego sam — to dotyka wszystkich 49 plików.
+
+---
+
+## Grupa: dryf identyfikatorów osób w stanowisku podglądowym (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Zmierzone:** **22 różne identyfikatory osób w 49 plikach `dev-render/`** (zero w `src/` — to
+atrapy, nie dane produktu). Ta sama osoba żyje pod wieloma identyfikatorami naraz:
+
+| identyfikator | wystąpień |
+| --- | --- |
+| `user-anna` | 56 |
+| `user-anna-kowalska` | 50 |
+| `user-anna-kowalczyk` | 10 |
+| `user-anna-demo` | 9 |
+| `user-anna-k` | 1 |
+| `user-marek` | 48 |
+| `user-marek-zielinski` | 13 |
+| `user-marek-demo` | 3 |
+| `user-marek-n` | 1 |
+
+**Właściwym wyjściem jest JEDEN wspólny zestaw osób dla całego `dev-render`** (identyfikator,
+imię i nazwisko z polskimi znakami, e-mail, rola), z którego korzystają wszystkie atrapy —
+a nie prostowanie 22 wariantów po jednym, bo to tylko przesunęłoby dryf, zamiast go usunąć.
+
+**To jest decyzja projektowa i nie wykonuję jej w tym dyżurze.** Dotyka 49 plików, a przypisanie
+„kim jest `user-anna-k`" jest rozstrzygnięciem TREŚCIOWYM (czy Kowalska i Kowalczyk to ta sama
+osoba, czy dwie), nie technicznym. Wymaga decyzji nadzorcy albo właściciela.
+
+**Co już jest gotowe i można na tym budować:** dwa lokalne zestawy zrobione dziś — `executionReviewPeople`
+(8 osób, Realizacja) i atrapa listy członków organizacji w dwóch ekranach OKR (4 osoby, kształt
+serwera `userId · email · name · role · status`). Wspólny zestaw powinien wchłonąć oba, a nie
+stanąć obok nich jako trzeci.

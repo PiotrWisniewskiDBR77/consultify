@@ -457,3 +457,81 @@ nazwać tę kolumnę. Wart rozważenia wyjątek na WERSALIKI albo na nazwę w cu
    importu, jeśli nazwa modułu już występuje w pliku" trafił na **mój własny komentarz**
    zawierający tę nazwę, więc import się nie dodał. Rano to samo przy `results-zestawienia`.
    Za każdym razem złapane sprawdzeniem po fakcie, nigdy uważnością — warto, żeby następny wiedział.
+
+---
+
+## DOPISEK 18:30 — atrapa listy osób i podpięcie resolvera w OKR
+
+### Bramka warunkowa ze zlecenia: NIE uruchomiła się — dostęp w produkcji JEST
+
+Zlecenie mówiło: *„jeśli `OkrObjectivesView` nie ma dostępu do organizacji także w produkcie —
+to defekt produktu, STOP z pomiarem"*. Zmierzone: organizacja jest w **globalnym magazynie stanu**
+(`useAppStore((s) => s.currentOrganization)` — 15 wywołań w `src/`, m.in. `ResultsAttentionPage:90`
+i `ResultsRoiHub:253`). Widok OKR sięga po nią jedną linią, bez przeprowadzania czegokolwiek przez
+drzewo. **Nie ma defektu produktu, warunek STOP nie zachodzi.** Idę dalej.
+
+### Sprostowanie premisy — dla JEDNEGO z dwóch ekranów, nie dla obu
+
+Zlecenie zakładało, że po dołożeniu atrapy „`resolveMemberName` zadziała sam". Pomiar rozdzielił
+te dwa ekrany:
+
+| ekran | czy woła resolver | co było potrzebne |
+| --- | --- | --- |
+| **rejestr zestawów OKR** | **TAK, od dawna** (`okrRegistryPresenters.tsx:108` w kolumnie i `:342` w podglądzie) | **sama atrapa** — premisa zlecenia trafna w 100% |
+| **Cele / Kluczowe Rezultaty / karta zestawu** | **NIE — w ogóle** (`value: row.ownerUserId, mono: true`) | atrapa **i** podpięcie |
+
+★ Potwierdzenie w kolejności, którą narzuca reguła 21: **najpierw dołożyłem samą atrapę i zrobiłem
+zrzut rejestru** — kolumna od razu pokazała „Piotr Wiśn…", „Anna Kow…", panel „Piotr Wiśniewski".
+To dowodzi, że tam defekt był **wyłącznie w przyrządzie**, dokładnie jak mówiło zlecenie. Dopiero
+potem tknąłem produkt, i tylko tam, gdzie zrzut pokazał, że atrapa nie wystarcza.
+
+### Co zrobione — przyrząd
+
+Atrapa listy członków organizacji w obu ekranach OKR, wzorem **`results-vnext-attention.tsx:41-45`**,
+gdzie dołożono ją 26.08 z identycznego powodu (komentarz w tamtym pliku mówi wprost: *„stub both so
+the harness renders the REAL id->name resolution, not a same-as-before »fetch fails, falls back to
+short id« no-op"*). **Czwarty raz dzisiaj trop „rodzeństwo z gotową poprawką".**
+
+Kształt odpowiedzi to kształt SERWERA (`userId · email · name · role · status`), nie kształt wygodny
+dla ekranu — inaczej atrapa potwierdzałaby nieprawdę. Nazwiska z polskimi znakami, bo tylko dane
+mogą je wnieść.
+
+### Co zrobione — produkt, bez czwartej kopii tego samego bloku
+
+Blok „organizacja ze stanu → pobierz członków → mapa → resolver" był już przepisany **trzy razy
+słowo w słowo**: `ResultsAttentionPage:90-115`, `ResultsRoiHub:253-278`, `ResultsOkrHub:201`.
+Ekrany Celów byłyby czwartą kopią. Zamiast tego wspólny hak
+`src/components/ResultsVNext/useOrganizationMemberNames.ts`, użyty w nowych miejscach; trzy stare
+kopie **zostawione nietknięte**, bo to ekrany z akceptem właściciela i ich zwinięcie wymaga
+własnego zrzutu PO. Zapisane jako dług w komentarzu haka.
+
+Podpięte: kolumna i podgląd Celów, kolumna i podgląd Kluczowych Rezultatów, właściciel i recenzent
+na karcie zestawu. Wszędzie z domyślnym `() => null`, więc istniejący wołacz i testy działają bez
+zmian, a brak listy nadal spada **uczciwie** do skróconego identyfikatora — nie wymyślamy nazwiska.
+
+**Dowód w obrazie** (`evidence/grafika/218-okr-nazwiska/`, oba motywy):
+rejestr — „Piotr Wiśn… · Tomasz N… · Anna Kow…" w kolumnie, „Piotr Wiśniewski" i „Anna Kowalska"
+w panelu; Cele — „Anna Kow… · Tomasz N…" w kolumnie, „Anna Kowalska" w panelu.
+
+### Wyjątek na WERSALIKI — dopisany w obu miejscach
+
+Reguła 22 w `00_ZASADY_PRACY.md` dostała akapit, a bramka nowy wzorzec. Rozstrzyganie jest
+mechaniczne, nie uznaniowe: całe słowo WERSALIKAMI albo nazwa w cudzysłowie drukarskim przechodzi,
+słowo pisane normalnie — nie. **Sprawdzone siedmioma przypadkami:** „Właściciel żąda…" i
+„Wlasciciel prosil…" i „jest właścicielem procesu" nadal trafiane; „kolumna WŁAŚCICIEL",
+„kolumna WLASCICIEL", „w kolumnie »Właściciel«" i zdanie w drugiej osobie — przepuszczane. 7/7.
+
+Furtki z tego nie ma: żeby obejść regułę tą drogą, trzeba by napisać „WŁAŚCICIEL ŻĄDA".
+
+**Nie ruszam długu bramki.** Sprawdzone: wynik jest **identyczny (79/89) przed moją zmianą wzorca
+i po niej**, więc nie wchodzę w drogę wykonawcy, który przepisuje te 103 zdania.
+
+### ZGŁASZAM
+
+**Czwarty raz dzisiaj przewróciłem się na własnej heurystyce wstawiania importu** — tym razem
+najdotkliwiej: reguła „wstaw po ostatniej linii zaczynającej się od `import`" wstawiła import
+**w środek wieloliniowego bloku importów**, rozbijając plik (`import {` … `import type …` …).
+Złapane natychmiast przez sprawdzenie składni, naprawione, ale to ta sama wada co rano
+(warunek trafiający na mój własny komentarz). **Wniosek dla następnego: nie zgaduj miejsca
+importu heurystyką — zakotwicz się na konkretnej, istniejącej linii importu i sprawdź składnię
+po każdej wstawce.** Uważność tu nie działa, bo heurystyka wygląda na poprawną.

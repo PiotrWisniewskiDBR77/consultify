@@ -1441,12 +1441,12 @@
           "co": "Piec celow z kluczowymi rezultatami.",
           "naprawione": [
             "Angielskie N/A zamiast N.D.",
-            "2 września: przycisk „Anuluj\" w panelu po prawej przestał być różowy. Anulowanie celu to nie skasowanie danych, więc przycisk wygląda tak samo jak „Edytuj\" obok."
+            "2 września: przycisk „Anuluj\" w panelu po prawej przestał być różowy. Anulowanie celu to nie skasowanie danych, więc przycisk wygląda tak samo jak „Edytuj\" obok.",
+            "2 września: kolumna z osobą odpowiedzialną i panel po prawej pokazują nazwiska („Anna Kowalska\", „Tomasz Nowak\") zamiast wewnętrznych identyfikatorów. Nazwiska biorą się z prawdziwej listy osób w organizacji — nie zgadujemy ich, a gdy kogoś na liście nie ma, uczciwie pokazujemy skrót zamiast wymyślać."
           ],
           "wyjatki": [
             "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie",
-            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)",
-            "ZMIERZONE 2 września: kolumna z osobą odpowiedzialną pokazuje wewnętrzne identyfikatory („user-ann…\", „user-tom…\"), a panel po prawej „user-anna-kowalska\" zamiast nazwiska. To ten sam defekt, który naprawiono dziś w Realizacji — tutaj siedzi w innym źródle danych, więc idzie osobno."
+            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)"
           ],
           "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → zakładka „Cele\" — pięć celów z kluczowymi rezultatami."
         },
@@ -1525,11 +1525,11 @@
           "ocena": "A",
           "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
           "naprawione": [
-            "Pigulka ucinana w kolumnie UWAGA"
+            "Pigulka ucinana w kolumnie UWAGA",
+            "2 września: kolumna z osobą odpowiedzialną pokazuje nazwiska („Piotr Wiśniewski\", „Anna Kowalska\", „Tomasz Nowak\"), a nie wewnętrzne identyfikatory. Ten ekran umiał to od dawna — brakowało mu tylko listy osób na naszym stanowisku podglądowym."
           ],
           "wyjatki": [
-            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)",
-            "ZMIERZONE 2 września: kolumna z osobą odpowiedzialną pokazuje wewnętrzne identyfikatory („user-pio…\", „user-ann…\"), a panel po prawej „user-piotr-wisniewski\" i „user-anna-kowalska\" zamiast nazwisk. Ten sam defekt co w Realizacji, inne źródło danych — idzie osobno."
+            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)"
           ],
           "gdzie": "Wyniki → OKR → rejestr zestawów celów (POZIOM 1) — dziewięć zestawów, tabela ośmiu kolumn."
         },
