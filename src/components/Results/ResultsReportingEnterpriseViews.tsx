@@ -324,7 +324,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       {
         id: 'name',
         label: t('results.reportingSchedules.name', 'Schedule'),
-        width: '34%',
+        width: '340px',
         render: (row) => {
           const item = row._raw as ScheduleItem;
           return (
@@ -337,18 +337,18 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
           );
         },
       },
-      { id: 'cadence', label: t('common.period', 'Cadence'), width: '20%' },
-      { id: 'audience', label: t('results.kpiReports.recipients', 'Audience'), width: '18%' },
+      { id: 'cadence', label: t('common.period', 'Cadence'), width: '200px' },
+      { id: 'audience', label: t('results.kpiReports.recipients', 'Audience'), width: '180px' },
       {
         id: 'approval',
         label: t('results.kpiReports.approval', 'Approval'),
-        width: '14%',
+        width: '140px',
         render: (row) => <ScheduleApprovalChip approval={String(row.approval ?? 'auto')} />,
       },
       {
         id: 'lastSentAt',
         label: t('results.kpiReports.lastSent', 'Last sent'),
-        width: '14%',
+        width: '140px',
         render: (row) => formatDateTime(row.lastSentAt),
       },
     ],
@@ -755,7 +755,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
       {
         id: 'name',
         label: t('results.wallboards.name', 'Wallboard'),
-        width: '36%',
+        width: '360px',
         render: (row) => {
           const item = row._raw as WallboardItem;
           return (
@@ -769,10 +769,10 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
           );
         },
       },
-      { id: 'scope', label: t('results.kpiReports.kpiScope', 'KPI scope'), width: '16%' },
-      { id: 'refresh', label: t('results.wallboards.refresh', 'Refresh'), width: '16%' },
-      { id: 'rotation', label: t('results.wallboards.rotation', 'Rotation'), width: '16%' },
-      { id: 'status', label: t('common.status', 'Status'), width: '16%' },
+      { id: 'scope', label: t('results.kpiReports.kpiScope', 'KPI scope'), width: '160px' },
+      { id: 'refresh', label: t('results.wallboards.refresh', 'Refresh'), width: '160px' },
+      { id: 'rotation', label: t('results.wallboards.rotation', 'Rotation'), width: '160px' },
+      { id: 'status', label: t('common.status', 'Status'), width: '160px' },
     ],
     [t]
   );
@@ -1096,7 +1096,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
       {
         id: 'name',
         label: t('results.connectors.name', 'Connector'),
-        width: '34%',
+        width: '340px',
         render: (row) => {
           const item = row._raw as ConnectorItem;
           return (
@@ -1109,10 +1109,10 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
           );
         },
       },
-      { id: 'type', label: t('common.type', 'Type'), width: '14%' },
-      { id: 'scope', label: t('results.kpiReports.kpiScope', 'KPI scope'), width: '14%' },
-      { id: 'cadence', label: t('common.period', 'Cadence'), width: '18%' },
-      { id: 'lastRun', label: t('results.connectors.lastRun', 'Last run'), width: '20%' },
+      { id: 'type', label: t('common.type', 'Type'), width: '140px' },
+      { id: 'scope', label: t('results.kpiReports.kpiScope', 'KPI scope'), width: '140px' },
+      { id: 'cadence', label: t('common.period', 'Cadence'), width: '180px' },
+      { id: 'lastRun', label: t('results.connectors.lastRun', 'Last run'), width: '200px' },
     ],
     [t]
   );

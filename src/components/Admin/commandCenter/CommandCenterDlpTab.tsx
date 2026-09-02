@@ -241,9 +241,15 @@ export const CommandCenterDlpTab: React.FC = () => {
         render: (row: TableRow) => (
           <span
             className={
-              row.severity === 'critical' || row.severity === 'high'
+              // Kanon czerwieni (CLAUDE.md UI#3) + PRIORITY_STYLES
+              // (src/constants/statusColors.ts) + SecurityEventsView:
+              // czerwony TYLKO najwyzszy stopien. „Wysoka" malowana tym samym
+              // czerwonym co „Krytyczna" kasowala roznice miedzy stopniami.
+              row.severity === 'critical'
                 ? 'text-c-danger font-medium'
-                : 'text-c-text-secondary'
+                : row.severity === 'high'
+                  ? 'text-c-warning font-medium'
+                  : 'text-c-text-secondary'
             }
           >
             {t(`commandCenter.dlp.form.severityOptions.${row.severity}`, String(row.severity))}

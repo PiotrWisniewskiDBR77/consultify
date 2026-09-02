@@ -701,9 +701,43 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
   const parsePx = useCallback((value?: string, fallback = 140) => {
     if (!value) return fallback;
-    const m = String(value).match(/(\d+)\s*px/i);
+    const raw = String(value);
+    const m = raw.match(/(\d+)\s*px/i);
     if (m?.[1]) return Number(m[1]);
-    const n = Number(String(value).replace(/[^\d.]/g, ''));
+    /**
+     * KONTRAKT SZEROKOŚCI: TYLKO `px` (lub goła liczba), NIGDY `%`.
+     *
+     * Do 2026-09-02 nierozpoznana jednostka (`'26%'`, `'18%'`…) trafiała do
+     * `.replace(/[^\d.]/g, '')`, które ucina WSZYSTKO poza cyframi — `'26%'`
+     * staje się `26`, więc kolumna dostaje `width: 26px` zamiast 26% realnej
+     * szerokości. Efekt: nagłówek/kolumna zapada się do kilkunastu pikseli,
+     * a treść ucina się w połowie wyrazu BEZ udziału mechanizmu łamania tekstu
+     * (`CELL_TEXT_CLAMP_CLASS`), bo ten dostaje kolumnę już przyciętą do
+     * absurdu. Zmierzone na żywo: `ChatSignalsFeed.tsx` (`width: '10%'` →
+     * `10px`), sześć kolejek w `MyWork/*DecisionQueue.tsx` (`'26%'`…), cztery
+     * ekrany `Results/*.tsx` — rodzina nazwana w dyżurze „rodzina ucięć”.
+     *
+     * Procent string jest tu NIEROZPOZNAWALNY z zasady: `FilterableTable` ma
+     * `table-fixed` i liczy budżet kolumn w PIKSELACH (`columnFit`,
+     * `FIT_MIN_COLUMN_WIDTH`) — nie zna szerokości kontenera w momencie
+     * definicji kolumny, więc nie ma z czego wyliczyć piksele z procentu.
+     * Zamiast cichej degradacji do 1–2 cyfr, NIEROZPOZNANA jednostka (w tym
+     * `%`) wraca do bezpiecznego `fallback` — tak samo jak pusty/NaN wpis.
+     * W dev/test krzyczy w konsoli, żeby błąd był widoczny przy pierwszym
+     * użyciu, nie dopiero na zrzucie ekranu.
+     */
+    if (raw.includes('%')) {
+      if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[FilterableTable] Kolumna deklaruje width="${raw}" — procenty nie są obsługiwane ` +
+            `(kontrakt: tylko px). Wartość zignorowana, użyto fallbacku ${fallback}px. ` +
+            `Zamień na px w definicji kolumny.`
+        );
+      }
+      return fallback;
+    }
+    const n = Number(raw.replace(/[^\d.]/g, ''));
     return Number.isFinite(n) && n > 0 ? n : fallback;
   }, []);
 

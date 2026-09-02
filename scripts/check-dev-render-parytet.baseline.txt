@@ -11,17 +11,8 @@
 # ŚWIADOMIE. Uzupełniaj ją ręcznie — regeneracja (--update) zachowuje istniejące powody.
 #
 # Regeneruj TYLKO gdy dług ŚWIADOMIE SPADŁ. Nigdy żeby uciszyć nową regresję.
-# WYGENEROWANO: 2026-09-01 (node scripts/check-dev-render-parytet.mjs --update)
-# RAZEM: 112 pozycji (2026-09-01, drugi audyt tego dnia:
-#   (a) naprawiono bezKomentarzy() — greedy regex zjadał <SettingsView>/<OrganizationView>/
-#       <AnalysisWorkspace>/<BaselineWorkspace>/<StatementPackWorkspaceV2> w AppRoutes.tsx i
-#       FinanceHub.tsx przez literalne "/*" w trasach-splatach (`` `/foo/*` ``) wewnątrz
-#       template-stringów; automat stanów zna teraz stringi -> usunięto 7 fałszywych R1;
-#   (b) rozszerzono regułę PODPIS o tekst poza <h1..h3> (symulowane/nie część/harness/
-#       dev-render/mock/PRZED-PO) -> złapano finance-comments-panel i rodzinę (7 ekranów
-#       finansów), naprawiono w kodzie (data-dev-render-chrome); 8 nowo złapanych ekranów
-#       to przyrządy (dyptyki/gallery/proof) — zostają w linii bazowej, oznaczone w
-#       docs/program/grafika/status.json)
+# WYGENEROWANO: 2026-09-02 (node scripts/check-dev-render-parytet.mjs --update)
+# RAZEM: 103 pozycji
 accent-soft-token-fix	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 accent-soft-token-fix	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 admin-health	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
@@ -62,11 +53,7 @@ fab-rail-kebab	R2	HelpToggleButton+StandardTable	dług zastany 2026-09-01 (audyt
 fab-rail-kebab	R3	max-w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[560px], którego nie ma ani u wołacza, ani w komponencie
 fab-rail-kebab	R3	w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[560px], którego nie ma ani u wołacza, ani w komponencie
 finance-focus-mode	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
-finance-hub	R1	FinanceHubLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinanceHubLazy>, którego żaden plik src/ nie renderuje
-finance-id-bridge	R1	FinanceLegacyBridgeGateLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinanceLegacyBridgeGateLazy>, którego żaden plik src/ nie renderuje
 finance-id-bridge	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
-finance-model-workspace	R1	FinancialModelWorkspaceLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinancialModelWorkspaceLazy>, którego żaden plik src/ nie renderuje
-finance-prediction-workspace	R1	PredictionWorkspaceLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <PredictionWorkspaceLazy>, którego żaden plik src/ nie renderuje
 finance-value-panels	R1	DriverPlannerPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <DriverPlannerPanel>, którego żaden plik src/ nie renderuje
 finance-value-panels	R1	EfficientFrontierPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <EfficientFrontierPanel>, którego żaden plik src/ nie renderuje
 finance-value-panels	R1	MonteCarloNpvPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <MonteCarloNpvPanel>, którego żaden plik src/ nie renderuje
@@ -76,11 +63,6 @@ finance-value-panels	R1	ValueOfficePanel	dług zastany 2026-09-01 (audyt przyrz�
 finance-value-panels	R1	WhatIfSensitivityPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <WhatIfSensitivityPanel>, którego żaden plik src/ nie renderuje
 i18n-fala1-smoke	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 i18n-fala1-smoke	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
-idea-table-tool-empty-filter	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
-idea-table-tool-grouping	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
-idea-table-tool-kebab	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
-idea-table-tool-paste	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
-idea-table-tool-sortfilter	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
 initiatives-portfolio-analysis	R1	PortfolioAnalysisView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PortfolioAnalysisView>, którego żaden plik src/ nie renderuje
 karta-task-pelna	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 menu-dlugi-domkniecie	PODPIS	tekst:harness	przyrząd pomiarowy, nie ekran produktu (klasyfikacja 2026-09-01, robotnik toru grafiki — dyptyk/gallery/proof, patrz docs/program/grafika/status.json ocena C gdzie dotyczy)
@@ -99,6 +81,7 @@ prawy-panel-szyna-ikon	PODPIS	tekst:PRZED/PO etykieta	przyrząd pomiarowy, nie e
 prawy-panel-szyna-ikon	PODPIS	tekst:mock	przyrząd pomiarowy, nie ekran produktu (klasyfikacja 2026-09-01, robotnik toru grafiki — dyptyk/gallery/proof, patrz docs/program/grafika/status.json ocena C gdzie dotyczy)
 prawy-panel-szyna-ikon	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
 prawy-pas-jedna-formula	R1	PreviewStructuredList	dług zastany 2026-09-01 (audyt przyrządu): montuje <PreviewStructuredList>, którego żaden plik src/ nie renderuje
+prawy-pas-jedna-formula	R2	PreviewActivityStrip+PreviewRelations	dlug zastany, ujawniony 2026-09-02: para miala precedens WYLACZNIE przez szerokie domkniecie MyIdeasListContent (ktory renderowal <PreviewRelations> we wlasnej kopii podgladu Idei). Kopia zostala scalona do wspolnego src/components/MyWork/IdeaPreview.tsx (naprawa zgloszenia wlasciciela o podgladzie idea-table), wiec domkniecie sie zwezilo i para stracila precedens. Sam ekran to przyrzad pomiarowy (prototyp prawego pasa, 4 inne wpisy tego ekranu juz w tej linii bazowej), nie ekran produktu — nie zmienia sie ani jego kod, ani produkt.
 prawy-pas-jedna-formula	R2	PreviewActivityStrip+RightRail	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewActivityStrip> i <RightRail>; produkcja nigdy ich razem nie renderuje
 prawy-pas-jedna-formula	R3	max-w-[640px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[640px], którego nie ma ani u wołacza, ani w komponencie
 prawy-pas-jedna-formula	R3	w-[640px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[640px], którego nie ma ani u wołacza, ani w komponencie

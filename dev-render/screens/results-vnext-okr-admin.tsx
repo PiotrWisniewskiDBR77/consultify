@@ -3,7 +3,27 @@
  * Program/Cycle admin surfaces (`OkrProgramsPage`/`OkrCyclesPage`), same
  * `window.fetch` stub pattern as `results-vnext-okr-workspace.tsx`.
  *
- * URL params: &page=programs|cycles (default programs)
+ * URL params: &page=programs|cycles (default programs) &ff=off
+ *
+ * ★ NAPRAWA PARYTETU 2026-09-02 (reguła 8 + 17 `00_ZASADY_PRACY.md`).
+ *
+ * Zmierzone zrzutem, nie kodem: ten ekran pokazywał WYŁĄCZNIE pusty stan
+ * blokady — „Programy OKR — jeszcze nie włączone. Ta powierzchnia jest
+ * w budowie…" (`OkrProgramsPage.tsx:350,358`). Właściciel dostawał kadr,
+ * w którym nie ma czego oceniać, a bramka parytetu tego NIE łapie: montowany
+ * komponent ma wołacza, więc R1/R2 milczą — pusty stan za flagą jest niewidoczny
+ * dla kontroli statycznej. Złapał to dopiero zrzut PRZED.
+ *
+ * Domena OKR stoi za `okrRegistry` (`resultsVNextFeatureFlags.ts:44`), domyślnie
+ * OFF. Siostrzany `results-vnext-okr-registry.tsx:489` ustawia ten klucz
+ * w `localStorage` od 2026-08-12 — trzy pozostałe ekrany OKR (`-admin`,
+ * `-objectives`, `-workspace`) nigdy tego nie dostały. Flagę włączamy
+ * W ŚRODOWISKU URUCHOMIENIA (klucz `localStorage` harnessu), nie zmianą
+ * wartości domyślnej w kodzie produktu — reguła #7/#9 `CLAUDE.md` zostaje w mocy.
+ *
+ * `&ff=off` zostawia dowód stanu zablokowanego (zapis JAWNY '0'/'1', nigdy
+ * pominięty — `localStorage` jest wspólny dla całego originu harnessu, więc
+ * pominięcie zapisu zostawiłoby nieświeże '1' z poprzedniej wizyty).
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +33,13 @@ import { OkrCyclesPage } from '../../src/components/ResultsVNext/okr/OkrCyclesPa
 
 const params = new URLSearchParams(window.location.search);
 const page = (params.get('page') as 'programs' | 'cycles') || 'programs';
+const flagOff = params.get('ff') === 'off';
+
+try {
+  window.localStorage.setItem('ff.results_vnext_okr_registry', flagOff ? '0' : '1');
+} catch {
+  // no-op — dev-render only
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

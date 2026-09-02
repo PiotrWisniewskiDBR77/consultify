@@ -1,6 +1,6 @@
 {
   "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-09-01",
+  "_zaktualizowano": "2026-09-02",
   "moduly": [
     {
       "katalog": "01-czat",
@@ -10,10 +10,12 @@
         {
           "id": "ntype-analizuj-ai",
           "nazwa": "Analizuj z AI — wynik",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "ROZSTRZYGNIĘTE 2026-09-02: lewa kolumna jest pusta, bo ten ekran pokazuje WYŁĄCZNIE panel analizy AI, a nie całą kartę. To własność przyrządu, nie defekt produktu — w aplikacji ten sam panel stoi wewnątrz pełnej karty (TaskDetailView:6066, DecisionDetailView, NotificationDetailView), gdzie lewą kolumnę wypełniają sekcje karty. Pełną kartę właściciel ogląda na osobnym ekranie (karta-task). Ocena obniżona z A na B, bo kadr nie pokazuje ekranu w całości."
+          ],
           "gdzie": "Wiele miejsc w aplikacji (Moja praca → karta Zadania/Decyzji/Powiadomienia, Inicjatywy → karta inicjatywy, Wywiad → karta Wniosku, Narzędzia → karta narzędzia) → przycisk „Analizuj z AI\" w prawym pasku karty — pokazuje braki, ryzyka i sugestie AI; to ocena doradcza, nic nie blokuje."
         },
         {
@@ -32,7 +34,8 @@
           "co": "'Proces wdrożenia nowego klienta' — SPRAWDZONE na świeżym zrzucie 151-processflow-typy (2026-08-31, oba motywy): krawędź łącząca 'Poproś o uzupełnienie danych' z węzłem decyzyjnym 'Dane kompletne?' NIE przechodzi już przez etykietę węzła 'Klient składa zgłoszenie' — trasa biegnie czystym korytarzem między wierszami torów 'Klient' i 'Zespół wdrożenia'. Zgłoszony defekt (krawędź wyglądająca jak przekreślenie) NAPRAWIONY, zgodne z commitem 'fix(processflow): poprawny import reactflow'.",
           "naprawione": [
             "Tekst wylewał się poza romb decyzyjny i nachodził na etykietę 'Tak' — naprawione wcześniej.",
-            "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach."
+            "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach.",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -83,7 +86,9 @@
           "nazwa": "Mala mapa mysli",
           "ocena": "B",
           "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.",
-          "naprawione": [],
+          "naprawione": [
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
+          ],
           "wyjatki": [],
           "warianty": [
             "b2-template-gallery",
@@ -101,7 +106,8 @@
           "ocena": "B",
           "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Angielski przycisk Apply"
+            "Angielski przycisk Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -129,7 +135,8 @@
           "ocena": "B",
           "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kolumny dostawały szerokość 26px zamiast 26% (parsePx zjadał znak procentu) — słowa łamały się w środku: „Krytyczn/y\", „Wykona…\". Naprawione U ŹRÓDŁA w FilterableTable + 12 plikach konsumentów. POZOSTAJE: „Ostrzeżenie\" i „Interpretacja\" nadal łamią się w środku — luka w samym mechanizmie klamrowania, poza bezpiecznym zakresem tej naprawy (2026-09-02)"
           ],
           "wyjatki": [
             "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
@@ -142,7 +149,8 @@
           "ocena": "B",
           "co": "Tablica z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Ten sam angielski Apply"
+            "Ten sam angielski Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -161,7 +169,8 @@
           "ocena": "B",
           "co": "Tablica oddalona, szesc elementow. Ta sama pastylka SEL po angielsku, widoczne nawet przy 25% zoom. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
-            "Ten sam angielski Apply"
+            "Ten sam angielski Apply",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "warianty": [
@@ -193,7 +202,9 @@
           "nazwa": "Teresa — podpowiedzi",
           "ocena": "A",
           "co": "Dwa panele rozmowy w kontekscie raportu i wniosku.",
-          "naprawione": [],
+          "naprawione": [
+            "Chip kontekstu Teresy mówił „Insight:\" — teraz „Wniosek:\" (2026-09-02)"
+          ],
           "wyjatki": [
             "Ta sama czerwonawa linia"
           ],
@@ -407,7 +418,8 @@
           "ocena": "A",
           "co": "Lista projektow ze statusami jako pigulki z kropka.",
           "naprawione": [
-            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji."
+            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji.",
+            "Pigułka statusu w podglądzie mówiła „active\", a ta sama wartość w tabeli obok „Aktywne\" — podgląd omijał istniejący mechanizm tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "gdzie": "Moja praca → zakładka „Projekty\" w głównym menu huba (MyWorkHub.tsx, obok Zadań/Decyzji) — lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie. Historia problemu (BRAK DROGI WEJŚCIA, pomyłkowa akcja Command Palette) opisana w poprzednich wpisach dziennika/rejestru z 30.08 rano — rozwiązana tego samego dnia wieczorem, patrz pole „naprawione\"."
@@ -531,7 +543,8 @@
           "ocena": "B",
           "co": "Pasek gorny Mojej pracy z otwarta idea: pigulki dokumentow, menu modulu i mapa mysli.",
           "naprawione": [
-            "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami."
+            "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami.",
+            "Pastylka trybu kanwy mówiła po angielsku (SEL) — teraz ZAZNACZANIE/ŁĄCZENIE/RYSOWANIE/PRZESUWANIE; tryb „przesuwanie\" nie miał w ogóle klucza tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [
             "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
@@ -559,7 +572,8 @@
           ],
           "wyjatki": [
             "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.",
-            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione."
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione.",
+            "SPROSTOWANIE zgłoszenia z przeglądu: „Whiteboard\"/„Process Flow\" w kolumnie Narzędzie NIE są defektem — to udokumentowana decyzja właściciela z 2026-07-24 (komentarz w kodzie). Zgłoszenie oparte na moim błędnym założeniu (2026-09-02)"
           ],
           "warianty": [
             "assessment-matryca",
@@ -625,7 +639,9 @@
           "nazwa": "Kalendarz (widok bazowy)",
           "ocena": "B",
           "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
-          "naprawione": [],
+          "naprawione": [
+            "Tytuły wydarzeń ucinały się bez wielokropka („1(\" zamiast „10:00\") — FullCalendar ma domyślnie text-overflow: clip. Dodany wielokropek i pełny tekst w podpowiedzi po najechaniu. SPROSTOWANIE: „Mene[dżer]\" NIE jest ucięciem — to świadomie przewijalny pasek zakładek, tekst jest pełny (2026-09-02)"
+          ],
           "wyjatki": [
             "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
           ],
@@ -652,7 +668,9 @@
           "nazwa": "Nowy — wybor rodzaju",
           "ocena": "A",
           "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
-          "naprawione": [],
+          "naprawione": [
+            "Karta typu obiektu nazywała się „Insight\" obok polskich „Inicjatywa\"/„Decyzja\" — teraz „Wniosek\", spójnie z resztą aplikacji (2026-09-02)"
+          ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
           ],
@@ -1121,7 +1139,9 @@
           "ocena": "B",
           "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy. Kolumny Rola/Zespol, Rodzaj, Presja ucinaja tekst w polowie slowa - StandardTable/FilterableTable za waskie kolumny. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Ucięcie w środku słowa pochodzi z luki we wspólnym mechanizmie klamrowania: text-overflow:ellipsis nie działa dla pojedynczego długiego słowa w wielolinijkowej, rosnącej komórce. Naprawa wymaga przeprojektowania komponentu współdzielonego przez dziesiątki ekranów (2026-09-02)"
+          ],
           "gdzie": "Inicjatywy → zakładka „Obciążenie\" — obciążenie zespołu, wszędzie z jednostką (FTE-tydzień, procenty, zakresy)."
         },
         {
@@ -1258,7 +1278,9 @@
           "nazwa": "Zakładka „Realizacje”",
           "ocena": "B",
           "co": "StandardTable + demo-fallback.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna statusu mieszała angielskie „Scheduled\"/„Blocked\" z polskim „W realizacji\" — ExecutionHub czytał mapę statusów wprost, zamiast wołać istniejącą funkcję tłumaczącą (2026-09-02)"
+          ],
           "wyjatki": [
             "Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217)."
           ],
@@ -1392,7 +1414,8 @@
             "Angielskie N/A zamiast N.D."
           ],
           "wyjatki": [
-            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
+            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie",
+            "Jak wyżej — „KLUCZ/REZUL\" i znikająca kolumna „Zaktualizowano\" to zasłonięcie przez przypiętą kolumnę akcji przy 9-10 kolumnach i otwartym podglądzie, nie ucięcie tekstu (2026-09-02)"
           ],
           "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → zakładka „Cele\" — pięć celów z kluczowymi rezultatami."
         },
@@ -1468,7 +1491,9 @@
           "naprawione": [
             "Pigulka ucinana w kolumnie UWAGA"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)"
+          ],
           "gdzie": "Wyniki → OKR → rejestr zestawów celów (POZIOM 1) — dziewięć zestawów, tabela ośmiu kolumn."
         },
         {
@@ -1584,7 +1609,8 @@
           ],
           "wyjatki": [
             "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
-            "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
+            "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)",
+            "Ekran istnieje WYŁĄCZNIE w harnessie (dev-render), nie ma odpowiednika w produkcie — to prototyp. Łamane „wskaźnik/i\" jest realne, ale naprawa w harnessie byłaby naprawą przyrządu, nie produktu (2026-09-02)"
           ],
           "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy) — sześć zestawień z okresem rozliczeniowym, właścicielem i liczbą wskaźników w środku.",
           "warianty": [
@@ -2561,10 +2587,12 @@
           "ocena": "A",
           "co": "Zestawienie rozliczen.",
           "naprawione": [
-            "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje"
+            "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje",
+            "Ekran był niemal w całości po angielsku — przetłumaczony w komplecie (tytuł, zakładki, kafle, statusy) (2026-09-02)"
           ],
           "wyjatki": [
-            "Ekran w calosci po angielsku — narzedzie wewnetrzne"
+            "Ekran w calosci po angielsku — narzedzie wewnetrzne",
+            "ZOSTAJE po angielsku: kolumna TYP („Subscription\"/„One Time\") i pigułka „subscription\" w podglądzie to WARTOŚCI DANYCH, nie etykiety; daty w formacie ISO (2026-07-10) zamiast polskiego; w banerze widoczny kod techniczny AMD-PRT-ECONOMICS-002 (2026-09-02)"
           ],
           "gdzie": "SuperAdmin → Revenue → Rozliczenia partnerskie — pięć zakładek (Prowizje/Atrybucja/Wygasające/Analityka/Wypłaty)."
         },
@@ -2694,7 +2722,8 @@
           "co": "'Zaproszenia' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy teraz w pełni po polsku ('Oczekujące', 'Błąd', 'Wygasło', 'Cofnięto', 'Zaakceptowane' — poprzednio 'expired'/'revoked' po angielsku), daty w formacie DD/MM/RRRR ('10/09/2026 14:00'). Oba wcześniej zgłoszone defekty NAPRAWIONE.",
           "naprawione": [
             "Statusy expired/revoked były po angielsku — teraz przetłumaczone (Wygasło/Cofnięto).",
-            "Daty były w formacie US — teraz DD/MM/RRRR."
+            "Daty były w formacie US — teraz DD/MM/RRRR.",
+            "Statusy „Wygasło\"/„Cofnięto\" były czerwone jak awaria — to zwykły stan cyklu życia; naprawione we wspólnej mapie statusów, nie w tym jednym ekranie (2026-09-02)"
           ],
           "wyjatki": [],
           "gdzie": "Administracja → Zespół (team) → zakładka „Zaproszenia”. Zrzuty: evidence/grafika/146-admin-team/."
@@ -2930,7 +2959,9 @@
           "nazwa": "Legal hold",
           "ocena": "B",
           "co": "Legal hold.",
-          "naprawione": [],
+          "naprawione": [
+            "Nieprzetłumaczony tytuł — teraz „Wstrzymanie prawne\", spójnie z treścią ekranu (2026-09-02)"
+          ],
           "wyjatki": [
             "Tytuł po angielsku."
           ],
@@ -3185,7 +3216,9 @@
           "nazwa": "Ślad agentów",
           "ocena": "A",
           "co": "StandardTable sortowalna.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna WYNIK mieszała ACCEPTED/MODIFIED/REJECTED z polskim „Oczekuje\" — przetłumaczone (2026-09-02)"
+          ],
           "wyjatki": [],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ślad agentów”. Zrzuty: evidence/grafika/146-admin-command/."
         },
@@ -3205,7 +3238,9 @@
           "nazwa": "DLP",
           "ocena": "B",
           "co": "DLP.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna „Waga\" malowała „Krytyczna\" i „Wysoka\" tą samą czerwienią — czterostopniowa skala czytała się jak dwustopniowa; „Wysoka\" jest teraz bursztynowa (2026-09-02)"
+          ],
           "wyjatki": [
             "Waga „Wysoka” tym samym text-c-danger co „Krytyczna” (CommandCenterDlpTab.tsx:244) — dwa poziomy nieodróżnialne kolorem — zob. zgłoszenie #23 do toru funkcji."
           ],
@@ -3379,7 +3414,8 @@
           "ocena": "B",
           "co": "SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.",
           "naprawione": [
-            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego."
+            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego.",
+            "Nagłówek ujednolicony z treścią ekranu. SPROSTOWANIE: forma „Blokery\" ZOSTAJE — pierwsza wersja naprawy zmieniła ją na „Blokady\", ale zrzut pokazał, że pięć innych plików używa ustalonej formy „bloker/blokery\"; cofnięte (2026-09-02)"
           ],
           "wyjatki": [
             "Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu)."
@@ -3404,7 +3440,8 @@
           "co": "SPRAWDZONE: nagłówek 'Ryzyka i szanse', baner 'Logika oceny ryzyka — Na podstawie 0 zadeklarowanych wyzwań oraz 0 aktywnych ograniczeń, zidentyfikowaliśmy poniższe ryzyka.', sekcja 'Ukryte ryzyka i zagrożenia', nagłówki tabeli 'RYZYKO / ZAGROŻENIE / DLACZEGO (PRZYCZYNA ŹRÓDŁOWA) / WAGA / STRATEGIA OGRANICZANIA / AKCJE', menu boczne zawiera już 'Podsumowanie dla zarządu' (było 'Executive brief'). Treść w pełni przetłumaczona.",
           "naprawione": [
             "Cała treść (baner, tabela, nagłówki) przetłumaczona na polski.",
-            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'."
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
+            "Baner „Logika oceny ryzyka\" był czerwony mimo neutralnej treści — teraz spokojny pas informacyjny; bliźniaczy baner szans w tym samym pliku był już poprawnie zielony (2026-09-02)"
           ],
           "wyjatki": [
             "Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny."
@@ -3417,7 +3454,8 @@
           "ocena": "B",
           "co": "SPRAWDZONE (dowód PRZED/PO w evidence/grafika/156-organizacja-i18n): wszystkie sześć kart scenariuszy przetłumaczone — 'Fundament cyfrowy' ('Najpierw fundamenty, potem tempo.'), 'Rewolucja doświadczenia klienta', 'Doskonałość operacyjna', 'Transformacja napędzana AI', 'Innowacja modelu biznesowego', 'Organizacja oparta na danych'; baner 'Rekomendowany scenariusz transformacji — Na podstawie 0 zadeklarowanych wyzwań rekomendowany kierunek to Fundament cyfrowy.'; wskaźniki TEMPO/AMBICJA/RYZYKO. PRZED: całość po angielsku (Digital Foundation, Recommended).",
           "naprawione": [
-            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO)."
+            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO).",
+            "Baner rekomendowanego scenariusza i odznaka REKOMENDOWANY były czerwone — teraz zielone (2026-09-02)"
           ],
           "wyjatki": [
             "Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny."
@@ -3443,7 +3481,8 @@
           "naprawione": [
             "Realny profil organizacji ('Atelier Toys Sp. z o.o.', branża, liczba pracowników) zamiast niepodstawionego placeholdera 'Company Name'.",
             "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
-            "Treść karty w pełni przetłumaczona."
+            "Treść karty w pełni przetłumaczona.",
+            "W ciemnym motywie cała karta danych firmy miała czerwone tło: autor napisał dark:from-primary-900 nie wiedząc, że primary = crimson; naprawione razem z CTA „Eksportuj PDF\" i wartością „Docelowa dojrzałość\" (2026-09-02)"
           ],
           "wyjatki": [
             "Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.",
@@ -3559,7 +3598,8 @@
           "ocena": "B",
           "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
           "naprawione": [
-            "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione."
+            "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione.",
+            "Lista kroków pokazywała 5× surowe „pending\" — status kroku nie był w ogóle tłumaczony (2026-09-02)"
           ],
           "wyjatki": [
             "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
@@ -3900,7 +3940,9 @@
           "nazwa": "Ustawienia — Integracje (połączone aplikacje)",
           "ocena": "B",
           "co": "Połączone aplikacje: karty (Gmail, Kalendarz, Slack i in.) z opisami funkcji i tagami (np. 'Email sync', 'Contact import', 'Label mapping').",
-          "naprawione": [],
+          "naprawione": [
+            "Opisy i tagi 20 integracji oraz licznik „2 connected\" były po angielsku mimo polskiej powłoki — przetłumaczone (2026-09-02)"
+          ],
           "wyjatki": [
             "Opisy kart integracji i tagi funkcji (np. 'Sync emails, contacts and labels from your Gmail account', 'Email sync', 'Contact import') renderują się po angielsku mimo polskich nagłówków sekcji — dev-render (connected-apps) wskazuje surowy window.fetch z pominięciem warstwy Api/i18n dla treści kart."
           ],
@@ -3911,7 +3953,9 @@
           "nazwa": "Ustawienia — Dane i prywatność (kontrola danych)",
           "ocena": "B",
           "co": "Kontrola danych: 5 przełączników zgód (Analityka użycia ON, Personalizacja ON, Komunikacja marketingowa OFF, Udostępnianie danych stronom trzecim OFF, Trenowanie modeli AI OFF) + pigułki retencji danych (30 dni / 90 dni / 6 miesięcy / 1 rok wybrane / Bezterminowo).",
-          "naprawione": [],
+          "naprawione": [
+            "Baner „Zgodność z GDPR\" (treść pozytywna) był czerwony — teraz zielony; zaznaczony okres retencji przestał mieć czerwoną ramkę w ciemnym motywie (2026-09-02)"
+          ],
           "wyjatki": [
             "ZNANE ZGŁOSZENIE: crimson dekoracyjny — baner 'Zgodność z GDPR' i kilka ikon sekcji (tarcza, zegar) w kolorze crimson, mimo że to treść informacyjna, nie stan krytyczny."
           ],

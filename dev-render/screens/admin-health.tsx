@@ -255,7 +255,19 @@ export default function AdminHealthScreen(props: {
   ) as AdminHealthScreenId | null;
   const adminScreen = requested || props.adminScreen;
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+    /*
+      SZEROKOSC = SZEROKOSC WOLACZA (naprawa przyrzadu 2026-09-02).
+      Zgloszenie wlasciciela na `admin-command-attention-queue`: "to nie jest
+      szerokosc strony". Stal tu wlasny inline `maxWidth: 1200` - liczba,
+      ktorej NIE MA u zadnego wolacza produkcyjnego. Realny wolacz kazdego
+      z tych paneli to `src/views/admin/AdminSettingsModule.tsx:599`:
+      `mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6`. Harness
+      zwezal produkt o 80 px i gubil responsywny padding - defekt PRZYRZADU,
+      nie produktu (ta sama klasa co Z-32b: `max-w-3xl` wklejony w harnessie
+      Finansow). Bramka R3 tego nie zlapala, bo szuka klas `max-w-*`, a to
+      byl inline `style`.
+    */
+    <div className="mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
       <DebugBoundary>
         <MemoryRouter initialEntries={['/']}>{renderHealthScreen(adminScreen)}</MemoryRouter>
       </DebugBoundary>

@@ -79,6 +79,37 @@ const WORKSPACE_LABELS: Record<WorkspaceType, string> = {
   empty: 'Chat',
 };
 
+/**
+ * ★ Znalezisko 203-polski (2026-09-02, chipy Teresy — `teresa-chipy-sugestii`
+ * / `teresa-chipy-panel-artefaktu`): `WORKSPACE_LABELS` (wyżej) nie miał
+ * ŻADNEGO polskiego wariantu — chip kontekstu pokazywał „Presentation:",
+ * „Report:", „Insight:" po angielsku w polskim UI, bo `primaryLabel`
+ * (niżej) czytał wyłącznie tę mapę. Dopisujemy bliźniaczą mapę PL zamiast
+ * przechodzić na klucze i18n — to lokalny idiom tego pliku (patrz
+ * `FOCUS_LABELS_PL` obok), nie SSOT dzielony z innymi ekranami.
+ */
+const WORKSPACE_LABELS_PL: Record<WorkspaceType, string> = {
+  task: 'Zadanie',
+  initiative: 'Inicjatywa',
+  assessment: 'Ocena',
+  roadmap: 'Mapa drogowa',
+  artifact: 'Artefakt',
+  document: 'Dokument',
+  decision: 'Decyzja',
+  idea: 'Pomysł',
+  report: 'Raport',
+  dashboard: 'Panel',
+  project: 'Projekt',
+  notebook: 'Notatnik',
+  finance: 'Finanse',
+  insight: 'Wniosek',
+  interview: 'Wywiad',
+  presentation: 'Prezentacja',
+  canvas: 'Płótno',
+  general: 'Ogólny',
+  empty: 'Czat',
+};
+
 const FOCUS_LABELS: Record<string, string> = {
   all: 'All sources',
   'pmo-docs': 'PMO Standards',
@@ -87,13 +118,24 @@ const FOCUS_LABELS: Record<string, string> = {
   web: 'Web Search',
 };
 
+const FOCUS_LABELS_PL: Record<string, string> = {
+  all: 'Wszystkie źródła',
+  'pmo-docs': 'Standardy PMO',
+  'project-data': 'Dane projektu',
+  research: 'Badania',
+  web: 'Wyszukiwanie w sieci',
+};
+
 export const ContextBadge: React.FC<ContextBadgeProps> = ({
   workspaceContext,
   focusMode = 'all',
   compact = false,
   className = '',
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
+  const workspaceLabels = isPolish ? WORKSPACE_LABELS_PL : WORKSPACE_LABELS;
+  const focusLabels = isPolish ? FOCUS_LABELS_PL : FOCUS_LABELS;
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasContext = useMemo(
@@ -106,7 +148,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
 
     if (workspaceContext?.entityName) {
       items.push({
-        label: WORKSPACE_LABELS[workspaceContext.type] || 'Entity',
+        label: workspaceLabels[workspaceContext.type] || (isPolish ? 'Obiekt' : 'Entity'),
         value: workspaceContext.entityName,
         icon: WORKSPACE_ICONS[workspaceContext.type],
       });
@@ -123,21 +165,21 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
     if (focusMode && focusMode !== 'all') {
       items.push({
         label: t('contextBadge.focus', 'Focus'),
-        value: FOCUS_LABELS[focusMode] || focusMode,
+        value: focusLabels[focusMode] || focusMode,
       });
     }
 
     return items;
-  }, [workspaceContext, focusMode, t]);
+  }, [workspaceContext, focusMode, t, workspaceLabels, focusLabels, isPolish]);
 
   // Don't render anything if there's no meaningful context
   if (!hasContext && focusMode === 'all') return null;
 
   // Single-line badge (collapsed)
   const primaryLabel = workspaceContext?.entityName
-    ? `${WORKSPACE_LABELS[workspaceContext.type] || 'AI'}: ${workspaceContext.entityName}`
+    ? `${workspaceLabels[workspaceContext.type] || 'AI'}: ${workspaceContext.entityName}`
     : focusMode !== 'all'
-      ? `Focus: ${FOCUS_LABELS[focusMode] || focusMode}`
+      ? `${t('contextBadge.focus', 'Focus')}: ${focusLabels[focusMode] || focusMode}`
       : null;
 
   if (!primaryLabel) return null;

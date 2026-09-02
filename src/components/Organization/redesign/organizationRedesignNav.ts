@@ -67,7 +67,7 @@ export const ORGANIZATION_REDESIGN_MODULES: OrganizationRedesignModules = [
       // #9 Zadeklarowane wyzwania + #12 Dowody
       { id: 'declared-challenges', label: 'Wyzwania i dowody', icon: ShieldAlert },
       // #10 Przyczyny źródłowe + #11 Blockery celów
-      { id: 'root-causes', label: 'Przyczyny i blockery', icon: Route },
+      { id: 'root-causes', label: 'Przyczyny i blokery', icon: Route },
     ],
   },
   {

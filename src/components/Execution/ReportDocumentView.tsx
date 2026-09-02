@@ -107,9 +107,12 @@ const RAG_DOT: Record<string, string> = {
   red: 'bg-danger-500 shadow-danger-500/40',
 };
 
+// Kanon czerwieni (CLAUDE.md UI#3) + PRIORITY_STYLES (src/constants/statusColors.ts):
+// czerwony TYLKO najwyzszy stopien. `high` dzielilo klase z `critical`, wiec
+// skala czterostopniowa czytala sie jak dwustopniowa.
 const SEVERITY_TEXT: Record<string, string> = {
   critical: 'text-danger-400',
-  high: 'text-danger-400',
+  high: 'text-amber-400',
   warning: 'text-amber-400',
   warn: 'text-amber-400',
   medium: 'text-amber-400',

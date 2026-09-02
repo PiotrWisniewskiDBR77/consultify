@@ -147,8 +147,15 @@ export default {
         },
         // ========================================================================
         // DATA-PALETTE DECISION GUIDE — kiedy c-tag vs c-chart vs c-accent (brand)?
-        //   • c-accent (crimson/brand): TYLKO brand/CTA/selected — NIGDY jako dana,
-        //     seria wykresu, ani kolor kategorii. Crimson w danych = dług (VA-B sweep).
+        //   • c-accent (crimson/brand): TYLKO tożsamość marki — NIGDY jako dana,
+        //     seria wykresu, kolor kategorii ANI stan aktywny/zaznaczony.
+        //     Crimson w danych = dług (VA-B sweep).
+        //     ★ SPROSTOWANIE 2026-09-02: ten komentarz mówił wcześniej „brand/CTA/selected",
+        //     co jest SPRZECZNE z prawem nadrzędnym w CLAUDE.md (reguła UI 3): „CTA/stany
+        //     aktywne = neutralne; fokus = niebieski c-focus". Wykonawcy dostawali dwie
+        //     różne instrukcje z dwóch źródeł prawdy i wybierali tę bliższą. Rozstrzygnięcie
+        //     nadzorcy toru grafiki: wiąże CLAUDE.md — crimson NIE jest kolorem CTA ani
+        //     zaznaczenia. Wykryte przy naprawie rodziny „czerwień na treści neutralnej".
         //   • c-success/warning/danger/info: SYGNAŁ (status/alarm/kierunek), nie kategoria.
         //   • c-tag-1..12: KATEGORIA/TYP/ŹRÓDŁO — równoważne, bezkolejnościowe „kropki"
         //     (chipy statusu-jako-typ, etykiety, tagi). ≤5 widocznych serii (§15.1).

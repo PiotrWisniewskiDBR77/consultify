@@ -392,3 +392,59 @@ Implementacja pozycji oznaczonych ROBIMY/PÓŹNIEJ/ODŁOŻONE nie została w tym
 dyżurze rozpoczęta: `ResultsHub.tsx`, `KPITimeSeriesDrawer.tsx`,
 `RecoveryCardPanel.tsx` i trzy silniki serwera **zostają nietknięte**, dopóki
 któryś z tych kierunków nie trafi do partii roboczej.
+
+---
+
+## 2026-09-02 · Trzy rzeczy świadomie odłożone po rodzinie „ucięcia tekstu"
+
+Wszystkie trzy zmierzone na **żywym DOM** (nie z kodu) przez robotnika naprawiającego
+rodzinę; wszystkie trzy odłożone z podaniem powodu, nie przemilczane.
+
+### 1. Zasłonięcie ostatniej kolumny przez przypiętą kolumnę akcji
+
+**Dlaczego wygląda na defekt, którym nie jest.** Na `results-vnext-okr-registry`
+nagłówek wygląda jak ucięte „PEW". Pomiar w przeglądarce: pełne słowo „Pewność"
+mieści się w swoim boksie (`scrollWidth === clientWidth === 62px`) — **nic się nie
+ucina**. Zasłania je sąsiedni `th.sticky` z nieprzezroczystym tłem, zaczynający się
+w x=935. To samo na `results-vnext-okr-objectives` (znika cała kolumna
+„Zaktualizowano") i `audyty-piec-powierzchni` (suma szerokości kolumn 1350 px
+w kontenerze 994 px).
+
+**Co niesie wartościowego:** przypięta kolumna akcji jest dobrym wzorcem — kebab
+zawsze pod ręką, niezależnie od przewinięcia.
+
+**Dlaczego odłożone:** naprawa wymaga **mechanizmu chowania kolumn wg priorytetu**,
+a produkt nie ma dziś pojęcia „która kolumna jest ważniejsza". Autor poprzedniej
+poprawki (dyżur 193, 01.09) zapisał to samo wprost. Dorobienie priorytetu na oko,
+per ekran, dałoby dziesięć różnych porządków kolumn w dziesięciu modułach.
+
+**Jak przywrócić:** zdefiniować priorytet kolumn w kontrakcie tabeli
+(`StandardTable`), potem chować od najniższego przy zwężeniu — jedna zmiana
+w komponencie, nie w ekranach. Zdarzenie poboczne warte naprawy przy okazji:
+`ResizeObserver` przeliczający szerokości po otwarciu podglądu bywa spóźniony —
+ręczne wywołanie `resize` na oknie naprawiało stan natychmiast.
+
+### 2. Wspólny mechanizm klamrowania nie stawia wielokropka na pojedynczym długim słowie
+
+`CELL_TEXT_CLAMP_CLASS` (`break-normal overflow-hidden text-ellipsis`) **nie działa**
+dla jednego słowa dłuższego niż kolumna, gdy komórka jest wielolinijkowa i rośnie
+(`white-space: normal`) — tak działa `text-overflow: ellipsis` zgodnie ze specyfikacją
+CSS, to nie jest błąd implementacji. Widoczne na `capacity-advisor-a3` („ogranic",
+„dotycz" bez kropek) i resztkowo na `chat-signals-feed` („Ostrzeżeni|e",
+„Interpretac|ja").
+
+**Dlaczego odłożone:** poprawka (np. `-webkit-line-clamp`) dotyka komponentu
+współdzielonego przez dziesiątki ekranów już raz odebranych. To osobna runda
+z pełnym przeglądem regresji, nie poprawka przy okazji — inaczej naprawiając jeden
+ekran zepsujemy trzydzieści.
+
+### 3. `results-zestawienia` — ekran istnieje tylko w przyrządzie
+
+Zmierzone: `dev-render/screens/results-zestawienia.tsx` **nie ma odpowiednika
+w `src/`** (`grep -rl "ZestawienieRow\|pluralizeWskaznik" src` — pusto). Defekt
+„3 wskaźnik / i" jest realny, ale naprawienie go byłoby naprawą przyrządu, nie
+produktu (reguła 17: harness ma pokazywać produkt, nie własną kompozycję).
+
+**Do rozstrzygnięcia:** albo rejestr zestawień okresowych powstaje w produkcie
+i wtedy ekran ma co pokazywać, albo karta schodzi z odbioru jako prototyp.
+**Nie zostawiać jej w odbiorze z oceną A** — właściciel ocenia wtedy rysunek.

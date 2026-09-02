@@ -321,3 +321,143 @@ Waga „Wysoka" i waga „Krytyczna" dostają ten sam kolor `text-c-danger` —
 dwa różne poziomy ryzyka są dziś nieodróżnialne kolorem na ekranie
 `admin-command-dlp`. Wymaga rozdzielenia semantyki kolorów (np. `c-warning`
 dla „Wysoka", `c-danger` zarezerwowane dla „Krytyczna").
+
+---
+
+## ★ 2026-09-02 — DWANAŚCIE EKRANÓW ZBUDOWANYCH I NIEPODŁĄCZONYCH (jedna sprawa, dwanaście przypadków)
+
+**Charakter ustalenia: POMIAR, nie hipoteza.** Dla każdego komponentu policzyłem
+pliki w `src/`, które renderują go w JSX, **odejmując plik jego własnej definicji
+i wszystkie pliki testów**. Wynik dla całej dwunastki: **zero wołaczy produkcyjnych**.
+Polecenie odtwarzające: `grep -rl "<Nazwa[ />]" src --include="*.tsx" | grep -v __tests__`.
+
+**Dlaczego to jest pilne, a nie kosmetyczne.** Właściciel postawił ocenę A lub B
+na każdym z tych dwunastu ekranów i powiedział „tak". Ekrany wyglądają dobrze —
+i słusznie je przyjął. Ale **użytkownik nie ma jak do nich dojść**: nie prowadzi
+do nich żadne miejsce w aplikacji. To dług „zbudowane, ale niepodłączone" —
+brakuje ostatniego przewodu, nie funkcji. Dopóki go nie ma, akcept właściciela
+dotyczy czegoś, czego klient nie zobaczy.
+
+**Zastrzeżenie dla wykonawcy — dwa kroki, nie jeden.** Zanim dopiszesz wołacza,
+sprawdź, czy komponent nie został świadomie wycofany (jak stary hub Wyników,
+wycofany 24.08). Wpis „zero wołaczy" mówi, że nikt go nie renderuje — **nie
+mówi, że powinien**. Propozycja miejsca w nawigacji poniżej to sugestia toru
+grafiki wywiedziona z tego, co ekran pokazuje, nie decyzja produktowa.
+
+**Eksport przez plik zbiorczy NIE jest wołaczem.** `AuditsHub` i
+`AssessmentPresentationView` są wyeksportowane przez `index.ts` swoich katalogów,
+ale z tego eksportu nikt nie korzysta. To ta sama pułapka co „klucz i18n istnieje,
+ale trzyma angielskie słowo": obecność nie jest użyciem.
+
+| # | Ekran (harness) | Komponent — plik:linia | Gdzie użytkownik powinien do niego dojść (propozycja toru grafiki) |
+| --- | --- | --- | --- |
+| 24 | `teresa-chipy-panel-artefaktu` | `src/components/shared/NModeLayout/AIConsultantPanel.tsx:160` | Prawy panel każdego artefaktu (karta inicjatywy, karta wniosku, dokument) — jako treść pozycji „Zapytaj Teresę", która dziś jest samym przyciskiem bez panelu. |
+| 25 | `unified-create-launcher` | `src/components/shared/UnifiedCreateLauncher.tsx:87` | Przycisk „Nowy" w pasku modułu — wspólny wybór rodzaju obiektu (Wniosek / Inicjatywa / Decyzja) zamiast osobnych ścieżek per moduł. |
+| 26 | `assessment-initiatives-table` | `src/components/assessment/InitiativesTable.tsx:148` | Ocena → zakładka „Inicjatywy strategiczne" (lista inicjatyw wyprowadzonych z oceny). |
+| 27 | `assessment-output-report` | `src/components/assessment/report/AssessmentReportView.tsx:45` | Ocena → Raporty → otwarcie pojedynczego raportu z tabeli raportów. |
+| 28 | `assessment-presentation-view` | `src/components/assessment/presentation/AssessmentPresentationView.tsx:74` | Ocena → Raporty → akcja „Pokaż jako prezentację" na raporcie (9 slajdów). |
+| 29 | `assessment-reports-table` | `src/components/assessment/ReportsTable.tsx:198` | Ocena → zakładka „Raporty" (rejestr raportów z oceny) — wejście do #27 i #28. |
+| 30 | `results-vnext-legacy-archive` | `src/components/ResultsVNext/legacy/ResultsVNextLegacyArchivePanel.tsx:77` | Wyniki → Ustawienia/Archiwum — podgląd historycznych tabel KPI/OKR/ROI. Ekran świadomie tylko do odczytu („Zapis: Zablokowany"). |
+| 31 | `audyty-drd-report` | `src/components/Audit/AuditsHub.tsx:101` | Audyty → wejście modułu. **Sprawdź najpierw, czy moduł Audytów nie ma dziś innego, nowszego wejścia** — hub o 101 liniach może być poprzednikiem. |
+| 32 | `audyty-warsztat-kryterium` | `src/components/Audit/method/workspace/CriterionWorkspaceGate.tsx:21` | Audyty → wiersz kryterium → „Otwórz warsztat". To wzorcowy ekran warsztatu kryterium. |
+| 33 | `rn-g3-class-l-record-shell` | `src/components/shared/states/TeresaState.tsx:49` (`TeresaUnavailableNotice`) | Stan awaryjny panelu Teresy — powinien pokazywać się wszędzie tam, gdzie Teresa jest niedostępna, zamiast pustego panelu. |
+| ~~34~~ | ~~`finance-model-workspace`~~ | — | **WYCOFANE 02.09 — patrz sprostowanie niżej. Ten ekran JEST osiągalny.** |
+| ~~35~~ | ~~`finance-prediction-workspace`~~ | — | **WYCOFANE 02.09 — patrz sprostowanie niżej. Ten ekran JEST osiągalny (za flagą).** |
+
+### ★ SPROSTOWANIE MOJEGO WŁASNEGO POMIARU (2026-09-02, tego samego dnia)
+
+**Pozycje 34 i 35 były BŁĘDNE i zostają wycofane.** `FinancialModelWorkspace` i
+`PredictionWorkspace` **są renderowane w produkcie** — oba przez `FinanceHub.tsx`
+(`:3585` bezpośrednio; `:340` przez otoczkę `FinanceV3PredictionWorkspace`), a sam
+`FinanceHub` ma wołacza w `src/views/EconomicsView.tsx:19`. Użytkownik może do nich dojść.
+
+**Jak popełniłem ten błąd.** Szukałem wołaczy wzorcem `<Nazwa` i przegapiłem te schowane
+za `const Alias = lazy(() => import('...').then(m => ({ default: m.Nazwa })))` — czyli
+popełniłem **dokładnie tę samą ślepotę, którą godzinę wcześniej wytknąłem bramce parytetu**.
+Złapał to robotnik naprawiający bramkę, bo zlecenie kazało mu sprawdzić moją liczbę, a nie
+przyjąć ją na wiarę.
+
+**Zastrzeżenie do 35:** `PredictionWorkspace` jest montowany warunkowo, za flagą
+(`useFinancePredictionWorkspaceFlag`). Jest osiągalny, ale nie dla każdego — to inny stan
+niż „niepodłączony" i inny niż „gotowy".
+
+**Wniosek dla następnego pomiaru:** licząc wołaczy, ZAWSZE uwzględniaj otoczki `lazy()`.
+Narzędzie, które to robi poprawnie i nie przechodzi przez powłokę (dwie wcześniejsze wersje
+kłamały przez cytowanie w `zsh`): `node scripts/dev/grafika-wolacze.mjs`. Po tym sprostowaniu
+lista niepodłączonych liczy **10 ekranów, nie 12**.
+
+**Kontrprzykład, który dowodzi, że pomiar jest wiarygodny:** w tej samej rundzie
+sprawdziłem `FinanceHub` (`src/components/Economics/FinanceHub.tsx`) i `PlatformGridView`
+(`src/components/MyWork/table/ViewRouter.tsx:152`) — **oba MAJĄ realnych wołaczy**
+(`src/views/EconomicsView.tsx:19` oraz `ViewRouter.tsx:1547`) i dlatego ich tu nie ma,
+mimo że bezpiecznik parytetu je zgłaszał. Pomiar, który zgłasza wszystko, nie jest pomiarem.
+
+### 36. [P1] `finance-baseline-workspace` — brak dodawania założeń i usuwania linii
+
+**Słowa właściciela (01.09, decyzja „poprawka" w bazie odbioru):** *„dalej nie mam
+przycisku dodawania założeń i możliwości usuwania linii"*. Słowo „dalej" znaczy,
+że zgłasza to nie pierwszy raz.
+
+To **brak funkcji, nie wygląd** — na ekranie Bazy porównania nie ma czym dodać
+założenia ani usunąć linii, więc tor grafiki nie ma czego stylować. Karta zostaje
+otwarta w odbiorze (`docs/program/grafika/reszta-odbioru.json`), żeby sprawa nie
+zniknęła po cichu. Do zamknięcia potrzebne są dwie operacje zapisu (dodanie
+założenia, usunięcie linii) wraz z ich powierzchnią; wygląd tej powierzchni wraca
+wtedy do toru grafiki.
+
+### 37. [P2] `AdminGuestsPanel.tsx:63` — przetłumaczony napis podawany jako wartość statusu
+
+**Charakter ustalenia: POMIAR w kodzie** (znalezione 02.09 przy naprawie rodziny
+„czerwień na treści neutralnej").
+
+Panel podaje do pigułki statusu **już przetłumaczony napis** (`t('...status.expired')`
+→ „Wygasł") zamiast wartości technicznej. `statusChipTone()` normalizuje status po
+**angielskim kluczu**, więc polski napis nie pasuje do żadnej gałęzi i wpada w tier
+`neutral` **przypadkiem**, nie z decyzji.
+
+**Dlaczego to zgłaszam mimo że ekran wygląda dobrze.** Przy przeglądzie 01.09 ten
+ekran posłużył za KONTRPRZYKŁAD („tu ten sam stan »wygasło« jest pokolorowany
+poprawnie") — czyli defekt mechaniki został wzięty za wzorzec projektowy. Ta sama
+ścieżka ukryje w przyszłości stan **krytyczny**: dowolny status przetłumaczony
+przed kolorowaniem będzie szary, niezależnie od wagi.
+
+Naprawa: przekazywać wartość techniczną do pigułki, a tłumaczyć dopiero etykietę.
+
+### 38. [P2] 710 kluczy w polskim pliku tłumaczeń trzyma wartość identyczną z angielską
+
+**Charakter ustalenia: POMIAR CAŁEGO ZBIORU** (02.09, rodzina „angielskie resztki").
+Skrypt porównał bajtowo każdą wartość z `public/locales/pl/translation.json` z jej
+odpowiednikiem w `en/`, z wykluczeniem uzasadnionych zapożyczeń (Status, System, KPI).
+Na **34 390** spłaszczonych kluczy **710** ma wartość identyczną z angielską.
+
+**Dlaczego to nie jest lista defektów, tylko lista do klasyfikacji.** Część z tych 710
+to poprawne zapożyczenia (nazwy własne, skróty branżowe). Część to prawdziwe luki —
+potwierdzone przykłady: `myWork.notebook.title`, `myWork.home`, `myWork.manager`.
+Rozróżnienie wymaga ludzkiego osądu per klucz.
+
+**Dlaczego zgłaszam zamiast naprawiać:** masowa podmiana 710 wartości to dokładnie ta
+operacja, przed którą `CLAUDE.md` ostrzega („raz już zniszczyła wydane instrukcje").
+Naprawiono jeden potwierdzony żywy przypadek (`myWork.notebook.title`); reszta wymaga
+osobnego dyżuru z listą i odbiorem.
+
+**Dlaczego to ważne mimo priorytetu P2:** audyt sprawdzający ISTNIENIE klucza melduje
+„przetłumaczone" dla wszystkich 710. To pułapka „klucz istnieje ≠ przetłumaczony" —
+każdy dotychczasowy pomiar pokrycia tłumaczeń w tym repozytorium był zawyżony o tę liczbę.
+
+### 39. [P2] Bramka parytetu ma DWIE dalsze ślepoty (znalezione 02.09 przy naprawie ekranów)
+
+Obie wykryte oczami, nie przez bramkę — czyli bramka meldowała CZYSTO na realnych defektach.
+
+1. **R3 nie widzi szerokości podanej w `style`, tylko w klasach.** `admin-command.tsx:590`
+   miał `style={{ maxWidth: 1200 }}`, gdy wołacz produkcyjny
+   (`AdminSettingsModule.tsx:599`) ma `max-w-[1280px]` plus responsywny padding. Bramka
+   zgłaszała **0 naruszeń** — fałszywy spokój. Ta sama wklejka była w **ośmiu** harnessach
+   Admina.
+2. **R1 nie rozpoznaje komponentu montowanego przez alias.** `teresa-confirm-chip.tsx`
+   montował realny `MessageRenderer`, ale jako `const Renderer = MessageRenderer as …`;
+   bramka dopasowuje nazwę znacznika JSX, więc zgłosiła „nie montuje ŻADNEGO komponentu
+   produkcyjnego" na ekranie, który montował produkt od początku.
+
+Obie ślepoty są tego samego rodzaju co dwie naprawione dziś rano (`React.lazy`, wołacz
+w pliku definicji): **bramka rozpoznaje wzorzec zapisu, nie rzecz.** Dopóki tak jest,
+każdy nowy sposób zapisania tego samego będzie dawał fałszywy alarm albo fałszywy spokój.

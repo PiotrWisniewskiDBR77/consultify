@@ -167,7 +167,7 @@ export const ADMIN_DOMAINS: DomainNavigationModule<AdminDomain, AdminScreen>[] =
       c('compliance-evidence', 'Dowody zgodności', ShieldCheck),
       c('retention-export', 'Retencja i eksport', FileText),
       c('integrity', 'Integralność', ShieldCheck),
-      c('legal-hold', 'Legal hold', FileClock),
+      c('legal-hold', 'Wstrzymanie prawne', FileClock),
       c('export-history', 'Historia eksportów', FileClock),
     ],
   },

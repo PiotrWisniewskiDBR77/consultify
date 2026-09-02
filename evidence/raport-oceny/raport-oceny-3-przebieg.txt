@@ -1,0 +1,7 @@
+POST / → 201 {"id":"report-75afb347-3dd0-4c7b-bc80-c0d99b9fe8ef","builderReportId":null}
+axis_data zapisane przez produkt: "{\"1\":{\"actual\":2.75,\"target\":4.5},\"2\":{\"actual\":1.67,\"target\":3.33},\"3\":{\"actual\":1.33,\"target\":3},\"4\":{\"actual\":2.75,\"target\":5},\"5\":{\"actual\":3,\"target\":4.67},\"6\":{\"actual\":2,\"target\":4.67},\"7\":{\"actual\":1.33,\"target\":3.33}}"
+GET /templates → 200, sztuk: 5 {"templates":[{"id":"tpl-drd-full-diagnostic-v2","name":"DRD Full Diagnostic Report","description":"Comprehensive digital maturity diagnostic covering all 7 transformation axes with detailed gap analysis, axis-by-axis deep dives, strategic recommendations, and a prioritized roadmap. Best suited for 
+POST /:id/generate (templateId=tpl-drd-full-diagnostic-v2) → 503 {"statusCode":503,"status":false,"type":"not_configured","message":"Service temporarily unavailable due to missing configuration","details":{"code":"ASSESSMENT_REPORTS_GENERATE_FAILED"}}
+GET /:id/drd-report → 200, bajtów: 60044
+GET /:id/export/pdf → 200, bajtów: 11575
+GET /:id/export/pptx → 500, bajtów: 99

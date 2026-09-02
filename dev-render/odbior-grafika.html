@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Odbiór grafiki — 2026-08-30</title>
+<title>Odbiór grafiki — 2026-09-01</title>
 <style>
   :root{color-scheme:light}
   *{box-sizing:border-box}
@@ -46,11 +46,11 @@
 <p class="lead">Ekrany gotowe do obejrzenia na żywo. Każdy z nich oglądałem sam, w obu motywach, zanim tu trafił — <b>dostajesz je do akceptu, nie do odkrywania zepsucia</b>.</p>
 
 <div class="licz">
-  <div class="kafel"><b>181</b><span>do odbioru</span></div>
-  <div class="kafel"><b>141</b><span>bez zastrzeżeń</span></div>
-  <div class="kafel"><b>40</b><span>z nazwanymi wyjątkami</span></div>
-  <div class="kafel"><b>106</b><span>defektów naprawionych</span></div>
-  <div class="kafel"><b>20</b><span>świadomie niepokazane</span></div>
+  <div class="kafel"><b>254</b><span>do odbioru</span></div>
+  <div class="kafel"><b>182</b><span>bez zastrzeżeń</span></div>
+  <div class="kafel"><b>72</b><span>z nazwanymi wyjątkami</span></div>
+  <div class="kafel"><b>176</b><span>defektów naprawionych</span></div>
+  <div class="kafel"><b>59</b><span>świadomie niepokazane</span></div>
 </div>
 
 <div class="jak">
@@ -97,8 +97,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=processflow-canvas&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Start, decyzja, koniec, dwa tory.</p>
-        <p class="naprawione"><b>Naprawione:</b> Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak</p>
+        <p class="co">'Proces wdrożenia nowego klienta' — SPRAWDZONE na świeżym zrzucie 151-processflow-typy (2026-08-31, oba motywy): krawędź łącząca 'Poproś o uzupełnienie danych' z węzłem decyzyjnym 'Dane kompletne?' NIE przechodzi już przez etykietę węzła 'Klient składa zgłoszenie' — trasa biegnie czystym korytarzem między wierszami torów 'Klient' i 'Zespół wdrożenia'. Zgłoszony defekt (krawędź wyglądająca jak przekreślenie) NAPRAWIONY, zgodne z commitem 'fix(processflow): poprawny import reactflow'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Tekst wylewał się poza romb decyzyjny i nachodził na etykietę 'Tak' — naprawione wcześniej. · Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach.</p>
         
       </div>
       <div class="ekran">
@@ -139,25 +139,25 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Mala mapa mysli<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Mala mapa mysli<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=melscanvas-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=melscanvas-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.</p>
+        <p class="co">Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.</p>
         
         
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Mapa mysli<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Mapa mysli<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=mindmap-canvas&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=mindmap-canvas&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Realna mapa mysli z paskiem podpowiedzi AI.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Angielski przycisk Apply</p>
         
       </div>
@@ -175,37 +175,37 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Strumien sygnalow<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Strumien sygnalow<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=chat-signals-feed&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=chat-signals-feed&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.</p>
+        <p class="co">W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Tablica<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Tablica<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=whiteboard-canvas&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=whiteboard-canvas&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Tablica z paskiem podpowiedzi AI.</p>
+        <p class="co">Tablica z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Ten sam angielski Apply</p>
         
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Tablica — warsztat<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Tablica — warsztat<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=whiteboard-workshop&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=whiteboard-workshop&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Tablica oddalona, szesc elementow.</p>
+        <p class="co">Tablica oddalona, szesc elementow. Ta sama pastylka SEL po angielsku, widoczne nawet przy 25% zoom. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Ten sam angielski Apply</p>
         
       </div>
@@ -294,8 +294,8 @@
           </span>
         </div>
         <p class="co">Graf polaczen z soczewka osieroconych.</p>
-        
-        
+        <p class="naprawione"><b>Naprawione:</b> 01.09: graf polaczen dostal tryb pelnoekranowy (przycisk „Pelny ekran” obok dokowanego panelu) — zgodnie ze zgloszeniem wlasciciela „zrob to na calym ekranie”; potwierdzone zrzutem, dark w pelni czytelny (evidence/grafika/171-pojedyncze/).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Na zrzucie w trybie jasnym (light, fullscreen) etykiety sasiednich wezlow sa przyciete na krawedziach modala (np. „DE (6)”, „ne (3)”, „Ekspa[nsja]”) — w trybie ciemnym te same wezly sa w pelni czytelne, wiec to raczej stan zoomu/pan w danym zrzucie niz twardy defekt, ale warto sprawdzic ponownie.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -317,7 +317,7 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=mywork-idea-inspector-lekki&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Sekcje z licznikami.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sekcje z licznikami.</p>
         
         
       </div>
@@ -359,15 +359,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Karta zadania<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Karta zadania<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=karta-task&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=karta-task&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.</p>
+        <p class="co">Czerwień na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona. Poprzedni zapis „Bez odchyleń” był NIEPRAWDZIWY — odchylenie znalezione w rundzie 2026-08-31 (patrz wyjątki).</p>
         
-        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Przycisk PRIMARY „Wyślij do przeglądu” w NModeHeader używa surowych bg-navy-900 / dark:bg-[#F4F7FB] zamiast tokenów c-* (zweryfikowane w DOM, zob. zgłoszenie #14 do toru funkcji).</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -401,7 +401,7 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=ideas-teresa-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Sugestie AI, zero crimsonu.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sugestie AI, zero crimsonu.</p>
         
         
       </div>
@@ -413,7 +413,7 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=mywork-notebook-rail-speca&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Prawy panel z uczciwymi pustymi powiazaniami.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: sekcja AKCJE ma przycisk „Zapytaj Teresę o tę notatkę” zamiast wbudowanego czatu — potwierdzone zrzutem (evidence/grafika/169-teresa-szyna/, evidence/grafika/164-szerokosc-panelu/). Prawy panel z uczciwymi pustymi powiazaniami.</p>
         
         
       </div>
@@ -450,7 +450,7 @@
           </span>
         </div>
         <p class="co">Lista projektow ze statusami jako pigulki z kropka.</p>
-        
+        <p class="naprawione"><b>Naprawione:</b> ★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects&quot; (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz&quot; faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects&quot;. Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji.</p>
         
       </div>
       <div class="ekran">
@@ -583,7 +583,7 @@
         </div>
         <p class="co">Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.</p>
         <p class="naprawione"><b>Naprawione:</b> Cztery literowki bez polskich znakow</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.</li></ul></div>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.</li><li>ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -596,6 +596,30 @@
         <p class="co">Ten sam komponent co karta decyzji, inne dane.</p>
         <p class="naprawione"><b>Naprawione:</b> Angielskie tytuly powiazanych zadan na polskim ekranie</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Nie otwieralem zwinietych sekcji Komentarze i Zrodla — moga tam byc jeszcze angielskie teksty</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Skrzynka (Inbox) — zakładka domyślna<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=mywork-inbox&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=mywork-inbox&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">StandardTable (ff_m03InboxStandardTable ON), 9 pozycji.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Powłoka MyWorkHub ma ~87 surowych klas navy-*/slate-* — dług systemowy całego huba, nie tylko tego ekranu.</li><li>Stan przeczytane/nieprzeczytane NIE istnieje w danych (InboxContent nie zna isRead).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Kalendarz (widok bazowy)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=mywork-calendar&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=mywork-calendar&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji).</li></ul></div>
       </div>
     </div><div class="modul">
       <h2>Wywiad</h2>
@@ -661,6 +685,18 @@
         <p class="naprawione"><b>Naprawione:</b> Angielskie zakladki Interview/Matrix/Report i przycisk Settings</p>
         
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Karta wywiadu<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=karta-interview&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=karta-interview&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Prawy panel ma trzy z szesciu kanonicznych sekcji. Na swiezym zrzucie ekran ma wszystkie 6 sekcji prawego panelu (Akcje, Wlasciwosci, Powiazania, Zrodla i zalozenia, Komentarze, Historia) - naprawione przez kogos innego od poprzedniego wpisu. Przywrocono z odzyskanego raportu nocnego.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy.</li></ul></div>
+      </div>
     </div><div class="modul">
       <h2>Narzędzia</h2>
       <p class="opis">Dynamiczny SWOT i pozostałe narzędzia doradcze.</p>
@@ -674,20 +710,8 @@
           </span>
         </div>
         <p class="co">Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.</p>
-        <p class="naprawione"><b>Naprawione:</b> Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kategoria pokazuje surowe strategic zamiast polskiej nazwy</li></ul></div>
-      </div>
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Dynamiczny SWOT — pole na zywo<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=tools-swot-live&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=tools-swot-live&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.</p>
-        <p class="naprawione"><b>Naprawione:</b> Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING</li></ul></div>
+        <p class="naprawione"><b>Naprawione:</b> Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi. · Kategoria pokazywala surowe strategy zamiast etykiety — teraz tlumaczona (KnownToolDetailView.tsx)</p>
+        
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -698,8 +722,8 @@
           </span>
         </div>
         <p class="co">Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.</p>
-        <p class="naprawione"><b>Naprawione:</b> CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po · Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>DRAFT, COPILOT AI i Find Signals po angielsku</li></ul></div>
+        <p class="naprawione"><b>Naprawione:</b> CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po · Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi. · Kategoria surowe strategic — tlumaczona; Find Signals labelPl byl kopia angielskiego — Znajdz sygnaly (toolAiActions.ts)</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>COPILOT AI po angielsku (klucz i18n istnieje, PL = kopia EN literalna)</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -710,12 +734,12 @@
           </span>
         </div>
         <p class="co">Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.</p>
-        
+        <p class="naprawione"><b>Naprawione:</b> 01.09: sekcja „AKCJE 0” po rozwinieciu pokazuje zdanie wyjasniajace („Ten wpis biblioteczny nie ma wlasnych akcji — startuj sesje przyciskiem w naglowku.”) zamiast golego zera — potwierdzone zrzutem (evidence/grafika/164-szerokosc-panelu/).</p>
         
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Narzedzia — zakladka wnioskow<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Narzedzia — zakladka wnioskow<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=tools-outputs-insights-tab&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=tools-outputs-insights-tab&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
@@ -723,7 +747,7 @@
         </div>
         <p class="co">Tabela kanoniczna, statusy i daty po polsku.</p>
         <p class="naprawione"><b>Naprawione:</b> Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.</p>
-        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Zakladka Insighty nie jest slowem polskim (tools.hub.tabs.outputs w locale)</li><li>Nazwy narzedzi Value Chain/Dynamic SWOT surowe w tabeli (karta-tool ma je poprawnie po polsku — inna droga danych)</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -759,19 +783,19 @@
         </div>
         <p class="co">Wyniki i gotowosc z paskiem postepu.</p>
         
-        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Checklista Mission brief jest jasny — angielskie Mission brief wklejone w polskie zdanie (locale)</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Narzedzia — wyjscie z sesji<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Narzedzia — wyjscie z sesji<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=tools-sesja-wyjscie&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=tools-sesja-wyjscie&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
         <p class="co">Powloka artefaktu z sesja, pytania po polsku.</p>
-        <p class="naprawione"><b>Naprawione:</b> Ekran nie byl podlaczony do harnessu · CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku</li><li>Surowe dynamic-swot i strategic we wlasciwosciach</li></ul></div>
+        <p class="naprawione"><b>Naprawione:</b> Ekran nie byl podlaczony do harnessu · CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po · Nazwa sesji Dynamic SWOT - Session na sztywno w fixture — Sesja (dev-render), domyslna nazwa sesji w produkcie tez PL (ToolDocumentView defaultSessionName); Kategoria tlumaczona</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>COPILOT AI po angielsku (locale)</li><li>Surowe dynamic-swot w polu Typ narzedzia (identyfikator techniczny, nie nazwa)</li></ul></div>
       </div>
     </div><div class="modul">
       <h2>Ocena</h2>
@@ -827,13 +851,13 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Raport z oceny<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Raport z oceny<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-output-report&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-output-report&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.</p>
+        <p class="co">Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi. Sekcja Ograniczenia i zalozenia cytuje wprost zargon inzynierski (EventDerivedOutputBridge, vertical-slice demo, businessMeaning/recommendation, aggregation.byGroup) w tekscie pokazywanym klientowi - zrodlo drdSessionRuntime.ts, poza zakresem UI. Przywrocono z odzyskanego raportu nocnego.</p>
         
         
       </div>
@@ -857,8 +881,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-artifacts-restart&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Piec statusow, baner ostrzegawczy.</p>
-        <p class="naprawione"><b>Naprawione:</b> Chipy statusu nachodzily na siebie · Baner bledu nieczytelny w motywie jasnym · Angielskie Retry</p>
+        <p class="co">SPRAWDZONE: zakładka 'Wnioski', sześć chipów statusu (Wszystkie 3 / Szkic / W przeglądzie / Oczekuje na zatwierdzenie / Zatwierdzony / Odrzucony / Zarchiwizowany) pokazuje teraz krótką etykietę '0 · 3 ukryte' zamiast uciętego surowego tekstu deweloperskiego '0 · 3 ukryte: hub nie pobiera podzia…' — pełne zdanie przeniesione do podpowiedzi, zgodnie z zapowiedzianą naprawą. Tabela z trzema wierszami: 'DBR77 · Digital Readiness — Grupa (runda Q3 2026)' (Ocena, v2, Aktualny, 10/08/2026), 'Segment Manufacturing — DRD Light (pilotaż)' (Ocena, v1, Aktualny), 'DBR77 · Digital Readiness — Grupa (runda Q2 2026)' (Ocena, v1, Zastąpiony).</p>
+        <p class="naprawione"><b>Naprawione:</b> Ucięty surowy komunikat dev w chipach filtra zamieniony na krótką etykietę '0 · 3 ukryte' (pełne zdanie przeniesione do podpowiedzi).</p>
         
       </div>
       <div class="ekran">
@@ -875,61 +899,61 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Biblioteka DRD<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Biblioteka DRD<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=drd-library-entry&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=drd-library-entry&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.</p>
+        <p class="co">Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku. Pasek wyjasniajacy flage dla inzyniera nie byl oznaczony jako chrom harnessu - naprawione (data-dev-render-chrome). Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Sciezka i zakladki przybite po angielsku · Ekran nie byl podlaczony do harnessu</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kolumna Zaktualizowano pokazuje date w formacie amerykanskim — defekt wspolnej warstwy tabel, dotyka calej aplikacji</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Lista ocen<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Lista ocen<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-list&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-list&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Tabela kanoniczna, statusy po polsku, kreska zamiast zera.</p>
+        <p class="co">Tabela kanoniczna, statusy po polsku, kreska zamiast zera. Na swiezym zrzucie bez zastrzezen. Przywrocono z odzyskanego raportu nocnego.</p>
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Panel raportow<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Panel raportow<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-reports-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-reports-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Mechanika czysta.</p>
+        <p class="co">Mechanika czysta. Wyjatek 'obudowa ekranu po angielsku' juz nieaktualny - dzis ekran w 100% polski. Przywrocono z odzyskanego raportu nocnego.</p>
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Obudowa ekranu po angielsku — inny komponent niz tabela raportow</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Prezentacja z oceny (9 slajdow)<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Prezentacja z oceny (9 slajdow)<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-presentation-view&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-presentation-view&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk</li></ul></div>
+        <p class="co">Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu. Slajd 6: macierz DRD ze slajdu opakowana komponentem DRDMatrixReadOnly (eksport z DRDAssessmentEditor) — zaakceptowana przez wlasciciela 2026-09-01 jako jedyne zrodlo macierzy w raporcie, potwierdzone zrzutem identycznym co do struktury z edytorem zrodlowym (evidence/grafika/159-macierz-drd/). SPROSTOWANIE (01.09): slajd 5 (Profil per wymiar) — wczesniejszy wyjatek „paski BEZ nazw osi, gole liczby” juz NIE jest prawdziwy: na najnowszym zrzucie kazdy pasek ma pelna, polska etykiete wymiaru (Cyfrowe Modele Biznesowe, Procesy Cyfrowe, Produkty Cyfrowe, Cyberbezpieczenstwo) obok wartosci liczbowej — potwierdzone w obu motywach (evidence/grafika/163-slajd5-cofniecie/). Katalog dowodowy nazwany „cofniecie” sugeruje, ze byla to naprawa przez wycofanie wczesniejszej zlej zmiany.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: slajd 5 — nazwy wymiarow przywrocone przy kazdym pasku (byly widoczne jako gole liczby bez etykiet) — potwierdzone zrzutem PO, oba motywy.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Podtytul slajdu 6 („Assessment of digital transformation across core business processes”) pozostaje po angielsku mimo ze reszta slajdu (tytul, etykiety osi, stopka) jest po polsku — drobna niespojnosc jezykowa, nie blokujaca.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Tablica inicjatyw strategicznych<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Tablica inicjatyw strategicznych<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-initiatives-table&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-initiatives-table&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Tablica inicjatyw.</p>
+        <p class="co">Tablica inicjatyw. Wyjatek 'obudowa po angielsku' juz nieaktualny - dzis w 100% polski (bledy konsoli fetch to brak backendu harnessu, nie defekt); styl pigulki priorytetu zgloszony osobno, nie obniza oceny (wzorzec ogolnoaplikacyjny). Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Ucinane etykiety priorytetu — kolumna poszerzona</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Obudowa ekranu po angielsku</li></ul></div>
       </div>
@@ -945,31 +969,55 @@
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Napis Help content unavailable po angielsku</li><li>Nazwy wymiarow po angielsku — to standardowa terminologia SIRI, nie defekt tlumaczenia</li><li>KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=.</li></ul></div>
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Panel inicjatyw<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-initiatives-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-initiatives-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Proces statusow inicjatywy. Na swiezym zrzucie ekran w 100% polski, brak bledow konsoli - oba problemy z poprzedniego wpisu juz naprawione. Przywrocono z odzyskanego raportu nocnego.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Caly ekran po angielsku</li><li>Blad w konsoli: zdublowany klucz EXECUTING</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Panel zarzadzania ocena<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=assessment-manage-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=assessment-manage-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Mechanika solidna: postep procesu, tabela etapow bramek. Domyslna zakladka Przeplyw jest dzis w 100% polska - wyrazna poprawa od poprzedniego wpisu; pozostale 4 zakladki (Zespol/Raporty/Inicjatywy/Dziennik) nie zostaly jeszcze zweryfikowane. Przywrocono z odzyskanego raportu nocnego.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Macierz oceny DRD — obszary x poziomy<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=drd-macierz-oceny&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=drd-macierz-oceny&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Glowne narzedzie pracy konsultanta: wiersze to poziomy dojrzalosci, kolumny to obszary osi, klik w komorke otwiera opis z przykladem i pozwala postawic AS-IS oraz TO-BE. Po polerowaniu wizualnym: popover ma tlo, kontrasty przechodza prog dostepnosci, wszystkie kolumny w kadrze, Spacious dziala.</p>
+        <p class="naprawione"><b>Naprawione:</b> popover odzyskal tlo (bg-white/98 nie istnialo w Tailwindzie) · Set TO-BE: kontrast 1,36 -&gt; 9,10 · tresc komorek nieocenionych: 2,43 -&gt; 7,58 · 9 z 9 kolumn w kadrze (bylo 488 px poza kadrem bez sygnalu) · przelacznik Spacious realnie zmienia gestosc · duplikat macierzy scalony w jeden komponent</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>TRESC KOMOREK NADAL KLAMIE — 23 z 63 komorek osi 1 falszywych, kolumna 1F to siedem razy MES, 1A poziom 7 pokazuje CRM</li><li>ETYKIETY WIERSZY ZMYSLONE — macierz ma wlasna drabine zamiast drabiny z metodyki wlasciciela</li><li>CALOSC PO ANGIELSKU — nazwy poziomow i obszarow nie maja polskich wariantow w danych</li></ul></div>
+      </div>
     </div><div class="modul">
       <h2>Inicjatywy</h2>
       <p class="opis">Portfel inicjatyw, plan, obciążenie.</p>
       
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Lista inicjatyw<span class="ocena o-B">B</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=inicjatywy-lista&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=inicjatywy-lista&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div>
-      </div>
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Obciazenie zespolu<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Obciazenie zespolu<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=capacity-advisor-a3&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=capacity-advisor-a3&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Wszedzie jednostki: FTE-tydzien, procenty, zakresy.</p>
+        <p class="co">Wszedzie jednostki: FTE-tydzien, procenty, zakresy. Kolumny Rola/Zespol, Rodzaj, Presja ucinaja tekst w polowie slowa - StandardTable/FilterableTable za waskie kolumny. Przywrocono z odzyskanego raportu nocnego.</p>
         
         
       </div>
@@ -981,8 +1029,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=plan-scenario-d1&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Daty po polsku, stany po polsku.</p>
-        
+        <p class="co">01.09 (fala 174): SPROSTOWANIE Z POPRZEDNIEJ RUNDY ZAMKNIĘTE DOWODEM. Kebab wiersza — pierwsza pozycja to teraz „Otwórz kartę inicjatywy” (było „Otwórz narzędzia planu”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/kebab-wiersza__PRZED__light.png, __PO__light.png). Warsztat planu przestał wciskać się jako druga pełna tabela pod pierwszą — po kliknięciu „Otwórz narzędzia planu” u góry panelu widać teraz tylko warsztat, bez duplikatu tabeli głównej nad nim (evidence/grafika/174-domkniecie/1-plan/klik-narzedzia__PRZED__light.png vs __PO__light.png, wysokość strony 2681→2294 px). To domyka uwagę właściciela z 30.08: „Ma ona otwierać konkretną kartę. W ogóle nie rozumiem, jak to działa.”</p>
+        <p class="naprawione"><b>Naprawione:</b> 31.08 (fala 141): enumy w tabeli „Warsztat planu” przetlumaczone na polski (NOW/NEXT/LATER, KNOWN/UNKNOWN, HIGH/MEDIUM/LOW) — potwierdzone zrzutem evidence/grafika/141-plan-scenario/plan-scenario-d1-warsztat__PO__*. · 01.09 (fala 174): kebab wiersza — pierwsza pozycja zmieniona z „Otwórz narzędzia planu” na „Otwórz kartę inicjatywy”; po kliknięciu „Otwórz narzędzia planu” Warsztat planu nie wciska się już jako druga tabela pod pierwszą — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/).</p>
         
       </div>
       <div class="ekran">
@@ -999,15 +1047,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Karta inicjatywy<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Karta inicjatywy<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=karta-initiative&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=karta-initiative&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ta powloka dzieli wspolny prawy panel z initiative-record/deck-artifact/notatnikiem, gdzie czat Teresy zastapiono przyciskiem wejscia „Zapytaj Teresę o…”. UWAGA UCZCIWA: na TYM konkretnym zrzucie (evidence/grafika/169-teresa-produkt/) PRZED i PO sa PIKSEL W PIKSEL identyczne — bo ekran byl zlapany w trybie Podglad, gdzie sekcja AKCJE pokazuje 0 pozycji z dopiskiem „W trybie Podgladu dzialania sa niedostepne” — wiec przycisku Teresy nie widac w zadnej z wersji i NIE da sie z tego zrzutu potwierdzic wizualnie samej zmiany na tym ekranie (choc jest ona widoczna na initiative-record, deck-artifact i notatniku, ktore dziela ten sam komponent). Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza. Wypelnij z AI faktycznie otwiera dzialajacy panel Konsultant AI z 6 akcjami i czatem z Teresa - nie martwy przycisk; tresc bogata, po polsku. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe · Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Zapisano bez daty i godziny</li><li>Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu</li><li>Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna</li></ul></div>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Zapisano bez daty i godziny</li><li>Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu</li><li>Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna</li><li>Zmiana czatu Teresy na przycisk wejscia NIE jest potwierdzona wizualnie na TYM zrzucie (tryb Podglad nie pokazuje AKCJI w ogole) — do ponownego sprawdzenia w trybie Edycji.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1017,8 +1065,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=initiative-record&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Powloka, etykiety i akcje po polsku, dobry rytm.</p>
-        <p class="naprawione"><b>Naprawione:</b> Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: prawy panel AKCJE dostal nowy przycisk „Zapytaj Teresę o tę inicjatywę” (dawniej byly tylko „Utwórz wariant” i „Oznacz gotowe”) — czat Teresy zastapiony przyciskiem wejscia, potwierdzone zrzutem PRZED/PO (evidence/grafika/169-teresa-produkt/). Powloka, etykiety i akcje po polsku, dobry rytm.</p>
+        <p class="naprawione"><b>Naprawione:</b> Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu · 01.09: dodano przycisk „Zapytaj Teresę o tę inicjatywę” w sekcji AKCJE — potwierdzone zrzutem PRZED/PO, oba widoczne w evidence/grafika/169-teresa-produkt/.</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego</li></ul></div>
       </div>
     </div><div class="modul">
@@ -1049,43 +1097,115 @@
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Status w pasku tozsamosci to zwykly tekst zamiast pigulki — kanon artefaktow wymaga pigulki. Komponent wspoldzielony przez caly modul, za szeroki promien razenia na jeden ekran</li></ul></div>
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zakładka „Realizacje”<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-list&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-list&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">StandardTable + demo-fallback.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zakładka „Praca”<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-work&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-work&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">ExecutionWorkSurface, StandardTable, bogate dane review.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zakładka „Zasoby”<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-resources&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-resources&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">ExecutionResourcesSurface. 01.09 (fala 174): surowe wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski (np. UNKNOWN → Nieznane) — potwierdzone zrzutem PRZED/PO, wiersz „Procurement” (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png vs __PO__light.png). Naprawiona kapitalizacja nazwiska: „Katarzyna WóJcik” → „Katarzyna Wójcik” (ExecutionResourcesSurface.tsx).</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/). · 01.09 (fala 174): wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski; poprawiona kapitalizacja polskich nazwisk (np. „WóJcik” → „Wójcik”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zakładka „Sterowanie”<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-control&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-control&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Tabela interwencji, czysto.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">„Rollout” (chromeless, deep-link)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-rollout&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-rollout&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Zmierzony tylko podwidok KPI.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">„Summary one-look” (chromeless, za flagą summaryOneLook)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=execution-tab-summary&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=execution-tab-summary&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Chromeless summary one-look.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Flaga ma komentarz „Default OFF do akceptu Piotra”, a logika (executionFeatureFlags.ts:115) włącza ją wszędzie poza public-prod — sprzeczność typu DEC-317, DO WYJAŚNIENIA z właścicielem (zob. zgłoszenie #11 do toru funkcji).</li></ul></div>
+      </div>
     </div><div class="modul">
       <h2>Wyniki</h2>
       <p class="opis">Wskaźniki, ROI, cele OKR — trzy poziomy.</p>
       
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Cel (OKR) jako JEDNA karta N<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Cel (OKR) jako JEDNA karta N<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=cel-jedna-karta&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=cel-jedna-karta&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego.</p>
+        <p class="co">Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego. Prototyp jednej N-karty celu/OKR - 5 sekcji lewego menu, prawy panel 7 sekcji kanonu, tresc bogata i w 100% polska. Przywrocono z odzyskanego raportu nocnego.</p>
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Wskaznik jako JEDNA karta N<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Wskaznik jako JEDNA karta N<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=wskaznik-jedna-karta&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=wskaznik-jedna-karta&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby.</p>
+        <p class="co">Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby. Naglowek pokazuje prawdziwa nazwe (KPI - Czas przezbrojenia, linia pakowania L3), numer KPI-0087 to osobne pole referencyjne, nie zastepuje nazwy. Przywrocono z odzyskanego raportu nocnego.</p>
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">ROI jako JEDNA karta N<span class="ocena o-B">B</span></span>
+          <span class="nazwa">ROI jako JEDNA karta N<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=roi-jedna-karta&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=roi-jedna-karta&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie.</p>
+        <p class="co">Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie. Wszystkie 5 sekcji (zalozenia/model/wynik/wyniki-po-wdrozeniu/wnioski) maja pelna, spojna, dobrze uzrodlowiona tresc; kolor czerwony uzyty tylko semantycznie. Przywrocono z odzyskanego raportu nocnego.</p>
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div>
       </div>
@@ -1115,38 +1235,26 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Karty wynikow<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Karty wynikow<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-scorecards&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-scorecards&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Lista kart z panelem podgladu.</p>
+        <p class="co">Lista kart z panelem podgladu. Lista KPI pokazuje surowe, uciete kody (kpi-oee-..., kpi-defe...) bez zadnego wyjasnienia - defekt kontraktu danych KPI (brak pola nazwy), nie grafiki. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Angielskie naglowki podgladu</p>
         
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Model ROI<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Model ROI<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-roi-model&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-roi-model&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Baza porownania i polityka kalkulacji.</p>
+        <p class="co">Baza porownania i polityka kalkulacji. Kolumna PEWNOSC ucieta przez prawy panel (widoczne tylko PEW); wlasciwosc Ziarno analizy pokazuje surowe monthly zamiast etykiety, mimo ze etykieta pola jest po polsku. Przywrocono z odzyskanego raportu nocnego.</p>
         
-        
-      </div>
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Narzedzie wskaznika<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-tool&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-tool&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.</p>
-        <p class="naprawione"><b>Naprawione:</b> Surowe statusy pomiaru zamiast etykiet</p>
         
       </div>
       <div class="ekran">
@@ -1211,51 +1319,39 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Rejestr wskaznikow<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Rejestr wskaznikow<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-registry&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-kpi-registry&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Pelna tabela wskaznikow ze statusami, filtrami i kebabem.</p>
+        <p class="co">Pelna tabela wskaznikow ze statusami, filtrami i kebabem. Wszystkie 5 wierszy rejestru KPI pokazuje surowy kod jako glowna etykiete (z uczciwym podpisem Kod KPI (brak nazwy)) - defekt kontraktu danych KPI, nie grafiki. Przywrocono z odzyskanego raportu nocnego.</p>
         
         
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Sprawa odchylenia<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Sprawa odchylenia<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-teresa-kpi-deviation&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-teresa-kpi-deviation&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Formularz sprawy z uczciwymi komunikatami o brakach.</p>
-        
-        
+        <p class="co">01.09 (fala 174): Sprawa odchylenia przestała mówić językiem repozytorium — zamiast odwołań do plików źródłowych i nazw stanów maszyny (np. „kpiDeviationCommands.ts:796-801”, „approved → executing”) ekran mówi teraz „zasada czterech oczu”, „Plan nie został jeszcze złożony” (potwierdzone zrzutem evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png). Naprawiony checkbox „To odchylenie się powtarza”, wcześniej nieczytelny w ciemnym motywie (evidence/grafika/174-domkniecie/2-kpi-checkbox__PO__dark.png). SPROSTOWANIE (01.09, wcześniejsza runda): stan OTWARTEJ/edytowalnej sprawy (evidence/grafika/171-pojedyncze/, PRZED i PO identyczne) nadal wygląda surowo — płaskie pola HTML, szare przyciski — to prawdopodobne źródło skargi właściciela „grafika jak sprzed 5 lat, niespójna z UI/UX” (zgłoszona 01.09 05:53), NIE naprawione tym dyżurem. ★ SPROSTOWANIE POLA WYJĄTKÓW (01.09): wcześniejszy wpis twierdził, że żółty baner sesji „nadal obecny” — to było NIEPRAWDĄ, baner został usunięty wcześniej (grep po src/ dla tekstu banera = 0 trafień); teza usunięta z rejestru. Naprawiony został inny stan: sprawa ZAMKNIĘTA (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/) pokazuje pełną narrację ze wszystkimi krokami wypełnionymi realną treścią zamiast pustych formularzy.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: sprawy ZAMKNIETE pokazuja teraz pelny, wypelniony przebieg (przyczyna, dzialania ze statusami, zatwierdzenie planu, obserwacja, weryfikacja skutecznosci, zamkniecie) zamiast pustych formularzy — potwierdzone zrzutem (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/), plan czytany z danych sprawy (serwera), nie z sesji przegladarki. · 01.09 (fala 174): język ekranu przestał odwoływać się do plików źródłowych/nazw stanów maszyny — zastąpiony ludzkim opisem („zasada czterech oczu”, „Plan nie został jeszcze złożony”); naprawiony nieczytelny w ciemnym motywie checkbox „To odchylenie się powtarza” — potwierdzone zrzutem (evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png, 2-kpi-checkbox__PO__dark.png).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Stan OTWARTEJ sprawy (w trakcie analizy/działań) nadal wygląda surowo — płaskie niestylowane pola formularza, szare przyciski — prawdopodobne źródło skargi właściciela „jak sprzed 5 lat”, wciąż nienaprawione dyżurem 174 (evidence/grafika/171-pojedyncze/).</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Trzy pary cel-wynik<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-three-pairs&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=results-three-pairs&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Ogladana tylko domyslna zakladka</li></ul></div>
-      </div>
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Uwaga<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Uwaga<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-vnext-attention&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-attention&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Siedem zakladek uwag z realnymi kodami wskaznikow.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole</li></ul></div>
+        <p class="co">Trzynascie list roboczych „czym trzeba sie dzis zajac&quot;, kazda z realnym licznikiem: siedem pod KPI (Brak wlasciciela · Zalegle obowiazki · Powtarzajace sie odchylenia · Nieskuteczne dzialania korygujace · Obciazenie wlascicieli · Pokrycie procesow · Rozklad wynikow) i szesc pod OKR (Nieaktualne check-iny · Cele o niskiej pewnosci · Otwarte prosby o wsparcie · Otwarte blokady · Eskalowane zestawy · Zdrowie zespolu). SPROSTOWANIE (01.09): wlasciciel widzial „tylko dwa przyciski w menu 2&quot; — bo Menu 2 to przelacznik ZRODLA (KPI/OKR), a tresc wybiera Menu 3. Zrzut, na ktory patrzyl, pokazywal najubozszy z trzynastu kubelkow (Brak wlasciciela ma z natury jedna kolumne). Zrzut PO pokazuje kubelek Obciazenie wlascicieli: trzy kolumny, prawdziwe nazwiska.</p>
+        <p class="naprawione"><b>Naprawione:</b> 2026-09-01: dorobione WEJSCIE — trasa /results/attention byla sierota, nic w aplikacji do niej nie prowadzilo (grep po RESULTS_ATTENTION i po literalnym adresie: zero odwolan poza definicja trasy i harnessem). Przycisk „Uwaga&quot; w powloce rejestrow Wynikow (ResultsVNextRegistryShell.tsx), za flaga attentionEntry (default OFF, czeka na odbior). · 01.09: potwierdzone zrzutem — przycisk „Uwaga” widoczny nad tabela w rejestrze KPI (ResultsVNextRegistryShell), prowadzi do tego ekranu (evidence/grafika/170-odrzucone-wykonanie/wejscie-uwaga-w-rejestrze__PO__light.png).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Jednokolumnowa tabela w kubelku „Brak wlasciciela&quot; — sprawdzone, model serwera naprawde ma jedno pole</li><li>Ekran nie ma naglowka — zaczyna sie od golych pigulek Menu 2/3, wiec nie widac, na co sie patrzy (do naprawy osobno)</li><li>Kubelek startowy to zawsze „Brak wlasciciela&quot;, czyli najubozszy z trzynastu — powinien otwierac sie na tym z najwieksza liczba pozycji (do naprawy osobno)</li><li>Surowe pola: kolumna KOD KPI bez nazwy wskaznika, SET ID i data w formacie 2026-08-01T00:00:00Z (do naprawy osobno)</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1265,9 +1361,9 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-vnext-okr-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Pelne narzedzie z cyklem zycia i wyjasnieniami.</p>
+        <p class="co">Pelne narzedzie z cyklem zycia i wyjasnieniami. CZEKA NA PRZEBUDOWE w karte N zestawu (wzorem ROI z 30.08) — plan i mapowanie szesciu zakladek na sekcje: docs/program/grafika/ODLOZONE.md. Wlasciciel (01.09): &quot;To mialo byc w N-type karcie&quot; — intuicja trafna co do KSZTALTU powloki, ale ekranu NIE zdejmujemy: karta celu go nie zastepuje, bo to inny poziom (warsztat to ZESTAW, karta to JEDEN cel; POZIOM 2 z DECYZJA_WYNIKI_TRZY_POZIOMY.md).</p>
         
-        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ADNOTACJA 2026-09-01: powloka do przebudowy — szesc zakladek w poziomie zamiast sekcji karty N, brak prawego panelu kanonu. Tresc i mechanika bez zmian. Plan: ODLOZONE.md</li><li>Pola „Wlasciciel&quot; i „Recenzent&quot; pokazuja uciete user-ann… / user-tom… zamiast nazwisk — rozwiazanie gotowe w ekranie „Uwaga&quot; (OrganizationApi.getOrganizationMembers), do przeniesienia 1:1</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1295,13 +1391,13 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">POZIOM 1 — Rejestr zestawien okresowych<span class="ocena o-B">B</span></span>
+          <span class="nazwa">POZIOM 1 — Rejestr zestawien okresowych<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=results-zestawienia&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=results-zestawienia&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.</p>
+        <p class="co">Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety. Poziom 1 rejestru zestawien okresowych w pelni po polsku, czytelny, zero kodow zamiast nazw. Przywrocono z odzyskanego raportu nocnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Kolizja zapamietanych szerokosci kolumn z realnym rejestrem · Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone · Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje</li><li>Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)</li></ul></div>
       </div>
@@ -1371,15 +1467,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Analiza<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Analiza<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-analysis-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=finance-analysis-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Uczciwy pusty stan i tabela wskaznikow z formulami.</p>
-        <p class="naprawione"><b>Naprawione:</b> Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie</li></ul></div>
+        <p class="co">Tabela wskaźników z formułami — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): wszystkie 11 nagłówków pełne, bez ucięcia — 'WSKAŹNIK', 'KATEGORIA', 'WZÓR', 'INTERPRETACJA', 'P-2025', 'ZMIANA R/R', 'P-2026', 'BENCHMARK', 'KOMENTARZ', 'JAKOŚĆ / DOSTĘPNOŚĆ', 'PRZEZNACZENIE'. Sprawdzono też dane w komórkach na całej szerokości tabeli (poprzedni defekt ucinał kolumnę 'Wzór' do 'Prz…') — kolumna 'Wzór' zawija się w pełni, np. wiersz 'Wzrost przychodów r/r' pokazuje cały wzór '(Przychody bieżący okres - Przychody rok wcześniej) / Przychody rok wcześniej', bez znaku ucięcia.</p>
+        <p class="naprawione"><b>Naprawione:</b> Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku · 11 nagłówków kolumn ucinanych w połowie słowa ('INTERPRETA…', 'PRZEZNACZ…') — teraz pełne na obu motywach, potwierdzone zrzutem 154-finanse-naprawa · Wartości w komórkach (kolumna 'Wzór') ucinane do 'Prz…' — teraz zawijają się w pełni bez ucięcia</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wartości wskaźników bez znaku procenta w części wierszy — brak metadanych jednostki w danych, nie do naprawy w wyglądzie.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1395,15 +1491,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Model finansowy<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Model finansowy<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-model-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=finance-model-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Model bazowy z danymi wejsciowymi i bilansem otwarcia.</p>
-        <p class="naprawione"><b>Naprawione:</b> Surowy enum 'quarterly' zamiast etykiety · Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika</p>
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany</li></ul></div>
+        <p class="co">Model bazowy z danymi wejściowymi i bilansem otwarcia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): badge 'OPARTE NA / FY2025 / PL • PLN • Zatwierdzony' — surowe 'approved' zastąpione polską etykietą 'Zatwierdzony'. Nagłówek pokazuje 'PLN · Kwartalnie · 36 miesięcy' (potwierdza wcześniejszą naprawę 'quarterly'→'Kwartalnie').</p>
+        <p class="naprawione"><b>Naprawione:</b> Surowy enum 'quarterly' zamiast etykiety · Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika · Surowy status 'approved' w badge 'OPARTE NA' — teraz polska etykieta 'Zatwierdzony', potwierdzone zrzutem 154-finanse-naprawa na obu motywach</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Pozostałe etykiety pól (PRZYCHODY (REVENUE), KOSZT WŁASNY SPRZEDAŻY (COGS) itd.) są dwujęzyczne celowo — akronim w nawiasie, nie surowy enum.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1426,7 +1522,7 @@
           </span>
         </div>
         <p class="co">Tabela porownania z roznicami.</p>
-        <p class="naprawione"><b>Naprawione:</b> Angielska etykieta trybu · Dodana waluta z istniejacych danych</p>
+        <p class="naprawione"><b>Naprawione:</b> Angielska etykieta trybu · Dodana waluta z istniejacych danych · 01.09: tabela porownania rozszerzona z waskiej wyśrodkowanej karty (~740 px) na pelna szerokosc dostepnego ekranu (~1364 px), zgodnie ze zgloszeniem wlasciciela „moze cala szerokosc dostepnego ekranu wykorzystajmy” — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/166-tabela-szerokosc/).</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kody pozycji w kolumnie wymiarow — dane makietowe</li></ul></div>
       </div>
       <div class="ekran">
@@ -1453,6 +1549,18 @@
         <p class="naprawione"><b>Naprawione:</b> Dwa z trzech krokow lancucha po angielsku · Brak procenta przy wadze metody · Kropka zamiast przecinka dziesietnego</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty</li></ul></div>
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Baza porownania<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-baseline-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-baseline-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Założenia (grid 9 wierszy) i wyliczenia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): kolumna 'PODGLĄD WPŁYWU' pokazuje teraz polskie etykiety z kodem w nawiasie, np. 'Zasila: Przychody (REVENUE)', 'Zasila: Koszt własny sprzedaży (COGS), Koszty operacyjne (OPEX)', 'Zasila: Należności (AR), Zapasy, Zobowiązania handlowe (AP)', 'Zasila: Nakłady inwestycyjne (CAPEX), Amortyzacja, Aktywa trwałe', 'Zasila: Dług długoterminowy, Koszty odsetkowe', 'Zasila: Podatek dochodowy' — żadnego samodzielnego surowego kodu. Sprawdzono też, czy tabela nie wyjeżdża poza kontener (poprzedni defekt: kolumna poszerzona, ucinana scrollem) — na pełnowymiarowym zrzucie kolumna 'Podgląd wpływu' mieści się w prawej krawędzi kontenera, bez paska przewijania i bez ucięcia.</p>
+        <p class="naprawione"><b>Naprawione:</b> Crimson na linku 'Spróbuj ponownie' · PRZYCZYNA trwałego błędu znaleziona i naprawiona: brakująca atrapa GET .../baseline/:id/context w harnessu. · Wartości PCT w kolumnach 'Wart. historyczna' i 'Wartość prognozy' pokazują teraz '12%' obok surowej wartości edytowalnej (formatPctAwareValue) — POTWIERDZONE na świeżym zrzucie. · Kolumna 'Podgląd wpływu' pokazywała surowe kody pól (REVENUE/COGS/OPEX/CAPEX/AR/INVENTORY/AP/DEPRECIATION/FIXED_ASSETS/LONG_TERM_DEBT/INTEREST_EXPENSE/TAX_EXPENSE) — teraz polskie etykiety z kodem w nawiasie, potwierdzone zrzutem 154-finanse-naprawa na obu motywach; tabela nie wyjeżdża poza kontener</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Ujemna gotówka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba).</li><li>ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane): „przyciski w menu tej karty sa kazdy inne, nie wyglada dobrze” + brak przycisku dodawania kolejnych zalozen. Na zrzucie kontrolnym z dzisiaj (evidence/grafika/171-pojedyncze/finance-baseline-workspace__DOWOD-braku-defektu__*) naglowek ma faktycznie rozne style przyciskow obok siebie (pigulka „v1 Wersja robocza”, dwie pigulki „NIEAKTUALNE”, dropdown „Wersja robocza”, czarny przycisk „Przelicz”) i nie widac przycisku dodawania zalozenia w widocznej czesci tabeli — plik nazwany „DOWOD-braku-defektu” sugeruje ze poprzednia runda uznala to za nie-defekt, ale wizualnie niespojnosc jest widoczna. Wymaga decyzji wlasciciela, nie automatycznego zamkniecia.</li></ul></div>
+      </div>
     </div><div class="modul">
       <h2>Materiały</h2>
       <p class="opis">Dokumenty, arkusze, prezentacje, wzorce.</p>
@@ -1465,7 +1573,7 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=sheet-artifact&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Podglad arkusza kalkulacyjnego.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Podglad arkusza kalkulacyjnego.</p>
         <p class="naprawione"><b>Naprawione:</b> Angielskie naglowki Workbook/Sheets</p>
         
       </div>
@@ -1483,15 +1591,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Biblioteka wzorcow — nowy szablon<span class="ocena o-A">A</span></span>
+          <span class="nazwa">Biblioteka wzorcow — nowy szablon<span class="ocena o-B">B</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=template-library-new-entry&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=template-library-new-entry&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Wejscie sprawdzone klikiem: prowadzi do kreatora.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych.</li></ul></div>
+        <p class="co">SPRAWDZONE: modal 'Nowy szablon' / 'Krok 1 z 3' z polem 'Nazwa szablonu' (przykład 'np. Raport statusu projektu'), podpowiedzią 'Nazwę zmienisz później w builderze.', przyciskami 'Anuluj' / 'Dalej' — kreator TemplateBuilderFlow RZECZYWIŚCIE SIĘ OTWIERA i renderuje po polsku. Główny zarzut 'nie pokazuje kreatora' NAPRAWIONY.</p>
+        <p class="naprawione"><b>Naprawione:</b> Kreator TemplateBuilderFlow (krok 1/3, pole nazwy, przyciski Anuluj/Dalej) faktycznie się renderuje — wcześniej zarzut był 'nie pokazuje kreatora'.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Pasek w tle za modalem to nadal uproszczony dev-render (nie realny StandardModuleBar), z widoczną etykietą harnessu 'flaga templateBuilder: ON' w kadrze — sam modal kreatora jest realny i poprawny.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1525,21 +1633,9 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=deck-artifact&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Kreator decka wedlug kanonu artefaktow.</p>
-        
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: przycisk w AKCJACH zmienil etykiete z „Zapytaj Teresę” na „Zapytaj Teresę o tę prezentację” (spojnosc z initiative-record/notatnikiem) — potwierdzone zrzutem PRZED/PO; w obu wersjach nie bylo i nie ma osobnego okna czatu w panelu, wiec to tylko doprecyzowanie etykiety. Kreator decka wedlug kanonu artefaktow.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: etykieta przycisku ujednolicona na „Zapytaj Teresę o tę prezentację” — potwierdzone zrzutem (evidence/grafika/169-teresa-produkt/ i 169-teresa-deck-legacy/).</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA.</li></ul></div>
-      </div>
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Deck — ocena jakosci<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=deck-quality-badge&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=deck-quality-badge&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Wynik kreatora z odznaka jakosci.</p>
-        <p class="naprawione"><b>Naprawione:</b> CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu · Surowy angielski enum Internal/Briefing</p>
-        
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -1549,7 +1645,7 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=document-artifact&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.</p>
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.</p>
         <p class="naprawione"><b>Naprawione:</b> Ekran w ogole sie nie renderowal — brak nawigacji w harnessie · Angielskie etykiety w danych testowych</p>
         
       </div>
@@ -1585,8 +1681,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=excele-prawy-panel-standard&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Szyna ikon: Akcje, Powiazania, Zrodla, Rezultaty, Historia. Zgodnie z decyzja z 28.07.</p>
-        
+        <p class="co">★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. SPRAWDZONE na świeżym zrzucie 155-materialy-ocena (2026-08-31, oba motywy): arkusz 'Ocena opłacalności projektu (NPV/IRR)', nagłówek kolumny 'Założenie' (był 'Driver' po angielsku) obok kolumny 'Wartość'; przykładowy wiersz 'Nakład początkowy (inwestycja) — 500 000'. Prawy panel w całości po polsku: 'AKCJE' (Kopiuj link wewnętrzny, Zapytaj Teresę), 'WŁAŚCIWOŚCI', 'POWIĄZANIA', 'ŹRÓDŁA I ZAŁOŻENIA', 'KOMENTARZE', 'HISTORIA'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Nagłówek kolumny 'Driver' → 'Założenie' naprawiony w realnym szablonie serwerowym (nie tylko w makiecie).</p>
         
       </div>
       <div class="ekran">
@@ -1741,8 +1837,8 @@
             <a class="btn" href="http://127.0.0.1:3020/?screen=prezentacje-template-states&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Ladowanie, wzorzec bez rekordu, brak dostepu. Wszystkie po polsku.</p>
-        
+        <p class="co">01.09 (fala 174): SPRZECZNOŚĆ Z POPRZEDNIEJ RUNDY ZAMKNIĘTA DOWODEM. Domyślny wariant zmieniony na taki, który realnie coś pokazuje — teraz od razu widać stan „wzorzec bez rekordu” z treścią i przyciskiem „Wróć do Biblioteki”, zamiast pustego spinnera (evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png vs __PO__light.png). Wariant „ładowanie” po 20 sekundach kończy się czytelnym komunikatem błędu „Nie udało się rozwiązać wzorca. Spróbuj ponownie.” z przyciskiem powrotu, zamiast wisieć w nieskończoność jak wcześniej w produkcie (evidence/grafika/174-domkniecie/5-prezentacje/loading-po-20s__PO__light.png). To domyka skargę właściciela z 01.09 05:31 „nie otwiera mi się nic :(”.</p>
+        <p class="naprawione"><b>Naprawione:</b> Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner. · 01.09 (fala 174): domyślny wariant pokazuje realną treść (nie pusty spinner); stan „ładowanie” po 20 s odrzuca się do czytelnego komunikatu błędu z przyciskiem powrotu — potwierdzone zrzutem (evidence/grafika/174-domkniecie/5-prezentacje/, evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png, __PO__light.png).</p>
         
       </div>
       <div class="ekran">
@@ -1819,18 +1915,6 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Szablony skoroszytow<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=gen-excel-templates-tab&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=gen-excel-templates-tab&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Model P&amp;L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.</p>
-        
-        
-      </div>
-      <div class="ekran">
-        <div class="glowna">
           <span class="nazwa">Szkic szablonu<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=materialy-draft-template-visibledraft-fix&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
@@ -1855,15 +1939,15 @@
       </div>
       <div class="ekran">
         <div class="glowna">
-          <span class="nazwa">Excel — edytowalna siatka<span class="ocena o-B">B</span></span>
+          <span class="nazwa">Excel — edytowalna siatka<span class="ocena o-A">A</span></span>
           <span class="akcje">
             <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=excele-edytowalna-siatka&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
             <a class="btn" href="http://127.0.0.1:3020/?screen=excele-edytowalna-siatka&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
           </span>
         </div>
-        <p class="co">Realny arkusz NPV/IRR z produkcyjnego szablonu.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Naglowek mowi Zadanie ukonczone i zaraz obok 0/8 krokow. Zielony ptaszek stoi obok zera. Dotyczy KAZDEGO ponownego otwarcia zapisanego pliku. To mechanika, zgloszone torowi funkcji</li></ul></div>
+        <p class="co">SPRAWDZONE: ten sam arkusz NPV/IRR — kolumna 'Założenie' zamiast 'Driver', wiersze: 'Nakład początkowy (inwestycja) 500 000', 'Przepływ operacyjny brutto — rok 1 220 000', 'Wzrost przepływów % rocznie 0,06', 'Stopa dyskontowa (wymagana stopa zwrotu) 0,1', 'Wartość rezydualna (koniec horyzontu) 50 000', 'Stopa podatkowa 0,19'. Pasek narzędzi w pełni po polsku (Waluta, Procent, Pogrubienie, Wstaw/Usuń wiersz/kolumnę, Liczba, Format ogólny).</p>
+        <p class="naprawione"><b>Naprawione:</b> Nagłówek kolumny 'Driver' → 'Założenie' w realnym, edytowalnym arkuszu produkcyjnym. · 01.09: pasek narzedzi zmieniony ze slow („Waluta, Procent, Pogrubienie, Wstaw wiersz, Usun wiersz, Wstaw kolumne, Usun kolumne, Liczba”) na ikony ($, %, B, ikony wiersza/kolumny, #) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Mechanika 'Zadanie ukończone' obok '0/8 kroków' przy ponownym otwarciu zapisanego pliku — nie widoczna na tym zrzucie (inny przepływ), nie zweryfikowana w tej rundzie.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -2069,6 +2153,438 @@
         <p class="naprawione"><b>Naprawione:</b> Surowe TEXT_LLM, IMAGE_MODEL, BUSINESS_MODEL w kartach, chipach i opisie</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy</li></ul></div>
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Miejsca i licencje<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-billing-seats-licences&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-billing-seats-licences&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Miejsca i licencje' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): kafle Łącznie 25 / Zajęte 18 / Wolne 7 / Wykorzystanie 72%, tabela historii (Zakup, Dodano automatycznie, Korekta ręczna) z datami DD/MM/RRRR ('01/08/2026 11:12'), w pełni po polsku, bez defektów.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Historia zmian planu<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-billing-plan-history&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-billing-plan-history&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Historia zmian planu' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): tabela z datami DD/MM/RRRR, powody zmian po polsku ('Wzrost zespołu do 18 osób', 'Automatyczne odnowienie'), nazwy planów (Starter/Growth) po angielsku jako nazwy handlowe produktu — akceptowalne jako nazwa własna planu, nie treść interfejsu.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Drobne: nazwy planów 'Starter'/'Growth' po angielsku — nazwy handlowe, nie tłumaczone.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Użytkownicy<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-members&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-members&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Członkowie i role' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 4 karty ról (Właściciel/Administrator/Członek/Gość) z opisami po polsku, tabela 6 osób z rolami i statusami 'Aktywne'/'Zawieszone' po polsku. Bez defektów.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zaproszenia<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-invitations&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-invitations&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Zaproszenia' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy teraz w pełni po polsku ('Oczekujące', 'Błąd', 'Wygasło', 'Cofnięto', 'Zaakceptowane' — poprzednio 'expired'/'revoked' po angielsku), daty w formacie DD/MM/RRRR ('10/09/2026 14:00'). Oba wcześniej zgłoszone defekty NAPRAWIONE.</p>
+        <p class="naprawione"><b>Naprawione:</b> Statusy expired/revoked były po angielsku — teraz przetłumaczone (Wygasło/Cofnięto). · Daty były w formacie US — teraz DD/MM/RRRR.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Role i uprawnienia<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-roles-permissions&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-roles-permissions&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Lista ról i uprawnień.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Daty w formacie US.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zespoły<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-teams&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-teams&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Lista zespołów.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kolumna Typ pokazuje surowe enumy consulting/finance/support.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Goście i dostęp zewnętrzny<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-guests-external&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-guests-external&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Goście i dostęp zewnętrzny' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy 'Aktywne'/'Wygasł'/'Cofnięto' w pełni po polsku (poprzednio 'revoked' po angielsku), daty '01/08/2026 12:00' itd. w formacie DD/MM/RRRR (poprzednio US). Oba zgłoszone defekty NAPRAWIONE.</p>
+        <p class="naprawione"><b>Naprawione:</b> Status 'revoked' był po angielsku — teraz 'Cofnięto'. · Daty były w formacie US — teraz DD/MM/RRRR.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Wnioski o dostęp<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-access-requests&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-access-requests&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Uczciwy placeholder bez mechaniki (celowy stan).</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Przeglądy dostępów<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-access-reviews&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-access-reviews&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Przeglądy dostępów' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 'Następny przegląd: 29/11/2026' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY.</p>
+        <p class="naprawione"><b>Naprawione:</b> Data 'Następny przegląd' była w formacie US — teraz DD/MM/RRRR.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Własność<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-team-ownership&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-team-ownership&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Własność organizacji' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): ekran w całości po polsku ('Zarządzaj właścicielem zespołu i zabezpieczeniami przekazania własności', pigułka 'WŁAŚCICIEL', 'Właściciel od 15/01/2025', ostrzeżenie 'Właściciela organizacji nie można usunąć z listy zespołu. Aby usunąć tego użytkownika, najpierw przekaż własność.', przycisk 'Przekaż własność'). Zgłoszony defekt ('cały ekran po angielsku') NAPRAWIONY — namespace admin.ownership uzupełniony w pl/translation.json.</p>
+        <p class="naprawione"><b>Naprawione:</b> Cały ekran był po angielsku (brak namespace admin.ownership w pl/translation.json) — NAPRAWIONE, potwierdzone na świeżym zrzucie.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kolor wyróżnienia karty właściciela (tło/avatar/pigułka) to ciepły bursztyn/pomarańcz, wizualnie odróżnialny od crimson #85182F używanego gdzie indziej w aplikacji dla stanów krytycznych — nie flagowane jako naruszenie kanonu, ale warto zweryfikować w kodzie kolor dokładny.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Sesje<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-security-sessions&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-security-sessions&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Tabela sesji.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>toLocaleString bez locale (format zależny od przeglądarki).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Domeny<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-security-domains&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-security-domains&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Czysto.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Konta usługowe<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-security-service-accounts&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-security-service-accounts&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Czysto.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Break-glass<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-security-break-glass&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-security-break-glass&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Crimson prawidłowy (akcja realnie krytyczna).</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Integralność<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-audit-integrity&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-audit-integrity&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Uczciwa treść.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Legal hold<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-audit-legal-hold&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-audit-legal-hold&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Legal hold.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Tytuł po angielsku.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Historia eksportów<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-audit-export-history&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-audit-export-history&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Historia eksportów' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): daty '30/08/2026 12:00', '10/08/2026 11:30', '22/07/2026 16:12' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY. Tabela w pełni po polsku (Kiedy/Kto/Eksport/Wiersze/Format).</p>
+        <p class="naprawione"><b>Naprawione:</b> Daty były w formacie US — teraz DD/MM/RRRR.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zależności<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-health-dependencies&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-health-dependencies&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Zależności usług organizacji' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 4 karty usług (Baza danych PostgreSQL, Brama LLM Anthropic, Kolejka zadań, Magazyn plików) ze statusami i datami DD/MM/RRRR po polsku, sekcja 'Probe'y bez zadeklarowanej zależności'. Bez defektów.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Historia incydentów<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-health-incident-history&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-health-incident-history&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Historia incydentów.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Link do nieistniejącego /admin/health/overview (AdminIncidentHistoryPanel.tsx:76) — zob. zgłoszenie #17 do toru funkcji.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Kolejki i zadania<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-health-queues-jobs&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-health-queues-jobs&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Kolejki i zadania.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Statusy Succeeded/Running/Queued po angielsku; czerwień poprawna semantycznie.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">SLA / SLO<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-health-sla-slo&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-health-sla-slo&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Uczciwe „Nie obliczono”.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Persony<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-ai-personas&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-ai-personas&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Karty person.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Karty pokazują surowy klucz (advisor_default) zamiast nazwy.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Jakość i ewaluacje<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-ai-quality-evaluations&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-ai-quality-evaluations&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Jakość i ewaluacje AI.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wartości positive/negative/Applied po angielsku w tabeli.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Incydenty AI<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-ai-ai-incidents&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-ai-ai-incidents&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Incydenty AI' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): daty '29/08/2026 05:12', '25/08/2026 13:00' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY. Treść błędów technicznych ('Provider timeout (OpenAI) po 20s', 'Rate limit 429 (Anthropic)') po angielsku w nazwach dostawców — akceptowalne jako komunikaty źródłowe systemu.</p>
+        <p class="naprawione"><b>Naprawione:</b> Daty były w formacie US — teraz DD/MM/RRRR.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Wersje konfiguracji<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-ai-configuration-versions&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-ai-configuration-versions&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Wersje konfiguracji.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Status miesza PL/EN (Rolled back/Canary).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Przegląd<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-overview&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-overview&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Kafle-linki + 5 kafli compliance.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Kolejka uwagi<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-attention-queue&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-attention-queue&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Kolejka uwagi. 01.09 (fala 174): przywrócony odnośnik do ekranu źródłowego — strzałka przy tekście „Uwaga” w każdym wierszu oraz akcja „Otwórz ekran kanoniczny” w kebabie — który zniknął przy wcześniejszej zamianie kart na tabelę. Potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/admin-command-attention-queue__PRZED__light.png vs __PO__light.png) i zrzutem kebaba (evidence/grafika/174-domkniecie/3-admin-kebab__PO__light.png, pozycja „Otwórz ekran kanoniczny”).</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -&gt; KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/). · 01.09 (fala 174): przywrócona strzałka nawigacyjna przy „Uwadze” i akcja „Otwórz ekran kanoniczny” w kebabie każdego wiersza (zgubione przy zamianie kart na tabelę we wcześniejszej fali) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji. Dyżur 174 naprawił tylko brakujący link, nie ten błąd — nadal nienaprawione.</li><li>NOWY ZNANY WYJĄTEK (01.09, fala 174): kolumna „Źródło” pokazuje surowe adresy techniczne (np. „GET /api/admin/health-panel/summary”) zamiast czytelnej nazwy sygnału — zgłoszone przez nadzorcę, do naprawy w kolejnej fali.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Koszt i pojemność<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-cost-capacity&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-cost-capacity&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Koszt i pojemność.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Drobne: koszty bez separatora tysięcy/waluty (2490.00).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia domyślne organizacji<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-organization-defaults&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-organization-defaults&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Ustawienia domyślne organizacji.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Surowe label/input bez opakowania nagłówkowego jak siostrzane zakładki.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ślad agentów<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-agent-trace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-agent-trace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">StandardTable sortowalna.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Audyt SOC2<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-audit&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-audit&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Audyt SOC2.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Drobne: kolumna OPÓŹNIENIE obcięta do „OPÓŹNIE...”.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">DLP<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-dlp&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-dlp&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">DLP.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Waga „Wysoka” tym samym text-c-danger co „Krytyczna” (CommandCenterDlpTab.tsx:244) — dwa poziomy nieodróżnialne kolorem — zob. zgłoszenie #23 do toru funkcji.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Rezydencja danych<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-residency&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-residency&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Rezydencja danych.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Retencja<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-retention&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-retention&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Retencja. Crimson poprawny (akcja nieodwracalna).</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Polityka AI<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-ai-policy&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-ai-policy&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Polityka AI.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Benchmark konsultingowy<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=admin-command-benchmark&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=admin-command-benchmark&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Karty statyczne, bez fetch (zamierzone).</p>
+        
+        
+      </div>
     </div><div class="modul">
       <h2>Organizacja</h2>
       <p class="opis">Profil organizacji, tożsamość i skala.</p>
@@ -2085,22 +2601,250 @@
         <p class="naprawione"><b>Naprawione:</b> CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji</p>
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis.</li></ul></div>
       </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Model działania<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-operating-model&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-operating-model&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Profil organizacji, kompletność 60%. Sekcja 'Model operacyjny' oraz pigułki 'Główne systemy' (SAP ERP, Salesforce CRM i in. zaznaczone), sekcja 'Rynek i konkurencja' — 'Główne rynki: Polska, DACH'.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Pozycja i kierunek<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-position-direction&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-position-direction&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Sekcja 'Pozycja strategiczna': Pozycja konkurencyjna 'Pretendent', Etap rozwoju 'Skalowanie', Priorytety strategiczne 'Skalowanie praktyki konsultingowej, Wejście na rynek DACH'.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Technologia, kultura i ograniczenia<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-technology-culture-constraints&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-technology-culture-constraints&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Sekcja 'Technologie i cyfryzacja': pola Dojrzałość cyfrowa (1–7), Wykorzystanie chmury, Stos technologiczny (placeholder 'np. AWS, React, Python, SAP'), Budżet cyfrowy; sekcja 'Komunikacja i preferencje AI'.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Intencja strategiczna<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-strategic-intent&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-strategic-intent&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n (2026-08-31, oba motywy): ekran w całości po polsku. Nagłówek 'Intencja strategiczna', pole 'Cel główny (gwiazda północna)' z przykładem 'Np. Zostać liderem rynku w produkcji na zamówienie, skracając czas realizacji o 50%...', pole 'Cele drugorzędne', sekcja 'Najważniejsze priorytety (wybierz maks. 3)' z sześcioma opcjami PL: 'Efektywność / Redukcja kosztów', 'Wzrost / Zwiększenie sprzedaży', 'Innowacje / Nowe produkty', 'Jakość / Zgodność', 'Szybkość / Zwinność', 'Doświadczenie klienta'. Wcześniej cały formularz był po angielsku ('Primary Objective (North Star)', 'Top Priorities').</p>
+        <p class="naprawione"><b>Naprawione:</b> Cały formularz 'Intencja strategiczna' przetłumaczony na polski (był w całości po angielsku).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Mierniki sukcesu<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-success-metrics&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-success-metrics&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n: nagłówek 'Mierniki sukcesu (KPI)', opis 'Zdefiniuj mierzalne wskaźniki śledzące sukces. Użyj „Dodaj pozycję”, aby dodać nowe KPI.', kolumny tabeli 'NAZWA KPI / WARTOŚĆ BAZOWA / CEL / HORYZONT CZASU / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'. Wcześniej cała tabela była po angielsku ('Success Metrics (KPIs)', 'KPI NAME'/'BASELINE'/'TARGET', 'No items yet. Add one!').</p>
+        <p class="naprawione"><b>Naprawione:</b> Nagłówki tabeli i opisy przetłumaczone z angielskiego na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Zakres i granice<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-scope-boundaries&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-scope-boundaries&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: dwie kolumny 'W zakresie (uwzględnione)' i 'Poza zakresem (wykluczone)', nagłówki tabel 'POZYCJA / OBSZAR / NOTATKI / AKCJE' oraz 'POZYCJA / OBSZAR / POWÓD / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!' w obu kolumnach. Wcześniej: 'In Scope (Included)' / 'Out of Scope (Excluded)' po angielsku.</p>
+        <p class="naprawione"><b>Naprawione:</b> Obie kolumny (nagłówki + puste stany) przetłumaczone na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Oczekiwania interesariuszy<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-stakeholder-expectations&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-stakeholder-expectations&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: trzy karty 'Archetyp transformacji', 'Współpraca człowiek-AI', 'Sterowanie i nadzór' z pełnym opisowym tekstem po polsku, np. 'Pilotaż i skalowanie (Agile)' — 'Szybkie prototypowanie, MVP, krótkie pętle informacji zwrotnej. Najlepsze przy dużej niepewności.', 'Doradca strategiczny' — 'AI kwestionuje założenia i dostarcza benchmarki. Ty decydujesz.'. Wcześniej całe karty ('Transformation Archetype' itd.) były po angielsku.</p>
+        <p class="naprawione"><b>Naprawione:</b> Wszystkie trzy kolumny kart (9 opcji) przetłumaczone z angielskiego na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Zadeklarowane wyzwania<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-declared-challenges&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-declared-challenges&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Zadeklarowane wyzwania', badge 'DLA: ZADEKLAROWANE WYZWANIA' (był 'DLA: DECLARED CHALLENGES'), opis 'Oficjalne problemy zgłoszone przez klienta (objawy).', nagłówki tabeli 'WYZWANIE / OBJAW / OBSZAR FUNKCJONALNY / WAGA / NOTATKI / KONTEKST / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Badge i nagłówki tabeli przetłumaczone na polski (były w całości po angielsku mimo polskiego menu bocznego).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Przyczyny źródłowe<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-root-causes&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-root-causes&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Przyczyny źródłowe', baner 'Pytania diagnostyczne: Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.', cztery pytania po polsku: 'Gdzie utykają decyzje?', 'Gdzie jest najsilniejszy opór wobec zmiany?', 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?', 'Czy istnieje rozdźwięk między wizją zarządu a rzeczywistością?' z polskimi przykładami (np. 'Obawy kadry średniego szczebla, brak danych...'). Wcześniej całość po angielsku.</p>
+        <p class="naprawione"><b>Naprawione:</b> Baner i cztery pytania diagnostyczne (z przykładami) przetłumaczone na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Blockery celów<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-goal-blockers&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-goal-blockers&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.</p>
+        <p class="naprawione"><b>Naprawione:</b> Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Dowody<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-evidence&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-evidence&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Dowody', badge 'DLA: DOWODY', nagłówek sekcji 'Dowody i punkty danych', nagłówki tabeli 'WSKAŹNIK / PUNKT DANYCH / OBJAW / OBSERWACJA / SYSTEM ŹRÓDŁOWY / DOKUMENT / LINK / ODWOŁANIE / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Badge i nagłówki tabeli przetłumaczone na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Ryzyka i szanse<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-risks-opportunities&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-risks-opportunities&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Ryzyka i szanse', baner 'Logika oceny ryzyka — Na podstawie 0 zadeklarowanych wyzwań oraz 0 aktywnych ograniczeń, zidentyfikowaliśmy poniższe ryzyka.', sekcja 'Ukryte ryzyka i zagrożenia', nagłówki tabeli 'RYZYKO / ZAGROŻENIE / DLACZEGO (PRZYCZYNA ŹRÓDŁOWA) / WAGA / STRATEGIA OGRANICZANIA / AKCJE', menu boczne zawiera już 'Podsumowanie dla zarządu' (było 'Executive brief'). Treść w pełni przetłumaczona.</p>
+        <p class="naprawione"><b>Naprawione:</b> Cała treść (baner, tabela, nagłówki) przetłumaczona na polski. · Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Scenariusze<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-scenarios&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-scenarios&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE (dowód PRZED/PO w evidence/grafika/156-organizacja-i18n): wszystkie sześć kart scenariuszy przetłumaczone — 'Fundament cyfrowy' ('Najpierw fundamenty, potem tempo.'), 'Rewolucja doświadczenia klienta', 'Doskonałość operacyjna', 'Transformacja napędzana AI', 'Innowacja modelu biznesowego', 'Organizacja oparta na danych'; baner 'Rekomendowany scenariusz transformacji — Na podstawie 0 zadeklarowanych wyzwań rekomendowany kierunek to Fundament cyfrowy.'; wskaźniki TEMPO/AMBICJA/RYZYKO. PRZED: całość po angielsku (Digital Foundation, Recommended).</p>
+        <p class="naprawione"><b>Naprawione:</b> Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Rekomendacja<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-recommendation&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-recommendation&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Rekomendacja', baner (zielony, nie crimson) 'Przewagi strategiczne — Na podstawie profilu firmy i celów zidentyfikowaliśmy te kluczowe mocne strony i szanse rynkowe.', sekcja 'Mocne strony i szanse', nagłówki tabeli 'MOCNA STRONA / SZANSA / DOWÓD / GDZIE ZAOBSERWOWANO / JAK WYKORZYSTAĆ / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Baner i tabela przetłumaczone na polski.</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Executive brief<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-executive-brief&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-executive-brief&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: menu boczne 'Podsumowanie dla zarządu' (było 'Executive brief'), nagłówek 'Strategiczne podsumowanie dla zarządu', PRAWDZIWY profil organizacji w banerze: 'Atelier Toys Sp. z o.o.' / 'Professional Services • 62 pracowników • — przychodu' zamiast literalnego niepodstawionego placeholdera 'Company Name' widocznego wcześniej — GŁÓWNY DEFEKT NAPRAWIONY. Karty 'Profil ryzyka — Do opanowania', 'Szanse — Rozwijające się', 'Wyzwania — 0 aktywnych', 'Nie wybrano scenariusza'.</p>
+        <p class="naprawione"><b>Naprawione:</b> Realny profil organizacji ('Atelier Toys Sp. z o.o.', branża, liczba pracowników) zamiast niepodstawionego placeholdera 'Company Name'. · Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'. · Treść karty w pełni przetłumaczona.</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.</li><li>Motyw ciemny: cały baner z profilem firmy ma pełne tło crimson — bardzo widoczne naruszenie Pułapki nr 1, sprawdzone osobno w dark.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Pliki<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-files&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-files&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Pliki organizacji', badge 'NIEZWERYFIKOWANE', komunikat: 'Obecna ekstrakcja dokumentu tworzy wyłącznie propozycje pól. Nie potwierdzono trwałej, wersjonowanej kolekcji plików, dlatego ekran nie pokazuje fikcyjnej listy ani przycisku upload.' — w pełni po polsku, uczciwe komunikowanie stanu funkcji zamiast fikcyjnych danych.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Twierdzenia i źródła<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-claims-sources&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-claims-sources&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: nagłówek 'Twierdzenia i źródła', sekcja 'Nadzorowany kontekst organizacji', 'Źródła (2)' pokazuje 'Wywiad' / 'Dokument' (było 'interview'/'document' małymi literami), 'Konflikty (0)' — 'Brak sprzecznych wartości w widocznych twierdzeniach.', 'Twierdzenia (2)' z kartami 'Opis firmy' (było 'item-1') i 'Branża', treść 'Niezależna firma doradcza z sektora handlu i produkcji.', metadane 'Wywiad · 86% · Cała organizacja' (było 'interview · 86% · organization'), status 'Zatwierdzone' / 'Oczekuje na decyzję' (było 'approved').</p>
+        <p class="naprawione"><b>Naprawione:</b> Surowe wartości 'interview'/'document'/'organization'/'approved'/'item-1' zamienione na polskie etykiety ('Wywiad', 'Dokument', 'Cała organizacja', 'Zatwierdzone', opisowe nazwy pól).</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Konflikty źródeł<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-source-conflicts&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-source-conflicts&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">SPRAWDZONE: identyczna naprawa jak 'Twierdzenia i źródła' (ten sam widok renderuje się pod pozycją menu 'Konflikty źródeł') — surowe wartości ('interview'/'item-1'/'organization'/'approved') zamienione na polskie etykiety.</p>
+        <p class="naprawione"><b>Naprawione:</b> Surowe wartości techniczne zamienione na etykiety PL (jak w 'Twierdzenia i źródła').</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Ekran nie różni się treścią od 'Twierdzenia i źródła' — możliwe, że to celowy wspólny widok; do potwierdzenia, nieblokujące dla i18n.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Graf wiedzy<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-knowledge-graph&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-knowledge-graph&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Graf wiedzy' — pigułki liczników po polsku (ENCJE 38, RELACJE 74, ŚR. PEWNOŚĆ 79%, NIEAKTUALNE 2, ZREDAGOWANE 0), ale etykiety typów encji po angielsku: 'Process (18)', 'Person (9)', 'System (6)', 'Organization (1)'. Pusty stan wyszukiwania 'Wyszukaj encje aby zobaczyć graf wiedzy' po polsku.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Etykiety typów encji (Process/Person/System/Organization) nieprzetłumaczone, reszta ekranu po polsku.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Organizacja — Gotowość organizacji<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=org-summary&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=org-summary&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">'Gotowość organizacji' — '1 blokada wymaga działania', 4 kafle (Zatwierdzone fakty 1, Otwarte konflikty 0, Oczekuje na decyzję 1, Opublikowana wersja v3), 'Ostatnia publikacja 31.08.2026' (poprawny format DD.MM.RRRR). W pełni po polsku, czytelnie w obu motywach.</p>
+        
+        
+      </div>
     </div><div class="modul">
       <h2>Agent</h2>
       <p class="opis">Centrum agentów, warsztat i uruchamianie planów.</p>
       
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Uruchom agenta<span class="ocena o-A">A</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=agent-plan-view&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=agent-plan-view&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Lista czterech gotowych agentow w falach.</p>
-        <p class="naprawione"><b>Naprawione:</b> Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku</p>
-        
-      </div>
       <div class="ekran">
         <div class="glowna">
           <span class="nazwa">Warsztat agenta — pelny<span class="ocena o-A">A</span></span>
@@ -2123,7 +2867,7 @@
         </div>
         <p class="co">Dwie sciezki budowy schematu i paleta klockow.</p>
         <p class="naprawione"><b>Naprawione:</b> Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial</p>
-        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ZGLOSZENIE WLASCICIELA 01.09 (duza praca, poza zakresem tej fali): oczekuje przesuwalnych/ukladalnych klockow (jak flow w N8N) budowanych rowniez przez AI — obecny schemat tego nie robi. Zgloszone, swiadomie nie zrobione w tej turze.</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -2141,18 +2885,6 @@
       <h2>Kanon i elementy wspólne</h2>
       <p class="opis">Wzorcowe klocki, stany błędu, podglądy — nie moduł menu, ale odbieramy osobno.</p>
       
-      <div class="ekran">
-        <div class="glowna">
-          <span class="nazwa">Prawy pas — WSPOLNY SYSTEM na notatniku<span class="ocena o-B">B</span></span>
-          <span class="akcje">
-            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=prawy-pas-notatnik-system&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
-            <a class="btn" href="http://127.0.0.1:3020/?screen=prawy-pas-notatnik-system&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
-          </span>
-        </div>
-        <p class="co">Przy fladze wylaczonej notatnik wyglada IDENTYCZNIE co do bajtu. Przy wlaczonej: szyna ikon, Teresa jako tryb z pelna wysokoscia.</p>
-        
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div>
-      </div>
       <div class="ekran">
         <div class="glowna">
           <span class="nazwa">PROTOTYP jednej formuly — idea, tryb Teresa<span class="ocena o-B">B</span></span>
@@ -2270,8 +3002,8 @@
           </span>
         </div>
         <p class="co">Karty metryk i panel wlasciwosci.</p>
+        <p class="naprawione"><b>Naprawione:</b> Fixture Wlasciciel/Proces pokazywal surowe ID — nazwy (dev-render)</p>
         
-        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe</li></ul></div>
       </div>
       <div class="ekran">
         <div class="glowna">
@@ -2297,44 +3029,202 @@
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Etykiety w danych testowych mieszaja polski z angielskim — realne ekrany te same wartosci tlumacza</li></ul></div>
       </div>
+    </div><div class="modul">
+      <h2>Internal Tools / AI OS</h2>
+      <p class="opis">Wewnętrzny panel akceptacyjny silnika AI — dostęp tylko dbr77.com.</p>
+      
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Memory &amp; Scope<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=aios-memory&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=aios-memory&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Pamięć i zakres.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>humanizeFactKey/formatFactValue po angielsku na sztywno.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Connectors<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=aios-connectors&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=aios-connectors&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Konektory.</p>
+        <p class="naprawione"><b>Naprawione:</b> 01.09: dodano przelacznik „Kafle / Lista” nad „Stan konektorow” — widok Lista renderuje sie jako realna tabela (KONEKTOR/STATUS/SWIEZOSC/DOSTEP OAUTH/ACL/POWIAZANIE ZRODLA) — potwierdzone zrzutem, oba widoki (evidence/grafika/171-pojedyncze/).</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Surowe enumy statusu w polskich zdaniach.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Agents<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=aios-agents&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=aios-agents&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Agenci.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Domyślna wartość pola celu po angielsku.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">KPI/ROI &amp; AI Ops<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=aios-outcomes&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=aios-outcomes&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">KPI/ROI i operacje AI.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Domyślne wartości pól i enum PASS po angielsku.</li></ul></div>
+      </div>
+    </div><div class="modul">
+      <h2>Ustawienia</h2>
+      <p class="opis">Ustawienia osobiste i konta użytkownika — 10 grup nawigacji zweryfikowanych w kodzie (SettingsSidebar.tsx navGroups: PERSONAL, WORKFLOW, AI &amp; AUTOMATION, NOTIFICATIONS, SECURITY, INTEGRATIONS, DATA &amp; PRIVACY, BILLING, APPEARANCE, ADVANCED &amp; HISTORY).</p>
+      
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Personalne (profil)<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-personalne&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-personalne&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Profil użytkownika: dane osobowe (Imię, Nazwisko, Telefon '+48 601 200 300', Firma 'Atelier Toys Sp. z o.o.', identyfikator LinkedIn) i sekcja zdjęcia profilowego. Wszystko po polsku, bez ucięć, przycisk 'Zapisz zmiany' neutralny (nie crimson).</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Workflow (preferencje pracy)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-workflow&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-workflow&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Panel: sekcja 'Preferencje pulpitu nawigacyjnego' z 4 przełącznikami widżetów (Aktywne inicjatywy, AI Insights, Szybkie akcje, Omówienie wskaźników) + 'Opcje wyświetlania' (Tryb kompaktowy, Pokaż wiadomość powitalną).</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ZNANE ZGŁOSZENIE potwierdzone na zrzucie: w motywie ciemnym 4 przełączniki widżetów pulpitu są nieczytelne — brak wyraźnego kontrastu ON/OFF, gałka ledwo widoczna na ciemnoniebieskim tle (w motywie jasnym te same przełączniki są czytelne).</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — AI i automatyzacja (zachowanie AI)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-ai-automatyzacja&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-ai-automatyzacja&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Zachowanie i instrukcje: pole 'Instrukcja systemowa' z przykładową treścią (70/2000 znaków, 'Odpowiadaj rzeczowo, po polsku, z naciskiem na konkretne rekomendacje.'), przełączniki stylu (styl 'Zbalansowany' aktywny), sekcja 'Ton i komunikacja'.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ZNANE ZGŁOSZENIE: crimson dekoracyjny — tło ikon w nagłówkach sekcji (dymek czatu, iskierka tonu) różowo-crimsonowe mimo braku stanu krytycznego.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Powiadomienia (przegląd)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-powiadomienia&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-powiadomienia&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Przegląd: tabela 'Aktywność' z 4 wierszami (Przypisania zadań, Aktualizacje zadań, Wzmianki, Kamienie milowe projektu) × 2 kolumny (W aplikacji, E-mail), przyciski 'Włącz wszystko' / 'Minimalne'.</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ZNANE ZGŁOSZENIE: crimson dekoracyjny — tło ikony dzwonka w nagłówku różowo-crimsonowe, nie stan krytyczny.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Integracje (połączone aplikacje)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-integracje&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-integracje&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Połączone aplikacje: karty (Gmail, Kalendarz, Slack i in.) z opisami funkcji i tagami (np. 'Email sync', 'Contact import', 'Label mapping').</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Opisy kart integracji i tagi funkcji (np. 'Sync emails, contacts and labels from your Gmail account', 'Email sync', 'Contact import') renderują się po angielsku mimo polskich nagłówków sekcji — dev-render (connected-apps) wskazuje surowy window.fetch z pominięciem warstwy Api/i18n dla treści kart.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Dane i prywatność (kontrola danych)<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-dane-prywatnosc&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-dane-prywatnosc&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Kontrola danych: 5 przełączników zgód (Analityka użycia ON, Personalizacja ON, Komunikacja marketingowa OFF, Udostępnianie danych stronom trzecim OFF, Trenowanie modeli AI OFF) + pigułki retencji danych (30 dni / 90 dni / 6 miesięcy / 1 rok wybrane / Bezterminowo).</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>ZNANE ZGŁOSZENIE: crimson dekoracyjny — baner 'Zgodność z GDPR' i kilka ikon sekcji (tarcza, zegar) w kolorze crimson, mimo że to treść informacyjna, nie stan krytyczny.</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Wygląd (motyw)<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-wyglad&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-wyglad&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Motyw: 3 opcje kolorystyczne (Jasny / Ciemny wybrany / Systemowy), 6 kolorów akcentu + własny ('#2563EB'), 3 poziomy gęstości interfejsu (Kompaktowy / Wygodny wybrany / Przestronny).</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Ustawienia — Zaawansowane (import/eksport)<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=ustawienia-zaawansowane&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=ustawienia-zaawansowane&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Import/eksport ustawień: 8 kategorii do zaznaczenia (Profil i kontakt, Ustawienia bezpieczeństwa, Ustawienia prywatności, Preferencje AI, Powiadomienia, Integracje, Wygląd, Skróty klawiszowe — wszystkie zaznaczone), strefa przeciągnij-i-upuść pliku ustawień.</p>
+        
+        
+      </div>
     </div>
 
 <div class="odrzucone">
-  <h2>Świadomie Ci nie pokazuję — 20</h2>
+  <h2>Świadomie Ci nie pokazuję — 59</h2>
   <p class="opis">Te ekrany nie przeszły mojej oceny albo wymagają decyzji, nie naprawy. Wypisuję je, żebyś wiedział, czego brakuje w tej partii i dlaczego.</p>
   <div class="ekran"><div class="glowna"><span class="nazwa">Skarbiec dokumentow<span class="ocena o-C">C</span></span></div>
       <p class="co">Wgrywanie i lista dokumentow.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Komponent nie ma ani jednego klucza tlumaczen — obudowa w calosci po angielsku, a tytuly dokumentow wpisane przez uzytkownika po polsku. Efekt: jeden ekran, dwa jezyki. To retrofit architektury, nie poprawka koloru</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Tabela pomyslow (izolowana)<span class="ocena o-D">D</span></span></div>
       <p class="co">Harness porownawczy szerokosci, nie ekran produktu.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Narzedzie pomiarowe</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Karta wywiadu<span class="ocena o-C">C</span></span></div>
-      <p class="co">Prawy panel ma trzy z szesciu kanonicznych sekcji.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Narzedzia — panel rezultatow<span class="ocena o-C">C</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Narzedzie pomiarowe</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Dynamiczny SWOT — pole na zywo<span class="ocena o-C">C</span></span></div>
+      <p class="co">Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>SwotLiveArtifact nie ma zadnego wolacza w produkcie (grep: zero uzyc poza harnessem i komentarzem) — komponent zbudowany, nigdy nie montowany w ToolWorkspace</li><li>★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn &quot;&lt;SwotLiveArtifact&quot; src/ server/src/ → ZERO trafień poza własnym plikiem i testami; jedyne wystąpienie w produkcji to komentarz w EvidenceEditor.tsx:41. Żadna sesja narzędzia tego nie montuje — pack `dynamicSwot.pack.ts:266` wskazuje renderer `tools/DynamicSWOT`, gdzie live-artefakt nie ma gniazda.</li><li>ZBUDOWANY, ALE NIEPODŁĄCZONY (nie martwy): silnik `swotTensionEngine.ts` i mapowanie `toEvidenceKind` są wspólne z żywym Wynikiem SWOT — brakuje JEDNEGO przewodu: gniazda/zakładki w sesji narzędzia Dynamiczny SWOT. Bez nowej trasy i bez zmian w silniku.</li><li>NIE POKAZUJEMY jako ekranu produktu do czasu podłączenia — właściciel oceniłby funkcję, której użytkownik nie widzi.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Narzedzia — panel rezultatow<span class="ocena o-C">C</span></span></div>
       <p class="co">Lista rezultatow sesji z wersjami.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS &amp; PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Panel inicjatyw<span class="ocena o-C">C</span></span></div>
-      <p class="co">Proces statusow inicjatywy.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Caly ekran po angielsku</li><li>Blad w konsoli: zdublowany klucz EXECUTING</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Panel zarzadzania ocena<span class="ocena o-C">C</span></span></div>
-      <p class="co">Mechanika solidna: postep procesu, tabela etapow bramek.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Poziomy SIRI<span class="ocena o-C">C</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS &amp; PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy</li><li>Przyczyna ustalona: ~15 kluczy toolOutputs.* nie istnieje w ogole w public/locales/{pl,en}/translation.json — component jest i18n-ready, slownik pusty</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Poziomy SIRI<span class="ocena o-C">C</span></span></div>
       <p class="co">Macierz priorytetow SIRI — ekran diagnostyczny dla inzyniera, nie dla klienta.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi</li><li>KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Matryca oceny<span class="ocena o-D">D</span></span></div>
-      <p class="co">Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Zgloszone do naprawy narzedzia</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Analiza portfela<span class="ocena o-D">D</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi</li><li>KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=.</li><li>★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn &quot;siriTierView|runSiriTier|siriTierAvailability&quot; src/ server/src/ → poza własnym plikiem i testami wyłącznie DWA komentarze w `siriHttpSessionRuntime.ts` (101, 397), z których drugi mówi wprost, że runtime tego NIE woła. Żadna powierzchnia produktu nie renderuje TIER.</li><li>ZBUDOWANY, ALE NIEPODŁĄCZONY: logika (`siriAdapter.prioritise` / `siriPrioritisation.ts`) i testy są gotowe; brakuje widoku w produkcie i wejścia do niego (osobny ekran po zamrożeniu sesji, wg ASSESSMENT_KB_SIRI.md §4 nie wolno go zlać z formularzem Band) — czyli więcej niż jeden przewód: widok + pozycja w menu sesji.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Matryca oceny<span class="ocena o-C">C</span></span></div>
+      <p class="co">Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu. NIEPRAWDA ze harness nie ma tego ekranu - renderuje sie poprawnie (DRDMatrixSession). Realny defekt: lewy panel osi jest po polsku, ale centrum ekranu (MaturityMatrix.tsx) jest w 100% po angielsku - wymaga przesiania przez decyzje 31.08 o angielskiej metodyce. Przywrocono z odzyskanego raportu nocnego.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zgloszone do naprawy narzedzia</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Lista inicjatyw<span class="ocena o-C">C</span></span></div>
+      <p class="co">Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial. Realny InitiativesHub pada na INITIATIVE_DATA_CONTRACT_ERROR - wyscig localStorage: shouldAllowDemoData() czyta debounce'owany (300ms) zapis do consultify-storage, pierwszy fetch startuje przed zapisem. Przywrocono z odzyskanego raportu nocnego.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Analiza portfela<span class="ocena o-D">D</span></span></div>
       <p class="co">Nie wiem, jak wyglada — komponent zostal swiadomie usuniety jako martwy kod (12,8 tys. linii). Funkcja nie istnieje w produkcie.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>To decyzja produktowa, nie kosmetyka — wymaga rozstrzygniecia wlasciciela</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Eksport realizacji do prezentacji<span class="ocena o-D">D</span></span></div>
       <p class="co">Nie istnieje w tej postaci — produkt dawno przeszedl na inna sciezke, ekran testowy nigdy nie zostal zaktualizowany.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Ekran harnessu wyrejestrowany, plik zostaje</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Sygnaly zmiany w realizacji<span class="ocena o-D">D</span></span></div>
       <p class="co">Nie istnieje — komponent zostal usuniety z produktu jako fantom bez implementacji.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Ekran harnessu wyrejestrowany, plik zostaje</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Powloka rejestru<span class="ocena o-D">D</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Ekran harnessu wyrejestrowany, plik zostaje</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">„People &amp; Change” (chromeless, z Action Center)<span class="ocena o-C">C</span></span></div>
+      <p class="co">Bez mocka V8.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Banner 'V8 is not enabled' po angielsku + zera.</li><li>Etykiety ITEMS/CRITICAL/ISSUES/BLOCKED po angielsku (ExecutionManagementView.tsx:322).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Narzedzie wskaznika<span class="ocena o-C">C</span></span></div>
+      <p class="co">Pelne narzedzie z ostatnim pomiarem i wlasciwosciami. Naglowek H1 calego ekranu to surowy kod OEE-LINIA-PAKOWANIA bez nazwy i bez podpisu wyjasniajacego - najgorszy wariant defektu braku nazwy KPI w calym zakresie. Przywrocono z odzyskanego raportu nocnego.</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Trzy pary cel-wynik<span class="ocena o-D">D</span></span></div>
+      <p class="co">Ekran historyczny — wlasciciel 01.09: &quot;To jest jakis historyczny ekran. Chyba juz tak dawno nie wyglada.&quot; Mial racje: stary hub Wynikow zostal wycofany 24.08 (commit 8df1cd413d), trasa /results przekierowuje na rejestr KPI (ResultsOwnerReviewEntry.tsx:12), a komponent ResultsThreePairsView montuja juz tylko pliki testow.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zdjete z odbioru 2026-09-01 (docs/program/grafika/ANALIZA_ODRZUCONE_20260901.md §2) — nie duplikuj wiecej</li><li>UWAGA: razem z martwym ResultsHub przestala byc osiagalna diagnostyka odchylen (anomalie/prognoza/podpowiedzi RCA) — sprawa otwarta do decyzji wlasciciela, patrz ODLOZONE.md</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Powloka rejestru<span class="ocena o-D">D</span></span></div>
       <p class="co">Ekran po angielsku.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Baza porownania<span class="ocena o-C">C</span></span></div>
-      <p class="co">Trwaly stan bledu — harness nie ma atrapy jednego wywolania.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Panele wartosci<span class="ocena o-C">C</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Panele wartosci<span class="ocena o-C">C</span></span></div>
       <p class="co">Most wartosci i planer nosnikow.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Most identyfikatorow (diagnostyka)<span class="ocena o-D">D</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu.</li><li>★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): SIEDEM montowanych paneli (`DriverPlannerPanel`, `ValueOfficePanel`, `EfficientFrontierPanel`, `MonteCarloNpvPanel`, `RealOptionsPanel`, `ScenarioComputePanel`, `WhatIfSensitivityPanel`) ma po ZERO wołaczy JSX w src/ — grep &quot;&lt;Nazwa&quot; nie trafia poza definicję. Finanse w produkcie renderują `FinanceHub` (EconomicsView).</li><li>ZBUDOWANE, ALE NIEPODŁĄCZONE (nie martwe): backend istnieje i zna te panele z nazwy — `server/src/routes/v8/financeValueDemoAllowlist.ts:113,121` wpisuje `ValueOfficePanel.tsx:98/112` jako `productionCaller`. Brakuje jednego przewodu po stronie UI: zakładki/gniazda w `FinanceHub` + przekazania fetcherów. Bez nowej trasy.</li><li>KOREKTA wcześniejszego powodu: „osie wykresu po angielsku, wymaga polskich danych makietowych&quot; opisywało objaw, nie przyczynę — przyczyną jest brak wołacza, więc to nie jest ekran produktu.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Most identyfikatorow (diagnostyka)<span class="ocena o-D">D</span></span></div>
       <p class="co">Narzedzie inzynierskie, nie ekran produktu.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Nie pokazuje sie jako ekran produktu</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Tryb skupienia (diagnostyka)<span class="ocena o-D">D</span></span></div>
       <p class="co">Narzedzie inzynierskie, nie ekran produktu.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Nie pokazuje sie jako ekran produktu</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Rodzaje blokow raportu<span class="ocena o-C">C</span></span></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie pokazuje sie jako ekran produktu</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Deck — ocena jakosci<span class="ocena o-C">C</span></span></div>
+      <p class="co">SPRAWDZONE: ekran wyniku kreatora prezentacji — 'Twój deck jest gotowy!' / '8 slajdów wygenerowanych pomyślnie', odznaka jakości 'Jakość: 3 ostrzeżeń' 'Wynik 62/100' (kolor bursztynowy/ostrzegawczy, NIE crimson), metadane '8 slajdów · Briefing · Angielski · Wewnętrzny' — surowy kod języka 'EN' zamieniony na polską etykietę 'Angielski' (to język treści decka, nie interfejsu — zgodnie z kryteriami nie jest to defekt). Główny przycisk 'Otwórz Deck Builder' w kolorze neutralnym (navy/biały), nie crimson.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): harness montuje `ResultStep`, którego JEDYNYM wołaczem jest `PresentationWizard.tsx:323`; sam `PresentationWizard` nie ma w src/ ANI JEDNEGO importu, a trasa `/presentations/wizard` jest redirect-only (AppRoutes.tsx:2741). Ten konkretny ekran jest nieosiągalny.</li><li>MARTWY DUBLET ŻYWEJ FUNKCJI (nie brak funkcji): sama odznaka jakości decka JEST w produkcie — `DeckBuilder.tsx:1930-1959` renderuje „Jakość: N ostrzeżeń&quot; + wynik krytyka, a DeckBuilder stoi na żywej trasie (AppRoutes.tsx:252, lazy). Właściciel oceniał kopię z wycofanego kreatora.</li><li>DO ZROBIENIA W TORZE GRAFIKI: przepiąć ekran na `DeckBuilder` (żywa ścieżka), nie na kreator. Do tego czasu nie pokazujemy.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Szablony skoroszytow<span class="ocena o-D">D</span></span></div>
+      <p class="co">Zdublowana ZAKLADKA za wylaczona flaga — wlasciciel (30.08): &quot;Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.&quot; (K8, MAPA_UWAG_WLASCICIELA.md) i &quot;To samo nie wiem, po co on jest.&quot; Zdejmujemy WEJSCIE, nie kod: sam komponent (ExceleParametricTemplates) jest zywym ekranem koncowym kreatora &quot;Nowy szablon -&gt; Arkusz&quot;.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zdjete z odbioru 2026-08-30, potwierdzone 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §1) — nie duplikuj wiecej</li><li>KODU NIE RUSZAMY: skasowanie komponentu zabiloby kreator szablonow arkusza</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Rodzaje blokow raportu<span class="ocena o-C">C</span></span></div>
       <p class="co">Tabela administracyjna, kanon tabel zachowany.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Caly komponent bez ani jednego klucza tlumaczen — nie pojedynczy napis, tylko brak lokalizacji ekranu</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Szablony raportow<span class="ocena o-C">C</span></span></div>
       <p class="co">Ta sama sytuacja co wyzej.</p>
@@ -2342,7 +3232,79 @@
       <p class="co">Powloka poprawna po polsku, ale TRESC wniosku w calosci po angielsku.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Streszczenie, kluczowe ustalenia, tematy i ryzyka to nie cytaty, tylko wygenerowana tresc — cala po angielsku</li><li>Zdublowany cytat z poczwornym cudzyslowem</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Studio — udostepnianie<span class="ocena o-D">D</span></span></div>
       <p class="co">Ekran nie renderuje sie w harnessie. Ta sama tresc jest dostepna przez menu Plik, ktore dziala.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Zdublowany ekran testowy, nie brak funkcji</li></ul></div></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zdublowany ekran testowy, nie brak funkcji</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Przegląd<span class="ocena o-D">D</span></span></div>
+      <p class="co">Atrapa językowa.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Karty po angielsku mimo lang=pl.</li><li>Crimson dekoracja (ikona text-primary-500).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Plan i limity<span class="ocena o-C">C</span></span></div>
+      <p class="co">Treść po polsku (PL OK).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Przycisk „Przydziel plan i limity” variant=&quot;brand&quot; = crimson na zwykłym CTA (AdminBillingFinOpsPanel.tsx:511).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Wykorzystanie i koszty<span class="ocena o-D">D</span></span></div>
+      <p class="co">Alias ekranu Przegląd (pixel-identyczny).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Mylący osobny slot menu dla identycznej treści.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Metody płatności<span class="ocena o-D">D</span></span></div>
+      <p class="co">Całość po angielsku (zero t()).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Surowy FilterableTable, brak kebab.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Faktury<span class="ocena o-D">D</span></span></div>
+      <p class="co">Nagłówki INVOICE/STATUS/AMOUNT DUE po angielsku.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>FilterableTable, hideRowActions.</li><li>Kwoty bez PLN.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Dane rozliczeniowe<span class="ocena o-D">D</span></span></div>
+      <p class="co">Alias ekranu Budżety i alerty.</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Budżety i alerty<span class="ocena o-D">D</span></span></div>
+      <p class="co">Spend alerts/Save alerts po angielsku.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>FilterableTable.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Polityka bezpieczeństwa<span class="ocena o-C">C</span></span></div>
+      <p class="co">Własny pill-nav.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Wzorzec ADM-OWN-001 nienaprawiony tu.</li><li>Surowe klasy slate/navy.</li><li>Ikony crimson dekoracyjnie.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">SSO<span class="ocena o-C">C</span></span></div>
+      <p class="co">Bitowo identyczny z ekranem Polityka bezpieczeństwa (WIRE_ONLY) — do potwierdzenia z właścicielem.</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">SCIM i cykl życia<span class="ocena o-D">D</span></span></div>
+      <p class="co">Listy jako surowe wiersze tekstu.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie używa StandardTable.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Dostęp API<span class="ocena o-D">D</span></span></div>
+      <p class="co">Cały ekran po angielsku (zero t()).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Bespoke karty.</li><li>Crimson odznaki na każdym kluczu.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Alerty bezpieczeństwa<span class="ocena o-C">C</span></span></div>
+      <p class="co">Lista alertów.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Typ/Dotkliwość surowe enumy (impossible_travel, critical).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Podsumowanie ryzyka<span class="ocena o-D">D</span></span></div>
+      <p class="co">Kolejka jako surowe karty.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Status: resolved po angielsku.</li><li>Crimson dekoracyjny.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Zdarzenia<span class="ocena o-C">C</span></span></div>
+      <p class="co">'Dziennik audytu administratora' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): format daty NAPRAWIONY ('30/08/2026 16:22' DD/MM/RRRR), ale kolumna 'Akcja' pokazuje surowe angielskie nazwy zdarzeń ('member removed', 'role change', 'update collaboration controls', 'update data retention policy', 'create scim token', 'export audit logs') a POD NIMI SUROWE ŁADUNKI JSON wprost w interfejsie (np. '{&quot;removedUser&quot;:&quot;anna@atelier-toys.pl&quot;}', '{&quot;from&quot;:&quot;member&quot;,&quot;to&quot;:&quot;admin&quot;}') — poważniejszy defekt niż wcześniej odnotowany. Placeholder wyszukiwania nadal ucięty ('Szukaj akcji, wykonaw...' bez wielokropka, pole za wąskie).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>FilterableTable zamiast StandardTable.</li><li>Placeholder szukania obcięty — potwierdzone na świeżym zrzucie ('Szukaj akcji, wykonaw...').</li><li>NOWE, poważniejsze niż wcześniej odnotowane: kolumna 'Akcja' pokazuje surowe nazwy zdarzeń po angielsku i surowe ładunki JSON wprost w UI zamiast czytelnego opisu po polsku.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Zmiany wysokiego ryzyka<span class="ocena o-D">D</span></span></div>
+      <p class="co">Alias ekranu Zdarzenia (zamierzony).</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Dowody zgodności<span class="ocena o-C">C</span></span></div>
+      <p class="co">REALNY BUG: kolumny Zdarzenie/Aktor/Ryzyko puste.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Frontend czyta action/actor/risk, backend zwraca action_type/admin_id/risk_level (AdminComplianceEvidencePanel.tsx:81-110 vs adminP32.routes.ts:2208-2296) — zob. zgłoszenie #9 do toru funkcji.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Retencja i eksport<span class="ocena o-D">D</span></span></div>
+      <p class="co">Alias ekranu Zdarzenia (zamierzony).</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Stan usług<span class="ocena o-D">D</span></span></div>
+      <p class="co">Placeholder zamierzony.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>CAN_ACCESS_PLATFORM_OPERATIONS=false na sztywno, nigdy nie woła API.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Diagnostyka<span class="ocena o-D">D</span></span></div>
+      <p class="co">Alias ekranu Stan usług.</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Operacje platformowe<span class="ocena o-D">D</span></span></div>
+      <p class="co">Zamierzony fail-closed gate.</p>
+      </div><div class="ekran"><div class="glowna"><span class="nazwa">Polityka i autonomia<span class="ocena o-D">D</span></span></div>
+      <p class="co">ProactivitySelector.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>100% po angielsku.</li><li>Crimson na wybranej roli/focus/ikonie.</li><li>Trzeci poziom tabów kolidujący nazewniczo z menu.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Modele i dostawcy<span class="ocena o-D">D</span></span></div>
+      <p class="co">Katalog modeli i dostawców.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>2. poziom nawigacji w całości po angielsku.</li><li>Raw &lt;table&gt; z fałszywym self-exempt (ModelsProvidersTab.tsx:649) — zob. zgłoszenie #20 do toru funkcji.</li><li>Crimson na odznace PREMIUM.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Limity i budżety<span class="ocena o-D">D</span></span></div>
+      <p class="co">Limity i budżety AI.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Jak wyżej (2. poziom nawigacji EN) + crimson na suwakach/sub-tabie.</li><li>Nagłówki kart NIEWIDOCZNE w dark (SettingsCard.tsx:74 text-navy-900 bez dark:) — zob. zgłoszenie #18 do toru funkcji.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Dane i prywatność<span class="ocena o-D">D</span></span></div>
+      <p class="co">Dane i prywatność AI.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Jak wyżej + WSZYSTKIE etykiety przełączników niewidoczne w dark (SettingsToggle.tsx:56 — komponent współdzielony) — zob. zgłoszenie #18 do toru funkcji.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Operacje AI<span class="ocena o-D">D</span></span></div>
+      <p class="co">Operacje AI.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nawigacja po angielsku.</li><li>Surowe id w polskim zdaniu („Sprawdź, czy connection działa poprawnie”, AIMissionControl.tsx:326).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Audyt AI<span class="ocena o-D">D</span></span></div>
+      <p class="co">Audyt AI.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nawigacja po angielsku.</li><li>„Settings Audit Log” bez t().</li><li>Niewidoczne w LIGHT (AuditLogViewer.tsx:174,322 text-white bez light-variant) — zob. zgłoszenie #18 do toru funkcji (promień rażenia, inny komponent).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Organizacja — redesign 21→11, komplet<span class="ocena o-D">D</span></span></div>
+      <p class="co">WIERSZ-DUCH bez dowodu wizualnego w tym drzewie — zastąpiony przez 20 realnych wierszy ekranów Organizacji (org-operating-model … org-summary).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>WIERSZ-DUCH: zmigrowany z historycznego odbioru (CLOSED_FINAL, DEC-2026-08-24-11 + DEC-2026-08-24-15, tag final-01-organization) BEZ ŻADNEGO zrzutu w tym drzewie roboczym — potwierdzone przeszukaniem evidence/. Realny katalog dowodowy (29 plików) żyje na INNYM branchu (codex/m01-organization-20260824), nieobecny tutaj.</li><li>ZASTĄPIONY realnymi ekranami z rundy 150-ustawienia-organizacja (2026-08-31) — 20 ekranów wariantu domyślnego (flaga orgRedesignV1 OFF) faktycznie zweryfikowanych w kodzie OrganizationSidebar.tsx, każdy z własnym zrzutem i oceną: patrz np. org-operating-model, org-summary, org-strategic-intent.</li><li>Ten wiersz pozostaje w rejestrze jako ślad historii (nie kasujemy), ale ocena D wyklucza go z tego, co widzi właściciel (strona pokazuje tylko A/B).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Uruchom agenta<span class="ocena o-C">C</span></span></div>
+      <p class="co">Lista czterech gotowych agentow w falach. Przed utworzeniem planu AgentPlanWorkspace renderuje WYLACZNIE ArtifactRightPanel jako cala zawartosc pelnoszerokiego warsztatu - lista Agenci zajmuje ok 1/4 szerokosci, reszta to pusta, niepodpisana przestrzen (oba motywy, flaga ff_agentPlan). Przywrocono z odzyskanego raportu nocnego.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn &quot;AgentPlanView&quot; src/ server/src/ → ZERO trafień poza `src/views/AgentPlanView.tsx`. Nagłówek pliku harnessu TWIERDZI, że komponent jest wpięty w AppRoutes.tsx + menuConfig.ts — to NIEPRAWDA w tej gałęzi: `/agent-plan` (AppRoutes.tsx:1618) tylko przekierowuje na `Moja praca?tab=agent`.</li><li>MARTWY, ALE FUNKCJA ŻYJE INNĄ DROGĄ (relokacja AGT-003): warsztat agenta użytkownik widzi przez MyWorkHub → AgentHubShell → AgentPlanWorkspace (AgentHubShell.tsx:1700). `AgentPlanView` to osierocona powierzchnia sprzed relokacji — nie ma czego podłączać, jest czego nie pokazywać.</li><li>NIE POKAZUJEMY — ekranem produktu jest Agent Hub, nie ten wrapper.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Prawy pas — WSPOLNY SYSTEM na notatniku<span class="ocena o-D">D</span></span></div>
+      <p class="co">Identyfikator BEZ KLUCZA w rejestrze harnessu (dev-render/main.tsx ma tylko lazy-import, linia 169) — ?screen=prawy-pas-notatnik-system oddaje liste awaryjna, nie ekran. Ten sam plik ekranu jest zarejestrowany 3x pod wlasciwymi id: prawy-pas-notatnik-artefakt / -teresa / -struktura (kazdy ze stalym trybem startowym, bo narzedzie zrzutowe nie klika UI). Wiersz zostaje w historii jako slad, ale nie idzie do odbioru. Zweryfikowane 2026-08-31 przez nadzorce (grep rejestru + ls screens).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">AI OS — Home<span class="ocena o-C">C</span></span></div>
+      <p class="co">Panel startowy.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zero t().</li><li>Crimson plakietka.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">AI Actions<span class="ocena o-C">C</span></span></div>
+      <p class="co">Lista akcji AI.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zero t().</li><li>Crimson.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Research Sessions<span class="ocena o-C">C</span></span></div>
+      <p class="co">Sesje badawcze.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Zero t().</li><li>Crimson.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Artifacts<span class="ocena o-C">C</span></span></div>
+      <p class="co">PL OK.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Crimson eyebrow + crimson Retry (Wave5ArtifactRuntimePanel.tsx:284,295).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Ustawienia — komplet 9 grup × 2 motywy<span class="ocena o-D">D</span></span></div>
+      <p class="co">WIERSZ-DUCH bez dowodu wizualnego w tym drzewie — zastąpiony przez 10 realnych wierszy grup Ustawień (ustawienia-personalne … ustawienia-zaawansowane).</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>WIERSZ-DUCH: zmigrowany z historycznego odbioru (CLOSED_FINAL, DEC-2026-08-25-16, tag final-02-settings) BEZ ŻADNEGO zrzutu w tym drzewie roboczym — potwierdzone przeszukaniem evidence/. Odbiór historyczny nie jest dowodem wizualnym w tej gałęzi.</li><li>ZASTĄPIONY realnymi ekranami z rundy 150-ustawienia-organizacja (2026-08-31) — 10 grup faktycznie zweryfikowanych w kodzie SettingsSidebar.tsx, każda z własnym zrzutem i oceną: patrz np. ustawienia-personalne, ustawienia-wyglad, ustawienia-bezpieczenstwo.</li><li>Ten wiersz pozostaje w rejestrze jako ślad historii (nie kasujemy), ale ocena D wyklucza go z tego, co widzi właściciel (strona pokazuje tylko A/B).</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Ustawienia — Bezpieczeństwo (przegląd)<span class="ocena o-C">C</span></span></div>
+      <p class="co">Przegląd bezpieczeństwa: status ochrony, hasło, lista 'Ostatnia aktywność' (Chrome · macOS, Safari · iPhone), link 'Zobacz pełną historię' ze znacznikiem czasu.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>ZNANE ZGŁOSZENIE potwierdzone na zrzucie: w motywie JASNYM wiersze 'Ostatnia aktywność' ('Chrome · macOS', 'Safari · iPhone') renderują się bladym/białym tekstem na jasnym tle — praktycznie nieczytelne; w motywie ciemnym ten sam tekst jest w pełni czytelny.</li><li>ZNANE ZGŁOSZENIE potwierdzone: znacznik czasu w formacie amerykańskim '8/31/2026, 9:18:49 AM' (M/D/RRRR + AM/PM) zamiast polskiego DD.MM.RRRR.</li><li>Crimson dekoracyjny w wielu miejscach ekranu (ikona tarczy, ikona klucza, link 'Zobacz pełną historię' w kolorze czerwonym) — nie stan krytyczny.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Ustawienia — Płatności (subskrypcja)<span class="ocena o-C">C</span></span></div>
+      <p class="co">ZNALEZISKO: kliknięcie grupy BILLING → 'Subskrypcja i płatności' NIE pokazuje treści rozliczeniowej. renderContent() dla 'billing' zwraca null w SettingsView.tsx:468-472 (komentarz w kodzie: 'Organization billing is owned by Admin'), więc ekran faktycznie renderuje zawartość Profilu (identyczną jak ustawienia-personalne), a pozycja 'Subskrypcja i płatności' w bocznym menu nie jest nawet podświetlona jako aktywna.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie jest to błąd harnessu — potwierdzone w kodzie realnego komponentu SettingsView.tsx.</li></ul></div></div>
 </div>
 
 </div></body></html>

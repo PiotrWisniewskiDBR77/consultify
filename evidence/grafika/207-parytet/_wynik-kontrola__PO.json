@@ -1,0 +1,46 @@
+{
+  "wynikSelektor": [
+    "[data-testid=\"canvas-header\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "canvas-toolbar-md-history",
+      "motyw": "light",
+      "plik": "/private/tmp/g-parytet/evidence/grafika/207-parytet/canvas-toolbar-md-history__PO__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"canvas-header\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 250.29011191705246,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "canvas-toolbar-md-history",
+      "motyw": "dark",
+      "plik": "/private/tmp/g-parytet/evidence/grafika/207-parytet/canvas-toolbar-md-history__PO__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "wynikSelektor": [
+        "[data-testid=\"canvas-header\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 22.648682068094132,
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "canvas-toolbar-md-history",
+      "ok": true,
+      "reasons": []
+    }
+  ]
+}

@@ -143,6 +143,50 @@ kandydata SWOT z zatwierdzonym wynikiem narzędzia. Ekran nie może obiecywać,
 | `src/components/MyWork/shared/**` · `TaskDetailView` · `DecisionDetailView` | funkcje (dyżur 133) | 2026-08-30 |
 | `src/components/Initiatives/InitiativesHub.tsx` | funkcje (dyżur 134) | 2026-08-30 |
 
+### ★ 2026-09-02 · OSTRZEŻENIE DLA OBU TORÓW: skille ładują się z KATALOGU GŁÓWNEGO, nie z gałęzi
+
+**Zmierzone, nie przypuszczenie.** Skill `consultify-preview` został poprawiony 01.09
+(dyżur 175) na gałęzi `codex/m03-admin-20260824` — kolejność bloków stopki doprowadzona
+do zgodności z normą. **Ta poprawka nie działa.** Sesje agentów ładują skille
+z `/Users/piotrwisniewski/Developer/Consultify/.claude/skills/`, czyli z katalogu
+głównego repozytorium, stojącego na gałęzi `codex/wave3-16-module-acceptance-20260821`
+— gdzie leży NADAL STARA, BŁĘDNA wersja (opisuje bloki jako
+„nagłówek·meta·treść·What's-next·akcje-pill·kebab", odwrotnie do normy).
+
+Polecenie sprawdzające:
+```
+grep -n "What's-next" /Users/piotrwisniewski/Developer/Consultify/.claude/skills/consultify-preview/SKILL.md
+grep -n "Co dalej"    /private/tmp/m03/.claude/skills/consultify-preview/SKILL.md
+```
+
+**Skutek, który już wystąpił:** robotnik naprawiający podgląd Idei (02.09) zameldował
+rozbieżność „skill mówi co innego niż norma" — bo dostał wersję sprzed poprawki.
+Zbudował wg normy, więc tym razem skończyło się dobrze, ale następny wykonawca może
+dopasować poprawny ekran do nieaktualnego opisu. To trzeci raz, gdy ten sam skill
+wysyła w złą stronę.
+
+**Czego NIE zrobiłem i dlaczego:** nie zmieniłem plików w katalogu głównym — stoi on
+na gałęzi drugiego toru i cicha edycja z boku jest dokładnie tym, czego zabrania
+zasada styku nr 2. **Proszę o decyzję, kto to przenosi**: albo katalog główny dostaje
+poprawkę osobnym commitem na swojej gałęzi, albo skille przestają żyć w dwóch
+miejscach naraz.
+
+**Reguła ogólna:** poprawka dokumentu, który jest ŁADOWANY przez narzędzie, jest
+skuteczna dopiero w miejscu ładowania. Poprawienie go na gałęzi roboczej to poprawienie
+kopii.
+
+### 2026-09-02 · TOR GRAFIKI DOTKNĄŁ PLIKU SPOZA SWOJEGO ZAKRESU (wpis wg zasady styku nr 2)
+
+`tailwind.config.js` — **zmiana wyłącznie w komentarzu**, zero zmian w wartościach
+tokenów, zero wpływu na budowanie. Powód: komentarz w linii ~150 mówił, że
+`c-accent` (crimson) służy do „brand/CTA/**selected**", co jest wprost sprzeczne
+z prawem nadrzędnym w `CLAUDE.md` (reguła UI 3: „CTA/stany aktywne = neutralne;
+fokus = niebieski `c-focus`"). Wykonawcy czytali dwa źródła prawdy i wybierali
+bliższe — tak powstała rodzina „crimson na treści neutralnej" naprawiana dziś.
+Rozstrzygnięcie nadzorcy toru grafiki: wiąże `CLAUDE.md`; komentarz poprawiony
+i opatrzony datą sprostowania. **Jeśli tor funkcji uważa inaczej — proszę o wpis
+tutaj, nie o cichą zmianę z powrotem.**
+
 ### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: kanon dat napisany i nieużyty
 
 **Pomiar, nie hipoteza.** `src/utils/listDateFormat.ts` powstał 27.07 po przeglądzie

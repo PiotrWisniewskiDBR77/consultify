@@ -16,6 +16,68 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+## 2026-09-02
+
+### Z-44 · Dwa źródła prawdy o kolorze mówiły co innego — i wykonawcy słuchali tego bliższego
+**Co się stało:** przy naprawie rodziny „crimson na treści neutralnej" robotnik zgłosił
+sprzeczność, której nikt wcześniej nie nazwał: `tailwind.config.js` (~linia 150) opisywał
+`c-accent` jako kolor „brand/CTA/**selected**", a `CLAUDE.md` reguła UI 3 mówi wprost
+„CTA/stany aktywne = **neutralne**; fokus = niebieski `c-focus`". Wykonawca piszący kod
+czyta komentarz w konfiguracji, bo jest **pięć linijek od miejsca pracy** — a nie plik
+reguł programu.
+
+**Dlaczego ważne:** to nie jest literówka w dokumencie. To wyjaśnia, dlaczego ta rodzina
+w ogóle powstała i dlaczego odrastała: pomiar wykazał **639 miejsc** z czerwonym banerem
+w 431 plikach oraz **37 własnych map wagi**, przy czym poprawna wspólna mapa
+(`src/constants/statusColors.ts`, `PRIORITY_STYLES`) ma tylko **4 konsumentów**. Każdy,
+kto pisał własną mapę, miał pod ręką komentarz mówiący, że crimson to kolor zaznaczenia.
+
+**Co z tego wynika:** rozstrzygnąłem sam (reguła 0) — wiąże `CLAUDE.md`, komentarz
+poprawiony i opatrzony datą sprostowania; dotknięcie pliku spoza zakresu grafiki wpisane
+do `KOORDYNACJA.md`. Reguła ogólna: **gdy dwa źródła prawdy mówią co innego, wygrywa to,
+które leży bliżej klawiatury** — więc sprzeczność trzeba usuwać u tego bliższego, nie
+dopisywać kolejnego akapitu do dalszego.
+
+### Z-43 · Bezpiecznik parytetu oskarżał uczciwe ekrany — 6 z 25 zgłoszeń to był błąd przyrządu
+**Co się stało:** audyt z 01.09 mówił, że **29 kart A/B** stoi na obrazie niebędącym
+produktem. Zanim to zameldowałem dalej, przepuściłem listę przez kontrolę dodatnią
+(policzyć wołaczy ręcznie, nie wierzyć bramce). Z 25 dzisiejszych zgłoszeń **sześć okazało
+się fałszywym alarmem**: `finance-hub` (harness owija prawdziwy `FinanceHub` we własną
+otoczkę `React.lazy`, a bramka nie umie rozwinąć `React.lazy(() => import(...))`) oraz
+pięć ekranów `idea-table-tool-*` (`PlatformGridView` **jest** renderowany —
+w `ViewRouter.tsx:1547`, czyli w tym samym pliku, w którym jest zdefiniowany, a bramka
+wyklucza plik definicji z listy wołaczy). Realna liczba: **19, nie 29**.
+
+**Dlaczego ważne:** to jest ta sama choroba, którą bezpiecznik miał leczyć, tylko odbita
+w drugą stronę. Narzędzie, które karze uczciwe ekrany, uczy patrzącego ignorować jego
+ostrzeżenia — a wtedy przepuści też te prawdziwe. Nie zamelduj liczby, dopóki nie
+sprawdzisz, czy przyrząd nie zawyża: raport bramki NIE jest pomiarem, jest hipotezą.
+
+**Co z tego wynika:** naprawa bramki zlecona z **warunkiem odbioru złożonym z dwóch
+kontroli** — dodatniej (te 6 ma zniknąć z R1) i ujemnej (7 nazwanych realnych rozbieżności
+ma NADAL być zgłaszanych; jeśli któraś zniknie, reguła została rozluźniona za bardzo)
+plus dowód mutacyjny. Naprawa, która ucisza bramkę, jest gorsza niż fałszywy alarm.
+
+### Z-42 · „Reszta odbioru" to nie były karty nieklikniete — właściciel przekliknął WSZYSTKO
+**Co się stało:** dostałem zadanie „zmierz, co zostało właścicielowi do przeklikania".
+Spodziewałem się luki w pokryciu. Pomiar z żywej bazy: kart A/B **253**, kart **bez żadnej
+decyzji — ZERO**. Właściciel nie ma zaległości. Zaległość jest po naszej stronie: 3 karty
+czekają na naprawę, o którą prosił, a 19 stało na obrazie, który nie pokazywał produktu.
+
+**Dlaczego ważne:** gdybym poszedł za intuicją („zostało trochę do klikania") i wystawił
+mu stronę z 253 kartami, utopiłby się w rzeczach, które już rozstrzygnął — i to on
+zapłaciłby czasem za mój brak pomiaru. Druga rzecz: sprawdziłem chronologię i okazało się,
+że 15 ekranów z partii do zatwierdzenia z 01.09 **też jest zamkniętych** — partia została
+zapisana o 11:40, a jego decyzje padły 11:50–12:06, czyli PO niej. Bez porównania dwóch
+znaczników czasu wystawiłbym mu je drugi raz.
+
+**Co z tego wynika:** strona odbioru otwiera się teraz na filtrze „★ Zostało do obejrzenia"
+(9 kart do oceny) i osobno pokazuje 13 kart „Czeka na budowę" — **bez przycisków oceny**,
+bo ich gotowość nie zależy od wyglądu. Licznik przy nazwie modułu liczy widoczne, nie pełne
+(„Czat 5 z 15") — wcześniej nagłówek mówiłby 15 nad pięcioma kartami i właściciel liczyłby
+rozbieżność zamiast oglądać ekrany. Zasada: **zanim pokażesz komuś listę „co zostało",
+zmierz, czy ta lista w ogóle o tym mówi.**
+
 ### Z-41 · Dzień naprawy przyrządu i wymiany z torem funkcji — bezpiecznik kłamał w obie strony, a zgłoszenie punktowe znów okazało się próbką
 **Co się stało:** (1) **Dług przyrządu spłacony o ponad ćwierć** — linia bazowa **152 → 112**
 pozycji: wymyślona szerokość **30 → 15** ekranów, podpis przyrządu w kadrze **33 → 24**, komponent

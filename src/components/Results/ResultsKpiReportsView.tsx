@@ -146,7 +146,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       {
         id: 'type',
         label: t('common.type', 'Type'),
-        width: '18%',
+        width: '160px',
         render: (row) => (
           <div>
             <div className="text-sm font-medium text-c-text">{formatTemplateLabel(row.type)}</div>
@@ -159,7 +159,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       {
         id: 'name',
         label: t('common.name', 'Name'),
-        width: '44%',
+        width: '380px',
         render: (row) => (
           <div>
             <div className="text-sm font-medium text-c-text">{row.name}</div>
@@ -177,9 +177,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
           </div>
         ),
       },
-      { id: 'period', label: t('common.period', 'Period'), width: '16%' },
-      { id: 'status', label: t('common.status', 'Status'), width: '16%' },
-      { id: 'updatedAt', label: t('common.updated', 'Updated'), width: '18%' },
+      { id: 'period', label: t('common.period', 'Period'), width: '150px' },
+      { id: 'status', label: t('common.status', 'Status'), width: '150px' },
+      { id: 'updatedAt', label: t('common.updated', 'Updated'), width: '160px' },
     ],
     [formatTemplateLabel, t]
   );

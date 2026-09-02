@@ -1930,11 +1930,12 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'canvas-toolbar-md-history': {
     label:
-      '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba. ?variant=bar (domyślny, główny pasek)|kebab (kebab otwarty)',
+      '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba — REALNY <WorkCanvasDocumentPanel>, główny pasek (kebab: ?screen=canvas-kebab-restructure)',
     render: () => <CanvasToolbarMdHistoryScreen />,
   },
   'canvas-kebab-restructure': {
-    label: '#87d: restrukturyzacja kebaba „⋯" — 14 sekcji → 8 nazwanych grup (stan PO)',
+    label:
+      '#87d: restrukturyzacja kebaba „⋯" w nazwane grupy — REALNY <WorkCanvasDocumentPanel>, harness sam klika trigger [data-testid="canvas-menu-root"]',
     render: () => <CanvasKebabRestructureScreen />,
   },
   'chat-split-teresa-right': {
