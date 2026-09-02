@@ -25,7 +25,7 @@ wskazanymi ścieżkami w repo.
 > ### ★★ MARKER I STAN WYDANIA
 >
 > **SHA markera: `c187bcc164`**
-> **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
+> **Gałąź bazowa: `github-backup/grafika/m03-20260902`**
 > **Stan dokumentu: WYDANY**
 >
 > Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
@@ -67,8 +67,8 @@ df -h /
 git -C "$VAULT" fetch github-backup --prune
 
 # (2) marker
-git -C "$VAULT" log --oneline -25 github-backup/codex/m03-admin-20260824
-git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/codex/m03-admin-20260824 \
+git -C "$VAULT" log --oneline -25 github-backup/grafika/m03-20260902
+git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/grafika/m03-20260902 \
   && echo "MARKER OK" || echo "MARKER BRAK"
 
 # (3) worktree — TWORZONY Z VAULTA, nigdy z katalogu wlasciciela
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline c187bcc164..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only c187bcc164..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline c187bcc164..github-backup/grafika/m03-20260902
+git -C "$VAULT" diff --name-only c187bcc164..github-backup/grafika/m03-20260902
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -205,7 +205,7 @@ Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie 
 | # | Zakaz | Dlaczego (incydent) |
 | --- | --- | --- |
 | `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day282-przeplywy-miedzymodulowe-20260902` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
-| `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `codex/m03-admin-20260824` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
+| `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `grafika/m03-20260902` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
 | `Z3` | **Żadnego `--force`, `--force-with-lease`, `git reset --hard` na gałęziach współdzielonych**, żadnego `rebase` w trakcie dyżuru | Krach 3/4: regresja demo z force/reset na złej bazie |
 | `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
 | `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
