@@ -99,9 +99,11 @@ fi
 
 # 8) Fokus crimson (CLAUDE.md "Pułapka nr 1": `primary` w tailwind = crimson
 #    #85182F, fokus MUSI iść przez `c-focus`; SSOT docs/ui-standards/TRIADA_KANON.md:167).
-#    Dług mierzy scripts/check-focus-canon.sh, ratchet względem
-#    docs/ui-standards/.focus-baseline.json — blokuje TYLKO wzrost długu
-#    ponad baseline, nigdy stan zastany. Do 2026-08-02 skrypt istniał, ale
+#    Dług mierzy scripts/check-focus-canon.sh, ratchet PER PLIK (K-41,
+#    2026-09-02) względem scripts/check-focus-canon.baseline.txt — blokuje
+#    TYLKO wzrost długu w KONKRETNYM pliku ponad jego wiersz baseline, nigdy
+#    stan zastany (i nie da się już schować za spadkiem sumy gdzie indziej —
+#    to był bug naprawiony w K-41). Do 2026-08-02 skrypt istniał, ale
 #    nie był wpięty NIGDZIE (panel adwersaryjny, finding K-23) — czysty
 #    teatr zgodności. Odpala się tylko gdy commit dotyka .ts/.tsx w src/.
 STAGED_FOCUS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/.*\.(ts|tsx)$')

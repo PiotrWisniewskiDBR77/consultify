@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # check-focus-canon.sh — REPORTING gate for the focus-color canon (TRIADA_KANON.md:167,
 # "--c-focus / --c-focus-solid, niebieski, nigdy crimson"; CLAUDE.md "Pułapka nr 1":
-# `primary` in tailwind = crimson #85182F, focus MUST go through `c-focus`).
+# `primary` w tailwind = crimson #85182F, fokus MUSI iść przez `c-focus`).
 #
 # This script is a DEBT METER, not a UI change. It does not touch src/. It only
 # counts and reports — same spirit as `npm run lint:motion`
 # (server/scripts/check-motion-compliance.ts): default mode is a report that
-# always exits 0; --ci mode compares the current count against a baseline JSON
-# and fails ONLY if the count grew (ratchet — debt may shrink, never grow).
+# always exits 0; --ci mode compares the current count against a baseline and
+# fails ONLY if debt grew (ratchet — debt may shrink, never grow).
 #
 # Measured deltas: see docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md D-01/D-05.
 #
@@ -55,11 +55,39 @@
 # do baseline, nie wpływa na exit code w żadnym trybie.
 #
 # K-40 (`--update-baseline` zerowało dług bez tarcia): teraz wypisuje deltę
-# (o ile spadł dług, z których plików zniknęły WSZYSTKIE naruszenia — jeśli
-# poprzedni baseline miał zapisane dane per-plik) i wymaga jawnego
-# potwierdzenia (`--yes` non-interactive, albo pytanie interaktywne). Baseline
-# JSON od teraz opcjonalnie niesie też mapę per-plik ("files"), żeby KOLEJNE
-# uruchomienie --update-baseline mogło pokazać, co konkretnie zniknęło.
+# (o ile spadł dług, z których plików zniknęły WSZYSTKIE naruszenia) i
+# wymaga jawnego potwierdzenia (`--yes` non-interactive, albo pytanie
+# interaktywne).
+#
+# ── 2026-09-02 — K-41: bramka liczyła GLOBALNIE, regresja chowała się za
+#    cudzą poprawą gdzie indziej (naprawa: zapadka PER PLIK, wzorem
+#    check-triada.sh/check-list-canon.sh/check-artefakt.sh) ──────────────────
+#
+# Do tej daty --ci porównywał WYŁĄCZNIE DWIE sumy (violation_files,
+# violation_occurrences) z jednym globalnym baseline. Skutek: regresja w
+# JEDNYM pliku obserwowanym przez baseline nie blokowała commitu, dopóki
+# suma repo i tak spadała dzięki NIEZWIĄZANEJ poprawie w innym pliku — ten
+# sam kształt co "bezpiecznik nagradza defekt" (patrz CLAUDE.md/pamięć
+# programu). ZMIERZONE dowodem mutacyjnym (2026-09-02, przed tą naprawą):
+# baseline violation_occurrences=232, stan repo tego dnia=228 (4 sztuki
+# luzu). Wstawienie JEDNEGO nowego naruszenia do pliku już obecnego w
+# baseline (228→229) dało `--ci` exit 0 — luz pochłonął regresję. Dopiero
+# wstawienie PIĘCIU naruszeń (228→233, powyżej baseline 232) dało exit 1.
+#
+# NAPRAWA: baseline przeniesiony z docs/ui-standards/.focus-baseline.json
+# (agregat + opcjonalna mapa "files") do scripts/check-focus-canon.baseline.txt
+# — TEN SAM format `<liczba>\t<ścieżka>` co check-triada.baseline.txt/
+# check-list-canon.baseline.txt/check-artefakt.baseline.txt (spójność między
+# czterema bezpiecznikami ważniejsza niż elegancja — patrz zlecenie). --ci
+# porównuje TERAZ każdy plik z JEGO WŁASNYM wierszem baseline (funkcja
+# baseline_for_focus(), identyczna z baseline_for() w check-triada.sh):
+# FAIL gdy cur > base dla KTÓREGOKOLWIEK pliku, bez względu na to, co się
+# dzieje z sumą reszty repo. Agregaty (violation_files/violation_occurrences)
+# zostają wyłącznie jako liczby W RAPORCIE (kontekst dla człowieka), NIE
+# wpływają już na decyzję bramki. Format baseline: jedna linia per plik z
+# violation>0 (pliki z zerem nie są wypisywane — tak samo jak w triada/
+# list-canon/artefakt), plus komentarze `#` na początku (ignorowane przez
+# baseline_for_focus i przez pętlę --update).
 #
 # Czego ten skrypt NADAL nie łapie (uczciwie, patrz --help):
 #   - dynamicznie budowanych klas, których heurystyka nie rozpozna (np. mapa
@@ -73,9 +101,11 @@
 # Usage:
 #   check-focus-canon.sh                      # report, always exit 0
 #   check-focus-canon.sh --top 20              # report with a bigger TOP N
-#   check-focus-canon.sh --ci                  # ratchet: exit 1 only if debt grew
-#                                               #   (tracked ratchet) OR any
-#                                               #   untracked-file violation exists
+#   check-focus-canon.sh --ci                  # ratchet PER PLIK: exit 1 gdy
+#                                               #   KTÓRYKOLWIEK plik urósł nad
+#                                               #   swój wiersz baseline, LUB
+#                                               #   jakikolwiek plik nieśledzony
+#                                               #   ma naruszenie
 #   check-focus-canon.sh --update-baseline      # regenerate baseline (asks to confirm)
 #   check-focus-canon.sh --update-baseline --yes  # same, non-interactive
 #   check-focus-canon.sh --help                # this text
@@ -86,7 +116,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
 
-BASELINE="docs/ui-standards/.focus-baseline.json"
+BASELINE="scripts/check-focus-canon.baseline.txt"
 REGISTER="docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md"
 
 print_help() {
@@ -112,15 +142,19 @@ NIE ŁAPIE (uczciwie — patrz komentarz K-39/K-24 w nagłówku pliku):
 TRYBY:
   (brak)              raport, zawsze exit 0
   --top N              raport z większym TOP N (domyślnie 10)
-  --ci                 ratchet: exit 1 gdy tracked-dług wzrósł NAD baseline,
-                        LUB gdy jakikolwiek plik nieśledzony ma naruszenie
-  --update-baseline     przelicz baseline z aktualnego stanu; wymaga
+  --ci                 ratchet PER PLIK (K-41): exit 1 gdy w KTÓRYMKOLWIEK
+                        pliku dług urósł nad jego wiersz w baseline, LUB gdy
+                        jakikolwiek plik nieśledzony ma naruszenie
+  --update-baseline     przelicz baseline PER PLIK z aktualnego stanu; wymaga
                         potwierdzenia (--yes albo pytanie interaktywne);
-                        pokazuje deltę i (jeśli dostępne) listę plików,
-                        z których zniknęły wszystkie naruszenia
+                        pokazuje deltę i listę plików, z których zniknęły
+                        wszystkie naruszenia
   --help                ten tekst
 
 Wpięcie: .husky/pre-commit bramka 8, tylko gdy commit dotyka .ts/.tsx w src/.
+Baseline: scripts/check-focus-canon.baseline.txt, format `<liczba>\t<ścieżka>`
+— identyczny jak check-triada.baseline.txt/check-list-canon.baseline.txt/
+check-artefakt.baseline.txt (spójność bezpieczników, patrz K-41 w nagłówku).
 HELP
 }
 
@@ -225,7 +259,7 @@ violation_files=0
 violation_occurrences=0
 compliant_files=0
 compliant_occurrences=0
-declare_top=""   # newline-joined "<count>\t<path>" for TOP N sort
+declare_top=""   # newline-joined "<count>\t<path>" for TOP N sort AND for the per-file ratchet
 
 if [ "${#scope_arr[@]}" -gt 0 ]; then
   violation_raw=$(batch_counts "$VIOLATION_RE" "${scope_arr[@]}")
@@ -345,21 +379,30 @@ else
   coverage_pct=100
 fi
 
-# ── --update-baseline: pokaż deltę, zażądaj potwierdzenia, zapisz ───────────
+# ── K-41: lookup PER PLIK w baseline `<liczba>\t<ścieżka>` (linie '#' i puste
+#    pomijane) — identyczne z baseline_for() w check-triada.sh/
+#    check-list-canon.sh/check-artefakt.sh. Brak wiersza dla pliku = 0 (nowy
+#    plik / plik dotąd bez naruszeń).
+baseline_for_focus() {
+  local rel="$1"
+  [ -f "$BASELINE" ] || { echo 0; return; }
+  awk -F'\t' -v p="$rel" '$0 !~ /^#/ && NF==2 && $2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE"
+}
+
+# Suma kolumny 1 baseline (agregat — wyłącznie do RAPORTU, nie do bramki od K-41).
+baseline_total_focus() {
+  [ -f "$BASELINE" ] || { echo 0; return; }
+  awk -F'\t' '$0 !~ /^#/ && NF==2 {s+=$1} END{print s+0}' "$BASELINE"
+}
+baseline_nfiles_focus() {
+  [ -f "$BASELINE" ] || { echo 0; return; }
+  awk -F'\t' '$0 !~ /^#/ && NF==2 {n++} END{print n+0}' "$BASELINE"
+}
+
+# ── --update-baseline: pokaż deltę, zażądaj potwierdzenia, zapisz PER PLIK ──
 if [ "$MODE" = "update" ]; then
-  old_files=0
-  old_occ=0
-  old_files_json="{}"
-  if [ -f "$BASELINE" ]; then
-    old_files=$(grep -o '"violation_files":[^,}]*' "$BASELINE" | grep -o '[0-9]*' || echo 0)
-    old_occ=$(grep -o '"violation_occurrences":[^,}]*' "$BASELINE" | grep -o '[0-9]*' || echo 0)
-    old_files=${old_files:-0}
-    old_occ=${old_occ:-0}
-    if command -v jq >/dev/null 2>&1; then
-      old_files_json=$(jq -c '.files // {}' "$BASELINE" 2>/dev/null || echo '{}')
-      [ -n "$old_files_json" ] || old_files_json="{}"
-    fi
-  fi
+  old_files=$(baseline_nfiles_focus)
+  old_occ=$(baseline_total_focus)
 
   delta_files=$((old_files - violation_files))
   delta_occ=$((old_occ - violation_occurrences))
@@ -371,28 +414,32 @@ if [ "$MODE" = "update" ]; then
     echo "  UWAGA: dlug ROSNIE wzgledem obecnego baseline — ratchet ma dzialac tylko w dol." >&2
   fi
 
-  new_files_json="{}"
-  if command -v jq >/dev/null 2>&1; then
-    if [ -n "$declare_top" ]; then
-      new_files_json=$(printf '%s' "$declare_top" | awk -F'\t' 'NF==2{print $2"\t"$1}' | jq -R -s '
-        split("\n") | map(select(length>0) | split("\t")) | map({(.[0]): (.[1]|tonumber)}) | add // {}
-      ')
-    fi
-    removed=$(jq -n --argjson old "$old_files_json" --argjson new "$new_files_json" '
-      (($old | keys) - ($new | keys)) as $goneKeys
-      | ($goneKeys | map({key: ., value: $old[.]}) | from_entries)
-    ' 2>/dev/null || echo '{}')
-    removed_count=$(printf '%s' "$removed" | jq 'length' 2>/dev/null || echo 0)
-    if [ "${removed_count:-0}" -gt 0 ]; then
-      echo "  Pliki, z ktorych zniknely WSZYSTKIE naruszenia (bylo w poprzednim baseline, teraz 0):"
-      printf '%s' "$removed" | jq -r 'to_entries[] | "    \(.value)\t\(.key)"'
-    elif [ "$old_files_json" = "{}" ]; then
-      echo "  Brak danych per-plik z poprzedniego baseline (stary format, sam agregat) — od tego zapisu beda zapisywane."
-    else
-      echo "  Brak plikow z calkowicie wyzerowanymi naruszeniami."
-    fi
+  # Pliki, z których zniknęły WSZYSTKIE naruszenia: były w starym baseline
+  # (linia z liczbą>0), a w aktualnym skanie (declare_top) ich już nie ma.
+  old_paths=$(mktemp)
+  new_paths=$(mktemp)
+  if [ -f "$BASELINE" ]; then
+    awk -F'\t' '$0 !~ /^#/ && NF==2{print $2}' "$BASELINE" | sort -u > "$old_paths"
   else
-    echo "  (jq niedostepny w PATH — pomijam liste plikow ze zmiana, zapisuje sam agregat.)"
+    : > "$old_paths"
+  fi
+  printf '%s' "$declare_top" | awk -F'\t' 'NF==2{print $2}' | sort -u > "$new_paths"
+  removed_paths=$(comm -23 "$old_paths" "$new_paths" 2>/dev/null || true)
+  rm -f "$old_paths" "$new_paths"
+
+  if [ -n "$removed_paths" ]; then
+    echo "  Pliki, z ktorych zniknely WSZYSTKIE naruszenia (bylo w poprzednim baseline, teraz 0):"
+    while IFS= read -r rp; do
+      [ -n "$rp" ] || continue
+      rn=$(baseline_for_focus "$rp")
+      printf '    %s\t%s\n' "$rn" "$rp"
+    done <<EOF
+$removed_paths
+EOF
+  elif [ -f "$BASELINE" ]; then
+    echo "  Brak plikow z calkowicie wyzerowanymi naruszeniami."
+  else
+    echo "  Brak poprzedniego baseline — od tego zapisu zaczyna sie historia per-plik."
   fi
 
   if [ "$CONFIRM" -ne 1 ]; then
@@ -413,24 +460,23 @@ if [ "$MODE" = "update" ]; then
   fi
 
   tmp=$(mktemp)
-  if command -v jq >/dev/null 2>&1; then
-    jq -n \
-      --arg comment "Baseline dlugu focus-canon (ring-primary-*/outline-primary-* zamiast ring-c-focus). Ratchet: liczby moga tylko malec. Aktualizuj W DOL po kazdej naprawie. NIGDY w gore. 'files' = mapa per-plik (do diffu przy kolejnym --update-baseline). Zob. docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md D-01." \
-      --arg date "$(date +%F)" \
-      --argjson vf "$violation_files" \
-      --argjson vo "$violation_occurrences" \
-      --argjson files "$new_files_json" \
-      '{_comment: $comment, _generated: $date, violation_files: $vf, violation_occurrences: $vo, files: $files}' > "$tmp"
-  else
-    cat > "$tmp" <<JSON
-{
-  "_comment": "Baseline dlugu focus-canon (ring-primary-*/outline-primary-* zamiast ring-c-focus). Ratchet: liczby moga tylko malec. Aktualizuj W DOL po kazdej naprawie. NIGDY w gore. (jq niedostepny przy zapisie — brak mapy per-plik). Zob. docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md D-01.",
-  "_generated": "$(date +%F)",
-  "violation_files": $violation_files,
-  "violation_occurrences": $violation_occurrences
-}
-JSON
-  fi
+  {
+    echo "# check-focus-canon.sh — BASELINE dlugu fokusa crimson (ratchet PER PLIK, K-41)."
+    echo "# Format: <liczba>\\t<sciezka>. Liczba = wystapienia VIOLATION_RE"
+    echo "# (ring-primary-*/outline-primary-*/ring-offset-primary-*) w CALYM pliku."
+    echo "#"
+    echo "# Bramka (--ci) przepuszcza plik dopoki jego liczba NIE ROSNIE wzgledem"
+    echo "# WLASNEGO wiersza (nie sumy repo — patrz K-41 w naglowku check-focus-canon.sh)."
+    echo "# Nowy plik z naruszeniem (brak wiersza = baseline 0) = FAIL. Regeneruj"
+    echo "# (--update-baseline) TYLKO gdy dlug SWIADOMIE SPADL — nigdy zeby uciszyc"
+    echo "# nowa regresje."
+    echo "#"
+    echo "# WYGENEROWANO: $(date +%Y-%m-%d) (scripts/check-focus-canon.sh --update-baseline)"
+    echo "# RAZEM: $violation_occurrences wystapien w $violation_files plikach"
+    echo "#"
+    echo "# Posortowane po sciezce (stabilny diff). Dlug maleje = wiersze znikaja / liczby spadaja."
+    printf '%s' "$declare_top" | awk -F'\t' 'NF==2{print $1"\t"$2}' | sort -t "$(printf '\t')" -k2,2
+  } > "$tmp"
   mv "$tmp" "$BASELINE"
   echo ""
   echo "check-focus-canon: baseline zaktualizowany -> $BASELINE (violation_files=$violation_files, violation_occurrences=$violation_occurrences)"
@@ -487,30 +533,43 @@ fi
 echo ""
 echo "  Rejestr delt (kontekst dokument<->kod): $REGISTER (D-01, D-05)"
 
-# ── --ci: ratchet, exit 1 tylko gdy dlug WZROSL (tracked) LUB sa naruszenia
-#          w plikach nieśledzonych (te sa zawsze "nowe", patrz K-24 wyzej) ──
+# ── --ci: ratchet PER PLIK (K-41) — exit 1 gdy KTÓRYKOLWIEK plik urósł ponad
+#          swój wiersz baseline, LUB są naruszenia w plikach nieśledzonych
+#          (te są zawsze "nowe", patrz K-24 wyżej). Agregaty poniżej są tylko
+#          kontekstem w komunikatach, NIE wpływają już na decyzję (K-41).
 if [ "$MODE" = "ci" ]; then
   if [ ! -f "$BASELINE" ]; then
     echo "" >&2
     echo "check-focus-canon --ci: brak baseline ($BASELINE) — uruchom --update-baseline najpierw." >&2
     exit 2
   fi
-  base_files=$(grep -o '"violation_files":[^,}]*' "$BASELINE" | grep -o '[0-9]*' || echo 0)
-  base_occ=$(grep -o '"violation_occurrences":[^,}]*' "$BASELINE" | grep -o '[0-9]*' || echo 0)
-  base_files=${base_files:-0}
-  base_occ=${base_occ:-0}
+  base_files=$(baseline_nfiles_focus)
+  base_occ=$(baseline_total_focus)
 
   fail=0
-  if [ "$violation_files" -gt "$base_files" ]; then
-    echo "" >&2
-    echo "check-focus-canon --ci: NOWA REGRESJA — violation_files $violation_files > baseline $base_files" >&2
-    fail=1
+  new_files=0
+  grown_files=0
+  if [ -n "$declare_top" ]; then
+    while IFS="$TAB" read -r n path; do
+      [ -n "$path" ] || continue
+      base=$(baseline_for_focus "$path")
+      if [ "$n" -gt "$base" ]; then
+        if [ "$base" -eq 0 ]; then
+          new_files=$((new_files + 1))
+          echo "" >&2
+          echo "check-focus-canon --ci: $path — NOWE naruszenie crimson-fokusa ($n, baseline 0)." >&2
+        else
+          grown_files=$((grown_files + 1))
+          echo "" >&2
+          echo "check-focus-canon --ci: $path — dlug UROSL: $n wystapien, baseline $base (+$((n - base)))." >&2
+        fi
+        fail=1
+      fi
+    done <<EOF
+$declare_top
+EOF
   fi
-  if [ "$violation_occurrences" -gt "$base_occ" ]; then
-    echo "" >&2
-    echo "check-focus-canon --ci: NOWA REGRESJA — violation_occurrences $violation_occurrences > baseline $base_occ" >&2
-    fail=1
-  fi
+
   if [ "$untracked_violation_files" -gt 0 ]; then
     echo "" >&2
     echo "check-focus-canon --ci: NOWY DLUG w plikach NIEsledzonych (poza baseline z definicji) — $untracked_violation_files plikow / $untracked_violation_occurrences wystapien." >&2
@@ -520,8 +579,13 @@ if [ "$MODE" = "ci" ]; then
   fi
 
   if [ "$fail" -eq 1 ]; then
-    echo "  Napraw nowe naruszenia (zamien ring-primary-*/outline-primary-* na ring-c-focus/outline-c-focus)." >&2
-    echo "  Jesli to swiadome sprzatniecie dlugu (liczby SPADLY), zaktualizuj baseline: bash scripts/check-focus-canon.sh --update-baseline" >&2
+    echo "" >&2
+    echo "  KANON FOKUSA: ring-primary-*/outline-primary-*/ring-offset-primary-* = crimson #85182F jako fokus." >&2
+    echo "  Nowych plikow z naruszeniem: $new_files · plikow z urosłym długiem: $grown_files." >&2
+    echo "  Napraw nowe naruszenia (zamien na ring-c-focus/outline-c-focus)." >&2
+    echo "  Jesli to swiadome sprzatniecie dlugu W INNYM pliku (suma spadla, ale TEN plik urosl), to i tak FAIL —" >&2
+    echo "  ratchet dziala per plik (K-41), nie po sumie repo." >&2
+    echo "  Jesli TEN KONKRETNY plik ma dzis zaakceptowany wzrost, zaktualizuj baseline: bash scripts/check-focus-canon.sh --update-baseline" >&2
     exit 1
   fi
 
@@ -531,7 +595,7 @@ if [ "$MODE" = "ci" ]; then
     echo "  Zaktualizuj baseline w dol: bash scripts/check-focus-canon.sh --update-baseline"
   else
     echo ""
-    echo "check-focus-canon --ci: OK (dlug nie rosnie, baseline $base_files plikow / $base_occ wystapien)"
+    echo "check-focus-canon --ci: OK (dlug nie rosnie w zadnym pliku, baseline $base_files plikow / $base_occ wystapien)"
   fi
 fi
 
