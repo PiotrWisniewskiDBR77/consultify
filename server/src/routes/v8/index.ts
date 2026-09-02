@@ -1,35 +1,36 @@
 import { Router } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
+import { createModuleGate } from '../../middleware/betaGate.middleware.js';
 import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { mutationAbortCanary } from '../../middleware/mutationGuard.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8OrgGate } from '../../middleware/v8FeatureGate.middleware.js';
 import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
+import caseWorkspaceRoutes from '../caseWorkspace/index.js';
 import featureFlagRoutes from './admin/feature-flags.routes.js';
 import adminHealthRoutes from './admin/health.routes.js';
 import adminMetricsRoutes from './admin/metrics.routes.js';
 import partnerReviewRoutes from './admin/partner-review.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
 import advisoryRoutes from './advisory.routes.js';
-import agentProcessTemplateRoutes from './agent-process-templates.routes.js';
 import agentOperationsRoutes, {
   agentOperationsBootstrapRouter,
 } from './agent-operations.routes.js';
-import agentQualityRoutes from './agent-quality.routes.js';
+import agentProcessTemplateRoutes from './agent-process-templates.routes.js';
 import agentProposalRoutes from './agent-proposals.routes.js';
+import agentQualityRoutes from './agent-quality.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
 import assessmentRoutes from './assessment.routes.js';
 import calendarRoutes from './calendar.routes.js';
 import calendarWebhookRoutes from './calendarWebhook.routes.js';
-import caseWorkspaceRoutes from '../caseWorkspace/index.js';
 import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import executionControlRoutes from './execution-control.routes.js';
 import financeRoutes from './finance.routes.js';
-import financeV2Routes from './finance-v2/index.js';
 import financeIntelligenceRoutes from './finance-intelligence.routes.js';
 import financePlanningRoutes from './finance-planning.routes.js';
+import financeV2Routes from './finance-v2/index.js';
 import financeValuationRoutes from './finance-valuation.routes.js';
 import financeValueTrackingRoutes from './finance-value.routes.js';
 import financeValueRoutes from './financeValueRoutes.js';
@@ -39,8 +40,8 @@ import interviewRoutes from './interview.routes.js';
 import interviewInsightsRoutes from './interview-insights.routes.js';
 import knowledgeBaseRoutes from './knowledge-base.routes.js';
 import mindmapRoutes from './mindmap.routes.js';
-import multiplayerRoutes from './multiplayer.routes.js';
 import multiAgentRoutes from './multi-agent.routes.js';
+import multiplayerRoutes from './multiplayer.routes.js';
 import myWorkRoutes from './my-work.routes.js';
 import notebookRoutes from './notebook.routes.js';
 import partnerRoutes from './partner.routes.js';
@@ -102,7 +103,16 @@ v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 v8Router.use('/calendar', calendarRoutes);
 v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
-v8Router.use('/case-workspace', caseWorkspaceRoutes);
+// Zlecenia (Case Workspace E7/E8) — `MODULE_CASE_WORKSPACE` = 'closed' w SSOT
+// (`server/src/sharedRuntime/utils/betaMenuStatus.ts`). Po stronie klienta
+// stoją tu DWIE bramki (`BetaGate` + `isCaseWorkspaceEnabled()`), ale API do
+// 2026-09-02 nie miało żadnej: zmierzone — rola USER robiła
+// `POST /api/v8/case-workspace/cases` -> 201 i wiersz w `case_core` (odczyt
+// na zimno, osobny klient pg). Jedyną bramką był globalny `v8FeatureGate`,
+// który mówi o wdrożeniu V8, a nie o statusie tego modułu.
+// ★ `verifyToken` stoi wyżej na całym `v8Router` (linia z `v8Router.use(verifyToken)`),
+// więc bramka widzi realną rolę i nie wygasza modułu dla właściciela.
+v8Router.use('/case-workspace', createModuleGate('MODULE_CASE_WORKSPACE'), caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', requireCanonicalExecutionWriter, executionControlRoutes);
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
