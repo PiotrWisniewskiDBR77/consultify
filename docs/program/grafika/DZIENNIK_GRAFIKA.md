@@ -18,6 +18,33 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-09-02
 
+### Z-48 · Menu „⋯" kanwy pokazywało każdemu klientowi surowy żargon audytu wdrożenia (REALNE/CZĘŚCIOWE, „…are backed") — nie flaga, nie atrapa, realny komponent produkcyjny
+**Co się stało:** pomiar właściciela na zrzucie karty `canvas-kebab-restructure` potwierdzony w kodzie:
+`WorkCanvasDocumentPanel.tsx` (montowany produkcyjnie przez `UnifiedChatPanel.tsx`, bez żadnej flagi
+`import.meta.env`/`NODE_ENV`) renderował KAŻDEMU użytkownikowi sekcję „Diagnostyka i workflow" z badge
+Możliwość=REALNE/CZĘŚCIOWE, notatkami inżynierskimi po angielsku („Markdown document, autosave, versions,
+export and Teresa context are backed.") oraz „MD file properties" (save/projection/lifecycle state).
+Selektor szablonu przepływu i przycisk „Start workflow" miały twardo wpisane angielskie etykiety mimo że
+wołają realny backend (`Api.workCanvasCreateWorkflow` → `server/src/routes/work-canvas.routes.ts`) —
+NIE atrapa. „Send to Document/Table Studio" wołały poprawne moduły, ale etykietami z pl translation.json
+nazywały je „Document Studio"/„Table Studio" zamiast nazw z menu głównego („Studio Dokumentów"/„Tabele Studio").
+
+**Dlaczego ważne:** to trzeci przypadek (po Z-46) tego samego mechanizmu — pomiar/status wdrożenia
+wycieka na ekran klienta jako treść. Tu akurat funkcja BYŁA realna (workflow), więc naprawą nie mogło
+być zwykłe „usuń" — trzeba było rozdzielić: co zostaje z polskimi etykietami (bo działa), co znika
+za flagą dev (bo to diagnostyka), i co dostaje właściwą nazwę modułu.
+
+**Co z tego wynika:** nowa flaga `VITE_DEV_DIAGNOSTICS` (domyślnie OFF, wzorzec 2-warstwowy localStorage+env,
+`src/utils/canvasDevDiagnosticsFlag.ts`) chowa MD properties + badge Możliwość/notatkę + ResearchSession id +
+cały ledger współpracy workflow (Reviewer/Send to review/Mark approved — sam w sobie DALEJ nieprzetłumaczony,
+odłożone jako osobny dyżur, bo widoczny tylko za tą samą flagą). Grupa menu przemianowana z „Diagnostyka i
+workflow" na „Przepływy pracy" — zostaje tylko realny selektor + „Uruchom przepływ", oba z i18n. Etykiety
+Document/Table Studio poprawione w obu plikach translation.json na nazwy z `sidebar.documentStudio`/`sidebar.tabele`.
+Rodzina (`capabilityNote`/`renderCapabilityBadge`) zmierzona greppem — istnieje TYLKO w tym jednym pliku,
+zero innych kebabów dotkniętych. Test `WorkCanvasDocumentPanel.test.tsx` (3184 linii, cała suita diagnostyki)
+ustawia flagę ON w `beforeEach`, więc nic nowego nie zepsuł — baseline miał już 10/38 czerwonych testów
+(niepowiązana usterka `switchView`/„Markdown view" sprzed tej zmiany, zmierzone przez `git stash` przed/po).
+
 ### Z-47 · Poprawka dokumentu, który jest ŁADOWANY, jest skuteczna dopiero w miejscu ładowania
 **Co sie stalo:** skill `consultify-preview` poprawiono 01.09 (dyzur 175) — kolejnosc blokow stopki
 doprowadzona do zgodnosci z norma. Dzis robotnik naprawiajacy podglad Idei zameldowal, ze skill NADAL

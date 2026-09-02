@@ -28189,11 +28189,37 @@
         "researchSession": "ResearchSession"
       },
       "workflowTemplate": "Workflow template",
+      "workflowTemplates": {
+        "market_research_to_report": {
+          "label": "Market research to report",
+          "description": "Research narrative, evidence map and report output."
+        },
+        "meeting_note_to_initiatives": {
+          "label": "Meeting note to initiatives",
+          "description": "Decisions, owners, initiative shortlist and brief."
+        },
+        "kpi_review_to_dashboard": {
+          "label": "KPI review to dashboard",
+          "description": "KPI signals, dashboard plan and table output."
+        },
+        "client_proposal_to_deck": {
+          "label": "Client proposal to deck",
+          "description": "Proposal storyline, deck outline and presentation output."
+        },
+        "decision_memo_to_execution_plan": {
+          "label": "Decision memo to execution plan",
+          "description": "Decision logic, milestones and execution plan."
+        }
+      },
+      "startWorkflow": "Start workflow",
+      "startingWorkflow": "Starting...",
+      "finalizeResearchReport": "Finalize research report",
+      "finalizingResearchReport": "Finalizing...",
       "groups": {
         "view": "View",
         "edit": "Edit & AI",
         "file": "File, export & workspace",
-        "diagnostics": "Diagnostics & workflow",
+        "workflow": "Workflow",
         "advanced": "Advanced"
       }
     },

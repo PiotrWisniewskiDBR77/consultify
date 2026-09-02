@@ -30508,12 +30508,12 @@
       "downloadCsv": "Pobierz CSV",
       "copyMarkdown": "Kopiuj Markdown",
       "downloadPdf": "Pobierz PDF",
-      "sendingToDocumentStudio": "Wysyłanie do Document Studio…",
-      "sendToDocumentStudio": "Wyślij do Document Studio",
-      "sendToTableStudioTitle": "Wyślij bieżącą tabelę do Table Studio",
-      "sendToTableStudioDisabledTitle": "Przekazanie do Table Studio wymaga Canvasa typu kind=table.",
-      "sendingToTableStudio": "Wysyłanie do Table Studio…",
-      "sendToTableStudio": "Wyślij do Table Studio",
+      "sendingToDocumentStudio": "Wysyłanie do Studio Dokumentów…",
+      "sendToDocumentStudio": "Wyślij do Studio Dokumentów",
+      "sendToTableStudioTitle": "Wyślij bieżącą tabelę do Tabele Studio",
+      "sendToTableStudioDisabledTitle": "Przekazanie do Tabele Studio wymaga Canvasa typu kind=table.",
+      "sendingToTableStudio": "Wysyłanie do Tabele Studio…",
+      "sendToTableStudio": "Wyślij do Tabele Studio",
       "downloadWord": "Pobierz Word (.docx)",
       "downloadExcelTitle": "Pobierz jako arkusz Excel",
       "downloadExcelDisabledTitle": "Eksport do Excela jest dostępny tylko dla tabel Canvas (kind=table).",
@@ -30534,11 +30534,37 @@
         "researchSession": "ResearchSession"
       },
       "workflowTemplate": "Szablon przepływu pracy",
+      "workflowTemplates": {
+        "market_research_to_report": {
+          "label": "Research rynkowy → raport",
+          "description": "Narracja badawcza, mapa dowodów i gotowy raport."
+        },
+        "meeting_note_to_initiatives": {
+          "label": "Notatka ze spotkania → inicjatywy",
+          "description": "Decyzje, właściciele, lista inicjatyw i brief."
+        },
+        "kpi_review_to_dashboard": {
+          "label": "Przegląd KPI → dashboard",
+          "description": "Sygnały KPI, plan dashboardu i tabela wynikowa."
+        },
+        "client_proposal_to_deck": {
+          "label": "Propozycja dla klienta → prezentacja",
+          "description": "Fabuła propozycji, konspekt prezentacji i gotowy deck."
+        },
+        "decision_memo_to_execution_plan": {
+          "label": "Notatka decyzyjna → plan realizacji",
+          "description": "Logika decyzji, kamienie milowe i plan realizacji."
+        }
+      },
+      "startWorkflow": "Uruchom przepływ",
+      "startingWorkflow": "Uruchamianie…",
+      "finalizeResearchReport": "Sfinalizuj raport z researchu",
+      "finalizingResearchReport": "Finalizowanie…",
       "groups": {
         "view": "Widok",
         "edit": "Edycja i AI",
         "file": "Plik, eksport i workspace",
-        "diagnostics": "Diagnostyka i workflow",
+        "workflow": "Przepływy pracy",
         "advanced": "Zaawansowane"
       }
     },

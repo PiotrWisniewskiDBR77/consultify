@@ -46,6 +46,12 @@ describe('WorkCanvasDocumentPanel', () => {
     // assert against the document/MD views, so pin the persisted mode to
     // 'document' to render the document UI the tests query.
     window.localStorage.setItem('workCanvas.viewMode.v2', 'document');
+    // grafika/kebab-diagnostyka-20260902: MD file properties, capability
+    // badge/note, ResearchSession id and the workflow collaboration ledger
+    // moved behind a dev-only flag (default OFF for real users — see
+    // src/utils/canvasDevDiagnosticsFlag.ts). This suite exercises exactly
+    // that engineering surface, so it opts in for every test.
+    window.localStorage.setItem('ff.canvas_dev_diagnostics', '1');
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     canvasAuthState.currentUser = null;
