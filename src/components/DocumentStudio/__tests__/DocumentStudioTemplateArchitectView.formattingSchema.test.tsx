@@ -33,7 +33,9 @@ const PARTIAL_FORMATTING_TEMPLATE: DocumentTemplate = {
   templateId: 'tpl-p0-partial-formatting',
   organizationId: 'org-test',
   name: 'Raport zarządczy (partial formatting)',
-  category: 'management',
+  // 'management' is not a member of TemplateCategory (see types.ts) — the
+  // closest real category for a steering_committee_report is 'report'.
+  category: 'report',
   documentType: 'steering_committee_report',
   purpose: 'Repro record for zgłoszenie #42.',
   audience: ['executive'],
