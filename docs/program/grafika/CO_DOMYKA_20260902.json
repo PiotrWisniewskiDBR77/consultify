@@ -1,0 +1,15 @@
+{
+  "_opis": "Zdanie 'co to domyka', ktore widzi WLASCICIEL na karcie modulu. Jezyk konsultanta: zero zargonu, zero nazw plikow i katalogow, polskie znaki.",
+  "_dlaczego_osobny_plik": "KORPUS_UWAG_20260902.md ma kolumne 'uzasadnienie' napisana dla NAS — tlumaczy, dlaczego pozycja dostala taka a nie inna klasyfikacje, i slusznie powoluje sie na zrzuty, flagi i katalogi dowodowe. Karta potrzebuje czego innego: co konkretnie zamyka sprawe, powiedziane do wlasciciela. To dwa teksty do dwoch odbiorcow, a nie ten sam tekst w dwoch kopiach. Korpus zostaje nietkniety jako zapis pomiaru; ten plik jest warstwa prezentacji. Dodatkowy powod: korpus pisze rownolegle inny wykonawca i nie wchodzimy w cudzy plik przy okazji swojej roboty (regula nr 14).",
+  "_zasada": "CYTAT WLASCICIELA JEST NIETYKALNY — takze z literowkami. Przepisujemy WYLACZNIE nasz wlasny tekst obok cytatu.",
+  "_slownik_zamian": {
+    "zakladka/ekran stoi za flaga domyslnie wylaczona": "ten widok jest gotowy, ale nie jest jeszcze wlaczony dla uzytkownikow i czeka na Twoja zgode",
+    "zmierzone zrzutem <data> (evidence/...)": "sprawdzone na zdjeciu z <data slownie>",
+    "i18n / klucz tlumaczenia": "tlumaczenie",
+    "wolacz / montowanie komponentu": "nic tego w aplikacji nie otwiera",
+    "harness / stanowisko pomiarowe": "nasze stanowisko podgladowe"
+  },
+  "ekrany": {
+    "audyty-drd-report": "Karta podaje teraz drogę, którą tam trafisz. Tabela jest na pełną szerokość — sprawdzone na zdjęciu z 30 sierpnia. Sam widok jest gotowy, ale nie jest jeszcze włączony dla użytkowników i czeka na Twoją zgodę."
+  }
+}
