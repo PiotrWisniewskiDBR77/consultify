@@ -3,7 +3,11 @@ import type { Express, RequestHandler } from 'express';
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
-import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
+import {
+  betaGate,
+  createBetaGate,
+  createModuleGate,
+} from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
 import { requireCanonicalExecutionWriter } from './middleware/executionSpineLegacyReadOnly.middleware.js';
@@ -1197,7 +1201,25 @@ export class ApiGateway {
         'stack:',
         economicsRoutes?.stack?.length
       );
-      app.use('/api/economics', betaGate, economicsRoutes);
+      // M16 Finance — `MODULE_ECONOMICS` jest 'closed' w SSOT
+      // (`server/src/sharedRuntime/utils/betaMenuStatus.ts`, mirror
+      // `src/utils/betaAccess.ts`). `betaGate` to atrapa (zawsze `next()`),
+      // więc do 2026-09-02 bramka istniała WYŁĄCZNIE w menu klienta: każdy
+      // zalogowany użytkownik zapisywał tu przez API niezależnie od flagi
+      // (zmierzone: rola `team_member` -> `POST /api/economics/analyses` 201
+      // + wiersz w `digitization_analyses`). Serwerowym odpowiednikiem jest
+      // `createModuleGate('MODULE_ECONOMICS')` — czyta TĘ SAMĄ mapę, więc
+      // przełącznik nadzorcy 'closed'->'open' otwiera menu i API razem.
+      // ★ `gatewayVerifyToken` MUSI stać PRZED bramką: gate czyta
+      // `req.user.role`, a `verifyToken` jest w tym routerze deklarowany
+      // per-trasa (wszystkie 66 tras go ma), więc bez tego bramka widziałaby
+      // pustą rolę i wygasiłaby moduł dla WSZYSTKICH, właściciela włącznie.
+      app.use(
+        '/api/economics',
+        gatewayVerifyToken,
+        createModuleGate('MODULE_ECONOMICS'),
+        economicsRoutes
+      );
       app.use('/api/presentations', createBetaGate(['/shared/', '/embed/']), presentationsRoutes);
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
       // Deliverables light runtime — flag-gated inside the router (404 when ENABLE_DELIVERABLES_LIGHT is off)
