@@ -245,7 +245,16 @@ Uwagi metodologiczne:
 - Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r3-registration-before.log`.
 - SHA-256: `16d88412ae72274ad3593cee030625b1d4775bfc6abeec9c56be73fb089620eb`.
 
+### Naprawa R4
+
+- Dodano nową migrację `server/migrations/20261911_email_verification_tokens.sql`; żadnego wydanego pliku migracji nie zmieniono.
+- Runtime DDL w `emailVerificationService.ts` używa teraz `TIMESTAMPTZ` zamiast `DATETIME`.
+- `ensureSchema()` sprawdza wyniki DDL, ustawia `ensured` dopiero po pełnym sukcesie, loguje błąd jako `error` i przekazuje go wyżej zamiast kontynuować po `warn`.
+- Jawny przebieg `--only 20261911_email_verification_tokens.sql` utworzył tabelę, siedem kolumn o typach PostgreSQL i trzy indeksy.
+- Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r4-migration-only.log`, SHA-256 `962c19de7e5c6d8f0daf3a696e143b1b4b209b4f1be8277905673a3b88bc2500`.
+
 ## D. Otwarte pozycje
 
 - `email_verification_tokens` nie jest tworzona przez żadną migrację.
 - Rejestracja pozostawia częściowy stan użytkownika i organizacji przed awarią tokenu weryfikacyjnego.
+- Pełne odtworzenie i rejestracja po naprawie pozostają do R5.

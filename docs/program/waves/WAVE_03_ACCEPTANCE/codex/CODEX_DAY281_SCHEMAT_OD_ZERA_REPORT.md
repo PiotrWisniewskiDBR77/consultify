@@ -51,6 +51,10 @@ Artefakt: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r3-registration-befo
 
 Pułapki (a)–(e): Vitest nie został użyty, więc globalny mock `fetch` nie działał; `RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawny lokalny `DATABASE_URL` i `JWT_SECRET` były w tej samej linii. Brak error middleware w `Gateway.ts` został skompensowany lokalnym middleware harnessu, ale awaria nastąpiła jako nieobsłużone odrzucenie wcześniej; pełny wyjątek jest w logu. Nie było retry.
 
+## R4 — naprawa licencjonowana
+
+Zakres zmiany jest ograniczony do `server/src/services/emailVerificationService.ts` i nowej migracji `server/migrations/20261911_email_verification_tokens.sql`. Typy runtime DDL zmieniono z `DATETIME` na `TIMESTAMPTZ`; nieudane DDL jest teraz logowane jako `error`, wynik każdej operacji jest sprawdzany, a `ensured` nie blokuje ponowienia po błędzie. Nowa migracja tworzy tabelę i oba indeksy. Jawny przebieg jednej migracji na lokalnej bazie przeszedł; schema readback potwierdził siedem kolumn i trzy indeksy. Log: `/private/tmp/cx-day281-schemat-od-zera-artefakty/r4-migration-only.log`, SHA-256 `962c19de7e5c6d8f0daf3a696e143b1b4b209b4f1be8277905673a3b88bc2500`.
+
 ## Twierdzenia niezweryfikowane
 
 - Idempotencja drugiego przebiegu po naprawie — R5 jeszcze niewykonane.
@@ -58,4 +62,4 @@ Pułapki (a)–(e): Vitest nie został użyty, więc globalny mock `fetch` nie d
 
 ## Stan
 
-R1–R3 wykonane. R4–R6 pozostają otwarte.
+R1–R4 wykonane. R5–R6 pozostają otwarte.
