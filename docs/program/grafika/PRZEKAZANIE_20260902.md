@@ -53,7 +53,7 @@ wstawał kilka minut, w czasie których właściciel mógł otworzyć stronę.
 | — ocena D | 33 | bez zmian | policzone |
 | Kart A/B do odbioru | 253 | bez zmian | policzone |
 | **Kart A/B bez decyzji właściciela** | **0** | — | `odbior.sqlite` |
-| Kart czekających na jego ponowne spojrzenie | 7 | — | `reszta-odbioru.json` |
+| Kart czekających na jego ponowne spojrzenie | **7 — KOMPLET, wszystkie ze świeżym zrzutem obejrzanym przeze mnie** | — | `reszta-odbioru.json` |
 | Kart czekających na budowę (nie do oceny) | 11 | — | j.w. |
 | Commitów w tej sesji | 40+ | — | `git log --since` |
 | Scaleń rodzin | 7 | — | `git log --merges` |
@@ -70,7 +70,7 @@ właściciela). Ocena, która spada, bo zaczęliśmy patrzeć uczciwiej, jest le
 
 ---
 
-## 3. CO ZROBIONO — siedem rodzin
+## 3. CO ZROBIONO — dziewięć rodzin
 
 Każda naprawiona **u przyczyny, nie per ekran**, każda z parą zrzutów PRZED/PO w obu motywach.
 
@@ -84,9 +84,18 @@ Każda naprawiona **u przyczyny, nie per ekran**, każda z parą zrzutów PRZED/
 | **Bramka parytetu** | oskarżała uczciwe ekrany | `check-dev-render-parytet.mjs` |
 | **Podgląd Idei + szerokość Admina** | brak bloku „Szczegóły"; zwężenie 1200 px było wklejką przyrządu | `IdeaPreview.tsx` (dwie kopie scalone) + 8 harnessów Admina |
 
-**Rodziny w toku przy zamykaniu sesji:** język menu kanwy i surowe wartości techniczne
-(`monthly`, `quarterly`, `OPEN_ORG`); odmiana liczebnika po polsku („1 dni", „1 testów");
-przegląd 09-Finanse i 10-Materiały wiersz po wierszu.
+| **Odmiana liczebnika po polsku** | „1 dni", „1 testów nieudanych" — kod pisany pod angielski wzorzec daje zły wynik akurat dla liczby 1 | `src/utils/liczebnik.ts` + test (11 przypadków) + 2 ekrany; ~68 wystąpień w ~46 plikach i 156 kluczy **nazwane liczbowo** w `ODLOZONE.md` |
+| **Język menu kanwy i surowe wartości techniczne** | menu mieszało języki w jednej grupie; `monthly`, `quarterly`, `CASH`, `LONG_TERM_DEBT`, `OPEN_ORG` wychodziły na ekran | 19 kluczy kanwy + słownik OKR + etykiety ROI + linie finansowe; dwa punkty świadomie zostawione z namiarem plik:linia |
+
+**Domknięte po drodze, poza rodzinami:** polska nazwa modułu w ścieżce nawigacji (jeden klucz
+naprawił **sześć ekranów**); kafle KPI i tabela dokumentu przełączają się wreszcie na ciemny motyw
+(malowały własne białe tło w stylach inline — komentarz w bliźniaczym `DocChartBlock.tsx:149`
+**wymieniał oba te pliki jako nienaprawione**, czyli rodzeństwo czekało opisane od tygodni);
+przegląd 09-Finanse i 10-Materiały wiersz po wierszu (98 obrazów, moduły oglądane pierwszy raz);
+partia werdyktowa 1 dla właściciela.
+
+**Zaciśnięte bezpieczniki (dług nie może wrócić):** parytet 112 → 103 pozycji;
+fokus 128 → 114 plików / 259 → 232 wystąpienia.
 
 ---
 
