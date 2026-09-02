@@ -445,9 +445,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-300">
                 {t(
                   `partner.canonicalRuntime.lifecycle.${programStatus.lifecyclePhase.toLowerCase()}`,
-                  programStatus.lifecyclePhase === 'certified'
-                    ? 'Certyfikowany'
-                    : programStatus.lifecyclePhase
+                  programStatus.lifecyclePhase
                 )}
               </p>
             )}
