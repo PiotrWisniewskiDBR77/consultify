@@ -177,7 +177,17 @@ export function ExecutionReportDay11Screen(): React.ReactElement {
   document.documentElement.classList.toggle('dark', params.get('theme') === 'dark');
   installFixtureTransport(state);
   return (
-    <div className="min-h-screen bg-c-surface p-4 text-c-text">
+    /*
+     * HARNESS-ONLY FIX (2026-09-02, pomiar --wysokosc): `min-h-screen`
+     * (tylko min-height, `height` zostaje "auto") nie daje
+     * `ExecutionReportsSurface` (h-full) definitywnej wysokosci do
+     * rozwiazania procentow — 216px luki na tej trasie samodzielnej, a
+     * 0px przez realna trase Menu 1 (ExecutionHub → zakladka Raporty,
+     * ktora NIE dokleja zadnego wrappera). `h-screen` (definitywna,
+     * wzorzec dev-render/screens/execution-tab.tsx) to naprawia. Zero
+     * zmian w ExecutionReportsSurface.tsx.
+     */
+    <div className="h-screen bg-c-surface p-4 text-c-text">
       {report === 'work' ? <WorkIntelligenceReport /> : null}
       {report === 'resources' ? <ResourcesCapacityReport /> : null}
       {report === 'control' ? <ControlLoopReport /> : null}

@@ -314,6 +314,14 @@ export const ChatSignalsFeed: React.FC<{
           </button>
         </div>
       ) : (
+        /*
+         * `flex-1 min-h-0` — bez tego opakowania `TableWithPreviewLayout` (root
+         * `h-full`) siedzi jako zwykle dziecko `flex-col` bez `flex-grow`,
+         * wiec nie rosnie do reszty wysokosci korzenia (pomiar 02.09,
+         * scripts/dev/measure-preview-canon.mjs --wysokosc; wzorzec z
+         * ExecutionResourcesSurface.tsx:418-437).
+         */
+        <div className="flex-1 min-h-0">
         <TableWithPreviewLayout<FeedRow>
           selectedId={selectedId}
           selectedItem={selected}
@@ -381,6 +389,7 @@ export const ChatSignalsFeed: React.FC<{
             persistKey="chat-signals-feed"
           />
         </TableWithPreviewLayout>
+        </div>
       )}
       {feed.nextCursor && (
         <button

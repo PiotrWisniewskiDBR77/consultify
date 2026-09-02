@@ -1011,7 +1011,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           <Eye size={15} /> {t('initiatives.planScenario.openWorkspace')}
         </button>
       </div>
-      <TableWithPreviewLayout<(typeof planWindowRows)[number]>
+      {/*
+       * `flex-1 min-h-0` — bez tego opakowania `TableWithPreviewLayout` (root
+       * `h-full`) siedzi jako zwykle dziecko `flex-col` bez `flex-grow`, wiec
+       * nie rosnie do reszty wysokosci sekcji (pomiar 02.09,
+       * scripts/dev/measure-preview-canon.mjs --wysokosc; wzorzec z
+       * ExecutionResourcesSurface.tsx:418-437).
+       */}
+      <div className="flex-1 min-h-0">
+        <TableWithPreviewLayout<(typeof planWindowRows)[number]>
         selectedId={selectedWindowId}
         selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
         onSelect={setSelectedWindowId}
@@ -1219,7 +1227,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             description: t('initiatives.planScenario.emptyDescription'),
           }}
         />
-      </TableWithPreviewLayout>
+        </TableWithPreviewLayout>
+      </div>
       {draft && workspaceOpen && (
         <section
           aria-label={t('initiatives.planScenario.workbenchAria')}

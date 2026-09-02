@@ -280,7 +280,14 @@ export default function VaultSafesTableScreen(): React.ReactElement {
       {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
           usunięty — HARNESS-ONLY artefakt (MyWorkHub.tsx montuje
           <ClientDocumentsVault /> bez żadnego limitu szerokości). */}
-      <div style={{ height: '80vh' }}>
+      {/* HARNESS-ONLY FIX (2026-09-02, pomiar --wysokosc): `80vh` byl
+          dowolny, mniejszy niz pelny viewport (800px z 1000px = 200px
+          luki) — `ClientDocumentsVault` samo w sobie skaluje sie poprawnie
+          (`h-full flex flex-col` + `flex-1 min-h-0 overflow-auto` wokol
+          `VaultSafesTable`, zweryfikowane pomiarem: 0px wewnetrznej luki).
+          `100vh` odtwarza pelna wysokosc realnej trasy. Zero zmian w
+          VaultSafesTable.tsx/ClientDocumentsVault.tsx. */}
+      <div style={{ height: '100vh' }}>
         <ClientDocumentsVault />
       </div>
     </MemoryRouter>

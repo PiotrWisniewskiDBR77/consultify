@@ -533,7 +533,19 @@ export function FinanceHubScreen(): React.ReactElement {
   return (
     <AppProviders>
       <FeatureFlagsProvider showDevTools={false}>
-        <div className="min-h-screen bg-c-bg">
+        {/*
+         * HARNESS-ONLY FIX (2026-09-02, pomiar
+         * scripts/dev/measure-preview-canon.mjs --wysokosc): `min-h-screen`
+         * (tylko min-height, `height` zostaje "auto") nie daje dzieciom z
+         * `h-full` definitywnej wysokosci do rozwiazania procentow — realny
+         * `<StandardModuleBar>` (h-full flex flex-col) wewnatrz FinanceHub
+         * zapadal sie do wysokosci tresci (263px luki). `h-screen` (height:
+         * 100vh, definitywna) to ten sam wzorzec co dziala w
+         * dev-render/screens/execution-tab.tsx (`style={{height:'100vh'}}`).
+         * Zero zmian w FinanceHub.tsx — produkt mierzy 0px przez realna
+         * trase MainLayout.
+         */}
+        <div className="h-screen bg-c-bg">
           <React.Suspense fallback={null}>
             <FinanceHubLazy />
           </React.Suspense>
