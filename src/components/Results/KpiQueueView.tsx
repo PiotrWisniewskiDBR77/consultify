@@ -258,7 +258,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
       {
         id: 'type',
         label: t('common.type', 'Type'),
-        width: '10%',
+        width: '100px',
         render: (row) => (
           <span
             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -273,14 +273,14 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
           </span>
         ),
       },
-      { id: 'name', label: t('results.kpi.signals.sheetName', 'Sheet'), width: '28%' },
-      { id: 'scope', label: t('results.kpi.signals.scope', 'KPI package'), width: '18%' },
-      { id: 'owner', label: t('common.owner', 'Owner'), width: '14%' },
-      { id: 'due', label: t('common.due', 'Due'), width: '12%' },
+      { id: 'name', label: t('results.kpi.signals.sheetName', 'Sheet'), width: '300px' },
+      { id: 'scope', label: t('results.kpi.signals.scope', 'KPI package'), width: '180px' },
+      { id: 'owner', label: t('common.owner', 'Owner'), width: '140px' },
+      { id: 'due', label: t('common.due', 'Due'), width: '120px' },
       {
         id: 'status',
         label: t('common.status', 'Status'),
-        width: '18%',
+        width: '160px',
         render: (row) => (
           <StatusChip label={String(row.status || '—')} tone={statusToneToChip(row.statusTone)} />
         ),

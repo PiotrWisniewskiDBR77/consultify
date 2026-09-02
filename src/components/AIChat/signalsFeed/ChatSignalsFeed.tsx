@@ -73,7 +73,7 @@ export const ChatSignalsFeed: React.FC<{
     {
       id: 'signal',
       label: t('chatSignals.columns.signal'),
-      width: '36%',
+      width: '320px',
       render: (row: FeedRow) => {
         const view = localizedSignal(row.dto, t);
         return (
@@ -95,13 +95,13 @@ export const ChatSignalsFeed: React.FC<{
     {
       id: 'domain',
       label: t('chatSignals.columns.domain'),
-      width: '12%',
+      width: '120px',
       render: (row: FeedRow) => t(`chatSignals.domain.${row.dto.domain}`),
     },
     {
       id: 'severity',
       label: t('chatSignals.columns.severity'),
-      width: '12%',
+      width: '120px',
       render: (row: FeedRow) => {
         const severity = localizedSignal(row.dto, t).severity;
         return (
@@ -120,7 +120,7 @@ export const ChatSignalsFeed: React.FC<{
     {
       id: 'source',
       label: t('chatSignals.columns.source'),
-      width: '14%',
+      width: '140px',
       render: (row: FeedRow) => (
         <span title={row.dto.source.ruleId}>{t(`chatSignals.origin.${row.dto.origin}`)}</span>
       ),
@@ -128,7 +128,7 @@ export const ChatSignalsFeed: React.FC<{
     {
       id: 'age',
       label: t('chatSignals.columns.age'),
-      width: '12%',
+      width: '120px',
       render: (row: FeedRow) => (
         <span title={new Date(row.dto.firstObservedAt).toLocaleString()}>
           {localizedSignal(row.dto, t).age}
@@ -138,7 +138,7 @@ export const ChatSignalsFeed: React.FC<{
     {
       id: 'status',
       label: t('chatSignals.columns.status'),
-      width: '10%',
+      width: '100px',
       render: () => t('chatSignals.status.OPEN'),
     },
   ];

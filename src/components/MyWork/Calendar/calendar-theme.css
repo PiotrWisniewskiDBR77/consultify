@@ -60,6 +60,23 @@
   font-weight: 500;
 }
 
+/*
+ * Rodzina "tekst ucięty w środku słowa" (2026-09-02): FullCalendar renderuje
+ * `.fc-event-title` i `.fc-event-time` z `white-space: nowrap` +
+ * `overflow: hidden`, ale jego WŁASNY domyślny `text-overflow` to `clip` —
+ * twarde obcięcie bez wielokropka. Na wąskim kafelku dnia (widok Miesiąc)
+ * to dawało „14:3" zamiast „14:30" i „Zwer" zamiast „Zweryfikuj klienta —
+ * dowody" bez ŻADNEGO sygnału, że tekst jest niepełny. Ta reguła nie zmienia
+ * `white-space`/`overflow` (poprawne dla ciasnego kafelka), tylko dokłada
+ * wielokropek i title() z pełnym tekstem zostaje w `renderEventContent`
+ * (CalendarGrid.tsx) jako `title={lineageText}` — day/month view pokazuje to
+ * na hover.
+ */
+.fc-consultify .fc-event-title,
+.fc-consultify .fc-event-time {
+  text-overflow: ellipsis;
+}
+
 .fc-consultify .fc-timegrid-slot {
   height: 48px;
 }
