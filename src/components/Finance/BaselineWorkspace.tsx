@@ -27,7 +27,8 @@
  * Ten komponent NIE jest dziś wpięty w żaden routing produkcyjny (poza
  * allowlistą tego pakietu — `FinanceHub.tsx`/routing to teren integracji po
  * akcepcie) — dostępny wyłącznie przez `dev-render/` i za flagą
- * `financeBaselineWorkspaceV1` (domyślnie OFF, CLAUDE.md #7).
+ * `financeBaselineWorkspaceV1` (domyślnie ON od dyżuru 279 — warunkowy akcept
+ * właściciela spełniony; jawny override OFF nadal wyłącza).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -104,7 +105,7 @@ const VIEW_NAV_STATE_NOT_CONFIGURED = {
 };
 
 /**
- * Gate publiczny (CLAUDE.md #7/#9): przy `financeBaselineWorkspaceV1` OFF
+ * Gate publiczny (CLAUDE.md #7/#9): przy jawnie wyłączonej `financeBaselineWorkspaceV1`
  * zwraca `null` PRZED zamontowaniem `BaselineWorkspaceInner` — żaden hook
  * (`useBaselineAssumptionsEditor`/`useBaselineOutputs`/`useBaselineCompute`,
  * wszystkie ładują dane z `/api/v8/finance-v2/baseline/*` na mount) nigdy się

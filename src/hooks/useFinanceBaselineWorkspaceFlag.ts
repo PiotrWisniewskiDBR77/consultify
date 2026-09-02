@@ -19,9 +19,18 @@
  * jest ta flaga w pozycji OFF. ZERO zmian w zachowaniu — poprawka
  * wyłącznie w opisie.
  *
- * OFF (domyślnie) → `FinanceHub` montuje POPRZEDNI ekran; nowy Baseline jest
- * osiągalny przez `dev-render/` albo tryb owner-review
- * (`?ff_wave3FinanceOwnerReview=1`) do akceptu na zrzutach.
+ * ★ DYŻUR 279 — FLAGA DOMYŚLNIE ON. Właściciel zaakceptował ekran warunkowo
+ * („włącz domyślnie PO naprawie surowej wartości `per-2025-12` w kolumnie
+ * Okres bazowy"). Warunek jest spełniony: kontrakt kontekstu bazowego niesie
+ * teraz `openingBalanceSheetPeriod` i `assumptionBasePeriods` z etykietami z
+ * `finance_stmt_periods` (dowód na realnej bazie 8/8, w tym mutacyjny:
+ * `server/src/scripts/baselineContextOpeningPeriodRealDbProof.ts`), a przycisk
+ * „+ Dodaj założenie" i usuwanie wiersza są potwierdzone odczytem na zimno
+ * przez osobną pulę `pg.Pool`, nie odpowiedzią zapisu.
+ *
+ * Jawny lokalny override OFF nadal wyłącza ekran (`allowLocalOverride`), a tryb
+ * owner-review (`?ff_wave3FinanceOwnerReview=1`) nadal ma pierwszeństwo —
+ * to ścieżka cofania z `_RUNBOOK_COFANIA.md`.
  *
  * Osobna flaga (nie reużycie `financeWorkspacePlatformV1`) celowo — pakiet C
  * gałęzi wyłącznie KLOCKI (bar/focus/boundary), ta gałęzi CAŁY nowy ekran
@@ -41,10 +50,10 @@ const FINANCE_BASELINE_WORKSPACE_FLAG: FeatureFlag = {
     'Włącza nowy ekran Baseline Model (dwa widoki: Założenia i Wyliczenia, ' +
     'OWN-FIN-017/018), zbudowany na FinanceWorkspaceBar/Focus Mode/Error ' +
     'Boundary (Pakiet C) i kanonicznym /api/v8/finance-v2/baseline/* (Pakiet ' +
-    'B2). OFF = ekran nieosiągalny (brak routingu produkcyjnego w allowlicie ' +
-    'tego pakietu) — dostępny wyłącznie przez dev-render do akceptu Piotra na ' +
-    'zrzutach (CLAUDE.md #7). Domyślnie OFF.',
-  defaultValue: false,
+    'B2). Domyślnie ON od dyżuru 279 (warunkowy akcept właściciela spełniony: ' +
+    'kolumna Okres bazowy pokazuje etykietę z bazy, nie surowe per-…). Jawny ' +
+    'lokalny override OFF nadal wyłącza ekran.',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };
