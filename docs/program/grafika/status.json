@@ -3185,7 +3185,8 @@
           ],
           "wyjatki": [
             "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji. Dyżur 174 naprawił tylko brakujący link, nie ten błąd — nadal nienaprawione.",
-            "NOWY ZNANY WYJĄTEK (01.09, fala 174): kolumna „Źródło” pokazuje surowe adresy techniczne (np. „GET /api/admin/health-panel/summary”) zamiast czytelnej nazwy sygnału — zgłoszone przez nadzorcę, do naprawy w kolejnej fali."
+            "NOWY ZNANY WYJĄTEK (01.09, fala 174): kolumna „Źródło” pokazuje surowe adresy techniczne (np. „GET /api/admin/health-panel/summary”) zamiast czytelnej nazwy sygnału — zgłoszone przez nadzorcę, do naprawy w kolejnej fali.",
+            "OBEJRZANE PRZEZ NADZORCĘ 2026-09-02 po naprawie szerokości. Zostają trzy rzeczy, o których właściciel ma wiedzieć PRZED spojrzeniem: (1) liczebnik odmienia się źle — „1 testów nieudanych\" zamiast „1 test nieudany\"; (2) wiersz „Ryzyka wymagające przeglądu\" zawsze pokazuje 0 — to zgłoszony wcześniej błąd odczytu danych, nie wygląd; (3) daty w formacie 02/09/2026 zamiast polskiego zapisu używanego na innych ekranach."
           ],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
@@ -3740,13 +3741,15 @@
         {
           "id": "fab-rail-kebab",
           "nazwa": "Szyna narzedzi i menu trzech kropek",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Tabela kanoniczna z realna szyna narzedzi.",
           "naprawione": [
             "Ucinana kolumna Nazwa — szerokosc podana w procentach byla czytana jako piksele",
             "Crimson na ikonie pomocy"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "OBEJRZANE PRZEZ NADZORCĘ 2026-09-02. Deweloperski podpis PRZED/PO zniknął z kadru i zdjęte jest sztuczne zwężenie. Zostaje: pasek akcji (Zatwierdź / Odrzuć / trzy kropki) unosi się nad dolnym wierszem tabeli i go zasłania — w aplikacji ten pasek siedzi w panelu podglądu, nie nad tabelą. To ekran-katalog wspólnych elementów, nie ekran, do którego użytkownik dochodzi z menu."
+          ],
           "gdzie": "Element wspólny (kanon) — szyna narzędzi (dokumenty/opinia/pomoc) i menu „⋯\" wiersza, pokazane razem z tabelą kanoniczną — używane w wielu modułach listowych."
         },
         {
