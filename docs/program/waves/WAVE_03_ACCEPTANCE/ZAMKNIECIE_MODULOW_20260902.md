@@ -115,6 +115,7 @@ bramek zamkniętych **31 → 125** z 336, nierozstrzygniętych **305 → 211**, 
 
 - G13–G16 (analiza, naprawa, self-QA, pakiet przed/po) i G19–G20 zostały nietknięte — zgodnie z poleceniem.
 - Nie ruszałem `docs/program/grafika/status.json` ani `evidence/` (pracuje tam równolegle inny agent).
-  W chwili pomiaru `status.json` miał niezacommitowane zmiany tego agenta; liczby powyżej pochodzą ze stanu
-  pliku z 2026-09-02 14:06 w katalogu roboczym, a nie z drzewa commita — to jest znane ograniczenie tego dowodu.
+  W chwili pierwszego pomiaru `status.json` miał niezacommitowane zmiany tego agenta. Po jego commicie
+  (`e6ba63c708`, plik z 14:18) powtórzyłem cały pomiar i porównałem oba przebiegi wiersz po wierszu:
+  **0 różnic** w parach ekran/moduł/ocena/decyzja. Liczby powyżej są więc zgodne z drzewem commita.
 - Żaden wpis `PASS` nie opiera się na pamięci rozmowy: każdy niesie liczbę, ścieżkę pliku i SHA.
