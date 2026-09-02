@@ -11,16 +11,11 @@ import {
   Lightbulb,
   MessageSquare,
   MessageSquarePlus,
-  Network,
-  PenTool,
   Presentation,
   Rocket,
   Sparkles,
-  Sprout,
   Star,
-  Table2,
   Trash2,
-  TreePine,
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,17 +24,6 @@ import {
   type TableSettingsColumn,
   TableSettingsPopover,
 } from '@/components/shared/ModuleHub/TableSettingsPopover';
-import {
-  type ActionRow,
-  type MetaPill,
-  PreviewActionBar,
-  PreviewAIHintStrip,
-  PreviewDetailsSection,
-  PreviewMetaCard,
-  PreviewRelations,
-  PreviewWhatsNextCard,
-  type RelationItem,
-} from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
   FOCUSED_ROW_CLASS,
@@ -50,7 +34,7 @@ import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/state
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { normalizeRowActionSections } from '@/components/standard/StandardTable';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
-import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
+import { ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type {
   ColumnDef,
   ColumnWidths,
@@ -58,11 +42,11 @@ import type {
   TableFilters,
 } from '@/components/ui/ResizableTable';
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
-import { formatListDate } from '@/utils/listDateFormat';
 
-import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
 import { IDEA_STAGE_BUCKET_LABELS } from './ideaEntryTypes';
+import { IdeaPreviewBody, IdeaPreviewFooter } from './IdeaPreview';
+import { formatIdeaDate, getToolMeta, STAGE_DOT_VAR } from './ideaPreviewMeta';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
@@ -149,82 +133,6 @@ function saveIdeaRowDescriptionSetting(showDescription: boolean) {
 // (ideaEntryTypes.ts, 2026-07-24 SSOT unification: this dict used to carry its
 // own "Rosnie"/"Ksztaltuje" (no diacritics), drifted from the other Ideas-list
 // renderers that spelled them "Rośnie"/"Kształtuje się").
-const STAGE_META: Record<
-  IdeaStage,
-  {
-    icon: React.ElementType;
-    badge: string;
-  }
-> = {
-  spark: {
-    icon: Lightbulb,
-    badge:
-      'border border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
-  },
-  incubating: {
-    icon: Sprout,
-    badge:
-      'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
-  },
-  shaping: {
-    icon: TreePine,
-    badge:
-      'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
-  },
-  ready: {
-    icon: CheckCircle2,
-    badge:
-      'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
-  },
-  promoted: {
-    icon: Rocket,
-    // Canon §4.0: "Promoted" = pozytywny stan końcowy (idea → inicjatywa), NIE alarm.
-    // Crimson-leak fix (VF1-11): was raw `primary-*` (bypassed the design tokens AND
-    // read as brand-crimson on a non-critical status badge). Neutral shell — same
-    // treatment as TOOL_META below — color signal lives in STAGE_DOT_VAR's dot only
-    // (canon §4.0a), never in the badge fill/text/border.
-    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-  },
-};
-
-// Icon/badge styling only — label TEXT comes from the single SSOT
-// `getIdeaWorkspaceToolLabel` (IdeaWorkspaceToolbar.tsx), so this table agrees
-// with the list's card/grid views and the canvas rail (2026-07-24: was
-// "Recommendation map"/"Mapa rekomendacji" here, drifted from other copies).
-const TOOL_META: Record<
-  string,
-  {
-    icon: React.ElementType;
-    badge: string;
-    /** Canonical ToolChip icon color — semantic `c.*` var. */
-    iconColorVar: string;
-  }
-> = {
-  mindmap: {
-    icon: Network,
-    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    // Crimson-leak fix (VF1-11): tool identity is a DATA category, not a brand/CTA
-    // moment — tailwind.config.js data-palette guide bans the brand token here
-    // ("crimson w danych = dług"). Use the tag category palette instead (violet, tag 3).
-    iconColorVar: 'var(--c-tag-3)',
-  },
-  table: {
-    icon: Table2,
-    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconColorVar: 'var(--c-info)',
-  },
-  process_flow: {
-    icon: Workflow,
-    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconColorVar: 'var(--c-success)',
-  },
-  whiteboard: {
-    icon: PenTool,
-    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
-    iconColorVar: 'var(--c-warning)',
-  },
-};
-
 interface IdeasTableContentProps {
   ideas: MyIdea[];
   isPolish: boolean;
@@ -263,33 +171,6 @@ interface IdeasTableContentProps {
   onConvertIdeaToTarget?: (idea: MyIdea, target: IdeaConvertTarget) => void;
   onDeleteIdea: (idea: MyIdea) => void;
   onRefresh: () => void;
-}
-
-function getStageMeta(stage?: IdeaStage) {
-  return STAGE_META[(stage || 'spark') as IdeaStage] || STAGE_META.spark;
-}
-
-/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot).
- * `promoted` was the brand accent (crimson) — crimson-leak fix (VF1-11): "promoted"
- * is a positive terminal state (idea → initiative), not a brand/CTA moment, so it
- * takes the same success signal as `incubating` rather than the brand token. */
-const STAGE_DOT_VAR: Record<IdeaStage, string | undefined> = {
-  spark: CHIP_TONE_VAR.warning,
-  incubating: CHIP_TONE_VAR.success,
-  shaping: CHIP_TONE_VAR.info,
-  ready: CHIP_TONE_VAR.info,
-  promoted: CHIP_TONE_VAR.success,
-};
-
-function getToolMeta(tool?: string | null) {
-  const key = String(tool || 'mindmap').toLowerCase();
-  return TOOL_META[key] || TOOL_META.mindmap;
-}
-
-function formatIdeaDate(idea: MyIdea) {
-  const value = idea.updatedAt || idea.createdAt;
-  if (!value) return '—';
-  return formatListDate(value);
 }
 
 function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {
@@ -339,6 +220,8 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onRefresh,
 }) => {
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
+  /** Stan Rozwin/Zwin bloku 3 podgladu (kanon 7.3 pkt 3) - przezywa zmiane wiersza. */
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   // MYW-IDEA-REC-001 — PPM-mirror (ANEKS #3b, same contract as
   // FilterableTable.tsx:613/1237-1268): right-click on a row opens the SAME
   // RowActionsMenu popover the row's kebab already renders, anchored at the
@@ -636,142 +519,33 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     );
   };
 
-  const renderPreview = (idea: MyIdea) => {
-    const resolvedStage = (idea.stage || 'spark') as IdeaStage;
-    const stageMeta = getStageMeta(idea.stage);
-    const StageIcon = stageMeta.icon;
-    const toolMeta = getToolMeta(idea.preferredTool);
-    const ToolIcon = toolMeta.icon;
-    const toolKey = String(idea.preferredTool || 'mindmap').toLowerCase() as CanvasToolType;
+  /**
+   * Podgląd wiersza — kanon §7 realizuje wspólny `IdeaPreview`, ten sam, który
+   * osadza widok listy (`MyIdeasListContent`). Do 2026-09-02 stała tu WŁASNA
+   * kopia bloków 2-6: jednolinijkowy `idea.body` bez tabeli właściwości
+   * (naruszenie §7.3 pkt 3 „bogaty domyślny szablon", zgłaszane przez
+   * właściciela trzy razy jako „preview nie jest zgodny z wzorem") i kebab
+   * bloku 3 bez ani jednej własnej pozycji. Powłoka nie klei już własnego
+   * podglądu — deklaruje dane i handlery, komponent narzuca wygląd.
+   */
+  const renderPreview = (idea: MyIdea) => (
+    <IdeaPreviewBody
+      idea={idea}
+      isPolish={isPolish}
+      detailsExpanded={detailsExpanded}
+      onToggleDetailsExpanded={() => setDetailsExpanded((v) => !v)}
+      onEditIdea={onOpenIdea}
+    />
+  );
 
-    const metaPills: MetaPill[] = [
-      {
-        label: isPolish
-          ? IDEA_STAGE_BUCKET_LABELS[resolvedStage].pl
-          : IDEA_STAGE_BUCKET_LABELS[resolvedStage].en,
-        className: stageMeta.badge,
-        icon: StageIcon,
-      },
-      {
-        label: getIdeaWorkspaceToolLabel(toolKey, isPolish),
-        className: toolMeta.badge,
-        icon: ToolIcon,
-      },
-    ];
-
-    const metaTrailing = (
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <span className="text-[11px] font-medium text-c-text-muted">{formatIdeaDate(idea)}</span>
-      </div>
-    );
-
-    const detailsText = idea.body || '';
-
-    const contextParts: string[] = [];
-    if (typeof idea.mapItems === 'number')
-      contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
-    if (typeof idea.mapNodes === 'number') contextParts.push(`Nodes: ${idea.mapNodes}`);
-    if (typeof idea.mapEdges === 'number')
-      contextParts.push(`${isPolish ? 'Połączenia' : 'Edges'}: ${idea.mapEdges}`);
-
-    return (
-      <div className="space-y-4">
-        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
-          {idea.tags?.length ? (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {idea.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[10px] font-medium text-c-text-secondary"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </PreviewMetaCard>
-
-        <PreviewDetailsSection text={detailsText} label={isPolish ? 'Szczegóły' : 'Details'}>
-          {contextParts.length > 0 ? (
-            <div className="mt-3 pt-3 border-t border-c-border-subtle">
-              <div className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider mb-2">
-                {isPolish ? 'Kontekst' : 'Context'}
-              </div>
-              <div className="flex flex-wrap gap-2 text-[11px] text-c-text-secondary">
-                {contextParts.map((part) => (
-                  <span key={part} className="rounded-full bg-c-surface-raised px-2 py-1">
-                    {part}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </PreviewDetailsSection>
-      </div>
-    );
-  };
-
-  const renderPreviewFooter = (idea: MyIdea) => {
-    const aiHints = isPolish
-      ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
-      : ['Why urgent?', 'Action plan', 'Who can help?'];
-
-    const relationItems: RelationItem[] = [];
-    if (idea.sourceType) {
-      relationItems.push({
-        label: `${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`,
-        tone: 'text-c-text-secondary',
-      });
-    }
-
-    // canon §7.3b — tylko dozwolone colorScheme; create-targety idą do „Co dalej" (§7.3a),
-    // Usuń żyje w kebabie wiersza (strefa danger) — NIE duplikujemy go tu (§7.3 pkt 4).
-    const actionRows: ActionRow[] = [
-      {
-        columns: 2,
-        buttons: [
-          {
-            label: isPolish ? 'Otwórz Flow' : 'Open Flow',
-            icon: Workflow,
-            onClick: () => onOpenIdeaInProcessFlow(idea),
-            colorScheme: 'neutral',
-          },
-        ],
-      },
-    ];
-
-    return (
-      // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
-      <div className="space-y-2.5">
-        <PreviewAIHintStrip hints={aiHints} />
-
-        <PreviewRelations
-          items={relationItems}
-          emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
-        />
-
-        <PreviewActionBar rows={actionRows} />
-
-        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown.
-            KOLEJNOŚĆ (§7.3 pkt 4.4 + §7.0): ten blok stoi POZA numeracją sześciu
-            bloków TRIADY i renderuje się ZAWSZE NA KOŃCU, po bloku 6 (Akcje) —
-            tak jak robi to `StandardPreview` (`whatsNext` po `actionRows`).
-            Do 2026-08-30 stał tutaj PRZED paskiem akcji, więc podgląd Ideas miał
-            inną kolejność od podglądu Assessment i Interview, mimo tego samego
-            kanonu. Ramka i typografia też są równane do `StandardPreview`, żeby
-            ten sam blok nie miał dwóch wyglądów. */}
-        <PreviewWhatsNextCard isPolish={isPolish}>
-          <ConvertToOutputMenu
-            sourceType="idea"
-            sourceId={idea.id}
-            sourceTitle={idea.title || ''}
-            onConvertComplete={() => onRefresh()}
-            variant="inline"
-          />
-        </PreviewWhatsNextCard>
-      </div>
-    );
-  };
+  const renderPreviewFooter = (idea: MyIdea) => (
+    <IdeaPreviewFooter
+      idea={idea}
+      isPolish={isPolish}
+      onOpenIdeaInProcessFlow={onOpenIdeaInProcessFlow}
+      onConvertComplete={onRefresh}
+    />
+  );
 
   // ── SPEC-A states (VF1-11) — flag `VITE_VF1_IDEATABLE_SPECA`, default OFF. ──
   // Zero behavior change while the flag is off: the caller (MyIdeasListContent)
