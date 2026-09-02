@@ -365,7 +365,6 @@ const ReportBuilderBlockTypesScreen = React.lazy(
   () => import('./screens/report-builder-block-types')
 );
 const ReportBuilderTemplatesScreen = React.lazy(() => import('./screens/report-builder-templates'));
-const ResultsThreePairsScreen = React.lazy(() => import('./screens/results-three-pairs'));
 const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-danger-token-parity'));
 const SettingsCrimsonNeutralizedScreen = React.lazy(
   () => import('./screens/settings-crimson-neutralized')
@@ -1698,10 +1697,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'template-builder-table': {
     label: '#83c/#83d Builder ARKUSZ (Excel) — wspólna powłoka MELS',
     render: () => <TemplateBuilderTableScreen />,
-  },
-  'results-three-pairs': {
-    label: '#81 Results — 3 pary (KPI/ROI/OKR)',
-    render: () => <ResultsThreePairsScreen />,
   },
   'notatnik-centrum-mysli': {
     label: 'Notatnik = CENTRUM MYŚLI (#16 auto-notatka · #21 przypomnij · #23 presence)',
