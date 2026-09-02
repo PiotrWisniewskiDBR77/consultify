@@ -2492,7 +2492,8 @@
     "closeTab": "Close tab",
     "closeAll": "Close all",
     "closeAllTitle": "Close all tabs?",
-    "closeAllDesc": "{{count}} tab(s) have unsaved changes. Close anyway?"
+    "closeAllDesc_one": "{{count}} tab has unsaved changes. Close anyway?",
+    "closeAllDesc_other": "{{count}} tabs have unsaved changes. Close anyway?"
   },
   "preview": {
     "open": "Open",
@@ -3063,7 +3064,8 @@
         "noLibrary": "Library is empty"
       },
       "selection": {
-        "elementsSelected": "{{count}} elements selected",
+        "elementsSelected_one": "{{count}} element selected",
+        "elementsSelected_other": "{{count}} elements selected",
         "alignLeft": "Align left",
         "alignCenter": "Align center",
         "alignRight": "Align right",
@@ -5185,7 +5187,8 @@
       "downloadFile": "Download file",
       "maxFilesExceeded": "Maximum {{maxFiles}} files allowed",
       "fileTooLarge": "File {{fileName}} is too large (max {{maxSizeMB}}MB)",
-      "uploadedCount": "Uploaded {{count}} file(s)",
+      "uploadedCount_one": "Uploaded {{count}} file",
+      "uploadedCount_other": "Uploaded {{count}} files",
       "confirmDelete": "Are you sure you want to delete \"{{name}}\"?"
     },
     "riskAssessment": {
@@ -5329,8 +5332,10 @@
       "helperReauth": "{{providerLabel}} needs reauthorization before it returns to a trustworthy sync state.",
       "helperError": "{{providerLabel}} has an active error and should not be treated as a ready calendar source.",
       "helperComingSoon": "{{providerLabel}} is not connected yet — connect it to bring events here.",
-      "heavyLoadSuggestion": "You already have {{totalItems}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
-      "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately.",
+      "heavyLoadSuggestion_one": "You already have {{count}} item here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
+      "heavyLoadSuggestion_other": "You already have {{count}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
+      "partialLoadSuggestion_one": "The selected day already has {{count}} item. This is a good moment to place new work deliberately.",
+      "partialLoadSuggestion_other": "The selected day already has {{count}} items. This is a good moment to place new work deliberately.",
       "toastVersionConflict": "This task was changed by someone else — restoring the current state.",
       "toastForbidden": "You can't reschedule this task.",
       "toastNotFound": "This task no longer exists — refreshing the calendar.",
@@ -5366,7 +5371,8 @@
       "task": "Task",
       "decision": "Decision",
       "loadingConflicts": "Loading conflicts...",
-      "itemsOnThisDay": "You already have {{count}} items on this day.",
+      "itemsOnThisDay_one": "You already have {{count}} item on this day.",
+      "itemsOnThisDay_other": "You already have {{count}} items on this day.",
       "dayPreviewLimited": "Day preview is limited",
       "dayAlreadyBusy": "This day is already fairly busy"
     },
@@ -7194,9 +7200,11 @@
       "sampleOptionA": "Option A",
       "sampleOptionB": "Option B",
       "sampleOptionC": "Option C",
-      "templateQualitySummary": "Template quality: {{score}}/100 — {{warnings}} warning(s). Review before publishing.",
+      "templateQualitySummary_one": "Template quality: {{score}}/100 — {{count}} warning. Review before publishing.",
+      "templateQualitySummary_other": "Template quality: {{score}}/100 — {{count}} warnings. Review before publishing.",
       "confirmRemoveQuestions": "Remove {{count}} question(s) from the survey?",
-      "itemsToConsider": "{{count}} item(s) to consider",
+      "itemsToConsider_one": "{{count}} item to consider",
+      "itemsToConsider_other": "{{count}} items to consider",
       "runtimeModeLabel": {
         "one_question_per_screen": "One question per screen",
         "task_list": "Question list"
@@ -9814,7 +9822,8 @@
         "depAcceptFailed": "Failed to save dependency",
         "noCycles": "No cycles detected",
         "noNewDeps": "AI found no additional dependencies",
-        "cyclesFound": "{{count}} cycle(s) detected",
+        "cyclesFound_one": "{{count}} cycle detected",
+        "cyclesFound_other": "{{count}} cycles detected",
         "criticalPathTitle": "Critical Path",
         "blockersTitle": "Blockers",
         "blockerBadge": "{{count}} dependent(s)",
@@ -11021,7 +11030,8 @@
       "taskDuplicated": "Task duplicated",
       "failedToDuplicateTask": "Failed to duplicate task",
       "noSelectedChanges": "No selected changes",
-      "deleteTasksConfirm": "Delete {{count}} task(s)? This action cannot be undone.",
+      "deleteTasksConfirm_one": "Delete {{count}} task? This action cannot be undone.",
+      "deleteTasksConfirm_other": "Delete {{count}} tasks? This action cannot be undone.",
       "appliedAiProposalsAddedRemovedReordered": "Applied AI proposals ({{added}} added, {{removed}} removed, reordered list)",
       "appliedAiProposalsAddedReordered": "Applied AI proposals ({{added}} added, reordered list)",
       "appliedAiProposalsAddedRemoved": "Applied AI proposals ({{added}} added, {{removed}} removed)",
@@ -11503,7 +11513,8 @@
       "noChangeSuggestions": "AI found no change suggestions — dependencies look good.",
       "aiAnalysisFailed": "AI analysis failed",
       "noSelectedChanges": "No selected changes",
-      "deleteDependenciesConfirm": "Delete {{count}} dependency link(s)? This action cannot be undone.",
+      "deleteDependenciesConfirm_one": "Delete {{count}} dependency link? This action cannot be undone.",
+      "deleteDependenciesConfirm_other": "Delete {{count}} dependency links? This action cannot be undone.",
       "appliedAiProposals": "Applied AI proposals ({{added}} added{{removed}})",
       "removedSuffix": ", {{count}} removed",
       "failedToApplyProposals": "Failed to apply proposals",
@@ -27354,7 +27365,8 @@
     "surveysCompletedOfTotal": "{{done}} of {{total}} surveys completed",
     "completionUnavailable": "Completion unavailable.",
     "suggestedPlan": "Suggested plan",
-    "confirmDeleteBulk": "Delete {{count}} audit program(s)?",
+    "confirmDeleteBulk_one": "Delete {{count}} audit program?",
+    "confirmDeleteBulk_other": "Delete {{count}} audit programs?",
     "aiHintSummarize": "Summarize audit",
     "aiHintNextSteps": "Next steps",
     "noSuggestedPlan": "No suggested plan",
@@ -28789,7 +28801,8 @@
         "low": "Low"
       },
       "pressure": {
-        "linkedItemsBlocked": "{{count}} linked item(s) may become operationally blocked",
+        "linkedItemsBlocked_one": "{{count}} linked item may become operationally blocked",
+        "linkedItemsBlocked_other": "{{count}} linked items may become operationally blocked",
         "manualWorkloadIncrease": "Manual workload may increase by about {{hours}}h/week",
         "escalationRisk": "High risk of escalation and loss of delivery momentum"
       },
@@ -31431,7 +31444,8 @@
       },
       "smartSuggestions": {
         "incompleteRowsTitle": "Incomplete rows",
-        "incompleteRowsDetail": "{{count}} row(s) with less than 30% filled fields. Consider filling them or use AI auto-fill.",
+        "incompleteRowsDetail_one": "{{count}} row with less than 30% filled fields. Consider filling it or use AI auto-fill.",
+        "incompleteRowsDetail_other": "{{count}} rows with less than 30% filled fields. Consider filling them or use AI auto-fill.",
         "aiAutoFill": "AI Auto-fill",
         "dominantPatternTitle": "Dominant pattern: {{header}}",
         "dominantPatternDetail": "{{pct}}% of rows have value \"{{value}}\". Consider adding more diversity.",
@@ -32709,7 +32723,8 @@
         },
         "retention": {
           "label": "Retention",
-          "scheduleCount": "{{count}} schedule(s)",
+          "scheduleCount_one": "{{count}} schedule",
+          "scheduleCount_other": "{{count}} schedules",
           "nextCleanup": "Next cleanup {{date}}",
           "empty": "No retention schedules configured",
           "error": "Failed to load retention schedules"
@@ -32803,7 +32818,8 @@
         "contentPlaceholder": "Paste content to scan…",
         "direction": "Direction",
         "clean": "Clean — no violations",
-        "blocked": "Blocked by {{count}} rule(s)",
+        "blocked_one": "Blocked by {{count}} rule",
+        "blocked_other": "Blocked by {{count}} rules",
         "violations": "{{count}} violation(s) found"
       },
       "columns": {
@@ -32923,7 +32939,8 @@
       },
       "customSafetyRules": {
         "title": "Custom safety rules",
-        "description": "Read-only in this view — {{count}} rule(s) configured.",
+        "description_one": "Read-only in this view — {{count}} rule configured.",
+        "description_other": "Read-only in this view — {{count}} rules configured.",
         "empty": "No custom safety rules configured."
       },
       "actions": {
@@ -37028,8 +37045,10 @@
       "copyLink": "Copy link",
       "revokeLink": "Revoke link",
       "close": "Close",
-      "nBlocksWithoutContent": "{{count}} block(s) without content: {{titles}}",
-      "nBlocksNotGenerated": "{{count}} block(s) not generated"
+      "nBlocksWithoutContent_one": "{{count}} block without content: {{titles}}",
+      "nBlocksWithoutContent_other": "{{count}} blocks without content: {{titles}}",
+      "nBlocksNotGenerated_one": "{{count}} block not generated",
+      "nBlocksNotGenerated_other": "{{count}} blocks not generated"
     },
     "commentPanel": {
       "comments": "Comments",
@@ -37047,7 +37066,8 @@
       "resolve": "Resolve",
       "addAComment": "Add a comment...",
       "cmdEnterToSubmit": "Cmd+Enter to submit",
-      "cannotApproveUntilResolved": "Report cannot be approved until {{count}} open comment(s) are resolved.",
+      "cannotApproveUntilResolved_one": "Report cannot be approved until {{count}} open comment is resolved.",
+      "cannotApproveUntilResolved_other": "Report cannot be approved until {{count}} open comments are resolved.",
       "commentType": {
         "FEEDBACK": "Feedback",
         "SUGGESTION": "Suggestion",

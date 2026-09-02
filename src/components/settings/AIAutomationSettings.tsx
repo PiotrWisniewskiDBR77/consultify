@@ -195,7 +195,7 @@ export const AIAutomationSettings: React.FC<{ className?: string }> = ({ classNa
           {/* Per-Module Model Defaults */}
           <div>
             <h4 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
-              <Sparkles size={14} className="text-c-accent" />
+              <Sparkles size={14} className="text-c-text-secondary" />
               {t('settings.ai.moduleRouting', 'Module AI Routing')}
             </h4>
             <p className="text-xs text-c-text-muted mb-4">

@@ -21,6 +21,7 @@ import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalM
 import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
+  executionReviewPeople,
   executionReviewSignals,
 } from './executionLocalReviewData';
 
@@ -115,16 +116,48 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
-const actorBusinessLabel = (value: string | null | undefined, fallback: string) =>
-  value
-    ? value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-    : fallback;
+/**
+ * Nazwisko osoby — z KATALOGU OSÓB (`executionLocalReviewData.ts`), nie z zamiany
+ * myślnika na spację. `\b\w` nie podnosi liter spoza ASCII i żadna zamiana znaków
+ * nie odtworzy `Wiśniewski` z `wisniewski` — diakrytyk musi przyjść z danych.
+ * Zamiana zostaje wyłącznie jako ostatnia deska ratunku dla identyfikatora
+ * spoza katalogu (granica po Unicode, bez `toLowerCase`).
+ */
+const actorBusinessLabel = (value: string | null | undefined, fallback: string) => {
+  if (!value) return fallback;
+  return (
+    executionReviewPeople[value] ??
+    value
+      .replace(/[-_]+/g, ' ')
+      .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase())
+  );
+};
 const interventionBusinessTitle = (intervention: any) =>
   intervention.title ||
   intervention.options?.find((option: any) => option.optionId === intervention.selectedOptionId)
     ?.label ||
   intervention.hypotheses?.[0] ||
   `Interwencja operacyjna · ${intervention.interventionId}`;
+/**
+ * Etykieta WYBRANEJ opcji interwencji — nazwa, nie identyfikator (2026-09-02).
+ *
+ * Do dziś pigułka rekomendacji w podglądzie składała `Wybrana opcja:
+ * ${selectedOptionId}` i wypisywała na ekran surowy klucz („parallel-validation").
+ * To ta sama rodzina co wyciek `undefined:` w POWIĄZANIA naprawiony wcześniej
+ * tego dnia: prezenter bierze pole techniczne i pokazuje je klientowi.
+ * Wyszukanie opcji po `optionId` istniało już 770 linii wyżej
+ * (`interventionBusinessTitle`) — brakowało go tylko tutaj.
+ *
+ * Gdy opcji o tym identyfikatorze nie ma w kolekcji (dane starsze niż kontrakt),
+ * pokazujemy identyfikator jako ostatnią deskę ratunku — brak nazwany jest
+ * lepszy niż pusta pigułka.
+ */
+const selectedOptionLabel = (intervention: any): string | null => {
+  const id = intervention?.selectedOptionId;
+  if (!id) return null;
+  const option = intervention.options?.find((o: any) => o.optionId === id);
+  return option?.label || String(id);
+};
 const interventionStatusLabel = (value: string) =>
   ({
     DRAFT: 'Szkic',
@@ -147,6 +180,25 @@ const verificationOutcomeLabel = (value: string) =>
     INEFFECTIVE: 'Nieskuteczna',
     NOT_VERIFIED: 'Niezweryfikowana',
   })[value] ?? value;
+/**
+ * Rodzaj opcji interwencji (kontrakt `InterventionOption.kind`) — po polsku.
+ * Zwraca `null`, gdy pola nie ma: przedrostek jest wtedy POMIJANY, zamiast
+ * wyciekać jako `undefined` albo surowy kod na ekran (defekt 2026-09-02).
+ */
+const optionKindLabel = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim()
+    ? (({ DO_NOTHING: 'Bez zmian', ACTION: 'Działanie' }) as Record<string, string>)[value] ?? value
+    : null;
+/** Pewność opcji — nazwana wprost, brak nazywany „Nieznana", nie `undefined`. */
+const confidenceLabel = (value: unknown): string =>
+  typeof value === 'string' && value.trim()
+    ? (({ HIGH: 'Wysoka pewność', MEDIUM: 'Średnia pewność', LOW: 'Niska pewność', UNKNOWN: 'Pewność nieznana' }) as Record<string, string>)[value] ?? value
+    : 'Pewność nieznana';
+/** Odwracalność opcji — słownik kontraktu, brak nazywany wprost. */
+const reversibilityLabel = (value: unknown): string =>
+  typeof value === 'string' && value.trim()
+    ? (({ REVERSIBLE: 'Odwracalna', PARTIALLY_REVERSIBLE: 'Częściowo odwracalna', IRREVERSIBLE: 'Nieodwracalna', UNKNOWN: 'Odwracalność nieznana' }) as Record<string, string>)[value] ?? value
+    : 'Odwracalność nieznana';
 const signalFieldLabels: Record<string, string> = {
   sourceId: 'Źródło sygnału',
   sourceVersionKey: 'Rodzaj wersji źródła',
@@ -868,8 +920,8 @@ export const ExecutionControlSurface = ({
               pills: [
                 { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
               ],
-              recommendation: r.source.selectedOptionId
-                ? `Wybrana opcja: ${r.source.selectedOptionId}`
+              recommendation: selectedOptionLabel(r.source)
+                ? `Wybrana opcja: ${selectedOptionLabel(r.source)}`
                 : 'Wymaga wyboru ograniczonej interwencji',
             }}
             details={{
@@ -891,8 +943,20 @@ export const ExecutionControlSurface = ({
                 label: `${signal.signalId} v${signal.signalVersion}`,
               })),
               ...(r.source.options ?? []).map((option: any) => ({
-                label: `${option.kind}: ${option.label}`,
-                value: `${option.confidence ?? 'UNKNOWN'} · ${option.reversibility ?? 'UNKNOWN'}`,
+                /**
+                 * JĘZYK UCZCIWOŚCI: brak ma być NAZWANY, nigdy nie może wyciec
+                 * jako `undefined`. Do 2026-09-02 etykieta była składana jako
+                 * `${option.kind}: ${option.label}` bez żadnej osłony, więc opcja
+                 * bez pola `kind` (atrapa `executionLocalReviewData.ts`, ale też
+                 * każda przyszła odpowiedź serwera sprzed tej wersji kontraktu)
+                 * dawała na ekranie literalne „undefined: Nie zmieniaj planu".
+                 * Rodzaj opcji pokazujemy PO POLSKU, nie surowym kodem, a gdy
+                 * go nie ma — nie pokazujemy przedrostka w ogóle.
+                 */
+                label: optionKindLabel(option.kind)
+                  ? `${optionKindLabel(option.kind)}: ${option.label}`
+                  : option.label,
+                value: `${confidenceLabel(option.confidence)} · ${reversibilityLabel(option.reversibility)}`,
               })),
             ]}
             relationsEmptyLabel="Brak powiązanych sygnałów"

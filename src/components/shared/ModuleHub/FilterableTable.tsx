@@ -251,6 +251,32 @@ export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 180;
  */
 export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-ellipsis';
 
+/**
+ * WARSTWA DLA TREŚCI RENDEROWANEJ PRZEZ MODUŁ JAKO ELEMENTY (2026-09-02).
+ *
+ * Dlaczego istnieje: `CELL_TEXT_CLAMP_CLASS` chroni tylko GOŁY tekst zwrócony
+ * z `render` (string/number). Gdy moduł zwraca własne ELEMENTY (`<div>`, `<span>`,
+ * chip, dwie linie), tekst siedzi bezpośrednio pod `td`, które nosi `break-words`
+ * (`overflow-wrap: break-word`) — i dziedziczy je. To była OSTATNIA nienaprawiona
+ * kondygnacja rodziny „ucięć": po naprawie procentów w `parsePx` kolumna nie
+ * zapada się już do kilkunastu pikseli, ale przy wąskiej kolumnie NADAL rozrywała
+ * wyraz w połowie. Zmierzone 2026-09-02 na zrzutach: `results-zestawienia`
+ * („3 wskaźnik / i" — kolumna 90 px, `render` zwraca `<span>`),
+ * `chat-signals-feed` („Interpretac / ja AI" — `render` zwraca dwuliniowy `<div>`).
+ *
+ * Co robi: zbija dziedziczone `overflow-wrap` z powrotem do `normal`, czyli
+ * łamanie WYŁĄCZNIE na spacji — dokładnie ta sama reguła, którą kanon
+ * (`TRIADA_KANON.md`, komentarz przy `CELL_TEXT_CLAMP_CLASS`) narzuca tekstowi.
+ *
+ * Czego ŚWIADOMIE nie robi: nie ma `overflow-hidden`. Powód jest ten sam, dla
+ * którego `td` go nie ma — komórki renderują popovery i menu bez portalu
+ * (`PMO/StatusTransitionDropdown.tsx` w `assessment/InitiativesTable.tsx`),
+ * a `overflow: hidden` przyciąłby je do szerokości kolumny. Wielokropek dla
+ * treści elementowej jest odpowiedzialnością modułu (`truncate` na własnym
+ * spanie), łamanie w połowie wyrazu — nie jest i nie może być.
+ */
+export const CELL_ELEMENT_WRAP_CLASS = 'min-w-0 break-normal';
+
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
 const isEmptyCell = (value: unknown): boolean =>
@@ -1669,7 +1695,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               {rendered}
                             </span>
                           ) : (
-                            rendered
+                            <div className={CELL_ELEMENT_WRAP_CLASS}>{rendered}</div>
                           )
                         ) : column.id === 'status' ? (
                           <EntityStatusChip status={row.status} />

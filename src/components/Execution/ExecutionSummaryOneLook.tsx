@@ -432,7 +432,8 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                 {onTime.onTrackCount} {tr('na tor', 'on-track')}
               </span>
               <span className="text-c-warning">
-                {onTime.atRiskCount} {tr('ryzyko', 'at-risk')}
+                {onTime.atRiskCount}{' '}
+                {tr(liczebnik(onTime.atRiskCount, ['ryzyko', 'ryzyka', 'ryzyk']), 'at-risk')}
               </span>
               <span className="text-c-danger">
                 {onTime.delayedCount} {tr('opóźn.', 'delayed')}
@@ -495,11 +496,15 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               )}
               {people.underutilizedCount > 0 && (
                 <span>
-                  {people.underutilizedCount} {tr('wolne', 'free')}
+                  {people.underutilizedCount}{' '}
+                  {tr(
+                    liczebnik(people.underutilizedCount, ['wolna', 'wolne', 'wolnych']),
+                    'free'
+                  )}
                 </span>
               )}
               <span>
-                {people.headcount} {tr('osób', 'ppl')}
+                {people.headcount} {tr(liczebnik(people.headcount, ['osoba', 'osoby', 'osób']), 'ppl')}
               </span>
             </div>
           </AnswerCard>
@@ -514,11 +519,21 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               >
                 {decisions.length}
               </span>
-              <span className="text-sm text-c-text-muted">{tr('pozycji', 'items')}</span>
+              <span className="text-sm text-c-text-muted">
+                {tr(liczebnik(decisions.length, ['pozycja', 'pozycje', 'pozycji']), 'items')}
+              </span>
             </div>
             <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-c-text-muted">
               <span className="text-c-danger">
-                {decisions.filter((d) => d.kind === 'blocker').length} {tr('blokery', 'blockers')}
+                {decisions.filter((d) => d.kind === 'blocker').length}{' '}
+                {tr(
+                  liczebnik(decisions.filter((d) => d.kind === 'blocker').length, [
+                    'bloker',
+                    'blokery',
+                    'blokerów',
+                  ]),
+                  'blockers'
+                )}
               </span>
               <span className="text-c-danger">
                 {decisions.filter((d) => d.kind === 'overdue').length}{' '}

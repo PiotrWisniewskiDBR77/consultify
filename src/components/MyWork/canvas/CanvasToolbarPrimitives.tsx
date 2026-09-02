@@ -20,7 +20,15 @@ export const CanvasToolbarBtn: React.FC<{
   active?: boolean;
   ariaLabel?: string;
   ariaPressed?: boolean;
-}> = ({ icon: Icon, label, onClick, disabled, danger, active, ariaLabel, ariaPressed }) => (
+  /**
+   * Sam znak, bez podpisu (2026-09-02). Domyslnie `false`, wiec zaden istniejacy
+   * wolacz nie zmienia sie ani o piksel. Wlaczany tam, gdzie pasek jest
+   * PLYWAJACY i nie moze rosnac ponad szerokosc kanwy — patrz
+   * `WhiteboardSelectionBar`. Podpis nie ginie: zostaje w `title` (dymek) i
+   * w `aria-label` (czytnik ekranu), wiec nazwa akcji jest nadal dostepna.
+   */
+  iconOnly?: boolean;
+}> = ({ icon: Icon, label, onClick, disabled, danger, active, ariaLabel, ariaPressed, iconOnly }) => (
   <button
     type="button"
     onClick={onClick}
@@ -37,7 +45,7 @@ export const CanvasToolbarBtn: React.FC<{
     title={label}
   >
     <Icon size={14} />
-    {label && <span className="hidden sm:inline">{label}</span>}
+    {label && !iconOnly && <span className="hidden sm:inline">{label}</span>}
   </button>
 );
 
@@ -55,7 +63,9 @@ export const CanvasToolbarDropdown: React.FC<{
   disabled?: boolean;
   items: CanvasDropdownItem[];
   onMainClick: () => void;
-}> = ({ icon: Icon, label, disabled, items, onMainClick }) => {
+  /** Sam znak, bez podpisu — patrz `CanvasToolbarBtn.iconOnly`. */
+  iconOnly?: boolean;
+}> = ({ icon: Icon, label, disabled, items, onMainClick, iconOnly }) => {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
@@ -110,7 +120,7 @@ export const CanvasToolbarDropdown: React.FC<{
           title={label}
         >
           <Icon size={14} />
-          <span className="hidden sm:inline">{label}</span>
+          {!iconOnly && <span className="hidden sm:inline">{label}</span>}
         </button>
         <button
           type="button"

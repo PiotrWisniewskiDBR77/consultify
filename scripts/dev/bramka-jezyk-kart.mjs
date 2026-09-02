@@ -18,7 +18,18 @@ const ROOT = process.cwd();
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 
 const WADY = [
-  { kod: 'TRZECIA_OSOBA', re: /\bwłaścicie|\bWłaścicie|\bwlascicie|\bWlascicie/,
+  /**
+   * WYJĄTEK NA WERSALIKI (2026-09-02, po fałszywym trafieniu na poprawnym zdaniu).
+   * „kolumna WŁAŚCICIEL pokazuje identyfikatory" opisuje NAGŁÓWEK, który tak się
+   * nazywa na ekranie — to nie jest streszczanie Piotra w trzeciej osobie. Bramka
+   * ma karać „Właściciel żąda…", nie nazwę elementu produktu.
+   * Rozstrzyganie mechaniczne: całe słowo WERSALIKAMI (WŁAŚCICIEL / WLASCICIEL)
+   * albo nazwa w cudzysłowie drukarskim („Właściciel") przechodzi; słowo pisane
+   * normalnie — nie. Żeby obejść regułę tą drogą, trzeba by napisać „WŁAŚCICIEL
+   * ŻĄDA", co widać z odległości metra.
+   */
+  { kod: 'TRZECIA_OSOBA',
+    re: /(?<!„)\b(?!WŁAŚCICIEL\b|WLASCICIEL\b)(?:w|W)(?:ł|l)a(?:ś|s)cicie/,
     rada: 'napisz do niego w drugiej osobie („Prosiłeś…", „Masz rację…"), nie o nim' },
   { kod: 'SCIEZKA',       re: /evidence\/|docs\/|scripts\/|\.json\b|\.mjs\b|\.tsx?\b|\.md\b/,
     rada: 'zamień na „sprawdzone na zdjęciu z <data słownie>"' },

@@ -1747,7 +1747,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </div>
             )}
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 dark:border-navy-700/70 dark:bg-navy-900/40">
+            {/*
+              DWIE KARTY JEDNA NA DRUGIEJ (2026-09-02). Wlasciciel: „Jest jakas
+              prehistoryczna karta jeszcze za tym, zanim przerobilismy to."
+              To nie byla stara karta — to BYL ten kontener: szara karta
+              (rounded-2xl + border + bg-slate-50/70) opakowywala tresc fazy,
+              ktora rysuje juz WLASNA biala karte. Dwie ramki jedna w drugiej
+              czytaja sie jak warstwa sprzed przebudowy wystajaca zza biezacej.
+              Zostaje kontenerem ukladu (overflow-hidden dla zaokraglen tresci),
+              przestaje byc karta.
+            */}
+            <div className="overflow-hidden rounded-2xl">
               {toolType === 'dynamic-swot' && toolAiError ? (
                 <div
                   role="alert"

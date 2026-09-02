@@ -581,7 +581,42 @@ Na 52 zmierzonych zdaniach trzecia osoba była wadą częstszą niż żargon.
 **CYTAT WŁAŚCICIELA JEST NIETYKALNY — znak w znak, także z literówkami.** To jego słowa i mają
 zostać jego słowami. Reguła dotyczy wyłącznie **naszego** tekstu obok cytatu.
 
+**NAZWA ELEMENTU PRODUKTU PISANA WERSALIKAMI NIE JEST MÓWIENIEM O WŁAŚCICIELU** (dopisane
+2026-09-02, po fałszywym trafieniu bramki). Zdanie „kolumna WŁAŚCICIEL pokazuje wewnętrzne
+identyfikatory" opisuje **nagłówek, który tak się nazywa na ekranie** — nie streszcza Piotra
+w trzeciej osobie. Bramka ma karać „Właściciel żąda…", a nie „kolumna WŁAŚCICIEL".
+
+Rozstrzyganie jest mechaniczne, żeby nie wracać do uważności: **całe słowo WERSALIKAMI** (albo
+nazwa w cudzysłowie drukarskim, np. „Właściciel") to nazwa elementu i przechodzi; słowo pisane
+normalnie — nie przechodzi. Powód, dla którego to nie jest furtka: żeby obejść regułę tą drogą,
+trzeba by napisać „WŁAŚCICIEL ŻĄDA", co widać z odległości metra.
+
 **Rozdział źródeł, żeby te dwa języki się nie mieszały:** kolumna `uzasadnienie` w korpusie uwag
 tłumaczy klasyfikację **nam** i słusznie powołuje się na zrzuty, flagi i katalogi dowodowe —
 zostaje jak jest. Zdanie dla właściciela mieszka osobno, w `CO_DOMYKA_<data>.json`, i ma
 pierwszeństwo przy renderowaniu karty. To dwa teksty do dwóch odbiorców, nie duplikat.
+
+## ★★ REGUŁA NR 23 — miejsce importu kotwiczy się na LINII, nigdy na heurystyce (2026-09-02, po czterech wpadkach jednego dnia)
+
+Dodając import do pliku, **zakotwicz się na konkretnej, istniejącej linii importu** (podmiana
+`stara_linia` → `stara_linia + "\n" + nowy_import`) i **sprawdź składnię po każdej wstawce**.
+Nigdy „wstaw po ostatniej linii zaczynającej się od `import`" i nigdy „nie dodawaj, jeśli nazwa
+modułu już występuje w pliku".
+
+**Cztery wpadki jednego dnia, dwa różne mechanizmy:**
+
+| co zawiodło | skutek |
+| --- | --- |
+| warunek „nie dodawaj, jeśli nazwa modułu już jest w pliku" | trafił na **mój własny komentarz**, w którym ta nazwa występowała — import się nie dodał, plik się nie kompilował (2×) |
+| „wstaw po ostatniej linii zaczynającej się od `import`" | wstawił import **w środek wieloliniowego bloku** `import { … }` — plik rozbity, błąd składni „Expected »as« but found »type«" (1×) |
+| ta sama heurystyka na pliku z importami wieloliniowymi | wstawka trafiła między `import {` a pierwszą nazwę (1×) |
+
+**Dlaczego to jest reguła, a nie notatka: heurystyka WYGLĄDA na poprawną.** „Po ostatnim
+imporcie" brzmi jak opis tego, czego się chce — i jest nim w 90% plików. Uważność tego nie łapie,
+bo nie ma czego zauważyć aż do momentu, w którym plik przestaje się kompilować. Łapie to
+**wyłącznie kontrola po fakcie**: `npx esbuild --outfile=/dev/null <plik>` po każdej wstawce,
+zanim pójdzie się dalej.
+
+**Ta sama rodzina co reguła 15 („bramka mechaniczna, nie uważność") i reguła 21 („dwa bezpieczniki
+z jednego źródła"):** wszystkie trzy mówią, że narzędzie, które wygląda na poprawne, jest
+groźniejsze od narzędzia, które widocznie zawodzi.

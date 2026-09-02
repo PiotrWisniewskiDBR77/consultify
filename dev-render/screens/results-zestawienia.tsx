@@ -44,6 +44,7 @@ import {
 } from '../../src/components/ResultsVNext/resultsDomainNavigation';
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '../../src/components/standard';
 import { StatusChip } from '../../src/components/ui/primitives';
+import { liczebnik } from '../../src/utils/liczebnik';
 
 // ==========================================================================
 // Mock — zestawienia okresowe (poziom 1). itemCount/distribution mirrorują
@@ -145,12 +146,13 @@ const PERIOD_STATUS_TONE: Record<PeriodStatus, 'success' | 'neutral'> = {
   closed: 'neutral',
 };
 
+/**
+ * Odmiana liczebnika — WSPÓLNA funkcja `liczebnik()` (`src/utils/liczebnik.ts`),
+ * nie lokalna kopia. Do 2026-09-02 ten plik miał własną, trzecią implementację
+ * tej samej reguły CLDR obok `liczebnik()` i natywnego `_one/_few/_many` i18next.
+ */
 function pluralizeWskaznik(n: number): string {
-  if (n === 1) return 'wskaźnik';
-  const lastDigit = n % 10;
-  const lastTwo = n % 100;
-  if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return 'wskaźniki';
-  return 'wskaźników';
+  return liczebnik(n, ['wskaźnik', 'wskaźniki', 'wskaźników']);
 }
 
 function formatDatePl(value: string): string {
@@ -210,15 +212,21 @@ function buildColumns(): TableColumn[] {
     {
       id: 'owner',
       label: 'Właściciel',
-      width: '130px',
+      width: '120px',
       render: (row: ZestawienieRow) => (
         <span className="text-sm text-c-text-secondary">{row.owner}</span>
       ),
     },
     {
+      // 2026-09-02 (rodzina ucięć): 90 px to MNIEJ niż podłoga czytelności
+      // `FIT_MIN_COLUMN_WIDTH` (112 px) z FilterableTable — po odjęciu `px-4`
+      // zostawało ~58 px, a odmieniony wyraz („wskaźniki", „wskaźników") ma ~65 px,
+      // więc komórka rozrywała go w połowie („3 wskaźnik / i"). Budżet odzyskany
+      // z kolumn `owner` i `updatedAt` (po -10 px), żeby suma nie przekroczyła
+      // realnego obszaru tabeli z otwartym podglądem (~981 px).
       id: 'itemCount',
       label: 'Wskaźniki',
-      width: '90px',
+      width: '120px',
       align: 'right',
       sortable: true,
       render: (row: ZestawienieRow) => (
@@ -236,7 +244,7 @@ function buildColumns(): TableColumn[] {
     {
       id: 'updatedAt',
       label: 'Zaktualizowano',
-      width: '130px',
+      width: '120px',
       sortable: true,
       render: (row: ZestawienieRow) => (
         <span className="text-sm text-c-text-muted">{formatDatePl(row.updatedAt)}</span>

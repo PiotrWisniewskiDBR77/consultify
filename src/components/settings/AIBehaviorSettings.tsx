@@ -330,7 +330,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           {/* Tone & Communication */}
           <div>
             <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
-              <Sparkles size={14} className="text-c-accent" />
+              <Sparkles size={14} className="text-c-text-secondary" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

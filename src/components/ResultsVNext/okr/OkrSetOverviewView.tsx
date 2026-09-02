@@ -56,6 +56,7 @@ import {
   gateRequestChanges,
   gateSubmit,
 } from './okrWorkspaceMappers';
+import { useOrganizationMemberNames } from '../useOrganizationMemberNames';
 
 export interface OkrSetOverviewViewProps {
   set: OkrSetDto;
@@ -74,6 +75,14 @@ const GHOST_BUTTON = `${ACTION_BUTTON_BASE} border-c-border bg-transparent text-
 const DANGER_BUTTON = `${ACTION_BUTTON_BASE} border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200`;
 
 export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isPolish, currentUserId, onSetChanged }) => {
+  // Nazwisko zamiast identyfikatora — wspolny hak, to samo zrodlo co rejestr.
+  // Gdy listy czlonkow nie ma (konto usuniete, brak organizacji w kontekscie),
+  // pokazujemy skrocony identyfikator monospace'em — uczciwie, bez zgadywania.
+  const resolveMemberName = useOrganizationMemberNames();
+  const osoba = (userId: string) => {
+    const nazwa = resolveMemberName(userId);
+    return nazwa ? <span>{nazwa}</span> : <span className="font-mono">{shortOkrId(userId)}</span>;
+  };
   const [pending, setPending] = useState<PendingAction>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -102,8 +111,8 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
   const rows: ArtifactPropertyRow[] = [
     { id: 'status', label: isPolish ? 'Status' : 'Status', value: <StatusChip label={okrSetStatusLabel(set.status, isPolish)} tone={OKR_SET_STATUS_TONE[set.status]} /> },
     { id: 'scope', label: isPolish ? 'Zasięg' : 'Scope', value: okrSetScopeLabel(set.scopeType, isPolish) },
-    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: <span className="font-mono">{shortOkrId(set.ownerUserId)}</span> },
-    { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: <span className="font-mono">{shortOkrId(set.reviewerUserId)}</span> },
+    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: osoba(set.ownerUserId) },
+    { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: osoba(set.reviewerUserId) },
     {
       id: 'progress',
       label: isPolish ? 'Postęp ogólny' : 'Overall progress',

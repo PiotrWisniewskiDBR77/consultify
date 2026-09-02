@@ -143,10 +143,11 @@
           "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
-            "Kolumny dostawały szerokość 26px zamiast 26% (parsePx zjadał znak procentu) — słowa łamały się w środku: „Krytyczn/y\", „Wykona…\". Naprawione U ŹRÓDŁA w FilterableTable + 12 plikach konsumentów. POZOSTAJE: „Ostrzeżenie\" i „Interpretacja\" nadal łamią się w środku — luka w samym mechanizmie klamrowania, poza bezpiecznym zakresem tej naprawy (2026-09-02)"
+            "Kolumny dostawały szerokość 26px zamiast 26% (parsePx zjadał znak procentu) — słowa łamały się w środku: „Krytyczn/y\", „Wykona…\". Naprawione U ŹRÓDŁA w FilterableTable + 12 plikach konsumentów. POZOSTAJE: „Ostrzeżenie\" i „Interpretacja\" nadal łamią się w środku — luka w samym mechanizmie klamrowania, poza bezpiecznym zakresem tej naprawy (2026-09-02)",
+            "2 września: słowa przestały pękać w połowie. W kolumnie Źródło stoi całe „Interpretacja AI\" (było „Interpretac / ja AI\"), w kolumnie Waga całe „Ostrzeżenie\" (było „Ostrzeżeni / e\"). Naprawione tak, żeby to samo obowiązywało na KAŻDEJ tabeli w aplikacji, nie tylko na tym ekranie."
           ],
           "wyjatki": [
-            "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
+            "Wyjątek nazwany PRZED spojrzeniem: kolumna Sygnał nadal jest wąska i tytuły zawijają się na trzy linie — ale już wyłącznie na spacjach, nigdy w środku wyrazu. Podpis pod tytułem kończy się wielokropkiem."
           ],
           "gdzie": "Czat → panel sygnałów w oknie rozmowy z Teresą (ChatSignalsPanel wewnątrz UnifiedChatPanel) — strumień zdarzeń z całej apki (opóźnione zadania, zablokowane decyzje, przekroczone KPI/budżet), pogrupowanych wg wagi."
         },
@@ -1308,7 +1309,9 @@
           "ocena": "A",
           "co": "ExecutionWorkSurface, StandardTable, bogate dane review.",
           "naprawione": [
-            "01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/)."
+            "01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/).",
+            "2 września: w panelu po prawej stoi „1 powiązany dowód\" zamiast „1 powiązanych dowodów\".",
+            "2 września: nazwiska pisane jak nazwiska — „Anna Kowalska\", „Piotr Wiśniewski\", „Katarzyna Wójcik\" z polskimi znakami i z wielkiej litery. Wcześniej tabela pisała „anna kowalska\", a panel obok „Anna Kowalska\" — ten sam człowiek, dwa zapisy, jeden ekran."
           ],
           "wyjatki": [],
           "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
@@ -1332,7 +1335,11 @@
           "ocena": "A",
           "co": "Tabela interwencji, czysto.",
           "naprawione": [
-            "01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/)."
+            "01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/).",
+            "2 września: w sekcji Powiązania zniknęło słowo „undefined\", które wyciekało zamiast nazwy. Stoi tam teraz „Bez zmian: Nie zmieniaj planu\" i „Działanie: Równoległa walidacja obu źródeł\".",
+            "2 września: przy każdej opcji pisze po polsku, jak bardzo jest pewna i czy da się ją cofnąć — „Wysoka pewność · Odwracalna\" zamiast „HIGH · HIGH\".",
+            "2 września: nazwiska pisane jak nazwiska — „Piotr Wiśniewski\" z polskim znakiem, a nie „piotr wisniewski\". Ten sam człowiek wyglądał inaczej w tabeli niż w panelu obok.",
+            "2 września: pigułka pod tytułem pisze „Wybrana opcja: Równoległa walidacja obu źródeł\" zamiast wewnętrznego kodu „parallel-validation\"."
           ],
           "wyjatki": [],
           "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
@@ -1343,7 +1350,8 @@
           "ocena": "B",
           "co": "Zmierzony tylko podwidok KPI.",
           "naprawione": [
-            "01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/)."
+            "01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/).",
+            "2 września: w tabeli „Śledzenie KPI\" liczba i jednostka są rozdzielone — „8 dni\", „12 dni\", „6 dni\" zamiast „8dni\", „12dni\", „6dni\". Wiersze z procentami zostały bez zmian („74%\"), bo tam spacja byłaby błędem. Ta sama zasada obowiązuje teraz wszędzie, gdzie pokazujemy liczbę z jednostką."
           ],
           "wyjatki": [
             "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji)."
@@ -1355,7 +1363,9 @@
           "nazwa": "„Summary one-look” (chromeless, za flagą summaryOneLook)",
           "ocena": "B",
           "co": "Chromeless summary one-look.",
-          "naprawione": [],
+          "naprawione": [
+            "2 września: liczby mówią po polsku. Kafel „Do rozstrzygnięcia\" pisze „1 pozycja\" i „1 bloker\" zamiast „1 pozycji\" i „1 blokery\". Tak samo poprawione liczniki na sąsiednich kaflach: „0 ryzyk\", „0 osób\"."
+          ],
           "wyjatki": [
             "Flaga ma komentarz „Default OFF do akceptu Piotra”, a logika (executionFeatureFlags.ts:115) włącza ją wszędzie poza public-prod — sprzeczność typu DEC-317, DO WYJAŚNIENIA z właścicielem (zob. zgłoszenie #11 do toru funkcji)."
           ],
@@ -1430,7 +1440,9 @@
           "ocena": "A",
           "co": "Piec celow z kluczowymi rezultatami.",
           "naprawione": [
-            "Angielskie N/A zamiast N.D."
+            "Angielskie N/A zamiast N.D.",
+            "2 września: przycisk „Anuluj\" w panelu po prawej przestał być różowy. Anulowanie celu to nie skasowanie danych, więc przycisk wygląda tak samo jak „Edytuj\" obok.",
+            "2 września: kolumna z osobą odpowiedzialną i panel po prawej pokazują nazwiska („Anna Kowalska\", „Tomasz Nowak\") zamiast wewnętrznych identyfikatorów. Nazwiska biorą się z prawdziwej listy osób w organizacji — nie zgadujemy ich, a gdy kogoś na liście nie ma, uczciwie pokazujemy skrót zamiast wymyślać."
           ],
           "wyjatki": [
             "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie",
@@ -1513,7 +1525,8 @@
           "ocena": "A",
           "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
           "naprawione": [
-            "Pigulka ucinana w kolumnie UWAGA"
+            "Pigulka ucinana w kolumnie UWAGA",
+            "2 września: kolumna z osobą odpowiedzialną pokazuje nazwiska („Piotr Wiśniewski\", „Anna Kowalska\", „Tomasz Nowak\"), a nie wewnętrzne identyfikatory. Ten ekran umiał to od dawna — brakowało mu tylko listy osób na naszym stanowisku podglądowym."
           ],
           "wyjatki": [
             "Nagłówek „PEW\" NIE jest uciętym tekstem — zmierzone na żywym DOM: pełne słowo „Pewność\" mieści się w swoim boksie, zasłania je przypięta kolumna akcji (sticky). Naprawa wymaga mechanizmu chowania kolumn, czyli decyzji o priorytecie kolumn — poza wyglądem (2026-09-02)"
@@ -1634,7 +1647,8 @@
           "naprawione": [
             "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
             "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
-            "Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji"
+            "Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji",
+            "2 września: kolumna Wskaźniki poszerzona — liczba i słowo mieszczą się w całości („1 wskaźnik\", „3 wskaźniki\", „10 wskaźników\"). Wcześniej słowo pękało na „wskaźnik / i\". Odmiana liczy się teraz tą samą regułą co w reszcie aplikacji, nie własną kopią."
           ],
           "wyjatki": [
             "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
@@ -2613,7 +2627,9 @@
           "nazwa": "Centrum dowodzenia",
           "ocena": "A",
           "co": "Zrodla danych nazwane, zero nagich zer.",
-          "naprawione": [],
+          "naprawione": [
+            "2 września: kafel Retencja pisze „5 harmonogramów\" zamiast „5 harmonogram(ów)\" — nawiasowa końcówka zniknęła."
+          ],
           "wyjatki": [],
           "gdzie": "„Panel Administratora\" (lewe menu główne, widoczne tylko dla ról Admin/Owner/SuperAdmin) → wewnątrz panelu lewy pasek grup → grupa „Centrum administracyjne\" → zakładki „Audyt SOC2\" / „DLP\" / „Rezydencja danych\" / „Retencja\" / „Polityka AI\" (adres /admin/command/audit itd.), sprawdzone klikiem (src/components/Admin/adminNavigation.ts:175-188, src/views/admin/AdminSettingsModule.tsx). Sam ekran ma własny widoczny nagłówek „Centrum dowodzenia\" — inna nazwa niż etykieta w menu, stąd zamieszanie właściciela. UWAGA: w kodzie ta sekcja bywa nazywana „Trust & Control\" (src/utils/commandCenterFlag.ts) — ten napis NIGDZIE nie pojawia się w interfejsie, to wyłącznie żargon deweloperski. Bez flag: gejtująca flaga commandCenterFlag.ts istnieje, ale jej funkcja isCommandCenterEnabled() nie ma dziś ŻADNEGO wołającego w kodzie — sekcja jest zawsze widoczna, flaga jest martwa (fantom bez efektu)."
         },
@@ -3226,7 +3242,9 @@
           "nazwa": "Przegląd",
           "ocena": "A",
           "co": "Kafle-linki + 5 kafli compliance.",
-          "naprawione": [],
+          "naprawione": [
+            "2 września: kafel Retencja pisze „5 harmonogramów\" zamiast „5 harmonogram(ów)\" — nawiasowa końcówka zniknęła."
+          ],
           "wyjatki": [],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Przegląd”. Zrzuty: evidence/grafika/146-admin-command/."
         },
@@ -3323,8 +3341,10 @@
           "id": "admin-command-retention",
           "nazwa": "Retencja",
           "ocena": "A",
-          "co": "Retencja. Crimson poprawny (akcja nieodwracalna).",
-          "naprawione": [],
+          "co": "Retencja. Przycisk wykonania jest neutralny — ostrzeżenie o nieodwracalności niesie okno potwierdzenia, nie kolor.",
+          "naprawione": [
+            "2 września: przycisk „Wykonaj retencję teraz\" przestał być krwistoczerwony — wygląda tak samo jak sąsiedni „Zainicjuj harmonogramy\". Ostrzeżenie o tym, że operacji nie da się cofnąć, zostało tam, gdzie jest potrzebne: w oknie potwierdzenia po kliknięciu."
+          ],
           "wyjatki": [],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Retencja”. Zrzuty: evidence/grafika/146-admin-command/."
         },
@@ -3333,7 +3353,9 @@
           "nazwa": "Polityka AI",
           "ocena": "A",
           "co": "Polityka AI.",
-          "naprawione": [],
+          "naprawione": [
+            "2 września: sekcja niestandardowych reguł pisze „skonfigurowano 0 reguł.\" zamiast „0 reguł(y)\"."
+          ],
           "wyjatki": [],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Polityka AI”. Zrzuty: evidence/grafika/146-admin-command/."
         },
@@ -3690,10 +3712,12 @@
           "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
           "naprawione": [
             "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione.",
-            "Lista kroków pokazywała 5× surowe „pending\" — status kroku nie był w ogóle tłumaczony (2026-09-02)"
+            "Lista kroków pokazywała 5× surowe „pending\" — status kroku nie był w ogóle tłumaczony (2026-09-02)",
+            "2 września: przycisk „Anuluj\" w panelu po prawej przestał być różowy. Zatrzymanie procesu to nie jest skasowanie danych, więc przycisk jest neutralny."
           ],
           "wyjatki": [
-            "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
+            "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego",
+            "Wyjątek nazwany PRZED spojrzeniem: trzy nagłówki kolumn („ZAPLANOW…NA\", „OSTATNIE URUCHOMI…\", „CZAS WYKONANIA\") i pięć wartości w kolumnie Status („Planow…\", „Zaplan…\", „Zakońc…\", „Nieuda…\", „Czeka …\") kończą się wielokropkiem — nie mieszczą się w kolumnach. To osobna sprawa, nie ta naprawa."
           ],
           "gdzie": "Moja praca → zakładka Agent → wejście — wspólna przestrzeń pracy: Teresa przygotowuje pracę, Moja praca przechowuje kanoniczne Sprawy i Przebiegi (dwie pod-zakładki: „Moje procesy\" i „Szablony\"); akcepty, wyniki, historia i odzyskiwanie w jednym miejscu."
         }
@@ -3766,13 +3790,16 @@
         {
           "id": "mw-007-calendar-narrow-viewport",
           "nazwa": "Kalendarz przy waskim ekranie",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Realny kalendarz Mojej pracy.",
           "naprawione": [
             "CRIMSON w czterech miejscach: aktywna zakladka Miesiac, dzien dzisiejszy, link do integracji, aktywny filtr",
-            "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok"
+            "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok",
+            "2 września: podpowiedź pod kalendarzem pisze „Wybrany dzień ma 1 pozycję.\" zamiast „1 pozycji\"."
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "Wyjątek nazwany PRZED spojrzeniem: podpis wydarzenia na kafelku 2 września jest nadal po angielsku („Internal\"). To osobna sprawa językowa, nie ta naprawa — ocena obniżona z A na B, żeby nie umknęła."
+          ],
           "gdzie": "Moja praca → zakładka Kalendarz — ten sam realny kalendarz, pokazany przy wąskim oknie/ekranie (test responsywności)."
         },
         {
@@ -4048,10 +4075,11 @@
           "ocena": "B",
           "co": "Kontrola danych: 5 przełączników zgód (Analityka użycia ON, Personalizacja ON, Komunikacja marketingowa OFF, Udostępnianie danych stronom trzecim OFF, Trenowanie modeli AI OFF) + pigułki retencji danych (30 dni / 90 dni / 6 miesięcy / 1 rok wybrane / Bezterminowo).",
           "naprawione": [
-            "Baner „Zgodność z GDPR\" (treść pozytywna) był czerwony — teraz zielony; zaznaczony okres retencji przestał mieć czerwoną ramkę w ciemnym motywie (2026-09-02)"
+            "Baner „Zgodność z GDPR\" (treść pozytywna) był czerwony — teraz zielony; zaznaczony okres retencji przestał mieć czerwoną ramkę w ciemnym motywie (2026-09-02)",
+            "2 września: ikony przy nagłówkach „Zarządzanie zgodami\" (tarcza) i „Retencja danych\" (zegar) są szare, nie malinowe."
           ],
           "wyjatki": [
-            "ZNANE ZGŁOSZENIE: crimson dekoracyjny — baner 'Zgodność z GDPR' i kilka ikon sekcji (tarcza, zegar) w kolorze crimson, mimo że to treść informacyjna, nie stan krytyczny."
+            "Wyjątek nazwany PRZED spojrzeniem: została JEDNA czerwień — kwadratowa ikonka bazy danych w lewym górnym rogu karty „Kontrola danych\". Ta sama ikonka stoi w nagłówku KAŻDEJ karty ustawień (23 ekrany), więc jej zdjęcie zmieni cały moduł naraz. Pytanie do Ciebie: zostawić czy zdjąć?"
           ],
           "gdzie": "Ustawienia → grupa DATA & PRIVACY → Kontrola danych. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
         },

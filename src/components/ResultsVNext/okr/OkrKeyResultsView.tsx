@@ -33,6 +33,7 @@ import {
 } from './okrObjectiveApi';
 import { getOkrSetChildEditLock } from './okrObjectiveMappers';
 import { buildOkrKeyResultColumns, buildOkrKeyResultPreview, buildOkrKeyResultRowMenu } from './okrKeyResultPresenters';
+import { useOrganizationMemberNames } from '../useOrganizationMemberNames';
 import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrKeyResultFormModal, type OkrKeyResultFormValues } from './OkrKeyResultFormModal';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -60,6 +61,7 @@ export interface OkrKeyResultsViewProps {
 }
 
 export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objectiveId, isPolish, breadcrumbs, onOpenCheckIns }) => {
+  const resolveMemberName = useOrganizationMemberNames();
   const [objective, setObjective] = useState<OkrObjectiveWithKeyResultsDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -205,7 +207,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
           },
         }}
         table={{
-          columns: buildOkrKeyResultColumns(isPolish, set.status),
+          columns: buildOkrKeyResultColumns(isPolish, set.status, resolveMemberName),
           data: rows,
           // D09 fix — see OkrObjectivesView.tsx's identical note. Was
           // `results-vnext.okr-key-results.${objectiveId}` (OQ-UI-H).
@@ -238,6 +240,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
         preview={
           selected
             ? buildOkrKeyResultPreview(selected, {
+                resolveMemberName,
                 isPolish,
                 parentSetStatus: set.status,
                 onClose: () => setSelectedKeyResultId(null),

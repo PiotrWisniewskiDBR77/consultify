@@ -52,6 +52,7 @@ import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import RolloutBaselinePanel from './RolloutBaselinePanel';
 import { type RolloutEditTarget, RolloutRegisterEditModal } from './RolloutRegisterEditModal';
 import RolloutStagesPanel from './RolloutStagesPanel';
+import { zJednostka } from '@/utils/jednostka';
 
 // ── Resource shapes (mirror rollout.routes.ts response rows) ────────────────
 
@@ -705,9 +706,11 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
         const pct = progressPct(k);
         return {
           ...k,
-          current_display: `${k.current_value}${k.unit}`,
-          baseline_display: `${k.baseline}${k.unit}`,
-          target_display: `${k.target}${k.unit}`,
+          // Separator zalezy od jednostki: slowo dostaje spacje ('8 dni'),
+          // symbol przykleja sie ('74%'). Patrz src/utils/jednostka.ts.
+          current_display: zJednostka(k.current_value, k.unit),
+          baseline_display: zJednostka(k.baseline, k.unit),
+          target_display: zJednostka(k.target, k.unit),
           progress_pct: pct,
           below_baseline: k.current_value < k.baseline,
         };
@@ -1391,21 +1394,18 @@ const DerivedKpiGrid: React.FC<{
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <KpiCell label={t('execution.rollout.kpi.baseline', 'Baseline')}>
-            {kpi.baseline}
-            {kpi.unit}
+            {zJednostka(kpi.baseline, kpi.unit)}
           </KpiCell>
           <div className="border-x border-slate-200 dark:border-navy-700">
             <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
               {t('execution.rollout.kpi.current', 'Current')}
             </div>
             <div className="font-mono font-bold text-xl text-slate-800 dark:text-white tabular-nums">
-              {kpi.current_value}
-              {kpi.unit}
+              {zJednostka(kpi.current_value, kpi.unit)}
             </div>
           </div>
           <KpiCell label={t('execution.rollout.kpi.target', 'Target')}>
-            {kpi.target}
-            {kpi.unit}
+            {zJednostka(kpi.target, kpi.unit)}
           </KpiCell>
         </div>
       </div>

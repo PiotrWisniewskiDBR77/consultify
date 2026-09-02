@@ -37,6 +37,7 @@ import {
 } from './okrObjectiveApi';
 import { getOkrSetChildEditLock } from './okrObjectiveMappers';
 import { buildOkrObjectiveColumns, buildOkrObjectivePreview, buildOkrObjectiveRowMenu } from './okrObjectivePresenters';
+import { useOrganizationMemberNames } from '../useOrganizationMemberNames';
 import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrObjectiveFormModal, type OkrObjectiveFormValues } from './OkrObjectiveFormModal';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -63,6 +64,9 @@ export interface OkrObjectivesViewProps {
 }
 
 export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPolish, breadcrumbs, onOpenKeyResults }) => {
+  // Nazwisko zamiast identyfikatora — wspolny hak, ten sam zrodlo danych
+  // co rejestr zestawow (realna lista czlonkow organizacji).
+  const resolveMemberName = useOrganizationMemberNames();
   const [objectives, setObjectives] = useState<OkrObjectiveWithKeyResultsDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +201,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
           },
         }}
         table={{
-          columns: buildOkrObjectiveColumns(isPolish, set.status),
+          columns: buildOkrObjectiveColumns(isPolish, set.status, resolveMemberName),
           data: rows,
           // D09 (task brief, 2026-08-11): persistKey is per SURFACE, never per
           // record id — a `${set.setId}` suffix here would (a) not carry
@@ -236,6 +240,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
         preview={
           selected
             ? buildOkrObjectivePreview(selected, {
+                resolveMemberName,
                 isPolish,
                 parentSetStatus: set.status,
                 onClose: () => setSelectedObjectiveId(null),

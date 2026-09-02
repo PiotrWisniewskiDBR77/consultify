@@ -8,6 +8,35 @@
 export const executionLocalReviewEnabled =
   import.meta.env.DEV && import.meta.env.MODE !== 'test';
 
+/**
+ * KATALOG OSÓB — dane demo są twarzą produktu (CLAUDE.md), a właściciel pokazuje
+ * te ekrany klientom.
+ *
+ * Dlaczego katalog, a nie poprawka w prezenterze: rekordy niosą IDENTYFIKATORY
+ * (`anna-kowalska`, `piotr-wisniewski`) i to jest poprawne — identyfikator nie
+ * ma prawa mieć polskich znaków. Cztery powierzchnie Realizacji robiły z niego
+ * nazwisko WŁASNĄ zamianą myślnika na spację, każda inaczej: tabela „Praca"
+ * pisała `anna kowalska` z małej litery, a panel obok — na TYM SAMYM ekranie —
+ * `Anna Kowalska`. I żadna zamiana znaków nie odtworzy `Wiśniewski` z
+ * `wisniewski` ani `Wójcik` z `wojcik`: diakrytyk MUSI przyjść z danych.
+ *
+ * Dowód, że to jest właściwe miejsce: `assigneeName: 'Katarzyna Wójcik'` istniało
+ * w tym pliku już wcześniej — ale tylko przy trzech osobach i tylko na jednym
+ * typie rekordu, więc reszta ekranów go nie widziała. Ten katalog domyka komplet.
+ */
+export const executionReviewPeople: Record<string, string> = {
+  'anna-kowalska': 'Anna Kowalska',
+  'marek-nowak': 'Marek Nowak',
+  'ewa-nowicka': 'Ewa Nowicka',
+  'piotr-wisniewski': 'Piotr Wiśniewski',
+  'katarzyna-wojcik': 'Katarzyna Wójcik',
+  'tomasz-lewandowski': 'Tomasz Lewandowski',
+  'omar-haddad': 'Omar Haddad',
+  'lena-meyer': 'Lena Meyer',
+  'execution-manager': 'Execution Manager',
+  'controls-engineer': 'Controls Engineer',
+};
+
 export const executionReviewCases = [
   {
     executionCaseId: 'review-exec-supply-chain',
@@ -246,9 +275,18 @@ export const executionReviewInterventions = [
     evidenceRefs: ['signal-demand-model-delay@2', 'forecast-source-comparison@1'],
     counterEvidenceRefs: [], unknowns: ['Czy dostawca danych usunie rozbieżność do 25 sierpnia?'],
     blastRadiusRefs: ['task-demand-model', 'milestone-pilot-ready'],
+    // KSZTAŁT SERWERA, nie kształt wygodny dla frontu (2026-09-02).
+    // Do dziś te dwie opcje NIE miały pola `kind`, a `reversibility` niosło
+    // wartości `'HIGH'`/`'MEDIUM'`, których kontrakt `InterventionOption`
+    // (server/src/domain/initiatives-execution/managementIntervention.ts:32)
+    // nie zna. Skutek widoczny na ekranie „Sterowanie": panel POWIĄZANIA
+    // składa etykietę jako `${option.kind}: ${option.label}` i wypisywał
+    // literalne „undefined: Nie zmieniaj planu". Poprawny wzorzec stał
+    // w TYM SAMYM module 80 linii wyżej (ExecutionControlSurface.tsx:462 —
+    // `kind: 'DO_NOTHING'` / `kind: 'ACTION'`); atrapa go nie miała.
     options: [
-      { optionId: 'do-nothing', label: 'Nie zmieniaj planu', impacts: ['Ryzyko opóźnienia pilotażu o 4–7 dni'], confidence: 'HIGH', reversibility: 'HIGH' },
-      { optionId: 'parallel-validation', label: 'Równoległa walidacja obu źródeł', impacts: ['Dodatkowe 10 h pracy', 'Skrócenie opóźnienia o 3 dni'], confidence: 'MEDIUM', reversibility: 'HIGH' },
+      { optionId: 'do-nothing', kind: 'DO_NOTHING', label: 'Nie zmieniaj planu', impacts: [{ targetRef: 'milestone-pilot-ready', effect: 'Ryzyko opóźnienia pilotażu o 4–7 dni' }], confidence: 'HIGH', reversibility: 'REVERSIBLE' },
+      { optionId: 'parallel-validation', kind: 'ACTION', label: 'Równoległa walidacja obu źródeł', impacts: [{ targetRef: 'task-demand-model', effect: 'Dodatkowe 10 h pracy' }, { targetRef: 'milestone-pilot-ready', effect: 'Skrócenie opóźnienia o 3 dni' }], confidence: 'MEDIUM', reversibility: 'PARTIALLY_REVERSIBLE' },
     ], selectedOptionId: 'parallel-validation',
   },
   {

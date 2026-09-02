@@ -283,7 +283,11 @@ export const CommandCenterRetentionTab: React.FC = () => {
               type="button"
               onClick={() => void handleExecute()}
               disabled={executing || schedules.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg bg-c-danger px-3 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
+              // KANON KOLORU (CLAUDE.md UI#3): crimson wyłącznie dla sytuacji KRYTYCZNEJ.
+              // „Wykonaj retencję teraz" jest akcją nieodwracalną, ale nie krytycznym
+              // STANEM — ostrzeżenie niesie okno potwierdzenia (`confirm({ variant: 'danger' })`
+              // w `handleExecute` poniżej), nie kolor przycisku. Przycisk zostaje neutralny.
+              className="inline-flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm font-medium text-c-text hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
             >
               {executing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

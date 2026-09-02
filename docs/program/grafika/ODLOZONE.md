@@ -512,3 +512,201 @@ Znalezione też dwie starsze, lokalne funkcje odmiany: `odmienNapiecia()`
 (`src/toolOutputs/buildSwotOutput.ts:203`) i `polskaOdmianaKolumn()`
 (`src/components/assessment/drd/DRDMatrixReadOnly.tsx:55`) — kandydaci do zastąpienia
 przy okazji, żeby nie zostały cztery sposoby na tę samą rzecz.
+
+---
+
+## Grupa: liczebnik — klasa B po domknięciu klasy A (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Sprostowanie liczby z wpisu powyżej.** Tamten wpis mówił „156 kluczy w `translation.json`
+z `{{count}}` przy rzeczowniku" i „207 kluczy używa `_one/_few/_many/_other`". Zmierzone dziś
+własnym skryptem przechodzącym CAŁY plik `pl/translation.json`: **kluczy do naprawy było 314,
+nie 156**, a kluczy z natywnym mechanizmem było **285, nie 207**. Nie podważam tamtej roboty —
+podaję liczby, bo na 156 partia wygląda na jednodniową, a na 314 nie.
+
+**Zrobione dzisiaj (nie odkładam):** cała **klasa A — 16 kluczy z protezą w nawiasie**
+(`harmonogram(ów)`, `reguł(y)`, `blok(ów)`, `task(ów)`, `zależnoś(ć)`, `program(ów)`, `karta(y)`,
+`uwag(a)`, `cykl(i)`, `element(y)`, `wiersz(y)`, `plik(ów)`, `komentarz(y)`, `ostrzeżenie(a)` ×2,
+`reguł(y)` ×2). Nawias to był sygnał, że autor **wiedział** o problemie i go ominął — dlatego
+poszedł pierwszy. **Po naprawie klasa A = 0.**
+
+| co zostaje | ile |
+| --- | --- |
+| klucze `{{count}} + rzeczownik` bez rodziny `_one/_few/_many/_other` | **296** |
+| klucze, które JUŻ mają rodzinę mnogą (stan po dzisiejszej partii) | **361** |
+| klucze z nawiasem RODZAJU (`Podpisał(a)`, `Zatwierdził(a)`, `Zgłosił(a)`, `utworzył(a)`, `zaktualizował(a)`, `Rozwiązał(a)`) | 6 — **NIE są defektem**, to poprawna polska konwencja; nie ruszać |
+
+**Dlaczego martwe / czemu odłożone:** żaden z 296 nie jest widoczny na 12 ekranach zlecenia
+„trzy rodziny". Zmiana dotyka dwóch plików zbiorczych (`pl` + `en` `translation.json`), a każdy
+klucz wymaga decyzji o trzech formach — to partia mierzalna, nie doklejka.
+
+**Co niosły wartościowego:** komplet jest policzalny i sprawdzalny jednym poleceniem, więc partia
+ma twardą bramkę wejścia i wyjścia (296 → 0).
+
+**Jak przywrócić / jak to zrobić:** skrypt pomiarowy, którym zmierzono te liczby, jest w raporcie
+`docs/program/grafika/TRZY_RODZINY_20260902.md` (klasa A = regex nawiasu przy zmiennej,
+klasa B = `{{count|value|totalItems}} + [a-ząćęłńóśźż]{3,}` bez rodzeństwa z sufiksem).
+Kolejność naprawy sprawdzona dziś na 19 kluczach: (1) w `pl` zamień klucz na cztery
+`_one/_few/_many/_other`, (2) w `en` na dwa `_one/_other`, (3) **sprawdź wołacza — i18next
+pluralizuje WYŁĄCZNIE po zmiennej `count`**; wołacz przekazujący `{{totalItems}}`/`{{warnings}}`
+musi dostać `count` (dwa takie były: `CalendarView.tsx`, `TemplateBuilder.tsx`).
+
+**Trzeci mechanizm — jeden usunięty, dwa zostają.** `pluralizeWskaznik()` w
+`dev-render/screens/results-zestawienia.tsx` (lokalna kopia reguły CLDR) została dziś zastąpiona
+wywołaniem `liczebnik()`. Nadal żyją: `odmienNapiecia()` (`src/toolOutputs/buildSwotOutput.ts:203`)
+i `polskaOdmianaKolumn()` (`src/components/assessment/drd/DRDMatrixReadOnly.tsx:55`).
+
+---
+
+## Grupa: kolumny węższe niż podłoga czytelności (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Zmierzone: 180 kolumn w 76 plikach** (`src/` + `dev-render/`) deklaruje `width` poniżej
+`FIT_MIN_COLUMN_WIDTH` (112 px) — rozkład: 82 × 110 px, 40 × 100 px, 34 × 90 px, 8 × 80 px,
+4 × 70 px, 4 × 60 px oraz pojedyncze 18/26/44/48 px.
+
+**Dlaczego NIE podniesione hurtem — decyzja, nie zaniechanie.** Kanon mówi wprost, w komentarzu
+przy `FIT_MIN_COLUMN_WIDTH`: *„podłoga nigdy nie ROZPYCHA, tylko ogranicza kurczenie"*. Podniesienie
+tych 180 kolumn do 112 px przepchnęłoby dziesiątki tabel ponad realny obszar, `columnFit` skalowałby
+je proporcjonalnie w dół, a skutkiem byłaby regresja na ekranach z akceptem właściciela. Cena jest
+wyższa niż zysk.
+
+**Co niosło wartościowego:** ta lista jest gotowym rankingiem ryzyka „tekst nie mieści się w
+kolumnie" — kolumny 18/26/44/48 px to niemal na pewno defekty, a nie decyzje projektowe, i warto
+je obejrzeć w pierwszej kolejności.
+
+**Jak przywrócić:** pomiar jednym poleceniem —
+`grep -rhoE "width: '[0-9]{1,3}px'" src/ dev-render/ | grep -oE '[0-9]+' | awk '$1<112' | sort -n | uniq -c`.
+Po naprawie z 02.09 (warstwa `CELL_ELEMENT_WRAP_CLASS` w `FilterableTable`) wąska kolumna
+**nie rozrywa już wyrazu** — najgorszym skutkiem jest zawinięcie na spacji, więc sprawa przestała
+być pilna i może iść ekran po ekranie, z akceptem.
+
+---
+
+## Grupa: crimson w ikonie nagłówka karty ustawień (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+`src/components/settings/shared/SettingsSection.tsx:141-142` rysuje kafelek ikony
+(`bg-c-accent-soft` + `text-c-accent` = Harvard Crimson `#85182f`) w nagłówku **każdej** karty
+ustawień — **23 pliki** modułu ustawień.
+
+**Dlaczego odłożone, a nie naprawione razem z 21 ikonami podsekcji:** właściciel zgłosił „ikony
+zwykłych sekcji (Zarządzanie zgodami, Retencja danych)" — czyli podnagłówki, i te są naprawione.
+Kafelek nagłówka KARTY to element marki stosowany konsekwentnie w całym module; jego zdjęcie to
+restyling, którego nikt nie zlecił (REGUŁA NR 16 — reguła dopuszcza stan zastany czy nakazuje
+zmianę?). To jest pytanie „podoba się / nie podoba" na zrzucie, czyli pytanie do właściciela.
+
+**Co niesie wartościowego:** jeśli właściciel powie „zdjąć", naprawa to DWIE linie w jednym
+wspólnym pliku i obejmuje wszystkie 23 karty naraz — tanio i bez ryzyka rozjazdu.
+
+**Jak przywrócić / gdzie patrzeć:** zrzut `evidence/grafika/217-trzy-rodziny/ustawienia-dane-prywatnosc__PO__light.png`,
+lewy górny róg karty „Kontrola danych" — to jedyna czerwień, jaka na tym ekranie została.
+
+---
+
+## Grupa: odmiana jednostki przy liczbie („1 dzień" vs „1 dni") — wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`
+
+**Zrobione dzisiaj (nie odkładam):** separator. Jednostka będąca SŁOWEM dostaje spację
+(`8 dni`, `120 zł`), jednostka będąca SYMBOLEM przykleja się (`74%`, `20°`). Wspólny pomocnik
+`src/utils/jednostka.ts` + test z dowodem mutacyjnym na OBU gałęziach reguły.
+
+**Co ZOSTAJE i dlaczego to NIE jest zaniechanie.** Przy wartości `1` poprawne jest „1 dzień",
+a nie „1 dni". Separator tego nie załatwi i **nie powinien**: jednostka przychodzi z danych jako
+GOTOWY NAPIS w jednym polu `unit: 'dni'`. Odmiana wymaga trzech form (`dzień · dni · dni`),
+czyli **zmiany kontraktu wskaźnika**, a nie poprawki w prezenterze. Zrobienie tego po stronie
+prezentera oznaczałoby zgadywanie odmiany ze skróconego napisu — dokładnie ten rodzaj
+„inteligentnej" heurystyki, który w tym repozytorium już raz wyprodukował `Wiśniewski` z
+`wisniewski` (się nie da) i `1 pozycji` zamiast `1 pozycja`.
+
+**Skala:** dziś w danych demo Rolloutu jest JEDEN wskaźnik z jednostką-słowem
+(`Czas realizacji zamówienia`, `unit: 'dni'`). Pozostałe mają `%`, którego problem nie dotyczy.
+Defekt odmiany zobaczy się dopiero, gdy któryś wskaźnik osiągnie wartość `1`.
+
+**Jak to zrobić, gdy przyjdzie kolej — droga sprawdzona dziś na 19 kluczach i18n:**
+zamienić `unit: string` na `unit: string | [string, string, string]` w kontrakcie wskaźnika
+(`RolloutTab.tsx` typ `unit` linia 64 + odpowiadające pole w danych), a w `zJednostka()` dodać
+gałąź: tablica trzech form → `liczebnik(wartosc, formy)` (`src/utils/liczebnik.ts`, już istnieje
+i ma testy). Napis pojedynczy dalej działa bez zmian — zgodność wsteczna dla wszystkich
+wskaźników z `%`. **Nie wprowadzać czwartego mechanizmu odmiany** (są już: `_one/_few/_many`
+i18next, `liczebnik()`, oraz dwie stare lokalne funkcje wymienione we wpisie z 30.08).
+
+---
+
+## Grupa: nazwiska w module Wyniki — ZATRZYMANE PRZED NAPRAWĄ (wpis 2026-09-02)
+
+**Zlecenie brzmiało:** „katalog osób w źródle danych Wyników plus prezentery, które go czytają —
+tak samo jak w Realizacji". **Nie wykonałem i uważam, że wykonać nie należy.** Trzy pomiary,
+każdy osobno wystarczający, żeby się zatrzymać:
+
+**1. Źródeł jest 49, nie trzy.** Reguła zatrzymania ze zlecenia („jeśli źródeł jest więcej niż
+trzy — zatrzymaj się") uruchomiła się z zapasem. Pomiar:
+`grep -rlE "'user-(anna|marek|piotr|katarzyna|tomasz|…)[a-z-]*'"` → **49 plików, 22 różne
+identyfikatory osób**. Katalog per moduł oznaczałby kilkanaście katalogów i tę samą osobę pod
+różnymi nazwiskami w różnych modułach — stan GORSZY niż dzisiejszy.
+
+**2. Wszystkie 49 plików leży w `dev-render/`, ZERO w `src/`.** To nie są dane produktu, tylko
+atrapy harnessu. W danych już dziś widać dryf tożsamości: `user-anna` (56×), `user-anna-kowalska`
+(50×), `user-anna-kowalczyk` (10×), `user-anna-demo` (9×), `user-anna-k` (1×) — pięć
+identyfikatorów, których przypisanie do osób jest DECYZJĄ TREŚCIOWĄ, nie techniczną.
+
+**3. ★ Moduł Wyniki MA JUŻ POPRAWNY MECHANIZM — i nie jest nim katalog atrap.**
+`resolveMemberName` (`ResultsAttentionPage.tsx:112`, `ResultsRoiHub.tsx:275`) mapuje identyfikator
+na nazwisko z **REALNEJ listy członków organizacji** (`OrganizationApi.getOrganizationMembers`,
+dane już pobrane, bez nowego wywołania serwera) i uczciwie spada do skróconego identyfikatora,
+gdy członka nie ma. Komentarz przy `attentionPresenters.tsx:83` opisuje wprost tę samą lukę
+„surowe id zamiast nazwy". **To jest rodzeństwo z gotową poprawką** — dokładnie ten trop, który
+dziś zadziałał już dwa razy. Właściwą naprawą jest PODPIĘCIE istniejącego resolvera do
+prezenterów OKR, nie zbudowanie obok niego katalogu atrap.
+
+**Dlaczego mimo to nie podpiąłem tego dzisiaj — powód, który jest ważniejszy od powyższych:**
+`OkrObjectivesView.tsx` nie ma `currentOrganization` (0 wystąpień), więc podpięcie wymaga
+przeprowadzenia resolvera przez drzewo widoków OKR. A **harness OKR nie atrapuje
+`getOrganizationMembers`** — sprawdzone: w `results-vnext-okr-objectives.tsx` i
+`results-vnext-okr-registry.tsx` nie ma ani jednego mocka tego wywołania. Skutek: poprawnie
+wykonana naprawa **nie zmieniłaby nic na zrzucie** — resolver spadłby do skróconego
+identyfikatora, właściciel zobaczyłby to samo, a ja zameldowałbym naprawę bez dowodu w obrazie.
+To jest kształt „zamknięte przez wygaszenie": zielono, bo kontekst nie dociera.
+
+**Zasięg, gdy przyjdzie kolej:** 29 plików w `ResultsVNext` dotyka `ownerUserId`; **6 miejsc
+renderuje go surowo** jako komórkę właściciela (`okrObjectivePresenters.tsx:224`,
+`okrKeyResultPresenters.tsx:214`, `OkrSetOverviewView.tsx:105` + 3 dalsze).
+
+**Kolejność naprawy, gdy zapadnie decyzja:** (1) dopisz mock `getOrganizationMembers` do dwóch
+ekranów harnessu OKR — inaczej nie ma czym udowodnić; (2) pokaż, że ekran psuje się WIDOCZNIE
+(nazwiska nadal surowe mimo mocka) — dopiero to dowodzi, że defekt jest w prezenterze;
+(3) przeprowadź `resolveMemberName` do widoków OKR wzorem `ResultsAttentionPage`;
+(4) zrzut PO. Kolejność „najpierw atrapa, potem kod" — reguła 21.
+
+**Decyzja projektowa do podjęcia przez nadzorcę/właściciela:** czy `executionReviewPeople`
+(katalog 8 osób, który zrobiłem dziś dla Realizacji, bo tamten fixture nie ma listy członków
+organizacji) ma się docelowo rozpuścić w jednym wspólnym katalogu atrap harnessu, czy zostać
+lokalny. Nie rozstrzygam tego sam — to dotyka wszystkich 49 plików.
+
+---
+
+## Grupa: dryf identyfikatorów osób w stanowisku podglądowym (wpis 2026-09-02, gałąź `grafika/trzy-rodziny-20260902`)
+
+**Zmierzone:** **22 różne identyfikatory osób w 49 plikach `dev-render/`** (zero w `src/` — to
+atrapy, nie dane produktu). Ta sama osoba żyje pod wieloma identyfikatorami naraz:
+
+| identyfikator | wystąpień |
+| --- | --- |
+| `user-anna` | 56 |
+| `user-anna-kowalska` | 50 |
+| `user-anna-kowalczyk` | 10 |
+| `user-anna-demo` | 9 |
+| `user-anna-k` | 1 |
+| `user-marek` | 48 |
+| `user-marek-zielinski` | 13 |
+| `user-marek-demo` | 3 |
+| `user-marek-n` | 1 |
+
+**Właściwym wyjściem jest JEDEN wspólny zestaw osób dla całego `dev-render`** (identyfikator,
+imię i nazwisko z polskimi znakami, e-mail, rola), z którego korzystają wszystkie atrapy —
+a nie prostowanie 22 wariantów po jednym, bo to tylko przesunęłoby dryf, zamiast go usunąć.
+
+**To jest decyzja projektowa i nie wykonuję jej w tym dyżurze.** Dotyka 49 plików, a przypisanie
+„kim jest `user-anna-k`" jest rozstrzygnięciem TREŚCIOWYM (czy Kowalska i Kowalczyk to ta sama
+osoba, czy dwie), nie technicznym. Wymaga decyzji nadzorcy albo właściciela.
+
+**Co już jest gotowe i można na tym budować:** dwa lokalne zestawy zrobione dziś — `executionReviewPeople`
+(8 osób, Realizacja) i atrapa listy członków organizacji w dwóch ekranach OKR (4 osoby, kształt
+serwera `userId · email · name · role · status`). Wspólny zestaw powinien wchłonąć oba, a nie
+stanąć obok nich jako trzeci.

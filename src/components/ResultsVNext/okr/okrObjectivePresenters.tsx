@@ -14,6 +14,7 @@ import { StatusChip } from '@/components/ui/primitives';
 import { HonestValueCell } from '../HonestValue';
 import { LifecycleLockBadge } from '../LifecycleLockBadge';
 import type { OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import type { OkrMemberNameResolver } from './okrRegistryPresenters';
 import {
   canCancelObjectiveStatus,
   formatOkrDate,
@@ -32,7 +33,11 @@ import {
 // Table columns
 // ==========================================
 
-export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: string): TableColumn[] {
+export function buildOkrObjectiveColumns(
+  isPolish: boolean,
+  parentSetStatus: string,
+  resolveMemberName: OkrMemberNameResolver = () => null
+): TableColumn[] {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   return [
     {
@@ -74,11 +79,17 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       id: 'owner',
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
-      render: (row: OkrObjectiveWithKeyResultsDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
-          {shortOkrId(row.ownerUserId)}
-        </span>
-      ),
+      render: (row: OkrObjectiveWithKeyResultsDto) => {
+        const name = resolveMemberName(row.ownerUserId);
+        return (
+          <span
+            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
+            title={row.ownerUserId}
+          >
+            {name || shortOkrId(row.ownerUserId)}
+          </span>
+        );
+      },
     },
     {
       id: 'progress',
@@ -181,8 +192,15 @@ export function buildOkrObjectiveRowMenu(
 // Preview
 // ==========================================
 
+/**
+ * Nazwisko zamiast identyfikatora — ten sam kontrakt co rejestr zestawow
+ * (`okrRegistryPresenters.tsx`, gdzie dziala od wczesniej). Domyslnie `() => null`,
+ * zeby istniejacy wolacz i testy dzialaly bez zmian, a kolumna spadala uczciwie
+ * do skroconego identyfikatora, gdy listy czlonkow nie ma.
+ */
 export interface OkrObjectivePreviewDeps {
   isPolish: boolean;
+  resolveMemberName?: OkrMemberNameResolver;
   parentSetStatus: string;
   onClose: () => void;
   onOpenKeyResults: (row: OkrObjectiveWithKeyResultsDto) => void;
@@ -221,7 +239,12 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: deps.resolveMemberName?.(row.ownerUserId) || row.ownerUserId,
+          mono: !deps.resolveMemberName?.(row.ownerUserId),
+        },
         { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
         { id: 'rationale', label: isPolish ? 'Uzasadnienie' : 'Rationale', value: row.rationale ?? '—' },
         {
@@ -273,7 +296,10 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           : { id: 'edit', variant: 'neutral', label: isPolish ? 'Edytuj' : 'Edit', onClick: () => onEdit(row) },
         {
           id: 'cancel',
-          variant: 'destructive',
+          // KANON KOLORU (CLAUDE.md UI#3): „Anuluj" zatrzymuje cykl życia obiektu,
+          // nie kasuje danych — to nie jest semantyka krytyczna. Wariant `destructive`
+          // (czerwony tint `PreviewActionButton`) zostaje dla „Usuń"/„Odrzuć".
+          variant: 'neutral',
           label: isPolish ? 'Anuluj' : 'Cancel',
           onClick: () => onCancel(row),
           disabled: !!childLock || !cancelEligible,

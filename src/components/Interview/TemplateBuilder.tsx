@@ -1049,7 +1049,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
           toast(
             t('interview.templateBuilder.templateQualitySummary', {
               score: quality.averageScore,
-              warnings: quality.totalWarnings,
+              count: quality.totalWarnings,
             }),
             { icon: '⚠️', duration: 6000 }
           );

@@ -231,14 +231,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         title: t('myWork.calendarView.title4', 'Day is already heavily loaded'),
         body:
           dayLoad?.suggestion ||
-          t('myWork.calendarView.heavyLoadSuggestion', { totalItems, taskCount, decisionCount }),
+          t('myWork.calendarView.heavyLoadSuggestion', {
+            count: totalItems,
+            taskCount,
+            decisionCount,
+          }),
       };
     }
 
     return {
       variant: 'info' as const,
       title: t('myWork.calendarView.title5', 'Day is partially loaded'),
-      body: dayLoad?.suggestion || t('myWork.calendarView.partialLoadSuggestion', { totalItems }),
+      body: dayLoad?.suggestion || t('myWork.calendarView.partialLoadSuggestion', { count: totalItems }),
     };
   }, [dayLoad, dayLoadError, dayLoadLoading, t]);
 

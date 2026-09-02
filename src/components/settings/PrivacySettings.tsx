@@ -231,7 +231,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Online Status ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Eye size={14} className="text-c-accent" />
+                <Eye size={14} className="text-c-text-secondary" />
                 {t('settings.privacy.statusTitle', 'Online Status')}
               </h4>
               <div className="space-y-3">
@@ -261,7 +261,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Activity Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Users size={14} className="text-c-accent" />
+                <Users size={14} className="text-c-text-secondary" />
                 {t('settings.privacy.activityTitle', 'Activity Visibility')}
               </h4>
               <p className="text-xs text-c-text-muted mb-4">
@@ -311,7 +311,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Profile Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <UserCircle size={14} className="text-c-accent" />
+                <UserCircle size={14} className="text-c-text-secondary" />
                 {t('settings.privacy.profileTitle', 'Profile Visibility')}
               </h4>
               <p className="text-xs text-c-text-muted mb-4">
@@ -361,7 +361,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Communication & AI ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <AtSign size={14} className="text-c-accent" />
+                <AtSign size={14} className="text-c-text-secondary" />
                 {t('settings.privacy.communicationTitle', 'Communication & AI')}
               </h4>
               <div className="space-y-3">
