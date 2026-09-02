@@ -1,0 +1,117 @@
+{
+  "fixtureId": "W3-MEETINGS-OWNER-v1",
+  "fixture": "W3-MEETINGS-OWNER-v1",
+  "ownershipState": "FINAL",
+  "databaseName": "consultify_w3_meetings_owner_20260902",
+  "ownershipNonce": "bd735ac1a99f905519e87b916f986da4a679a994559adb74866355b30233ceb1",
+  "marker": {
+    "table": "wave3_owner_fixture_markers",
+    "fixtureId": "W3-MEETINGS-OWNER-v1",
+    "ownershipNonce": "bd735ac1a99f905519e87b916f986da4a679a994559adb74866355b30233ceb1"
+  },
+  "productionWrites": false,
+  "aiGenerationInvoked": false,
+  "capturePolicy": {
+    "recordingEnabled": false,
+    "automaticTranscriptionEnabled": false,
+    "acceptsManualSourceText": true
+  },
+  "personas": [
+    {
+      "id": "08000000-0000-4000-8000-000000000011",
+      "org": "08000000-0000-4000-8000-000000000001",
+      "email": "w3.meetings.owner@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Piotr",
+      "lastName": "Wisniewski",
+      "purpose": "allowed: governed decision + administrative status/delete"
+    },
+    {
+      "id": "08000000-0000-4000-8000-000000000012",
+      "org": "08000000-0000-4000-8000-000000000001",
+      "email": "w3.meetings.admin@local.test",
+      "role": "ADMIN",
+      "membership": "ACTIVE",
+      "firstName": "Anna",
+      "lastName": "Kowalska",
+      "purpose": "allowed: governed decision (distinct ADMIN reviewer)"
+    },
+    {
+      "id": "08000000-0000-4000-8000-000000000013",
+      "org": "08000000-0000-4000-8000-000000000001",
+      "email": "w3.meetings.member@local.test",
+      "role": "MEMBER",
+      "membership": "ACTIVE",
+      "firstName": "Marek",
+      "lastName": "Nowak",
+      "purpose": "allowed: meeting/note proposal; denied: decision/status/delete"
+    },
+    {
+      "id": "08000000-0000-4000-8000-000000000014",
+      "org": "08000000-0000-4000-8000-000000000001",
+      "email": "w3.meetings.inactive@local.test",
+      "role": "ADMIN",
+      "membership": "REVOKED",
+      "firstName": "Nieaktywny",
+      "lastName": "Uzytkownik",
+      "purpose": "denied: inactive/revoked member (ORG_MEMBERSHIP_REVOKED)"
+    },
+    {
+      "id": "08000000-0000-4000-8000-000000000015",
+      "org": "08000000-0000-4000-8000-000000000002",
+      "email": "w3.meetings.foreign@local.test",
+      "role": "OWNER",
+      "membership": "ACTIVE",
+      "firstName": "Obcy",
+      "lastName": "Wlasciciel",
+      "purpose": "denied: foreign tenant (cross-org meeting invisible)"
+    }
+  ],
+  "journey": [
+    "one meeting created for mainOrg (owner as creator, member as attendee)",
+    "proposeMeetingNote (service layer, manual transcript, no AI call) x3 -> pending notes",
+    "decideMeetingNote REJECT (owner) on note 1 -> rejected, zero materialization",
+    "decideMeetingNote APPROVE (owner) on note 2 -> approved + materialize-as-one-call -> exactly-one immutable receipt",
+    "note 3 stays pending (undecided) -> owner-review evidence of the pending state",
+    "HTTP layer (verifyToken -> isAuthenticated -> closedBetaModuleGate -> requireActiveMeetingMembership -> meeting.routes.ts): MEMBER denied POST /:id/notes/:noteId/decision (403 Admin or owner role required); revoked member denied (403 ORG_MEMBERSHIP_REVOKED); foreign-tenant OWNER denied (404, cross-org meeting invisible); anonymous request denied (401); JWT forged with the wrong secret denied (401); legitimate ADMIN decision (approve note 3) succeeds (200) and is the same governed path exercised at the service layer"
+  ],
+  "boundaries": {
+    "memberDecisionDenied": "HTTP 403 \"Admin or owner role required\" (requireMeetingAdmin)",
+    "inactiveOrRevokedMember": "HTTP 403 ORG_MEMBERSHIP_REVOKED (requireActiveMeetingMembership)",
+    "foreignTenant": "HTTP 404 \"Meeting not found\" (org-scoped lookup; no existence oracle)",
+    "anonymousToken": "HTTP 401 \"No token provided\" (verifyToken)",
+    "forgedJwt": "HTTP 401 before any route logic runs (wrong-secret signature)",
+    "staleOrConcurrentLoser": "decideMeetingNote on an already-decided note converges/errors per HandoffSpineError state machine, never double-materializes",
+    "directWritesRetired": "POST /:id/decisions and /:id/follow-ups return 410 MEETING_PROPOSAL_REQUIRED"
+  },
+  "dynamic": {
+    "meetingId": "meeting-d54392af-4cfb-4056-bfcc-f92ac506df72",
+    "rejectedNoteId": "meeting-note-1cedb4db-9fa7-4bdf-afbe-a5d8bf502f39",
+    "approvedNoteId": "meeting-note-f5b9382d-f633-4ae0-ad19-16ad9c90fc75",
+    "pendingNoteId": "meeting-note-e310f6f9-bebf-4f34-847c-cb782ffb5e55",
+    "receiptId": "25bdfba0-6424-482d-9778-cdac053c0d29",
+    "httpProof": {
+      "memberStatus": 403,
+      "inactiveStatus": 403,
+      "foreignStatus": 404,
+      "anonymousStatus": 401,
+      "forgedJwtStatus": 401,
+      "adminStatus": 200
+    }
+  },
+  "readback": {
+    "personas": 5,
+    "meetings": 1,
+    "notes": 3,
+    "pending_notes": 1,
+    "rejected_notes": 1,
+    "approved_notes": 1,
+    "rejected_proposals": 1,
+    "materialized_proposals": 1,
+    "pending_proposals": 1,
+    "receipts": 1,
+    "ownership_nonce": "bd735ac1a99f905519e87b916f986da4a679a994559adb74866355b30233ceb1",
+    "successful_migrations": 883
+  }
+}
