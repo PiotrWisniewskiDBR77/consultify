@@ -1,8 +1,8 @@
 {
   "_opis": "Trwala kopia decyzji wlasciciela ze strony odbioru (baza sqlite jest lokalna i ulotna).",
-  "_wyeksportowano": "2026-09-02T14:12:19",
+  "_wyeksportowano": "2026-09-02T14:15:19",
   "_podsumowanie": {
-    "ok": 257,
+    "ok": 262,
     "poprawka": 1,
     "nie": 2
   },
@@ -384,6 +384,36 @@
       "decyzja": "ok",
       "uwaga": null,
       "kiedy": "2026-09-02T10:44:58.131Z"
+    },
+    {
+      "ekran": "auth-code-entry",
+      "decyzja": "ok",
+      "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
+      "kiedy": "2026-09-02T14:15:19"
+    },
+    {
+      "ekran": "auth-forgot-password",
+      "decyzja": "ok",
+      "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
+      "kiedy": "2026-09-02T14:15:19"
+    },
+    {
+      "ekran": "auth-login",
+      "decyzja": "ok",
+      "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
+      "kiedy": "2026-09-02T14:15:19"
+    },
+    {
+      "ekran": "auth-register",
+      "decyzja": "ok",
+      "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
+      "kiedy": "2026-09-02T14:15:19"
+    },
+    {
+      "ekran": "auth-reset-password",
+      "decyzja": "ok",
+      "uwaga": "AKCEPT ZBIOROWY wlasciciela 02.09: \"wszystkie sa ok\". Ekrany sprzed zalogowania powstaly dzis (naprawa jezyka i czerwieni); wlasciciel widzial zrzut ekranu logowania, pozostale cztery objal akceptem zbiorczym, nie ogladal ich pojedynczo.",
+      "kiedy": "2026-09-02T14:15:19"
     },
     {
       "ekran": "b2-template-gallery",
