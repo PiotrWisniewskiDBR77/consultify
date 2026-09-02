@@ -422,3 +422,42 @@ poprawnie") — czyli defekt mechaniki został wzięty za wzorzec projektowy. Ta
 przed kolorowaniem będzie szary, niezależnie od wagi.
 
 Naprawa: przekazywać wartość techniczną do pigułki, a tłumaczyć dopiero etykietę.
+
+### 38. [P2] 710 kluczy w polskim pliku tłumaczeń trzyma wartość identyczną z angielską
+
+**Charakter ustalenia: POMIAR CAŁEGO ZBIORU** (02.09, rodzina „angielskie resztki").
+Skrypt porównał bajtowo każdą wartość z `public/locales/pl/translation.json` z jej
+odpowiednikiem w `en/`, z wykluczeniem uzasadnionych zapożyczeń (Status, System, KPI).
+Na **34 390** spłaszczonych kluczy **710** ma wartość identyczną z angielską.
+
+**Dlaczego to nie jest lista defektów, tylko lista do klasyfikacji.** Część z tych 710
+to poprawne zapożyczenia (nazwy własne, skróty branżowe). Część to prawdziwe luki —
+potwierdzone przykłady: `myWork.notebook.title`, `myWork.home`, `myWork.manager`.
+Rozróżnienie wymaga ludzkiego osądu per klucz.
+
+**Dlaczego zgłaszam zamiast naprawiać:** masowa podmiana 710 wartości to dokładnie ta
+operacja, przed którą `CLAUDE.md` ostrzega („raz już zniszczyła wydane instrukcje").
+Naprawiono jeden potwierdzony żywy przypadek (`myWork.notebook.title`); reszta wymaga
+osobnego dyżuru z listą i odbiorem.
+
+**Dlaczego to ważne mimo priorytetu P2:** audyt sprawdzający ISTNIENIE klucza melduje
+„przetłumaczone" dla wszystkich 710. To pułapka „klucz istnieje ≠ przetłumaczony" —
+każdy dotychczasowy pomiar pokrycia tłumaczeń w tym repozytorium był zawyżony o tę liczbę.
+
+### 39. [P2] Bramka parytetu ma DWIE dalsze ślepoty (znalezione 02.09 przy naprawie ekranów)
+
+Obie wykryte oczami, nie przez bramkę — czyli bramka meldowała CZYSTO na realnych defektach.
+
+1. **R3 nie widzi szerokości podanej w `style`, tylko w klasach.** `admin-command.tsx:590`
+   miał `style={{ maxWidth: 1200 }}`, gdy wołacz produkcyjny
+   (`AdminSettingsModule.tsx:599`) ma `max-w-[1280px]` plus responsywny padding. Bramka
+   zgłaszała **0 naruszeń** — fałszywy spokój. Ta sama wklejka była w **ośmiu** harnessach
+   Admina.
+2. **R1 nie rozpoznaje komponentu montowanego przez alias.** `teresa-confirm-chip.tsx`
+   montował realny `MessageRenderer`, ale jako `const Renderer = MessageRenderer as …`;
+   bramka dopasowuje nazwę znacznika JSX, więc zgłosiła „nie montuje ŻADNEGO komponentu
+   produkcyjnego" na ekranie, który montował produkt od początku.
+
+Obie ślepoty są tego samego rodzaju co dwie naprawione dziś rano (`React.lazy`, wołacz
+w pliku definicji): **bramka rozpoznaje wzorzec zapisu, nie rzecz.** Dopóki tak jest,
+każdy nowy sposób zapisania tego samego będzie dawał fałszywy alarm albo fałszywy spokój.
