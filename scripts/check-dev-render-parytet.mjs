@@ -371,15 +371,40 @@ function czyUzyciePozaDeklaracja(tekst, nazwa, zasiegi) {
 }
 
 /**
+ * Komponenty BEZ ŻADNEGO wizualnego wyjścia (populowane niżej, po zbudowaniu
+ * `indeks`/`definicje` — patrz komentarz przy wypełnieniu). `czyRusztowanie`
+ * sprawdza to jako DRUGIE, niezależne od nazwy sito (patrz niżej).
+ * `KOMPONENTY_MA_JSX` to pomocnicze — nazwa, dla której ZNALEZIONO gdziekolwiek
+ * `return <…>`; dopiero po przejściu WSZYSTKICH deklaracji nazwa bez trafienia
+ * w tym zbiorze trafia do `KOMPONENTY_BEZ_JSX`.
+ */
+const KOMPONENTY_BEZ_JSX = new Set();
+const KOMPONENTY_MA_JSX = new Set();
+
+/**
  * Rusztowanie harnessu, nie kompozycja wizualna (sito fałszywych alarmów dla R2):
  * providery, konteksty, routery i granice błędów niczego nie stawiają obok siebie.
  * Ekran, który owija realny komponent w `<AppProviders>` albo `<MemoryRouter>`,
  * pokazuje produkt — a nie „kompozycję bez precedensu".
+ *
+ * DRUGIE SITO (fałszywy alarm zmierzony 2026-09-02, `RouterSync` w
+ * `day238-ustawienia`, sparowany R2 z 10 realnych paneli Ustawień): nazwa
+ * NIE kończy się na `Router` (kończy się na `Sync`), więc sito nazwy wyżej go
+ * nie łapie — mimo że `RouterSync.tsx` kończy się dosłownie `return null; //
+ * Logic only component` i NIGDY nie zwraca JSX (zweryfikowane: WSZYSTKIE
+ * `return` w ciele to gołe `return;` wewnątrz efektów, poza jednym końcowym
+ * `return null`). Komponent, który w KAŻDEJ swojej deklaracji nigdy nie
+ * zwraca JSX (`KOMPONENTY_BEZ_JSX`, budowane z realnego ciała funkcji, nie z
+ * nazwy), niczego nie stawia obok niczego — to ten sam przypadek co
+ * `Provider`/`Context`, tylko nazwany inaczej. Ósma ślepota tej rodziny:
+ * naprawiona tu strukturalnie (czyta ciało), nie kolejnym słowem na liście
+ * sufiksów — żeby DZIEWIĄTA nie wymagała kolejnej łatki nazwy.
  */
 function czyRusztowanie(nazwa) {
   return /(?:Providers?|Context|Boundary|Router|Gate|Wrapper|Harness|Mock)$/.test(nazwa)
     || nazwa === 'Suspense'
-    || nazwa === 'Fragment';
+    || nazwa === 'Fragment'
+    || KOMPONENTY_BEZ_JSX.has(nazwa);
 }
 
 /** Tokeny szerokości narzucone klasą: max-w-* oraz w-[Npx]. */
@@ -400,6 +425,19 @@ const PARAMY_WARIANTUJACE = new Set([
   'variant', 'wariant', 'state', 'stan', 'scene', 'view', 'widok', 'case', 'mode',
   'tryb', 'stage', 'step', 'krok', 'kind', 'sekcja', 'tab', 'zakladka',
   'scenario', 'scenariusz',
+  // Dopisane 2026-09-02 (fałszywy alarm zmierzony po naprawie ekranów-agregatorów
+  // `montowaneProduktowePrzezEkran` — dopiero transytywne wciągnięcie realnych
+  // komponentów odsłoniło ten R2, wcześniej ekrany te miały 0 wołaczy i nigdy nie
+  // trafiały do parowania): `panel` (`day200-finance-panels.tsx`, `day233-finanse-
+  // panele.tsx` — `switch(panel)`/ternary wybiera DOKŁADNIE JEDEN z 13-21 paneli
+  // finansowych) i `domain` (`day234-wyniki-narzedzia.tsx`, `day234-wyniki-
+  // rejestry.tsx` — `if (domain==='roi') … else if (domain==='okr') … else …`
+  // wybiera DOKŁADNIE JEDEN z 3 narzędzi/rejestrów KPI·ROI·OKR). Zweryfikowane, że
+  // `domain` NIE wybiera komponentu w pozostałych dwóch ekranach, które go używają
+  // (`results-vnext-legacy-archive.tsx`, `results-vnext-registry-shell.tsx`) —
+  // tam trafia jako zwykły prop do JEDNEGO stałego komponentu (dane, nie wariant
+  // montażu), więc dopisanie nie ukrywa tam niczego.
+  'panel', 'domain',
 ]);
 // Świadomie POZA listą: `empty`, `pusty`, `dane` — te przełączają DANE, nie to, który
 // komponent się montuje. Wpisanie ich tu ukryło `menu-dlugi-domkniecie` (dwa niezależne
@@ -596,6 +634,154 @@ for (const [p, { tekst }] of indeks) {
   }
 }
 
+// MAPA KOMPONENTÓW (fałszywy alarm zmierzony 2026-09-02, `FinanceValuePanelsSurface`
+// → 13 z 21 R1 tego przebiegu, wszystkie `day200-finance-panels`): zamiast
+// `const X = lazy(() => import(...))`, plik ma OBIEKT `{ klucz: lazy(() =>
+// import(spec)), … }` i renderuje JEDNĄ zmienną wybraną przez indeksowanie
+// (`const Panel = MAPA[wybrany]; … <Panel />`). Żaden z leniwie ładowanych
+// komponentów nigdy nie stoi jako `<BankingValuePanel …>` dosłownie w tym
+// pliku — literalne dopasowanie `<Nazwa` (i wzorzec `const NAZWA = lazy(…)`
+// powyżej, który wymaga WIELKIEJ litery PRZY `lazy`) nigdy go nie zobaczy.
+// Sito dwuwarunkowe (celowo wąskie, żeby NIE kredytować martwych map):
+//  (1) plik ma ≥1 `klucz: lazy(() => import(spec))` jako WŁAŚCIWOŚĆ obiektu;
+//  (2) plik OSOBNO przypisuje zmienną z indeksowania obiektu
+//      (`const Panel = COŚ[…]`) i renderuje ją jako JSX (`<Panel`) — dowód,
+//      że wartości z mapy faktycznie trafiają na ekran, nie tylko są
+//      zadeklarowane. Bez warunku (2) każdy nieużywany rejestr komponentów
+//      dostałby fałszywego wołacza.
+{
+  const plikiZDynamicznymRenderem = new Set();
+  for (const [p, { tekst, rend }] of indeks) {
+    for (const m of tekst.matchAll(/(?:const|let)\s+([A-Z][A-Za-z0-9_]*)\s*=\s*[A-Za-z_$][\w$]*\s*\[/g)) {
+      if (rend.has(m[1])) { plikiZDynamicznymRenderem.add(p); break; }
+    }
+  }
+  for (const p of plikiZDynamicznymRenderem) {
+    const { tekst } = indeks.get(p);
+    for (const m of tekst.matchAll(
+      /[A-Za-z_$][\w$]*\s*:\s*(?:React\.)?lazy\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)(?:\s*\.then\(\s*\([^)]*\)\s*=>\s*\(?\s*\{\s*default:\s*[A-Za-z_$][\w$]*\.([A-Za-z_$][\w$]*)\s*,?\s*\}\s*\)?\s*\))?/g,
+    )) {
+      const [, spec, celZThen] = m;
+      const cel = rozwinSciezke(spec, p);
+      let celDekl;
+      if (celZThen) celDekl = new Set([celZThen]);
+      else if (cel) celDekl = indeks.get(cel)?.dekl ?? new Set();
+      else celDekl = new Set();
+      for (const n of celDekl) {
+        if (!wolacze.has(n)) wolacze.set(n, new Set());
+        wolacze.get(n).add(p);
+      }
+    }
+  }
+}
+
+/**
+ * Znajduje zasięg PRAWDZIWEGO ciała funkcji/komponentu — pomija listę
+ * parametrów, NAWET zdestrukturyzowaną (`({ a, b }) => { ciało }`), zamiast
+ * (jak `znajdzKoniecBloku` wołane wprost od `m.index`) brać pierwszy `{` po
+ * dopasowaniu deklaracji. BŁĄD ZMIERZONY 2026-09-02 przy pierwszej wersji
+ * `KOMPONENTY_BEZ_JSX`: dla `export const AuthView: React.FC<Props> = ({
+ * initialStep, … }) => { … 1140 linii dalej: return (<div>…) }` pierwszy `{`
+ * po dopasowaniu to nawias DESTRUKTURYZACJI parametru (zamyka się 5 linii
+ * niżej) — `zasiegi.get('AuthView')` (dzielone z Wzorcem 2/`domkniecie`)
+ * kończył się tam, więc realny `return (<div>` nigdy nie trafiał do
+ * sprawdzanego tekstu i AuthView fałszywie lądował w KOMPONENTY_BEZ_JSX,
+ * co ciszej niż powinno gasiło R2 dla `auth-login`/`auth-register`/
+ * `auth-code-entry`/`auth-forgot-password`/`auth-reset-password` (kontrola
+ * ujemna złapała to PO naprawie — patrz raport). Naprawa: OSOBNA funkcja,
+ * NIE modyfikuje `deklaracjeZasiegi`/`znajdzKoniecBloku` współdzielone z
+ * Wzorcem 2 — zbyt ryzykowne zmieniać zachowanie używane gdzie indziej bez
+ * pełnej regresji na 269 ekranach. Algorytm: od początku deklaracji szukaj
+ * pierwszego `(` (lista parametrów — w tym zdestrukturyzowana) na
+ * najwyższym poziomie zagnieżdżenia; przeskocz do jej ZBALANSOWANEGO `)`;
+ * DOPIERO za nią szukaj `{` (ciało blokowe) albo `=>` (ciało zwięzłe, np.
+ * `= (p) => <div/>`). Brak `(` w ogóle (np. `class Foo {`) → pierwszy `{`
+ * jest ciałem od razu, jak wcześniej.
+ */
+function znajdzZasiegCialaKomponentu(tekst, poczatekDeklaracji) {
+  let i = poczatekDeklaracji;
+  const n = tekst.length;
+  let stan = 'code';
+  let sawParenAt = -1;
+  while (i < n) {
+    const c = tekst[i]; const c2 = i + 1 < n ? tekst[i + 1] : '';
+    if (stan === 'code') {
+      if (c === "'") { stan = 'squote'; i += 1; continue; }
+      if (c === '"') { stan = 'dquote'; i += 1; continue; }
+      if (c === '`') { stan = 'template'; i += 1; continue; }
+      if (c === '(') { sawParenAt = i; break; }
+      if (c === '{') return [i, znajdzKoniecBloku(tekst, i)]; // brak parametrów (np. `class`)
+      if (c === '=' && c2 === '>') { i += 2; break; } // strzałka bez nawiasu (`x => …`)
+      i += 1; continue;
+    }
+    if (stan === 'squote' || stan === 'dquote') {
+      const q = stan === 'squote' ? "'" : '"';
+      if (c === '\\') { i += 2; continue; }
+      if (c === q) stan = 'code';
+      i += 1; continue;
+    }
+    if (stan === 'template') {
+      if (c === '\\') { i += 2; continue; }
+      if (c === '`') stan = 'code';
+      i += 1; continue;
+    }
+  }
+  if (sawParenAt >= 0) {
+    let depth = 0; let j = sawParenAt; stan = 'code';
+    for (; j < n; j += 1) {
+      const c = tekst[j];
+      if (stan === 'code') {
+        if (c === "'") { stan = 'squote'; continue; }
+        if (c === '"') { stan = 'dquote'; continue; }
+        if (c === '`') { stan = 'template'; continue; }
+        if (c === '(') depth += 1;
+        else if (c === ')') { depth -= 1; if (depth === 0) { j += 1; break; } }
+        continue;
+      }
+      if (stan === 'squote' || stan === 'dquote') {
+        const q = stan === 'squote' ? "'" : '"';
+        if (c === '\\') { j += 1; continue; }
+        if (c === q) stan = 'code';
+        continue;
+      }
+      if (stan === 'template') {
+        if (c === '\\') { j += 1; continue; }
+        if (c === '`') stan = 'code';
+        continue;
+      }
+    }
+    i = j; // za zbalansowanym `(...)` — tu ewentualna adnotacja typu zwracanego, potem `{` albo `=>`
+    while (i < n && tekst[i] !== '{' && !(tekst[i] === '=' && tekst[i + 1] === '>')) i += 1;
+    if (tekst[i] === '{') return [i, znajdzKoniecBloku(tekst, i)];
+    if (tekst[i] === '=') i += 2;
+  }
+  while (i < n && /\s/.test(tekst[i])) i += 1;
+  if (tekst[i] === '{') return [i, znajdzKoniecBloku(tekst, i)];
+  return [i, Math.min(n, i + 500)]; // ciało zwięzłe (arrow bez bloku) — okno wystarcza do testu JSX
+}
+
+// Populacja KOMPONENTY_BEZ_JSX (patrz definicja wyżej, przy `czyRusztowanie`):
+// komponent, który w ŻADNEJ swojej deklaracji nigdy nie zwraca JSX (żaden
+// `return <…>` / `return (<…`), jest rusztowaniem logicznym — jak Provider/
+// Context, tylko bez pasującego sufiksu w nazwie. Sprawdzane na CIELE
+// funkcji znalezionym przez `znajdzZasiegCialaKomponentu` (NIE przez dzielony
+// `zasiegi`, patrz komentarz wyżej) — więc komponent, który w innej gałęzi TO
+// renderuje JSX, nie kwalifikuje się (poprawnie — to nie jest scaffolding).
+for (const [p, { tekst }] of indeks) {
+  for (const w of WZORCE_DEKLARACJI) {
+    for (const m of tekst.matchAll(w)) {
+      const nazwa = m[1];
+      if (KOMPONENTY_MA_JSX.has(nazwa)) continue; // już potwierdzone gdzie indziej — nie licz ponownie
+      const [s, e] = znajdzZasiegCialaKomponentu(tekst, m.index);
+      const maJsx = /return\s*\(?\s*<[A-Za-z>]/.test(tekst.slice(s, e));
+      if (maJsx) KOMPONENTY_MA_JSX.add(nazwa);
+    }
+  }
+}
+for (const nazwa of definicje.keys()) {
+  if (!KOMPONENTY_MA_JSX.has(nazwa)) KOMPONENTY_BEZ_JSX.add(nazwa);
+}
+
 /**
  * DOMKNIĘCIE O JEDEN SKOK (sito (b)): zbiór komponentów widocznych „z" danego pliku —
  * to, co renderuje sam, plus to, co renderują komponenty, które renderuje.
@@ -647,6 +833,96 @@ function czyWspolwystepuja(a, b) {
   return wynik;
 }
 
+/**
+ * `./inny-ekran` → ścieżka bezwzględna DRUGIEGO pliku w `dev-render/screens/`
+ * (albo null). Tylko sąsiedzi w TYM SAMYM katalogu — harness nie zagnieżdża
+ * ekranów w podfolderach.
+ */
+function rozwinSciezkeEkranu(spec, zPliku) {
+  if (!spec.startsWith('.')) return null;
+  const kandydat = path.resolve(path.dirname(zPliku), `${spec}.tsx`);
+  if (path.dirname(kandydat) !== SCREENS_DIR) return null;
+  return fs.existsSync(kandydat) ? kandydat : null;
+}
+
+/**
+ * EKRAN AGREGUJĄCY (fałszywy alarm zmierzony 2026-09-02, 6 R1: `day233-finanse-
+ * rejestry`, `day234-wyniki-narzedzia`, `day234-wyniki-rejestry`, `day235-
+ * materialy-dokumenty`, `day235-materialy-excele`, `day236-organizacja`):
+ * ekran nie importuje PRODUKCJI wprost — importuje INNY plik z `dev-render/
+ * screens/` i montuje (albo re-eksportuje) go. Własnymi słowami dokumentacji
+ * tych ekranów: „Ten entry nie replikuje UI ani nie przekazuje ręcznych
+ * propsów — montuje istniejący harness". `importyProdukcyjne` widzi tylko
+ * ścieżki `@/`/`../src/`/`src/` — import sąsiedniego ekranu (`./finance-hub`)
+ * nie pasuje do żadnego z tych wzorców, więc taki ekran wyglądał na R1
+ * „zero montażu", mimo że plik, na który wskazuje, montuje realną produkcję.
+ *
+ * Rozwiązuje TRANSYTYWNIE (rekurencyjnie, ze stróżem cyklu) — więc przełącznik
+ * przełącznika (`day234-wyniki-narzedzia` → `results-vnext-kpi-tool`) też
+ * dziedziczy prawdziwe komponenty tego drugiego poziomu, a nie tylko pierwszy
+ * skok. Pamięć podręczna, bo te same ekrany-cele bywają importowane przez
+ * kilku agregatorów.
+ */
+const cacheMontowanychEkranow = new Map();
+function montowaneProduktowePrzezEkran(sciezka, odwiedzone = new Set()) {
+  if (cacheMontowanychEkranow.has(sciezka)) return cacheMontowanychEkranow.get(sciezka);
+  if (odwiedzone.has(sciezka)) return []; // cykl importów ekranów — nie zapętlaj się
+  odwiedzone.add(sciezka);
+
+  const surowy = fs.readFileSync(sciezka, 'utf8');
+  const tekst = bezKomentarzy(surowy);
+  const rend = renderowaneNazwy(tekst);
+  const importy = importyProdukcyjne(tekst, sciezka);
+
+  const wynik = [];
+  const widziane = new Set();
+  const dodaj = (wpis) => {
+    const klucz = `${wpis.nazwa}\t${wpis.plik ?? ''}`;
+    if (widziane.has(klucz)) return;
+    widziane.add(klucz);
+    wynik.push(wpis);
+  };
+
+  for (const [lokalna, info] of importy) {
+    if (!rend.has(lokalna)) continue;
+    dodaj({ lokalna, nazwa: info.zrodlo, plik: info.plik });
+  }
+
+  // UWAGA (błąd zmierzony 2026-09-02, `day233-finanse-rejestry` — regres z
+  // pierwszej wersji tej naprawy): wymóg `\.` NA POCZĄTKU grupy 2 W REGEXIE
+  // psuje leniwe dopasowanie `[\s\S]*?`, gdy PIERWSZY import w pliku (np.
+  // `import React from 'react'`) ma specyfikator BEZ kropki — silnik regexu
+  // wtedy rozciąga `klauzula` PRZEZ ten import (i słowo `import` w nim) aż do
+  // NASTĘPNEGO cudzysłowu zaczynającego się kropką, sklejając dwie linie
+  // importu w jedno dopasowanie. `importyProdukcyjne` (wzorzec niżej w tym
+  // pliku) nie ma tego problemu, bo NIE nakłada dodatkowego warunku na treść
+  // grupy 2 — dopasowuje NAJBLIŻSZE `from '...'`, jakiekolwiek by nie było.
+  // Naprawa: ten sam, bezwarunkowy wzorzec; filtr „zaczyna się kropką"
+  // (`spec.startsWith('.')`) sprawdzany OSOBNO, PO dopasowaniu.
+  for (const m of tekst.matchAll(/import\s+([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/g)) {
+    const [, klauzula, spec] = m;
+    if (!spec.startsWith('.')) continue;
+    if (czySciezkaProdukcyjna(spec)) continue; // już obsłużone przez importyProdukcyjne
+    const cel = rozwinSciezkeEkranu(spec, sciezka);
+    if (!cel || cel === sciezka) continue;
+    const domyslny = klauzula.replace(/\{[\s\S]*\}/, '').replace(/,/g, ' ').trim();
+    // Import z klauzulą `{ … }` (nazwane) nie jest tym wzorcem — sąsiednie
+    // ekrany eksportują `export default function …`, nie nazwane eksporty.
+    if (domyslny && !/^[A-Z][A-Za-z0-9_]*$/.test(domyslny)) continue;
+    if (domyslny && !rend.has(domyslny)) continue; // zaimportowany, ale nigdy niewyrenderowany
+    for (const wpis of montowaneProduktowePrzezEkran(cel, odwiedzone)) dodaj(wpis);
+  }
+  // `export { default } from './x'` (re-eksport bez zmiennej — day235-materialy-excele)
+  for (const m of tekst.matchAll(/export\s*\{\s*default\s*\}\s*from\s*['"](\.[^'"]+)['"]/g)) {
+    const cel = rozwinSciezkeEkranu(m[1], sciezka);
+    if (!cel || cel === sciezka) continue;
+    for (const wpis of montowaneProduktowePrzezEkran(cel, odwiedzone)) dodaj(wpis);
+  }
+
+  cacheMontowanychEkranow.set(sciezka, wynik);
+  return wynik;
+}
+
 // ── Analiza ekranów harnessu ──────────────────────────────────────────────────
 
 console.error('… analizuję ekrany harnessu');
@@ -683,15 +959,10 @@ for (const nazwaPliku of plikiEkranow) {
   const surowy = fs.readFileSync(sciezka, 'utf8');
   const tekst = bezKomentarzy(surowy);
 
-  const importy = importyProdukcyjne(tekst, sciezka);
-  const rend = renderowaneNazwy(tekst);
-
-  // Montowane = zaimportowane Z PRODUKCJI i faktycznie postawione w JSX.
-  const montowane = [];
-  for (const [lokalna, info] of importy) {
-    if (!rend.has(lokalna)) continue;
-    montowane.push({ lokalna, nazwa: info.zrodlo, plik: info.plik });
-  }
+  // Montowane = zaimportowane Z PRODUKCJI (wprost albo transytywnie przez
+  // ekran-agregator, patrz `montowaneProduktowePrzezEkran`) i faktycznie
+  // postawione w JSX.
+  const montowane = montowaneProduktowePrzezEkran(sciezka);
 
   // ── R1 — komponent bez wołacza ──────────────────────────────────────────────
   // Pierwsza połowa reguły: ekran, który nie montuje ANI JEDNEGO komponentu
