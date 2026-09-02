@@ -1,0 +1,16 @@
+NOWY — DYŻUR 270
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/instrukcje/270-273-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_270_REALIZACJA_ZADAN.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 270.
+
+Marker: 444d789363 (gałąź bazowa: integracja/20260902)
+Zasoby wyłączne: baza 6280, runtime 5260 i 5261.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
