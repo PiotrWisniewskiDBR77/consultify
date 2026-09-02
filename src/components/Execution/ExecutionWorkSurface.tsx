@@ -673,7 +673,7 @@ export const ExecutionWorkSurface = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterFilterControl, documentId, caseId, cases]);
   return (
-    <section aria-label="Execution Work" className="p-4">
+    <section aria-label="Execution Work" className="flex h-full min-h-0 flex-col p-4">
       {documentId && (
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -691,6 +691,15 @@ export const ExecutionWorkSurface = ({
         </div>
       )}
       {!documentId && state === 'READY' && rows.length > 0 && (
+        /*
+         * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
+         * `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
+         * tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
+         * o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
+         * na wlasnej tresci. Zmierzone narzedziem
+         * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
+         */
+        <div className="flex min-h-0 flex-1 flex-col">
         <TableWithPreviewLayout<Row>
           selectedId={selectedId}
           selectedItem={selected}
@@ -834,6 +843,7 @@ export const ExecutionWorkSurface = ({
             persistKey="execution.work.canonical-register.v2"
           />
         </TableWithPreviewLayout>
+        </div>
       )}
       {showWorkspace && selected && (
         <section

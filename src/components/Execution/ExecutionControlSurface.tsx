@@ -645,10 +645,13 @@ export const ExecutionControlSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Control" className="p-4">
+    <section aria-label="Execution Control" className="flex h-full min-h-0 flex-col p-4">
       {state === 'LOADING' && <p role="status">Ładowanie interwencji…</p>}
       {showInterventionForm && (
-        <section aria-label="Intervention Signal Workbench" className="mt-4">
+        <section
+          aria-label="Intervention Signal Workbench"
+          className="mt-4 flex min-h-0 flex-1 flex-col"
+        >
           <h3 className="font-semibold">Sygnały zarządcze</h3>
           {showSignalForm && (
             <div className="mt-3 rounded-lg border border-c-border p-4">
@@ -731,6 +734,15 @@ export const ExecutionControlSurface = ({
               </button>
             </div>
           )}
+        /*
+         * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
+         * `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
+         * tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
+         * o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
+         * na wlasnej tresci. Zmierzone narzedziem
+         * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
+         */
+          <div className="flex min-h-0 flex-1 flex-col">
           <TableWithPreviewLayout<SignalRow>
             selectedId={selectedSignalId}
             selectedItem={selectedSignal}
@@ -840,6 +852,7 @@ export const ExecutionControlSurface = ({
               persistKey="execution.management-signals.v1"
             />
           </TableWithPreviewLayout>
+          </div>
         </section>
       )}
       <TableWithPreviewLayout<Row>
