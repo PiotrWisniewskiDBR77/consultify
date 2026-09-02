@@ -28,4 +28,3 @@ Wynik częściowy dyżuru 279. `PRZEŻYWA` oznacza realne HTTP przez produkcyjny
 - BRAK ZAPISU: 0
 - ZA FLAGĄ: 0
 - PODEJRZENIE: 15
-
