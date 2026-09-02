@@ -1,0 +1,525 @@
+
+Raport Diagnozy Dojrzałości Cyfrowej — Metalpol Sp. z o.o.
+      DBR77 · Digital Pathfinder
+      Raport Diagnozy Dojrzałości Cyfrowej
+      Metalpol Sp. z o.o.
+      Digital Readiness Diagnosis (DRD) · Ocena dojrzałości cyfrowej DRD · DRD-2026-0817-MTP
+      Wygenerowano: 26 sierpnia 2026
+        Wskaźnik wiarygodności ocenyNiska
+        Kompletność59%
+        Obszary ocenione23/39
+        Dojrzałość ogólna36%
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 1
+    01
+    Streszczenie zarządcze
+      36%
+      → Cel 69%
+      Faza: Podstawowa Digitalizacja
+    Narracja deterministyczna (bez modelu językowego). Liczby pochodzą z silnika oceny; interpretacje zostaną wzbogacone po podłączeniu narratora LLM.
+    Metalpol Sp. z o.o. osiąga zagregowaną dojrzałość cyfrową na poziomie 36% wobec celu 69% (luka 33 p.p.), co plasuje organizację w fazie „Podstawowa Digitalizacja”. Ocena objęła 23 obszarów w 7 osiach transformacji cyfrowej metodyki DRD.
+Najsilniejszą osią jest „Kultura Transformacji”, gdzie fundamenty cyfrowe są najlepiej ugruntowane. Największy potencjał wzrostu koncentruje się w osi „Cyberbezpieczeństwo”, która wyznacza priorytet kolejnej fali inwestycji.
+Profil dojrzałości jest nierównomierny: dojrzałe procesy operacyjne współistnieją z lukami w obszarach o wyższej dźwigni strategicznej. Zamknięcie tych luk wymaga sekwencjonowania działań według relacji wpływ/nakład, a nie równoległego frontu inwestycji.
+Rekomendowana ścieżka to trzy fale wdrożeniowe (F1–F3): najpierw „szybkie zwycięstwa” o wysokim wpływie i niskim nakładzie, następnie inicjatywy strukturalne, na końcu przedsięwzięcia transformacyjne o horyzoncie wieloletnim.
+Wszystkie wartości liczbowe w raporcie pochodzą wyłącznie z silnika oceny DRD i odzwierciedlają stan zarejestrowany w assessmencie. Warstwa narracyjna interpretuje te dane, nie modyfikując ich.
+    Interpretacja oparta na danych assessmentu; przed egzekucją zaleca się walidację warsztatową z zespołem klienta.
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 2
+    02
+    Profil dojrzałości — radar wymiarów
+      [SVG]
+        [SVG]
+        Stan aktualnyStan docelowy
+        Radar komunikuje 7 mierzonych osi transformacji (wynik silnika). Warstwa komunikacyjna 8D (MAP-1.0) zostanie uzupełniona po dostarczeniu kanonu DRD.
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 3
+    03
+    Macierz obszarów
+    [SVG]
+    Kolor = wielkość luki (brak · niska · średnia · wysoka)
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 4
+    04
+    Kluczowe luki (Top 3)
+      1
+        Strategia i zarządzanie ryzykiem
+        Cyberbezpieczeństwo · 2/6 → 5/6 · Luka 3
+      Co jestCo jest: obszar „Strategia i zarządzanie ryzykiem” (Cyberbezpieczeństwo) znajduje się na poziomie 2/6 — „Analiza ryzyka”.
+      Co to znaczyCo to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 5/6 („HR w strategii”), co ogranicza efektywność i skalowalność w tym obszarze.
+      Co robićCo robić: zaplanować przejście na poziom 5, wdrażając zdolności opisane dla „HR w strategii”.
+      EfektEfekt: domknięcie luki 3 poziomu podnosi dojrzałość osi „Cyberbezpieczeństwo” i odblokowuje kolejne działania zależne.
+      2
+        Plany awaryjne
+        Cyberbezpieczeństwo · 1/6 → 4/6 · Luka 3
+      Co jestCo jest: obszar „Plany awaryjne” (Cyberbezpieczeństwo) znajduje się na poziomie 1/6 — „Identyfikacja zagrożeń”.
+      Co to znaczyCo to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 4/6 („Szkolenia awaryjne”), co ogranicza efektywność i skalowalność w tym obszarze.
+      Co robićCo robić: zaplanować przejście na poziom 4, wdrażając zdolności opisane dla „Szkolenia awaryjne”.
+      EfektEfekt: domknięcie luki 3 poziomu podnosi dojrzałość osi „Cyberbezpieczeństwo” i odblokowuje kolejne działania zależne.
+      3
+        Metodologia Przechowywania Danych
+        Zarządzanie Danymi · 2/7 → 5/7 · Luka 3
+      Co jestCo jest: obszar „Metodologia Przechowywania Danych” (Zarządzanie Danymi) znajduje się na poziomie 2/7 — „Single Local Digital Storage”.
+      Co to znaczyCo to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 5/7 („Public Cloud Storage”), co ogranicza efektywność i skalowalność w tym obszarze.
+      Co robićCo robić: zaplanować przejście na poziom 5, wdrażając zdolności opisane dla „Public Cloud Storage”.
+      EfektEfekt: domknięcie luki 3 poziomu podnosi dojrzałość osi „Zarządzanie Danymi” i odblokowuje kolejne działania zależne.
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 5
+    05
+    Roadmapa transformacji — wpływ × nakład
+      Fala F1
+        Obszar
+Oś
+Wpływ
+Nakład
+Luka
+        Skalowalność Produktu
+        Produkty Cyfrowe
+        średni
+        niski
+        1
+        Model As-a-Service
+        Cyfrowe Modele Biznesowe
+        średni
+        niski
+        1
+        Postawy przywódcze
+        Kultura Transformacji
+        średni
+        niski
+        1
+      Fala F2
+        Obszar
+Oś
+Wpływ
+Nakład
+Luka
+        Procesy Sprzedaży
+        Procesy Cyfrowe
+        średni
+        średni
+        2
+        Procesy Logistyczne
+        Procesy Cyfrowe
+        średni
+        średni
+        2
+        Procesy Produkcyjne
+        Procesy Cyfrowe
+        średni
+        średni
+        2
+        Produkty Cyfrowe
+        Produkty Cyfrowe
+        wysoki
+        średni
+        2
+        Dopasowanie Produktu do Oczekiwań Klienta
+        Produkty Cyfrowe
+        wysoki
+        średni
+        2
+        Modele E-commerce
+        Cyfrowe Modele Biznesowe
+        wysoki
+        średni
+        2
+        Modele Monetyzacji Danych
+        Cyfrowe Modele Biznesowe
+        wysoki
+        średni
+        2
+        Zbieranie Danych
+        Zarządzanie Danymi
+        średni
+        średni
+        2
+        Komunikacja Danych
+        Zarządzanie Danymi
+        średni
+        średni
+        2
+        Analiza Big Data
+        Zarządzanie Danymi
+        średni
+        średni
+        2
+        Gotowość na zmianę
+        Kultura Transformacji
+        wysoki
+        średni
+        2
+        Ciągły rozwój kompetencji
+        Kultura Transformacji
+        wysoki
+        średni
+        2
+        Ochrona danych
+        Cyberbezpieczeństwo
+        wysoki
+        średni
+        2
+        Dane i Fundamenty AI
+        Dojrzałość AI
+        wysoki
+        średni
+        2
+        Procesy Wspierane przez AI
+        Dojrzałość AI
+        wysoki
+        średni
+        2
+        Kompetencje i Kultura AI
+        Dojrzałość AI
+        wysoki
+        średni
+        2
+        Procesy Jakości
+        Procesy Cyfrowe
+        niski
+        niski
+        1
+      Fala F3
+        Obszar
+Oś
+Wpływ
+Nakład
+Luka
+        Metodologia Przechowywania Danych
+        Zarządzanie Danymi
+        wysoki
+        wysoki
+        3
+        Strategia i zarządzanie ryzykiem
+        Cyberbezpieczeństwo
+        wysoki
+        wysoki
+        3
+        Plany awaryjne
+        Cyberbezpieczeństwo
+        wysoki
+        wysoki
+        3
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 6
+    06
+    Rozdziały wymiarów
+      Procesy Cyfrowe
+      2.8/7 → 4.5/7
+    Oś „Procesy Cyfrowe” osiąga poziom 2.8/7 przy celu 4.5/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      1A · Procesy Sprzedaży
+      3/7
+      5/7
+      2
+      Process Control
+      1B · Procesy Marketingowe
+      0/7
+      0/7
+      0
+      Basic Data Registration
+      1C · Technologia Procesowa i R&D
+      0/7
+      0/7
+      0
+      Basic Data Registration
+      1D · Procesy Zakupowe
+      0/7
+      0/7
+      0
+      Basic Data Registration
+      1E · Procesy Logistyczne
+      2/7
+      4/7
+      2
+      Workstation Control
+      1F · Procesy Produkcyjne
+      4/7
+      6/7
+      2
+      Automation
+      1G · Procesy Jakości
+      2/7
+      3/7
+      1
+      Workstation Control
+      1H · Zarządzanie Finansami
+      0/7
+      0/7
+      0
+      Basic Data Registration
+      1I · Procesy HR
+      0/7
+      0/7
+      0
+      Basic Data Registration
+      Produkty Cyfrowe
+      1.7/5 → 3.3/5
+    Oś „Produkty Cyfrowe” osiąga poziom 1.7/5 przy celu 3.3/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      2A · Produkty Cyfrowe
+      1/5
+      3/5
+      2
+      Basic
+      2B · Produkty Społecznościowe
+      0/5
+      0/5
+      0
+      Basic
+      2C · Produkty ICT
+      0/5
+      0/5
+      0
+      Basic
+      2D · Dopasowanie Produktu do Oczekiwań Klienta
+      2/5
+      4/5
+      2
+      Intermediate
+      2E · Skalowalność Produktu
+      2/5
+      3/5
+      1
+      Intermediate
+      Cyfrowe Modele Biznesowe
+      1.3/5 → 3/5
+    Oś „Cyfrowe Modele Biznesowe” osiąga poziom 1.3/5 przy celu 3/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      3A · Modele E-commerce
+      2/5
+      4/5
+      2
+      Intermediate
+      3B · Rozwiązania Platformowe
+      0/5
+      0/5
+      0
+      Basic
+      3C · Model As-a-Service
+      1/5
+      2/5
+      1
+      Basic
+      3D · Modele Współdzielenia Zasobów
+      0/5
+      0/5
+      0
+      Basic
+      3E · Modele Monetyzacji Danych
+      1/5
+      3/5
+      2
+      Basic
+      Zarządzanie Danymi
+      2.8/7 → 5/7
+    Oś „Zarządzanie Danymi” osiąga poziom 2.8/7 przy celu 5/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      4A · Zbieranie Danych
+      4/7
+      6/7
+      2
+      Data from Machines and Devices
+      4B · Metodologia Przechowywania Danych
+      2/7
+      5/7
+      3
+      Single Local Digital Storage
+      4C · Komunikacja Danych
+      3/7
+      5/7
+      2
+      Ethernet-based Architecture
+      4D · Analiza Big Data
+      2/7
+      4/7
+      2
+      ETL Systems
+      4E · Przetwarzanie Danych
+      0/7
+      0/7
+      0
+      PC Computation
+      Kultura Transformacji
+      3/6 → 4.7/6
+    Oś „Kultura Transformacji” osiąga poziom 3/6 przy celu 4.7/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      5A · Postawy przywódcze
+      4/6
+      5/6
+      1
+      Wspierający
+      5B · Gotowość na zmianę
+      3/6
+      5/6
+      2
+      Poszukiwanie wizji
+      5C · Ciągły rozwój kompetencji
+      2/6
+      4/6
+      2
+      Szkolenia wewnętrzne
+      5D · Kultura innowacji
+      0/6
+      0/6
+      0
+      Promowanie pomysłów
+      5E · Dostępność zasobów
+      0/6
+      0/6
+      0
+      Kapitał
+      Cyberbezpieczeństwo
+      2/6 → 4.7/6
+    Oś „Cyberbezpieczeństwo” osiąga poziom 2/6 przy celu 4.7/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      6A · Strategia i zarządzanie ryzykiem
+      2/6
+      5/6
+      3
+      Analiza ryzyka
+      6B · Ochrona sieci i systemów
+      0/6
+      0/6
+      0
+      Firewalle
+      6C · Ochrona danych
+      3/6
+      5/6
+      2
+      Kontrola dostępu
+      6D · Edukacja i jakość systemów
+      0/6
+      0/6
+      0
+      Opis systemu szkoleń
+      6E · Plany awaryjne
+      1/6
+      4/6
+      3
+      Identyfikacja zagrożeń
+      Dojrzałość AI
+      1.3/5 → 3.3/5
+    Oś „Dojrzałość AI” osiąga poziom 1.3/5 przy celu 3.3/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.
+      Obszar
+Aktualny
+Docelowy
+Luka
+Poziom aktualny
+      7A · Dane i Fundamenty AI
+      2/5
+      4/5
+      2
+      Structured Data in Silos
+      7B · Procesy Wspierane przez AI
+      1/5
+      3/5
+      2
+      Isolated AI Experiments
+      7C · AI w Produktach i Usługach
+      0/5
+      0/5
+      0
+      No AI Components in Products
+      7D · Governance, Bezpieczeństwo i Etyka
+      0/5
+      0/5
+      0
+      No AI Governance, Uncontrolled Use
+      7E · Kompetencje i Kultura AI
+      1/5
+      3/5
+      2
+      No Competencies
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 7
+    07
+    Załącznik metodyczny
+    Metodyka DRD ocenia dojrzałość cyfrową w 7 osiach transformacji i 39 obszarach. Osie 1 i 4 stosują skalę 1–7, pozostałe 1–5; wartości procentowe normalizują skale dla porównań między osiami. Wszystkie liczby pochodzą wyłącznie z silnika oceny.
+      Oś
+Obszary
+Skala
+      Oś 1 · Procesy Cyfrowe
+      9
+      1–7
+      Oś 2 · Produkty Cyfrowe
+      5
+      1–5
+      Oś 3 · Cyfrowe Modele Biznesowe
+      5
+      1–5
+      Oś 4 · Zarządzanie Danymi
+      5
+      1–7
+      Oś 5 · Kultura Transformacji
+      5
+      1–6
+      Oś 6 · Cyberbezpieczeństwo
+      5
+      1–6
+      Oś 7 · Dojrzałość AI
+      5
+      1–5
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 8
+    08
+    Benchmark branżowy
+    Produkcja procesowa — Produkcja procesowa (chemia, spożywka, farmacja, energetyka) ma naturalnie wysoką dojrzałość infrastruktury i bezpieczeństwa: instalacje ciągłe od dekad pracują na DCS/SCADA z gęstą siecią sensorów, a reżimy compliance (HACCP, GMP, Seveso, NIS2) wymuszają zarządzanie ryzykiem i reagowanie na incydenty na poziomie systemowym — liderzy sięgają poziomu V w D5 i D7 (edge przy instalacji, certyfikowany SZBI). Paradoks segmentu: dane telemetryczne istnieją w nadmiarze, ale służą sterowaniu i raportowaniu zgodności, nie decyzjom biznesowym — warstwa analityczna między OT a zarządem jest typowo najsłabszym ogniwem. Produkt (commodity, receptura) i model biznesowy (kontrakty wolumenowe) dają mało przestrzeni na cyfryzację oferty, stąd niskie D2/D3 nawet u liderów. Kultura jest zorientowana na stabilność i bezpieczeństwo („nie dotykaj instalacji, która działa"), co jest zaletą operacyjną, ale systemowo tłumi eksperymentowanie i innowację — najtrudniejszy do podniesienia wymiar w tym segmencie.
+      Wymiar
+Dojrzałość ogólna
+Typowa firma
+Lider branży
+Różnica vs typowa
+      Procesy Cyfrowe
+      40%
+      60%
+      80%
+      -20
+      Produkty Cyfrowe
+      34%
+      40%
+      60%
+      -6
+      Cyfrowe Modele Biznesowe
+      26%
+      40%
+      60%
+      -14
+      Zarządzanie Danymi
+      40%
+      60%
+      80%
+      -20
+      Kultura Transformacji
+      50%
+      40%
+      60%
+      +10
+      Cyberbezpieczeństwo
+      33%
+      60%
+      100%
+      -27
+      Dojrzałość AI
+      26%
+      20%
+      60%
+      +6
+    Wymiar D5 (Technologia i infrastruktura) profilu branżowego nie ma jeszcze odpowiednika w mierzonych osiach silnika — pominięty, nie wymyślony.
+    Profil referencyjny ekspercki DBR77 (hipoteza, wersja v1) — nie jest benchmarkiem statystycznym. Wartości podlegają kalibracji danymi platformy od n ≥ 10 zamkniętych ocen w segmencie (mediana + kwartyle, dane zanonimizowane). Benchmark statystyczny w budowie.
+    Metalpol Sp. z o.o. · Digital Readiness Diagnosis (DRD)Strona 9
