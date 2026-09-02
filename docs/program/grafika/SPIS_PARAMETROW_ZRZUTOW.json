@@ -15,7 +15,9 @@
       "wejscie": "screen"
     },
     "processflow-canvas": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": ".react-flow__node",
+      "powod_klika": "Panel wlasciwosci kanwy jest DOMYSLNIE w stanie pustym ('Zaznacz element, aby zobaczyc wlasciwosci'). Bez klikniecia w wezel zrzut pokazuje pusty panel, a wlasciciel napisal wprost: 'na tym obrazie jak go nie moge ocenic'. Klik w .react-flow__node rozwija panel w calosci (PODSTAWOWE / TRESC I GLEBIA / KLASYFIKACJA / DOWODY I ZRODLA / POWIAZANIA / ARTEFAKTY WYJSCIOWE / KRAWEDZ I TOR)."
     },
     "canvas-kebab-restructure": {
       "wejscie": "screen"
