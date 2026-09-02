@@ -62,6 +62,16 @@ bezpiecznej zmiany nazw. Nie są alternatywną nazwą produktu. Istnieją szczeg
 statements, models i analyses. Runtime ma tryb V8 oraz przełączniki fallback do
 starszych powierzchni. Menu oznacza Finance jako beta.
 
+**Pomiar 2026-09-01** (pełne cytaty:
+`docs/functional/POMIAR_2026-09-01_FINANSE_WYNIKI_MATERIALY.md`, sekcja 1):
+w warsztacie wyceny **18 z 21 paneli** woła realny endpoint backendu (trzy
+pozostałe są celowo lokalne — `DriverPlannerPanel`, `EvBasketFootballField`,
+`ValuationVisualsPanel`, nie luka). Na domyślnych ustawieniach **25 z 26
+ekranów modułu jest zamkniętych za flagami** — to jest zamierzony,
+kontrolowany rollout wizualny, nie usterka. „Management report" wyceny
+**nie istnieje w kodzie**; `ExportStep.tsx` jest uczciwym placeholderem
+(decyzja w MVP/poza MVP wciąż otwarta, patrz `FIN-F-006` niżej).
+
 ## TO-BE i luki
 
 Jednoznaczny, wersjonowany i audytowalny workbench finansowy, w którym wynik

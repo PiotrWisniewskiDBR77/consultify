@@ -44,9 +44,9 @@ const IDS = Object.freeze({
   action: 'w3-aud-action-v1', report: 'w3-aud-report-v1', proposal: 'w3-aud-proposal-v1',
 });
 
-const PACK_TITLE = 'Transformation Audit Pack — internal operations';
-const REQUIREMENT = 'Internal transformation decisions retain an accountable owner, dated evidence and independent review.';
-const EVIDENCE_TEXT = 'Internal steering review sampled 12 decisions; 3 lacked a dated independent review record.';
+const PACK_TITLE = 'Pakiet audytu transformacji — operacje wewnętrzne';
+const REQUIREMENT = 'Wewnętrzne decyzje transformacyjne zachowują wskazanego właściciela, datowany dowód i niezależny przegląd.';
+const EVIDENCE_TEXT = 'Wewnętrzny przegląd komitetu objął próbę 12 decyzji; w 3 brakowało datowanego zapisu niezależnego przeglądu.';
 const BANNED = /\b(?:ISO|SOC\s?2|NIST|IATF|VDA|HIPAA)\b/i;
 
 function fail(message) { throw new Error(`[W3-AUD fixture] BLOCKED: ${message}`); }
@@ -136,7 +136,7 @@ async function seed(client) {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   await client.query('BEGIN');
   try {
-    await client.query(`INSERT INTO organizations(id,name,plan,status) VALUES ($1,'Wave 3 Audits Owner Review','enterprise','active'),($2,'Wave 3 Audits Foreign Boundary','enterprise','active')`, [IDS.org, IDS.foreignOrg]);
+    await client.query(`INSERT INTO organizations(id,name,plan,status) VALUES ($1,'Przegląd właścicielski Audytów Fali 3','enterprise','active'),($2,'Granica obcej organizacji Audytów Fali 3','enterprise','active')`, [IDS.org, IDS.foreignOrg]);
     const users = [
       [IDS.owner,IDS.org,'w3.aud.owner@local.test','ADMIN'], [IDS.lead,IDS.org,'w3.aud.lead@local.test','USER'],
       [IDS.auditee,IDS.org,'w3.aud.auditee@local.test','USER'], [IDS.reviewer,IDS.org,'w3.aud.reviewer@local.test','USER'],
@@ -168,7 +168,7 @@ async function seed(client) {
       VALUES($1,$2,$3,$4,'corrective_action','Require dated independent-review record','Add a workflow checkpoint without changing external standards policy',$5,'2026-10-15','medium','approved',$6,'2026-08-21T09:30:00Z',$7)`, [IDS.action,IDS.finding,IDS.program,IDS.org,IDS.actionOwner,IDS.reviewer,IDS.auditee]);
     const reportPayload = { schemaVersion:'aud-owner-v1', programId:IDS.program, findingIds:[IDS.finding], internalOnly:true };
     await client.query(`INSERT INTO audit_reports(id,program_id,organization_id,version,report_kind,title,status,payload,content_hash,language,audience,confidentiality,generated_at,created_by)
-      VALUES($1,$2,$3,1,'audit_report','Transformation governance audit — draft owner report','draft',$4,$5,'en','internal owner review','internal','2026-08-21T09:40:00Z',$6)`, [IDS.report,IDS.program,IDS.org,JSON.stringify(reportPayload),hash(JSON.stringify(reportPayload)),IDS.lead]);
+      VALUES($1,$2,$3,1,'audit_report','Audyt zarządzania transformacją — szkic raportu właścicielskiego','draft',$4,$5,'en','wewnętrzny przegląd właścicielski','wewnętrzny','2026-08-21T09:40:00Z',$6)`, [IDS.report,IDS.program,IDS.org,JSON.stringify(reportPayload),hash(JSON.stringify(reportPayload)),IDS.lead]);
     await client.query(`INSERT INTO audit_initiative_proposals(id,program_id,organization_id,title,problem_statement,systemic_cause,intended_outcome,scope,priority,proposed_owner_id,timeframe,success_measures,source_finding_ids,verification_link,confidence,status,created_by)
       VALUES($1,$2,$3,'Independent review checkpoint','Three sampled decisions lacked dated independent review','Review is not a mandatory workflow step','Every internal transformation decision has a distinct dated reviewer','Internal workflow only','medium',$4,'Q4 2026',$5,$6,$7,0.85,'draft',$8)`, [IDS.proposal,IDS.program,IDS.org,IDS.actionOwner,JSON.stringify(['100% sampled decisions have a dated independent reviewer']),JSON.stringify([IDS.finding]),`/audit-programs/${IDS.program}?findingId=${IDS.finding}`,IDS.lead]);
     await client.query('COMMIT');

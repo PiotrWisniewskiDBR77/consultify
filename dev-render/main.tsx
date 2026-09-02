@@ -20,6 +20,20 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
+const Day235MaterialyDokumentyScreen = React.lazy(
+  () => import('./screens/day235-materialy-dokumenty')
+);
+const Day235MaterialyPrezentacjeScreen = React.lazy(
+  () => import('./screens/day235-materialy-prezentacje')
+);
+const Day235MaterialyExceleScreen = React.lazy(
+  () => import('./screens/day235-materialy-excele')
+);
+const Day238UstawieniaScreen = React.lazy(() => import('./screens/day238-ustawienia'));
+const Day235MaterialyArchitektSzablonowScreen = React.lazy(
+  () => import('./screens/day235-materialy-architekt-szablonow')
+);
 const IdeaFinancialCasePersistenceScreen = React.lazy(
   () => import('./screens/idea-financial-case-persistence')
 );
@@ -102,6 +116,9 @@ const UiFoundationFocus01EvidenceScreen = React.lazy(
 const AdminCommandCenterPanelScreen = React.lazy(
   () => import('./screens/admin-command-center-panel')
 );
+const AdminAIControlCenterPanelScreen = React.lazy(
+  () => import('./screens/admin-ai-control-center-panel')
+);
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
@@ -147,6 +164,9 @@ const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
+const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
+const Day221AudytyWarsztatScreen = React.lazy(() => import('./screens/day221-audyty-warsztat'));
+const Day220AudytyRejestrScreen = React.lazy(() => import('./screens/day220-audyty-rejestr'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
@@ -229,6 +249,7 @@ const CanvasToolbarMdHistoryScreen = React.lazy(
 );
 const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
 const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
+const ChatToolStepsDay206Screen = React.lazy(() => import('./screens/chat-tool-steps-day206'));
 const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
 const CrimsonWaveChromeScreen = React.lazy(
   () => import('./screens/crimson-wave-chrome-2026-07-26')
@@ -275,6 +296,11 @@ const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 //   () => import('./screens/execution-export-prezentacja')
 // );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const Day200FinancePanelsScreen = React.lazy(() => import('./screens/day200-finance-panels'));
+const Day233FinanseRejestryScreen = React.lazy(
+  () => import('./screens/day233-finanse-rejestry')
+);
+const Day233FinansePaneleScreen = React.lazy(() => import('./screens/day233-finanse-panele'));
 const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
@@ -421,6 +447,21 @@ const ExcelePrawyPanelStandardScreen = React.lazy(
   () => import('./screens/excele-prawy-panel-standard')
 );
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
+const Day214TeresaAdoptCardScreen = React.lazy(() => import('./screens/day214-teresa-adopt-card'));
+const Day228ImageStyleFieldScreen = React.lazy(
+  () => import('./screens/day228-image-style-field')
+);
+const Day231KonspektZWiedzyScreen = React.lazy(
+  () => import('./screens/day231-konspekt-z-wiedzy')
+);
+const Day230PrzepelnienieScreen = React.lazy(() => import('./screens/day230-przepelnienie'));
+const Day232AgentDeckuScreen = React.lazy(() => import('./screens/day232-agent-decku'));
+const Day234WynikiRejestryScreen = React.lazy(
+  () => import('./screens/day234-wyniki-rejestry')
+);
+const Day234WynikiNarzedziaScreen = React.lazy(
+  () => import('./screens/day234-wyniki-narzedzia')
+);
 // aios (runda pełna) — 146-aios, Internal Tools / AI OS submenu (8 ekranów), 2026-08-31.
 const AiosScreen = React.lazy(() => import('./screens/aios'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
@@ -456,6 +497,7 @@ const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
 const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
 const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identity-operating'));
+const Day236OrganizacjaScreen = React.lazy(() => import('./screens/day236-organizacja'));
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
@@ -538,8 +580,37 @@ const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-repo
 const ToolsSwotInitiativeProposalScreen = React.lazy(
   () => import('./screens/tools-swot-initiative-proposal')
 );
+const Day267MaterialyHubZrzutyScreen = React.lazy(
+  () => import('./screens/day267-materialy-hub-zrzuty')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'day237-spotkania': {
+    label:
+      'Dyżur 237 — realne MeetingHub / MeetingObjectPage / Sidebar; &view=list|object|member-sidebar|member-direct &state=pending|rejected|approved',
+    render: () => <Day237SpotkaniaScreen />,
+  },
+  'day238-ustawienia': {
+    label:
+      'Dyżur 238 — REALNY SettingsSidebar + reprezentatywny panel każdej z 10 zmierzonych grup. &section=profile|regional|ai-behavior|notifications-overview|security-dashboard|connected-apps|data-controls|billing|theme|developer &role=OWNER|MEMBER &proof=restricted|allowed|owner',
+    render: () => <Day238UstawieniaScreen />,
+  },
+  'day235-materialy-dokumenty': {
+    label: 'Dyżur 235 — realny Document Studio; &view=registry pokazuje wspólny rejestr Materiałów',
+    render: () => <Day235MaterialyDokumentyScreen />,
+  },
+  'day235-materialy-prezentacje': {
+    label: 'Dyżur 235 — realny Deck Template Builder, cztery slajdy',
+    render: () => <Day235MaterialyPrezentacjeScreen />,
+  },
+  'day235-materialy-excele': {
+    label: 'Dyżur 235 — realny ExceleView z arkuszem formułowym NPV/IRR',
+    render: () => <Day235MaterialyExceleScreen />,
+  },
+  'day235-materialy-architekt-szablonow': {
+    label: 'Dyżur 235 — realny architekt szablonów Word: draft, approved, deprecated',
+    render: () => <Day235MaterialyArchitektSzablonowScreen />,
+  },
   'angielskie-resztki-i18n': {
     label:
       'I18N — REALNY <MonteCarloNpvPanel> (Driver -> Czynnik, ziarna Revenue/Cost -> Przychody/Koszty) + REALNY <EditableSpreadsheetGrid> z 250 wierszami (stopka rowCap: brakujące kimi.showingAllRows/showAllRows, showingRows kłamał "25"). &theme=light|dark &rows=<n>',
@@ -564,6 +635,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'M01 Organizacja — REALNY <OrganizationView> z flagą orgRedesignV1 ON: ekran „Tożsamość i model działania" (11 ekranów w nawigacji, Menu 2/3 ze StandardModuleBar, prawy panel stanu). Dodaj &ff_org_redesign_v1=1 w URL.',
     render: () => <OrgIdentityOperatingScreen />,
+  },
+  'day236-organizacja': {
+    label:
+      'DAY 236 Organizacja — REALNY <OrganizationView>, komplet 11 tras redesignu. &orgRoute=profile/identity-scale|profile/position-direction|goals/strategic-intent|goals/stakeholder-expectations|challenges/declared-challenges|challenges/root-causes|strategy/risks-opportunities|strategy/executive-brief|sources/claims-sources|sources/knowledge-graph|readiness/summary; &redesign=off dla legacy; &persona=member dla ograniczonej persony.',
+    render: () => <Day236OrganizacjaScreen />,
   },
   'staging-fixes-initiatives-i18n': {
     label:
@@ -1093,10 +1169,24 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
     render: () => <AdminCommandCenterPanelScreen />,
   },
+  'admin-ai-control-center-panel': {
+    label: 'Day 218 — AI policy honest full/empty/unavailable states (&state=)',
+    render: () => <AdminAIControlCenterPanelScreen />,
+  },
   'finance-hub': {
     label:
       'GRAFIKA 17 — REALNY <FinanceHub> (ekran wejściowy Finansów, brakująca „pierwsza karta" — sześć analizowanych spółek, PLN/EUR/USD/GBP). &tab=statements|analysis|models|prediction|valuation',
     render: () => <FinanceHubScreen />,
+  },
+  'day233-finanse-rejestry': {
+    label:
+      'Day233 — realny FinanceHub, pięć rejestrów z fixture owner-review; &tab=statements|analysis|models|prediction|valuation',
+    render: () => <Day233FinanseRejestryScreen />,
+  },
+  'day233-finanse-panele': {
+    label:
+      'Day233 — 21 realnych paneli Finansów; &panel=monte-carlo|real-options|frontier|sensitivity|scenarios|banking|cash-forecast|driver|driver-tree|extended-ratios|headcount|investment-appraisal|rolling-forecast|valuation-visuals|value|value-attribution|value-capture|value-ledger|variance-bridge|variance-narration|ev-basket',
+    render: () => <Day233FinansePaneleScreen />,
   },
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
@@ -1410,6 +1500,18 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'AGT-007 — AgentPlanCanvas przestawialny schemat (ścieżka ① 5-fazowy vs ② pusty), status planning',
     render: () => <AgentPlanCanvasScreen />,
   },
+  'day207-write-proposal': {
+    label: 'Day207 — real ExecutionProposalMessage for a same-turn pending WRITE proposal',
+    render: () => <Day207WriteProposalScreen />,
+  },
+  'day221-audyty-warsztat': {
+    label: 'Day221 — Audyty D-5: prototyp warsztatu, SPEC-A Rekord L, 18 ogniw / 4 fazy / prawy panel',
+    render: () => <Day221AudytyWarsztatScreen />,
+  },
+  'day220-audyty-rejestr': {
+    label: 'Day220 — Audyty: Sesje/Raporty/Ustalenia, pełne polskie wartości; &view=processes|reports|findings',
+    render: () => <Day220AudytyRejestrScreen />,
+  },
   'agent-hub': {
     label:
       'AGT-010 — powłoka Run agent (Moje procesy | Szablony) PRZED AgentPlanWorkspace, tabela planning/executing/awaiting_approval/completed/failed',
@@ -1607,6 +1709,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&panel=value|driver &state=populated|empty)',
     render: () => <FinanceValuePanelsScreen />,
+  },
+  'day200-finance-panels': {
+    label:
+      'Dyżur 200 — pozostałych 14/21 paneli finansów (&panel=banking|cash-forecast|driver-tree|extended-ratios|headcount|investment-appraisal|rolling-forecast|valuation-visuals|value-attribution|value-capture|value-ledger|variance-bridge|variance-narration|ev-basket)',
+    render: () => <Day200FinancePanelsScreen />,
   },
   'finance-model-workspace': {
     label: 'Finance model workspace',
@@ -1834,6 +1941,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
     render: () => <ChatSplitTeresaRightScreen />,
   },
+  'chat-tool-steps-day206': {
+    label: 'Day206 — realny komponent kroków narzędzi READ Teresy',
+    render: () => <ChatToolStepsDay206Screen />,
+  },
   'crimson-mywork-wave2': {
     label: 'Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)',
     render: () => <CrimsonMyWorkWave2Screen />,
@@ -2036,6 +2147,41 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
     render: () => <ExcelePrawyPanelStandardScreen />,
   },
+  'day214-teresa-adopt-card': {
+    label:
+      'FIX-214 pkt 4 — REALNY <GovernedInitiativeHandoffCard> (karta adopcji szkicu z czatu Teresy, za ENABLE_TERESA_ADOPT_CHAT_DRAFT, domyślnie OFF), 4 stany (idle/blocked/ready/adopted) napędzone realnymi kliknięciami przeciw przechwyconemu fetch — dane z fixture w harnessie, NIE z realnego przebiegu (patrz komentarz w pliku ekranu).',
+    render: () => <Day214TeresaAdoptCardScreen />,
+  },
+  'day228-image-style-field': {
+    label:
+      'FIX-228 pkt 3 — REALNY <PresentationTemplateArchitectView>, pole „Styl obrazu" za flagą presentationImageStyleUiV1 (domyślnie OFF). &scene=on|off.',
+    render: () => <Day228ImageStyleFieldScreen />,
+  },
+  'day231-konspekt-z-wiedzy': {
+    label:
+      'Day231 — realny OutlineStep z widocznymi źródłami przy tezach; dane z propsów harnessu, nie z realnego przebiegu.',
+    render: () => <Day231KonspektZWiedzyScreen />,
+  },
+  'day230-przepelnienie': {
+    label:
+      'Day230 — realny komponent ostrzeżenia przed eksportem; stan overflow/clean z propsów harnessu.',
+    render: () => <Day230PrzepelnienieScreen />,
+  },
+  'day232-agent-decku': {
+    label:
+      'Day232 — agent decku: pending/applied/rejected oraz następne ruchy; dane z propsów harnessu, nie z realnego przebiegu.',
+    render: () => <Day232AgentDeckuScreen />,
+  },
+  'day234-wyniki-rejestry': {
+    label:
+      'Dyżur 234 — trzy REALNE rejestry Wyników, izolowane per domena. &domain=kpi|roi|okr &ff=off (jawny dowód bramki OFF) &state=ready|loading|empty|error',
+    render: () => <Day234WynikiRejestryScreen />,
+  },
+  'day234-wyniki-narzedzia': {
+    label:
+      'Dyżur 234 — reprezentatywne wycinki REALNYCH pełnych narzędzi KPI/OKR/ROI na ręcznych fixture harnessu. &domain=kpi|roi|okr + parametry domenowe',
+    render: () => <Day234WynikiNarzedziaScreen />,
+  },
   // aios (runda pełna) — 146-aios, Internal Tools / AI OS (8 pozycji submenu),
   // odbiór grafiki 2026-08-31. Realne komponenty z src/components/AIChat/,
   // przełącznik `&screen=` w dev-render/screens/aios.tsx.
@@ -2205,6 +2351,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'org-summary': {
     label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
     render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
+  },
+  'day267-materialy-hub-zrzuty': {
+    label:
+      'Day267 — realny ReportsAndPresentationsHub; &tab=outputs_all|outputs_documents|presentations|outputs_sheets|templates &state=ready|empty|loading|error',
+    render: () => <Day267MaterialyHubZrzutyScreen />,
   },
 };
 

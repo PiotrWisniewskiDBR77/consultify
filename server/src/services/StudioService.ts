@@ -87,14 +87,30 @@ export class StudioService {
   }
 
   /**
-   * Get a single document by ID
+   * Get a single document by ID.
+   *
+   * `organizationId` is REQUIRED and enforced in-app (not just accepted and
+   * ignored, as the original implementation did — the caller's org/user was
+   * never compared to the row, so any authenticated user who knew/guessed a
+   * documentId could read/update/delete another organization's document via
+   * GET/PUT/DELETE /studio/documents/:id). A document is visible when it
+   * belongs to the caller's organization OR the caller is its creator —
+   * mirroring the same `organization_id = ? OR created_by = ?` rule already
+   * used by `getDocuments` — so behavior for an authorized caller is
+   * unchanged; a cross-org caller now gets `null` (route responds 404,
+   * matching the "don't reveal existence" convention already used for
+   * `/forms/:formId`).
    */
-  async getDocument(documentId: string, userId: string): Promise<StudioDocument | null> {
+  async getDocument(
+    documentId: string,
+    userId: string,
+    organizationId: string
+  ): Promise<StudioDocument | null> {
     const db = getDatabase();
 
     try {
       const row = await db.get<any>(
-        `SELECT 
+        `SELECT
                     id, organization_id, name, description, type,
                     nodes_json, edges_json, viewport_json,
                     linked_task_id, linked_project_id, linked_initiative_id,
@@ -106,6 +122,7 @@ export class StudioService {
       );
 
       if (!row) return null;
+      if (row.organization_id !== organizationId && row.created_by !== userId) return null;
 
       return this.mapRowToDocument(row);
     } catch (error: any) {
@@ -182,19 +199,25 @@ export class StudioService {
   async updateDocument(
     documentId: string,
     userId: string,
+    organizationId: string,
     input: UpdateDocumentInput
   ): Promise<StudioDocument | null> {
     const db = getDatabase();
     const now = new Date().toISOString();
 
     try {
-      // Get existing document first
-      const existing = await this.getDocument(documentId, userId);
+      // Get existing document first (org/creator-scoped — see getDocument)
+      const existing = await this.getDocument(documentId, userId, organizationId);
       if (!existing) return null;
 
       // Create snapshot if requested
       if (input.createSnapshot) {
-        await this.createSnapshot(documentId, userId, input.snapshotReason || 'manual');
+        await this.createSnapshot(
+          documentId,
+          userId,
+          organizationId,
+          input.snapshotReason || 'manual'
+        );
       }
 
       // Build update query dynamically
@@ -252,7 +275,7 @@ export class StudioService {
 
       logger.info(`[StudioService] Document updated: ${documentId}`);
 
-      return this.getDocument(documentId, userId);
+      return this.getDocument(documentId, userId, organizationId);
     } catch (error: any) {
       logger.error('[StudioService] Failed to update document:', error);
       throw new Error('Failed to update document');
@@ -260,12 +283,22 @@ export class StudioService {
   }
 
   /**
-   * Delete a document
+   * Delete a document. `userId`/`organizationId` are enforced the same way
+   * as `getDocument` before the row is removed — the original implementation
+   * accepted only `documentId`, so any authenticated caller who knew/guessed
+   * a documentId could permanently delete another organization's document.
    */
-  async deleteDocument(documentId: string): Promise<boolean> {
+  async deleteDocument(
+    documentId: string,
+    userId: string,
+    organizationId: string
+  ): Promise<boolean> {
     const db = getDatabase();
 
     try {
+      const existing = await this.getDocument(documentId, userId, organizationId);
+      if (!existing) return false;
+
       const result = await db.run('DELETE FROM studio_documents WHERE id = ?', [documentId]);
 
       if (result.changes && result.changes > 0) {
@@ -281,11 +314,14 @@ export class StudioService {
   }
 
   /**
-   * Create a snapshot of the document
+   * Create a snapshot of the document. `organizationId` is enforced via
+   * `getDocument` before any snapshot row is written — see that method's
+   * comment for why this is required.
    */
   async createSnapshot(
     documentId: string,
     userId: string,
+    organizationId: string,
     reason: string = 'manual'
   ): Promise<string> {
     const db = getDatabase();
@@ -293,8 +329,8 @@ export class StudioService {
     const now = new Date().toISOString();
 
     try {
-      // Get current document state
-      const doc = await this.getDocument(documentId, userId);
+      // Get current document state (org/creator-scoped — see getDocument)
+      const doc = await this.getDocument(documentId, userId, organizationId);
       if (!doc) throw new Error('Document not found');
 
       // Get next version number
@@ -331,12 +367,18 @@ export class StudioService {
   }
 
   /**
-   * Get document snapshots
+   * Get document snapshots. `userId`/`organizationId` are enforced via
+   * `getDocument` before snapshots are read — the original implementation
+   * accepted only `documentId`, so any authenticated caller who knew/guessed
+   * a documentId could read another organization's snapshot history.
    */
-  async getSnapshots(documentId: string): Promise<any[]> {
+  async getSnapshots(documentId: string, userId: string, organizationId: string): Promise<any[]> {
     const db = getDatabase();
 
     try {
+      const doc = await this.getDocument(documentId, userId, organizationId);
+      if (!doc) return [];
+
       const rows = await db.all<any[]>(
         `SELECT 
                     id, document_id, version, name,
@@ -367,9 +409,17 @@ export class StudioService {
   }
 
   /**
-   * Restore document from snapshot
+   * Restore document from snapshot. `organizationId` is enforced via
+   * `getDocument` against the snapshot's parent document before anything is
+   * restored — the original implementation accepted only `userId`, so any
+   * authenticated caller who knew/guessed a snapshotId could overwrite
+   * another organization's document with that snapshot's contents.
    */
-  async restoreSnapshot(snapshotId: string, userId: string): Promise<StudioDocument | null> {
+  async restoreSnapshot(
+    snapshotId: string,
+    userId: string,
+    organizationId: string
+  ): Promise<StudioDocument | null> {
     const db = getDatabase();
 
     try {
@@ -379,11 +429,15 @@ export class StudioService {
 
       if (!snapshot) return null;
 
+      // Verify the snapshot's document belongs to the caller (org/creator-scoped)
+      const doc = await this.getDocument(snapshot.document_id, userId, organizationId);
+      if (!doc) return null;
+
       // Create a snapshot of current state before restoring
-      await this.createSnapshot(snapshot.document_id, userId, 'before_restore');
+      await this.createSnapshot(snapshot.document_id, userId, organizationId, 'before_restore');
 
       // Update document with snapshot data
-      return this.updateDocument(snapshot.document_id, userId, {
+      return this.updateDocument(snapshot.document_id, userId, organizationId, {
         nodes: JSON.parse(snapshot.nodes_json || '[]'),
         edges: JSON.parse(snapshot.edges_json || '[]'),
         viewport: JSON.parse(snapshot.viewport_json || '{"x":0,"y":0,"zoom":1}'),

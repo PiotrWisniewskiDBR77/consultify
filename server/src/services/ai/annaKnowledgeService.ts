@@ -252,6 +252,16 @@ async function searchScopedKnowledge(
   if (docs.length === 0) return [];
 
   const docById = new Map(docs.map((doc) => [doc.id, doc]));
+  // FIX-2 (dyżur 210): deliberately NOT threading a userId here. Anna is the
+  // public marketing chatbot — `buildAnnaKnowledgeContext` above calls the
+  // policy gateway with `organizationId: 'public'`, `userId: 'anonymous'`;
+  // there is no real per-request human identity to take instead of
+  // fabricating one (the card explicitly forbids inventing an identity).
+  // `docs` here is always sourced from `loadIndexedProductDocs()`, which
+  // hard-filters `WHERE source_type = 'product_pill'` — never `scope='user'`
+  // Vault-private documents — so the owner-aware exception in
+  // `appendKnowledgeDocAccessFilter` has no private doc to apply to on this
+  // path regardless.
   const results = await ragService.searchRelevantChunks(query, {
     limit,
     minSimilarity: 0.15,

@@ -19,6 +19,11 @@ last_updated: 2026-05-09
 
 - Route exists, but behavior can diverge if imports are present and not mounted.
 - Documentation must track mounted runtime, not planned/RAW target-state behavior.
+- **Zmierzone 2026-09-01 (dyżur 236):** `docs/FUNCTIONAL_DOCUMENTATION.md:55`
+  twierdzi `CLOSED_FINAL 2026-08-25`, ale realny default flagi `orgRedesignV1`
+  jest OFF i stan pozostaje `OWNER_NOT_REVIEWED` — zamknięcie opierało się na
+  prototypie, nie na odbiorze realnego builda. Pełny pomiar:
+  `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
 
 ## Next Contract Work (without changing scope)
 

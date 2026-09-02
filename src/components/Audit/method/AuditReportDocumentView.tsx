@@ -70,9 +70,12 @@
  * samego dokumentu (sekcje z ustaleniami niosą już `statement`/`referenceCode`
  * — żaden dodatkowy request).
  *
- * Eksport PDF ŚWIADOMIE pominięty (osobny, droższy blok — poza zakresem tej
- * naprawy) — widoczny jako wyszarzały wiersz z notatką „Planowane" w sekcji
- * Akcje prawego panelu, NIGDY jako działający przycisk.
+ * FIX-187: eksport PDF (`GET /reports/:id/export.pdf`, strukturalny
+ * bliźniak `.docx` — ten sam aktor/walidacja/kontekst/schemat, różnica
+ * tylko renderer+Content-Type, zero nowej flagi) ma teraz realny przycisk
+ * „Pobierz PDF" obok „Pobierz DOCX" w sekcji Akcje prawego panelu — ten sam
+ * wzorzec pobierania (fetch → blob → `<a download>` → revoke), ta sama
+ * bramka `reportChainEnabled`. Wyszarzały wiersz „Planowane" usunięty.
  */
 import {
   AlertTriangle,
@@ -542,6 +545,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const reportChainEnabled = useMemo(() => isAuditsReportChainEnabled(), []);
   const [exportingDocx, setExportingDocx] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
   /** R1: DRUGI, jawnie nazwany tryb — domyślnie OFF, ładowany leniwie na żądanie (patrz `switchToPresentation`). */
@@ -585,6 +589,46 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       setExportingDocx(false);
     }
   }, [exportingDocx, isPolish, reportId]);
+
+  /**
+   * FIX-187: bliźniak `downloadDocx` — trasa `.pdf` jest strukturalnym
+   * bliźniakiem `.docx` (ten sam aktor/walidacja/kontekst/schemat, różnica
+   * tylko renderer+Content-Type), więc wzorzec pobierania jest identyczny
+   * (fetch → blob → tymczasowy `<a download>` → revoke), zero nowej flagi.
+   */
+  const downloadPdf = useCallback(async () => {
+    if (!reportId || exportingPdf) return;
+    setExportingPdf(true);
+    setExportError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/audits/reports/${encodeURIComponent(reportId)}/export.pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || (isPolish ? 'Nie udało się pobrać PDF.' : 'Could not download PDF.'));
+      }
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `audit-report-${reportId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (downloadError) {
+      setExportError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : isPolish
+            ? 'Nie udało się pobrać PDF.'
+            : 'Could not download PDF.'
+      );
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [exportingPdf, isPolish, reportId]);
 
   const load = useCallback(() => {
     if (!reportId) {
@@ -1335,10 +1379,17 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
               {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
             </button>
           ) : null}
-          <div className="mt-1 flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2 opacity-60">
-            <span className="text-xs text-c-text-muted">{isPolish ? 'Eksport PDF' : 'PDF export'}</span>
-            <span className="text-[10px] font-medium text-c-text-muted">{isPolish ? 'Planowane' : 'Planned'}</span>
-          </div>
+          {reportChainEnabled ? (
+            <button
+              type="button"
+              disabled={exportingPdf}
+              onClick={() => void downloadPdf()}
+              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {isPolish ? 'Pobierz PDF' : 'Download PDF'}
+            </button>
+          ) : null}
         </div>
       ),
     },

@@ -190,3 +190,19 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+## Dzień 241 — pomiar dróg zapisu i nadzoru (2026-09-01)
+
+Pomiar rejestracji `router.post/put/patch/delete` w dziesięciu plikach tras daje łącznie **210** dróg: 96 w `initiatives.routes.ts`, 82 w `initiativesExecutionRuntime.routes.ts` oraz 32 w ośmiu pozostałych plikach. Klasyfikacja zachowawcza, bez przepisywania liczb autora: **co najmniej 92 audytowane, co najmniej 16 osiągalnych i cichych, 25 zatrzymanych przed handlerem oraz 77 jeszcze nierozstrzygniętych**. Ostatniego bucketu nie wolno rozdzielić między audytowane i ciche samym wystąpieniem słowa `audit`; wymaga śledzenia każdego handlera do tabeli docelowej.
+
+| Zakres | N | M: ślad potwierdzony | K: ciche potwierdzone | D: handler odcięty | U: nierozstrzygnięte |
+|---|---:|---:|---:|---:|---:|
+| `initiatives.routes.ts` | 96 | >=10 | >=16 | 25 | 45 |
+| `initiativesExecutionRuntime.routes.ts` | 82 | 82 (wspólny UoW `ie_audit_events`) | 0 | 0 | 0 |
+| pozostałe 8 plików tras | 32 | >=0 | >=0 | 0 | 32 |
+| **Razem** | **210** | **>=92** | **>=16** | **25** | **77** |
+
+Realny test na lokalnym PostgreSQL potwierdził żywą lukę: podpisane żądanie `PUT /api/initiatives/:id` zapisuje samo `hypothesisStatement`, lecz licznik `initiative_history` pozostaje `0 → 0`. Przyczyna jest widoczna w `server/src/controllers/InitiativeController.ts:998-1024,1065`: pola `LAZY_FIELDS` trafiają do `UPDATE`, ale nie do `changes`, a zapis historii jest warunkowany niepustym `changes`. Renderowany ekran rzeczywiście wywołuje tę drogę (`src/components/Initiatives/InitiativeDocumentView.tsx:1594-1649,8559,8623`; `src/services/initiativeWriteTruth.ts:305`).
+
+Potwierdzone martwe funkcje w `InitiativeDocumentView.tsx`: `handleUploadAttachments`, `handleDeleteAttachment`, `handleAddLinkedItem`, `handleRemoveLinkedItem` mają wyłącznie definicje (`:3859-3917`) oraz wpisy zależności (`:8908-8911`), bez wywołania. `FullInitiativesView` jest legacy wrapperem, natomiast `InitiativeManagementView` jest oznaczony `@deprecated`; bezpośrednim właścicielem `/initiatives` pozostaje `InitiativesHub` (`src/routes/AppRoutes.tsx:2255-2263`).
+
+`requireCanonicalInitiativeExecutionWriter` jest zamontowany po `/runtime-v1`, a przed handlerami legacy (`server/src/routes/pmo/initiatives.routes.ts:155-160`). Zwykła bramka `requireGovernedInitiativeCapability` nie jest dowodem zatwierdzenia: przy braku obu zmiennych sterujących starszy middleware zezwala na przejście. Wzorzec Organizacji ma osobny rejestr decyzji i niemutowalne, haszowane wersje (`OrganizationContextService.ts:2173-2260`; `20260912_claude_c_org_context_snapshots.sql:64-75,101-107,153`).

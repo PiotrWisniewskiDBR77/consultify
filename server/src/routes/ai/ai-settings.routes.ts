@@ -92,6 +92,68 @@ const transformSettingsToSnakeCase = (settings: any) => ({
   data_residency: settings.dataResidency,
 });
 
+/**
+ * Shared snake_case <-> camelCase key renamer, driven by an explicit field
+ * map (snake_case key -> camelCase key). Deliberately NOT a generic
+ * regex-based converter: several organization_ai_settings columns carry
+ * acronyms that don't round-trip through a naive snake->camel regex
+ * (max_ai_calls_per_day -> maxAICallsPerDay, not maxAiCallsPerDay;
+ * monthly_budget_usd -> monthlyBudgetUSD, not monthlyBudgetUsd;
+ * hard_limit_usd -> hardLimitUSD). An explicit map keeps every rename
+ * correct while still being one reusable mechanism instead of a bespoke
+ * transform function per tier.
+ */
+const mapKeys = (obj: Record<string, any> | null | undefined, keyMap: Record<string, string>) => {
+  const out: Record<string, any> = {};
+  if (!obj) return out;
+  for (const [fromKey, toKey] of Object.entries(keyMap)) {
+    if (Object.prototype.hasOwnProperty.call(obj, fromKey)) {
+      out[toKey] = obj[fromKey];
+    }
+  }
+  return out;
+};
+
+const invertKeyMap = (keyMap: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(Object.entries(keyMap).map(([from, to]) => [to, from]));
+
+/**
+ * organization_ai_settings columns (snake_case, see aiSettingsService.ts
+ * getOrgSettings/updateOrgSettings and migrations/000_initdb_core_tables.sql)
+ * -> OrgAISettings frontend fields (camelCase, see src/types/domain/ai.ts).
+ * This is the org-tier analogue of transformSettingsTo{CamelCase,SnakeCase}
+ * above for superadmin — same file, same pattern, aligned to it per the
+ * working superadmin/user tiers rather than inventing a new mechanism.
+ */
+const ORG_SETTINGS_FIELD_MAP: Record<string, string> = {
+  policy_level: 'policyLevel',
+  max_policy_level: 'maxPolicyLevel',
+  default_proactivity_mode: 'defaultProactivityMode',
+  active_roles: 'activeRoles',
+  default_role: 'defaultRole',
+  enabled_model_ids: 'enabledModelIds',
+  max_ai_calls_per_day: 'maxAICallsPerDay',
+  max_tokens_per_month: 'maxTokensPerMonth',
+  monthly_budget_usd: 'monthlyBudgetUSD',
+  hard_limit_usd: 'hardLimitUSD',
+  freeze_on_limit: 'freezeOnLimit',
+  web_search_enabled: 'webSearchEnabled',
+  artifacts_enabled: 'artifactsEnabled',
+  thinking_steps_enabled: 'thinkingStepsEnabled',
+  focus_modes_enabled: 'focusModesEnabled',
+  voice_enabled: 'voiceEnabled',
+  audit_all_requests: 'auditAllRequests',
+  audit_policy_changes: 'auditPolicyChanges',
+};
+
+const transformOrgSettingsToCamelCase = (settings: any) => ({
+  organizationId: settings?.organization_id,
+  ...mapKeys(settings, ORG_SETTINGS_FIELD_MAP),
+});
+
+const transformOrgSettingsToSnakeCase = (settings: any) =>
+  mapKeys(settings, invertKeyMap(ORG_SETTINGS_FIELD_MAP));
+
 const respondServiceNotConfigured = (
   _req: Request,
   res: Response,
@@ -224,7 +286,11 @@ router.get(
       }
 
       const settings = await AISettingsService.getOrgSettings(orgId);
-      return res.json(settings);
+      // Transform snake_case (DB/service shape) to camelCase for the frontend
+      // (OrgAISettingsView.tsx / src/types/domain/ai.ts OrgAISettings). This
+      // mirrors the transformSettingsToCamelCase wrapper used a few dozen
+      // lines above for the superadmin tier, which the org tier was missing.
+      return res.json(transformOrgSettingsToCamelCase(settings));
     } catch (error: any) {
       logger.error('[AI Settings] Error getting org settings:', error);
       return res.status(500).json({
@@ -267,7 +333,12 @@ router.put(
         return res.status(403).json({ error: 'Admin access required' });
       }
 
-      const settings = req.body;
+      // Transform camelCase input (OrgAISettingsView.tsx sends OrgAISettings
+      // as-is) to the snake_case shape aiSettingsService.updateOrgSettings
+      // reads (settings.policy_level ?? current.policy_level, etc). Without
+      // this, every key lookup misses and the `??` fallback silently
+      // re-persists the OLD value for all 18 settings on every save.
+      const settings = transformOrgSettingsToSnakeCase(req.body);
       const actorId = req.user?.id;
       const actorRole = req.user?.role;
       const ipAddress = (req as Request).ip || (req.headers['x-forwarded-for'] as string) || null;
@@ -301,7 +372,10 @@ router.put(
         /* best-effort */
       }
 
-      return res.json(updated);
+      // Transform the persisted (snake_case) row back to camelCase so the
+      // frontend's re-fetch-and-compare save verification (orgAISettingsMatch
+      // in OrgAISettingsView.tsx) is comparing like with like.
+      return res.json(transformOrgSettingsToCamelCase(updated));
     } catch (error: any) {
       logger.error('[AI Settings] Error updating org settings:', error);
       return res.status(500).json({
@@ -370,9 +444,15 @@ router.put(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Validate proactivity mode against org settings
+      // Validate proactivity mode against org settings. getOrgSettings()
+      // returns the snake_case service/DB shape (default_proactivity_mode),
+      // so this must go through the same camelCase transform as the org
+      // GET/PUT handlers above — otherwise orgSettings.defaultProactivityMode
+      // is always undefined and the org-level proactivity cap is silently
+      // never enforced (falls through to the 'PROACTIVE' || fallback).
       if (settings.proactivityMode) {
-        const orgSettings = await AISettingsService.getOrgSettings(organizationId);
+        const orgSettingsRaw = await AISettingsService.getOrgSettings(organizationId);
+        const orgSettings = transformOrgSettingsToCamelCase(orgSettingsRaw);
         const proactivityOrder: Record<string, number> = { REACTIVE: 0, BALANCED: 1, PROACTIVE: 2 };
         const maxAllowed = proactivityOrder[orgSettings.defaultProactivityMode || 'PROACTIVE'] || 2;
         const requested = proactivityOrder[settings.proactivityMode] || 1;
@@ -425,7 +505,17 @@ router.get(
       }
 
       const effective = await AISettingsService.getEffectiveSettings(userId, organizationId);
-      return res.json(effective);
+      const superadmin = transformSettingsToCamelCase(effective.superadmin || {});
+      const org = transformOrgSettingsToCamelCase(effective.org || {});
+      const user = effective.user || {};
+      return res.json({
+        ...superadmin,
+        ...org,
+        ...user,
+        superadmin,
+        org,
+        user,
+      });
     } catch (error: any) {
       logger.error('[AI Settings] Error getting effective settings:', error);
       return res.status(500).json({

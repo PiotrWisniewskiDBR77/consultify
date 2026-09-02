@@ -214,6 +214,18 @@ Date: —
 Accepted-out/deferred: Partner economics remain disabled pending later policy/release authorization.
 Evidence manifest: —
 
+## Day224 — trzy pozycje Partnera po Day188/189 (2026-09-01)
+
+Na markerze `0a35699021` i kanonicznym lokalnym runtime `5122/5123` potwierdzono,
+że stary baner `error && !summary` nie występuje po odpowiedzi earnings-summary `200`;
+żywy ekran pokazuje uczciwy widok ekonomii OFF. `Users: 0` rozstrzygnięto jako dane
+fixture: organizacja istnieje, realny PostgreSQL zwraca `COUNT(*) = 0`, API/UI jest
+zgodne, bez ostrzeżenia zapytania. Dla Organizations dodano wyłącznie lokalny prop
+`minTableWidth="auto"`: sześć kolumn mieści się przy 1280 px, ale zrzut 375 px nadal
+nie pokazuje kolumny Status, więc PRT-D112-003 pozostaje `PARTIAL_MOBILE` i wymaga
+osobnego kontraktu responsywnego. `Current gate` oraz ekonomia OFF pozostają bez zmian.
+Pełny raport i hashe artefaktów: `../../codex/CODEX_DAY224_PARTNER_REPORT.md`.
+
 ## Day126 — weryfikacja palety Partnera (2026-08-29)
 
 Własny pomiar na dokładnym markerze `714faf5f8b0d9cda8204fec9495893c9fe97bed7`, świeżej lokalnej bazie (`863` migracje, drugi przebieg `0`) i kanonicznym runtime `4918/4919` **obalił** tezę, że preferencja Light renderuje ciemną paletę. Jawny wybór Light usuwa klasę `dark` z `<html>` i daje tło `rgb(248,250,252)` oraz tekst `rgb(15,23,42)`; Dark przywraca klasę oraz tło `rgb(15,23,42)` i tekst `rgb(244,247,251)`. Wynik powtórzono dla connected i unconnected: `4/4` obrazy rozróżniają motywy.
@@ -223,3 +235,19 @@ Nie zmieniono kodu produktu ani testów i nie wykonano pozornej „naprawy”. D
 ## Day177 — fixture gotowy, kanoniczny runtime zablokowany (2026-08-30)
 
 Na markerze `d3d36cd5f5` lokalny `cx-day177-pg` przeszedł 869 migracji (drugi przebieg 0), a naprawiony seeder dla `cx177` zakończył się sukcesem z readbackiem `bound_partner=1`, `certifications=2`, `participant_facts=1`. Kanoniczny `start-wave3-owner-runtime.mjs` odrzucił jednak `cx177`, ponieważ allowlista adopcji Partnera nadal wymaga prefiksu `consultify_w3_partner_owner_*`. Serwer 5024/5025 nie wystartował; logowanie, 25 sekcji, 50 zrzutów oraz PRT-D62-005/006/007 pozostają niezmierzone. Stan `EVIDENCE_MISSING`; G08–G20 bez podniesienia. Ten wpis poprawia błędny równoległy wpis zasobowy z commita `abc9517689`; kontener był zasobem tego przebiegu. Szczegóły: `../../codex/CODEX_DAY177_PARTNER_REPORT.md`.
+
+## Day177 — wznowienie i realny przejazd G08 (2026-08-30)
+
+Po autoryzowanej zmianie nazwy DB na `consultify_w3_partner_owner_cx177` pełny łańcuch przeszedł: 869 migracji (drugi przebieg 0), seeder i readback, kanoniczny runtime health/ready/frontend 200, realny login fixture (`Password valid: true`, `ENABLE_TEST_AUTH_BYPASS=false`) oraz 25/25 sekcji w polskim Light i Dark. Finalny pakiet ma 50/50 zrzutów z walidacją active+lang+theme. Wyniki per sekcja: `17 renderuje się / 7 błąd / 1 pusty`. `PRT-D62-005` POTWIERDZONY (earnings-summary HTTP 500), `PRT-D62-006` POTWIERDZONY (`uuid = text`, a UI Projects pokazuje fałszywe zero), `PRT-D62-007` POTWIERDZONY na `23/25` sekcji; komunikat blokady economics jest dziś po polsku. Materiał jest `EVIDENCE_PACKAGE_READY_WITH_DEFECTS / OWNER_PENDING`; żadnej bramki G08–G20 nie podniesiono do PASS. Pełny raport i ścieżki/hash artefaktów: `../../codex/CODEX_DAY177_PARTNER_REPORT.md`.
+## Dzień 263 — retest sześciu sekcji błędnych (30.08 → 1.09)
+
+Wynik jest częściowy i fail-closed: realny `ApiGateway` + podpisany JWT + fixture tenantowa + PostgreSQL potwierdziły HTTP `200` dla wszystkich readerów sześciu sekcji, ale kanoniczny runtime odrzucił literalną bazę `cx263` wymaganą przez instrukcję. Bez runtime nie wykonano dowodu UI Light/Dark ani mobile 375 px, dlatego nie przypisano dzisiejszej kategorii `renderuje się / błąd / pusta` i nie zmieniono mianownika `17 renderuje się / 7 błąd / 1 pusta`.
+
+| Sekcja | Stan 30.08 | Stan dziś | HTTP dziś | Zmiana | Dowód mobile |
+|---|---|---|---|---|---|
+| `dashboard` | błąd | `UI NOT_PROVEN` | `200, 200, 200` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `statements` | błąd | `UI NOT_PROVEN` | `200 × 4` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `payouts` | błąd | `UI NOT_PROVEN` | `200 × 4` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `payout-settings` | błąd | `UI NOT_PROVEN` | `200 × 5` | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `organizations` | błąd | `UI NOT_PROVEN` | `200`; fixture odczytany | HTTP naprawione; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |
+| `projects` | błąd | `UI NOT_PROVEN` | `200` | błąd `uuid = text` nie wystąpił; kategoria UI nierozstrzygnięta | `NOT_PROVEN` — runtime zablokowany przed startem |

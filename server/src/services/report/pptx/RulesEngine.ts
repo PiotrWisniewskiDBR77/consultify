@@ -39,6 +39,12 @@ interface Rule {
   check: (slide: UnifiedSlide, index: number) => RuleViolation | null;
 }
 
+interface ReportRule {
+  id: string;
+  description: string;
+  check: (report: UnifiedReportJSON) => RuleViolation[];
+}
+
 const MAX_TITLE_WORDS = 14;
 const MAX_BULLETS = 5;
 const MAX_KPI_DASHBOARD = 6;
@@ -294,6 +300,48 @@ const STRUCTURAL_RULES: Rule[] = [
   },
 ];
 
+const REPORT_RULES: ReportRule[] = [
+  {
+    id: 'ZERO_CLAIM_CONTRADICTS_SOURCE',
+    description: 'A zero initiatives/risks claim must agree with source-bearing report slides',
+    check(report) {
+      const zeroPattern =
+        /\b0\s+(inicjatyw(?:a|y|ach|ami|om)?|ryzyk(?:o|a|ach|ami|om)?|initiatives?|risks?)\b/i;
+      const hasInitiatives = report.slides.some((slide) => {
+        if (slide.intent !== 'initiative_portfolio') return false;
+        return ((slide.content as InitiativePortfolioContent).initiatives?.length ?? 0) > 0;
+      });
+      const hasRisks = report.slides.some((slide) => {
+        if (slide.intent !== 'risk_management') return false;
+        return ((slide.content as RiskManagementContent).risks?.length ?? 0) > 0;
+      });
+
+      return report.slides.flatMap((slide, slideIndex) => {
+        if (slide.intent !== 'key_messages') return [];
+        const content = slide.content as KeyMessagesContent;
+        const text = [
+          slide.key_message,
+          ...(content.messages ?? []).flatMap((message) => [message.title, message.description]),
+        ]
+          .filter(Boolean)
+          .join(' ');
+        const match = text.match(zeroPattern);
+        if (!match) return [];
+        const claimsInitiatives = /inicjatyw|initiative/i.test(match[1]);
+        if ((claimsInitiatives && !hasInitiatives) || (!claimsInitiatives && !hasRisks)) return [];
+        return [
+          {
+            rule: 'ZERO_CLAIM_CONTRADICTS_SOURCE',
+            message: `Slide ${slideIndex + 1}: claims "${match[0]}" but the report contains non-zero ${claimsInitiatives ? 'initiatives' : 'risks'} source data.`,
+            severity: 'error' as const,
+            slideIndex,
+          },
+        ];
+      });
+    },
+  },
+];
+
 // ============================================================
 // VALIDATE
 // ============================================================
@@ -319,6 +367,10 @@ export function validateReport(report: UnifiedReportJSON): ValidationResult {
         violations.push(violation);
       }
     }
+  }
+
+  for (const rule of REPORT_RULES) {
+    violations.push(...rule.check(report));
   }
 
   const hasErrors = violations.some((v) => v.severity === 'error');

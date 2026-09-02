@@ -98,3 +98,15 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: Wave 2 bounded acceptance does not replace Wave 3 Tools review.
 Evidence manifest: —
+
+## Day225 — sprostowanie komentarza i lokalny retest (2026-09-01)
+
+Na markerze `0a35699021` sprostowano trzy nieaktualne bloki komentarza w
+`toolsInsightsWiringFlag.ts`; kod wykonywalny i domyślne `false` nie zmieniły się.
+Lokalny retest na świeżym PostgreSQL przeszedł przez realny `ApiGateway`, podpisany JWT
+i `GET /api/tool-outputs`: pusty owner read `200 { outputs: [] }`, SQL→HTTP readback
+wiersza organizacji `200`, brak tokenu `401`. Kanoniczny lokalny runtime z flagą włączoną
+query zwrócił `/api/tool-outputs` `200` i wyrenderował zakładkę Insighty bez błędu
+pełnoekranowego. Jest to dowód techniczny, nie akcept właścicielski i nie zmienia
+`OWNER_QUALITY_REVIEW_IN_PROGRESS` ani domyślnego stanu flagi. Szczegóły i hashe:
+`../../codex/CODEX_DAY225_NARZEDZIA_REPORT.md`.

@@ -4,7 +4,7 @@ import path from 'path';
 import { getStorage } from './storage/index.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
-export type AttachmentObjectType = 'task' | 'decision';
+export type AttachmentObjectType = 'task' | 'decision' | 'initiative';
 
 export interface ObjectAttachment {
   id: string;
@@ -37,7 +37,7 @@ export class ObjectAttachmentError extends Error {
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const ALLOWED_TYPES = new Set<AttachmentObjectType>(['task', 'decision']);
+const ALLOWED_TYPES = new Set<AttachmentObjectType>(['task', 'decision', 'initiative']);
 
 const selectFields = `
   id,
@@ -81,6 +81,29 @@ async function requireObjectAccess(input: {
   organizationId: string;
   userId: string;
 }): Promise<void> {
+  // Initiatives are org-wide objects (any member of the owning organization can
+  // open one — see server/src/routes/pmo/initiatives.routes.ts, every read/write
+  // there scopes by `organization_id` alone, never by an assignee/owner pair).
+  // Task/decision attachments stay participant-restricted below; widening THAT
+  // check to initiatives would be a permission regression, not a fix.
+  if (input.objectType === 'initiative') {
+    const row = await queryHelpers.queryOne<{ organizationId: string }>(
+      `SELECT organization_id as "organizationId"
+         FROM initiatives
+        WHERE id = ?
+        LIMIT 1`,
+      [input.objectId]
+    );
+    if (!row || String(row.organizationId) !== input.organizationId) {
+      throw new ObjectAttachmentError(
+        404,
+        'OBJECT_ATTACHMENT_OBJECT_NOT_FOUND',
+        'Object not found'
+      );
+    }
+    return;
+  }
+
   const table = input.objectType === 'task' ? 'tasks' : 'decisions';
   const participantColumns =
     input.objectType === 'task'

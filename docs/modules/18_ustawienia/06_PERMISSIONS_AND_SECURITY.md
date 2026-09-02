@@ -52,3 +52,26 @@ Function-level enforcement applies uniformly to: `SET_SETTINGS_WORKSPACE`, `SET_
 - [x] Legacy system settings root is blocked for non-superadmin users.
 - [ ] Explicit superadmin ownership handoff pattern is documented and validated in settings UX (`NOT_DONE`).
 - [ ] E2E audit confirms settings cannot directly mutate admin/superadmin policy controls (`NOT_DONE`).
+
+## STAN ZMIERZONY 2026-09-01 (dyżur 238) — bramka widoczności sekcji dla pilota
+
+Ta sekcja dokumentu wcześniej nie opisywała mechanizmu ograniczającego
+zwykłego użytkownika (pilota) do podzbioru sekcji Ustawień. Zmierzone
+bezpośrednio na `SettingsSidebar.tsx` i `pilotAccess.ts`:
+
+| Element | Zmierzone | Dowód |
+| --- | --- | --- |
+| Pełna lista sekcji | 37 liści w 10 grupach | `src/components/settings/SettingsSidebar.tsx` (pomiar bezpośredni `grep`) |
+| Dozwolone dla pilota | 4: `profile`, `auth-access`, `language`, `theme` | `src/utils/pilotAccess.ts:15-19` |
+| Mechanizm ukrywania | **Usuwa** pozycje z listy (nie kłódka) | `SettingsSidebar.tsx:491-492` |
+| Przekierowanie z zablokowanej trasy | **Ciche** — brak wpisu do dziennika w tym bloku | `src/components/RouterSync.tsx:330-344` (wpis do dziennika ma sąsiedni blok `316-327`) |
+
+**Ryzyko bezpieczeństwa nazwane wprost:** to jest UI-owy filtr nawigacji, nie
+dowód separacji danych API/DB dla pilota — ten pomiar nie sprawdza, czy
+backend odmawia zapisu/odczytu dla sekcji spoza allowlisty niezależnie od UI.
+
+Test regresyjny (dowiedziony mutacyjnie 1.09):
+`src/components/settings/__tests__/SettingsSidebar.pilotSectionFilter.test.tsx`
+(commit `93a6092cd6`) i `src/components/__tests__/RouterSync.pilotSettingsSilentRedirect.test.tsx`
+(commit `4c59a77010`). Pełny pomiar:
+`docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.

@@ -8,9 +8,8 @@ export const ACTION_SCHEMA_VERSION = '1.0';
 
 export type ChatActionType =
   | 'NAVIGATE'
-  | 'CREATE_TASK'
-  | 'CREATE_DECISION'
-  | 'CREATE_INITIATIVE'
+  // Task, decision and initiative creation use the governed CREATE_DRAFT_* proposal
+  // lifecycle in server/src/services/aiActionExecutor.ts (cases at marker lines 911-920).
   | 'GENERATE_REPORT'
   | 'GENERATE_PRESENTATION'
   | 'USE_TEMPLATE'
@@ -94,52 +93,6 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
       params: { type: 'object', required: false, description: 'Additional route params' },
     },
     requiredCapabilities: ['read'],
-    styling: 'primary',
-  },
-  {
-    type: 'CREATE_TASK',
-    label: 'chat.actions.createTask.label',
-    description: 'chat.actions.createTask.description',
-    icon: 'CheckSquare',
-    category: 'creation',
-    payloadSchema: {
-      title: { type: 'string', required: true, description: 'Task title' },
-      description: { type: 'string', required: false, description: 'Task description' },
-      priority: { type: 'string', required: false, description: 'Priority: low, medium, high' },
-      dueDate: { type: 'string', required: false, description: 'ISO date string' },
-      initiativeId: { type: 'string', required: false, description: 'Related initiative ID' },
-    },
-    requiredCapabilities: ['create_task'],
-    styling: 'primary',
-  },
-  {
-    type: 'CREATE_DECISION',
-    label: 'chat.actions.createDecision.label',
-    description: 'chat.actions.createDecision.description',
-    icon: 'Scale',
-    category: 'creation',
-    payloadSchema: {
-      title: { type: 'string', required: true, description: 'Decision title' },
-      description: { type: 'string', required: false, description: 'Decision description' },
-      priority: { type: 'string', required: false, description: 'Priority: low, medium, high' },
-      dueDate: { type: 'string', required: false, description: 'ISO date string' },
-      initiativeId: { type: 'string', required: false, description: 'Related initiative ID' },
-    },
-    requiredCapabilities: ['create_decision'],
-    styling: 'primary',
-  },
-  {
-    type: 'CREATE_INITIATIVE',
-    label: 'chat.actions.createInitiative.label',
-    description: 'chat.actions.createInitiative.description',
-    icon: 'Target',
-    category: 'creation',
-    payloadSchema: {
-      title: { type: 'string', required: true, description: 'Initiative title' },
-      description: { type: 'string', required: false, description: 'Initiative description' },
-      templateId: { type: 'string', required: false, description: 'Template ID to use' },
-    },
-    requiredCapabilities: ['create_initiative'],
     styling: 'primary',
   },
   {

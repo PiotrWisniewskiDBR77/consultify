@@ -14,6 +14,7 @@
 
 import { Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -281,8 +282,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (isPilotAllowedSettingsSection(activeSection)) return;
+    toast.error(
+      t(
+        'settings.pilot.sectionUnavailableForRole',
+        'Ta sekcja nie jest dostępna w Twojej roli podczas pilota. Skontaktuj się z administratorem, jeśli potrzebujesz dostępu.'
+      )
+    );
     navigate(getPilotDefaultSettingsRoute(), { replace: true });
-  }, [activeSection, isPilotParticipant, navigate]);
+  }, [activeSection, isPilotParticipant, navigate, t]);
 
   // Hidden sections redirect to Profile. Their nav entries are removed from the
   // sidebar; if reached via URL, bounce to profile.

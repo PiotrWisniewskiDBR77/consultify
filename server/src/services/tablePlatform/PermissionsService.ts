@@ -470,6 +470,34 @@ const permissionsService = {
   },
 
   /**
+   * Express middleware: resolve form → table access.
+   * A form's id alone carries no org context — without this, any
+   * authenticated caller who knows (or guesses) a formId could read,
+   * update, or delete another organization's form via GET/PATCH/DELETE
+   * /forms/:formId, bypassing the org boundary entirely.
+   */
+  requireFormAccess(req: Request, res: Response, next: NextFunction): void {
+    const authReq = req as AuthRequest;
+    const formId = authReq.params?.formId;
+    if (!formId) {
+      res.status(400).json({ error: 'formId required' });
+      return;
+    }
+    const db = getDatabase();
+    db.query('SELECT table_id FROM tp_forms WHERE id = $1', [formId])
+      .then((result) => {
+        const row = result.rows[0] as { table_id?: string } | undefined;
+        if (!row?.table_id) {
+          res.status(404).json({ error: 'Form not found' });
+          return;
+        }
+        authReq.params.tableId = row.table_id;
+        permissionsService.requireTableAccess(req, res, next);
+      })
+      .catch(next);
+  },
+
+  /**
    * Express middleware: resolve view → table access.
    */
   requireViewAccess(req: Request, res: Response, next: NextFunction): void {

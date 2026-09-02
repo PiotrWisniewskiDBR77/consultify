@@ -19,6 +19,13 @@ last_updated: 2026-05-09
 
 - Route exists, but behavior can diverge if imports are present and not mounted.
 - Documentation must track mounted runtime, not planned/RAW target-state behavior.
+- **Zmierzone 2026-09-01 (dyżur 238):** `docs/FUNCTIONAL_DOCUMENTATION.md:57`
+  twierdzi `CLOSED_FINAL 2026-08-25`, ale karta modułu ma `G08`/`G09`
+  `NOT_STARTED` — pierwszy przegląd wizualny nigdy się nie zaczął. 33 z 37
+  (89%) sekcji jest niedostępnych dla zwykłego użytkownika (mechanizm
+  usuwa je z listy), a przekierowanie z zablokowanej trasy jest ciche (brak
+  wpisu do dziennika). Pełny pomiar:
+  `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`.
 
 ## Next Contract Work (without changing scope)
 

@@ -1,0 +1,839 @@
+# INSTRUKCJA DYŻURU nr 238 — Codex — „★★ USTAWIENIA — KOMPLET EKRANÓW DO ZRZUTÓW WŁAŚCICIELA modułu oznaczonego `CLOSED_FINAL` (`FUNCTIONAL_DOCUMENTATION.md`), którego karta modułu ma G08/G09 „First-impression review”/„Guided CX journey review” = `NOT_STARTED`. Zero nowego mechanizmu: tylko dev-render harness montujący REALNY `SettingsSidebar` + panele i korekta liczby w tablicy zamknięć (nie „4/5 tras”, lecz **33 z 37 sekcji (89%)** cicho przekierowuje MEMBER do Profilu — inny mechanizm niż w Spotkaniach: tu chowa się TREŚĆ po kliknięciu w `RouterSync.tsx`, nie pozycja menu)"
+
+Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
+Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
+poprzednich dyżurów. Wszystko, czego potrzebujesz, jest poniżej albo pod
+wskazanymi ścieżkami w repo.
+
+> ### ★★ ZAKAZ NR 1 — KATALOG WŁAŚCICIELA. CZYTASZ TO, ZANIM URUCHOMISZ COKOLWIEK.
+>
+> **Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani
+> do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`,
+> ani `git fetch`, ani `git worktree add`.
+> To brudny checkout właściciela produktu i jest **NIETYKALNY**.
+> Jedyny dozwolony kontakt z tą ścieżką to **symlink `node_modules` (odczyt)**
+> wg `DEC-2026-08-26-86`.
+>
+> **★★ TO JEST NAJCZĘSTSZA PRZYCZYNA STRACONEJ GODZINY W TYM PROGRAMIE.**
+> Instrukcja dyżuru 53 kazała wykonać `git fetch --all` i `git worktree add`
+> „w root-repo" — wykonawca zrobił to w katalogu właściciela, `Z5` zablokowało
+> pracę i dyżur stanął na STOP-ie, który nie miał prawa powstać.
+> **Dlatego w `§0.1` masz PEŁNĄ, DOSŁOWNĄ procedurę worktree Z VAULTA.**
+> Nie improwizuj jej i nie zastępuj „swoim sposobem". Twoje miejsce pracy to
+> **wyłącznie** `/private/tmp/cx-day238-ustawienia`.
+
+> ### ★★ MARKER I STAN WYDANIA
+>
+> **SHA markera: `e014ba0d8b`**
+> **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
+> **Stan dokumentu: WYDANY**
+>
+> Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
+> Jeżeli widzisz `PROJEKT` albo jakiekolwiek niewypelnione pole szablonu — **dokument nie
+> jest wydany, nie zaczynasz i zgłaszasz to nadzorcy**.
+> Ta ramka jest **jedynym** miejscem, w którym rozstrzyga się stan wydania.
+> Objaśnienia w innych blokach cytowanych **nie** są powodem do STOP-u.
+
+Data wystawienia: 2026-09-01.
+Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
+Język pracy i raportowania: **polski**.
+Zakres: ****15 USTAWIENIA (`/settings/*`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03, ze sprzecznością między dwoma dokumentami kanonicznymi.** `docs/FUNCTIONAL_DOCUMENTATION.md:66`: „aktywny · CLOSED_FINAL 2026-08-25, tag `final-02-settings`”. Karta modułu G08/G09: `NOT_STARTED`. Zmierzone na markerze `e014ba0d8b`: `src/components/settings/SettingsSidebar.tsx` deklaruje **37** liści-sekcji w **11** grupach (`my-settings`, `work-preferences`, `ai-automation-group`, `notifications`, `security`, `integrations`, `data-privacy`, `billing`, `appearance`, `advanced`). `src/utils/pilotAccess.ts:15-18` (`PILOT_ALLOWED_SETTINGS_SECTIONS`) dopuszcza dla roli pilotażowej wyłącznie 4: `profile`, `auth-access`, `language`, `theme`. Mechanizm zasłaniania: `src/components/RouterSync.tsx:330-338` — przekierowanie efektu ubocznego nawigacji do `/settings/profile`, BEZ komunikatu, dla każdej z pozostałych 33 sekcji. Pozycja „Ustawienia” w sidebarze pozostaje widoczna (`SETTINGS` jest w `PILOT_VISIBLE_MENU_IDS`), więc problem jest niewidoczny na poziomie menu — ujawnia się dopiero po kliknięciu.**.
+Trasy front: ``src/components/settings/SettingsSidebar.tsx` (37 sekcji, 11 grup, `:143-660`) · `src/views/SettingsView.tsx` · reprezentatywne panele treści (jeden na grupę — `ProfileSettings.tsx`, `RegionalSettings.tsx`, AI grupa, `notifications-overview`, `security-dashboard`, `connected-apps`, `data-controls`/`privacy`, `BillingSettings.tsx`, `AppearanceSettings.tsx`/`AccessibilitySettings.tsx`, `advanced` grupa) · `UsageMeters.tsx` (martwy kod podejrzany, `REKONESANS...md` „Tezy OBALONE”: bug `t()` realny na `:174`, ale zero importerów `SidebarUsage`). ★★ Ósmy kształt fałszywego gotowe: komponent zaimportowany ≠ realnie renderowany z danymi — każdy zrzut musi pochodzić z realnego montażu przez `dev-render` harness z fixture danych. Kanon: `docs/ui-standards/TRIADA_KANON.md` — **nie przebudowujesz powłoki**, tylko montujesz do zrzutu`. Trasy tył: `Ten dyżur jest w większości front-only (mechanizm zasłaniania jest routingiem klienckim, nie bramką backendu) — `server/src/middleware/auth.middleware.ts` jako kontekst uwierzytelnienia person OWNER/ADMIN/MEMBER użytych w fixture'ach `R1`. Zero zmian backendu w tym dyżurze (patrz `§4` tabela licencji)`.
+
+---
+
+### 0.1. ★★ BAZA PRACY, MARKER I GAŁĄŹ — PROCEDURA DOSŁOWNA, Z VAULTA
+
+**Repozytorium, z którego pracujesz, to BARE-vault, a nie checkout właściciela:**
+
+```
+/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+```
+
+Vault ma `extensions.worktreeConfig=true`. **To ma konsekwencję operacyjną,
+którą MUSISZ obsłużyć — krok (4).**
+
+**PIERWSZE KOMENDY DYŻURU — wklej dokładnie tak, po kolei:**
+
+```bash
+VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+WT=/private/tmp/cx-day238-ustawienia
+MARKER=e014ba0d8b
+
+# (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
+df -h /
+
+# (1) fetch WYLACZNIE z github-backup — NIGDY `--all`
+git -C "$VAULT" fetch github-backup --prune
+
+# (2) marker
+git -C "$VAULT" log --oneline -25 github-backup/codex/m03-admin-20260824
+git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/codex/m03-admin-20260824 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+
+# (3) worktree — TWORZONY Z VAULTA, nigdy z katalogu wlasciciela
+git -C "$VAULT" worktree add "$WT" -b codex/day238-ustawienia-20260901 "$MARKER"
+
+# (4) ★★ BEZ TEGO GIT ODMOWI PRACY W WORKTREE (vault jest BARE)
+printf '[core]\n\tbare = false\n' > "$VAULT/worktrees/cx-day238-ustawienia/config.worktree"
+cat "$VAULT/worktrees/cx-day238-ustawienia/config.worktree"   # ma wypisac dwie linie
+
+# (5) node_modules przez SYMLINK — jedyny dozwolony kontakt z katalogiem
+#     wlasciciela (DEC-2026-08-26-86, odczyt)
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+
+# (6) katalogi pomocnicze POZA repo (Z13)
+mkdir -p /private/tmp/cx-day238-ustawienia-scratch
+mkdir -p /private/tmp/cx-day238-ustawienia-artefakty
+
+# (7) sanity
+git -C "$WT" rev-parse HEAD
+git -C "$WT" status --short | head -3
+```
+
+**Wynik komend (2) i (7) wklejasz do raportu dosłownie.**
+
+> **★★ PUŁAPKA — REMOTE `icloud-source` JEST MARTWY.**
+> Vault ma trzy remote'y: `github-backup` (żywy, jedyny Twój),
+> `origin` (**zakazany do pushu**, `Z1`) i `icloud-source`, wskazujący na
+> nieistniejący katalog `/private/tmp/consultify-staging-deploy-e6ca`.
+> **Dlatego NIE WOLNO Ci wołać `git fetch --all`.**
+> **Błąd `icloud-source` przy jakimkolwiek fetchu NIE JEST negatywnym wynikiem
+> markera i NIE JEST powodem do STOP-u.** Jedynym negatywnym wynikiem markera
+> jest napis `MARKER BRAK` z komendy `merge-base` powyżej.
+
+**★★ REGUŁA ROZEJŚCIA (`DEC-2026-08-26-95`).**
+Jeżeli marker **nie jest** przodkiem tipa albo gałąź nie istnieje — **STOP
+całego dyżuru**. Nie improwizujesz bazy: nie startujesz z `origin/demo`,
+`main`, `Londyn`, `codex/preserve-*`, `codex/day*-instrukcja-*` ani z żadnej
+gałęzi cudzych dyżurów.
+
+Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
+STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
+
+```bash
+git -C "$VAULT" log --oneline e014ba0d8b..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only e014ba0d8b..github-backup/codex/m03-admin-20260824
+```
+
+Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
+**Rebase w trakcie dyżuru: ZAKAZANY** (`Z3`).
+
+**★★ PUSH PO PIERWSZYM COMMICIE** (`Z34a`), nie na koniec:
+
+```bash
+git -C "$WT" push github-backup codex/day238-ustawienia-20260901
+```
+
+Powtarzasz go **po każdej kolejnej pozycji**.
+
+**Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
+
+```bash
+git -C "$WT" diff --name-only e014ba0d8b..HEAD
+```
+
+**WERYFIKACJA STANU WEJŚCIOWEGO — `7` komend, wszystkie obowiązkowe.**
+Każda ma podany **oczekiwany wynik autora instrukcji**; rozbieżność idzie do
+„Korekt wobec instrukcji", **nie do improwizacji**.
+
+```bash
+cd "$WT"
+
+# (1) TEZA: 37 LISCI-sekcji w SettingsSidebar.tsx w 11 grupach (nie 47 wszystkich 'id:')
+grep -c "id: '" src/components/settings/SettingsSidebar.tsx
+grep -n "^                id: '" src/components/settings/SettingsSidebar.tsx | wc -l
+#   oczekiwane: 47 wszystkich 'id:' (grupy+dzieci), 37 samych liesci (drugi poziom wciecia)
+
+# (2) TEZA: tylko 4 sekcje dozwolone dla roli pilotazowej
+sed -n '1,20p' src/utils/pilotAccess.ts | grep -n "PILOT_ALLOWED_SETTINGS_SECTIONS" -A 6
+#   oczekiwane: Set(['profile','auth-access','language','theme']) — 4 wpisy
+
+# (3) TEZA: przekierowanie nastepuje w RouterSync.tsx, jeden warunek
+sed -n '325,345p' src/components/RouterSync.tsx
+#   oczekiwane: warunek isPilotRestrictedRole + path.startsWith('/settings') + navigate do
+#   getPilotDefaultSettingsRoute(), bez zadnego komunikatu/toastu w tym bloku
+
+# (4) TEZA: SETTINGS jest widoczny w PILOT_VISIBLE_MENU_IDS mimo zaslonietej tresci
+sed -n '6,13p' src/utils/pilotAccess.ts
+#   oczekiwane: 'SETTINGS' obecne w zbiorze
+
+# (5) TEZA: UsageMeters/SidebarUsage nie ma importerow produkcyjnych
+grep -rln "SidebarUsage" src/ --include="*.tsx" --include="*.ts" | grep -v __tests__
+grep -rln "from.*UsageMeters'\|from.*UsageMeters\"" src/ | grep -v __tests__ | grep -v "UsageMeters.tsx$"
+#   oczekiwane: SidebarUsage bez importera poza wlasnym plikiem/testami; sprawdz obydwa
+#   wzorce bo grep --include w zsh bywa zawodny (filtruj potokiem, nie flaga --include, jesli
+#   pierwszy wariant da pustke)
+
+# (6) TEZA: karta modulu ma G08/G09 NOT_STARTED mimo CLOSED_FINAL gdzie indziej
+grep -n "NOT_STARTED" docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md | head -5
+grep -n "CLOSED_FINAL" docs/FUNCTIONAL_DOCUMENTATION.md | grep -i settings
+#   oczekiwane: co najmniej dwa NOT_STARTED w karcie (G08,G09), jeden CLOSED_FINAL w
+#   FUNCTIONAL_DOCUMENTATION dla Settings
+
+# (7) TEZA: miejsce na dysku wystarcza na dyzur (~1,7 GB)
+df -h /
+#   oczekiwane: powyzej 5 GB wolnego — ponizej tego STOP calego dyzuru (patrz Z incydentow)
+```
+
+---
+
+### §0.4a — pomiar zasięgu testów (warunek oddania raportu, patrz `Z24`)
+
+Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie liczbami:
+
+1. PRZED zmianami produktu: uruchom pakiet(y) testów wskazane w licencji z
+   `--reporter=json` (albo zapisz listę `describe/it` z wyjścia) i zapisz do
+   artefaktów plik `przed-nazwy.txt` — po jednej PEŁNEJ nazwie testu na wiersz.
+2. PO zmianach: to samo do `po-nazwy.txt`.
+3. Do raportu wchodzi: `diff przed-nazwy.txt po-nazwy.txt` — nazwy DODANE (twoje
+   nowe testy) i nazwy ZNIKNIĘTE (każda zniknięta = wyjaśnienie albo STOP).
+   `N passed` bez nazw NIE jest pomiarem. „Ta sama liczba" przy innym składzie
+   nazw to fałszywa zieleń (Z37).
+4. Przepisanie liczby z instrukcji, cudzego raportu albo rejestru = zawyżenie
+   i podstawa odrzucenia raportu. Liczysz sam, u siebie, na swojej bazie.
+
+---
+
+### 0.2. Bezwzględne ZAKAZY — `Z1`–`Z40`
+
+| # | Zakaz | Dlaczego (incydent) |
+| --- | --- | --- |
+| `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day238-ustawienia-20260901` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
+| `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `codex/m03-admin-20260824` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
+| `Z3` | **Żadnego `--force`, `--force-with-lease`, `git reset --hard` na gałęziach współdzielonych**, żadnego `rebase` w trakcie dyżuru | Krach 3/4: regresja demo z force/reset na złej bazie |
+| `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
+| `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
+| `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
+| `Z7` | **★★ Twój JEDYNY port bazy to `6186`. Twój JEDYNY port harnessu to `5160 i 5161`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day238-pg`**. **ZAKAZANE:** `Zakazane na stałe: 5000 (macOS Control Center), 5037 (adb), 5060-5061. Zajęte przez inne prace (nie ruszasz): 6012, 5433, 6047, 6054-6183, 5010-5155, 6404-6411, 6600-6830. Twoje własne: baza 6186, harness 5160 i 5161. Cudze — siostrzane dyżury TEJ SAMEJ fali, nie dotykasz: baza 6184 i harness 5156-5157 (dyżur 236 Organizacja), baza 6185 i harness 5158-5159 (dyżur 237 Spotkania). Sprawdzasz sam przed startem: lsof -nP -iTCP:PORT -sTCP:LISTEN oraz docker ps`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
+| `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
+| `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `ŻADNEJ nowej flagi i ŻADNEJ zmiany `PILOT_ALLOWED_SETTINGS_SECTIONS`. Ten dyżur jest pomiarowo-dowodowy — harness `dev-render` renderuje panele treści bezpośrednio (nie przez pełny router z rolą pilotażową), więc nie ma tu query-param do wymuszenia; para dowodowa `R1a` odtwarza realną nawigację przez `RouterSync` w osobnym, minimalnym montażu roli MEMBER. `Z10` obowiązuje bez wyjątku`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
+| `Z11` | **★★ NIE ODSŁANIASZ NOWEGO EKRANU BEZ AKCEPTU.** Nowe wizualium ma flagę `default OFF` i idzie do właściciela **na zrzutach zrobionych przez Ciebie**. Zmiana domyślnej na `ON` = **odrzucenie pozycji** | `CLAUDE.md` reguła 7: właściciel NIGDY nie jest pierwszym testerem wizualnym (powód: załamanie 07-11) |
+| `Z12` | **★★ NIE ZMIENIASZ MODELU UPRAWNIEŃ ANI BRAMEK PLATFORMOWYCH.** Nietykalne do zapisu: ``src/utils/pilotAccess.ts` · `src/utils/roleGuards.ts` · `src/components/RouterSync.tsx` · `server/src/database/Database.ts` · `vitest.config.ts` · `tests/setup.ts``. **Wyjątek — jeżeli istnieje — jest wymieniony imiennie w tabeli licencji** | Pliki przekrojowe; dyżury 37/43/46/52 rozjechały się właśnie na nich |
+| `Z13` | **Nie tworzysz nowych dokumentów rejestrowych.** Dokładnie JEDEN plik raportu: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY238_USTAWIENIA_REPORT.md`. Jedyny inny dokument, który wolno Ci dotknąć, to `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md` (§R.1) — WYŁĄCZNIE dopisanie nowej sekcji na końcu pliku ze zmierzonym stanem (skala zasłoniętych sekcji, sprzeczność CLOSED_FINAL), każde zdanie z dowodem `plik:linia`. Zakaz kasowania, nadpisywania lub przepisywania istniejących wierszy tabel. Zakaz wpisywania `FIXED`/`VERIFIED` — ten dyżur nie naprawia mechanizmu, tylko mierzy i dokumentuje. **Zrzuty, logi i pliki wynikowe NIE wchodzą do repo** — leżą w `/private/tmp/cx-day238-ustawienia-artefakty`, a raport podaje ścieżki i `shasum -a 256` | Dokumentacja rośnie szybciej niż produkt |
+| `Z14` | **Nie zmieniasz `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`** i nie podważasz decyzji w kodzie. Uważasz, że decyzja się myli → **errata w raporcie** | SSOT decyzji właściciela |
+| `Z15` | **Zero modelu językowego w tym dyżurze.** Żaden pomiar, strażnik ani ekran nie woła `llmService`, `/api/ai/**` ani `GoogleGenerativeAI` | `DEC-51` — zakaz atrapy AI; bezpieczeństwo nie ma prawa zależeć od sieci |
+| `Z16` | **Nie usuwasz i nie „naprawiasz" uczciwych stanów pustych, `503 not_configured`, `null`, `UNKNOWN` ani nagrobków `410`** | „Zero placebo i atrap"; uczciwy `503` jest wzorcem POPRAWNYM |
+| `Z17` | **Zakaz wszystkiego poza zakresem tego dyżuru** — z imiennymi licencjami z tabeli licencji | Podział front/tył i rozłączność z dyżurami równoległymi |
+| `Z18` | **★★ NAJOSTRZEJSZY — ABSOLUTNY zakaz modyfikowania globalnej infrastruktury testowej:** `tests/setup.ts`, `tests/helpers/**`, `tests/__mocks__/**`, `vitest.config.ts`, każdy `vitest.*.config.ts`, `server/vitest.config*.ts`, `tests/integration/_helpers/assertRealPostgres.ts` | Jedna zmiana globalnego mocka fałszuje wynik całego korpusu |
+| `Z19` | **Nie odmontowujesz i nie kasujesz żadnego routera, middleware ani joba CI zamontowanego dziś** | Odmontowanie trasy potrafi zabić ekran, którego nie mierzysz; bramki znikają łatwiej, niż wracają |
+| `Z20` | **★★ ZAKAZ uruchamiania testów DB bez jawnego kompletu env wskazującego kontener TEGO dyżuru, W TEJ SAMEJ LINII komendy.** Kolejność BLOKU 0 jest wiążąca: **NAJPIERW kontener + pełne migracje, DOPIERO potem jakikolwiek pomiar** | Trzy incydenty zapisu do cudzej bazy |
+| `Z21` | **DoD wymaga DOWODU OSIĄGALNOŚCI, nie istnienia pliku** (`DEC-2026-08-26-104`). Pełna ścieżka: realne wejście HTTP → realny `ApiGateway` → `verifyToken` → trasa → handler → zapytanie → **wiersz w Twojej bazie** → odczyt, który ten wiersz podnosi → konsument w `src/` **albo jawne zdanie „brak konsumenta"** | Istnienie kodu ≠ działanie |
+| `Z22` | **★★ Test wstrzykujący zależności albo montujący router w gołym `express()` NIE dowodzi ścieżki produkcyjnej** (`DEC-2026-08-26-107`). Dowodem jest `ApiGateway.getInstance().initializeRoutes(app)` | Replika rozjeżdża się z produkcją i nikt tego nie zauważa |
+| `Z23` | **★★ ZERO ATRAP.** `200` z pustą kopertą tam, gdzie zapytanie padło, jest atrapą. `0` tam, gdzie wartość jest nieznana, jest atrapą. Ekran, który zapisuje do magazynu, którego nikt nie czyta, jest atrapą. Przycisk bez trasy jest atrapą | `DEC-2026-08-25-21/22`, `DEC-51` |
+| `Z24` | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
+| `Z25` | **★★ Testy realdb WYŁĄCZNIE z jawnym `DATABASE_URL` wskazującym Twój efemeryczny kontener.** `tests/setup.ts` ma bezpiecznik i rzuca błędem zamiast fallbacku | **Port `5432` NASŁUCHUJE i nie jest Twój** — fallback = zapis do cudzych danych |
+| `Z26` | **★★ Komplet env w tej samej linii — patrz `§0.2c`.** Bez `MOCK_DB=false` odczyty idą cicho na atrapę bazy; bez `ENABLE_V8_GLOBAL=true` część tras daje `404` **przed uwierzytelnieniem**; bez `ENABLE_TEST_AUTH_BYPASS=false` `verifyToken` **jest omijany** | Tak zginął dzień 23 |
+| `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day238-ustawienia-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
+| `Z28` | **★★ ZERO POŁĄCZEŃ DO RAILWAY, DEMO, STAGINGU I PRODUKCJI — w każdą stronę i każdym narzędziem.** Zakaz obejmuje `railway` CLI, `psql`/`docker exec psql` do hosta innego niż `127.0.0.1`, `curl`/`wget`/`fetch` do `*.railway.app`, `demo.consultify.ai`, `consultify.ai`, `staging.*` | Produkcja NIETYKALNA; demo i staging są jedną bazą. **To jedyny zakaz, którego naruszenie zatrzymuje CAŁY dyżur** |
+| `Z29` | **★★ Testy o kształcie „atak odrzucony + readback bez zmian" MUSZĄ biec BEZ PONAWIANIA: `--retry=0` w KAŻDEJ komendzie** i `retry: 0` w opcjach `describe`/`it`, jeśli plik je ustawia | `vitest.config.ts` ustawia `retry: CI ? 3 : 1`. Przy otwartej dziurze pierwszy przebieg realnie zmienia stan, asercja pada, Vitest ponawia — i test **raportuje `PASS` mimo otwartej dziury**. Udowodnione na module Partner |
+| `Z30` | **★★ ZAKAZ REALNEJ WYSYŁKI E-MAILI, ZAPROSZEŃ KALENDARZOWYCH I POWIADOMIEŃ.** Przed pierwszym przebiegiem zapisującym **udowodnij w raporcie**, że dostawca poczty jest atrapą — protokół `§0.2b` | Wysłany e-mail i zaproszenie kalendarzowe są **nieodwracalne** i trafiają do skrzynek osób trzecich |
+| `Z31` | **★★ ZAKAZ PRZYPINANIA STRAŻNIKA TESTU REALDB DO HOSTA, PORTU ALBO NAZWY BAZY.** Wołasz `await assertRealPostgresTestEnvironment()` **BEZ ARGUMENTÓW**, w szczególności bez `expectedDatabase` | Dyżur 43 przypiął strażnik do swojej bazy: po usunięciu kontenera **30 przypadków dowodowych stało się trwałym `SKIP`**, pakiet raportuje `exit 0` i wygląda jak sukces |
+| `Z32` | **★★ ZAKAZ WPISU `FIXED` / `VERIFIED` / `ZROBIONE_WG_DoD` BEZ DOWODU MUTACYJNEGO W OBIE STRONY.** Psujesz kod produkcyjny → test **CZERWONY**; cofasz → test **ZIELONY**; `git diff` po cofnięciu **pusty**. Obie komendy i oba wyniki dosłownie w raporcie. Mutację cofasz przez `cp` (`Z27`), nigdy `git stash` | Dyżur 44 wpisał `FIXED` dla podatności, **która nigdy nie istniała** — test przechodził także przed zmianą, bo asercja była tautologią |
+| `Z33` | **★★ PRZED KAŻDYM POMIAREM SPRAWDZASZ, CZY STRAŻNIK, KTÓRY MIERZYSZ, NIE WYŁĄCZA SIĘ SAM W TRYBIE TESTOWYM** — ramka `§0.2d` | Na `resultsInternalBetaVisibility.middleware.ts` zmierzono **416 fałszywych twierdzeń** o uprawnieniach jednego modułu |
+| `Z34` | **★★ GREP DOWODZI, ŻE ŁAŃCUCH ISTNIEJE, NIE ŻE DZIAŁA.** Zdanie „działa" wolno Ci napisać wyłącznie po realnym żądaniu HTTP przez realny `ApiGateway`, z podpisanym JWT, na realnym Postgresie po pełnych migracjach — **i po zapisaniu KODU ODPOWIEDZI** | 28.08 w module kalendarza zmierzono kompletny łańcuch komponent → `fetch` → trasa → handler → `INSERT`. **Każdy realny `POST` zwracał `500`**, bo `req.db` nigdy nie było ustawiane w tej gałęzi montażu |
+| `Z34a` | **★★ PO PIERWSZYM COMMICIE ROBISZ PUSH NA `github-backup`**, a potem po każdej pozycji | 28.08 trzy dyżury pracowały cały dzień bez kopii zapasowej |
+| `Z35` | **Zakaz „naprawiania" przez wyciszanie:** `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `.skip`, `.todo`, poszerzanie `exclude`/`testIgnore`, obniżanie progów pokrycia, `--max-warnings`, `continue-on-error: true` na jobie testowym. Uznajesz to za jedyne wyjście → **STOP z uzasadnieniem**, nie cichy commit | To jest choroba, którą program leczy, a nie narzędzie do jej leczenia |
+| `Z36` | **Zakaz `eslint --fix` i `prettier --write` na czymkolwiek szerszym niż plik, który i tak zmieniasz z innego powodu.** Zakaz `--fix` na katalogu, na `.`, na globie | Autofix dotknąłby tysięcy plików i skasował pracę **wszystkich** równoległych dyżurów |
+| `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
+| `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
+| `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
+| `Z40` | **ZAKAZ ZMIANY `PILOT_ALLOWED_SETTINGS_SECTIONS`.** Czy MEMBER ma dostęp do którejkolwiek z 33 zasłoniętych sekcji, to decyzja produktowa o zakresie pilota — opisujesz w `R4`, nie zmieniasz. **ZAKAZ DODANIA KOMUNIKATU PRZY PRZEKIEROWANIU** w `RouterSync.tsx` — realna poprawka UX, ale poza zakresem „komplet ekranów do zrzutów”; rekomendacja w raporcie. **ZAKAZ USUWANIA `UsageMeters`/`SidebarUsage`** — dokumentujesz martwy kod, nie kasujesz w tym dyżurze | Dwa dokumenty kanoniczne programu mówią o Ustawieniach coś przeciwnego. `docs/FUNCTIONAL_DOCUMENTATION.md:66`: moduł `CLOSED_FINAL` od 25.08. Karta modułu, ta sama data zakresu: G08 (pierwsze wrażenie właściciela) i G09 (przewodnik CX) `NOT_STARTED` — właściciel nigdy nie dostał pierwszego przeglądu wizualnego tego modułu. Do tego tablica zamknięć (`REKONESANS...md:83`) podaje liczbę zasłoniętych tras jako „4/5”, podczas gdy realny pomiar (`SettingsSidebar.tsx` + `pilotAccess.ts`) daje **33 z 37 (89%)** — licznik i mianownik są oba błędne, nie tylko nieaktualne. Ten dyżur istnieje, żeby (a) dać właścicielowi pierwszy realny widok całej siatki 11 grup / 37 sekcji, (b) uczciwie skorygować liczbę w dokumencie kanonicznym, i (c) nazwać wprost sprzeczność `CLOSED_FINAL` vs `NOT_STARTED`, zanim ktoś zaplanuje kolejny dyżur na błędnej przesłance „gotowe” |
+
+---
+
+### 0.2b. ★★ PROTOKÓŁ `Z30` — ZERO WYSYŁKI, A MIMO TO PEŁNY DOWÓD
+
+**(1) Czego NIE WOLNO Ci zrobić — nigdy:**
+- ★ **UWAGA — SPROSTOWANIE 2026-08-30.** Ten szkielet wymieniał tu wcześniej
+  przełącznik `ENABLE_LIVE_EMAIL`. **Taka flaga NIE ISTNIEJE w kodzie** — `grep`
+  po całym `server/src` i `src` daje zero trafień. Był to fantom, powielany
+  w każdej wydanej instrukcji. **Nie szukaj go i nie raportuj, że jest wyłączony.**
+  Realny warunek wysyłki jest inny i opisany w punkcie (2) poniżej: poczta wychodzi
+  wyłącznie wtedy, gdy `emailService.ts:202` zobaczy **jednocześnie** `smtpConfig.host`
+  i `smtpConfig.auth.user`, sklejone **najpierw z tabeli `settings`**, dopiero potem
+  ze zmiennych środowiskowych. Bez tych dwóch wartości serwis pisze na konsolę;
+- ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
+  w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
+- wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
+- uruchomić serwera pełnym `server/src/index.ts` **na potrzeby testów** — tam
+  startują drenaże outboxów; testy montują `ApiGateway`, nie cały serwer
+  (`Z22`);
+- uruchomić `server/src/index.ts` na potrzeby zrzutów inaczej niż przez
+  kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` i bez spełnienia
+  wszystkich warunków z punktu (4) poniżej;
+- wywołać ręcznie żadnej funkcji `drain*` / `startNotificationOutboxDrainCron`
+  / `outboxWorker`.
+
+**(2) Trzy dowody, które wklejasz do raportu ZANIM uruchomisz cokolwiek
+zapisującego:**
+
+```bash
+cd /private/tmp/cx-day238-ustawienia
+
+# (a) srodowisko nie ma ani jednej zmiennej poczty
+env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL)" || echo "BRAK ZMIENNYCH POCZTY"
+
+# (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
+#     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
+docker exec cx-day238-pg psql -U postgres -d cx238 \
+  -c "SELECT key, left(coalesce(value,''),8) FROM settings WHERE key LIKE 'smtp%';"
+#   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
+#   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
+
+# (c) dla TESTOW: zaden drenaz outboxu nie dziala w procesie testowym
+grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
+#   oczekiwane: 0 trafien — drenaze startuja w server/src/index.ts, ktorego NIE uruchamiasz
+```
+
+**(3) Deklaracja obowiązkowa dla TESTÓW w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
+żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
+wysłane."**
+
+**(4) Wyjątek wyłącznie dla ZRZUTÓW ODBIOROWYCH — pełny produkt, nie replika.**
+Pełny `server/src/index.ts` wolno uruchomić wyłącznie przez kanoniczny
+`scripts/dev/start-wave3-owner-runtime.mjs`, po wykonaniu dowodów (a) i (b),
+oraz tylko gdy wszystkie poniższe warunki są spełnione imiennie:
+
+- runtime pracuje wyłącznie na efemerycznej lokalnej bazie dyżuru pod
+  `127.0.0.1`, na zasobach przydzielonych w instrukcji; nie wolno adoptować
+  bazy zawierającej jakikolwiek klucz `smtp%`;
+- środowisko procesu serwera pochodzi z `childEnv(...)`, ma
+  `DOTENV_DISABLED='1'` i nie zawiera `SMTP_*`, `RESEND`, `SENDGRID` ani
+  `MAIL*`; trzeba to potwierdzić dla uruchomionego procesu, nie tylko dla
+  powłoki wywołującej;
+- zapytanie z dowodu (b), wykonane po wszystkich migracjach i seedach, zwraca
+  `0` wierszy bezpośrednio przed startem runtime'u;
+- nie ustawiasz flag drenaży na `true`, nie wywołujesz żadnego drenażu ręcznie
+  i nie wykonujesz żadnej operacji, która tworzy wiadomość, zaproszenie lub
+  powiadomienie; runtime służy wyłącznie do odczytu i wykonania zrzutów;
+- po starcie ponownie sprawdzasz środowisko należącego do Ciebie procesu oraz
+  log serwera. Trafienie konfiguracji poczty, próby realnego transportu albo
+  niejednoznaczność dowodu oznacza natychmiastowe zatrzymanie runtime'u i STOP
+  całego dyżuru (`Z30`).
+
+Brak konfiguracji nie wyłącza samych drenaży: w runtime z realną bazą startują
+one domyślnie. Ochroną jest fail-closed protokół powyżej — `emailService`
+tworzy realny transporter dopiero przy jednoczesnej obecności hosta i
+użytkownika SMTP; bez nich pozostaje atrapą konsolową. Dowody (a) i (b)
+obowiązują zatem zarówno testy, jak i zrzuty odbiorowe.
+
+**Deklaracja obowiązkowa dla ZRZUTÓW ODBIOROWYCH w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie
+przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie
+dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log
+serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani
+powiadomienie zewnętrzne nie zostało wysłane."**
+
+**Ostrzeżenie wsteczne (`DEC-2026-08-29-314`):** dyżury `70`, `72`, `73`,
+`76`, `81` i `85` uruchomiły kanoniczny runtime do zrzutów, przez co
+sześciokrotnie naruszyły wcześniejsze bezwarunkowe brzmienie `§0.2b`. Do szkody
+nie doszło, ponieważ niezależny protokół `Z30` wymagał wykazania, że dostawca
+poczty jest atrapą. To ostrzeżenie nie znosi zakazu ani nie zastępuje dowodów.
+
+---
+
+### 0.2c. ★★ KOMPLET ZMIENNYCH ŚRODOWISKOWYCH — TRZY WARIANTY, ZAWSZE W JEDNEJ LINII
+
+**Zmienna postawiona `export`-em wcześniej NIE LICZY SIĘ.** `vitest.config.ts`
+przybija część wartości (`DB_TYPE='sqlite'`), więc komplet musi stać
+**w tej samej linii komendy** — i masz **udowodnić, że nadpisał**, a nie założyć.
+
+**(A) MIGRACJE — pełny łańcuch, przed jakimkolwiek pomiarem (`Z20`):**
+
+```bash
+cd /private/tmp/cx-day238-ustawienia
+
+docker run -d --name cx-day238-pg \
+  -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx238 \
+  -p 127.0.0.1:6186:5432 pgvector/pgvector:pg16
+#   ★ `postgres:15` NIE PRZECHODZI migracji — brak rozszerzenia `vector`
+
+until docker exec cx-day238-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6186/cx238 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+
+# DRUGI przebieg — musi byc bezbledny i bez zmian (idempotencja):
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6186/cx238 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+```
+
+**`NODE_ENV=test` jest OBOWIĄZKOWE przy bazie lokalnej** — bez niego strażnik
+localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+(`server/scripts/migrate.postgres.ts:640-650` opisuje ten mechanizm wprost).
+**Liczbę zastosowanych migracji i wynik obu przebiegów mierzysz sam** (`Z24`).
+
+**(B) PAKIETY DOTYKAJĄCE BAZY — komplet obowiązkowy, gotowy do wklejenia:**
+
+```bash
+cd /private/tmp/cx-day238-ustawienia && \
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test \
+ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
+RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6186/cx238 \
+JWT_SECRET=cx238-test-secret-do-not-reuse \
+npx vitest run src/components/settings/__tests__ src/utils/__tests__ src/components/__tests__ dev-render/screens --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day238-ustawienia-artefakty/day238-pakiet.json
+```
+
+Dla testów **serwerowych** dodajesz `--config server/vitest.config.ts`.
+**Uruchomienie `vitest` z roota bez właściwego configu daje
+`No test files found` — a to NIE jest `PASS`.** Sprawdź, którego configu
+wymaga dana ścieżka, i **wpisz to do raportu**.
+
+**(C) PAKIETY CZYSTO JEDNOSTKOWE** (mockują `dbGet`, nigdy nie otwierają
+połączenia — m.in. pomiar zasięgu `§0.4a`):
+
+```bash
+cd /private/tmp/cx-day238-ustawienia && \
+RUN_DB_TESTS=0 MOCK_DB=true \
+npx vitest run src/components/settings/__tests__ src/utils/__tests__ src/components/__tests__ dev-render/screens --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day238-ustawienia-artefakty/day238-pakiet.json
+```
+
+**To NIE jest naruszenie `Z26`, tylko warunek `Z25`:** bez `DATABASE_URL`
+`tests/setup.ts` rzuciłby błędem przy `RUN_DB_TESTS=1`.
+**Nigdy nie mieszasz: pakiet jednostkowy NIE jest dowodem egzekucji.**
+
+**Znaczenie każdej zmiennej — musisz je znać, zanim ją wpiszesz:**
+
+| Zmienna | Co się stanie, gdy jej zabraknie |
+| --- | --- |
+| `RUN_DB_TESTS=1` | `tests/setup.ts` pomija testy bazodanowe; pakiet raportuje `exit 0` |
+| `MOCK_DB=false` | odczyty idą **cicho** na atrapę bazy, zapisy nigdzie nie lądują |
+| `DB_TYPE=postgres` | `vitest.config.ts` przybija `sqlite` — mierzysz inny silnik, niż myślisz |
+| `NODE_ENV=test` | runner migracji odmawia albo zwraca MOCK przy bazie lokalnej |
+| `ENABLE_V8_GLOBAL=true` | część tras daje **fałszywe `404` PRZED uwierzytelnieniem** |
+| `ENABLE_TEST_AUTH_BYPASS=false` | **`verifyToken` JEST OMIJANY** — każdy test uwierzytelniania przechodzi z fałszywego powodu |
+| `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce` | strażnik przepuszcza wszystko przy `NODE_ENV=test` (416 fałszywych twierdzeń) |
+| `DATABASE_URL` | fallback na `localhost:5432`, który **nasłuchuje i nie jest Twój** |
+| `JWT_SECRET` | podpisany JWT nie przejdzie przez `verifyToken`; dostaniesz `401` z niewłaściwego powodu |
+| `--retry=0` | test „atak odrzucony" **leczy się skutkiem własnego ataku** i raportuje `PASS` |
+
+---
+
+### 0.2d. ★★ ZNANE PUŁAPKI ŚRODOWISKA — OSIEMNAŚCIE, KAŻDA KOSZTOWAŁA GODZINY
+
+**Czytaj to, ZANIM uznasz cokolwiek za zepsute.**
+
+1. **Vault jest BARE + `extensions.worktreeConfig=true`.** Po `git worktree add`
+   **musisz** utworzyć `<vault>/worktrees/cx-day238-ustawienia/config.worktree`
+   z treścią `[core]` / `bare = false`, inaczej `git` w worktree odmawia pracy.
+   Komenda dosłowna: `§0.1` krok (4).
+2. **Remote `icloud-source` w vaulcie jest MARTWY** (wskazuje na nieistniejący
+   `/private/tmp/consultify-staging-deploy-e6ca`). **Nie wołaj `git fetch --all`.**
+   Jego błąd **NIE jest** negatywnym wynikiem markera i nie jest powodem STOP-u.
+3. **Host NIE MA binarki `psql`** (`which psql` → `psql not found`).
+   Każde zapytanie: `docker exec cx-day238-pg psql -U postgres -d cx238 -c '…'`.
+4. **Runner migracji wymaga `NODE_ENV=test` przy bazie lokalnej.** Bez tego
+   strażnik localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+   (`server/scripts/migrate.postgres.ts:640-650`).
+5. **`vitest.config.ts` (ok. `:209-210`) twardo ustawia `test.env.DB_TYPE='sqlite'`.**
+   Zmienna z powłoki bywa nadpisywana — `DB_TYPE=postgres` musi stać
+   **w tej samej linii komendy**, a Ty **udowadniasz w raporcie, że nadpisało**
+   (asercja `expect(process.env.DB_TYPE).toBe('postgres')` w pierwszym `it`
+   każdego nowego pakietu). Pliku **nie zmieniasz** (`Z18`).
+6. **`JSON.parse` na kolumnie typu `json` działa na SQLite i wywala `500` na
+   PostgreSQL** — sterownik `pg` zwraca już zdeserializowany obiekt. Jeżeli
+   kolumny są `TEXT`, kształt `500` nie występuje, ale występuje kształt
+   **cichej utraty danych**. Każdy `500` widoczny na PG a nie na SQLite sprawdź
+   najpierw pod tym kątem (`DEC-2026-08-28-245`).
+7. **CI NIE URUCHAMIA TESTÓW dla naszych gałęzi.** Joby `test-suite.yml` są
+   warunkowane na `main`/`develop`, a my jesteśmy na `Londyn`/`demo`;
+   `lint-typecheck` pada na zastanych błędach `tsc`, a `pr-gate` czyta wynik
+   pominiętego joba jako sukces (`DEC-2026-08-28-246`). **„CI zielone" nie jest
+   w tym repo żadnym dowodem.** Dowodem jest wyłącznie Twój przebieg z `--retry=0`.
+8. **`docker rm -f` bez `-v` NIE kasuje wolumenu.** Sprzątanie: `docker rm -fv cx-day238-pg`.
+9. **Reporter `basic` NIE ISTNIEJE w tej wersji vitest** (`--reporter=basic` →
+   `Failed to load custom Reporter from basic`). Do porównania nazw używasz
+   `--reporter=json --outputFile=<plik poza repo>`.
+10. **`npx vitest run` bywa kończy się `exit 0` mimo czerwonych testów** przy
+    przekierowaniu wyjścia. **Nie ufaj kodowi wyjścia** — liczby i nazwy czytasz
+    z JSON-a.
+11. **Nowe pliki w `tests/` wymagają `git add -f`** (katalog bywa ignorowany
+    częściowo). Sprawdzasz `git status --short` po każdym commicie.
+12. **`| head` na grepie sierot produkuje FAŁSZYWE SIEROTY.** Werdykt „martwy
+    komponent" wymaga grepu **bez obcięcia**, z wykluczeniem `__tests__`
+    i komentarzy.
+13. **ESM nie honoruje `NODE_PATH`.** Skrypt `.mjs` uruchamiany spoza repo nie
+    znajdzie pakietów — rozwiązuj je przez `createRequire(REPO + '/package.json')`.
+14. **Na remote `github-backup` NIE MA gałęzi `main`, `develop`, `Londyn` ani
+    `demo`** — są na `origin` (`origin/develop` **stoi od 2026-06-02**).
+    Pracujemy na linii `Londyn`/`demo`.
+15. **`postgres:15` NIE PRZECHODZI migracji** — brak rozszerzenia `vector`.
+    Obraz obowiązkowy: `pgvector/pgvector:pg16`.
+16. **`prettier` na wielkich plikach potrafi przepisać cały plik.** W repo
+    **nie ma** skryptu `format` — wołasz `npx prettier --write <pliki>` wprost.
+    Jeżeli wynik reformatu przekracza ~3× liczbę Twoich linii merytorycznych —
+    **cofasz reformat** (`cp` z kopii wg `Z27`, nigdy `git stash`), zostawiasz
+    styl zastany i wpisujesz to do raportu.
+17. **Istnieją testy tekstowe przez `readFileSync` + `toContain`,** które
+    asertują **dosłowne linie kodu**. Reformat takiej linii wywala test.
+    Jeżeli test zapali się od Twojego reformatu — **to jest regresja Twojego
+    reformatu, nie „test do poprawienia"**: cofasz reformat.
+18. **`npx vitest` z roota bez właściwego configu daje `No test files found`.**
+    To **nie jest `PASS`** — to jest brak pomiaru.
+
+---
+
+> **★★ RAMKA DO `Z33` — PUŁAPKI, KTÓRE FAŁSZUJĄ ZIELONY PRZEBIEG.**
+> **Zielona suita w tym repozytorium NIE JEST DOWODEM, dopóki nie wiesz, którą
+> pułapkę omija.**
+>
+> **(a) `ENABLE_V8_GLOBAL` nieustawione → fałszywe `404` PRZED uwierzytelnieniem.**
+> `server/src/middleware/v8FeatureGate.middleware.ts:15` czyta
+> `process.env.ENABLE_V8_GLOBAL === 'true'`; przy braku zmiennej bramka odcina
+> trasę **zanim** cokolwiek sprawdzi tożsamość. Twój test „obcy tenant dostaje
+> `404`" przechodzi wtedy z całkiem innego powodu, niż myślisz.
+>
+> **(b) `resultsInternalBetaVisibility.middleware.ts` przepuszcza wszystko przy
+> `NODE_ENV=test`,** dopóki nie ustawisz
+> `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`. **Na tym strażniku
+> zmierzono 416 fałszywych twierdzeń o uprawnieniach.**
+>
+> **(c) `vitest.config.ts` twardo ustawia `test.env.DB_TYPE='sqlite'`.** Część
+> „testów bazodanowych" idzie na atrapę. `MOCK_DB=false DB_TYPE=postgres`
+> w tej samej linii to jedyne wyjście; pliku nie zmieniasz (`Z18`).
+>
+> **(d) `ENABLE_TEST_AUTH_BYPASS`.** `server/src/middleware/auth.middleware.ts`
+> zawiera gałąź: `if (NODE_ENV === 'test' && ENABLE_TEST_AUTH_BYPASS === 'true')`
+> — czyli **`verifyToken` potrafi wyłączyć się sam w trybie testowym**.
+>
+> **(e) ★★ **`CLOSED_FINAL` MOŻE OPISYWAĆ ZAMROŻENIE ZAKRESU, NIE ODBIÓR WIZUALNY — NIE MYL TYCH DWÓCH ZNACZEŃ.** `docs/FUNCTIONAL_DOCUMENTATION.md:66` cytuje tag `final-02-settings` z 25.08 jako `CLOSED_FINAL`, ale karta modułu (ten sam zakres, ta sama data) ma G08/G09 `NOT_STARTED` — czyli „zamrożenie zakresu” (co wolno budować) i „odbiór wizualny” (czy właściciel to zaakceptował) to DWA RÓŻNE zdarzenia, oba nazwane tym samym słowem `CLOSED_FINAL` w różnych miejscach programu. Jeśli znajdziesz w historii `git log` albo w `DEC-*` ślad, który z tych dwóch tag `final-02-settings` faktycznie oznacza — zacytuj go w `R3`; jeśli nie znajdziesz, zapisz obie interpretacje jako otwarte. Druga pułapka: mechanizm zasłaniania w Ustawieniach (przekierowanie w `RouterSync.tsx`) jest INNY niż w Spotkaniach (filtr widoczności menu w `Sidebar.tsx`, dyżur 237) — nie kopiuj wniosków ani komend weryfikacyjnych między dyżurami bez sprawdzenia, że dotyczą tego samego mechanizmu. Trzecia pułapka: `SettingsSidebar.tsx` ma zagnieżdżoną strukturę grupa→dzieci — policz LIŚCIE (`id:` w drugim poziomie wcięcia), nie WSZYSTKIE wystąpienia `id: '` (te obejmują też 10 nagłówków grup, dając fałszywie zawyżoną liczbę 47 zamiast 37)**
+>
+> **Obowiązek dowodowy.** Dla **każdego** pakietu uruchomionego jako dowód
+> czegokolwiek raport zawiera akapit: *która z pułapek (a)–(e) dotyczy tego
+> pakietu, jak ją wyłączyłem, i co konkretnie dowodzi, że wyłączyłem*.
+> Akapit „nie dotyczy" jest dopuszczalny **tylko** z komendą pokazującą, że dany
+> strażnik nie leży na ścieżce. **Pomiar bez tego akapitu nie liczy się jako dowód.**
+
+---
+
+### 0.5. Reguła STOP
+
+**Przy jakiejkolwiek wątpliwości MERYTORYCZNEJ: STOP tej POZYCJI i wpis
+w raporcie — nigdy improwizacja. W tym programie zasadny STOP jest NAGRADZANY,
+a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
+`DEC-2026-08-26-130`).
+
+**Rozróżnij dwa rodzaje:**
+
+- **STOP MERYTORYCZNY** (mile widziany): zmierzyłeś i wyszło inaczej, niż mówi
+  ta instrukcja; brakuje informacji, której nikt poza właścicielem nie
+  dostarczy; naprawa wymaga decyzji produktowej. **Wpisujesz do raportu
+  i IDZIESZ DALEJ do następnej pozycji.**
+- **STOP PROCEDURALNY** (zakazany): „instrukcja jest sprzeczna", „ścieżka nie
+  istnieje", „nie mam licencji na plik". **Ten rodzaj NIE zatrzymuje niczego** —
+  patrz tabela niżej i sekcja końcowa.
+
+### ★★ TABELA: STOP PROCEDURALNY ZAKAZANY — DZIAŁANIE ZASTĘPCZE
+
+| Powód, dla którego chciałbyś stanąć | Co robisz ZAMIAST STOP-u |
+| --- | --- |
+| „Musiałbym zmienić plik przekrojowy (`auth.middleware.ts` / `Gateway.ts` / bramkę platformową)" | **Czerwony kontrakt testowy + brief wynikowy** (tabela licencji, wiersz 1). Pozycja jest wtedy **ZROBIONA**, nie STOP |
+| „Plik, którego potrzebuję, nie jest w tabeli licencji" | Traktujesz go jako **tylko do odczytu** i dajesz czerwony kontrakt + brief. Pozycja **ZROBIONA** |
+| „Instrukcja jest wewnętrznie sprzeczna" | Sekcja **„JEŚLI COŚ JEST SPRZECZNE"** na końcu dokumentu. Wybierasz interpretację **bezpieczniejszą**, opisujesz w „Korektach", **kontynuujesz pozostałe pozycje** |
+| „Ścieżka podana w instrukcji nie istnieje" | Sprawdzasz `ls`, wpisujesz **swój wynik** do „Korekt", szukasz realnego odpowiednika i **idziesz dalej**. Rozbieżność pomiaru z instrukcją **nie jest sprzecznością — jest WYNIKIEM** |
+| „Instrukcja podaje dwie różne liczby" | Mierzysz sam, podajesz **swoją** liczbę z komendą (`Z24`). To **nie jest** powód do STOP-u |
+| „`git fetch` zwrócił błąd `icloud-source`" | To **nie jest** błąd. `§0.2d` pkt 2. Idziesz dalej |
+| „`psql` nie istnieje na hoście" | `docker exec cx-day238-pg psql …`. `§0.2d` pkt 3 |
+| „Hook pre-commit blokuje commit" | **Naprawiasz kodem, nie omijasz.** `--no-verify` jest zakazem, nie STOP-em |
+| „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day238-ustawienia-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
+| „Test przeszkadza" | **Nie osłabiasz asercji.** Opisujesz, co blokuje. Osłabienie = odrzucenie pozycji, nie STOP |
+| „Nie zdążę zrobić wszystkich pozycji" | Robisz **rdzeń** (`R1 (harness 11 grup / reprezentatywnych paneli, dwie persony, zrzuty) · R2 (weryfikacja martwego kodu UsageMeters/SidebarUsage) · R3 (korekta MODULE_ACCEPTANCE.md — liczba 33/37, mechanizm RouterSync, sprzeczność CLOSED_FINAL)`) i **uczciwie opisujesz resztę jako niezrobioną**. Odwrotna kolejność (inwentarze zrobione, rdzeń „częściowo") jest podstawą odrzucenia |
+| „Port `6186` albo `5160 i 5161` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
+
+**Zatrzymanie CAŁEGO dyżuru jest dopuszczalne WYŁĄCZNIE przy:**
+1. **`MARKER BRAK`** (`§0.1`);
+2. **faktycznym połączeniu do bazy zdalnej, demo, stagingu albo produkcji**
+   (`Z28`) — „przecież to był tylko `SELECT`" nie jest okolicznością łagodzącą;
+3. **ryzyku utraty danych** albo realnej wysyłki e-maila (`Z30`);
+4. **mniej niż 5 GB wolnego dysku** (`§0.1` krok 0);
+5. **zajętym porcie `6186` albo `5160 i 5161`** (`Z7`).
+
+Format wpisu STOP:
+
+```
+### STOP — <pozycja>
+Rodzaj: MERYTORYCZNY / PROCEDURALNY
+Powód: <jedno zdanie>
+Licencja, którą sprawdziłem: <cytat wiersza z tabeli licencji + wynik>
+Dowód: <plik:linia albo komenda + wynik>
+Co dostarczyłem ZAMIAST zmiany: <czerwony kontrakt / pomiar / gotowy diff / brief>
+Co zrobiłbym, gdyby zapadła decyzja X: <2-3 zdania>
+Rekomendacja dla nadzorcy: <co zmienić, gdzie, jaki promień rażenia>
+Stan: NIE ZACOMMITOWANO / zacommitowano częściowo w <SHA>
+Czy kontynuowałem pozostałe pozycje: TAK / NIE + dlaczego
+```
+
+**★★ STOP bez wypełnionego pola „Licencja, którą sprawdziłem" jest NIEZASADNY
+z definicji. STOP bez wypełnionego pola „Co dostarczyłem ZAMIAST zmiany" jest
+NIEZASADNY z definicji.**
+
+---
+
+## ★★ JEŚLI COŚ W TEJ INSTRUKCJI JEST SPRZECZNE LUB NIEWYKONALNE
+
+**Ta instrukcja była pisana i sprawdzana przez człowieka i model. Może mieć
+błędy. Nie zatrzymuj przez nie dyżuru.**
+
+**Procedura, dosłownie:**
+
+1. **Opisz sprzeczność w raporcie**, w sekcji „Korekty wobec instrukcji":
+   **cytat obu wykluczających się zdań z numerami paragrafów**, na czym polega
+   konflikt, jaki masz dowód i co zrobiłeś.
+2. **Wybierz interpretację BEZPIECZNIEJSZĄ.** Reguły rozstrzygające,
+   w tej kolejności:
+   - **nie ruszaj cudzego pliku** — gdy nie wiesz, czy masz licencję, **nie
+     masz**; traktuj plik jako tylko do odczytu i dostarcz czerwony kontrakt
+     + brief;
+   - **nie osłabiaj asercji** — gdy test przeszkadza, opisujesz go, nie
+     zmieniasz;
+   - **nie kasuj** — gdy werdykt jest niepewny, wpisz `DO DECYZJI WŁAŚCICIELA`
+     ze zdaniem **„czego konkretnie mi zabrakło, żeby rozstrzygnąć
+     samodzielnie"** (wiersz bez tego zdania liczy się jako nierozstrzygnięty);
+   - **nie włączaj** — gdy nie wiesz, czy flaga ma być `ON`, zostaje `OFF`
+     (`Z10`/`Z11`);
+   - **nie wysyłaj niczego na zewnątrz** — gdy nie masz pewności co do `Z30`,
+     nie klikasz;
+   - **nie poszerzaj dostępu** — gdy bramka jest niejednoznaczna, **odmawiasz
+     zamiast przepuszczać**;
+   - **mierz zamiast zgadywać** — gdy instrukcja podaje liczbę, a Twój pomiar
+     daje inną, **wiążący jest Twój pomiar z komendą** (`Z24`).
+3. **KONTYNUUJESZ POZOSTAŁE POZYCJE.** Sprzeczność w jednym paragrafie nie
+   zwalnia z pozostałych ani z raportu.
+4. **Zatrzymanie CAŁEGO dyżuru** — wyłącznie z pięciu powodów wymienionych
+   w `§0.5`.
+5. **Nigdy nie „naprawiaj" instrukcji przez improwizację w kodzie.**
+   Sprzeczność w dokumencie rozwiązuje się **wpisem w raporcie**, nie zmianą
+   w produkcie.
+6. **★ Rozbieżność między pomiarem a tą instrukcją NIE JEST sprzecznością —
+   jest WYNIKIEM.** Każda liczba, linia i teza w tym dokumencie to **rozkaz
+   pomiarowy**, nie prawda objawiona.
+
+**★ Trzy najcenniejsze rzeczy, jakie możesz oddać:** dowód, że coś, co uchodziło
+za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne;
+i uczciwe zdanie „tego nie zmierzyłem, bo…".
+
+**★ Ostatnie zdanie tej instrukcji i najważniejsze: obalenie którejkolwiek tezy
+z sekcji „TEZY ZLECENIA…" jest SUKCESEM dyżuru, a nie porażką. Zapisz to
+w „Korektach wobec instrukcji" z dowodem i idź dalej.**
+
+---
+
+# 1. PO CO TEN DYŻUR ISTNIEJE
+
+Moduł **15 Ustawienia** to jeden z siedmiu modułów tej fali bez ŻADNEGO dyżuru w programie
+WAVE_03. `docs/FUNCTIONAL_DOCUMENTATION.md:66` opisuje moduł jako *„aktywny ·
+**CLOSED_FINAL 2026-08-25**, tag `final-02-settings`"*. Karta modułu
+(`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md`) mówi coś
+innego dla tego samego modułu: **G08 „First-impression review" = `NOT_STARTED`**, **G09
+„Guided CX journey review" = `NOT_STARTED`**. Moduł oznaczony jako CLOSED_FINAL nigdy nie
+przeszedł pierwszego przeglądu wizualnego właściciela. Cel tego dyżuru **nie jest „napraw
+wszystko"** — jest nim rozstrzygnięcie tej sprzeczności pomiarem i przygotowanie modułu do
+pierwszych, kompletnych zrzutów.
+
+## ★★ POMIAR NA MARKERZE `e014ba0d8b` — SKALA ZASŁONIĘTYCH EKRANÓW JEST DZIESIĘCIOKROTNIE WIĘKSZA NIŻ MÓWI TABLICA ZAMKNIĘĆ
+
+Sprawdź każde zdanie u siebie (komendy w `§0`) — poniżej wynik.
+
+### 1. Tablica zamknięć mówi „4/5 tras" — realnie jest 37 sekcji, 33 zasłonięte dla MEMBER
+
+Tablica zamknięć modułów (`docs/program/funkcje/REKONESANS_ZAMKNIECIA_16_MODULOW.md:83`):
+*„komunikat dla MEMBER (4/5 tras wraca cicho do Profilu, day124)"*. **To zdanie jest
+nieaktualne w liczbie**, nie w mechanizmie. `src/components/settings/SettingsSidebar.tsx` ma
+**37** liści-sekcji (`grep -c` na wzorcu `id: '` w indentacji liścia, `§0` komenda 1) w **11**
+grupach nawigacyjnych (`my-settings`, `work-preferences`, `ai-automation-group`,
+`notifications`, `security`, `integrations`, `data-privacy`, `billing`, `appearance`,
+`advanced`). Dopuszczalne dla roli pilotażowej: `src/utils/pilotAccess.ts:15-18`
+(`PILOT_ALLOWED_SETTINGS_SECTIONS`) = wyłącznie `profile`, `auth-access`, `language`, `theme`
+— **4 z 37**, nie 4 z 5. Pozostałe **33 sekcje** (89%) — w tym cały blok AI (9 sekcji), cały
+blok powiadomień (4), cały blok integracji (4), cały blok danych/prywatności (2), billing,
+accessibility, cała sekcja „advanced" (5) — **cicho przekierowują** MEMBER do
+`/settings/profile`.
+
+### 2. Mechanizm przekierowania — zmierzony, jeden warunek, jedna linia
+
+`src/components/RouterSync.tsx:330-338`: dla `isPilotRestrictedRole(userRole)` i ścieżki
+zaczynającej się od `/settings` innej niż dozwolona (`getPilotDefaultSettingsRoute()` =
+`/settings/profile`, `pilotAccess.ts:145-146`) — `navigate(getPilotDefaultSettingsRoute(),
+{replace: true})`. Brak komunikatu, brak toastu, brak informacji dlaczego. Sekcja po prostu
+„znika" — użytkownik ląduje z powrotem na Profilu bez wyjaśnienia.
+
+### 3. To NIE jest ta sama bramka, co w Spotkaniach (dyżur 237) — inny plik, inna logika
+
+W przeciwieństwie do Spotkań (gdzie trzy bramki żyją w `pilotAccess.ts` jako proste stałe),
+tu bramka jest zaimplementowana jako WARUNEK w `RouterSync.tsx` (efekt uboczny nawigacji), nie
+filtr renderu menu. Skutek: pozycja „Ustawienia" w sidebarze **zostaje widoczna** dla MEMBER
+(`SETTINGS` jest w `PILOT_VISIBLE_MENU_IDS`, `pilotAccess.ts:6-13`) — użytkownik widzi wejście,
+klika, dostaje się do Profilu, ale każda z 33 innych sekcji, do których nawiguje (np. z linku
+bezpośredniego albo z linku w mailu), cicho go odsyła z powrotem. To jest inny kształt tego
+samego problemu — widoczność wejścia myli o dostępności treści.
+
+### 4. Karta modułu — G08/G09 `NOT_STARTED` mimo tagu `CLOSED_FINAL` w innym dokumencie
+
+`MODULE_ACCEPTANCE.md`, G00: `PASS_FOR_PREFLIGHT`. G08: `NOT_STARTED`, „—". G09:
+`NOT_STARTED`, „—". G10: `DAY124_TECHNICAL_PARTIAL / OWNER_REVIEW_PENDING` — *„MEMBER Profile
+is reachable, but Regional/Notifications/Security/Data Controls all silently redirect to
+Profile; 8/10 MEMBER captures are therefore not semantically the requested surface. No owner
+decision exists."* **`docs/FUNCTIONAL_DOCUMENTATION.md:66` cytuje `CLOSED_FINAL 2026-08-25`
+dla modułu, którego G08 (pierwsze wrażenie) i G09 (przewodnik CX) nigdy się nie zaczęły** —
+zmierz to rozbieżnie i zapisz w `R3`, nie rozstrzygaj które źródło ma rację (oba są
+kanoniczne, dotyczą różnych warstw: `CLOSED_FINAL` może odnosić się do zamrożenia zakresu, nie
+do odbioru wizualnego — opisz to rozróżnienie, jeśli je znajdziesz w historii commitów/DEC).
+
+### 5. Martwy kod w tym samym module — `UsageMeters`/`SidebarUsage`
+
+Tablica zamknięć (`REKONESANS...md`, sekcja „Tezy OBALONE") ustaliła: bug `t()` w
+`UsageMeters.tsx:174` jest realny, ale komponent jest **martwy** — `SidebarUsage` ma zero
+importerów. Potwierdź to samodzielnie (`§0` komenda 5) — jeśli się potwierdzi, jest to
+kandydat do osobnego sprzątania (nie w tym dyżurze, patrz zakaz), ale wpisujesz go do raportu
+jako ustalenie z dowodem.
+
+## Czego ten dyżur świadomie NIE robi
+
+- **Nie zmienia `PILOT_ALLOWED_SETTINGS_SECTIONS`.** Czy MEMBER ma dostęp do któregokolwiek z
+  33 zasłoniętych sekcji, to decyzja produktowa o zakresie pilota — opisujesz w `R4`, nie
+  zmieniasz.
+- **Nie dodaje komunikatu przy przekierowaniu** (np. toastu „ta sekcja nie jest dostępna w
+  Twojej roli") — to jest realna poprawka UX, ale wykracza poza „komplet ekranów do zrzutów";
+  opisujesz jako rekomendację.
+- **Nie usuwa `UsageMeters`/`SidebarUsage`** — martwy kod zostaje udokumentowany, nie kasowany
+  w tym dyżurze (ryzyko: może mieć ukrytego konsumenta, którego szybki grep nie złapał).
+- **Nie rozstrzyga sprzeczności `CLOSED_FINAL` vs `NOT_STARTED`** — zapisujesz oba stwierdzenia
+  z dowodem i zostawiasz rozstrzygnięcie nadzorcy/właścicielowi.
+
+---
+
+# 2. TEZY ZLECENIA
+
+| # | Teza | Jak sprawdzasz |
+|---|---|---|
+| T1 | 37 liści-sekcji w `SettingsSidebar.tsx`, w 11 grupach | komenda (1) |
+| T2 | Tylko 4 sekcje dozwolone dla roli pilotażowej (`PILOT_ALLOWED_SETTINGS_SECTIONS`) | komenda (2) |
+| T3 | Przekierowanie następuje w `RouterSync.tsx:330-338`, jeden warunek | komenda (3) |
+| T4 | `SETTINGS` jest widoczny w menu (`PILOT_VISIBLE_MENU_IDS`), mimo że treść pod spodem jest zasłonięta w 89% | komenda (4) |
+| T5 | `UsageMeters`/`SidebarUsage` nie ma importerów produkcyjnych | komenda (5) |
+| T6 | Karta modułu ma G08/G09 `NOT_STARTED` mimo `CLOSED_FINAL` gdzie indziej | komenda (6) |
+| T7 | Miejsce na dysku wystarcza | komenda (7) |
+
+---
+
+# 3. POZYCJE DYŻURU
+
+## R1 — HARNESS SEKCJI USTAWIEŃ, DWIE PERSONY (rdzeń, dowodowy)
+
+**Cel:** pierwszy realny, kompletny widok modułu, jaki właściciel kiedykolwiek zobaczy jako
+przegląd — nie pojedynczych, znanych mu ekranów Profilu, ale całej siatki 11 grup / 37 sekcji.
+
+Montujesz `dev-render/screens/day238-ustawienia.tsx` (+ wpis w `dev-render/main.tsx`),
+renderujący **realny** `SettingsSidebar` + reprezentatywne panele treści (jeden na grupę,
+11 sztuk — nie wszystkie 37, żeby nie zalać raportu; wybierz ten z każdej grupy, który ma
+najbogatszy stan) z fixture'em danych OWNER.
+
+### R1a — PARA DOWODOWA „obcy nie widzi / właściciel widzi"
+
+| przebieg | oczekiwane |
+|---|---|
+| pilot-restricted MEMBER, nawigacja z sidebaru do sekcji spoza dozwolonych 4 | cichy powrót do `/settings/profile`, zero komunikatu — zrzuć DOKŁADNIE ten moment (URL przed i po w pasku adresu, jeśli harness na to pozwala) |
+| pilot-restricted MEMBER, jedna z 4 dozwolonych sekcji | treść renderuje się normalnie |
+| OWNER/ADMIN | wszystkie 37 sekcji dostępne bez przekierowań |
+
+### R1b — zrzuty
+
+11 grup nawigacyjnych (jeden reprezentatywny panel na grupę) × dwa motywy = **22 obrazy**,
+plus zrzut sidebaru pełnego (OWNER) i sidebaru z perspektywy MEMBER (jeśli sidebar sam w sobie
+różni się — sprawdź, czy `SettingsSidebar` filtruje pozycje, czy tylko `RouterSync` odsyła po
+kliknięciu) — **2 dodatkowe**. `mean_luma` każdej pary jasny/ciemny, różnica **> 150**
+(komenda w `§5`).
+
+## R2 — WERYFIKACJA MARTWEGO KODU (nie-rdzeń, dowodowy)
+
+Potwierdź samodzielnie tezę T5 (`UsageMeters`/`SidebarUsage` bez importerów) grepem po całym
+`src/`. Jeśli teza się potwierdza — zapisz dokładną listę plików i `git blame` ostatniej
+żywej daty importu (jeśli była). Jeśli teza się NIE potwierdza (znajdziesz importera) —
+**to jest ważniejsze ustalenie niż potwierdzenie** — opisz je jako obaloną tezę tablicy
+zamknięć w `R3`.
+
+## R3 — KOREKTA `MODULE_ACCEPTANCE.md` (rdzeń, dokumentacyjny)
+
+Dopisujesz na końcu `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md`
+nową sekcję (np. `## Dzień 238 — skala zasłoniętych sekcji i sprzeczność CLOSED_FINAL`) ze
+zmierzonym stanem z `§1`: 33 z 37 sekcji (89%), nie „4/5"; mechanizm w `RouterSync.tsx`, nie w
+filtrze menu; status martwego kodu `UsageMeters`/`SidebarUsage`; nazwana sprzeczność
+`CLOSED_FINAL` (FUNCTIONAL_DOCUMENTATION) vs `NOT_STARTED` (G08/G09 karty). **Nie kasujesz i
+nie przepisujesz** istniejących wierszy — to dopisek. **Nie edytujesz**
+`docs/FUNCTIONAL_DOCUMENTATION.md` — jeśli uważasz że wymaga korekty, piszesz rekomendację w
+raporcie.
+
+## R4 — OTWARTE PYTANIE: ZAKRES PILOTA DLA USTAWIEŃ (nie-rdzeń, do raportu)
+
+**Nie rozstrzygasz.** W raporcie opisujesz koszt i ryzyko rozszerzenia
+`PILOT_ALLOWED_SETTINGS_SECTIONS` o kolejne sekcje (np. `notifications-overview`,
+`data-controls`) jednym akapitem, oraz koszt dodania uczciwego komunikatu przy przekierowaniu
+zamiast cichego powrotu — obie rzeczy jako rekomendacje, nie zmiany.
+
+## R5 — RAPORT DYŻURU (rdzeń)
+
+Struktura z `§R.2`, sekcja „TWIERDZENIA NIEZWERYFIKOWANE" obowiązkowa nawet jeśli pusta.
+Dołącz tabelę mianowników (`§0.4a`) i pełne wyjścia komend z `§0`.
+
+---
+
+# 4. TABELA LICENCJI PLIKOWYCH
+
+Ten dyżur jest **pomiarowo-dowodowy**, nie buduje mechanizmu — licencja zapisu jest świadomie
+wąska.
+
+| Zakres | Ścieżki |
+|---|---|
+| Zapis (NOWE) | `dev-render/screens/day238-ustawienia.tsx` + wpis w `dev-render/main.tsx` |
+| Zapis (WĄSKO) | `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md` — WYŁĄCZNIE nowa sekcja na końcu pliku (`R3`), zakaz kasowania/przepisywania istniejących wierszy |
+| Zapis | raport `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY238_USTAWIENIA_REPORT.md` |
+| Odczyt (ZAKAZ ZAPISU) | `src/components/settings/**` (wszystkie ~40+ plików sekcji, w tym `SettingsSidebar.tsx`, `UsageMeters.tsx`) · `src/views/SettingsView.tsx` — montujesz je w harnessie, **nie zmieniasz ich logiki** |
+| Odczyt (ZAKAZ ZAPISU) | `src/utils/pilotAccess.ts` (`PILOT_ALLOWED_SETTINGS_SECTIONS`, `PILOT_VISIBLE_MENU_IDS`) · `src/utils/roleGuards.ts` · `src/components/RouterSync.tsx` |
+| Odczyt (ZAKAZ ZAPISU) | `server/src/database/Database.ts` (`Z18`) · `vitest.config.ts` · `tests/setup.ts` |
+| Odczyt | `docs/program/funkcje/REKONESANS_ZAMKNIECIA_16_MODULOW.md` · `docs/FUNCTIONAL_DOCUMENTATION.md` (odczyt, zakaz zapisu) |
+
+**Nietykalne imiennie:** `pilotAccess.ts` · `roleGuards.ts` · `RouterSync.tsx` ·
+`vitest.config.ts` · `tests/setup.ts` · `Database.ts` · `docs/FUNCTIONAL_DOCUMENTATION.md` ·
+każdy inny `MODULE_ACCEPTANCE.md` poza Ustawień.
+
+---
+
+# 5. TWARDE ZASADY
+
+- ★★ **CEL JEST ZRZUT I POMIAR, NIE NAPRAWA.** Zakres pilota dla Ustawień i komunikat przy
+  przekierowaniu są ŚWIADOMIE poza zakresem (`ZAKAZ_WLASCIWY_TEMU_DYZUROWI`) — mierzysz,
+  opisujesz, nie zmieniasz.
+- ★★ **LICZBA, NIE UŁAMEK.** Tablica zamknięć mówi „4/5" — to jest złe zarówno w liczniku, jak
+  i mianowniku. Zanim napiszesz jakąkolwiek liczbę w raporcie, przelicz ją komendą z `§0`, nie
+  przepisuj z żadnego dokumentu, włącznie z tą instrukcją.
+- ★★ **DWA RÓŻNE MECHANIZMY ZASŁANIANIA W PROGRAMIE, NIE MYL ICH.** Spotkania (dyżur 237)
+  chowają POZYCJĘ MENU (filtr renderu). Ustawienia chowają TREŚĆ PO KLIKNIĘCIU (przekierowanie
+  w `RouterSync`) — pozycja menu zostaje widoczna. Opisz to rozróżnienie w raporcie, jeśli
+  odbiorca miałby czytać oba dyżury razem.
+- ★★ **WŁAŚCICIEL NIGDY NIE JEST PIERWSZYM TESTEREM WIZUALNYM.** Zrzuty robisz Ty. Para
+  jasny/ciemny musi się REALNIE różnić — `mean_luma` obu obrazów i różnica **> 150**:
+  ```bash
+  node -e "const s=require('sharp');s(process.argv[1]).stats().then(r=>console.log(process.argv[1], (0.2126*r.channels[0].mean+0.7152*r.channels[1].mean+0.0722*r.channels[2].mean).toFixed(1)))" <plik.png>
+  ```
+- ★★ **W RAPORCIE PISZESZ WPROST, CZY DANE NA ZRZUCIE POCHODZĄ Z REALNEGO PRZEBIEGU (fixture
+  przez `dev-render` montujący prawdziwy komponent) CZY Z RĘCZNYCH PROPSÓW.**
+- ★★ **ZERO KOREKTY BEZ DOWODU.** Sekcja `R3` — każde zdanie ma `plik:linia`.
+- ★ **PUŁAPKI ŚRODOWISKA — SPRAWDŹ KAŻDĄ U SIEBIE:** `Database.ts:80-88` cicho podstawia
+  atrapę bazy bez `RUN_DB_TESTS=1`; `Database.ts:686` atrapa zwraca `changes:1` dla KAŻDEGO
+  `UPDATE`; `vitest.config.ts:210` przypina `DB_TYPE='sqlite'`; `tests/setup.ts:896` podmienia
+  `global.fetch`; **komentarze w kodzie bywają nieaktualne, dokumenty kanoniczne też — ten
+  dyżur sam jest tego dowodem (`§1.1`, `§1.4`)** — sprawdzaj logikę, nie ufaj opisowi.
+- ★ **`Z13`:** logi, zrzuty i pliki wynikowe NIE wchodzą do repo — leżą w `/private/tmp/cx-day238-ustawienia-artefakty`,
+  raport podaje ścieżki i `shasum -a 256`.
+- ★ **PUSH WYŁĄCZNIE NA `github-backup`.** `origin` jest PUBLICZNY.
+- ★★ **SEKCJA „TWIERDZENIA NIEZWERYFIKOWANE" W RAPORCIE JEST OBOWIĄZKOWA.**

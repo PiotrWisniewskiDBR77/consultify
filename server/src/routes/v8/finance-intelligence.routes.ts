@@ -15,10 +15,21 @@
  *     (financial_analysis_ratios), not fabricated — see the endpoint below
  *     for the org-ownership check before that ratio is read.
  *
- * NOT MOUNTED YET.
- * MOUNT: v8Router.use('/finance-intelligence', financeIntelligenceRoutes);
- * (in server/src/routes/v8/index.ts, alongside the other v8Router.use(...) lines —
- * intentionally left undone here per task scope: "NIE montuj".)
+ * MOUNTED at server/src/routes/v8/index.ts:121 —
+ * `v8Router.use('/finance-intelligence', financeIntelligenceRoutes);` — this
+ * IS the live route to other tenants' revenue, ROI, and margin data.
+ * (Corrected 2026-08-31: this comment previously said "NOT MOUNTED YET" after
+ * the mount had already landed — a stale claim that could have led the next
+ * reader to treat this barrier as dead code.)
+ *
+ * Every endpoint below sits behind the full `v8Router` chain applied before
+ * line 121 in index.ts: `verifyToken` (line 58) and `requireV8OrgContext`
+ * (line 59) globally, then `v8OrgGate`, `attachV8Context`, and
+ * `v8MetricsMiddleware` (lines 87-89) on the tenant-routes branch this file
+ * is mounted under. `getV8Context(req)` (imported below) is what each handler
+ * calls to read the verified `organizationId` that `attachV8Context` put on
+ * the request — see the org-ownership check on the `livingBusinessCaseService`
+ * endpoint noted above.
  *
  * @module routes/v8/finance-intelligence.routes
  */

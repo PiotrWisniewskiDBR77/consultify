@@ -21,7 +21,8 @@ export function adaptIdeaActions(): FederatedActionEntry[] {
   }));
 }
 
-const CHAT_MUTATIONS = new Set(['CREATE_TASK', 'CREATE_DECISION', 'CREATE_INITIATIVE', 'ASSIGN_INTERVIEW', 'RECORD_KPI']);
+// Creation proposals are governed by CREATE_DRAFT_* in aiActionExecutor, not this catalog.
+const CHAT_MUTATIONS = new Set(['ASSIGN_INTERVIEW', 'RECORD_KPI']);
 export function adaptChatActions(): FederatedActionEntry[] {
   return CHAT_ACTION_DEFINITIONS.map((action) => {
     const mutates = CHAT_MUTATIONS.has(action.type);

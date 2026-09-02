@@ -25,6 +25,8 @@
  * No LLM. Fail-soft callers (bundlePptxRuntime) already wrap in try/catch.
  */
 
+import { featureFlags } from '../../config/FeatureFlags.js';
+import { getDesignTokens } from '../report/pptx/designTokens.js';
 import { readableTextOn } from './paletteLibrary.js';
 import { type DeliverableTheme, PPT_TYPE_SCALE, resolveTheme } from './themeRegistry.js';
 
@@ -32,13 +34,15 @@ import { type DeliverableTheme, PPT_TYPE_SCALE, resolveTheme } from './themeRegi
 // Canvas geometry (16:9 — pptxgenjs LAYOUT_16x9 = 10 × 5.625 in)
 // ---------------------------------------------------------------------------
 
+const canonicalGrid = getDesignTokens().grid;
+
 export const DECK_GRID = {
   slideW: 10,
   slideH: 5.625,
   /** Uniform outer margin (left/right). */
-  marginX: 0.6,
+  marginX: featureFlags.ENABLE_PPTX_CANONICAL_GEOMETRY ? canonicalGrid.contentX : 0.6,
   /** Top of the content band (below title). */
-  contentTop: 1.7,
+  contentTop: featureFlags.ENABLE_PPTX_CANONICAL_GEOMETRY ? canonicalGrid.contentY : 1.7,
   /** Title band top. */
   titleY: 0.5,
   titleH: 1.0,

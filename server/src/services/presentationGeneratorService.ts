@@ -7,12 +7,16 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  isArtifactKnowledgeIndexEnabled,
+  isDeckFromKnowledgeEnabled,
+} from '../config/FeatureFlags.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
 import type { PgTransactionClient } from '../utils/queryHelpers.js';
 import { exportsDir } from '../utils/storagePaths.js';
-import { materializePlannedVisual } from './ai/deckVisualsService.js';
+import { buildImageStyleAppendix, materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
   buildContextPack,
   type ContextPack,
@@ -32,6 +36,10 @@ import {
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
 import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
+import {
+  deckArtifactToKnowledgeMarkdown,
+  indexDeckArtifactForKnowledge,
+} from './knowledge/artifactKnowledgeIndexer.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -49,6 +57,7 @@ import {
   deckDocumentFromUnifiedJson,
 } from './presentationDeckDocumentService.js';
 import { generateDeckVariants } from './presentationLayoutVariantsService.js';
+import { generateKnowledgeOutline } from './presentationKnowledgeOutlineService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
@@ -354,6 +363,7 @@ export interface DeckSetup {
   theme: 'corporate' | 'minimal' | 'modern';
   confidentiality: 'confidential' | 'internal' | 'public';
   brandColor?: string;
+  imageStylePreset?: string;
   sourceArtifacts: SourceArtifact[];
 
   /** V3-A01: Traceability — canonical source of this deck */
@@ -390,6 +400,7 @@ export interface DeckSetup {
    * (zod w DeckSetupSchema ścina nieznane pola), więc zero regresji.
    */
   brief?: string;
+  projectId?: string;
 }
 
 export interface SourceArtifact {
@@ -429,6 +440,9 @@ export interface OutlineItem {
   enabled: boolean;
   sourceRef?: string;
   sourceRefs?: string[];
+  teza?: string;
+  archetyp?: string;
+  zrodla?: Array<{ typ: string; id: string; etykieta: string }>;
   confidence?: number;
   density?: 'visual' | 'balanced' | 'document';
   /**
@@ -1499,13 +1513,18 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
 
 export async function generateOutline(
   setup: DeckSetup,
-  organizationId: string
+  organizationId: string,
+  actor?: { userId: string; projectId?: string }
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
   let templateOutlineUsed = false;
   let templateRuntime: PresentationTemplateRuntime | null = null;
   let templateWarnings: string[] = [];
   let templateSlotMapping: TemplateSlotMappingResult | null = null;
+  // FIX-1 (ODBIOR_231): stempel pochodzenia musi opisywać FAKT wykonania gałęzi wiedzy,
+  // nie samą wartość flagi. Flaga ON + brak `actor` (4 producenccy wołacze bez actora)
+  // dawało fałszywy stempel 'org_knowledge_outline' na konspekcie zrobionym z szablonu.
+  let groundedOutlineUsed = false;
   const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
   const sourcePackPreflight = preflightPresentationSourcePack({
     setup,
@@ -1513,7 +1532,28 @@ export async function generateOutline(
     strict: Boolean(setup.sourcePackStrict),
   });
 
-  if (setup.templateId) {
+  if (isDeckFromKnowledgeEnabled() && actor?.userId) {
+    const grounded = await generateKnowledgeOutline({
+      organizationId,
+      userId: actor.userId,
+      projectId: actor.projectId || setup.projectId,
+      title: setup.title,
+      audience: setup.audience,
+      goal: setup.goal,
+      language: setup.language,
+    });
+    groundedOutlineUsed = true;
+    outline = grounded.outline.map((item, index) => ({
+      intent: (item.archetyp || (index === 0 ? 'cover' : 'key_messages')) as SlideIntent,
+      title: item.tytul,
+      keyMessage: item.teza,
+      teza: item.teza,
+      archetyp: item.archetyp,
+      zrodla: item.zrodla,
+      sourceRefs: item.zrodla.map((source) => `${source.typ}:${source.id}`),
+      enabled: true,
+    }));
+  } else if (setup.templateId) {
     const template = await dbGet(
       `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
       [setup.templateId, organizationId]
@@ -1560,9 +1600,18 @@ export async function generateOutline(
   });
 
   const deckId = uuidv4().replace(/-/g, '');
-  const resolvedSourceType =
-    setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
+  const knowledgeSources = outline.flatMap((item) => item.zrodla || []);
+  // FIX-1: stempel wystawiany z FAKTU (groundedOutlineUsed), nie z echa flagi.
+  // Bez tego przebieg bez `actor` (flaga ON) dostawał 'org_knowledge_outline' mimo
+  // że konspekt powstał z szablonu/słów kluczowych — patrz ODBIOR_231.md FIX-1.
+  const resolvedSourceType = groundedOutlineUsed
+    ? 'org_knowledge_outline'
+    : setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  // Brak fallbacku na organizationId: gdy nie ma projectId, nie ma sensownego "źródła"
+  // wiedzy do wskazania — stempel bez identyfikowalnego źródła jest gorszy niż jego brak.
+  const resolvedSourceId = groundedOutlineUsed
+    ? actor?.projectId || setup.projectId || null
+    : setup.sourceId || sourceArtifacts[0]?.id || null;
   // C7 — initiative linkage: when the deck's canonical source is an initiative
   // (sourceType 'INITIATIVE'/'initiative'), carry the id into the registry so
   // the initiative detail view can list this deck under "Artefakty".
@@ -1571,8 +1620,8 @@ export async function generateOutline(
       ? String(resolvedSourceId)
       : null;
   await dbRun(
-    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id, source_refs_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
     [
       deckId,
       organizationId,
@@ -1600,6 +1649,7 @@ export async function generateOutline(
               sourceRequirements: templateRuntime.sourceRequirements,
               headerFooter: templateRuntime.headerFooter,
               customTemplate: templateRuntime.customTemplate,
+              imageStylePrompt: templateRuntime.imageStylePrompt,
             }
           : null,
         templateSlotMapping,
@@ -1620,6 +1670,7 @@ export async function generateOutline(
       null,
       resolvedSourceType,
       resolvedSourceId,
+      JSON.stringify(knowledgeSources),
     ]
   );
 
@@ -2019,6 +2070,10 @@ export async function generateDeck(
         preferPremium: true,
       });
       const plannedSlides = tieredVisuals.slides;
+      const styleAppendix = buildImageStyleAppendix(
+        templateRuntime?.imageStylePrompt,
+        setup.imageStylePreset
+      );
       // Apply planned visuals back into the slides array (in-place by index)
       for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
 
@@ -2041,6 +2096,7 @@ export async function generateDeck(
             brandColor,
             priority: visualPriority,
             dataClass: 'no_pii',
+            styleAppendix,
           });
           if (warning) extraWarnings.push(warning);
           if (visual) {
@@ -2058,6 +2114,7 @@ export async function generateDeck(
                       brandColor,
                       priority: visualPriority,
                       dataClass: 'no_pii',
+                      styleAppendix,
                     });
                     return regen.visual?.asset?.path || visual.asset?.path || '';
                   },
@@ -2421,6 +2478,35 @@ export async function generateDeck(
         organizationId,
       ]
     );
+
+    if (isArtifactKnowledgeIndexEnabled()) {
+      void (async () => {
+        const knowledgeSource = (await dbGet(
+          `SELECT title, confidentiality, deck_json, unified_json, generated_by
+             FROM presentation_decks
+            WHERE id = ? AND organization_id = ? AND status = 'ready'`,
+          [deckId, organizationId]
+        )) as any;
+        if (!knowledgeSource) return;
+
+        await indexDeckArtifactForKnowledge({
+          artifactId: deckId,
+          organizationId,
+          ownerId: String(knowledgeSource.generated_by || 'system'),
+          title: String(knowledgeSource.title || setup.title || 'Presentation'),
+          contentMd: deckArtifactToKnowledgeMarkdown(
+            knowledgeSource.deck_json,
+            knowledgeSource.unified_json
+          ),
+          confidentiality: knowledgeSource.confidentiality,
+        });
+      })().catch((err: any) =>
+        logger.warn(
+          '[artifactKnowledgeIndex] deck hook failed (ignored):',
+          err?.message || err
+        )
+      );
+    }
 
     await artifactRegistryService.registerArtifactOrigin({
       organizationId,

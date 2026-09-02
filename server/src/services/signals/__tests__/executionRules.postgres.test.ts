@@ -28,6 +28,7 @@ const now = new Date('2026-08-26T12:00:00.000Z');
 interface RuleFixture {
   name: string;
   rule: SignalRule;
+  expectedBodyParams?: { value: number };
   seedHit(org: string, id: string): Promise<void>;
   seedMiss(org: string, id: string): Promise<void>;
   clear(org: string, id: string): Promise<void>;
@@ -62,6 +63,7 @@ const fixtures: RuleFixture[] = [
   {
     name: 'exec.task.overdue',
     rule: taskOverdueRule,
+    expectedBodyParams: { value: 6 },
     seedHit: (org, id) =>
       insertTask({
         org,
@@ -88,6 +90,7 @@ const fixtures: RuleFixture[] = [
   {
     name: 'exec.task.due_soon_not_started',
     rule: taskDueSoonNotStartedRule,
+    expectedBodyParams: { value: 2 },
     seedHit: (org, id) =>
       insertTask({
         org,
@@ -114,6 +117,7 @@ const fixtures: RuleFixture[] = [
   {
     name: 'exec.task.blocked_stale',
     rule: taskBlockedStaleRule,
+    expectedBodyParams: { value: 7 },
     seedHit: (org, id) =>
       insertTask({
         org,
@@ -180,6 +184,9 @@ describePg('four EXECUTION rules on real tenant data', () => {
         await fixture.seedHit(org, id);
         const hits = await fixture.rule.evaluate({ organizationId: org, db, now });
         expect(hits).toHaveLength(1);
+        if (fixture.expectedBodyParams) {
+          expect(hits[0].bodyParams).toEqual(fixture.expectedBodyParams);
+        }
         expect(fixture.rule.evidence(hits[0])[0]).toMatchObject({ ref: id });
         expect(fixture.rule.action(hits[0]).route).toContain(id);
         expect(fixture.rule.audience(hits[0]).userId).toBe('user-owner');

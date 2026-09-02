@@ -14,7 +14,9 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
+import { isDeckOverflowWarningEnabled } from '../config/FeatureFlags.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { featureFlags } from '../config/FeatureFlags.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -32,6 +34,7 @@ import {
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
 import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
+import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import {
   isTemplateResolveError,
   resolvePresentationTemplateForCreation,
@@ -98,7 +101,6 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
-import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -168,7 +170,10 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
+import {
+  mapOutlineBlueprintToDeckSlides,
+  validatePresentationCustomTemplate,
+} from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -186,6 +191,7 @@ import {
   applyPdfLayoutTruncationMarker,
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
+import { wykryjPrzepelnienie } from '../services/report/pptx/deckOverflowDetector.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
@@ -430,6 +436,7 @@ const pendingDeckAiOperations = new Map<
     proposedDeckJson: string;
     reply: string;
     actions: string[];
+    status: 'draft' | 'accepted' | 'rejected' | 'applied';
     createdAt: string;
   }
 >();
@@ -444,6 +451,7 @@ type PendingDeckAiOperation = {
   reply: string;
   actions: string[];
   diff?: any;
+  status: 'draft' | 'accepted' | 'rejected' | 'applied';
   createdAt: string;
 };
 
@@ -884,8 +892,6 @@ async function saveAiOperation(op: PendingDeckAiOperation, prompt: string, versi
 }
 
 async function getAiOperation(operationId: string): Promise<PendingDeckAiOperation | null> {
-  const cached = pendingDeckAiOperations.get(operationId);
-  if (cached) return cached;
   try {
     const row = (await dbGet(`SELECT * FROM presentation_ai_operations WHERE id = ?`, [
       operationId,
@@ -901,29 +907,34 @@ async function getAiOperation(operationId: string): Promise<PendingDeckAiOperati
       reply: row.reply || '',
       actions: JSON.parse(row.actions_json || '[]'),
       diff: JSON.parse(row.diff_json || '{}'),
+      status: row.status,
       createdAt: row.created_at || new Date().toISOString(),
     };
   } catch (error) {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not read AI operation', error);
-    return null;
+    return pendingDeckAiOperations.get(operationId) || null;
   }
 }
 
 async function resolveAiOperation(
   operationId: string,
   status: 'accepted' | 'rejected' | 'applied',
-  versionAfter?: number
-) {
-  pendingDeckAiOperations.delete(operationId);
+  versionAfter?: number,
+  expectedStatus?: 'draft' | 'accepted'
+): Promise<boolean> {
   try {
-    await dbRun(
-      `UPDATE presentation_ai_operations SET status = ?, version_after = COALESCE(?, version_after), resolved_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [status, versionAfter || null, operationId]
-    );
+    const result = (await dbRun(
+      `UPDATE presentation_ai_operations SET status = ?, version_after = COALESCE(?, version_after), resolved_at = CURRENT_TIMESTAMP WHERE id = ?${expectedStatus ? ' AND status = ?' : ''}`,
+      [status, versionAfter || null, operationId, ...(expectedStatus ? [expectedStatus] : [])]
+    )) as { changes?: number } | undefined;
+    const resolved = (result?.changes ?? 0) === 1;
+    if (resolved) pendingDeckAiOperations.delete(operationId);
+    return resolved;
   } catch (error) {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not resolve AI operation', error);
+    return false;
   }
 }
 
@@ -1363,6 +1374,35 @@ router.post(
     }
     const useLlm = req.body?.useLlm === true;
 
+    // Pre-existing gap closed during FIX-228 x 226 merge (2026-09-01) —
+    // presentationCustomTemplateContract.test.ts already asserted that a
+    // customTemplate contract supplied at creation time gets validated and
+    // persisted (parity with the PUT /templates/:id save path), but no code
+    // on the m03-admin-20260824 line did it: /templates/plan silently
+    // dropped `input.customTemplate` on the floor. `layout_policy_json` is a
+    // baseline (20260719) column, unlike the migration-767 lifecycle/lineage
+    // columns below, so it is always safe to write here.
+    let planLayoutPolicyJson: string | null = null;
+    if (
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true' &&
+      input.customTemplate !== undefined
+    ) {
+      if (input.customTemplate) {
+        const validation = validatePresentationCustomTemplate(input.customTemplate);
+        if (validation.ok === false) {
+          res.status(400).json({
+            success: false,
+            error: 'custom_template_invalid',
+            details: validation.errors,
+          });
+          return;
+        }
+        planLayoutPolicyJson = JSON.stringify({ customTemplate: validation.value });
+      } else {
+        planLayoutPolicyJson = JSON.stringify({ customTemplate: input.customTemplate || null });
+      }
+    }
+
     let draft;
     try {
       draft = await draftPresentationTemplateAsync({ input, useLlm });
@@ -1378,13 +1418,14 @@ router.post(
 
     const { template, llmRefined } = draft;
     const id = uuidv4().replace(/-/g, '');
-    // Base insert uses ONLY the migration-568 columns so template creation
+    // Base insert uses ONLY the migration-568 columns (plus baseline
+    // `layout_policy_json`, present since 20260719) so template creation
     // keeps working on installs where migration 767 (lifecycle + lineage)
     // has not run yet. `lifecycle_state` defaults to `draft` either way
     // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
     await dbRun(
-      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by, layout_policy_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?, ?)`,
       [
         id,
         orgId,
@@ -1402,6 +1443,7 @@ router.post(
         JSON.stringify(template.mustHaveIntents),
         JSON.stringify(template.recommendedVisuals),
         userId,
+        planLayoutPolicyJson,
       ]
     );
 
@@ -1563,29 +1605,95 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
-      req.body;
+    const {
+      name,
+      description,
+      audience,
+      goal,
+      theme,
+      outlineJson,
+      maxSlides,
+      colorTemplateId,
+      imageStylePrompt,
+      customTemplate,
+    } = req.body;
 
-    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
+    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31) + Day 228 "styl obrazu"
+    // + Day 226 "custom template" contract. Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
     // migration) instead of a new column — see
     // `presentationTemplateCompatibilityService.ts` for the read side.
-    // `colorTemplateId === undefined` means "field not sent, leave
-    // untouched"; `null` or `''` means "explicitly cleared".
+    // `colorTemplateId === undefined` / `imageStylePrompt === undefined` /
+    // `customTemplate === undefined` each mean "field not sent, leave
+    // untouched"; an explicit falsy value (`null`/`''`) clears it.
+    //
+    // Merge note (FIX-228 x 226, 2026-09-01 scalenie na github-backup/codex/
+    // m03-admin-20260824): `imageStylePrompt` writes UNCONDITIONALLY — its
+    // own flag `ENABLE_PRESENTATION_IMAGE_STYLE` is read only downstream by
+    // deckVisualsService at image-generation time, never by this endpoint.
+    // `customTemplate` writes ONLY under `ENABLE_PRESENTATION_TEMPLATE_
+    // CUSTOM_SAVE` (226's own gate + validation, unchanged — do not weaken).
+    // Neither flag conditions the other field's write. `typeof` guard on
+    // `existing.layout_policy_json` (228's version — driver-tolerant: some
+    // paths return it already-parsed as an object, not a JSON string) kept
+    // from FIX-228, per ODBIOR_228.md "Kolizja z dyżurem 226" finding.
+    // Outer "worth looking at all" gate, restored to 226's original literal
+    // shape (`colorTemplateId !== undefined || customTemplate !== undefined`)
+    // with `imageStylePrompt !== undefined` OR'd on independently — see
+    // presentationCustomTemplateContract.test.ts, which greps this route's
+    // source text for the exact 226 expression to prove the merge didn't
+    // rewrite it. `customTemplate !== undefined` here is unconditional
+    // (matches 226): the flag-gating for customTemplate happens ONLY at the
+    // validate/write step below, never at this outer "should we bother" gate.
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined) {
-      let currentLayoutPolicy: Record<string, unknown> = {};
-      if (existing?.layout_policy_json) {
-        try {
-          currentLayoutPolicy = JSON.parse(existing.layout_policy_json) || {};
-        } catch {
-          currentLayoutPolicy = {};
+    if (
+      colorTemplateId !== undefined ||
+      customTemplate !== undefined ||
+      imageStylePrompt !== undefined
+    ) {
+      const customSaveEnabled = process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true';
+      let customTemplateUpdate: Record<string, unknown> = {};
+      if (customSaveEnabled && customTemplate !== undefined) {
+        if (customTemplate) {
+          const validation = validatePresentationCustomTemplate(customTemplate);
+          if (validation.ok === false) {
+            return res.status(400).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
+          }
+          customTemplateUpdate = { customTemplate: validation.value };
+        } else {
+          customTemplateUpdate = { customTemplate: customTemplate || null };
         }
       }
-      layoutPolicyJson = JSON.stringify({
-        ...currentLayoutPolicy,
-        colorTemplateId: colorTemplateId || null,
-      });
+
+      if (
+        colorTemplateId !== undefined ||
+        imageStylePrompt !== undefined ||
+        (customSaveEnabled && customTemplate !== undefined)
+      ) {
+        let currentLayoutPolicy: Record<string, unknown> = {};
+        if (existing?.layout_policy_json) {
+          try {
+            currentLayoutPolicy =
+              typeof existing.layout_policy_json === 'string'
+                ? JSON.parse(existing.layout_policy_json) || {}
+                : { ...existing.layout_policy_json };
+          } catch {
+            currentLayoutPolicy = {};
+          }
+        }
+        layoutPolicyJson = JSON.stringify({
+          ...currentLayoutPolicy,
+          ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
+          ...(imageStylePrompt !== undefined
+            ? { imageStylePrompt: String(imageStylePrompt || '').trim() || null }
+            : {}),
+          ...customTemplateUpdate,
+        });
+      }
     }
 
     await dbRun(
@@ -1684,6 +1792,44 @@ router.post(
         error: 'Unknown targetState. Allowed: draft, approved, deprecated.',
         code: 'INVALID_TARGET_STATE',
       });
+    }
+
+    // Pre-existing gap closed during FIX-228 x 226 merge (2026-09-01) —
+    // presentationCustomTemplateContract.test.ts already asserted this
+    // behavior ("validates a custom contract again before approval") but
+    // no code on the m03-admin-20260824 line actually did it: a draft could
+    // carry a customTemplate contract saved under an older, looser
+    // validatePresentationCustomTemplate and sail into `approved` unchecked.
+    // Re-validate whatever customTemplate is already persisted on the row
+    // right before an `approved` transition, gated by the same
+    // ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE flag as the PUT save path —
+    // this endpoint never wrote imageStylePrompt/colorTemplateId, so it has
+    // no interaction with FIX-228's flag.
+    if (targetState === 'approved' && process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true') {
+      const existingForApproval = await getTemplateForOrgOrSystem(templateId, orgId);
+      let customTemplate: unknown;
+      if (existingForApproval?.layout_policy_json) {
+        try {
+          const parsedLayoutPolicy =
+            typeof existingForApproval.layout_policy_json === 'string'
+              ? JSON.parse(existingForApproval.layout_policy_json)
+              : existingForApproval.layout_policy_json;
+          customTemplate = (parsedLayoutPolicy as { customTemplate?: unknown } | null)
+            ?.customTemplate;
+        } catch {
+          customTemplate = undefined;
+        }
+      }
+      if (customTemplate) {
+        const validation = validatePresentationCustomTemplate(customTemplate);
+        if (validation.ok === false) {
+          return res.status(400).json({
+            success: false,
+            error: 'custom_template_invalid',
+            details: validation.errors,
+          });
+        }
+      }
     }
 
     const result = await applyLifecycleTransition({
@@ -1915,7 +2061,10 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const setup: DeckSetup = req.body;
-    const result = await generateOutline(setup, orgId);
+    const result = await generateOutline(setup, orgId, {
+      userId: getUserId(req),
+      projectId: typeof req.body?.projectId === 'string' ? req.body.projectId : undefined,
+    });
     res.json({ success: true, data: result });
   })
 );
@@ -2293,6 +2442,7 @@ router.post(
       return;
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const materializedBrief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
 
     let resolved;
     try {
@@ -2315,7 +2465,7 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
@@ -2621,6 +2771,17 @@ router.get(
     if (!deck) return res.status(404).json({ success: false, error: 'Export not available' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
+    if (req.query.preflight === 'overflow') {
+      return res.json({
+        success: true,
+        data: {
+          overflowWarnings: isDeckOverflowWarningEnabled()
+            ? wykryjPrzepelnienie(parseDeckPayload(deck), orgId)
+            : [],
+        },
+      });
+    }
+
     if (
       exportMode === 'final' &&
       presentationExportOverride(req).requested &&
@@ -2884,6 +3045,20 @@ router.get(
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
+
+    if (req.query.preflight === 'overflow') {
+      // FIX-230 F8: PDF does NOT go through the PPTX pipeline — it renders
+      // with pdfkit (see `new PDFDocument` below in this same route). The
+      // character budgets `wykryjPrzepelnienie` checks are PPTX slot
+      // capacities and say nothing about pdfkit layout, so calling the
+      // same detector here would report a PowerPoint-shaped opinion about
+      // a file that isn't PowerPoint-shaped. Always silent for PDF until
+      // a PDF-specific detector exists.
+      return res.json({
+        success: true,
+        data: { overflowWarnings: [] },
+      });
+    }
 
     if (
       exportMode === 'final' &&
@@ -4020,7 +4195,9 @@ router.post(
     const isPolish = String(req.headers['accept-language'] || '')
       .toLowerCase()
       .startsWith('pl');
-    const plan = parsePresentationEditIntent(prompt);
+    const plan = parsePresentationEditIntent(prompt, {
+      enableTeresaDeckEdit: featureFlags.ENABLE_TERESA_DECK_EDIT,
+    });
     if (!plan.actionable) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
@@ -4042,7 +4219,7 @@ router.post(
         },
       });
     }
-    const result = applyPresentationEditPlan({
+    const result = await applyPresentationEditPlan({
       plan,
       prompt,
       isPolish,
@@ -4051,6 +4228,7 @@ router.post(
         deck_id: deck.deck_id || deckId,
         title: deck.title || row.title,
       },
+      organizationId: orgId,
     });
 
     const operationId = uuidv4().replace(/-/g, '');
@@ -4076,6 +4254,7 @@ router.post(
         reply: result.reply,
         actions: result.appliedActions,
         diff,
+        status: 'draft',
         createdAt: new Date().toISOString(),
       },
       prompt,
@@ -4136,12 +4315,28 @@ router.post(
     if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
       return res.status(404).json({ success: false, error: 'AI proposal not found' });
     }
+    if (op.status !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: `AI proposal is already ${op.status}`,
+        code: 'AI_PROPOSAL_ALREADY_RESOLVED',
+      });
+    }
 
     const row = (await dbGet(
       `SELECT version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [deckId, orgId]
     )) as any;
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const claimed = await resolveAiOperation(operationId, 'accepted', undefined, 'draft');
+    if (!claimed) {
+      return res.status(409).json({
+        success: false,
+        error: 'AI proposal is no longer pending',
+        code: 'AI_PROPOSAL_STATE_CONFLICT',
+      });
+    }
 
     const nextVersion = (row.version || 1) + 1;
     try {
@@ -4173,7 +4368,7 @@ router.post(
       `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [JSON.stringify(proposed), nextVersion, deckId, orgId]
     );
-    await resolveAiOperation(operationId, 'applied', nextVersion);
+    await resolveAiOperation(operationId, 'applied', nextVersion, 'accepted');
     await recordPresentationRuntimeEvent({
       organizationId: orgId,
       deckId,
@@ -4226,7 +4421,21 @@ router.post(
     if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
       return res.status(404).json({ success: false, error: 'AI proposal not found' });
     }
-    await resolveAiOperation(operationId, 'rejected');
+    if (op.status !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: `AI proposal is already ${op.status}`,
+        code: 'AI_PROPOSAL_ALREADY_RESOLVED',
+      });
+    }
+    const rejected = await resolveAiOperation(operationId, 'rejected', undefined, 'draft');
+    if (!rejected) {
+      return res.status(409).json({
+        success: false,
+        error: 'AI proposal is no longer pending',
+        code: 'AI_PROPOSAL_STATE_CONFLICT',
+      });
+    }
     await recordPresentationRuntimeEvent({
       organizationId: orgId,
       deckId,

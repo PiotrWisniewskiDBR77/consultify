@@ -237,3 +237,19 @@ dostępu do środowiska w zakresie tego zlecenia):**
 - Zakres defektu na piętrze superadmina nie został doprowadzony do tego samego poziomu
   szczegółu (tabela pól, próba wywołania) co piętro organizacji — potwierdzony ten sam
   MECHANIZM, nie policzone dokładnie ile pól.
+
+## Sprostowanie 2026-09-01 (dyżur 250) — plik cytowany w tym dokumencie nie istnieje
+
+`server/src/routes/ai-settings.routes.ts` (bez prefiksu `ai/`), cytowany w sekcjach 1 i
+4 tego dokumentu jako źródło numerów linii i werdyktu „piętro superadmina ZEPSUTE”,
+nie istnieje w repozytorium na SHA `df7f13056f` (`ls` zwraca `No such file or
+directory`). Jedyny zamontowany plik tego kontraktu to
+`server/src/routes/ai/ai-settings.routes.ts`: `Gateway.ts:54,744` montuje go pod
+`/api/ai-settings`, a `routes/ai/index.ts:25,64` montuje ten sam router drugi raz pod
+`/api/ai/settings`. Na żywym pliku piętro superadmina ma transformacje
+`transformSettingsToCamelCase` i `transformSettingsToSnakeCase` (definicje 60–93,
+użycie 189–253 na markerze), co przeczy części tego dokumentu dotyczącej
+superadministratora. Nie ustalono, czy dokument analizował plik później usunięty, czy
+od początku błędną ścieżkę; oba wyjaśnienia są zgodne z dostępnym dowodem. Werdykt
+„POTWIERDZONE” o historycznie zepsutym piętrze organizacji pozostaje bez zmian; to
+wyłącznie twierdzenie o żywym piętrze superadmina wymaga niniejszego sprostowania.

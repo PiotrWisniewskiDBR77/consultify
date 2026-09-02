@@ -259,7 +259,7 @@ async function seedInitiativesTasksDecisions(): Promise<void> {
       DEMO_ORG_ID,
       DEMO_PROJECT_ID,
       `Initiative ${i}: Atelier Workstream`,
-      i <= 2 ? 'completed' : i <= 5 ? 'in_progress' : 'planned',
+      i <= 2 ? 'DONE' : i <= 5 ? 'EXECUTING' : 'PLANNING',
     ];
     if (hasPriority) {
       cols.push('priority');

@@ -94,4 +94,32 @@ else
   echo "✓ kazdy wpis w spisie ma leniwy import"
 fi
 
+# 6. PODLOGA LICZEBNOSCI (2026-09-01, przypadek od toru grafiki).
+#    POWOD: bezpiecznik, ktoremu podano PUSTE wejscie, melduje sukces —
+#    "nie ma czego sprawdzac" i "sprawdzilem, jest dobrze" koncza sie tym samym
+#    kodem wyjscia. Zmierzone: ta bramka dawala PIEC zielonych ptaszkow na pliku
+#    bez ani jednego ekranu.
+#    Groza podwojna, bo `grep --include` w tej powloce zwraca PUSTKE zamiast
+#    wynikow — czyli zepsute polecenie wyglada jak czysty przebieg.
+PODLOGA_F="scripts/dev/check-devrender-main.podloga.txt"
+ILE=$(grep -cE "^const [A-Za-z0-9_]+ = React\.lazy" "$F")
+if [ -f "$PODLOGA_F" ]; then
+  PODLOGA=$(cat "$PODLOGA_F")
+  MIN=$(( PODLOGA * 80 / 100 ))
+  if [ "$ILE" -lt "$MIN" ]; then
+    echo "✘ liczba ekranow spadla do $ILE (podloga $PODLOGA, prog $MIN)"
+    echo "    Albo ekrany zniknely, albo pomiar sie zepsul. Jedno i drugie wymaga czlowieka."
+    RC=1
+  else
+    echo "✓ liczba ekranow: $ILE (podloga $PODLOGA)"
+    if [ "$ILE" -gt "$PODLOGA" ]; then
+      echo "$ILE" > "$PODLOGA_F"
+      echo "  • podloga podniesiona do $ILE"
+    fi
+  fi
+else
+  echo "✘ brak pliku podlogi $PODLOGA_F — nie da sie odroznic pustego wejscia od poprawnego"
+  RC=1
+fi
+
 exit $RC

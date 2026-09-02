@@ -3,6 +3,60 @@ import React, { lazy, Suspense, useState } from 'react';
 import { isFinanceValuePanelsEnabled } from '@/utils/financeValuePanelsFlag';
 
 const PANELS = {
+  bankingValue: lazy(() =>
+    import('./panels/BankingValuePanel').then((m) => ({ default: m.BankingValuePanel }))
+  ),
+  cashForecast: lazy(() =>
+    import('./panels/CashForecastPanel').then((m) => ({ default: m.CashForecastPanel }))
+  ),
+  driverPlanner: lazy(() =>
+    import('./panels/DriverPlannerPanel').then((m) => ({ default: m.DriverPlannerPanel }))
+  ),
+  driverTree: lazy(() =>
+    import('./panels/DriverTreePanel').then((m) => ({ default: m.DriverTreePanel }))
+  ),
+  extendedRatios: lazy(() =>
+    import('./panels/ExtendedRatiosPanel').then((m) => ({ default: m.ExtendedRatiosPanel }))
+  ),
+  headcountPlanner: lazy(() =>
+    import('./panels/HeadcountPlannerPanel').then((m) => ({ default: m.HeadcountPlannerPanel }))
+  ),
+  investmentAppraisal: lazy(() =>
+    import('./panels/InvestmentAppraisalPanel').then((m) => ({
+      default: m.InvestmentAppraisalPanel,
+    }))
+  ),
+  rollingForecast: lazy(() =>
+    import('./panels/RollingForecastPanel').then((m) => ({ default: m.RollingForecastPanel }))
+  ),
+  valuationVisuals: lazy(() =>
+    import('./panels/ValuationVisualsPanel').then((m) => ({ default: m.ValuationVisualsPanel }))
+  ),
+  valueAttribution: lazy(() =>
+    import('./panels/ValueAttributionPanel').then((m) => ({ default: m.ValueAttributionPanel }))
+  ),
+  valueCapture: lazy(() =>
+    import('./panels/ValueCapturePipelinePanel').then((m) => ({
+      default: m.ValueCapturePipelinePanel,
+    }))
+  ),
+  valueLedger: lazy(() =>
+    import('./panels/ValueLedgerPanel').then((m) => ({ default: m.ValueLedgerPanel }))
+  ),
+  valueOffice: lazy(() =>
+    import('./panels/ValueOfficePanel').then((m) => ({ default: m.ValueOfficePanel }))
+  ),
+  varianceBridge: lazy(() =>
+    import('./panels/VarianceBridgePanel').then((m) => ({ default: m.VarianceBridgePanel }))
+  ),
+  varianceNarration: lazy(() =>
+    import('./panels/VarianceNarrationPanel').then((m) => ({
+      default: m.VarianceNarrationPanel,
+    }))
+  ),
+  evBasket: lazy(() =>
+    import('./panels/EvBasketFootballField').then((m) => ({ default: m.EvBasketFootballField }))
+  ),
   monteCarlo: lazy(() =>
     import('./panels/MonteCarloNpvPanel').then((m) => ({ default: m.MonteCarloNpvPanel }))
   ),
@@ -23,6 +77,22 @@ const PANELS = {
 type PanelId = keyof typeof PANELS;
 
 const LABELS: Record<PanelId, string> = {
+  bankingValue: 'Banking value',
+  cashForecast: 'Cash forecast',
+  driverPlanner: 'Driver planner',
+  driverTree: 'Driver tree',
+  extendedRatios: 'Extended ratios',
+  headcountPlanner: 'Headcount planner',
+  investmentAppraisal: 'Investment appraisal',
+  rollingForecast: 'Rolling forecast',
+  valuationVisuals: 'Valuation visuals',
+  valueAttribution: 'Value attribution',
+  valueCapture: 'Value capture pipeline',
+  valueLedger: 'Value ledger',
+  valueOffice: 'Value office',
+  varianceBridge: 'Variance bridge',
+  varianceNarration: 'Variance narration',
+  evBasket: 'EV basket',
   monteCarlo: 'Monte Carlo NPV',
   realOptions: 'Real options',
   frontier: 'Efficient frontier',

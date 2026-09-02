@@ -2544,12 +2544,13 @@ async function upsertReports(
   return reports.length;
 }
 
-async function upsertKnowledgeDocs(organizationId: string, locale: DemoLocale): Promise<number> {
+export async function upsertKnowledgeDocs(organizationId: string, locale: DemoLocale): Promise<number> {
   if (!(await tableExists('knowledge_docs'))) return 0;
   const hasCategory = await columnExists('knowledge_docs', 'category');
   const hasMetadata = await columnExists('knowledge_docs', 'metadata');
   const hasIndexedAt = await columnExists('knowledge_docs', 'indexed_at');
   const hasUpdatedAt = await columnExists('knowledge_docs', 'updated_at');
+  const hasScope = await columnExists('knowledge_docs', 'scope');
 
   const supportsChunks = await tableExists('knowledge_chunks');
 
@@ -2581,11 +2582,20 @@ async function upsertKnowledgeDocs(organizationId: string, locale: DemoLocale): 
       cols.push('updated_at');
       vals.push(new Date().toISOString());
     }
+    if (hasScope) {
+      // Demo seed knowledge must be org-wide (matches knowledgeIndexer/insightSignalBridgeService):
+      // without an explicit scope it defaults to the column default ('user') with owner_id=NULL,
+      // which the scope filter never matches — the demo knowledge base goes invisible to the AI.
+      cols.push('scope');
+      vals.push('organization');
+    }
 
     await DbPromise.run(
       `INSERT INTO knowledge_docs (${cols.join(', ')})
        VALUES (${cols.map(() => '?').join(', ')})
-       ON CONFLICT(id) DO UPDATE SET filename=excluded.filename, status=excluded.status`,
+       ON CONFLICT(id) DO UPDATE SET filename=excluded.filename, status=excluded.status${
+         hasScope ? ", scope='organization'" : ''
+       }`,
       vals,
       { fallback: true }
     );

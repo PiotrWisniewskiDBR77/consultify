@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
 import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
+import { usePresentationImageStyleUiFlag } from '@/hooks/usePresentationImageStyleUiFlag';
 import {
   FilterableTable,
   type FilterChip,
@@ -202,6 +203,10 @@ export const PresentationTemplateArchitectView: React.FC<
 > = ({ onTemplateSaved }) => {
   const { t } = useTranslation();
   const intentLabel = useIntentLabel(t);
+  // Day 228 FIX pkt 3 — pole „Styl obrazu" nie miało akceptu wizualnego
+  // właściciela (CLAUDE.md #7/#9). Domyślnie OFF; zdejmowana wyłącznie po
+  // akcepcie na czystym zrzucie z dev-render.
+  const { enabled: imageStyleUiEnabled } = usePresentationImageStyleUiFlag();
 
   const [templates, setTemplates] = useState<PresentationTemplate[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -245,6 +250,7 @@ export const PresentationTemplateArchitectView: React.FC<
   // generation time. Independent of the outline — a template can carry
   // colors, structure, or both (see `ColorPatternPicker`).
   const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const [editImageStylePrompt, setEditImageStylePrompt] = useState('');
   const [editCustomTemplate, setEditCustomTemplate] =
     useState<PresentationCustomTemplateDefinition>(DEFAULT_CUSTOM_TEMPLATE);
   const brandKitColors = useBrandKitColors();
@@ -266,6 +272,12 @@ export const PresentationTemplateArchitectView: React.FC<
     setEditTheme(selectedTemplate.theme || 'corporate');
     setEditOutline(selectedTemplate.outline_json ? [...selectedTemplate.outline_json] : []);
     setEditColorTemplateId(selectedTemplate.color_template_id || '');
+    const layoutPolicy = (
+      selectedTemplate as PresentationTemplate & {
+        layout_policy_json?: { imageStylePrompt?: string | null };
+      }
+    ).layout_policy_json;
+    setEditImageStylePrompt(layoutPolicy?.imageStylePrompt || '');
     setEditCustomTemplate(selectedTemplate.custom_template || DEFAULT_CUSTOM_TEMPLATE);
   }, [selectedTemplate]);
 
@@ -515,6 +527,7 @@ export const PresentationTemplateArchitectView: React.FC<
         // "explicitly cleared" (null) once a value existed.
         colorTemplateId: editColorTemplateId || null,
         customTemplate: editCustomTemplate,
+        imageStylePrompt: editImageStylePrompt || null,
       });
       const fresh = await getPresentationTemplate(selectedTemplate.id);
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
@@ -1135,6 +1148,36 @@ export const PresentationTemplateArchitectView: React.FC<
                   ))}
                 </select>
               </label>
+              {/* Day 228 FIX pkt 3 — za flagą `presentationImageStyleUiV1` (domyślnie OFF)
+                  do akceptu wizualnego właściciela na zrzutach dev-render (CLAUDE.md #7/#9).
+                  OFF nie kasuje `editImageStylePrompt` — zapis w handleSave leci bez zmian,
+                  flaga chowa wyłącznie pole edycji. */}
+              {imageStyleUiEnabled && (
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="flex flex-col gap-1 text-xs">
+                    <span className="font-medium text-c-text">
+                      {t('presentations.templateArchitect.imageStyleLabel', 'Styl obrazu')}
+                    </span>
+                    <textarea
+                      value={editImageStylePrompt}
+                      onChange={(event) => setEditImageStylePrompt(event.target.value)}
+                      disabled={!isEditable}
+                      rows={3}
+                      placeholder={t(
+                        'presentations.templateArchitect.imageStylePlaceholder',
+                        'Np. gradient fuksji, różu i królewskiego błękitu, subtelne światło studyjne'
+                      )}
+                      className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
+                    />
+                    <span className="text-[11px] text-c-text-secondary">
+                      {t(
+                        'presentations.templateArchitect.imageStyleHint',
+                        'Te słowa zostaną dopisane do każdego polecenia generowania obrazu AI w tym motywie.'
+                      )}
+                    </span>
+                  </label>
+                </div>
+              )}
               <div className="col-span-1 sm:col-span-2">
                 <span className="font-medium text-c-text text-xs">
                   {t('presentations.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}

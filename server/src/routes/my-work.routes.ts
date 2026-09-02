@@ -51,6 +51,7 @@ import inboxService from '../services/inboxService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import NotificationService from '../services/notificationService.js';
+import { createPersonalTask } from '../services/personalTask/createPersonalTaskService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { createNativeDeck } from '../services/presentationGeneratorService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
@@ -1287,19 +1288,8 @@ router.post(
     const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
 
-    // F15 (data-integrity, continuation of Z139): decode HTML entities the global
-    // input-sanitization middleware escaped on this request body string, before
-    // storing tasks.title — mirrors the tool_sessions.name fix.
-    const title = decodeHtmlEntities(String(req.body?.title || '').trim());
-    if (!title) {
-      res.status(400).json({ error: 'title is required' });
-      return;
-    }
-
     const description =
       typeof req.body?.description === 'string' ? req.body.description : undefined;
-    const status = String(req.body?.status || 'todo').trim() || 'todo';
-    const priority = String(req.body?.priority || 'medium').trim() || 'medium';
     const dueDate = req.body?.dueDate ? String(req.body.dueDate).trim() : undefined;
     const tags = parseTagsArray(req.body?.tags);
     const sourceTypeRaw = req.body?.sourceType ?? req.body?.source_type;
@@ -1322,89 +1312,50 @@ router.post(
         ? idempotencyKeyRaw.trim()
         : null;
 
-    if (idempotencyKey) {
-      const existing = await queryHelpers.queryOne<any>(
-        `
-        SELECT
-          t.id, t.title, t.description, t.status, t.priority,
-          t.due_date as "dueDate", t.tags,
-          t.created_at as "createdAt", t.updated_at as "updatedAt",
-          t.completed_at as "completedAt"
-        FROM tasks t
-        WHERE t.organization_id = ? AND t.idempotency_key = ?
-        LIMIT 1
-        `,
-        [orgId, idempotencyKey]
-      );
-      if (existing) {
-        res
-          .status(200)
-          .json({ ...existing, tags: parseTagsArray(existing?.tags), idempotent: true });
+    // FIX-207b (ODBIOR_207.md follow-up, decyzja właściciela): ta trasa jest
+    // teraz cienką HTTP-otoczką nad `createPersonalTask` (jedno źródło
+    // prawdy dla INSERT INTO tasks, dzielone z zatwierdzoną propozycją
+    // `create_task` z czatu Teresy — aiActionExecutor.ts). Walidacja/parsing
+    // req.body i audyt AI-apply zostają tu (HTTP-specyficzne); sam zapis
+    // przeniesiony do server/src/services/personalTask/createPersonalTaskService.ts.
+    let created;
+    try {
+      created = await createPersonalTask({
+        organizationId: orgId,
+        userId,
+        title: String(req.body?.title || ''),
+        description,
+        status: req.body?.status,
+        priority: req.body?.priority,
+        dueDate,
+        tags,
+        sourceType,
+        sourceId,
+        idempotencyKey,
+      });
+    } catch (err: any) {
+      if (err?.message === 'title is required') {
+        res.status(400).json({ error: 'title is required' });
         return;
       }
+      throw err;
     }
 
-    const id = uuidv4();
-    const cols = await getTableColumns('tasks');
-
-    const insertCols: string[] = ['id'];
-    const insertVals: string[] = ['?'];
-    const insertParams: any[] = [id];
-
-    const add = (col: string, val: any) => {
-      if (!cols.has(col)) return;
-      insertCols.push(col);
-      insertVals.push('?');
-      insertParams.push(val);
-    };
-
-    add('organization_id', orgId);
-    add('title', title);
-    add('description', description ?? null);
-    add('status', status);
-    add('priority', priority);
-    add('assignee_id', userId);
-    add('reporter_id', userId);
-    if (dueDate) add('due_date', dueDate);
-    add('tags', JSON.stringify(tags));
-    add('task_type', 'personal');
-    if (sourceType && sourceId) {
-      add('source_type', sourceType);
-      add('source_id', sourceId);
-    }
-    if (idempotencyKey) add('idempotency_key', idempotencyKey);
-
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-    } catch (insertErr: any) {
-      // Race guard: two concurrent retries can both pass the pre-insert SELECT
-      // above. A unique-violation on (organization_id, idempotency_key) means the
-      // other request won; re-read and return its row instead of a 500.
-      if (idempotencyKey && insertErr?.code === '23505') {
-        const winning = await queryHelpers.queryOne<any>(
-          `
-          SELECT
-            t.id, t.title, t.description, t.status, t.priority,
-            t.due_date as "dueDate", t.tags,
-            t.created_at as "createdAt", t.updated_at as "updatedAt",
-            t.completed_at as "completedAt"
-          FROM tasks t
-          WHERE t.organization_id = ? AND t.idempotency_key = ?
-          LIMIT 1
-          `,
-          [orgId, idempotencyKey]
-        );
-        if (winning) {
-          res
-            .status(200)
-            .json({ ...winning, tags: parseTagsArray(winning?.tags), idempotent: true });
-          return;
-        }
-      }
-      throw insertErr;
+    if (created.idempotent) {
+      res.status(200).json({
+        id: created.id,
+        title: created.title,
+        description: created.description,
+        status: created.status,
+        priority: created.priority,
+        dueDate: created.dueDate,
+        tags: created.tags,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+        completedAt: created.completedAt,
+        idempotent: true,
+      });
+      return;
     }
 
     // V4-NOTE-06: Audit when task created from AI-extracted actions (insert-as-blocks apply)
@@ -1416,9 +1367,9 @@ router.post(
           actorType: 'USER',
           action: 'NOTE_AI_APPLY',
           resourceType: 'task',
-          resourceId: id,
+          resourceId: created.id,
           organizationId: orgId,
-          after: { title, sourceType, sourceId },
+          after: { title: created.title, sourceType, sourceId },
           metadata: { fromAI: true, source: 'extract-actions' },
         });
       } catch (_e) {
@@ -1426,30 +1377,20 @@ router.post(
       }
     }
 
-    const row = await queryHelpers.queryOne<any>(
-      `
-      SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date as "dueDate",
-        t.tags,
-        t.created_at as "createdAt",
-        t.updated_at as "updatedAt",
-        t.completed_at as "completedAt",
-        ${cols.has('source_type') ? 't.source_type' : 'NULL'} as "sourceType",
-        ${cols.has('source_id') ? 't.source_id' : 'NULL'} as "sourceId"
-      FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
-        AND lower(coalesce(t.task_type,'')) = 'personal'
-      LIMIT 1
-    `,
-      [id, orgId, userId]
-    );
-
-    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.status(201).json({
+      id: created.id,
+      title: created.title,
+      description: created.description,
+      status: created.status,
+      priority: created.priority,
+      dueDate: created.dueDate,
+      tags: created.tags,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+      completedAt: created.completedAt,
+      sourceType: created.sourceType,
+      sourceId: created.sourceId,
+    });
   })
 );
 

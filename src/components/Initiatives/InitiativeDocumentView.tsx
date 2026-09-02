@@ -193,6 +193,11 @@ import {
   isShowcaseInitiativeId,
 } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
+// DZIEŃ 2026-09-01: realny loader załączników Inicjatywy (naprawa utraty danych
+// AttachmentsSection.tsx — `fetchAll` wcześniej NIGDY nie wołał serwera dla
+// prawdziwych, nie-showcase'owych inicjatyw, więc stan po odświeżeniu zawsze
+// wracał do pustej listy niezależnie od naprawy w samym uploadzie).
+import { loadInitiativeAttachments } from './sections/AttachmentsSection';
 import { dedupeInitiativeUsersById } from './initiativeUsers';
 import {
   DEFAULT_SECTION_ORDER,
@@ -2605,6 +2610,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Fetch related data (best-effort, parallel)
       const fetches = [
+        loadInitiativeAttachments(Api, initiativeId)
+          .then((loaded) => setAttachments(loaded))
+          .catch(() => setAttachments([])),
         Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
           .then((ds: any) => {
             const raw = Array.isArray(ds) ? ds : ds?.decisions || [];
@@ -5721,10 +5729,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // `readMode` wchodzi tu jako pełnoprawny warunek — w Podglądzie select
           // NIE JEST renderowany (nie „disabled", tylko go nie ma).
           const canChangeStatus = stripStatusActions.length > 0 && !isMutating && !readMode;
-          // DEC-104: `stripStatusActions` is currently always empty (see the
-          // `statusActions` comment above) — no card-level status write path
-          // exists yet. Explain via title instead of leaving a silent,
-          // unexplained read-only pill.
+          // DEC-104 (corrected in duty 196, 2026-08-31; the original claim was
+          // disproved by acceptance 172): `stripStatusActions` is empty when
+          // `gateReadiness.availableTransitions` offers no executable transition
+          // for the current user/state, not because the card lacks a write path.
+          // The same `onChange` calls `handleStatusAction` (~3025), which calls
+          // `updateInitiativeStatusWriteTruth` (~3148) and the real
+          // `PATCH /initiatives/:id/status`. ODBIOR_172_EKRANY_NIEPRAWDA.md
+          // independently replayed DRAFT→PENDING_REVIEW: 200 with persistence;
+          // without the authorized role: 403 with zero writes. The title below
+          // explains the actual reason for an empty transition list.
           const noGateActionsTitle =
             stripStatusActions.length === 0
               ? t(

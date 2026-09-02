@@ -16,6 +16,7 @@
  * techniczne", karty Gotowość 5 wymiarów, karta Pliki „Używany w") — 2026-08-26
  * na prototypie `organization-prototyp-{uklad,gotowosc}.html`
  * (DEC-2026-08-26-78). Od tego odbioru flaga jest DEFAULT ON.
+ * Stan wykonawczy od 2026-08-29 pozostaje jednak DEFAULT OFF — patrz komentarz przy `readEnvFlag()` poniżej.
  *
  * OFF → Organizacja renderuje się bajt w bajt jak przed redesignem: 21 pozycji
  * nawigacji w 6 grupach, stare komponenty ekranów, nagłówek z „Save Changes"

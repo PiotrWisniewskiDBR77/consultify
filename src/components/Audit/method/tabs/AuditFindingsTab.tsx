@@ -300,7 +300,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       id: 'statement',
       label: isPolish ? 'Treść' : 'Statement',
       render: (row: AuditFindingSummary) => (
-        <span className="text-sm text-c-text line-clamp-2">{row.statement}</span>
+        <span className="text-sm text-c-text line-clamp-2" title={row.statement}>
+          {row.statement}
+        </span>
       ),
     },
     {
@@ -320,12 +322,19 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       id: 'criterionId',
       label: isPolish ? 'Kryterium / proces' : 'Criterion / process',
       width: '200px',
-      render: (row: AuditFindingSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[190px]">
-          {(row.criterionId && criterionTitleById.get(row.criterionId)) ||
-            (isPolish ? 'Bez przypisanego kryterium' : 'No criterion assigned')}
-        </span>
-      ),
+      render: (row: AuditFindingSummary) => {
+        const criterionTitle =
+          (row.criterionId && criterionTitleById.get(row.criterionId)) ||
+          (isPolish ? 'Bez przypisanego kryterium' : 'No criterion assigned');
+        return (
+          <span
+            className="text-xs text-c-text-secondary truncate block max-w-[190px]"
+            title={criterionTitle}
+          >
+            {criterionTitle}
+          </span>
+        );
+      },
     },
     {
       id: 'ownerUserId',

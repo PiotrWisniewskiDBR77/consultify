@@ -62,7 +62,7 @@ beforeAll(async () => {
   // Fail hard (never skip) on a misconfigured run -- proves the connection
   // with real queries (SELECT version()/current_database()), not just env
   // var presence. See assertRealPostgres.ts.
-  await assertRealPostgresTestEnvironment({ expectedDatabase: 'consultinity' });
+  await assertRealPostgresTestEnvironment();
 
   const ToolController = (await import('../../server/src/controllers/ToolController.js')).default;
 

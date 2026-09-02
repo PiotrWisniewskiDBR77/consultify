@@ -145,6 +145,33 @@ Czerwony kontrakt `1/1 FAIL` zapisano w `0caec88e83`. G08–G10 i akceptacja
 modułu pozostają bez zmian. Pełny raport:
 `../../codex/CODEX_DAY118_PROPAGACJA_REPORT.md`.
 
+## Day 218 — AI Policy: uczciwe dane i błąd (2026-09-01)
+
+`FIXED / MUTATION_VERIFIED / VISUAL_PROOF_6_OF_6` wyłącznie dla ekranu AI
+Policy. Dodano addytywną tabelę `llm_org_policies`, statusy `ok/unavailable`
+oraz realne mapowanie pól governance/context bez fabrykowania
+`modelCount/budgetStatus/defaultSensitivity/allowExternalContext`.
+
+Pełny `ApiGateway → verifyToken → podpisany JWT → PostgreSQL → HTTP` przeszedł
+`3/3`; komponent `5/5`; routing `30/30`. Mutacja zabezpieczenia dała
+`2/3 PASS, 1/3 FAIL`, po przywróceniu `3/3 PASS`. Sześć zrzutów full/empty/
+unavailable w dwóch motywach ma różnicę luminancji 221–223. Główna bramka
+modułu i Owner verdict pozostają bez zmian. Raport:
+`../../codex/CODEX_DAY218_ADMIN_POLITYKI_REPORT.md`.
+## Day 219 — Billing / Security / globalna nawigacja (2026-09-01)
+
+`FIXED_LOCAL / REALPG_API_MUTATION_VERIFIED / OWNER_REVIEW_PENDING` dla trzech
+ograniczonych wierszy: brakującej `invoices.issue_date`, brakującego
+`organization_id` w `scim_group_mappings` i `scim_sync_logs` oraz ośmiu
+angielskich etykiet globalnego breadcrumbu Admina. Pełny runner migracji
+zastosował `2`, a replay `0`; realny ApiGateway + JWT + PostgreSQL ma `3/3
+PASS`, i18n `16/16 PASS`, oba zabezpieczenia czerwienieją po mutacji i wracają
+do zieleni po cofnięciu. Zastany pakiet `adminP32.routes.test.ts` zachowuje ten
+sam jeden niezwiązany FAIL przed i po. `ADM-OWN-001` oraz główna bramka modułu
+pozostają bez zmian. Aktywny dług: starsze writery w
+`integrations/scim.routes.ts` nie ustawiają `organization_id` i były poza
+licencją. Szczegóły: `../../codex/CODEX_DAY219_ADMIN_SCHEMATY_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`

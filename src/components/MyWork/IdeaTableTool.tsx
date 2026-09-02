@@ -153,7 +153,6 @@ import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
 import { FinancialCaseDialog } from './table/financial/FinancialCaseDialog';
 import type { FinancialCaseStatus } from './table/financial/financialTypes';
-import FormBuilder from './table/FormBuilder';
 import { IdeaDecisionLogPanel } from './table/IdeaDecisionLogPanel';
 import type { FinancialFreshnessResult } from './table/ideaDecisionGovernance';
 import { FormsIndex } from './table/forms/FormsIndex';
@@ -843,7 +842,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     'data' | 'forms' | 'interfaces' | 'models' | 'workflow'
   >('data');
   const [showInterfaceDesigner, setShowInterfaceDesigner] = useState(false);
-  const [showFormBuilder, setShowFormBuilder] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showDistributionBuilder, setShowDistributionBuilder] = useState(false);
   const [showAutomationsManager, setShowAutomationsManager] = useState(false);
@@ -2544,7 +2542,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             id: 'form-builder',
             label: t('ideas.table.formBuilder.label', 'Form Builder'),
             icon: FileText,
-            onClick: () => setShowFormBuilder(true),
+            onClick: () => setPlatformTab('forms'),
             show: usePlatform && !locked,
           },
           {
@@ -3352,7 +3350,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Form Builder (direct open) */}
                 {!guidedBar && usePlatform && !locked && (
                   <button
-                    onClick={() => setShowFormBuilder(true)}
+                    onClick={() => setPlatformTab('forms')}
                     className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:text-c-text-secondary"
                     title={t('ideas.table.formBuilder.label', 'Form Builder')}
                   >
@@ -3437,7 +3435,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         </div>
                         <button
                           onClick={() => {
-                            setShowFormBuilder(true);
+                            setPlatformTab('forms');
                             setShowToolsMenu(false);
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
@@ -5051,51 +5049,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               ]}
               onSave={() => {
                 setShowInterfaceDesigner(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Form Builder */}
-      {showFormBuilder && usePlatform && (
-        <div
-          className="fixed inset-0 z-[160] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)] backdrop-blur-[2px]"
-          onClick={() => setShowFormBuilder(false)}
-        >
-          <div
-            className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <FormBuilder
-              form={{
-                id: `form-${ideaId}`,
-                table_id: ideaId,
-                name: t('ideas.table.newForm', 'New Form'),
-                description: null,
-                slug: `form-${ideaId}`,
-                is_published: false,
-                config: { fields: [] },
-                submit_count: 0,
-              }}
-              tableFields={effectiveColumns.map((c) => ({
-                id: c.key,
-                tableId: ideaId,
-                name: c.header,
-                fieldType: (c.type ??
-                  'singleLineText') as import('@/types/tablePlatform').FieldType,
-                options: {},
-                isComputed: false,
-                order: 0,
-                createdAt: '',
-                updatedAt: '',
-              }))}
-              onSave={async () => {
-                toast.success(t('ideas.table.formSaved', 'Form saved'));
-                setShowFormBuilder(false);
-              }}
-              onDelete={async () => {
-                setShowFormBuilder(false);
               }}
             />
           </div>

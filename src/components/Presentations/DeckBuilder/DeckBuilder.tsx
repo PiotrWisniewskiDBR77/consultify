@@ -30,7 +30,12 @@ import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusC
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
-import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
+import {
+  exportPresentationDeck,
+  preflightPresentationExport,
+  PresentationExportError,
+  type PresentationOverflowWarning,
+} from '@/services/presentationExport';
 import {
   fetchPresentationGovernanceCard,
   type GovernanceVerdict,
@@ -66,6 +71,7 @@ import { DeckCommentsPanel, type DeckSlideRef } from './DeckCommentsPanel';
 // unifiedJson→Deck converter honours B1's composition identically to deckData.ts.
 import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
+import { DeckOverflowWarning } from './DeckOverflowWarning';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
@@ -437,6 +443,10 @@ export const DeckBuilder: React.FC = () => {
   // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
   const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
+  const [pendingOverflowExport, setPendingOverflowExport] = useState<{
+    format: 'pdf' | 'pptx' | 'png';
+    warnings: PresentationOverflowWarning[];
+  } | null>(null);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [auditLogOpen, setAuditLogOpen] = useState(() => {
     if (typeof window === 'undefined' || !window.location) return false;
@@ -1078,7 +1088,7 @@ export const DeckBuilder: React.FC = () => {
     [handleInsertBlock]
   );
 
-  const handleExport = useCallback(
+  const performExport = useCallback(
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
@@ -1103,7 +1113,24 @@ export const DeckBuilder: React.FC = () => {
         toast.error(message);
       }
     },
-    [deck]
+    [deck, t]
+  );
+
+  const handleExport = useCallback(
+    async (format: 'pdf' | 'pptx' | 'png') => {
+      if (!deck) return;
+      const warnings = await preflightPresentationExport({
+        deckId: deck.deck_id,
+        title: deck.title,
+        format,
+      }).catch(() => []);
+      if (warnings.length > 0) {
+        setPendingOverflowExport({ format, warnings });
+        return;
+      }
+      await performExport(format);
+    },
+    [deck, performExport]
   );
 
   const handleRestoreVersion = useCallback(
@@ -2116,6 +2143,17 @@ export const DeckBuilder: React.FC = () => {
             </div>
           )}
         </div>
+
+        <DeckOverflowWarning
+          warnings={pendingOverflowExport?.warnings || []}
+          onJumpToSlide={(slideIndex) => setActiveCardIndex(slideIndex - 1)}
+          onContinueExport={() => {
+            const pending = pendingOverflowExport;
+            setPendingOverflowExport(null);
+            if (pending) void performExport(pending.format);
+          }}
+          onCancel={() => setPendingOverflowExport(null)}
+        />
 
         {conflict && (
           <ConflictBanner

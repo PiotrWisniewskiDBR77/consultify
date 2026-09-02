@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
+import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
 
 import { ExceleParametricTemplates } from './ExceleParametricTemplates';
 import type { KimiLane } from './KimiWorkspaceShell';
@@ -91,6 +92,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const navigate = useNavigate();
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<HomeTab>('templates');
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
 
   const meta = LANE_META[lane];
   const Icon = meta.icon;
@@ -148,9 +150,23 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const handleTemplateClick = (templateId: string, promptOverride?: string) => {
     if (promptOverride) {
       navigate(`${meta.route}?view=new&templatePrompt=${encodeURIComponent(promptOverride)}`);
-    } else {
-      navigate(`${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`);
+      return;
     }
+    if (lane === 'prezentacje') {
+      setPendingTemplateId(templateId);
+      return;
+    }
+    navigate(`${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`);
+  };
+
+  const navigateToTemplate = (templateId: string, brief?: string) => {
+    const trimmed = (brief || '').trim();
+    navigate(
+      trimmed
+        ? `${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}&templatePrompt=${encodeURIComponent(trimmed)}`
+        : `${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`
+    );
+    setPendingTemplateId(null);
   };
 
   const handleArtifactClick = (artifactId: string) => {
@@ -250,6 +266,15 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
           />
         )}
       </div>
+      <PresentationBriefModal
+        open={pendingTemplateId !== null}
+        onSubmit={(brief) => {
+          if (pendingTemplateId) navigateToTemplate(pendingTemplateId, brief);
+        }}
+        onSkip={() => {
+          if (pendingTemplateId) navigateToTemplate(pendingTemplateId);
+        }}
+      />
     </div>
   );
 };

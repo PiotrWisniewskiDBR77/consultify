@@ -1,0 +1,16 @@
+NOWY — DYŻUR 259
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_259_TRZY_PLIKI.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 259.
+
+Marker: df7f13056f
+Zasoby wyłączne: baza 6258, runtime 5238 i 5239.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

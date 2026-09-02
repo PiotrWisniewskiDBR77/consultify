@@ -2,12 +2,9 @@
  * Case Workspace HTTP routes — runLifecycleService
  * (server/src/services/caseWorkspace/runLifecycleService.ts).
  *
- * NOT MOUNTED YET — this file is built and self-contained (default-exports a
- * Router, same shape every sibling in this directory uses), but wiring it
- * into `server/src/routes/caseWorkspace/index.ts` is explicitly OPUS's job
- * per this packet's brief ("routes/caseWorkspace/index.ts (montaż = OPUS)").
- * The exact two-line change OPUS needs is documented in this packet's
- * handoff report, not made here.
+ * Mounted via `server/src/routes/caseWorkspace/index.ts` (import and
+ * `router.use`). Corrected on 2026-09-01 by duty 254 after the previous
+ * "NOT MOUNTED YET" comment was verified against the current route index.
  *
  * Path families (mirrors executionGraph.routes.ts/waitSubscriptions.routes.ts/
  * actionProposals.routes.ts's own established `/cases/:caseId/...` and

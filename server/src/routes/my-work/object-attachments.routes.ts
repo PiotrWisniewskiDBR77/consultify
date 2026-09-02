@@ -32,7 +32,7 @@ router.post(
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
-    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'object_attachments']))) return;
+    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'initiatives', 'object_attachments']))) return;
     try {
       if (!req.file) {
         throw new ObjectAttachmentError(400, 'OBJECT_ATTACHMENT_FILE_REQUIRED', 'File required');
@@ -57,7 +57,7 @@ router.get(
   '/object-attachments/:objectType/:objectId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
-    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'object_attachments']))) return;
+    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'initiatives', 'object_attachments']))) return;
     try {
       const data = await listObjectAttachments({
         objectType: parseObjectType(req.params.objectType),
@@ -76,7 +76,7 @@ router.get(
   '/object-attachments/:objectType/:objectId/:attachmentId/download',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
-    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'object_attachments']))) return;
+    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'initiatives', 'object_attachments']))) return;
     try {
       const { attachment, object } = await getObjectAttachment({
         objectType: parseObjectType(req.params.objectType),
@@ -99,7 +99,7 @@ router.delete(
   '/object-attachments/:objectType/:objectId/:attachmentId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
-    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'object_attachments']))) return;
+    if (!identity || !(await requireTables(res, ['tasks', 'decisions', 'initiatives', 'object_attachments']))) return;
     try {
       await deleteObjectAttachment({
         objectType: parseObjectType(req.params.objectType),

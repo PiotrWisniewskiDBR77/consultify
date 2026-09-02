@@ -6,12 +6,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
+
+const videoBelongsToOrg = async (
+  videoId: string,
+  organizationId: string | undefined
+): Promise<boolean> => {
+  if (!organizationId) return false;
+  const row = (await dbGet('SELECT organization_id FROM videos WHERE id = ?', [videoId])) as {
+    organization_id?: string;
+  } | null;
+  return row?.organization_id === organizationId;
+};
 
 router.get(
   '/',
@@ -58,6 +69,9 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await videoBelongsToOrg(req.params.id, req.user?.organizationId))) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
     await dbRun('DELETE FROM videos WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   })

@@ -5,7 +5,7 @@ import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const REAL_DB =
@@ -80,9 +80,6 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
       [assignmentA, orgA, ownerA, sessionA]
     );
 
-    mockLlmCall.mockResolvedValue({
-      object: { questionEvaluations: [], recommendations: [] }, usage: {},
-    });
     const { default: config } = await import('../../../config/Config.js');
     const sign = (userId: string, organizationId: string) =>
       jwt.sign({ id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
@@ -95,6 +92,14 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
     app.use(express.json());
     app.use('/api/interview', interviewRouter);
   }, 60_000);
+
+  // ★ DAY211 — reinstall after the global beforeEach clears chained mock
+  // implementations; keep the expensive PostgreSQL fixture in beforeAll.
+  beforeEach(() => {
+    mockLlmCall.mockResolvedValue({
+      object: { questionEvaluations: [], recommendations: [] }, usage: {},
+    });
+  });
 
   afterAll(async () => {
     if (!pool) return;

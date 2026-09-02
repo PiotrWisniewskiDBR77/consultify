@@ -145,6 +145,14 @@ describe('EscalationService', () => {
   });
 
   describe('EscalationService.getEscalations', () => {
+    // Security fix (2026-09-01): `getEscalations`/`runAutoEscalation` now
+    // require `organizationId` and verify the project belongs to that org
+    // (`SELECT id FROM projects WHERE id = ? AND organization_id = ?`) before
+    // touching `decisions` — see AUDYT_RODZINY_TRAS_UPRAWNIENIA.md family #3.
+    // `queryOne` is mocked to resolve a matching project row so these
+    // "happy path" tests keep exercising the downstream `queryAll`/`queryRun`
+    // calls exactly as before; the negative (cross-org) case is covered by
+    // the real-Postgres regression suite (`notifications.escalations.idor.realdb.test.ts`).
     it('should get escalations for project', async () => {
       const mockEscalations = [
         {
@@ -155,20 +163,31 @@ describe('EscalationService', () => {
         },
       ];
 
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({ id: 'project-1' });
       vi.mocked(queryHelpers.queryAll).mockResolvedValue(mockEscalations);
 
-      const result = await EscalationService.getEscalations('project-1');
+      const result = await EscalationService.getEscalations('project-1', 'org-1');
 
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
 
     it('should filter by status if provided', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({ id: 'project-1' });
       vi.mocked(queryHelpers.queryAll).mockResolvedValue([]);
 
-      await EscalationService.getEscalations('project-1', 'escalated');
+      await EscalationService.getEscalations('project-1', 'org-1', 'escalated');
 
       expect(queryHelpers.queryAll).toHaveBeenCalled();
+    });
+
+    it('should return an empty array without querying decisions when the project is not in the caller org', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue(null);
+
+      const result = await EscalationService.getEscalations('project-1', 'org-attacker');
+
+      expect(result).toEqual([]);
+      expect(queryHelpers.queryAll).not.toHaveBeenCalled();
     });
   });
 
@@ -187,21 +206,33 @@ describe('EscalationService', () => {
         },
       ];
 
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({ id: 'project-1' });
       vi.mocked(queryHelpers.queryAll).mockResolvedValue(mockDecisions);
       vi.mocked(queryHelpers.queryRun).mockResolvedValue({ lastID: 1, changes: 1 });
 
-      const result = await EscalationService.runAutoEscalation('project-1');
+      const result = await EscalationService.runAutoEscalation('project-1', 'org-1');
 
       expect(result).toBeDefined();
       expect(result.processed).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle empty decisions list', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({ id: 'project-1' });
       vi.mocked(queryHelpers.queryAll).mockResolvedValue([]);
 
-      const result = await EscalationService.runAutoEscalation('project-1');
+      const result = await EscalationService.runAutoEscalation('project-1', 'org-1');
 
       expect(result.processed).toBe(0);
+    });
+
+    it('should not touch decisions when the project is not in the caller org', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue(null);
+
+      const result = await EscalationService.runAutoEscalation('project-1', 'org-attacker');
+
+      expect(result.processed).toBe(0);
+      expect(queryHelpers.queryAll).not.toHaveBeenCalled();
+      expect(queryHelpers.queryRun).not.toHaveBeenCalled();
     });
   });
 });

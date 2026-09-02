@@ -170,6 +170,10 @@ type CallParams = {
    * `tools`, nigdy `clientTools`.
    */
   clientTools?: ToolDefinition[];
+  /** Server-side READ tools. Their dispatcher is deliberately separate from MCP. */
+  readTools?: ToolDefinition[];
+  /** Server-side WRITE tools whose execute only creates a governed proposal. */
+  proposalTools?: ToolDefinition[];
   context?: unknown;
   maxTokens?: number;
   temperature?: number;
@@ -1297,6 +1301,56 @@ export class LLMService {
                   ? 'Requested in the open Idea view; the interface will apply it.'
                   : 'Przekazano do otwartej reprezentacji Idei; interfejs zaraz to wykona.',
             };
+          },
+        } as any);
+      }
+    }
+
+    if (params.readTools?.length && !wantsReasoning) {
+      const executeReadTool = (params.context as any)?.executeReadTool as
+        | ((name: string, args: Record<string, unknown>) => Promise<string>)
+        | undefined;
+      if (executeReadTool) {
+        if (!streamToolDefinitions) streamToolDefinitions = {};
+        for (const def of params.readTools) {
+          // READ intentionally wins collisions (notably search_knowledge_base),
+          // because this dispatcher is the governed executeToolCall path.
+          streamToolDefinitions[def.name] = tool({
+            description: def.description,
+            inputSchema: jsonSchema(def.parameters as any),
+            execute: async (args: unknown) =>
+              executeReadTool(def.name, (args || {}) as Record<string, unknown>),
+          } as any);
+        }
+      }
+    }
+
+    // Day207 / 17-C — WRITE-as-proposal. These definitions intentionally shadow
+    // neither MCP tools nor client tools. Their executor creates an ai_actions
+    // proposal and returns a truthful pending-review result; it never mutates the
+    // target record. Missing callback is fail-closed.
+    // Merge note (31.08): runs AFTER the READ dispatcher above, so a name already
+    // claimed by READ keeps the READ executor — the `continue` below preserves the
+    // collision rule both duties agreed on.
+    if (params.proposalTools?.length && !wantsReasoning) {
+      const onProposalToolCall = (params.context as any)?.onProposalToolCall as
+        | ((name: string, args: unknown) => Promise<Record<string, unknown>>)
+        | undefined;
+      if (!streamToolDefinitions) streamToolDefinitions = {};
+      for (const def of params.proposalTools) {
+        if (streamToolDefinitions[def.name]) continue;
+        streamToolDefinitions[def.name] = tool({
+          description: def.description,
+          inputSchema: jsonSchema(def.parameters as any),
+          execute: async (args: unknown) => {
+            if (!onProposalToolCall) {
+              return {
+                status: 'PROPOSAL_REJECTED',
+                tool: def.name,
+                message: 'Write proposal is unavailable; no change was made.',
+              };
+            }
+            return onProposalToolCall(def.name, args);
           },
         } as any);
       }

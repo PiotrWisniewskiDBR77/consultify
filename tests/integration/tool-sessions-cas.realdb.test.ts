@@ -94,7 +94,7 @@ async function readVersion(id: string): Promise<{ version: number; answersJson: 
 beforeAll(async () => {
   // Hard fail (never skip) on a misconfigured run — proves the connection
   // with real queries, not just env var presence. See assertRealPostgres.ts.
-  await assertRealPostgresTestEnvironment({ expectedDatabase: 'consultinity' });
+  await assertRealPostgresTestEnvironment();
 
   const { default: ToolControllerRaw } = await import('../../server/src/controllers/ToolController.js');
   const ToolController = ToolControllerRaw as any;
