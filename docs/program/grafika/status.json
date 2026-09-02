@@ -200,7 +200,9 @@
           "nazwa": "Teresa — podpowiedzi",
           "ocena": "A",
           "co": "Dwa panele rozmowy w kontekscie raportu i wniosku.",
-          "naprawione": [],
+          "naprawione": [
+            "Chip kontekstu Teresy mówił „Insight:\" — teraz „Wniosek:\" (2026-09-02)"
+          ],
           "wyjatki": [
             "Ta sama czerwonawa linia"
           ],
@@ -414,7 +416,8 @@
           "ocena": "A",
           "co": "Lista projektow ze statusami jako pigulki z kropka.",
           "naprawione": [
-            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji."
+            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji.",
+            "Pigułka statusu w podglądzie mówiła „active\", a ta sama wartość w tabeli obok „Aktywne\" — podgląd omijał istniejący mechanizm tłumaczenia (2026-09-02)"
           ],
           "wyjatki": [],
           "gdzie": "Moja praca → zakładka „Projekty\" w głównym menu huba (MyWorkHub.tsx, obok Zadań/Decyzji) — lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie. Historia problemu (BRAK DROGI WEJŚCIA, pomyłkowa akcja Command Palette) opisana w poprzednich wpisach dziennika/rejestru z 30.08 rano — rozwiązana tego samego dnia wieczorem, patrz pole „naprawione\"."
@@ -567,7 +570,8 @@
           ],
           "wyjatki": [
             "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.",
-            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione."
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione.",
+            "SPROSTOWANIE zgłoszenia z przeglądu: „Whiteboard\"/„Process Flow\" w kolumnie Narzędzie NIE są defektem — to udokumentowana decyzja właściciela z 2026-07-24 (komentarz w kodzie). Zgłoszenie oparte na moim błędnym założeniu (2026-09-02)"
           ],
           "warianty": [
             "assessment-matryca",
@@ -662,7 +666,9 @@
           "nazwa": "Nowy — wybor rodzaju",
           "ocena": "A",
           "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
-          "naprawione": [],
+          "naprawione": [
+            "Karta typu obiektu nazywała się „Insight\" obok polskich „Inicjatywa\"/„Decyzja\" — teraz „Wniosek\", spójnie z resztą aplikacji (2026-09-02)"
+          ],
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
           ],
@@ -1270,7 +1276,9 @@
           "nazwa": "Zakładka „Realizacje”",
           "ocena": "B",
           "co": "StandardTable + demo-fallback.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna statusu mieszała angielskie „Scheduled\"/„Blocked\" z polskim „W realizacji\" — ExecutionHub czytał mapę statusów wprost, zamiast wołać istniejącą funkcję tłumaczącą (2026-09-02)"
+          ],
           "wyjatki": [
             "Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217)."
           ],
@@ -2577,10 +2585,12 @@
           "ocena": "A",
           "co": "Zestawienie rozliczen.",
           "naprawione": [
-            "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje"
+            "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje",
+            "Ekran był niemal w całości po angielsku — przetłumaczony w komplecie (tytuł, zakładki, kafle, statusy) (2026-09-02)"
           ],
           "wyjatki": [
-            "Ekran w calosci po angielsku — narzedzie wewnetrzne"
+            "Ekran w calosci po angielsku — narzedzie wewnetrzne",
+            "ZOSTAJE po angielsku: kolumna TYP („Subscription\"/„One Time\") i pigułka „subscription\" w podglądzie to WARTOŚCI DANYCH, nie etykiety; daty w formacie ISO (2026-07-10) zamiast polskiego; w banerze widoczny kod techniczny AMD-PRT-ECONOMICS-002 (2026-09-02)"
           ],
           "gdzie": "SuperAdmin → Revenue → Rozliczenia partnerskie — pięć zakładek (Prowizje/Atrybucja/Wygasające/Analityka/Wypłaty)."
         },
@@ -2947,7 +2957,9 @@
           "nazwa": "Legal hold",
           "ocena": "B",
           "co": "Legal hold.",
-          "naprawione": [],
+          "naprawione": [
+            "Nieprzetłumaczony tytuł — teraz „Wstrzymanie prawne\", spójnie z treścią ekranu (2026-09-02)"
+          ],
           "wyjatki": [
             "Tytuł po angielsku."
           ],
@@ -3202,7 +3214,9 @@
           "nazwa": "Ślad agentów",
           "ocena": "A",
           "co": "StandardTable sortowalna.",
-          "naprawione": [],
+          "naprawione": [
+            "Kolumna WYNIK mieszała ACCEPTED/MODIFIED/REJECTED z polskim „Oczekuje\" — przetłumaczone (2026-09-02)"
+          ],
           "wyjatki": [],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ślad agentów”. Zrzuty: evidence/grafika/146-admin-command/."
         },
@@ -3398,7 +3412,8 @@
           "ocena": "B",
           "co": "SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.",
           "naprawione": [
-            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego."
+            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego.",
+            "Nagłówek ujednolicony z treścią ekranu. SPROSTOWANIE: forma „Blokery\" ZOSTAJE — pierwsza wersja naprawy zmieniła ją na „Blokady\", ale zrzut pokazał, że pięć innych plików używa ustalonej formy „bloker/blokery\"; cofnięte (2026-09-02)"
           ],
           "wyjatki": [
             "Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu)."
@@ -3581,7 +3596,8 @@
           "ocena": "B",
           "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
           "naprawione": [
-            "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione."
+            "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione.",
+            "Lista kroków pokazywała 5× surowe „pending\" — status kroku nie był w ogóle tłumaczony (2026-09-02)"
           ],
           "wyjatki": [
             "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
@@ -3922,7 +3938,9 @@
           "nazwa": "Ustawienia — Integracje (połączone aplikacje)",
           "ocena": "B",
           "co": "Połączone aplikacje: karty (Gmail, Kalendarz, Slack i in.) z opisami funkcji i tagami (np. 'Email sync', 'Contact import', 'Label mapping').",
-          "naprawione": [],
+          "naprawione": [
+            "Opisy i tagi 20 integracji oraz licznik „2 connected\" były po angielsku mimo polskiej powłoki — przetłumaczone (2026-09-02)"
+          ],
           "wyjatki": [
             "Opisy kart integracji i tagi funkcji (np. 'Sync emails, contacts and labels from your Gmail account', 'Email sync', 'Contact import') renderują się po angielsku mimo polskich nagłówków sekcji — dev-render (connected-apps) wskazuje surowy window.fetch z pominięciem warstwy Api/i18n dla treści kart."
           ],
