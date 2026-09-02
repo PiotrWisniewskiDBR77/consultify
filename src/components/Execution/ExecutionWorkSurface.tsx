@@ -25,6 +25,7 @@ import {
   updateExecutionTask,
 } from '@/services/initiatives-execution/runtimeApi';
 import { useAppStore } from '@/store/useAppStore';
+import { liczebnik } from '@/utils/liczebnik';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
 import {
@@ -738,7 +739,11 @@ export const ExecutionWorkSurface = ({
                     id: 'evidence',
                     label: 'Dowody',
                     value: r.source.evidenceRefs?.length
-                      ? `${r.source.evidenceRefs.length} powiązanych dowodów`
+                      ? `${r.source.evidenceRefs.length} ${liczebnik(r.source.evidenceRefs.length, [
+                          'powiązany dowód',
+                          'powiązane dowody',
+                          'powiązanych dowodów',
+                        ])}`
                       : 'Brak wymaganych dowodów',
                   },
                 ],
