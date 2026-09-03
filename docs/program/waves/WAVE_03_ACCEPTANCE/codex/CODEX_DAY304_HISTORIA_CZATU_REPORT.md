@@ -21,6 +21,10 @@ Regułę docelową zapisano w projekcie, lecz kod zastany ma co najmniej dwa wyk
 
 Czerwony kontrakt dla dalszej centralizacji: każdy odczyt/mutacja rozmowy musi przejść przez jeden resolver, a test ma oblać się po usunięciu z niego filtra `organization_id`; handler nie może odtwarzać warunku SQL lokalnie. Refaktor wymaga pełnego spisu wszystkich handlerów i dowodu Gateway, więc nie został improwizowany w tym commicie.
 
+## R3 — model i migracje
+
+Nie dodano migracji: wymagane dane już mają reprezentację. Zakres wynika z `chat_projects.scope` i `conversations.visibility_scope`; wersję polityki niesie `access_policy_version`; jawna zgoda i ślad są atomowo emitowane jako `chat.visibility_consent_recorded` z `before`, `after`, aktorem, wersją polityki i operacją. Pełny łańcuch na pustym PG przeszedł, drugi przebieg zastosował 0 migracji. R3 jest **GOTOWE pomiarowo**, bez czwartej definicji tabeli.
+
 ## Test bazowy
 
 `conversations.search.realdb.test.ts`: 12/12, pełne nazwy w `/private/tmp/cx-day304-historia-czatu-artefakty/przed.json`, `--retry=0`, realny PG 6308 i podpisany JWT. Ograniczenie Z22: test montuje `conversationsRoutes` w gołym Express, nie przez `ApiGateway.initializeRoutes`, więc **nie jest dowodem produkcyjnego montażu**; potwierdza zachowanie routera na PG, w tym parę członek widzi / obca org nie widzi.
