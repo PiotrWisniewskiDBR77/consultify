@@ -61,9 +61,9 @@ Wszystkie commity na `github-backup/grafika/m03-20260902`.
 | D2 | Przebudowy DUŻE: struktura raportu Oceny (ASS-2), biblioteka DRD (ASS-3), prawy panel Idei (MW-4), „Tworzy raport" (INIT-2b), menu kanw Czatu, preferencje Czatu | DO DECYZJI — `DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md` |
 | D3 | Crimson poza semantyką krytyczną: 5 325 wystąpień w 609 plikach; pierścień fokusu 193 (dyżur Codexa 287) | Projekt wizualny per moduł, wymaga akceptu na zrzutach |
 | D4 | 9 zastanych czerwieni testów (`chatActionHandler.createInitiative` 3, `executionWorkResources` 6) + `AssessmentLibraryTab.day178` | Dyżur Codexa 286 (G15) |
-| D5 | `WatchingTab` w Ustawieniach: trasa `/api/settings/watchers` nie istnieje | Funkcja martwa w produkcji — osobny dyżur |
+| D5 | `WatchingTab` w Ustawieniach: trasa `/api/settings/watchers` nie istnieje — **korekta z równoległej sesji (pomiar G20, `77661c4de6`): `WatchingTab` jest komponentem NIERENDEROWANYM (martwy komponent, nie martwa trasa)** | Dyżur Codexa 289 (help) |
 | D6 | `help_articles`/`help_events`: migracja w innym kształcie niż kod tras (`column "category_id" does not exist`, cicho łapane) | Osobny dyżur |
-| D7 | 34 trasy odczytowe `/api/v8/finance/*` bez bramki modułu (z poprzedniego przekazania) | Bezpieczeństwo — nie domykać po omacku |
+| D7 | Trasy `/api/v8/finance/*` bez bramki modułu — **korekta z równoległej sesji (pomiar G20, `748e51013b`): 270 tras, nie 34; teza zaniżała 8×** | Dyżur Codexa 288 (jeden middleware na wzorcu, dowód USER/OWNER na realnej bazie) |
 | D8 | MW-5 `escalation`: dowód odczytu na zimno nie przeszedł z powodu harnessu testowego | Dyżur 286 lub osobny |
 | D9 | `capacity-advisor-a3`: 11 nagłówków tabeli, podgląd, formularz, stany LOADING/ERROR po angielsku | Runda 3 i18n |
 | D10 | Paleta 12 kolorów `--c-tag-1..12` z białym tekstem: 10–11 z 12 poniżej progu w obu motywach | Zbyt szeroki promień na jeden dyżur; do decyzji wizualnej |
@@ -73,7 +73,7 @@ Wszystkie commity na `github-backup/grafika/m03-20260902`.
 
 ## E. Stan bramek na koniec dnia
 
-240 → **245/336** po pomiarze #2 (marker `35afcb15fd`); pomiar #3 na `fee24bddb0` (po naprawie 24 ekranów
-kontrastu w podglądzie) biegnie — wynik i wpisy G06 wg `PRZEKAZANIE_20260904.md` §6 pkt 1.
+240 → **256/336**: pomiar #3 na `fee24bddb0` (po naprawie 24 ekranów kontrastu w podglądzie) —
+**G06 PASS 16/16** (2064 kadry, zero długu), wiersze zapisane commitem `02c339c5f1`.
 G14: 16 × `PARTIAL / OWNER_DECISION_PENDING`. G16: 16 × `TECHNICAL_PACKET_READY / OWNER_RETEST_PENDING`.
 G15: dyżur 286. G19/G20: po przelocie właściciela po stagingu.

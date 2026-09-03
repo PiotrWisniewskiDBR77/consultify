@@ -12,9 +12,9 @@ Wszystko wypchnięte na kopię zapasową po każdym scaleniu.
 
 ## 1. Gdzie jesteśmy — trzy zdania
 
-**245 z 336 bramek** (rano 240). G06 zamknięte dla Organizacji, Narzędzi, Oceny, Inicjatyw
-i Ustawień na markerze `35afcb15fd`; pozostałe 11 czekają na pomiar #3 po naprawie kontrastu
-w podglądzie. G14 i G16 mają wpisy dla wszystkich 16 modułów ze śladem, ale nie mogą paść bez
+**256 z 336 bramek** (rano 240). **G06 zamknięte 16/16** na markerze `fee24bddb0` (pomiar #3:
+258 ekranów × 8 kadrów = 2064, zero realnych naruszeń a11y, PL≠EN, pary jasny/ciemny poprawne;
+wiersze zapisane commitem `02c339c5f1`). G14 i G16 mają wpisy dla wszystkich 16 modułów ze śladem, ale nie mogą paść bez
 właściciela: G14 czeka na jego decyzje o pozycjach DUŻYCH, G16 na jego przelot po stagingu.
 
 ## 2. ★★★ Trzy rzeczy, które zmieniły obraz programu
@@ -70,11 +70,13 @@ Narzędzia w repo: `scripts/dev/g06-macierz-{uruchom,agreguj,rejestr}.mjs`, `g06
 
 ## 5. Otwarte ryzyka
 
+- ★ **Na tej samej linii pracowała równolegle druga sesja** (commity 18:38–18:54 03.09: inwentarz G19, blokery G20, ratunek dowodów z worktree, instrukcje Codexa 288/289, kolizja numeracji kolejki). Jej commity są docs/evidence, `src/` bez zmian od `fee24bddb0` (sprawdzone), więc pomiar #3 pozostaje ważny. Przed każdym pomiarem i scaleniem sprawdzaj `git log` — kto jeszcze commituje do m03.
+- ★ Po zakończeniu pomiaru #3 (ostatni strumień  UTC) druga sesja scaliła `agent/i18n-r3` ( CEST, zmiany w `src/components/Initiatives/CapacityScenarioSurface.tsx` i `PlanScenarioSurface.tsx`) — **HEAD ≠ marker pomiaru** (`fee24bddb0`). G06 dla 05_INITIATIVES stoi na markerze; przy G19 dołóż pomiar różnicowy `capacity-advisor-a3`, `plan-scenario-d1`.
+
 - 9 czerwieni ZASTANYCH w testach jednostkowych (`chatActionHandler.createInitiative` 3,
   `executionWorkResources` 6) + `AssessmentLibraryTab.day178` — do dyżuru 286.
-- `WatchingTab` w Ustawieniach: cała trasa `/api/settings/watchers` nie istnieje (funkcja martwa w produkcji).
 - `help_articles`/`help_events` mają migrację w innym kształcie niż kod tras (`column "category_id" does not exist`, cicho łapane).
-- 34 trasy odczytowe `/api/v8/finance/*` bez bramki modułu (z poprzedniego przekazania, nietknięte).
+- Trasy `/api/v8/finance/*` bez bramki modułu: równoległa sesja zmierzyła **270** (nie 34) → dyżur Codexa 288; `WatchingTab` to martwy komponent (nierenderowany), nie martwa trasa → dyżur 289.
 - MW-5 `escalation`: zapis w bazie udowodniony migracją, test odczytu na zimno nie przeszedł z powodu
   harnessu (kształt „dwa dostępy, jedna baza").
 - Opus 5 dawał dziś 529/stall trzykrotnie — robotnicy na Sonnet; zakaz `pkill` w każdym zleceniu.
