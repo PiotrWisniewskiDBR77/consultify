@@ -1181,7 +1181,13 @@ export const ExecutionReportsSurface = ({
                   >
                     <option value="">Wybierz realizację</option>
                     {executionCases.map((item) => (
-                      <option key={item.executionCaseId}>{item.executionCaseId}</option>
+                      <option key={item.executionCaseId} value={item.executionCaseId}>
+                        {/* EXE-1 (G14 05-08, 2026-09-03): server now sends
+                            initiativeTitle (execution-cases route); raw
+                            executionCaseId stays as a fallback for local/demo
+                            fixtures that predate the field. */}
+                        {item.initiativeTitle || item.title || item.executionCaseId}
+                      </option>
                     ))}
                   </select>
                 ) : (
