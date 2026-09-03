@@ -48,14 +48,41 @@ useAppStore.setState({
 // Zaślepka sieci: panel odpytuje kilka końcówek przy montowaniu (konwersacje,
 // pamięć, flagi). Bez logowania dostałby 401 i wysypał konsolę — zwracamy
 // puste, poprawne kształty. Nic poza /api/ nie jest przechwytywane.
+//
+// FIX (dyżur crash-czat 2026-09-03) — kliknięcie „Ważne sygnały" montuje
+// `ChatSignalsFeed`, który woła `GET /signals`. Kontrakt tego endpointu
+// (`SignalsFeedResponse`, `signalTypes.ts`) ZAWSZE niesie pole `signals`
+// (tablica — nawet pustą, `readSignalFeed` na serwerze buduje ją przez
+// `.map()`). Ta atrapa zwracała jeden ogólny kształt bez `signals` w ogóle —
+// `useSignalsFeed` ustawiał stan wprost na `response.signals` (`undefined`),
+// a `ChatSignalsFeed.tsx:35` robi `[...feed.signals]` bez zabezpieczenia →
+// `TypeError: feed.signals is not iterable` na 8/8 kadrów (G06, REJESTR_G06).
+// To NIE jest defekt produkcyjny: prawdziwy serwer albo zwraca `signals`
+// zawsze (200), albo rzuca błędem (401/403/503), który `useSignalsFeed`
+// łapie i sam ustawia `signals: []` (patrz `catch` w `useSignalsFeed.ts`).
+// Naprawa jest więc tu — w atrapie sieci tego ekranu, żeby dotrzymywała
+// kontraktu, którym się przedstawia — a NIE zabezpieczeniem `?? []` w
+// komponencie produkcyjnym (to ukryłoby przyszłe realne naruszenie kontraktu
+// przez backend zamiast dawać sygnał w konsoli).
 const realFetch = window.fetch.bind(window);
 window.fetch = (async (input: any, init?: any) => {
   const url = typeof input === 'string' ? input : (input?.url ?? '');
   if (url.includes('/api/')) {
-    return new Response(JSON.stringify({ data: [], items: [], conversations: [], messages: [] }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        data: [],
+        items: [],
+        conversations: [],
+        messages: [],
+        signals: [],
+        nextCursor: null,
+        producerEnabled: true,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
   return realFetch(input, init);
 }) as typeof window.fetch;
