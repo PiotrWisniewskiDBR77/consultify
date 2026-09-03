@@ -285,3 +285,7 @@ Drugi redeploy stagingu POTWIERDZONY: run `33799377961` zakończony `success`, `
 ## 9. Prognoza w czasie AI (sprostowanie właściciela, 03.09 22:30)
 
 Właściciel: „podajesz terminy w dniach ludzkich, a nie AI-owych — dyżur Codex robi w minuty, a ja mogę wklejać cały czas”. Poprawiona ścieżka krytyczna: przelot właściciela (1,5 h) → naprawy z uwag (2–4 h robotników równolegle) → zamrożenie markera → pomiar #5 pełnej macierzy (1,5 h maszyny) → wpisy G20. Reszta (13 dyżurów Codexa 1–3 h równolegle, 13 odbiorów adwersaryjnych zlecanych Opusom 1–2 h, wpisy G15/G19 1 h) dzieje się obok. **Prognoza: G15 i G19 04.09 do południa, G16 04.09 po południu, G20 05.09.** Termin 10–12.09 (DEC-384) był liczony w dniach ludzkich. Ostrożność: dyżury z Postgresem (288, 290, 291, 296, 298) trwają dłużej i bywają zatrzymane (298: profil read-only, wznowienie w nowej sesji).
+
+## 10. Sprostowanie 03.09 23:30
+
+Trzeci redeploy stagingu POTWIERDZONY: run success, `/api/health` zwraca `gitSha 120bb2db81` (wszystkie nocne scalenia). Instrukcja 312 jest na kopii. Oba łańcuchy nocne (A, B) przeleciały na pusto z powodu wyścigu czasowego — do ponownego uruchomienia rano po `rm -f /private/tmp/cx-noc-*-postep.md`.
