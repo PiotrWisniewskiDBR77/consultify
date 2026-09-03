@@ -33,8 +33,54 @@ Werdykt R1: preferencje Czatu już istnieją i są osiągalne. Ich główny maga
 
 ## Testy i pułapki Z33
 
-Na etapie R1 nie ogłoszono wyniku żadnego pakietu testowego i nie użyto testów jako dowodu działania. W konsekwencji §0.4a nie został jeszcze uruchomiony; tabela jawnie oznacza brak testu zimnego klienta zamiast przepisywać cudze liczby. Grep i lektura kodu dowodzą istnienia czterech warstw, nie działania HTTP.
+Uruchomiono ten sam pakiet `tests/components/AIChat/ToolsMenu.test.tsx` przed i po zamknięciu dokumentacji, zawsze: `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 --reporter=json`.
 
-## R2–R6
+- `przed-nazwy.txt`: 14 pełnych nazw;
+- `po-nazwy.txt`: 14 pełnych nazw;
+- `diff -u`: pusty; dodane `0`, zniknięte `0`;
+- suma obu list nazw: `dd30e11f40c6849c7d9562913bc6bfa1f1cec48d181ab304d20a8d1a256d3a93`;
+- artefakty: `/private/tmp/cx-day303-preferencje-czatu-artefakty/`.
 
-Do uzupełnienia po odzyskaniu zakresu R2.
+Pułapki Z33: pakiet jest czysto komponentowy, ma zamockowany store i fetch, więc nie dowodzi HTTP, `ApiGateway`, PostgreSQL ani zimnej persystencji. `RUN_DB_TESTS=0 MOCK_DB=true` jawnie wyklucza użycie go jako dowodu bazy. Służy wyłącznie do kontroli, że skład istniejącego pakietu nie zniknął; wnioski o czterech warstwach pochodzą z kodu, a brak dowodu zimnego klienta pozostaje jawny.
+
+## R2 — odzyskanie zakresu
+
+Zakres odzyskano bez pytania do właściciela:
+
+- `TRIAZ_UWAG_20260902.md:170`: `UW-13-02` oznacza kontekstowy przełącznik chipów sugestii;
+- `KORPUS_UWAG_20260902.md:84` i `BACKLOG_UWAG_ODBIORU_20260902.md:156`: właściciel nie lubi chipów, ale nie chce ich usuwać osobom, którym pomagają; prosi o włączanie/wyłączanie;
+- `ANALIZA_G13_MODULY_09_16_20260903.md:212`: ta sama pozycja była sklasyfikowana jako nowa preferencja użytkownika;
+- commit `fcb83a5f7d` jest przodkiem markera i implementuje `aiConfig.chatSuggestionsEnabled` w istniejącym menu oraz jego konsumenta.
+
+Wniosek R2: B6 jest już zaimplementowane na bazie dyżuru. Nie powstało STOP-pytanie, bo korpus daje odpowiedź jednoznaczną.
+
+## R3 — prototyp
+
+`n/d`: nie dodano drugiego prototypu ani drugiej flagi. Funkcja już istnieje w kanonicznym miejscu; duplikacja byłaby sprzeczna z R3/Z40. Zastany przełącznik ma domyślnie `ON`, ponieważ pochodzi ze starszej, wdrożonej decyzji D-104 i zachowuje chipy dla użytkowników; dyżur nie zmienił tej wartości ani nie włączył żadnej nowej powierzchni.
+
+## R4 — trwałość
+
+`n/d` dla nowej migracji: B6 nie używa bazy, lecz `consultify-storage.state.aiConfig.chatSuggestionsEnabled`. Kod dowodzi rehydratacji w tej samej przeglądarce; osobny klient i synchronizacja konta pozostają `NIEZWERYFIKOWANE` i nie są kryterium odzyskanego B6. Nie dodano pola ani migracji.
+
+## R5 — kadry i lista czekowania
+
+`n/d` dla nowych kadr: nie powstała nowa powierzchnia. Commit zastany `fcb83a5f7d` zawiera parę light/dark i sekwencję interakcyjną `toggle-01`…`toggle-05`, ale w tym dyżurze nie użyto ich jako świeżego dowodu wizualnego i nie ogłoszono ponownej akceptacji właściciela.
+
+Lista czekowania część B w zakresie ustawień:
+
+- istniejące miejsce ustawień: TAK — `ToolsMenu` przy kompozytorze;
+- widoczny stan włączony/wyłączony: TAK w kodzie, świeży render `NIEZWERYFIKOWANY`;
+- light/dark i PL/EN: klucze istnieją, świeże kadry `n/d` bez zmiany wizualnej;
+- klawiatura/fokus: zastana kontrolka `button`, świeży przebieg a11y `NIEZWERYFIKOWANY`;
+- synchronizacja per użytkownik między klientami: `NIEZWERYFIKOWANA`, poza odzyskanym zakresem B6.
+
+## R6 — wynik
+
+- Ile z B6 już istniało: **cały odzyskany zakres funkcjonalny** — przełącznik, konsument, domyślne zachowanie zachowujące chipy, i persystencja po przeładowaniu tej samej przeglądarki.
+- Co dołożono: wyłącznie inwentarz i dowód mapowania B6 → `UW-13-02` → istniejący commit; zero kodu produktu.
+- STOP-pytania: brak, bo zakres odzyskano.
+- TWIERDZENIA NIEZWERYFIKOWANE: synchronizacja ustawienia między urządzeniami/klientami; realny zimny login na osobnym kliencie; świeży render i a11y; zachowanie przez realny HTTP/ApiGateway/PG (ścieżka B6 nie korzysta z backendu).
+
+## Stan końcowy
+
+`GOTOWE` jako pomiar i odzyskanie zakresu; bez scalania, bez uruchomienia flag, bez zmian produktu i bez środowisk zdalnych.

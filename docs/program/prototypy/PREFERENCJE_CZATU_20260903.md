@@ -28,3 +28,17 @@ Stan pomiaru: marker `416432abaf`, 2026-09-04. „Trwałość” poniżej oznacz
 ## Wniosek R1
 
 W Czat już wchodzi co najmniej osiem jawnych preferencji użytkownika oraz ustawienia TTS i własnych instrukcji. Większość przeżywa przeładowanie tylko przez persystencję Zustand do `localStorage`, a więc nie ma dowodu przeżycia zimnego logowania na osobnym kliencie; nie wolno na tej podstawie nazwać ich trwałymi per użytkownik w bazie.
+
+## R2 — odzyskany zakres B6
+
+Zakres da się odzyskać jednoznacznie. `TRIAZ_UWAG_20260902.md:170` mapuje B6 na `UW-13-02`, czyli kontekstowe włączanie i wyłączanie chipów sugestii pod kompozytorem. Źródłowe słowa właściciela są zachowane w `KORPUS_UWAG_20260902.md:84` i `BACKLOG_UWAG_ODBIORU_20260902.md:156`.
+
+Ta funkcja już istnieje na markerze. Commit `fcb83a5f7d` (przodek `416432abaf`) dodał:
+
+- kontrolkę `chatSuggestionsEnabled` w istniejącym `ToolsMenu`,
+- konsumenta w `UnifiedChatPanel`, który zwraca pustą listę sugestii po wyłączeniu,
+- persystencję w istniejącym `aiConfig` / `consultify-storage`,
+- polskie i angielskie etykiety,
+- kadry interakcji, w tym stan po przeładowaniu tej samej przeglądarki.
+
+Wniosek: B6 nie wymaga nowego prototypu. R3–R5 są `n/d`, ponieważ ponowne zbudowanie tej samej funkcji za drugą flagą stworzyłoby duplikat i naruszyło zakaz budowania na błędnej diagnozie. Osobnym, niezamkniętym zagadnieniem jest synchronizacja preferencji między klientami; korpus B6 jej nie zamawia.
