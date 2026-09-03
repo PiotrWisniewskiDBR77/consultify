@@ -48,6 +48,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 01_ORGANIZATION | 11 | 22 | 22 | 0 | 0 | 0; trzy pliki obecne, lecz bez wykonanych przypadków | `G15 PASS — 11 plików, 22/22 przypadki zielone na 35afcb15fd; porównanie z f65c4ff6a0 wykazało 1 czerwień naprawioną dziś i 2 nowe przypadki; brak nowych czerwieni.` |
 | 02_INTERVIEW | 26 | 147 | 124 | 7 (4 front, 3 serwer) | 0 | 16 oczekujących testów DB; 1 czerwień naprawiona dziś | `G15 PARTIAL — 26 plików: marker 124 PASS, 7 FAIL potwierdzonych także na f65c4ff6a0, 16 pending; jedna czerwień naprawiona dziś, brak czerwieni NOWYCH; brak tabeli licencji uniemożliwia bezpieczną zmianę 7 zastanych kontraktów.` |
 | 03_TOOLS | 36 | 621 | 620 | 1 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: 36 plików, 620/621 PASS; ta sama pełna nazwa jednej czerwieni ToolCanvas występuje na f65c4ff6a0 i 35afcb15fd, brak czerwieni NOWYCH; serwerowe katalogi narzędzi pozostają do pomiaru.` |
+| 04_ASSESSMENT | 17 | 620 | 620 po korekcie kontraktu | 0 | 1 (`AssessmentLibraryTab.day178.empty-state`) | 0 | `G15 PARTIAL — ukierunkowany front: baza 608/608 PASS; marker przed korektą 619/620, po korekcie 620/620. NOWA czerwień była nieaktualną asercją wobec zatwierdzonego napisu produktu; serwerowe katalogi Assessment pozostają do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -62,3 +63,7 @@ Front uruchomiono z `RUN_DB_TESTS=0 MOCK_DB=true`; cztery czerwienie dotyczą re
 ### Pułapki — 03_TOOLS
 
 Pakiet frontowy jest jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`, `--retry=0`). Czerwień sprawdza renderowany tekst strażnika nieznanego kroku, nie `fetch.ok`; pełna nazwa jest identyczna na obu markerach. Serwerowe 5 plików nie zostało jeszcze uruchomione i nie jest zaliczone do wyniku.
+
+### Pułapki — 04_ASSESSMENT
+
+Pakiet frontowy jest jednostkowy i nie stanowi dowodu sieci/DB. Para JSON pokazała NOWĄ czerwień o dokładnej nazwie `AssessmentLibraryTab day178 empty-state render contract describes an empty static catalog without claiming a load failure`. Produkt na markerze renderuje zatwierdzony, uczciwy napis `Katalog metodyk jest pusty.`; zgodnie z imiennym wyjątkiem `Z40` uaktualniono dokładną asercję, bez jej osłabienia. Ukierunkowany przebieg po zmianie: 1/1 PASS. Serwer nie jest jeszcze zaliczony.

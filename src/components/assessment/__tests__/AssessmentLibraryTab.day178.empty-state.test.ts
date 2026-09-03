@@ -28,7 +28,9 @@ describe('AssessmentLibraryTab day178 empty-state render contract', () => {
     render(React.createElement(AssessmentLibraryTab));
 
     expect(screen.getByRole('heading', { name: 'Brak dostępnych metodyk oceny' })).toBeInTheDocument();
-    expect(screen.getByText('Katalog metodyk nie zawiera obecnie żadnych pozycji.')).toBeInTheDocument();
+    // Day 286 / G15: the approved product copy names the honest empty state
+    // directly; keep the contract exact so a load-error claim cannot return.
+    expect(screen.getByText('Katalog metodyk jest pusty.')).toBeInTheDocument();
     expect(screen.queryByText('The methodology catalog could not be loaded.')).not.toBeInTheDocument();
   });
 });
