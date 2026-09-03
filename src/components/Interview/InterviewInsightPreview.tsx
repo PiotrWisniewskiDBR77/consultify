@@ -5,17 +5,31 @@
  * Uses shared building blocks from @/components/shared/PreviewPane.
  */
 
-import { ChevronDown, Copy, Download, Send, Sparkles } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  Copy,
+  Download,
+  FileText,
+  GitFork,
+  RotateCcw,
+  Send,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
+  type ActionRow,
   type MetaPill,
+  PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
+import { interviewActionMeta } from './interviewActionMatrix';
 
 // ── Body ───────────────────────────────────────────────────────────────────
 
@@ -160,17 +174,80 @@ export interface InterviewInsightPreviewFooterProps {
   isPolish: boolean;
   /** Show the compact "What next" create-strip below the AI hints (default true). */
   showActionPanel?: boolean;
+  isArchived?: boolean;
+  onFork?: () => void;
+  onExportAssessment?: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  onDelete?: () => void;
 }
 
 export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFooterProps> = ({
   insight,
   isPolish,
   showActionPanel = true,
+  isArchived = false,
+  onFork,
+  onExportAssessment,
+  onArchive,
+  onRestore,
+  onDelete,
 }) => {
   const { t } = useTranslation();
   const aiHints = [
     t('interview.insightPreview.summarizeInsight'),
     t('interview.insightPreview.suggestActions'),
+  ];
+  const buttons: ActionRow['buttons'] = [
+    ...(onFork
+      ? [
+          {
+            label: interviewActionMeta('insight', 'fork', t).label,
+            icon: GitFork,
+            onClick: onFork,
+            colorScheme: 'neutral' as const,
+          },
+        ]
+      : []),
+    ...(onExportAssessment
+      ? [
+          {
+            label: interviewActionMeta('insight', 'export-assessment', t).label,
+            icon: FileText,
+            onClick: onExportAssessment,
+            colorScheme: 'neutral' as const,
+          },
+        ]
+      : []),
+    ...(isArchived && onRestore
+      ? [
+          {
+            label: interviewActionMeta('insight', 'restore', t).label,
+            icon: RotateCcw,
+            onClick: onRestore,
+            colorScheme: 'neutral' as const,
+          },
+        ]
+      : !isArchived && onArchive
+        ? [
+            {
+              label: interviewActionMeta('insight', 'archive', t).label,
+              icon: Archive,
+              onClick: onArchive,
+              colorScheme: 'neutral' as const,
+            },
+          ]
+        : []),
+    ...(onDelete
+      ? [
+          {
+            label: interviewActionMeta('insight', 'delete', t).label,
+            icon: Trash2,
+            onClick: onDelete,
+            colorScheme: 'red' as const,
+          },
+        ]
+      : []),
   ];
 
   // Canon §7.3: footer = AI → (Relations) → "What next" (create). The primary "Open" lives in the
@@ -180,6 +257,7 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
     <div className="space-y-2.5 pb-1">
       {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
       <PreviewAIHintStrip hints={aiHints} />
+      {buttons.length > 0 ? <PreviewActionBar rows={[{ buttons }]} /> : null}
       {showActionPanel && (
         <ArtifactActionPanel
           variant="compact"

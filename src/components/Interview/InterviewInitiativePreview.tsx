@@ -22,7 +22,12 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { EntityStatusChip, PriorityChip, type PriorityLevel } from '@/components/ui/primitives/chips';
+import { interviewActionMeta } from './interviewActionMatrix';
+import {
+  EntityStatusChip,
+  PriorityChip,
+  type PriorityLevel,
+} from '@/components/ui/primitives/chips';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewInitiativePreviewBody
@@ -188,7 +193,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isDraft && onSendToReview
       ? [
           {
-            label: t('interview.initiativePreview.sendToReview'),
+            label: interviewActionMeta('initiative', 'send-to-review', t).label,
             icon: ArrowRight,
             onClick: onSendToReview,
             colorScheme: 'neutral' as const,
@@ -198,7 +203,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isPending && canReview && onApproveMoveForward
       ? [
           {
-            label: t('interview.initiativePreview.approveAndMoveForward'),
+            label: interviewActionMeta('initiative', 'approve-to-initiatives', t).label,
             icon: Rocket,
             onClick: onApproveMoveForward,
             colorScheme: 'primary' as const,
@@ -208,7 +213,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
     ...(isPending && onBackToDraft
       ? [
           {
-            label: t('interview.initiativePreview.backToDraft'),
+            label: interviewActionMeta('initiative', 'back-to-draft', t).label,
             icon: RotateCcw,
             onClick: onBackToDraft,
             colorScheme: 'neutral' as const,
@@ -220,7 +225,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
           {
             // M13 flow redesign: the DOCUMENT is the working surface — for a
             // DRAFT this is the primary move (staging stays a source view).
-            label: t('interview.initiativePreview.openInitiativeDocument'),
+            label: interviewActionMeta('initiative', 'open-module', t).label,
             icon: ExternalLink,
             onClick: onOpenInModule,
             colorScheme: isDraft ? ('primary' as const) : ('neutral' as const),
