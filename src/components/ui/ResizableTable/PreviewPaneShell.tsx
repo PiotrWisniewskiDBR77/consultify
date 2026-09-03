@@ -81,6 +81,14 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
 
       <div
         className={[embedded ? 'flex-1' : 'flex-1 overflow-y-auto p-4', bodyClassName].join(' ')}
+        // axe `scrollable-region-focusable`: a scrollable container needs to
+        // be reachable by keyboard even when its content happens to hold no
+        // focusable elements of its own (e.g. a text-only report summary).
+        // `embedded` mode has no overflow here (parent owns scrolling), so
+        // it's excluded — this is the shared shell behind every StandardPreview
+        // pane in the app, so this one tabIndex fixes the rule everywhere it
+        // was scrollable-but-unreachable, not just this screen.
+        tabIndex={embedded ? undefined : 0}
       >
         {children}
       </div>

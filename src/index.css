@@ -75,6 +75,16 @@
     --c-focus-rgb: 37 99 235;
     --c-focus-solid: #2563eb; /* focus border color */
     --c-focus-solid-rgb: 37 99 235;
+    /* Text-on-tint pairing for "active" chips/tabs styled `bg-c-focus/10
+     * text-*` (the canon neutral-blue active state — CLAUDE.md #3). Plain
+     * `--c-focus-solid` (#2563eb) measures only 3.97-4.31:1 against that 10%
+     * tint depending on the exact surface underneath — under the 4.5:1
+     * floor (axe `color-contrast`, dyżur 2026-09-03). Scoped addition, NOT a
+     * change to `--c-focus-solid` itself — that token has ~24 other call
+     * sites (borders, rings, plain-surface text) that already pass and are
+     * out of this dyżur's scope; a new token avoids reshading them. */
+    --c-focus-solid-on-tint: #1d4ed8; /* ~5.6:1 on bg-c-focus/10 */
+    --c-focus-solid-on-tint-rgb: 29 78 216;
     /* Ordinary selection is deliberately neutral-blue. Brand crimson remains
      * available for primary actions, while error/destructive states keep their
      * own semantic red tokens. */
@@ -298,6 +308,11 @@
     --c-focus-rgb: 91 141 239;
     --c-focus-solid: #5b8def; /* focus border color (lifted for dark) */
     --c-focus-solid-rgb: 91 141 239;
+    /* Dark theme already clears 4.5:1 on `bg-c-focus/10` with the plain
+     * solid — no lift needed here, but the token exists in both themes so
+     * callers never have to special-case light vs dark. */
+    --c-focus-solid-on-tint: #5b8def;
+    --c-focus-solid-on-tint-rgb: 91 141 239;
     --c-selection: rgba(91, 141, 239, 0.14);
     --c-selection-border: rgba(91, 141, 239, 0.42);
     /* Status tokens — Harvard complementary lifted for dark backgrounds.

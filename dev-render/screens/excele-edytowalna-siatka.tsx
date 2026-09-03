@@ -80,6 +80,7 @@ const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) =>
 // Założenia — dokładnie te 7 driverów co projectViability.ts (uproszczony
 // horyzont: 3 lata zamiast parametrycznych 3–15).
 const ZALOZENIA = {
+  id: 'sheet-zalozenia',
   name: 'Założenia',
   columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
@@ -105,6 +106,7 @@ const aRef = (row: number) => `'Założenia'!$B$${row}`;
 // struktura wierszy co ENGINE_ROW w projectViability.ts (gross/tax/net/
 // discountFactor/discounted), skrócona do horyzontu 3 lat.
 const PRZEPLYWY = {
+  id: 'sheet-przeplywy',
   name: 'Przepływy',
   columns: [
     kol('pozycja', 'Pozycja'),
@@ -154,6 +156,7 @@ const PRZEPLYWY = {
 // NPV(rate, C4:E4)+B4 (rok0 dodany osobno, poza zakresem NPV — konwencja
 // Excela: NPV() zakłada, że pierwsza wartość przypada na KONIEC okresu 1).
 const WYNIKI = {
+  id: 'sheet-wyniki',
   name: 'Wyniki',
   columns: [kol('metryka', 'Metryka'), kol('wartosc', 'Wartość')],
   rows: [

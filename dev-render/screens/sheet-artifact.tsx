@@ -52,6 +52,7 @@ const WORKBOOK = {
     title: 'Model marży projektu wdrożeniowego',
     sheets: [
       {
+        id: 'sheet-zalozenia',
         name: 'Założenia',
         columns: [
           kol('poz', 'Pozycja'),
@@ -87,6 +88,7 @@ const WORKBOOK = {
         ],
       },
       {
+        id: 'sheet-kalkulacja',
         name: 'Kalkulacja',
         columns: [
           kol('etap', 'Etap'),
@@ -134,6 +136,7 @@ const WORKBOOK = {
         ],
       },
       {
+        id: 'sheet-wrazliwosc',
         name: 'Wrażliwość',
         columns: [
           kol('scen', 'Scenariusz'),

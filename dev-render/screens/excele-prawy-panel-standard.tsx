@@ -69,6 +69,7 @@ const kol = (key: string, header: string) => ({ key, header });
 const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) => ({ cells });
 
 const ZALOZENIA = {
+  id: 'sheet-zalozenia',
   name: 'Założenia',
   columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
@@ -90,6 +91,7 @@ const AR = { investment: 2, cf1: 3, growth: 4, discountRate: 5, residual: 6, tax
 const aRef = (row: number) => `'Założenia'!$B$${row}`;
 
 const PRZEPLYWY = {
+  id: 'sheet-przeplywy',
   name: 'Przepływy',
   columns: [
     kol('pozycja', 'Pozycja'),
@@ -136,6 +138,7 @@ const PRZEPLYWY = {
 };
 
 const WYNIKI = {
+  id: 'sheet-wyniki',
   name: 'Wyniki',
   columns: [kol('metryka', 'Metryka'), kol('wartosc', 'Wartość')],
   rows: [
