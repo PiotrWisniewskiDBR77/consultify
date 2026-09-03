@@ -16,18 +16,32 @@ const repo = '/private/tmp/ag-g06-b';
 const artefakty = '/private/tmp/ag-g06-b-artefakty';
 const register = path.join(repo, 'docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_G06_JEZYKI_MOTYWY_20260902.md');
 
+// ★★★ SPROSTOWANIE 2026-09-03 (nadzorca) — TA LISTA MIALA SZESC POZYCJI I BYLA ZA DLUGA.
+// Nadzorca przekazal teze, ze SZESC regul krajobrazowych znika po zawezeniu skanu do
+// '#dev-render-root'. Teza byla ZA MOCNA i zostala obalona dwoma niezaleznymi pomiarami
+// (moduly 05-08 i 09-12). Autor tego skryptu zmierzyl samodzielnie TRZY i mimo to przyjal
+// szesc, bo pochodzily od koordynatora - to jest dokladnie ten wzorzec, ktoremu program ma
+// zapobiegac: teza nadzorcy staje sie faktem w narzedziu.
+//
+// ZMIERZONE I POTWIERDZONE - znikaja po zawezeniu, sa szumem hosta:
 const HARNESS_AXE_IDS = new Set([
   'landmark-one-main',
   'page-has-heading-one',
   'region',
+]);
+
+// NIE POTWIERDZONE jako szum - potrafia wystapic WEWNATRZ fragmentu i wtedy sa realnym
+// defektem produktu. Zmierzone: 'heading-order' na ekranie audyty-warsztat-kryterium
+// wystepuje IDENTYCZNIE w obu zakresach skanu. Tych trzech NIE WOLNO odejmowac hurtem -
+// kazde wystapienie wymaga rozstrzygniecia, czy dotyczy renderowanego ekranu, czy hosta.
+const WYMAGA_ROZSTRZYGNIECIA_AXE_IDS = new Set([
   'heading-order',
   'landmark-no-duplicate-banner',
   'landmark-unique',
-]); // Zmierzone przez rownolegly dyzur modulow 01-04 (przekazane przez koordynatora,
-// 2026-09-03): dev-render montuje ekran BEZ src/layouts/MainLayout.tsx, ktory jest
-// jedynym miejscem w produkcie tworzacym <main>/<h1>/role=banner. Tych szesc id
-// pojawia sie w KAZDYM kadrze bez wzgledu na ekran - to szum hosta harnessu, nie
-// defekt produktu. Wlasna proba (3 id) byla podzbiorem tego samego zjawiska.
+]);
+
+// ★ Skutek dla liczb juz zapisanych: moduly 05-08 byly agregowane wersja szescioregulowa,
+// wiec ich liczba naruszen jest ZANIZONA o wystapienia tych trzech id. Wymaga przeliczenia.
 // Zmierzone na wielu ekranach modułów 05-08 jako wyzwalacze menu/dropdown,
 // NIE sekcje treści (patrz R1 commit + logi R_initiatives): pozostają zwinięte
 // PO ROZMYŚLE — to jest poprawny, oczekiwany stan (menu domyślnie zamknięte).
