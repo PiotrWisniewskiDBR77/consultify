@@ -19,13 +19,16 @@
   border-color: var(--fc-border-color);
 }
 
+/* axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): #64748b (slate-500) na
+   ciemnym tle #0f172a dawal 3.75:1 zamiast 4,5:1 dla etykiet dni tygodnia —
+   #94a3b8 (slate-400) daje 6.96:1. */
 .fc-consultify .fc-col-header-cell {
   padding: 8px 0;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .fc-consultify .fc-daygrid-day-number {
@@ -38,6 +41,22 @@
 .fc-consultify .fc-day-today .fc-daygrid-day-number {
   color: var(--c-info);
   font-weight: 700;
+}
+
+/* axe `color-contrast`: FullCalendar's OWN default opacity na <td
+   class="fc-day-other"> (dni sasiedniego miesiaca) dociera do potomkow przez
+   kompozycje — opacity:1 na samym <a> (potomku) NIE kasuje opacity rodzica.
+   Zerujemy opacity na wlascicielu klasy (<td>) i nadajemy jawny, juz-zgodny
+   kolor numerowi dnia (bez zmiany semantyki „inny miesiac" — tlo/obramowanie
+   fc-day-other zostaja bez zmian). */
+.fc-consultify .fc-day-other {
+  opacity: 1;
+}
+.fc-consultify .fc-day-other .fc-daygrid-day-number {
+  color: #94a3b8;
+}
+:root:not(.dark) .fc-consultify .fc-day-other .fc-daygrid-day-number {
+  color: #64748b;
 }
 
 .fc-consultify .fc-event {
