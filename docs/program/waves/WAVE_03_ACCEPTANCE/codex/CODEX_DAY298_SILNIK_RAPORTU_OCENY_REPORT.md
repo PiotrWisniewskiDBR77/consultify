@@ -1,6 +1,6 @@
 # CODEX DAY 298 — silnik raportu Oceny DRD
 
-Stan bieżący: `IN_PROGRESS` — R1–R2 zakończone, R3 częściowe, R4–R6 niewykonane.
+Stan bieżący: `IN_PROGRESS` — R1–R2 zakończone, R3–R4 częściowe, R5 w toku, R6 niewykonane.
 
 ## Baza i sanity
 
@@ -49,6 +49,36 @@ Rekomendacja dla nadzorcy: wskazać dokładny komponent sesji i licencję na oba
 Stan: zacommitowano częściowo po zweryfikowaniu migracji i odczytu.
 
 Czy kontynuowałem pozostałe pozycje: TAK — R4 nie wymaga improwizowania brakującego UI.
+
+## R4 — skład i podpięcie
+
+Stan: `PARTIAL`. Zaakceptowany generator przyjmuje teraz opcjonalny moduł modelu, więc prototyp i silnik używają dokładnie jednego kodu składu. Przebieg domyślny i przebieg z jawnym modelem miały identyczne `word/document.xml`. PDF ma 21 stron A4; wyciąg zarządczy ma 4 strony (okładka, zbiorcze, mapa drogowa, kolejny krok/granice).
+
+Artefakty poza repo:
+
+- DOCX SHA-256 `10c4e8ec747aca491aca3b745d008d5f7757da8f95255611c674dd94c071d736`
+- PDF pełny SHA-256 `22e3896986e52d11e01b24346f060468931431234e5cf76f3fc04696cbeff6a7`
+- PDF zarządczy SHA-256 `0544be6b1c46e22947ffdda0a8945914d9833c828ea5f237a3e8930d684ba584`
+
+### STOP — R4 realna trasa i magazyn plików
+
+Rodzaj: MERYTORYCZNY
+
+Powód: obecna trasa Method Core wymaga gotowego `content` od klienta i zapisuje wyłącznie JSON; brakuje imiennej licencji na zmianę handlera oraz decyzji o docelowym magazynie binarnych DOCX/PDF.
+
+Licencja, którą sprawdziłem: Z13 zezwala na moduł modelu/składu, migrację i testy; brak tabeli licencji oraz brak wskazania konkretnego magazynu plików.
+
+Dowód: `createArtefactSnapshot` w `server/src/routes/method-core.routes.ts` oblicza hash `body.content` i zapisuje `method_report_snapshots`; nie ma ścieżki pliku ani wywołania kompozytora.
+
+Co dostarczyłem ZAMIAST zmiany: wspólny skład DOCX, pełny PDF i czterostronicowy wyciąg z jednego modelu, wraz z hashami i renderami. Nie podłączyłem atrapy pliku do przypadkowego magazynu.
+
+Co zrobiłbym, gdyby zapadła decyzja X: dodałbym generowanie po odczycie zamrożonej sesji, atomowy zapis obu plików w wskazanym magazynie oraz manifest plików powiązany z `method_report_snapshots`.
+
+Rekomendacja dla nadzorcy: wskazać istniejący kanoniczny magazyn binarnych artefaktów lub zatwierdzić nową tabelę manifestu i katalog storage; przyznać licencję na handler `/outputs/:id/report`.
+
+Stan: zacommitowano częściowo wspólny skład; brak realnego HTTP i pliku z sesji.
+
+Czy kontynuowałem pozostałe pozycje: TAK — dowód wizualny wspólnego składu jest niezależny.
 
 ## Z30 — deklaracja testowa
 

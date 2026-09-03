@@ -43,4 +43,10 @@ Kontrakt właściciela pozostaje bez zmian: 21 stron pełnych i 4 strony wyciąg
 
 ## Różnice strona po stronie
 
-Do wypełnienia w R5 po wygenerowaniu i obejrzeniu każdej strony. Brak tego pomiaru oznacza `NOT_PROVEN`, nie zgodność wizualną.
+Pomiar modelu przykładowego przez wspólny skład; nie jest to raport z realnej sesji.
+
+| Strony | Różnica pikselowa po normalizacji | Oględziny |
+| --- | --- | --- |
+| 1–21 | każda `mean_abs_rgb = 0.0000` | wszystkie obejrzane; brak ucięć, nakładania i sierot |
+
+Różnice nazwane: brak. Każda z 21 stron jest piksel-w-piksel identyczna z odpowiadającą stroną zaakceptowanego prototypu. Wyciąg 4-stronicowy obejrzany osobno; zawiera strony pełnego modelu 1, 18, 20 i 21.
