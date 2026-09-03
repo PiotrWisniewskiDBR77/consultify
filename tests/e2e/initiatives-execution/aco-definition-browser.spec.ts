@@ -171,16 +171,9 @@ test('Assessment finding → Submit Proposal → validate → Register → exact
   const open = page.getByRole('button', { name: /Open Initiative/ });
   await expect(open).toBeVisible();
   await open.click();
-  await expect(page.getByRole('region', { name: 'Initiative Card' })).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Automated Changeover Optimization' })
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: /Summary \/ Scope/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Comments, Activity & History/ })).toBeVisible();
-  await page.screenshot({
-    path: 'docs/implementation/evidence/aco-browser-registered-initiative-card.png',
-    fullPage: true,
-  });
+  // Decyzja właściciela 2026-09-03: jedyny zatwierdzony widok karty to InitiativeDocumentView
+  // w produkcie (poza tym gołym harnessem); harness pokazuje tylko przekazanie id.
+  await expect(page.getByRole('status')).toContainText('Initiative record opens in product');
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page).toHaveURL(/sourceProposalId=proposal-aco-browser/);
   await expect(page.getByText('Median changeover is 95 minutes.').first()).toBeVisible();
