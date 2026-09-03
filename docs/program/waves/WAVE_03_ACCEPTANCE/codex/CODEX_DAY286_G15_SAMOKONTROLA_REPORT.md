@@ -53,6 +53,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 06_EXECUTION | 102 | 440 | 426 | 0 | 14 nierozstrzygniętych | 0 | `G15 FAIL — ukierunkowany front: baza 404/404 PASS, marker 426/440 PASS. Wszystkie 14 czerwieni są NOWE, w tym sześć executionWorkResources; brak tabeli licencji blokuje zmianę harnessu/testów lub produktu.` |
 | 07_MY_WORK_AGENT | 93 | 566 | 554 | 2 | 1 nierozstrzygnięta | 9 pending | `G15 FAIL — ukierunkowany front: marker 554 PASS, 3 FAIL, 9 pending; para dowodzi 2 czerwieni ZASTANYCH i 1 NOWEJ (MYW-IDEAS-010). Serwer pozostaje do pomiaru.` |
 | 08_MEETINGS | 6 | 35 | 32 | 0 | 3 nierozstrzygnięte | 0 | `G15 FAIL — ukierunkowany front: baza 2/2 PASS, marker 32/35 PASS; wszystkie 3 czerwienie są NOWE (dwa uczciwe stany błędu briefu i sekcja decyzji/działań). Serwer pozostaje do pomiaru.` |
+| 09_RESULTS | 30 | 418 | 418 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 408/408, marker 418/418; 10 nowych zielonych przypadków, zero czerwieni. Flagi pozostały OFF; serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -87,3 +88,7 @@ Pakiet uruchomiono jako jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`). K
 ### Pułapki — 08_MEETINGS
 
 Pakiet uruchomiono jako jednostkowy z atrapą bazy i nie jest dowodem realnego HTTP. Dwie z trzech nowych czerwieni jawnie sterują odpowiedzią briefu 500/404 i asertują uczciwy stan błędu; globalne `fetch.ok` nie jest podstawą ich zieleni. Marker ma 33 nowe przypadki względem bazy i trzy z nich są czerwone.
+
+### Pułapki — 09_RESULTS
+
+Pakiet frontowy był czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`). Nie włączono żadnej flagi Wyników i nie wyprowadzono z zieleni twierdzeń o RealPG, HTTP ani uprawnieniach. Pełne nazwy z JSON potwierdzają 10 dodanych przypadków i brak znikniętych.
