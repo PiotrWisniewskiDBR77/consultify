@@ -72,6 +72,28 @@ Object.assign(Api, {
   workCanvasListDrafts: async () => OTHER_DRAFTS,
 });
 
+// G14 13-16 (dyżur 2026-09-03) — `WorkCanvasDocumentPanel.tsx:1273` robi
+// SUROWY `fetch('/api/work-canvas/drafts?conversationId=...')`, NIE przez
+// `Api.workCanvasListDrafts` stubowane wyżej — ten harness nie ma backendu
+// na porcie vite, więc surowy fetch dostawał 404 (rozstrzygnięcie: trasa
+// `GET /drafts` istnieje produkcyjnie, `server/src/routes/work-canvas.routes.ts:2744`,
+// zamontowana w `Gateway.ts:585` — to jest dziura FIXTURE, nie defekt trasy).
+// Kod produkcyjny obsługuje 404 gracefully (`if (!response.ok) return;`), więc
+// to nie był crash — ale 404 zaśmiecał konsolę/network tab pomiaru G06.
+// Przechwytujemy WYŁĄCZNIE ten jeden endpoint; wszystko inne idzie do
+// realnego fetch, jak dotąd.
+const realFetch = window.fetch.bind(window);
+window.fetch = (async (input: any, init?: any) => {
+  const url = typeof input === 'string' ? input : (input?.url ?? '');
+  if (url.includes('/api/work-canvas/drafts') && (!init || (init.method ?? 'GET') === 'GET')) {
+    return new Response(JSON.stringify({ success: true, data: OTHER_DRAFTS }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  return realFetch(input, init);
+}) as typeof window.fetch;
+
 export default function CanvasNewDocScreen(): React.ReactElement {
   // Otwórz REALNE menu „+" po zamontowaniu panelu (dropdown jest stanem
   // komponentu, a narzędzie zrzutowe nie klika — patrz nagłówek).
