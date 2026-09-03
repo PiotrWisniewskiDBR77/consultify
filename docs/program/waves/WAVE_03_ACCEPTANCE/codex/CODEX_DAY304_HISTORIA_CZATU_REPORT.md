@@ -40,3 +40,11 @@ Werdykt R4: **CZĘŚCIOWE**. Nie wykonano wymaganego dowodu mutacyjnego ani prze
 ## R5 — prototyp panelu
 
 Nie dodano nowej etykiety ani alternatywnego panelu: R2 i R4 nie spełniają jeszcze ostrych warunków, a kryterium właściciela zakazuje kosmetycznego podziału. Zastany realny `ChatHistorySidebar` już renderuje prywatne i organizacyjne foldery oraz operacje historii, ale nie ma odrębnej flagi default-OFF dla nowego wariantu. Nowe kadry: `NIE WYKONANO`; stan R5: **NIEUKOŃCZONE**. Bezpieczna kontynuacja to najpierw scentralizowany resolver + Gateway/mutacja, potem wariant wizualny za flagą OFF i 4 obejrzane kadry.
+
+## R6 — wynik
+
+Stan dyżuru: **CZĘŚCIOWE**. R1 i R3 są zamknięte pomiarowo; R2 nie centralizuje zastanych reguł; R4 ma real-PG parę, ale bez Gateway i mutacji; R5 celowo nie tworzy kosmetycznej powierzchni.
+
+STOP-pytanie: brak pytania produktowego — wymagany kierunek jest jasny. Bloker ma charakter dowodowo-implementacyjny, nie decyzji właściciela.
+
+TWIERDZENIA NIEZWERYFIKOWANE: produkcyjny mount wszystkich tras przez Gateway; zachowanie po usunięciu filtra organizacji; zimny readback osobnym klientem po przeniesieniu; atomowość audytu w awarii; komplet 4 kadrów; a11y i właścicielska akceptacja wariantu. Nic nie scalono i żadnej flagi nie włączono.
