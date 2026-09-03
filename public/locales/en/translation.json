@@ -32921,6 +32921,13 @@
       "conflictBanner": "This page was changed elsewhere. Your edits were not overwritten.",
       "conflictReload": "Reload",
       "conflictRetry": "Save mine anyway",
+      "conflictUseTheirs": "Use theirs",
+      "conflictCompare": "Compare",
+      "conflictKeepMine": "Keep mine",
+      "conflictComparison": "Conflict comparison",
+      "conflictMine": "My version",
+      "conflictTheirs": "Their version",
+      "conflictEmpty": "No text",
       "backToList": "All notes",
       "graphExpand": "Full screen",
       "graphCollapse": "Exit full screen"

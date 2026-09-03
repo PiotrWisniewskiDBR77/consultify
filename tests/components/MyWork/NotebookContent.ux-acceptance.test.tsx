@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -467,8 +467,9 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       // the very save-failed banner this test is asserting exists. Scoped
       // the check to what actually distinguishes "conflict" from "generic
       // error": the conflict-only recovery actions.
-      expect(queryByText('Reload')).toBeNull();
-      expect(queryByText('Save mine anyway')).toBeNull();
+      expect(queryByText('Use theirs')).toBeNull();
+      expect(queryByText('Compare')).toBeNull();
+      expect(queryByText('Keep mine')).toBeNull();
 
       // Retry: the next successful save must clear the error state, proving
       // 'error' isn't a sticky dead-end the user can't recover from.
@@ -487,7 +488,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     }
   });
 
-  it('shows a persistent conflict banner with Reload/retry, and never overwrites the edit silently', async () => {
+  it('shows a persistent conflict banner with keep/use/compare choices, and never overwrites the edit silently', async () => {
     vi.useFakeTimers();
     try {
       apiMock.getNotebookPages.mockResolvedValue([makePage({ id: 'note-1', title: 'Note 1' })]);
@@ -526,7 +527,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       };
       editorMock.getJSON.mockReturnValue(localContent);
 
-      const { getByTestId, getByRole, getByText } = renderWithRouter(<NotebookContent searchQuery="" />);
+      const { getByTestId, getByRole, getByText, getAllByText } = renderWithRouter(<NotebookContent searchQuery="" />);
 
       await vi.waitFor(() => {
         expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -548,8 +549,13 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       expect(banner.textContent).toContain(
         'This page was changed elsewhere. Your edits were not overwritten.'
       );
-      expect(getByText('Reload')).toBeTruthy();
-      expect(getByText('Save mine anyway')).toBeTruthy();
+      expect(getByText('Use theirs')).toBeTruthy();
+      expect(getAllByText('Keep mine').length).toBeGreaterThan(0);
+      fireEvent.click(getByText('Compare'));
+      expect(getByRole('region', { name: 'Conflict comparison' })).toBeTruthy();
+      expect(getByText('My version')).toBeTruthy();
+      expect(getByText('Their version')).toBeTruthy();
+      expect(getByText('Someone else changed this')).toBeTruthy();
 
       // The locally-edited content must NOT have been silently overwritten —
       // setContent should not have been called with the server's content.
@@ -565,7 +571,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
     }
   });
 
-  it('Reload in the conflict banner loads the fresh server content', async () => {
+  it('Use theirs in the conflict banner loads the fresh server content', async () => {
     vi.useFakeTimers();
     try {
       apiMock.getNotebookPages.mockResolvedValue([makePage({ id: 'note-1', title: 'Note 1' })]);
@@ -626,7 +632,7 @@ describe('NotebookContent — MW-08 UX acceptance', () => {
       editorMock.commands.setContent.mockClear();
 
       await act(async () => {
-        getByText('Reload').click();
+        getByText('Use theirs').click();
       });
 
       // handleReloadFromConflict merges the fresh server page into `pages`,
