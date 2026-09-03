@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -113,7 +114,10 @@ const formatDate = (value: string | null) => {
   if (!value) return 'UNKNOWN';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'UNKNOWN';
-  return new Intl.DateTimeFormat('pl-PL', {
+  // 2026-09-03 (i18n-r3): locale przybity na 'pl-PL' pokazywał polskie
+  // skróty miesięcy (wrz/lis/gru) nawet w trybie EN — ten sam kształt bugu
+  // jak w rodzeństwie CapacityScenarioSurface.formatPeriodDate.
+  return new Intl.DateTimeFormat(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
