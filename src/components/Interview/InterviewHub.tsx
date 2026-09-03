@@ -7638,7 +7638,7 @@ Return ONLY the answer text (no markdown fences).`;
           {lineageDecisionCount > 0 || lineageTaskCount > 0 ? (
             <div className="mx-4 mb-3 mt-4 shrink-0 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
               <div className="mb-2 flex items-center gap-2">
-                <Send size={13} className="text-crimson-500" />
+                <Send size={13} className="text-c-text-muted" />
                 <span className="text-[12px] font-semibold text-c-text-secondary">
                   {t('interview.hub.handedOffFromInterviews')}
                 </span>
