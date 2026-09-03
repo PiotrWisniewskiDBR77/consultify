@@ -156,7 +156,16 @@ const DEFAULT_USER = {
   auto_suggestions: true,
 };
 
-// Ensure lightweight table for tiers (if not present)
+// Ensure lightweight table for tiers (if not present).
+// Reproducible from server/migrations/20260903_ai_user_tiers.sql — this
+// runtime DDL is a compatibility fallback for DBs that predate that
+// migration, kept in sync with it. TIMESTAMPTZ (not DATETIME): DbPromise's
+// `run()` adapts DATETIME->TIMESTAMP for Postgres via adaptQuery, but the
+// column type is written explicitly here so it stays correct even if this
+// call is ever moved to a DB method that bypasses that adapter (see
+// commit 5b5c0e3849 — emailVerificationService hit exactly that via
+// DbPromise.exec(), which does not adaptQuery, and failed with
+// Postgres 42704 "type \"datetime\" does not exist").
 const ensureUserTiersTable = async () => {
   await dbRun(
     `
@@ -164,8 +173,8 @@ const ensureUserTiersTable = async () => {
             organization_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             tier TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (organization_id, user_id)
         )
     `,
