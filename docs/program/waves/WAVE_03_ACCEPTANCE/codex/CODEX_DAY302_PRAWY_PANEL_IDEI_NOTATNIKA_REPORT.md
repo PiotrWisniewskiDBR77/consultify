@@ -1,6 +1,6 @@
 # CODEX DAY 302 — prawy panel Idei i Notatnika
 
-Stan roboczy: R1–R2 wykonane.
+Stan roboczy: R1–R3 wykonane.
 
 ## §0 — baza
 
@@ -24,6 +24,12 @@ Pomiar potwierdził 1289 / 867 / 1037 linii oraz 61 plików wspominających `Art
 
 Projekt słowny powstał przed kodem. Utrzymuje jedną kolejność sekcji i jedną powłokę SPEC-A dla obu kontekstów, jawne stany loading/empty/error, szerokość 360 px (320–420) oraz drawer poniżej 1280 px.
 
+## R3 — prototyp za flagą OFF
+
+Dodano jeden komponent dla kontekstów `idea` i `notebook` oraz jedną flagę `ff_idea_notebook_right_panel_prototype`. Bez query, localStorage i env flaga zwraca `false`; każdy błąd odczytu także zamyka prototyp. Wrapper przy OFF zwraca przekazany legacy DOM bez dodatkowej powłoki. Cztery testy pokrywają brak wartości, jawne OFF oraz oba konteksty ON: 4/4 PASS, `--retry=0`. Punktowy esbuild komponentu: PASS. Grep prototypu: zero `primary-*`.
+
+Pułapki §0.2d (a)–(d) nie leżą na ścieżce czysto frontendowego testu flagi: pakiet nie importuje Gateway, middleware, bazy ani auth. Pułapka (e) jest wyłączona konstrukcją: wrapper nie jest podłączony do żadnego produkcyjnego konsumenta, flaga jest default OFF, komponent używa kanonicznego `ArtifactRightPanel`, a test dowodzi niezmienionego legacy DOM przy OFF.
+
 ## Korekty wobec instrukcji
 
 - Cztery ekrany harnessu istnieją zgodnie z tezą.
@@ -31,5 +37,5 @@ Projekt słowny powstał przed kodem. Utrzymuje jedną kolejność sekcji i jedn
 
 ## Twierdzenia niezweryfikowane
 
-- Prototyp, jego flaga, kadry i odbiór §18.1 nie są jeszcze wykonane.
+- Kadry i odbiór §18.1 nie są jeszcze wykonane.
 - Gałąź nie jest scalona i flaga nie jest włączona.
