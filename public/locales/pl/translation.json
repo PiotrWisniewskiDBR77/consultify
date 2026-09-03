@@ -14633,11 +14633,7 @@
       },
       "vip": {
         "empty": "Brak prezentacji."
-      },
-      "watchNotifyPrefix": "Powiadamiaj",
-      "watchNotifyAll": "Wszystkie aktualizacje",
-      "watchNotifyMentions": "Tylko wzmianki",
-      "watchNotifyStatusChanges": "Tylko zmiany statusu"
+      }
     },
     "integrations": {
       "title": "Integracje",
