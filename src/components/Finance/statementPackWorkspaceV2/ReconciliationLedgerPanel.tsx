@@ -126,7 +126,16 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
                   {runBadgeLabel(run.resultQuality, run.status)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-2 text-[10px] text-c-text-muted">
+              {/* axe color-contrast: text-c-text-muted on the bg-c-focus/10
+                  selected tint measures 4.13:1 (< 4.5) in light theme.
+                  text-c-text-secondary passes (6.58:1) — swapped only for the
+                  selected state, unselected rows (plain/hover background)
+                  keep text-c-text-muted since that combo already passes. */}
+              <div
+                className={`flex items-center justify-between gap-2 text-[10px] ${
+                  isSelected ? 'text-c-text-secondary' : 'text-c-text-muted'
+                }`}
+              >
                 <span>{new Date(run.createdAt).toLocaleString('pl-PL')}</span>
                 <span className="tabular-nums">Residual: {formatPct(run.totals.residualPct)}</span>
               </div>
