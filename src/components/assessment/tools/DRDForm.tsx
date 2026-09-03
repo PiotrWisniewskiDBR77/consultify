@@ -212,7 +212,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                   ? type === 'actual'
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                     : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
             } ${readOnly ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
           >
             {level}

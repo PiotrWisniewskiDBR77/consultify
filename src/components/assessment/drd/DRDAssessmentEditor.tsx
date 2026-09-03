@@ -1002,9 +1002,12 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         </button>
 
         <div className="space-y-2">
-          <label className="text-xs text-slate-500 dark:text-slate-400">Axis</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400" htmlFor="drd-axis-select">
+            Axis
+          </label>
           <div className="relative">
             <select
+              id="drd-axis-select"
               value={axisId}
               onChange={(e) => handleAxisChange(Number(e.target.value))}
               className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
@@ -1042,7 +1045,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <div className="text-xs font-mono text-slate-600">{a.id}</div>
+                    <div className="text-xs font-mono text-slate-600 dark:text-slate-400">{a.id}</div>
                     {isMine && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/30"
@@ -1079,7 +1082,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     return null;
                   })()}
                 </div>
-                <div className="text-[10px] px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 shrink-0">
+                {/* slate-600, nie slate-500: 4.34:1 zamiast 4,5:1 (axe: color-contrast,
+                    zmierzone na drd-macierz-oceny, x6 wierszy). */}
+                <div className="text-[10px] px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 shrink-0">
                   {getAreaState(value, a.id, axis?.levelCount || 5).achievedLevel}/
                   {axis?.levelCount || 5}
                 </div>
@@ -1608,7 +1613,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
           <>
             <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <div className="text-xs font-mono text-slate-600">{areaId}</div>
+                <div className="text-xs font-mono text-slate-600 dark:text-slate-400">{areaId}</div>
                 <div className="flex items-center gap-2">
                   <div className="text-xl md:text-2xl font-semibold text-navy-900 dark:text-white">
                     {selectedArea?.name || 'Area'}

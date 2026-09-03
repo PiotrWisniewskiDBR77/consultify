@@ -344,7 +344,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                   </button>
                   <button
                     onClick={() => openInitiative(initiative)}
-                    className="p-1 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
+                    className="p-1 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
                     title={t('assessment.initiativesBoard.openDetails')}
                   >
                     <ArrowRight size={14} />
@@ -353,7 +353,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                 <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
                   {initiative.description}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 mt-1">
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mt-1">
                   <span>{initiative.axis}</span>
                   {initiative.projectName && (
                     <>
@@ -416,7 +416,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           const owner = initiative.ownerBusiness;
           if (!owner) {
             return (
-              <span className="text-xs text-slate-600 dark:text-slate-500 italic">
+              <span className="text-xs text-slate-600 dark:text-slate-400 italic">
                 {t('assessment.initiativesBoard.unassigned')}
               </span>
             );
@@ -426,7 +426,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               className="flex items-center gap-2 cursor-default"
               title={`${owner.firstName} ${owner.lastName}`}
             >
-              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300 overflow-hidden shrink-0">
+              {/* amber-700 na bg-amber-100 dawał 3.79:1 zamiast 4,5:1 (axe:
+                  color-contrast, zmierzone na assessment-initiatives-table). */}
+              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-medium text-amber-800 dark:text-amber-300 overflow-hidden shrink-0">
                 {owner.avatarUrl ? (
                   <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -472,7 +474,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                 {formatCurrency(initiative.estimatedBudget)}
               </span>
               {initiative.estimatedROI > 0 && (
-                <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                // emerald-600 na białym dawał 4.35:1 zamiast 4,5:1 (axe:
+                // color-contrast, zmierzone na assessment-initiatives-table).
+                <div className="flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400">
                   <TrendingUp size={12} />
                   <span>
                     {t('assessment.initiativesBoard.roi', { value: initiative.estimatedROI })}
@@ -560,7 +564,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 filterStatus === 'all'
                   ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                  : 'text-slate-600 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
               }`}
             >
               {t('assessment.initiativesBoard.filter.all', { count: stats.total })}
@@ -572,7 +576,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   filterStatus === status
                     ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                    : 'text-slate-600 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >
                 {t('assessment.initiativesBoard.filter.tab', {
@@ -588,6 +592,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           {/* Project Filter */}
           {projects.length > 0 && (
             <select
+              aria-label={t('assessment.initiativesBoard.filter.allProjects')}
               value={filterProject}
               onChange={(e) => setFilterProject(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
@@ -604,6 +609,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           {/* Location Filter */}
           {locations.length > 0 && (
             <select
+              aria-label={t('assessment.initiativesBoard.filter.allLocations')}
               value={filterLocation}
               onChange={(e) => setFilterLocation(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
@@ -622,7 +628,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           {/* Search */}
           <div className="relative w-64">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
               size={16}
             />
             <input

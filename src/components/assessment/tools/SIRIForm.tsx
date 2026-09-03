@@ -280,7 +280,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 ? `bg-${colorClass}-600 text-white`
                 : currentValue > level
                   ? `bg-${colorClass}-100 dark:bg-${colorClass}-900/30 text-${colorClass}-600 dark:text-${colorClass}-400`
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
             } ${readOnly ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
           >
             {level}

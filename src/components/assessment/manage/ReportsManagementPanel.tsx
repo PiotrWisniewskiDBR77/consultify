@@ -97,6 +97,9 @@ const STATUS_CONFIG: Record<
     icon: FC<{ size?: number; className?: string }>;
   }
 > = {
+  // amber-700/emerald-600 na własnym -50 tle dawały 4.21:1 / 4.08:1 zamiast
+  // 4,5:1 (axe: color-contrast, zmierzone na assessment-reports-panel/-table;
+  // identyczna konfiguracja co ReportsTable.tsx, ten sam odcień o jeden ciemniej).
   DRAFT: {
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
@@ -110,7 +113,7 @@ const STATUS_CONFIG: Record<
     icon: Clock,
   },
   GENERATING: {
-    color: 'text-amber-700 dark:text-amber-300',
+    color: 'text-amber-800 dark:text-amber-300',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
     icon: Loader2,
@@ -129,7 +132,7 @@ const STATUS_CONFIG: Record<
     icon: Eye,
   },
   APPROVED: {
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: CheckCircle2,
@@ -147,13 +150,13 @@ const STATUS_CONFIG: Record<
     icon: Upload,
   },
   UTILIZED: {
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: FileOutput,
   },
   FINAL: {
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: CheckCircle2,
@@ -676,7 +679,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   })}
                 </p>
                 {latestRunReadback?.assessmentRunId ? (
-                  <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
+                  <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
                     {t('assessment.reportsManagePanel.header.laneReadback', {
                       run: latestRunReadback.assessmentRunId,
                     })}
@@ -743,9 +746,11 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 {t('assessment.reportsManagePanel.stats.total', { count: stats.total })}
               </span>
             </div>
+            {/* amber-700 na bg-amber-50 dawał 4.21:1 zamiast 4,5:1 (axe:
+                color-contrast, zmierzone na assessment-reports-panel). */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
               <Edit3 size={14} className="text-amber-600 dark:text-amber-400" />
-              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
                 {t('assessment.reportsManagePanel.stats.inProgress', { count: stats.draft })}
               </span>
             </div>

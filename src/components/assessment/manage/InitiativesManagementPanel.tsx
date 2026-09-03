@@ -853,6 +853,8 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
+                title={t('common.refresh', 'Refresh')}
+                aria-label={t('common.refresh', 'Refresh')}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -1177,7 +1179,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       )}
                     </span>
                     {batch.provenance?.assessmentRunId ? (
-                      <span className="text-[10px] text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400">
                         {t('assessment.initiativesPanel.batches.run', 'run {{id}}', {
                           id: batch.provenance.assessmentRunId,
                         })}
@@ -1190,7 +1192,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       </span>
                     ) : null}
                   </div>
-                  <span className="text-slate-600 dark:text-slate-500">
+                  <span className="text-slate-600 dark:text-slate-400">
                     {new Date(batch.createdAt).toLocaleDateString(dateLocale(i18n.language))}
                   </span>
                 </div>

@@ -353,7 +353,10 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       <section>
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">Dodaj dowód</h3>
         <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* aria-label: żaden z trzech selectów niżej nie ma widocznej etykiety
+              (axe: select-name, zmierzone na assessment-quality-review-panel). */}
           <select
+            aria-label="Oś DRD"
             value={axisId}
             onChange={(e) => setAxisId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
@@ -365,6 +368,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             ))}
           </select>
           <select
+            aria-label="Obszar"
             value={areaId}
             onChange={(e) => setAreaId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
@@ -378,6 +382,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <select
+            aria-label="Typ dowodu"
             value={evidenceType}
             onChange={(e) => setEvidenceType(e.target.value as EvidenceType)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
