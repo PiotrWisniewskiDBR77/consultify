@@ -415,22 +415,40 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
                       ['learning', isPolish ? 'Czego się nauczono' : 'Learning'],
                       ['nextCycleChange', isPolish ? 'Zmiana w kolejnym cyklu' : 'Next-cycle change'],
                     ] as const
-                  ).map(([field, label]) => (
-                    <div key={field}>
-                      <label className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">{label}</label>
-                      <textarea
-                        value={draft[field]}
-                        onChange={(e) => setReflectionDrafts((prev) => ({ ...prev, [o.objectiveId]: { ...draftFor(o.objectiveId), [field]: e.target.value } }))}
-                        className="w-full min-h-[52px] rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                        data-testid={`okr-reflection-${field}-${o.objectiveId}`}
-                      />
-                    </div>
-                  ))}
+                  ).map(([field, label]) => {
+                    // axe `label`: a plain sibling <label> with no
+                    // htmlFor/id link is NOT a programmatic label — it just
+                    // happens to sit visually above the control. id here is
+                    // already unique per field+objective (matches the
+                    // existing data-testid pattern).
+                    const fieldId = `okr-reflection-${field}-${o.objectiveId}`;
+                    return (
+                      <div key={field}>
+                        <label
+                          htmlFor={fieldId}
+                          className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1"
+                        >
+                          {label}
+                        </label>
+                        <textarea
+                          id={fieldId}
+                          value={draft[field]}
+                          onChange={(e) => setReflectionDrafts((prev) => ({ ...prev, [o.objectiveId]: { ...draftFor(o.objectiveId), [field]: e.target.value } }))}
+                          className="w-full min-h-[52px] rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          data-testid={fieldId}
+                        />
+                      </div>
+                    );
+                  })}
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">
+                    <label
+                      htmlFor={`okr-reflection-disposition-${o.objectiveId}`}
+                      className="block text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1"
+                    >
                       {isPolish ? 'Dyspozycja' : 'Disposition'}
                     </label>
                     <select
+                      id={`okr-reflection-disposition-${o.objectiveId}`}
                       value={draft.disposition}
                       onChange={(e) =>
                         setReflectionDrafts((prev) => ({

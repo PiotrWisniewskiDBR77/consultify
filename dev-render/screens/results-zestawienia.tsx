@@ -247,7 +247,12 @@ function buildColumns(): TableColumn[] {
       width: '120px',
       sortable: true,
       render: (row: ZestawienieRow) => (
-        <span className="text-sm text-c-text-muted">{formatDatePl(row.updatedAt)}</span>
+        // axe `color-contrast`: c-text-muted measures ~4.76:1 on plain
+        // c-surface but drops to 4.02:1 once the row is selected
+        // (bg-state-selected tints the background darker) — below 4.5:1.
+        // c-text-secondary clears 6.4:1 on that tint and still reads as
+        // the muted/secondary column next to the primary cells.
+        <span className="text-sm text-c-text-secondary">{formatDatePl(row.updatedAt)}</span>
       ),
     },
   ];
