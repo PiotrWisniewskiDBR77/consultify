@@ -53,6 +53,12 @@ const WYNIK_JSON = arg('wynik-json', '');
 // dostępność mierzymy na dokładnie tym samym, rozwiniętym DOM-ie.
 const ROZWIN_SEKCJE = arg('rozwin-sekcje', '0') === '1';
 const A11Y = arg('a11y', '0') === '1';
+// Dyżur G06 03.09 (nadzorca): opt-in czas osiadania PO rozwinięciu sekcji, PRZED skanem
+// dostępności i zrzutem. Zmierzone na deck-artifact: bloki mają fade-in framer-motion
+// (0,4–0,6 s, AnimatedBlock.tsx), a skan axe startował ~150 ms po ostatnim kliknięciu —
+// tekst w połowie przejścia opacity dawał fałszywy color-contrast (4 węzły, oba motywy).
+// Domyślnie 0, więc historyczne wywołania nie zmieniają zachowania.
+const OSIAD_PO_ROZWINIECIU = Number(arg('osiad-po-rozwinieciu', '0'));
 /**
  * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
  *
@@ -421,6 +427,7 @@ for (const ekran of EKRANY) {
           wynikBrak.push(`zwinięte sekcje: ${sekcjeNadalZwiniete.join(' / ')}`);
         }
       }
+      if (ROZWIN_SEKCJE && OSIAD_PO_ROZWINIECIU > 0) await page.waitForTimeout(OSIAD_PO_ROZWINIECIU);
       let a11yNaruszenia = [];
       if (A11Y) {
         const wynikA11y = await new AxeBuilder({ page }).include('#dev-render-root').analyze();
@@ -571,7 +578,7 @@ if (BEZ_KLIKA_DOMYSLNEGO) {
 if (WYNIK_JSON) {
   if (!path.isAbsolute(WYNIK_JSON)) throw new Error('--wynik-json musi być ścieżką absolutną');
   fs.mkdirSync(path.dirname(WYNIK_JSON), { recursive: true });
-  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, wyniki, pary: wszystkiePary }, null, 2));
+  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, wyniki, pary: wszystkiePary }, null, 2));
   console.log(`Wynik JSON → ${WYNIK_JSON}`);
 }
 

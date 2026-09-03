@@ -87,6 +87,9 @@ for (const mod of MODULY) {
         '--motywy=light,dark',
         '--rozwin-sekcje=1',
         '--a11y=1',
+        // 03.09: osiadanie po rozwinięciu sekcji — bez tego fade-in framer-motion (AnimatedBlock)
+        // daje fałszywy color-contrast (zmierzone: deck-artifact 4 węzły → 0 przy 1500 ms).
+        '--osiad-po-rozwinieciu=1500',
         `--wyjscie=${katalog}`,
         `--wynik-json=${wynik}`,
       ];
