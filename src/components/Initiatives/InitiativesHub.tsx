@@ -109,7 +109,6 @@ import {
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import { CanonicalInitiativeCardWorkspace } from './CanonicalInitiativeCardWorkspace';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
 import {
@@ -765,9 +764,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const handleOpenInitiativeDocument = useCallback(
     (initiative: PortfolioInitiative) => {
-      const desiredSubType = isShowcaseInitiativeId(initiative.id)
-        ? 'showcase'
-        : 'canonical-runtime';
+      // DECYZJA WŁAŚCICIELA 2026-09-03: inicjatywa jest najważniejszym dokumentem systemu i KAŻDA
+      // otwiera zatwierdzony rekord (InitiativeDocumentView, archetyp C·Rekord SPEC-A). Od 13.08
+      // (07bc597420) realne inicjatywy otwierały nieodebrany CanonicalInitiativeCardWorkspace,
+      // a wyjątek z 23.08 (5c6d72066f) zostawiał zatwierdzony widok tylko fiksturze pokazowej —
+      // odbiór stał na przyrządzie, nie na produkcie. Komponent usunięty z repo; bezpiecznik:
+      // tests/unit/initiatives/initiativeRecordCanon.test.ts.
+      const desiredSubType = 'initiative';
       const existingDoc = openDocuments.find(
         (document) => document.id === initiative.id && document.type === 'initiative'
       );
@@ -1692,34 +1695,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
 
       if (activeDoc?.type === 'initiative' || !activeDoc) {
-        if (activeDoc?.subType === 'canonical-runtime') {
-          return (
-            <CanonicalInitiativeCardWorkspace
-              initiativeId={activeDocumentId}
-              onOpenExecution={(executionCaseId, initiativeId) =>
-                navigate(
-                  `/execution?tab=list&mode=initiative&open=${encodeURIComponent(initiativeId)}&executionCaseId=${encodeURIComponent(executionCaseId)}`
-                )
-              }
-              initialCardKey={searchParams.get('cardKey')}
-              initialFindingId={searchParams.get('findingId')}
-              onContextChange={({ cardKey, findingId }) => {
-                const next = new URLSearchParams(searchParams);
-                next.set('cardKey', cardKey);
-                if (findingId) next.set('findingId', findingId);
-                else next.delete('findingId');
-                setSearchParams(next, { replace: true });
-              }}
-              onBack={() => {
-                const next = new URLSearchParams(searchParams);
-                next.delete('cardKey');
-                next.delete('findingId');
-                setSearchParams(next, { replace: true });
-                handleShowList();
-              }}
-            />
-          );
-        }
         return (
           <InitiativeDocumentView
             initiativeId={activeDocumentId}

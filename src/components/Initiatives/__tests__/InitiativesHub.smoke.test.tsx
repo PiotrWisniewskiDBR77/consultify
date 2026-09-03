@@ -106,11 +106,6 @@ vi.mock('../InitiativeDocumentView', () => ({
   InitiativeDocumentView: () => React.createElement('div', { 'data-testid': 'legacy-initiative' }),
 }));
 
-vi.mock('../CanonicalInitiativeCardWorkspace', () => ({
-  CanonicalInitiativeCardWorkspace: () =>
-    React.createElement('div', { 'data-testid': 'canonical-initiative' }),
-}));
-
 vi.mock('@/store/useConversationStore', () => ({
   useConversationStore: (selector: (state: typeof conversationStoreState) => unknown) =>
     selector(conversationStoreState),
@@ -309,14 +304,17 @@ describe('InitiativesHub smoke', () => {
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
   });
 
-  it('opens a runtime-v1 registered deep link in the canonical card', async () => {
+  // Decyzja właściciela 2026-09-03: KAŻDA inicjatywa (także zarejestrowana w runtime-v1)
+  // otwiera zatwierdzony rekord InitiativeDocumentView; osobny „canonical card" usunięty z repo
+  // (bezpiecznik: tests/unit/initiatives/initiativeRecordCanon.test.ts).
+  it('opens a runtime-v1 registered deep link in the approved initiative document', async () => {
     apiGet.mockResolvedValueOnce({ id: 'runtime-1' });
     getInitiative.mockResolvedValueOnce({
       initiative: { id: 'runtime-1', name: 'Registered runtime', status: 'DRAFT' },
     });
     renderHubAt('/initiatives?open=runtime-1&mode=doc');
-    expect(await screen.findByTestId('canonical-initiative')).toBeInTheDocument();
-    expect(screen.queryByTestId('legacy-initiative')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
+    expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
   });
 
   it('fails closed when the runtime-v1 registration read fails unexpectedly', async () => {
