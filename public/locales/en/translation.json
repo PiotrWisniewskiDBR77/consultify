@@ -18251,6 +18251,38 @@
       "unconfirmed": "I don't have confirmation that the “{{action}}” action actually happened — nothing confirmed it. Check manually before assuming it's done.",
       "error": "The “{{action}}” action failed — an error occurred. Nothing was confirmed as done.",
       "refusedNoReason": "I did not perform the “{{action}}” action — the registry refused without giving a reason."
+    },
+    "providerError": {
+      "rateLimit": {
+        "message": "The assistant is handling too many requests right now.",
+        "action": "Please wait a moment and send your message again."
+      },
+      "unavailable": {
+        "message": "The assistant is temporarily unavailable.",
+        "action": "Try again shortly, or switch to a different model."
+      },
+      "config": {
+        "message": "The assistant is not available on this account.",
+        "action": "Please contact your administrator."
+      },
+      "timeout": {
+        "message": "The assistant took too long to answer.",
+        "action": "Try again, or shorten your question."
+      },
+      "interrupted": {
+        "message": "The answer was interrupted before it finished.",
+        "action": "Send the message again to get the full answer."
+      },
+      "empty": {
+        "message": "The assistant returned no answer.",
+        "action": "Try again, or rephrase your question."
+      },
+      "generic": {
+        "message": "The assistant could not complete this request.",
+        "action": "Try again. If it keeps happening, contact your administrator."
+      },
+      "retry": "Try again",
+      "adminDetails": "Details (administrator only)"
     }
   },
   "agentAudit": {

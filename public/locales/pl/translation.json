@@ -19498,6 +19498,38 @@
       "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
       "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",
       "refusedNoReason": "Nie wykonałem akcji „{{action}}” — rejestr odmówił bez podania powodu."
+    },
+    "providerError": {
+      "rateLimit": {
+        "message": "Asystent obsługuje w tej chwili zbyt wiele zapytań.",
+        "action": "Odczekaj chwilę i wyślij wiadomość ponownie."
+      },
+      "unavailable": {
+        "message": "Asystent jest chwilowo niedostępny.",
+        "action": "Spróbuj za moment albo wybierz inny model."
+      },
+      "config": {
+        "message": "Asystent nie jest dostępny na tym koncie.",
+        "action": "Skontaktuj się z administratorem."
+      },
+      "timeout": {
+        "message": "Asystent odpowiadał zbyt długo.",
+        "action": "Spróbuj ponownie albo skróć pytanie."
+      },
+      "interrupted": {
+        "message": "Odpowiedź została przerwana przed końcem.",
+        "action": "Wyślij wiadomość ponownie, żeby dostać całą odpowiedź."
+      },
+      "empty": {
+        "message": "Asystent nie zwrócił odpowiedzi.",
+        "action": "Spróbuj ponownie albo sformułuj pytanie inaczej."
+      },
+      "generic": {
+        "message": "Asystent nie mógł wykonać tego polecenia.",
+        "action": "Spróbuj ponownie. Jeśli problem wraca, skontaktuj się z administratorem."
+      },
+      "retry": "Spróbuj ponownie",
+      "adminDetails": "Szczegóły (tylko administrator)"
     }
   },
   "agentAudit": {
