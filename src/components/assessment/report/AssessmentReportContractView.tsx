@@ -132,7 +132,16 @@ function Matrix({ chapter }: { readonly chapter: AssessmentReportChapter }) {
   const areasWithSkips = chapter.matrix.areas.filter((area) => area.skips.length > 0);
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-c-border-subtle">
+      {/* axe scrollable-region-focusable: at narrower widths (e.g. 1024px) the
+          table's min-w-[480px] genuinely exceeds the chapter column, making
+          this a real horizontally-scrollable region with no keyboard access —
+          tabIndex + role="region" + aria-label fix it without touching scroll. */}
+      <div
+        className="overflow-x-auto rounded-xl border border-c-border-subtle"
+        tabIndex={0}
+        role="region"
+        aria-label={t('assessment.reportView.matrix.regionLabel', 'Axis matrix table — scrolls horizontally')}
+      >
         {/* prettier-ignore */}
         <table className="w-full min-w-[480px] border-collapse text-xs" data-table-canon="§27-exempt-document-matrix">
           <thead className="bg-c-surface-raised text-left text-c-text-muted" data-table-canon="§27-exempt">

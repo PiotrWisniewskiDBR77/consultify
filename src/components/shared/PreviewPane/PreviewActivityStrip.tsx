@@ -51,7 +51,12 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
 
   return (
     <div className="py-1">
-      <div className="flex items-center gap-1.5 mb-2 text-slate-600 dark:text-slate-500">
+      {/* axe color-contrast: dark:text-slate-500 measured 3.75:1 on the dark
+          surface (< 4.5) — dark:text-slate-400 fixes it (6.96:1) on both
+          instances below (header label + per-event timestamp); light theme
+          (text-slate-600 on white, 7.58:1) unaffected. Shared component —
+          fixes every preview pane's activity strip, not just this screen. */}
+      <div className="flex items-center gap-1.5 mb-2 text-slate-600 dark:text-slate-400">
         <Clock size={12} />
         <span className="text-[10px] font-medium uppercase tracking-wider">
           {t('sharedComponents.previewActivityStrip.activity')}
@@ -69,7 +74,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
                 {event.userName ? <span className="font-medium">{event.userName} </span> : null}
                 {event.description}
               </div>
-              <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+              <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
                 {(formatTimestamp ?? formatRelative)(event.timestamp, t)}
               </div>
             </div>

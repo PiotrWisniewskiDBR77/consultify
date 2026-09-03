@@ -8054,7 +8054,8 @@
         "target": "Target level",
         "gap": "Gap",
         "evidence": "Evidence state",
-        "skips": "Skipped questions"
+        "skips": "Skipped questions",
+        "regionLabel": "Axis matrix table — scrolls horizontally"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",
@@ -21882,6 +21883,8 @@
       "moveUp": "Move up",
       "moveDown": "Move down",
       "removeSlide": "Remove slide",
+      "slideTitleLabel": "Slide {{n}} title",
+      "slideTypeLabel": "Slide {{n}} type",
       "contentHints": "Content guidance",
       "contentHintsPlaceholder": "One guidance phrase per line — what this slide should cover (no invented facts). Use \"Refine with AI\" on a new draft to auto-suggest.",
       "keyMessage": "Teza",
@@ -21891,6 +21894,7 @@
       "suggestedVisual": "Sugerowana wizualizacja",
       "suggestedVisualPlaceholder": "E.g. bar chart, priority matrix, timeline.",
       "addSlide": "Add slide",
+      "newSlideTypeLabel": "New slide type",
       "saving": "Saving…",
       "save": "Save template",
       "errLoadTemplates": "Failed to load templates",
@@ -36238,7 +36242,8 @@
       "placeholder": "Write a comment...",
       "sendTitle": "Send comment",
       "send": "Send",
-      "aiEnhanceTitle": "AI helps refine comment"
+      "aiEnhanceTitle": "AI helps refine comment",
+      "deleteComment": "Delete comment"
     },
     "aiFieldEnhancer": {
       "triggerTitle": "AI actions for this field",

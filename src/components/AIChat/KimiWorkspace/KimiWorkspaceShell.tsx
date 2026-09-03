@@ -527,7 +527,11 @@ function ArtifactPreviewPane({
               {t('kimi.generationFailed', 'Generation failed')}
             </p>
             {failureReason && (
-              <p className="text-xs text-danger-600/80 dark:text-danger-400/80 mt-1.5 leading-relaxed">
+              // axe color-contrast: dark:text-danger-400/80 flattened onto
+              // dark:bg-c-surface-raised (#15213b) measures 3.33:1 (< 4.5).
+              // dark:text-danger-300/80 keeps the same translucent weight at
+              // ~5.9:1.
+              <p className="text-xs text-danger-600/80 dark:text-danger-300/80 mt-1.5 leading-relaxed">
                 {failureReason}
               </p>
             )}

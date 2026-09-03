@@ -1310,6 +1310,8 @@
       "moveUp": "Przenieś w górę",
       "moveDown": "Przenieś w dół",
       "removeSlide": "Usuń slajd",
+      "slideTitleLabel": "Tytuł slajdu {{n}}",
+      "slideTypeLabel": "Typ slajdu {{n}}",
       "contentHints": "Wskazówki dot. treści",
       "contentHintsPlaceholder": "Po jednej wskazówce w linii — co powinien zawierać ten slajd (bez zmyślonych faktów). Użyj „Dopracuj z AI” przy nowym szkicu, aby zaproponować je automatycznie.",
       "keyMessage": "Kluczowy przekaz",
@@ -1319,6 +1321,7 @@
       "suggestedVisual": "Sugerowana wizualizacja",
       "suggestedVisualPlaceholder": "Np. wykres słupkowy, macierz priorytetów, oś czasu.",
       "addSlide": "Dodaj slajd",
+      "newSlideTypeLabel": "Typ nowego slajdu",
       "saving": "Zapisywanie…",
       "save": "Zapisz szablon",
       "errLoadTemplates": "Nie udało się wczytać szablonów",
@@ -7392,7 +7395,8 @@
         "target": "Poziom docelowy",
         "gap": "Luka",
         "evidence": "Stan dowodów",
-        "skips": "Pominięcia"
+        "skips": "Pominięcia",
+        "regionLabel": "Tabela macierzy osi — przewijana poziomo"
       },
       "evidence": {
         "evidenced": "Potwierdzono dowodami",
@@ -38849,7 +38853,8 @@
       "placeholder": "Napisz komentarz...",
       "sendTitle": "Wyślij komentarz",
       "send": "Wyślij",
-      "aiEnhanceTitle": "AI pomoże dopracować komentarz"
+      "aiEnhanceTitle": "AI pomoże dopracować komentarz",
+      "deleteComment": "Usuń komentarz"
     },
     "aiFieldEnhancer": {
       "triggerTitle": "Akcje AI dla tego pola",

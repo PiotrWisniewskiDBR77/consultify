@@ -97,9 +97,15 @@ export const OrgSectionCard: React.FC<OrgSectionCardProps> = ({
     >
       <header className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-3">
         {Icon && <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-c-text-muted" />}
-        <h3 id={`org-card-${id}`} className="flex-1 text-[13px] font-semibold text-c-text">
+        {/* axe heading-order: this card is a direct subsection of the page's
+            own <h1> ("Organizacja", from OrganizationScreenShell) — every
+            screen in the redesign family (9 screens) stacks several
+            OrgSectionCard instances directly under that h1 with nothing at
+            h2 in between, so <h3> here skipped a level everywhere it's used.
+            <h2> is the semantically correct level for these cards. */}
+        <h2 id={`org-card-${id}`} className="flex-1 text-[13px] font-semibold text-c-text">
           {title}
-        </h3>
+        </h2>
         {status && <OrgStatusChip tone={status.tone}>{status.label}</OrgStatusChip>}
       </header>
       <div className="p-4">

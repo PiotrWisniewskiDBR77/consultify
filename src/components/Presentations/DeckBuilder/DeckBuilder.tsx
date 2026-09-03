@@ -1684,7 +1684,13 @@ export const DeckBuilder: React.FC = () => {
                     {t('presentations.builder.saving', 'Saving…')}
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  // axe color-contrast: emerald-600 (#388A22, custom "HBS Green"
+                  // scale — tailwind.config.js) measures 4.35:1 on white at this
+                  // 11px size, below the 4.5:1 floor. emerald-700 (6.93:1) fixes
+                  // it locally; dark:emerald-400 already passes (8.89:1), left
+                  // as-is. Scoped to this "Saved" indicator only — emerald-600
+                  // has ~200 other call sites out of this dyżur's scope.
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                     <Check size={11} />
                     {t('presentations.builder.saved', 'Saved')}
                   </span>
@@ -1705,7 +1711,8 @@ export const DeckBuilder: React.FC = () => {
                     {t('presentations.builder.saving', 'Saving…')}
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  // axe color-contrast: see identical fix above (presenceSlot).
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                     <Check size={11} />
                     {t('presentations.builder.saved', 'Saved')}
                   </span>

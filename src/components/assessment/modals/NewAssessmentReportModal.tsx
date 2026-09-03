@@ -111,10 +111,16 @@ export function NewAssessmentReportModal(props: {
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+            {/* axe select-name: the label wasn't associated (no htmlFor/id,
+                not wrapping the select) — htmlFor pairing fixes it. */}
+            <label
+              htmlFor="new-assessment-report-assessment-select"
+              className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2"
+            >
               {t(`${NS}.assessment`, 'Assessment')}
             </label>
             <select
+              id="new-assessment-report-assessment-select"
               value={assessmentId}
               onChange={(e) => setAssessmentId(e.target.value)}
               className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
@@ -156,8 +162,11 @@ export function NewAssessmentReportModal(props: {
                   </div>
                 ) : null}
               </div>
+              {/* axe color-contrast: text-slate-500 on bg-slate-100 measures 4.34:1
+                  (< 4.5) — slate-600 fixes it (6.92:1); dark:slate-400 on
+                  dark:bg-navy-800 already passes (6.48:1), left as-is. */}
               {lockTemplate ? (
-                <span className="shrink-0 h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-800 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span className="shrink-0 h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-800 text-xs font-medium text-slate-600 dark:text-slate-400">
                   {t(`${NS}.fromLibrary`, 'Z Biblioteki')}
                 </span>
               ) : (
