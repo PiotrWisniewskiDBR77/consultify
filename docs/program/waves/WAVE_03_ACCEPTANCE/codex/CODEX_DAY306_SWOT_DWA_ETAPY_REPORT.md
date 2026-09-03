@@ -13,3 +13,15 @@ Korekta tezy instrukcji: spośród 19 paczek 14 ma pięć faz, jedna osiem, czte
 ## R3 — CZĘŚCIOWE
 
 Jedna flaga `VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES` jest fail-closed i domyślnie OFF. OFF zwraca ten sam obiekt pięciofazowy; ON układa `recommendations` przed `outputs` i `review` po nim oraz dodaje po jednej bramie. Testy flagi 3/3. Zmiana dotyczy packa/rejestru; realny store sesji nadal ma pięć kroków, więc nie ogłaszam pełnej budowy runtime.
+
+## STOP — R4
+
+Rodzaj: MERYTORYCZNY  
+Powód: pack ma siedem faz przy ON, ale produkcyjny store sesji nadal ma pięć kroków, więc realny dowód siedmioetapowego przejścia i wznowienia byłby fałszywy.  
+Licencja, którą sprawdziłem: R4 wymaga realnej bazy 6310, zimnego odczytu i wznawialności; `tests/e2e/tools/swot-real-pg-resume.spec.ts` jest tylko do odczytu.  
+Dowód: test flagi dowodzi wyłącznie deskryptora; komentarz i test rejestru wskazują runtime IDs `mission,input,swot,insights,outputs`.  
+Co dostarczyłem ZAMIAST zmiany: lokalny PostgreSQL po pełnych migracjach (drugi przebieg 0), prototyp deskryptora i precyzyjna granica brakującej integracji store.  
+Co zrobiłbym, gdyby zapadła decyzja X: rozszerzył model stanu sesji addytywnie, następnie dopisał osobny test RealPG przez ApiGateway i zimny klient.  
+Rekomendacja dla nadzorcy: osobno licencjonować zmianę runtime/store; nie uznawać tej gałęzi za dowód wznawialności siedmiu kroków.  
+Stan: zacommitowano częściowo w `b65776b7e1`.  
+Czy kontynuowałem pozostałe pozycje: TAK.
