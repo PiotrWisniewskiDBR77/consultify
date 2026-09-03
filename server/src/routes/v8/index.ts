@@ -55,6 +55,8 @@ import teresaRoutes from './teresa.routes.js';
 import transformationCaseRoutes from './transformation-cases.routes.js';
 
 const v8Router = Router();
+export const FINANCE_MODULE_PATH = /^\/finance(?:-|\/|$)/;
+const financeModuleGate = createModuleGate('MODULE_ECONOMICS');
 
 v8Router.use(verifyToken);
 v8Router.use(requireV8OrgContext);
@@ -115,6 +117,13 @@ v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
 v8Router.use('/case-workspace', createModuleGate('MODULE_CASE_WORKSPACE'), caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', requireCanonicalExecutionWriter, executionControlRoutes);
+// Dyżur 288 (2026-09-03): wszystkie prefiksy Finance należą do zamkniętego
+// MODULE_ECONOMICS. verifyToken stoi na całym v8Router wyżej, więc bramka
+// widzi realną rolę i zachowuje dostęp OWNER/ADMIN.
+v8Router.use((req, res, next) => {
+  if (!FINANCE_MODULE_PATH.test(req.path)) return next();
+  return financeModuleGate(req, res, next);
+});
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
 // BUG-02/05: FE woła /api/v8/finance/value/* — alias na financeValueRoutes (zgubiony w rebase 2026-06-25, przywrócony).
 v8Router.use('/finance/value', financeValueRoutes);

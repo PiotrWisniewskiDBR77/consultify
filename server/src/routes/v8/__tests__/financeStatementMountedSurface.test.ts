@@ -49,7 +49,11 @@ describe('mounted Finance Statement surface before the global V8 gate', () => {
     const observed: string[] = [];
     const pass = (name: string) => (req: any, _res: any, next: any) => {
       observed.push(name);
-      req.user = { id: 'user-1', organizationId: 'org-v8-disabled' };
+      // Dyżur 288-domknięcie (2026-09-03): ten stub wchodzi przez realny
+      // createModuleGate('MODULE_ECONOMICS'), który czyta req.user.role.
+      // Test broni allowlisty pre-gate (isMountedFinanceStatementSurface),
+      // nie samej bramki modułu — stub dostaje rolę OWNER, żeby ją przejść.
+      req.user = { id: 'user-1', organizationId: 'org-v8-disabled', role: 'OWNER' };
       req.organizationId = 'org-v8-disabled';
       req.userId = 'user-1';
       next();
@@ -120,7 +124,15 @@ describe('mounted Finance Statement surface before the global V8 gate', () => {
     database.run.mockResolvedValue({ changes: 0 });
     const identity = (req: any, _res: any, next: any) => {
       const userId = String(req.headers['x-test-user'] || '');
-      req.user = { id: userId, organizationId: 'org-v8-disabled' };
+      // Dyżur 288-domknięcie (2026-09-03): identity przechodzi przez realny
+      // createModuleGate('MODULE_ECONOMICS'), który czyta req.user.role z
+      // tokena (mirror produkcji: JWT.role, nie organization_members.role).
+      // Test broni innej, niższej ściany — realnego membership/editor gate
+      // wewnątrz financeRoutes — więc oba stuby dostają rolę ADMIN na
+      // poziomie tokena, żeby przejść bramkę modułu i dotrzeć do ściany,
+      // której DB-mock niżej (organization_members) różnicuje na
+      // MEMBER/OWNER per organizacja.
+      req.user = { id: userId, organizationId: 'org-v8-disabled', role: 'ADMIN' };
       req.userId = userId;
       req.organizationId = 'org-v8-disabled';
       req.v8Context = {
