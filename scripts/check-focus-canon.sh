@@ -89,6 +89,30 @@
 # list-canon/artefakt), plus komentarze `#` na początku (ignorowane przez
 # baseline_for_focus i przez pętlę --update).
 #
+# ── 2026-09-03 — naprawa dyżuru 287 (odbiór C): VIOLATION_RE zwężony przy
+#    okazju dodania `crimson` stracił BEZ PREFIKSU `focus:`/`focus-visible:`
+#    ────────────────────────────────────────────────────────────────────────
+#
+# Dyżur 287 zmienił VIOLATION_RE z 'ring-primary-|outline-primary-|
+# ring-offset-primary-' na 'focus(-visible)?:(ring|outline)-(primary|
+# crimson)-|ring-offset-(primary|crimson)-' — jednocześnie ROZSZERZenie
+# (nazwa `crimson`) i ZWĘŻENIE (wymóg prefiksu focus:/focus-visible: dla
+# ring-/outline-). Odbiór adwersaryjny zmierzył skutek zwężenia: 39
+# wystąpień `ring-primary-*` BEZ prefiksu focus: (pierścienie stanu
+# zaznaczenia, nie fokusu — np. `ChatHistorySidebar.tsx:298 ring-1
+# ring-primary-400/50`) wypadło spod bramki po cichu, bez odnotowania w
+# raporcie liczbą. Merytorycznie odróżnienie "pierścień fokusu" od
+# "pierścień zaznaczenia" jest zasadne, ale kanon TRIADA_KANON.md:167 mówi
+# ogólnie "crimson nigdy jako fokus ANI jako pierścień akcentu" — a zwężenie
+# zdjęło z bramki KAŻDY goły `ring-primary-*`, nie tylko te bezpiecznie
+# odróżnione. NAPRAWA: VIOLATION_RE wraca do łapania GOŁEGO
+# `ring-(primary|crimson)-|outline-(primary|crimson)-|
+# ring-offset-(primary|crimson)-` (bez wymogu prefiksu focus:) — dokładnie
+# jak przed dyżurem 287, plus nazwa `crimson` (zero użyć w src/ w chwili tej
+# naprawy, więc rozszerzenie jest tylko na przyszłość). Wystąpienia, które są
+# faktycznie pierścieniami zaznaczenia (nie fokusu) i świadomie zostają jako
+# dług, są zapisane W BASELINE z nazwą pliku — nie przez zwężanie wzorca.
+#
 # Czego ten skrypt NADAL nie łapie (uczciwie, patrz --help):
 #   - dynamicznie budowanych klas, których heurystyka nie rozpozna (np. mapa
 #     obiektowa `{focus: 'ring-primary-500'}[state]`, klasy budowane w
@@ -198,7 +222,7 @@ list_untracked_scope_files() {
 
 INDEX_CSS="src/index.css"
 
-VIOLATION_RE='focus(-visible)?:(ring|outline)-(primary|crimson)-|ring-offset-(primary|crimson)-'
+VIOLATION_RE='ring-(primary|crimson)-|outline-(primary|crimson)-|ring-offset-(primary|crimson)-'
 CORRECT_RE='ring-c-focus|outline-c-focus|--c-focus'
 
 # K-39: heurystyka DRUGORZĘDNA (ostrzeżenie, nie bramka) na dynamiczną

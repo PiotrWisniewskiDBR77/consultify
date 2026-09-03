@@ -303,7 +303,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                     'aiChat.projectBrief.placeholder',
                     'e.g. We are a B2B SaaS in fintech. Be concise, cite sources, prefer EU regulations…'
                   )}
-                  className="mt-2 w-full resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  className="mt-2 w-full resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-focus"
                 />
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {instructionsSaved && (
@@ -381,7 +381,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('aiChat.searchFoldersPlaceholder', 'Search folders...')}
-              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-focus transition-all"
             />
           </div>
 
@@ -410,7 +410,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                       }
                     }}
                     placeholder={t('aiChat.folderName', 'Folder name...')}
-                    className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                    className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-focus transition-all"
                     autoFocus
                   />
                   <button

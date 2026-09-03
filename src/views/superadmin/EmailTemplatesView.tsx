@@ -423,7 +423,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   aria-label="Search templates"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/40"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-focus"
                 />
               </div>
             </div>
@@ -433,7 +433,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as EmailTemplateStatus | '')}
               aria-label="Filter by status"
-              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <option value="">{t('superadmin.emailTemplates.filters.allStatuses')}</option>
               <option value="DRAFT">{t('superadmin.emailTemplates.status.draft')}</option>
@@ -446,7 +446,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filter by category"
-              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <option value="">{t('superadmin.emailTemplates.filters.allCategories')}</option>
               {categories.map((cat) => (

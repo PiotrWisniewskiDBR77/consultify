@@ -340,7 +340,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, from: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 />
               </div>
               <div>
@@ -354,7 +354,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, to: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 />
               </div>
             </div>
@@ -403,7 +403,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               value={filters.language}
               onChange={(e) => onChange({ ...filters, language: e.target.value })}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <option value="">All languages</option>
               {languages.map((lang) => (

@@ -344,7 +344,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
               onChange={(e) => setMissionComment(e.target.value)}
               rows={6}
               placeholder={t('discoveryToolsMain.toolContextPanel.workingNotePlaceholder')}
-              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             />
             <button
               onClick={onOpenChat}
