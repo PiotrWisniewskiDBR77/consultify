@@ -6,11 +6,11 @@
 | 04_ASSESSMENT | 17 | 136 | **0** | 0 | — | 0 | 8 | 0 | 0 | 0 | 0 | — |
 | 05_INITIATIVES | 6 | 48 | **0** | 0 | — | 0 | 0 | 0 | 0 | 0 | 0 | — |
 | 06_EXECUTION | 8 | 64 | **2** | 10 | color-contrast×10 | 0 | 6 | 0 | 0 | 0 | 0 | — |
-| 07_MY_WORK_AGENT | 40 | 320 | **2** | 6 | color-contrast×6 | 0 | 0 | 0 | 0 | 0 | 1 | — |
+| 07_MY_WORK_AGENT | 40 | 320 | **2** | 6 | color-contrast×6 | 0 | 0 | 0 | 0 | 0 | 0 | — |
 | 08_MEETINGS | 2 | 16 | **1** | 4 | color-contrast×4 | 0 | 1 | 0 | 0 | 0 | 0 | — |
 | 09_RESULTS | 19 | 152 | **7** | 20 | color-contrast×20 | 0 | 3 | 0 | 0 | 0 | 0 | — |
 | 10_FINANCE | 13 | 104 | **1** | 2 | color-contrast×2 | 0 | 2 | 0 | 0 | 0 | 0 | — |
-| 11_MATERIALS | 35 | 280 | **2** | 4 | color-contrast×4 | 0 | 3 | 0 | 1 | 0 | 0 | — |
+| 11_MATERIALS | 35 | 280 | **2** | 4 | color-contrast×4 | 0 | 3 | 0 | 0 | 0 | 0 | — |
 | 12_AUDITS | 4 | 32 | **1** | 4 | color-contrast×4 | 0 | 3 | 0 | 0 | 0 | 0 | — |
 | 13_CHAT | 7 | 56 | **1** | 8 | color-contrast×8 | 0 | 1 | 0 | 0 | 0 | 0 | — |
 | 14_ADMIN | 42 | 336 | **4** | 24 | color-contrast×24 | 0 | 0 | 0 | 0 | 0 | 0 | — |
@@ -26,7 +26,6 @@
 
 ### 07_MY_WORK_AGENT — ekrany z długiem
 - `mywork-inbox`: a11y 4/8 kadrów (color-contrast×4)
-- `notebook-quick-capture`: a11y 0/8 kadrów; ★ BEZ TEKSTU (<40 znaków)
 - `vault-sejf-wnetrze`: a11y 2/8 kadrów (color-contrast×2)
 
 ### 08_MEETINGS — ekrany z długiem
@@ -47,7 +46,6 @@
 ### 11_MATERIALS — ekrany z długiem
 - `materialy-draft-template-visibledraft-fix`: a11y 2/8 kadrów (color-contrast×2)
 - `materialy-template-library-slice`: a11y 2/8 kadrów (color-contrast×2)
-- `report-artifact`: a11y 0/8 kadrów; ★ PL=EN (tekst identyczny w obu językach)
 
 ### 12_AUDITS — ekrany z długiem
 - `audyty-piec-powierzchni`: a11y 4/8 kadrów (color-contrast×4)

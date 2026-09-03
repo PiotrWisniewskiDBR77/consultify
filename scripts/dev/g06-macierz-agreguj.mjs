@@ -29,8 +29,9 @@ const SZUM_HOSTA = new Set(['landmark-one-main', 'page-has-heading-one', 'region
 const WYJATKI = (() => {
   try {
     return JSON.parse(fs.readFileSync(new URL('./g06-macierz-wyjatki.json', import.meta.url), 'utf8'));
-  } catch {
-    return { plRownaEn: {}, brakTekstu: {} };
+  } catch (e) {
+    // Brak pomiaru nie jest wynikiem: uszkodzony plik wyjątków ma zatrzymać agregację, nie cicho zniknąć.
+    throw new Error('g06-macierz-wyjatki.json: ' + e.message);
   }
 })();
 const KOMBINACJE = ['pl-1440', 'pl-1024', 'en-1440', 'en-1024'];
