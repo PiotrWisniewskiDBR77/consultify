@@ -1,0 +1,191 @@
+
+ RUN  v4.1.8 /private/tmp/cx-day290-g19-regresja/server
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:05:425 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-03 20:42:05:425 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-03 20:42:05:425 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-03 20:42:05:425 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-03 20:42:05:425 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:05:425 [31merror[39m: [31m[Config] Configuration validation failed:[39m
+2026-09-03 20:42:05:425 [31merror[39m: [31m  - JWT_SECRET: JWT_SECRET must be at least 32 characters in production[39m
+2026-09-03 20:42:05:425 [33mwarn[39m: [33m[Config] Using defaults for invalid values. Fix configuration errors before deploying to production.[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:08:428 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:08:428 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"cx290","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6294/cx290 host=127.0.0.1 port=6294 database=cx290 source=app:pool-config
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:11:4211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-09-03T18:42:11.361Z"}
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:11:4211 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[2026-09-03T18:42:12.179Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:12:4212 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:15:4215 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:19:4219 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-03 20:42:19:4219 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-03 20:42:19:4219 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-03 20:42:19:4219 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:21:4221 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:22:4222 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-09-03 20:42:22:4222 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts
+2026-09-03 20:42:29:4229 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/cx-day290-g19-regresja/server/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-03 20:42:36:4236 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+ ✓ src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > uses PostgreSQL and the exclusively assigned HTTP port 7ms
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:36:4236 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[AIContextBuilder] buildContext user=29000000-0000-4000-8000-000000000011 org=29000000-0000-4000-8000-000000000001 proj=null focus=all[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[AIContextBuilder] Context built in 277ms (5886 chars)[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[AIContextBuilder] buildContext user=29000000-0000-4000-8000-000000000012 org=29000000-0000-4000-8000-000000000002 proj=null focus=all[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [37mdebug[39m: [37m[AIContextBuilder] Context built in 46ms (5890 chars)[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [32minfo[39m: [32m[Deprecation] First call to legacy route: GET /api/help/playbooks → migrate to /api/v8/help[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [32minfo[39m: [32m[V8:AIOperatingEnv] Environment status: healthy=true, degraded=0, activeRuns=0[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [32minfo[39m: [32m[V8:AIOperatingEnv] Environment status: healthy=true, degraded=0, activeRuns=0[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+2026-09-03 20:42:37:4237 [32minfo[39m: [32m[P08-TeresaCopilot] Teresa DB tables ensured[39m
+
+stdout | src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers
+DAY290_HTTP_FLIGHT=[{"file":"adminP32.routes.ts","method":"GET","path":"/api/admin/people","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"ai.routes.ts","method":"GET","path":"/api/ai/context","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"auth.routes.ts","method":"GET","path":"/api/auth/sessions","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"help.routes.ts","method":"GET","path":"/api/help/playbooks","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"meeting.routes.ts","method":"GET","path":"/api/meeting","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"mfa.routes.ts","method":"GET","path":"/api/mfa/status","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"pmo/decisions.routes.ts","method":"GET","path":"/api/decisions","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"pmo/initiativesExecutionRuntime.routes.ts","method":"GET","path":"/api/initiatives/runtime-v1/execution-cases","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"security.routes.ts","method":"GET","path":"/api/security/settings","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"v8/chat.routes.ts","method":"GET","path":"/api/v8/chat/snapshots?conversationId=day290-missing","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"v8/index.ts","method":"GET","path":"/api/v8/health","ownerStatus":200,"foreignStatus":200,"foreignLeaksOwner":false},{"file":"v8/teresa.routes.ts","method":"GET","path":"/api/v8/teresa/proposal/day290-missing","ownerStatus":404,"foreignStatus":404,"foreignLeaksOwner":false}]
+
+ ✓ src/routes/__tests__/day290-g19-http-flight.pg.test.ts > Day 290 G19 — HTTP flight over 12 changed route files > records OWNER and foreign-organization responses without leaking owner identifiers 831ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  20:42:03
+   Duration  34.45s (transform 24.52s, setup 0ms, import 32.27s, tests 924ms, environment 0ms)
+
