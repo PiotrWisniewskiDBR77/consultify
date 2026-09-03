@@ -85,7 +85,7 @@ export interface RolloutRegisterEditModalProps {
 const FIELD_LABEL =
   'block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1';
 const SELECT_CLASS =
-  'w-full rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-primary-500';
+  'w-full rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus-visible:ring-1 focus-visible:ring-c-focus';
 
 /**
  * The modal is keyed by `target.row.id` from RolloutTab so React remounts it for

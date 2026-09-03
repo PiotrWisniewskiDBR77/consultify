@@ -193,14 +193,14 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('common.search', 'Search…')}
-            className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
+            className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>
 
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="ALL">{t('common.all', 'All')}</option>
           <option value="critical">{t('common.priority.critical', 'Critical')}</option>
@@ -317,7 +317,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                             <select
                               value={draft.status}
                               onChange={(e) => updateDraft(item.id, { status: e.target.value })}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
                               <option value="todo">todo</option>
                               <option value="in_progress">in_progress</option>
@@ -338,7 +338,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 'feedback.backlog.assigneePlaceholder',
                                 'Leave empty to unassign'
                               )}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             />
                           </label>
                           <label className="space-y-1 md:col-span-3">
@@ -353,7 +353,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 'Optional note saved on the task'
                               )}
                               rows={2}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             />
                           </label>
                           <div className="md:col-span-3 flex justify-end">

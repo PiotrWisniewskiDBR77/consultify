@@ -194,7 +194,7 @@ const PeriodSelector: React.FC<{
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Period)}
-        className="appearance-none bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-1.5 pr-8 text-sm font-medium text-navy-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="appearance-none bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-1.5 pr-8 text-sm font-medium text-navy-900 dark:text-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         {periods.map((period) => (
           <option key={period.id} value={period.id}>

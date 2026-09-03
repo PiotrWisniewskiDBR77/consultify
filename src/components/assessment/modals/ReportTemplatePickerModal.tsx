@@ -252,7 +252,7 @@ export function ReportTemplatePickerModal(props: {
                 onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
                 className={cn(
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
-                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-primary-400',
+                  'bg-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus',
                   recipientFilter !== 'all'
                     ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
@@ -274,7 +274,7 @@ export function ReportTemplatePickerModal(props: {
                 disabled={Boolean(lockFramework && framework)}
                 className={cn(
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
-                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-primary-400',
+                  'bg-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus',
                   frameworkFilter !== 'all'
                     ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'

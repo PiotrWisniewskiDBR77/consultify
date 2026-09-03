@@ -749,7 +749,7 @@ function EditModelModal({
   useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: nameInputRef });
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
   const dirty =
     name.trim() !== (model.name ?? '').trim() ||

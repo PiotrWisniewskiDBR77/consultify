@@ -92,7 +92,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   return (
     <button
-      className={`${paddingClass} rounded-token-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600/40 disabled:opacity-50 disabled:cursor-not-allowed ${variantClass} ${className}`
+      className={`${paddingClass} rounded-token-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50 disabled:cursor-not-allowed ${variantClass} ${className}`
         .trim()
         .replace(/\s+/g, ' ')}
       disabled={disabled || loading}

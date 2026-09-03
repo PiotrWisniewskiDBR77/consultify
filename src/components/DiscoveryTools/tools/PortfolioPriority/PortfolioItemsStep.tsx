@@ -96,14 +96,14 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t('discoveryToolsTools.portfolioPriority.itemsStep.namePlaceholder')}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t('discoveryToolsTools.portfolioPriority.itemsStep.descPlaceholder')}
           rows={2}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus resize-none"
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-xs text-slate-500">

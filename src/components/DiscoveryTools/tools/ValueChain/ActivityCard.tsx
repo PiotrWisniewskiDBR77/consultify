@@ -251,7 +251,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             value={newDriver}
             onChange={(e) => setNewDriver(e.target.value)}
             placeholder={t('discoveryToolsTools.valueChain.card.addDriverPlaceholder')}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             onKeyDown={(e) => e.key === 'Enter' && handleAddDriver()}
           />
           <button

@@ -234,7 +234,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="flex-1 px-2 py-1 bg-c-surface-raised border border-slate-600 rounded text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="flex-1 px-2 py-1 bg-c-surface-raised border border-slate-600 rounded text-c-text text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 autoFocus
               />
               <div className="flex gap-1">
@@ -380,7 +380,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Category name..."
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             </div>
             <div>
@@ -390,7 +390,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional description..."
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             </div>
           </div>
