@@ -1,6 +1,6 @@
 # CODEX DAY 311 — crimson w Czacie
 
-Stan roboczy: R1 wykonane; raport będzie uzupełniany po każdej pozycji.
+Stan roboczy: R1–R4 wykonane; R4 ma wynik CZĘŚCIOWE z powodu niedostatecznego pokrycia kadru.
 
 ## §0 — baza i marker
 
@@ -42,11 +42,35 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 W tym samym mianowniku co R1 sklasyfikowano 262 dopasowane linie: 6 jako semantyka krytyczna, 244 jako CTA lub stan aktywny i 12 jako pierścień fokusu/pokrycie z dyżurem 287. Pełna tabela plik · linia · PRZED · PO znajduje się w `REJESTR_CRIMSON_CZAT_20260903.md`. Wpisy fokusu pozostają poza zmianami R3.
 
-## R3–R6
+## R3 — neutralizacja
+
+W 58 plikach `src/components/AIChat/**` zamieniono 247 linii klas wizualnych na kanoniczne tokeny `c-surface-*`, `c-border`, `c-text-*` i `c-focus`. Semantyczna czerwień błędu/blokady pozostała bez zmiany. Wszystkie 58 dotkniętych plików przeszły punktowy esbuild. Cztery pierścienie fokusu, które początkowo wróciły do starego `primary-*`, domknięto tokenem `c-focus`; jest to jawne pokrycie z dyżurem 287, nie drugi kontrakt fokusu.
+
+Commity R3: `8dbf73bf52`, `993814c08b`.
+
+## R4 — zrzuty PRZED/PO
+
+Kanoniczne narzędzie wygenerowało 32 PNG: osiem ekranów, dwa motywy i dwie fazy. Każdy plik został obejrzany. Dwanaście par jest bajtowo identycznych. Cztery pary mają różne bajty (`chat-split-teresa-right`, `teresa-chipy-sugestii`, `chat-blad-ai` w obu motywach), lecz inspekcja nie wykazała widocznej różnicy w objętych kadrach; różnica jest zgodna z dynamicznym stanem renderu, a nie dowodem przemalowania.
+
+| ekran | light | dark | ocena |
+|---|---|---|---|
+| `canvas-kebab-restructure` | brak widocznej różnicy | brak widocznej różnicy | kadr nie dociera do zmienionych stanów |
+| `canvas-new-doc` | brak widocznej różnicy | brak widocznej różnicy | kadr nie dociera do zmienionych stanów |
+| `canvas-toolbar-md-history` | brak widocznej różnicy | brak widocznej różnicy | kadr nie dociera do zmienionych stanów |
+| `chat-signals-feed` | brak widocznej różnicy | brak widocznej różnicy | zachowana semantyczna czerwień krytyczna; brak dowodu neutralizacji CTA |
+| `chat-split-teresa-right` | brak widocznej różnicy | brak widocznej różnicy | 29 błędów konsoli; kadr niewystarczający |
+| `teresa-chipy-sugestii` | brak widocznej różnicy | brak widocznej różnicy | kadr niewystarczający |
+| `teresa-confirm-chip` | brak widocznej różnicy | brak widocznej różnicy | kontroler kadru OK, ale brak ekspozycji zmienionego stanu |
+| `chat-blad-ai` | brak widocznej różnicy | brak widocznej różnicy | zachowany czerwony stan błędu; 19 błędów konsoli; brak dowodu neutralizacji CTA |
+
+Kontroler narzędzia oznaczył tylko 2/16 kadrów w każdej fazie jako `OK`; pozostałe 14/16 jako `BRAK` z powodu zwiniętych sekcji. Dlatego wynik R4 jest **CZĘŚCIOWE**: pliki istnieją i potwierdzają zachowanie semantycznej czerwieni, ale nie stanowią wystarczającego dowodu akceptacyjnego dla neutralizacji.
+
+## R5–R6
 
 Do uzupełnienia.
 
 ## Twierdzenia niezweryfikowane
 
-- Zrzuty PRZED/PO, zamiany, esbuildy i bramki PO nie są jeszcze wykonane.
+- Akceptacja wizualna neutralizacji pozostaje NIEPOTWIERDZONA: kadry nie eksponują zmienionych stanów.
+- Bramki PO i testy komponentowe R5 nie są jeszcze wykonane.
 - Gałąź NIE jest scalona i czeka na akcept właściciela na zrzutach.
