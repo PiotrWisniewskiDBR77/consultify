@@ -84,3 +84,27 @@ describe('martwe komponenty odbioru 2026-09-03 runda 2 nie wracają', () => {
     ).toBe(false);
   });
 });
+
+/**
+ * Decyzja właściciela A5 (03.09 wieczór, `docs/program/waves/WAVE_03_ACCEPTANCE/
+ * G20_BLOKERY_P0P1_20260903.md` T2): katalog `NotificationSettingsV2/` (rodzina
+ * „Obserwowane" — 8 plików, w tym `WatchingTab`) nie miał ani jednego importera
+ * spoza siebie; Ustawienia renderują v1 (`src/views/SettingsView.tsx:433` →
+ * `NotificationSettings`). Hook `useUserNotificationPreferences.tsx` wołał
+ * `/api/settings/watchers`, której serwer nie ma, i był używany wyłącznie z
+ * tego katalogu. Usunięte razem z hookiem i 4 osieroconymi kluczami i18n
+ * (`settings.notifications.watchNotify*`).
+ */
+describe('NotificationSettingsV2 (decyzja A5, 03.09 wieczór) nie wraca', () => {
+  it('katalog src/components/settings/NotificationSettingsV2/ nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/settings/NotificationSettingsV2'))
+    ).toBe(false);
+  });
+
+  it('hook src/hooks/useUserNotificationPreferences.tsx nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/hooks/useUserNotificationPreferences.tsx'))
+    ).toBe(false);
+  });
+});
