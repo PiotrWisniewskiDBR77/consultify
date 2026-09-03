@@ -43,13 +43,19 @@
   font-weight: 700;
 }
 
-/* axe `color-contrast`: FullCalendar's OWN default opacity na <td
-   class="fc-day-other"> (dni sasiedniego miesiaca) dociera do potomkow przez
-   kompozycje — opacity:1 na samym <a> (potomku) NIE kasuje opacity rodzica.
-   Zerujemy opacity na wlascicielu klasy (<td>) i nadajemy jawny, juz-zgodny
-   kolor numerowi dnia (bez zmiany semantyki „inny miesiac" — tlo/obramowanie
-   fc-day-other zostaja bez zmian). */
+/* axe `color-contrast`: dni sasiedniego miesiaca. ★ SPROSTOWANIE pierwszej
+   proby (dyzur G06, runda 1): opacity NIE siedzi na <td class="fc-day-other">,
+   tylko na JEGO DZIECKU — FullCalendar ma wlasna regule
+   `.fc-day-other .fc-daygrid-day-top { opacity: 0.3 }`. `opacity: 1` na <td>
+   nic nie zmienialo (zmierzone PO pierwszej rundzie: wypadkowa nadal
+   #d1d5dc/1,47:1 na bialym). Zerujemy opacity na WLASCIWYM elemencie i
+   nadajemy jawny, juz-zgodny kolor numerowi dnia — semantyka „inny miesiac"
+   zostaje niesiona przez sam kolor (szary wobec ciemniejszego numeru dnia
+   biezacego miesiaca), a nie przez przezroczystosc. */
 .fc-consultify .fc-day-other {
+  opacity: 1;
+}
+.fc-consultify .fc-day-other .fc-daygrid-day-top {
   opacity: 1;
 }
 .fc-consultify .fc-day-other .fc-daygrid-day-number {
@@ -100,9 +106,13 @@
   height: 48px;
 }
 
+/* axe `color-contrast` (runda 2): etykiety godzin widoku dziennego/tygodniowego
+   — #64748b na ciemnym tle #0a0f1e dawalo 4,01:1. #94a3b8 (ta sama wartosc co
+   naglowek dni tygodnia wyzej) daje 6,96:1. Motyw jasny ma wlasne nadpisanie
+   (#475569) nizej i zostaje bez zmian. */
 .fc-consultify .fc-timegrid-slot-label {
   font-size: 10px;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .fc-consultify .fc-timegrid-now-indicator-line {

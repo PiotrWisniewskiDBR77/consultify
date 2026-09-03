@@ -29,6 +29,27 @@ import { coerceValue } from './PropertyRegistry';
 import type { ColumnDef, ColumnType } from './tableTypes';
 import { evaluateFormula, SELECT_COLORS } from './tableTypes';
 
+/**
+ * Staly, ciemny atrament plakietek wyboru w tabeli pomyslow. Dobrany tak, by
+ * z tlem rozjasnionym do >=65% bieli dawac >=7:1 nawet dla czarnego wejscia
+ * (patrz komentarz w `SelectCell`).
+ */
+const BADGE_INK = '#0f172a';
+
+/**
+ * Czy wartosc jest kolorem, ktory przegladarka przyjmie w `color-mix()`.
+ * `optionColors` bywa wypelnione nazwa palety ('slate'), a nie kolorem CSS —
+ * wtedy cala deklaracja tla jest odrzucana i plakietka zostaje przezroczysta.
+ * `var(--...)` przepuszczamy wprost: `CSS.supports` nie rozwija zmiennych,
+ * a tokeny palety sa nasze i zawsze rozwijaja sie do koloru.
+ */
+function isCssColorValue(value: string): boolean {
+  if (!value) return false;
+  if (value.startsWith('var(')) return true;
+  if (typeof CSS === 'undefined' || typeof CSS.supports !== 'function') return true;
+  return CSS.supports('color', value);
+}
+
 interface CellProps {
   column: ColumnDef;
   value: any;
@@ -97,29 +118,42 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const bgColor =
+  const rawBgColor =
     colors[String(value)] ||
     SELECT_COLORS[options.indexOf(String(value)) % SELECT_COLORS.length] ||
     '#e0e7ff';
+  // ★ axe `color-contrast` (odbior G06 runda 2, idea-table-timeline-stuck):
+  // `optionColors` bywa wypelnione NAZWA palety ('slate'/'amber'/'emerald'),
+  // a nie kolorem CSS. Cala deklaracja tla byla wtedy odrzucana przez
+  // przegladarke — badge zostawal BEZ tla, a jasny tekst ladowal wprost na
+  // tle strony (zmierzone 1.04:1, 5 wezlow). Kolor spoza CSS zastepujemy
+  // tokenem palety po indeksie opcji, zeby opcje dalej roznily sie barwa.
+  const bgColor = isCssColorValue(rawBgColor)
+    ? rawBgColor
+    : SELECT_COLORS[Math.max(0, options.indexOf(String(value))) % SELECT_COLORS.length] ||
+      '#e0e7ff';
 
   return (
     <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
-      {/* axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): staly bialy
-          tekst na `bgColor` mierzony ponizej 4,5:1 w dwoch niezaleznych
-          przypadkach — (1) fallback '#e0e7ff' (1.04-1.23:1), (2) kilka z
-          samych tokenow --c-tag-N tez nie dobija 4,5:1 z bialym (np. tag-1
-          #3b8ea5 -> 3.75:1, tag-6 #5a9367 -> 3.62:1, zmierzone niezaleznie).
-          `bgColor` moze byc DOWOLNY (uzytkownik/legacy wartosc), wiec zamiast
-          zgadywac ktory token akurat przejdzie, mieszamy 35% czerni do
-          KAZDEGO wejscia — ten sam wzorzec co NotebookPresenceStack.tsx
-          (gwarantuje >=4.5:1 niezaleznie od wejscia). */}
+      {/* axe `color-contrast`: `bgColor` moze byc DOWOLNY (wybor uzytkownika,
+          wartosc legacy, token palety). Poprzednie podejscie — bialy tekst na
+          tle przyciemnionym o 35% czerni — nie domykalo progu dla jasnych
+          pasteli, ktore realnie siedza w `optionColors`
+          (#d1fae5/#fef3c7/#fce7f3/#fee2e2 z IdeaTableTool i FrameworkGenerator:
+          po zmieszaniu z czernia bialy tekst dawal ~2,6:1).
+          Kierunek odwrocony i domkniety arytmetycznie: tlo rozjasniamy do
+          co najmniej 65% bieli, a tekst jest staly i ciemny. Najgorszy
+          mozliwy przypadek (tlo = czern) daje #a6a6a6 pod #0f172a = 7,0:1,
+          najlepszy (tlo = biel) 17:1 — prog 4,5:1 spelniony dla KAZDEGO
+          wejscia, bez zgadywania. Ten sam kierunek co siostrzany StatusCell
+          nizej (jasny pastel + ciemny tekst) — jedna rodzina wizualna. */}
       <button
         onClick={() => !locked && setOpen(!open)}
         disabled={locked}
         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors"
         style={{
-          backgroundColor: `color-mix(in srgb, ${bgColor} 65%, black 35%)`,
-          color: 'var(--c-tag-foreground)',
+          backgroundColor: `color-mix(in srgb, ${bgColor} 35%, white 65%)`,
+          color: BADGE_INK,
         }}
       >
         {value || '—'}
@@ -198,10 +232,18 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
           <span
             key={s}
             className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold"
+            // Ta sama rodzina co `SelectCell` wyzej (ten sam `optionColors`,
+            // ta sama lista `SELECT_COLORS`): staly ciemny tekst na tokenie
+            // palety nie domykal progu (np. --c-tag-1 #3b8ea5 pod #334155 =
+            // 2,76:1). Tlo rozjasniane do >=65% bieli daje gwarancje >=7:1.
             style={{
-              backgroundColor:
-                colors[s] || SELECT_COLORS[options.indexOf(s) % SELECT_COLORS.length] || '#e0e7ff',
-              color: '#334155',
+              backgroundColor: `color-mix(in srgb, ${
+                isCssColorValue(colors[s])
+                  ? colors[s]
+                  : SELECT_COLORS[Math.max(0, options.indexOf(s)) % SELECT_COLORS.length] ||
+                    '#e0e7ff'
+              } 35%, white 65%)`,
+              color: BADGE_INK,
             }}
           >
             {s}
@@ -502,7 +544,11 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 
   const current = String(value ?? 'todo');
   const display = STATUS_DISPLAY[current];
-  const bg = column.optionColors?.[current] || display?.bg || '#e0e7ff';
+  const rawStatusBg = column.optionColors?.[current] || display?.bg || '#e0e7ff';
+  // Odsiew jak w `SelectCell`: nazwa palety ('slate') nie jest kolorem CSS —
+  // deklaracja tla zostalaby odrzucona, a ciemny tekst plakietki wyladowalby
+  // na tle strony (w motywie ciemnym: ciemne na ciemnym).
+  const bg = isCssColorValue(rawStatusBg) ? rawStatusBg : display?.bg || '#e0e7ff';
   const label = (isPl ? display?.pl : display?.en) || current;
 
   return (
@@ -535,7 +581,11 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
               >
                 <span
                   className="w-3 h-3 rounded-sm flex-shrink-0"
-                  style={{ backgroundColor: column.optionColors?.[opt] || d?.bg || '#e0e7ff' }}
+                  style={{
+                    backgroundColor: isCssColorValue(column.optionColors?.[opt] || '')
+                      ? column.optionColors?.[opt]
+                      : d?.bg || '#e0e7ff',
+                  }}
                 />
                 {(isPl ? d?.pl : d?.en) || opt}
               </button>
