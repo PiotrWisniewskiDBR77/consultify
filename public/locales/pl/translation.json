@@ -25608,7 +25608,36 @@
     "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
     "goToBaseline": "Przejdź do Baseline"
   },
+  "publicBooking": {
+    "header": "Umów spotkanie",
+    "loading": "Ładowanie dostępnych terminów…",
+    "notFound": "Nie znaleziono konsultanta",
+    "notFoundHint": "Link rezerwacji jest nieprawidłowy lub wygasł.",
+    "loadError": "Nie udało się wczytać terminów",
+    "retry": "Spróbuj ponownie",
+    "meetingWith": "Spotkanie z {{name}}",
+    "durationTimezone": "{{minutes}} min · strefa {{timezone}}",
+    "chooseDay": "Wybierz dzień",
+    "noSlots": "Brak wolnych terminów w najbliższych 14 dniach.",
+    "slotsAvailable": "{{count}} wol.",
+    "chooseDayFromList": "Wybierz dzień z listy po lewej."
+  },
   "valuation": {
+    "basket": {
+      "empty": "Uruchom wycenę, aby zobaczyć koszyk metod.",
+      "unit": "wartość",
+      "eyebrow": "Wycena · koszyk metod",
+      "title": "Enterprise Value — przedział rekomendowany",
+      "recommendation": "rekomendacja",
+      "intersection": "strefa przecięcia",
+      "divergence": "Rozjazd",
+      "threshold": "próg",
+      "topDriver": "TOP-driver różnicy",
+      "legendRange": "przedział metody (low–high)",
+      "legendZone": "strefa przecięcia = rekomendacja",
+      "engine": "silnik",
+      "deterministic": "deterministyczny, zero LLM"
+    },
     "inputs": {
       "failed": "Dane wejściowe wyceny są niedostępne"
     },
@@ -43489,6 +43518,16 @@
       "approval": "zgoda"
     },
     "canvas": {
+      "vaultLevelPlaceholder": "— wybierz sejf —",
+      "kind": {
+        "etapModul": "Etap-moduł",
+        "aiTeresa": "AI / Teresa",
+        "vaultKontekst": "Vault-kontekst",
+        "bramaAkceptu": "Zgoda (bramka)",
+        "automat": "Automat",
+        "informacja": "Informacja",
+        "pauza": "Odczekaj (pauza)"
+      },
       "moduleTag": {
         "assessment": "Ocena",
         "control": "Kontrola",

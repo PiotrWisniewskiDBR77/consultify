@@ -5,6 +5,7 @@
  * Dane mocka odwzorowują kształt ExecutiveAggregateSnapshot + action-center.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   OneLookDecision,
@@ -112,7 +113,15 @@ const MILESTONES: OneLookMilestone[] = [
   },
 ];
 
-const ExecSummaryOneLookScreen: React.FC = () => (
+const ExecSummaryOneLookScreen: React.FC = () => {
+  // G06 i18n (2026-09-03, agent/i18n-pl-en): ten mock przybijał `isPolish`
+  // na sztywno `true` — komponent ma pełną obsługę bilingual przez
+  // `isPolish` (patrz `tr(pl, en)` w `ExecutionSummaryOneLook.tsx`), a realny
+  // `ExecutionHub.tsx:5869` już przekazuje `isPolish={isPolish}` liczone z
+  // i18n. Czytamy `?lang=` przez `i18n.language`, żeby mock honorował to samo.
+  const { i18n } = useTranslation();
+  const isPolish = (i18n.language || 'pl').toLowerCase().startsWith('pl');
+  return (
   <div className="min-h-screen bg-c-bg text-c-text">
     <ExecutionSummaryOneLook
       health={{ healthScore: 71, progressPercent: 58, phaseLabel: 'Faza 2 — Skalowanie' }}
@@ -141,10 +150,11 @@ const ExecSummaryOneLookScreen: React.FC = () => (
       decisions={DECISIONS}
       milestones={MILESTONES}
       currency="PLN"
-      isPolish
+      isPolish={isPolish}
       generatedAt="2026-07-13T08:00:00Z"
     />
   </div>
-);
+  );
+};
 
 export default ExecSummaryOneLookScreen;

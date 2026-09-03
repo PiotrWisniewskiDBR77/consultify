@@ -11,6 +11,7 @@
 
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = '/api/public/booking';
 
@@ -44,9 +45,9 @@ function getSlugFromPath(): string {
   return m ? decodeURIComponent(m[1]) : '';
 }
 
-function fmtDayLabel(dateStr: string): string {
+function fmtDayLabel(dateStr: string, locale = 'pl-PL'): string {
   const d = new Date(`${dateStr}T00:00:00Z`);
-  return d.toLocaleDateString('pl-PL', {
+  return d.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -54,8 +55,8 @@ function fmtDayLabel(dateStr: string): string {
   });
 }
 
-function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('pl-PL', {
+function fmtTime(iso: string, locale = 'pl-PL'): string {
+  return new Date(iso).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: 'UTC',
@@ -66,6 +67,8 @@ export function PublicBookingView({
   slugOverride,
   mockData,
 }: PublicBookingViewProps = {}): React.ReactElement {
+  const { t, i18n } = useTranslation();
+  const dateLocale = (i18n.language || 'pl').toLowerCase().startsWith('en') ? 'en-US' : 'pl-PL';
   const slug = useMemo(() => slugOverride || getSlugFromPath(), [slugOverride]);
 
   const [state, setState] = useState<ViewState>(mockData ? 'pick' : 'loading');
@@ -169,7 +172,7 @@ export function PublicBookingView({
           </div>
           <div className="leading-tight">
             <div className="text-sm font-semibold">Consultify</div>
-            <div className="text-xs text-c-text-muted">Umów spotkanie</div>
+            <div className="text-xs text-c-text-muted">{t('publicBooking.header', 'Umów spotkanie')}</div>
           </div>
         </div>
       </header>
@@ -178,28 +181,28 @@ export function PublicBookingView({
         {state === 'loading' && (
           <div className="flex flex-col items-center gap-3 py-24 text-c-text-muted">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm">Ładowanie dostępnych terminów…</p>
+            <p className="text-sm">{t('publicBooking.loading', 'Ładowanie dostępnych terminów…')}</p>
           </div>
         )}
 
         {state === 'not_found' && (
           <div className="rounded-xl border border-c-border bg-c-surface p-8 text-center">
-            <h1 className="text-lg font-semibold">Nie znaleziono konsultanta</h1>
+            <h1 className="text-lg font-semibold">{t('publicBooking.notFound', 'Nie znaleziono konsultanta')}</h1>
             <p className="mt-2 text-sm text-c-text-muted">
-              Link rezerwacji jest nieprawidłowy lub wygasł.
+              {t('publicBooking.notFoundHint', 'Link rezerwacji jest nieprawidłowy lub wygasł.')}
             </p>
           </div>
         )}
 
         {state === 'error' && (
           <div className="rounded-xl border border-c-border bg-c-surface p-8 text-center">
-            <h1 className="text-lg font-semibold">Nie udało się wczytać terminów</h1>
+            <h1 className="text-lg font-semibold">{t('publicBooking.loadError', 'Nie udało się wczytać terminów')}</h1>
             <button
               type="button"
               onClick={() => void loadAvailability()}
               className="mt-4 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
-              Spróbuj ponownie
+              {t('publicBooking.retry', 'Spróbuj ponownie')}
             </button>
           </div>
         )}
@@ -208,18 +211,21 @@ export function PublicBookingView({
           <div className="grid gap-6 md:grid-cols-[1fr_1.2fr]">
             {/* Lewa kolumna: kontekst + dni */}
             <section>
-              <h1 className="text-xl font-semibold">Spotkanie z {consultantName}</h1>
+              <h1 className="text-xl font-semibold">{t('publicBooking.meetingWith', 'Spotkanie z {{name}}', { name: consultantName })}</h1>
               <p className="mt-1 text-sm text-c-text-muted">
-                {availability.slotMinutes} min · strefa {availability.timezone}
+                {t('publicBooking.durationTimezone', '{{minutes}} min · strefa {{timezone}}', {
+                  minutes: availability.slotMinutes,
+                  timezone: availability.timezone,
+                })}
               </p>
 
               <div className="mt-5">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">
-                  Wybierz dzień
+                  {t('publicBooking.chooseDay', 'Wybierz dzień')}
                 </div>
                 {availability.days.length === 0 ? (
                   <p className="rounded-lg border border-c-border bg-c-surface p-4 text-sm text-c-text-muted">
-                    Brak wolnych terminów w najbliższych 14 dniach.
+                    {t('publicBooking.noSlots', 'Brak wolnych terminów w najbliższych 14 dniach.')}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
@@ -241,8 +247,10 @@ export function PublicBookingView({
                               : 'border-c-border bg-c-surface hover:border-c-border-strong',
                           ].join(' ')}
                         >
-                          <span className="capitalize">{fmtDayLabel(d.date)}</span>
-                          <span className="text-xs text-c-text-muted">{d.slots.length} wol.</span>
+                          <span className="capitalize">{fmtDayLabel(d.date, dateLocale)}</span>
+                          <span className="text-xs text-c-text-muted">
+                            {t('publicBooking.slotsAvailable', '{{count}} wol.', { count: d.slots.length })}
+                          </span>
                         </button>
                       );
                     })}
@@ -258,9 +266,9 @@ export function PublicBookingView({
                   <div className="mb-3 flex items-center gap-2 text-sm font-medium">
                     <Clock className="h-4 w-4 text-c-text-muted" />
                     {activeDay ? (
-                      <span className="capitalize">{fmtDayLabel(activeDay.date)}</span>
+                      <span className="capitalize">{fmtDayLabel(activeDay.date, dateLocale)}</span>
                     ) : (
-                      'Wybierz dzień'
+                      t('publicBooking.chooseDay', 'Wybierz dzień')
                     )}
                   </div>
                   {activeDay ? (
@@ -272,12 +280,12 @@ export function PublicBookingView({
                           onClick={() => handlePickSlot(s)}
                           className="rounded-lg border border-c-border bg-c-bg px-2 py-2 text-sm font-medium transition hover:border-c-focus hover:bg-c-surface-raised focus:outline-none focus:ring-2 focus:ring-c-focus"
                         >
-                          {fmtTime(s.startAt)}
+                          {fmtTime(s.startAt, dateLocale)}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-c-text-muted">Wybierz dzień z listy po lewej.</p>
+                    <p className="text-sm text-c-text-muted">{t('publicBooking.chooseDayFromList', 'Wybierz dzień z listy po lewej.')}</p>
                   )}
                 </>
               )}

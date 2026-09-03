@@ -14,6 +14,7 @@
  * in, JSX out — so this mock host needs no state at all.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import EvBasketFootballField, {
   type EvBasketResult,
@@ -84,12 +85,20 @@ const MOCK_BASKET: EvBasketResult = {
 };
 
 export function EvFootballFieldScreen(): React.ReactElement {
+  // G06 i18n (2026-09-03, agent/i18n-pl-en): ten mock nigdy nie przekazywał
+  // `t` — komponent ma OPCJONALNY prop `t?: (key, defaultValue) => string`
+  // (patrz `EvBasketFootballField.tsx` `const tr = t ?? ((_k, d) => d)`),
+  // więc bez niego zawsze renderował polski fallback niezależnie od języka.
+  // Realny produkcyjny caller (`ValuationWorkspace.tsx:1140`) już przekazuje
+  // `t` poprawnie — to była luka mocka, nie produktu.
+  const { t } = useTranslation();
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
       <EvBasketFootballField
         basket={MOCK_BASKET}
         unitLabel="mln PLN"
         subjectLabel="DBR77 Sp. z o.o. — Wycena Q2 2026"
+        t={t}
       />
     </div>
   );

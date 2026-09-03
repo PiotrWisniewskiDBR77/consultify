@@ -23,6 +23,7 @@
  *                   without ever showing a fabricated success.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { OkrReviewReflectionView } from '../../src/components/ResultsVNext/okr/OkrReviewReflectionView';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
@@ -397,11 +398,18 @@ if (!g.__RVN_TERESA_OKR_REFLECTION_FETCH__) {
 }
 
 export default function ResultsVNextTeresaOkrReflectionScreen() {
+  // G06 i18n (2026-09-03, agent/i18n-pl-en): ten mock przybijał `isPolish`
+  // na sztywno `true` — komponent ma pełną bilingual obsługę (każdy string
+  // już `isPolish ? '...' : '...'`), tylko prop nigdy nie odzwierciedlał
+  // `?lang=`. Czytamy `i18n.language`, tak jak inne naprawione ekrany tego
+  // dyżuru (exec-summary-onelook, ev-football-field).
+  const { i18n } = useTranslation();
+  const isPolish = (i18n.language || 'pl').toLowerCase().startsWith('pl');
   return (
     <div className="h-screen w-screen bg-c-bg text-c-text">
       <OkrReviewReflectionView
         set={MOCK_SET}
-        isPolish
+        isPolish={isPolish}
         currentUserId={OWNER_ID}
         onSetChanged={() => {}}
       />

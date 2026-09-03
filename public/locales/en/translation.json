@@ -24352,7 +24352,36 @@
     "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
     "goToBaseline": "Go to Baseline"
   },
+  "publicBooking": {
+    "header": "Book a meeting",
+    "loading": "Loading available slots…",
+    "notFound": "Consultant not found",
+    "notFoundHint": "The booking link is invalid or has expired.",
+    "loadError": "Couldn't load available slots",
+    "retry": "Try again",
+    "meetingWith": "Meeting with {{name}}",
+    "durationTimezone": "{{minutes}} min · {{timezone}} timezone",
+    "chooseDay": "Choose a day",
+    "noSlots": "No available slots in the next 14 days.",
+    "slotsAvailable": "{{count}} free",
+    "chooseDayFromList": "Choose a day from the list on the left."
+  },
   "valuation": {
+    "basket": {
+      "empty": "Run a valuation to see the method basket.",
+      "unit": "value",
+      "eyebrow": "Valuation · method basket",
+      "title": "Enterprise Value — recommended range",
+      "recommendation": "recommendation",
+      "intersection": "intersection zone",
+      "divergence": "Divergence",
+      "threshold": "threshold",
+      "topDriver": "TOP driver of the difference",
+      "legendRange": "method range (low–high)",
+      "legendZone": "intersection zone = recommendation",
+      "engine": "engine",
+      "deterministic": "deterministic, zero LLM"
+    },
     "tabLabel": "Valuation",
     "title": "Enterprise valuation",
     "subtitle": "DCF + comps + sensitivity, deck-ready export",
@@ -40898,6 +40927,16 @@
       "approval": "approval"
     },
     "canvas": {
+      "vaultLevelPlaceholder": "— choose a vault —",
+      "kind": {
+        "etapModul": "Stage-module",
+        "aiTeresa": "AI / Teresa",
+        "vaultKontekst": "Vault context",
+        "bramaAkceptu": "Approval (gate)",
+        "automat": "Automation",
+        "informacja": "Information",
+        "pauza": "Wait (pause)"
+      },
       "moduleTag": {
         "assessment": "Assessment",
         "control": "Control",
