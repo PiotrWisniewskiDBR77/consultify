@@ -423,7 +423,7 @@ for (const ekran of EKRANY) {
       }
       let a11yNaruszenia = [];
       if (A11Y) {
-        const wynikA11y = await new AxeBuilder({ page }).analyze();
+        const wynikA11y = await new AxeBuilder({ page }).include('#dev-render-root').analyze();
         a11yNaruszenia = wynikA11y.violations.map((naruszenie) => ({
           id: naruszenie.id,
           impact: naruszenie.impact,

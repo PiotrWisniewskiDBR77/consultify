@@ -55,6 +55,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
       <div
         className="mb-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-navy-800"
         role="progressbar"
+        aria-label={isPolish ? 'Postęp konfiguracji' : 'Setup progress'}
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={activeStepIndex + 1}

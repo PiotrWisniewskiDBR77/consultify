@@ -14,21 +14,29 @@ export const Field: React.FC<{ label: string; children: React.ReactNode; hint?: 
   label,
   children,
   hint,
-}) => (
-  <div>
-    <label className={LABEL}>{label}</label>
-    {children}
-    {hint && <p className="mt-1 text-[11px] text-c-text-muted">{hint}</p>}
-  </div>
-);
+}) => {
+  const fieldId = React.useId();
+  const labelledChild = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<{ id?: string }>, { id: fieldId })
+    : children;
+  return (
+    <div>
+      <label className={LABEL} htmlFor={fieldId}>{label}</label>
+      {labelledChild}
+      {hint && <p className="mt-1 text-[11px] text-c-text-muted">{hint}</p>}
+    </div>
+  );
+};
 
 export const TextInput: React.FC<{
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   testId?: string;
-}> = ({ value, onChange, placeholder, testId }) => (
+}> = ({ id, value, onChange, placeholder, testId }) => (
   <input
+    id={id}
     type="text"
     className={FIELD}
     value={value}
@@ -39,13 +47,15 @@ export const TextInput: React.FC<{
 );
 
 export const TextArea: React.FC<{
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
   testId?: string;
-}> = ({ value, onChange, placeholder, rows = 3, testId }) => (
+}> = ({ id, value, onChange, placeholder, rows = 3, testId }) => (
   <textarea
+    id={id}
     className={`${FIELD} resize-none`}
     rows={rows}
     value={value}
@@ -56,11 +66,13 @@ export const TextArea: React.FC<{
 );
 
 export function Select<T extends string>({
+  id,
   value,
   options,
   onChange,
   testId,
 }: {
+  id?: string;
   value: T;
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
@@ -68,6 +80,7 @@ export function Select<T extends string>({
 }): React.ReactElement {
   return (
     <select
+      id={id}
       className={FIELD}
       value={value}
       onChange={(e) => onChange(e.target.value as T)}
