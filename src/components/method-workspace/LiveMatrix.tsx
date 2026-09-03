@@ -28,7 +28,6 @@ export interface LiveMatrixProps {
   onCloseSideSheet: () => void;
   renderSideSheet: (selection: MatrixSelection, cell: MatrixCellState | null) => React.ReactNode;
   methodName: string;
-  legendCollapsed?: boolean;
   className?: string;
 }
 
@@ -91,9 +90,21 @@ const Cell: React.FC<{
   // Not-yet-reached cells never mention evidence at all — there is nothing to
   // report yet, and saying "evidence missing" here would read as a defect.
   const evidencePhrase = engaged ? `evidence ${cell.evidenceState}` : 'jeszcze nieoceniony';
+
+  // ASM-OWN-013: the global legend (Propozycja AI / Review / Blocker /
+  // Evidence luka / Nieoceniony) is gone — the owner never understood what it
+  // meant. Every icon it used to explain must still be readable from the
+  // cell itself, so its exact wording moves into the accessible name/tooltip
+  // instead of disappearing. Precedence mirrors the icon rendering below
+  // (Sparkles wins over Eye when both would apply).
+  const workflowPhrase = cell.aiProposalPending
+    ? ', Propozycja AI'
+    : cell.reviewRequired
+      ? ', Review'
+      : '';
   const accessibleName = `${methodName}, ${unitName}, poziom ${cell.level}, ${
     cell.achieved ? 'osiągnięty' : 'nieosiągnięty'
-  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, ${evidencePhrase}${
+  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, ${evidencePhrase}${workflowPhrase}${
     cell.blocker ? ', blocker' : ''
   }`;
 
@@ -150,7 +161,6 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
   onCloseSideSheet,
   renderSideSheet,
   methodName,
-  legendCollapsed = false,
   className = '',
 }) => {
   const maxLevel = levels.length > 0 ? Math.max(...levels) : 1;
@@ -176,25 +186,6 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
     <div data-testid="live-matrix" className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold text-c-text-secondary">Macierz na żywo</h3>
-        {!legendCollapsed && (
-          <div className="flex items-center gap-3 text-[10px] text-c-text-muted">
-            <span className="flex items-center gap-1">
-              <Sparkles size={9} className="text-teal-500" /> Propozycja AI
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye size={9} className="text-c-info" /> Review
-            </span>
-            <span className="flex items-center gap-1">
-              <AlertTriangle size={9} className="text-c-danger" /> Blocker
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" /> Evidence luka
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm border border-c-border-subtle" /> Nieoceniony
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="overflow-x-auto">

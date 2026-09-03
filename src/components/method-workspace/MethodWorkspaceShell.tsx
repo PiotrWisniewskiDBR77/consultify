@@ -65,7 +65,7 @@ export interface MethodWorkspaceShellProps {
   navigatorProps: Omit<MethodNavigatorProps, 'className'>;
   interviewProps: Omit<InterviewFocusPanelProps, 'className'>;
   teresaProps: Omit<TeresaPreviewPanelProps, 'className'>;
-  matrixProps: Omit<LiveMatrixProps, 'className' | 'legendCollapsed' | 'methodName'>;
+  matrixProps: Omit<LiveMatrixProps, 'className' | 'methodName'>;
   /** Method-specific report workspace; it reads the same session state. */
   reportContent: React.ReactNode;
   /** Runtime provenance shown in Settings instead of occupying a permanent technical stripe. */
