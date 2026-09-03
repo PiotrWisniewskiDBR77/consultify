@@ -40,7 +40,10 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
 
   return (
     <div className={`flex flex-wrap items-center justify-end gap-2 ${className}`}>
-      <span className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-slate-600 sm:inline">
+      {/* axe color-contrast: text-slate-600 had no dark: override — 2.36:1 on
+          the dark surface (< 4.5). dark:text-slate-400 fixes it (6.96:1);
+          light theme (7.58:1 on white) unaffected. */}
+      <span className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-slate-600 dark:text-slate-400 sm:inline">
         {t('discoveryToolsSteps.toolPhaseAiActions.aiCopilot')}
       </span>
 
