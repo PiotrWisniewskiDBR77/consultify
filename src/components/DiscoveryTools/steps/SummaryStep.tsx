@@ -452,11 +452,15 @@ function DynamicSwotOutputs({
     // (the session's own `summary.verdict`/`executiveSummary`) — and leaves
     // the rest for a dedicated follow-up once that scoring exists.
     const openBlockers = readinessChecklist.filter((item) => !item.done);
+    // emerald-600/amber-600 (paleta custom w tym repo) dawały 4.35:1 / 3.83:1
+    // na białym zamiast 4,5:1 (axe: color-contrast, zmierzone na
+    // tools-swot-initiative-proposal dla emerald; amber tej samej rodziny
+    // naprawiony przy okazji — o jeden odcień ciemniej, dark: bez zmian).
     const overallReadiness: { key: string; tone: string } =
       readinessScore === readinessTotal
-        ? { key: 'readyForApproval', tone: 'text-emerald-600 dark:text-emerald-400' }
+        ? { key: 'readyForApproval', tone: 'text-emerald-700 dark:text-emerald-400' }
         : readinessScore >= readinessTotal - 1
-          ? { key: 'readyWithReservations', tone: 'text-amber-600 dark:text-amber-400' }
+          ? { key: 'readyWithReservations', tone: 'text-amber-700 dark:text-amber-400' }
           : { key: 'notReady', tone: 'text-danger-600 dark:text-danger-400' };
     const finalSummaryText = summary?.verdict || summary?.executiveSummary || null;
 
