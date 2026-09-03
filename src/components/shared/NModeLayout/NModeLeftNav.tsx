@@ -122,55 +122,64 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    // axe `nested-interactive` (odbiór G06, moduł 05_INITIATIVES): uchwyt
+    // przeciągania miał role="button"/tabIndex z dnd-kit (`{...attributes}`)
+    // ZAGNIEŻDŻONY wewnątrz <button onClick={onSectionChange}> — dwa
+    // interaktywne kontrolki jeden w drugim. Naprawa: uchwyt i przycisk są
+    // teraz RODZEŃSTWEM w tym samym wierszu (grupa/hover/tło przeniesione na
+    // wspólny <div>, żeby wygląd całego wiersza został identyczny — hover na
+    // divie odpala się już przy najechaniu na dowolne dziecko, tak jak
+    // wcześniej na całym buttonie).
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group w-full flex items-center gap-2 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard ${
+        isActive
+          ? 'bg-c-surface-raised text-c-text border-l-2 border-c-focus-solid'
+          : 'text-c-text-secondary hover:bg-state-hover border-l-2 border-transparent'
+      } ${isDragging ? 'opacity-90 shadow-lg' : ''}`}
+    >
+      {/* Uchwyt przeciągania — TYLKO w Edycji (standard §4.4). W Podglądzie
+          nie renderujemy go wcale: nie ma za co złapać, więc drag jest
+          bezwiedny, a wiersz przestaje mieć 12 px szumu przed ikoną. */}
+      {!readMode && (
+        <span
+          className="inline-flex items-center pl-3 text-c-text-secondary hover:text-c-text-muted cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+          aria-label={t('sharedComponents.nModeLeftNav.dragSection')}
+        >
+          <GripVertical size={12} />
+        </span>
+      )}
       <button
         onClick={() => onSectionChange(section.id)}
-        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
-          isActive
-            ? 'bg-c-surface-raised text-c-text border-l-2 border-c-focus-solid'
-            : 'text-c-text-secondary hover:bg-state-hover border-l-2 border-transparent'
-        } ${isDragging ? 'opacity-90 shadow-lg' : ''}`}
+        className={`flex-1 min-w-0 flex items-center gap-2 text-left py-2.5 pr-3 ${readMode ? 'pl-3' : ''} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)]`}
       >
-        <span className="flex items-center gap-2">
-          {/* Uchwyt przeciągania — TYLKO w Edycji (standard §4.4). W Podglądzie
-              nie renderujemy go wcale: nie ma za co złapać, więc drag jest
-              bezwiedny, a wiersz przestaje mieć 12 px szumu przed ikoną. */}
-          {!readMode && (
-            <span
-              className="inline-flex items-center text-c-text-secondary hover:text-c-text-muted cursor-grab active:cursor-grabbing"
-              onClick={(e) => e.stopPropagation()}
-              {...attributes}
-              {...listeners}
-              aria-label={t('sharedComponents.nModeLeftNav.dragSection')}
-            >
-              <GripVertical size={12} />
-            </span>
-          )}
-          <Icon
-            size={14}
-            className={
-              isActive
-                ? 'text-c-focus-solid'
-                : 'text-c-text-muted group-hover:text-c-text-secondary'
-            }
-          />
-          <span className="whitespace-nowrap flex-1 min-w-0 truncate">
-            {isPolish ? section.label.pl : section.label.en}
-          </span>
-          {/* Mark Complete ✓ badge — AI signal only */}
-          {section.completed && (
-            <CheckCircle2
-              size={13}
-              className="shrink-0 text-success-500 dark:text-success-400"
-              aria-label={t('sharedComponents.nModeLeftNav.sectionComplete')}
-            />
-          )}
-          {section.badge !== undefined && section.badge > 0 && !section.completed && (
-            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
-              {section.badge}
-            </span>
-          )}
+        <Icon
+          size={14}
+          className={
+            isActive
+              ? 'text-c-focus-solid'
+              : 'text-c-text-muted group-hover:text-c-text-secondary'
+          }
+        />
+        <span className="whitespace-nowrap flex-1 min-w-0 truncate">
+          {isPolish ? section.label.pl : section.label.en}
         </span>
+        {/* Mark Complete ✓ badge — AI signal only */}
+        {section.completed && (
+          <CheckCircle2
+            size={13}
+            className="shrink-0 text-success-500 dark:text-success-400"
+            aria-label={t('sharedComponents.nModeLeftNav.sectionComplete')}
+          />
+        )}
+        {section.badge !== undefined && section.badge > 0 && !section.completed && (
+          <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
+            {section.badge}
+          </span>
+        )}
       </button>
     </div>
   );
