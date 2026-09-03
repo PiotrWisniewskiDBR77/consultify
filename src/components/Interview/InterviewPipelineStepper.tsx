@@ -64,6 +64,7 @@ export const InterviewPipelineStepper: React.FC<InterviewPipelineStepperProps> =
       <div
         className="mb-2.5 h-1 w-full overflow-hidden rounded-token-pill bg-[var(--c-border-subtle)]"
         role="progressbar"
+        aria-label={t('interview.pipelineStepper.ariaLabel')}
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={activeIndex + 1}

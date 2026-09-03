@@ -365,6 +365,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
     <button
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
