@@ -24,6 +24,8 @@ R3 stop-loss: istniejący dev-render ma nadmiarowy ósmy ekran, a dostępny harn
 
 R4 stop-loss: nie zapisano zrzutów, ponieważ identyczny stan PRZED/PO albo ekran zastępczy byłby fałszywym dowodem przemalowania.
 
+R5 kontrole: test bazowy i końcowy `initiativeRecordCanon.test.ts` po 8/8; `check-artefakt-struktura` bez nowego długu (baseline 9, aktualnie 9); `check-list-canon` 368/368; `check-focus-canon` raportuje istniejące 208 wystąpień w 104 plikach. Ponieważ nie ma zmiany produktu, lista pełnych nazw testów przed i po jest identyczna.
+
 ## Uczciwa granica
 
 Nie powstał prototyp wizualny ani cztery zrzuty. W szczególności nie uznaję dokumentu, testu jednostkowego ani istniejącego ekranu dev-render za dowód PRZED/PO. Flaga nie została utworzona, więc nic nie zostało przypadkiem włączone.
