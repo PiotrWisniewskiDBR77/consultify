@@ -4083,7 +4083,11 @@ export function createInitiativesExecutionRuntimeRouter(
           initiative &&
           (await deps.authorize(actor, initiative.initiative.projectId, 'initiative.view'))
         )
-          visible.push(item);
+          // EXE-1 (G14 05-08, 2026-09-03): the "Wybierz realizację" dropdown
+          // (ExecutionReportsSurface.tsx) used to render the raw
+          // executionCaseId — the initiative name was already loaded here
+          // for the authorize() check above, just never sent to the client.
+          visible.push({ ...item, initiativeTitle: initiative.initiative.title });
       }
       res.json({ cases: visible });
     })

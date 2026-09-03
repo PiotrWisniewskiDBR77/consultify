@@ -145,6 +145,11 @@ const EKRANY_WYSOKOSC = [
     extra: '&domain=okr&selected=okr-1',
   },
   { id: 'mywork-inbox', opis: 'Moja praca / InboxContent (Skrzynka)' },
+
+  // ── G14 05-08 (2026-09-03): MW-2 — DecisionsPanelContent, żywy nastepca
+  // 12 wycofanych kolejek decyzyjnych, dodany do harnessu dzis (dev-render/main.tsx
+  // id `mywork-decisions`), nigdy dotad zmierzony kanonicznym przyrzadem.
+  { id: 'mywork-decisions', opis: 'Moja praca / DecisionsPanelContent (Decyzje)', wiersz: 'Wybór podejścia do automatycznego generowania raportów DRD' },
 ];
 
 const oczekiwanaSzerokosc = (viewport) =>

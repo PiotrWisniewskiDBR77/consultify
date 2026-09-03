@@ -1151,7 +1151,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                   type="text"
                   value={newNotifTitle}
                   onChange={(e) => setNewNotifTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-c-focus/40"
                   placeholder={t('notifications.titlePlaceholder', 'Notification title...')}
                 />
               </div>
@@ -1163,7 +1163,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                   value={newNotifMessage}
                   onChange={(e) => setNewNotifMessage(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-c-focus/40"
                   placeholder={t('notifications.messagePlaceholder', 'Notification message...')}
                 />
               </div>
