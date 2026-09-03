@@ -357,11 +357,73 @@ const POSITIONS: Position[] = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POZYCJE ODCZYTOWE
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Powierzchnia, na której szkodą jest WYCIEK ODCZYTU, nie zapis. Para dowodów
+ * ma inny kształt niż przy zapisie, ale tę samą logikę:
+ *   NEG — nieuprawniony dostaje odmowę i ZERO rekordów, przy czym rekord
+ *         ISTNIEJE (zasiany na zimno w JEGO organizacji). Bez tego „zero
+ *         rekordów" znaczyłoby tylko „baza pusta" — brak pomiaru nie jest
+ *         wynikiem.
+ *   POS — uprawniony dostaje 200 i WIDZI dokładnie ten zasiany rekord.
+ */
+interface ReadPosition {
+  id: string;
+  mount: string;
+  moduleId: string;
+  /** Zasiewa rekord NA ZIMNO w organizacji wskazanej tożsamości; zwraca jego id. */
+  seedCold: (who: Identity, marker: string) => Promise<string>;
+  /** Potwierdza NA ZIMNO, że rekord istnieje w bazie (kontrola „baza nie jest pusta"). */
+  coldExists: (who: Identity, seededId: string) => Promise<number>;
+  read: (who: Identity) => Promise<{ status: number; body: Json }>;
+  /** Ile z zasianych rekordów widać w odpowiedzi HTTP. */
+  exposed: (body: Json, seededId: string) => number;
+}
+
+const READ_POSITIONS: ReadPosition[] = [
+  {
+    id: 'finance-statements-read',
+    mount: 'GET /api/finance-statements/',
+    moduleId: 'MODULE_ECONOMICS',
+    seedCold: async (who, marker) => {
+      const id = `fs-gate-${crypto.randomUUID()}`;
+      await withClient(async (client) => {
+        await client.query(
+          `INSERT INTO financial_statements
+             (id, organization_id, entity_name, statement_type, period_start, period_end,
+              period_label, currency, status)
+           VALUES ($1, $2, $3, 'BS', '2026-01-01', '2026-12-31', $4, 'PLN', 'draft')`,
+          [id, who.organizationId, marker, marker]
+        );
+      });
+      return id;
+    },
+    coldExists: (_who, seededId) =>
+      coldCount('SELECT count(*)::int AS n FROM financial_statements WHERE id = $1', [seededId]),
+    read: (who) => requestJson('GET', '/api/finance-statements/', { token: who.token }),
+    exposed: (body, seededId) => {
+      const rows = Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(body?.statements)
+          ? body.statements
+          : Array.isArray(body)
+            ? body
+            : [];
+      return rows.filter((r: any) => String(r?.id) === seededId).length;
+    },
+  },
+];
+
 async function run(): Promise<void> {
   const nonce = Date.now();
   const only = String(process.env.GATE_PROBE_ONLY || '').trim();
   const positions = only ? POSITIONS.filter((p) => p.id === only) : POSITIONS;
-  assert.ok(positions.length > 0, `unknown GATE_PROBE_ONLY=${only}`);
+  assert.ok(
+    positions.length > 0 || READ_POSITIONS.some((p) => p.id === only),
+    `unknown GATE_PROBE_ONLY=${only}`
+  );
 
   const emailOwner = `gateprobe+owner-${nonce}@local.test`;
   const emailUser = `gateprobe+user-${nonce}@local.test`;
@@ -409,6 +471,49 @@ async function run(): Promise<void> {
         code: posWrite.body?.code ?? null,
         error: posWrite.body?.error ?? null,
         coldRowCount: posCold,
+        allowed,
+      },
+      pass: blocked && allowed,
+    };
+  }
+
+  out.readPositions = {};
+  for (const rp of READ_POSITIONS) {
+    if (only && only !== rp.id) continue;
+    const negSeed = await rp.seedCold(user, `GateProbe NEG ${rp.id} ${nonce}`);
+    const posSeed = await rp.seedCold(owner, `GateProbe POS ${rp.id} ${nonce}`);
+    const negSeedExists = await rp.coldExists(user, negSeed);
+    const posSeedExists = await rp.coldExists(owner, posSeed);
+
+    const negRead = await rp.read(user);
+    const posRead = await rp.read(owner);
+    const negExposed = rp.exposed(negRead.body, negSeed);
+    const posExposed = rp.exposed(posRead.body, posSeed);
+
+    const blocked =
+      negRead.status === 403 &&
+      negRead.body?.code === 'BETA_LOCKED' &&
+      negExposed === 0 &&
+      negSeedExists === 1;
+    const allowed = posRead.status === 200 && posExposed === 1 && posSeedExists === 1;
+
+    out.readPositions[rp.id] = {
+      mount: rp.mount,
+      moduleId: rp.moduleId,
+      negative: {
+        role: user.role,
+        status: negRead.status,
+        code: negRead.body?.code ?? null,
+        seededRowExistsCold: negSeedExists,
+        exposedRows: negExposed,
+        blocked,
+      },
+      positive: {
+        role: owner.role,
+        status: posRead.status,
+        code: posRead.body?.code ?? null,
+        seededRowExistsCold: posSeedExists,
+        exposedRows: posExposed,
         allowed,
       },
       pass: blocked && allowed,
@@ -492,11 +597,13 @@ async function run(): Promise<void> {
     };
   }
 
+  const allChecked: Array<[string, any]> = [
+    ...Object.entries(out.positions),
+    ...Object.entries(out.readPositions),
+  ];
   out.verdict = {
-    pass: Object.values(out.positions).every((p: any) => p.pass),
-    failing: Object.entries(out.positions)
-      .filter(([, p]: [string, any]) => !p.pass)
-      .map(([id]) => id),
+    pass: allChecked.every(([, p]) => p.pass),
+    failing: allChecked.filter(([, p]) => !p.pass).map(([id]) => id),
   };
 
   console.log(JSON.stringify(out, null, 2));
@@ -511,6 +618,10 @@ async function run(): Promise<void> {
       ]);
       await client.query(
         'DELETE FROM digitization_analyses WHERE organization_id = ANY($1::text[])',
+        [orgs]
+      );
+      await client.query(
+        'DELETE FROM financial_statements WHERE organization_id = ANY($1::text[])',
         [orgs]
       );
       await client.query('DELETE FROM projects WHERE organization_id = ANY($1::text[])', [orgs]);
