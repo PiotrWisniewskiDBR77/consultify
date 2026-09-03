@@ -217,6 +217,26 @@ export function financeArtifactFreshnessLabel(freshness: FinanceArtifactFreshnes
   }
 }
 
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `financeArtifactFreshnessLabel`. */
+export function financeArtifactFreshnessLabelEn(freshness: FinanceArtifactFreshness): string {
+  switch (freshness) {
+    case 'NEVER_COMPUTED':
+      return 'Never computed';
+    case 'CURRENT':
+      return 'Up to date';
+    case 'STALE_SOURCE':
+      return 'Outdated (source changed)';
+    case 'STALE_ASSUMPTIONS':
+      return 'Outdated (assumptions changed)';
+    case 'COMPUTE_FAILED':
+      return 'Calculation failed';
+    default: {
+      const _exhaustive: never = freshness;
+      return _exhaustive;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // AP-00 — ArtifactRef. Źródło: server/src/types/finance/ArtifactRef.ts:29-119
 // ---------------------------------------------------------------------------
@@ -246,6 +266,28 @@ export function financeArtifactTypeLabel(artifactType: FinanceArtifactType): str
       return 'Wycena przedsiębiorstwa';
     case 'REPORT_EXPORT':
       return 'Eksport raportu';
+    default: {
+      const _exhaustive: never = artifactType;
+      return _exhaustive;
+    }
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `financeArtifactTypeLabel`. */
+export function financeArtifactTypeLabelEn(artifactType: FinanceArtifactType): string {
+  switch (artifactType) {
+    case 'STATEMENT_PACK':
+      return 'Financial statement';
+    case 'HISTORICAL_ANALYSIS':
+      return 'Historical analysis';
+    case 'BASELINE_MODEL':
+      return 'Baseline model';
+    case 'PREDICTION_SCENARIO':
+      return 'Prediction scenario';
+    case 'VALUATION_CASE':
+      return 'Company valuation';
+    case 'REPORT_EXPORT':
+      return 'Report export';
     default: {
       const _exhaustive: never = artifactType;
       return _exhaustive;
@@ -476,6 +518,32 @@ export function businessVersionStatusLabel(status: BusinessVersionStatus): strin
       return 'Zarchiwizowane';
     case 'INVALIDATED':
       return 'Unieważnione';
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `businessVersionStatusLabel`. */
+export function businessVersionStatusLabelEn(status: BusinessVersionStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Draft';
+    case 'READY_FOR_REVIEW':
+      return 'Ready for review';
+    case 'IN_REVIEW':
+      return 'In review';
+    case 'APPROVED':
+      return 'Approved';
+    case 'NEEDS_CHANGES':
+      return 'Needs changes';
+    case 'SUPERSEDED':
+      return 'Superseded';
+    case 'ARCHIVED':
+      return 'Archived';
+    case 'INVALIDATED':
+      return 'Invalidated';
     default: {
       const _exhaustive: never = status;
       return _exhaustive;
@@ -2440,6 +2508,26 @@ export function compareDiffKindLabel(kind: CompareDiffKindDto): string {
   }
 }
 
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `compareDiffKindLabel`. */
+export function compareDiffKindLabelEn(kind: CompareDiffKindDto): string {
+  switch (kind) {
+    case 'BOTH_PRESENT':
+      return 'Both sides have a value';
+    case 'MISSING_IN_A':
+      return 'Missing in A';
+    case 'MISSING_IN_B':
+      return 'Missing in B';
+    case 'MISSING_IN_BOTH':
+      return 'Missing in both';
+    case 'CURRENCY_MISMATCH':
+      return 'Currency mismatch';
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
+
 export function compareComparisonTypeLabel(type: CompareComparisonTypeDto): string {
   switch (type) {
     case 'PERIOD':
@@ -2456,6 +2544,30 @@ export function compareComparisonTypeLabel(type: CompareComparisonTypeDto): stri
       return 'Rzeczywiste / prognoza';
     case 'GENERIC':
       return 'Porównanie ogólne';
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `compareComparisonTypeLabel`. */
+export function compareComparisonTypeLabelEn(type: CompareComparisonTypeDto): string {
+  switch (type) {
+    case 'PERIOD':
+      return 'Period / period';
+    case 'VERSION':
+      return 'Version / version';
+    case 'ENTITY':
+      return 'Entity / entity';
+    case 'SCENARIO':
+      return 'Scenario / baseline';
+    case 'VALUATION_METHOD':
+      return 'Method / method';
+    case 'ACTUAL_VS_FORECAST':
+      return 'Actual / forecast';
+    case 'GENERIC':
+      return 'General comparison';
     default: {
       const _exhaustive: never = type;
       return _exhaustive;
@@ -2757,6 +2869,18 @@ export type FinanceImportApplyErrorCodeDto =
 export interface FinanceLabelDto {
   key: string;
   pl: string;
+  /**
+   * G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `pl` —
+   * opcjonalny, bo ten typ jest dziś server-authored i backend nie zawsze go
+   * jeszcze wysyła. Brak `en` = renderujemy `pl` (świadomy dług, nie
+   * fałszywe tłumaczenie kopiujące polski tekst). Patrz `pickFinanceLabel`.
+   */
+  en?: string;
+}
+
+/** G06 i18n: wybiera `.en`/`.pl` wg aktywnego języka — patrz `FinanceLabelDto.en`. */
+export function pickFinanceLabel(label: FinanceLabelDto, language: string): string {
+  return language.toLowerCase().startsWith('en') ? (label.en ?? label.pl) : label.pl;
 }
 
 /** `lineageNavigatorContract.ts` `LineageNodeMetadata` — everything the trail/panel shows about one business version. */

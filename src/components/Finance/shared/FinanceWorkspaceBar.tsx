@@ -37,6 +37,7 @@
  */
 
 import React, { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '@/components/shared/ModuleMenu3';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
@@ -51,9 +52,22 @@ import {
   type WorkspaceBarConfig,
   type WorkspaceBarContextField,
   type WorkspaceBarEvaluationContext,
+  type WorkspaceBarLabel,
   type WorkspaceBarLifecycleTransition,
   type WorkspaceBarMoreMenuItem,
 } from './financeWorkspaceBar.contract';
+
+// ---------------------------------------------------------------------------
+// G06 i18n (dyżur 2026-09-03, agent/i18n-pl-en): pomiar pełnej macierzy
+// PL/EN pokazał ten pasek jako PL=EN na `?lang=en` — `WorkspaceBarLabel`
+// zawsze renderował `.pl`, `key` istniał w kontrakcie, ale nic go nie
+// czytało. `pickWorkspaceBarLabel` wybiera `.en` gdy aktywny język to
+// angielski I moduł-wołający dostarczył `en` — brak `en` = świadomy dług
+// (renderujemy `.pl`), NIE fałszywe tłumaczenie kopiujące polski tekst.
+// ---------------------------------------------------------------------------
+export function pickWorkspaceBarLabel(label: WorkspaceBarLabel, language: string): string {
+  return language.toLowerCase().startsWith('en') ? (label.en ?? label.pl) : label.pl;
+}
 
 // ---------------------------------------------------------------------------
 // Props
@@ -79,7 +93,16 @@ export interface FinanceWorkspaceBarProps {
 // Etykiety pól Context popover
 // ---------------------------------------------------------------------------
 
-const CONTEXT_FIELD_LABELS: Record<WorkspaceBarContextField, string> = {
+const CONTEXT_FIELD_LABEL_KEYS: Record<WorkspaceBarContextField, string> = {
+  type: 'finance.workspaceBar.contextField.type',
+  period: 'finance.workspaceBar.contextField.period',
+  entity: 'finance.workspaceBar.contextField.entity',
+  currencyScale: 'finance.workspaceBar.contextField.currencyScale',
+  source: 'finance.workspaceBar.contextField.source',
+  lastCompute: 'finance.workspaceBar.contextField.lastCompute',
+};
+
+const CONTEXT_FIELD_LABEL_PL: Record<WorkspaceBarContextField, string> = {
   type: 'Typ',
   period: 'Okres',
   entity: 'Podmiot',
@@ -93,6 +116,8 @@ const CONTROL_BASE_CLASS =
 
 export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.ReactElement {
   const { config, evaluationContext, contextValues, onCommitRename } = props;
+  const { t, i18n } = useTranslation();
+  const pick = (label: WorkspaceBarLabel): string => pickWorkspaceBarLabel(label, i18n.language || 'pl');
 
   if (import.meta.env?.DEV) {
     const validation = validateWorkspaceBarConfig(config);
@@ -203,7 +228,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
           <button
             type="button"
             onClick={props.onNavigateBack}
-            aria-label={identity.back.label.pl}
+            aria-label={pick(identity.back.label)}
             className={`${CONTROL_BASE_CLASS} shrink-0 min-w-[2.75rem] text-c-text-secondary hover:bg-c-surface-raised`}
             data-testid="finance-workspace-bar-back"
           >
@@ -243,7 +268,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                   disabled={isSavingName}
                   className={`${CONTROL_BASE_CLASS} shrink-0 min-w-0 bg-c-text px-2.5 text-c-surface hover:brightness-95`}
                 >
-                  {isSavingName ? 'Zapisuję…' : 'Zapisz'}
+                  {isSavingName ? t('finance.workspaceBar.saving', 'Zapisuję…') : t('finance.workspaceBar.save', 'Zapisz')}
                 </button>
                 <button
                   type="button"
@@ -251,7 +276,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                   disabled={isSavingName}
                   className={`${CONTROL_BASE_CLASS} shrink-0 min-w-0 border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised`}
                 >
-                  Anuluj
+                  {t('finance.workspaceBar.cancel', 'Anuluj')}
                 </button>
               </div>
             ) : (
@@ -261,10 +286,13 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 onClick={() => identity.name.editable && setIsEditingName(true)}
                 title={
                   identity.name.editable
-                    ? 'Kliknij, aby zmienić nazwę'
+                    ? t('finance.workspaceBar.renameHint', 'Kliknij, aby zmienić nazwę')
                     : identity.name.editableBlockedReason === 'STATUS_IMMUTABLE'
-                      ? 'Nazwy nie można zmienić — wersja jest zatwierdzona/zamknięta. Otwórz ponownie lub utwórz nową wersję.'
-                      : 'Twoja rola nie pozwala na zmianę nazwy.'
+                      ? t(
+                          'finance.workspaceBar.renameBlockedStatus',
+                          'Nazwy nie można zmienić — wersja jest zatwierdzona/zamknięta. Otwórz ponownie lub utwórz nową wersję.'
+                        )
+                      : t('finance.workspaceBar.renameBlockedRole', 'Twoja rola nie pozwala na zmianę nazwy.')
                 }
                 className={`group flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                   identity.name.editable ? 'hover:bg-c-surface-raised' : 'cursor-default'
@@ -303,7 +331,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={contextOpen}
-                aria-label="Szczegóły kontekstu"
+                aria-label={t('finance.workspaceBar.contextDetails', 'Szczegóły kontekstu')}
                 onClick={() => setContextOpen((v) => !v)}
                 className={`${CONTROL_BASE_CLASS} min-w-[2.75rem] text-c-text-muted hover:bg-c-surface-raised`}
               >
@@ -312,7 +340,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
               {contextOpen && (
                 <div
                   role="dialog"
-                  aria-label="Kontekst artefaktu"
+                  aria-label={t('finance.workspaceBar.contextDialogTitle', 'Kontekst artefaktu')}
                   className="absolute left-0 top-full z-30 mt-1 w-72 rounded-xl border border-c-border-subtle bg-c-surface p-3 shadow-lg"
                 >
                   <dl className="space-y-1.5">
@@ -321,7 +349,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                         key={field}
                         className="flex items-baseline justify-between gap-3 text-xs"
                       >
-                        <dt className="text-c-text-muted">{CONTEXT_FIELD_LABELS[field]}</dt>
+                        <dt className="text-c-text-muted">{t(CONTEXT_FIELD_LABEL_KEYS[field], CONTEXT_FIELD_LABEL_PL[field])}</dt>
                         <dd className="min-w-0 truncate text-right font-medium text-c-text">
                           {contextValues[field]}
                         </dd>
@@ -355,7 +383,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
         >
           {actions.secondary && (
             <SecondaryButton
-              label={actions.secondary.label.pl}
+              label={pick(actions.secondary.label)}
               disabled={
                 !resolveControlState(actions.secondary.enablement, evaluationContext).available
               }
@@ -373,7 +401,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 className={`${CONTROL_BASE_CLASS} border-c-border-subtle text-c-text hover:bg-c-surface-raised`}
                 data-testid="finance-workspace-bar-lifecycle-trigger"
               >
-                {actions.lifecycle.label.pl}
+                {pick(actions.lifecycle.label)}
                 <ChevronDownIcon />
               </button>
               {lifecycleOpen && (
@@ -403,7 +431,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                             : 'text-c-text hover:bg-c-surface-raised'
                         }`}
                       >
-                        {transition.label.pl}
+                        {pick(transition.label)}
                       </button>
                     );
                   })}
@@ -418,7 +446,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={moreOpen}
-                aria-label={actions.more.label.pl}
+                aria-label={pick(actions.more.label)}
                 onClick={() => setMoreOpen((v) => !v)}
                 className={`${CONTROL_BASE_CLASS} min-w-[2.75rem] text-c-text-secondary hover:bg-c-surface-raised`}
                 data-testid="finance-workspace-bar-more-trigger"
@@ -452,7 +480,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                             : 'text-c-text hover:bg-c-surface-raised'
                         }`}
                       >
-                        {item.label.pl}
+                        {pick(item.label)}
                       </button>
                     );
                   })}
@@ -465,20 +493,24 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
             type="button"
             disabled={!primaryState.available}
             onClick={props.onPrimaryAction}
-            title={primaryState.available ? undefined : `Niedostępne: ${primaryState.reason}`}
+            title={
+              primaryState.available
+                ? undefined
+                : `${t('finance.workspaceBar.unavailable', 'Niedostępne')}: ${primaryState.reason}`
+            }
             className={`${CONTROL_BASE_CLASS} bg-c-text px-3.5 text-c-surface hover:brightness-95`}
             data-testid="finance-workspace-bar-primary"
           >
-            {primaryMerged.prefix && <span className="opacity-80">{primaryMerged.prefix.pl}</span>}
+            {primaryMerged.prefix && <span className="opacity-80">{pick(primaryMerged.prefix)}</span>}
             {primaryMerged.prefix && <span aria-hidden="true">·</span>}
-            <span>{primaryMerged.action.pl}</span>
+            <span>{pick(primaryMerged.action)}</span>
           </button>
 
           <button
             type="button"
             onClick={props.onEnterFocusMode}
-            aria-label={actions.fullscreen.ariaLabel.pl}
-            title={actions.fullscreen.ariaLabel.pl}
+            aria-label={pick(actions.fullscreen.ariaLabel)}
+            title={pick(actions.fullscreen.ariaLabel)}
             className={`${CONTROL_BASE_CLASS} min-w-[2.75rem] border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised`}
             data-testid="finance-workspace-bar-fullscreen"
           >
@@ -509,8 +541,8 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
         <ConfirmDestructiveDialog
           label={
             pendingDestructive.kind === 'lifecycle'
-              ? pendingDestructive.transition.label.pl
-              : pendingDestructive.item.label.pl
+              ? pick(pendingDestructive.transition.label)
+              : pick(pendingDestructive.item.label)
           }
           onCancel={() => {
             // ★ NAPRAWA a11y (Pakiet I): przywracamy fokus na trigger JAWNIE
@@ -582,6 +614,7 @@ function ViewTab({
   active: boolean;
   onClick: () => void;
 }): React.ReactElement {
+  const { i18n } = useTranslation();
   return (
     <button
       type="button"
@@ -590,7 +623,7 @@ function ViewTab({
       onClick={onClick}
       className={`${active ? MENU_2_TAB_ACTIVE : MENU_2_TAB_INACTIVE} shrink-0`}
     >
-      <span>{view.label.pl}</span>
+      <span>{pickWorkspaceBarLabel(view.label, i18n.language || 'pl')}</span>
       {view.state && <ViewStateBadge state={view.state} />}
     </button>
   );
@@ -607,6 +640,7 @@ function ViewStateBadge({
   // `text-amber-900`/dark `amber-300` to ta sama konwencja co `StatusChip`
   // TONE_SHELL (zweryfikowana tam kontrastowo) — analogicznie dla
   // success/danger, żeby nie zostawić utajonej wersji tego samego defektu.
+  const { i18n } = useTranslation();
   const toneClass =
     state.kind === 'ready'
       ? 'text-emerald-800 dark:text-emerald-300'
@@ -617,7 +651,7 @@ function ViewStateBadge({
           : 'text-c-text-muted';
   return (
     <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>
-      {state.label.pl}
+      {pickWorkspaceBarLabel(state.label, i18n.language || 'pl')}
     </span>
   );
 }
@@ -641,6 +675,7 @@ function IdentityBadge({
   version: WorkspaceBarConfig['identity']['version'];
   status: WorkspaceBarConfig['identity']['status'];
 }): React.ReactElement {
+  const { t } = useTranslation();
   const toneClass =
     status === 'APPROVED'
       ? 'border-c-success/30 bg-c-success/10 text-c-success'
@@ -651,19 +686,21 @@ function IdentityBadge({
     <span
       className={`hidden shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium sm:inline-flex ${toneClass}`}
       title={
-        version.hasUncommittedWorkingRevision ? 'Wersja robocza — niezapisane zmiany' : undefined
+        version.hasUncommittedWorkingRevision
+          ? t('finance.workspaceBar.draftUnsaved', 'Wersja robocza — niezapisane zmiany')
+          : undefined
       }
       data-testid="finance-workspace-bar-identity-badge"
     >
       <span className="tabular-nums">{version.label}</span>
       <span aria-hidden="true">·</span>
-      <span>{STATUS_LABELS[status] ?? status}</span>
+      <span>{t(`finance.workspaceBar.status.${status}`, STATUS_LABELS[status] ?? status)}</span>
       {/* Status DRAFT już czyta się jako „Wersja robocza" — dopisek „· robocza"
           dubluje ten sam fakt (widoczne np. na finance-analysis-workspace jako
           „v1 · Wersja robocza · robocza"). Pokazuj dopisek tylko gdy status
           NIE jest DRAFT, a mimo to są niezapisane zmiany. */}
       {version.hasUncommittedWorkingRevision && status !== 'DRAFT' && (
-        <span className="text-c-text-muted">· robocza</span>
+        <span className="text-c-text-muted">· {t('finance.workspaceBar.draftSuffix', 'robocza')}</span>
       )}
     </span>
   );
@@ -699,6 +736,7 @@ function ConfirmDestructiveDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }): React.ReactElement {
+  const { t } = useTranslation();
   const confirmRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // ★ NAPRAWA a11y (Pakiet I): poprzednia wersja miała TYLKO Escape (bez
@@ -733,14 +771,20 @@ function ConfirmDestructiveDialog({
         ref={containerRef}
         role="alertdialog"
         aria-modal="true"
-        aria-label={`Potwierdź: ${label}`}
+        aria-label={`${t('finance.workspaceBar.confirm', 'Potwierdź')}: ${label}`}
         onMouseDown={(e) => e.stopPropagation()}
         className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
       >
-        <p className="text-sm font-semibold text-c-text">Potwierdź operację</p>
+        <p className="text-sm font-semibold text-c-text">
+          {t('finance.workspaceBar.confirmDialog.title', 'Potwierdź operację')}
+        </p>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Czy na pewno chcesz wykonać: <span className="font-medium text-c-text">{label}</span>? Tej
-          operacji nie da się cofnąć jednym kliknięciem.
+          {t('finance.workspaceBar.confirmDialog.body', 'Czy na pewno chcesz wykonać:')}{' '}
+          <span className="font-medium text-c-text">{label}</span>?{' '}
+          {t(
+            'finance.workspaceBar.confirmDialog.irreversible',
+            'Tej operacji nie da się cofnąć jednym kliknięciem.'
+          )}
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <button
@@ -748,7 +792,7 @@ function ConfirmDestructiveDialog({
             onClick={onCancel}
             className={`${CONTROL_BASE_CLASS} border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised`}
           >
-            Anuluj
+            {t('finance.workspaceBar.cancel', 'Anuluj')}
           </button>
           <button
             ref={confirmRef}
@@ -756,7 +800,7 @@ function ConfirmDestructiveDialog({
             onClick={onConfirm}
             className={`${CONTROL_BASE_CLASS} bg-c-danger px-3.5 text-white hover:brightness-95`}
           >
-            Potwierdź
+            {t('finance.workspaceBar.confirm', 'Potwierdź')}
           </button>
         </div>
       </div>

@@ -17,6 +17,7 @@
  * `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import {
@@ -40,7 +41,9 @@ import {
 } from '@/services/api/financeV2.api';
 import {
   compareComparisonTypeLabel,
+  compareComparisonTypeLabelEn,
   compareDiffKindLabel,
+  compareDiffKindLabelEn,
   type CompareResultDto,
   type CompareRowDto,
   describeFinanceV2Error,
@@ -169,6 +172,8 @@ export function FinanceComparePanel({
   request,
   className,
 }: FinanceComparePanelProps): React.ReactElement | null {
+  const { t, i18n } = useTranslation();
+  const isEn = (i18n.language || 'pl').toLowerCase().startsWith('en');
   const { enabled } = useFinanceCompareFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [onlyMaterial, setOnlyMaterial] = useState(false);
@@ -206,10 +211,10 @@ export function FinanceComparePanel({
   // inny DOM (loading→error/loaded).
   const liveMessage =
     state.kind === 'loading'
-      ? 'Liczenie porównania…'
+      ? t('finance.compare.computing', 'Liczenie porównania…')
       : state.kind === 'error'
-        ? `Błąd porównania: ${state.title}`
-        : 'Porównanie gotowe.';
+        ? `${t('finance.compare.error', 'Błąd porównania')}: ${state.title}`
+        : t('finance.compare.ready', 'Porównanie gotowe.');
   const livePriority = state.kind === 'error' ? 'assertive' : 'polite';
 
   // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — MutationObserver defekt): patrz
@@ -227,7 +232,7 @@ export function FinanceComparePanel({
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="compare-panel-loading"
       >
-        <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.compare.computing', 'Liczenie porównania…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -250,12 +255,13 @@ export function FinanceComparePanel({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-c-text-primary">
-              {compareComparisonTypeLabel(result.comparisonType)}
+              {isEn ? compareComparisonTypeLabelEn(result.comparisonType) : compareComparisonTypeLabel(result.comparisonType)}
             </p>
             <p className="text-xs text-c-text-secondary">
-              {result.sourceA.label} vs {result.sourceB.label} · próg istotności{' '}
-              {result.materialityThresholdPct}%
-              {comparePanelCurrencyLabel(result.rows) && ` · waluta: ${comparePanelCurrencyLabel(result.rows)}`}
+              {result.sourceA.label} vs {result.sourceB.label} ·{' '}
+              {t('finance.compare.materialityThreshold', 'próg istotności')} {result.materialityThresholdPct}%
+              {comparePanelCurrencyLabel(result.rows) &&
+                ` · ${t('finance.compare.currency', 'waluta')}: ${comparePanelCurrencyLabel(result.rows)}`}
             </p>
           </div>
           <button
@@ -264,7 +270,7 @@ export function FinanceComparePanel({
             onClick={() => downloadCsv(visibleRows)}
             data-testid="compare-export-diff"
           >
-            Eksport różnic (.csv)
+            {t('finance.compare.exportDiff', 'Eksport różnic (.csv)')}
           </button>
         </div>
 
@@ -272,12 +278,12 @@ export function FinanceComparePanel({
           className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-6"
           data-testid="compare-summary"
         >
-          <SummaryTile label="Wiersze" value={result.summary.totalRows} />
-          <SummaryTile label="Obie strony" value={result.summary.bothPresent} />
-          <SummaryTile label="Brak w A" value={result.summary.missingInA} />
-          <SummaryTile label="Brak w B" value={result.summary.missingInB} />
-          <SummaryTile label="Niezgodność walut" value={result.summary.currencyMismatch} />
-          <SummaryTile label="Istotne" value={result.summary.materialCount} />
+          <SummaryTile label={t('finance.compare.rows', 'Wiersze')} value={result.summary.totalRows} />
+          <SummaryTile label={t('finance.compare.bothSides', 'Obie strony')} value={result.summary.bothPresent} />
+          <SummaryTile label={t('finance.compare.missingInA', 'Brak w A')} value={result.summary.missingInA} />
+          <SummaryTile label={t('finance.compare.missingInB', 'Brak w B')} value={result.summary.missingInB} />
+          <SummaryTile label={t('finance.compare.currencyMismatch', 'Niezgodność walut')} value={result.summary.currencyMismatch} />
+          <SummaryTile label={t('finance.compare.material', 'Istotne')} value={result.summary.materialCount} />
         </div>
 
         <label className="flex items-center gap-2 text-xs text-c-text-secondary">
@@ -288,7 +294,7 @@ export function FinanceComparePanel({
             className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
             data-testid="compare-only-material-toggle"
           />
-          Pokaż tylko istotne różnice
+          {t('finance.compare.onlyMaterial', 'Pokaż tylko istotne różnice')}
         </label>
 
         <div
@@ -304,19 +310,19 @@ export function FinanceComparePanel({
               className="sticky top-0 bg-c-surface-raised text-c-text-secondary" /* §27-exempt */
             >
               <tr>
-                <th className="px-2 py-1.5 font-medium">Wymiary</th>
+                <th className="px-2 py-1.5 font-medium">{t('finance.compare.dimensions', 'Wymiary')}</th>
                 <th className="px-2 py-1.5 font-medium">A</th>
                 <th className="px-2 py-1.5 font-medium">B</th>
                 <th className="px-2 py-1.5 font-medium">Δ</th>
                 <th className="px-2 py-1.5 font-medium">Δ%</th>
-                <th className="px-2 py-1.5 font-medium">Stan</th>
+                <th className="px-2 py-1.5 font-medium">{t('finance.compare.state', 'Stan')}</th>
               </tr>
             </thead>
             <tbody /* §27-exempt */>
               {visibleRows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-2 py-4 text-center text-c-text-secondary">
-                    Brak wierszy do pokazania.
+                    {t('finance.compare.noRows', 'Brak wierszy do pokazania.')}
                   </td>
                 </tr>
               ) : (
@@ -338,7 +344,7 @@ export function FinanceComparePanel({
                     </td>
                     <td className="px-2 py-1.5">{formatPct(row.pctDiff)}</td>
                     <td className="px-2 py-1.5 text-c-text-secondary">
-                      {compareDiffKindLabel(row.diffKind)}
+                      {isEn ? compareDiffKindLabelEn(row.diffKind) : compareDiffKindLabel(row.diffKind)}
                     </td>
                   </tr>
                 ))

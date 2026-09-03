@@ -16,6 +16,7 @@
  * `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCommentsFlag } from '@/hooks/useFinanceCommentsFlag';
@@ -66,6 +67,7 @@ export function FinanceCommentsPanel({
   businessVersionId,
   className,
 }: FinanceCommentsPanelProps): React.ReactElement | null {
+  const { t } = useTranslation();
   const { enabled } = useFinanceCommentsFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [draftBody, setDraftBody] = useState('');
@@ -121,7 +123,7 @@ export function FinanceCommentsPanel({
       setDraftBody('');
       setDraftBlocking(false);
       setDraftMentions('');
-      setActionMessage('Komentarz dodany.');
+      setActionMessage(t('finance.comments.added', 'Komentarz dodany.'));
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -133,7 +135,7 @@ export function FinanceCommentsPanel({
   async function handleResolve(commentId: string) {
     try {
       await resolveFinanceComment(commentId);
-      setActionMessage('Komentarz oznaczony jako rozwiązany.');
+      setActionMessage(t('finance.comments.resolved', 'Komentarz oznaczony jako rozwiązany.'));
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -143,7 +145,7 @@ export function FinanceCommentsPanel({
   async function handleReopen(commentId: string) {
     try {
       await reopenFinanceComment(commentId);
-      setActionMessage('Komentarz otwarty ponownie.');
+      setActionMessage(t('finance.comments.reopened', 'Komentarz otwarty ponownie.'));
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -159,7 +161,7 @@ export function FinanceCommentsPanel({
         required: true,
       });
       setNewChecklistItem('');
-      setActionMessage('Pozycja checklisty dodana.');
+      setActionMessage(t('finance.comments.checklistItemAdded', 'Pozycja checklisty dodana.'));
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -170,10 +172,10 @@ export function FinanceCommentsPanel({
     try {
       if (item.checkedBy) {
         await uncheckFinanceReviewChecklistItem(item.id);
-        setActionMessage(`Odznaczono: ${item.item}.`);
+        setActionMessage(t('finance.comments.unchecked', 'Odznaczono: {{item}}.', { item: item.item }));
       } else {
         await checkFinanceReviewChecklistItem(item.id);
-        setActionMessage(`Odhaczono: ${item.item}.`);
+        setActionMessage(t('finance.comments.checked', 'Odhaczono: {{item}}.', { item: item.item }));
       }
       load();
     } catch (err) {
@@ -198,13 +200,13 @@ export function FinanceCommentsPanel({
   let content: React.ReactNode;
 
   if (state.kind === 'loading') {
-    announcerMessage = 'Ładowanie komentarzy…';
+    announcerMessage = t('finance.comments.loading', 'Ładowanie komentarzy…');
     content = (
       <div
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="comments-panel-loading"
       >
-        <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.comments.loading', 'Ładowanie komentarzy…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -222,7 +224,7 @@ export function FinanceCommentsPanel({
   } else {
     const { comments, checklist, hasUnresolvedBlocking } = state;
     const requiredChecked = checklist.filter((i) => i.required).every((i) => i.checkedBy);
-    announcerMessage = actionMessage ?? 'Komentarze wczytane.';
+    announcerMessage = actionMessage ?? t('finance.comments.loaded', 'Komentarze wczytane.');
     content = (
       <div
         className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
@@ -237,18 +239,20 @@ export function FinanceCommentsPanel({
             className="rounded-md border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-xs text-red-800 dark:text-red-300"
             data-testid="comments-blocking-banner"
           >
-            Są nierozwiązane komentarze blokujące — zatwierdzenie tej wersji jest wstrzymane do ich
-            rozwiązania.
+            {t(
+              'finance.comments.blockingBanner',
+              'Są nierozwiązane komentarze blokujące — zatwierdzenie tej wersji jest wstrzymane do ich rozwiązania.'
+            )}
           </div>
         ) : null}
 
         <div>
           <p className="mb-2 text-xs font-semibold text-c-text-secondary">
-            Komentarze ({comments.length})
+            {t('finance.comments.title', 'Komentarze')} ({comments.length})
           </p>
           <ul className="flex flex-col gap-2" data-testid="comments-list">
             {comments.length === 0 ? (
-              <li className="text-xs text-c-text-secondary">Brak komentarzy.</li>
+              <li className="text-xs text-c-text-secondary">{t('finance.comments.none', 'Brak komentarzy.')}</li>
             ) : (
               comments.map((comment) => (
                 <li
@@ -269,18 +273,18 @@ export function FinanceCommentsPanel({
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {comment.isBlocking ? (
                       <span className="rounded-full border border-c-danger/40 bg-c-danger/10 px-1.5 py-0.5 text-[11px] text-red-800 dark:text-red-300">
-                        Blokujący
+                        {t('finance.comments.blocking', 'Blokujący')}
                       </span>
                     ) : null}
                     {comment.mentions.length > 0 ? (
                       <span className="text-[11px] text-c-text-secondary">
-                        Wzmianki: {comment.mentions.join(', ')}
+                        {t('finance.comments.mentions', 'Wzmianki')}: {comment.mentions.join(', ')}
                       </span>
                     ) : null}
                     {comment.resolvedAt ? (
                       <>
                         <span className="text-[11px] text-c-text-secondary">
-                          Rozwiązany {formatDate(comment.resolvedAt)}
+                          {t('finance.comments.resolvedAt', 'Rozwiązany')} {formatDate(comment.resolvedAt)}
                         </span>
                         {/* ★ NAPRAWA a11y (Pakiet I): `--c-focus` to `rgba(37,99,235,0.4)`
                           — 40% KRYCIA, zaprojektowany jako pierścień fokusa, NIE
@@ -292,7 +296,7 @@ export function FinanceCommentsPanel({
                           className="text-[11px] font-medium text-c-focus-solid hover:underline"
                           onClick={() => handleReopen(comment.id)}
                         >
-                          Otwórz ponownie
+                          {t('finance.comments.reopen', 'Otwórz ponownie')}
                         </button>
                       </>
                     ) : (
@@ -301,7 +305,7 @@ export function FinanceCommentsPanel({
                         className="text-[11px] font-medium text-c-focus-solid hover:underline"
                         onClick={() => handleResolve(comment.id)}
                       >
-                        Oznacz jako rozwiązany
+                        {t('finance.comments.markResolved', 'Oznacz jako rozwiązany')}
                       </button>
                     )}
                   </div>
@@ -315,14 +319,14 @@ export function FinanceCommentsPanel({
           <textarea
             className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface-raised p-2 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             rows={2}
-            placeholder="Dodaj komentarz…"
+            placeholder={t('finance.comments.composerPlaceholder', 'Dodaj komentarz…')}
             value={draftBody}
             onChange={(e) => setDraftBody(e.target.value)}
             data-testid="comment-composer-body"
           />
           <input
             className="w-full rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            placeholder="Wzmianki (po przecinku, id użytkowników)"
+            placeholder={t('finance.comments.mentionsPlaceholder', 'Wzmianki (po przecinku, id użytkowników)')}
             value={draftMentions}
             onChange={(e) => setDraftMentions(e.target.value)}
             data-testid="comment-composer-mentions"
@@ -336,7 +340,7 @@ export function FinanceCommentsPanel({
                 className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
                 data-testid="comment-composer-blocking"
               />
-              Flaga blokująca
+              {t('finance.comments.blockingFlag', 'Flaga blokująca')}
             </label>
             <button
               type="button"
@@ -345,21 +349,21 @@ export function FinanceCommentsPanel({
               onClick={handleAddComment}
               data-testid="comment-composer-submit"
             >
-              Dodaj komentarz
+              {t('finance.comments.submit', 'Dodaj komentarz')}
             </button>
           </div>
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold text-c-text-secondary">Lista kontrolna przeglądu</p>
+            <p className="text-xs font-semibold text-c-text-secondary">{t('finance.comments.checklistTitle', 'Lista kontrolna przeglądu')}</p>
             <span
               className={`text-[11px] ${requiredChecked ? 'text-c-text-secondary' : 'text-c-danger'}`}
               data-testid="checklist-required-status"
             >
               {requiredChecked
-                ? 'Wszystkie wymagane odhaczone'
-                : 'Są nieodhaczone wymagane pozycje'}
+                ? t('finance.comments.allRequiredChecked', 'Wszystkie wymagane odhaczone')
+                : t('finance.comments.someRequiredUnchecked', 'Są nieodhaczone wymagane pozycje')}
             </span>
           </div>
           <ul className="flex flex-col gap-1" data-testid="checklist-items">
@@ -380,7 +384,7 @@ export function FinanceCommentsPanel({
                   <span className="text-c-text-primary">{item.item}</span>
                 </label>
                 {item.required ? (
-                  <span className="text-[11px] text-c-text-secondary">(wymagane)</span>
+                  <span className="text-[11px] text-c-text-secondary">({t('finance.comments.required', 'wymagane')})</span>
                 ) : null}
               </li>
             ))}
@@ -388,7 +392,7 @@ export function FinanceCommentsPanel({
           <div className="mt-2 flex gap-1.5">
             <input
               className="flex-1 rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              placeholder="Nowa pozycja checklisty…"
+              placeholder={t('finance.comments.newChecklistItemPlaceholder', 'Nowa pozycja checklisty…')}
               value={newChecklistItem}
               onChange={(e) => setNewChecklistItem(e.target.value)}
               data-testid="checklist-new-item-input"
@@ -399,7 +403,7 @@ export function FinanceCommentsPanel({
               onClick={handleAddChecklistItem}
               data-testid="checklist-new-item-submit"
             >
-              Dodaj
+              {t('finance.comments.addChecklistItem', 'Dodaj')}
             </button>
           </div>
         </div>

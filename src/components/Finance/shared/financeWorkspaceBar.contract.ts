@@ -43,22 +43,32 @@ export const WORKSPACE_BAR_MIN_CONTROL_PX = 44;
 export interface WorkspaceBarLabel {
   key: string;
   pl: string;
+  /**
+   * G06 i18n (dyżur 2026-09-03, agent/i18n-pl-en): angielski odpowiednik
+   * `pl` — `FinanceWorkspaceBar` wybiera pole wg aktywnego `i18n.language`
+   * (patrz `pickWorkspaceBarLabel` w `FinanceWorkspaceBar.tsx`). Opcjonalne
+   * celowo: brak `en` = renderujemy `pl` w każdym języku (znany dług, nie
+   * fałszywe tłumaczenie kopiujące polski tekst).
+   */
+  en?: string;
 }
 
 export const WORKSPACE_BAR_FRESHNESS_SEPARATOR = ' · ';
 
 export const WORKSPACE_BAR_FRESHNESS_PREFIX: Readonly<Record<FinanceArtifactFreshness, WorkspaceBarLabel | null>> = {
   CURRENT: null,
-  NEVER_COMPUTED: { key: 'finance.freshness.neverComputed', pl: 'Nie przeliczono' },
-  STALE_SOURCE: { key: 'finance.freshness.staleSource', pl: 'Nieaktualne' },
-  STALE_ASSUMPTIONS: { key: 'finance.freshness.staleAssumptions', pl: 'Nieaktualne' },
-  COMPUTE_FAILED: { key: 'finance.freshness.computeFailed', pl: 'Błąd przeliczenia' },
+  NEVER_COMPUTED: { key: 'finance.freshness.neverComputed', pl: 'Nie przeliczono', en: 'Not computed yet' },
+  STALE_SOURCE: { key: 'finance.freshness.staleSource', pl: 'Nieaktualne', en: 'Outdated' },
+  STALE_ASSUMPTIONS: { key: 'finance.freshness.staleAssumptions', pl: 'Nieaktualne', en: 'Outdated' },
+  COMPUTE_FAILED: { key: 'finance.freshness.computeFailed', pl: 'Błąd przeliczenia', en: 'Calculation failed' },
 };
 
 export interface MergedPrimaryLabel {
   prefix: WorkspaceBarLabel | null;
   action: WorkspaceBarLabel;
   pl: string;
+  /** G06 i18n: angielski odpowiednik `pl` — patrz `WorkspaceBarLabel.en`. */
+  en: string;
   freshness: FinanceArtifactFreshness;
 }
 
@@ -73,6 +83,9 @@ export function mergeFreshnessIntoPrimaryLabel(
     prefix,
     action,
     pl: prefix ? `${prefix.pl}${WORKSPACE_BAR_FRESHNESS_SEPARATOR}${action.pl}` : action.pl,
+    en: prefix
+      ? `${prefix.en ?? prefix.pl}${WORKSPACE_BAR_FRESHNESS_SEPARATOR}${action.en ?? action.pl}`
+      : (action.en ?? action.pl),
     freshness,
   };
 }

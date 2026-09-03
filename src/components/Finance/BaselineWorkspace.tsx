@@ -97,11 +97,11 @@ export interface BaselineWorkspaceProps {
   initialView?: BaselineWorkspaceView;
 }
 
-const VIEW_NAV_STATE_READY = { kind: 'ready' as const, label: { key: 'ready', pl: 'Gotowe' } };
-const VIEW_NAV_STATE_STALE = { kind: 'stale' as const, label: { key: 'stale', pl: 'Nieaktualne' } };
+const VIEW_NAV_STATE_READY = { kind: 'ready' as const, label: { key: 'ready', pl: 'Gotowe', en: 'Ready' } };
+const VIEW_NAV_STATE_STALE = { kind: 'stale' as const, label: { key: 'stale', pl: 'Nieaktualne', en: 'Outdated' } };
 const VIEW_NAV_STATE_NOT_CONFIGURED = {
   kind: 'not-configured' as const,
-  label: { key: 'brak', pl: 'Do uzupełnienia' },
+  label: { key: 'brak', pl: 'Do uzupełnienia', en: 'To complete' },
 };
 
 /**
@@ -338,7 +338,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
     artifactType: 'BASELINE_MODEL',
     identity: {
       artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId, artifactId },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy', en: 'Back to list' } },
       name: {
         value: name,
         editable:
@@ -361,12 +361,12 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
       views: [
         {
           id: 'assumptions',
-          label: { key: 'assumptions', pl: 'Założenia' },
+          label: { key: 'assumptions', pl: 'Założenia', en: 'Assumptions' },
           state: assumptionsViewState,
         },
         {
           id: 'wyliczenia',
-          label: { key: 'wyliczenia', pl: 'Wyliczenia' },
+          label: { key: 'wyliczenia', pl: 'Wyliczenia', en: 'Outputs' },
           state: wyliczeniaViewState,
         },
       ],
@@ -377,7 +377,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
       primary: {
         kind: 'primary',
         id: 'primary.compute',
-        label: { key: 'compute', pl: 'Przelicz' },
+        label: { key: 'compute', pl: 'Przelicz', en: 'Recalculate' },
         enablement: ENABLEMENT_ALWAYS,
         mergesFreshness: true,
         keyboardCommandId: null,
@@ -386,7 +386,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
       lifecycle: {
         kind: 'lifecycle',
         id: 'lifecycle.status',
-        label: { key: 'status', pl: lifecycleShortLabel(status) },
+        label: { key: 'status', pl: lifecycleShortLabel(status), en: lifecycleShortLabelEn(status) },
         enablement: ENABLEMENT_ALWAYS,
         transitions: lifecycleTransitionsFor(status),
       },
@@ -394,10 +394,10 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
       fullscreen: {
         kind: 'fullscreen',
         id: 'fullscreen.toggle',
-        label: { key: 'fullscreen', pl: 'Pełny ekran' },
+        label: { key: 'fullscreen', pl: 'Pełny ekran', en: 'Full screen' },
         enablement: ENABLEMENT_ALWAYS,
         iconOnly: true,
-        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego' },
+        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego', en: 'Full workspace mode' },
       },
       extraDirectControls: [],
     },
@@ -652,6 +652,30 @@ function lifecycleShortLabel(status: BusinessVersionStatus): string {
       return 'Zarchiwizowane';
     case 'INVALIDATED':
       return 'Unieważnione';
+    default:
+      return status;
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `lifecycleShortLabel`. */
+function lifecycleShortLabelEn(status: BusinessVersionStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Draft';
+    case 'READY_FOR_REVIEW':
+      return 'Ready for review';
+    case 'IN_REVIEW':
+      return 'In review';
+    case 'APPROVED':
+      return 'Approved';
+    case 'NEEDS_CHANGES':
+      return 'Needs changes';
+    case 'SUPERSEDED':
+      return 'Superseded';
+    case 'ARCHIVED':
+      return 'Archived';
+    case 'INVALIDATED':
+      return 'Invalidated';
     default:
       return status;
   }

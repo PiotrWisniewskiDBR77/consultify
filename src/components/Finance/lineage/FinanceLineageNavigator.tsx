@@ -18,6 +18,7 @@
  * są już gotowe do renderu (etykiety PL w `label.pl`, nigdy surowy token).
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips/StatusChip';
@@ -25,13 +26,17 @@ import { useFinanceLineageNavigatorFlag } from '@/hooks/useFinanceLineageNavigat
 import { getFinanceLineageNavigator } from '@/services/api/financeV2.api';
 import {
   businessVersionStatusLabel,
+  businessVersionStatusLabelEn,
   describeFinanceV2Error,
   financeArtifactFreshnessLabel,
+  financeArtifactFreshnessLabelEn,
   financeArtifactTypeLabel,
+  financeArtifactTypeLabelEn,
   type FinanceLineageNavigatorDto,
   type LineageRelatedGroupDto,
   type LineageStaleBadgeDto,
   type LineageTrailItemDto,
+  pickFinanceLabel,
 } from '@/services/api/financeV2.types';
 
 export interface FinanceLineageNavigatorProps {
@@ -68,10 +73,19 @@ function badgeTone(severity: LineageStaleBadgeDto['severity']): StatusTone {
 }
 
 function Badge({ badge }: { badge: LineageStaleBadgeDto }): React.ReactElement {
-  return <StatusChip label={badge.label.pl} tone={badgeTone(badge.severity)} size="sm" />;
+  const { i18n } = useTranslation();
+  return (
+    <StatusChip
+      label={pickFinanceLabel(badge.label, i18n.language || 'pl')}
+      tone={badgeTone(badge.severity)}
+      size="sm"
+    />
+  );
 }
 
 function TrailItemView({ item }: { item: LineageTrailItemDto }): React.ReactElement {
+  const { i18n } = useTranslation();
+  const isEn = (i18n.language || 'pl').toLowerCase().startsWith('en');
   if (item.kind === 'collapsed') {
     return (
       <span
@@ -98,7 +112,7 @@ function TrailItemView({ item }: { item: LineageTrailItemDto }): React.ReactElem
       </div>
       <div className="flex flex-wrap items-center gap-1">
         <StatusChip
-          label={businessVersionStatusLabel(metadata.status)}
+          label={isEn ? businessVersionStatusLabelEn(metadata.status) : businessVersionStatusLabel(metadata.status)}
           tone="neutral"
           size="sm"
           hideDot
@@ -122,6 +136,8 @@ function RelatedGroupSection({
   groups: readonly LineageRelatedGroupDto[];
   emptyLabel: string;
 }): React.ReactElement {
+  const { i18n } = useTranslation();
+  const isEn = (i18n.language || 'pl').toLowerCase().startsWith('en');
   const totalCount = groups.reduce((sum, g) => sum + g.count, 0);
   return (
     <div className="flex flex-col gap-1.5" data-testid={`lineage-related-section-${title}`}>
@@ -139,7 +155,7 @@ function RelatedGroupSection({
               className="flex items-center justify-between rounded-md border border-c-border-subtle px-2 py-1"
             >
               <span className="text-xs text-c-text-primary">
-                {financeArtifactTypeLabel(group.artifactType)}
+                {isEn ? financeArtifactTypeLabelEn(group.artifactType) : financeArtifactTypeLabel(group.artifactType)}
               </span>
               <span className="text-xs font-medium text-c-text-secondary">{group.count}</span>
             </li>
@@ -159,6 +175,8 @@ export function FinanceLineageNavigator({
   onCreateNew,
   className,
 }: FinanceLineageNavigatorProps): React.ReactElement | null {
+  const { t, i18n } = useTranslation();
+  const isEn = (i18n.language || 'pl').toLowerCase().startsWith('en');
   const { enabled } = useFinanceLineageNavigatorFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
 
@@ -193,13 +211,13 @@ export function FinanceLineageNavigator({
   let content: React.ReactNode;
 
   if (state.kind === 'loading') {
-    announcerMessage = 'Ładowanie powiązań…';
+    announcerMessage = t('finance.lineage.loading', 'Ładowanie powiązań…');
     content = (
       <div
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="lineage-navigator-loading"
       >
-        <p className="text-xs text-c-text-secondary">Ładowanie powiązań…</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.lineage.loading', 'Ładowanie powiązań…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -217,19 +235,21 @@ export function FinanceLineageNavigator({
   } else {
     const { data } = state;
     const { trail, relatedPanel } = data;
-    announcerMessage = `Łańcuch powiązań wczytany: ${trail.items.length} elementów.`;
+    announcerMessage = t('finance.lineage.trailLoaded', 'Łańcuch powiązań wczytany: {{count}} elementów.', {
+      count: trail.items.length,
+    });
     content = (
       <div
         className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="finance-lineage-navigator"
       >
         <div>
-          <p className="mb-2 text-xs font-semibold text-c-text-secondary">Łańcuch powiązań</p>
+          <p className="mb-2 text-xs font-semibold text-c-text-secondary">{t('finance.lineage.trail', 'Łańcuch powiązań')}</p>
           <div
             className="flex flex-wrap items-center gap-1.5"
             data-testid="lineage-trail"
             role="list"
-            aria-label="Łańcuch powiązań"
+            aria-label={t('finance.lineage.trail', 'Łańcuch powiązań')}
           >
             {trail.items.map((item, idx) => (
               <React.Fragment
@@ -263,13 +283,15 @@ export function FinanceLineageNavigator({
           </div>
           {trail.unresolvedVersionIds.length > 0 ? (
             <p className="mt-1 text-[11px] text-c-danger" data-testid="lineage-trail-unresolved">
-              {trail.unresolvedVersionIds.length} wersji nie udało się opisać.
+              {t('finance.lineage.unresolved', '{{count}} wersji nie udało się opisać.', {
+                count: trail.unresolvedVersionIds.length,
+              })}
             </p>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-3" data-testid="lineage-related-panel">
-          <p className="text-xs font-semibold text-c-text-secondary">Powiązane</p>
+          <p className="text-xs font-semibold text-c-text-secondary">{t('finance.lineage.related', 'Powiązane')}</p>
           {relatedPanel.focusBadges.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {relatedPanel.focusBadges.map((badge) => (
@@ -279,35 +301,35 @@ export function FinanceLineageNavigator({
           ) : null}
           <div className="grid grid-cols-2 gap-3">
             <RelatedGroupSection
-              title="Rodzice"
+              title={t('finance.lineage.parents', 'Rodzice')}
               groups={relatedPanel.parents}
-              emptyLabel="Brak bezpośrednich rodziców."
+              emptyLabel={t('finance.lineage.noParents', 'Brak bezpośrednich rodziców.')}
             />
             <RelatedGroupSection
-              title="Dzieci"
+              title={t('finance.lineage.children', 'Dzieci')}
               groups={relatedPanel.children}
-              emptyLabel="Brak bezpośrednich dzieci."
+              emptyLabel={t('finance.lineage.noChildren', 'Brak bezpośrednich dzieci.')}
             />
             <RelatedGroupSection
-              title="Przodkowie pośredni"
+              title={t('finance.lineage.indirectAncestors', 'Przodkowie pośredni')}
               groups={relatedPanel.indirectAncestors}
-              emptyLabel="Brak."
+              emptyLabel={t('finance.lineage.none', 'Brak.')}
             />
             <RelatedGroupSection
-              title="Potomkowie pośredni"
+              title={t('finance.lineage.indirectDescendants', 'Potomkowie pośredni')}
               groups={relatedPanel.indirectDescendants}
-              emptyLabel="Brak."
+              emptyLabel={t('finance.lineage.none', 'Brak.')}
             />
           </div>
           {relatedPanel.siblings.length > 0 ? (
             <div>
               <p className="mb-1 text-xs font-semibold text-c-text-secondary">
-                Inne wersje/warianty
+                {t('finance.lineage.otherVariants', 'Inne wersje/warianty')}
               </p>
               <ul className="flex flex-col gap-1">
                 {relatedPanel.siblings.map((sibling) => (
                   <li key={sibling.metadata.versionId} className="text-xs text-c-text-secondary">
-                    {sibling.displayName} ({businessVersionStatusLabel(sibling.metadata.status)})
+                    {sibling.displayName} ({isEn ? businessVersionStatusLabelEn(sibling.metadata.status) : businessVersionStatusLabel(sibling.metadata.status)})
                   </li>
                 ))}
               </ul>
@@ -324,26 +346,33 @@ export function FinanceLineageNavigator({
                     className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     onClick={() => onCreateNew?.(action)}
                   >
-                    + Nowy: {financeArtifactTypeLabel(action.targetArtifactType)}
+                    + {t('finance.lineage.new', 'Nowy')}: {isEn ? financeArtifactTypeLabelEn(action.targetArtifactType) : financeArtifactTypeLabel(action.targetArtifactType)}
                   </button>
                 ))}
               </div>
             ) : relatedPanel.createNewBlockedLabel ? (
               <p className="text-xs text-c-text-secondary">
-                {relatedPanel.createNewBlockedLabel.pl}
+                {pickFinanceLabel(relatedPanel.createNewBlockedLabel, i18n.language || 'pl')}
               </p>
             ) : null}
           </div>
 
           {relatedPanel.hiddenTerminalCount > 0 ? (
             <p className="text-[11px] text-c-text-secondary">
-              Ukryto {relatedPanel.hiddenTerminalCount} zarchiwizowanych/unieważnionych powiązań.
+              {t(
+                'finance.lineage.hiddenTerminal',
+                'Ukryto {{count}} zarchiwizowanych/unieważnionych powiązań.',
+                { count: relatedPanel.hiddenTerminalCount }
+              )}
             </p>
           ) : null}
         </div>
 
         <p className="text-[11px] text-c-text-secondary" data-testid="lineage-freshness-note">
-          Świeżość ogniska: {financeArtifactFreshnessLabel(relatedPanel.focus.freshness)}
+          {t('finance.lineage.focusFreshness', 'Świeżość ogniska')}:{' '}
+          {isEn
+            ? financeArtifactFreshnessLabelEn(relatedPanel.focus.freshness)
+            : financeArtifactFreshnessLabel(relatedPanel.focus.freshness)}
         </p>
       </div>
     );

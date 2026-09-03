@@ -44,18 +44,18 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
   const views = [
     {
       id: PREDICTION_VIEW_IDS.assumptions,
-      label: { key: 'finance.prediction.view.assumptions', pl: 'Budowa założeń' },
+      label: { key: 'finance.prediction.view.assumptions', pl: 'Budowa założeń', en: 'Building assumptions' },
       state: null,
     },
     {
       id: PREDICTION_VIEW_IDS.results,
-      label: { key: 'finance.prediction.view.results', pl: 'Modele/Wyniki' },
+      label: { key: 'finance.prediction.view.results', pl: 'Modele/Wyniki', en: 'Models/Results' },
       state:
         resultsFreshness === 'NEVER_COMPUTED'
-          ? { kind: 'not-configured' as const, label: { key: 'finance.prediction.results.neverComputed', pl: 'Nie przeliczono' } }
+          ? { kind: 'not-configured' as const, label: { key: 'finance.prediction.results.neverComputed', pl: 'Nie przeliczono', en: 'Not computed yet' } }
           : resultsFreshness !== 'CURRENT'
-            ? { kind: 'stale' as const, label: { key: 'finance.prediction.results.stale', pl: 'Nieaktualne' } }
-            : { kind: 'ready' as const, label: { key: 'finance.prediction.results.ready', pl: 'Aktualne' } },
+            ? { kind: 'stale' as const, label: { key: 'finance.prediction.results.stale', pl: 'Nieaktualne', en: 'Outdated' } }
+            : { kind: 'ready' as const, label: { key: 'finance.prediction.results.ready', pl: 'Aktualne', en: 'Up to date' } },
     },
   ];
 
@@ -64,7 +64,7 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
     artifactType: 'PREDICTION_SCENARIO',
     identity: {
       artifactRef: { artifactType: 'PREDICTION_SCENARIO', businessVersionId, artifactId: params.artifactId },
-      back: { targetListRoute: '/finance/prediction', label: { key: 'finance.back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance/prediction', label: { key: 'finance.back', pl: 'Wróć do listy', en: 'Back to list' } },
       name: {
         value: draft.name,
         editable: rename.editable,
@@ -93,7 +93,7 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       primary: {
         kind: 'primary',
         id: 'primary-compute',
-        label: { key: 'finance.prediction.primary.compute', pl: 'Przelicz scenariusz' },
+        label: { key: 'finance.prediction.primary.compute', pl: 'Przelicz scenariusz', en: 'Recalculate scenario' },
         enablement: ENABLEMENT_ALWAYS,
         mergesFreshness: true,
         keyboardCommandId: null,
@@ -101,13 +101,13 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       secondary: {
         kind: 'secondary',
         id: 'secondary-preflight',
-        label: { key: 'finance.prediction.secondary.preflight', pl: 'Uruchom preflight' },
+        label: { key: 'finance.prediction.secondary.preflight', pl: 'Uruchom preflight', en: 'Run preflight' },
         enablement: ENABLEMENT_ALWAYS,
         keyboardCommandId: null,
       },
       lifecycle: null,
       more: null,
-      fullscreen: { kind: 'fullscreen', id: 'fullscreen', label: { key: 'finance.fullscreen', pl: 'Pełny ekran' }, enablement: ENABLEMENT_ALWAYS, iconOnly: true, ariaLabel: { key: 'finance.fullscreen.aria', pl: 'Przełącz tryb pełnoekranowy' } },
+      fullscreen: { kind: 'fullscreen', id: 'fullscreen', label: { key: 'finance.fullscreen', pl: 'Pełny ekran', en: 'Full screen' }, enablement: ENABLEMENT_ALWAYS, iconOnly: true, ariaLabel: { key: 'finance.fullscreen.aria', pl: 'Przełącz tryb pełnoekranowy', en: 'Toggle full-screen mode' } },
       extraDirectControls: [],
     },
   };

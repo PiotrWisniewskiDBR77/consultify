@@ -15,6 +15,7 @@
  * `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceSavedViewsFlag } from '@/hooks/useFinanceSavedViewsFlag';
@@ -54,6 +55,7 @@ export function FinanceSavedViewsPanel({
   onApplyView,
   className,
 }: FinanceSavedViewsPanelProps): React.ReactElement | null {
+  const { t } = useTranslation();
   const { enabled } = useFinanceSavedViewsFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [newViewName, setNewViewName] = useState('');
@@ -92,7 +94,7 @@ export function FinanceSavedViewsPanel({
         filters: currentFilters ?? [],
       });
       setNewViewName('');
-      setActionMessage('Widok zapisany.');
+      setActionMessage(t('finance.savedViews.saved', 'Widok zapisany.'));
       load();
     } catch (err) {
       setRowError(describeFinanceV2Error(err).detail);
@@ -103,7 +105,7 @@ export function FinanceSavedViewsPanel({
     setRowError(null);
     try {
       await deleteFinanceSavedView(viewId);
-      setActionMessage('Widok usunięty.');
+      setActionMessage(t('finance.savedViews.deleted', 'Widok usunięty.'));
       load();
     } catch (err) {
       setRowError(describeFinanceV2Error(err).detail);
@@ -116,7 +118,9 @@ export function FinanceSavedViewsPanel({
       navigator.clipboard.writeText(url).catch(() => {});
     }
     setCopiedViewId(view.id);
-    setActionMessage(`Link do widoku „${view.name}" skopiowany.`);
+    setActionMessage(
+      t('finance.savedViews.linkCopied', 'Link do widoku „{{name}}" skopiowany.', { name: view.name })
+    );
     window.setTimeout(() => setCopiedViewId((cur) => (cur === view.id ? null : cur)), 2000);
   }
 
@@ -134,13 +138,13 @@ export function FinanceSavedViewsPanel({
   let content: React.ReactNode;
 
   if (state.kind === 'loading') {
-    announcerMessage = 'Ładowanie zapisanych widoków…';
+    announcerMessage = t('finance.savedViews.loading', 'Ładowanie zapisanych widoków…');
     content = (
       <div
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="saved-views-panel-loading"
       >
-        <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.loading', 'Ładowanie zapisanych widoków…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -159,13 +163,13 @@ export function FinanceSavedViewsPanel({
     const { views } = state;
     const personalViews = views.filter((v) => v.scope === 'PERSONAL');
     const teamViews = views.filter((v) => v.scope === 'TEAM');
-    announcerMessage = actionMessage ?? 'Zapisane widoki wczytane.';
+    announcerMessage = actionMessage ?? t('finance.savedViews.loaded', 'Zapisane widoki wczytane.');
     content = (
       <div
         className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="finance-saved-views-panel"
       >
-        <p className="text-xs font-semibold text-c-text-secondary">Zapisane widoki</p>
+        <p className="text-xs font-semibold text-c-text-secondary">{t('finance.savedViews.title', 'Zapisane widoki')}</p>
 
         {rowError ? (
           <div
@@ -178,7 +182,7 @@ export function FinanceSavedViewsPanel({
         ) : null}
 
         <ViewGroup
-          title="Zespołowe"
+          title={t('finance.savedViews.team', 'Zespołowe')}
           views={teamViews}
           onApplyView={onApplyView}
           onDelete={handleDelete}
@@ -186,7 +190,7 @@ export function FinanceSavedViewsPanel({
           copiedViewId={copiedViewId}
         />
         <ViewGroup
-          title="Osobiste"
+          title={t('finance.savedViews.personal', 'Osobiste')}
           views={personalViews}
           onApplyView={onApplyView}
           onDelete={handleDelete}
@@ -195,10 +199,10 @@ export function FinanceSavedViewsPanel({
         />
 
         <div className="flex flex-col gap-1.5 rounded-md border border-c-border-subtle p-2">
-          <p className="text-xs font-medium text-c-text-primary">Zapisz bieżący widok</p>
+          <p className="text-xs font-medium text-c-text-primary">{t('finance.savedViews.saveCurrent', 'Zapisz bieżący widok')}</p>
           <input
             className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            placeholder="Nazwa widoku…"
+            placeholder={t('finance.savedViews.namePlaceholder', 'Nazwa widoku…')}
             value={newViewName}
             onChange={(e) => setNewViewName(e.target.value)}
             data-testid="saved-view-name-input"
@@ -208,14 +212,14 @@ export function FinanceSavedViewsPanel({
               (axe: "select-name" critical) — "Zapisz bieżący widok" wyżej jest
               nagłówkiem sekcji, nie programowo powiązaną etykietą TEGO pola. */}
             <select
-              aria-label="Widoczność zapisywanego widoku"
+              aria-label={t('finance.savedViews.scopeAria', 'Widoczność zapisywanego widoku')}
               className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               value={newViewScope}
               onChange={(e) => setNewViewScope(e.target.value as FinanceSavedViewScope)}
               data-testid="saved-view-scope-select"
             >
-              <option value="PERSONAL">{financeSavedViewScopeLabel('PERSONAL')}</option>
-              <option value="TEAM">{financeSavedViewScopeLabel('TEAM')}</option>
+              <option value="PERSONAL">{t('finance.savedViews.scope.personal', financeSavedViewScopeLabel('PERSONAL'))}</option>
+              <option value="TEAM">{t('finance.savedViews.scope.team', financeSavedViewScopeLabel('TEAM'))}</option>
             </select>
             <button
               type="button"
@@ -224,7 +228,7 @@ export function FinanceSavedViewsPanel({
               onClick={handleSave}
               data-testid="saved-view-save-submit"
             >
-              Zapisz widok
+              {t('finance.savedViews.saveButton', 'Zapisz widok')}
             </button>
           </div>
         </div>
@@ -255,13 +259,14 @@ function ViewGroup({
   onCopyShareLink: (view: FinanceSavedViewDto) => void;
   copiedViewId: string | null;
 }): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div>
       <p className="mb-1 text-[11px] font-semibold text-c-text-secondary">
         {title} ({views.length})
       </p>
       {views.length === 0 ? (
-        <p className="text-xs text-c-text-secondary">Brak.</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.none', 'Brak.')}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {views.map((view) => (
@@ -282,7 +287,7 @@ function ViewGroup({
                   onClick={() => onApplyView?.(view)}
                   data-testid="saved-view-apply"
                 >
-                  Zastosuj
+                  {t('finance.savedViews.apply', 'Zastosuj')}
                 </button>
                 <button
                   type="button"
@@ -290,7 +295,7 @@ function ViewGroup({
                   onClick={() => onCopyShareLink(view)}
                   data-testid="saved-view-copy-link"
                 >
-                  {copiedViewId === view.id ? 'Skopiowano' : 'Kopiuj link'}
+                  {copiedViewId === view.id ? t('finance.savedViews.copied', 'Skopiowano') : t('finance.savedViews.copyLink', 'Kopiuj link')}
                 </button>
                 <button
                   type="button"
@@ -298,7 +303,7 @@ function ViewGroup({
                   onClick={() => onDelete(view.id)}
                   data-testid="saved-view-delete"
                 >
-                  Usuń
+                  {t('finance.savedViews.delete', 'Usuń')}
                 </button>
               </div>
             </li>

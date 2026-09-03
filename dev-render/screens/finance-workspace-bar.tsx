@@ -82,7 +82,7 @@ function buildConfig(): WorkspaceBarConfig {
     artifactType: 'BASELINE_MODEL',
     identity: {
       artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-dbr77-1', artifactId: 'art-dbr77-model' },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy', en: 'Back to list' } },
       name: {
         value: name,
         editable: meta.status !== 'APPROVED',
@@ -102,19 +102,19 @@ function buildConfig(): WorkspaceBarConfig {
     viewNavigation: {
       kind: 'tabs',
       views: [
-        { id: 'assumptions', label: { key: 'assumptions', pl: 'Założenia' }, state: { kind: 'ready', label: { key: 'ready', pl: 'Gotowe' } } },
-        { id: 'events', label: { key: 'events', pl: 'Zdarzenia' }, state: null },
+        { id: 'assumptions', label: { key: 'assumptions', pl: 'Założenia', en: 'Assumptions' }, state: { kind: 'ready', label: { key: 'ready', pl: 'Gotowe', en: 'Ready' } } },
+        { id: 'events', label: { key: 'events', pl: 'Zdarzenia', en: 'Events' }, state: null },
         {
           id: 'outputs',
-          label: { key: 'outputs', pl: 'Wyliczenia' },
+          label: { key: 'outputs', pl: 'Wyliczenia', en: 'Outputs' },
           state:
             scene === 'failed'
-              ? { kind: 'blocked', label: { key: 'blocked', pl: 'Błąd' } }
+              ? { kind: 'blocked', label: { key: 'blocked', pl: 'Błąd', en: 'Error' } }
               : scene === 'stale' || scene === 'needs-changes'
-                ? { kind: 'stale', label: { key: 'stale', pl: 'Nieaktualne' } }
-                : { kind: 'ready', label: { key: 'ready', pl: 'Gotowe' } },
+                ? { kind: 'stale', label: { key: 'stale', pl: 'Nieaktualne', en: 'Outdated' } }
+                : { kind: 'ready', label: { key: 'ready', pl: 'Gotowe', en: 'Ready' } },
         },
-        { id: 'validation', label: { key: 'validation', pl: 'Walidacja' }, state: null },
+        { id: 'validation', label: { key: 'validation', pl: 'Walidacja', en: 'Validation' }, state: null },
       ],
       activeViewId: 'assumptions',
       placement: 'separate-row',
@@ -123,7 +123,7 @@ function buildConfig(): WorkspaceBarConfig {
       primary: {
         kind: 'primary',
         id: 'primary.recalculate',
-        label: { key: 'recalc', pl: 'Przelicz' },
+        label: { key: 'recalc', pl: 'Przelicz', en: 'Recalculate' },
         enablement: ENABLEMENT_ALWAYS,
         mergesFreshness: true,
         keyboardCommandId: null,
@@ -131,7 +131,7 @@ function buildConfig(): WorkspaceBarConfig {
       secondary: {
         kind: 'secondary',
         id: 'secondary.export',
-        label: { key: 'export', pl: 'Eksportuj' },
+        label: { key: 'export', pl: 'Eksportuj', en: 'Export' },
         enablement: ENABLEMENT_ALWAYS,
         keyboardCommandId: null,
       },
@@ -155,7 +155,7 @@ function buildConfig(): WorkspaceBarConfig {
             ? [
                 {
                   action: 'new_version',
-                  label: { key: 'new-version', pl: 'Utwórz nową wersję' },
+                  label: { key: 'new-version', pl: 'Utwórz nową wersję', en: 'Create new version' },
                   enablement: ENABLEMENT_ALWAYS,
                   destructive: false,
                   requiresConfirmation: false,
@@ -163,7 +163,7 @@ function buildConfig(): WorkspaceBarConfig {
                 },
                 {
                   action: 'reopen',
-                  label: { key: 'reopen', pl: 'Otwórz ponownie' },
+                  label: { key: 'reopen', pl: 'Otwórz ponownie', en: 'Reopen' },
                   enablement: ENABLEMENT_ALWAYS,
                   destructive: true,
                   requiresConfirmation: true,
@@ -173,7 +173,7 @@ function buildConfig(): WorkspaceBarConfig {
             : [
                 {
                   action: 'save_draft',
-                  label: { key: 'save', pl: 'Zapisz wersję roboczą' },
+                  label: { key: 'save', pl: 'Zapisz wersję roboczą', en: 'Save draft' },
                   enablement: ENABLEMENT_ALWAYS,
                   destructive: false,
                   requiresConfirmation: false,
@@ -181,7 +181,7 @@ function buildConfig(): WorkspaceBarConfig {
                 },
                 {
                   action: 'submit_for_review',
-                  label: { key: 'submit', pl: 'Przekaż do przeglądu' },
+                  label: { key: 'submit', pl: 'Przekaż do przeglądu', en: 'Submit for review' },
                   enablement: ENABLEMENT_ALWAYS,
                   destructive: false,
                   requiresConfirmation: false,
@@ -189,7 +189,7 @@ function buildConfig(): WorkspaceBarConfig {
                 },
                 {
                   action: 'invalidate',
-                  label: { key: 'invalidate', pl: 'Unieważnij' },
+                  label: { key: 'invalidate', pl: 'Unieważnij', en: 'Invalidate' },
                   enablement: ENABLEMENT_ALWAYS,
                   destructive: true,
                   requiresConfirmation: true,
@@ -200,21 +200,21 @@ function buildConfig(): WorkspaceBarConfig {
       more: {
         kind: 'more',
         id: 'more.menu',
-        label: { key: 'more', pl: 'Więcej' },
+        label: { key: 'more', pl: 'Więcej', en: 'More' },
         enablement: ENABLEMENT_ALWAYS,
         items: [
-          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
+          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj', en: 'Duplicate' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
+          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji', en: 'Version history' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
+          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj', en: 'Archive' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
         ],
       },
       fullscreen: {
         kind: 'fullscreen',
         id: 'fullscreen.toggle',
-        label: { key: 'fullscreen', pl: 'Pełny ekran' },
+        label: { key: 'fullscreen', pl: 'Pełny ekran', en: 'Full screen' },
         enablement: ENABLEMENT_ALWAYS,
         iconOnly: true,
-        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego' },
+        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego', en: 'Full workspace mode' },
       },
       extraDirectControls: [],
     },
