@@ -60,6 +60,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 13_CHAT | 45 | 439 | 439 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 416/416, marker 439/439; 23 nowe zielone przypadki, zero czerwieni. Serwer pozostaje do pomiaru.` |
 | 14_ADMIN | 38 | 248 | 241 | 7 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 241/248 PASS; te same 7 pełnych nazw czerwonych na bazie i markerze, 6 nowych zielonych przypadków, brak czerwieni NOWYCH. Serwer pozostaje do pomiaru.` |
 | 15_SETTINGS | 7 | 13 | 13 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — 13/13 PASS na bazie i markerze, zero zmian nazw i zero czerwieni; serwer poza mianownikiem R1.` |
+| 16_PARTNER | 42 uruchomione | 195 | 186 | 0 | 9 nierozstrzygniętych | 0 | `G15 FAIL — ukierunkowany front/unit: baza 112/112 PASS, marker 186/195 PASS. Dziewięć czerwieni jest NOWYCH i dotyczy fail-closed oraz pierwszeństwa tras V8 dla payout/company-info/regions/specializations. Testy RealPG Partnera nie są w tym przebiegu.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -122,3 +123,7 @@ Pakiet jest jednostkowy i nie dowodzi realnych zapisów API mimo nazw testów su
 ### Pułapki — 15_SETTINGS
 
 Pakiet jest jednostkowy i nie dowodzi trwałości ustawień. JSDOM zgłosił `Not implemented: navigation to another Document`, lecz JSON ma 13/13 PASS po obu stronach. Pełne nazwy są identyczne.
+
+### Pułapki — 16_PARTNER
+
+Pakiet uruchomiono z `RUN_DB_TESTS=0 MOCK_DB=true --retry=0`; nie jest dowodem RealPG ani egzekucji uprawnień. Baza ma zero czerwieni, marker dziewięć, więc wszystkie są NOWE. Ponieważ czerwienie obejmują fail-closed i zakaz legacy mutation, ich osłabienie byłoby szczególnie niebezpieczne. Nie zmieniono palety ani decyzji `DEC-2026-08-29-253`.
