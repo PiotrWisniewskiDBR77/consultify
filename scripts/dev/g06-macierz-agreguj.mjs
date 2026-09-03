@@ -29,6 +29,11 @@ const KOMBINACJE = ['pl-1440', 'pl-1024', 'en-1440', 'en-1024'];
 
 const jestHarness404 = (b) => b.status === 404 && /\/api\//.test(b.url || '');
 const jestKonsola404 = (m) => /status of 404/.test(m);
+// Komunikaty konsoli będące SKUTKIEM braku backendu w harnessie (fetch do /api/*
+// oddaje 404, komponent loguje własny błąd). Liczone osobno — to nie jest defekt
+// produktu ani szum a11y, ale nie wolno ich mieszać z realnymi wyjątkami renderu.
+const jestKonsolaPochodna = (m) =>
+  /(Failed to fetch|Error fetching|Failed to load|unavailable\)|NetworkError|Load failed|fetch failed)/i.test(String(m));
 
 const moduly = fs.readdirSync(WEJSCIE).filter((d) => /^\d{2}_/.test(d)).sort();
 const wynik = {};
@@ -46,7 +51,7 @@ for (const mod of moduly) {
     for (const f of pliki) {
       const w = JSON.parse(fs.readFileSync(path.join(kat, f), 'utf8'));
       for (const r of w.wyniki) {
-        const e = (ekrany[r.ekran] ||= { kadry: 0, a11yKadry: 0, a11yIds: {}, a11yGdzie: [], harness404: 0, inneBledy: [], zleStatusy: [], zwinieteNieznane: [] });
+        const e = (ekrany[r.ekran] ||= { kadry: 0, a11yKadry: 0, a11yIds: {}, a11yGdzie: [], harness404: 0, konsolaPochodna: 0, inneBledy: [], zleStatusy: [], zwinieteNieznane: [] });
         e.kadry += 1;
         const real = (r.a11yNaruszenia || []).filter((v) => !SZUM_HOSTA.has(v.id));
         if (real.length) {
@@ -58,7 +63,10 @@ for (const mod of moduly) {
         const konsola = r.bledyKonsoli || [];
         e.harness404 += http.filter(jestHarness404).length;
         for (const b of http.filter((x) => !jestHarness404(x))) e.inneBledy.push(`${komb}/${r.motyw}: HTTP ${b.status} ${b.url}`);
-        for (const m of konsola.filter((x) => !jestKonsola404(x))) e.inneBledy.push(`${komb}/${r.motyw}: ${String(m).slice(0, 160)}`);
+        for (const m of konsola.filter((x) => !jestKonsola404(x))) {
+          if (jestKonsolaPochodna(m)) e.konsolaPochodna += 1;
+          else e.inneBledy.push(`${komb}/${r.motyw}: ${String(m).slice(0, 160)}`);
+        }
         if (!/^OK|^wynik BRAK/.test(r.status || '')) e.zleStatusy.push(`${komb}/${r.motyw}: ${String(r.status).slice(0, 120)}`);
       }
     }
@@ -71,6 +79,7 @@ for (const mod of moduly) {
     kadryZa11y: lista.reduce((s, [, e]) => s + e.a11yKadry, 0),
     a11yIds: {},
     ekranyZinnymiBledami: lista.filter(([, e]) => e.inneBledy.length).length,
+    ekranyZKonsolaPochodna: lista.filter(([, e]) => e.konsolaPochodna).length,
     ekranyZeZlymStatusem: lista.filter(([, e]) => e.zleStatusy.length).length,
     ekranyNiepelne: lista.filter(([, e]) => e.kadry !== 8).map(([n, e]) => `${n}(${e.kadry})`),
     brakujaceKombinacje: brakujace,
@@ -80,11 +89,11 @@ for (const mod of moduly) {
 }
 
 const linie = [];
-linie.push('| Moduł | Ekranów | Kadrów | Ekrany z realnym a11y | Kadry z a11y | Reguły | Ekrany z innym błędem (nie 404 harnessu) | Zły status | Niepełne |');
-linie.push('| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |');
+linie.push('| Moduł | Ekranów | Kadrów | Ekrany z realnym a11y | Kadry z a11y | Reguły | Ekrany z realnym błędem konsoli | Ekrany z konsolą pochodną braku backendu | Zły status | Niepełne |');
+linie.push('| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |');
 for (const [mod, { suma }] of Object.entries(wynik)) {
   const reguly = Object.entries(suma.a11yIds).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(', ') || '—';
-  linie.push(`| ${mod} | ${suma.ekrany} | ${suma.kadry} | **${suma.ekranyZa11y}** | ${suma.kadryZa11y} | ${reguly} | ${suma.ekranyZinnymiBledami} | ${suma.ekranyZeZlymStatusem} | ${suma.ekranyNiepelne.join(', ') || (suma.brakujaceKombinacje.length ? `brak: ${suma.brakujaceKombinacje.join(',')}` : '—')} |`);
+  linie.push(`| ${mod} | ${suma.ekrany} | ${suma.kadry} | **${suma.ekranyZa11y}** | ${suma.kadryZa11y} | ${reguly} | ${suma.ekranyZinnymiBledami} | ${suma.ekranyZKonsolaPochodna} | ${suma.ekranyZeZlymStatusem} | ${suma.ekranyNiepelne.join(', ') || (suma.brakujaceKombinacje.length ? `brak: ${suma.brakujaceKombinacje.join(',')}` : '—')} |`);
 }
 linie.push('');
 for (const [mod, { ekrany }] of Object.entries(wynik)) {
