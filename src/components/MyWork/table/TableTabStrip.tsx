@@ -7,6 +7,9 @@ import { Copy, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ScrollEdgeFade } from '../shared/ScrollEdgeFade';
+import { useScrollEdges } from '../shared/useScrollEdges';
+
 export interface TableTabStripProps {
   baseId: string;
   tables: { id: string; name: string }[];
@@ -41,6 +44,12 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // MW-DROBIAZGI (03.09, rodzeństwo MYW-PHOTO-003): pasek tabel bazy
+  // (Airtable-style) przycina ostatnią zakładkę bez żadnej sygnalizacji przy
+  // wielu tabelach na 768/1024px — ten sam mechanizm co `MyWorkHub.tsx`'s
+  // tabs row.
+  const [tabsRowRef, tabsRowEdges] = useScrollEdges([tables.length]);
 
   useEffect(() => {
     if (renamingId && renameInputRef.current) {
@@ -94,7 +103,11 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
   }, [dragId, dragOverId, tables, onReorderTables]);
 
   return (
-    <div className="flex items-center h-9 bg-c-surface-raised border-t border-c-border-subtle px-1 gap-0.5 overflow-x-auto flex-shrink-0 select-none">
+    <div className="relative shrink-0">
+      <div
+        ref={tabsRowRef}
+        className="flex items-center h-9 bg-c-surface-raised border-t border-c-border-subtle px-1 gap-0.5 overflow-x-auto flex-shrink-0 select-none"
+      >
       {tables.map((table) => {
         const isActive = table.id === activeTableId;
         const isDragOver = table.id === dragOverId;
@@ -162,6 +175,9 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       >
         <Plus size={14} />
       </button>
+      </div>
+      <ScrollEdgeFade side="start" visible={tabsRowEdges.scrollable && !tabsRowEdges.atStart} />
+      <ScrollEdgeFade side="end" visible={tabsRowEdges.scrollable && !tabsRowEdges.atEnd} />
 
       {/* Context menu */}
       {contextMenu && (
