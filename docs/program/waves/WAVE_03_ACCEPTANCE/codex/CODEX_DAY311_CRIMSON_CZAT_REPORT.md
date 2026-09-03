@@ -1,6 +1,6 @@
 # CODEX DAY 311 — crimson w Czacie
 
-Stan roboczy: R1–R4 wykonane; R4 ma wynik CZĘŚCIOWE z powodu niedostatecznego pokrycia kadru.
+Stan roboczy: R1–R5 wykonane; R4 ma wynik CZĘŚCIOWE z powodu niedostatecznego pokrycia kadru.
 
 ## §0 — baza i marker
 
@@ -65,12 +65,23 @@ Kanoniczne narzędzie wygenerowało 32 PNG: osiem ekranów, dwa motywy i dwie fa
 
 Kontroler narzędzia oznaczył tylko 2/16 kadrów w każdej fazie jako `OK`; pozostałe 14/16 jako `BRAK` z powodu zwiniętych sekcji. Dlatego wynik R4 jest **CZĘŚCIOWE**: pliki istnieją i potwierdzają zachowanie semantycznej czerwieni, ale nie stanowią wystarczającego dowodu akceptacyjnego dla neutralizacji.
 
-## R5–R6
+## R5 — bramki i testy
+
+Punktowy zestaw dziesięciu plików testowych AIChat uruchomiono z `RUN_DB_TESTS=0`, `MOCK_DB=true` i `--retry=0` na archiwalnym markerze oraz na bieżącej gałęzi. W obu fazach wynik to 22/22 zestawy i 122/122 testy. Listy 122 pełnych nazw są identyczne (`diff` pusty), więc nie wystąpiło chowanie porażki w zmianie mianownika.
+
+Porównanie bramek nazwa po nazwie:
+
+- `check-focus-canon --ci`: PRZED 104 pliki / 208 naruszeń; PO 100 / 204 — dług spadł, bramka zielona;
+- `check-artefakt`: PRZED i PO 9/9 względem baseline — brak nowego naruszenia, bramka zielona;
+- `check-list-canon`: PRZED i PO pełny skan 157 plików / 368 naruszeń względem baseline 368 — brak nowego naruszenia, bramka zielona.
+
+## R6
+
+Do uzupełnienia raportem końcowym.
 
 Do uzupełnienia.
 
 ## Twierdzenia niezweryfikowane
 
 - Akceptacja wizualna neutralizacji pozostaje NIEPOTWIERDZONA: kadry nie eksponują zmienionych stanów.
-- Bramki PO i testy komponentowe R5 nie są jeszcze wykonane.
 - Gałąź NIE jest scalona i czeka na akcept właściciela na zrzutach.
