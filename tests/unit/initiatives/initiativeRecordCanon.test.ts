@@ -40,3 +40,33 @@ describe('kanon rekordu inicjatywy (decyzja właściciela 2026-09-03)', () => {
     expect(src).toMatch(/<InitiativeDocumentView\b/);
   });
 });
+
+/**
+ * Audyt przewodów odbioru (2026-09-03, `docs/program/waves/WAVE_03_ACCEPTANCE/
+ * AUDYT_PRZEWODOW_ODBIORU_20260903.md`) i ślad `evidence/grafika/
+ * przewody-odbioru-20260903.md` wykazały trzy komponenty, na których stały
+ * zatwierdzone przez właściciela zrzuty, choć żaden użytkownik nigdy ich nie
+ * widział — `git grep -w <Nazwa> -- src/` zwracał wyłącznie własną definicję,
+ * komentarze i (dla InitiativesTable/ReportsTable) zero żywych wołaczy w
+ * ogóle, a dla AuditsHub — wyłącznie jego własne testy (dawny równoległy hub
+ * nad wycofanym `/api/audit`, nigdy nie mounted — `AuditsMethodHub.tsx:10`).
+ * Decyzja właściciela (03.09, przy Inicjatywach): martwe/obce komponenty
+ * kasować, „aby nigdy nie wróciły".
+ */
+describe('martwe komponenty odbioru 2026-09-03 nie wracają', () => {
+  it('InitiativesTable.tsx (assessment) nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/assessment/InitiativesTable.tsx'))
+    ).toBe(false);
+  });
+
+  it('ReportsTable.tsx (assessment) nie istnieje', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/components/assessment/ReportsTable.tsx'))).toBe(
+      false
+    );
+  });
+
+  it('AuditsHub.tsx (Audit) nie istnieje', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/components/Audit/AuditsHub.tsx'))).toBe(false);
+  });
+});
