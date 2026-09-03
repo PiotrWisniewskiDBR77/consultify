@@ -38848,7 +38848,8 @@
       "placeholder": "Napisz komentarz...",
       "sendTitle": "Wyślij komentarz",
       "send": "Wyślij",
-      "aiEnhanceTitle": "AI pomoże dopracować komentarz"
+      "aiEnhanceTitle": "AI pomoże dopracować komentarz",
+      "deleteComment": "Usuń komentarz"
     },
     "aiFieldEnhancer": {
       "triggerTitle": "Akcje AI dla tego pola",

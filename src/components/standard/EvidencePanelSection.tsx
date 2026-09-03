@@ -99,8 +99,16 @@ function AssumptionRow({
     <div className="flex flex-col gap-1 py-1.5">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-c-text truncate">{assumption.key}</span>
+        {/* axe color-contrast: the shared --c-tag-foreground (white) only
+            passes against tag-10/tag-11 of the 12-color identity palette —
+            this component's own 5-entry ASSUMPTION_BADGE map (tag-1..tag-5)
+            all fail white text (2.49-4.32:1 across both themes). Black text
+            passes comfortably against all 5 in both themes (4.86-8.44:1).
+            Scoped to this component's own badge map, NOT a change to
+            --c-tag-foreground or --c-tag-1..12 (those serve ~24+ other call
+            sites app-wide, out of this dyżur's scope). */}
         <span
-          className={`inline-flex items-center gap-1 h-5 px-1.5 rounded-full text-[10px] font-medium text-c-tag-foreground shrink-0 ${badge.tagClass}`}
+          className={`inline-flex items-center gap-1 h-5 px-1.5 rounded-full text-[10px] font-medium text-black shrink-0 ${badge.tagClass}`}
         >
           {isPolish ? badge.labelPl : badge.labelEn}
         </span>

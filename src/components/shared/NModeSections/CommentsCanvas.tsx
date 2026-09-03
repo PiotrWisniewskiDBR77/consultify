@@ -194,6 +194,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}
+                    aria-label={t('sharedComponents.commentsCanvas.deleteComment', 'Delete comment')}
                     className="p-0.5 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
