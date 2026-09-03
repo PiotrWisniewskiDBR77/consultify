@@ -32,6 +32,7 @@ import {
   Settings,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { MethodReadiness, MethodSaveState, MethodSession } from '@/method-core/contracts';
 
@@ -109,11 +110,15 @@ function readStoredViewMode(sessionId: string): MethodWorkspaceViewMode {
 // resztą apki: „Wywiad" (Interview — patrz Sidebar/menuConfig.ts,
 // FeedbackSidePanel.tsx), „Macierz" (Matrix — patrz DrdHttpMethodWorkspaceScreen
 // „Macierz osi"), „Raport".
-const VIEW_MODE_OPTIONS: Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> = [
-  { id: 'interview', label: 'Wywiad', icon: <MessageSquareText size={13} /> },
-  { id: 'matrix', label: 'Macierz', icon: <LayoutGrid size={13} /> },
-  { id: 'report', label: 'Raport', icon: <FileText size={13} /> },
-];
+function viewModeOptions(
+  t: (key: string, fallback: string) => string
+): Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> {
+  return [
+    { id: 'interview', label: t('methodWorkspace.tabs.interview', 'Wywiad'), icon: <MessageSquareText size={13} /> },
+    { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Macierz'), icon: <LayoutGrid size={13} /> },
+    { id: 'report', label: t('methodWorkspace.tabs.report', 'Raport'), icon: <FileText size={13} /> },
+  ];
+}
 
 export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   session,
@@ -144,6 +149,8 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   readOnly = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const VIEW_MODE_OPTIONS = viewModeOptions(t);
   const [internalViewMode, setInternalViewMode] = useState<MethodWorkspaceViewMode>(() =>
     readStoredViewMode(session.id)
   );
@@ -190,16 +197,16 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
   const statusLabel = useMemo(() => {
     const map: Record<MethodSession['state'], string> = {
-      draft: 'Szkic',
-      prepared: 'Przygotowana',
-      active: 'W trakcie wywiadu',
-      in_review: 'Do przeglądu',
-      frozen: 'Zamrożona',
-      closed: 'Zamknięta',
-      archived: 'Zarchiwizowana',
+      draft: t('methodWorkspace.status.draft', 'Szkic'),
+      prepared: t('methodWorkspace.status.prepared', 'Przygotowana'),
+      active: t('methodWorkspace.status.active', 'W trakcie wywiadu'),
+      in_review: t('methodWorkspace.status.inReview', 'Do przeglądu'),
+      frozen: t('methodWorkspace.status.frozen', 'Zamrożona'),
+      closed: t('methodWorkspace.status.closed', 'Zamknięta'),
+      archived: t('methodWorkspace.status.archived', 'Zarchiwizowana'),
     };
     return map[session.state];
-  }, [session.state]);
+  }, [session.state, t]);
 
   if (loading) {
     return (
@@ -207,7 +214,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         data-testid="method-workspace-loading"
         className="flex h-full items-center justify-center text-sm text-c-text-muted"
       >
-        Ładowanie sesji…
+        {t('methodWorkspace.loading', 'Ładowanie sesji…')}
       </div>
     );
   }
@@ -238,14 +245,16 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <LogOut size={13} />
-          Wyjdź
+          {t('methodWorkspace.exit', 'Wyjdź')}
         </button>
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-c-text">
             {methodName} · Sesja {session.id.slice(0, 8)}
           </p>
-          <p className="truncate text-[11px] text-c-text-muted">Method Pack {packVersionLabel}</p>
+          <p className="truncate text-[11px] text-c-text-muted">
+            {t('methodWorkspace.methodPack', 'Method Pack {{version}}', { version: packVersionLabel })}
+          </p>
         </div>
 
         <span className="shrink-0 rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary">
@@ -268,7 +277,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           disabled={readOnly}
           className="shrink-0 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Zapisz teraz
+          {t('methodWorkspace.saveNow', 'Zapisz teraz')}
         </button>
 
         <button
@@ -279,7 +288,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Settings size={13} />
-          Ustawienia
+          {t('methodWorkspace.settings', 'Ustawienia')}
         </button>
 
         <div className="relative shrink-0">
@@ -288,7 +297,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             onClick={() => setMenu3Open((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menu3Open}
-            aria-label="Więcej opcji"
+            aria-label={t('methodWorkspace.moreOptions', 'Więcej opcji')}
             className="rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <MoreHorizontal size={16} />
@@ -303,28 +312,28 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                Duplikuj jako nową
+                {t('methodWorkspace.menu.duplicate', 'Duplikuj jako nową')}
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                Historia wersji
+                {t('methodWorkspace.menu.versionHistory', 'Historia wersji')}
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                Udostępnij / kopiuj link
+                {t('methodWorkspace.menu.share', 'Udostępnij / kopiuj link')}
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                Archiwizuj
+                {t('methodWorkspace.menu.archive', 'Archiwizuj')}
               </button>
             </div>
           )}
@@ -412,10 +421,20 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
       {/* Context strip + one Command Row: view mode switch */}
       <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-2">
         <div className="text-xs text-c-text-muted">
-          {readiness.answeredUnits}/{readiness.totalUnits} jednostek odpowiedzianych
-          {readiness.unitsMissingEvidence > 0 && ` · ${readiness.unitsMissingEvidence} bez dowodu`}
+          {t('methodWorkspace.unitsAnswered', '{{answered}}/{{total}} jednostek odpowiedzianych', {
+            answered: readiness.answeredUnits,
+            total: readiness.totalUnits,
+          })}
+          {readiness.unitsMissingEvidence > 0 &&
+            ` · ${t('methodWorkspace.unitsMissingEvidence', '{{count}} bez dowodu', {
+              count: readiness.unitsMissingEvidence,
+            })}`}
         </div>
-        <div role="tablist" aria-label="Tryb widoku" className="flex items-center rounded-lg border border-c-border p-0.5">
+        <div
+          role="tablist"
+          aria-label={t('methodWorkspace.viewModeAria', 'Tryb widoku')}
+          className="flex items-center rounded-lg border border-c-border p-0.5"
+        >
           {VIEW_MODE_OPTIONS.map((opt) => (
             <button
               key={opt.id}

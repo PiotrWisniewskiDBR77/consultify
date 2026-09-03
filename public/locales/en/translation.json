@@ -41187,6 +41187,37 @@
       "description": "Set a new password for your Consultify account."
     }
   },
+  "methodWorkspace": {
+    "tabs": {
+      "interview": "Interview",
+      "matrix": "Matrix",
+      "report": "Report"
+    },
+    "status": {
+      "draft": "Draft",
+      "prepared": "Prepared",
+      "active": "Interview in progress",
+      "inReview": "For review",
+      "frozen": "Frozen",
+      "closed": "Closed",
+      "archived": "Archived"
+    },
+    "loading": "Loading session…",
+    "exit": "Exit",
+    "methodPack": "Method Pack {{version}}",
+    "saveNow": "Save now",
+    "settings": "Settings",
+    "moreOptions": "More options",
+    "menu": {
+      "duplicate": "Duplicate as new",
+      "versionHistory": "Version history",
+      "share": "Share / copy link",
+      "archive": "Archive"
+    },
+    "unitsAnswered": "{{answered}}/{{total}} units answered",
+    "unitsMissingEvidence": "{{count}} without evidence",
+    "viewModeAria": "View mode"
+  },
   "templateBuilder": {
     "rightPanel": {
       "heading": "Template properties",

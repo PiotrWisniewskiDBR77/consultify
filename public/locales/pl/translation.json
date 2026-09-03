@@ -43792,6 +43792,37 @@
       "description": "Ustaw nowe hasło do swojego konta Consultify."
     }
   },
+  "methodWorkspace": {
+    "tabs": {
+      "interview": "Wywiad",
+      "matrix": "Macierz",
+      "report": "Raport"
+    },
+    "status": {
+      "draft": "Szkic",
+      "prepared": "Przygotowana",
+      "active": "W trakcie wywiadu",
+      "inReview": "Do przeglądu",
+      "frozen": "Zamrożona",
+      "closed": "Zamknięta",
+      "archived": "Zarchiwizowana"
+    },
+    "loading": "Ładowanie sesji…",
+    "exit": "Wyjdź",
+    "methodPack": "Method Pack {{version}}",
+    "saveNow": "Zapisz teraz",
+    "settings": "Ustawienia",
+    "moreOptions": "Więcej opcji",
+    "menu": {
+      "duplicate": "Duplikuj jako nową",
+      "versionHistory": "Historia wersji",
+      "share": "Udostępnij / kopiuj link",
+      "archive": "Archiwizuj"
+    },
+    "unitsAnswered": "{{answered}}/{{total}} jednostek odpowiedzianych",
+    "unitsMissingEvidence": "{{count}} bez dowodu",
+    "viewModeAria": "Tryb widoku"
+  },
   "templateBuilder": {
     "rightPanel": {
       "heading": "Właściwości szablonu",
