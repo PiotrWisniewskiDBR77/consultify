@@ -1,0 +1,942 @@
+[
+  {
+    "ekran": "meetings-module",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "staging-fixes-initiatives-i18n",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 989,
+    "przepelnienie": 821,
+    "kolumnyDanych": 10,
+    "zaslonione": 5,
+    "przykladLabel": "NASTĘPNE DZIAŁANIE"
+  },
+  {
+    "ekran": "inicjatywy-lista",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 989,
+    "przepelnienie": 821,
+    "kolumnyDanych": 10,
+    "zaslonione": 5,
+    "przykladLabel": "NASTĘPNE DZIAŁANIE"
+  },
+  {
+    "ekran": "capacity-advisor-a3",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 943,
+    "przepelnienie": 637,
+    "kolumnyDanych": 10,
+    "zaslonione": 5,
+    "przykladLabel": "LUKA"
+  },
+  {
+    "ekran": "plan-scenario-d1",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 966,
+    "przepelnienie": 614,
+    "kolumnyDanych": 10,
+    "zaslonione": 5,
+    "przykladLabel": "RELACJE"
+  },
+  {
+    "ekran": "staging-fixes-execution-i18n",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 280,
+    "kolumnyDanych": 9,
+    "zaslonione": 3,
+    "przykladLabel": "TERMIN"
+  },
+  {
+    "ekran": "audyty-piec-powierzchni",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 994,
+    "przepelnienie": 356,
+    "kolumnyDanych": 8,
+    "zaslonione": 3,
+    "przykladLabel": "STATUS PUBLIKACJI"
+  },
+  {
+    "ekran": "audyty-warsztat-kryterium",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1004,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "drd-library-entry",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 971,
+    "przepelnienie": 9,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-artifacts-restart",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-registry-shell",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-kpi-registry",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-zestawienia",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-roi-registry",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-roi-model",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 428,
+    "przepelnienie": 552,
+    "kolumnyDanych": 4,
+    "zaslonione": 3,
+    "przykladLabel": "PODSUMOWANIE"
+  },
+  {
+    "ekran": "results-vnext-roi-full-tool",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-okr-registry",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 629,
+    "kolumnyDanych": 9,
+    "zaslonione": 5,
+    "przykladLabel": "OSTATNI / NASTĘPNY CHECK-IN"
+  },
+  {
+    "ekran": "results-vnext-search-registry",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1384,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-okr-objectives",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 359,
+    "kolumnyDanych": 8,
+    "zaslonione": 3,
+    "przykladLabel": "PEWNOŚĆ"
+  },
+  {
+    "ekran": "results-vnext-okr-admin",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-kpi-scorecards",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-legacy-archive",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 3,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-attention",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 1,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "results-vnext-roi-pir-outcomes",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "fab-rail-kebab",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1374,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "materialy-template-library-slice",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "materialy-draft-template-visibledraft-fix",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "materials-registry",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 934,
+    "przepelnienie": 450,
+    "kolumnyDanych": 11,
+    "zaslonione": 5,
+    "przykladLabel": "WIDOCZNOŚĆ"
+  },
+  {
+    "ekran": "audyty-drd-report",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 934,
+    "przepelnienie": 46,
+    "kolumnyDanych": 4,
+    "zaslonione": 1,
+    "przykladLabel": "AKTUALIZACJA"
+  },
+  {
+    "ekran": "assessment-quality-review-panel",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1356,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "gen-deck-content-hints",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1292,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "excele-jeden-widok-materialy",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 400,
+    "kolumnyDanych": 11,
+    "zaslonione": 4,
+    "przykladLabel": "ŹRÓDŁO"
+  },
+  {
+    "ekran": "interview-sessions-status",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 967,
+    "przepelnienie": 13,
+    "kolumnyDanych": 8,
+    "zaslonione": 1,
+    "przykladLabel": "WYSŁANO"
+  },
+  {
+    "ekran": "mywork-inbox",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 973,
+    "przepelnienie": 451,
+    "kolumnyDanych": 9,
+    "zaslonione": 4,
+    "przykladLabel": "SEKCJA"
+  },
+  {
+    "ekran": "finance-hub",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 989,
+    "przepelnienie": 255,
+    "kolumnyDanych": 9,
+    "zaslonione": 2,
+    "przykladLabel": "STATUS"
+  },
+  {
+    "ekran": "admin-security-sessions",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-security-domains",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-security-service-accounts",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-security-security-alerts",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-security-break-glass",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-billing-payment-methods",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1150,
+    "przepelnienie": 0,
+    "kolumnyDanych": 2,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-billing-invoices",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1150,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-billing-seats-licences",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-billing-plan-history",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-members",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1108,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-invitations",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1108,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-roles-permissions",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 3,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-teams",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-guests-external",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-team-access-reviews",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-ai-quality-evaluations",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-ai-ai-incidents",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-ai-configuration-versions",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1118,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-audit-events",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1108,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-audit-high-risk-changes",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1108,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-audit-compliance-evidence",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-audit-retention-export",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1108,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-health-queues-jobs",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-attention-queue",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1132,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-cost-capacity",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 3,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-agent-trace",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-audit",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-dlp",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "admin-command-retention",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1100,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "agent-hub",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 957,
+    "przepelnienie": 23,
+    "kolumnyDanych": 8,
+    "zaslonione": 1,
+    "przykladLabel": "DATA"
+  },
+  {
+    "ekran": "vault-sejf-wnetrze",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 397,
+    "kolumnyDanych": 10,
+    "zaslonione": 4,
+    "przykladLabel": "ROZMIAR"
+  },
+  {
+    "ekran": "results-three-pairs",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1156,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "finance-analysis-workspace",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1406,
+    "przepelnienie": 0,
+    "kolumnyDanych": 9,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "execution-report-day11",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1212,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "execution-tab-list",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 984,
+    "przepelnienie": 280,
+    "kolumnyDanych": 9,
+    "zaslonione": 3,
+    "przykladLabel": "TERMIN"
+  },
+  {
+    "ekran": "execution-tab-work",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 966,
+    "przepelnienie": 14,
+    "kolumnyDanych": 5,
+    "zaslonione": 1,
+    "przykladLabel": "TERMIN / SLA"
+  },
+  {
+    "ekran": "execution-tab-resources",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 966,
+    "przepelnienie": 1364,
+    "kolumnyDanych": 13,
+    "zaslonione": 8,
+    "przykladLabel": "ZAKRES OBCIĄŻENIA"
+  },
+  {
+    "ekran": "execution-tab-control",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 943,
+    "przepelnienie": 37,
+    "kolumnyDanych": 5,
+    "zaslonione": 1,
+    "przykladLabel": "TERMIN WERYFIKACJI"
+  },
+  {
+    "ekran": "execution-tab-rollout",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1406,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "execution-tab-summary",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 506,
+    "przepelnienie": 474,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "chat-signals-feed",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 650,
+    "przepelnienie": 330,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "exec-summary-onelook",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 506,
+    "przepelnienie": 474,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-list",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1406,
+    "przepelnienie": 0,
+    "kolumnyDanych": 8,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-five-surfaces",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 971,
+    "przepelnienie": 9,
+    "kolumnyDanych": 4,
+    "zaslonione": 1,
+    "przykladLabel": "DZIAŁANIA"
+  },
+  {
+    "ekran": "assessment-manage-panel",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1322,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-menu3-status-chips",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 981,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-initiatives-panel",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1404,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-reports-panel",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1404,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-initiatives-table",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1372,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "report-builder-block-types",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 974,
+    "przepelnienie": 6,
+    "kolumnyDanych": 7,
+    "zaslonione": 1,
+    "przykladLabel": "ZAKTUALIZOWANO"
+  },
+  {
+    "ekran": "report-builder-templates",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 814,
+    "przepelnienie": 395,
+    "kolumnyDanych": 9,
+    "zaslonione": 4,
+    "przykladLabel": "FORMAT"
+  },
+  {
+    "ekran": "model-catalog-table",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 966,
+    "przepelnienie": 414,
+    "kolumnyDanych": 9,
+    "zaslonione": 4,
+    "przykladLabel": "CAPABILITIES"
+  },
+  {
+    "ekran": "partner-settlements-view",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 954,
+    "przepelnienie": 26,
+    "kolumnyDanych": 7,
+    "zaslonione": 1,
+    "przykladLabel": "DATE"
+  },
+  {
+    "ekran": "prompt-registry-tab",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 954,
+    "przepelnienie": 26,
+    "kolumnyDanych": 6,
+    "zaslonione": 1,
+    "przykladLabel": "CHECKSUM"
+  },
+  {
+    "ekran": "assessment-reports-table",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1372,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "assessment-output-report",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 796,
+    "przepelnienie": 0,
+    "kolumnyDanych": 5,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "zwornik-projects",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 986,
+    "przepelnienie": 0,
+    "kolumnyDanych": 6,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "vault-safes-table",
+    "listowy": true,
+    "podglad": true,
+    "kontener": 989,
+    "przepelnienie": 0,
+    "kolumnyDanych": 7,
+    "zaslonione": 0,
+    "przykladLabel": null
+  },
+  {
+    "ekran": "aios-home",
+    "listowy": true,
+    "podglad": false,
+    "kontener": 1236,
+    "przepelnienie": 0,
+    "kolumnyDanych": 4,
+    "zaslonione": 0,
+    "przykladLabel": null
+  }
+]

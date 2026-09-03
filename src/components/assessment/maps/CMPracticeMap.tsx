@@ -82,7 +82,7 @@ const CMMIMaturityLevelBar: React.FC<{
                 className={`h-12 rounded-lg flex items-center justify-center transition-all ${
                   isAchieved
                     ? `bg-${level.color}-500 text-white`
-                    : 'bg-slate-200 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
+                    : 'bg-slate-200 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
                 } ${isCurrent ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}
               >
                 <div className="text-center">

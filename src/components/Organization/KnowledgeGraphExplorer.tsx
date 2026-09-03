@@ -82,6 +82,29 @@ const ENTITY_COLORS: Record<string, string> = {
   default: '#64748b',
 };
 
+/**
+ * Klasy tekstowe czipów typu encji — ODDZIELNE od `ENTITY_COLORS` (dot/tło grafu).
+ * Powód istnienia (axe: color-contrast, zmierzone na org-knowledge-graph, light I
+ * dark): czip renderował `color: getEntityColor(type)` — surowy hex-500 wprost jako
+ * tekst na niemal-białym (light) albo niemal-czarnym (dark) tle. W light 500-tka
+ * dawała 2.4–4.1:1 zamiast 4,5:1; sam ciemniejszy odcień naprawiłby light, ale
+ * złamał dark (za ciemny na czarnym tle) — stąd para 700/300, nie jedna stała.
+ */
+const ENTITY_TEXT_CLASSES: Record<string, string> = {
+  person: 'text-indigo-700 dark:text-indigo-300',
+  organization: 'text-sky-700 dark:text-sky-300',
+  concept: 'text-indigo-700 dark:text-indigo-300',
+  technology: 'text-emerald-700 dark:text-emerald-300',
+  location: 'text-amber-700 dark:text-amber-300',
+  process: 'text-pink-700 dark:text-pink-300',
+  metric: 'text-blue-700 dark:text-blue-300',
+  default: 'text-slate-700 dark:text-slate-300',
+};
+
+function getEntityTextClass(type: string): string {
+  return ENTITY_TEXT_CLASSES[type.toLowerCase()] || ENTITY_TEXT_CLASSES.default;
+}
+
 function getEntityColor(type: string): string {
   return ENTITY_COLORS[type.toLowerCase()] || ENTITY_COLORS.default;
 }
@@ -299,7 +322,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               key={s.label}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 {s.label}
               </span>
               <span className="text-sm font-bold text-slate-800 dark:text-white">{s.value}</span>
@@ -308,11 +331,8 @@ export const KnowledgeGraphExplorer: React.FC = () => {
           {entityTypeBreakdown.map(([type, count]) => (
             <div
               key={type}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium"
-              style={{
-                background: `${getEntityColor(type)}15`,
-                color: getEntityColor(type),
-              }}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium ${getEntityTextClass(type)}`}
+              style={{ background: `${getEntityColor(type)}15` }}
             >
               <div className="w-2 h-2 rounded-full" style={{ background: getEntityColor(type) }} />
               {entityTypeLabel(type, t)} ({count})
@@ -393,7 +413,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-3">
+              <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-400 gap-3">
                 <Network size={48} className="opacity-30" />
                 <p className="text-sm font-medium">
                   {t(
@@ -401,7 +421,11 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                     'Search entities to explore the knowledge graph'
                   )}
                 </p>
-                <p className="text-xs opacity-60">
+                {/* `opacity-60` na dziedziczonym kolorze schodziło poniżej 4,5:1 w obu
+                    motywach (axe: color-contrast, zmierzone na org-knowledge-graph:
+                    1.63 dark / 2.87 light) — text-slate-500 to stały, wystarczający
+                    kontrast bez opacity. */}
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {t(
                     'organization.knowledgeGraph.emptySearch.hint',
                     'Click a node to see details and provenance'
@@ -458,7 +482,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
             <div className="p-4 space-y-4">
               {/* Properties */}
               <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   {t('organization.knowledgeGraph.properties', 'Properties')}
                 </h4>
                 {[
@@ -516,7 +540,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               {/* Provenance */}
               {provenance && (
                 <div className="space-y-2">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     {t('organization.knowledgeGraph.provenance', 'Provenance')}
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">

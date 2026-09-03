@@ -256,9 +256,12 @@ const GATE_CONFIG: Record<
     key: 'approveReport',
     actionLabel: 'Approve Report',
   },
+  // emerald-600/amber-600 na własnym -50 tle dawały 4.08:1 / 3.57:1 zamiast
+  // 4,5:1 (axe: color-contrast, zmierzone na assessment-manage-panel i
+  // assessment-reports-table — ten sam GATE_ACTIONS renderuje oba).
   APPROVE_ASSESSMENT: {
     icon: ShieldCheck,
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     key: 'approveAssessment',
@@ -274,7 +277,7 @@ const GATE_CONFIG: Record<
   },
   GENERATE_INITIATIVES: {
     icon: Sparkles,
-    color: 'text-amber-600 dark:text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
     key: 'generateInitiatives',
@@ -293,24 +296,27 @@ const STATUS_CONFIG: Record<
     icon: React.ElementType;
   }
 > = {
+  // Kolory tekstu poprawione o jeden-dwa odcienie ciemniej (light) — 500/600 na
+  // własnym tle -100 dawały 3.2-4.3:1 zamiast 4,5:1 (axe: color-contrast,
+  // zmierzone na assessment-manage-panel). REJECTED (danger-600) już przechodził.
   NOT_STARTED: {
     labelKey: 'notStarted',
     label: 'Not Started',
-    color: 'text-slate-500 dark:text-slate-400',
+    color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
     icon: Clock,
   },
   PENDING: {
     labelKey: 'pending',
     label: 'Pending',
-    color: 'text-amber-600 dark:text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     bgColor: 'bg-amber-100 dark:bg-amber-500/20',
     icon: Clock,
   },
   APPROVED: {
     labelKey: 'approved',
     label: 'Approved',
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
     icon: CheckCircle2,
   },
@@ -324,7 +330,7 @@ const STATUS_CONFIG: Record<
   SKIPPED: {
     labelKey: 'skipped',
     label: 'Skipped',
-    color: 'text-slate-500 dark:text-slate-400',
+    color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
     icon: ArrowRight,
   },
@@ -400,7 +406,10 @@ const StageNameCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+        {/* slate-600, nie slate-500: ta komórka renderuje się też na podbarwionym
+            tle wiersza zaznaczonego — 4.21:1 zamiast 4,5:1 (axe: color-contrast,
+            zmierzone na assessment-manage-panel po otwarciu podglądu). */}
+        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">
           {t(`assessment.workflowStages.stage.${stage.labelKey}.description`, stage.description)}
         </p>
       </div>
@@ -412,7 +421,7 @@ const GateCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
   const { t } = useTranslation();
   const gateConfig = stage.gate ? GATE_CONFIG[stage.gate] : null;
   if (!stage.gate || !gateConfig) {
-    return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
+    return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
   }
   const GateIcon = gateConfig.icon;
   return (
@@ -436,7 +445,7 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   if (stage.requirements.length === 0) {
-    return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
+    return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
   }
 
   const blocking = stage.requirements.filter((r) => r.severity === 'blocking' && !r.pass);
@@ -581,7 +590,7 @@ const ApproverCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
       {t(`assessment.workflowStages.role.${stage.approverRole}`, stage.approverRole)}
     </span>
   ) : (
-    <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
+    <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
   );
 };
 
@@ -607,7 +616,7 @@ const AssigneeCell: FC<{
   };
 
   if (!stage.gate) {
-    return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
+    return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
   }
 
   return (
@@ -711,7 +720,7 @@ const StatusCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
   const StatusIcon = statusConfig.icon;
 
   if (!stage.gate) {
-    return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
+    return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
   }
 
   return (
@@ -865,7 +874,7 @@ const ActionsCell: FC<{
     );
   }
 
-  return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
+  return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
 };
 
 // ============================================
@@ -1065,6 +1074,8 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
+            title={t('common.refresh', 'Refresh')}
+            aria-label={t('common.refresh', 'Refresh')}
             className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors ${FOCUS_RING}`}
           >
             <Loader2 size={16} className={refreshing ? 'animate-spin' : ''} />

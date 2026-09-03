@@ -145,11 +145,15 @@ export const OrganizationDecisionQualityPanel: React.FC<{
                 : 'Below is the current state of approved data, conflicts, and the published version. Every blocker links to the place where it can be resolved.'}
             </p>
           </div>
+          {/* text-*-300/400 na bg-*-500/10 nie miało pary dla jasnego motywu — kontrast
+              1.42:1 zamiast wymaganych 4,5:1 (axe: color-contrast, zmierzone na
+              org-knowledge-graph). Para *-700/*-300 to istniejący wzorzec w repo
+              (RouteErrorBoundary.tsx, RoadmapGantt.tsx). */}
           <span
             className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
               ready
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                : 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                : 'border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300'
             }`}
           >
             {ready ? 'READY' : isPolish ? 'WYMAGA UWAGI' : 'NEEDS ATTENTION'}

@@ -131,10 +131,12 @@ const STATUS_CONFIG: Record<
     borderColor: 'border-slate-200 dark:border-slate-500/30',
     icon: Clock,
   },
+  // amber-700/emerald-600 na własnym -50 tle dawały 4.21:1 / 4.08:1 zamiast
+  // 4,5:1 (axe: color-contrast, zmierzone na assessment-reports-panel/-table).
   GENERATING: {
     label: 'Generating',
     labelKey: 'assessment.reportsTable.status.generating',
-    color: 'text-amber-700 dark:text-amber-300',
+    color: 'text-amber-800 dark:text-amber-300',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
     icon: Loader2,
@@ -160,7 +162,7 @@ const STATUS_CONFIG: Record<
   APPROVED: {
     label: 'Approved',
     labelKey: 'assessment.reportsTable.status.approved',
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: CheckCircle2,
@@ -501,7 +503,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 {report.sourceName || '—'}
               </span>
               {report.sourceType && (
-                <span className="text-xs text-slate-600 dark:text-slate-500">
+                <span className="text-xs text-slate-600 dark:text-slate-400">
                   {t(
                     `assessment.reportsTable.sourceType.${report.sourceType}`,
                     report.sourceType
@@ -538,7 +540,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         render: (row) => {
           const report = row as unknown as Report;
           return (
-            <span className="text-xs text-slate-600 dark:text-slate-500">
+            <span className="text-xs text-slate-600 dark:text-slate-400">
               {formatDate(report.updatedAt)}
             </span>
           );
@@ -750,7 +752,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center gap-6 mt-4">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`text-sm ${filterStatus === 'all' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'all' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {t('assessment.reportsTable.stats.all', 'All')} ({stats.total})
           </button>
@@ -758,13 +760,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             <>
               <button
                 onClick={() => setFilterStatus('draft')}
-                className={`text-sm ${filterStatus === 'draft' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'draft' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 {t('assessment.reportsTable.stats.drafts', 'Drafts')} ({stats.draft})
               </button>
               <button
                 onClick={() => setFilterStatus('generated')}
-                className={`text-sm ${filterStatus === 'generated' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'generated' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 {t('assessment.reportsTable.stats.generated', 'Generated')} ({stats.generated})
               </button>
@@ -772,19 +774,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           )}
           <button
             onClick={() => setFilterStatus('in_review')}
-            className={`text-sm ${filterStatus === 'in_review' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'in_review' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {t('assessment.reportsTable.stats.inReview', 'In Review')} ({stats.inReview})
           </button>
           <button
             onClick={() => setFilterStatus('approved')}
-            className={`text-sm ${filterStatus === 'approved' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'approved' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {t('assessment.reportsTable.stats.approved', 'Approved')} ({stats.approved})
           </button>
           <button
             onClick={() => setFilterStatus('sent')}
-            className={`text-sm ${filterStatus === 'sent' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'sent' ? 'text-navy-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {t('assessment.reportsTable.stats.sent', 'Sent')} ({stats.sent})
           </button>
@@ -794,7 +796,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center gap-3 mt-4">
           <div className="relative flex-1 max-w-md">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
               size={18}
             />
             <input
@@ -807,6 +809,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
           <button
             onClick={fetchReports}
+            title={t('common.refresh', 'Refresh')}
+            aria-label={t('common.refresh', 'Refresh')}
             className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
           >
             <RefreshCw size={18} />

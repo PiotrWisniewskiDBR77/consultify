@@ -242,7 +242,10 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
             style={{ width: `${completeness}%` }}
           />
         </div>
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+        {/* slate-600, nie slate-500: renderuje się też na podbarwionym tle wiersza
+            zaznaczonego — 4.21:1 zamiast 4,5:1 (axe: color-contrast, zmierzone na
+            assessment-initiatives-table po otwarciu podglądu). */}
+        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
           {completeness}%
         </span>
       </div>

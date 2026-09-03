@@ -304,7 +304,7 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
           <div className="text-center py-12">
             <Clock className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400">No activity recorded yet</p>
-            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Actions will appear here as you work on the assessment
             </p>
           </div>

@@ -43,28 +43,31 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
   const recommendedText = t.recommended || 'Recommended';
 
   return (
-    <div
-      onClick={onClick}
-      className={`
-                relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer group min-w-[280px] w-[280px] snap-center
+    // Wrapper BEZ opacity: odznaka "REKOMENDOWANY" była dzieckiem karty, która w
+    // stanie non-selected niesie `opacity-80` — opacity CSS jest dziedziczone
+    // multiplikatywnie, więc biały tekst na zielonym tle spadał efektywnie do
+    // ok. 80% (axe: color-contrast 4.48 zamiast 4,5:1, zmierzone na org-scenarios,
+    // x14 na obu motywach/viewportach). Odznaka renderuje się teraz jako
+    // rodzeństwo karty w tym samym względnie pozycjonowanym wrapperze — ten sam
+    // wygląd (-top-3 liczone teraz od wrappera, nie od karty), pełna nieprzezroczystość.
+    <div className="relative min-w-[280px] w-[280px] snap-center">
+      <div
+        onClick={onClick}
+        className={`
+                relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer group
                 flex flex-col justify-between h-[380px]
                 ${
                   isSelected
                     ? 'border-c-text bg-white dark:bg-navy-800 shadow-xl shadow-black/10 scale-105 z-10'
-                    : 'border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
+                    : /* `opacity-80` (usunięte) dziedziczył się na WSZYSTKIE potomne
+                         teksty (badge, narrative, etykiety Tempo/Ambicja/Ryzyko) i
+                         zjadał ich kontrast poniżej 4,5:1 (axe: color-contrast,
+                         zmierzone na org-scenarios — nie tylko odznaka, cała karta). */
+                      'border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg scale-100'
                 }
             `}
-    >
-      {/* Kanon czerwieni (CLAUDE.md UI#3): „REKOMENDOWANY" to stan POZYTYWNY,
-          nie alarm — brandowy crimson `c-accent` malowal go na czerwono. */}
-      {isRecommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-success text-white text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-black/20 flex items-center gap-1 z-20 whitespace-nowrap border border-c-success">
-          <BrainCircuit size={12} />
-          {recommendedText}
-        </div>
-      )}
-
-      <div>
+      >
+        <div>
         <div className="flex justify-center mb-6 mt-4">
           <div
             className={`
@@ -81,11 +84,13 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
         </div>
 
         <div className="text-center mb-4">
-          <h4
+          {/* h3: siostrzane karty scenariuszy pod h2 "Rekomendowany scenariusz" w
+              TransformationScenarios.tsx — h4 tu łamał kolejność (axe: heading-order). */}
+          <h3
             className={`font-bold text-lg mb-2 leading-tight transition-colors ${isSelected ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
           >
             {name}
-          </h4>
+          </h3>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 italic min-h-[40px] px-2">
             "{narrative}"
           </p>
@@ -105,7 +110,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
 
       <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 -mx-5 -mb-5 p-4 py-3 rounded-b-2xl">
         <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
+          <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
             {t.metricLabels?.tempo || 'Tempo'}
           </span>
           <VisualScale
@@ -114,7 +119,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           />
         </div>
         <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
+          <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
             {t.metricLabels?.ambition || 'Ambition'}
           </span>
           <VisualScale
@@ -123,7 +128,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           />
         </div>
         <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
+          <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
             {t.metricLabels?.risk || 'Risk'}
           </span>
           <VisualScale
@@ -138,6 +143,20 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
           <div className="bg-white dark:bg-navy-900 rounded-full p-1 shadow-sm">
             <Check size={16} />
           </div>
+        </div>
+      )}
+      </div>
+
+      {/* Kanon czerwieni (CLAUDE.md UI#3): „REKOMENDOWANY" to stan POZYTYWNY,
+          nie alarm — brandowy token akcentu malowal go na czerwono.
+          Rodzeństwo karty (nie dziecko) — patrz komentarz przy wrapperze wyżej.
+          text-white dark:text-navy-950: --c-success w dark to jasna zieleń (#3fb950,
+          skalibrowana na tekst NA niej, nie tekst tła), więc biały dawał 2.54:1
+          zamiast 4,5:1 (axe: color-contrast, zmierzone na org-scenarios dark). */}
+      {isRecommended && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-success text-white dark:text-navy-950 text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-black/20 flex items-center gap-1 z-20 whitespace-nowrap border border-c-success">
+          <BrainCircuit size={12} />
+          {recommendedText}
         </div>
       )}
     </div>

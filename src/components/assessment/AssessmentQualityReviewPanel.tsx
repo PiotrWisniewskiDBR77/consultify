@@ -113,13 +113,15 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         align: 'right',
         render: (row: TableRow) =>
           row.hasEvidence ? (
-            <span className="text-emerald-600 dark:text-emerald-400">{row.evidenceCount}</span>
+            // emerald/amber-600 dawały 4.31:1 / 3.79:1 zamiast 4,5:1 na białym
+            // (axe: color-contrast, zmierzone na assessment-quality-review-panel).
+            <span className="text-emerald-700 dark:text-emerald-400">{row.evidenceCount}</span>
           ) : (
             // MPQ odbiór 2026-08-13: brak dowodu to normalny, oczekiwany stan
             // oceny dojrzałości (jeszcze nie udokumentowane) — NIE błąd/awaria.
             // Crimson/danger w tym repo jest zarezerwowany dla semantyki
             // krytycznej; tu ostrzegawczy amber (do uzupełnienia, nie alarm).
-            <span className="text-amber-600 dark:text-amber-400">brak</span>
+            <span className="text-amber-800 dark:text-amber-400">brak</span>
           ),
       },
     ],
@@ -353,7 +355,10 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       <section>
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">Dodaj dowód</h3>
         <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* aria-label: żaden z trzech selectów niżej nie ma widocznej etykiety
+              (axe: select-name, zmierzone na assessment-quality-review-panel). */}
           <select
+            aria-label="Oś DRD"
             value={axisId}
             onChange={(e) => setAxisId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
@@ -365,6 +370,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             ))}
           </select>
           <select
+            aria-label="Obszar"
             value={areaId}
             onChange={(e) => setAreaId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
@@ -378,6 +384,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <select
+            aria-label="Typ dowodu"
             value={evidenceType}
             onChange={(e) => setEvidenceType(e.target.value as EvidenceType)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
@@ -488,8 +495,8 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 <span
                   className={
                     rev.action === 'accept'
-                      ? 'font-medium text-emerald-600 dark:text-emerald-400'
-                      : 'font-medium text-amber-600 dark:text-amber-400'
+                      ? 'font-medium text-emerald-700 dark:text-emerald-400'
+                      : 'font-medium text-amber-800 dark:text-amber-400'
                   }
                 >
                   {rev.action === 'accept' ? 'Zaakceptowano' : 'Odesłano'}

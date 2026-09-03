@@ -222,7 +222,7 @@ const WasteSelector: React.FC<{
               >
                 <Icon
                   size={20}
-                  className={`mx-auto mb-1 ${isSelected ? `text-${waste.color}-500` : 'text-slate-600 dark:text-slate-500'}`}
+                  className={`mx-auto mb-1 ${isSelected ? `text-${waste.color}-500` : 'text-slate-600 dark:text-slate-400'}`}
                 />
                 <div
                   className={`text-xs font-medium ${isSelected ? `text-${waste.color}-700 dark:text-${waste.color}-400` : 'text-slate-500'}`}

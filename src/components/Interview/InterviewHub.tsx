@@ -4718,7 +4718,7 @@ export const InterviewHub: React.FC = () => {
         label: t('interview.hub.progress'),
         width: '130px',
         align: 'right',
-        render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} />,
+        render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} ariaLabel="Postęp sesji" />,
       },
       {
         id: 'due',
@@ -6684,7 +6684,7 @@ Return ONLY the answer text (no markdown fences).`;
         sortable: true,
         sortAccessor: (row: InterviewAssignment) => row.session?.completenessPercent || 0,
         render: (row: InterviewAssignment) => (
-          <ProgressCell value={row.session?.completenessPercent || 0} />
+          <ProgressCell value={row.session?.completenessPercent || 0} ariaLabel="Postęp sesji" />
         ),
       },
       {
@@ -8229,7 +8229,7 @@ Return ONLY the answer text (no markdown fences).`;
           width: '130px',
           align: 'right',
           render: (row: InterviewAssignment) => (
-            <ProgressCell value={row.session?.completenessPercent ?? 0} />
+            <ProgressCell value={row.session?.completenessPercent ?? 0} ariaLabel="Postęp sesji" />
           ),
         },
         {

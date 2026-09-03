@@ -263,7 +263,7 @@ const ADMAPillarCard: React.FC<{
               >
                 {pillarScore.current.toFixed(1)}
               </span>
-              <span className="text-slate-600 dark:text-slate-500">/</span>
+              <span className="text-slate-600 dark:text-slate-400">/</span>
               <span className="text-sm text-slate-500 dark:text-slate-400">
                 {pillarScore.target.toFixed(1)}
               </span>
@@ -558,7 +558,7 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
             )}
           </div>
           {averagePeerScores === ADMA_DEFAULT_PEER_SCORES && (
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+            <p className="text-center text-xs text-slate-400 dark:text-slate-400 mt-2">
               Średnia (peers) — dane przykładowe
             </p>
           )}

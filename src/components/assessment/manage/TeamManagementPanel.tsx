@@ -814,7 +814,7 @@ const PermissionsCell: FC<{ member: TeamMember }> = ({ member }) => {
           </span>
         ))
       ) : (
-        <span className="text-xs text-slate-600 dark:text-slate-500">View only</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">View only</span>
       )}
       {activePermissions.length > 4 && (
         <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">
@@ -851,7 +851,7 @@ const AreaOrgCell: FC<{ member: TeamMember; isInitiative: boolean }> = ({
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 w-fit">
           {t('assessment.team.inOrg', 'In org')}
         </span>
-        <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
+        <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
           {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
         </span>
       </div>
@@ -863,7 +863,7 @@ const AreaOrgCell: FC<{ member: TeamMember; isInitiative: boolean }> = ({
       {member.assignedAreas.length} areas
     </span>
   ) : (
-    <span className="text-xs text-slate-600 dark:text-slate-500">All areas</span>
+    <span className="text-xs text-slate-600 dark:text-slate-400">All areas</span>
   );
 };
 
@@ -1069,6 +1069,8 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
+                title={t('common.refresh', 'Refresh')}
+                aria-label={t('common.refresh', 'Refresh')}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <Loader2 size={16} className={refreshing ? 'animate-spin' : ''} />

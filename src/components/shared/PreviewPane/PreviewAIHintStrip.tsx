@@ -107,12 +107,15 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
+<<<<<<< HEAD
         {/* axe `color-contrast`: dark:text-slate-500 measured 3.36:1 on this
             strip's navy-900 dark background — under 4.5:1. slate-400 clears
             ~6.2:1 there; light stays slate-600 (already passing on the
             light surface). Shared preview block (`data-preview-block="ai"`)
             — this fix reaches every AI hint strip in the app, not just the
             two screens that happened to be measured. */}
+=======
+>>>>>>> agent/fix-a11y-01-04-20260903
         <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
@@ -131,9 +134,12 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
 
           {hasKebab ? (
             <>
+              {/* aria-label: trigger ikony bez widocznego tekstu (axe: button-name,
+                  zmierzone na tools-outputs-insights-tab po otwarciu podglądu). */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+                aria-label={t('common.moreOptions', 'More options')}
+                className="p-1 rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
               >
                 <MoreVertical size={13} />
               </button>
@@ -199,7 +205,14 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
               onRunHint?.(hint);
             }}
             disabled={loading}
-            className={`${PREVIEW_HINT_CHIP} border-c-info/30 dark:border-c-info/20${disabled ? ' opacity-50' : ''}`}
+            // `opacity-50` na `PREVIEW_HINT_CHIP` (text-slate-600 dark:text-slate-300,
+            // sam w sobie zgodny) rozmywał tekst poniżej 4,5:1 (axe: color-contrast,
+            // zmierzone na interview-sessions-status po otwarciu podglądu — 2.29:1
+            // light / 3.74:1 dark) — przycisk zostaje w pełni klikalny (disabled
+            // wiąże się z `loading`, nie z tym stanem, pokazuje toast), więc axe
+            // NIE traktuje go jak wyłączony. cursor-not-allowed niesie ten sam sygnał
+            // bez zjadania kontrastu tekstu.
+            className={`${PREVIEW_HINT_CHIP} border-c-info/30 dark:border-c-info/20${disabled ? ' cursor-not-allowed' : ''}`}
           >
             <Zap size={10} className="text-c-info" />
             {hint}
@@ -216,7 +229,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
               onRunHint?.(hint);
             }}
             disabled={loading}
-            className={`${PREVIEW_HINT_CHIP}${disabled ? ' opacity-50' : ''}`}
+            className={`${PREVIEW_HINT_CHIP}${disabled ? ' cursor-not-allowed' : ''}`}
           >
             <Sparkles size={10} className="text-c-info/70" />
             {hint}

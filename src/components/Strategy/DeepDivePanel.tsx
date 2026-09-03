@@ -70,7 +70,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
         {/* 1. What it means */}
         <section>
-          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Target size={16} /> {t.deepDive?.definition || 'What this scenario means'}
           </h4>
           <div className="bg-white dark:bg-navy-800 p-4 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
@@ -111,7 +111,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
 
         {/* 3. Trade-offs */}
         <section>
-          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <AlertTriangle size={16} /> {t.deepDive?.tradeoffs || 'Trade-offs'}
           </h4>
           <div className="grid grid-cols-2 gap-4">
@@ -146,7 +146,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
 
         {/* 4. Organizational Impact */}
         <section>
-          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
+          <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3">
             {t.deepDive?.impact || 'Organizational impact'}
           </h4>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 divide-y divide-slate-200 dark:divide-white/5">

@@ -77,9 +77,12 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
             <BrainCircuit size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-navy-900 dark:text-white text-lg">
+            {/* h2, nie h3: bezpośredni następnik h1 ekranu — h3 łamał kolejność
+                (axe: heading-order, zmierzone na org-scenarios); ScenarioCard poniżej
+                podniesiony razem z tym do h3, żeby zachować +1. */}
+            <h2 className="font-bold text-navy-900 dark:text-white text-lg">
               {t.banner?.title || 'Recommended transformation scenario'}
-            </h3>
+            </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl mt-1">
               {(
                 t.banner?.subtitle ||

@@ -109,14 +109,19 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                     {isComplete && !isActive ? <Check size={12} strokeWidth={3} /> : index + 1}
                   </span>
                   <span className="min-w-0 flex-1">
+                    {/* Etykieta w stanie nie-aktywnym dziedziczyła text-slate-500
+                        z przycisku (4.42:1 zamiast 4,5) — jawny slate-600 daje
+                        bezpieczny margines. Podpowiedź (hint) była jeszcze jaśniejsza
+                        (slate-400, 2.38:1) — ten sam slate-600 (axe: color-contrast,
+                        zmierzone na interview-creator-shell). */}
                     <span
                       className={`block truncate text-xs font-semibold leading-tight ${
-                        isActive ? 'text-slate-900 dark:text-white' : ''
+                        isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'
                       }`}
                     >
                       {label}
                       {step.optional ? (
-                        <span className="ml-1 text-[10px] font-normal text-slate-400">
+                        <span className="ml-1 text-[10px] font-normal text-slate-500 dark:text-slate-400">
                           {t('sharedComponents.wizardStepper.optional')}
                         </span>
                       ) : null}
@@ -124,7 +129,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
                     {hint ? (
                       <span
                         className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${
-                          isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'
+                          isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-600 dark:text-slate-400'
                         }`}
                       >
                         {hint}

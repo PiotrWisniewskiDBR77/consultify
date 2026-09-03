@@ -425,10 +425,15 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
               ) : null}
             </div>
           ) : null}
+          {/* `opacity-60` na kontenerze mnożył się z już-przyciemnionym c-text-muted
+              (kalibrowanym na pełną nieprzezroczystość) — 2.29:1 zamiast 4,5:1
+              (axe: color-contrast, zmierzone na assessment-report-contract, x3
+              wiersze "planowane"). c-text-muted samo w sobie jest już wystarczająco
+              wyciszone wizualnie bez dodatkowego opacity. */}
           {(['generate', 'pdf', 'all'] as const).map((kind) => (
             <div
               key={kind}
-              className="flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2 opacity-60"
+              className="flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-2"
             >
               <span className="text-xs text-c-text-muted">
                 {kind === 'generate'

@@ -20,6 +20,14 @@ export interface ProgressCellProps {
   /** Bar height. `sm` = h-1 (table), `md` = h-1.5. Default `sm`. */
   size?: 'sm' | 'md';
   className?: string;
+  /**
+   * Accessible name for the `role="progressbar"` div — a caller-supplied name
+   * (e.g. "Postęp sesji") gives screen-reader users context the bare percent
+   * doesn't. Falls back to a generic "Postęp: N%" so the bar always has SOME
+   * name (axe: aria-progressbar-name, zmierzone na interview-sessions-status —
+   * the bar had none at all).
+   */
+  ariaLabel?: string;
 }
 
 /**
@@ -31,6 +39,7 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
   showLabel = true,
   size = 'sm',
   className,
+  ariaLabel,
 }) => {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   const complete = pct >= 100;
@@ -46,6 +55,7 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-label={ariaLabel ?? `Postęp: ${pct}%`}
       >
         <div
           className={cn(
@@ -55,8 +65,13 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
           style={{ width: `${pct}%` }}
         />
       </div>
+      {/* c-text-secondary, nie c-text-muted: muted jest kalibrowany na --c-bg,
+          ale ta komórka renderuje się też na podbarwionym tle wiersza
+          zaznaczonego (bg-state-selected) — muted dawał tam 3.98:1 zamiast
+          4,5:1 (axe: color-contrast, zmierzone na interview-sessions-status
+          po otwarciu podglądu). secondary ma bezpieczny margines na obu tłach. */}
       {showLabel && (
-        <span className="shrink-0 tabular-nums text-[11px] text-c-text-muted">{pct}%</span>
+        <span className="shrink-0 tabular-nums text-[11px] text-c-text-secondary">{pct}%</span>
       )}
     </div>
   );

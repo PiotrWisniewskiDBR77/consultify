@@ -2136,20 +2136,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const kind = String(row?.outputKind || '');
           const cfg: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+            // `-400` shades bez pary light/dark były kalibrowane pod ciemne tło —
+            // na jasnym dawały 2.2-2.6:1 zamiast 4,5:1 (axe: color-contrast,
+            // zmierzone na tools-outputs-insights-tab). Para `-700 dark:-400`.
             assessment_report: {
               icon: <Activity size={14} />,
               label: isPolish ? 'Raport assessment' : 'Assessment report',
-              color: 'text-blue-400',
+              color: 'text-blue-700 dark:text-blue-400',
             },
             report_builder: {
               icon: <FileText size={14} />,
               label: isPolish ? 'Raport' : 'Report',
-              color: 'text-blue-400',
+              color: 'text-blue-700 dark:text-blue-400',
             },
             presentation_deck: {
               icon: <Layers size={14} />,
               label: isPolish ? 'Prezentacja' : 'Presentation',
-              color: 'text-emerald-400',
+              color: 'text-emerald-700 dark:text-emerald-400',
             },
             // DEC-118 repair #1: the module's OWN tool_outputs snapshot rows
             // (migration 946), distinguishable from the three downstream
@@ -2157,7 +2160,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             tool_output: {
               icon: <Zap size={14} />,
               label: isPolish ? 'Wynik narzędzia' : 'Tool output',
-              color: 'text-amber-400',
+              color: 'text-amber-800 dark:text-amber-400',
             },
           };
           const c = cfg[kind] || {
@@ -2211,10 +2214,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const d = new Date(row?.updatedAt);
           if (Number.isNaN(d.getTime())) {
-            return <span className="text-sm text-c-text-muted">—</span>;
+            return <span className="text-sm text-c-text-secondary">—</span>;
           }
           return (
-            <span className="text-sm text-c-text-muted">
+            <span className="text-sm text-c-text-secondary">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',

@@ -273,7 +273,7 @@ const SIRIDimensionCard: React.FC<{
           onClick={() => setShowLevels(!showLevels)}
           className="p-1 hover:bg-white dark:hover:bg-navy-800 rounded"
         >
-          <HelpCircle size={14} className="text-slate-600 dark:text-slate-500" />
+          <HelpCircle size={14} className="text-slate-600 dark:text-slate-400" />
         </button>
       </div>
 

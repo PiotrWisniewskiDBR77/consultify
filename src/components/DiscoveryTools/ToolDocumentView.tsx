@@ -2116,8 +2116,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             {isPolish ? 'Anuluj generowanie' : 'Cancel generation'}
           </button>
         ) : null}
+        {/* slate-600, nie slate-500: 4.34:1 zamiast 4,5:1 na bg-slate-100 (axe:
+            color-contrast, zmierzone na tools-sesja-wyjscie/tools-swot-session-workspace). */}
         <span
-          className="inline-flex h-8 items-center rounded-full border border-slate-200/60 bg-slate-100 px-3 text-[11px] font-semibold text-slate-500 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300"
+          className="inline-flex h-8 items-center rounded-full border border-slate-200/60 bg-slate-100 px-3 text-[11px] font-semibold text-slate-600 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300"
           data-menu3-lifecycle-status={toolStatus}
         >
           {statusLabel(toolStatus)}

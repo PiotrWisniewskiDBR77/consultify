@@ -1,0 +1,1822 @@
+[
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 104,
+    "id": "description-scope",
+    "en": "Description & Scope",
+    "pl": "Opis i zakres",
+    "grupa": "TASK",
+    "ikona": "FileText",
+    "rolaAI": "pisze",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 125,
+    "id": "implementation",
+    "en": "Implementation Ideas",
+    "pl": "Pomysły realizacji",
+    "grupa": "TASK",
+    "ikona": "Sparkles",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 147,
+    "id": "risk-alternatives",
+    "en": "Risk & Alternatives",
+    "pl": "Ryzyko i alternatywy",
+    "grupa": "TASK",
+    "ikona": "ShieldAlert",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 166,
+    "id": "checklist",
+    "en": "Checklist",
+    "pl": "Lista kontrolna",
+    "grupa": "TASK",
+    "ikona": "CheckSquare",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 186,
+    "id": "dependencies",
+    "en": "Dependencies",
+    "pl": "Zależności",
+    "grupa": "TASK",
+    "ikona": "Link2",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "4",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 206,
+    "id": "evidence",
+    "en": "Evidence",
+    "pl": "Dowody",
+    "grupa": "TASK",
+    "ikona": "Eye",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "5",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 227,
+    "id": "governance",
+    "en": "RACI & Escalation",
+    "pl": "RACI i eskalacja",
+    "grupa": "CONTROL",
+    "ikona": "Users",
+    "rolaAI": "asystuje",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "6",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 243,
+    "id": "attachments",
+    "en": "Attachments & Links",
+    "pl": "Załączniki i powiązania",
+    "grupa": "CONTROL",
+    "ikona": "Paperclip",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "7",
+    "alias": "attachments-links",
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 269,
+    "id": "comments",
+    "en": "Comments",
+    "pl": "Komentarze",
+    "grupa": "AUDIT",
+    "ikona": "MessageSquare",
+    "rolaAI": "transakcyjna",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "8",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "task",
+    "file": "src/components/MyWork/taskCardContract.ts",
+    "line": 285,
+    "id": "activity-log",
+    "en": "Activity Log",
+    "pl": "Aktywność",
+    "grupa": "AUDIT",
+    "ikona": "History",
+    "rolaAI": "systemowa",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "9",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "task"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 60,
+    "id": "context-problem",
+    "en": "Decision Scope",
+    "pl": "Zakres decyzji",
+    "grupa": "DECISION",
+    "ikona": "FileText",
+    "rolaAI": "pisze",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 76,
+    "id": "options-tradeoffs",
+    "en": "Options & Trade-offs",
+    "pl": "Opcje i trade-offy",
+    "grupa": "DECISION",
+    "ikona": "GitCompare",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 93,
+    "id": "risk-impact",
+    "en": "Risk & Impact",
+    "pl": "Ryzyko i wpływ",
+    "grupa": "DECISION",
+    "ikona": "ShieldAlert",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 110,
+    "id": "consequences",
+    "en": "Consequences",
+    "pl": "Konsekwencje",
+    "grupa": "DECISION",
+    "ikona": "Clock",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 129,
+    "id": "governance",
+    "en": "RACI & Escalation",
+    "pl": "RACI i eskalacja",
+    "grupa": "CONTROL",
+    "ikona": "Users",
+    "rolaAI": "asystuje",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "4",
+    "alias": "governance-escalation",
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 154,
+    "id": "attachments",
+    "en": "Attachments & Links",
+    "pl": "Załączniki i powiązania",
+    "grupa": "CONTROL",
+    "ikona": "Paperclip",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "5",
+    "alias": "resources-links",
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 180,
+    "id": "comments",
+    "en": "Comments",
+    "pl": "Komentarze",
+    "grupa": "AUDIT",
+    "ikona": "MessageSquare",
+    "rolaAI": "transakcyjna",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "6",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "decision",
+    "file": "src/components/MyWork/decisionCardContract.ts",
+    "line": 198,
+    "id": "activity-log",
+    "en": "Activity Log",
+    "pl": "Logi aktywności",
+    "grupa": "AUDIT",
+    "ikona": "History",
+    "rolaAI": "systemowa",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "7",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "decision"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 62,
+    "id": "overview",
+    "en": "Overview",
+    "pl": "Przegląd",
+    "grupa": "CONTENT",
+    "ikona": "FileText",
+    "rolaAI": "pisze",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 80,
+    "id": "problemDefinition",
+    "en": "Problem Definition",
+    "pl": "Definicja problemu",
+    "grupa": "CONTENT",
+    "ikona": "AlertCircle",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 102,
+    "id": "targetState",
+    "en": "Target State",
+    "pl": "Stan docelowy",
+    "grupa": "CONTENT",
+    "ikona": "Target",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 120,
+    "id": "scope",
+    "en": "Scope",
+    "pl": "Zakres",
+    "grupa": "CONTENT",
+    "ikona": "ListChecks",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 141,
+    "id": "tasks",
+    "en": "Tasks & Milestones",
+    "pl": "Zadania i kamienie milowe",
+    "grupa": "EXECUTION",
+    "ikona": "CheckSquare",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "4",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 159,
+    "id": "decisions",
+    "en": "Decisions",
+    "pl": "Decyzje",
+    "grupa": "EXECUTION",
+    "ikona": "GitBranch",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "5",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 176,
+    "id": "raid",
+    "en": "RAID",
+    "pl": "RAID",
+    "grupa": "EXECUTION",
+    "ikona": "ShieldAlert",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "6",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 199,
+    "id": "gates",
+    "en": "Gates",
+    "pl": "Bramy",
+    "grupa": "EXECUTION",
+    "ikona": "Flag",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "7",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 219,
+    "id": "financialAnalysis",
+    "en": "Financial Analysis",
+    "pl": "Analiza finansowa",
+    "grupa": "FINANCE",
+    "ikona": "Calculator",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "8",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 240,
+    "id": "financialImpact",
+    "en": "Financial Impact",
+    "pl": "Wpływ finansowy",
+    "grupa": "FINANCE",
+    "ikona": "TrendingUp",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "9",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 258,
+    "id": "kpis",
+    "en": "KPIs & Benefits",
+    "pl": "KPI i korzyści",
+    "grupa": "RESULTS",
+    "ikona": "Gauge",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "10",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 276,
+    "id": "competencyRequirements",
+    "en": "Competency Requirements",
+    "pl": "Wymagane kompetencje",
+    "grupa": "COMPETENCY",
+    "ikona": "GraduationCap",
+    "rolaAI": "asystuje",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "11",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 299,
+    "id": "skillsGap",
+    "en": "Skills Gap",
+    "pl": "Luka kompetencyjna",
+    "grupa": "COMPETENCY",
+    "ikona": "UserMinus",
+    "rolaAI": "asystuje",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "12",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 321,
+    "id": "pilot",
+    "en": "Pilot",
+    "pl": "Pilotaż",
+    "grupa": "EXECUTION",
+    "ikona": "FlaskConical",
+    "rolaAI": "pisze",
+    "rola": "ukryta-domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "13",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 339,
+    "id": "comments",
+    "en": "Comments",
+    "pl": "Komentarze",
+    "grupa": "AUDIT",
+    "ikona": "MessageSquare",
+    "rolaAI": "transakcyjna",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "14",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 354,
+    "id": "activity-log",
+    "en": "Activity Log",
+    "pl": "Historia aktywności",
+    "grupa": "AUDIT",
+    "ikona": "History",
+    "rolaAI": "systemowa",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "15",
+    "alias": "history",
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 382,
+    "id": "control",
+    "en": "Control",
+    "pl": "Sterowanie",
+    "grupa": "CONTROL",
+    "ikona": "SlidersHorizontal",
+    "rolaAI": "asystuje",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 407,
+    "id": "team",
+    "en": "Team",
+    "pl": "Zespół",
+    "grupa": "CONTROL",
+    "ikona": "Users",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 425,
+    "id": "governance",
+    "en": "RACI & Escalation",
+    "pl": "RACI i eskalacja",
+    "grupa": "CONTROL",
+    "ikona": "Users",
+    "rolaAI": "asystuje",
+    "rola": "ukryta-domyslna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "2",
+    "alias": "raciEscalation",
+    "stan": "rozjazd",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 456,
+    "id": "timeline",
+    "en": "Timeline",
+    "pl": "Harmonogram",
+    "grupa": "META",
+    "ikona": "Calendar",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 470,
+    "id": "resources",
+    "en": "Resources",
+    "pl": "Zasoby",
+    "grupa": "META",
+    "ikona": "Boxes",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "4",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 487,
+    "id": "stakeholders",
+    "en": "Stakeholders",
+    "pl": "Interesariusze",
+    "grupa": "CONTROL",
+    "ikona": "Contact",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "5",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 503,
+    "id": "dependencies",
+    "en": "Dependencies",
+    "pl": "Zależności",
+    "grupa": "META",
+    "ikona": "Link",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "6",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 521,
+    "id": "attachments",
+    "en": "Attachments & Links",
+    "pl": "Załączniki i powiązania",
+    "grupa": "META",
+    "ikona": "Paperclip",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "7",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 538,
+    "id": "tags",
+    "en": "Tags",
+    "pl": "Etykiety",
+    "grupa": "META",
+    "ikona": "Tag",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "8",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 552,
+    "id": "reminders",
+    "en": "Reminders",
+    "pl": "Przypomnienia",
+    "grupa": "META",
+    "ikona": "Bell",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "9",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "initiative",
+    "file": "src/components/Initiatives/sections/initiativeCardContract.ts",
+    "line": 574,
+    "id": "watchers",
+    "en": "Watchers",
+    "pl": "Obserwujący",
+    "grupa": "META",
+    "ikona": "Eye",
+    "rolaAI": "dane",
+    "rola": "ukryta-domyslna",
+    "klasa": "L",
+    "kolumna": "right",
+    "kolejnosc": "10",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "initiative"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 104,
+    "id": "artifact-actions",
+    "en": "Results",
+    "pl": "Rezultaty",
+    "grupa": "INSIGHT",
+    "ikona": "Rocket",
+    "rolaAI": "pisze",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 123,
+    "id": "executive-summary",
+    "en": "Executive Summary",
+    "pl": "Podsumowanie",
+    "grupa": "INSIGHT",
+    "ikona": "Star",
+    "rolaAI": "pisze",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 141,
+    "id": "consulting-readout",
+    "en": "Consulting Readout",
+    "pl": "Odczyt konsultingowy",
+    "grupa": "INSIGHT",
+    "ikona": "Sparkles",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 159,
+    "id": "themes",
+    "en": "Themes",
+    "pl": "Tematy",
+    "grupa": "INSIGHT",
+    "ikona": "Layers",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 177,
+    "id": "issues-risks",
+    "en": "Issues & Risks",
+    "pl": "Problemy i ryzyka",
+    "grupa": "INSIGHT",
+    "ikona": "ShieldAlert",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "4",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 195,
+    "id": "opportunities",
+    "en": "Opportunity Spaces",
+    "pl": "Przestrzenie szans",
+    "grupa": "INSIGHT",
+    "ikona": "TrendingUp",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "5",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 215,
+    "id": "people",
+    "en": "People",
+    "pl": "Perspektywy",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Users",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "6",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 233,
+    "id": "signals",
+    "en": "Signals",
+    "pl": "Sygnały",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Radio",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "7",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 251,
+    "id": "analysis-matrix",
+    "en": "Analysis Matrix",
+    "pl": "Macierz Analizy",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "BarChart3",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "8",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 269,
+    "id": "consensus-divergence",
+    "en": "Consensus & Divergence",
+    "pl": "Zgoda i rozbieżności",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "GitCompare",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "9",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 287,
+    "id": "implicit-assumptions",
+    "en": "Implicit Assumptions",
+    "pl": "Ukryte założenia",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Brain",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "10",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 305,
+    "id": "silences",
+    "en": "Silences",
+    "pl": "Przemilczenia",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "EyeOff",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "11",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 327,
+    "id": "quote-comparison",
+    "en": "Quote Comparison",
+    "pl": "Porównanie cytatów",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "MessageSquare",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "12",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 345,
+    "id": "sentiment-tone",
+    "en": "Sentiment & Tone",
+    "pl": "Sentyment i ton",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Heart",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "13",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 363,
+    "id": "power-dynamics",
+    "en": "Power Dynamics",
+    "pl": "Dynamika władzy",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Scale",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "14",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 381,
+    "id": "hypothesis-board",
+    "en": "Hypothesis Board",
+    "pl": "Tablica hipotez",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Target",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "15",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 401,
+    "id": "evidence-map",
+    "en": "Evidence Map",
+    "pl": "Mapa dowodów",
+    "grupa": "EVIDENCE",
+    "ikona": "MapIcon",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "16",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 420,
+    "id": "candidate-triage",
+    "en": "Findings & Evidence",
+    "pl": "Wnioski i dowody",
+    "grupa": "EVIDENCE",
+    "ikona": "Eye",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "17",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 443,
+    "id": "source-pack",
+    "en": "Sources",
+    "pl": "Źródła",
+    "grupa": "EVIDENCE",
+    "ikona": "Link2",
+    "rolaAI": "dane",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "18",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 465,
+    "id": "report-pack",
+    "en": "Report Pack",
+    "pl": "Pakiet raportu",
+    "grupa": "DELIVERABLES",
+    "ikona": "FileText",
+    "rolaAI": "pisze",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "19",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 487,
+    "id": "material-quality",
+    "en": "Quality & Trust",
+    "pl": "Jakość i zaufanie",
+    "grupa": "AUDIT",
+    "ikona": "Gauge",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "20",
+    "alias": null,
+    "stan": "rozjazd",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 523,
+    "id": "key-findings",
+    "en": "Key Findings",
+    "pl": "Kluczowe wnioski",
+    "grupa": "INSIGHT",
+    "ikona": "Star",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "21",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 546,
+    "id": "tensions",
+    "en": "Tensions",
+    "pl": "Napięcia",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "GitCompare",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "23",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 563,
+    "id": "patterns",
+    "en": "Patterns",
+    "pl": "Wzorce",
+    "grupa": "INSIGHT",
+    "ikona": "Layers",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "24",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 580,
+    "id": "mental-models",
+    "en": "Mental Models",
+    "pl": "Modele myślowe",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Brain",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "25",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 597,
+    "id": "moments",
+    "en": "Moments",
+    "pl": "Momenty",
+    "grupa": "EVIDENCE",
+    "ikona": "MessageSquare",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "26",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 614,
+    "id": "quote-bank",
+    "en": "Quote Bank",
+    "pl": "Bank cytatów",
+    "grupa": "EVIDENCE",
+    "ikona": "MessageSquare",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "27",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 631,
+    "id": "stakeholder-map",
+    "en": "Stakeholder Map",
+    "pl": "Mapa interesariuszy",
+    "grupa": "BETWEEN THE LINES",
+    "ikona": "Users",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "28",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 648,
+    "id": "source-credibility",
+    "en": "Source Credibility",
+    "pl": "Wiarygodność źródeł",
+    "grupa": "EVIDENCE",
+    "ikona": "Eye",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "29",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "insight",
+    "file": "src/components/Interview/insightCardContract.ts",
+    "line": 668,
+    "id": "consulting-narrative",
+    "en": "Consulting Narrative",
+    "pl": "Narracja konsultingowa",
+    "grupa": "DELIVERABLES",
+    "ikona": "FileText",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "30",
+    "alias": null,
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "insight"
+    ]
+  },
+  {
+    "art": "notification",
+    "file": "src/components/MyWork/notificationCardContract.ts",
+    "line": 70,
+    "id": "executive-summary",
+    "en": "What's Happening",
+    "pl": "Co się dzieje",
+    "grupa": "NOTIFICATION",
+    "ikona": "FileText",
+    "rolaAI": "asystuje",
+    "rola": "rdzen",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": "whats-happening",
+    "stan": "rozjazd",
+    "arts": [
+      "notification"
+    ]
+  },
+  {
+    "art": "notification",
+    "file": "src/components/MyWork/notificationCardContract.ts",
+    "line": 107,
+    "id": "ai-analysis",
+    "en": "AI Analysis",
+    "pl": "Analiza AI",
+    "grupa": "NOTIFICATION",
+    "ikona": "Brain",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": "ai-analysis",
+    "stan": "do-decyzji-piotra",
+    "arts": [
+      "notification"
+    ]
+  },
+  {
+    "art": "notification",
+    "file": "src/components/MyWork/notificationCardContract.ts",
+    "line": 137,
+    "id": "artifact-actions",
+    "en": "Expected Action",
+    "pl": "Oczekiwana akcja",
+    "grupa": "NOTIFICATION",
+    "ikona": "CheckSquare",
+    "rolaAI": "asystuje",
+    "rola": "rdzen",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": "expected-action",
+    "stan": "czysta",
+    "arts": [
+      "notification"
+    ]
+  },
+  {
+    "art": "notification",
+    "file": "src/components/MyWork/notificationCardContract.ts",
+    "line": 170,
+    "id": "activity-log",
+    "en": "Activity Log",
+    "pl": "Historia aktywności",
+    "grupa": "AUDIT",
+    "ikona": "History",
+    "rolaAI": "systemowa",
+    "rola": "domyslna",
+    "klasa": "S",
+    "kolumna": "right",
+    "kolejnosc": "0",
+    "alias": "history",
+    "stan": "czysta",
+    "arts": [
+      "notification"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 65,
+    "id": "interview-overview",
+    "en": "Overview",
+    "pl": "Podgląd",
+    "grupa": "INTERVIEW",
+    "ikona": "BarChart3",
+    "rolaAI": "asystuje",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": "overview",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 90,
+    "id": "interview-questions",
+    "en": "Questions",
+    "pl": "Pytania",
+    "grupa": "INTERVIEW",
+    "ikona": "FileText",
+    "rolaAI": "asystuje",
+    "rola": "rdzen",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": "questions",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 115,
+    "id": "interview-notes",
+    "en": "Notes",
+    "pl": "Notatki",
+    "grupa": "INTERVIEW",
+    "ikona": "FileText",
+    "rolaAI": "dane",
+    "rola": "domyslna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": "notes",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 140,
+    "id": "attachments",
+    "en": "Files & links",
+    "pl": "Pliki i linki",
+    "grupa": "CONTEXT",
+    "ikona": "Paperclip",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": "evidence",
+    "stan": "rozjazd",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 168,
+    "id": "interview-company-facts",
+    "en": "Company facts",
+    "pl": "Fakty",
+    "grupa": "CONTEXT",
+    "ikona": "Building2",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "4",
+    "alias": "company-facts",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 193,
+    "id": "stakeholders",
+    "en": "Stakeholders",
+    "pl": "Interesariusze",
+    "grupa": "CONTEXT",
+    "ikona": "Users",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "5",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 211,
+    "id": "interview-open-gaps",
+    "en": "Open gaps",
+    "pl": "Luki",
+    "grupa": "CONTEXT",
+    "ikona": "AlertTriangle",
+    "rolaAI": "systemowa",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "6",
+    "alias": "open-gaps",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "interview",
+    "file": "src/components/Interview/interviewCardContract.ts",
+    "line": 242,
+    "id": "interview-summary",
+    "en": "Summary",
+    "pl": "Podsumowanie",
+    "grupa": "SUMMARY",
+    "ikona": "Sparkles",
+    "rolaAI": "pisze",
+    "rola": "dodawalna",
+    "klasa": "L",
+    "kolumna": "left",
+    "kolejnosc": "7",
+    "alias": "summary",
+    "stan": "czysta",
+    "arts": [
+      "interview"
+    ]
+  },
+  {
+    "art": "tool",
+    "file": "src/components/DiscoveryTools/toolCards.contract.ts",
+    "line": 76,
+    "id": "goal",
+    "en": "Goal",
+    "pl": "Cel",
+    "grupa": "OVERVIEW",
+    "ikona": "Target",
+    "rolaAI": "dane",
+    "rola": "domyslna",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "0",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "tool"
+    ]
+  },
+  {
+    "art": "tool",
+    "file": "src/components/DiscoveryTools/toolCards.contract.ts",
+    "line": 93,
+    "id": "process",
+    "en": "Process",
+    "pl": "Proces",
+    "grupa": "HOW-IT-WORKS",
+    "ikona": "CheckCircle2",
+    "rolaAI": "dane",
+    "rola": "domyslna",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "1",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "tool"
+    ]
+  },
+  {
+    "art": "tool",
+    "file": "src/components/DiscoveryTools/toolCards.contract.ts",
+    "line": 109,
+    "id": "outcomes",
+    "en": "Outcomes",
+    "pl": "Rezultat",
+    "grupa": "HOW-IT-WORKS",
+    "ikona": "Lightbulb",
+    "rolaAI": "dane",
+    "rola": "domyslna",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "2",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "tool"
+    ]
+  },
+  {
+    "art": "tool",
+    "file": "src/components/DiscoveryTools/toolCards.contract.ts",
+    "line": 129,
+    "id": "example",
+    "en": "Example",
+    "pl": "Przykład",
+    "grupa": "EXAMPLE",
+    "ikona": "FileText",
+    "rolaAI": "dane",
+    "rola": "dodawalna",
+    "klasa": "S",
+    "kolumna": "left",
+    "kolejnosc": "3",
+    "alias": null,
+    "stan": "czysta",
+    "arts": [
+      "tool"
+    ]
+  }
+]

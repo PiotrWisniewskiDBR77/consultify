@@ -108,17 +108,19 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                   className={[
                     PREVIEW_META_PILL,
                     pill.className ??
-                      // axe `color-contrast`: text-emerald-600 on this
-                      // project's custom emerald-500/10 tint measured
-                      // 3.93:1 (< 4.5). emerald-700 clears ~6.3:1 there.
-                      // (warning/danger below use the identical
-                      // bg-X-500/10 + text-X-600 shape but weren't
-                      // reachable on the screens measured this dyżur —
-                      // worth the same check next time either renders.)
+                      // axe `color-contrast` na własnym tle `bg-X-500/10`.
+                      // Dwa niezależne pomiary z 2026-09-03, oba zachowane:
+                      //  - `text-emerald-600` na emerald-500/10 = 3,93:1 (moduły 09-12,
+                      //    ekran preview) → `emerald-700` daje ~6,3:1;
+                      //  - `text-emerald-600` / `text-amber-600` = 3,4:1 / 2,9:1
+                      //    (moduły 01-04, `interview-preview-canon`) → o jeden-dwa
+                      //    odcienie ciemniej.
+                      // Stąd emerald-700 i amber-800 poniżej. `danger` i `slate`
+                      // przechodziły bez zmian w obu pomiarach.
                       (pill.tone === 'success'
                         ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                         : pill.tone === 'warning'
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                          ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300'
                           : pill.tone === 'danger'
                             ? 'bg-danger-500/10 text-danger-600 dark:text-danger-300'
                             : pill.tone === 'info'

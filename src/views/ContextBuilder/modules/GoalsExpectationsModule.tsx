@@ -196,6 +196,11 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
         <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-start gap-3">
           <Sparkles className="text-primary-600 mt-1" size={18} />
           <div className="flex-1">
+            {/* Pozostaje h4: `aiSuggestions` to zawsze puste [] (mock, brak settera) —
+              ten blok fizycznie nigdy się nie renderuje, więc nie wpływa na heading-order
+              żadnego zmierzonego ekranu. Podniesienie do h2 dotknęłoby sąsiedniej linii
+              z zakazanym tokenem koloru (poza zakresem tego dyżuru), więc zostawiam tag
+              bez zmian zamiast poszerzać diff bez pokrycia pomiarem. */}
             <h4 className="text-sm font-bold text-primary-900 dark:text-primary-300">
               {t('organization.goals.aiSuggestion.title', 'AI Suggested Addition')}
             </h4>
@@ -480,10 +485,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Transformation Archetype */}
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
-              <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+              <h2 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <Rocket size={20} className="text-amber-500" />
                 {t('organization.goals.expectations.archetype.title', 'Transformation Archetype')}
-              </h3>
+              </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
                 {t(
                   'organization.goals.expectations.archetype.hint',
@@ -521,10 +526,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
 
             {/* Human-AI Engagement Model */}
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
-              <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+              <h2 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <TeresaMark size={20} className="text-primary-500" />
                 {t('organization.goals.expectations.aiRole.title', 'Human-AI Collaboration')}
-              </h3>
+              </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
                 {t(
                   'organization.goals.expectations.aiRole.hint',
@@ -562,10 +567,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
 
             {/* Steering & Governance */}
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
-              <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+              <h2 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <GanttChartSquare size={20} className="text-blue-500" />
                 {t('organization.goals.expectations.cadence.title', 'Steering & Governance')}
-              </h3>
+              </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
                 {t(
                   'organization.goals.expectations.cadence.hint',
