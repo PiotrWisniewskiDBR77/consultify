@@ -223,7 +223,13 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       render: (row: AuditReportSummary) => (
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-c-text">{row.title}</span>
-          <span className="text-[11px] text-c-text-muted">
+          {/* PRZEWODY ODBIORU 2026-09-03: `text-c-text-muted` (#64748b) na
+              11 px daje 4,02:1 na tle ZAZNACZONEGO wiersza (bg-state-selected,
+              #ebecec) — poniżej progu WCAG AA 4,5:1 (axe, jeden węzeł, motyw
+              jasny). Na tle niezaznaczonym przechodziło, więc defekt ujawniał
+              się dopiero po kliknięciu wiersza. `text-c-text-secondary` to ten
+              sam rejestr wizualny o stopień ciemniejszy — zdaje w obu stanach. */}
+          <span className="text-[11px] text-c-text-secondary">
             {programNameById.get(row.programId) || row.programName || '—'}
           </span>
         </div>

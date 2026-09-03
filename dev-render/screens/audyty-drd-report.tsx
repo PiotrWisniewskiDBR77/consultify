@@ -1,45 +1,47 @@
 /**
- * Dev-render host for the REAL `<AuditsHub>` "Raporty DRD" tab (flag-gated,
- * 2026-07-26) + the REAL `<DRDAuditReportView>` it opens into.
+ * Dev-render: AUDYTY → RAPORTY DRD.
  *
- * `isDrdReportEnabled()` (`src/utils/drdReportFlag.ts`) is OFF by default —
- * this harness force-enables it via `localStorage['ff.drdReport'] = '1'`
- * (mirrors the flag's own override mechanism) BEFORE mount, per task spec.
- * The query override `?ff_drd_report=1` still wins if present (flag
- * precedence: query > localStorage > env > default).
+ * ★ NAPRAWA PRZEWODU ODBIORU (2026-09-03). Wariant `list` (domyślny — ten,
+ * który właściciel oglądał 2026-09-02) montował
+ * `src/components/Audit/AuditsHub.tsx`, a ten komponent NIE JEST ZAMONTOWANY
+ * NIGDZIE w produkcie. Mówi to wprost kod samego modułu,
+ * `src/components/Audit/method/AuditsMethodHub.tsx:10`:
+ *   „Dawny równoległy `AuditsHub` nad `/api/audit` nie jest już mounted;
+ *    jego write endpoints pozostają wycofane po stronie serwera."
+ * `git grep -w AuditsHub -- src/` poza definicją zwraca wyłącznie testy.
+ * Audyt: `docs/program/waves/WAVE_03_ACCEPTANCE/AUDYT_PRZEWODOW_ODBIORU_20260903.md`,
+ * wiersz `audyty-drd-report` — „ROZJAZD".
  *
- * Two variants, switched by `&variant=`:
- *   list (default)  — mounts `AuditsHub`. Base "Audit programs" tab gets a
- *     couple of realistic programs so the underlying `GET /api/audit/programs`
- *     (unrelated backend, always fetched on mount) doesn't error/spin. After
- *     mount, an `AutoOpenDrdTab` wrapper clicks the "Raporty DRD" tab button
- *     (real DOM, real component — no internals touched) so the harness lands
- *     directly on the list of `Api.getAssessmentReports()` — 3 realistic
- *     DRD audit reports.
- *   report — mounts `DRDAuditReportView` directly (`reportId` prop, no
- *     router param plumbing needed) with `Api.getFullReport` mocked: a
- *     3-section DRD report in Polish (streszczenie zarządcze, wynik osi,
- *     rekomendacje).
+ * Realny moduł Audyty to `AuditsMethodHub` pod `/audit-programs`
+ * (`src/routes/AppRoutes.tsx:1678-1686`), a jego zakładka „Raporty"
+ * (`AuditsMethodHub.tsx:530` → `AuditReportsTab`) to realne zestawienie
+ * raportów audytowych — dokładnie to, co ekran ma pokazywać.
  *
- * `Api.getAssessmentReports` / `Api.getFullReport` are real methods on the
- * `Api` singleton (not routed through `apiGet`/`apiPost`), so they're patched
- * directly — no `window.fetch` needed for those two. `listPrograms` (Audit
- * Orchestrator, `./auditApi.ts`) goes through `Api.get`, patched below too.
- *
- * ★ Patched at MODULE level (see prezentacje-template-states.tsx /
- * report-builder-library-template.tsx for the full rationale): `AuditsHub`'s
- * `load()` effect fires `Api.get('/audit/programs')` on the very first mount
- * commit, before any wrapper `useEffect` in this file would run.
+ * Dwa warianty (`&variant=`):
+ *   list (domyślny) — REALNY `AuditsMethodHub` z wymuszonym `?tab=reports`.
+ *     Mocki `/audits/**` pochodzą z `./audyty-piec-powierzchni` (ten sam,
+ *     realny hub, ten sam kontrakt `auditsMethodApi.ts`) — import tego modułu
+ *     instaluje je na poziomie modułu; nie duplikujemy 1200 linii atrap.
+ *   report — REALNY `DRDAuditReportView`, czyli komponent, który montuje
+ *     realna trasa `/audit-programs/drd-report/:reportId`
+ *     (`DRDAuditReportRoute`, `src/routes/AppRoutes.tsx:801-806`) po przejściu
+ *     bramki `isDrdReportEnabled()` (domyślnie OFF → przekierowanie na
+ *     `/audit-programs`). Harness ustawia `localStorage['ff.drdReport']='1'`,
+ *     czyli DOKŁADNIE ten sam przełącznik, którego używa bramka — nie omija
+ *     jej, tylko ją włącza.
  *
  * URL: ?screen=audyty-drd-report[&variant=list|report][&theme=light|dark]
  */
-import React, { useEffect } from 'react';
+import React from 'react';
 
-import { AuditsHub } from '../../src/components/Audit/AuditsHub';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { DRDAuditReportView } from '../../src/views/DRDAuditReportView';
 import { seedRealisticSession } from '../mocks/seedStore';
+// Import instaluje na poziomie modułu komplet atrap `/audits/**` dla REALNEGO
+// `AuditsMethodHub` (patrz nagłówek tamtego pliku) i eksportuje ten hub w
+// realnym `AppProviders`.
+import AudytyPiecPowierzchniScreen from './audyty-piec-powierzchni';
 
 seedRealisticSession();
 try {
@@ -50,6 +52,12 @@ try {
 
 const params = new URLSearchParams(window.location.search);
 const variant = params.get('variant') || 'list';
+
+if (variant !== 'report') {
+  const p = new URLSearchParams(window.location.search);
+  p.set('tab', 'reports');
+  window.history.replaceState(null, '', `${window.location.pathname}?${p.toString()}`);
+}
 
 const AUDIT_PROGRAMS = [
   {
@@ -251,22 +259,6 @@ if (tenEkran && !g.__AUDYTY_DRD_FETCH__) {
   };
 }
 
-/** Clicks the real "Raporty DRD" tab button after mount — same technique as
- * `dev-render/screens/admin-sso-self-service-card.tsx` (`AutoTestWrapper`).
- * No AuditsHub internals touched; this is a DOM click on its own rendered
- * button, landing the harness on the interesting tab by default. */
-function AutoOpenDrdTab({ children }: { children: React.ReactNode }): React.ReactElement {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      const tabButton = buttons.find((b) => (b.textContent || '').trim().includes('Raporty DRD'));
-      tabButton?.click();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
-  return <>{children}</>;
-}
-
 export default function AudytyDrdReportScreen(): React.ReactElement {
   if (variant === 'report') {
     return (
@@ -278,13 +270,8 @@ export default function AudytyDrdReportScreen(): React.ReactElement {
     );
   }
 
-  return (
-    <AppProviders>
-      <AutoOpenDrdTab>
-        <div className="h-screen w-screen overflow-hidden bg-c-bg">
-          <AuditsHub />
-        </div>
-      </AutoOpenDrdTab>
-    </AppProviders>
-  );
+  // Wariant listowy: REALNY `AuditsMethodHub` (z `audyty-piec-powierzchni`)
+  // z wymuszoną zakładką „Raporty". `?tab=` czyta `useSearchParams` w hubie
+  // przy renderze, więc wystarczy dopisać je do adresu przed montowaniem.
+  return <AudytyPiecPowierzchniScreen />;
 }

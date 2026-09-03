@@ -8144,7 +8144,15 @@
       "allStatuses": "All statuses",
       "statusValue": "Status {{status}}",
       "focusedDocuments": "Focused documents",
-      "listWorkspace": "List workspace"
+      "listWorkspace": "List workspace",
+      "newAssessment": "New assessment",
+      "newReport": "New report",
+      "newInitiative": "New initiative",
+      "uploadPdf": "Upload PDF",
+      "uploadPdfTooltip": "Upload a DRD report (PDF)",
+      "reportPreview": {
+        "notFound": "The report could not be loaded — it was not found or is temporarily unavailable."
+      }
     },
     "newModal": {
       "comingSoonBadge": "Coming soon",

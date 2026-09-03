@@ -726,7 +726,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'drd-library-entry': {
     label:
-      'GRAFIKA 13 — DRD Library/Processes entry point (StandardModuleBar + StandardTable, jeden mock-wiersz DRD; NIE mock AssessmentHub, patrz nagłówek pliku)',
+      'OCENA — zakładka „Biblioteka" (wejście do metodyki DRD): REALNY <AssessmentHub initialTab="library"> → AssessmentLibraryTab. Do 2026-09-02 była to REPLIKA triady.',
     render: () => <DrdLibraryEntryScreen />,
   },
   'drd-http-workspace': {
@@ -949,7 +949,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'audyty-drd-report': {
     label:
-      'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
+      'AUDYTY — zakładka „Raporty": REALNY <AuditsMethodHub ?tab=reports> (/audit-programs) + REALNY DRDAuditReportView (?variant=report, ff_drd_report). Do 2026-09-02 wariant listowy montował niezamontowany w produkcie AuditsHub.',
     render: () => <AudytyDrdReportScreen />,
   },
   'assessment-quality-review-panel': {
@@ -1889,7 +1889,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <ExecSummaryOnelookScreen />,
   },
   'assessment-list': {
-    label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
+    label:
+      'OCENA — lista ocen: REALNY <AssessmentHub initialTab="processes"> (/assessment?tab=processes). Do 2026-09-02 była to REPLIKA triady, nie produkt.',
     render: () => <AssessmentListScreen />,
   },
   'assessment-five-surfaces': {
@@ -1925,7 +1926,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AssessmentReportsPanelScreen />,
   },
   'assessment-initiatives-table': {
-    label: '§27-todo batch2: InitiativesTable (Assessment→Board→Initiatives) → StandardTable',
+    label:
+      'OCENA — zakładka „Inicjatywy": REALNY <AssessmentHub initialTab="initiatives">. Do 2026-09-02 montowany martwy InitiativesTable (zero wołaczy w src/).',
     render: () => <AssessmentInitiativesTableScreen />,
   },
   'report-builder-block-types': {
@@ -1950,7 +1952,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <PromptRegistryTabScreen />,
   },
   'assessment-reports-table': {
-    label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
+    label:
+      'OCENA — zakładka „Raporty" (widok globalny): REALNY <AssessmentHub initialTab="reports">. Do 2026-09-02 montowany martwy ReportsTable (zero wołaczy w src/).',
     render: () => <AssessmentReportsTableScreen />,
   },
   'assessment-output-report': {

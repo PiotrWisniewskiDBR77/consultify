@@ -47,10 +47,12 @@ import {
 } from '@/components/standard';
 import { ErrorState } from '@/components/ui/primitives';
 import {
+  EntityStatusChip,
   MetaChip,
   PriorityChip,
   type PriorityLevel,
   StatusChip,
+  statusChipLabel,
   statusChipTone,
   type StatusTone,
 } from '@/components/ui/primitives/chips';
@@ -964,7 +966,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return <StatusChip label={cfg.label} tone={cfg.tone} />;
             }
-            return undefined;
+            // PRZEWODY ODBIORU 2026-09-03: `return undefined` zostawialo tu
+            // PUSTA komorke dla KAZDEGO raportu z Report Buildera (czyli dla
+            // wszystkich poza importami PDF). `FilterableTable` uzywa fallbacku
+            // `column.id === 'status' -> <EntityStatusChip>` WYLACZNIE gdy
+            // kolumna nie ma `render` (FilterableTable.tsx:1696) — a ta ma, wiec
+            // fallback nigdy nie wchodzil. Zakladka „Raporty" pokazywala kolumne
+            // Status bez ani jednego statusu; zatwierdzony zrzut (martwy
+            // `ReportsTable`) mial tam pigulki. Renderujemy ten sam kanoniczny
+            // chip, ktorego uzywa fallback — jedno zrodlo etykiety i tonu.
+            return <EntityStatusChip status={row.status} />;
           },
         },
         progressCol,
@@ -1602,7 +1613,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 : activeTab === 'outputs'
                   ? t('assessment.hub.tabs.insights', 'Insights')
                   : t('assessment.hub.tabs.assessment', 'Assessment'),
-        badge: currentData.length,
+        // PRZEWODY ODBIORU 2026-09-03: `currentData` nie ma gałęzi dla zakładki
+        // „Biblioteka" (jej katalog metodyk żyje w `AssessmentLibraryTab`, nie
+        // w `currentData`), więc chip pokazywał „Biblioteka 0" nad tabelą z
+        // pięcioma wierszami. Brak liczby jest uczciwy; zero nie jest.
+        badge: activeTab === 'library' ? null : currentData.length,
         active: true,
         title: t(
           'assessment.hub.activeTabTooltip',
@@ -1636,7 +1651,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     [activeTab, currentData.length, openDocuments.length, statusFilter, t]
   );
 
-  const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
+  // PRZEWODY ODBIORU 2026-09-03: na zakladce „Biblioteka" `statusCounts` nie
+  // ma gałęzi (liczy tylko processes/reports/initiatives), wiec caly rzad
+  // chipow statusu renderowal sie z licznikiem 0 przy kazdej pozycji — licznik,
+  // ktory ZAWSZE pokazuje zero, klamie o zawartosci ekranu. Wzorzec, ktory ten
+  // rzad kopiuje (DiscoveryToolsHub), wlacza go tylko na zakladkach NIE-Library
+  // — ten warunek byl pominiety przy przenoszeniu. Biblioteka wraca na chipy
+  // informacyjne (nazwa zakladki + liczba pozycji), ktore mowia prawde.
+  const hubMenu3Chips =
+    menu3StatusChipsEnabled && activeTab !== 'library' ? statusFilterChips : hubMenu3InfoChips;
 
   /**
    * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
@@ -2113,7 +2136,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           onItemClick={handleOpenDocument}
           onItemAction={handleRowAction}
           onNewItem={handleNewAssessment}
-          newItemLabel="New Assessment"
+          newItemLabel={t('assessment.hub.newAssessment', 'Nowa ocena')}
         />
       );
     }
@@ -2183,7 +2206,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 meta={{
                   pills: [
                     {
-                      label: String(selectedRow.status || 'DRAFT'),
+                      // PRZEWODY ODBIORU 2026-09-03: podglad pokazywal surowy
+                      // enum („APPROVED"/„DRAFT"), a tabela obok ten sam status
+                      // po polsku („Zatwierdzone") — dwa napisy na jeden stan,
+                      // jeden ekran. `statusChipLabel` to to samo zrodlo, z
+                      // ktorego korzysta `EntityStatusChip` w tabeli.
+                      label: statusChipLabel(selectedRow.status || 'DRAFT', t),
                       tone: statusChipTone(selectedRow.status),
                     },
                     {
@@ -2324,7 +2352,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 meta={{
                   pills: [
                     {
-                      label: String(selectedRow.status || 'DRAFT'),
+                      // PRZEWODY ODBIORU 2026-09-03: podglad pokazywal surowy
+                      // enum („APPROVED"/„DRAFT"), a tabela obok ten sam status
+                      // po polsku („Zatwierdzone") — dwa napisy na jeden stan,
+                      // jeden ekran. `statusChipLabel` to to samo zrodlo, z
+                      // ktorego korzysta `EntityStatusChip` w tabeli.
+                      label: statusChipLabel(selectedRow.status || 'DRAFT', t),
                       tone: statusChipTone(selectedRow.status),
                     },
                   ],
@@ -2411,11 +2444,25 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 meta={{
                   pills: [
                     {
-                      label: String(selectedRow.status || 'DRAFT'),
+                      // PRZEWODY ODBIORU 2026-09-03: podglad pokazywal surowy
+                      // enum („APPROVED"/„DRAFT"), a tabela obok ten sam status
+                      // po polsku („Zatwierdzone") — dwa napisy na jeden stan,
+                      // jeden ekran. `statusChipLabel` to to samo zrodlo, z
+                      // ktorego korzysta `EntityStatusChip` w tabeli.
+                      label: statusChipLabel(selectedRow.status || 'DRAFT', t),
                       tone: statusChipTone(selectedRow.status),
                     },
                     {
-                      label: String(selectedRow.priority || 'medium'),
+                      // PRZEWODY ODBIORU 2026-09-03: surowy enum priorytetu
+                      // („critical"/„high") w polskim podglądzie. Słownik
+                      // `assessment.hub.table.priorityLevel.*` istniał już
+                      // w obu językach — nikt go tu nie wołał.
+                      label: t(
+                        `assessment.hub.table.priorityLevel.${String(
+                          selectedRow.priority || 'medium'
+                        ).toLowerCase()}`,
+                        String(selectedRow.priority || 'medium')
+                      ),
                       tone: 'neutral',
                     },
                   ],
@@ -2523,10 +2570,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               border border-slate-200/60 dark:border-white/10
               transition-colors duration-150
               disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Upload DRD report (PDF)"
+            title={t('assessment.hub.uploadPdfTooltip', 'Wgraj raport DRD w formacie PDF')}
           >
             {isUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-            Upload PDF
+            {t('assessment.hub.uploadPdf', 'Wgraj PDF')}
           </button>
         </>
       )}
@@ -2554,9 +2601,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
 
   // Dynamic new item label based on active tab
   const getNewItemLabel = () => {
-    if (activeTab === 'reports') return 'New Report';
-    if (activeTab === 'initiatives') return 'New Initiative';
-    return 'New Assessment';
+    // PRZEWODY ODBIORU 2026-09-03: trzy CTA Menu 2 byly przybite po angielsku
+    // ("New Report"/"New Initiative"/"New Assessment") w calkowicie polskim
+    // module — zatwierdzone zrzuty mialy tu „Nowa ocena".
+    if (activeTab === 'reports') return t('assessment.hub.newReport', 'Nowy raport');
+    if (activeTab === 'initiatives') return t('assessment.hub.newInitiative', 'Nowa inicjatywa');
+    return t('assessment.hub.newAssessment', 'Nowa ocena');
   };
 
   // Loading state
@@ -2769,6 +2819,7 @@ const ReportSlideOverContent: React.FC<{
   builderReportId?: string;
   onOpenFull: () => void;
 }> = ({ assessmentReportId, builderReportId, onOpenFull }) => {
+  const { t } = useTranslation();
   const [report, setReport] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [exports, setExports] = React.useState<any[]>([]);
@@ -2869,7 +2920,15 @@ const ReportSlideOverContent: React.FC<{
   if (!report) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-8">
-        <p className="text-sm">Report not found or could not be loaded.</p>
+        {/* PRZEWODY ODBIORU 2026-09-03: jedyny angielski napis w polskim
+            podglądzie raportu — widoczny zawsze, gdy `/assessment-reports/:id/full`
+            nie odpowie. */}
+        <p className="text-sm">
+          {t(
+            'assessment.hub.reportPreview.notFound',
+            'Nie udało się wczytać raportu — nie znaleziono go albo jest chwilowo niedostępny.'
+          )}
+        </p>
       </div>
     );
   }

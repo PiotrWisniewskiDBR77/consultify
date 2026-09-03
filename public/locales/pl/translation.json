@@ -7518,7 +7518,15 @@
       "allStatuses": "Wszystkie statusy",
       "statusValue": "Status: {{status}}",
       "focusedDocuments": "Otwarte dokumenty",
-      "listWorkspace": "Lista robocza"
+      "listWorkspace": "Lista robocza",
+      "newAssessment": "Nowa ocena",
+      "newReport": "Nowy raport",
+      "newInitiative": "Nowa inicjatywa",
+      "uploadPdf": "Wgraj PDF",
+      "uploadPdfTooltip": "Wgraj raport DRD w formacie PDF",
+      "reportPreview": {
+        "notFound": "Nie udało się wczytać raportu — nie znaleziono go albo jest chwilowo niedostępny."
+      }
     },
     "newModal": {
       "comingSoonBadge": "Wkrótce",
