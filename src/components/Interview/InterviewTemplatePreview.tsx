@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { interviewActionMeta } from './interviewActionMatrix';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -196,6 +197,7 @@ export interface InterviewTemplatePreviewFooterProps {
   onAssign?: () => void;
   onClone?: () => void;
   onDelete?: () => void;
+  additionalActions?: ActionRow['buttons'];
   aiHints: string[];
   onRunAiHint: (hint: string) => void;
 }
@@ -209,6 +211,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   onAssign,
   onClone,
   onDelete,
+  additionalActions = [],
   aiHints,
   onRunAiHint,
 }) => {
@@ -238,7 +241,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
               {
                 // Object-specific Edit is valid here; the only generic Open
                 // remains in PreviewPaneShell's header (INT-PREV-OWN-001).
-                label: t('interview.templatePreview.edit'),
+                label: interviewActionMeta('template', 'edit', t).label,
                 icon: ExternalLink,
                 onClick: onOpenFull,
                 colorScheme: 'primary' as const,
@@ -250,7 +253,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
         ...(onClone
           ? [
               {
-                label: t('interview.templatePreview.duplicate'),
+                label: interviewActionMeta('template', 'clone', t).label,
                 icon: Copy,
                 onClick: onClone,
                 colorScheme: 'neutral' as const,
@@ -258,6 +261,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
               },
             ]
           : []),
+        ...additionalActions,
       ],
     },
     ...(onDelete && canAssign && !template.isDefault
@@ -265,7 +269,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
           {
             buttons: [
               {
-                label: t('interview.templatePreview.delete'),
+                label: interviewActionMeta('template', 'delete', t).label,
                 icon: Trash2,
                 onClick: onDelete,
                 colorScheme: 'red' as const,
