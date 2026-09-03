@@ -93,7 +93,13 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
         {item.value !== undefined ? (
           <>
             <span className="font-medium">{label}</span>
-            <span className="opacity-70">{String(item.value)}</span>
+            {/* Naprawa G06 „podgląd — kontrast" (dyżur 2026-09-03): `opacity-70`
+             * przyciemniał JUŻ przechodzący `tone` (np. slate-600 ≈7,2:1 na
+             * #f8fafc) do ~3,48:1 — próg 4,5:1 (axe color-contrast,
+             * execution-tab-control). Odróżnienie wartości od etykiety daje
+             * już `font-medium` na labelu; wartość nie potrzebuje własnego
+             * przyciemnienia, które psuje kontrast niezależnie od tła. */}
+            <span>{String(item.value)}</span>
           </>
         ) : (
           label
