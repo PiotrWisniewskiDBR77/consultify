@@ -57,7 +57,16 @@ import { Api } from '../../src/services/api';
 import { SettingsApi } from '../../src/services/api/settings.api';
 import SettingsView from '../../src/views/SettingsView';
 
-void i18n.changeLanguage('pl');
+// G06 (dyżur 2026-09-03, moduły 13-16): NIE hardkodować 'pl' tutaj — main.tsx
+// już woła `i18n.changeLanguage(lang)` globalnie z parametru `?lang=pl|en`, a
+// ponieważ ten moduł jest lazy-loadowany, jego import wykonuje się PO
+// globalnym wywołaniu i nadpisywał je na sztywno 'pl' — 8 z 9 ekranów
+// modułu 15_SETTINGS renderowały PL nawet przy `?lang=en` (fałszywy
+// alarm „PL=EN" w REJESTR_G06_JEZYKI_MOTYWY_20260902.md, wiersze
+// ustawienia-*). Realne tłumaczenia EN istnieją w src/i18n — harness je
+// tylko maskował.
+const grupyLang = new URLSearchParams(window.location.search).get('lang');
+if (grupyLang === 'en') void i18n.changeLanguage('en');
 
 export type UstawieniaGrupaId =
   | 'personalne'
