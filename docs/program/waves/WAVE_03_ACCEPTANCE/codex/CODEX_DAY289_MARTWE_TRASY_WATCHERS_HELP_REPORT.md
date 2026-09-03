@@ -105,14 +105,22 @@ Katalog: `/private/tmp/cx-day289-martwe-trasy-artefakty`.
 
 ## STOP — A / decyzja produktowa
 
-Rodzaj: MERYTORYCZNY  
-Powód: budowa agregatu watchers wymaga decyzji właściciela, a komponent nie ma żywego importera.  
-Licencja, którą sprawdziłem: R4 i Z40 — zero kodu A; wynik: brak agregatu, komponent martwy.  
-Dowód: 3 wołacze w `src`, 0 w `server/src`, realny 404, tylko importy własnej rodziny.  
-Co dostarczyłem ZAMIAST zmiany: pełny inwentarz i jednoznaczny werdykt MARTWY.  
-Co zrobiłbym po decyzji: osobny dyżur może usunąć rodzinę; jeśli właściciel chce ekran, potrzebny jest agregat, Bearer JWT, izolacja org i odbiór UI za flagą OFF.  
-Rekomendacja: usunąć martwą rodzinę w już uruchomionym dyżurze nadzorcy; nie budować API bez decyzji.  
-Stan: NIE ZACOMMITOWANO kodu A.  
+Rodzaj: MERYTORYCZNY
+
+Powód: budowa agregatu watchers wymaga decyzji właściciela, a komponent nie ma żywego importera.
+
+Licencja, którą sprawdziłem: R4 i Z40 — zero kodu A; wynik: brak agregatu, komponent martwy.
+
+Dowód: 3 wołacze w `src`, 0 w `server/src`, realny 404, tylko importy własnej rodziny.
+
+Co dostarczyłem ZAMIAST zmiany: pełny inwentarz i jednoznaczny werdykt MARTWY.
+
+Co zrobiłbym po decyzji: osobny dyżur może usunąć rodzinę; jeśli właściciel chce ekran, potrzebny jest agregat, Bearer JWT, izolacja org i odbiór UI za flagą OFF.
+
+Rekomendacja: usunąć martwą rodzinę w już uruchomionym dyżurze nadzorcy; nie budować API bez decyzji.
+
+Stan: NIE ZACOMMITOWANO kodu A.
+
 Czy kontynuowałem: TAK — B zakończone.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE

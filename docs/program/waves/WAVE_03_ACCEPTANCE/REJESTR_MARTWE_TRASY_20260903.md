@@ -26,4 +26,3 @@
 | `help.routes.ts:216` `.catch(() => [])` | log z kontekstem + błąd przekazany do 5xx |
 | `help.routes.ts:224` `.catch(() => [])` | log z kontekstem + błąd przekazany do 5xx |
 | `help.routes.ts:274-278`, sukces mimo nieudanego `dbRun` | sprawdzenie `result.success`; log z kontekstem i HTTP 500 albo potwierdzony zapis |
-
