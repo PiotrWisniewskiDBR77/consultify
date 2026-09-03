@@ -1,0 +1,12 @@
+
+Zrzuty → /private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel/en-1024/day290-aiconsultantpanel
+
+ekran                          motyw   status      wys.strony  błędy konsoli
+──────────────────────────────────────────────────────────────────────────────────
+teresa-chipy-panel-artefaktu   light   wynik BRAK: zwinięte sekcje: Main / Voice modes explained       900  ★ 2 | podgląd: BRAK (nie znaleziono wiersza do kliknięcia)
+teresa-chipy-panel-artefaktu   dark    wynik BRAK: zwinięte sekcje: Main / Voice modes explained       900  ★ 2 | podgląd: BRAK (nie znaleziono wiersza do kliknięcia)
+
+0/2 zrzutów wykonanych.
+Domyślny klik w wiersz (table[data-min-table-width] tbody tr): 0/2 zrzutów kliknęło wiersz przed zrzutem; 2 sfotografowano BEZ próby otwarcia podglądu (nie znaleziono wiersza do kliknięcia — ekran może nie być listowy, tabela może być pusta).
+Wynik JSON → /private/tmp/cx-day290-g19-regresja/evidence/g19/aiconsultantpanel/en-1024.json
+★ KONTROLA STANU (--wynik-selektor) NIE URUCHOMIONA — 0/2 zrzutów miało sprawdzoną zgodność light/dark wg KSZTAŁTU 19 (para zgodna, różne stany). Oceniono WYŁĄCZNIE różnicą jasności/wymiarami strony. Podaj --wynik-selektor=<css>, jeśli ekran ma pokazywać POLICZONY wynik.
