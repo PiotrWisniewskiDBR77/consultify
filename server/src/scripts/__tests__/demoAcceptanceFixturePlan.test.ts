@@ -38,6 +38,30 @@ describe('demo acceptance fixtures safety contract',()=>{
       expect(flag.verifySql).toContain('enabled=true');
     }
   });
+  it('seeds a materializable, evidence-backed presentation instead of sparse placeholders',()=>{
+    const presentation=buildFixturePlan(ctx).find(item=>item.domain==='artifact');
+    expect(presentation).toBeDefined();
+    const unified=JSON.parse(String(presentation!.params[7]));
+    expect(unified.slides).toHaveLength(6);
+    expect(unified.slides.every((slide:any)=>slide.content.type===slide.intent)).toBe(true);
+    expect(unified.slides.every((slide:any)=>slide.source_refs?.length>0)).toBe(true);
+    expect(presentation!.sql).toContain('deck_json=NULL');
+  });
+  it('stores workbook percentages as fractions so 76% never renders as 7600%',()=>{
+    const workbook=buildGoldenChildPlan(ctx).find(item=>item.domain==='artifact-workbook');
+    const schema=JSON.parse(String(workbook!.params[3]));
+    const rows=schema.sheets[0].rows;
+    expect(rows[0].cells.actual).toMatchObject({value:0.76,style:{numberFormat:'0%'}});
+    expect(rows[2].cells.actual).toMatchObject({value:0.314,style:{numberFormat:'0.0%'}});
+  });
+  it('seeds a non-zero integrated Finance baseline for full-workspace rehearsal',()=>{
+    const finance=buildFixturePlan(ctx).find(item=>item.domain==='finance');
+    const assumptions=JSON.parse(String(finance!.params[5]));
+    expect(assumptions.baseline.revenue).toBeGreaterThan(0);
+    expect(assumptions.initialCash+assumptions.initialAR+assumptions.initialInventory+assumptions.initialPPE)
+      .toBe(assumptions.initialDebt+assumptions.initialAP+assumptions.initialEquity);
+    expect(finance!.sql).toContain('assumptions_json=EXCLUDED.assumptions_json');
+  });
   it('documents the dedicated acceptance owner and Piotr readback without exposing a password',()=>{
     const source=readFileSync(resolve(process.cwd(),'server/scripts/acceptance-fixtures/run.ts'),'utf8');
     expect(source).toContain('acceptance.owner@consultify.local');

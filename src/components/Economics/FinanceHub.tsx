@@ -1262,6 +1262,14 @@ export const FinanceHub: React.FC = () => {
 
   const handleModuleTabChange = useCallback(
     (nextTab: ModuleTab) => {
+      if (nextTab === activeTab) return;
+
+      // Scalenie 2026-09-03 (demo dc11acec88 + f3237e9423): dokument Finansow
+      // nalezy do DOKLADNIE JEDNEJ sciezki rejestru. Zostawienie poprzedniego
+      // wiersza zamontowanego po zmianie sciezki daje klamiacy ekran (np.
+      // okruszek Prognozy nad warsztatem Analizy). Pasek otwartych dokumentow
+      // nie koduje sciezki-wlasciciela, wiec jego tez nie wolno przeniesc.
+      setOpenDocuments([]);
       setActiveDocumentId(null);
       setActiveDocument(null);
       setSelectedFinanceRowIds(new Set());
@@ -1275,7 +1283,7 @@ export const FinanceHub: React.FC = () => {
       setSearchParams(nextParams, { replace: true });
       setActiveTab(nextTab);
     },
-    [searchParams, setActiveDocumentId, setSearchParams]
+    [activeTab, searchParams, setActiveDocumentId, setOpenDocuments, setSearchParams]
   );
 
   const handleRemoveFilter = useCallback(
@@ -3485,6 +3493,14 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_statement_packs"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialStatementPackWorkspace
+                      statementPackId={activeDocument.id}
+                      onStatementChanged={handleStatementChanged}
+                      onCreateModelFromPack={handleCreateModelFromStatement}
+                      onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3527,6 +3543,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialModelWorkspace
+                      initialModelId={activeDocument.id}
+                      hideSidebar
+                      onModelChanged={handleModelChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3559,6 +3582,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialModelWorkspace
+                      initialModelId={activeDocument.id}
+                      hideSidebar
+                      onModelChanged={handleModelChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3595,6 +3625,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_analyses"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialAnalysisWorkspace
+                      initialAnalysisId={activeDocument.id}
+                      hideSidebar
+                      onAnalysisChanged={handleAnalysisChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3625,6 +3662,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="valuations"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <ValuationWorkspace
+                      initialValuationId={activeDocument.id}
+                      hideSidebar
+                      onValuationChanged={handleValuationChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount

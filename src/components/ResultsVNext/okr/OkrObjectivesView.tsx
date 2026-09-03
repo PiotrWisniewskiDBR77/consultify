@@ -243,6 +243,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
                 resolveMemberName,
                 isPolish,
                 parentSetStatus: set.status,
+                currentUserId,
                 onClose: () => setSelectedObjectiveId(null),
                 onOpenKeyResults: (r) => onOpenKeyResults(r, set),
                 onEdit: openEdit,

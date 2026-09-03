@@ -202,6 +202,7 @@ export interface OkrObjectivePreviewDeps {
   isPolish: boolean;
   resolveMemberName?: OkrMemberNameResolver;
   parentSetStatus: string;
+  currentUserId?: string | null;
   onClose: () => void;
   onOpenKeyResults: (row: OkrObjectiveWithKeyResultsDto) => void;
   onEdit: (row: OkrObjectiveWithKeyResultsDto) => void;
@@ -209,7 +210,7 @@ export interface OkrObjectivePreviewDeps {
 }
 
 export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, deps: OkrObjectivePreviewDeps): StandardPreviewProps {
-  const { isPolish, parentSetStatus, onClose, onOpenKeyResults, onEdit, onCancel } = deps;
+  const { isPolish, parentSetStatus, currentUserId, onClose, onOpenKeyResults, onEdit, onCancel } = deps;
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   const progress = parseOkrObjectiveProgress(row.progress, row.progressCalcReason);
   const confidence = parseOkrObjectiveConfidence(row.confidence, row.confidenceCalcReason);
