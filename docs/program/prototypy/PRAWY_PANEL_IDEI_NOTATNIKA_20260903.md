@@ -27,3 +27,20 @@ Na markerze `416432abaf` pliki mają odpowiednio 1289, 867 i 1037 linii. Ścisł
 - `provenance`: sourceType, sourceId, capturedAt, hash/version; dziś dane są rozproszone między grafem i linked outputs;
 - `version` oraz `conflictState`: potrzebne do uczciwego stanu konfliktu i historii; brak wspólnego odczytu dla obu kontekstów;
 - `capabilities`: jawne uprawnienia do eksportu, udostępniania i wiązania, zamiast wyprowadzania ich z obecności callbacku.
+
+## R2 — jeden układ przed kodem
+
+Kanon §11.2 rozstrzyga panel 360 px w zakresie 320–420 px, tło `c.surface`, lewą krawędź `c.border-subtle`, nagłówki akordeonu h-44 oraz stałą kolejność: Akcje, Właściwości, Powiązania, Komentarze, Historia / AI. §10.2/§11.2 rozdziela powłokę od archetypu, a §13 wymaga, by szczegóły kontekstu nie tworzyły lokalnego wariantu powłoki.
+
+Prototyp ma jeden komponent i prop `context='idea' | 'notebook'`. Kolejność pięciu sekcji jest stała; zmieniają się wyłącznie etykiety, wartości właściwości i grupy powiązań. Na szerokości co najmniej 1280 px panel ma 360 px; poniżej 1280 px jest drawerem o szerokości do 420 px, a na bardzo wąskim ekranie nie przekracza viewportu.
+
+Stany są jawne: `loading` pokazuje opisany status ładowania, `empty` zachowuje pięć sekcji z uczciwymi pustymi komunikatami, `error` pokazuje komunikat i akcję ponowienia bez zastępowania go pustą listą. `Esc` zamyka jeden poziom (najpierw otwarty popover/drawer, potem panel); `Tab` przechodzi po nagłówkach i kontrolkach, a każda kontrolka ma `focus-visible` w `c-focus`.
+
+Wszystkie powierzchnie używają tokenów `c-*`; crimson nie oznacza aktywności ani fokusu. Semantyczny `c-danger` jest zarezerwowany dla rzeczywistego błędu.
+
+## Pytania do właściciela
+
+1. Czy sekcja „Historia / AI” ma pozostać jedną sekcją? **TAK/NIE**
+2. Czy „Akcje” mają być domyślnie rozwinięte w obu kontekstach? **TAK/NIE**
+3. Czy poniżej 1280 px panel ma zawsze przechodzić w drawer? **TAK/NIE**
+4. Czy powiązania Idei i Notatnika mają zachować lokalne podgrupy wewnątrz jednej sekcji? **TAK/NIE**

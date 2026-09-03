@@ -1,6 +1,6 @@
 # CODEX DAY 302 — prawy panel Idei i Notatnika
 
-Stan roboczy: R1 wykonane.
+Stan roboczy: R1–R2 wykonane.
 
 ## §0 — baza
 
@@ -19,6 +19,10 @@ Tip refa uciekł do przodu; praca zaczęła się dokładnie z markera. Dysk: 39 
 ## R1 — wynik
 
 Pomiar potwierdził 1289 / 867 / 1037 linii oraz 61 plików wspominających `ArtifactRightPanel`. Pełna tabela sekcji, przyczyna rozjazdu powłok i lista brakujących danych są w `docs/program/prototypy/PRAWY_PANEL_IDEI_NOTATNIKA_20260903.md`.
+
+## R2 — wynik
+
+Projekt słowny powstał przed kodem. Utrzymuje jedną kolejność sekcji i jedną powłokę SPEC-A dla obu kontekstów, jawne stany loading/empty/error, szerokość 360 px (320–420) oraz drawer poniżej 1280 px.
 
 ## Korekty wobec instrukcji
 
