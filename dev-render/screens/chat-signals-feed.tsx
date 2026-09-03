@@ -10,7 +10,12 @@ const query = new URLSearchParams(location.search);
 const dark = query.get('theme') === 'dark';
 document.documentElement.classList.toggle('dark', dark);
 document.body.className = 'm-0 bg-c-surface';
-void i18n.changeLanguage('pl');
+// G06 (dyżur 2026-09-03, moduły 13-16): NIE hardkodować 'pl' — main.tsx już
+// woła `i18n.changeLanguage(lang)` globalnie z `?lang=pl|en`; ten ekran
+// nadpisywał to na sztywno 'pl', więc `?lang=en` nigdy nie renderował
+// angielskiego tekstu (fałszywy alarm „PL=EN" dla chat-signals-feed w
+// REJESTR_G06_JEZYKI_MOTYWY_20260902.md).
+if (query.get('lang') === 'en') void i18n.changeLanguage('en');
 
 const types = [
   ['task_overdue', 'EXECUTION', 'warning'],
