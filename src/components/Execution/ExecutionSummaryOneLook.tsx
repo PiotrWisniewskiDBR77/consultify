@@ -138,9 +138,20 @@ const ragUpBar = (pct: number | null): string => {
   return 'bg-c-danger';
 };
 
+// axe `color-contrast` (odbiór G06, moduł 06_EXECUTION): tekst 'text-c-danger'
+// (#e80538) na taśmowanym tle wiersza tabeli (#f0f0f1) daje 4.08:1 zamiast
+// 4,5:1 — sam token ledwo mieści 4,5:1 nawet na czystej bieli (4.66:1) i pada
+// poniżej progu na KAŻDYM stonowanym tle. 'danger-700' (skala Tailwind, bez
+// zmiany globalnego --c-danger) daje >6.9:1 na wszystkich zmierzonych tłach
+// tego pliku; dark: token zostaje (#ed5565 już przechodzi na ciemnym tle).
 const riskBand = (score: number): { dot: string; text: string; pl: string; en: string } => {
   if (score >= 15)
-    return { dot: 'bg-c-danger', text: 'text-c-danger', pl: 'Krytyczne', en: 'Critical' };
+    return {
+      dot: 'bg-c-danger',
+      text: 'text-danger-700 dark:text-c-danger',
+      pl: 'Krytyczne',
+      en: 'Critical',
+    };
   if (score >= 8) return { dot: 'bg-c-warning', text: 'text-c-warning', pl: 'Wysokie', en: 'High' };
   return { dot: 'bg-c-success', text: 'text-c-success', pl: 'Umiarkowane', en: 'Moderate' };
 };
@@ -149,8 +160,8 @@ const decisionBand = (
   kind: OneLookDecisionKind,
   ageDays?: number | null
 ): { dot: string; text: string } => {
-  if (kind === 'blocker') return { dot: 'bg-c-danger', text: 'text-c-danger' };
-  if (kind === 'overdue') return { dot: 'bg-c-danger', text: 'text-c-danger' };
+  if (kind === 'blocker') return { dot: 'bg-c-danger', text: 'text-danger-700 dark:text-c-danger' };
+  if (kind === 'overdue') return { dot: 'bg-c-danger', text: 'text-danger-700 dark:text-c-danger' };
   if (ageDays != null && ageDays >= 5) return { dot: 'bg-c-warning', text: 'text-c-warning' };
   return { dot: 'bg-c-warning', text: 'text-c-warning' };
 };
@@ -236,7 +247,11 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-c-text">{row.title}</div>
                 {row.ownerName && (
-                  <div className="truncate text-xs text-c-text-muted">{row.ownerName}</div>
+                  // axe `color-contrast`: text-c-text-muted (#64748b) na tle wiersza
+                  // #f0f0f1 dawał 4.17:1 zamiast 4,5:1 — slate-600 daje 6.65:1.
+                  <div className="truncate text-xs text-slate-600 dark:text-c-text-muted">
+                    {row.ownerName}
+                  </div>
                 )}
               </div>
             </div>
@@ -309,7 +324,11 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-c-text">{row.title}</div>
                 {row.context && (
-                  <div className="truncate text-xs text-c-text-muted">{row.context}</div>
+                  // axe `color-contrast`: sam wzorzec co ownerName wyzej w tym pliku
+                  // (identyczna klasa na tym samym stylu wiersza tabeli).
+                  <div className="truncate text-xs text-slate-600 dark:text-c-text-muted">
+                    {row.context}
+                  </div>
                 )}
               </div>
             </div>

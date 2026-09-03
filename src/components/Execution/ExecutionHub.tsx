@@ -2385,11 +2385,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // #12 — signal-tone system (danger/warning/success) with a leading
           // signal dot, readable in light mode. Hard-coded rose/amber/emerald
           // tints replaced with the c.* tokens.
+          //
+          // axe `color-contrast` (odbior G06, 06_EXECUTION, execution-tab-list):
+          // text-c-danger na bg-c-danger/10 dawal 3.88:1 zamiast 4,5:1 (#e80538
+          // pada ponizej progu na kazdym jasnym tintowanym tle, nie tylko tutaj
+          // — patrz ten sam fix w ExecutionSummaryOneLook.tsx i
+          // WorkIntelligenceReport.tsx). danger-700 w light (7.69:1 na tym tle),
+          // dark: token zostaje (juz przechodzi).
           if (row.status === InitiativeStatus.BLOCKED) {
             badges.push(
               <span
                 key="blocked"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-danger-700 dark:text-c-danger"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {t('execution.badges.blocked')}
@@ -2404,7 +2411,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="btasks"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-danger-700 dark:text-c-danger"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {blockedTasks} {t('execution.badges.blocked')}

@@ -65,9 +65,16 @@ const BUCKET_LABEL_FALLBACK: Record<string, string> = {
 // card border while the rest sat bare against the page background.
 const SECTION_SHELL_CLASS = 'rounded-xl border border-c-border bg-c-surface-raised p-4';
 
+// axe `color-contrast` (odbiór G06, 06_EXECUTION): plaskie tokeny sygnalowe
+// na wlasnym 14%-owym tinted tle nie miesza sie z 4,5:1 — zmierzone:
+// text-c-danger 3.5:1 (light) / 4.0:1 (dark) na tym tle, text-c-warning
+// 4.31:1 (light). Naprawa lokalna, wazna TYLKO dla tego badge'a (nie ruszamy
+// globalnych --c-danger/--c-warning, ktore maja dziesiatki innych wywolan):
+// danger-700 (skala Tailwind) w light, danger-300 w dark (obie >5:1 na tym
+// tle); amber: literal #8a4517 w light (5.64:1), dark zostaje bo juz przechodzi.
 const SEVERITY_BADGE_CLASS: Record<string, string> = {
-  red: 'bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-c-danger',
-  amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-c-warning',
+  red: 'bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300',
+  amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-[#8a4517] dark:text-c-warning',
   neutral: 'bg-c-surface-raised text-c-text-secondary',
   unknown: 'bg-c-surface-raised text-c-text-muted',
 };
