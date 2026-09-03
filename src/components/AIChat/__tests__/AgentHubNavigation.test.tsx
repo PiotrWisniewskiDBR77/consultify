@@ -122,8 +122,15 @@ describe('canonical Agent workspace navigation', () => {
     expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent(
       'Teresa prepares the work'
     );
-    expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent('Case: case-old');
-    expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent('Run: stale');
+    // Scalenie 2026-09-03 (demo b36c3d19b9 "hide technical context identifiers"):
+    // naglowek Huba NIE pokazuje juz surowych identyfikatorow Sprawy/Przebiegu
+    // (byly UUID-em pod etykieta biznesowa — ta sama rodzina defektow, co
+    // REJESTR_SUROWE_ID_20260902.md). Kontekst zostaje sprawdzany tam, gdzie
+    // jest prawda: w adresie (`location`) i w przekazaniu do Operacji nizej.
+    expect(screen.getByTestId('agent-hub-workspace-summary')).not.toHaveTextContent('case-old');
+    expect(screen.getByTestId('agent-hub-workspace-summary')).not.toHaveTextContent('stale');
+    expect(screen.getByTestId('location')).toHaveTextContent('transformationCaseId=case-old');
+    expect(screen.getByTestId('location')).toHaveTextContent('canonicalRunId=stale');
 
     fireEvent.click(screen.getByRole('button', { name: 'Select case' }));
     await waitFor(() =>
@@ -196,8 +203,10 @@ describe('canonical Agent workspace navigation', () => {
     const summary = screen.getByTestId('agent-hub-workspace-summary');
     expect(summary).toHaveTextContent('Agent Hub — wspólna przestrzeń pracy');
     expect(summary).toHaveTextContent('kanoniczne Sprawy i Przebiegi');
-    expect(summary).toHaveTextContent('Sprawa: nie wybrano');
-    expect(summary).toHaveTextContent('Przebieg: nie wybrano');
+    // jw. — pusty kontekst nie jest juz wypisywany surowo w naglowku;
+    // komunikat obszaru (role=status) nadal mowi, gdzie jestesmy.
+    expect(summary).not.toHaveTextContent('Sprawa:');
+    expect(summary).not.toHaveTextContent('Przebieg:');
     const areaStatus = summary.querySelector('[role="status"]');
     expect(areaStatus).toHaveAttribute('aria-live', 'polite');
     expect(areaStatus).toHaveTextContent('Bieżący obszar Agent Hub: Archiwum procesów');
