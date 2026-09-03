@@ -71,6 +71,11 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
+    // axe `aria-prohibited-attr` (odbior G06, 07_MY_WORK_AGENT — komponent
+    // wspoldzielony, dotyka tez FilterableTable/kanoniczna tabela): aria-label
+    // na <div> bez roli jest niedozwolony. role="separator" to wlasciwa
+    // semantyka uchwytu-dzielnika kolumn — aria-label na niej jest jawnie
+    // dopuszczony przez ARIA 1.2, zero zmiany zachowania (mouse-drag zostaje).
     <div
       onMouseDown={handleMouseDown}
       className={`
@@ -79,6 +84,8 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
         group/resizer
         ${isDragging ? 'z-50' : 'z-10'}
       `}
+      role="separator"
+      aria-orientation="vertical"
       title="Resize column"
       aria-label="Resize column"
     >

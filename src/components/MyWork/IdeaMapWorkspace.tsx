@@ -4383,12 +4383,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   if (melsCanvasEnabled) {
     return (
+      // axe `landmark-main-is-top-level` (odbior G06, 07_MY_WORK_AGENT): ten
+      // wrapper mial role="region"+aria-label (nazwany landmark), a
+      // ExecutiveModuleShell renderuje wewnatrz WLASNY <main> — main
+      // zagniezdzony w innym landmarku. <main> juz niesie aria-label
+      // (`${moduleLabel} canvas`), wiec zewnetrzny region byl duplikatem;
+      // usuniety bez utraty semantyki (jeden landmark zamiast dwoch
+      // zagniezdzonych).
       <div
         ref={workspaceRootRef}
         className="w-full h-full flex flex-col overflow-hidden bg-c-surface-raised dark:bg-c-surface"
         style={{ touchAction: 'none' }}
-        role="region"
-        aria-label={t('mindmap.ideaMapWorkspace')}
         data-local-command-palette="idea-map"
       >
         <div ref={canvasContainerRef} className="flex-1 min-w-0 min-h-0 relative">
@@ -4714,12 +4719,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }
 
   return (
+    // axe `landmark-main-is-top-level`: sam wzorzec co branch melsCanvasEnabled
+    // wyzej — region-landmark tego wrappera duplikowal <main> renderowany
+    // przez ExecutiveModuleShell w srodku.
     <div
       ref={workspaceRootRef}
       className="w-full h-full flex overflow-hidden bg-c-surface-raised dark:bg-c-surface"
       style={{ touchAction: 'none' }}
-      role="region"
-      aria-label={t('mindmap.ideaMapWorkspace')}
       // Signals the global command palette to yield Cmd+K to this scoped palette.
       data-local-command-palette="idea-map"
     >

@@ -124,7 +124,14 @@ export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ case
         <table /* §27-exempt */ className="w-full border-collapse table-fixed">
           <thead>
             <tr className="bg-c-surface-raised text-[11px] text-c-text-muted uppercase tracking-wide">
-              <th className="w-6" />
+              {/* axe `empty-table-header`: pusty <th> bez tekstu widocznego dla
+                  czytnika ekranu — kolumna chevronu rozwijania wiersza,
+                  sr-only etykieta bez zmiany wygladu. */}
+              <th className="w-6">
+                <span className="sr-only">
+                  {t('ideas.financial.col.expand', 'Expand')}
+                </span>
+              </th>
               {/* `break-words` on every header (VaultDocumentsView's own
                   fix for the same shape of bug, 143-resztki point 1): an
                   unbroken label word (e.g. "JEDNOSTKA") in a column too
@@ -153,7 +160,13 @@ export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ case
               <th className="text-left font-medium px-2 py-1.5 w-[70px] break-words">
                 {t('ideas.financial.col.evidence', 'Evidence')}
               </th>
-              {!readOnly && <th className="w-8" />}
+              {!readOnly && (
+                <th className="w-8">
+                  <span className="sr-only">
+                    {t('ideas.financial.col.actions', 'Actions')}
+                  </span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>

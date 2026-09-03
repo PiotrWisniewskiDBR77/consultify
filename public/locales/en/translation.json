@@ -36231,7 +36231,8 @@
       "placeholder": "Write a comment...",
       "sendTitle": "Send comment",
       "send": "Send",
-      "aiEnhanceTitle": "AI helps refine comment"
+      "aiEnhanceTitle": "AI helps refine comment",
+      "deleteComment": "Delete comment"
     },
     "aiFieldEnhancer": {
       "triggerTitle": "AI actions for this field",

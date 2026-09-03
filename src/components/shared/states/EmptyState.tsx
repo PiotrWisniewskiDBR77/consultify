@@ -67,6 +67,14 @@ export interface EmptyStateProps {
   /** Reduce vertical padding for inline / in-card usage. */
   compact?: boolean;
   className?: string;
+  /**
+   * Nagłówek tytułu — domyślnie h3 (dotychczasowe zachowanie, bez zmiany dla
+   * istniejących wywołań). axe `heading-order`: ten shared komponent
+   * renderuje się w bardzo różnych miejscach drzewa nagłówków — gdy lokalny
+   * kontekst wymaga innego poziomu (np. bezpośrednio po h1, bez h2 pomiędzy),
+   * wołający może go nadpisać zamiast globalnie zmieniać domyślne h3.
+   */
+  headingLevel?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 }
 
 const VARIANT_ICON: Record<EmptyStateVariant, LucideIcon> = {
@@ -120,7 +128,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onRetry,
   compact = false,
   className = '',
+  headingLevel = 'h3',
 }) => {
+  const Heading = headingLevel;
   const { t } = useTranslation();
   const Icon = icon ?? VARIANT_ICON[variant];
 
@@ -156,13 +166,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <Icon size={compact ? 22 : 30} aria-hidden />
       </div>
 
-      <h3
+      <Heading
         className={`font-semibold text-[var(--c-text)] ${
           compact ? 'mb-1 text-base' : 'mb-2 text-lg'
         }`}
       >
         {title}
-      </h3>
+      </Heading>
 
       {description && (
         <p className={`max-w-sm text-[var(--c-text-muted)] ${compact ? 'text-sm' : 'text-[15px]'}`}>

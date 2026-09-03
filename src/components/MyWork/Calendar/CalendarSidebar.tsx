@@ -182,12 +182,18 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               : true;
             const active = isAvailable && filter.sources.includes(source);
             return (
+              // axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): opacity-70
+              // na przycisku mnozyla sie z juz-zgodnym text-slate-500 (4.76:1)
+              // i text-blue-600 (5.17:1), zbijajac oba ponizej 4,5:1 — ten sam
+              // ksztalt awarii co PreviewAIHintStrip/AgentWorkshopPalette
+              // (opacity x kolor). Przycisk zostaje w pelni klikalny mimo
+              // "niedostepne" wygladu, wiec tekst musi zostac czytelny.
               <button
                 key={source}
                 onClick={() => toggleSource(source)}
                 className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
                   !isAvailable && isExternalSource
-                    ? 'cursor-pointer text-slate-500 dark:text-slate-400 opacity-70'
+                    ? 'cursor-pointer text-slate-500 dark:text-slate-400'
                     : active
                       ? 'text-slate-800 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 line-through'

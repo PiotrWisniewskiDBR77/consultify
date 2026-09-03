@@ -6063,6 +6063,17 @@ function MindMapInner({
                 // before our own keydown handler can see it. Disable it so the map's
                 // grammar actually works. (We provide arrow/Tab navigation ourselves.)
                 disableKeyboardA11y
+                // axe `nested-interactive` (odbior G06, 07_MY_WORK_AGENT): domyslnie
+                // React Flow nadaje KAZDEMU wezlowi role="button" tabIndex={0}
+                // (nodesFocusable=true), a wezel `idea` renderuje WEWNATRZ prawdziwe
+                // <button> (ikona wlasciwosci/dodaj-dziecko/dodaj-rodzenstwo, widoczne
+                // po zaznaczeniu) — dwie interaktywne kontrolki jedna w drugiej. Ten
+                // sam wzorzec juz rozwiazany per-wezel dla "branch" w
+                // useMindMapPersistence.ts (`focusable: false`); tu wylaczamy globalnie
+                // dla calego plotna, bo mamy WLASNA nawigacje klawiatura (patrz komentarz
+                // wyzej) i przyciski wewnatrz wezlow zostaja fokusowalne niezaleznie
+                // (prawdziwe <button>, tabIndex nie jest im potrzebny od rodzica).
+                nodesFocusable={false}
                 {...getIdeasToolInteractionProps('mindmap', {
                   locked,
                   connectMode: interactionMode === 'connect',

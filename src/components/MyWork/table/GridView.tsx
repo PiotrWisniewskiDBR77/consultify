@@ -425,8 +425,14 @@ const DataGrid: React.FC<DataGridProps> = ({
         );
 
       return (
+        // axe `aria-required-parent` (odbior G06, 07_MY_WORK_AGENT): sam
+        // wzorzec co ViewRouter.tsx renderCell — role="cell" NADAL padal, bo
+        // ten div siedzi wewnatrz prawdziwego <td>, ktory juz ma WLASNA,
+        // implicit role "cell" (zagniezdzenie cell-w-cell mylilo sprawdzenie
+        // wymaganego rodzica). Div zostaje bez wlasnej roli — <td> rodzic juz
+        // poprawnie niesie semantyke komorki; tabIndex/onKeyDown/edycja bez
+        // zmian.
         <div
-          role="gridcell"
           tabIndex={0}
           className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text"
           onDoubleClick={(e) => {
@@ -610,8 +616,12 @@ const DataGrid: React.FC<DataGridProps> = ({
                   ? rowValidationRaw
                   : null;
               return (
+                // axe `aria-required-parent`: sam wzorzec co ViewRouter.tsx
+                // renderRow — explicit role="row" wymagany, implicit
+                // display:table-row nie wystarczyl empirycznie.
                 <tr
                   key={row.id}
+                  role="row"
                   data-testid={`table-row-${row.id}`}
                   className={`${selected ? 'bg-c-surface-raised' : ''} hover:bg-c-surface-raised`}
                   onClick={() => onOpenDetail(row.id)}

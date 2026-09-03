@@ -191,9 +191,14 @@ export const RightRail: React.FC<RightRailProps> = ({
   const isLeft = side === 'left';
 
   return (
+    // axe `landmark-unique`: gdy lewy i prawy RightRail renderuja sie
+    // rownoczesnie (ExecutiveModuleShell), oba byly <aside> BEZ aria-label —
+    // dwa nienazwane landmarki tej samej roli sa nieodrozniale. Etykieta
+    // per strona (lewy/prawy) czyni je unikalne.
     <aside
       className="hidden sm:flex flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
+      aria-label={isLeft ? t('mels.leftRailPanel', 'Panel narzędzi (lewy)') : t('mels.rightRailPanel', 'Panel narzędzi (prawy)')}
       data-testid={testId ?? 'mels-right-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}
       data-side={side}

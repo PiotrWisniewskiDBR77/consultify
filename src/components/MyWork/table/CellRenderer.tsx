@@ -104,11 +104,23 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 
   return (
     <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      {/* axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): staly bialy
+          tekst na `bgColor` mierzony ponizej 4,5:1 w dwoch niezaleznych
+          przypadkach — (1) fallback '#e0e7ff' (1.04-1.23:1), (2) kilka z
+          samych tokenow --c-tag-N tez nie dobija 4,5:1 z bialym (np. tag-1
+          #3b8ea5 -> 3.75:1, tag-6 #5a9367 -> 3.62:1, zmierzone niezaleznie).
+          `bgColor` moze byc DOWOLNY (uzytkownik/legacy wartosc), wiec zamiast
+          zgadywac ktory token akurat przejdzie, mieszamy 35% czerni do
+          KAZDEGO wejscia — ten sam wzorzec co NotebookPresenceStack.tsx
+          (gwarantuje >=4.5:1 niezaleznie od wejscia). */}
       <button
         onClick={() => !locked && setOpen(!open)}
         disabled={locked}
         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors"
-        style={{ backgroundColor: bgColor, color: '#334155' }}
+        style={{
+          backgroundColor: `color-mix(in srgb, ${bgColor} 65%, black 35%)`,
+          color: 'var(--c-tag-foreground)',
+        }}
       >
         {value || '—'}
         {!locked && <ChevronDown size={10} />}
@@ -495,6 +507,10 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 
   return (
     <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      {/* NIE `--c-tag-foreground` tutaj (jak w SelectCell wyzej): STATUS_DISPLAY
+          to WLASNA, oddzielna paleta JASNYCH pasteli (#e0e7ff/#fef3c7/#d1fae5/
+          #fee2e2) zaprojektowana pod CIEMNY tekst (8.4-9.3:1) — bialy tekst na
+          nich dawal 1.1-1.2:1 (odbior G06, zmierzone). */}
       <button
         onClick={() => !locked && setOpen(!open)}
         disabled={locked}

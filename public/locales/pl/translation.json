@@ -987,7 +987,9 @@
     "expandRightRail": "Rozwiń prawy panel",
     "collapseRightRail": "Zwiń prawy panel",
     "resizeRightRail": "Zmień szerokość prawego panelu",
-    "discussWithTeresa": "Porozmawiaj z Teresą"
+    "discussWithTeresa": "Porozmawiaj z Teresą",
+    "leftRailPanel": "Panel narzędzi (lewy)",
+    "rightRailPanel": "Panel narzędzi (prawy)"
   },
   "presentations": {
     "comments": {
@@ -38844,7 +38846,8 @@
       "placeholder": "Napisz komentarz...",
       "sendTitle": "Wyślij komentarz",
       "send": "Wyślij",
-      "aiEnhanceTitle": "AI pomoże dopracować komentarz"
+      "aiEnhanceTitle": "AI pomoże dopracować komentarz",
+      "deleteComment": "Usuń komentarz"
     },
     "aiFieldEnhancer": {
       "triggerTitle": "Akcje AI dla tego pola",

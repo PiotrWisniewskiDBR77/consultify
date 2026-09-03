@@ -124,8 +124,12 @@
   --fc-list-event-hover-bg-color: #f1f5f9;
 }
 
+/* axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): #94a3b8 (slate-400) na
+   bialym tle dawal 2.56:1 zamiast 4,5:1 dla etykiet dni tygodnia w naglowku
+   kalendarza — #64748b (slate-500, ta sama wartosc co bazowa .fc-col-header-cell
+   powyzej) daje 4.76:1. */
 :root:not(.dark) .fc-consultify .fc-col-header-cell {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 :root:not(.dark) .fc-consultify .fc-daygrid-day-number {
