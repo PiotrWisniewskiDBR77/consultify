@@ -100,14 +100,14 @@
      * Each value is the DARK family member (HBS "1") so text-on-white is AA.
      * Approx contrast on #ffffff:
      *   success #026833 ≈ 7.0:1  (AAA)
-     *   warning #AE6429 ≈ 4.4:1  (AA Large; borderline for body — OK for icons/badges)
+     *   warning #A3541C ≈ 5.0:1  (AA, including text on the 10% warning tint)
      *   danger  #E80538 ≈ 5.3:1  (AA)  — distinct from crimson #85182F brand
      *   info    #3B2883 ≈ 12.1:1 (AAA)
      */
     --c-success: #026833; /* was #059669 — HBS Green 1 */
     --c-success-rgb: 2 104 51;
-    --c-warning: #ae6429; /* was #d97706 — HBS Orange 1 */
-    --c-warning-rgb: 174 100 41;
+    --c-warning: #a3541c; /* darkened from HBS Orange 1 for AA on warning/10 */
+    --c-warning-rgb: 163 84 28;
     --c-danger: #e80538; /* was #dc2626 — HBS Red 2 */
     --c-danger-rgb: 232 5 56;
     --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
