@@ -5301,7 +5301,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             .map((node) => String(node.data?.label || ''))
             .filter(Boolean)
             .join('\n')}
-          isAccepted={false}
+          isAccepted
           graphNodes={effectiveNodes}
           graphEdges={edges}
           onActionExpand={() => {

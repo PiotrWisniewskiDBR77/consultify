@@ -15,4 +15,21 @@ describe('AI nudge strip remaining tools', () => {
     expect(source).toContain(`action: '${action}'`);
     expect(source).toContain("status: 'handed_off'");
   });
+
+  // MYW-IDEAS-011 (2026-09-03): the strip was mounted in both files but with
+  // `isAccepted={false}` — a hardcoded, never-changing prop that makes
+  // `IdeaAINudgeStrip` return `null` unconditionally (see its own
+  // `if (!isAccepted || allNudges.length === 0) return null;`). A grep for
+  // "<IdeaAINudgeStrip" therefore falsely reads as "done" while the strip is
+  // dead on both surfaces. Whiteboard and Mind Map pass the bare boolean
+  // shorthand `isAccepted` (== `isAccepted={true}`) — Table and Process Flow
+  // must match that exactly, not carry their own `={false}` override.
+  it.each([
+    ['IdeaTableTool.tsx'],
+    ['IdeaProcessFlowTool.tsx'],
+  ])('%s does not hardcode isAccepted={false} on the nudge strip', (file) => {
+    const source = read(file);
+    expect(source).not.toContain('isAccepted={false}');
+    expect(source).toMatch(/<IdeaAINudgeStrip[\s\S]*?\bisAccepted\b(?!=)/);
+  });
 });
