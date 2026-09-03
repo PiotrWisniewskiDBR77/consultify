@@ -76,7 +76,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
             zmierzone na org-declared-challenges i rodzeństwie). */}
         <h2 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
           Dokumenty pomocnicze
-          <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
             Dla: {tabName}
           </span>
         </h2>

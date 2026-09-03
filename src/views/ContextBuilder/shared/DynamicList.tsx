@@ -122,7 +122,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
       {/* List Items */}
       <div className="space-y-2">
         {safeItems.length === 0 && !isAdding && (
-          <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-500">
+          <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400">
             {resolvedEmptyStateMessage}
           </div>
         )}
@@ -138,7 +138,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
               >
                 {columns.map((col) => (
                   <div key={col.key} className={`${col.width || 'flex-1'}`}>
-                    <label className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-500 mb-1 block">
+                    <label className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block">
                       {col.label}
                     </label>
                     {col.type === 'select' ? (
@@ -176,7 +176,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="p-2 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
+                    className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
                   >
                     <X size={18} />
                   </button>
@@ -193,7 +193,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             >
               {columns.map((col) => (
                 <div key={col.key} className={`${col.width || 'flex-1'} flex items-center`}>
-                  <span className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-500 mr-2 min-w-[80px]">
+                  <span className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-400 mr-2 min-w-[80px]">
                     {col.label}:
                   </span>
                   {col.render ? (
@@ -208,13 +208,13 @@ export const DynamicList: React.FC<DynamicListProps> = ({
               <div className="md:w-20 flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={(e) => handleStartEdit(item, e)}
-                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 rounded"
+                  className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded"
                 >
                   <Edit2 size={16} />
                 </button>
                 <button
                   onClick={(e) => handleDelete(item.id, e)}
-                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 rounded"
+                  className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-danger-500 hover:bg-danger-50 rounded"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -228,7 +228,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
           <div className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-500 border-dashed rounded-lg">
             {columns.map((col) => (
               <div key={col.key} className={`${col.width || 'flex-1'}`}>
-                <label className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-500 mb-1 block">
+                <label className="md:hidden text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block">
                   {col.label}
                 </label>
                 {col.type === 'select' ? (
@@ -263,7 +263,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
               </button>
               <button
                 onClick={handleCancel}
-                className="p-2 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
+                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
               >
                 <X size={18} />
               </button>

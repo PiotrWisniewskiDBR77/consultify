@@ -48,7 +48,17 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
   return (
     <div className="relative group">
       <textarea
-        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all placeholder:text-slate-400 dark:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-primary-50 dark:bg-primary-900/20' : ''}`}
+        // Dwie naprawy na tej linii:
+        // (1) a11y: `dark:text-slate-500` (bez prefiksu `placeholder:`) malowało
+        //     WPISANY tekst, nie tylko placeholder — 3.88:1 zamiast 4,5:1 na ciemnym
+        //     tle (axe: color-contrast, zmierzone na org-root-causes dark, x4 pola).
+        //     Brakujący prefiks dodany, wpisany tekst dziedziczy zwykły kolor.
+        // (2) kanon (CLAUDE.md #3, przy okazji tego samego dotknięcia): fokus
+        //     malowany brandowym tokenem zamiast niebieskim tokenem fokusu
+        //     (pułapka nr 1 — crimson tylko dla semantyki krytycznej); podświetlenie
+        //     stanu "AI dopracowuje" przechodzi na fioletowy token AI, ten sam
+        //     wzorzec co Teresa/AIFieldEnhancer w innych ekranach.
+        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-c-ai/10' : ''}`}
         value={props.value}
         onChange={props.onChange}
         disabled={isRefining}

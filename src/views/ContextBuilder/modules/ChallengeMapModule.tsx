@@ -345,9 +345,14 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                     )}
                   </p>
                 </div>
+                {/* Neutralna paleta (CLAUDE.md #3, CTA=neutralne): brandowy tekst
+                    dawał 1,71:1 na ciemnym tle zamiast 4,5:1 (axe: color-contrast,
+                    zmierzone na org-goal-blockers) — zamiast doklejać jaśniejszy
+                    odcień tej samej rodziny barw (dalej zakazany kanonem), przycisk
+                    przechodzi na tę samą neutralną paletę co reszta akcji w pliku. */}
                 <button
                   onClick={addCustomBlocker}
-                  className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-primary-600 text-xs font-bold border border-primary-100 dark:border-primary-500/20 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                  className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-navy-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 >
                   <Plus size={14} />
                   {t('organization.challenges.blockers.createCustom', 'Create Custom')}
@@ -371,7 +376,7 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                                             `}
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-500">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-400">
                           {blockerTypeLabel(cb.type)}
                         </span>
                         {isAdded ? (
@@ -391,7 +396,7 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
             {/* 2. Active Blockers List (Editable) */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                <Lock size={16} className="text-slate-600 dark:text-slate-500" />
+                <Lock size={16} className="text-slate-600 dark:text-slate-400" />
                 {t('organization.challenges.blockers.activeTitle', 'Active Blockers')}
                 <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">
                   {activeBlockers.length}
@@ -399,7 +404,7 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
               </h3>
               {activeBlockers.length === 0 ? (
                 <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <p className="text-sm text-slate-600 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     {t(
                       'organization.challenges.blockers.emptyMessage',
                       'No blockers identified yet. Add from suggestions or create a custom one.'
@@ -417,7 +422,7 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
                       <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => removeBlocker(blocker.id)}
-                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                           title={t('organization.challenges.blockers.removeTitle', 'Remove Blocker')}
                         >
                           <Trash2 size={16} />

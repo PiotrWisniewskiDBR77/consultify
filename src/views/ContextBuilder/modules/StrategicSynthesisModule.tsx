@@ -325,7 +325,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                   <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-2">
                           {t('organization.synthesis.risks.modal.severityLevel', 'Severity Level')}
                         </label>
                         <div
@@ -354,7 +354,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-2">
                           {t('organization.synthesis.risks.modal.sourceContext', 'Source / Context')}
                         </label>
                         <div className="text-sm text-navy-900 dark:text-white font-medium">
@@ -369,7 +369,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-1">
                           {t(
                             'organization.synthesis.risks.modal.rootCauseAnalysis',
                             'Root Cause Analysis'
@@ -381,7 +381,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                       </div>
                       <div className="h-px bg-slate-200 dark:bg-white/5" />
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-1">
                           {t(
                             'organization.synthesis.risks.modal.recommendedMitigation',
                             'Recommended Mitigation'
@@ -573,7 +573,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                   <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-2">
                           {t('organization.synthesis.strengths.modal.impactPotential', 'Impact Potential')}
                         </label>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -582,7 +582,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-2">
                           {t('organization.synthesis.strengths.modal.confidence', 'Confidence')}
                         </label>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:bg-slate-800 dark:text-slate-300">

@@ -953,7 +953,12 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                           ot.label
                         )}
                       </div>
-                      <div className="text-[10px] text-c-text-muted mt-1">
+                      {/* c-text-secondary, nie c-text-muted: gdy karta jest zaznaczona,
+                          tło zmienia się na --c-selection (podbarwiony niebieski) — muted
+                          jest tam kalibrowany na --c-bg i daje 4.27:1 zamiast 4,5:1 (axe:
+                          color-contrast, zmierzone na org-identity-operating). secondary
+                          ma bezpieczny margines na obu tłach. */}
+                      <div className="text-[10px] text-c-text-secondary mt-1">
                         {t(
                           `organization.profile.options.organizationType.${ot.value}.hint`,
                           ot.hint

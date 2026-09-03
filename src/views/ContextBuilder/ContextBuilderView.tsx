@@ -164,7 +164,7 @@ const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                   className={cn(
                     isActive
                       ? 'text-primary-600 dark:text-primary-400'
-                      : 'text-slate-600 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-400'
                   )}
                 />
                 <span className="truncate">{item.label}</span>
