@@ -67,3 +67,32 @@ Surowe `grep -c 'NIEWERYFIKOWALNE'` zwróciło `12`, nie `8`, ponieważ poza oś
 wierszami pozycji liczy również tekst i wiersze podsumowań. Lista identyfikatorów
 z tabeli nadal zawiera dokładnie osiem pozycji wskazanych w zleceniu.
 
+## R2 — ASM-OWN-001/002/003
+
+Scenariusze źródłowe: `OWNER_FEEDBACK_REGISTER.md:10-43,102-151,207-240`
+oraz `modules/04_ASSESSMENT/MODULE_ACCEPTANCE.md:109-111`. Zmierzone przez
+kanoniczny runtime, prawdziwy login OWNER, podpisany JWT,
+`ApiGateway.initializeRoutes`, realny PostgreSQL i flagę V8 włączoną przez
+kanoniczny bootstrap. `ENABLE_TEST_AUTH_BYPASS=false`; runtime pracował w
+`NODE_ENV=development`, więc testowe samowyłączenia auth i Results nie miały
+zastosowania.
+
+| ID | HTTP / ciało | Zimny readback | Werdykt |
+| --- | --- | --- | --- |
+| ASM-OWN-001 | `GET /api/method/packs` → 200 `{"packs":[]}`; `GET /api/method/sessions` → 200, jawna pusta lista | osobny klient `pg`: `owner_sessions=0` | `NIE DOTYCZY KODU → G16`: route działa lokalnie; wcześniejsze proxy 404 jest rozjazdem wdrożenia. Pusty katalog w tej fixture nie dowodzi kompletności treści/licencji. |
+| ASM-OWN-002 | `GET /api/method/sessions` → 200; deep-link do nieistniejącej sesji → 404 `Session not found` | `owner_sessions=0`; `foreign_sessions=0` | `NIE DOTYCZY KODU → G16` dla 404 proxy; fail-closed jest sprawny. Utworzenie nowej sesji nie było częścią fixture Inicjatyw i pozostaje niezmierzone. |
+| ASM-OWN-003 | `GET /api/method/outputs` → 200 `{"outputs":[],"total":0,...}` | `owner_outputs=0` | `NIE DOTYCZY KODU → G16`: endpoint jest osiągalny; brak Output w tej fixture jest uczciwym stanem pustym, nie dowodem trwałości Assessment. |
+
+Obcy OWNER otrzymał własną pustą listę sesji 200; nie zobaczył danych tenant-a
+głównego. Artefakty: `evidence/runtime-p0p1-20260903/asm-*.txt` i
+`asm-cold-readback.json`.
+
+Gotowe zdania do rejestru:
+
+- ASM-OWN-001: „Lokalny marker 67d235cfa0 wystawia `/api/method/packs` i
+  `/sessions` przez realny Gateway/JWT/PG z HTTP 200; wcześniejsze 404 za proxy
+  klasyfikujemy jako defekt wdrożenia do G16, nie kodu.”
+- ASM-OWN-002: „Nieistniejąca sesja fail-closed daje jawne 404 `Session not
+  found`; lokalny draft nie został uznany za serwerową sesję.”
+- ASM-OWN-003: „`/api/method/outputs` lokalnie odpowiada 200, a osobny klient PG
+  potwierdza 0 trwałych Output w użytej fixture; proxy 404 nie reprodukuje się.”
