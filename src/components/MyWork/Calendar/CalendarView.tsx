@@ -9,6 +9,8 @@ import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/primitives/
 import { useIsMobile } from '@/hooks/useDeviceType';
 import Api from '@/services/api';
 
+import { ScrollEdgeFade } from '../shared/ScrollEdgeFade';
+import { useScrollEdges } from '../shared/useScrollEdges';
 import { CalendarCreateEventModal } from './CalendarCreateEventModal';
 import { CalendarGrid } from './CalendarGrid';
 import { CalendarSidebar } from './CalendarSidebar';
@@ -124,6 +126,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     refreshTrigger,
     includeOwnEvents ? ['event'] : []
   );
+
+  // MW-DROBIAZGI (03.09, rodzeństwo MYW-PHOTO-003): pasek "Deadlines" nad
+  // siatką kalendarza przewija się poziomo bez sygnalizacji przy wielu
+  // zadaniach — ten sam mechanizm co `MyWorkHub.tsx`'s tabs row.
+  const deadlinesCount = events.filter((event) => event.source === 'task').length;
+  const [deadlinesRowRef, deadlinesRowEdges] = useScrollEdges([deadlinesCount]);
 
   const buildExternalSourceState = useCallback(
     (status: ExternalCalendarStatusKey, providerLabel: string): ExternalCalendarSourceState => {
@@ -500,27 +508,40 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         {includeOwnEvents ? (
           <section
             aria-label={t('myWork.calendarV2.deadlines', 'Deadlines')}
-            className="flex min-h-12 items-center gap-2 overflow-x-auto border-b border-c-border px-4 py-2"
+            className="relative border-b border-c-border"
           >
-            <strong className="shrink-0 text-xs uppercase text-c-text-secondary">
-              {t('myWork.calendarV2.deadlines', 'Deadlines')}
-            </strong>
-            {events
-              .filter((event) => event.source === 'task')
-              .map((event) => (
-                <button
-                  key={event.id}
-                  type="button"
-                  onClick={() => handleEventClick(event.sourceId || event.id, 'task')}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs text-c-text"
-                >
-                  <span className="h-2 w-2 bg-[var(--c-warning)]" aria-hidden="true" />
-                  {event.title}
-                </button>
-              ))}
-            <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(true)}>
-              {t('myWork.calendarV2.new', 'New')}
-            </Button>
+            <div
+              ref={deadlinesRowRef}
+              className="flex min-h-12 items-center gap-2 overflow-x-auto px-4 py-2"
+            >
+              <strong className="shrink-0 text-xs uppercase text-c-text-secondary">
+                {t('myWork.calendarV2.deadlines', 'Deadlines')}
+              </strong>
+              {events
+                .filter((event) => event.source === 'task')
+                .map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    onClick={() => handleEventClick(event.sourceId || event.id, 'task')}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs text-c-text"
+                  >
+                    <span className="h-2 w-2 bg-[var(--c-warning)]" aria-hidden="true" />
+                    {event.title}
+                  </button>
+                ))}
+              <Button variant="secondary" size="sm" onClick={() => setCreateModalOpen(true)}>
+                {t('myWork.calendarV2.new', 'New')}
+              </Button>
+            </div>
+            <ScrollEdgeFade
+              side="start"
+              visible={deadlinesRowEdges.scrollable && !deadlinesRowEdges.atStart}
+            />
+            <ScrollEdgeFade
+              side="end"
+              visible={deadlinesRowEdges.scrollable && !deadlinesRowEdges.atEnd}
+            />
           </section>
         ) : null}
         <CalendarGrid
