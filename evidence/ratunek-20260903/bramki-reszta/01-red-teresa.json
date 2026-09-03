@@ -1,0 +1,414 @@
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-03 06:27:43:2743 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+2026-09-03 06:27:43:2743 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-09-03 06:27:43:2743 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"createSecurityIncident","184":"deleteSecurityIncident","185":"getSecurityIncidentById","186":"getSecurityIncidentStats","187":"getSecurityIncidents","188":"resolveSecurityIncident","189":"updateSecurityIncident","190":"addThreat","191":"blockThreat","192":"bulkImportThreats","193":"checkDomainReputation","194":"checkIPReputation","195":"createDLPPolicy","196":"deleteDLPPolicy","197":"deleteThreat","198":"getBlockedDomains","199":"getBlockedIPs","200":"getDLPPolicies","201":"getDLPPolicyById","202":"getDLPStats","203":"getDLPViolationById","204":"getDLPViolations","205":"getThreatById","206":"getThreatStats","207":"getThreats","208":"resolveDLPViolation","209":"scanResourceDLP","210":"toggleDLPPolicy","211":"unblockThreat","212":"updateDLPPolicy","213":"updateThreat","214":"connectIntegration","215":"createWebhook","216":"deleteWebhook","217":"disconnectIntegration","218":"getIntegrations","219":"getWebhookDeliveries","220":"getWebhooks","221":"refreshIntegration","222":"testIntegration","223":"testWebhook","224":"updateIntegrationConfig","225":"updateWebhook","226":"addDashboardWidget","227":"cloneDashboard","228":"createDashboard","229":"deleteDashboard","230":"getDashboardBuilderStats","231":"getDashboardById","232":"getDashboardWidgetData","233":"getDashboards","234":"removeDashboardWidget","235":"reorderDashboardWidgets","236":"toggleDashboardShare","237":"updateDashboard","238":"updateDashboardWidget","239":"addPaymentMethod","240":"addPlanFeature","241":"approveSubscriptionChange","242":"calculateProration","243":"comparePricingPlans","244":"createPricingPlan","245":"createRevenueForecast","246":"createRevenueRecognition","247":"createSubscriptionChange","248":"deletePaymentMethod","249":"deletePricingPlan","250":"deleteRevenueForecast","251":"generateRevenueForecast","252":"getPaymentFailureStats","253":"getPaymentFailures","254":"getPaymentMethods","255":"getPlanFeatures","256":"getPricingPlans","257":"getRecognitionSchedule","258":"getRevenueForecastStats","259":"getRevenueForecasts","260":"getRevenueRecognitionStats","261":"getRevenueRecognitions","262":"getSubscriptionChangeStats","263":"getSubscriptionChanges","264":"recognizeRevenue","265":"rejectSubscriptionChange","266":"removePlanFeature","267":"retryPayment","268":"updatePaymentMethod","269":"updatePricingPlan","270":"updateRevenueForecast","271":"updateRevenueRecognition","272":"createContractAmendment","273":"createCustomerContract","274":"createLifecycleStage","275":"createSuccessPlaybook","276":"deleteCustomerContract","277":"deleteLifecycleStage","278":"deleteSuccessPlaybook","279":"executeSuccessPlaybook","280":"getContractAmendments","281":"getContractStats","282":"getCustomerContracts","283":"getLifecycleStages","284":"getLifecycleStats","285":"getLifecycleTransitions","286":"getPlaybookStats","287":"getSuccessActions","288":"getSuccessPlaybooks","289":"getUpcomingRenewals","290":"transitionOrganization","291":"updateCustomerContract","292":"updateLifecycleStage","293":"updateSuccessPlaybook"}
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/ag-bramki-reszta/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"cxbramki2","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:6294/cxbramki2 host=127.0.0.1 port=6294 database=cxbramki2 source=app:pool-config
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-09-03 06:27:44:2744 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:44:2744 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-09-03T04:27:44.937Z"}
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+2026-09-03 06:27:45:2745 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AttributionService] Attribution recorded: SELF_SERVE for org c016e63c-083f-4fe2-bc63-cbad58a4a5f3[39m
+2026-09-03 06:27:45:2745 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[39m
+[32m--- [EMAIL SERVICE] Sending to gateprobe+owner-1788409664867@local.test ---[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mUsing Host: Mock (Console)[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mSubject: Verify your email[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mContent: [39m
+[32m      <p>Hi Gate,</p>[39m
+[32m      <p>Please verify your email by clicking this link:</p>[39m
+[32m      <p><a href...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m------------------------------------------[39m
+[32m[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Email verification sent to gateprobe+owner-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[39m
+[32m--- [EMAIL SERVICE] Sending to gateprobe+owner-1788409664867@local.test ---[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mUsing Host: Mock (Console)[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mSubject: Welcome to Consultify (Demo Account) 🎉[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mContent: [39m
+[32m<!DOCTYPE html>[39m
+[32m<html>[39m
+[32m<head>[39m
+[32m    <meta charset="utf-8">[39m
+[32m    <style>[39m
+[32m        body { font-family: Ar...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m------------------------------------------[39m
+[32m[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[WelcomeEmail] Welcome email sent to gateprobe+owner-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Welcome email sent to gateprobe+owner-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [37mdebug[39m: [37m[Auth] Skipping progress Slack alert for seed/test account[39m {"emailDomain":"local.test"}
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AttributionService] Attribution recorded: SELF_SERVE for org 143b4d87-5931-43e9-ae4c-d90188c7344f[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[39m
+[32m--- [EMAIL SERVICE] Sending to gateprobe+user-1788409664867@local.test ---[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mUsing Host: Mock (Console)[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mSubject: Verify your email[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mContent: [39m
+[32m      <p>Hi Gate,</p>[39m
+[32m      <p>Please verify your email by clicking this link:</p>[39m
+[32m      <p><a href...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m------------------------------------------[39m
+[32m[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Email verification sent to gateprobe+user-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[39m
+[32m--- [EMAIL SERVICE] Sending to gateprobe+user-1788409664867@local.test ---[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mUsing Host: Mock (Console)[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mSubject: Welcome to Consultify (Demo Account) 🎉[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32mContent: [39m
+[32m<!DOCTYPE html>[39m
+[32m<html>[39m
+[32m<head>[39m
+[32m    <meta charset="utf-8">[39m
+[32m    <style>[39m
+[32m        body { font-family: Ar...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m------------------------------------------[39m
+[32m[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[WelcomeEmail] Welcome email sent to gateprobe+user-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Welcome email sent to gateprobe+user-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [37mdebug[39m: [37m[Auth] Skipping progress Slack alert for seed/test account[39m {"emailDomain":"local.test"}
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Redis] Connecting to: redis://localhost:6379[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Login request received for email:[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Login request received for email: gateprobe+owner-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Querying user from DB: gateprobe+owner-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Redis] Connecting...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Redis] Connected and ready[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Redis] Successfully connected[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Password valid: true[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Sending response:[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Sending response with res.send[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Login request received for email:[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Login request received for email: gateprobe+user-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Querying user from DB: gateprobe+user-1788409664867@local.test[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Auth] Password valid: true[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Sending response:[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[AuthController] Sending response with res.send[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Deprecation] First call to legacy route: GET /api/finance-statements/ → migrate to /api/v8/finance[39m
+2026-09-03 06:27:45:2745 [32minfo[39m: [32m[Deprecation] First call to legacy route: GET /api/finance-v4/overview → migrate to /api/v8/finance[39m
+2026-09-03 06:27:45:2745 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-09-03 06:27:45:2745 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, organization_id, project_id, title, report_type, executive_summary,[39m
+[31m              recommendations, detailed_analysis, status, created_by, created_at, updated_at[39m
+[31m       FROM assessment_reports[39m
+[31m       WHERE organization_id = $1[39m
+[31m       ORDER BY updated_at DESC[39m
+[31m       LIMIT 100[39m
+2026-09-03 06:27:45:2745 [31merror[39m: [31m[QueryHelper] Error in queryAll: column "title" does not exist[39m {"length":105,"name":"error","severity":"ERROR","code":"42703","position":"41","file":"parse_relation.c","line":"3716","routine":"errorMissingColumn","stack":"error: column \"title\" does not exist\n    at /Users/piotrwisniewski/Developer/Consultify/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async executeWithLogging (/private/tmp/ag-bramki-reszta/server/src/database/PostgresDatabase.ts:732:17)"}
+[gate-probe] unhandled route error Access to this case is denied.
+[gate-probe] unhandled route error Access to this case is denied.
+2026-09-03 06:27:46:2746 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:46:2746 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:46:2746 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:46:2746 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:46:2746 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-09-03 06:27:46:2746 [32minfo[39m: [32m[P08-TeresaCopilot] Teresa DB tables ensured[39m
+{
+  "roles": {
+    "owner": "OWNER",
+    "user": "USER"
+  },
+  "positions": {
+    "teresa-case-intake": {
+      "mount": "/api/v8/teresa/case-intake",
+      "moduleId": "MODULE_CASE_WORKSPACE",
+      "negative": {
+        "role": "USER",
+        "status": 201,
+        "code": null,
+        "error": null,
+        "coldRowCount": 1,
+        "blocked": false
+      },
+      "positive": {
+        "role": "OWNER",
+        "status": 201,
+        "code": null,
+        "error": null,
+        "coldRowCount": 1,
+        "allowed": true
+      },
+      "pass": false
+    }
+  },
+  "observations": {
+    "v8-finance-digitization-read": {
+      "path": "GET /api/v8/finance/digitization-analyses",
+      "user": {
+        "status": 404,
+        "code": null
+      },
+      "owner": {
+        "status": 404,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "v8-finance-digitization-write": {
+      "path": "POST /api/v8/finance/digitization-analyses",
+      "user": {
+        "status": 403,
+        "code": "FINANCE_EDIT_FORBIDDEN"
+      },
+      "owner": {
+        "status": 400,
+        "code": "IDEMPOTENCY_KEY_REQUIRED"
+      },
+      "userReachesModule": true
+    },
+    "finance-statements-read": {
+      "path": "GET /api/finance-statements/",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "finance-v4-read": {
+      "path": "GET /api/finance-v4/overview",
+      "user": {
+        "status": 404,
+        "code": null
+      },
+      "owner": {
+        "status": 404,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "webhooks-case-workspace": {
+      "path": "POST /api/webhooks/case-workspace/probe/deliveries",
+      "user": {
+        "status": 400,
+        "code": null
+      },
+      "owner": {
+        "status": 400,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "case-workspace-subtree-read": {
+      "path": "GET /api/v8/case-workspace/cases",
+      "user": {
+        "status": 403,
+        "code": "BETA_LOCKED"
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": false
+    },
+    "economics-read": {
+      "path": "GET /api/economics/analyses",
+      "user": {
+        "status": 403,
+        "code": "BETA_LOCKED"
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": false
+    },
+    "conclusions-read": {
+      "path": "GET /api/conclusions",
+      "user": {
+        "status": 403,
+        "code": "BETA_LOCKED"
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": false
+    },
+    "chat-case-intake-read": {
+      "path": "GET /api/v8/chat/conversations/gateprobe-x/case-intake/work-order",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "chat-case-intake-case-read": {
+      "path": "GET /api/v8/chat/case-intake/cases/gateprobe-x/conversation",
+      "user": {
+        "status": 404,
+        "code": null
+      },
+      "owner": {
+        "status": 404,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "teresa-case-intake-read": {
+      "path": "GET /api/v8/teresa/case-intake/conversations/gateprobe-x/work-order",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-artifact-conversions": {
+      "path": "GET /api/artifact-conversions",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-my-work": {
+      "path": "GET /api/my-work/inbox",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-chat-snapshots": {
+      "path": "GET /api/v8/chat/snapshots",
+      "user": {
+        "status": 400,
+        "code": "MISSING_QUERY_PARAM"
+      },
+      "owner": {
+        "status": 400,
+        "code": "MISSING_QUERY_PARAM"
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-chat-handoffs": {
+      "path": "GET /api/v8/chat/handoffs",
+      "user": {
+        "status": 400,
+        "code": "MISSING_QUERY_PARAM"
+      },
+      "owner": {
+        "status": 400,
+        "code": "MISSING_QUERY_PARAM"
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-chat-conversation-sibling": {
+      "path": "GET /api/v8/chat/conversations/gateprobe-x/handoff-proposals",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-teresa-contract": {
+      "path": "GET /api/v8/teresa/contract",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    },
+    "anti-extinction-teresa-proposals": {
+      "path": "GET /api/v8/teresa/proposals",
+      "user": {
+        "status": 200,
+        "code": null
+      },
+      "owner": {
+        "status": 200,
+        "code": null
+      },
+      "userReachesModule": true
+    }
+  },
+  "verdict": {
+    "pass": false,
+    "failing": [
+      "teresa-case-intake"
+    ]
+  }
+}
