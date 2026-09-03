@@ -162,3 +162,24 @@ git grep -cE "error: \(err(or)? as Error\)\.message|error: err(or)?\.message" --
 
 Wynik na 03.09 (obie strony, różnica zero): **62 pliki / 294 wystąpienia**. Dopóki przyszły raport
 296 nie zacytuje tej samej komendy przy nowej liczbie, zdanie „294 → 0” pozostaje niemierzalne.
+
+## J. Noc 03.09 część 2 — 8 lekcji metodycznych (odbiory 13 dyżurów, 23:00–00:30)
+
+| # | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| J1 | Raport Codexa 286 nazwał 13 zastanych czerwieni „nowymi”, bo baza pomiaru `f65c4ff6a0` **nie kompilowała się** — nierozstrzygnięty marker konfliktu w `PreviewAIHintStrip.tsx:110` dawał `Transform failed` przy `numFailedTests: 0`, co raport odczytał jako „baza zielona” | Klasyfikacja ZASTANA/NOWA fałszywa dla całego bloku; odbiorca musiał ją odwrócić przed wpisaniem 16 wierszy `G15` | NAPRAWIONE (odbiorem) | `ODBIOR_DYZUROW_286_290_291_20260903.md` §1.3; `REJESTR_ZNALEZISK_20260903.md` §I wiersz 286 |
+| J2 | Dyżur 290 podał blok 3 = `11/18 PASS` zamiast `16/18` — pomiar zrobiony na bazie dzielonej z listenerem, zanieczyszczonej sygnaturą `ORG_MEMBERSHIP_REVOKED` (podwójne `500`), nie stan kodu | 5 z 7 „czerwieni” bloku 3 nie reprodukuje się na czystej bazie; liczba wiążąca do 16 wierszy `G19` to 16/18, nie 11/18 | NAPRAWIONE (odbiorem, dwukrotny pomiar na czystej bazie) | `ODBIOR_DYZUROW_286_290_291_20260903.md` §2.3 |
+| J3 | `git merge-tree` w starej formie (bez `--write-tree --messages`) daje **0 znaczników konfliktu** przy realnych konfliktach między gałęzią a linią integracyjną | Kontrola scalenia wyglądała na czystą, choć konflikty istniały — fałszywe „merge-clean” | NAPRAWIONE (procedura odbioru zmieniona) | `ODBIOR_DYZUROW_287_292_294_20260903.md` §„Kontrola scalenia” |
+| J4 | `grep -c` na bardzo dużym wyjściu (setki tysięcy linii) zwrócił **pustą odpowiedź zamiast `0`** | Komenda licząca wystąpienia wyglądała na błąd/brak wyniku, mogła zostać odczytana jako „zero potwierdzone”, gdy w rzeczywistości komenda nie dokończyła się poprawnie | OTWARTE (unikać `grep -c` na wielkim wyjściu, weryfikować kod wyjścia) | odbiory nocy część 2, ustne przekazanie nadzorcy |
+| J5 | Test enumeracji kontrolek (dyżur 295) zostaje **zielony po wypatroszeniu handlera** — dowodzi efektu tylko dla **12 z 226** sygnatur, resztę przepuszcza bez sprawdzenia efektu | „Zielony test” nie znaczy „kontrolka działa”; mianownik dowodu de facto 12/226, nie cały ekran | OTWARTE — do wzmocnienia w instrukcji 312 pozycja (e) | `ODBIOR_DYZUROW_295_297_298_20260903.md` §„Rozbieżność 1” |
+| J6 | Silnik raportu Oceny (dyżur 298): `save()` odrzuca obcego tenanta dopiero przez `get()` **PO** `INSERT` — po usunięciu warunku organizacji w mutacji odbiorcy obcy **nadpisał wiersz**, a `save()` mimo to zgłosiło „refused” (bo odczyt-po-zapisie i tak trafił na własny, świeżo nadpisany rekord) | Test bezpieczeństwa daje fałszywy spokój — blokada nie działa na poziomie zapisu, tylko przypadkiem na poziomie odczytu | OTWARTE — do naprawy w instrukcji 312 pozycja (f) | `ODBIOR_DYZUROW_295_297_298_20260903.md` §„Rozbieżność 3” |
+| J7 | Dwóch robotników nocy złamało zakaz `pkill`/`git stash` — i **oba przypadki same to zgłosiły** w swoich raportach, bez próby ukrycia | Bez szkody dla wyniku (zgłoszone, nie zatajone), ale potwierdza że zakaz bywa łamany mimo reguły `Z27` obowiązującej od dyżuru 33 | ZAMKNIĘTE (zgłoszone samodzielnie, brak szkody) | raporty robotników nocy część 2 (ustne przekazanie nadzorcy) |
+| J8 | Generator instrukcji dyżurów wkleja **opis zamiast komendy** w sekcji szablonu §0.2c | Wykonawca dostaje słowny opis kroku zamiast gotowej do wklejenia komendy — ryzyko własnej (błędnej) interpretacji zamiast literalnego wykonania | OTWARTE — naprawa szkieletu generatora zaplanowana jako pierwszy krok rana (§6 `PRZEKAZANIE_20260904.md`) | generator instrukcji dyżurów, ustne przekazanie nadzorcy |
+
+**Dziewiąte, dodatkowe znalezisko własne (spoza listy przekazanej ustnie, zmierzone samodzielnie
+podczas pisania tego rejestru):** oba łańcuchy nocne A i B (13 pozycji) zakończyły się STOP nie z
+powodu braku treści instrukcji, tylko dlatego, że **push instrukcji 299–312 na
+`github-backup/grafika/m03-20260902` (23:18–23:20) nastąpił 20–25 minut PO tym, jak łańcuchy już
+zgłosiły STOP** (raporty STOP z 22:55–22:57). Świeży `git fetch github-backup --prune` w chwili
+pisania tego wpisu potwierdza, że wszystkie 13 instrukcji są teraz obecne na tej gałęzi. Szczegóły,
+dowód czasowy i wniosek („uruchomić łańcuchy ponownie”) w `PRZEKAZANIE_20260904.md` §3c.
