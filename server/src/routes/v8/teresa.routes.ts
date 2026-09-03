@@ -21,9 +21,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { createModuleGate } from '../../middleware/betaGate.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
-import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import {
   type HandoffTargetModule,
@@ -44,6 +43,8 @@ import {
 import * as teresaService from '../../services/v8/teresaCopilotService.js';
 import * as teresaToolOperatorService from '../../services/v8/teresaToolOperatorService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 
 const router = Router();
 
@@ -429,6 +430,25 @@ router.get(
  * so a summary that was redrafted between display and click can no longer be
  * confirmed (409 `intake_work_order_digest_stale`).
  */
+
+/**
+ * ★ BRAMKA MODUŁU NA PODŚCIEŻCE `/case-intake` (a nie na całym `/api/v8/teresa`).
+ *
+ * Bliźniak bramki z `chat.routes.ts` — ten sam moduł
+ * (`MODULE_CASE_WORKSPACE` = 'closed' w SSOT), ten sam serwis
+ * `caseIntakeService`, ta sama para dowodów. Zmierzone przed naprawą (sonda,
+ * pozycja `teresa-case-intake`): rola USER robiła summary -> confirm i
+ * dostawała 201 z wierszem w `case_core` (odczyt na zimno, osobny klient pg).
+ *
+ * Prefiks `/case-intake` jest w tym routerze CZYSTY — żadna inna trasa Teresy
+ * go nie używa — więc bramka nie może złapać `/proposal`, `/proposals`,
+ * `/contract` ani `/voice-posture` (moduł Teresy jest otwarty). Potwierdzone
+ * obserwacjami `anti-extinction-teresa-*` w sondzie.
+ *
+ * `verifyToken` stoi wyżej, na całym `v8Router`, więc bramka widzi realną rolę
+ * i nie wygasza intake'u dla właściciela.
+ */
+router.use('/case-intake', createModuleGate('MODULE_CASE_WORKSPACE'));
 
 const teresaClosureTypeEnum = z.enum([
   'DELIVERY_COMPLETED',
