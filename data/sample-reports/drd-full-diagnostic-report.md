@@ -68,8 +68,8 @@ DRD opiera się na holistycznym podejściu do transformacji cyfrowej, obejmując
 2. **Oś 2: Produkty Cyfrowe** - 5 obszarów, skala 1-5
 3. **Oś 3: Cyfrowe Modele Biznesowe** - 5 obszarów, skala 1-5
 4. **Oś 4: Zarządzanie Danymi** - 5 obszarów, skala 1-7
-5. **Oś 5: Kultura Transformacji** - 5 obszarów, skala 1-5
-6. **Oś 6: Cyberbezpieczeństwo** - 5 obszarów, skala 1-5
+5. **Oś 5: Kultura Transformacji** - 5 obszarów, skala 1-6
+6. **Oś 6: Cyberbezpieczeństwo** - 5 obszarów, skala 1-6
 7. **Oś 7: Dojrzałość AI** - 5 obszarów, skala 1-5
 
 ### Proces Oceny

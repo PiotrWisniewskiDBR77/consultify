@@ -11,12 +11,21 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   AlignmentType, BorderStyle, Document, Footer, Header, PageBreak, PageNumber, Packer,
   Paragraph, ShadingType, Table, TableCell, TableRow, TextRun, VerticalAlign,
   WidthType, convertMillimetersToTwip,
 } from 'docx';
-import { META, OSIE, WYNIK_OGOLNY, WNIOSKI_PRZEKROJOWE, MAPA_DROGOWA, KOLEJNY_KROK, GRANICE } from './raport-oceny-tresc.mjs';
+import * as prototypeModel from './raport-oceny-tresc.mjs';
+
+// Optional model module keeps the accepted layout shared by prototype and
+// production engine. CLI: node <script> <output.docx> [model.mjs].
+const modelModule = process.argv[3]
+  ? await import(pathToFileURL(path.resolve(process.argv[3])).href)
+  : prototypeModel;
+const { META, OSIE, WYNIK_OGOLNY, WNIOSKI_PRZEKROJOWE, MAPA_DROGOWA, KOLEJNY_KROK, GRANICE } =
+  modelModule.default ?? modelModule;
 
 // ---------- paleta (src/index.css) ----------
 const C = {
