@@ -2811,7 +2811,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             id="insight-creator-heading"
             className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
           >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-c-ai/10 text-c-ai">
               <TeresaMark size={16} />
             </span>
             {t('interview.insightCreatorModal.aiInsightCreator')}
