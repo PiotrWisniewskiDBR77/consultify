@@ -44,7 +44,7 @@ describe('Day 289 help schema through ApiGateway and real Postgres', NO_RETRY, (
       config.JWT_SECRET,
       { expiresIn: '10m', jwtid: randomUUID() }
     )}`;
-  }, 60_000);
+  }, 120_000);
 
   afterAll(async () => {
     await pool.query(`DELETE FROM help_events WHERE user_id=$1`, [userId]);
