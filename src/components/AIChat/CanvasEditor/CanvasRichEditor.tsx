@@ -120,6 +120,11 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
     extensions,
     editable,
     content: markdownToHtml(contentMd),
+    editorProps: {
+      attributes: {
+        'aria-label': t('canvas.editor.ariaLabel', 'Document content'),
+      },
+    },
     onUpdate: ({ editor: ed }) => {
       if (isExternalUpdateRef.current) return;
 

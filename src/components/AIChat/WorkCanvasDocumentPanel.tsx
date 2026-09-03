@@ -5161,7 +5161,7 @@ function WorkCanvasMarkdownDocumentPanel({
       ) : null}
 
       <div className="flex min-h-0 flex-1">
-        <main className="flex min-w-0 flex-1 overflow-auto">
+        <div className="flex min-w-0 flex-1 overflow-auto">
           <div className="flex min-h-full w-full max-w-[980px] px-3 pb-3 pt-2 lg:pl-2 lg:pr-8">
             {isHydrating ? (
               <div
@@ -5254,7 +5254,7 @@ function WorkCanvasMarkdownDocumentPanel({
               </article>
             )}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

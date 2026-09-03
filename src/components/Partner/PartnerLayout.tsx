@@ -164,14 +164,17 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
               {/* Breadcrumbs or Title */}
               <div>
                 {breadcrumbs && breadcrumbs.length > 0 ? (
-                  <nav className="flex items-center gap-1 text-sm">
+                  <nav
+                    aria-label={t('partner.layout.breadcrumbs', 'Breadcrumbs')}
+                    className="flex items-center gap-1 text-sm"
+                  >
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={index}>
                         {index > 0 && <ChevronRight className="w-4 h-4 text-slate-600" />}
                         {index < breadcrumbs.length - 1 ? (
                           <button
                             onClick={() => crumb.section && onSectionChange(crumb.section)}
-                            className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             {crumb.label}
                           </button>

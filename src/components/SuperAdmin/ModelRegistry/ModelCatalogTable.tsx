@@ -574,7 +574,7 @@ export const ModelCatalogTable: React.FC = () => {
             className={`px-2 py-1 rounded text-xs font-medium ${
               row.status === 'active'
                 ? 'bg-c-success/10 text-c-success'
-                : 'bg-c-text-muted/10 text-c-text-muted'
+                : 'bg-c-text-muted/10 text-c-text-secondary'
             }`}
           >
             {row.status === 'active' ? 'Active' : 'Inactive'}
@@ -786,7 +786,7 @@ export const ModelCatalogTable: React.FC = () => {
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               {/* kanon TRIADA pułapka #1: c-accent = crimson; spójne z badge purple. */}
-              <div className="text-sm text-purple-400">{KIND_LABELS.IMAGE_MODEL}</div>
+              <div className="text-sm text-purple-600 dark:text-purple-400">{KIND_LABELS.IMAGE_MODEL}</div>
               <div className="text-2xl font-bold text-c-text">{kindCounts.IMAGE_MODEL}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">

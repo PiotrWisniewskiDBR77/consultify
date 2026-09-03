@@ -226,22 +226,25 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
 // kanon TRIADA pułapka #1: `primary-*` = crimson (zarezerwowane dla semantyki
 // krytycznej). IMAGE_MODEL to identyfikator kategorii, nie stan krytyczny —
 // purple (HBS Purple, patrz tailwind.config central remap) zamiast primary.
+// axe color-contrast (odbior G06, 2026-09-03) — text-*-400 na jasnym tle /10
+// mierzone 1.8-3.47:1 (prog 4.5:1); text-slate-600 na ciemnym tle /10 mierzone
+// 2.17:1. Dodano jawny wariant per motyw zamiast jednego koloru dla obu.
 export const KIND_BADGE_STYLES: Record<ModelKind, { bg: string; text: string }> = {
-  TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  IMAGE_MODEL: { bg: 'bg-purple-500/10', text: 'text-purple-400' },
-  BUSINESS_MODEL: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400' },
+  IMAGE_MODEL: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-400' },
+  BUSINESS_MODEL: { bg: 'bg-amber-500/10', text: 'text-amber-800 dark:text-amber-400' },
 };
 
 export const PROVIDER_TYPE_STYLES: Record<ProviderType, { bg: string; text: string }> = {
-  direct: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-  aggregator: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
-  local: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  customer_managed: { bg: 'bg-slate-500/10', text: 'text-slate-600' },
+  direct: { bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400' },
+  aggregator: { bg: 'bg-amber-500/10', text: 'text-amber-800 dark:text-amber-400' },
+  local: { bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400' },
+  customer_managed: { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-300' },
 };
 
 export const HEALTH_STYLES: Record<HealthStatus, { bg: string; text: string; dot: string }> = {
-  healthy: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-  degraded: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-400' },
-  unknown: { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
+  healthy: { bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-400' },
+  degraded: { bg: 'bg-amber-500/10', text: 'text-amber-800 dark:text-amber-400', dot: 'bg-amber-400' },
+  unhealthy: { bg: 'bg-danger-500/10', text: 'text-danger-600 dark:text-danger-400', dot: 'bg-danger-400' },
+  unknown: { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-300', dot: 'bg-slate-400' },
 };

@@ -142,7 +142,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
               <Icon size={20} className="text-c-accent" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-c-text leading-tight">{title}</h3>
+              <h2 className="text-lg font-semibold text-c-text leading-tight">{title}</h2>
               <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">{description}</p>
             </div>
           </div>

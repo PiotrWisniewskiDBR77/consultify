@@ -177,10 +177,11 @@ export const CommandCenterAgentTraceTab: React.FC = () => {
           </div>
           <div className="flex shrink-0 flex-wrap items-end gap-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="agent-trace-filters-from" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.agentTrace.filters.from', 'From')}
               </label>
               <input
+                id="agent-trace-filters-from"
                 type="date"
                 className={inputClass}
                 value={from}
@@ -188,10 +189,11 @@ export const CommandCenterAgentTraceTab: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="agent-trace-filters-to" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.agentTrace.filters.to', 'To')}
               </label>
               <input
+                id="agent-trace-filters-to"
                 type="date"
                 className={inputClass}
                 value={to}
@@ -199,20 +201,22 @@ export const CommandCenterAgentTraceTab: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="agent-trace-filters-userId" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.agentTrace.filters.userId', 'User ID')}
               </label>
               <input
+                id="agent-trace-filters-userId"
                 className={inputClass}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="agent-trace-filters-actionType" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.agentTrace.filters.actionType', 'Action type')}
               </label>
               <input
+                id="agent-trace-filters-actionType"
                 className={inputClass}
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value)}

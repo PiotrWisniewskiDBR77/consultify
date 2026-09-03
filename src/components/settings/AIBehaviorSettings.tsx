@@ -329,13 +329,14 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
 
           {/* Tone & Communication */}
           <div>
-            <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
               <Sparkles size={14} className="text-c-text-secondary" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
-            </h4>
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <SettingsFormRow label={t('settings.ai.toneLabel', 'Tone')}>
+              <SettingsFormRow label={t('settings.ai.toneLabel', 'Tone')} htmlFor="ai-behavior-tone">
                 <SettingsSelect
+                  id="ai-behavior-tone"
                   options={toneOptions}
                   value={preferences.tone}
                   onChange={(e) => update('tone', e.target.value as AIBehaviorPreferences['tone'])}
@@ -351,8 +352,12 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 />
               </SettingsFormRow>
 
-              <SettingsFormRow label={t('settings.ai.verbosityLabel', 'Verbosity')}>
+              <SettingsFormRow
+                label={t('settings.ai.verbosityLabel', 'Verbosity')}
+                htmlFor="ai-behavior-verbosity"
+              >
                 <SettingsSelect
+                  id="ai-behavior-verbosity"
                   options={verbosityOptions}
                   value={preferences.verbosity}
                   onChange={(e) =>
@@ -384,8 +389,10 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                   'settings.ai.maxContextLengthDesc',
                   'Maximum tokens of context to include in AI requests.'
                 )}
+                htmlFor="ai-behavior-max-context-length"
               >
                 <SettingsSelect
+                  id="ai-behavior-max-context-length"
                   options={contextLengthOptions}
                   value={preferences.maxContextLength.toString()}
                   onChange={(e) => update('maxContextLength', parseInt(e.target.value))}

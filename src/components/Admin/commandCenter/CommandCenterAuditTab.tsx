@@ -172,10 +172,11 @@ export const CommandCenterAuditTab: React.FC = () => {
           </div>
           <div className="flex shrink-0 flex-wrap items-end gap-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="audit-filters-from" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.audit.filters.from', 'From')}
               </label>
               <input
+                id="audit-filters-from"
                 type="date"
                 className={inputClass}
                 value={from}
@@ -183,10 +184,11 @@ export const CommandCenterAuditTab: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="audit-filters-to" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.audit.filters.to', 'To')}
               </label>
               <input
+                id="audit-filters-to"
                 type="date"
                 className={inputClass}
                 value={to}
@@ -194,20 +196,22 @@ export const CommandCenterAuditTab: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="audit-filters-userId" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.audit.filters.userId', 'User ID')}
               </label>
               <input
+                id="audit-filters-userId"
                 className={inputClass}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="audit-filters-eventType" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.audit.filters.eventType', 'Event type')}
               </label>
               <input
+                id="audit-filters-eventType"
                 className={inputClass}
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}

@@ -1360,7 +1360,8 @@
         "academy": "ACADEMY",
         "resources": "RESOURCES",
         "profile": "PROFILE"
-      }
+      },
+      "navigation": "Partner sections"
     },
     "clientAccess": {
       "title": "Client Access Manager",
@@ -1786,7 +1787,9 @@
       "tipLinkedIn": "Share your link on LinkedIn with a compelling message about digital transformation",
       "tipCampaigns": "Use campaign links to track which channels perform best",
       "tipSignature": "Add your referral code to your email signature",
-      "tipCaseStudies": "Share case studies alongside your referral link for higher trust"
+      "tipCaseStudies": "Share case studies alongside your referral link for higher trust",
+      "copyCode": "Copy referral code",
+      "copyLinkAction": "Copy referral link"
     },
     "canonicalRuntime": {
       "title": "Current partner programme status",
@@ -1825,6 +1828,9 @@
     "common": {
       "comingSoon": "Coming soon",
       "progress": "Progress"
+    },
+    "layout": {
+      "breadcrumbs": "Breadcrumbs"
     }
   },
   "common": {
@@ -28092,7 +28098,8 @@
         "insertLink": "Insert link"
       },
       "stop": "Stop",
-      "startTypingPlaceholder": "Start typing or press / for commands..."
+      "startTypingPlaceholder": "Start typing or press / for commands...",
+      "ariaLabel": "Document content"
     },
     "versionHistory": {
       "justNow": "just now",

@@ -332,30 +332,33 @@ export const CommandCenterDlpTab: React.FC = () => {
         {showForm && (
           <div className="mt-4 grid gap-3 rounded-xl border border-c-border bg-c-surface-raised p-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-ruleName" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.ruleName', 'Rule name')}
               </label>
               <input
+                id="dlp-form-ruleName"
                 className={inputClass}
                 value={form.ruleName}
                 onChange={(e) => setForm((f) => ({ ...f, ruleName: e.target.value }))}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-pattern" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.pattern', 'Pattern')}
               </label>
               <input
+                id="dlp-form-pattern"
                 className={inputClass}
                 value={form.pattern}
                 onChange={(e) => setForm((f) => ({ ...f, pattern: e.target.value }))}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-ruleType" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.ruleType', 'Type')}
               </label>
               <select
+                id="dlp-form-ruleType"
                 className={selectClass}
                 value={form.ruleType}
                 onChange={(e) =>
@@ -370,10 +373,11 @@ export const CommandCenterDlpTab: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-action" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.action', 'Action')}
               </label>
               <select
+                id="dlp-form-action"
                 className={selectClass}
                 value={form.action}
                 onChange={(e) =>
@@ -388,10 +392,11 @@ export const CommandCenterDlpTab: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-appliesTo" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.appliesTo', 'Applies to')}
               </label>
               <select
+                id="dlp-form-appliesTo"
                 className={selectClass}
                 value={form.appliesTo}
                 onChange={(e) =>
@@ -406,10 +411,11 @@ export const CommandCenterDlpTab: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label htmlFor="dlp-form-severity" className="mb-1 block text-xs font-medium text-c-text-secondary">
                 {t('commandCenter.dlp.form.severity', 'Severity')}
               </label>
               <select
+                id="dlp-form-severity"
                 className={selectClass}
                 value={form.severity}
                 onChange={(e) =>
@@ -488,6 +494,7 @@ export const CommandCenterDlpTab: React.FC = () => {
           />
           <div className="flex flex-col gap-2">
             <select
+              aria-label={t('commandCenter.dlp.scan.direction', 'Scan direction')}
               className={selectClass}
               value={scanDirection}
               onChange={(e) => setScanDirection(e.target.value as typeof scanDirection)}

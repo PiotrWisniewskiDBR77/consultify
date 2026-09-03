@@ -29,6 +29,7 @@ const RetentionDaysCell: React.FC<{
   schedule: RetentionSchedule;
   onSave: (id: string, days: number) => Promise<void>;
 }> = ({ schedule, onSave }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState(schedule.retentionDays);
   const [saving, setSaving] = useState(false);
   const dirty = value !== schedule.retentionDays;
@@ -44,6 +45,9 @@ const RetentionDaysCell: React.FC<{
         min={1}
         value={value}
         onChange={(e) => setValue(Number(e.target.value || 0))}
+        aria-label={t('commandCenter.retention.fields.retentionDaysFor', 'Retention days for {{dataType}}', {
+          dataType: schedule.dataType,
+        })}
         className="w-20 rounded-lg border border-c-border bg-c-surface px-2 py-1 text-sm text-c-text focus:border-c-focus focus:outline-none focus:ring-1 focus:ring-c-focus"
       />
       {dirty && (
