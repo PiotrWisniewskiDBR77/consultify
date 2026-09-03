@@ -69,3 +69,5 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 | 14_ADMIN | front: `Admin`, `tests/unit/superadmin` (38 plików; `m14-*.json`) | 248 | 235 PASS, 7 FAIL | 241 PASS, 7 FAIL | 7 ZASTANYCH; 6 przypadków dodanych | — | 241 PASS, 7 FAIL |
 | 15_SETTINGS | `settings`, `tests/unit/settings` (7 plików; `m15-*.json`) | 13 | 13 PASS | 13 PASS | bez zmiany | — | 13 PASS |
 | 16_PARTNER | `src/views/partner`, `tests/components/partner` i wskazane unit (42 uruchomione pliki; `m16-*.json`) | 195 | 112 PASS | 186 PASS, 9 FAIL | 9 NOWYCH; 83 przypadki dodane | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
+| WSPÓLNE | `standard`, `shared`, `ui`, `tests/unit/shared*` (12 plików; `r6-shared-*.json`) | 204 | 166 PASS, 2 FAIL | 200 PASS, 4 FAIL | 2 ZASTANE; 2 NOWE (`Relations`) | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
+| R6_SERVER | `aiSettingsFallback.test.ts`; `help.routes.test.ts` | 9 | 9 PASS | 9 PASS | bez zmiany | — | 9 PASS |

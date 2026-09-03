@@ -41,6 +41,18 @@ Mapa 16 modułów, katalogi testów, mianowniki i lista współdzielonych zmian 
 
 Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/config serwera, porównanie baza/marker oraz strażniki wyłączające się w `NODE_ENV=test`. Wynik liczbowy bez pełnych nazw z JSON nie będzie traktowany jako dowód G15.
 
+## R6 — komponenty współdzielone i serwer
+
+- Współdzielone: baza 166 PASS / 2 FAIL; marker 200 PASS / 4 FAIL. Dwie czerwienie są potwierdzone po obu stronach, dwie są NOWE: oba przypadki `R03-1 · Relations jest blokiem obowiązkowym`. Nie dokonano zmiany bez brakującej tabeli licencji.
+- Serwer wskazany przez instrukcję: rzeczywiste pliki znalezione w repo to `server/src/routes/__tests__/aiSettingsFallback.test.ts` i `server/src/routes/v8/__tests__/help.routes.test.ts` (nie istnieją pliki o literalnym globie `aiSettingsService*`/`help*` w katalogach podanych w instrukcji). Z cwd `server/`, pełnym env RealPG i `--retry=0`: 9/9 PASS na bazie i 9/9 PASS na markerze, identyczne pełne nazwy.
+- Pełny łańcuch migracji: pierwszy przebieg 885, drugi 0; tabela `schema_migrations` potwierdza status `success` dla `20260903_ai_user_tiers.sql` i `20260903_help_categories.sql`.
+- Zastrzeżenie: oba serwerowe pliki są testami tras/jednostkowymi i mogą mockować zależności. Pełny env oraz obecność migracji nie zamieniają ich automatycznie w dowód realnego `ApiGateway`/JWT/readback; takiego twierdzenia raport nie stawia.
+- Zasięg nazw: `przed-nazwy.txt` 5183 unikalne nazwy, `po-nazwy.txt` 5566; diff 723 linie. SHA-256: `07fc241fa621e9e1689e1c91dd81dbb7f5c78a6390374aeceb58a6e7eead406e`, `f619caa695ffa5d8729f0d65e3213e480b7bf5bf7e244eae582695c6a48f417c`, diff `2f6d147b7db5ee88c163da978b77ff44d9a6e7442106d67f01c1685c44ac4c56`.
+
+### Pułapki — R6
+
+Współdzielone testy były jednostkowe i nie dowodzą sieci. Serwer uruchomiono z cwd `server/` oraz pełnym `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6290/cx286 JWT_SECRET=... --retry=0`; `No test files found` nie wystąpiło. Osobno sprawdzono status dwóch migracji w lokalnym Postgresie. Globalnej infrastruktury testowej nie zmieniono.
+
 ## Tabela G15 per moduł
 
 | Moduł | Plików | Testów na markerze | Zielone | ZASTANE | NOWE naprawione | Pozostałe | Gotowe zdanie G15 |
