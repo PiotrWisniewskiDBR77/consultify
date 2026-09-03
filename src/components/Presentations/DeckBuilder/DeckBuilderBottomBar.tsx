@@ -46,8 +46,10 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
         className={`flex min-h-8 items-center gap-1.5 px-2.5 rounded-lg text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
           // VF1-7: was crimson `bg-c-accent-soft` — active/toggle state is neutral
           // chrome (canonical c-focus tint, matches RightRail.tsx's active tool style).
+          // axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures
+          // 4.31:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped fix.
           notesOpen
-            ? 'bg-c-focus/10 text-c-focus-solid'
+            ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
             : 'text-c-text-muted hover:bg-c-surface-raised'
         }`}
       >

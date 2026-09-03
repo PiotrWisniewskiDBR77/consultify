@@ -1508,12 +1508,22 @@ export const PresentationTemplateArchitectView: React.FC<
                             value={slide.title}
                             onChange={(e) => handleOutlineTitleChange(idx, e.target.value)}
                             disabled={!isEditable}
+                            aria-label={t(
+                              'presentations.templateArchitect.slideTitleLabel',
+                              'Slide {{n}} title',
+                              { n: idx + 1 }
+                            )}
                             className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                           />
                           <select
                             value={slide.intent}
                             onChange={(e) => handleOutlineIntentChange(idx, e.target.value)}
                             disabled={!isEditable}
+                            aria-label={t(
+                              'presentations.templateArchitect.slideTypeLabel',
+                              'Slide {{n}} type',
+                              { n: idx + 1 }
+                            )}
                             className="w-44 shrink-0 rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                           >
                             {PRESENTATION_SLIDE_INTENTS.map((intent) => (
@@ -1682,6 +1692,10 @@ export const PresentationTemplateArchitectView: React.FC<
                   value={addIntent}
                   onChange={(e) => setAddIntent(e.target.value)}
                   disabled={!isEditable}
+                  aria-label={t(
+                    'presentations.templateArchitect.newSlideTypeLabel',
+                    'New slide type'
+                  )}
                   className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                 >
                   {PRESENTATION_SLIDE_INTENTS.map((intent) => (

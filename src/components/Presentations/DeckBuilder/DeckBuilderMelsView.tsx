@@ -379,7 +379,10 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
             onClick={() => setArtifactLeftMode(mode)}
             className={`min-h-9 rounded-md px-2 text-xs font-medium transition-colors ${
               artifactLeftMode === mode
-                ? 'bg-c-focus/10 text-c-focus-solid ring-1 ring-inset ring-c-focus'
+                ? // axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures
+                  // 4.31:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped token
+                  // added for this exact pairing (src/index.css, ~5.6:1).
+                  'bg-c-focus/10 text-c-focus-solid-on-tint ring-1 ring-inset ring-c-focus'
                 : 'text-c-text-secondary hover:bg-c-surface-hover hover:text-c-text'
             }`}
           >

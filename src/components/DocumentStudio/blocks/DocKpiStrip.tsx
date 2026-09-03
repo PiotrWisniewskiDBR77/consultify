@@ -24,10 +24,15 @@ function isNarrowed(c: unknown): c is NarrowedKpiContent {
   return typeof c === 'object' && c !== null && Array.isArray((c as { items?: unknown }).items);
 }
 
+// axe color-contrast: the previous fixed hex pair (#1e6b32 up / #9b1c2e down)
+// was theme-blind — on the dark surface (var(--c-surface) = #0f172a) it
+// measured only 2.72:1 / 3.75:1 (< 4.5). The `--c-success`/`--c-danger`/
+// `--c-text-muted` tokens already carry theme-appropriate values that pass
+// 4.5:1 against both surfaces (light ≥4.66:1, dark ≥5.18:1).
 function trendColor(trend?: NarrowedKpiItem['trend']): string {
-  if (trend === 'up') return '#1e6b32';
-  if (trend === 'down') return '#9b1c2e';
-  return '#64748b';
+  if (trend === 'up') return 'var(--c-success)';
+  if (trend === 'down') return 'var(--c-danger)';
+  return 'var(--c-text-muted)';
 }
 
 export const DocKpiStrip: React.FC<DocKpiStripProps> = ({ content }) => {

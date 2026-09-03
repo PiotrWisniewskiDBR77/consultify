@@ -63,9 +63,13 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
         <div className="relative">
           <button
             onClick={() => togglePanel('layout')}
+            // axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures
+            // 4.31:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped token
+            // for this exact pairing (src/index.css, ~5.6:1). Applies to all
+            // active-state buttons in this toolbar.
             className={`p-1.5 rounded-lg text-xs flex items-center gap-1 ${
               expandedPanel === 'layout'
-                ? 'bg-c-focus/10 text-c-focus-solid'
+                ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title={t('presentations.builder.cardToolbar.layout', 'Layout')}
@@ -106,7 +110,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
             onClick={() => togglePanel('bg')}
             className={`p-1.5 rounded-lg ${
               expandedPanel === 'bg'
-                ? 'bg-c-focus/10 text-c-focus-solid'
+                ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title={t('presentations.builder.cardToolbar.background', 'Background')}
@@ -132,7 +136,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
                   }}
                   className={`w-full text-left px-2 py-1.5 rounded text-[11px] ${
                     card.background.type === bg.id
-                      ? 'bg-c-focus/10 text-c-focus-solid'
+                      ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
                       : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                   aria-label={`Use ${bg.label} background`}
@@ -168,7 +172,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
           }
           className={`p-1.5 rounded-lg ${
             card.animations.block_stagger
-              ? 'bg-c-focus/10 text-c-focus-solid'
+              ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
               : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title={t('presentations.builder.cardToolbar.animations', 'Animations')}

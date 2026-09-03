@@ -47,7 +47,9 @@ export const PresentationReviewPanel: React.FC<Props> = ({ deckId, version, orga
 
   return <div className="flex h-full min-h-0 flex-col" data-testid="presentation-review-panel">
     <div className="flex shrink-0 gap-1 border-b border-c-border-subtle p-2" role="tablist">
-      {(['qa', 'approval'] as const).map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => setTab(item)} className={`min-h-9 rounded-md px-3 text-xs font-medium ${tab === item ? 'bg-c-focus/10 text-c-focus-solid' : 'text-c-text-secondary hover:bg-c-surface-hover'}`}>{item === 'qa' ? 'QA' : 'Zatwierdzenie'}</button>)}
+      {/* axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures 4.31:1
+          (< 4.5) — text-c-focus-solid-on-tint is the scoped fix. */}
+      {(['qa', 'approval'] as const).map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => setTab(item)} className={`min-h-9 rounded-md px-3 text-xs font-medium ${tab === item ? 'bg-c-focus/10 text-c-focus-solid-on-tint' : 'text-c-text-secondary hover:bg-c-surface-hover'}`}>{item === 'qa' ? 'QA' : 'Zatwierdzenie'}</button>)}
     </div>
     <div className="min-h-0 flex-1 overflow-auto">{tab === 'qa' ? qualityPanel : <div className="space-y-4 p-4 text-sm text-c-text">
       <div><h3 className="font-semibold">Zatwierdzenie prezentacji</h3><p className="mt-1 text-xs text-c-text-secondary">Wersja {version}. Autor nie może sam zatwierdzić własnej wersji.</p></div>

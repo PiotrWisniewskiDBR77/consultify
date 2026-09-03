@@ -1805,9 +1805,12 @@ function DocumentReviewPanel({ artifactId }: { artifactId: string }): React.Reac
           role="tab"
           aria-selected={tab === 'qa'}
           onClick={() => setTab('qa')}
+          // axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures
+          // 4.31:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped token
+          // for this exact pairing (src/index.css, ~5.6:1).
           className={`min-h-9 rounded-md px-3 text-xs font-medium ${
             tab === 'qa'
-              ? 'bg-c-focus/10 text-c-focus-solid'
+              ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
               : 'text-c-text-secondary hover:bg-c-surface-hover'
           }`}
         >
@@ -1820,7 +1823,7 @@ function DocumentReviewPanel({ artifactId }: { artifactId: string }): React.Reac
           onClick={() => setTab('approval')}
           className={`min-h-9 rounded-md px-3 text-xs font-medium ${
             tab === 'approval'
-              ? 'bg-c-focus/10 text-c-focus-solid'
+              ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
               : 'text-c-text-secondary hover:bg-c-surface-hover'
           }`}
         >
