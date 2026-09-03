@@ -3598,6 +3598,8 @@
       "label12": "Clear",
       "setLoadError": "Failed to load Inbox",
       "toastError3": "Failed to load Inbox",
+      "accessDeniedTitle": "You don't have access to this inbox",
+      "accessDeniedMessage": "You don't have access to this inbox. Check that you're signed into the right organization, or ask an administrator to grant you access.",
       "acceptToday": "Focus → Today",
       "acceptWeek": "Focus → This week",
       "acceptLater": "Focus → Later",

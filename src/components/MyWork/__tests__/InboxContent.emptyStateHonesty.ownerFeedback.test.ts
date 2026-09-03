@@ -22,7 +22,10 @@ describe('Inbox empty state no longer claims an unverifiable success (MYW-PHOTO-
   it('still distinguishes loading, error and filtered-empty from the truly-empty state', () => {
     expect(source).toContain('loading ? (');
     expect(source).toContain('loadError ? (');
-    expect(source).toContain('<ErrorState message={loadError} retry={() => void fetchInbox()} />');
+    // MYW-PHOTO-002 "Still open" gap: error now further distinguishes
+    // access-denied (401/403) from a generic load failure — see
+    // InboxContent.photo002.contract.test.ts for the dedicated assertion.
+    expect(source).toContain('message={loadError}');
     expect(source).toContain("variant=\"filter\"");
   });
 

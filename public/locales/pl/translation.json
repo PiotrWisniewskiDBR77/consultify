@@ -2890,6 +2890,8 @@
       "label12": "Wyczyść",
       "setLoadError": "Nie udało się załadować Inbox",
       "toastError3": "Nie udało się załadować Inbox",
+      "accessDeniedTitle": "Nie masz dostępu do tej skrzynki",
+      "accessDeniedMessage": "Nie masz dostępu do tej skrzynki. Sprawdź, czy jesteś zalogowany do właściwej organizacji, albo poproś administratora o nadanie dostępu.",
       "acceptToday": "Focus → Dziś",
       "acceptWeek": "Focus → Ten tydzień",
       "acceptLater": "Focus → Później",
