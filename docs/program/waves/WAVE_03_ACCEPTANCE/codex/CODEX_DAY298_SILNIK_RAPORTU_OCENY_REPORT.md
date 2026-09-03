@@ -1,6 +1,6 @@
 # CODEX DAY 298 — silnik raportu Oceny DRD
 
-Stan bieżący: `IN_PROGRESS` — R1–R2 zakończone, R3–R4 częściowe, R5 w toku, R6 niewykonane.
+Stan końcowy duty: `PARTIAL` — R1–R2 wykonane; R3–R5 częściowe; R6 wykonane jako uczciwy raport. Nie promować do demo/release.
 
 ## Baza i sanity
 
@@ -92,7 +92,34 @@ Pierwszy pełny przebieg zakończył się `Postgres migrations complete`. Drugi 
 
 ## Pomiar zasięgu testów
 
-PRZED zmianami produktu zapisano 68 pełnych nazw przypadków do `/private/tmp/cx-day298-silnik-raportu-artefakty/przed-nazwy.txt`. Pomiar PO i diff nazw pozostają do wykonania w R5.
+PRZED zmianami produktu zapisano 68 pełnych nazw przypadków do `/private/tmp/cx-day298-silnik-raportu-artefakty/przed-nazwy.txt`. PO zmianach: 71/71 PASS, pełne nazwy w `po-nazwy.txt`. Diff zawiera dokładnie trzy nazwy dodane i zero znikniętych:
+
+```text
+accepted DRD report model from MethodSession fails closed when required axis content is absent
+accepted DRD report model from MethodSession maps E0-E4 to the four accepted evidence labels with one rule
+accepted DRD report model from MethodSession reproduces the accepted prototype model for SAMPLE_DRD_SCORES
+```
+
+Pułapki §0.2d dla tego pakietu: (a), (b), (d) nie leżą na ścieżce, bo są to czyste funkcje modelu bez routera/middleware; (c) nie dotyczy jako dowód bazy, bo pakiet jawnie uruchomiono `RUN_DB_TESTS=0 MOCK_DB=true` i nie jest raportowany jako egzekucja PG; (e1–e5) są przedmiotem testu modelu i wspólnego składu, ale (e6) dowiedziono osobno zimnym klientem `pg`, a (e7) renderem PNG. Komenda pakietu zawierała `--retry=0`.
+
+Migracje/zimny odczyt: nie są częścią pakietu jednostkowego. Biegły z `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres` i jawnym `DATABASE_URL` do `127.0.0.1:6302/cx298`; końcowy przebieg migracji = 0. Nie uruchomiono routera, więc bramki (a), (b), (d) nie mogły fałszować wyniku. Asercja `DB_TYPE=postgres` w nowym pakiecie PG nie powstała, dlatego nie nazywam tego testem Vitest PG — jest to osobny zimny readback klientem `pg`.
+
+## R5 — dowód
+
+Stan: `PARTIAL`.
+
+- 21 stron modelu przykładowego wyrenderowano i obejrzano; wszystkie są piksel-w-piksel identyczne z prototypem (`mean_abs_rgb=0.0000` każda).
+- DOCX render: 21 stron; pełny PDF: 21 stron A4; wyciąg: 4 strony A4. Brak ucięć, nakładania i sierot w oględzinach.
+- `check-artefakt`: brak nowych naruszeń, baseline 9 → aktualnie 9.
+- Przykładowy raport ma poprawione skale osi 5 i 6 na 1–6 w osobnym commicie `412d3beb96`.
+- Nie wykonano ośmiu kadrów runtime. Ekran nie ma podpiętego silnika; sfotografowanie starego UI lub repliki nie dowodziłoby działania.
+- Nie wygenerowano raportu z realnej sesji demo przez HTTP. Dowód wizualny dotyczy wyłącznie modelu `SAMPLE_DRD_SCORES`.
+
+## R6 — przekazanie
+
+Zdanie dla `ASM-OWN-024/025`: **zaakceptowany skład raportu DRD jest odtwarzany 1:1 z wymiennego modelu i ma backendowe pola sesyjne, ale przycisk „Generuj raport” nadal nie uruchamia tego silnika ani nie zapisuje DOCX/PDF; pozycje pozostają PARTIAL do czasu realnego HTTP/PG/storage i kadrów runtime.**
+
+Nadzorca może bezpiecznie integrować R1/R2 oraz migrację/metadane po przeglądzie. Nie powinien oznaczać całego duty jako zamkniętego ani włączać narratora LLM. Flaga LLM default OFF nie została dodana; istniejący narrator starszego HTML przyjmuje klienta przez injection, ale nowy zaakceptowany skład go nie wywołuje.
 
 ## Korekty wobec instrukcji
 
@@ -101,7 +128,10 @@ PRZED zmianami produktu zapisano 68 pełnych nazw przypadków do `/private/tmp/c
 
 ## Twierdzenia niezweryfikowane
 
-- Zgodność modelu z prototypem: `NOT_PROVEN`.
-- DOCX/PDF oraz wyciąg 4-stronicowy: `NOT_PROVEN`.
+- Zgodność modelu przykładowego z prototypem: zweryfikowana testem 1:1; zgodność modelu z realnej sesji: `NOT_PROVEN`.
+- DOCX/PDF oraz wyciąg 4-stronicowy dla modelu przykładowego: zweryfikowane; dla realnej sesji: `NOT_PROVEN`.
 - Realny HTTP → ApiGateway → JWT → PostgreSQL → plik → zimny odczyt: `NOT_PROVEN`.
-- Zgodność wizualna strona po stronie oraz osiem kadrów: `NOT_PROVEN`.
+- Zgodność wizualna 21 stron modelu przykładowego: zweryfikowana; osiem kadrów runtime: `NOT_PROVEN`.
+- Karta „Metryka badania” w UI: `NOT_PROVEN` / niewykonana.
+- Polskie tytuły poziomów osi 1–4 i 7: niewykonane.
+- Narrator deterministyczny zaakceptowanego modelu oraz flaga LLM default OFF: niewykonane.
