@@ -10,6 +10,8 @@ It records later technical closure evidence for `INI-C01`, `INI-C02`,
 `INI-C03` and `INI-C08`, while preserving the expert NO-GO and the genuinely
 open product/owner gates.
 Owner: Piotr Wisniewski
+
+★ **DEC-2026-09-03-346 (03.09.2026):** każda inicjatywa otwiera zatwierdzony rekord `InitiativeDocumentView`; `CanonicalInitiativeCardWorkspace` usunięty z repo (od 13.08 realne inicjatywy otwierały go zamiast zatwierdzonego widoku, a harness odbioru pokazywał zatwierdzony widok tylko na fiksturze pokazowej). Bezpiecznik: `tests/unit/initiatives/initiativeRecordCanon.test.ts`. Odbiór rekordu = otwarcie REALNEJ inicjatywy z listy na stagingu.
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 

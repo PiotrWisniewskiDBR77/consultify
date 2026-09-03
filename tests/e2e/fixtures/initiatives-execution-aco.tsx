@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { CanonicalInitiativeCardWorkspace } from '@/components/Initiatives/CanonicalInitiativeCardWorkspace';
 import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
 import { PortfolioScenarioSurface } from '@/components/Initiatives/PortfolioScenarioSurface';
 import { PlanScenarioSurface } from '@/components/Initiatives/PlanScenarioSurface';
@@ -269,11 +268,15 @@ const Harness: React.FC = () => {
       </main>
     );
   }
+  // Decyzja właściciela 2026-09-03: karta inicjatywy ma JEDEN zatwierdzony widok
+  // (InitiativeDocumentView w produkcie, wymaga routera/sklepu — poza tym gołym
+  // harnessem). CanonicalInitiativeCardWorkspace usunięty z repo; ten harness
+  // pokazuje wyłącznie przekazanie id, bez własnej karty.
   return initiativeId ? (
-    <CanonicalInitiativeCardWorkspace
-      initiativeId={initiativeId}
-      onBack={() => setInitiativeId(null)}
-    />
+    <main aria-label="Initiative record handoff">
+      <p role="status">Initiative record opens in product: /initiatives?open={initiativeId}</p>
+      <button type="button" onClick={() => setInitiativeId(null)}>Back</button>
+    </main>
   ) : (
     <SourceProposalRegistrationSurface
       initialSelectedId={sourceProposalId}
