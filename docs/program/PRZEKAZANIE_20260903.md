@@ -126,8 +126,12 @@ Kolejka pozycji: `docs/program/KOLEJKA_CODEX_INTEGRACJA.md`.
 
 ## 11. Pierwsze kroki dla następnego
 
-1. **Scal `agent/fix-a11y-01-04-20260903`**, gdy wróci. Potem **przemierz `G06`** — jeśli naruszenia
-   spadły do zera, bramki się zamkną.
+1. ★★★ **NAJPIERW: scal `agent/fix-a11y-01-04-20260903`.** Gałąź **żyje w `/private/tmp/m03`**
+   i ma już commity (ostatni widziany: `d4d2470d2e fix(a11y): 04_ASSESSMENT — button-name…`).
+   Robotnik commitował po każdym module, więc jego praca jest bezpieczna **nawet jeśli sesja,
+   która go uruchomiła, już nie istnieje**. Sprawdź stan komendą:
+   `git -C /private/tmp/m03 log --oneline 17160f7cd8..agent/fix-a11y-01-04-20260903`
+   Potem **przemierz `G06`** dla modułów 01-04 — jeśli naruszenia spadły do zera, bramki się zamkną.
 2. **Wydaj `G14`/`G15`/`G16` razem z naprawami**, nie po nich. Ślad znalezisko→commit zapisuj
    w trakcie naprawy, nie osobnym dyżurem.
 3. **Zapytaj właściciela o `develop`** — promocja jest fast-forward i bezpieczna, ale uruchamia
