@@ -1,0 +1,22 @@
+-- MW-5 (G14 05-08, 2026-09-03): `decision_enhancements.escalation` closes the
+-- ONE field (of three named in the finding) that genuinely had zero backend
+-- persistence. Verified directly in code before writing this:
+--   - `attachments` already has a full, dedicated backend (object-attachment
+--     upload/download API, `/my-work/object-attachments/decision/:id` —
+--     see DecisionDetailView.tsx `loadDecisionAttachments`/
+--     `uploadDecisionAttachmentsAndReload`); its localStorage read path
+--     (`selectDecisionAttachments`) already discards the local value and
+--     returns the server value unconditionally — not a bug, no column needed.
+--   - `description` already has a real column on `decisions` itself (see
+--     20260719_baseline_gap.sql / 730_beta_schema_fixes.sql) and IS sent on
+--     every save (`handleSave`); its bug was a stale localStorage READ
+--     clobbering the correct server value on load — fixed in code only
+--     (DecisionDetailView.tsx), no migration needed.
+--   - `escalation` (singular EscalationRule|null — distinct from the
+--     already-persisted `escalation_rules` array) had NO backend field at
+--     all. This migration closes that gap.
+--
+-- Additive, Postgres-native JSONB (parent table already uses TIMESTAMPTZ,
+-- see 20261910_day277_decision_local_only_fields.sql) — no SQLite dialect trap.
+ALTER TABLE decision_enhancements
+  ADD COLUMN IF NOT EXISTS escalation JSONB;

@@ -213,6 +213,11 @@ export const ReplaceDecisionEnhancementsSchema = z.object({
   linkedItems: DecisionEnhancementJsonArraySchema,
   contextDetails: z.string().max(20000),
   consequenceScenarios: DecisionEnhancementJsonObjectSchema.nullable(),
+  // MW-5 (G14 05-08, 2026-09-03): `escalation` closes the one field (of
+  // three named in the finding) that genuinely had zero backend persistence
+  // — see 20261912_decision_enhancements_escalation.sql for why `attachments`
+  // and `description` needed no column here.
+  escalation: DecisionEnhancementJsonObjectSchema.nullable(),
 });
 
 // ==========================================

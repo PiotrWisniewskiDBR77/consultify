@@ -2423,16 +2423,24 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       // Hydrate local enhancements (for fields without backend persistence yet)
       //
-      // MW-DEC-001: comments/alternatives/risks/rationale are now real,
-      // persisted, server-sourced data (loaded above from
-      // `dossierAlternatives`/`dossierRisks`/`comments`/`rationale` on the
-      // `/detail` aggregate) — the server is the source of truth for them,
-      // full stop. Reading them from this local cache here used to CLOBBER
-      // a fresh, correct server response with whatever stale copy happened
-      // to be sitting in this browser's storage (e.g. from a session before
-      // this fix, or from a different browser's abandoned draft) — the
-      // classic two-sources-of-truth bug. localStorage stays a transitional
-      // fallback for fields that genuinely have no backend endpoint yet.
+      // MW-DEC-001/MW-5 (G14 05-08, 2026-09-03): comments/alternatives/risks/
+      // rationale/escalation are now real, persisted, server-sourced data
+      // (loaded above from `dossierAlternatives`/`dossierRisks`/`comments`/
+      // `rationale`/`escalation` on the `/detail` aggregate) — the server is
+      // the source of truth for them, full stop. Reading them from this local
+      // cache here used to CLOBBER a fresh, correct server response with
+      // whatever stale copy happened to be sitting in this browser's storage
+      // (e.g. from a session before this fix, or from a different browser's
+      // abandoned draft) — the classic two-sources-of-truth bug.
+      //
+      // `description` ALSO already has a real column on `decisions` (sent by
+      // `handleSave`) — the local-only guard below only matters for the
+      // window where the server genuinely has nothing yet, i.e. migrating an
+      // existing local draft up (one-time, then the sync effect below
+      // persists it and future loads read straight from the server).
+      // `attachments` needs no guard at all: `selectDecisionAttachments`
+      // already discards the local value unconditionally (real backend via
+      // the object-attachment upload API) — see its definition above.
       try {
         // Browser-owned decision data is scoped by both tenant and user. Legacy
         // entries have no owner metadata, so they cannot be claimed safely.
@@ -2442,8 +2450,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           const local = JSON.parse(raw);
           if (Array.isArray(local.attachments))
             setAttachments((current) => selectDecisionAttachments(current, local.attachments));
-          if (local.escalation) setEscalation(local.escalation);
-          if (typeof local.description === 'string' && local.description.trim())
+          if (!loadedEscalation && local.escalation) setEscalation(local.escalation);
+          if (
+            !decision.description?.trim() &&
+            typeof local.description === 'string' &&
+            local.description.trim()
+          )
             setDescription(local.description);
         }
       } catch {
@@ -2499,6 +2511,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         linkedItems,
         contextDetails,
         consequenceScenarios,
+        // MW-5 (G14 05-08, 2026-09-03): now real, persisted server data —
+        // see 20261912_decision_enhancements_escalation.sql.
+        escalation,
       }).catch((error) => {
         console.error('[DecisionDetailView] Failed to persist decision enhancements', error);
         toast.error(
@@ -2517,6 +2532,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     linkedItems,
     contextDetails,
     consequenceScenarios,
+    escalation,
     isPolish,
   ]);
 
