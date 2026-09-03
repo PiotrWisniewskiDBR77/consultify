@@ -52,6 +52,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 05_INITIATIVES | 61 | 868 | 840 | 6 | 13 nierozstrzygniętych | 8 pending; 1 czerwień naprawiona dziś | `G15 FAIL — ukierunkowany front: marker 840 PASS, 19 FAIL, 8 pending. Para z f65c4ff6a0 dowodzi 13 czerwieni NOWYCH, 6 ZASTANYCH oraz 1 naprawionej dziś. Bezpiecznik initiativeRecordCanon 2/2 PASS. Brak wydanej tabeli licencji blokuje bezpieczną korektę nowych kontraktów/harnessu.` |
 | 06_EXECUTION | 102 | 440 | 426 | 0 | 14 nierozstrzygniętych | 0 | `G15 FAIL — ukierunkowany front: baza 404/404 PASS, marker 426/440 PASS. Wszystkie 14 czerwieni są NOWE, w tym sześć executionWorkResources; brak tabeli licencji blokuje zmianę harnessu/testów lub produktu.` |
 | 07_MY_WORK_AGENT | 93 | 566 | 554 | 2 | 1 nierozstrzygnięta | 9 pending | `G15 FAIL — ukierunkowany front: marker 554 PASS, 3 FAIL, 9 pending; para dowodzi 2 czerwieni ZASTANYCH i 1 NOWEJ (MYW-IDEAS-010). Serwer pozostaje do pomiaru.` |
+| 08_MEETINGS | 6 | 35 | 32 | 0 | 3 nierozstrzygnięte | 0 | `G15 FAIL — ukierunkowany front: baza 2/2 PASS, marker 32/35 PASS; wszystkie 3 czerwienie są NOWE (dwa uczciwe stany błędu briefu i sekcja decyzji/działań). Serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -82,3 +83,7 @@ Pakiet jednostkowy uruchomiono identycznie po obu stronach z `RUN_DB_TESTS=0 MOC
 ### Pułapki — 07_MY_WORK_AGENT
 
 Pakiet uruchomiono jako jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`). Konsola JSDOM zgłaszała `Not implemented: navigation to another Document`; nie uznano jej ani za PASS, ani osobny FAIL poza JSON. NOWA czerwień dotyczy tekstowego kontraktu ścieżki `MYW-IDEAS-010`, a nie sieci. Dwie pozostałe pełne nazwy są czerwone na obu markerach.
+
+### Pułapki — 08_MEETINGS
+
+Pakiet uruchomiono jako jednostkowy z atrapą bazy i nie jest dowodem realnego HTTP. Dwie z trzech nowych czerwieni jawnie sterują odpowiedzią briefu 500/404 i asertują uczciwy stan błędu; globalne `fetch.ok` nie jest podstawą ich zieleni. Marker ma 33 nowe przypadki względem bazy i trzy z nich są czerwone.
