@@ -47,6 +47,27 @@ export const INITIATIVE_LIFECYCLE_LABELS: Record<string, string> = {
   CLOSED: 'Zamknięta',
   CANCELLED: 'Anulowana',
   ARCHIVED: 'Zarchiwizowana',
+
+  // PRZEWODY ODBIORU 2026-09-03 — dopisek ADDYTYWNY (żaden klucz powyżej się
+  // nie zmienia). `createInitiativeRegisterColumns()` jest wspólny dla trzech
+  // powierzchni (test `day274-jedna-kolumnistyka`), ale dwie z nich karmią go
+  // LEGACY słownikiem statusów (`mapInitiativeApiStatus` w AssessmentHub.tsx:313
+  // → DRAFT/PLANNING/REVIEW/EXECUTING/APPROVED…), którego ta mapa nie znała.
+  // Efekt zmierzony na zrzucie `assessment-initiatives-table` (2026-09-03):
+  // kolumna „Cykl życia" pokazywała surowe DRAFT / PLANNING / REVIEW /
+  // EXECUTING / APPROVED po angielsku, obok polskich chipów Menu 3.
+  // Brzmienie 1:1 z `initiativeStatus.*` w public/locales/pl/translation.json —
+  // jeden status, jeden napis w całej aplikacji.
+  DRAFT: 'Szkic',
+  PENDING_REVIEW: 'Oczekuje na przegląd',
+  REVIEW: 'W przeglądzie',
+  PROMOTED: 'Zatwierdzona',
+  PLANNING: 'Planowanie',
+  APPROVED: 'Zaakceptowana',
+  EXECUTING: 'W realizacji',
+  BLOCKED: 'Zablokowana',
+  DONE: 'Zakończona',
+  TRACKING: 'Monitorowanie',
 };
 
 /**

@@ -160,11 +160,14 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
     id: 'nextAction',
     label: 'Następne działanie',
     width: '160px',
+    // PRZEWODY ODBIORU 2026-09-03: brak danych renderował się jako angielskie
+    // „UNKNOWN" w polskiej tabeli (zmierzone na `assessment-initiatives-table`
+    // — pięć wierszy, dwie kolumny). Kanon tabel: pusta komórka to „—".
     render: (raw) =>
       h(
         'span',
         { className: 'text-xs font-medium text-c-text' },
-        String((raw as InitiativeRegisterRow).nextAction || 'UNKNOWN')
+        String((raw as InitiativeRegisterRow).nextAction || '—')
       ),
   },
   {
@@ -180,7 +183,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
         h(
           'span',
           { className: 'block truncate text-c-text-secondary' },
-          String(row.expectedImpact || 'UNKNOWN')
+          String(row.expectedImpact || '—')
         ),
         h(
           'span',
