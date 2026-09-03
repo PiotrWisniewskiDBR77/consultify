@@ -290,6 +290,11 @@ const CAPTURE_FUNNEL_RESULT = [
   { gate: 'G4' as const, count: 3, totalValue: 980_000, conversionFromPrev: 0.75 },
   { gate: 'G5' as const, count: 2, totalValue: 620_000, conversionFromPrev: 0.67 },
 ];
+const CAPTURE_INITIATIVES_RESULT = [
+  { id: 'init-001', title: 'Wdrożenie ERP — Berlin' },
+  { id: 'init-002', title: 'Optymalizacja łańcucha dostaw' },
+  { id: 'init-003', title: 'Automatyzacja fakturowania' },
+];
 const CAPTURE_GATES_RESULT = [
   {
     id: 'gate-1',
@@ -595,6 +600,7 @@ export default function Day200FinancePanelsScreen({
           fetcher={{
             funnel: async () => CAPTURE_FUNNEL_RESULT,
             gates: async () => CAPTURE_GATES_RESULT,
+            listInitiatives: async () => CAPTURE_INITIATIVES_RESULT,
           }}
         />
       );

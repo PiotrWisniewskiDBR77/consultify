@@ -378,6 +378,13 @@ if (!g.__RVN_TERESA_OKR_REFLECTION_FETCH__) {
     if (rawUrl.match(/\/sets\/[^/]+\/reviews$/) && method === 'GET') {
       return jsonResponse({ reviews: [] });
     }
+    // G14 09_RESULTS naprawa harnessu (2026-09-03): serwer MA GET
+    // /objectives/:id/reflection (okr.routes.ts ~L2490, kontrakt
+    // { reflection }) — fixture stubowal tylko POST, wiec pomiar zglaszal
+    // 404 mimo ze produkt dziala. Dopisany GET zwraca ten sam ksztalt.
+    if (rawUrl.match(/\/objectives\/[^/]+\/reflection$/) && method === 'GET') {
+      return jsonResponse({ reflection: mutableReflection });
+    }
     if (rawUrl.match(/\/objectives\/[^/]+\/reflection$/) && method === 'POST') {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
       mutableReflection = {
