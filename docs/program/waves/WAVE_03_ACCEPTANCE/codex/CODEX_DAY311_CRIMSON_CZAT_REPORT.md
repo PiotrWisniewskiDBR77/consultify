@@ -1,6 +1,6 @@
 # CODEX DAY 311 — crimson w Czacie
 
-Stan roboczy: R1–R5 wykonane; R4 ma wynik CZĘŚCIOWE z powodu niedostatecznego pokrycia kadru.
+Stan końcowy dyżuru: **CZĘŚCIOWE**. Kod, klasyfikacja i bramki są dostarczone, ale R4 nie daje akceptacyjnego dowodu wizualnego.
 
 ## §0 — baza i marker
 
@@ -75,13 +75,29 @@ Porównanie bramek nazwa po nazwie:
 - `check-artefakt`: PRZED i PO 9/9 względem baseline — brak nowego naruszenia, bramka zielona;
 - `check-list-canon`: PRZED i PO pełny skan 157 plików / 368 naruszeń względem baseline 368 — brak nowego naruszenia, bramka zielona.
 
-## R6
+## R6 — podsumowanie i wzorzec
 
-Do uzupełnienia raportem końcowym.
+Zakres `416432abaf..f001cf81d1` zawiera sześć commitów: `71442d9d6c` (R1), `93f7eee932` (R2), `8dbf73bf52` i `993814c08b` (R3), `9d060b919d` (R4), `f001cf81d1` (R5). R6 zostaje zapisane osobnym commitem dokumentacyjnym. Różnice obejmują dwa dokumenty, 32 PNG oraz 58 plików AIChat; nie zmieniono konfiguracji palety Tailwinda ani kodu poza AIChat.
+
+Po zmianie pozostają 22 linie `primary-` w AIChat. Obejmują one semantykę krytyczną, jawne testy/guardy, identyfikatory niebędące klasami wizualnymi oraz pokrycie fokusu. Rejestr klasyfikacji zachowuje odtwarzalny mianownik 262 dopasowanych linii. Pokrycie z dyżurem 287 rozstrzygnięto kanonicznym `c-focus`; osobnej palety fokusu nie wprowadzono.
+
+Wzorzec dla kolejnych modułów:
+
+1. policzyć ścisły mianownik klas oraz osobno aliasy i fokus;
+2. sklasyfikować każdą dopasowaną linię przed zmianą;
+3. zamieniać grupami na `c-surface-*`, `c-border`, `c-text-*`, `c-focus`, pozostawiając semantyczny błąd/blokadę;
+4. wykonać esbuild każdego dotkniętego pliku;
+5. dopiero potem wykonać kadry, których stan kontrolny rzeczywiście montuje zmienione elementy, oraz ratchety i testy z identycznym mianownikiem nazw.
+
+Koszt orientacyjny na moduł podobnej wielkości (około 60 plików / 260 linii): 2–3 godziny klasyfikacji i mechanicznej zmiany, 1–2 godziny kompilacji/testów oraz 2–4 godziny przygotowania i naprawy pokrycia kadrów. Największym ryzykiem kosztowym nie jest sama zamiana klas, lecz osiągalność stanów UI w kanonicznym harnessie.
+
+**Gałąź NIE jest scalona i czeka na akcept właściciela na zrzutach.** Nie włączono flagi, nie wykonano wdrożenia i nie dotknięto demo, stagingu ani produkcji.
 
 Do uzupełnienia.
 
 ## Twierdzenia niezweryfikowane
 
 - Akceptacja wizualna neutralizacji pozostaje NIEPOTWIERDZONA: kadry nie eksponują zmienionych stanów.
+- Nie zweryfikowano zachowania na urządzeniu ani w produkcyjnym bundle; dyżur obejmował lokalny harness i punktowe testy.
+- Nie potwierdzono, że szacunek kosztu przeniesie się 1:1 na moduły o innym udziale stanów dynamicznych.
 - Gałąź NIE jest scalona i czeka na akcept właściciela na zrzutach.
