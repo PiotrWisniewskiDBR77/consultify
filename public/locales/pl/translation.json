@@ -17391,7 +17391,8 @@
     },
     "layout": {
       "closeNavigation": "Zamknij nawigację partnera",
-      "openNavigation": "Otwórz nawigację partnera"
+      "openNavigation": "Otwórz nawigację partnera",
+      "breadcrumbs": "Okruszki nawigacyjne"
     },
     "start": {
       "activeSubtitle": "Aktualne saldo, status programu i następny krok.",
@@ -17730,7 +17731,8 @@
         "academy": "AKADEMIA",
         "resources": "ZASOBY",
         "profile": "PROFIL"
-      }
+      },
+      "navigation": "Sekcje partnera"
     },
     "clientAccess": {
       "title": "Menedżer dostępu klientów",
@@ -18258,7 +18260,9 @@
       "tipLinkedIn": "Udostępnij link na LinkedIn z konkretnym opisem transformacji cyfrowej",
       "tipCampaigns": "Używaj linków kampanii, aby porównywać skuteczność kanałów",
       "tipSignature": "Dodaj kod polecający do podpisu e-mail",
-      "tipCaseStudies": "Udostępniaj studia przypadków razem z linkiem polecającym"
+      "tipCaseStudies": "Udostępniaj studia przypadków razem z linkiem polecającym",
+      "copyCode": "Skopiuj kod polecający",
+      "copyLinkAction": "Skopiuj link polecający"
     },
     "canonicalRuntime": {
       "title": "Aktualny stan programu partnerskiego",

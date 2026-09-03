@@ -388,7 +388,10 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
 
       {/* Navigation - Collapsible Groups */}
       <div className="flex-1 overflow-y-auto px-3">
-        <nav className="space-y-1">
+        <nav
+          aria-label={t('partner.sidebar.navigation', 'Partner sections')}
+          className="space-y-1"
+        >
           {navGroups.map((group) => {
             const isExpanded = expandedGroups.has(group.id);
 

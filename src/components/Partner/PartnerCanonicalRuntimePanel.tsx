@@ -252,15 +252,14 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" role="list">
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <article
+            <li
               key={card.id}
               className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-navy-700 dark:bg-navy-900/50"
               data-testid={`partner-runtime-${card.id}`}
-              role="listitem"
             >
               <div className="flex items-start justify-between gap-2">
                 <Icon
@@ -282,10 +281,10 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
               <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">
                 {card.detail}
               </p>
-            </article>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       <div
         className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-500/10 dark:text-amber-100"

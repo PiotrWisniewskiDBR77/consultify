@@ -431,10 +431,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       <div className="bg-c-surface rounded-xl border border-c-border p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-c-text-secondary" />
               {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
-            </h3>
+            </h2>
             <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'partner.earnings.v8RuntimeSubtitle',
@@ -746,7 +746,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <div
                 className={cn(
                   'flex items-center gap-1 mt-1 text-sm',
-                  monthOverMonthChange >= 0 ? 'text-emerald-400' : 'text-danger-400'
+                  monthOverMonthChange >= 0
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-danger-400'
                 )}
               >
                 {monthOverMonthChange >= 0 ? (

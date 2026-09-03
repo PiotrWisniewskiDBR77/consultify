@@ -400,7 +400,7 @@ const DashboardSection: React.FC = () => {
             <p
               className={cn(
                 'text-sm mt-1',
-                stat.changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
+                stat.changeType === 'positive' && 'text-emerald-700 dark:text-emerald-400',
                 stat.changeType === 'negative' && 'text-danger-400',
                 stat.changeType === 'neutral' && 'text-c-text-secondary'
               )}
@@ -890,7 +890,7 @@ const MetricsSection: React.FC = () => {
               <span
                 className={cn(
                   'text-sm',
-                  metric.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-400'
+                  metric.isPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-400'
                 )}
               >
                 {metric.change}
@@ -1241,6 +1241,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           <div className="flex gap-2">
             <button
               onClick={fetchData}
+              aria-label={t('common.refresh', 'Refresh')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
@@ -1789,10 +1790,12 @@ const CertificationSection: React.FC<{
                 <div
                   key={course.id}
                   className={cn(
-                    'bg-c-surface rounded-xl border border-c-border-subtle p-5',
-                    status === 'locked'
-                      ? 'border-c-border-subtle opacity-60'
-                      : 'border-c-border-subtle'
+                    'bg-c-surface rounded-xl border border-c-border-subtle p-5'
+                    /* axe color-contrast (odbiór G06, 2026-09-03) — `opacity-60` na
+                       CAŁEJ karcie kursu psuł kontrast wszystkich tekstów wewnątrz
+                       (mierzone: 2.02-4.4:1, próg 4.5:1). Stan „zablokowany" jest już
+                       czytelny bez przyciemniania: awatar/badge „Zablokowano" (teraz
+                       text-c-text-secondary, ~6:1) i ukryty pasek postępu poniżej. */
                   )}
                 >
                   <div className="flex items-start gap-4">
@@ -1800,25 +1803,25 @@ const CertificationSection: React.FC<{
                       className={cn(
                         'w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold',
                         status === 'completed' &&
-                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
+                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
                         status === 'in-progress' &&
                           'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
-                        status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
+                        status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-secondary'
                       )}
                     >
                       {status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-c-text">{course.name}</h4>
+                        <h3 className="font-medium text-c-text">{course.name}</h3>
                         <span
                           className={cn(
                             'px-2 py-1 text-xs font-medium rounded-full',
                             status === 'completed' &&
-                              'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
+                              'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
                             status === 'in-progress' &&
                               'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary',
-                            status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
+                            status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-secondary'
                           )}
                         >
                           {getDisplayStatus(course.status)}
@@ -1854,7 +1857,7 @@ const CertificationSection: React.FC<{
                           </span>
                         )}
                         {course.reviewState && (
-                          <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                          <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300">
                             {t(
                               `partner.certification.reviewState.${course.reviewState}`,
                               'Wymaga oceny'
@@ -1946,7 +1949,7 @@ const CertificationSection: React.FC<{
                                     {getDisplayStatus(module.status)}
                                   </span>
                                   {module.reviewRequired && (
-                                    <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-300">
+                                    <span className="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-300">
                                       {t('partner.certification.reviewRequired', 'Wymagana ocena')}
                                     </span>
                                   )}
@@ -2037,11 +2040,11 @@ const CertificationSection: React.FC<{
                     </div>
                   </div>
                   {course.certificateId ? (
-                    <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium rounded-full">
+                    <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium rounded-full">
                       {t('partner.certification.examStatus.passed', 'Zdano')}
                     </span>
                   ) : !course.examEligible ? (
-                    <span className="px-3 py-1 bg-slate-200 dark:bg-navy-700 text-c-text-muted text-sm font-medium rounded-full">
+                    <span className="px-3 py-1 bg-slate-200 dark:bg-navy-700 text-c-text-secondary text-sm font-medium rounded-full">
                       {t('partner.certification.status.locked', 'Zablokowano')}
                     </span>
                   ) : (
@@ -2187,6 +2190,7 @@ const CertificationSection: React.FC<{
         </div>
         <button
           onClick={fetchCertifications}
+          aria-label={t('common.refresh', 'Refresh')}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
@@ -2409,6 +2413,7 @@ const ResourcesSection: React.FC<{
         </div>
         <button
           onClick={fetchResources}
+          aria-label={t('common.refresh', 'Refresh')}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
@@ -2536,9 +2541,9 @@ const ResourcesSection: React.FC<{
                 <FileText className="w-6 h-6 text-c-text-muted" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-c-text group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
+                <h3 className="font-medium text-c-text group-hover:text-c-text-secondary dark:group-hover:text-c-text-secondary">
                   {item.title}
-                </h4>
+                </h3>
                 <p className="text-sm text-c-text-secondary">
                   {item.type} • {item.size}
                 </p>
@@ -2817,6 +2822,7 @@ const ProfileSection: React.FC<{
           </div>
           <button
             onClick={fetchOrganization}
+            aria-label={t('common.refresh', 'Refresh')}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
@@ -2826,10 +2832,11 @@ const ProfileSection: React.FC<{
         <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
+              <label htmlFor="partner-profile-company-name" className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('partner.profile.companyName', 'Company Name')}
               </label>
               <input
+                id="partner-profile-company-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
@@ -2837,10 +2844,11 @@ const ProfileSection: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
+              <label htmlFor="partner-profile-tax-id" className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('partner.profile.taxId', 'Tax ID / VAT')}
               </label>
               <input
+                id="partner-profile-tax-id"
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
@@ -2848,10 +2856,11 @@ const ProfileSection: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
+              <label htmlFor="partner-profile-contact-email" className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('partner.profile.contactEmail', 'E-mail kontaktowy')}
               </label>
               <input
+                id="partner-profile-contact-email"
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
@@ -2859,10 +2868,11 @@ const ProfileSection: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
+              <label htmlFor="partner-profile-phone" className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('partner.profile.phone', 'Telefon')}
               </label>
               <input
+                id="partner-profile-phone"
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
@@ -2870,10 +2880,11 @@ const ProfileSection: React.FC<{
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-c-text-secondary mb-2">
+              <label htmlFor="partner-profile-website" className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('partner.profile.website', 'Strona internetowa')}
               </label>
               <input
+                id="partner-profile-website"
                 type="url"
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}

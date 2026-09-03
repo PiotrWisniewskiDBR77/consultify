@@ -688,6 +688,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </code>
             <button
               onClick={() => copyToClipboard(tools?.referralCode || '', 'code')}
+              aria-label={t('partner.referrals.copyCode', 'Copy referral code')}
               className="p-3 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
             >
               {copiedField === 'code' ? (
@@ -717,10 +718,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               type="text"
               value={tools?.referralLink || ''}
               readOnly
+              aria-label={t('partner.referrals.yourLink', 'Your Referral Link')}
               className="flex-1 px-4 py-3 bg-c-surface-raised rounded-lg text-sm text-c-text border border-c-border-subtle truncate"
             />
             <button
               onClick={() => copyToClipboard(tools?.referralLink || '', 'link')}
+              aria-label={t('partner.referrals.copyLinkAction', 'Copy referral link')}
               className="p-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
             >
               {copiedField === 'link' ? (
