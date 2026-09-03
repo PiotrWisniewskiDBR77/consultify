@@ -81,11 +81,13 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
         </div>
 
         <div className="text-center mb-4">
-          <h4
+          {/* h3: siostrzane karty scenariuszy pod h2 "Rekomendowany scenariusz" w
+              TransformationScenarios.tsx — h4 tu łamał kolejność (axe: heading-order). */}
+          <h3
             className={`font-bold text-lg mb-2 leading-tight transition-colors ${isSelected ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
           >
             {name}
-          </h4>
+          </h3>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 italic min-h-[40px] px-2">
             "{narrative}"
           </p>

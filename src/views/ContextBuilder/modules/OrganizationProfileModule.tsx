@@ -710,12 +710,12 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             <TeresaMark size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
               Teresa
               <span className="text-[10px] font-normal px-1.5 py-0.5 bg-c-ai/10 text-c-ai rounded-full">
                 {t('organization.profile.aiGuide', 'AI Guide')}
               </span>
-            </h4>
+            </h3>
             <p className="text-xs text-c-text-secondary mt-1 leading-relaxed">
               {t(`organization.profile.guidance.${teresaHint.id}.message`, teresaHint.message, {
                 completeness,
@@ -780,13 +780,13 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       {/* Document extraction proposals (Phase 3.4) */}
       {activeProfileArea === 'document-extraction' && docExtractProposals.length > 0 && (
         <div className="bg-c-surface rounded-xl border border-c-ai/20 p-4 space-y-3">
-          <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Sparkles size={16} className="text-c-ai" />
             {t(
               'organization.profile.extraction.proposalsTitle',
               'Teresa extracted these fields from your document'
             )}
-          </h4>
+          </h3>
           {docExtractProposals.map((proposal, idx) => (
             <div
               key={idx}
@@ -869,10 +869,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       {/* Downstream readiness indicators (Phase 3.3) */}
       {activeProfileArea === 'readiness' && showReadiness && (
         <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
             <Target size={16} className="text-c-text-secondary" />
             {t('organization.profile.readiness.title', 'Module Readiness')}
-          </h4>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {readiness.map((r) => (
               <div
@@ -985,8 +985,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>{t('organization.profile.fields.industry')} *</label>
-                  <select
+                  <label className={labelCls} htmlFor="org-profile-industry">{t('organization.profile.fields.industry')} *</label>
+                  <select id="org-profile-industry"
                     value={profile.industry}
                     onChange={(e) => update('industry', e.target.value)}
                     className={inputCls}
@@ -1000,8 +1000,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>{t('organization.profile.fields.subIndustry')}</label>
-                  <input
+                  <label className={labelCls} htmlFor="org-profile-industry_subsector">{t('organization.profile.fields.subIndustry')}</label>
+                  <input id="org-profile-industry_subsector"
                     type="text"
                     value={profile.industry_subsector}
                     onChange={(e) => update('industry_subsector', e.target.value)}
@@ -1010,10 +1010,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-industry_code">
                     {t('organization.profile.fields.industryCode')}
                   </label>
-                  <input
+                  <input id="org-profile-industry_code"
                     type="text"
                     value={profile.industry_code}
                     onChange={(e) => update('industry_code', e.target.value)}
@@ -1022,10 +1022,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-companySize">
                     {t('organization.profile.fields.companySize')} *
                   </label>
-                  <select
+                  <select id="org-profile-companySize"
                     value={profile.companySize}
                     onChange={(e) => update('companySize', e.target.value)}
                     className={inputCls}
@@ -1039,10 +1039,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-employee_count">
                     {t('organization.profile.fields.employeeCount')}
                   </label>
-                  <input
+                  <input id="org-profile-employee_count"
                     type="number"
                     value={profile.employee_count ?? ''}
                     onChange={(e) =>
@@ -1053,10 +1053,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-annual_revenue">
                     {t('organization.profile.fields.annualRevenue')}
                   </label>
-                  <input
+                  <input id="org-profile-annual_revenue"
                     type="number"
                     value={profile.annual_revenue ?? ''}
                     onChange={(e) =>
@@ -1067,10 +1067,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-founding_year">
                     {t('organization.profile.fields.foundingYear')}
                   </label>
-                  <input
+                  <input id="org-profile-founding_year"
                     type="number"
                     value={profile.founding_year ?? ''}
                     onChange={(e) =>
@@ -1081,10 +1081,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-headquarters_country">
                     {t('organization.profile.fields.headquartersCountry')}
                   </label>
-                  <input
+                  <input id="org-profile-headquarters_country"
                     type="text"
                     value={profile.headquarters_country}
                     onChange={(e) => update('headquarters_country', e.target.value)}
@@ -1094,8 +1094,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 </div>
               </div>
               <div>
-                <label className={labelCls}>{t('organization.profile.fields.description')}</label>
-                <textarea
+                <label className={labelCls} htmlFor="org-profile-description">{t('organization.profile.fields.description')}</label>
+                <textarea id="org-profile-description"
                   value={profile.description}
                   onChange={(e) => update('description', e.target.value)}
                   rows={2}
@@ -1127,10 +1127,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               <div className="p-5 border-t border-c-border-subtle space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelCls}>
+                    <label className={labelCls} htmlFor="org-profile-production_archetype">
                       {t('organization.profile.fields.productionArchetype')}
                     </label>
-                    <select
+                    <select id="org-profile-production_archetype"
                       value={profile.production_archetype}
                       onChange={(e) => update('production_archetype', e.target.value)}
                       className={inputCls}
@@ -1147,10 +1147,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>
+                    <label className={labelCls} htmlFor="org-profile-shift_pattern">
                       {t('organization.profile.fields.shiftPattern')}
                     </label>
-                    <select
+                    <select id="org-profile-shift_pattern"
                       value={profile.shift_pattern}
                       onChange={(e) => update('shift_pattern', e.target.value)}
                       className={inputCls}
@@ -1164,10 +1164,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>
+                    <label className={labelCls} htmlFor="org-profile-automation_level">
                       {t('organization.profile.fields.automationLevel')}
                     </label>
-                    <select
+                    <select id="org-profile-automation_level"
                       value={profile.automation_level}
                       onChange={(e) => update('automation_level', e.target.value)}
                       className={inputCls}
@@ -1206,10 +1206,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 <div className="p-5 border-t border-c-border-subtle space-y-4">
                   {showDeliveryModel(orgType) && (
                     <div>
-                      <label className={labelCls}>
+                      <label className={labelCls} htmlFor="org-profile-delivery_model">
                         {t('organization.profile.fields.deliveryModel')}
                       </label>
-                      <select
+                      <select id="org-profile-delivery_model"
                         value={profile.delivery_model}
                         onChange={(e) => update('delivery_model', e.target.value)}
                         className={inputCls}
@@ -1225,12 +1225,12 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   )}
                   {showRevenueModel(orgType) && (
                     <div>
-                      <label className={labelCls}>
+                      <label className={labelCls} htmlFor="org-profile-revenue_model">
                         {orgType === 'NONPROFIT'
                           ? t('organization.profile.fields.fundingModel')
                           : t('organization.profile.fields.revenueFundingModel')}
                       </label>
-                      <select
+                      <select id="org-profile-revenue_model"
                         value={profile.revenue_model}
                         onChange={(e) => update('revenue_model', e.target.value)}
                         className={inputCls}
@@ -1279,10 +1279,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-competitive_position">
                     {t('organization.profile.fields.competitivePosition')}
                   </label>
-                  <select
+                  <select id="org-profile-competitive_position"
                     value={profile.competitive_position}
                     onChange={(e) => update('competitive_position', e.target.value)}
                     className={inputCls}
@@ -1296,8 +1296,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>{t('organization.profile.fields.growthStage')}</label>
-                  <select
+                  <label className={labelCls} htmlFor="org-profile-growth_stage">{t('organization.profile.fields.growthStage')}</label>
+                  <select id="org-profile-growth_stage"
                     value={profile.growth_stage}
                     onChange={(e) => update('growth_stage', e.target.value)}
                     className={inputCls}
@@ -1323,10 +1323,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>
+                <label className={labelCls} htmlFor="org-profile-mission_statement">
                   {t('organization.profile.fields.missionStatement')}
                 </label>
-                <textarea
+                <textarea id="org-profile-mission_statement"
                   value={profile.mission_statement}
                   onChange={(e) => update('mission_statement', e.target.value)}
                   rows={2}
@@ -1335,10 +1335,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>
+                <label className={labelCls} htmlFor="org-profile-vision_statement">
                   {t('organization.profile.fields.visionStatement')}
                 </label>
-                <textarea
+                <textarea id="org-profile-vision_statement"
                   value={profile.vision_statement}
                   onChange={(e) => update('vision_statement', e.target.value)}
                   rows={2}
@@ -1368,10 +1368,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-digital_maturity_overall">
                     {t('organization.profile.fields.digitalMaturity')}
                   </label>
-                  <input
+                  <input id="org-profile-digital_maturity_overall"
                     type="number"
                     min={1}
                     max={7}
@@ -1387,10 +1387,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-cloud_adoption_level">
                     {t('organization.profile.fields.cloudAdoption')}
                   </label>
-                  <select
+                  <select id="org-profile-cloud_adoption_level"
                     value={profile.cloud_adoption_level}
                     onChange={(e) => update('cloud_adoption_level', e.target.value)}
                     className={inputCls}
@@ -1416,8 +1416,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>{t('organization.profile.fields.digitalBudget')}</label>
-                <input
+                <label className={labelCls} htmlFor="org-profile-digital_budget_percent">{t('organization.profile.fields.digitalBudget')}</label>
+                <input id="org-profile-digital_budget_percent"
                   type="number"
                   min={0}
                   max={100}
@@ -1485,8 +1485,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>{t('organization.profile.fields.marketShare')}</label>
-                <input
+                <label className={labelCls} htmlFor="org-profile-market_share_estimate">{t('organization.profile.fields.marketShare')}</label>
+                <input id="org-profile-market_share_estimate"
                   type="number"
                   min={0}
                   max={100}
@@ -1528,10 +1528,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>
+                  <label className={labelCls} htmlFor="org-profile-communication_style">
                     {t('organization.profile.fields.communicationStyle')}
                   </label>
-                  <select
+                  <select id="org-profile-communication_style"
                     value={profile.communication_style}
                     onChange={(e) => update('communication_style', e.target.value)}
                     className={inputCls}
@@ -1545,8 +1545,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>{t('organization.profile.fields.jargonLevel')}</label>
-                  <select
+                  <label className={labelCls} htmlFor="org-profile-industry_jargon_level">{t('organization.profile.fields.jargonLevel')}</label>
+                  <select id="org-profile-industry_jargon_level"
                     value={profile.industry_jargon_level}
                     onChange={(e) => update('industry_jargon_level', e.target.value)}
                     className={inputCls}
@@ -1605,10 +1605,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 </div>
               </div>
               <div>
-                <label className={labelCls}>
+                <label className={labelCls} htmlFor="org-profile-budget_constraints">
                   {t('organization.profile.fields.budgetConstraints')}
                 </label>
-                <textarea
+                <textarea id="org-profile-budget_constraints"
                   value={profile.budget_constraints}
                   onChange={(e) => update('budget_constraints', e.target.value)}
                   rows={2}
@@ -1617,10 +1617,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>
+                <label className={labelCls} htmlFor="org-profile-timeline_constraints">
                   {t('organization.profile.fields.timelineConstraints')}
                 </label>
-                <textarea
+                <textarea id="org-profile-timeline_constraints"
                   value={profile.timeline_constraints}
                   onChange={(e) => update('timeline_constraints', e.target.value)}
                   rows={2}

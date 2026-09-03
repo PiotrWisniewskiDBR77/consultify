@@ -334,10 +334,10 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
             <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
                     <Search size={16} className="text-primary-500" />
                     {t('organization.challenges.blockers.suggestedTitle', 'Suggested Obstacles')}
-                  </h4>
+                  </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {t(
                       'organization.challenges.blockers.suggestedHint',
@@ -390,13 +390,13 @@ export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen
             </div>
             {/* 2. Active Blockers List (Editable) */}
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
                 <Lock size={16} className="text-slate-600 dark:text-slate-500" />
                 {t('organization.challenges.blockers.activeTitle', 'Active Blockers')}
                 <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">
                   {activeBlockers.length}
                 </span>
-              </h4>
+              </h3>
               {activeBlockers.length === 0 ? (
                 <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                   <p className="text-sm text-slate-600 dark:text-slate-500">

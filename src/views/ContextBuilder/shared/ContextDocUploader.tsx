@@ -71,12 +71,15 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
       </div>
 
       <div className="flex-1">
-        <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+        {/* h2, nie h4: ten uploader renderuje się bezpośrednio po h1 ekranu (org-legacy
+            challenges/goals/strategy) — h4 tu łamał kolejność nagłówków (axe: heading-order,
+            zmierzone na org-declared-challenges i rodzeństwie). */}
+        <h2 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
           Dokumenty pomocnicze
           <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
             Dla: {tabName}
           </span>
-        </h4>
+        </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {uploadStatus === 'success' ? (
             <span className="text-green-600 font-medium">Przetworzono: {statusMessage}</span>

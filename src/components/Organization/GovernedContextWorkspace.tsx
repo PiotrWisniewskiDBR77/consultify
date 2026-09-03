@@ -405,7 +405,10 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
 
   return (
     <div className="space-y-6" data-testid="governed-context-workspace">
-      <header className="rounded-2xl border border-c-border bg-c-surface p-5">
+      {/* Sekcyjny nagłówek karty, nie banner strony — <div>, nie <header>, żeby nie
+          dublować landmarku "banner" obok DomainScreenHeader (axe: landmark-no-duplicate-banner,
+          landmark-unique; zmierzone na org-claims-sources i org-source-conflicts). */}
+      <div className="rounded-2xl border border-c-border bg-c-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -501,7 +504,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
             {error}
           </p>
         )}
-      </header>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section

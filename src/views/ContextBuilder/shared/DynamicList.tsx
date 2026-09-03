@@ -93,8 +93,13 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     <div className="space-y-4">
       {(title || description) && (
         <div className="mb-2">
+          {/* h2, nie h3: ta lista renderuje się bezpośrednio po h1 ekranu w wielu
+              modułach org-legacy (goals/challenges/strategy) — h3 tu łamał kolejność
+              (axe: heading-order, zmierzone na org-success-metrics/scope-boundaries/
+              recommendation i rodzeństwie; w challenges h2 zostaje sąsiadem uploadera
+              podniesionego do h2 w ContextDocUploader.tsx). */}
           {title && (
-            <h3 className="text-lg font-semibold text-navy-900 dark:text-white">{title}</h3>
+            <h2 className="text-lg font-semibold text-navy-900 dark:text-white">{title}</h2>
           )}
           {description && (
             <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
