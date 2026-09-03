@@ -27346,6 +27346,7 @@
       "updatedAt": "Ostatnia zmiana"
     },
     "materialsLauncher": {
+      "backgroundHint": "Materiały — tło (modal poniżej otwarty)",
       "aiDesc": "Opisz materiał — AI przygotuje pierwszą wersję.",
       "aiTitle": "Z AI",
       "blankDesc": "Ręczny start w pustym edytorze, bez AI.",
@@ -28039,6 +28040,22 @@
     "showingAllRows": "Pokazywanie wszystkich {{total}} wierszy",
     "showAllRows": "Pokaż wszystkie",
     "excele": {
+      "triChooser": {
+        "heading": "Jak chcesz zacząć arkusz?",
+        "subheading": "Wybierz tryb — wszystkie trzy są równorzędne.",
+        "clean": {
+          "title": "Czysto",
+          "desc": "Pusta siatka (1 arkusz). Wypełniasz sam, bez AI."
+        },
+        "ai": {
+          "title": "Z AI",
+          "desc": "Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami."
+        },
+        "template": {
+          "title": "Z szablonu",
+          "desc": "Zacznij od gotowego szablonu arkusza."
+        }
+      },
       "reopenNotFound": "Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.",
       "reopenNotFoundToast": "Nie udało się otworzyć arkusza — treść nie została znaleziona.",
       "formulaBarEmpty": "Zaznacz komórkę, aby zobaczyć jej treść",
@@ -30411,6 +30428,15 @@
   },
   "comingSoon": "Już wkrótce",
   "prezentacje": {
+    "templateOrphaned": "Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.",
+    "templateNotIndexed": "Tego wzorca nie ma w Twoim indeksie Biblioteki. Wybierz inny wzorzec.",
+    "templateForbidden": "Nie masz dostępu do tego wzorca.",
+    "templateDeprecated": "Ten wzorzec został wycofany i nie może już sterować generacją. Wybierz aktualny wzorzec.",
+    "templateFormatUnsupported": "Ten wzorzec nie tworzy prezentacji.",
+    "templateResolveFailed": "Nie udało się rozwiązać wzorca. Spróbuj ponownie.",
+    "template": {
+      "backToLibrary": "Wróć do Biblioteki"
+    },
     "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów.",
     "kpi": {
       "slides": "slajdów",
@@ -43764,6 +43790,127 @@
     "resetPassword": {
       "title": "Ustaw nowe hasło",
       "description": "Ustaw nowe hasło do swojego konta Consultify."
+    }
+  },
+  "templateBuilder": {
+    "rightPanel": {
+      "heading": "Właściwości szablonu",
+      "nameLabel": "Nazwa",
+      "descLabel": "Opis",
+      "descHint": "Krótko: do czego służy ten szablon.",
+      "availabilityLabel": "Dostępność",
+      "themeLabel": "Motyw (branding org)",
+      "themeHint": "Brand Kit organizacji — osobno od struktury (D19)."
+    },
+    "editors": {
+      "instructionLabel": "Instrukcja dla generatora",
+      "aiFilledLabel": "Wypełniane przez AI",
+      "doc": {
+        "emptyPick": "Wybierz sekcję z lewej listy.",
+        "heading": "Sekcja dokumentu",
+        "titleLabel": "Tytuł sekcji",
+        "titlePlaceholder": "np. Streszczenie wykonawcze",
+        "blockLabel": "Typ bloku",
+        "blockHint": "Jaki element renderuje generator w tej sekcji.",
+        "depthLabel": "Długość / głębokość",
+        "instructionHint": "Placeholder strukturalny — co ma się tu znaleźć. NIE treść finalna.",
+        "instructionPlaceholder": "np. 3 kluczowe wnioski + rekomendacja, ton executive",
+        "aiFilledDesc": "Gdy wyłączone — sekcja zostaje pusta do ręcznego uzupełnienia."
+      },
+      "deck": {
+        "emptyPick": "Wybierz slajd z lewej listy.",
+        "heading": "Slajd prezentacji",
+        "titleLabel": "Tytuł slajdu",
+        "titlePlaceholder": "np. Kontekst rynkowy",
+        "archetypeLabel": "Archetyp układu",
+        "archetypeHint": "Layout slajdu — zmienia kompozycję, nie treść.",
+        "instructionHint": "Co pokazuje slajd; placeholder strukturalny.",
+        "instructionPlaceholder": "np. wykres udziałów rynkowych + 2 zdania komentarza",
+        "aiFilledDesc": "Gdy wyłączone — slajd zostaje pusty do ręcznego uzupełnienia.",
+        "untitled": "bez tytułu"
+      },
+      "table": {
+        "emptyPick": "Wybierz arkusz z lewej listy.",
+        "heading": "Arkusz skoroszytu",
+        "sheetNameLabel": "Nazwa arkusza",
+        "sheetNamePlaceholder": "np. Plan finansowy",
+        "columnN": "Kolumna {{n}}",
+        "deleteColumnN": "Usuń kolumnę {{n}}",
+        "columnNameLabel": "Nazwa kolumny",
+        "dataTypeLabel": "Typ danych",
+        "numberFormatLabel": "Format liczbowy",
+        "numberFormatHint": "Opcjonalny format zgodny z Excel.",
+        "formulaLabel": "Formuła startowa",
+        "formulaHint": "Np. =B2*C2; zostanie zapisana w pierwszym wierszu.",
+        "starterValueLabel": "Wartość startowa",
+        "starterValueHint": "Opcjonalna wartość pierwszego wiersza.",
+        "validationLabel": "Walidacja danych",
+        "validation": {
+          "none": "Brak",
+          "list": "Lista wartości",
+          "decimal": "Liczba dziesiętna",
+          "whole": "Liczba całkowita"
+        },
+        "allowedValuesLabel": "Dozwolone wartości",
+        "allowedValuesHint": "Rozdziel wartości przecinkami.",
+        "minLabel": "Minimum",
+        "maxLabel": "Maksimum",
+        "addColumn": "Dodaj kolumnę"
+      }
+    },
+    "container": {
+      "saveChanges": "Zapisz zmiany",
+      "untitled": "Bez tytułu",
+      "unnamed": "Bez nazwy",
+      "columnsCount": "{{count}} kolumn",
+      "addSection": "Dodaj sekcję",
+      "addSlide": "Dodaj slajd",
+      "addSheet": "Dodaj arkusz"
+    },
+    "shell": {
+      "save": "Zapisz jako szablon",
+      "defaultOrgTheme": "Domyślny motyw org",
+      "typeTooltip": "Typ szablonu (ustalony przy tworzeniu)",
+      "scopeTooltip": "Zakres widoczności — kliknij, by zmienić",
+      "themeTooltip": "Motyw / branding organizacji (D19 — osobno od szablonu)",
+      "validationOk": "Walidacja: OK",
+      "validationErrors": "Błędy: {{count}}",
+      "validationPassedTooltip": "Szablon przeszedł walidację struktury",
+      "versionHistory": "{{version}} · {{status}} · {{count}} zmian",
+      "versionHistoryTooltip": "Wersja i historia lifecycle",
+      "deprecate": "Wycofaj",
+      "deprecateTooltip": "Wycofaj szablon z użycia bez utraty historii",
+      "deleteDraft": "Usuń draft",
+      "deleteDraftTooltip": "Usuń nieopublikowany szablon",
+      "approveAndPublish": "Zatwierdź i opublikuj",
+      "approveTooltip": "Zatwierdź szablon do użycia",
+      "saving": "Zapisywanie…",
+      "saveTooltip": "Zapisz reużywalny szablon",
+      "completeTemplate": "Uzupełnij szablon",
+      "moduleLabel": "Kreator szablonu",
+      "back": "Wróć",
+      "sections": "Sekcje",
+      "slides": "Slajdy",
+      "sheets": "Arkusze"
+    },
+    "wizard": {
+      "deckDesc": "Reużywalny układ slajdów: archetypy, kolejność, placeholdery.",
+      "docDesc": "Struktura dokumentu: sekcje, typy bloków, głębokość.",
+      "tableDesc": "Schemat arkusza: kolumny, typy danych, formuły.",
+      "title": "Nowy szablon",
+      "close": "Zamknij",
+      "stepOf": "Krok {{step}} z 3",
+      "nameLabel": "Nazwa szablonu",
+      "namePlaceholder": "np. Raport statusu projektu",
+      "nameHint": "Nazwę zmienisz później w builderze.",
+      "chooseType": "Wybierz typ",
+      "availability": "Dostępność",
+      "privateHint": "Widoczny tylko dla Ciebie. Domyślnie.",
+      "orgHint": "Widoczny dla całej organizacji (może wymagać zatwierdzenia).",
+      "cancel": "Anuluj",
+      "back": "Wstecz",
+      "createAndEdit": "Utwórz i edytuj",
+      "next": "Dalej"
     }
   }
 }

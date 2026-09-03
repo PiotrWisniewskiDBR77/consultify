@@ -25809,6 +25809,37 @@
     }
   },
   "rap": {
+    "materialsLauncher": {
+      "backgroundHint": "Materials — background (modal open below)",
+      "title": "New material",
+      "subtitle": "Choose a format",
+      "chooseMode": "How do you want to start?",
+      "modeHint": "Choose a mode — all three are equally valid.",
+      "document": "Document",
+      "presentation": "Presentation",
+      "spreadsheet": "Excel spreadsheet",
+      "blankTitle": "Blank",
+      "blankDesc": "Manual start — an empty artifact in the editor, no AI.",
+      "aiTitle": "With AI",
+      "aiDesc": "Describe a brief — AI builds the first version.",
+      "templateTitle": "From a template",
+      "templateDesc": "Pick an existing template and adjust it."
+    },
+    "templatesLauncher": {
+      "title": "New template",
+      "subtitle": "Choose a template type",
+      "moreOptions": "More template creation options",
+      "openDeckArchitect": "Template architect (Presentation)",
+      "document": "Word",
+      "presentation": "Presentation",
+      "spreadsheet": "Excel",
+      "blankTitle": "From scratch",
+      "blankDesc": "New template from zero in the architect.",
+      "aiTitle": "With AI",
+      "aiDesc": "Describe the template — the architect plans the structure.",
+      "existingTitle": "Based on an existing one",
+      "existingDesc": "Clone an approved template and adjust it."
+    },
     "tabs": {
       "templates": "Template Library",
       "reports": "Reports",
@@ -26488,6 +26519,22 @@
     "showingAllRows": "Showing all {{total}} rows",
     "showAllRows": "Show all",
     "excele": {
+      "triChooser": {
+        "heading": "How do you want to start the spreadsheet?",
+        "subheading": "Choose a mode — all three are equally valid.",
+        "clean": {
+          "title": "Blank",
+          "desc": "Empty grid (1 sheet). You fill it in yourself, no AI."
+        },
+        "ai": {
+          "title": "With AI",
+          "desc": "Describe the spreadsheet — AI builds a multi-sheet workbook with formulas."
+        },
+        "template": {
+          "title": "From a template",
+          "desc": "Start from a ready-made spreadsheet template."
+        }
+      },
       "reopenNotFound": "This spreadsheet's content could not be found — the source data was deleted or has expired.",
       "reopenNotFoundToast": "Could not open the spreadsheet — content was not found.",
       "formulaBarEmpty": "Select a cell to see its content",
@@ -28134,6 +28181,15 @@
   },
   "comingSoon": "Coming soon",
   "prezentacje": {
+    "templateOrphaned": "This template no longer has a canonical record — there's nothing to generate from. Choose another template in the Library.",
+    "templateNotIndexed": "This template isn't in your Library index. Choose another template.",
+    "templateForbidden": "You don't have access to this template.",
+    "templateDeprecated": "This template has been retired and can no longer drive generation. Choose a current template.",
+    "templateFormatUnsupported": "This template doesn't create presentations.",
+    "templateResolveFailed": "Couldn't resolve the template. Please try again.",
+    "template": {
+      "backToLibrary": "Back to Library"
+    },
     "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
     "kpi": {
       "slides": "slides",
@@ -41129,6 +41185,127 @@
     "resetPassword": {
       "title": "Set New Password",
       "description": "Set a new password for your Consultify account."
+    }
+  },
+  "templateBuilder": {
+    "rightPanel": {
+      "heading": "Template properties",
+      "nameLabel": "Name",
+      "descLabel": "Description",
+      "descHint": "Briefly: what this template is for.",
+      "availabilityLabel": "Availability",
+      "themeLabel": "Theme (org branding)",
+      "themeHint": "Organization Brand Kit — separate from the structure (D19)."
+    },
+    "editors": {
+      "instructionLabel": "Instructions for the generator",
+      "aiFilledLabel": "AI-filled",
+      "doc": {
+        "emptyPick": "Pick a section from the list on the left.",
+        "heading": "Document section",
+        "titleLabel": "Section title",
+        "titlePlaceholder": "e.g. Executive summary",
+        "blockLabel": "Block type",
+        "blockHint": "What element the generator renders in this section.",
+        "depthLabel": "Length / depth",
+        "instructionHint": "Structural placeholder — what should go here. NOT the final content.",
+        "instructionPlaceholder": "e.g. 3 key takeaways + a recommendation, executive tone",
+        "aiFilledDesc": "When off — the section stays empty for manual completion."
+      },
+      "deck": {
+        "emptyPick": "Pick a slide from the list on the left.",
+        "heading": "Presentation slide",
+        "titleLabel": "Slide title",
+        "titlePlaceholder": "e.g. Market context",
+        "archetypeLabel": "Layout archetype",
+        "archetypeHint": "The slide's layout — changes composition, not content.",
+        "instructionHint": "What the slide shows; structural placeholder.",
+        "instructionPlaceholder": "e.g. market-share chart + 2 sentences of commentary",
+        "aiFilledDesc": "When off — the slide stays empty for manual completion.",
+        "untitled": "untitled"
+      },
+      "table": {
+        "emptyPick": "Pick a sheet from the list on the left.",
+        "heading": "Workbook sheet",
+        "sheetNameLabel": "Sheet name",
+        "sheetNamePlaceholder": "e.g. Financial plan",
+        "columnN": "Column {{n}}",
+        "deleteColumnN": "Delete column {{n}}",
+        "columnNameLabel": "Column name",
+        "dataTypeLabel": "Data type",
+        "numberFormatLabel": "Number format",
+        "numberFormatHint": "Optional Excel-compatible format.",
+        "formulaLabel": "Starting formula",
+        "formulaHint": "E.g. =B2*C2; will be saved in the first row.",
+        "starterValueLabel": "Starting value",
+        "starterValueHint": "Optional value for the first row.",
+        "validationLabel": "Data validation",
+        "validation": {
+          "none": "None",
+          "list": "List of values",
+          "decimal": "Decimal number",
+          "whole": "Whole number"
+        },
+        "allowedValuesLabel": "Allowed values",
+        "allowedValuesHint": "Separate values with commas.",
+        "minLabel": "Minimum",
+        "maxLabel": "Maximum",
+        "addColumn": "Add column"
+      }
+    },
+    "container": {
+      "saveChanges": "Save changes",
+      "untitled": "Untitled",
+      "unnamed": "Unnamed",
+      "columnsCount": "{{count}} columns",
+      "addSection": "Add section",
+      "addSlide": "Add slide",
+      "addSheet": "Add sheet"
+    },
+    "shell": {
+      "save": "Save as template",
+      "defaultOrgTheme": "Default org theme",
+      "typeTooltip": "Template type (set on creation)",
+      "scopeTooltip": "Visibility scope — click to change",
+      "themeTooltip": "Organization theme / branding (D19 — separate from the template)",
+      "validationOk": "Validation: OK",
+      "validationErrors": "Errors: {{count}}",
+      "validationPassedTooltip": "The template passed structural validation",
+      "versionHistory": "{{version}} · {{status}} · {{count}} changes",
+      "versionHistoryTooltip": "Version and lifecycle history",
+      "deprecate": "Deprecate",
+      "deprecateTooltip": "Retire the template from use without losing its history",
+      "deleteDraft": "Delete draft",
+      "deleteDraftTooltip": "Delete an unpublished template",
+      "approveAndPublish": "Approve and publish",
+      "approveTooltip": "Approve the template for use",
+      "saving": "Saving…",
+      "saveTooltip": "Save a reusable template",
+      "completeTemplate": "Complete the template",
+      "moduleLabel": "Template builder",
+      "back": "Back",
+      "sections": "Sections",
+      "slides": "Slides",
+      "sheets": "Sheets"
+    },
+    "wizard": {
+      "deckDesc": "Reusable slide layout: archetypes, order, placeholders.",
+      "docDesc": "Document structure: sections, block types, depth.",
+      "tableDesc": "Spreadsheet schema: columns, data types, formulas.",
+      "title": "New template",
+      "close": "Close",
+      "stepOf": "Step {{step}} of 3",
+      "nameLabel": "Template name",
+      "namePlaceholder": "e.g. Project status report",
+      "nameHint": "You can rename it later in the builder.",
+      "chooseType": "Choose a type",
+      "availability": "Availability",
+      "privateHint": "Visible only to you. Default.",
+      "orgHint": "Visible to the whole organization (may require approval).",
+      "cancel": "Cancel",
+      "back": "Back",
+      "createAndEdit": "Create and edit",
+      "next": "Next"
     }
   }
 }

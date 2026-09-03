@@ -8,6 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   getTemplate as getWorkbookLifecycle,
@@ -25,12 +26,15 @@ import {
 import {
   type DeckSlide,
   DOC_BLOCK_LABELS,
+  DOC_BLOCK_LABELS_EN,
   type DocSection,
   emptyDraft,
   newDeckSlide,
   newDocSection,
   newWorkbookSheet,
+  pickTemplateLabel,
   SLIDE_ARCHETYPE_LABELS,
+  SLIDE_ARCHETYPE_LABELS_EN,
   type TemplateDraft,
   type TemplateScope,
   type TemplateType,
@@ -71,6 +75,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   persistRailState = true,
   templateId,
 }) => {
+  const { t, i18n } = useTranslation();
+  const language = i18n.language || 'pl';
   const [builderState, setBuilderState] = useState(() => ({
     draft: initialDraft,
     selectedId: firstElementId(initialDraft),
@@ -116,27 +122,33 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (draft.type === 'doc')
       return draft.doc.map((s, i) => ({
         id: s.id,
-        label: s.title || 'Bez tytułu',
-        meta: DOC_BLOCK_LABELS[s.block],
+        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        meta: pickTemplateLabel(DOC_BLOCK_LABELS, DOC_BLOCK_LABELS_EN, s.block, language),
         index: i + 1,
       }));
     if (draft.type === 'deck')
       return draft.deck.map((s, i) => ({
         id: s.id,
-        label: s.title || 'Bez tytułu',
-        meta: SLIDE_ARCHETYPE_LABELS[s.archetype],
+        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        meta: pickTemplateLabel(SLIDE_ARCHETYPE_LABELS, SLIDE_ARCHETYPE_LABELS_EN, s.archetype, language),
         index: i + 1,
       }));
     return draft.table.map((sheet, i) => ({
       id: sheet.id,
-      label: sheet.name || 'Bez nazwy',
-      meta: `${sheet.columns.length} kolumn`,
+      label: sheet.name || t('templateBuilder.container.unnamed', 'Bez nazwy'),
+      meta: t('templateBuilder.container.columnsCount', '{{count}} kolumn', {
+        count: sheet.columns.length,
+      }),
       index: i + 1,
     }));
-  }, [draft]);
+  }, [draft, t, language]);
 
   const addLabel =
-    draft.type === 'doc' ? 'Dodaj sekcję' : draft.type === 'deck' ? 'Dodaj slajd' : 'Dodaj arkusz';
+    draft.type === 'doc'
+      ? t('templateBuilder.container.addSection', 'Dodaj sekcję')
+      : draft.type === 'deck'
+        ? t('templateBuilder.container.addSlide', 'Dodaj slajd')
+        : t('templateBuilder.container.addSheet', 'Dodaj arkusz');
 
   // ── Mutacje listy ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(() => {
@@ -331,7 +343,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         onSave={handleSave}
         saving={saving}
         canSave={canSave}
-        saveLabel={templateId ? 'Zapisz zmiany' : 'Zapisz jako szablon'}
+        saveLabel={
+          templateId
+            ? t('templateBuilder.container.saveChanges', 'Zapisz zmiany')
+            : t('templateBuilder.shell.save', 'Zapisz jako szablon')
+        }
         validationErrors={validation.errors}
         lifecycle={
           templateId && draft.type === 'table'
