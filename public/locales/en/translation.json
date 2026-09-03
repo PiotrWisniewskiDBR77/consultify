@@ -8195,7 +8195,49 @@
       "failed": "Failed to generate deck",
       "requiresApproval": "Assessment must be APPROVED to export deck"
     },
+    "qualityReview": {
+      "title": "Assessment quality review",
+      "intro1Prefix": "This screen checks the",
+      "quality": "quality",
+      "intro1Suffix": "of a completed assessment: how many areas have evidence, where evidence is missing, and whether the reviewer accepts the assessment. You can add evidence and make a decision here — but no level is set here.",
+      "notMatrix": "This is not the assessment matrix",
+      "notMatrixSuffix": "and doesn't replace it. The matrix (areas × levels) is the working tool — that's where the current and target level of each area is set. The table below is a read-out of its result, collapsed to the per-axis average.",
+      "openMatrix": "Open the assessment matrix",
+      "openMatrixHint": "Opens this assessment's session; the matrix is there under the \"Matrix\" switch in the header."
+    },
+    "presentation": {
+      "methodPack": "Method Pack",
+      "frozenAt": "Frozen on",
+      "outputVersion": "Output version",
+      "ariaLabel": "Maturity assessment presentation",
+      "prevSlide": "Previous slide",
+      "prev": "Previous",
+      "exitFullscreen": "Exit full screen",
+      "fullscreen": "Full screen",
+      "fullscreenTitle": "Full screen (F)",
+      "nextSlide": "Next slide",
+      "next": "Next"
+    },
     "report": {
+      "lifecycleSuperseded": "Frozen — superseded by a newer revision",
+      "lifecycleFrozen": "Frozen (immutable)",
+      "demoBypassBanner": "This Output comes from a session created in demo mode (readiness gate bypassed). This is NOT a production result — it can't be presented as an approved pilot/production result.",
+      "title": "Maturity assessment report",
+      "demoMode": "Demo mode",
+      "project": "Project",
+      "noProject": "No project assigned",
+      "session": "Session",
+      "outputVersion": "Output version",
+      "frozenAt": "Frozen on",
+      "approvedBy": "Approved by",
+      "noApproval": "No recorded approval",
+      "module": "Module",
+      "supersededNotice": "This Output was superseded by a newer revision{{suffix}}. The content below remains an immutable record of THIS revision — it is not updated.",
+      "chapter1": {
+        "title": "How the assessment was conducted",
+        "lede": "Scope, mode, and the reliability boundaries of this assessment — before the first number appears.",
+        "courseTitle": "Assessment course"
+      },
       "strengths": "Key Strengths",
       "dataGaps": "Data Gaps & Follow-up Items",
       "roadmap": "Transformation Roadmap",
@@ -41185,6 +41227,32 @@
     "resetPassword": {
       "title": "Set New Password",
       "description": "Set a new password for your Consultify account."
+    }
+  },
+  "discoveryTools": {
+    "swot": {
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "opportunities": "Opportunities",
+      "threats": "Threats",
+      "strategicField": "Strategic field",
+      "tensionsCount": "{{count}} tensions connect the quadrants"
+    },
+    "report": {
+      "execPresentation": "Executive presentation",
+      "title": "Report",
+      "rendererInfo": "Renderer {{version}} · sources: {{count}}"
+    }
+  },
+  "drd": {
+    "matrix": {
+      "title": "Digital Development Map",
+      "subtitle": "Process Digitalization Assessment Matrix",
+      "fullscreen": "Full screen",
+      "openFullscreenTitle": "Open matrix in full screen",
+      "rowHint": "Hover for preview · Click for details",
+      "rowHintClick": "Click for details",
+      "spacious": "Spacious"
     }
   },
   "methodWorkspace": {

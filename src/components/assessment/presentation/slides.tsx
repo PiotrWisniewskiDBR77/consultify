@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   DRDMatrixReadOnly,
@@ -48,19 +49,31 @@ function formatPercent(ratio: number): string {
 // 1. Tytuł
 // ---------------------------------------------------------------------------
 
-export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string }> = ({ model, locale }) => (
-  <PresentationSlideShell
-    kicker={model.methodPackId.toUpperCase()}
-    title={model.narrative.clientName ?? model.scope}
-    lede={model.narrative.clientName ? model.scope : undefined}
-  >
-    <div className="flex flex-wrap items-center gap-3">
-      <StatChip label="Pakiet metodyczny" value={`${model.methodPackId} v${model.methodPackVersion}`} />
-      <StatChip label="Data zamrożenia" value={formatDate(model.frozenAt, locale)} />
-      <StatChip label="Wersja Outputu" value={`v${model.outputVersion}`} />
-    </div>
-  </PresentationSlideShell>
-);
+export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string }> = ({ model, locale }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={model.methodPackId.toUpperCase()}
+      title={model.narrative.clientName ?? model.scope}
+      lede={model.narrative.clientName ? model.scope : undefined}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <StatChip
+          label={t('assessment.presentation.methodPack', 'Pakiet metodyczny')}
+          value={`${model.methodPackId} v${model.methodPackVersion}`}
+        />
+        <StatChip
+          label={t('assessment.presentation.frozenAt', 'Data zamrożenia')}
+          value={formatDate(model.frozenAt, locale)}
+        />
+        <StatChip
+          label={t('assessment.presentation.outputVersion', 'Wersja Outputu')}
+          value={`v${model.outputVersion}`}
+        />
+      </div>
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 2. Po co ta ocena

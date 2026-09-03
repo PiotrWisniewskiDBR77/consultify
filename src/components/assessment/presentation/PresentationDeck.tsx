@@ -16,6 +16,7 @@
  */
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { PresentationDeckModel } from './buildPresentationDeck';
 import {
@@ -46,6 +47,7 @@ function currentFullscreenElement(): Element | null {
 }
 
 export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, locale = 'pl', initialSlide = 0 }) => {
+  const { t } = useTranslation();
   /**
    * ★ Lista slajdów jest DYNAMICZNA od 2026-08-30. Wcześniej deck miał
    * sztywne 9 pozycji w `switch`; macierze osi (odbiór właściciela: „nie ma
@@ -140,7 +142,7 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
       tabIndex={-1}
       role="region"
       aria-roledescription="presentation"
-      aria-label="Prezentacja wyniku oceny dojrzałości"
+      aria-label={t('assessment.presentation.ariaLabel', 'Prezentacja wyniku oceny dojrzałości')}
       className="flex h-full min-h-[560px] w-full flex-col bg-c-bg text-c-text outline-none"
       data-testid="presentation-deck"
     >
@@ -158,11 +160,11 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
           type="button"
           onClick={goPrev}
           disabled={slide === 0}
-          aria-label="Poprzedni slajd"
+          aria-label={t('assessment.presentation.prevSlide', 'Poprzedni slajd')}
           className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-c-text-secondary outline-none transition-colors hover:bg-c-surface-raised focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-30"
         >
           <ChevronLeft size={14} />
-          Poprzedni
+          {t('assessment.presentation.prev', 'Poprzedni')}
         </button>
 
         <div className="flex items-center gap-4">
@@ -172,9 +174,13 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
           <button
             type="button"
             onClick={toggleFullscreen}
-            aria-label={isFullscreen ? 'Wyjdź z pełnego ekranu' : 'Pełny ekran'}
+            aria-label={
+              isFullscreen
+                ? t('assessment.presentation.exitFullscreen', 'Wyjdź z pełnego ekranu')
+                : t('assessment.presentation.fullscreen', 'Pełny ekran')
+            }
             aria-pressed={isFullscreen}
-            title="Pełny ekran (F)"
+            title={t('assessment.presentation.fullscreenTitle', 'Pełny ekran (F)')}
             className="inline-flex items-center justify-center rounded-lg p-2 text-c-text-secondary outline-none transition-colors hover:bg-c-surface-raised focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -185,10 +191,10 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
           type="button"
           onClick={goNext}
           disabled={slide === slideCount - 1}
-          aria-label="Następny slajd"
+          aria-label={t('assessment.presentation.nextSlide', 'Następny slajd')}
           className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-c-text-secondary outline-none transition-colors hover:bg-c-surface-raised focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-30"
         >
-          Następny
+          {t('assessment.presentation.next', 'Następny')}
           <ChevronRight size={14} />
         </button>
       </div>

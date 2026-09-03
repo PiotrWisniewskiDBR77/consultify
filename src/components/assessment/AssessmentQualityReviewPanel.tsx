@@ -31,6 +31,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type DRDEditorAnswers,
@@ -56,6 +57,7 @@ type EvidenceType = 'note' | 'link' | 'document' | 'reference';
 export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanelProps> = ({
   assessmentId,
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<V8AssessmentEvidence[]>([]);
@@ -241,31 +243,39 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       {/* ── Czym ten ekran JEST, a czym NIE JEST — patrz nagłówek pliku ── */}
       <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5 p-4">
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
-          Przegląd jakości oceny
+          {t('assessment.qualityReview.title', 'Przegląd jakości oceny')}
         </h3>
         <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
-          Ten ekran sprawdza{' '}
-          <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong> gotowej
-          oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
-          Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.
+          {t('assessment.qualityReview.intro1Prefix', 'Ten ekran sprawdza')}{' '}
+          <strong className="font-semibold text-navy-900 dark:text-white">
+            {t('assessment.qualityReview.quality', 'jakość')}
+          </strong>{' '}
+          {t(
+            'assessment.qualityReview.intro1Suffix',
+            'gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje. Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.'
+          )}
         </p>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           <strong className="font-semibold text-navy-900 dark:text-white">
-            To nie jest macierz oceny
+            {t('assessment.qualityReview.notMatrix', 'To nie jest macierz oceny')}
           </strong>{' '}
-          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia
-          się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku,
-          zwiniętym do średniej per oś.
+          {t(
+            'assessment.qualityReview.notMatrixSuffix',
+            'i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do średniej per oś.'
+          )}
         </p>
         <a
           href={`/assessment/drd/${assessmentId}`}
           className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm font-medium text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         >
           <Grid3x3 size={16} />
-          Otwórz macierz oceny
+          {t('assessment.qualityReview.openMatrix', 'Otwórz macierz oceny')}
         </a>
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz" w nagłówku.
+          {t(
+            'assessment.qualityReview.openMatrixHint',
+            'Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz" w nagłówku.'
+          )}
         </p>
       </section>
 

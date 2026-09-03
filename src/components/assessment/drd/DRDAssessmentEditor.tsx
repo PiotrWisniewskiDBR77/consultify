@@ -477,7 +477,9 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
 const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean) => void }> = ({
   compact,
   onCompactChange,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex flex-col gap-2 text-xs text-c-text-secondary">
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-2">
@@ -503,11 +505,12 @@ const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean
           onChange={(e) => onCompactChange(!e.target.checked)}
           className="h-4 w-4 rounded border-c-border accent-slate-600 dark:accent-slate-300 focus:ring-c-focus"
         />
-        Spacious
+        {t('drd.matrix.spacious', 'Spacious')}
       </label>
     </div>
   </div>
-);
+  );
+};
 
 type Props = {
   assessmentId: string;
@@ -1138,13 +1141,13 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <div className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
-                    Digital Development Map
+                    {t('drd.matrix.title', 'Digital Development Map')}
                   </div>
                   <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                     {axis?.id}. {axis?.name}
                   </div>
                   <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                    Process Digitalization Assessment Matrix
+                    {t('drd.matrix.subtitle', 'Process Digitalization Assessment Matrix')}
                   </div>
                 </div>
 
@@ -1156,10 +1159,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     type="button"
                     onClick={() => setIsMatrixFullscreen(true)}
                     className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-                    title="Open matrix in full screen"
+                    title={t('drd.matrix.openFullscreenTitle', 'Open matrix in full screen')}
                   >
                     <Maximize2 className="w-4 h-4" />
-                    Full screen
+                    {t('drd.matrix.fullscreen', 'Full screen')}
                   </button>
                 </div>
               </div>
@@ -1170,7 +1173,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 value={value}
                 compact={matrixCompact}
                 columnMinPx={150}
-                rowHint="Hover for preview · Click for details"
+                rowHint={t('drd.matrix.rowHint', 'Hover for preview · Click for details')}
                 selectedCell={popupCell}
                 onCellClick={(cellAreaId, cellLevel, e) => {
                   if (e.shiftKey && !readOnly) {
@@ -2242,13 +2245,13 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                       <div className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
-                        Digital Development Map
+                        {t('drd.matrix.title', 'Digital Development Map')}
                       </div>
                       <div className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
                         {axis?.id}. {axis?.name}
                       </div>
                       <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                        Process Digitalization Assessment Matrix
+                        {t('drd.matrix.subtitle', 'Process Digitalization Assessment Matrix')}
                       </div>
                     </div>
 
@@ -2262,7 +2265,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     value={value}
                     compact={matrixCompact}
                     columnMinPx={180}
-                    rowHint="Click for details"
+                    rowHint={t('drd.matrix.rowHintClick', 'Click for details')}
                     onCellClick={(cellAreaId, cellLevel, e) => {
                       if (e.shiftKey && !readOnly) {
                         const cur = getAreaState(value, cellAreaId, levelCount);

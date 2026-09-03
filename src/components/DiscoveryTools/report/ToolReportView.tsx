@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   EvidenceKind,
@@ -167,29 +168,30 @@ export function BlockView({ block }: { block: ReportBlock }) {
 
 /** Geometria sygnaturowa — pole 2×2 z napięciami dla Dynamic SWOT. */
 function SignatureVisual({ archetype, payload }: { archetype: string; payload: unknown }) {
+  const { t } = useTranslation();
   const data = payload as {
     items?: Array<{ id: string; label: string; bucket: string }>;
     tensions?: Array<{ posture: string; sourceItemIds: [string, string] }>;
   };
   if (archetype !== 'dynamic-swot') return null;
 
-  const QUADRANTS: Array<{ key: string; pl: string }> = [
-    { key: 'strengths', pl: 'Siły' },
-    { key: 'weaknesses', pl: 'Słabości' },
-    { key: 'opportunities', pl: 'Szanse' },
-    { key: 'threats', pl: 'Zagrożenia' },
+  const QUADRANTS: Array<{ key: string; label: string }> = [
+    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Siły') },
+    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Słabości') },
+    { key: 'opportunities', label: t('discoveryTools.swot.opportunities', 'Szanse') },
+    { key: 'threats', label: t('discoveryTools.swot.threats', 'Zagrożenia') },
   ];
 
   return (
     <section className="space-y-2">
-      <Eyebrow>Pole strategiczne</Eyebrow>
+      <Eyebrow>{t('discoveryTools.swot.strategicField', 'Pole strategiczne')}</Eyebrow>
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-c-border-subtle bg-c-border-subtle">
         {QUADRANTS.map((q) => {
           const inQ = (data.items ?? []).filter((i) => i.bucket === q.key);
           return (
             <div key={q.key} className="min-h-[92px] bg-c-surface p-3">
               <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                {q.pl}
+                {q.label}
               </div>
               <ul className="mt-1.5 space-y-1">
                 {inQ.map((i) => (
@@ -205,7 +207,9 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
       </div>
       {/* Napięcia łączą ćwiartki — bez nich to tylko cztery listy. */}
       <div className="text-[11px] text-c-text-muted">
-        {(data.tensions ?? []).length} napięć łączy ćwiartki
+        {t('discoveryTools.swot.tensionsCount', '{{count}} napięć łączy ćwiartki', {
+          count: (data.tensions ?? []).length,
+        })}
       </div>
     </section>
   );
@@ -218,6 +222,7 @@ export interface ToolReportViewProps {
 }
 
 export function ToolReportView({ doc, presentationMode = false }: ToolReportViewProps) {
+  const { t } = useTranslation();
   const isDeck = doc.kind === 'presentation';
 
   return (
@@ -228,11 +233,18 @@ export function ToolReportView({ doc, presentationMode = false }: ToolReportView
       className="mx-auto w-full max-w-3xl bg-c-bg p-8 text-c-text"
     >
       <header className="mb-6 border-b border-c-border-subtle pb-4">
-        <Eyebrow>{isDeck ? 'Prezentacja wykonawcza' : 'Raport'}</Eyebrow>
+        <Eyebrow>
+          {isDeck
+            ? t('discoveryTools.report.execPresentation', 'Prezentacja wykonawcza')
+            : t('discoveryTools.report.title', 'Raport')}
+        </Eyebrow>
         <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-c-text">{doc.title}</h1>
         {!presentationMode && (
           <p className="mt-2 text-xs text-c-text-muted">
-            Renderer {doc.rendererVersion} · źródła: {doc.sourceOutputIds.length}
+            {t('discoveryTools.report.rendererInfo', 'Renderer {{version}} · źródła: {{count}}', {
+              version: doc.rendererVersion,
+              count: doc.sourceOutputIds.length,
+            })}
           </p>
         )}
       </header>

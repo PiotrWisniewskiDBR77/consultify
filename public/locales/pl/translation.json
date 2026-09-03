@@ -7570,7 +7570,49 @@
       "failed": "Nie udało się wygenerować prezentacji",
       "requiresApproval": "Ocena musi być ZATWIERDZONA, aby eksportować prezentację"
     },
+    "qualityReview": {
+      "title": "Przegląd jakości oceny",
+      "intro1Prefix": "Ten ekran sprawdza",
+      "quality": "jakość",
+      "intro1Suffix": "gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje. Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.",
+      "notMatrix": "To nie jest macierz oceny",
+      "notMatrixSuffix": "i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do średniej per oś.",
+      "openMatrix": "Otwórz macierz oceny",
+      "openMatrixHint": "Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz” w nagłówku."
+    },
+    "presentation": {
+      "methodPack": "Pakiet metodyczny",
+      "frozenAt": "Data zamrożenia",
+      "outputVersion": "Wersja Outputu",
+      "ariaLabel": "Prezentacja wyniku oceny dojrzałości",
+      "prevSlide": "Poprzedni slajd",
+      "prev": "Poprzedni",
+      "exitFullscreen": "Wyjdź z pełnego ekranu",
+      "fullscreen": "Pełny ekran",
+      "fullscreenTitle": "Pełny ekran (F)",
+      "nextSlide": "Następny slajd",
+      "next": "Następny"
+    },
     "report": {
+      "lifecycleSuperseded": "Zamrożony — zastąpiony nowszą rewizją",
+      "lifecycleFrozen": "Zamrożony (niezmienny)",
+      "demoBypassBanner": "Ten Output pochodzi z sesji utworzonej przez tryb demo (ominięcie bramki gotowości pakietu). To NIE jest wynik produkcyjny — nie może być przedstawiony jako zatwierdzony wynik pilota/produkcji.",
+      "title": "Raport oceny dojrzałości",
+      "demoMode": "Tryb demo",
+      "project": "Projekt",
+      "noProject": "Brak przypisanego projektu",
+      "session": "Sesja",
+      "outputVersion": "Wersja Outputu",
+      "frozenAt": "Data zamrożenia",
+      "approvedBy": "Zatwierdził",
+      "noApproval": "Brak zarejestrowanego zatwierdzenia",
+      "module": "Moduł",
+      "supersededNotice": "Ten Output został zastąpiony nowszą rewizją{{suffix}}. Poniższa treść pozostaje niezmiennym zapisem TEJ rewizji — nie jest aktualizowana.",
+      "chapter1": {
+        "title": "Jak prowadzono badanie",
+        "lede": "Zakres, tryb i granice wiarygodności tej oceny — zanim padnie pierwsza liczba.",
+        "courseTitle": "Przebieg oceny"
+      },
       "strengths": "Kluczowe mocne strony",
       "dataGaps": "Luki danych i elementy do uzupełnienia",
       "roadmap": "Mapa drogowa transformacji",
@@ -43790,6 +43832,32 @@
     "resetPassword": {
       "title": "Ustaw nowe hasło",
       "description": "Ustaw nowe hasło do swojego konta Consultify."
+    }
+  },
+  "discoveryTools": {
+    "swot": {
+      "strengths": "Siły",
+      "weaknesses": "Słabości",
+      "opportunities": "Szanse",
+      "threats": "Zagrożenia",
+      "strategicField": "Pole strategiczne",
+      "tensionsCount": "{{count}} napięć łączy ćwiartki"
+    },
+    "report": {
+      "execPresentation": "Prezentacja wykonawcza",
+      "title": "Raport",
+      "rendererInfo": "Renderer {{version}} · źródła: {{count}}"
+    }
+  },
+  "drd": {
+    "matrix": {
+      "title": "Mapa rozwoju cyfrowego",
+      "subtitle": "Macierz oceny digitalizacji procesów",
+      "fullscreen": "Pełny ekran",
+      "openFullscreenTitle": "Otwórz macierz w trybie pełnoekranowym",
+      "rowHint": "Najedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły",
+      "rowHintClick": "Kliknij, aby zobaczyć szczegóły",
+      "spacious": "Przestronny"
     }
   },
   "methodWorkspace": {
