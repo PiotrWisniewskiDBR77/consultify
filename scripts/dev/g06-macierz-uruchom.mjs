@@ -93,6 +93,14 @@ for (const mod of MODULY) {
         // 03.09: po rozwinięciu sekcji klik w wiersz ponownie — bez tego skan leci bez podglądu
         // (zmierzone: execution-tab-list tekst 1018 → 648, naruszenie w podglądzie znikało).
         '--klik-po-rozwinieciu=1',
+        // 03.09 (dyżur agent/slepa-plama, ślepa plama pętli rozwijania): pętla klika przycisk
+        // „Szukaj" jak każdą inną kontrolkę aria-expanded=false, a on PODMIENIA cały rząd Menu 3
+        // (chipy statusu/taby/liczniki) na pole wyszukiwania — bez obsługi Escape/klik-na-zewnątrz,
+        // więc chipy znikają z DOM na resztę przelotu. Zmierzone: assessment-list tekst 1562 → 1444,
+        // meetings-module 1139 → 1028. Cofa AUTOMATYCZNIE każdy klik, który skraca widoczny tekst
+        // (dowód per ekran w wynik.json: `sekcjeCofniete`) — patrz komentarz przy fladze w
+        // grafika-zrzuty.mjs.
+        '--cofnij-jesli-skraca=1',
         `--wyjscie=${katalog}`,
         `--wynik-json=${wynik}`,
       ];
