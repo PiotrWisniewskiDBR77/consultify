@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
@@ -79,20 +80,29 @@ interface Row extends TableRow {
   version: number;
   source: any;
 }
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Interwencja', sortable: true, width: '240px' },
-  { id: 'status', label: 'Status', sortable: true, filterable: true },
-  { id: 'owner', label: 'Właściciel', sortable: true },
-  { id: 'authority', label: 'Osoba zatwierdzająca', sortable: true },
-  { id: 'slaAt', label: 'Termin weryfikacji', sortable: true },
+// i18n-reszta 20260903: kolumny przeniesione do funkcji wywoływanych z `t`
+// wewnątrz komponentu (patrz `useMemo` niżej) — poprzednio literały PL na
+// module-scope nie reagowały na `?lang=`, PL i EN renderowały identyczny
+// tekst nagłówków (pomiar nadzorcy 03.09, execution-tab-control).
+const buildColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  { id: 'title', label: t('execution.control.columns.title', 'Intervention'), sortable: true, width: '240px' },
+  { id: 'status', label: t('execution.control.columns.status', 'Status'), sortable: true, filterable: true },
+  { id: 'owner', label: t('execution.control.columns.owner', 'Owner'), sortable: true },
+  { id: 'authority', label: t('execution.control.columns.authority', 'Approver'), sortable: true },
+  { id: 'slaAt', label: t('execution.control.columns.slaAt', 'Review deadline'), sortable: true },
 ];
-const signalColumns: TableColumn[] = [
-  { id: 'title', label: 'Sygnał', sortable: true, width: '240px' },
-  { id: 'rule', label: 'Rodzaj', sortable: true, filterable: true },
-  { id: 'source', label: 'Źródło', sortable: true },
-  { id: 'severity', label: 'Ważność', sortable: true, filterable: true },
-  { id: 'occurrences', label: 'Wystąpienia', sortable: true },
-  { id: 'updatedAt', label: 'Aktualizacja', sortable: true },
+const buildSignalColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  { id: 'title', label: t('execution.control.signalColumns.title', 'Signal'), sortable: true, width: '240px' },
+  { id: 'rule', label: t('execution.control.signalColumns.rule', 'Type'), sortable: true, filterable: true },
+  { id: 'source', label: t('execution.control.signalColumns.source', 'Source'), sortable: true },
+  {
+    id: 'severity',
+    label: t('execution.control.signalColumns.severity', 'Severity'),
+    sortable: true,
+    filterable: true,
+  },
+  { id: 'occurrences', label: t('execution.control.signalColumns.occurrences', 'Occurrences'), sortable: true },
+  { id: 'updatedAt', label: t('execution.control.signalColumns.updatedAt', 'Updated'), sortable: true },
 ];
 const lines = (value: string) =>
   value
@@ -236,6 +246,9 @@ export const ExecutionControlSurface = ({
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
+  const signalColumns = useMemo(() => buildSignalColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [rows, setRows] = useState<Row[]>([]),
     [signalRows, setSignalRows] = useState<SignalRow[]>([]),
@@ -669,7 +682,7 @@ export const ExecutionControlSurface = ({
             setShowSignalForm(true);
           }}
         >
-          Dodaj sygnał
+          {t('execution.control.actions.addSignal', 'Add signal')}
         </button>
         <button
           type="button"
@@ -680,7 +693,7 @@ export const ExecutionControlSurface = ({
             setInterventionComposerOpen(true);
           }}
         >
-          Przygotuj interwencję
+          {t('execution.control.actions.prepareIntervention', 'Prepare intervention')}
         </button>
       </div>
     );
@@ -888,7 +901,7 @@ export const ExecutionControlSurface = ({
                 primary: [
                   {
                     id: 'prepare-intervention',
-                    label: 'Przygotuj interwencję',
+                    label: t('execution.control.actions.prepareIntervention', 'Prepare intervention'),
                     onClick: () => {
                       setShowInterventionForm(true);
                       setInterventionComposerOpen(true);

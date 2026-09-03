@@ -1,5 +1,6 @@
 import { ArrowRight, Eye } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CanonicalWorkHardeningPanel } from '@/components/shared/CanonicalWorkHardeningPanel';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -110,28 +111,32 @@ const actorLabel = (value: string) =>
   value
     .replace(/[-_]+/g, ' ')
     .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());
-const cols: TableColumn[] = [
-  { id: 'title', label: 'Element pracy', sortable: true, width: '240px' },
+// i18n-reszta 20260903: kolumny przeniesione do funkcji wywoływanej z `t`
+// wewnątrz komponentu (patrz `useMemo` w ciele `ExecutionWorkSurface`) —
+// poprzednio literały PL na module-scope nie reagowały na `?lang=` (pomiar
+// nadzorcy 03.09, execution-tab-work).
+const buildCols = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  { id: 'title', label: t('execution.work.columns.title', 'Work item'), sortable: true, width: '240px' },
   {
     id: 'kind',
-    label: 'Rodzaj',
+    label: t('execution.work.columns.kind', 'Type'),
     sortable: true,
     filterable: true,
     render: (row) => workKindLabel[row.kind as WorkKind] ?? row.kind,
   },
   {
     id: 'status',
-    label: 'Status',
+    label: t('execution.work.columns.status', 'Status'),
     sortable: true,
     render: (row) => <span role="status">{workStatusLabel[row.status] ?? row.status}</span>,
   },
   {
     id: 'owner',
-    label: 'Właściciel / osoba decyzyjna',
+    label: t('execution.work.columns.owner', 'Owner / decision maker'),
     sortable: true,
     render: (row) => actorLabel(row.owner),
   },
-  { id: 'dueAt', label: 'Termin / SLA', sortable: true },
+  { id: 'dueAt', label: t('execution.work.columns.dueAt', 'Due / SLA'), sortable: true },
 ];
 const workPresets = [
   'all',
@@ -188,6 +193,8 @@ export const ExecutionWorkSurface = ({
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
+  const { t } = useTranslation();
+  const cols = useMemo(() => buildCols(t), [t]);
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
     [caseId, setCaseId] = useState(''),
@@ -601,7 +608,7 @@ export const ExecutionWorkSurface = ({
             }
           }}
         >
-          <option value="">Wszystkie realizacje</option>
+          <option value="">{t('execution.filters.allCases', 'All deliveries')}</option>
           {cases.map((c) => (
             <option key={c.executionCaseId} value={c.executionCaseId}>
               {c.initiativeTitle ||
@@ -613,21 +620,21 @@ export const ExecutionWorkSurface = ({
         {caseId && (
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-secondary" onClick={() => setToolMode('TASK')}>
-              Nowe zadanie
+              {t('execution.actions.newTask', 'New Task')}
             </button>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setToolMode('DECISION')}
             >
-              Nowa decyzja
+              {t('execution.actions.newDecision', 'New Decision')}
             </button>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setToolMode('MILESTONE')}
             >
-              Nowy kamień milowy
+              {t('execution.actions.newMilestone', 'New milestone')}
             </button>
           </div>
         )}

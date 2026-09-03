@@ -9006,7 +9006,11 @@
       "applied": "Opcje zostały zapisane i przeładowane.",
       "noPressure": "Brak przeciążenia — nie ma czego rozwiązywać",
       "conflict": "Wariant został zmieniony. Odśwież dane przed ponowną próbą.",
-      "failed": "Nie udało się zaproponować opcji."
+      "failed": "Nie udało się zaproponować opcji.",
+      "header": "Obciążenie",
+      "subtitle": "Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.",
+      "newAnalysis": "Nowa analiza",
+      "openTools": "Otwórz narzędzia obciążenia"
     },
     "planScenario": {
       "status": {
@@ -11618,7 +11622,14 @@
       "team": "Zespół",
       "reports": "Raportowanie",
       "peopleChange": "Zarządzanie",
-      "summary": "Kokpit"
+      "summary": "Kokpit",
+      "moduleBar": {
+        "list": "Realizacje",
+        "work": "Praca",
+        "resources": "Zasoby",
+        "control": "Sterowanie",
+        "reports": "Raporty"
+      }
     },
     "manager": {
       "noInitiatives": "Brak inicjatyw w realizacji",
@@ -12018,7 +12029,8 @@
       "weeksLeft": "tyg. pozostało"
     },
     "filters": {
-      "all": "Wszystkie"
+      "all": "Wszystkie",
+      "allCases": "Wszystkie realizacje"
     },
     "portfolio": {
       "onTrack": "Na ścieżce",
@@ -12082,7 +12094,8 @@
       "export": "Eksport",
       "report": "Raport",
       "aiChat": "Czat AI",
-      "copyLink": "Kopiuj link"
+      "copyLink": "Kopiuj link",
+      "newMilestone": "Nowy kamień milowy"
     },
     "raidLog": {
       "title": "Log RAID",
@@ -12582,6 +12595,55 @@
       "loading": "Ładowanie predykcji…",
       "empty": "Brak inicjatyw o wysokim ryzyku — wszystko w normie.",
       "suggestedActions": "Sugerowane działania"
+    },
+    "control": {
+      "columns": {
+        "title": "Interwencja",
+        "status": "Status",
+        "owner": "Właściciel",
+        "authority": "Osoba zatwierdzająca",
+        "slaAt": "Termin weryfikacji"
+      },
+      "signalColumns": {
+        "title": "Sygnał",
+        "rule": "Rodzaj",
+        "source": "Źródło",
+        "severity": "Ważność",
+        "occurrences": "Wystąpienia",
+        "updatedAt": "Aktualizacja"
+      },
+      "actions": {
+        "addSignal": "Dodaj sygnał",
+        "prepareIntervention": "Przygotuj interwencję"
+      }
+    },
+    "work": {
+      "columns": {
+        "title": "Element pracy",
+        "kind": "Rodzaj",
+        "status": "Status",
+        "owner": "Właściciel / osoba decyzyjna",
+        "dueAt": "Termin / SLA"
+      }
+    },
+    "resources": {
+      "columns": {
+        "person": "Osoba / zespół / rola",
+        "period": "Okres",
+        "availability": "Dostępność",
+        "demand": "Przydzielone",
+        "remaining": "Pozostałe",
+        "load": "Zakres obciążenia",
+        "skillMatch": "Dopasowanie",
+        "affectedWork": "Dotknięta praca",
+        "cost": "Koszt / prognoza",
+        "conflict": "Konflikt",
+        "freshness": "Świeżość",
+        "nextAction": "Następne działanie"
+      },
+      "actions": {
+        "proposeAllocation": "Zaproponuj przydział"
+      }
     }
   },
   "benefits": {
