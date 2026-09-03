@@ -1,6 +1,6 @@
 # CODEX DAY 302 — prawy panel Idei i Notatnika
 
-Stan roboczy: R1–R3 wykonane.
+Stan roboczy: R1–R4 wykonane.
 
 ## §0 — baza
 
@@ -30,6 +30,19 @@ Dodano jeden komponent dla kontekstów `idea` i `notebook` oraz jedną flagę `f
 
 Pułapki §0.2d (a)–(d) nie leżą na ścieżce czysto frontendowego testu flagi: pakiet nie importuje Gateway, middleware, bazy ani auth. Pułapka (e) jest wyłączona konstrukcją: wrapper nie jest podłączony do żadnego produkcyjnego konsumenta, flaga jest default OFF, komponent używa kanonicznego `ArtifactRightPanel`, a test dowodzi niezmienionego legacy DOM przy OFF.
 
+## R4 — kadry prototypu
+
+Kanoniczne narzędzie wykonało 16/16 kadrów (cztery ekrany × PL/EN × light/dark), wszystkie z jawnym `ff_idea_notebook_right_panel_prototype=1`, pełnym zestawem flag rozwijania i bez domyślnego kliku. Wszystkie 16 obejrzano osobno. Sumy SHA-256: `/private/tmp/cx-day302-panel-idei-artefakty/kadry-sha256.txt`.
+
+| Ekran | PL light/dark | EN light/dark | Co widać | Czego brakuje |
+|---|---|---|---|---|
+| `ideas-teresa-panel` | poprawna para motywów | poprawna para motywów | wspólna powłoka Idei, sześć sekcji, akcje i właściwości rozwinięte | brak realnego centrum i danych relacji; to izolowany prototyp |
+| `mywork-idea-inspector-lekki` | poprawna para motywów | poprawna para motywów | identyczny komponent Idei jak wyżej | kadr jest celowo duplikatem treści pierwszego ekranu; dowodzi wspólnej powłoki, nie integracji trasy |
+| `mywork-notebook-rail-speca` | poprawna para motywów | poprawna para motywów | ta sama powłoka z kontekstem i18n Notatnika | brak realnego edytora i danych; prototyp nie jest podpięty do bieżącego raila |
+| `notatnik-centrum-mysli` | poprawna para motywów | poprawna para motywów | identyczny komponent Notatnika jak wyżej | kadr jest celowo duplikatem treści drugiego ekranu; brak dowodu produkcyjnego montażu |
+
+Każda para light/dark różni się obrazem i czytelnie zmienia tokeny powierzchni. PL/EN zmienia tytuły, akcje, właściwości i puste komunikaty. Harness raportuje 0 błędów konsoli po wymuszeniu query. Jednocześnie łańcuch przodków kończy się na `PrototypeHarness` w `dev-render/main.tsx`, a nie na produkcyjnych `IdeaContextPanel`/`NotebookContextPanel`/`NotebookRightRail`; kadry są dowodem projektu wizualnego, nie dowodem migracji ani realnej trasy.
+
 ## Korekty wobec instrukcji
 
 - Cztery ekrany harnessu istnieją zgodnie z tezą.
@@ -37,5 +50,5 @@ Pułapki §0.2d (a)–(d) nie leżą na ścieżce czysto frontendowego testu fla
 
 ## Twierdzenia niezweryfikowane
 
-- Kadry i odbiór §18.1 nie są jeszcze wykonane.
+- Odbiór §18.1 nie jest jeszcze wykonany.
 - Gałąź nie jest scalona i flaga nie jest włączona.
