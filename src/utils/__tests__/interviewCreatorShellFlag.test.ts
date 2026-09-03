@@ -27,24 +27,24 @@ describe('isInterviewCreatorShellEnabled (DEC-2026-08-25-67)', () => {
     setLocationSearch('');
   });
 
-  it('defaults to OFF everywhere when no override exists', () => {
-    expect(isInterviewCreatorShellEnabled()).toBe(false);
-  });
-
-  it('honours the explicit local preview override', () => {
-    window.localStorage.setItem(KEYS.localStorage, '1');
+  it('defaults to ON everywhere when no override exists (DEC 03.09 wieczór A4)', () => {
     expect(isInterviewCreatorShellEnabled()).toBe(true);
   });
 
-  it('lets the URL override localStorage', () => {
-    window.localStorage.setItem(KEYS.localStorage, '1');
-    setLocationSearch(`?${KEYS.query}=0`);
+  it('honours an explicit local override that disables it (awaryjny wyłącznik CLAUDE.md §8)', () => {
+    window.localStorage.setItem(KEYS.localStorage, '0');
     expect(isInterviewCreatorShellEnabled()).toBe(false);
   });
 
-  it('fails closed for unknown values', () => {
+  it('lets the URL override localStorage', () => {
+    window.localStorage.setItem(KEYS.localStorage, '0');
+    setLocationSearch(`?${KEYS.query}=1`);
+    expect(isInterviewCreatorShellEnabled()).toBe(true);
+  });
+
+  it('falls through to the ON default for unknown values (no longer "fails closed" — the default itself is now ON)', () => {
     window.localStorage.setItem(KEYS.localStorage, 'unexpected');
-    expect(isInterviewCreatorShellEnabled()).toBe(false);
+    expect(isInterviewCreatorShellEnabled()).toBe(true);
   });
 
   it('keeps the three rollout keys stable', () => {
