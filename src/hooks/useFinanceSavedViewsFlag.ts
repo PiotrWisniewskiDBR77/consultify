@@ -19,9 +19,10 @@ const FINANCE_SAVED_VIEWS_FLAG: FeatureFlag = {
   description:
     'Włącza samodzielny panel zapisanych widoków Finance v3 (saved-views.routes.ts, 6 ' +
     'endpointów): widoczność PERSONAL/TEAM, kolejność/przypięcie/ukrycie kolumn, zapis i ' +
-    'udostępnianie widoku linkiem. OFF = komponent nieosiągalny — dostępny wyłącznie przez ' +
-    'dev-render do akceptu Piotra na zrzutach (CLAUDE.md #7). Domyślnie OFF.',
-  defaultValue: false,
+    'udostępnianie widoku linkiem. DEC 03.09 wieczór (A2, ' +
+    'docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 — 6 paneli ' +
+    'Finansów) — domyślnie ON. Override OFF nadal możliwy (allowLocalOverride).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

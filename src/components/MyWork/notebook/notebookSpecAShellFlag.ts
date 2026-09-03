@@ -1,11 +1,21 @@
 /**
  * Notebook SPEC-A shell rollout flag.
  *
- * The accepted Notebook remains the fail-closed default. The shared shell can
- * be enabled only for an explicit review session (query, local override, or
- * build-time environment), and malformed/unavailable inputs resolve to false.
+ * DEC 03.09 wieczór (R-11, MYW-NBK-CORE-001,
+ * docs/program/DECYZJE_WLASCICIELA_P0P1_20260904.md wiersz 39 — "Włączamy
+ * domyślnie zaakceptowany widok Notatnika (Praca/Kontekst)? TAK"): widok
+ * przeszedł odbiór na 8/8 zrzutach (light/dark × oba stany) i 31/31
+ * plików/82/82 nazw testów Notatnika PASS
+ * (docs/program/waves/WAVE_03_ACCEPTANCE/modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md
+ * wiersz MYW-NBK-CORE-001) — jedyne, czego brakowało, to zgoda właściciela
+ * na zmianę defaultu, nie kod. Flaga jest teraz domyślnie ON.
+ *
+ * Malformed/unavailable inputs still resolve to this default (ON), not to a
+ * hardcoded `false` — see `isNotebookSpecAShellEnabled()` below. An explicit
+ * local override can still turn it OFF (query, local override, or build-time
+ * environment) — awaryjny wyłącznik CLAUDE.md §8.
  */
-export const ENABLE_NOTEBOOK_SPEC_A_SHELL = false;
+export const ENABLE_NOTEBOOK_SPEC_A_SHELL = true;
 
 const QUERY_KEY = 'ff_notebookSpecAShell';
 const STORAGE_KEY = 'ff.ENABLE_NOTEBOOK_SPEC_A_SHELL';

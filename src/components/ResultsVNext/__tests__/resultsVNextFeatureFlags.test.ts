@@ -2,14 +2,19 @@
  * @vitest-environment jsdom
  *
  * Unit tests for `isResultsVNextFlagEnabled` (RN-G2 registry flags:
- * kpiRegistry / roiRegistry / okrRegistry).
+ * kpiRegistry / roiRegistry / okrRegistry / resultsSearch / attentionEntry).
  *
  * kpiRegistry flipped OFF -> ON (demo/stage/dev; public production stays
  * OFF) on 2026-08-27 — Piotr accepted the KPI registry on dev-render
  * screenshots (DEC-2026-08-26-112 flagged it "GOTOWE DO WŁĄCZENIA", decision
  * deferred to the owner's visual odbiór — that odbiór has now happened).
- * roiRegistry/okrRegistry are untouched by this flip and stay default OFF
- * everywhere — neither domain has had its dev-render odbiór yet.
+ *
+ * DEC 03.09 wieczór (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
+ * wiersz A1 — "14 ekranów Wyników: KPI, OKR, ROI, wyszukiwarka, uwaga"):
+ * roiRegistry/okrRegistry/resultsSearch/attentionEntry join kpiRegistry in the
+ * same D-D default-on shape (ON off public production, OFF on it).
+ * managementReportEntry/resultsLegacyArchive are NOT part of this decision —
+ * they stay default OFF everywhere.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -90,36 +95,40 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
-  describe('roiRegistry / okrRegistry — untouched by the kpiRegistry flip', () => {
-    it('roiRegistry still defaults OFF everywhere', () => {
-      expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(false);
-      setLocation({ hostname: 'consultify.ai' });
-      expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(false);
-    });
-
-    it('okrRegistry still defaults OFF everywhere', () => {
-      expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(false);
-      setLocation({ hostname: 'consultify.ai' });
-      expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(false);
-    });
-
-    it('roiRegistry/okrRegistry still honour explicit query/localStorage overrides', () => {
-      window.localStorage.setItem(RESULTS_VNEXT_FLAG_KEYS.roiRegistry.localStorage, '1');
+  describe('roiRegistry / okrRegistry / resultsSearch / attentionEntry — DEC 03.09 wieczór A1 default-on', () => {
+    it('roiRegistry defaults ON off public production, OFF on it', () => {
       expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(true);
-      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.okrRegistry.query}=1` });
+      setLocation({ hostname: 'consultify.ai' });
+      expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(false);
+    });
+
+    it('okrRegistry defaults ON off public production, OFF on it', () => {
       expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(true);
+      setLocation({ hostname: 'consultify.ai' });
+      expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(false);
     });
-  });
 
-  describe('resultsSearch — owner-contract Menu 2 entry', () => {
-    it('stays OFF by default and turns ON only with an explicit carrier', () => {
-      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(false);
-      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.resultsSearch.query}=1` });
+    it('resultsSearch defaults ON off public production, OFF on it', () => {
       expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(true);
+      setLocation({ hostname: 'consultify.ai' });
+      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(false);
+    });
+
+    it('attentionEntry defaults ON off public production, OFF on it', () => {
+      expect(isResultsVNextFlagEnabled('attentionEntry')).toBe(true);
+      setLocation({ hostname: 'consultify.ai' });
+      expect(isResultsVNextFlagEnabled('attentionEntry')).toBe(false);
+    });
+
+    it('roiRegistry/okrRegistry still honour explicit query/localStorage "0" overrides despite the ON default', () => {
+      window.localStorage.setItem(RESULTS_VNEXT_FLAG_KEYS.roiRegistry.localStorage, '0');
+      expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(false);
+      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.okrRegistry.query}=0` });
+      expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(false);
     });
   });
 
-  describe('managementReportEntry — E.1 entry point to the existing Management Reports screen', () => {
+  describe('managementReportEntry — E.1 entry point to the existing Management Reports screen (NOT part of DEC 03.09 A1)', () => {
     it('stays OFF by default and turns ON only with an explicit carrier', () => {
       expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(false);
       setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.managementReportEntry.query}=1` });

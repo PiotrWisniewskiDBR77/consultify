@@ -22,10 +22,10 @@ const FINANCE_LINEAGE_NAVIGATOR_FLAG: FeatureFlag = {
     'Włącza samodzielny nawigator powiązań Finance v3 (lineage-navigator.routes.ts, 2 ' +
     'endpointy): kompaktowy breadcrumb łańcucha przodków (Statement pack → Analysis → ' +
     'Baseline → Scenario → Valuation) z okresem/statusem/aktualnością każdego elementu, plus ' +
-    'panel „Powiązane" z licznikami i akcją „+ Nowy" per typ. Zamyka OWN-FIN-007/022. OFF = ' +
-    'komponent nieosiągalny — dostępny wyłącznie przez dev-render do akceptu Piotra na ' +
-    'zrzutach (CLAUDE.md #7). Domyślnie OFF.',
-  defaultValue: false,
+    'panel „Powiązane" z licznikami i akcją „+ Nowy" per typ. Zamyka OWN-FIN-007/022. DEC ' +
+    '03.09 wieczór (A2, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 ' +
+    '— 6 paneli Finansów) — domyślnie ON. Override OFF nadal możliwy (allowLocalOverride).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

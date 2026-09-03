@@ -178,14 +178,20 @@ function writeLocalStorage(key: string, value: boolean): void {
 }
 
 /**
- * True when the given Results Next registry is enabled. Default OFF for
- * roiRegistry/okrRegistry (no dev-render odbiór yet). kpiRegistry flipped to
- * the D-D default-on set on 2026-08-27 (Piotr accepted the KPI registry on
- * dev-render screenshots — DEC-2026-08-26-112 flagged it "GOTOWE DO
- * WŁĄCZENIA", decision deferred to the owner's visual odbiór per CLAUDE.md
- * #7; that odbiór has now happened) — same shape as the `threePairs` /
- * `deviationDiagnostics` promotions in `resultsFeatureFlags.ts`: ON on
- * demo/stage/dev, OFF on public production via `resultsVNextHostAllowsDefaultOn`.
+ * True when the given Results Next registry is enabled. DEC 03.09 wieczór
+ * (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A1;
+ * "14 ekranów Wyników — KPI, OKR, ROI, wyszukiwarka, uwaga" — zatwierdzone
+ * 02.09, potwierdzone 03.09 wieczór): kpiRegistry/roiRegistry/okrRegistry/
+ * resultsSearch/attentionEntry są teraz WSZYSTKIE w D-D default-on — ta sama
+ * konwencja co `threePairs`/`deviationDiagnostics` w `resultsFeatureFlags.ts`:
+ * ON na demo/stage/dev, OFF na publicznej produkcji (`resultsVNextHostAllowsDefaultOn`
+ * / `isPublicProductionHost`). Uwaga: moduł Wyników i tak nie jest w rdzeniu
+ * VTS pilota na consultify.ai (`publicProduction.ts` PUBLIC_PRODUCTION_CORE_MENU_IDS
+ * — Wyniki tam nie występują, więc menu jest zablokowane niezależnie od tej flagi).
+ * `managementReportEntry` i `resultsLegacyArchive` NIE są objęte tą decyzją —
+ * nie były wymienione w wierszu A1 (5 nazwanych domen, nie "wszystkie flagi
+ * pliku") i `resultsLegacyArchive` ma jawny, osobny wyjątek (linie niżej —
+ * czeka na odrębny odbiór właściciela na zrzutach). Zostają default OFF.
  */
 export function isResultsVNextFlagEnabled(
   flag: ResultsVNextFlag,
@@ -215,21 +221,26 @@ export function isResultsVNextFlagEnabled(
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // kpiRegistry (DEC-2026-08-26-112, owner accept 2026-08-27): dołączony do
-  // D-D default-on (demo/stage/dev ON, public production OFF). Opt-out:
-  // ?ff_resultsVNextKpi=0. roiRegistry/okrRegistry stay OFF below — neither
-  // domain has had its dev-render screenshot round + Piotr's odbiór yet.
-  if (flag === 'kpiRegistry') {
+  // DEC 03.09 wieczór (A1): kpiRegistry/roiRegistry/okrRegistry/resultsSearch/
+  // attentionEntry — wszystkie pięć nazwanych domen "14 ekranów Wyników" —
+  // dołączone do D-D default-on (demo/stage/dev ON, public production OFF).
+  // Opt-out per flaga: ?ff_resultsVNext<Flag>=0.
+  if (
+    flag === 'kpiRegistry' ||
+    flag === 'roiRegistry' ||
+    flag === 'okrRegistry' ||
+    flag === 'resultsSearch' ||
+    flag === 'attentionEntry'
+  ) {
     return resultsVNextHostAllowsDefaultOn(
       typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
     );
   }
-  if (flag === 'resultsSearch') return false;
+  // Poza zakresem DEC 03.09 wieczór A1 — nie były nazwane w decyzji, zostają
+  // OFF. managementReportEntry: brak jeszcze dev-render odbioru. resultsLegacyArchive:
+  // jawnie wyjęty spod profilu demo wyżej, czeka na odrębny odbiór.
   if (flag === 'managementReportEntry') return false;
-  if (flag === 'attentionEntry') return false;
   if (flag === 'resultsLegacyArchive') return false;
-  // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
-  // dev) reads OFF until an explicit opt-in.
   return false;
 }
 
