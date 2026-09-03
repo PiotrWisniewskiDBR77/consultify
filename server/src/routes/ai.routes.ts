@@ -35,6 +35,11 @@ import {
 } from '../services/ai/runtimeCitationVerification.js';
 // Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
 // surowym `process.env.ENABLE_TERESA_MINDMAP` w tym pliku.
+import {
+  mapProviderError,
+  toSafeErrorBody,
+  toSafeSseFrame,
+} from '../services/ai/providerErrorMapper.js';
 import { isTeresaMindmapSearchEnabled } from '../services/ai/tools/orgRetrievalShared.js';
 import {
   isDbr77ProductTruthQuery,
@@ -393,14 +398,13 @@ async function ensureAiProviderAndAccess(
        LIMIT 1`
   ));
   if (!hasEnvProvider && !hasDbProvider) {
-    return {
-      status: 500,
-      body: {
-        error:
-          'No LLM provider configured. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY, or configure a provider.',
-        code: 'NO_LLM_PROVIDER',
-      },
-    };
+    // CHAT-OWN-016: konfiguracja to sprawa administratora — uzytkownik nie
+    // dostaje nazw zmiennych srodowiskowych ani tabel. Szczegol idzie do logu.
+    logger.error(
+      '[AI] No LLM provider configured. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY, or configure a row in llm_providers.'
+    );
+    const mapped = mapProviderError({ code: 'NO_LLM_PROVIDER' }, { legacyCode: 'NO_LLM_PROVIDER' });
+    return { status: mapped.httpStatus, body: toSafeErrorBody(mapped) };
   }
 
   const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
@@ -432,7 +436,11 @@ function mapLlmCallError(error: any): { status: number; body: Record<string, unk
       },
     };
   }
-  return { status: 502, body: { error: 'LLM call failed', code: 'LLM_CALL_FAILED' } };
+  // CHAT-OWN-016: rozroznienie przypadkow dostawcy + zero surowej tresci.
+  // `legacyCode` zachowuje 'LLM_CALL_FAILED' na drucie dla zgodnosci wstecz.
+  const mapped = mapProviderError(error, { legacyCode: 'LLM_CALL_FAILED' });
+  logger.error('[AI] LLM call failed', { errorCode: mapped.errorCode, detail: mapped.logMessage });
+  return { status: mapped.httpStatus, body: toSafeErrorBody(mapped) };
 }
 
 router.post(
@@ -2235,12 +2243,17 @@ router.post(
         )) as { content?: string } | null;
         if (!partial?.content) {
           res.write(
-            `data: ${JSON.stringify({
-              type: 'error',
-              code: 'PARTIAL_RECOVERY_NOT_FOUND',
-              message: 'Interrupted response could not be resumed.',
-              sessionId: streamSessionId,
-            })}\n\n`
+            // CHAT-OWN-016: dotad ramka niosla tylko `message`, a klient SSE
+            // rozpoznaje blad po polu `error` — przerwany strumien ginal w ciszy.
+            `data: ${JSON.stringify(
+              toSafeSseFrame(
+                mapProviderError(
+                  { code: 'PARTIAL_RECOVERY_NOT_FOUND' },
+                  { legacyCode: 'PARTIAL_RECOVERY_NOT_FOUND' }
+                ),
+                { type: 'error', sessionId: streamSessionId }
+              )
+            )}\n\n`
           );
           streamCompleted = true;
           clearInterval(heartbeatInterval);
@@ -2332,8 +2345,9 @@ router.post(
       } catch (e: any) {
         res.write(
           `data: ${JSON.stringify({
-            error: `E2E stream failed: ${e?.message || String(e)}`,
+            error: mapProviderError(e, { legacyCode: 'E2E_STREAM_ERROR' }).safeMessage,
             code: 'E2E_STREAM_ERROR',
+            errorCode: mapProviderError(e, { legacyCode: 'E2E_STREAM_ERROR' }).errorCode,
           })}\n\n`
         );
         res.write('data: [DONE]\n\n');
@@ -2456,12 +2470,15 @@ router.post(
       ));
 
       if (!hasEnvProvider && !hasDbProvider) {
+        logger.error(
+          '[AI Stream] No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.'
+        );
         res.write(
-          `data: ${JSON.stringify({
-            error:
-              'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
-            code: 'NO_LLM_PROVIDER',
-          })}\n\n`
+          `data: ${JSON.stringify(
+            toSafeSseFrame(
+              mapProviderError({ code: 'NO_LLM_PROVIDER' }, { legacyCode: 'NO_LLM_PROVIDER' })
+            )
+          )}\n\n`
         );
         emitMinimalTrustBundle('', { mode: 'blocked', reason: 'no_llm_provider' });
         res.write('data: [DONE]\n\n');
@@ -2560,14 +2577,23 @@ router.post(
           );
         } else {
           res.write(
-            `data: ${JSON.stringify({
-              type: 'error',
-              code: partialLookupFailed
-                ? 'PARTIAL_RECOVERY_UNAVAILABLE'
-                : 'PARTIAL_RECOVERY_NOT_FOUND',
-              message: 'Interrupted response could not be resumed.',
-              sessionId: streamSessionId,
-            })}\n\n`
+            `data: ${JSON.stringify(
+              toSafeSseFrame(
+                mapProviderError(
+                  {
+                    code: partialLookupFailed
+                      ? 'PARTIAL_RECOVERY_UNAVAILABLE'
+                      : 'PARTIAL_RECOVERY_NOT_FOUND',
+                  },
+                  {
+                    legacyCode: partialLookupFailed
+                      ? 'PARTIAL_RECOVERY_UNAVAILABLE'
+                      : 'PARTIAL_RECOVERY_NOT_FOUND',
+                  }
+                ),
+                { type: 'error', sessionId: streamSessionId }
+              )
+            )}\n\n`
           );
           streamCompleted = true;
           return res.end();
@@ -5125,6 +5151,18 @@ router.post(
           (/invalid_api_key|incorrect api key/i.test(msg)
             ? 'INVALID_API_KEY'
             : 'AI_PIPELINE_ERROR');
+        // CHAT-OWN-016: `msg` to SUROWA tresc dostawcy (nazwy modeli, adresy,
+        // tekst wylacznika, echo klucza). Zostaje w logu i w sladzie run-a;
+        // do klienta idzie wylacznie `safeMessage` + kanoniczny `errorCode`.
+        const mappedPipelineErr = mapProviderError(
+          { code, message: msg, status: (errObj as any)?.status },
+          { legacyCode: code }
+        );
+        logger.error('[AI Stream] Pipeline error', {
+          errorCode: mappedPipelineErr.errorCode,
+          code,
+          detail: mappedPipelineErr.logMessage,
+        });
 
         if (chatRunId) {
           try {
@@ -5143,12 +5181,12 @@ router.post(
 
         if (isClientConnected && !res.destroyed) {
           res.write(
-            `data: ${JSON.stringify({
-              error: msg,
-              code,
-              ...(providerStarts !== undefined ? { providerStarts } : {}),
-              ...(maxProviderStarts !== undefined ? { maxProviderStarts } : {}),
-            })}\n\n`
+            `data: ${JSON.stringify(
+              toSafeSseFrame(mappedPipelineErr, {
+                ...(providerStarts !== undefined ? { providerStarts } : {}),
+                ...(maxProviderStarts !== undefined ? { maxProviderStarts } : {}),
+              })
+            )}\n\n`
           );
           res.write('data: [DONE]\n\n');
         }
@@ -6296,6 +6334,15 @@ router.post(
         const code = /invalid_api_key|incorrect api key/i.test(msg)
           ? 'INVALID_API_KEY'
           : 'AI_STREAM_ERROR';
+        // CHAT-OWN-016: dotad `error: msg` wysylalo do przegladarki surowa tresc
+        // wyjatku dostawcy. Teraz klasyfikacja + bezpieczny komunikat; `code`
+        // zostaje bez zmian (kontrakt drutu), `errorCode` jest kanoniczny.
+        const mappedStreamErr = mapProviderError(err, { legacyCode: code });
+        logger.error('[AI Stream] Provider error', {
+          errorCode: mappedStreamErr.errorCode,
+          code,
+          detail: mappedStreamErr.logMessage,
+        });
 
         if (chatRunId) {
           try {
@@ -6313,12 +6360,12 @@ router.post(
         }
 
         res.write(
-          `data: ${JSON.stringify({
-            error: msg,
-            code,
-            sessionId: streamSessionId,
-            canResume: accumulatedContent.length > 0,
-          })}\n\n`
+          `data: ${JSON.stringify(
+            toSafeSseFrame(mappedStreamErr, {
+              sessionId: streamSessionId,
+              canResume: accumulatedContent.length > 0,
+            })
+          )}\n\n`
         );
         // Keep SSE protocol consistent for the client parser
         res.write('data: [DONE]\n\n');
@@ -6413,10 +6460,14 @@ router.get(
         organizationId: req.organizationId,
         error: err instanceof Error ? err.message : String(err),
       });
-      return res.status(503).json({
-        error: 'Partial response discovery unavailable',
-        code: 'PARTIAL_RECOVERY_UNAVAILABLE',
-      });
+      return res.status(503).json(
+        toSafeErrorBody(
+          mapProviderError(
+            { code: 'PARTIAL_RECOVERY_UNAVAILABLE' },
+            { legacyCode: 'PARTIAL_RECOVERY_UNAVAILABLE' }
+          )
+        )
+      );
     }
   })
 );
@@ -6510,10 +6561,11 @@ router.post(
     const refinedText = String(result?.content || result?.text || '').trim();
 
     if (!refinedText) {
-      return res.status(502).json({
-        error: 'LLM returned empty response',
-        code: 'EMPTY_LLM_RESPONSE',
-      });
+      return res.status(502).json(
+        toSafeErrorBody(
+          mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
+        )
+      );
     }
 
     return res.json({ text: refinedText });
@@ -6598,10 +6650,11 @@ router.post(
     const responseText = String(result?.content || result?.text || '').trim();
 
     if (!responseText) {
-      return res.status(502).json({
-        error: 'LLM returned empty response',
-        code: 'EMPTY_LLM_RESPONSE',
-      });
+      return res.status(502).json(
+        toSafeErrorBody(
+          mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
+        )
+      );
     }
 
     return res.json({ response: responseText });
@@ -6661,7 +6714,11 @@ router.post(
     if (!text) {
       return res
         .status(502)
-        .json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
+        .json(
+          toSafeErrorBody(
+            mapProviderError({ code: 'EMPTY_LLM_RESPONSE' }, { legacyCode: 'EMPTY_LLM_RESPONSE' })
+          )
+        );
     }
 
     // ★ 2026-07-24 — REGRESJA R1: slad audytowy AI. Noc przepiela wywolania
