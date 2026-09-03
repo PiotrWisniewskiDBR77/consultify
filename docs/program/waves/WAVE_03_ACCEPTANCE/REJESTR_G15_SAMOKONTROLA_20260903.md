@@ -53,3 +53,5 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 | 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts` | 0 | 0 | 0 | plik bez wykonanych przypadków | — | 0 |
 | 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgOpsWorkerMounted.pg.test.ts` | 5 | 5 PASS | 5 PASS | bez zmiany | — | 5 PASS |
 | 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgPinnedConsumersMounted.pg.test.ts` | 4 | 4 PASS | 4 PASS | bez zmiany | — | 4 PASS |
+| 02_INTERVIEW | `src/components/Interview/__tests__` (16 plików; szczegóły w `m02-*-front.json`) | 84 | 55 PASS, 4 FAIL (59 przypadków) | 80 PASS, 4 FAIL | 4 ZASTANE; 25 przypadków dodanych | — | 80 PASS, 4 FAIL |
+| 02_INTERVIEW | `server/src/{services/interview,services/interviewCandidate,routes/interviewDelivery}/__tests__` (10 plików; szczegóły w `m02-*-server.json`) | 63 | 43 PASS, 4 FAIL, 16 pending | 44 PASS, 3 FAIL, 16 pending | 3 ZASTANE; 1 NAPRAWIONA DZIŚ | — | 44 PASS, 3 FAIL, 16 pending |

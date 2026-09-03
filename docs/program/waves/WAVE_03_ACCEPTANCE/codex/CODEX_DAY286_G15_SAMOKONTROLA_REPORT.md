@@ -46,9 +46,14 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | Moduł | Plików | Testów na markerze | Zielone | ZASTANE | NOWE naprawione | Pozostałe | Gotowe zdanie G15 |
 | --- | ---: | ---: | ---: | --- | --- | --- | --- |
 | 01_ORGANIZATION | 11 | 22 | 22 | 0 | 0 | 0; trzy pliki obecne, lecz bez wykonanych przypadków | `G15 PASS — 11 plików, 22/22 przypadki zielone na 35afcb15fd; porównanie z f65c4ff6a0 wykazało 1 czerwień naprawioną dziś i 2 nowe przypadki; brak nowych czerwieni.` |
+| 02_INTERVIEW | 26 | 147 | 124 | 7 (4 front, 3 serwer) | 0 | 16 oczekujących testów DB; 1 czerwień naprawiona dziś | `G15 PARTIAL — 26 plików: marker 124 PASS, 7 FAIL potwierdzonych także na f65c4ff6a0, 16 pending; jedna czerwień naprawiona dziś, brak czerwieni NOWYCH; brak tabeli licencji uniemożliwia bezpieczną zmianę 7 zastanych kontraktów.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
 ### Pułapki — 01_ORGANIZATION
 
 Front jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`); atrapa `fetch` nie stanowi podstawy żadnej asercji sieciowej w tych czterech przypadkach. Pakiet serwera uruchomiono ponownie z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6290/cx286 JWT_SECRET=... --retry=0`, z cwd `server/`. Pierwsze przebiegi z `RUN_DB_TESTS=0` dały przypadki oczekujące i nie są zaliczone jako dowód. Para RealPG baza/marker jest podstawą klasyfikacji.
+
+### Pułapki — 02_INTERVIEW
+
+Front uruchomiono z `RUN_DB_TESTS=0 MOCK_DB=true`; cztery czerwienie dotyczą renderowanego kontraktu dostępności, nie wyniku `fetch.ok`. Serwer uruchomiono z cwd `server/`, pełnym env RealPG i `--retry=0`; 16 przypadków pozostało pending mimo `RUN_DB_TESTS=1`, więc nie zaliczono ich jako zielonych. Te same pełne nazwy siedmiu czerwieni występują na bazie i markerze. Brakująca tabela licencji oznacza, że pliki pozostały tylko do odczytu.
