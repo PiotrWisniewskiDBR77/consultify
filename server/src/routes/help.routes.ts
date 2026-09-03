@@ -16,44 +16,76 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+// Reproducible from server/migrations/20260903_help_categories.sql for
+// help_categories — the only one of these four tables with no migration
+// (help_articles/help_playbooks/help_events already have one: see
+// 255_help_system.sql / 551_help_playbooks_onboarding.sql /
+// 000_initdb_core_tables.sql). This runtime DDL is a compatibility fallback
+// for DBs that predate that migration, kept in sync with it. TIMESTAMPTZ
+// (not DATETIME): DbPromise's `run()` adapts DATETIME->TIMESTAMP for
+// Postgres via adaptQuery, but the type is written explicitly here so it
+// stays correct even if this call is ever moved to a DB method that
+// bypasses that adapter (see commit 5b5c0e3849 —
+// emailVerificationService hit exactly that via DbPromise.exec(), which
+// does not adaptQuery, and failed with Postgres 42704 "type \"datetime\"
+// does not exist").
+//
+// NOTE (measured 2026-09-03, out of scope for this fix): help_articles and
+// help_events already exist via migration with DIFFERENT column shapes than
+// declared here (migrated help_articles has `category`/`content`, not this
+// file's `category_id`/`body`/`status`; migrated help_events has no
+// `organization_id`/`article_id`/`metadata`). Because these tables already
+// exist, the CREATE TABLE IF NOT EXISTS below is a no-op for them — the
+// queries elsewhere in this file that reference the missing columns fail
+// silently (caught by their own try/catch) on a real Postgres DB. Flagged
+// separately; not part of this P0 DATETIME-reproducibility fix.
 let ensured = false;
-async function ensureHelpSchema() {
+async function ensureHelpSchema(): Promise<void> {
   if (ensured) return;
-  ensured = true;
+
   try {
-    await dbRun(
+    const categoriesResult = await dbRun(
       `CREATE TABLE IF NOT EXISTS help_categories (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         sort_order INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )`,
       []
     );
-    await dbRun(
+    if (!categoriesResult?.success)
+      throw new Error(categoriesResult?.error || 'help_categories table creation failed');
+
+    const articlesResult = await dbRun(
       `CREATE TABLE IF NOT EXISTS help_articles (
         id TEXT PRIMARY KEY,
         category_id TEXT,
         title TEXT NOT NULL,
         body TEXT,
         status TEXT DEFAULT 'published',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )`,
       []
     );
-    await dbRun(
+    if (!articlesResult?.success)
+      throw new Error(articlesResult?.error || 'help_articles table creation failed');
+
+    const playbooksResult = await dbRun(
       `CREATE TABLE IF NOT EXISTS help_playbooks (
         id TEXT PRIMARY KEY,
         key TEXT,
         title TEXT,
         content TEXT,
         status TEXT DEFAULT 'published',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )`,
       []
     );
-    await dbRun(
+    if (!playbooksResult?.success)
+      throw new Error(playbooksResult?.error || 'help_playbooks table creation failed');
+
+    const eventsResult = await dbRun(
       `CREATE TABLE IF NOT EXISTS help_events (
         id TEXT PRIMARY KEY,
         user_id TEXT,
@@ -61,14 +93,19 @@ async function ensureHelpSchema() {
         event_type TEXT,
         article_id TEXT,
         metadata TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )`,
       []
     );
+    if (!eventsResult?.success)
+      throw new Error(eventsResult?.error || 'help_events table creation failed');
+
+    ensured = true;
   } catch (e) {
-    logger.warn('[Help] ensureHelpSchema failed (continuing)', {
+    logger.error('[Help] ensureHelpSchema failed', {
       error: (e as Error)?.message || e,
     });
+    throw e;
   }
 }
 
