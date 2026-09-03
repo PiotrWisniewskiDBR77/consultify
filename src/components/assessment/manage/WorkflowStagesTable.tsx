@@ -493,6 +493,13 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
+              // axe scrollable-region-focusable: this popover is a real
+              // keyboard-scrollable region (max-h-80 overflow-y-auto) with no
+              // way to reach it via keyboard — tabIndex + role="region" +
+              // aria-label fix it without disabling scroll.
+              tabIndex={0}
+              role="region"
+              aria-label={t('assessment.workflowStages.requirements.title', 'Gate Requirements')}
               className="absolute left-0 top-full mt-2 z-50 w-80 max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-xl p-3"
             >
               <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
@@ -547,7 +554,11 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
                           {req.label}
                         </div>
                         {req.reason && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          // axe color-contrast: text-slate-500 measures 4.30-4.46:1
+                          // (< 4.5) against all three possible badge backgrounds
+                          // here (danger-50/emerald-50/amber-50) — slate-600 fixes
+                          // all three at once (6.85-7.11:1); dark:slate-400 unaffected.
+                          <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                             {req.reason}
                           </div>
                         )}

@@ -7395,7 +7395,8 @@
         "target": "Poziom docelowy",
         "gap": "Luka",
         "evidence": "Stan dowodów",
-        "skips": "Pominięcia"
+        "skips": "Pominięcia",
+        "regionLabel": "Tabela macierzy osi — przewijana poziomo"
       },
       "evidence": {
         "evidenced": "Potwierdzono dowodami",

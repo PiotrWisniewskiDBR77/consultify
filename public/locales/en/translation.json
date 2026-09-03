@@ -8048,7 +8048,8 @@
         "target": "Target level",
         "gap": "Gap",
         "evidence": "Evidence state",
-        "skips": "Skipped questions"
+        "skips": "Skipped questions",
+        "regionLabel": "Axis matrix table — scrolls horizontally"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",

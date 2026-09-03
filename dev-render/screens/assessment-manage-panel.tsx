@@ -94,16 +94,36 @@ const MOCK_ELIGIBILITY = {
     assignedAreas: null,
     isOwner: true,
   },
+  // Mirrors the REAL shape returned by GET /assessment-workflow-v2/:id/eligibility
+  // (server/src/routes/assessment-workflow-v2.routes.ts ~L544-568: auth/role/dod/sod,
+  // keys 'auth'|'role'|'dod'|'sod' — NOT 'completion'/'confidence'). The previous
+  // mock used 'completion' here, which collided with WorkflowStagesTable's own
+  // hardcoded `key: 'completion'` DoD requirement (the component correctly
+  // filters out the API's `key: 'dod'` duplicate, but 'completion' never matched
+  // that filter) — produced a real "two children with the same key" React
+  // warning that a correct mock never would have surfaced.
   checks: [
     {
-      key: 'completion',
-      label: 'Definition of Done (DoD)',
+      key: 'auth',
+      label: 'Authenticated user',
       pass: true,
       severity: 'blocking' as const,
     },
     {
-      key: 'confidence',
-      label: 'Average confidence ≥ 3',
+      key: 'role',
+      label: 'Assessment role assigned',
+      pass: true,
+      severity: 'blocking' as const,
+    },
+    {
+      key: 'dod',
+      label: 'Definition of done (DoD)',
+      pass: true,
+      severity: 'blocking' as const,
+    },
+    {
+      key: 'sod',
+      label: 'Segregation of duties (SoD)',
       pass: true,
       severity: 'warning' as const,
     },
