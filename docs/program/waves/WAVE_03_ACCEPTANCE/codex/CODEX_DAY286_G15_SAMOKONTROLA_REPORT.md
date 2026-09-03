@@ -49,6 +49,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 02_INTERVIEW | 26 | 147 | 124 | 7 (4 front, 3 serwer) | 0 | 16 oczekujących testów DB; 1 czerwień naprawiona dziś | `G15 PARTIAL — 26 plików: marker 124 PASS, 7 FAIL potwierdzonych także na f65c4ff6a0, 16 pending; jedna czerwień naprawiona dziś, brak czerwieni NOWYCH; brak tabeli licencji uniemożliwia bezpieczną zmianę 7 zastanych kontraktów.` |
 | 03_TOOLS | 36 | 621 | 620 | 1 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: 36 plików, 620/621 PASS; ta sama pełna nazwa jednej czerwieni ToolCanvas występuje na f65c4ff6a0 i 35afcb15fd, brak czerwieni NOWYCH; serwerowe katalogi narzędzi pozostają do pomiaru.` |
 | 04_ASSESSMENT | 17 | 620 | 620 po korekcie kontraktu | 0 | 1 (`AssessmentLibraryTab.day178.empty-state`) | 0 | `G15 PARTIAL — ukierunkowany front: baza 608/608 PASS; marker przed korektą 619/620, po korekcie 620/620. NOWA czerwień była nieaktualną asercją wobec zatwierdzonego napisu produktu; serwerowe katalogi Assessment pozostają do pomiaru.` |
+| 05_INITIATIVES | 61 | 868 | 840 | 6 | 13 nierozstrzygniętych | 8 pending; 1 czerwień naprawiona dziś | `G15 FAIL — ukierunkowany front: marker 840 PASS, 19 FAIL, 8 pending. Para z f65c4ff6a0 dowodzi 13 czerwieni NOWYCH, 6 ZASTANYCH oraz 1 naprawionej dziś. Bezpiecznik initiativeRecordCanon 2/2 PASS. Brak wydanej tabeli licencji blokuje bezpieczną korektę nowych kontraktów/harnessu.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -67,3 +68,7 @@ Pakiet frontowy jest jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`, `--retry=0`). C
 ### Pułapki — 04_ASSESSMENT
 
 Pakiet frontowy jest jednostkowy i nie stanowi dowodu sieci/DB. Para JSON pokazała NOWĄ czerwień o dokładnej nazwie `AssessmentLibraryTab day178 empty-state render contract describes an empty static catalog without claiming a load failure`. Produkt na markerze renderuje zatwierdzony, uczciwy napis `Katalog metodyk jest pusty.`; zgodnie z imiennym wyjątkiem `Z40` uaktualniono dokładną asercję, bez jej osłabienia. Ukierunkowany przebieg po zmianie: 1/1 PASS. Serwer nie jest jeszcze zaliczony.
+
+### Pułapki — 05_INITIATIVES
+
+Pakiet jednostkowy uruchomiono identycznie po obu stronach z `RUN_DB_TESTS=0 MOCK_DB=true --retry=0`; klasyfikacja wynika z różnicy pełnych nazw, nie samych liczb. Trzy znane czerwienie `handleChatAction CREATE_INITIATIVE` są potwierdzone po obu stronach. Sześć testów `executionWorkResources` jest NOWYCH i pada, bo filtr `Execution Case` został przeniesiony do callbacku `onRegisterFilterControl`, którego stary test nie montuje; cztery testy `ExecutionControlSurface`, dwie parytetu rejestru oraz intake są także NOWE. To nie jest awaria `fetch.ok`. Bez brakującej tabeli licencji nie wolno zmienić harnessu ani produktu poza imiennymi wyjątkami `Z40`, więc dostarczono czerwony pomiar zamiast improwizacji.
