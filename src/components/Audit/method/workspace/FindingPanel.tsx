@@ -281,7 +281,12 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       label: t('Nr', '#'),
       width: '70px',
       render: (row: WorkspaceFinding) => (
-        <span className="font-mono text-xs text-c-text-muted">{row.referenceCode || '—'}</span>
+        // axe `color-contrast`: c-text-muted measures ~4.76:1 on the plain
+        // row but drops to 4.03:1 once FilterableTable marks this the
+        // selected row (bg-state-selected tints the background darker) —
+        // same systemic pairing found elsewhere this dyżur (results-
+        // zestawienia, CriterionWorkspaceV2). c-text-secondary clears it.
+        <span className="font-mono text-xs text-c-text-secondary">{row.referenceCode || '—'}</span>
       ),
     },
     {

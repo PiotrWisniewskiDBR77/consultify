@@ -259,11 +259,18 @@ const StepPill: React.FC<{ no: number; label: string; state: 'done' | 'current' 
   reason,
   onClick,
 }) => {
+  // axe `color-contrast`: text-c-focus-solid on bg-c-focus/10 measures
+  // 4.48:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped token added
+  // for exactly this pairing (see src/index.css). `opacity-70` on the
+  // step-number span compounded the problem further (drops to 2.77:1 for
+  // 'current', 3.26:1 for 'done' even though the base `text-c-success` on
+  // bg-c-success/10 alone would clear ~5.9:1) — removed, the number stays
+  // visually secondary via its small size/weight without needing opacity.
   const cls =
     state === 'done'
       ? 'border-c-success/40 bg-c-success/10 text-c-success'
       : state === 'current'
-        ? 'border-c-focus-solid bg-c-focus/10 text-c-focus-solid font-semibold ring-2 ring-c-focus/20'
+        ? 'border-c-focus-solid bg-c-focus/10 text-c-focus-solid-on-tint font-semibold ring-2 ring-c-focus/20'
         : 'border-dashed border-c-border text-c-text-muted bg-c-surface-raised';
   return (
     <button
@@ -273,7 +280,7 @@ const StepPill: React.FC<{ no: number; label: string; state: 'done' | 'current' 
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${cls}`}
     >
       {state === 'done' ? <Check size={11} aria-hidden /> : state === 'current' ? <Circle size={11} className="fill-current" aria-hidden /> : <Lock size={10} aria-hidden />}
-      <span className="text-[9.5px] font-bold tabular-nums opacity-70">{no}</span>
+      <span className="text-[9.5px] font-bold tabular-nums">{no}</span>
       <span>{label}</span>
     </button>
   );
@@ -337,7 +344,7 @@ const PhaseCard: React.FC<{
     state === 'done'
       ? 'border-c-success/40 bg-c-success/10 text-c-success'
       : state === 'current'
-        ? 'border-c-focus-solid bg-c-focus/10 text-c-focus-solid'
+        ? 'border-c-focus-solid bg-c-focus/10 text-c-focus-solid-on-tint'
         : 'border-dashed border-c-border-subtle bg-c-surface-raised text-c-text-muted';
   return (
     <section
@@ -358,7 +365,7 @@ const PhaseCard: React.FC<{
         </span>
         <span
           className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tabular-nums ${
-            state === 'current' ? 'border-c-focus-solid/40 bg-c-focus/10 text-c-focus-solid' : 'border-c-border-subtle bg-c-surface-raised text-c-text-muted'
+            state === 'current' ? 'border-c-focus-solid/40 bg-c-focus/10 text-c-focus-solid-on-tint' : 'border-c-border-subtle bg-c-surface-raised text-c-text-muted'
           }`}
         >
           {doneCount} / {totalCount}
@@ -1342,7 +1349,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                   p.state === 'done'
                     ? 'bg-c-success/10 text-c-success'
                     : p.state === 'current'
-                      ? 'bg-c-focus/10 text-c-focus-solid'
+                      ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
                       : 'bg-c-border-subtle text-c-text-muted'
                 }`}
               >
@@ -1394,7 +1401,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {myRoles[0] && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-c-focus-solid/30 bg-c-focus/10 px-2 py-0.5 text-[10.5px] font-semibold text-c-focus-solid">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-c-focus-solid/30 bg-c-focus/10 px-2 py-0.5 text-[10.5px] font-semibold text-c-focus-solid-on-tint">
                     <Users size={11} aria-hidden />
                     {t(`Twoja rola: ${(isPolish ? ROLE_LABEL_PL : ROLE_LABEL_EN)[myRoles[0]] ?? myRoles[0]}`, `Your role: ${ROLE_LABEL_EN[myRoles[0]] ?? myRoles[0]}`)}
                   </span>
@@ -1471,23 +1478,33 @@ export const CriterionWorkspaceV2: React.FC = () => {
                 expanded={expanded}
                 onToggle={() => togglePhase(p.id)}
               >
+                {/* axe `heading-order`: these field-group labels were <h4>,
+                    but the only headings above them in this screen are
+                    <h1> (criterion title, line ~1245) and <h2> ("Warsztat
+                    kryterium…", line ~1393) — no <h3> anywhere, so every
+                    phase's first visible one skipped straight from h2 to
+                    h4. PhaseCard's own "Faza N · Tytuł" row (line ~354) is
+                    a <span> inside a toggle <button>, not a heading — a
+                    real <h3> can't live there (headings aren't valid button
+                    content). Demoting these to <h3> closes the h2→h4 gap
+                    without touching the button. */}
                 {p.id === 'planowanie' && (
                   <>
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Kryterium / źródło', 'Criterion / source')}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Kryterium / źródło', 'Criterion / source')}</h3>
                       <p className="text-[13px] leading-relaxed text-c-text">
                         {criterion.requirementText || t('Brak sformułowanego wymagania.', 'No requirement text yet.')}
                       </p>
                       {criterion.sourceReference && <p className="mt-0.5 text-[11px] text-c-text-muted">{criterion.sourceReference}</p>}
                     </div>
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Pytanie audytowe', 'Audit question')}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Pytanie audytowe', 'Audit question')}</h3>
                       <p className="text-[13px] leading-relaxed text-c-text">
                         {criterion.auditQuestion || t('Brak zdefiniowanego pytania audytowego.', 'No audit question defined.')}
                       </p>
                     </div>
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Oczekiwany dowód', 'Expected evidence')}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Oczekiwany dowód', 'Expected evidence')}</h3>
                       {criterion.expectedEvidence.length === 0 ? (
                         <p className="text-[13px] text-c-text-muted">{t('Pakiet nie zdefiniował oczekiwanego dowodu.', 'The pack defines no expected evidence.')}</p>
                       ) : (
@@ -1506,7 +1523,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                 {p.id === 'badanie' && (
                   <>
                     <div>
-                      <h4 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Dostarczony dowód', 'Provided evidence')}</h4>
+                      <h3 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Dostarczony dowód', 'Provided evidence')}</h3>
                       <EvidencePanel programId={programId} criterionId={criterionId} capabilities={capabilities} isPolish={isPolish} onEvidenceChanged={load} maxRows={3} />
                     </div>
                     {!criterion.applicable ? (
@@ -1517,7 +1534,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Procedura audytora', "Auditor's procedure")}</h4>
+                          <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Procedura audytora', "Auditor's procedure")}</h3>
                           <textarea
                             value={procedurePerformed}
                             onChange={(e) => setProcedurePerformed(e.target.value)}
@@ -1528,7 +1545,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Próba', 'Sample')}</h4>
+                          <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Próba', 'Sample')}</h3>
                           <textarea
                             value={sampleDescription}
                             onChange={(e) => setSampleDescription(e.target.value)}
@@ -1539,7 +1556,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wykonany test', 'Test performed')}</h4>
+                          <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wykonany test', 'Test performed')}</h3>
                           <textarea
                             value={testPerformed}
                             onChange={(e) => setTestPerformed(e.target.value)}
@@ -1550,7 +1567,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wynik testu', 'Test result')}</h4>
+                          <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wynik testu', 'Test result')}</h3>
                           <select
                             value={testResult}
                             onChange={(e) => setTestResult(e.target.value as TestResult)}
@@ -1585,7 +1602,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                 {p.id === 'ustalenia' && (
                   <>
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wniosek audytora', "Auditor's conclusion")}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Wniosek audytora', "Auditor's conclusion")}</h3>
                       {!criterion.testResult ? (
                         <p className="text-xs text-c-text-muted">{t('Nieosiągalne: wymaga wcześniej wykonanej procedury testowej.', 'Unreachable: requires a recorded test result first.')}</p>
                       ) : (
@@ -1601,7 +1618,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                     </div>
 
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Status zgodności', 'Conformity status')}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Status zgodności', 'Conformity status')}</h3>
                       {!criterion.testResult ? (
                         <p className="text-xs text-c-text-muted">{t('Nieosiągalne: wymaga wcześniej wykonanej procedury testowej.', 'Unreachable: requires a recorded test result first.')}</p>
                       ) : isOwnAuditeeResponse ? (
@@ -1650,7 +1667,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                     />
 
                     <div>
-                      <h4 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Ustalenie', 'Finding')}</h4>
+                      <h3 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Ustalenie', 'Finding')}</h3>
                       <FindingPanel
                         programId={programId}
                         criterionId={criterionId}
@@ -1665,16 +1682,33 @@ export const CriterionWorkspaceV2: React.FC = () => {
                       />
                     </div>
 
+                    {/* axe `color-contrast`: `text-c-cta-text` is not a
+                        defined token anywhere in src/index.css — the class
+                        is a no-op, so the badge below just inherited
+                        whichever ambient --c-text happened to cascade
+                        (near-black in light, near-white in dark), which
+                        FAILED against bg-c-focus-solid in BOTH themes
+                        (3.87:1 light, 3.08:1 dark). `text-white
+                        dark:text-slate-900` is a real pairing that clears
+                        4.5:1 on both themes' c-focus-solid (blue gets
+                        noticeably lighter in dark mode, so the same fixed
+                        text color can't serve both — same convention as
+                        `ui/checkbox.tsx`'s `bg-c-focus-solid text-white`,
+                        extended with the dark flip this bg needs here).
+                        Also: text-c-text-muted on this panel's bg-c-focus/5
+                        tint (only applied when `selectedFindingId`) measured
+                        4.43:1 — text-c-text-secondary clears it while
+                        staying visually secondary to the panel's body text. */}
                     <div className={selectedFindingId ? 'rounded-token-md border border-c-focus-solid/35 bg-c-focus/5 p-3.5' : 'space-y-1'}>
                       <div className="mb-1.5 flex items-center gap-2">
-                        <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Odpowiedź właściciela', 'Management response')}</h4>
+                        <h3 className="text-[10.5px] font-bold uppercase tracking-wider text-c-text-secondary">{t('Odpowiedź właściciela', 'Management response')}</h3>
                         {selectedFindingId && (
-                          <span className="inline-flex h-[19px] items-center rounded-full bg-c-focus-solid px-2 text-[10px] font-bold uppercase tracking-wide text-c-cta-text">
+                          <span className="inline-flex h-[19px] items-center rounded-full bg-c-focus-solid px-2 text-[10px] font-bold uppercase tracking-wide text-white dark:text-slate-900">
                             {t('teraz', 'now')}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-c-text-muted">
+                      <p className="text-xs text-c-text-secondary">
                         {t(
                           'Odpowiedź składa i przegląda właściciel obszaru wewnątrz sekcji „Ustalenie" powyżej (finding.respond_as_management) — segregacja obowiązków zabrania audytorowi wypełniać ją w czyimś imieniu.',
                           'The response is submitted and reviewed by the finding owner inside the "Finding" section above (finding.respond_as_management) — segregation of duties forbids the auditor from filling it in on someone else’s behalf.'
@@ -1683,7 +1717,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
                     </div>
 
                     <div>
-                      <h4 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Odpowiedź audytowanego', 'Auditee response')}</h4>
+                      <h3 className="mb-1 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Odpowiedź audytowanego', 'Auditee response')}</h3>
                       {canRespondAsAuditee ? (
                         <>
                           <textarea
@@ -1735,9 +1769,9 @@ export const CriterionWorkspaceV2: React.FC = () => {
                       </p>
                       {REMEDIATION_LINK_IDS.map((id) => (
                         <div key={id}>
-                          <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">
+                          <h3 className="text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">
                             {isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id]}
-                          </h4>
+                          </h3>
                           <p className="text-xs text-c-text-muted">{t('Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.', 'Select a finding above to see this remediation step.')}</p>
                         </div>
                       ))}
