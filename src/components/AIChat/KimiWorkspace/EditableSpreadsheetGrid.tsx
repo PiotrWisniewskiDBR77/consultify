@@ -837,9 +837,14 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             <thead className="sticky top-0 z-10">
               <tr className="bg-c-surface-raised">
                 <th
-                  aria-label="Zaznacz wszystko"
                   className="sticky left-0 z-20 w-10 border-b border-r border-c-border-subtle bg-c-surface-raised"
-                />
+                >
+                  {/* axe `empty-table-header`: an aria-label alone isn't
+                      "text visible to screen readers" — needs real text
+                      content, just visually hidden (this corner cell has no
+                      visual label by design, it's the row-number gutter). */}
+                  <span className="sr-only">Zaznacz wszystko</span>
+                </th>
                 {columns.map((col, ci) => {
                   /*
                    * KLIKALNOŚĆ NAGŁÓWKÓW (2026-08-30). `onClick` zaznaczający

@@ -591,6 +591,19 @@
         "--strictPort"
       ],
       "port": 4991
+    },
+    {
+      "name": "fix-a11y-09-12-20260903",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "5324",
+        "--strictPort"
+      ],
+      "port": 5324
     }
   ]
 }

@@ -1405,7 +1405,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   aria-current={activeSheet === index ? 'page' : undefined}
                   className={`min-h-10 min-w-0 flex-1 truncate rounded-lg px-3 text-left text-sm transition-colors ${
                     activeSheet === index
-                      ? 'bg-c-focus/10 text-c-focus-solid'
+                      ? // axe `color-contrast`: text-c-focus-solid on this
+                        // bg-c-focus/10 tint measured 4.31:1 — c-focus-solid-on-tint
+                        // is the same blue family, tuned to clear 4.5:1 here.
+                        'bg-c-focus/10 text-c-focus-solid-on-tint'
                       : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
                   } ${sheet.hidden ? 'opacity-55' : ''}`}
                 >
@@ -2072,35 +2075,42 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           icon: Files,
           defaultOpen: true,
           children: (
-            <dl className="divide-y divide-c-border-subtle">
-              {detailRow('Nazwa pliku', preview.fileName ?? `${workbookTitle}.xlsx`)}
-              {detailRow('Format', 'XLSX')}
-              {detailRow('Arkusze', sheetNames.length)}
-              {detailRow(
-                'Klasyfikacja',
-                classification === 'public'
-                  ? 'Publiczny'
-                  : classification === 'confidential'
-                    ? 'Poufny'
-                    : 'Wewnętrzny'
-              )}
-              {detailRow(
-                'Status',
-                lifecycleStatus === 'in_review'
-                  ? 'Do przeglądu'
-                  : lifecycleStatus === 'approved'
-                    ? 'Zatwierdzony'
-                    : lifecycleStatus === 'final'
-                      ? 'Finalny'
-                      : 'Szkic'
-              )}
-              {detailRow('Wersja', version)}
+            // axe `definition-list`: a <dl>'s content model is properly-
+            // ordered dt/dd groups (each optionally div-wrapped) — nothing
+            // else. `preview.summary` is prose, not a term/description pair,
+            // so (structurally correct, not just a tag swap) it lives as a
+            // SIBLING after the </dl>, not inside it.
+            <>
+              <dl className="divide-y divide-c-border-subtle">
+                {detailRow('Nazwa pliku', preview.fileName ?? `${workbookTitle}.xlsx`)}
+                {detailRow('Format', 'XLSX')}
+                {detailRow('Arkusze', sheetNames.length)}
+                {detailRow(
+                  'Klasyfikacja',
+                  classification === 'public'
+                    ? 'Publiczny'
+                    : classification === 'confidential'
+                      ? 'Poufny'
+                      : 'Wewnętrzny'
+                )}
+                {detailRow(
+                  'Status',
+                  lifecycleStatus === 'in_review'
+                    ? 'Do przeglądu'
+                    : lifecycleStatus === 'approved'
+                      ? 'Zatwierdzony'
+                      : lifecycleStatus === 'final'
+                        ? 'Finalny'
+                        : 'Szkic'
+                )}
+                {detailRow('Wersja', version)}
+              </dl>
               {preview.summary ? (
-                <p className="pt-2 text-xs leading-relaxed text-c-text-secondary">
+                <div className="pt-2 text-xs leading-relaxed text-c-text-secondary">
                   {preview.summary}
-                </p>
+                </div>
               ) : null}
-            </dl>
+            </>
           ),
         },
         {

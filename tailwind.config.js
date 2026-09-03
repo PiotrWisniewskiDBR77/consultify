@@ -93,6 +93,10 @@ export default {
           'accent-soft': cTok('accent-soft'),
           focus: cTok('focus'),
           'focus-solid': cTok('focus-solid'),
+          // Text-on-tint pairing for `bg-c-focus/10 text-*` active states —
+          // see src/index.css `--c-focus-solid-on-tint` for why this is a
+          // separate token instead of changing `focus-solid` itself.
+          'focus-solid-on-tint': cTok('focus-solid-on-tint'),
           success: cTok('success'),
           warning: cTok('warning'),
           danger: cTok('danger'),

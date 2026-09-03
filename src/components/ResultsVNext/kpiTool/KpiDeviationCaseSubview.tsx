@@ -635,8 +635,16 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           ) : (
             <div className="space-y-3">
               <div>
-                <label className={LABEL_CLASS}>{t('Podsumowanie przyczyny', 'Root cause summary')}</label>
+                {/* axe `label`: these LABEL_CLASS labels sit next to their
+                    field visually but were never wired via htmlFor/id — a
+                    sibling <label> with no programmatic link isn't an
+                    accessible label. Same fix repeated for every
+                    LABEL_CLASS + input/textarea/select pair in this file. */}
+                <label className={LABEL_CLASS} htmlFor="kpi-deviation-root-cause-summary">
+                  {t('Podsumowanie przyczyny', 'Root cause summary')}
+                </label>
                 <textarea
+                  id="kpi-deviation-root-cause-summary"
                   value={rootCauseSummary}
                   onChange={(e) => setRootCauseSummary(e.target.value)}
                   disabled={!isAnalysis}
@@ -646,8 +654,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={LABEL_CLASS}>{t('Kategoria', 'Category')}</label>
+                  <label className={LABEL_CLASS} htmlFor="kpi-deviation-root-cause-category">
+                    {t('Kategoria', 'Category')}
+                  </label>
                   <input
+                    id="kpi-deviation-root-cause-category"
                     value={rootCauseCategory}
                     onChange={(e) => setRootCauseCategory(e.target.value)}
                     disabled={!isAnalysis}
@@ -656,8 +667,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>{t('Oczekiwana data odbudowy', 'Expected recovery date')}</label>
+                  <label className={LABEL_CLASS} htmlFor="kpi-deviation-expected-recovery-date">
+                    {t('Oczekiwana data odbudowy', 'Expected recovery date')}
+                  </label>
                   <input
+                    id="kpi-deviation-expected-recovery-date"
                     type="date"
                     value={expectedRecoveryDate}
                     onChange={(e) => setExpectedRecoveryDate(e.target.value)}
@@ -779,6 +793,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                       <select
                         className={`${FIELD_CLASS} h-7 text-xs w-auto`}
                         value={a.status}
+                        aria-label={t(`Status działania: ${a.title}`, `Action status: ${a.title}`)}
                         data-testid={`kpi-deviation-action-status-${a.actionId}`}
                         onChange={(e) => {
                           const nextStatus = e.target.value as CorrectiveActionDto['status'];
@@ -836,6 +851,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   value={actionDue}
                   onChange={(e) => setActionDue(e.target.value)}
                   disabled={!isPlanRequired}
+                  aria-label={t('Termin działania', 'Action due date')}
                   className={FIELD_CLASS}
                 />
               </div>
@@ -981,6 +997,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   value={recoveryMeasurementId}
                   onChange={(e) => setRecoveryMeasurementId(e.target.value)}
                   disabled={!isExecuting}
+                  aria-label={t('Pomiar odbudowy', 'Recovery measurement')}
                   className={FIELD_CLASS}
                   data-testid="kpi-deviation-recovery-measurement"
                 >
@@ -1053,8 +1070,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className={LABEL_CLASS}>{t('Początek okna', 'Window start')}</label>
+                  <label className={LABEL_CLASS} htmlFor="kpi-deviation-verification-window-start">
+                    {t('Początek okna', 'Window start')}
+                  </label>
                   <input
+                    id="kpi-deviation-verification-window-start"
                     type="date"
                     value={verificationStart}
                     onChange={(e) => setVerificationStart(e.target.value)}
@@ -1063,8 +1083,11 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>{t('Koniec okna', 'Window end')}</label>
+                  <label className={LABEL_CLASS} htmlFor="kpi-deviation-verification-window-end">
+                    {t('Koniec okna', 'Window end')}
+                  </label>
                   <input
+                    id="kpi-deviation-verification-window-end"
                     type="date"
                     value={verificationEnd}
                     onChange={(e) => setVerificationEnd(e.target.value)}
@@ -1077,6 +1100,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                 value={verificationOutcome}
                 onChange={(e) => setVerificationOutcome(e.target.value as EffectivenessVerificationStatus)}
                 disabled={!isExecuting && !isRecoveryObserved}
+                aria-label={t('Wynik weryfikacji skuteczności', 'Effectiveness verification outcome')}
                 className={FIELD_CLASS}
                 data-testid="kpi-deviation-verification-outcome"
               >

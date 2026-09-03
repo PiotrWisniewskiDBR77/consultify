@@ -123,7 +123,11 @@ export default function ReportArtifactScreen(): React.ReactElement {
     // podglądu 340-480px. Harness poprzednio pokazywał max-w-3xl (768px) —
     // ~1,9x za szeroko wobec realnej szuflady podglądu.
     <div className="flex h-screen w-full flex-col bg-c-bg">
-      <aside className="mx-auto w-[400px] shrink-0 flex-1 overflow-y-auto p-3">
+      {/* axe `scrollable-region-focusable`: real host's outer aside (this
+          harness's stand-in for it) needs to be keyboard-reachable too —
+          matches the tabIndex fix applied to the real PreviewPaneShell body
+          (src/components/ui/ResizableTable/PreviewPaneShell.tsx). */}
+      <aside className="mx-auto w-[400px] shrink-0 flex-1 overflow-y-auto p-3" tabIndex={0}>
         <div className="rounded-xl border border-c-border-subtle bg-c-surface shadow-sm">
           <GeneratedReportView doc={doc} />
         </div>

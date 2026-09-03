@@ -50,17 +50,8 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
           return (
             <div
               key={item.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelect(item.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelect(item.id);
-                }
-              }}
               className={[
-                'group rounded-lg border px-2.5 py-2 cursor-pointer transition-colors',
+                'group rounded-lg border px-2.5 py-2 transition-colors',
                 active
                   ? 'border-c-focus bg-c-focus/10'
                   : 'border-c-border bg-c-surface hover:bg-c-surface-raised',
@@ -68,21 +59,38 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
               data-testid={`structure-item-${item.id}`}
               data-active={active}
             >
-              <div className="flex items-start gap-2">
-                <GripVertical className="w-3.5 h-3.5 mt-0.5 text-c-text-muted shrink-0" />
-                <span
-                  className={[
-                    'shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold',
-                    active ? 'bg-c-focus text-white' : 'bg-c-bg text-c-text-muted',
-                  ].join(' ')}
-                >
-                  {item.index}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-c-text truncate">{item.label}</div>
-                  <div className="text-[11px] text-c-text-muted truncate">{item.meta}</div>
+              {/* Own <button> (not a role="button" wrapper) so the move/delete
+                  buttons below are SIBLINGS, not descendants — axe
+                  `nested-interactive` forbids an interactive control nested
+                  inside another one (screen readers/AT can't reliably announce
+                  or focus it). Native button also gives Enter/Space handling
+                  for free — no manual onKeyDown needed. */}
+              <button
+                type="button"
+                onClick={() => onSelect(item.id)}
+                className="w-full cursor-pointer rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <div className="flex items-start gap-2">
+                  <GripVertical className="w-3.5 h-3.5 mt-0.5 text-c-text-muted shrink-0" />
+                  <span
+                    className={[
+                      'shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-semibold',
+                      active ? 'bg-c-focus text-white' : 'bg-c-bg text-c-text-muted',
+                    ].join(' ')}
+                  >
+                    {item.index}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-c-text truncate">{item.label}</div>
+                    {/* c-text-secondary, not c-text-muted: on the active card's
+                        bg-c-focus/10 highlight, c-text-muted measures 3.97:1
+                        (below the 4.5:1 floor) — c-text-secondary clears
+                        6.3:1 there while staying token-based (no hardcoded
+                        hex), and reads fine on the inactive c-surface bg too. */}
+                    <div className="text-[11px] text-c-text-secondary truncate">{item.meta}</div>
+                  </div>
                 </div>
-              </div>
+              </button>
               <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                 <button
                   type="button"

@@ -17,6 +17,13 @@ import type {
   ReportTableRow,
 } from './reportContentGenerator';
 
+// axe `color-contrast`: several muted-caption spots below carried
+// `dark:text-slate-500` — a straight copy of the LIGHT-theme class, not an
+// actual dark-theme adaptation. slate-500 (#64748b) reads fine on a white
+// card (~4.8:1) but drops to ~3.75:1 on the dark navy-900 background this
+// report renders on in dark mode — below the 4.5:1 floor. slate-400 clears
+// ~7:1 there while staying just as visually "muted" relative to the
+// brighter body text around it.
 const toneText: Record<string, string> = {
   good: 'text-emerald-700 dark:text-emerald-400',
   warn: 'text-amber-700 dark:text-amber-400',
@@ -27,8 +34,11 @@ const toneText: Record<string, string> = {
 const ragBadge: Record<string, string> = {
   green:
     'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+  // amber-700 on this project's custom amber-50 (#AE6429 on #FEF6EC,
+  // tailwind.config.js) measures 4.21:1 — under the 4.5:1 floor. amber-800
+  // clears 6.6:1 there and still reads as the same "amber" family.
   amber:
-    'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-800',
   red: 'bg-danger-50 dark:bg-danger-900/20 text-danger-700 dark:text-danger-400 border-danger-200 dark:border-danger-800',
 };
 
@@ -43,11 +53,14 @@ const calloutTone: Record<string, string> = {
 function MetricCard({ m }: { m: ReportMetric }) {
   return (
     <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/40 px-3 py-2 min-w-[96px]">
-      <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-500">
+      <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {m.label}
       </div>
       <div className={`text-base font-semibold ${toneText[m.tone || 'default']}`}>{m.value}</div>
-      {m.hint && <div className="text-[10px] text-slate-400 dark:text-slate-500">{m.hint}</div>}
+      {/* Was slate-400/dark:slate-500 — 2.56:1 on white, 3.75:1 on navy-900,
+          both below the 4.5:1 floor. slate-600/dark:slate-400 clears it on
+          both (~9:1 / ~7:1) while staying the most muted line on the card. */}
+      {m.hint && <div className="text-[10px] text-slate-600 dark:text-slate-400">{m.hint}</div>}
     </div>
   );
 }
@@ -63,13 +76,19 @@ function Table({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="text-[11px] italic text-slate-500 dark:text-slate-500 px-1 py-1.5">
+      <div className="text-[11px] italic text-slate-500 dark:text-slate-400 px-1 py-1.5">
         {emptyText || '—'}
       </div>
     );
   }
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-navy-700">
+    // axe `scrollable-region-focusable`: a read-only table with no
+    // interactive cells leaves this horizontal-scroll wrapper unreachable by
+    // keyboard. tabIndex=0 puts the region itself in the tab sequence.
+    <div
+      className="overflow-x-auto rounded-lg border border-slate-200 dark:border-navy-700"
+      tabIndex={0}
+    >
       <table
         /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-[11px]"
       >
@@ -161,10 +180,10 @@ export const GeneratedReportView: React.FC<GeneratedReportViewProps> = ({ doc, c
           >
             {doc.ragLabel}
           </span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-500">{doc.periodLabel}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">{doc.periodLabel}</span>
         </div>
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">{doc.title}</h2>
-        <div className="text-[11px] text-slate-500 dark:text-slate-500">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400">
           {doc.audience} · {doc.generatedAtLabel}
         </div>
         <p className="mt-2 text-xs italic text-slate-600 dark:text-slate-400">{doc.summary}</p>
@@ -178,7 +197,7 @@ export const GeneratedReportView: React.FC<GeneratedReportViewProps> = ({ doc, c
               {s.heading}
             </h3>
           </div>
-          {s.intro && <p className="text-[11px] text-slate-500 dark:text-slate-500">{s.intro}</p>}
+          {s.intro && <p className="text-[11px] text-slate-500 dark:text-slate-400">{s.intro}</p>}
           <div className="space-y-2.5">
             {s.blocks.map((b, i) => (
               <Block key={i} block={b} />

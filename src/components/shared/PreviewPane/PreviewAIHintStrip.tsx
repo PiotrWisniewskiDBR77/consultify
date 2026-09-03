@@ -107,7 +107,13 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
+        {/* axe `color-contrast`: dark:text-slate-500 measured 3.36:1 on this
+            strip's navy-900 dark background — under 4.5:1. slate-400 clears
+            ~6.2:1 there; light stays slate-600 (already passing on the
+            light surface). Shared preview block (`data-preview-block="ai"`)
+            — this fix reaches every AI hint strip in the app, not just the
+            two screens that happened to be measured. */}
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
         </div>
