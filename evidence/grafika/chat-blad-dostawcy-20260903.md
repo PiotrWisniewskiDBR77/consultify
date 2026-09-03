@@ -154,3 +154,9 @@ PRZED dark ma **1** naruszenie `color-contrast` — stan zastany chromu Czatu, n
 - **Nie mierzono zapisu do bazy** — `metadata` wiadomości niesie teraz kod zamiast treści,
   ale stare rekordy w `chat_messages` z `metadata.error` = surowa treść dostawcy **zostają**.
   Czyszczenie historycznych rekordów nie było w zleceniu.
+- **Nie ruszono ośmiu innych tras w `ai.routes.ts`**, które nadal odsyłają `error: (err as Error).message`
+  wprost do klienta: `/policy` (GET 6838, PATCH 6858), `/policy/can-perform/:actionType` (6880),
+  `/memory/project/:projectId` (6906, 6973), `/memory/project/:projectId/decision` (6944),
+  `/memory/user` (6958, 7001), `/memory/org`. To **nie są** błędy dostawcy AI (to błędy bazy
+  i walidacji), więc `providerErrorMapper` ich nie dotyczy i są poza zakresem `CHAT-OWN-016` —
+  ale wyciek treści wyjątku do przeglądarki jest ten sam co rodziny i wart osobnego zgłoszenia.
