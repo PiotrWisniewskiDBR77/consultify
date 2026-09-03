@@ -1,10 +1,47 @@
 ---
 doc_id: program-decyzje-wlasciciela-p0p1-20260904
-status: do-decyzji
+status: rozstrzygniete-2026-09-03
 data: 2026-09-03 (wieczór), do rozstrzygnięcia 2026-09-04 rano
 ---
 
 # Pakiet decyzji P0/P1 — 56 pozycji bez decyzji, pogrupowanych w 20 rodzin
+
+## Rozstrzygnięcia 03.09 wieczór
+
+Właściciel odpowiedział na wszystkie 20 rodzin w rozmowie 03.09 (21:00–22:30), jednym słowem na
+rodzinę zgodnie z formatem pytań poniżej. Pełna treść zamrożona każdej decyzji:
+`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`,
+`DEC-2026-09-03-364`…`DEC-2026-09-03-383`. Treść rodzin poniżej **nie jest kasowana**.
+
+| Rodzina | Odpowiedź właściciela | DEC |
+| --- | --- | --- |
+| R-1 Ocena: przebudowa narzędzia (10) | PO BRAMKACH (fala 2) | `DEC-2026-09-03-364` |
+| R-2 Ocena: karty pytań i poziomy (3) | razem z R-1 (fala 2) | `DEC-2026-09-03-365` |
+| R-3 Ocena: trzy drobne poprawki sesji (3) | TAK, wszystkie trzy (pomiar 03.09 obalił `ASM-OWN-005` i `ASM-OWN-020`; realnie otwarta zostaje `ASM-OWN-013`) | `DEC-2026-09-03-366` |
+| R-4 Ocena: biblioteka i katalog (2) | TAK, teraz | `DEC-2026-09-03-367` |
+| R-5 Ocena: łańcuch Wnioski/Raporty/Inicjatywy (1) | NIE (fala 2) | `DEC-2026-09-03-368` |
+| R-6 Ocena: uprawnienia, kredyty, doradca AI (3) | NIE (fala 2) | `DEC-2026-09-03-369` |
+| R-7 Moja Praca: dane demo (5) | TAK — wykonane 03.09 (Skrzynka 9/9, Kalendarz 7/7) | `DEC-2026-09-03-370` |
+| R-8 Moja Praca: pasek nawigacji (3) | przewijanie naprawione 03.09; kafel „MOJA PRACA” → USUNĄĆ | `DEC-2026-09-03-371` |
+| R-9 Moja Praca: Idee — drobiazgi (5) | TAK (3 drobne teraz, 2 większe — fala 2) | `DEC-2026-09-03-372` |
+| R-10 Moja Praca: Idea → Notatka (3) | NIE (fala 2) | `DEC-2026-09-03-373` |
+| R-11 Moja Praca: Notatnik (3) | TAK, włączyć domyślnie (widok Praca/Kontekst); pozostałe 2 pozycje rodziny bez zmiany rekomendacji (fala 2) | `DEC-2026-09-03-374` |
+| R-12 Moja Praca: porządkowanie Skrzynki (1) | PODŁĄCZYĆ | `DEC-2026-09-03-375` |
+| R-13 Moja Praca: pulpit Menedżera (1) | NIE (fala 2) | `DEC-2026-09-03-376` |
+| R-14 Czat: cztery defekty + brama (6) | TAK dla czterech defektów (komunikat błędu AI wykonany 03.09); historię przeniesiono do fali 2 | `DEC-2026-09-03-377` (+ `DEC-384`) |
+| R-15 Inicjatywy (2) | TAK (audyt kanonu teraz, kreator inicjatyw — fala 2) | `DEC-2026-09-03-378` |
+| R-16 Wywiad: menu akcji (1) | TAK, teraz | `DEC-2026-09-03-379` |
+| R-17 Wyniki: odbiór podglądu (1) | ZAMKNIĘTA jako odebrana | `DEC-2026-09-03-380` |
+| R-18 Karty obiektów, 7 typów (1) | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-381` (+ `DEC-384`) |
+| R-19 Narzędzia: wspólny kreator inicjatyw (1) | poza MVP (rozszerzenie `DEC-238`; fala 2) | `DEC-2026-09-03-382` |
+| R-20 Narzędzia: pełny model SWOT (1) | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-383` (+ `DEC-384`) |
+
+Skutek terminowy pięciu wyborów TERAZ ponad rekomendację (B3, B6, historia Czatu, R-18, R-20):
++17 dni robotnika, termin 15–17.09 zamiast 10–12.09. Właściciel: „Trzymamy termin: te 5 do fali
+2.” (`DEC-2026-09-03-384`). Rejestr pozycji przeniesionych do fali 2, z kolejnością startu:
+`docs/program/FALA_2_PO_STAGINGU.md`.
+
+---
 
 Źródło: `docs/program/waves/WAVE_03_ACCEPTANCE/ROZLICZENIE_P0P1_20260903.md` (79 otwartych
 pozycji P0/P1) skrzyżowane z `ROZLICZENIE_P0P1_DECYZJE_20260903.md` (rejestr 398 decyzji).

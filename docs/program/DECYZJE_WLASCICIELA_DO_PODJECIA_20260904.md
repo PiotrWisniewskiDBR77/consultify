@@ -1,10 +1,44 @@
 ---
 doc_id: program-decyzje-wlasciciela-20260904
-status: do-decyzji
+status: rozstrzygniete-2026-09-03
 data: 2026-09-03 (wieczór), do rozstrzygnięcia 2026-09-04 rano
 ---
 
 # Decyzje właściciela, od których zależy termin zamknięcia bramek
+
+## Rozstrzygnięcia 03.09 wieczór
+
+Właściciel odpowiedział na wszystkie pozycje poniżej w rozmowie 03.09 (21:00–22:30). Pełna
+treść zamrożona każdej decyzji: `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`,
+`DEC-2026-09-03-347`…`DEC-2026-09-03-384`. Treść pytań poniżej **nie jest kasowana** — zostaje
+jako zapis tego, co było przedstawione właścicielowi.
+
+| Pozycja | Odpowiedź właściciela | DEC |
+| --- | --- | --- |
+| A1 — Wyniki, 14 ekranów | ON | `DEC-2026-09-03-347` |
+| A2 — Finanse, 6 paneli | ON | `DEC-2026-09-03-348` |
+| A3 — Organizacja redesign | ON | `DEC-2026-09-03-349` |
+| A4 — Kreator wywiadu | ON OD RAZU (wbrew rekomendacji „ON po odbiorze”; odbiór na stagingu w przelocie `G16`) | `DEC-2026-09-03-350` |
+| A5 — `NotificationSettingsV2` (Obserwowane) | USUNĄĆ | `DEC-2026-09-03-351` |
+| B1 — Struktura raportu Oceny (ASS-2) | TERAZ, osobnym torem (prototyp jako plik do akceptu, potem silnik) | `DEC-2026-09-03-352` |
+| B2 — Biblioteka DRD, kolumny | Propozycja CTO przyjęta (7 kolumn + podgląd z przyciskiem „Rozpocznij ocenę”) | `DEC-2026-09-03-353` |
+| B3 — Prawy panel Idei/Notatnika | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-354` (+ `DEC-384`) |
+| B4 — „Tworzy raport” w doradcy | ODŁOŻONE (fala 2) | `DEC-2026-09-03-355` |
+| B5 — Menu kanw Czatu | ODŁOŻONE (fala 2) | `DEC-2026-09-03-356` |
+| B6 — Preferencje Czatu | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-357` (+ `DEC-384`) |
+| B7 — Ekran w Materiałach | ZOSTAJE | `DEC-2026-09-03-358` |
+| C — Crimson poza semantyką | po stagingu, moduł po module, od Czatu (fala 2) | `DEC-2026-09-03-359` |
+| D1 — Panele jakości/prezentacji Oceny | zostają jak są | `DEC-2026-09-03-360` |
+| D2 — Organizacja bez uwag | widziałem, bez uwag (odebrana) | `DEC-2026-09-03-361` |
+| E1 — Reguła G20 | PRZYJĘTA | `DEC-2026-09-03-362` |
+| E3 — „Wdrażaj” | TAK, teraz (push na `develop` odbity przez ochronę gałęzi — ścieżka w toku) | `DEC-2026-09-03-363` |
+| Skutek terminowy pięciu wyborów TERAZ (B3, B6, historia Czatu, R-18, R-20) | „Trzymamy termin: te 5 do fali 2.” | `DEC-2026-09-03-384` |
+
+Pełna lista pozycji rodzin P0/P1 (R-1…R-20) i jej rozstrzygnięcia: patrz sekcja
+„Rozstrzygnięcia 03.09 wieczór” w `DECYZJE_WLASCICIELA_P0P1_20260904.md`. Rejestr pozycji
+przeniesionych do fali 2: `docs/program/FALA_2_PO_STAGINGU.md`.
+
+---
 
 Źródło: `ANALIZA_G13_MODULY_01_08_20260903.md`, `ANALIZA_G13_MODULY_09_16_20260903.md`,
 `AUDYT_PRZEWODOW_ODBIORU_20260903.md`. Każda pozycja: co widzi użytkownik dziś, ile kosztuje,
