@@ -117,6 +117,22 @@ const MODULE_SURFACES: Record<string, ModuleSurface[] | { noApiSurface: string }
       anchor: "'/api/finance-statements',",
       verifier: { kind: 'same-block', literal: 'gatewayVerifyToken' },
     },
+    {
+      label: 'Finance — rodzina /api/v8/finance*',
+      file: 'routes/v8/index.ts',
+      anchor: 'if (!FINANCE_MODULE_PATH.test(req.path)) return next();',
+      verifier: { kind: 'earlier-in-file', literal: 'v8Router.use(verifyToken)' },
+      gateAlias: 'financeModuleGate',
+      aliasDefinition: "const financeModuleGate = createModuleGate('MODULE_ECONOMICS');",
+    },
+    {
+      label: 'Finance — sprawozdania przed globalna bramka V8',
+      file: 'routes/v8/financeStatementMountedSurface.ts',
+      anchor: 'dependencies.verifyToken,',
+      verifier: { kind: 'same-block', literal: 'dependencies.verifyToken' },
+      gateAlias: 'dependencies.moduleGate',
+      aliasDefinition: "moduleGate: createModuleGate('MODULE_ECONOMICS')",
+    },
   ],
   MODULE_CONCLUSIONS: [
     {
@@ -333,6 +349,25 @@ describe('bezpiecznik bramek modułów — rejestr mountów', () => {
 });
 
 describe('bezpiecznik bramek modułów — pułapki samej bramki', () => {
+  it('wzorzec Finance obejmuje wszystkie prefiksy rodziny i nie obejmuje sąsiadów', () => {
+    const financeModulePath = /^\/finance(?:-|\/|$)/;
+    for (const path of [
+      '/finance',
+      '/finance/value',
+      '/finance/value-tracking',
+      '/finance-v2',
+      '/finance-value',
+      '/finance-valuation',
+      '/finance-planning',
+      '/finance-intelligence',
+    ]) {
+      expect(financeModulePath.test(path), path).toBe(true);
+    }
+    for (const path of ['/retrieval', '/execution', '/case-workspace', '/finances']) {
+      expect(financeModulePath.test(path), path).toBe(false);
+    }
+  });
+
   it('betaGate i createBetaGate są nadal atrapami (gdyby przestały, ten rejestr trzeba przemyśleć)', () => {
     const source = readServerFile('middleware/betaGate.middleware.ts');
     const betaGateBody = source.slice(
