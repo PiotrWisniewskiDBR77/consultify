@@ -63,3 +63,4 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 | 08_MEETINGS | front: `Meeting`, `tests/unit/meeting` (6 plików; `m08-*.json`) | 35 | 2 PASS | 32 PASS, 3 FAIL | 3 NOWE; 33 nowe przypadki zakresu | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
 | 09_RESULTS | front: `Results`, `ResultsVNext`, `tests/unit/results` (30 plików; `m09-*.json`) | 418 | 408 PASS | 418 PASS | 10 przypadków dodanych; brak czerwieni | — | 418 PASS |
 | 10_FINANCE | front: `Economics`, `tests/unit/finance` (79 plików; `m10-*.json`) | 924 | 850 PASS, 1 FAIL | 923 PASS, 1 FAIL | ZMIANA ZAKRESU: 1 stary FAIL zniknął, 1 nowy FAIL dodany | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
+| 11_MATERIALS | front: 4 katalogi komponentów + `tests/unit/presentations`, `documentStudio` (20 plików; `m11-*.json`) | 184 | 177 PASS, 2 FAIL | 182 PASS, 2 FAIL | 2 ZASTANE; 5 przypadków dodanych | — | 182 PASS, 2 FAIL |

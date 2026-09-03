@@ -55,6 +55,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 08_MEETINGS | 6 | 35 | 32 | 0 | 3 nierozstrzygnięte | 0 | `G15 FAIL — ukierunkowany front: baza 2/2 PASS, marker 32/35 PASS; wszystkie 3 czerwienie są NOWE (dwa uczciwe stany błędu briefu i sekcja decyzji/działań). Serwer pozostaje do pomiaru.` |
 | 09_RESULTS | 30 | 418 | 418 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 408/408, marker 418/418; 10 nowych zielonych przypadków, zero czerwieni. Flagi pozostały OFF; serwer pozostaje do pomiaru.` |
 | 10_FINANCE | 79 | 924 | 923 | 0 | 1 nowa w zmienionym zakresie | 0 | `G15 FAIL — ukierunkowany front: baza 850/851, marker 923/924. Stary czerwony benchmark 1.2M-cell zniknął, nowy benchmark 1000-cell paste-batch jest czerwony; Z37 zabrania uznać równą liczbę czerwieni za brak zmiany. Flagi pozostały OFF.` |
+| 11_MATERIALS | 20 | 184 | 182 | 2 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 182/184 PASS; te same dwie pełne nazwy są czerwone na bazie i markerze, brak czerwieni NOWYCH; serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -97,3 +98,7 @@ Pakiet frontowy był czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`
 ### Pułapki — 10_FINANCE
 
 Pakiet frontowy uruchomiono bez włączania flag, jako jednostkowy i bez twierdzeń o DB/HTTP. Porównanie `fullName` wykazało wymianę czerwonego benchmarku, mimo identycznej liczby FAIL. To przykład fałszywej zieleni, przed którą chroni `Z37`; nowego benchmarku nie osłabiono ani nie zwiększono budżetu czasowego.
+
+### Pułapki — 11_MATERIALS
+
+Pakiet frontowy uruchomiono jednostkowo z `--retry=0`; dwie czerwienie dotyczą powłoki/right rail oraz bannera ostrzegawczego, nie `fetch.ok`. Pełne nazwy są identyczne po obu stronach. Pięć nowych przypadków na markerze jest zielonych. Serwer nie jest zaliczony.
