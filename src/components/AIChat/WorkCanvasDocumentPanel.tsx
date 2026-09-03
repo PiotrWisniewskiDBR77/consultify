@@ -3516,7 +3516,11 @@ function WorkCanvasMarkdownDocumentPanel({
                   <span className="font-semibold">
                     {t('canvas.panel.newMenu.blank', 'Czysty dokument')}
                   </span>
-                  <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  {/* G06 (2026-09-03, canvas-new-doc): text-slate-500 na
+                      hover/active tle bg-slate-100 tego kafla mierzyło 4,34:1
+                      (próg 4,5:1). slate-600 — 6,9:1 na slate-100, 7,6:1 na
+                      białym. dark:text-slate-400 bez zmian (0 naruszeń). */}
+                  <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
                     {t('canvas.panel.newMenu.blankDesc', 'Puste — zaczynasz od zera z Teresą.')}
                   </div>
                 </button>
@@ -3555,7 +3559,10 @@ function WorkCanvasMarkdownDocumentPanel({
                           ? renderCapabilityBadge(template.capability)
                           : null}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      {/* G06 (2026-09-03, canvas-new-doc): patrz komentarz przy
+                          "Czysty dokument" wyżej — ten sam kafel-rodzeństwo
+                          w tym samym menu, ta sama para kolorów. */}
+                      <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
                         {template.description}
                       </div>
                     </button>
@@ -3622,7 +3629,10 @@ function WorkCanvasMarkdownDocumentPanel({
                           ? renderCapabilityBadge(template.capability)
                           : null}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      {/* G06 (2026-09-03, canvas-new-doc): patrz komentarz przy
+                          "Czysty dokument" wyżej — ten sam kafel-rodzeństwo
+                          w tym samym menu, ta sama para kolorów. */}
+                      <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
                         {template.description}
                       </div>
                     </button>
