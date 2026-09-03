@@ -1,0 +1,107 @@
+---
+doc_id: program-decyzje-wlasciciela-20260904
+status: rozstrzygniete-2026-09-03
+data: 2026-09-03 (wieczór), do rozstrzygnięcia 2026-09-04 rano
+---
+
+# Decyzje właściciela, od których zależy termin zamknięcia bramek
+
+## Rozstrzygnięcia 03.09 wieczór
+
+Właściciel odpowiedział na wszystkie pozycje poniżej w rozmowie 03.09 (21:00–22:30). Pełna
+treść zamrożona każdej decyzji: `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`,
+`DEC-2026-09-03-347`…`DEC-2026-09-03-384`. Treść pytań poniżej **nie jest kasowana** — zostaje
+jako zapis tego, co było przedstawione właścicielowi.
+
+| Pozycja | Odpowiedź właściciela | DEC |
+| --- | --- | --- |
+| A1 — Wyniki, 14 ekranów | ON | `DEC-2026-09-03-347` |
+| A2 — Finanse, 6 paneli | ON | `DEC-2026-09-03-348` |
+| A3 — Organizacja redesign | ON | `DEC-2026-09-03-349` |
+| A4 — Kreator wywiadu | ON OD RAZU (wbrew rekomendacji „ON po odbiorze”; odbiór na stagingu w przelocie `G16`) | `DEC-2026-09-03-350` |
+| A5 — `NotificationSettingsV2` (Obserwowane) | USUNĄĆ | `DEC-2026-09-03-351` |
+| B1 — Struktura raportu Oceny (ASS-2) | TERAZ, osobnym torem (prototyp jako plik do akceptu, potem silnik) | `DEC-2026-09-03-352` |
+| B2 — Biblioteka DRD, kolumny | Propozycja CTO przyjęta (7 kolumn + podgląd z przyciskiem „Rozpocznij ocenę”) | `DEC-2026-09-03-353` |
+| B3 — Prawy panel Idei/Notatnika | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-354` (+ `DEC-384`) |
+| B4 — „Tworzy raport” w doradcy | ODŁOŻONE (fala 2) | `DEC-2026-09-03-355` |
+| B5 — Menu kanw Czatu | ODŁOŻONE (fala 2) | `DEC-2026-09-03-356` |
+| B6 — Preferencje Czatu | wybrane TERAZ, potem przy pytaniu o termin przeniesione do **FALI 2** | `DEC-2026-09-03-357` (+ `DEC-384`) |
+| B7 — Ekran w Materiałach | ZOSTAJE | `DEC-2026-09-03-358` |
+| C — Crimson poza semantyką | po stagingu, moduł po module, od Czatu (fala 2) | `DEC-2026-09-03-359` |
+| D1 — Panele jakości/prezentacji Oceny | zostają jak są | `DEC-2026-09-03-360` |
+| D2 — Organizacja bez uwag | widziałem, bez uwag (odebrana) | `DEC-2026-09-03-361` |
+| E1 — Reguła G20 | PRZYJĘTA | `DEC-2026-09-03-362` |
+| E3 — „Wdrażaj” | TAK, teraz (push na `develop` odbity przez ochronę gałęzi — ścieżka w toku) | `DEC-2026-09-03-363` |
+| Skutek terminowy pięciu wyborów TERAZ (B3, B6, historia Czatu, R-18, R-20) | „Trzymamy termin: te 5 do fali 2.” | `DEC-2026-09-03-384` |
+
+Pełna lista pozycji rodzin P0/P1 (R-1…R-20) i jej rozstrzygnięcia: patrz sekcja
+„Rozstrzygnięcia 03.09 wieczór” w `DECYZJE_WLASCICIELA_P0P1_20260904.md`. Rejestr pozycji
+przeniesionych do fali 2: `docs/program/FALA_2_PO_STAGINGU.md`.
+
+---
+
+Źródło: `ANALIZA_G13_MODULY_01_08_20260903.md`, `ANALIZA_G13_MODULY_09_16_20260903.md`,
+`AUDYT_PRZEWODOW_ODBIORU_20260903.md`. Każda pozycja: co widzi użytkownik dziś, ile kosztuje,
+rekomendacja CTO. Wybór jest binarny: **MVP TERAZ** albo **JAWNIE ODŁOŻONE** (wpis do rejestru
+decyzji, bramka `G14` przechodzi z odłożeniem zapisanym, nie przemilczanym).
+
+## A. Flagi domyślnie OFF na 21 zatwierdzonych ekranach (audyt przewodów, 22 pozycje)
+
+| # | Co | Co widzi klient na produkcji bez ręcznego włączenia | Koszt | Rekomendacja CTO |
+| --- | --- | --- | --- | --- |
+| A1 | 14 ekranów Wyników (KPI, OKR, ROI, wyszukiwarka, uwaga) — `resultsVNextFeatureFlags.ts` | brak całego modułu Wyników w nowej postaci; na demo/stagingu widoczne przez profil odbiorowy | DROBNE (przełączniki) | **ON** — zatwierdzone 02.09, reguła 7 kodeksu: po akcepcie flaga domyślna |
+| A2 | 6 paneli Finansów (komentarze, porównanie, eksport/import, nawigator pochodzenia, zapisane widoki, pakiet sprawozdań v2) — `useFinance*Flag.ts` | panele niewidoczne | DROBNE | **ON** — jak wyżej |
+| A3 | Przeprojektowana Organizacja (`orgRedesignV1`) | stara powierzchnia; zatwierdzony ekran A tylko z parametrem | DROBNE | **ON** — zatwierdzony ekran ma być domyślny |
+| A4 | Kreator wywiadu (`interview-creator-shell`, INT-1) | brak kreatora | DROBNE + odbiór 40-punktową listą po włączeniu | **ON po odbiorze na stagingu** |
+
+Uwaga: włączenie dotyczy kodu, więc obejmie także produkcję consultify.ai przy następnym wdrożeniu.
+Produkcja jest oddzielna i nietykalna do Twojego słowa — dlatego to jest Twoja decyzja, nie moja.
+
+## B. Przebudowy wymagające prototypu do akceptu (DUŻE)
+
+| # | Co | Co widzi użytkownik dziś | Koszt | Rekomendacja CTO |
+| --- | --- | --- | --- | --- |
+| B1 | ASS-2 — struktura raportu końcowego Oceny (wstęp → 7 osi → odpowiedzi i wnioski → podsumowanie; analogicznie SIRI) | raport w starej strukturze | DUŻE: przeprojektowanie + generowanie per metodyka; prototyp dokumentu jako PLIK do akceptu przed silnikiem | **MVP TERAZ, ale osobnym torem**: prototyp w 1 dzień, budowa 2–3 dni; nie blokuje bramek pozostałych 15 modułów |
+| B2 | ASS-3 — biblioteka DRD: odrzucony zestaw kolumn i brak podglądu („Do powtórki") | tabela z kolumnami, których nie chcesz | DUŻE (co pokazać — decyzja treści) | **Twoja lista kolumn w 5 zdaniach** → wykonanie ŚREDNIE |
+| B3 | MW-4 — prawy panel Idei/Notatnika (UW-07-14/17/18), sam wpisałeś do backlogu | obecny układ panelu | DUŻE projektowo | **ODŁOŻONE** (Twoja własna kwalifikacja z 01.09) |
+| B4 | INIT-2(b) — „Tworzy raport" w doradcy obciążenia (migawka zespołu) — funkcji nie ma w kodzie | brak przycisku/funkcji | DUŻE (nowa funkcja) | **ODŁOŻONE** — nie budujemy nowych funkcji w tygodniu zamykania bramek |
+| B5 | Czat — restrukturyzacja współdzielonego menu kanw (kebab) | obecne menu na wszystkich kanwach | DUŻE, szeroki promień | **ODŁOŻONE** do osobnej fali po stagingu |
+| B6 | Czat — nowa funkcja preferencji (za crashem, który dziś się nie odtworzył) | brak funkcji | DUŻE (nowa) | **ODŁOŻONE** |
+| B7 | 11_MATERIALS — usunięcie jednej trasy/ekranu (analiza: „tanie, ale wymaga decyzji produktowej") — szczegół w analizie 09–16 | ekran istnieje | DROBNE po decyzji | **Twoje jedno słowo: zostaje / znika** |
+
+## C. Przemalowanie crimsona poza semantyką krytyczną (projekt, nie poprawka)
+
+Systemowy dług: **5 325 wystąpień w 609 plikach** (Czat 69 plików, Administracja 102, Moja Praca
+53, Finanse 6, Ustawienia 17). Pierścień fokusu (193 wystąpienia) idzie już dyżurem Codexa 287.
+Reszta to zmiana wyglądu CTA i stanów aktywnych na neutralne — **wymaga Twojego akceptu na
+zrzutach per moduł**, bo zmienia twarz produktu.
+
+Rekomendacja CTO: **moduł po module, po Twoim przelocie po stagingu**, zaczynając od Czatu
+(moduł startowy każdej sesji), jako osobne dyżury Codexa z parą zrzutów PRZED/PO. Nie w tym
+tygodniu — nie blokuje żadnej z 96 bramek, bo kanon crimsona jest bezpiecznikiem „nie rośnie",
+nie „zero".
+
+## D. Rzeczy zamknięte rozmową (0 linii kodu)
+
+| # | Co | Pytanie |
+| --- | --- | --- |
+| D1 | ASS-6 — `assessment-quality-review-panel` i `assessment-presentation-view`: analiza mówi, że masz pytanie o ich sens | Zostają jako są? |
+| D2 | ORG-4 — Organizacja nie ma ani jednej Twojej uwagi w 77 uwagach z odbioru | Widziałeś ten moduł na przeglądzie 22–23.08, czy przeoczony? |
+| D3 | INT-1 (jak A4) | — |
+
+## Co się dzieje bez Twojej decyzji
+
+Robotnicy zamykają dziś i jutro wszystko DROBNE i ŚREDNIE (dostępność, język, przewody, luki
+podglądu, martwy kod, migracje). Pozycje z tej listy stoją. Przy `G14` każdego modułu wpisuję
+„odłożone decyzją właściciela DEC-…" albo „w budowie" — nie „gotowe".
+
+## E. Dopisane wieczorem 03.09 (po pomiarach robotników)
+
+| # | Co | Co widzi użytkownik dziś | Koszt | Rekomendacja CTO |
+| --- | --- | --- | --- | --- |
+| A5 | Zakładka „Obserwowane” w Ustawieniach: cały katalog `NotificationSettingsV2` (8 plików + hook wołający trasę, której serwer nie ma) NIE jest podłączony — Ustawienia renderują starą wersję | nic — funkcji nie widać | usunięcie DROBNE; podłączenie ŚREDNIE (trasa + tabela + 3 operacje + test) | **USUNĄĆ** (kod bez wołacza to dług, nie funkcja; jeśli obserwowanie obiektów ma wrócić, wraca jako projekt po MVP) |
+| E1 | Reguła liczenia bramki G20 „zero otwartych P0/P1”: rejestry mają 121 pozycji, z czego 48 to Twoje życzenia produktowe z 22–23.08 bez decyzji, 8 czeka na rozmowę, 23 są zamknięte/odłożone Twoimi decyzjami | — | 0 linii kodu | **Przyjąć regułę**: pozycje ZAMKNIĘTE/ODŁOŻONE decyzją (z numerem DEC) nie blokują; blokują tylko pozycje bez decyzji. Bez tej reguły G20 nie ma matematycznej szansy przejść w tym tygodniu |
+| E2 | Pakiet 56 pozycji P0/P1 do decyzji „teraz / po MVP” — rodzinami, z rekomendacją per rodzina | — | wg pakietu | Osobny plik `DECYZJE_WLASCICIELA_P0P1_20260904.md` (w przygotowaniu przez robotnika; rano gotowy) |
+| E3 | Staging jest 507 commitów za linią dowodów | Twój przelot po stagingu ogląda kod sprzed tygodnia | 0 linii, jedno słowo | **„wdrażaj”** — bez tego G16 nie rusza |
+
+Wydane dziś wieczorem dyżury Codexa: 288 (bramka modułu na 270 trasach finansów), 289 (pomoc), 290 (dowody G19), 291 (dowody runtime P0/P1). Wklejki masz w rozmowie; instrukcje w `docs/program/waves/WAVE_03_ACCEPTANCE/codex/`.

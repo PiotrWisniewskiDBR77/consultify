@@ -20,10 +20,10 @@ const FINANCE_COMMENTS_FLAG: FeatureFlag = {
   description:
     'Włącza samodzielny panel komentarzy/review Finance v3 (comments.routes.ts, 17 ' +
     'endpointów): kotwice na artefakcie/KPI/linii/komórce/okresie, wzmianki, przypisanie, ' +
-    'resolve/reopen, flaga blokująca, checklist review. OFF = komponent nieosiągalny — ' +
-    'dostępny wyłącznie przez dev-render do akceptu Piotra na zrzutach (CLAUDE.md #7). ' +
-    'Domyślnie OFF.',
-  defaultValue: false,
+    'resolve/reopen, flaga blokująca, checklist review. DEC 03.09 wieczór (A2, ' +
+    'docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 — 6 paneli ' +
+    'Finansów) — domyślnie ON. Override OFF nadal możliwy (allowLocalOverride).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

@@ -9,6 +9,12 @@
  * Gotowości) — 2026-08-26 na prototypie zaakceptowanym przez właściciela
  * (CLAUDE.md §7). Flaga OFF zostaje jako awaryjny wyłącznik (§8), nie jako
  * ścieżka domyślna.
+ *
+ * Realny kod (`readEnvFlag()`) miał od 2026-08-29 do 2026-09-03 twardo
+ * wpisane OFF mimo tego cytatu (krok (d) reguły 7 nie był domknięty w
+ * rejestrze) — te dwa testy poniżej faktycznie CZERWIENIŁY SIĘ w tym oknie.
+ * DEC 03.09 wieczór (A3) domyka krok (d) i przywraca zgodność kodu z tym
+ * plikiem testowym.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

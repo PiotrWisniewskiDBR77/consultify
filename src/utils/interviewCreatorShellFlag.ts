@@ -1,8 +1,13 @@
 /**
  * Interview Creator Shell rollout gate (DEC-2026-08-25-67).
  *
- * Resolution order: URL query, localStorage, Vite build env, then hard OFF.
- * The shell remains opt-in until visual acceptance has been completed.
+ * DEC 03.09 wieczór (A4, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
+ * wiersz A4 — "Kreator wywiadu → ON od razu"): wizualna akceptacja jest
+ * zamknięta, flaga przełączona na domyślne ON.
+ *
+ * Resolution order: URL query, localStorage, Vite build env, then hard ON.
+ * Override OFF nadal możliwy (query/localStorage) — awaryjny wyłącznik
+ * CLAUDE.md §8.
  */
 
 const LS_KEY = 'ff.interview_creator_shell';
@@ -44,8 +49,12 @@ function readLocalStorageOverride(): boolean | null {
 function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return parseFlag(meta.env?.[ENV_KEY]) ?? false;
+    // DEC 03.09 wieczór (A4): domyślna wartość ON w kodzie (nie w env) —
+    // produkcja bez żadnej zmiennej pokazuje zatwierdzony kreator.
+    return parseFlag(meta.env?.[ENV_KEY]) ?? true;
   } catch {
+    // fail-CLOSED na błąd odczytu środowiska pozostaje bezpieczniejszym
+    // fallbackiem niż fail-open (wzorzec `orgRedesignFlag.ts`/`chatSignalsFeedFlag.ts`).
     return false;
   }
 }

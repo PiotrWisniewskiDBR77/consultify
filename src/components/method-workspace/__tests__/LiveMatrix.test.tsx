@@ -57,6 +57,40 @@ describe('LiveMatrix', () => {
     expect(unassessedCell).toBeInTheDocument();
   });
 
+  it('ASM-OWN-013: a cell with an AI proposal or a required review states so in its own accessible name — the global legend that used to explain the icon is gone', () => {
+    const row = makeMatrixRow({
+      levels: [1, 2, 3, 4].map((level) => ({
+        unitId: 'unit-1',
+        level,
+        achieved: level === 1,
+        proposed: false,
+        target: false,
+        answerState: level === 1 ? 'confirmed' : 'unresolved',
+        evidenceState: level === 1 ? 'complete' : 'missing',
+        aiProposalPending: level === 2,
+        reviewRequired: level === 3,
+        blocker: false,
+      })),
+    });
+    render(
+      <LiveMatrix
+        rows={[row]}
+        levels={[1, 2, 3, 4]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    expect(screen.getByLabelText(/poziom 2,.*Propozycja AI/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/poziom 3,.*Review/)).toBeInTheDocument();
+    // No legend block is rendered anywhere in the matrix header any more.
+    expect(screen.queryByText('Propozycja AI')).not.toBeInTheDocument();
+    expect(screen.queryByText('Evidence luka')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nieoceniony')).not.toBeInTheDocument();
+  });
+
   it('clicking a cell opens the side sheet scoped to that cell', () => {
     render(<ControlledMatrix />);
     expect(screen.queryByTestId('matrix-side-sheet')).not.toBeInTheDocument();

@@ -1,5 +1,6 @@
 import { ArrowRight, Eye } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
@@ -86,10 +87,11 @@ const businessLabel = (value: string | null | undefined, fallback: string) =>
  * w komórkach tabeli. Właściciel widział „UNKNOWN" w kolumnach Dostępność,
  * Pozostałe, Zakres obciążenia, Koszt/prognoza i Świeżość oraz „NONE",
  * „CAPACITY_CONFLICT", „NOT_ASSESSED", „CURRENT" w Konflikcie i Świeżości.
- * Ta powierzchnia pisze etykiety po polsku wprost (bez i18n — patrz nagłówki
- * kolumn niżej), więc słownik jest tu, przy miejscu użycia. Dane surowe
- * (`item.*.knowledgeState`) zostają nietknięte — filtry i podgląd nadal
- * porównują enumy, tłumaczona jest wyłącznie TREŚĆ KOMÓRKI.
+ * Ta powierzchnia pisze TREŚĆ KOMÓREK po polsku wprost (bez i18n) — słownik
+ * jest tu, przy miejscu użycia. Dane surowe (`item.*.knowledgeState`) zostają
+ * nietknięte — filtry i podgląd nadal porównują enumy, tłumaczona jest
+ * wyłącznie TREŚĆ KOMÓRKI. (i18n-reszta 20260903: nagłówki kolumn NIŻEJ
+ * przeszły na `t()` — to była inna, dodatkowa dziura, patrz `columns`.)
  */
 const ETYKIETY_PL: Record<string, string> = {
   UNKNOWN: 'Nieznane',
@@ -125,6 +127,7 @@ export const ExecutionResourcesSurface = ({
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
+  const { t } = useTranslation();
   const [cases, setCases] = useState<any[]>([]),
     [caseId, setCaseId] = useState(''),
     [caseVersion, setCaseVersion] = useState(1),
@@ -227,27 +230,58 @@ export const ExecutionResourcesSurface = ({
       setState('ERROR');
     }
   };
+  // i18n-reszta 20260903: nagłówki kolumn przez t() (poprzednio literały PL
+  // nie reagowały na `?lang=` — pomiar nadzorcy 03.09, execution-tab-resources).
+  // Wartości KOMÓREK (ETYKIETY_PL, enum stanów) zostają po polsku — patrz
+  // komentarz przy ETYKIETY_PL powyżej (decyzja 174-domkniecie, dotyczyła
+  // TREŚCI komórki, nie nagłówków).
   const columns: TableColumn[] = [
-    { id: 'resourceLabel', label: 'Osoba / zespół / rola', sortable: true, width: '220px' },
-    { id: 'periodLabel', label: 'Okres', width: '180px' },
-    { id: 'availabilityLabel', label: 'Dostępność', width: '150px' },
-    { id: 'demandLabel', label: 'Przydzielone', width: '150px' },
-    { id: 'remainingLabel', label: 'Pozostałe', width: '140px' },
-    { id: 'loadLabel', label: 'Zakres obciążenia', width: '160px' },
-    { id: 'skillLabel', label: 'Dopasowanie', width: '150px' },
-    { id: 'taskTitle', label: 'Dotknięta praca', sortable: true, width: '260px' },
-    { id: 'costLabel', label: 'Koszt / prognoza', width: '160px' },
+    {
+      id: 'resourceLabel',
+      label: t('execution.resources.columns.person', 'Person / team / role'),
+      sortable: true,
+      width: '220px',
+    },
+    { id: 'periodLabel', label: t('execution.resources.columns.period', 'Period'), width: '180px' },
+    {
+      id: 'availabilityLabel',
+      label: t('execution.resources.columns.availability', 'Availability'),
+      width: '150px',
+    },
+    { id: 'demandLabel', label: t('execution.resources.columns.demand', 'Allocated'), width: '150px' },
+    {
+      id: 'remainingLabel',
+      label: t('execution.resources.columns.remaining', 'Remaining'),
+      width: '140px',
+    },
+    { id: 'loadLabel', label: t('execution.resources.columns.load', 'Load range'), width: '160px' },
+    {
+      id: 'skillLabel',
+      label: t('execution.resources.columns.skillMatch', 'Skill match'),
+      width: '150px',
+    },
+    {
+      id: 'taskTitle',
+      label: t('execution.resources.columns.affectedWork', 'Affected work'),
+      sortable: true,
+      width: '260px',
+    },
+    { id: 'costLabel', label: t('execution.resources.columns.cost', 'Cost / forecast'), width: '160px' },
     {
       id: 'status',
-      label: 'Status',
+      label: t('execution.table.status', 'Status'),
       sortable: true,
       filterable: true,
       width: '200px',
       render: (row) => allocationStatusLabel(String(row.status)),
     },
-    { id: 'conflictLabel', label: 'Konflikt', width: '130px' },
-    { id: 'freshnessLabel', label: 'Świeżość', width: '130px' },
-    { id: 'nextActionLabel', label: 'Następne działanie', width: '220px' },
+    { id: 'conflictLabel', label: t('execution.resources.columns.conflict', 'Conflict'), width: '130px' },
+    { id: 'freshnessLabel', label: t('execution.resources.columns.freshness', 'Freshness'), width: '130px' },
+    {
+      id: 'nextActionLabel',
+      label: t('execution.resources.columns.nextAction', 'Next action'),
+      width: '220px',
+    },
   ];
   const tableItems = useMemo(
     () =>
@@ -382,7 +416,7 @@ export const ExecutionResourcesSurface = ({
           }}
           className="h-9 min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text-secondary"
         >
-          <option value="">Wszystkie realizacje</option>
+          <option value="">{t('execution.filters.allCases', 'All deliveries')}</option>
           {cases.map((c) => (
             <option key={c.executionCaseId} value={c.executionCaseId}>
               {c.initiativeTitle ||
@@ -393,7 +427,7 @@ export const ExecutionResourcesSurface = ({
         </select>
         {caseId && (
           <button type="button" className="btn-secondary" onClick={() => setShowProposal(true)}>
-            Zaproponuj przydział
+            {t('execution.resources.actions.proposeAllocation', 'Propose allocation')}
           </button>
         )}
       </div>

@@ -2,15 +2,18 @@
  * @vitest-environment jsdom
  *
  * `StatementPackWorkspaceV2` — AP_MOUNT §A: the component reads its OWN flag
- * (`financeStatementPackWorkspaceV2`, default OFF) and gates on it BEFORE
- * mounting the four `useEffect`s that fetch on mount (identity, lines,
- * lineage, reconciliation runs) — via the component's own injectable
- * `fetchers` prop (its established DI pattern), not `vi.mock()`.
+ * (`financeStatementPackWorkspaceV2`) and gates on it BEFORE mounting the
+ * four `useEffect`s that fetch on mount (identity, lines, lineage,
+ * reconciliation runs) — via the component's own injectable `fetchers` prop
+ * (its established DI pattern), not `vi.mock()`.
  *
- * Proves:
- *   - flag OFF (no override, i.e. real production default): renders nothing
- *     AND never calls any injected fetcher.
- *   - flag ON (local override): mounts and calls `listLines`/`getIdentity`.
+ * DEC 03.09 wieczór (A2, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
+ * wiersz A2 — 6 paneli Finansów, w tym pakiet sprawozdań v2): flaga
+ * przełączona OFF -> ON w kodzie. Proves:
+ *   - flag ON (no override, i.e. real production default now): mounts and
+ *     calls `listLines`/`getIdentity`.
+ *   - flag OFF (explicit local override — awaryjny wyłącznik CLAUDE.md §8):
+ *     renders nothing AND never calls any injected fetcher.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -58,8 +61,26 @@ afterEach(() => {
 });
 
 describe('StatementPackWorkspaceV2 — flag gate (AP_MOUNT §A)', () => {
-  it('OFF (default): renders nothing and never calls any injected fetcher', () => {
+  it('ON (default, DEC 03.09 wieczór A2, no override): mounts and calls listLines + getIdentity', async () => {
     const fetchers = fakeFetchers();
+    render(
+      <StatementPackWorkspaceV2
+        businessVersionId="bv-1"
+        resolveLineLabel={resolveLineLabel}
+        fetchers={fetchers}
+        onOpenArtifact={() => {}}
+        onCreateNew={() => {}}
+        onOpenReportResult={() => {}}
+      />
+    );
+    expect(screen.getByTestId('statement-pack-workspace-v2')).toBeInTheDocument();
+    await waitFor(() => expect(fetchers.listLines).toHaveBeenCalledTimes(1));
+    expect(fetchers.getIdentity).toHaveBeenCalledTimes(1);
+  });
+
+  it('OFF (explicit local override — awaryjny wyłącznik CLAUDE.md §8): renders nothing and never calls any injected fetcher', () => {
+    const fetchers = fakeFetchers();
+    setFeatureFlagOverrides({ financeStatementPackWorkspaceV2: false });
     const { container } = render(
       <StatementPackWorkspaceV2
         businessVersionId="bv-1"
@@ -75,23 +96,5 @@ describe('StatementPackWorkspaceV2 — flag gate (AP_MOUNT §A)', () => {
     expect(fetchers.getLineage).not.toHaveBeenCalled();
     expect(fetchers.listReconciliationRuns).not.toHaveBeenCalled();
     expect(fetchers.getIdentity).not.toHaveBeenCalled();
-  });
-
-  it('ON (local override): mounts and calls listLines + getIdentity', async () => {
-    const fetchers = fakeFetchers();
-    setFeatureFlagOverrides({ financeStatementPackWorkspaceV2: true });
-    render(
-      <StatementPackWorkspaceV2
-        businessVersionId="bv-1"
-        resolveLineLabel={resolveLineLabel}
-        fetchers={fetchers}
-        onOpenArtifact={() => {}}
-        onCreateNew={() => {}}
-        onOpenReportResult={() => {}}
-      />
-    );
-    expect(screen.getByTestId('statement-pack-workspace-v2')).toBeInTheDocument();
-    await waitFor(() => expect(fetchers.listLines).toHaveBeenCalledTimes(1));
-    expect(fetchers.getIdentity).toHaveBeenCalledTimes(1);
   });
 });

@@ -143,10 +143,11 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
         <div className="px-5 py-5 min-h-[220px]">
           {step === 1 && (
             <div className="space-y-3" data-testid="wizard-step-name">
-              <label className="block text-sm font-medium text-c-text">
+              <label className="block text-sm font-medium text-c-text" htmlFor="wizard-name-input">
                 {t('templateBuilder.wizard.nameLabel', 'Nazwa szablonu')}
               </label>
               <TextInput
+                id="wizard-name-input"
                 value={name}
                 onChange={setName}
                 placeholder={t('templateBuilder.wizard.namePlaceholder', 'np. Raport statusu projektu')}

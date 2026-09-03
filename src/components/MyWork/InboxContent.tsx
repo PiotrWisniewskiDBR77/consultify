@@ -1542,7 +1542,10 @@ const PreviewPane: React.FC<{
             label: i18n.t('myWork.inboxContent.linkedTask', 'Linked task'),
             title: item.linkedTaskId,
             icon: CheckSquare,
-            tone: 'text-emerald-600 dark:text-emerald-400',
+            // G06 „podgląd — kontrast" (2026-09-03): text-emerald-600 (#388A22)
+            // na tle bloku Relations w panelu podglądu (#f8fafc) mierzyło
+            // 4,16:1 (próg 4,5:1, mywork-inbox). emerald-700 — 6,6:1.
+            tone: 'text-emerald-700 dark:text-emerald-400',
             onClick: onOpenTask ? () => onOpenTask(item.linkedTaskId!) : undefined,
           } as RelationItem,
         ]
@@ -2167,6 +2170,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // MYW-PHOTO-002 (P0, "Still open" gap): a plain empty inbox and an
+  // access-denied inbox (401/403 — wrong org, revoked membership, missing
+  // scope) both rendered the same neutral "no items" copy. That still lets a
+  // genuinely-blocked user believe there is simply nothing to do. The
+  // load-failure branch already carries the HTTP status via `err.status`
+  // (`services/api.ts` — `err.status = res.status`), so this distinguishes
+  // "the request failed because you are not allowed to see this inbox" from
+  // "the request failed for another reason" without needing a new backend
+  // signal — the status code was already there, just not read.
+  const [loadErrorIsAccessDenied, setLoadErrorIsAccessDenied] = useState(false);
   const [uncontrolledViewMode, setUncontrolledViewMode] = useState<InboxViewMode>('flat');
   const viewMode = controlledViewMode ?? uncontrolledViewMode;
   const setViewMode = useCallback(
@@ -2338,6 +2351,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     try {
       setLoading(true);
       setLoadError(null);
+      setLoadErrorIsAccessDenied(false);
       const status =
         statusTab === 'all'
           ? 'all'
@@ -2425,8 +2439,22 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       });
     } catch (e) {
       console.error('Failed to load inbox', e);
-      setLoadError(t('myWork.inboxContent.setLoadError', 'Failed to load Inbox'));
-      toast.error(t('myWork.inboxContent.toastError3', 'Failed to load Inbox'));
+      const httpStatus = Number((e as { status?: unknown } | null)?.status);
+      const isAccessDenied = httpStatus === 401 || httpStatus === 403;
+      setLoadErrorIsAccessDenied(isAccessDenied);
+      setLoadError(
+        isAccessDenied
+          ? t(
+              'myWork.inboxContent.accessDeniedMessage',
+              "You don't have access to this inbox. Check that you're signed into the right organization, or ask an administrator to grant you access."
+            )
+          : t('myWork.inboxContent.setLoadError', 'Failed to load Inbox')
+      );
+      toast.error(
+        isAccessDenied
+          ? t('myWork.inboxContent.accessDeniedTitle', "You don't have access to this inbox")
+          : t('myWork.inboxContent.toastError3', 'Failed to load Inbox')
+      );
     } finally {
       setLoading(false);
     }
@@ -4169,7 +4197,25 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           {loading ? (
             <SharedLoadingState template="list" rows={6} />
           ) : loadError ? (
-            <ErrorState message={loadError} retry={() => void fetchInbox()} />
+            // MYW-PHOTO-002 (P0, "Still open" gap): access-denied (401/403)
+            // gets its own title + actionable copy instead of the generic
+            // "Failed to load Inbox" — a blocked user needs to know it is a
+            // permissions problem, not a transient fetch failure, and what to
+            // do about it (switch org / ask an admin), not just "Try again".
+            <div data-testid={loadErrorIsAccessDenied ? 'inbox-access-denied' : 'inbox-load-error'}>
+              <ErrorState
+                title={
+                  loadErrorIsAccessDenied
+                    ? t(
+                        'myWork.inboxContent.accessDeniedTitle',
+                        "You don't have access to this inbox"
+                      )
+                    : undefined
+                }
+                message={loadError}
+                retry={loadErrorIsAccessDenied ? undefined : () => void fetchInbox()}
+              />
+            </div>
           ) : filteredItems.length === 0 &&
             ((searchQuery || '').trim().length > 0 || actionRequiredOnly) ? (
             <SharedEmptyState

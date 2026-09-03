@@ -40,3 +40,71 @@ describe('kanon rekordu inicjatywy (decyzja właściciela 2026-09-03)', () => {
     expect(src).toMatch(/<InitiativeDocumentView\b/);
   });
 });
+
+/**
+ * Audyt przewodów odbioru (2026-09-03, `docs/program/waves/WAVE_03_ACCEPTANCE/
+ * AUDYT_PRZEWODOW_ODBIORU_20260903.md`) i ślad `evidence/grafika/
+ * przewody-odbioru-20260903.md` wykazały trzy komponenty, na których stały
+ * zatwierdzone przez właściciela zrzuty, choć żaden użytkownik nigdy ich nie
+ * widział — `git grep -w <Nazwa> -- src/` zwracał wyłącznie własną definicję,
+ * komentarze i (dla InitiativesTable/ReportsTable) zero żywych wołaczy w
+ * ogóle, a dla AuditsHub — wyłącznie jego własne testy (dawny równoległy hub
+ * nad wycofanym `/api/audit`, nigdy nie mounted — `AuditsMethodHub.tsx:10`).
+ * Decyzja właściciela (03.09, przy Inicjatywach): martwe/obce komponenty
+ * kasować, „aby nigdy nie wróciły".
+ */
+describe('martwe komponenty odbioru 2026-09-03 nie wracają', () => {
+  it('InitiativesTable.tsx (assessment) nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/assessment/InitiativesTable.tsx'))
+    ).toBe(false);
+  });
+
+  it('ReportsTable.tsx (assessment) nie istnieje', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/components/assessment/ReportsTable.tsx'))).toBe(
+      false
+    );
+  });
+
+  it('AuditsHub.tsx (Audit) nie istnieje', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/components/Audit/AuditsHub.tsx'))).toBe(false);
+  });
+});
+
+/**
+ * Runda 2 (03.09, rejestr D11 + rodzina „komponent bez importera"):
+ * OrganizationV8CanonPanel.tsx zastąpiony przez OrgContextSummaryBanner.tsx
+ * (M16 P0-2) — zero żywych wołaczy, 10 wystąpień crimson `primary-*`, brak
+ * testów dedykowanych, brak montowania w dev-render.
+ */
+describe('martwe komponenty odbioru 2026-09-03 runda 2 nie wracają', () => {
+  it('OrganizationV8CanonPanel.tsx (Organization) nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/Organization/OrganizationV8CanonPanel.tsx'))
+    ).toBe(false);
+  });
+});
+
+/**
+ * Decyzja właściciela A5 (03.09 wieczór, `docs/program/waves/WAVE_03_ACCEPTANCE/
+ * G20_BLOKERY_P0P1_20260903.md` T2): katalog `NotificationSettingsV2/` (rodzina
+ * „Obserwowane" — 8 plików, w tym `WatchingTab`) nie miał ani jednego importera
+ * spoza siebie; Ustawienia renderują v1 (`src/views/SettingsView.tsx:433` →
+ * `NotificationSettings`). Hook `useUserNotificationPreferences.tsx` wołał
+ * `/api/settings/watchers`, której serwer nie ma, i był używany wyłącznie z
+ * tego katalogu. Usunięte razem z hookiem i 4 osieroconymi kluczami i18n
+ * (`settings.notifications.watchNotify*`).
+ */
+describe('NotificationSettingsV2 (decyzja A5, 03.09 wieczór) nie wraca', () => {
+  it('katalog src/components/settings/NotificationSettingsV2/ nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/settings/NotificationSettingsV2'))
+    ).toBe(false);
+  });
+
+  it('hook src/hooks/useUserNotificationPreferences.tsx nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/hooks/useUserNotificationPreferences.tsx'))
+    ).toBe(false);
+  });
+});

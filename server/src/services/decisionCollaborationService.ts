@@ -825,6 +825,10 @@ export interface DecisionEnhancementsInput {
   linkedItems: Array<Record<string, unknown>>;
   contextDetails: string;
   consequenceScenarios: Record<string, unknown> | null;
+  // MW-5 (G14 05-08, 2026-09-03): the one field (of three named in the
+  // finding) that genuinely had zero backend persistence — see
+  // 20261912_decision_enhancements_escalation.sql.
+  escalation: Record<string, unknown> | null;
 }
 
 export async function replaceDecisionEnhancements(input: {
@@ -839,14 +843,16 @@ export async function replaceDecisionEnhancements(input: {
   await queryHelpers.queryRun(
     `INSERT INTO decision_enhancements
        (decision_id, organization_id, reminders, escalation_rules, linked_items,
-        context_details, consequence_scenarios, updated_by, created_at, updated_at)
-     VALUES (?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, NOW(), NOW())
+        context_details, consequence_scenarios, escalation,
+        updated_by, created_at, updated_at)
+     VALUES (?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, NOW(), NOW())
      ON CONFLICT (decision_id) DO UPDATE SET
        reminders = EXCLUDED.reminders,
        escalation_rules = EXCLUDED.escalation_rules,
        linked_items = EXCLUDED.linked_items,
        context_details = EXCLUDED.context_details,
        consequence_scenarios = EXCLUDED.consequence_scenarios,
+       escalation = EXCLUDED.escalation,
        updated_by = EXCLUDED.updated_by,
        updated_at = NOW()
      WHERE decision_enhancements.organization_id = EXCLUDED.organization_id`,
@@ -858,6 +864,7 @@ export async function replaceDecisionEnhancements(input: {
       JSON.stringify(value.linkedItems),
       value.contextDetails,
       JSON.stringify(value.consequenceScenarios),
+      JSON.stringify(value.escalation),
       input.actorId,
     ]
   );
@@ -869,7 +876,8 @@ async function getDecisionEnhancements(
   organizationId: string
 ): Promise<DecisionEnhancementsInput | null> {
   const row = await queryHelpers.queryOne<any>(
-    `SELECT reminders, escalation_rules, linked_items, context_details, consequence_scenarios
+    `SELECT reminders, escalation_rules, linked_items, context_details, consequence_scenarios,
+            escalation
        FROM decision_enhancements
       WHERE decision_id = ? AND organization_id = ?`,
     [decisionId, organizationId]
@@ -881,6 +889,7 @@ async function getDecisionEnhancements(
     linkedItems: row.linked_items ?? [],
     contextDetails: row.context_details ?? '',
     consequenceScenarios: row.consequence_scenarios ?? null,
+    escalation: row.escalation ?? null,
   };
 }
 

@@ -4389,7 +4389,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             .map((node) => String(node.data?.label || ''))
             .filter(Boolean)
             .join('\n')}
-          isAccepted={false}
+          isAccepted
           graphNodes={nodes}
           graphEdges={edges}
           onActionExpand={() => {

@@ -239,6 +239,7 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
               // `flex-1 overflow-y-auto` na body, to `overflow-hidden` tutaj
               // tnie tylko cień/róg karty, nie treść.
               <aside
+                data-preview-pane
                 className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden"
                 style={{ width: PREVIEW_PANE_WIDTH }}
               >

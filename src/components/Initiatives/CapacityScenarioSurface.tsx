@@ -2,6 +2,7 @@ import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '@/i18n';
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -23,31 +24,40 @@ import {
 import { type CanonicalMenu3Contract, countPresets } from './canonicalMenu3';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
-const knowledgeLabel: Record<K, string> = {
-  KNOWN: 'Potwierdzone',
-  ESTIMATED: 'Szacowane',
-  UNKNOWN: 'Brak danych',
-  UNCONFIRMED: 'Niepotwierdzone',
-};
-const confidenceLabel: Record<string, string> = {
-  HIGH: 'Wysoka',
-  MEDIUM: 'Średnia',
-  LOW: 'Niska',
-  UNKNOWN: 'Brak danych',
-};
-const scenarioStateLabel: Record<string, string> = {
-  DRAFT: 'Szkic',
-  PUBLISHED: 'Opublikowany',
-  SUPERSEDED: 'Zastąpiony',
-};
-const rowKindLabel: Record<string, string> = {
-  PERIOD: 'Okres',
-  CONSTRAINT: 'Ograniczenie',
-};
-const criticalityLabel: Record<string, string> = {
-  KNOWN: 'Oceniona',
-  UNKNOWN: 'Do oceny',
-};
+// 2026-09-03 (i18n-r3): te były Record<K,string> ze stałą wartością PL —
+// pokazywały się identycznie w trybie EN. Zamiana na funkcje wołające
+// i18n.t() (moduł poza komponentem, nie hook) naprawia to bez ruszania
+// wywołań w JSX (`knowledgeLabel[x]` → `knowledgeLabel(x)`).
+const knowledgeLabel = (value: K): string =>
+  ({
+    KNOWN: i18n.t('initiatives.capacityAdvisor.knowledge.known'),
+    ESTIMATED: i18n.t('initiatives.capacityAdvisor.knowledge.estimated'),
+    UNKNOWN: i18n.t('initiatives.capacityAdvisor.knowledge.unknown'),
+    UNCONFIRMED: i18n.t('initiatives.capacityAdvisor.knowledge.unconfirmed'),
+  })[value];
+const confidenceLabel = (value: string): string | undefined =>
+  ({
+    HIGH: i18n.t('initiatives.capacityAdvisor.confidence.high'),
+    MEDIUM: i18n.t('initiatives.capacityAdvisor.confidence.medium'),
+    LOW: i18n.t('initiatives.capacityAdvisor.confidence.low'),
+    UNKNOWN: i18n.t('initiatives.capacityAdvisor.knowledge.unknown'),
+  })[value];
+const scenarioStateLabel = (value: string): string | undefined =>
+  ({
+    DRAFT: i18n.t('initiatives.planScenario.status.draft'),
+    PUBLISHED: i18n.t('initiatives.planScenario.status.published'),
+    SUPERSEDED: i18n.t('initiatives.planScenario.status.superseded'),
+  })[value];
+const rowKindLabel = (value: string): string | undefined =>
+  ({
+    PERIOD: i18n.t('initiatives.capacityAdvisor.rowKind.period'),
+    CONSTRAINT: i18n.t('initiatives.capacityAdvisor.rowKind.constraint'),
+  })[value];
+const criticalityLabel = (value: string): string | undefined =>
+  ({
+    KNOWN: i18n.t('initiatives.capacityAdvisor.criticality.assessed'),
+    UNKNOWN: i18n.t('initiatives.capacityAdvisor.criticality.toAssess'),
+  })[value];
 // Odbiór grafiki 07-realizacja (2026-08-30): kilka kolumn tabeli obciążenia
 // (demand/supply/gap/saturation/affectedInitiatives/freshness/proposedResponse)
 // dla wierszy typu CONSTRAINT nie mają jeszcze realnych danych i renderowały
@@ -55,16 +65,17 @@ const criticalityLabel: Record<string, string> = {
 // zamiast etykiet". Ta funkcja tłumaczy WYŁĄCZNIE ten token (prefiks złożonych
 // napisów typu "UNKNOWN — brak pełnego zakresu" też), nie rusza już
 // sformatowanych wartości (liczby, zakresy, daty).
+const knowledgeStates: K[] = ['KNOWN', 'ESTIMATED', 'UNKNOWN', 'UNCONFIRMED'];
 const renderKnowledgeToken = (value: unknown): React.ReactNode => {
   if (typeof value !== 'string') return value as React.ReactNode;
-  if (value in knowledgeLabel) return knowledgeLabel[value as K];
+  if ((knowledgeStates as string[]).includes(value)) return knowledgeLabel(value as K);
   const composedMatch = value.match(/^(KNOWN|UNKNOWN|ESTIMATED|UNCONFIRMED)\b(.*)$/);
-  if (composedMatch) return `${knowledgeLabel[composedMatch[1] as K]}${composedMatch[2]}`;
+  if (composedMatch) return `${knowledgeLabel(composedMatch[1] as K)}${composedMatch[2]}`;
   return value;
 };
 const actorLabel = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value)
-    ? 'Właściciel zasobów'
+    ? i18n.t('initiatives.capacityAdvisor.resourceOwnerFallback')
     : ({
         'resource-manager': 'Resource Manager',
         'capacity-owner': 'Właściciel obciążenia',
@@ -74,7 +85,11 @@ const actorLabel = (value: string) =>
 const formatPeriodDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'UNKNOWN';
-  return new Intl.DateTimeFormat('pl-PL', {
+  // 2026-09-03 (i18n-r3): locale przybity na 'pl-PL' pokazywał polskie
+  // skróty miesięcy nawet w trybie EN (ten sam kształt co defekt
+  // public-booking-widget z rundy 03.09) — wzorzec przełączania:
+  // OrganizationDecisionQualityPanel.tsx / ApprovalPatternManager.tsx.
+  return new Intl.DateTimeFormat(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -292,8 +307,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         period.supply.low > 0 &&
         period.supply.base > 0 &&
         period.supply.high > 0
-          ? `${Math.round((period.demand.low / period.supply.high) * 100)}–${Math.round((period.demand.high / period.supply.low) * 100)}% (bazowo ${Math.round((period.demand.base / period.supply.base) * 100)}%)`
-          : 'UNKNOWN — brak pełnego zakresu',
+          ? `${Math.round((period.demand.low / period.supply.high) * 100)}–${Math.round((period.demand.high / period.supply.low) * 100)}% (${i18n.t('initiatives.capacityAdvisor.saturationBaseline')} ${Math.round((period.demand.base / period.supply.base) * 100)}%)`
+          : `UNKNOWN — ${i18n.t('initiatives.capacityAdvisor.saturationIncompleteRange')}`,
       confidence:
         period.demand.confidence === 'UNKNOWN' || period.supply.confidence === 'UNKNOWN'
           ? 'UNKNOWN'
@@ -326,7 +341,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       supply: constraint.state,
       supplyState: constraint.state,
       gap: 'UNKNOWN',
-      saturation: 'UNKNOWN — nie dotyczy ograniczenia',
+      saturation: `UNKNOWN — ${i18n.t('initiatives.capacityAdvisor.saturationNotApplicable')}`,
       confidence: 'UNKNOWN',
       criticality: constraint.state === 'UNKNOWN' ? 'UNKNOWN' : 'KNOWN',
       owner: constraint.ownerId || 'UNKNOWN',
@@ -336,7 +351,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       detail: constraint.detail,
     }));
     return [...periods, ...constraints];
-  }, [scenario]);
+  }, [scenario, i18n.language]);
   const matchesCapacityPreset = (row: (typeof constraintRows)[number], preset: string) =>
     preset === 'all'
       ? true
@@ -789,25 +804,32 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   if (state === 'LOADING')
     return (
       <div role="status" className="p-6">
-        <Loader2 className="inline animate-spin" size={16} /> Loading Capacity scenarios
+        <Loader2 className="inline animate-spin" size={16} />{' '}
+        {t('initiatives.capacityAdvisor.loading', 'Loading Capacity register…')}
       </div>
     );
   if (state === 'ERROR')
     return (
       <div role="alert" className="p-6 text-c-danger">
-        <AlertTriangle className="inline" size={16} /> Capacity register unavailable. No local
-        shadow was created.{' '}
+        <AlertTriangle className="inline" size={16} />{' '}
+        {t(
+          'initiatives.capacityAdvisor.unavailable',
+          'Capacity register unavailable. No local shadow was created.'
+        )}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          Retry
+          {t('initiatives.capacityAdvisor.retry', 'Retry')}
         </button>
       </div>
     );
   return (
     <section aria-label="Capacity scenarios" className="flex h-full min-h-0 flex-col p-4">
       <header className="mb-3">
-        <h2 className="font-semibold">Obciążenie</h2>
+        <h2 className="font-semibold">{t('initiatives.capacityAdvisor.header', 'Load')}</h2>
         <p className="text-xs text-c-text-muted">
-          Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.
+          {t(
+            'initiatives.capacityAdvisor.subtitle',
+            'Ranges show the state of knowledge and evidence, not false precision of resource utilization.'
+          )}
         </p>
       </header>
       <div className="mb-3 flex justify-end">
@@ -816,7 +838,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           className="btn-primary"
           onClick={() => setShowCreate((open) => !open)}
         >
-          <Plus size={15} /> Nowa analiza
+          <Plus size={15} /> {t('initiatives.capacityAdvisor.newAnalysis', 'New analysis')}
         </button>
       </div>
       {showCreate && (
@@ -866,7 +888,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       )}
       <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
         <label className="w-full min-w-0 text-xs text-c-text-muted sm:w-auto">
-          Aktywny wariant obciążenia
+          {t('initiatives.capacityAdvisor.activeScenario', 'Active capacity scenario')}
           <select
             aria-label="Active Capacity Scenario"
             className="mt-1 block w-full min-w-0 max-w-full rounded border border-c-border bg-c-surface px-2 py-1 text-sm sm:ml-2 sm:mt-0 sm:inline-block sm:w-auto"
@@ -880,7 +902,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           >
             {rows.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.title} · {scenarioStateLabel[row.state] ?? row.state} · v{row.version}
+                {row.title} · {scenarioStateLabel(row.state) ?? row.state} · v{row.version}
               </option>
             ))}
           </select>
@@ -891,7 +913,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           disabled={!selectedId}
           onClick={showWorkspace}
         >
-          <Eye size={15} /> Otwórz narzędzia obciążenia
+          <Eye size={15} /> {t('initiatives.capacityAdvisor.openTools', 'Open load tools')}
         </button>
       </div>
       {/*
@@ -916,31 +938,52 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             title={row.title}
             onClose={() => setSelectedConstraintId(null)}
             onOpenFull={showWorkspace}
-            openLabel="Otwórz narzędzia obciążenia"
+            openLabel={t('initiatives.capacityAdvisor.openTools', 'Open load tools')}
             meta={{
               pills: [
-                { label: rowKindLabel[row.kind] ?? row.kind, tone: 'neutral' },
-                { label: criticalityLabel[row.criticality] ?? row.criticality, tone: 'neutral' },
-                { label: confidenceLabel[row.confidence] ?? row.confidence, tone: 'neutral' },
+                { label: rowKindLabel(row.kind) ?? row.kind, tone: 'neutral' },
+                { label: criticalityLabel(row.criticality) ?? row.criticality, tone: 'neutral' },
+                { label: confidenceLabel(row.confidence) ?? row.confidence, tone: 'neutral' },
               ],
               trailing: <span>{actorLabel(row.owner)}</span>,
             }}
             details={{
-              label: 'Stan obciążenia i dowodów',
+              label: t('initiatives.capacityAdvisor.details.label', 'Load state and evidence'),
               text:
                 row.detail ||
-                'Zakresy są oparte na dostępnych dowodach; brak danych nie oznacza zera.',
+                t(
+                  'initiatives.capacityAdvisor.details.text',
+                  'Ranges are based on available evidence; missing data does not mean zero.'
+                ),
               properties: [
-                { id: 'demand', label: 'Zapotrzebowanie', value: knowledgeLabel[row.demand as K] },
-                { id: 'supply', label: 'Dostępność', value: knowledgeLabel[row.supply as K] },
-                { id: 'gap', label: 'Luka', value: row.gap },
-                { id: 'owner', label: 'Właściciel', value: actorLabel(row.owner) },
+                {
+                  id: 'demand',
+                  label: t('initiatives.capacityAdvisor.properties.demand', 'Demand'),
+                  value: knowledgeLabel(row.demand as K),
+                },
+                {
+                  id: 'supply',
+                  label: t('initiatives.capacityAdvisor.properties.supply', 'Supply'),
+                  value: knowledgeLabel(row.supply as K),
+                },
+                { id: 'gap', label: t('initiatives.capacityAdvisor.columns.gap', 'Gap'), value: row.gap },
+                {
+                  id: 'owner',
+                  label: t('initiatives.capacityAdvisor.properties.owner', 'Owner'),
+                  value: actorLabel(row.owner),
+                },
               ],
             }}
             ai={{
-              hints: ['Challenge assumptions', 'Compare options'],
+              hints: [
+                t('initiatives.capacityAdvisor.ai.hintChallenge', 'Challenge assumptions'),
+                t('initiatives.capacityAdvisor.ai.hintCompare', 'Compare options'),
+              ],
               disabled: true,
-              disabledTooltip: 'AI suggestions require an explicit governed analysis request.',
+              disabledTooltip: t(
+                'initiatives.capacityAdvisor.ai.disabledTooltip',
+                'AI suggestions require an explicit governed analysis request.'
+              ),
             }}
             relations={[
               {
@@ -954,7 +997,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                 {
                   id: 'open-workspace',
                   variant: 'neutral',
-                  label: 'Otwórz narzędzia obciążenia',
+                  label: t('initiatives.capacityAdvisor.openTools', 'Open load tools'),
                   icon: Eye,
                   shortcut: 'O',
                   onClick: showWorkspace,
@@ -966,59 +1009,69 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       >
         <StandardTable
           columns={[
-            { id: 'title', label: 'Okres / ograniczenie', sortable: true, width: '240px' },
+            {
+              id: 'title',
+              label: t('initiatives.capacityAdvisor.columns.titlePeriod', 'Period / constraint'),
+              sortable: true,
+              width: '240px',
+            },
             {
               id: 'roleTeamSkill',
-              label: 'Rola / zespół',
+              label: t('initiatives.capacityAdvisor.columns.roleTeam', 'Role / team'),
               sortable: true,
               filterable: true,
               render: (row) => renderKnowledgeToken(row.roleTeamSkill),
             },
             {
               id: 'kind',
-              label: 'Rodzaj',
+              label: t('initiatives.capacityAdvisor.columns.kind', 'Kind'),
               sortable: true,
               filterable: true,
-              render: (row) => rowKindLabel[row.kind] ?? row.kind,
+              render: (row) => rowKindLabel(row.kind) ?? row.kind,
             },
             {
               id: 'demand',
-              label: 'Potrzeby (zakres)',
+              label: t('initiatives.capacityAdvisor.columns.demandRange', 'Demand (range)'),
               sortable: true,
               filterable: true,
               render: (row) => renderKnowledgeToken(row.demand),
             },
             {
               id: 'supply',
-              label: 'Zasoby (zakres)',
+              label: t('initiatives.capacityAdvisor.columns.supplyRange', 'Supply (range)'),
               sortable: true,
               filterable: true,
               render: (row) => renderKnowledgeToken(row.supply),
             },
-            { id: 'gap', label: 'Luka', sortable: true, render: (row) => renderKnowledgeToken(row.gap) },
+            {
+              id: 'gap',
+              label: t('initiatives.capacityAdvisor.columns.gap', 'Gap'),
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.gap),
+            },
             {
               id: 'saturation',
-              label: 'Presja (zakres)',
+              label: t('initiatives.capacityAdvisor.columns.pressureRange', 'Pressure (range)'),
               sortable: true,
               render: (row) => renderKnowledgeToken(row.saturation),
             },
             {
               id: 'confidence',
-              label: 'Pewność',
+              label: t('initiatives.capacityAdvisor.columns.confidence', 'Confidence'),
               sortable: true,
               filterable: true,
-              render: (row) => confidenceLabel[row.confidence] ?? row.confidence,
+              render: (row) => confidenceLabel(row.confidence) ?? row.confidence,
             },
             {
               id: 'criticality',
-              label: 'Waga',
+              label: t('initiatives.capacityAdvisor.columns.weight', 'Weight'),
               sortable: true,
               filterable: true,
-              render: (row) => criticalityLabel[row.criticality] ?? row.criticality,
+              render: (row) => criticalityLabel(row.criticality) ?? row.criticality,
             },
             {
               id: 'owner',
-              label: 'Opiekun',
+              label: t('initiatives.capacityAdvisor.columns.owner', 'Owner'),
               sortable: true,
               filterable: true,
               render: (row) => actorLabel(row.owner),
@@ -1035,7 +1088,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               sortable: true,
               render: (row) =>
                 row.freshness === 'UNKNOWN'
-                  ? knowledgeLabel.UNKNOWN
+                  ? knowledgeLabel('UNKNOWN')
                   : formatPeriodDate(row.freshness),
             },
             {
@@ -1053,7 +1106,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             primary: [
               {
                 id: 'open-workspace',
-                label: 'Otwórz narzędzia obciążenia',
+                label: t('initiatives.capacityAdvisor.openTools', 'Open load tools'),
                 icon: Eye,
                 onClick: showWorkspace,
               },
@@ -1061,14 +1114,25 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             universalHandlers: {
               preview: () => setSelectedConstraintId(String(row.id)),
               edit: showWorkspace,
-              archiveNote: 'Published capacity history is immutable',
+              archiveNote: t(
+                'initiatives.capacityAdvisor.archiveNote',
+                'Published capacity history is immutable'
+              ),
             },
-            destructive: { note: 'Capacity scenarios are superseded, not deleted' },
+            destructive: {
+              note: t(
+                'initiatives.capacityAdvisor.destructiveNote',
+                'Capacity scenarios are superseded, not deleted'
+              ),
+            },
           })}
           persistKey="initiatives.capacity-constraints.v2"
           empty={{
-            title: 'Brak danych obciążenia w tym zakresie',
-            description: 'Zmień filtr albo otwórz narzędzia aktywnego wariantu obciążenia.',
+            title: t('initiatives.capacityAdvisor.emptyTitle', 'No load data in this range'),
+            description: t(
+              'initiatives.capacityAdvisor.emptyDescription',
+              'Change the filter or open the tools for the active capacity scenario.'
+            ),
           }}
         />
         </TableWithPreviewLayout>
@@ -1135,7 +1199,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               <h4 className="font-medium">Ograniczenia</h4>
               {scenario.constraints.map((c) => (
                 <p key={c.constraintId}>
-                  {knowledgeLabel[c.state]} · {c.detail} · właściciel {actorLabel(c.ownerId)}
+                  {knowledgeLabel(c.state)} · {c.detail} · właściciel {actorLabel(c.ownerId)}
                 </p>
               ))}
             </div>
@@ -1154,7 +1218,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                   }
                 >
                   {actorLabel(a.resourceOrRoleId)} · okresy {a.periodIds.join(', ')} ·{' '}
-                  {knowledgeLabel[a.demand.knowledgeState]}
+                  {knowledgeLabel(a.demand.knowledgeState)}
                 </button>
               ))}
             </div>
@@ -1322,7 +1386,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
 const RangeView = ({ label, value }: { label: string; value: Range }) => (
   <div>
     <h5>
-      {label}: {knowledgeLabel[value.knowledgeState]}
+      {label}: {knowledgeLabel(value.knowledgeState)}
     </h5>
     <p>
       {value.knowledgeState === 'UNKNOWN'
@@ -1330,7 +1394,7 @@ const RangeView = ({ label, value }: { label: string; value: Range }) => (
         : `${value.low} / ${value.base} / ${value.high}`}
     </p>
     <p className="text-xs text-c-text-muted">
-      {knowledgeLabel[value.knowledgeState]} · pewność {value.confidence} · właściciel{' '}
+      {knowledgeLabel(value.knowledgeState)} · pewność {value.confidence} · właściciel{' '}
       {value.ownerId}
     </p>
   </div>

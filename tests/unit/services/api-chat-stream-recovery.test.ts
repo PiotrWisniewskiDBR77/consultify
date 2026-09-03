@@ -35,7 +35,15 @@ describe('CHAT-02 stream transport recovery', () => {
     await expect(Api.chatWithAIStream('hello', [], onChunk, onDone)).rejects.toMatchObject({
       code: 'AI_STREAM_ERROR',
     });
-    expect(onChunk).toHaveBeenCalledWith(expect.stringContaining('error'));
+    // CHAT-OWN-016: asercja byla `stringContaining('error')` — przechodzila
+    // rowniez wtedy, gdy do rozmowy trafial SUROWY tekst dostawcy (bo on tez
+    // zwykle zawiera slowo „error"). Teraz sprawdzamy to, o co naprawde chodzi:
+    // uzytkownik dostaje zdanie ze wspolnego zrodla, a tresc serwera
+    // („provider disconnected") do rozmowy NIE trafia.
+    const [wyswietlone] = onChunk.mock.calls[0] as [string];
+    expect(wyswietlone).not.toContain('provider disconnected');
+    expect(wyswietlone).toMatch(/assistant|asystent/i);
+    expect(onChunk).toHaveBeenCalledTimes(1);
     expect(onDone).not.toHaveBeenCalled();
   });
 

@@ -2932,93 +2932,46 @@ export const Api = {
                     '[AI Stream] Deep Thinking confirm required but not called. Check frontend flow.'
                   );
                 } else {
-                  // Non-access errors: show an inline friendly message for known codes,
-                  // otherwise fall back to raw backend error (so user isn't left with an empty bubble).
-                  const uiLang = getCachedUserLanguage();
+                  // Non-access errors: the user-facing sentence comes from the
+                  // shared copy module (CHAT-OWN-016), never from the backend text.
                   const sid =
                     typeof (data as any).sessionId === 'string' &&
                     (data as any).sessionId.trim().length > 0
                       ? String((data as any).sessionId).trim()
                       : null;
 
-                  const friendlyByCode =
-                    dataCode === 'EMPTY_STREAM'
-                      ? uiLang === 'pl'
-                        ? '⚠️ AI nie zwróciło odpowiedzi. Spróbuj ponownie za chwilę. Jeśli problem się powtarza, skontaktuj się z administratorem.'
-                        : '⚠️ AI returned no output. Please try again in a moment. If the problem persists, contact your administrator.'
-                      : dataCode === 'NO_LLM_PROVIDER'
-                        ? uiLang === 'pl'
-                          ? '⚠️ AI nie jest skonfigurowane na backendzie. Skontaktuj się z administratorem.'
-                          : '⚠️ AI is not configured on the backend. Please contact your administrator.'
-                        : dataCode === 'INVALID_API_KEY'
-                          ? uiLang === 'pl'
-                            ? '⚠️ Konfiguracja klucza API do AI jest nieprawidłowa lub wygasła. Skontaktuj się z administratorem.'
-                            : '⚠️ AI API key is invalid or expired. Please contact your administrator.'
-                          : dataCode === 'RATE_LIMIT'
-                            ? uiLang === 'pl'
-                              ? '⚠️ Przekroczono limit zapytań do AI. Spróbuj ponownie za chwilę.'
-                              : '⚠️ AI rate limit exceeded. Please try again in a moment.'
-                            : dataCode === 'LOCAL_LLM_DISABLED' ||
-                                dataCode === 'LOCAL_LLM_ENDPOINT_NOT_ALLOWED'
-                              ? uiLang === 'pl'
-                                ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
-                                : '⚠️ Local AI provider is not allowed in this environment.'
-                              : // Feedback #a9fcdd99 / #3b6c0287 — circuit breaker is open
-                                // for the LLM provider (e.g. OpenRouter temporarily down or
-                                // rate-limited). Previously we had no mapping so the raw
-                                // text "Circuit [openrouter] is OPEN. Retry in 18s" leaked
-                                // into the chat bubble. Try to parse the cooldown seconds
-                                // from the message so we can show the user a concrete
-                                // "try again in N seconds" hint.
-                                dataCode === 'CIRCUIT_OPEN'
-                                ? (() => {
-                                    const rawMsg = String(data.error || '');
-                                    const retryMatch = rawMsg.match(/Retry in (\d+)s/i);
-                                    const seconds = retryMatch ? retryMatch[1] : null;
-                                    if (uiLang === 'pl') {
-                                      return seconds
-                                        ? `⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za ${seconds} s lub wybierz inny model.`
-                                        : '⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za chwilę lub wybierz inny model.';
-                                    }
-                                    return seconds
-                                      ? `⚠️ The AI provider is temporarily unavailable. Please try again in ${seconds}s or switch to a different model.`
-                                      : '⚠️ The AI provider is temporarily unavailable. Please try again in a moment or switch to a different model.';
-                                  })()
-                                : dataCode === 'STREAM_ERROR' ||
-                                    dataCode === 'AI_STREAM_ERROR' ||
-                                    dataCode === 'AI_PIPELINE_ERROR' ||
-                                    // Feedback #a9fcdd99 / #3b6c0287 — legacy generic code
-                                    // the backend used to emit for any uncategorized
-                                    // pipeline error. Map it here so we never fall through
-                                    // to dumping `String(data.error)` into the bubble.
-                                    dataCode === 'AI_ERROR'
-                                  ? uiLang === 'pl'
-                                    ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
-                                    : '⚠️ An error occurred while generating the response. Please try again.'
-                                  : null;
+                  // CHAT-OWN-016: dotad stal tu zagniezdzony ternary z twardymi
+                  // napisami PL/EN dla siedmiu kodow, a nierozpoznany kod
+                  // konczyl na ogolniku. Jedno zrodlo tresci to teraz
+                  // `aiProviderErrorCopy.ts` (klucze `aiChat.providerError.*`
+                  // w obu translation.json) — te same zdania widzi rozmowa,
+                  // kanwa Czatu i dymki bledu.
+                  const { getAiErrorLine, readAiErrorCode } = await import(
+                    '../components/AIChat/aiProviderErrorCopy'
+                  );
+                  const canonicalCode = readAiErrorCode({
+                    errorCode: (data as any).errorCode,
+                    code: dataCode,
+                  });
+                  const friendly = `\u26a0\ufe0f ${getAiErrorLine(
+                    i18n.t.bind(i18n) as (k: string, d?: string) => string,
+                    { errorCode: canonicalCode }
+                  )}`;
 
                   hasAnyVisibleOutput = true;
-                  // Feedback #a9fcdd99 / #3b6c0287 — never surface raw backend
-                  // error strings (e.g. "Circuit [openrouter] is OPEN. Retry in
-                  // 18s") directly in the chat. If we don't recognize the code,
-                  // fall back to a generic friendly message and log the raw text
-                  // to the console so ops can still debug from browser logs.
-                  if (!friendlyByCode) {
-                    try {
-                      console.warn(
-                        '[AI Stream] Unmapped error code surfaced:',
-                        dataCode,
-                        String(data.error || '').slice(0, 240)
-                      );
-                    } catch {
-                      /* ignore */
-                    }
+                  // Surowa tresc dostawcy nie trafia do rozmowy — tylko do
+                  // konsoli przegladarki, zeby ops mial czym debugowac.
+                  try {
+                    console.warn(
+                      '[AI Stream] Provider error:',
+                      dataCode,
+                      canonicalCode,
+                      String(data.error || '').slice(0, 240)
+                    );
+                  } catch {
+                    /* ignore */
                   }
-                  const genericFallback =
-                    uiLang === 'pl'
-                      ? '⚠️ Wystąpił nieoczekiwany błąd AI. Spróbuj ponownie za chwilę.'
-                      : '⚠️ An unexpected AI error occurred. Please try again in a moment.';
-                  onChunk(friendlyByCode || genericFallback);
+                  onChunk(friendly);
 
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);
@@ -3028,8 +2981,9 @@ export const Api = {
                   // response. Propagate it to useAIStream so its bounded retry
                   // and visible manual-retry state can run. Access errors stay
                   // non-retryable and are handled by the access modal above.
-                  const streamError: any = new Error(friendlyByCode || genericFallback);
+                  const streamError: any = new Error(friendly);
                   streamError.code = dataCode || 'AI_STREAM_ERROR';
+                  streamError.errorCode = canonicalCode;
                   streamError.isStreamError = true;
                   throw streamError;
                 }

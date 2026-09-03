@@ -1,3 +1,7 @@
+import i18n from '@/i18n';
+
+import { getAiErrorLine } from './aiProviderErrorCopy';
+
 /**
  * Build a compact, admin-only diagnostic string from a stream error so the real
  * cause (HTTP status / error code / message) is visible in the chat instead of
@@ -19,9 +23,18 @@ export function formatTeresaAdminDiagnostic(err: unknown): string {
   return parts.join(' · ');
 }
 
+/**
+ * CHAT-OWN-016: tresc glowna pochodzi teraz WYLACZNIE z `aiProviderErrorCopy`
+ * (klucze `aiChat.providerError.*` w obu translation.json). Wczesniej byly tu
+ * dwa twarde zdania bez `t()`, do tego pozbawione polskich znakow
+ * („niedostepna", „Sprobuj"), niezalezne od reszty komunikatow Czatu.
+ * `errorSource` pozwala dobrac zdanie do przypadku (limit / konfiguracja /
+ * czas / przerwany strumien) zamiast jednego ogolnika na wszystko.
+ */
 export function getTeresaStartFailureMessage(
   language?: string,
-  adminDiagnostic?: string | null
+  adminDiagnostic?: string | null,
+  errorSource?: unknown
 ): string {
   const base = String(language || 'en')
     .trim()
@@ -29,9 +42,13 @@ export function getTeresaStartFailureMessage(
     .split('-')[0];
   const pl = base === 'pl';
 
-  const main = pl
-    ? '⚠️ Teresa jest chwilowo niedostepna. Sprobuj ponownie za chwile. Jesli problem wraca, rozpocznij nowa rozmowe lub odswiez widok.'
-    : '⚠️ Teresa is temporarily unavailable. Please try again in a moment. If the problem persists, start a new chat or refresh the view.';
+  const main = `⚠️ ${getAiErrorLine(
+    ((key: string, dflt?: string) => i18n.t(key, { defaultValue: dflt, lng: base })) as (
+      k: string,
+      d?: string
+    ) => string,
+    errorSource ?? { errorCode: 'AI_UNAVAILABLE' }
+  )}`;
 
   const diag = String(adminDiagnostic || '').trim();
   if (!diag) return main;

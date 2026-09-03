@@ -2890,6 +2890,8 @@
       "label12": "Wyczyść",
       "setLoadError": "Nie udało się załadować Inbox",
       "toastError3": "Nie udało się załadować Inbox",
+      "accessDeniedTitle": "Nie masz dostępu do tej skrzynki",
+      "accessDeniedMessage": "Nie masz dostępu do tej skrzynki. Sprawdź, czy jesteś zalogowany do właściwej organizacji, albo poproś administratora o nadanie dostępu.",
       "acceptToday": "Focus → Dziś",
       "acceptWeek": "Focus → Ten tydzień",
       "acceptLater": "Focus → Później",
@@ -7912,87 +7914,6 @@
       "cancel": "Anuluj",
       "apply": "Zastosuj"
     },
-    "reportsTable": {
-      "sourceType": {
-        "ASSESSMENT": "Ocena"
-      },
-      "status": {
-        "draft": "Szkic",
-        "configuring": "Konfiguracja",
-        "generating": "Generowanie",
-        "generated": "Wygenerowany",
-        "inReview": "W przeglądzie",
-        "approved": "Zatwierdzony",
-        "sentInternal": "Wysłany wewnętrznie",
-        "sentExternal": "Wysłany zewnętrznie",
-        "utilized": "Wykorzystany"
-      },
-      "toastApproved": "Raport zatwierdzony",
-      "toastApproveFailed": "Nie udało się zatwierdzić raportu",
-      "toastSentInternal": "Oznaczono jako wysłany wewnętrznie",
-      "toastSentInternalFailed": "Nie udało się oznaczyć jako wysłany",
-      "toastSentExternal": "Oznaczono jako wysłany zewnętrznie",
-      "toastSentExternalFailed": "Nie udało się oznaczyć jako wysłany",
-      "toastSentBack": "Raport odesłany do edycji",
-      "toastSendBackFailed": "Nie udało się odesłać raportu",
-      "toastExportCompleted": "Eksport {{format}} zakończony",
-      "toastExportFailed": "Nie udało się wyeksportować",
-      "toastExportError": "Błąd eksportu",
-      "toastLinkCopied": "Link skopiowany",
-      "toastLinkCreated": "Link utworzony",
-      "toastLinkFailed": "Błąd tworzenia linku",
-      "toastImported": "Raport zaimportowany pomyślnie",
-      "columns": {
-        "report": "Raport",
-        "author": "Autor",
-        "context": "Kontekst",
-        "updated": "Zaktualizowany"
-      },
-      "menu": {
-        "view": "Podgląd raportu",
-        "exportPdf": "Eksportuj PDF",
-        "exportPptx": "Eksportuj PPTX",
-        "exportWord": "Eksportuj Word",
-        "shareLink": "Utwórz link",
-        "generateInitiatives": "Generuj inicjatywy",
-        "approve": "Zatwierdź",
-        "sendBack": "Odeślij do edycji",
-        "sendInternal": "Wyślij wewn.",
-        "sendExternal": "Wyślij zewn."
-      },
-      "header": {
-        "creatorTitle": "Kreator raportów",
-        "title": "Raporty",
-        "creatorSubtitle": "Wszystkie raporty (wszystkie źródła i statusy) oraz szybki dostęp do edytora.",
-        "subtitle": "Raporty z ocen w statusie przeglądu i wyższych",
-        "settingsTitle": "Ustawienia kreatora (bloki/szablony/profile)",
-        "settings": "Ustawienia",
-        "importTitle": "Importuj raport zewnętrzny",
-        "import": "Importuj",
-        "newTemplateTitle": "Utwórz nowy szablon raportu",
-        "newTemplate": "Nowy Szablon",
-        "newReportTitle": "Utwórz raport z pomocą AI",
-        "newReport": "Nowy Raport"
-      },
-      "stats": {
-        "all": "Wszystkie",
-        "drafts": "Szkice",
-        "generated": "Wygenerowane",
-        "inReview": "W przeglądzie",
-        "approved": "Zatwierdzone",
-        "sent": "Wysłane"
-      },
-      "search": {
-        "placeholder": "Szukaj raportów..."
-      },
-      "empty": {
-        "noMatchTitle": "Brak raportów pasujących do wyszukiwania",
-        "noneInReviewTitle": "Brak raportów w przeglądzie",
-        "noneTitle": "Brak raportów",
-        "creatorDesc": "Utwórz nowy raport lub otwórz istniejący z listy.",
-        "reviewDesc": "Raporty pojawią się tutaj po przesłaniu do przeglądu"
-      }
-    },
     "adma": {
       "editor": {
         "viewDimensions": "Wymiary",
@@ -8682,47 +8603,6 @@
         "deleted": "Raport usunięty",
         "deleteFailed": "Nie udało się usunąć raportu"
       }
-    },
-    "initiativesBoard": {
-      "defaultName": "Inicjatywa bez nazwy",
-      "header": {
-        "title": "Tablica inicjatyw strategicznych",
-        "subtitleOne": "Inicjatywy w fazie: {{phases}} • łącznie: {{total}}",
-        "subtitle": "Inicjatywy w fazach: {{phases}} • łącznie: {{total}}",
-        "generate": "Generuj z raportu"
-      },
-      "filter": {
-        "all": "Wszystkie ({{count}})",
-        "tab": "{{label}} ({{count}})",
-        "allProjects": "Wszystkie projekty",
-        "allLocations": "Wszystkie lokalizacje",
-        "refresh": "Odśwież listę"
-      },
-      "search": {
-        "placeholder": "Szukaj inicjatyw..."
-      },
-      "columns": {
-        "initiative": "Inicjatywa",
-        "status": "Status",
-        "completeness": "Kompletność",
-        "owner": "Właściciel",
-        "priority": "Priorytet",
-        "budget": "Budżet"
-      },
-      "openDetails": "Otwórz szczegóły inicjatywy",
-      "unassigned": "Nieprzypisany",
-      "roi": "ROI {{value}}x",
-      "menu": {
-        "viewDetails": "Zobacz szczegóły",
-        "duplicate": "Duplikuj",
-        "deleteNote": "Usunąć można tylko inicjatywy w statusie Szkic lub Planowanie"
-      },
-      "confirmDelete": "Czy na pewno usunąć tę inicjatywę?",
-      "empty": {
-        "noMatchTitle": "Brak inicjatyw pasujących do wyszukiwania",
-        "noneTitle": "Brak inicjatyw",
-        "description": "Wygeneruj inicjatywy ze sfinalizowanego raportu"
-      }
     }
   },
   "initiatives": {
@@ -9014,7 +8894,71 @@
       "applied": "Opcje zostały zapisane i przeładowane.",
       "noPressure": "Brak przeciążenia — nie ma czego rozwiązywać",
       "conflict": "Wariant został zmieniony. Odśwież dane przed ponowną próbą.",
-      "failed": "Nie udało się zaproponować opcji."
+      "failed": "Nie udało się zaproponować opcji.",
+      "header": "Obciążenie",
+      "subtitle": "Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.",
+      "newAnalysis": "Nowa analiza",
+      "openTools": "Otwórz narzędzia obciążenia",
+      "loading": "Wczytywanie rejestru obciążenia…",
+      "unavailable": "Rejestr obciążenia jest niedostępny. Nie utworzono lokalnej kopii.",
+      "retry": "Ponów",
+      "activeScenario": "Aktywny wariant obciążenia",
+      "knowledge": {
+        "known": "Potwierdzone",
+        "estimated": "Szacowane",
+        "unknown": "Brak danych",
+        "unconfirmed": "Niepotwierdzone"
+      },
+      "confidence": {
+        "high": "Wysoka",
+        "medium": "Średnia",
+        "low": "Niska"
+      },
+      "rowKind": {
+        "period": "Okres",
+        "constraint": "Ograniczenie"
+      },
+      "criticality": {
+        "assessed": "Oceniona",
+        "toAssess": "Do oceny"
+      },
+      "columns": {
+        "titlePeriod": "Okres / ograniczenie",
+        "roleTeam": "Rola / zespół",
+        "kind": "Rodzaj",
+        "demandRange": "Potrzeby (zakres)",
+        "supplyRange": "Zasoby (zakres)",
+        "gap": "Luka",
+        "pressureRange": "Presja (zakres)",
+        "confidence": "Pewność",
+        "weight": "Waga",
+        "owner": "Opiekun",
+        "affectedInitiatives": "Dotknięte inicjatywy",
+        "freshness": "Aktualność założeń",
+        "proposedResponse": "Proponowana reakcja"
+      },
+      "saturationBaseline": "bazowo",
+      "saturationNotApplicable": "nie dotyczy ograniczenia",
+      "saturationIncompleteRange": "brak pełnego zakresu",
+      "details": {
+        "label": "Stan obciążenia i dowodów",
+        "text": "Zakresy są oparte na dostępnych dowodach; brak danych nie oznacza zera."
+      },
+      "properties": {
+        "demand": "Zapotrzebowanie",
+        "supply": "Dostępność",
+        "owner": "Właściciel"
+      },
+      "ai": {
+        "hintChallenge": "Zakwestionuj założenia",
+        "hintCompare": "Porównaj opcje",
+        "disabledTooltip": "Podpowiedzi AI wymagają jawnego, kontrolowanego wniosku o analizę."
+      },
+      "emptyTitle": "Brak danych obciążenia w tym zakresie",
+      "emptyDescription": "Zmień filtr albo otwórz narzędzia aktywnego wariantu obciążenia.",
+      "archiveNote": "Opublikowana historia obciążenia jest niezmienna",
+      "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
+      "resourceOwnerFallback": "Właściciel zasobów"
     },
     "planScenario": {
       "status": {
@@ -11626,7 +11570,14 @@
       "team": "Zespół",
       "reports": "Raportowanie",
       "peopleChange": "Zarządzanie",
-      "summary": "Kokpit"
+      "summary": "Kokpit",
+      "moduleBar": {
+        "list": "Realizacje",
+        "work": "Praca",
+        "resources": "Zasoby",
+        "control": "Sterowanie",
+        "reports": "Raporty"
+      }
     },
     "manager": {
       "noInitiatives": "Brak inicjatyw w realizacji",
@@ -12026,7 +11977,8 @@
       "weeksLeft": "tyg. pozostało"
     },
     "filters": {
-      "all": "Wszystkie"
+      "all": "Wszystkie",
+      "allCases": "Wszystkie realizacje"
     },
     "portfolio": {
       "onTrack": "Na ścieżce",
@@ -12090,7 +12042,8 @@
       "export": "Eksport",
       "report": "Raport",
       "aiChat": "Czat AI",
-      "copyLink": "Kopiuj link"
+      "copyLink": "Kopiuj link",
+      "newMilestone": "Nowy kamień milowy"
     },
     "raidLog": {
       "title": "Log RAID",
@@ -12590,6 +12543,55 @@
       "loading": "Ładowanie predykcji…",
       "empty": "Brak inicjatyw o wysokim ryzyku — wszystko w normie.",
       "suggestedActions": "Sugerowane działania"
+    },
+    "control": {
+      "columns": {
+        "title": "Interwencja",
+        "status": "Status",
+        "owner": "Właściciel",
+        "authority": "Osoba zatwierdzająca",
+        "slaAt": "Termin weryfikacji"
+      },
+      "signalColumns": {
+        "title": "Sygnał",
+        "rule": "Rodzaj",
+        "source": "Źródło",
+        "severity": "Ważność",
+        "occurrences": "Wystąpienia",
+        "updatedAt": "Aktualizacja"
+      },
+      "actions": {
+        "addSignal": "Dodaj sygnał",
+        "prepareIntervention": "Przygotuj interwencję"
+      }
+    },
+    "work": {
+      "columns": {
+        "title": "Element pracy",
+        "kind": "Rodzaj",
+        "status": "Status",
+        "owner": "Właściciel / osoba decyzyjna",
+        "dueAt": "Termin / SLA"
+      }
+    },
+    "resources": {
+      "columns": {
+        "person": "Osoba / zespół / rola",
+        "period": "Okres",
+        "availability": "Dostępność",
+        "demand": "Przydzielone",
+        "remaining": "Pozostałe",
+        "load": "Zakres obciążenia",
+        "skillMatch": "Dopasowanie",
+        "affectedWork": "Dotknięta praca",
+        "cost": "Koszt / prognoza",
+        "conflict": "Konflikt",
+        "freshness": "Świeżość",
+        "nextAction": "Następne działanie"
+      },
+      "actions": {
+        "proposeAllocation": "Zaproponuj przydział"
+      }
     }
   },
   "benefits": {
@@ -14631,11 +14633,7 @@
       },
       "vip": {
         "empty": "Brak prezentacji."
-      },
-      "watchNotifyPrefix": "Powiadamiaj",
-      "watchNotifyAll": "Wszystkie aktualizacje",
-      "watchNotifyMentions": "Tylko wzmianki",
-      "watchNotifyStatusChanges": "Tylko zmiany statusu"
+      }
     },
     "integrations": {
       "title": "Integracje",
@@ -19498,6 +19496,38 @@
       "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
       "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",
       "refusedNoReason": "Nie wykonałem akcji „{{action}}” — rejestr odmówił bez podania powodu."
+    },
+    "providerError": {
+      "rateLimit": {
+        "message": "Asystent obsługuje w tej chwili zbyt wiele zapytań.",
+        "action": "Odczekaj chwilę i wyślij wiadomość ponownie."
+      },
+      "unavailable": {
+        "message": "Asystent jest chwilowo niedostępny.",
+        "action": "Spróbuj za moment albo wybierz inny model."
+      },
+      "config": {
+        "message": "Asystent nie jest dostępny na tym koncie.",
+        "action": "Skontaktuj się z administratorem."
+      },
+      "timeout": {
+        "message": "Asystent odpowiadał zbyt długo.",
+        "action": "Spróbuj ponownie albo skróć pytanie."
+      },
+      "interrupted": {
+        "message": "Odpowiedź została przerwana przed końcem.",
+        "action": "Wyślij wiadomość ponownie, żeby dostać całą odpowiedź."
+      },
+      "empty": {
+        "message": "Asystent nie zwrócił odpowiedzi.",
+        "action": "Spróbuj ponownie albo sformułuj pytanie inaczej."
+      },
+      "generic": {
+        "message": "Asystent nie mógł wykonać tego polecenia.",
+        "action": "Spróbuj ponownie. Jeśli problem wraca, skontaktuj się z administratorem."
+      },
+      "retry": "Spróbuj ponownie",
+      "adminDetails": "Szczegóły (tylko administrator)"
     }
   },
   "agentAudit": {

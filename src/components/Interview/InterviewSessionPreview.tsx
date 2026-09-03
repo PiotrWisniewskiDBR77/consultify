@@ -19,6 +19,7 @@ import {
 } from '@/components/standard/ArtifactPropertiesTable';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
+import { interviewActionMeta } from './interviewActionMatrix';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewSessionPreviewBody
@@ -207,6 +208,7 @@ export interface InterviewSessionPreviewFooterProps {
   onOpenFull: () => void;
   onGenerateInsight?: (type: string) => void;
   onCopyId: () => void;
+  additionalActions?: ActionRow['buttons'];
 }
 
 export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFooterProps> = ({
@@ -219,6 +221,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
   onOpenFull,
   onGenerateInsight,
   onCopyId,
+  additionalActions = [],
 }) => {
   const { t } = useTranslation();
   const relationItems: RelationItem[] = relations.map((r) => ({
@@ -232,7 +235,7 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
     ...(canRunAi && onGenerateInsight
       ? [
           {
-            label: t('interview.sessionPreview.generateInsights'),
+            label: interviewActionMeta('session', 'generate-insight', t).label,
             icon: Sparkles,
             onClick: () => onGenerateInsight('summary'),
             colorScheme: 'neutral' as const,
@@ -242,7 +245,8 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
       : []),
   ];
 
-  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
+  const buttons = [...contextButtons, ...additionalActions];
+  const actionRows: ActionRow[] = buttons.length > 0 ? [{ buttons }] : [];
 
   /**
    * N-51 (przegląd 128 zrzutów): „jedyna akcja w podglądzie sesji to skopiowanie

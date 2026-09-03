@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
+import { InitiativeApi } from '@/services/api/initiatives.api';
 import {
   type FunnelStage,
   getFunnel,
@@ -50,6 +51,10 @@ export interface ValueCapturePipelinePanelProps {
     gates?: typeof getGates;
     createGate?: typeof postCreateGate;
     advanceGate?: typeof postAdvanceGate;
+    /** Nazwy inicjatyw do etykietowania kolumny „Inicjatywa" (id → title). Domyślnie
+     * `InitiativeApi.getInitiatives()` — bez zmiany kontraktu serwera value-capture
+     * (rodzina „surowy identyfikator zamiast etykiety", wzorzec z InitiativeTeamSection). */
+    listInitiatives?: () => Promise<Array<{ id: string; title?: string }>>;
   };
 }
 
@@ -69,6 +74,7 @@ export const ValueCapturePipelinePanel: React.FC<ValueCapturePipelinePanelProps>
   const [newCriteria, setNewCriteria] = useState('');
   const [newValueEvidence, setNewValueEvidence] = useState('0');
   const [signOffById, setSignOffById] = useState<Record<string, string>>({});
+  const [initiativeNames, setInitiativeNames] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,6 +98,19 @@ export const ValueCapturePipelinePanel: React.FC<ValueCapturePipelinePanelProps>
       );
     } finally {
       setLoading(false);
+    }
+    // Nazwy inicjatyw — osobny, fail-soft strumień: błąd tego wywołania NIE psuje
+    // ładowania bramek (kolumna po prostu wraca do surowego id, jak dziś).
+    try {
+      const listFn = fetcher?.listInitiatives ?? (() => InitiativeApi.getInitiatives());
+      const initiatives = await listFn();
+      const names: Record<string, string> = {};
+      for (const initiative of initiatives ?? []) {
+        if (initiative?.id && initiative.title) names[initiative.id] = initiative.title;
+      }
+      setInitiativeNames(names);
+    } catch {
+      // fail-soft — kolumna „Inicjatywa" pokazuje wtedy surowy id (zachowanie sprzed naprawy)
     }
   }, [fetcher, t]);
 
@@ -341,7 +360,9 @@ export const ValueCapturePipelinePanel: React.FC<ValueCapturePipelinePanelProps>
                   className="border-b border-c-border-subtle/60 text-c-text"
                   data-testid={`capture-gate-row-${gate.id}`}
                 >
-                  <td className="py-1.5 pr-3">{gate.initiativeId}</td>
+                  <td className="py-1.5 pr-3">
+                    {initiativeNames[gate.initiativeId] ?? gate.initiativeId}
+                  </td>
                   <td className="py-1.5 pr-3 font-medium">{gate.gate}</td>
                   <td className="py-1.5 pr-3">
                     <span

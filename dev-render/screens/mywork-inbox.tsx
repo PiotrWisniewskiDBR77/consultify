@@ -35,7 +35,19 @@
  * tak jak zrobiłby to prawdziwy backend, patrz `ALL_ITEMS`/`byStatus` niżej),
  * żeby zakładki Open/Done/Saved/All dawały spójny, nie-pusty obraz.
  *
- * URL: ?screen=mywork-inbox[&lang=pl|en][&theme=light|dark]
+ * URL: ?screen=mywork-inbox[&lang=pl|en][&theme=light|dark][&stan=pelny|pusty|brak-dostepu]
+ *
+ * `stan` (MYW-PHOTO-002 dowód PRZED/PO, dyżur mw-skrzynka-pasek-20260903):
+ * harness sam nie umiał wymusić pustego/403 stanu Skrzynki (`InboxContent`
+ * nie ma propa do tego — jedyna dźwignia to co zwraca zmockowane
+ * `V8MyWorkApi`), więc dokładamy trzy warianty tego samego mocka zamiast
+ * trzech osobnych plików ekranu:
+ *   - `pelny` (domyślny) — 9 pozycji demo jak dotychczas.
+ *   - `pusty` — 200 OK, `items: []` (prawdziwie pusta skrzynka, zero błędu).
+ *   - `brak-dostepu` — `getCanonicalInboxTable` odrzuca z `err.status = 403`
+ *     (ten sam kształt błędu co `services/api.ts:1105` `err.status = res.status`
+ *     dla realnego 401/403 z backendu), żeby wymusić gałąź
+ *     `loadErrorIsAccessDenied` w `InboxContent.tsx`.
  */
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -59,11 +71,20 @@ const daysAgo = (d: number) => new Date(now - d * 86_400_000).toISOString();
 const daysFromNow = (d: number) => new Date(now + d * 86_400_000).toISOString();
 
 /**
- * Osiem pozycji Skrzynki — ten sam uniwersum demo co `karta-task.tsx`
+ * Jedenaście pozycji Skrzynki — ten sam uniwersum demo co `karta-task.tsx`
  * (klienci Grupa Termika/NordFarm/Bielmar/Kolej Wschodnia, inicjatywa DRD,
  * zespół Piotr/Anna/Marek/Kasia) dla ciągłości między ekranami odbioru.
- * Sześć `pending` (widoczne domyślnie w zakładce "Otwarte"), po jednej w
+ * Dziewięć `pending` (widoczne domyślnie w zakładce "Otwarte"), po jednej w
  * `resolved`/`snoozed` (widoczne w "Zamknięte"/"Zapisane"/"Wszystkie").
+ *
+ * MYW-PHOTO-001/007 (dyżur 2026-09-03): pomiar wobec `InboxSection`
+ * (InboxContent.tsx:201-210, 9 wartości) pokazał, że pierwsza wersja tego
+ * mocka (inbox-1..9) nie miała ani jednej pozycji w `fyi_system` ani `other`
+ * — dwie z dziewięciu sekcji filtra (`INBOX_SECTION_FILTER_OPTIONS`,
+ * InboxContent.tsx:1001-1034) zawsze pokazywałyby licznik zero. Dołożone
+ * `inbox-10` (`fyi_system`) i `inbox-11` (`other`), bez zmiany istniejących
+ * dziewięciu pozycji cytowanych w `docs/program/grafika/status.json` (wpis
+ * `mywork-inbox`, „9 pozycji" — zaktualizowany razem z tym commitem).
  */
 const ALL_ITEMS: V8CanonicalInboxItem[] = [
   {
@@ -207,6 +228,34 @@ const ALL_ITEMS: V8CanonicalInboxItem[] = [
     status: 'snoozed',
     createdAt: daysAgo(5),
   },
+  {
+    id: 'inbox-10',
+    userId: USER_ID,
+    organizationId: ORG_ID,
+    itemType: 'signal',
+    sourceEntityType: 'system',
+    sourceEntityId: 'integration-google-calendar-sync',
+    title: 'Synchronizacja z kalendarzem Google zakończona',
+    description: 'Zaimportowano 2 nowe spotkania z klientem Bielmar — sprawdź, czy nie kolidują z warsztatem.',
+    priority: 'low',
+    section: 'fyi_system',
+    status: 'pending',
+    createdAt: hoursAgo(2),
+  },
+  {
+    id: 'inbox-11',
+    userId: USER_ID,
+    organizationId: ORG_ID,
+    itemType: 'signal',
+    sourceEntityType: 'document',
+    sourceEntityId: 'template-raport-koncowy-v3',
+    title: 'Nowa wersja szablonu raportu końcowego DRD',
+    description: 'Zespół metodyczny opublikował wersję 3 szablonu — poprzednie raporty zostają bez zmian.',
+    priority: 'low',
+    section: 'other',
+    status: 'pending',
+    createdAt: daysAgo(1),
+  },
 ];
 
 const V8_STATUS_TO_CANONICAL: Record<string, V8CanonicalInboxItem['status']> = {
@@ -229,14 +278,37 @@ function buildStats(items: V8CanonicalInboxItem[]): V8CanonicalInboxStats {
   return { total: items.length, byPriority, bySection, byStatus, bySlaStatus };
 }
 
-V8MyWorkApi.getCanonicalInboxTable = (async (params?: { status?: string }) => {
-  const wanted = params?.status ? V8_STATUS_TO_CANONICAL[params.status] : undefined;
-  const items = wanted ? ALL_ITEMS.filter((i) => i.status === wanted) : ALL_ITEMS;
-  return { items };
-}) as typeof V8MyWorkApi.getCanonicalInboxTable;
+const STAN = new URLSearchParams(window.location.search).get('stan') ?? 'pelny';
 
-V8MyWorkApi.getCanonicalInboxStats = (async () =>
-  buildStats(ALL_ITEMS)) as typeof V8MyWorkApi.getCanonicalInboxStats;
+if (STAN === 'brak-dostepu') {
+  // Same error shape a real 401/403 produces (`services/api.ts:1104-1105`:
+  // `const err: any = new Error(...); err.status = res.status;`) so
+  // `InboxContent.tsx`'s `loadErrorIsAccessDenied` branch fires exactly as
+  // it would against a real backend rejection — not a harness-only shortcut.
+  const accessDenied = () => {
+    const err: any = new Error('Forbidden');
+    err.status = 403;
+    return Promise.reject(err);
+  };
+  V8MyWorkApi.getCanonicalInboxTable = accessDenied as typeof V8MyWorkApi.getCanonicalInboxTable;
+  V8MyWorkApi.getCanonicalInboxStats = accessDenied as typeof V8MyWorkApi.getCanonicalInboxStats;
+  Api.shouldFallbackToLegacyMyWorkInbox = (() => false) as typeof Api.shouldFallbackToLegacyMyWorkInbox;
+} else if (STAN === 'pusty') {
+  V8MyWorkApi.getCanonicalInboxTable = (async () => ({
+    items: [],
+  })) as typeof V8MyWorkApi.getCanonicalInboxTable;
+  V8MyWorkApi.getCanonicalInboxStats = (async () =>
+    buildStats([])) as typeof V8MyWorkApi.getCanonicalInboxStats;
+} else {
+  V8MyWorkApi.getCanonicalInboxTable = (async (params?: { status?: string }) => {
+    const wanted = params?.status ? V8_STATUS_TO_CANONICAL[params.status] : undefined;
+    const items = wanted ? ALL_ITEMS.filter((i) => i.status === wanted) : ALL_ITEMS;
+    return { items };
+  }) as typeof V8MyWorkApi.getCanonicalInboxTable;
+
+  V8MyWorkApi.getCanonicalInboxStats = (async () =>
+    buildStats(ALL_ITEMS)) as typeof V8MyWorkApi.getCanonicalInboxStats;
+}
 
 V8MyWorkApi.materializeCanonicalInbox = (async () => ({
   success: true,

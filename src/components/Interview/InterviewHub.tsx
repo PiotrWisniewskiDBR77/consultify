@@ -148,6 +148,7 @@ import {
 } from './InterviewAssignmentPreview';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
+import { interviewActionMeta } from './interviewActionMatrix';
 import {
   InterviewInitiativePreviewBody,
   InterviewInitiativePreviewFooter,
@@ -4517,8 +4518,7 @@ export const InterviewHub: React.FC = () => {
         ...(isSubmitted && linkedAssignment
           ? [
               {
-                id: 'approve',
-                label: t('interview.hub.approve'),
+                ...interviewActionMeta('session', 'approve', t),
                 icon: Check,
                 onClick: () => handleApproveAssignment(linkedAssignment),
               },
@@ -4527,8 +4527,7 @@ export const InterviewHub: React.FC = () => {
         ...(isApproved
           ? [
               {
-                id: 'generate-insight',
-                label: t('interview.hub.generateAiInsights'),
+                ...interviewActionMeta('session', 'generate-insight', t),
                 icon: Lightbulb,
                 onClick: () => handleGenerateInsight(session, 'summary'),
               },
@@ -5522,8 +5521,7 @@ export const InterviewHub: React.FC = () => {
       kind: 'context' as const,
       actions: [
         {
-          id: 'use',
-          label: t('interview.hub.useTemplate'),
+          ...interviewActionMeta('template', 'use', t),
           icon: Sparkles,
           onClick: async () => {
             const projectId = await ensureProjectId();
@@ -6398,8 +6396,7 @@ Return ONLY the answer text (no markdown fences).`;
         ...(!showAssignee && assignment.status === 'assigned'
           ? [
               {
-                id: 'start',
-                label: t('interview.hub.start'),
+                ...interviewActionMeta(showAssignee ? 'assignment' : 'inbox', 'start', t),
                 icon: Sparkles,
                 onClick: () => startInterviewAssignment(assignment),
               },
@@ -7057,6 +7054,7 @@ Return ONLY the answer text (no markdown fences).`;
               const s = item as InterviewSession;
               const workflowStatus = getSessionWorkflowStatus(s);
               const canRunAi = ['approved', 'completed'].includes(workflowStatus);
+              const linkedAssignment = getManagedAssignmentForSession(s);
               const aiHints = isPolish
                 ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
                 : ['Summarize', 'Risks', 'Next steps'];
@@ -7131,6 +7129,87 @@ Return ONLY the answer text (no markdown fences).`;
                       : undefined
                   }
                   onCopyId={() => copyToClipboard(s.id)}
+                  additionalActions={[
+                    ...(workflowStatus === 'submitted' && linkedAssignment
+                      ? [
+                          {
+                            label: interviewActionMeta('session', 'approve', t).label,
+                            icon: Check,
+                            onClick: () => handleApproveAssignment(linkedAssignment),
+                            colorScheme: 'emerald' as const,
+                          },
+                          {
+                            label: interviewActionMeta('session', 'send-back', t).label,
+                            icon: RotateCcw,
+                            onClick: () => handleOpenSendBackModal(linkedAssignment),
+                            colorScheme: 'amber' as const,
+                          },
+                        ]
+                      : []),
+                    ...(['in_progress', 'sent_back'].includes(workflowStatus) && linkedAssignment
+                      ? [
+                          {
+                            label: interviewActionMeta('session', 'remind', t).label,
+                            icon: Bell,
+                            onClick: () => handleOpenReminderModal(linkedAssignment),
+                            colorScheme: 'neutral' as const,
+                          },
+                          ...[1, 3, 7].map((days) => ({
+                            label:
+                              days === 1
+                                ? t('interview.hub.plusDaysOne', { count: days })
+                                : t('interview.hub.plusDaysOther', { count: days }),
+                            icon: Clock,
+                            onClick: () => void handleDelayAssignment(linkedAssignment, days),
+                            colorScheme: 'amber' as const,
+                          })),
+                        ]
+                      : []),
+                    ...(sessionLifecycle === 'archived'
+                      ? [
+                          {
+                            label: interviewActionMeta('session', 'restore', t).label,
+                            icon: RotateCcw,
+                            onClick: () => handleSessionLifecycleAction(s, 'restore'),
+                            colorScheme: 'neutral' as const,
+                            disabled: sessionLifecycleBusy,
+                          },
+                          {
+                            label: interviewActionMeta('session', 'trash', t).label,
+                            icon: Trash2,
+                            onClick: () => handleSessionLifecycleAction(s, 'trash'),
+                            colorScheme: 'red' as const,
+                          },
+                        ]
+                      : sessionLifecycle === 'trash'
+                        ? [
+                            {
+                              label: interviewActionMeta('session', 'restore', t).label,
+                              icon: RotateCcw,
+                              onClick: () => handleSessionLifecycleAction(s, 'untrash'),
+                              colorScheme: 'neutral' as const,
+                              disabled: sessionLifecycleBusy,
+                            },
+                            {
+                              label: interviewActionMeta('session', 'delete', t).label,
+                              icon: Trash2,
+                              onClick: () => {
+                                setSessionDeleteConfirmText('');
+                                setSessionDeleteTarget(s);
+                              },
+                              colorScheme: 'red' as const,
+                            },
+                          ]
+                        : [
+                            {
+                              label: interviewActionMeta('session', 'archive', t).label,
+                              icon: Archive,
+                              onClick: () => handleSessionLifecycleAction(s, 'archive'),
+                              colorScheme: 'neutral' as const,
+                              disabled: sessionLifecycleBusy,
+                            },
+                          ]),
+                  ]}
                 />
               );
             }}
@@ -7348,7 +7427,23 @@ Return ONLY the answer text (no markdown fences).`;
             );
           }}
           renderPreviewFooter={(item) => {
-            return <InterviewInsightPreviewFooter insight={item} isPolish={isPolish} />;
+            const isArchived = !!item.archivedAt || insightScope === 'archived';
+            return (
+              <InterviewInsightPreviewFooter
+                insight={item}
+                isPolish={isPolish}
+                isArchived={isArchived}
+                onFork={() => handleForkInsight(item.id)}
+                onExportAssessment={
+                  item.exportedToAssessment
+                    ? undefined
+                    : () => handleExportInsightToAssessment(item.id)
+                }
+                onArchive={isArchived ? undefined : () => handleSetInsightArchived(item.id, true)}
+                onRestore={isArchived ? () => handleSetInsightArchived(item.id, false) : undefined}
+                onDelete={() => handleDeleteInsight(item.id)}
+              />
+            );
           }}
           itemIds={insightsForTable.map((i) => i.id)}
           getItemById={(id) => insightsForTable.find((x) => x.id === id) ?? null}
@@ -7468,8 +7563,7 @@ Return ONLY the answer text (no markdown fences).`;
             ...(status === 'DRAFT'
               ? [
                   {
-                    id: 'send-to-review',
-                    label: t('interview.hub.sendToReview'),
+                    ...interviewActionMeta('initiative', 'send-to-review', t),
                     icon: ArrowRight,
                     onClick: () =>
                       void handleUpdateInterviewInitiativeStatus(initiative.id, 'PENDING_REVIEW'),
@@ -7638,7 +7732,7 @@ Return ONLY the answer text (no markdown fences).`;
           {lineageDecisionCount > 0 || lineageTaskCount > 0 ? (
             <div className="mx-4 mb-3 mt-4 shrink-0 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
               <div className="mb-2 flex items-center gap-2">
-                <Send size={13} className="text-crimson-500" />
+                <Send size={13} className="text-c-text-muted" />
                 <span className="text-[12px] font-semibold text-c-text-secondary">
                   {t('interview.hub.handedOffFromInterviews')}
                 </span>
@@ -8136,6 +8230,70 @@ Return ONLY the answer text (no markdown fences).`;
                   onDelete={
                     canAssign && !item.isDefault ? () => handleDeleteTemplate(item) : undefined
                   }
+                  additionalActions={canAssign ? [
+                    {
+                      label: interviewActionMeta('template', 'use', t).label,
+                      icon: Sparkles,
+                      onClick: async () => {
+                        const projectId = await ensureProjectId();
+                        if (!projectId) {
+                          toast.error(t('interview.hub.selectAProjectBeforeCreating'));
+                          return;
+                        }
+                        Api.post(`/interview/templates/${item.id}/use`, {
+                          projectId,
+                          name: `${item.name} ${formatListDate(new Date())}`,
+                        })
+                          .then((created) => {
+                            const newSession = created as InterviewSession;
+                            setSessions((prev) => [newSession, ...prev]);
+                            handleOpenDocument({
+                              id: newSession.id,
+                              type: 'interview_session',
+                              subType: 'interview',
+                              name: newSession.name || t('interview.defaultSessionName'),
+                              status: ((newSession as any)?.status || 'in_progress').toUpperCase() as any,
+                            });
+                            toast.success(t('interview.hub.sessionCreated'));
+                          })
+                          .catch(() => toast.error(t('interview.hub.failedToCreateSession')));
+                      },
+                      colorScheme: 'primary' as const,
+                    },
+                    {
+                      label: interviewActionMeta('template', 'assign', t).label,
+                      icon: UserPlus,
+                      onClick: () => {
+                        setSelectedTemplateForAssign(item);
+                        setAssignmentForReassign(null);
+                        setShowAssignModal(true);
+                      },
+                      colorScheme: 'neutral' as const,
+                    },
+                    {
+                      label: item.isDefault
+                        ? t('interview.hub.unsetDefault')
+                        : interviewActionMeta('template', 'toggle-default', t).label,
+                      icon: item.isDefault ? StarOff : Star,
+                      onClick: () => handleToggleTemplateDefault(item),
+                      colorScheme: 'neutral' as const,
+                    },
+                    ...(!item.isDefault
+                      ? [String((item as any).status || '').toLowerCase() === 'archived'
+                          ? {
+                              label: interviewActionMeta('template', 'restore', t).label,
+                              icon: RotateCcw,
+                              onClick: () => handleRestoreTemplate(item),
+                              colorScheme: 'neutral' as const,
+                            }
+                          : {
+                              label: interviewActionMeta('template', 'archive', t).label,
+                              icon: Archive,
+                              onClick: () => handleArchiveTemplate(item),
+                              colorScheme: 'neutral' as const,
+                            }]
+                      : []),
+                  ] : []}
                   aiHints={
                     isPolish
                       ? ['Podsumuj', 'Usprawnienia', 'Luki']
@@ -8649,6 +8807,23 @@ Return ONLY the answer text (no markdown fences).`;
                       // wykonawca dostaje zwrot bez informacji, co poprawić.
                       a.status === 'submitted' ? () => handleOpenSendBackModal(a) : undefined
                     }
+                    additionalActions={[
+                      {
+                        label: interviewActionMeta('inbox', 'edit', t).label,
+                        icon: Edit2,
+                        onClick: () => startInterviewAssignment(a),
+                        colorScheme: 'neutral',
+                      },
+                      ...[1, 3, 7].map((days) => ({
+                        label:
+                          days === 1
+                            ? t('interview.hub.plusDaysOne', { count: days })
+                            : t('interview.hub.plusDaysOther', { count: days }),
+                        icon: Clock,
+                        onClick: () => void handleDelayAssignment(a, days),
+                        colorScheme: 'amber' as const,
+                      })),
+                    ]}
                     onOpenFull={() => void openInterviewAssignmentFull(a, false)}
                   />
                 );
@@ -8817,6 +8992,69 @@ Return ONLY the answer text (no markdown fences).`;
                     onSendBackAssignment={
                       a.status === 'submitted' ? () => handleOpenSendBackModal(a) : undefined
                     }
+                    additionalActions={[
+                      ...(canAssign && a.status === 'assigned'
+                        ? [
+                            {
+                              label: interviewActionMeta('assignment', 'reassign', t).label,
+                              icon: UserPlus,
+                              onClick: () => handleReassignAssignment(a),
+                              colorScheme: 'neutral' as const,
+                            },
+                          ]
+                        : []),
+                      ...(canAssign && a.status !== 'completed' && a.status !== 'approved'
+                        ? [
+                            {
+                              label: interviewActionMeta('assignment', 'remind', t).label,
+                              icon: Bell,
+                              onClick: () => handleOpenReminderModal(a),
+                              colorScheme: 'neutral' as const,
+                            },
+                            {
+                              label: interviewActionMeta('assignment', 'escalate', t).label,
+                              icon: ArrowUpRight,
+                              onClick: () => handleEscalateNow(a),
+                              colorScheme: 'amber' as const,
+                              disabled: Boolean(a.escalatedAt) || Boolean(a.escalationTarget),
+                            },
+                          ]
+                        : []),
+                      {
+                        label: interviewActionMeta('assignment', 'edit', t).label,
+                        icon: Edit2,
+                        onClick: () => handleOpenDueDateModal(a),
+                        colorScheme: 'neutral' as const,
+                      },
+                      ...(managedLifecycle === 'archived'
+                        ? [
+                            {
+                              label: interviewActionMeta('assignment', 'restore', t).label,
+                              icon: RotateCcw,
+                              onClick: () => handleAssignmentLifecycleAction(a, 'restore'),
+                              colorScheme: 'neutral' as const,
+                              disabled: managedLifecycleBusy,
+                            },
+                          ]
+                        : [
+                            {
+                              label: interviewActionMeta('assignment', 'archive', t).label,
+                              icon: Archive,
+                              onClick: () => handleAssignmentLifecycleAction(a, 'archive'),
+                              colorScheme: 'neutral' as const,
+                              disabled: managedLifecycleBusy,
+                            },
+                          ]),
+                      ...[1, 3, 7].map((days) => ({
+                        label:
+                          days === 1
+                            ? t('interview.hub.plusDaysOne', { count: days })
+                            : t('interview.hub.plusDaysOther', { count: days }),
+                        icon: Clock,
+                        onClick: () => void handleDelayAssignment(a, days),
+                        colorScheme: 'amber' as const,
+                      })),
+                    ]}
                   />
                 );
               }}

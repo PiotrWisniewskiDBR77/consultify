@@ -167,19 +167,34 @@ const DEFAULT_USER = {
 // DbPromise.exec(), which does not adaptQuery, and failed with
 // Postgres 42704 "type \"datetime\" does not exist").
 const ensureUserTiersTable = async () => {
-  await dbRun(
-    `
-        CREATE TABLE IF NOT EXISTS ai_user_tiers (
-            organization_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            tier TEXT NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (organization_id, user_id)
-        )
-    `,
-    []
-  );
+  // G14 13-16 (dyżur 2026-09-03) — ten runtime DDL wołany BEZWARUNKOWO z
+  // getOrgUserTiers/assignUserTier (ekran „Model Tier Assignments") nie miał
+  // try/catch: na środowisku, gdzie migracja 20260903_ai_user_tiers.sql
+  // jeszcze nie przeszła (świeży Postgres, odtworzenie po awarii), pierwsze
+  // wejście na ten ekran rzuca NIEOBSŁUŻONE odrzucenie — dokładnie ten sam
+  // wzorzec, który już raz ubił proces serwera przy `email_verification_tokens`
+  // (commit 5b5c0e3849). Wzorzec best-effort z `chatTraceService.ts`
+  // (`ensureTables`): CREATE TABLE IF NOT EXISTS jest idempotentny — połknięty
+  // błąd nie maskuje realnej awarii zapisu/odczytu niżej (te wołania rzucają
+  // własne błędy niezależnie), tylko chroni PRZED wejściem do bloku, który go
+  // nie potrzebuje (bo migracja już go stworzyła).
+  try {
+    await dbRun(
+      `
+          CREATE TABLE IF NOT EXISTS ai_user_tiers (
+              organization_id TEXT NOT NULL,
+              user_id TEXT NOT NULL,
+              tier TEXT NOT NULL,
+              created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (organization_id, user_id)
+          )
+      `,
+      []
+    );
+  } catch (err) {
+    logger.warn('[AISettingsService] ensureUserTiersTable degraded (table may already exist via migration): ', err);
+  }
 };
 
 class AISettingsService {

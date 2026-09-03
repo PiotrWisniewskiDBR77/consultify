@@ -2687,6 +2687,7 @@ export class DecisionController {
           linkedItems: [],
           contextDetails: '',
           consequenceScenarios: null,
+          escalation: null,
         }),
         // M02-004: sections whose backing table is absent in this environment.
         // The arrays above are empty for these, so the client MUST read this

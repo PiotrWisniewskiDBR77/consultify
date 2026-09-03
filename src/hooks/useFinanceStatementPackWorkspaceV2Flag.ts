@@ -27,10 +27,11 @@ const FINANCE_STATEMENT_PACK_WORKSPACE_V2_FLAG: FeatureFlag = {
     'FinanceErrorBoundary (Pakiet C) oraz kanonicznym kliencie `/finance-v2/statements/*` — jedna ' +
     'tożsamość/status w pasku (OWN-FIN-005), nazwane zwijane sekcje z licznikiem (OWN-FIN-006), ' +
     'sekcja „Powiązane" po lineage/immutable ID (OWN-FIN-007), rozdzielony przepływ ' +
-    '„Generuj szkic → Otwórz wynik → Opublikuj/dołącz" (OWN-FIN-003). OFF = dzisiejszy bespoke ' +
-    'render `FinancialStatementPackWorkspace` bez zmian. Domyślnie OFF do akceptu Piotra na ' +
-    'zrzutach (CLAUDE.md #7).',
-  defaultValue: false,
+    '„Generuj szkic → Otwórz wynik → Opublikuj/dołącz" (OWN-FIN-003). DEC 03.09 wieczór (A2, ' +
+    'docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 — 6 paneli ' +
+    'Finansów, w tym pakiet sprawozdań v2) — domyślnie ON. OFF nadal możliwy przez ' +
+    'allowLocalOverride lub isFinanceOwnerReviewModeEnabled() jak wcześniej.',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

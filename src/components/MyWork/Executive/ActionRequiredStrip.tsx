@@ -20,6 +20,9 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ScrollEdgeFade } from '../shared/ScrollEdgeFade';
+import { useScrollEdges } from '../shared/useScrollEdges';
+
 interface ActionItem {
   id: string;
   type: 'decision' | 'task' | 'escalation' | 'blocker';
@@ -194,6 +197,13 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
   const criticalCount = displayItems.filter((i) => i.urgency === 'critical').length;
   const highCount = displayItems.filter((i) => i.urgency === 'high').length;
 
+  // MW-DROBIAZGI (03.09, rodzeństwo MYW-PHOTO-003): ta karta scrolluje
+  // poziomo z `scrollbar-hide` — zero natywnego paska I zero sygnalizacji,
+  // gorszy przypadek niż `MyWorkHub.tsx`'s tabs row (ten miał chociaż
+  // cienki pasek). Ten sam mechanizm co tam: `useScrollEdges` +
+  // `ScrollEdgeFade`.
+  const [cardsRowRef, cardsRowEdges] = useScrollEdges([displayItems.length]);
+
   if (loading) {
     return (
       <div className="rounded-xl bg-white dark:bg-navy-900/50 p-5">
@@ -288,18 +298,25 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 
       {/* Cards */}
       <div className="px-5 pb-5">
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-          <AnimatePresence mode="popLayout">
-            {displayItems.map((item) => (
-              <ActionItemCard
-                key={item.id}
-                item={item}
-                onApprove={onApprove}
-                onReject={onReject}
-                onClick={() => onItemClick?.(item)}
-              />
-            ))}
-          </AnimatePresence>
+        <div className="relative">
+          <div ref={cardsRowRef} className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            <AnimatePresence mode="popLayout">
+              {displayItems.map((item) => (
+                <ActionItemCard
+                  key={item.id}
+                  item={item}
+                  onApprove={onApprove}
+                  onReject={onReject}
+                  onClick={() => onItemClick?.(item)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+          <ScrollEdgeFade
+            side="start"
+            visible={cardsRowEdges.scrollable && !cardsRowEdges.atStart}
+          />
+          <ScrollEdgeFade side="end" visible={cardsRowEdges.scrollable && !cardsRowEdges.atEnd} />
         </div>
       </div>
     </motion.div>

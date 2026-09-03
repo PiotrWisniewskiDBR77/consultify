@@ -173,7 +173,11 @@ export const ADMIN_DOMAINS: DomainNavigationModule<AdminDomain, AdminScreen>[] =
   },
   {
     id: 'command',
-    label: 'Centrum administracyjne',
+    // G14 13-16 (dyżur 2026-09-03) — było „Centrum administracyjne", ale nagłówek
+    // ekranu (i18n `commandCenter.title`, AdminCommandCenterPanel.tsx:983) mówi
+    // „Centrum dowodzenia" — rozjazd nazw, źródło zamieszania właściciela
+    // (TRIAZ_UWAG_20260902.md UW-14-02). Ujednolicone na nazwę z ekranu.
+    label: 'Centrum dowodzenia',
     children: [
       c('overview', 'Przegląd', Gauge),
       c('attention-queue', 'Kolejka uwagi', AlertTriangle),

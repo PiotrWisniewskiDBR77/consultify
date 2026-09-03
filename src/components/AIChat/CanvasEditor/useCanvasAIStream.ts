@@ -11,6 +11,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import i18n from '@/i18n';
 
+import { getAiErrorLine } from '../aiProviderErrorCopy';
+
 import { hasPendingAiDiff } from './canvasDiffOps';
 import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
 
@@ -321,7 +323,11 @@ export function useCanvasAIStream({
 
         if (!response.ok || !response.body) {
           setIsStreaming(false);
-          onError?.(i18n.t('canvas.aiStream.streamRequestFailed', 'Stream request failed'));
+          onError?.(
+            getAiErrorLine(i18n.t.bind(i18n) as (k: string, d?: string) => string, {
+              errorCode: 'AI_UNAVAILABLE',
+            })
+          );
           return;
         }
 
@@ -361,7 +367,16 @@ export function useCanvasAIStream({
 
               // Handle error events
               if (data.type === 'error') {
-                onError?.(data.message || i18n.t('canvas.aiStream.streamError', 'Stream error'));
+                // CHAT-OWN-016: dotad szlo tu `data.message` — czyli tekst
+                // przyslany przez serwer — a przy braku pola goly napis
+                // „Stream error". Kanwa Czatu uzywa teraz tego samego zrodla
+                // komunikatu co rozmowa.
+                onError?.(
+                  getAiErrorLine(i18n.t.bind(i18n) as (k: string, d?: string) => string, {
+                    errorCode: (data as any).errorCode,
+                    code: (data as any).code,
+                  })
+                );
                 break;
               }
             } catch {
@@ -440,7 +455,13 @@ export function useCanvasAIStream({
         if (err?.name === 'AbortError') {
           // User stopped — not an error
         } else {
-          onError?.(err?.message || i18n.t('canvas.aiStream.streamFailed', 'Stream failed'));
+          // CHAT-OWN-016: `err.message` moglo niesc tresc dostawcy/sieci.
+          onError?.(
+            getAiErrorLine(i18n.t.bind(i18n) as (k: string, d?: string) => string, {
+              errorCode: (err as any)?.errorCode,
+              code: (err as any)?.code,
+            })
+          );
         }
         setIsStreaming(false);
         abortControllerRef.current = null;

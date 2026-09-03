@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { interviewActionMeta } from './interviewActionMatrix';
 
 export interface InterviewAssignmentPreviewBodyProps {
   assignment: any;
@@ -111,6 +112,8 @@ export interface InterviewAssignmentPreviewFooterProps {
    */
   onApproveAssignment?: () => void;
   onSendBackAssignment?: () => void;
+  /** Additional supported actions from the shared type/state matrix. */
+  additionalActions?: ActionRow['buttons'];
   onOpenFull: () => void;
 }
 
@@ -131,6 +134,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
   onFixAssignment,
   onApproveAssignment,
   onSendBackAssignment,
+  additionalActions = [],
   onOpenFull,
 }) => {
   const { t } = useTranslation();
@@ -145,7 +149,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
 
   if (assignment.status === 'assigned' && onStartAssignment) {
     buttons.push({
-      label: t('interview.assignmentPreview.start'),
+      label: interviewActionMeta('assignment', 'start', t).label,
       icon: Sparkles,
       onClick: onStartAssignment,
       colorScheme: 'primary',
@@ -154,7 +158,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     });
   } else if (assignment.status === 'in_progress' && hasSession && onContinueAssignment) {
     buttons.push({
-      label: t('interview.assignmentPreview.continue'),
+      label: interviewActionMeta('assignment', 'continue', t).label,
       icon: ChevronRight,
       onClick: onContinueAssignment,
       colorScheme: 'primary',
@@ -163,7 +167,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     });
   } else if (assignment.status === 'sent_back' && hasSession && onFixAssignment) {
     buttons.push({
-      label: t('interview.assignmentPreview.fixResubmit'),
+      label: interviewActionMeta('assignment', 'fix', t).label,
       icon: RotateCcw,
       onClick: onFixAssignment,
       colorScheme: 'amber',
@@ -178,7 +182,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
   if (assignment.status === 'submitted') {
     if (onApproveAssignment) {
       buttons.push({
-        label: t('interview.assignmentPreview.approve', isPolish ? 'Zatwierdź' : 'Approve'),
+        label: interviewActionMeta('assignment', 'approve', t).label,
         icon: Check,
         onClick: onApproveAssignment,
         colorScheme: 'emerald',
@@ -200,6 +204,8 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
       });
     }
   }
+
+  buttons.push(...additionalActions);
 
   // NOTE: "Open" button lives exclusively in the PreviewPaneShell header (canon §7.3 anty-duplikacja).
   // Do NOT add an extra Open button here.

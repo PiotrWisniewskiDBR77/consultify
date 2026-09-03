@@ -16,7 +16,9 @@
  * techniczne", karty Gotowość 5 wymiarów, karta Pliki „Używany w") — 2026-08-26
  * na prototypie `organization-prototyp-{uklad,gotowosc}.html`
  * (DEC-2026-08-26-78). Od tego odbioru flaga jest DEFAULT ON.
- * Stan wykonawczy od 2026-08-29 pozostaje jednak DEFAULT OFF — patrz komentarz przy `readEnvFlag()` poniżej.
+ * Stan wykonawczy od 2026-08-29 do 2026-09-03 pozostawał jednak DEFAULT OFF
+ * (krok (d) reguły 7 z CLAUDE.md nie był domknięty w rejestrze). DEC 03.09
+ * wieczór (A3) domyka ten krok — flaga jest teraz DEFAULT ON w kodzie.
  *
  * OFF → Organizacja renderuje się bajt w bajt jak przed redesignem: 21 pozycji
  * nawigacji w 6 grupach, stare komponenty ekranów, nagłówek z „Save Changes"
@@ -51,12 +53,12 @@ function readEnvFlag(): boolean {
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    // DEC-2026-08-26-78 autoryzował flip ON na PROTOTYPIE, a nie na realnym
-    // ekranie. Odbiór wizualny realnego builda (evidence/build-20260826, 5 z 5
-    // zrzutów) nigdy nie wrócił do rejestru jako akcept właściciela — krok (d)
-    // reguły 7 z CLAUDE.md nie został wykonany. Do czasu jego wykonania
-    // domyślną wartością jest OFF (2026-08-29, nadzorca).
-    return parsed === null ? false : parsed;
+    // DEC 03.09 wieczór (A3, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
+    // wiersz A3 — "Przeprojektowana Organizacja: zatwierdzony ekran ma być
+    // domyślny") ZAMYKA krok (d) reguły 7 z CLAUDE.md, który od 2026-08-29
+    // wstrzymywał ten flip (odbiór wizualny realnego builda nigdy nie wrócił
+    // do rejestru jako akcept właściciela). Domyślna wartość jest teraz ON.
+    return parsed === null ? true : parsed;
   } catch {
     // ★ fail-CLOSED. Poprzednio `return true` — ta flaga była JEDYNĄ z siedmiu,
     // która przy błędzie odczytu środowiska otwierała ekran zamiast go zamykać,

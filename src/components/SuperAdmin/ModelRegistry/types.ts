@@ -229,8 +229,13 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
 // axe color-contrast (odbior G06, 2026-09-03) — text-*-400 na jasnym tle /10
 // mierzone 1.8-3.47:1 (prog 4.5:1); text-slate-600 na ciemnym tle /10 mierzone
 // 2.17:1. Dodano jawny wariant per motyw zamiast jednego koloru dla obu.
+// DRUGI PRZEJAZD G06 (2026-09-03, podgląd — kontrast): text-blue-600 (#4F62A2)
+// na tle KOMÓRKI ZAZNACZONEGO WIERSZA (bg-blue-500/10 + bg-state-selected
+// złożone = #dee0e6) mierzył 4,41:1 — wciąż pod 4,5:1 mimo poprzedniej
+// naprawy (ta mierzyła zwykłe tło, nie zaznaczony wiersz). blue-700 —
+// 8,76:1 na tym samym złożonym tle.
 export const KIND_BADGE_STYLES: Record<ModelKind, { bg: string; text: string }> = {
-  TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400' },
+  TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400' },
   IMAGE_MODEL: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-400' },
   BUSINESS_MODEL: { bg: 'bg-amber-500/10', text: 'text-amber-800 dark:text-amber-400' },
 };
@@ -238,7 +243,7 @@ export const KIND_BADGE_STYLES: Record<ModelKind, { bg: string; text: string }> 
 export const PROVIDER_TYPE_STYLES: Record<ProviderType, { bg: string; text: string }> = {
   direct: { bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400' },
   aggregator: { bg: 'bg-amber-500/10', text: 'text-amber-800 dark:text-amber-400' },
-  local: { bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400' },
+  local: { bg: 'bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400' },
   customer_managed: { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-300' },
 };
 

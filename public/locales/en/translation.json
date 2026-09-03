@@ -3598,6 +3598,8 @@
       "label12": "Clear",
       "setLoadError": "Failed to load Inbox",
       "toastError3": "Failed to load Inbox",
+      "accessDeniedTitle": "You don't have access to this inbox",
+      "accessDeniedMessage": "You don't have access to this inbox. Check that you're signed into the right organization, or ask an administrator to grant you access.",
       "acceptToday": "Focus → Today",
       "acceptWeek": "Focus → This week",
       "acceptLater": "Focus → Later",
@@ -8537,87 +8539,6 @@
       "cancel": "Cancel",
       "apply": "Apply"
     },
-    "reportsTable": {
-      "sourceType": {
-        "ASSESSMENT": "Assessment"
-      },
-      "status": {
-        "draft": "Draft",
-        "configuring": "Configuring",
-        "generating": "Generating",
-        "generated": "Generated",
-        "inReview": "In Review",
-        "approved": "Approved",
-        "sentInternal": "Sent Internal",
-        "sentExternal": "Sent External",
-        "utilized": "Utilized"
-      },
-      "toastApproved": "Report approved",
-      "toastApproveFailed": "Failed to approve report",
-      "toastSentInternal": "Marked as sent internally",
-      "toastSentInternalFailed": "Failed to mark as sent internally",
-      "toastSentExternal": "Marked as sent externally",
-      "toastSentExternalFailed": "Failed to mark as sent externally",
-      "toastSentBack": "Report sent back for editing",
-      "toastSendBackFailed": "Failed to send report back",
-      "toastExportCompleted": "{{format}} export completed",
-      "toastExportFailed": "Failed to export",
-      "toastExportError": "Export error",
-      "toastLinkCopied": "Link copied",
-      "toastLinkCreated": "Link created",
-      "toastLinkFailed": "Failed to create link",
-      "toastImported": "Report imported successfully",
-      "columns": {
-        "report": "Report",
-        "author": "Author",
-        "context": "Context",
-        "updated": "Updated"
-      },
-      "menu": {
-        "view": "View Report",
-        "exportPdf": "Export PDF",
-        "exportPptx": "Export PPTX",
-        "exportWord": "Export Word",
-        "shareLink": "Share link",
-        "generateInitiatives": "Generate Initiatives",
-        "approve": "Approve",
-        "sendBack": "Send Back",
-        "sendInternal": "Send Internal",
-        "sendExternal": "Send External"
-      },
-      "header": {
-        "creatorTitle": "Report creator",
-        "title": "Reports",
-        "creatorSubtitle": "All reports (all sources and statuses) with quick access to the editor.",
-        "subtitle": "Assessment reports in review status and above",
-        "settingsTitle": "Creator settings (blocks/templates/profiles)",
-        "settings": "Settings",
-        "importTitle": "Import external report",
-        "import": "Import",
-        "newTemplateTitle": "Create new report template",
-        "newTemplate": "New Template",
-        "newReportTitle": "Create AI-powered report",
-        "newReport": "New Report"
-      },
-      "stats": {
-        "all": "All",
-        "drafts": "Drafts",
-        "generated": "Generated",
-        "inReview": "In Review",
-        "approved": "Approved",
-        "sent": "Sent"
-      },
-      "search": {
-        "placeholder": "Search reports..."
-      },
-      "empty": {
-        "noMatchTitle": "No reports match your search",
-        "noneInReviewTitle": "No reports in review yet",
-        "noneTitle": "No reports yet",
-        "creatorDesc": "Create a new report or open an existing one from the list.",
-        "reviewDesc": "Reports will appear here after being submitted for review"
-      }
-    },
     "adma": {
       "editor": {
         "viewDimensions": "Dimensions",
@@ -9291,47 +9212,6 @@
         "deleted": "Report deleted",
         "deleteFailed": "Failed to delete report"
       }
-    },
-    "initiativesBoard": {
-      "defaultName": "Unnamed Initiative",
-      "header": {
-        "title": "Strategic Initiatives Board",
-        "subtitleOne": "Initiatives in phase: {{phases}} • total: {{total}}",
-        "subtitle": "Initiatives in phases: {{phases}} • total: {{total}}",
-        "generate": "Generate from Report"
-      },
-      "filter": {
-        "all": "All ({{count}})",
-        "tab": "{{label}} ({{count}})",
-        "allProjects": "All Projects",
-        "allLocations": "All Locations",
-        "refresh": "Refresh list"
-      },
-      "search": {
-        "placeholder": "Search initiatives..."
-      },
-      "columns": {
-        "initiative": "Initiative",
-        "status": "Status",
-        "completeness": "Completeness",
-        "owner": "Owner",
-        "priority": "Priority",
-        "budget": "Budget"
-      },
-      "openDetails": "Open initiative details",
-      "unassigned": "Unassigned",
-      "roi": "{{value}}x ROI",
-      "menu": {
-        "viewDetails": "View Details",
-        "duplicate": "Duplicate",
-        "deleteNote": "Only draft/planning initiatives can be deleted here"
-      },
-      "confirmDelete": "Are you sure you want to delete this initiative?",
-      "empty": {
-        "noMatchTitle": "No initiatives match your search",
-        "noneTitle": "No initiatives yet",
-        "description": "Generate initiatives from a finalized report"
-      }
     }
   },
   "initiatives": {
@@ -9623,7 +9503,71 @@
       "applied": "Options were saved and reloaded.",
       "noPressure": "No overload — there is nothing to resolve",
       "conflict": "The scenario changed. Refresh the data before trying again.",
-      "failed": "Options could not be proposed."
+      "failed": "Options could not be proposed.",
+      "header": "Load",
+      "subtitle": "Ranges show the state of knowledge and evidence, not false precision of resource utilization.",
+      "newAnalysis": "New analysis",
+      "openTools": "Open load tools",
+      "loading": "Loading Capacity register…",
+      "unavailable": "Capacity register unavailable. No local shadow was created.",
+      "retry": "Retry",
+      "activeScenario": "Active capacity scenario",
+      "knowledge": {
+        "known": "Confirmed",
+        "estimated": "Estimated",
+        "unknown": "No data",
+        "unconfirmed": "Unconfirmed"
+      },
+      "confidence": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "rowKind": {
+        "period": "Period",
+        "constraint": "Constraint"
+      },
+      "criticality": {
+        "assessed": "Assessed",
+        "toAssess": "To assess"
+      },
+      "columns": {
+        "titlePeriod": "Period / constraint",
+        "roleTeam": "Role / team",
+        "kind": "Kind",
+        "demandRange": "Demand (range)",
+        "supplyRange": "Supply (range)",
+        "gap": "Gap",
+        "pressureRange": "Pressure (range)",
+        "confidence": "Confidence",
+        "weight": "Weight",
+        "owner": "Owner",
+        "affectedInitiatives": "Affected initiatives",
+        "freshness": "Assumption freshness",
+        "proposedResponse": "Proposed response"
+      },
+      "saturationBaseline": "baseline",
+      "saturationNotApplicable": "not applicable to a constraint",
+      "saturationIncompleteRange": "no full range",
+      "details": {
+        "label": "Load state and evidence",
+        "text": "Ranges are based on available evidence; missing data does not mean zero."
+      },
+      "properties": {
+        "demand": "Demand",
+        "supply": "Supply",
+        "owner": "Owner"
+      },
+      "ai": {
+        "hintChallenge": "Challenge assumptions",
+        "hintCompare": "Compare options",
+        "disabledTooltip": "AI suggestions require an explicit governed analysis request."
+      },
+      "emptyTitle": "No load data in this range",
+      "emptyDescription": "Change the filter or open the tools for the active capacity scenario.",
+      "archiveNote": "Published capacity history is immutable",
+      "destructiveNote": "Capacity scenarios are superseded, not deleted",
+      "resourceOwnerFallback": "Resource owner"
     },
     "planScenario": {
       "status": {
@@ -12236,7 +12180,14 @@
       "team": "Team",
       "reports": "Reporting",
       "peopleChange": "Management",
-      "summary": "Dashboard"
+      "summary": "Dashboard",
+      "moduleBar": {
+        "list": "Deliveries",
+        "work": "Work",
+        "resources": "Resources",
+        "control": "Control",
+        "reports": "Reports"
+      }
     },
     "manager": {
       "noInitiatives": "No executing initiatives",
@@ -12614,7 +12565,8 @@
       "weeksLeft": "w left"
     },
     "filters": {
-      "all": "All"
+      "all": "All",
+      "allCases": "All deliveries"
     },
     "portfolio": {
       "onTrack": "On Track",
@@ -12676,7 +12628,8 @@
       "export": "Export",
       "report": "Report",
       "aiChat": "AI Chat",
-      "copyLink": "Copy link"
+      "copyLink": "Copy link",
+      "newMilestone": "New milestone"
     },
     "raidLog": {
       "title": "RAID Log",
@@ -13149,6 +13102,55 @@
       "loading": "Loading prediction…",
       "empty": "No high-risk initiatives — everything on track.",
       "suggestedActions": "Suggested actions"
+    },
+    "control": {
+      "columns": {
+        "title": "Intervention",
+        "status": "Status",
+        "owner": "Owner",
+        "authority": "Approver",
+        "slaAt": "Review deadline"
+      },
+      "signalColumns": {
+        "title": "Signal",
+        "rule": "Type",
+        "source": "Source",
+        "severity": "Severity",
+        "occurrences": "Occurrences",
+        "updatedAt": "Updated"
+      },
+      "actions": {
+        "addSignal": "Add signal",
+        "prepareIntervention": "Prepare intervention"
+      }
+    },
+    "work": {
+      "columns": {
+        "title": "Work item",
+        "kind": "Type",
+        "status": "Status",
+        "owner": "Owner / decision maker",
+        "dueAt": "Due / SLA"
+      }
+    },
+    "resources": {
+      "columns": {
+        "person": "Person / team / role",
+        "period": "Period",
+        "availability": "Availability",
+        "demand": "Allocated",
+        "remaining": "Remaining",
+        "load": "Load range",
+        "skillMatch": "Skill match",
+        "affectedWork": "Affected work",
+        "cost": "Cost / forecast",
+        "conflict": "Conflict",
+        "freshness": "Freshness",
+        "nextAction": "Next action"
+      },
+      "actions": {
+        "proposeAllocation": "Propose allocation"
+      }
     }
   },
   "benefits": {
@@ -15168,11 +15170,7 @@
       },
       "vip": {
         "empty": "No presentations yet."
-      },
-      "watchNotifyPrefix": "Notify",
-      "watchNotifyAll": "All updates",
-      "watchNotifyMentions": "Mentions only",
-      "watchNotifyStatusChanges": "Status changes only"
+      }
     },
     "integrations": {
       "title": "Integrations",
@@ -18251,6 +18249,38 @@
       "unconfirmed": "I don't have confirmation that the “{{action}}” action actually happened — nothing confirmed it. Check manually before assuming it's done.",
       "error": "The “{{action}}” action failed — an error occurred. Nothing was confirmed as done.",
       "refusedNoReason": "I did not perform the “{{action}}” action — the registry refused without giving a reason."
+    },
+    "providerError": {
+      "rateLimit": {
+        "message": "The assistant is handling too many requests right now.",
+        "action": "Please wait a moment and send your message again."
+      },
+      "unavailable": {
+        "message": "The assistant is temporarily unavailable.",
+        "action": "Try again shortly, or switch to a different model."
+      },
+      "config": {
+        "message": "The assistant is not available on this account.",
+        "action": "Please contact your administrator."
+      },
+      "timeout": {
+        "message": "The assistant took too long to answer.",
+        "action": "Try again, or shorten your question."
+      },
+      "interrupted": {
+        "message": "The answer was interrupted before it finished.",
+        "action": "Send the message again to get the full answer."
+      },
+      "empty": {
+        "message": "The assistant returned no answer.",
+        "action": "Try again, or rephrase your question."
+      },
+      "generic": {
+        "message": "The assistant could not complete this request.",
+        "action": "Try again. If it keeps happening, contact your administrator."
+      },
+      "retry": "Try again",
+      "adminDetails": "Details (administrator only)"
     }
   },
   "agentAudit": {

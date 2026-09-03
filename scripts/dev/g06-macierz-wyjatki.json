@@ -1,0 +1,9 @@
+{
+  "_opis": "Uzasadnione wyjątki od kontroli PL≠EN / 'bez tekstu' w agregacie G06. Każdy wpis ma powód i źródło. Wyjątek NIE zwalnia z kontroli a11y ani pary jasny/ciemny.",
+  "plRownaEn": {
+    "report-artifact": "Treść to DANE wygenerowanego dokumentu (raport), nie chrome UI; chrome tego ekranu jest tłumaczony. Źródło: evidence/grafika/i18n-pl-en-20260903.md (agent/i18n-pl-en-20260903)."
+  },
+  "brakTekstu": {
+    "notebook-quick-capture": "Harness celowo montuje sam przycisk „Wrzuć/Capture” (dowód #12a, że CTA nie jest crimsonem) — ekran-dowód, nie powierzchnia użytkownika. Źródło: dev-render/screens/notebook-quick-capture.tsx nagłówek."
+  }
+}

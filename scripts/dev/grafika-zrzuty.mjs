@@ -66,6 +66,41 @@ const OSIAD_PO_ROZWINIECIU = Number(arg('osiad-po-rozwinieciu', '0'));
 // ponownie, żeby skan i zrzut objęły podgląd. Domyślnie 0 (historyczne wywołania bez zmian).
 const KLIK_PO_ROZWINIECIU = arg('klik-po-rozwinieciu', '0') === '1';
 /**
+ * `--cofnij-jesli-skraca=1` — OPT-IN. W pętli rozwijania (`ROZWIN_SEKCJE`),
+ * po każdym kliku w kontrolkę `[aria-expanded="false"]`, porównaj długość
+ * `document.body.innerText` PRZED i PO. Jeśli klik tekst SKRÓCIŁ — to nie był
+ * akordeon treści (rozwinięcie ZAWSZE dokłada tekst), tylko przełącznik trybu,
+ * i cofamy go PONOWNYM klikiem w ten sam element (uchwyt DOM, nie pozycja —
+ * po pierwszym kliku atrybut `aria-expanded` już nie pasuje do selektora).
+ *
+ * POWÓD ISTNIENIA (dyżur agent/slepa-plama-20260903, zmierzone empirycznie —
+ * `scripts/dev/r2-test-each.mjs` w worktree agenta, 10/10 kontrolek na
+ * `assessment-list` przetestowanych pojedynczo): przycisk „Szukaj" w
+ * `src/components/shared/ModuleHub/ModuleNavBar.tsx` ma poprawne, semantyczne
+ * `aria-expanded={showSearch}` — ale to nie akordeon, to PRZEŁĄCZNIK TRYBU:
+ * `commandRow` (komentarz w źródle: „Modes swap in place: search ↔ dynamic
+ * tabs ↔ counters/bulk ↔ other contextual chips") PODMIENIA CAŁY rząd Menu 3
+ * (chipy statusu, taby, liczniki — np. „Wszystkie 6 · Szkic 1 · … · AI
+ * Triage" na `assessment-list`) na pole wyszukiwania. Ten przełącznik NIE MA
+ * obsługi Escape ani kliku-na-zewnątrz (`showSearch` gasi wyłącznie klik na
+ * ten sam przycisk albo klik „X" przy wpisanej frazie) — więc naprawa
+ * `KLIK_PO_ROZWINIECIU`/`OSIAD_PO_ROZWINIECIU` z tego samego dnia (wyżej) go
+ * NIE dotyczy, bo to nie jest nakładka `.fixed.inset-0`. Pętla rozwijania
+ * klika ten przycisk jak każdy inny `aria-expanded=false`, chipy znikają z
+ * DOM PRZED skanem axe i zrzutem, i already zostają znikłe do końca przelotu
+ * (żaden późniejszy krok pętli już go nie trafia — `aria-expanded` jest teraz
+ * `true`). Zmierzone na `assessment-list`: tekst 1562 → 1444 znaków po tym
+ * jednym kliku, z powrotem 1562 po ponownym kliknięciu w ten sam przycisk.
+ * Ten sam wzorzec (ModuleNavBar używany przez WSZYSTKIE ekrany listowe) trafia
+ * też np. `meetings-module` (tekst 1139 → 1028, zmierzone R1 tej samej sesji).
+ *
+ * Domyślnie 0 — historyczne wywołania (w tym `g06-macierz-uruchom.mjs` sprzed
+ * tego dyżuru) mają zachowanie bez zmian. Wynik trafia do `wynik.json` jako
+ * `cofnijJesliSkraca` (nagłówek) i `sekcjeCofniete` (per ekran, lista
+ * {etykieta, przed, poKliku}) — dowód, CO i O ILE cofnięto, nie tylko że.
+ */
+const COFNIJ_JESLI_SKRACA = arg('cofnij-jesli-skraca', '0') === '1';
+/**
  * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
  *
  * POWÓD ISTNIENIA (odbiór grafiki 2026-08-30): ekran „Tożsamość i model działania"
@@ -386,6 +421,7 @@ for (const ekran of EKRANY) {
       }
       let sekcjeRozwiniete = 0;
       let sekcjeNadalZwiniete = [];
+      let sekcjeCofniete = [];
       if (ROZWIN_SEKCJE) {
         // Kilka rund jest konieczne, bo rozwinięcie rodzica może odsłonić
         // kolejne accordiony. Klikamy wyłącznie semantyczne kontrolki ze
@@ -398,7 +434,33 @@ for (const ekran of EKRANY) {
           for (let i = 0; i < ile; i++) {
             const kontrolka = kontrolki.nth(i);
             if (!(await kontrolka.isVisible().catch(() => false))) continue;
+            // Uchwyt DOM (nie pozycja/selektor) — patrz komentarz przy
+            // COFNIJ_JESLI_SKRACA: po kliku `aria-expanded` tego elementu już
+            // nie pasuje do `[aria-expanded="false"]`, więc ponowne odpytanie
+            // selektora + `nth(i)` trafiłoby w INNY element.
+            const uchwytDoCofniecia = COFNIJ_JESLI_SKRACA
+              ? await kontrolka.elementHandle().catch(() => null)
+              : null;
+            const tekstPrzedKlikiem = uchwytDoCofniecia
+              ? (await page.evaluate(() => document.body.innerText).catch(() => '')).length
+              : null;
             await kontrolka.click({ timeout: 3000 }).then(() => { postep++; }).catch(() => {});
+            if (uchwytDoCofniecia && tekstPrzedKlikiem !== null) {
+              const tekstPoKliku = (await page.evaluate(() => document.body.innerText).catch(() => '')).length;
+              if (tekstPoKliku < tekstPrzedKlikiem) {
+                // Klik SKRÓCIŁ widoczny tekst — to nie akordeon (rozwinięcie
+                // treści zawsze DOKŁADA tekst), tylko przełącznik trybu (np.
+                // „Szukaj" w ModuleNavBar.tsx, patrz COFNIJ_JESLI_SKRACA).
+                // Cofamy PONOWNYM klikiem w ten sam uchwyt DOM.
+                const etykieta = await uchwytDoCofniecia
+                  .evaluate((el) => el.getAttribute('aria-label') || el.getAttribute('title') || el.tagName)
+                  .catch(() => null);
+                await uchwytDoCofniecia.click({ timeout: 3000 }).catch(() => {});
+                await page.waitForTimeout(100);
+                const tekstPoCofnieciu = (await page.evaluate(() => document.body.innerText).catch(() => '')).length;
+                sekcjeCofniete.push({ etykieta, przed: tekstPrzedKlikiem, poKliku: tekstPoKliku, poCofnieciu: tekstPoCofnieciu });
+              }
+            }
             // NAPRAWA PRZYRZĄDU (dyżur G06 modules-05-08, 2026-09-03): część kontrolek
             // aria-expanded=false NIE JEST akordeonem treści — to wyzwalacz menu
             // rozwijanego (np. przycisk-hamburger, split-button „Analizuj z AI"),
@@ -494,6 +556,7 @@ for (const ekran of EKRANY) {
         obrazJasnosc,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
+        sekcjeCofniete: ROZWIN_SEKCJE && COFNIJ_JESLI_SKRACA ? sekcjeCofniete : undefined,
         a11yNaruszenia: A11Y ? a11yNaruszenia : undefined,
         status: [
           klikBrak.length > 0 ? `klik BRAK: ${klikBrak.join(' ')}` : '',
@@ -591,7 +654,7 @@ if (BEZ_KLIKA_DOMYSLNEGO) {
 if (WYNIK_JSON) {
   if (!path.isAbsolute(WYNIK_JSON)) throw new Error('--wynik-json musi być ścieżką absolutną');
   fs.mkdirSync(path.dirname(WYNIK_JSON), { recursive: true });
-  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, klikPoRozwinieciu: KLIK_PO_ROZWINIECIU, wyniki, pary: wszystkiePary }, null, 2));
+  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, klikPoRozwinieciu: KLIK_PO_ROZWINIECIU, cofnijJesliSkraca: COFNIJ_JESLI_SKRACA, wyniki, pary: wszystkiePary }, null, 2));
   console.log(`Wynik JSON → ${WYNIK_JSON}`);
 }
 

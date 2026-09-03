@@ -39,7 +39,23 @@ export function useSignalsFeed(params: {
         if (params.severityMin) query.set('severityMin', params.severityMin);
         if (append && nextCursor) query.set('cursor', nextCursor);
         const response = (await api.get(`/signals?${query}`)) as SignalsFeedResponse;
-        setSignals((current) => (append ? [...current, ...response.signals] : response.signals));
+        // G14 14-16 (dyżur 2026-09-03) — kontrakt `SignalsFeedResponse` ZAWSZE
+        // niesie `signals` jako tablicę, ale gdy backend/fixture je złamie
+        // (pole brakuje albo ma inny kształt), `setSignals(undefined)` psuje
+        // stan cicho tutaj i wybucha DOPIERO w konsumencie
+        // (`ChatSignalsFeed.tsx`: `[...feed.signals]` → `TypeError: feed.signals
+        // is not iterable`, przechwycone przez ErrorBoundary — cały ekran
+        // pusty/błędny). Walidacja fail-closed: nieprawidłowy kształt = pusta
+        // lista + sygnał w konsoli, NIE crash całego ekranu.
+        const incomingSignals = Array.isArray(response?.signals) ? response.signals : [];
+        if (!Array.isArray(response?.signals)) {
+          // eslint-disable-next-line no-console
+          console.error(
+            '[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować.',
+            response
+          );
+        }
+        setSignals((current) => (append ? [...current, ...incomingSignals] : incomingSignals));
         setNextCursor(response.nextCursor);
         // FIX-10 (dyżur 26 chat-signals-front, odbiór P2.10) — `POST
         // /signals/refresh` może ustawić `producerEnabled: false` (stan 3a),
