@@ -114,6 +114,7 @@ while (changed) {
 const dbSignal = /\b(?:db(?:All|Get|Run)?|query(?:All|First|One|Run)?|pool|SELECT|FROM|JOIN)\b/i;
 const orgSignal = /\b(?:organizationId|organization_id|orgId|org_id|req\.user|req\.organization)\b/i;
 const publicSignal = /(?:^|\/)(?:health|ready|ping|status|auth|public|webhooks?)(?:\/|$)/i;
+const externalOrAiSignal = /(?:^|\/)(?:ai|cloud|connectors?|integrations?|mcp|webhooks?)(?:\/|$)/i;
 const guardPatterns = [
   'verifyToken',
   'requireOrganization',
@@ -150,6 +151,7 @@ for (const file of routeFiles) {
       ? mounts.map((mount) => `${mount.replace(/\/$/, '')}/${localPath.replace(/^\//, '')}`.replace(/\/$/, ''))
       : [];
     if (fullPaths.some((item) => publicSignal.test(item))) reasons.push('rodzina_publiczna_lub_systemowa');
+    if (fullPaths.some((item) => externalOrAiSignal.test(item))) reasons.push('ryzyko_wyjscia_zewnetrznego_lub_AI_Z15');
     const guards = guardPatterns.filter((pattern) => callText.includes(pattern));
     const flags = [
       ...(fullPaths.some((item) => item.startsWith('/api/v8')) ? ['ENABLE_V8_GLOBAL'] : []),
