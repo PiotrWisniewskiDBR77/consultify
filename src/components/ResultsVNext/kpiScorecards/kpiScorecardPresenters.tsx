@@ -136,7 +136,7 @@ export function buildKpiScorecardColumns(
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.updatedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">{formatKpiScorecardDate(row.updatedAt, isPolish)}</span>
       ),
     },
   ];
@@ -436,7 +436,7 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.addedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">{formatKpiScorecardDate(row.addedAt, isPolish)}</span>
       ),
     },
   ];
@@ -600,7 +600,7 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardReviewSnapshotDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.publishedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">{formatKpiScorecardDate(row.publishedAt, isPolish)}</span>
       ),
     },
     {
@@ -609,7 +609,7 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
       width: '150px',
       sortable: true,
       render: (row: KpiScorecardReviewSnapshotDto) => (
-        <span className="text-sm text-c-text-muted">{formatKpiScorecardDate(row.createdAt, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">{formatKpiScorecardDate(row.createdAt, isPolish)}</span>
       ),
     },
   ];
