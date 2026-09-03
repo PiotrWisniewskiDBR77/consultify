@@ -1,0 +1,58 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 1500,
+  "klikPoRozwinieciu": true,
+  "cofnijJesliSkraca": true,
+  "wyniki": [
+    {
+      "ekran": "ustawienia-powiadomienia",
+      "motyw": "light",
+      "plik": "/private/tmp/g06-usun-v2-out/15settings-pl-1440/ustawienia-powiadomienia__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Ustawienia\n\nPreferencje osobiste\n\nMoje ustawienia\nProfil\nAwatar i zdjęcie\nPodpisy e-mail\nGodziny pracy\nPreferencje pracy\nPanel\nPreferencje pracy\nRegionalne\nJęzyk\nAI i automatyzacja\nZachowanie i instrukcje\nModel i parametry\nAutouzupełnianie\nPamięć\nHistoria czatu\nDane i prywatność\nBiblioteka promptów\nGłos i TTS\nPanel użycia\nPowiadomienia\nPrzegląd\nE-mail i podsumowanie\nPulpit i dźwięki\nDostępność\nBezpieczeństwo\nPrzegląd bezpieczeństwa\nUwierzytelnianie i dostęp\nIntegracje\nPołączone aplikacje\nSynchronizacja kalendarza\nKlucze API\nWebhooki\nDane i prywatność\nKontrola danych\nPrywatność\nPłatności\nSubskrypcja i płatności\nWygląd\nMotyw\nDostępność\nZaawansowane\nImport/Eksport\nSzablony\nDeweloper\nFunkcje beta\nBeta\nHistoria\nWróć do panelu\nUstawienia\nPowiadomienia\nPowiadomienia\n\nKontroluj sposób i czas otrzymywania powiadomień\n\nZapisz zmiany\nPreferencje powiadomień\n\nZarządzaj tym, jak i kiedy otrzymujesz powiadomienia we wszystkich kanałach\n\nAktywność\nW aplikacji\nE-mail\nPrzypisania zadań\n\nGdy zostanie Ci przypisane nowe zadanie\n\nAktualizacje zadań\n\nGdy zmieni się status albo pojawi się komentarz\n\nWzmianki\n\nGdy ktoś wspomni Cię w komentarzu\n\nKamienie milowe projektu\n\nWażne aktualizacje i zakończenia w projekcie\n\nWłącz wszystko\nMinimalne\nWszystkie zmiany zapisane",
+      "hasResultMarker": null,
+      "obrazJasnosc": 247.80368663464503,
+      "sekcjeRozwiniete": 8,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "ustawienia-powiadomienia",
+      "motyw": "dark",
+      "plik": "/private/tmp/g06-usun-v2-out/15settings-pl-1440/ustawienia-powiadomienia__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Ustawienia\n\nPreferencje osobiste\n\nMoje ustawienia\nProfil\nAwatar i zdjęcie\nPodpisy e-mail\nGodziny pracy\nPreferencje pracy\nPanel\nPreferencje pracy\nRegionalne\nJęzyk\nAI i automatyzacja\nZachowanie i instrukcje\nModel i parametry\nAutouzupełnianie\nPamięć\nHistoria czatu\nDane i prywatność\nBiblioteka promptów\nGłos i TTS\nPanel użycia\nPowiadomienia\nPrzegląd\nE-mail i podsumowanie\nPulpit i dźwięki\nDostępność\nBezpieczeństwo\nPrzegląd bezpieczeństwa\nUwierzytelnianie i dostęp\nIntegracje\nPołączone aplikacje\nSynchronizacja kalendarza\nKlucze API\nWebhooki\nDane i prywatność\nKontrola danych\nPrywatność\nPłatności\nSubskrypcja i płatności\nWygląd\nMotyw\nDostępność\nZaawansowane\nImport/Eksport\nSzablony\nDeweloper\nFunkcje beta\nBeta\nHistoria\nWróć do panelu\nUstawienia\nPowiadomienia\nPowiadomienia\n\nKontroluj sposób i czas otrzymywania powiadomień\n\nZapisz zmiany\nPreferencje powiadomień\n\nZarządzaj tym, jak i kiedy otrzymujesz powiadomienia we wszystkich kanałach\n\nAktywność\nW aplikacji\nE-mail\nPrzypisania zadań\n\nGdy zostanie Ci przypisane nowe zadanie\n\nAktualizacje zadań\n\nGdy zmieni się status albo pojawi się komentarz\n\nWzmianki\n\nGdy ktoś wspomni Cię w komentarzu\n\nKamienie milowe projektu\n\nWażne aktualizacje i zakończenia w projekcie\n\nWłącz wszystko\nMinimalne\nWszystkie zmiany zapisane",
+      "hasResultMarker": null,
+      "obrazJasnosc": 32.51826724556327,
+      "sekcjeRozwiniete": 8,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "ustawienia-powiadomienia",
+      "roznicaLuminancji": 215.28541938908177,
+      "procentRoznychPikseli": 99.88703703703705,
+      "powod": null
+    }
+  ]
+}
