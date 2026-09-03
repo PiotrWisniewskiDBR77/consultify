@@ -33,7 +33,7 @@ const jestKonsola404 = (m) => /status of 404/.test(m);
 // oddaje 404, komponent loguje własny błąd). Liczone osobno — to nie jest defekt
 // produktu ani szum a11y, ale nie wolno ich mieszać z realnymi wyjątkami renderu.
 const jestKonsolaPochodna = (m) =>
-  /(Failed to fetch|Error fetching|Failed to load|unavailable\)|NetworkError|Load failed|fetch failed)/i.test(String(m));
+  /(Failed to fetch|Error fetching|Failed to load|unavailable\)|NetworkError|Load failed|fetch failed|HTTP 404)/i.test(String(m));
 
 const moduly = fs.readdirSync(WEJSCIE).filter((d) => /^\d{2}_/.test(d)).sort();
 const wynik = {};
@@ -50,9 +50,17 @@ for (const mod of moduly) {
     if (!pliki.length) brakujace.push(komb);
     for (const f of pliki) {
       const w = JSON.parse(fs.readFileSync(path.join(kat, f), 'utf8'));
+      // Para jasny/ciemny z narzędzia: powod !== null = para NIE przeszła kontroli
+      // (duplikat zamiast motywu — kształt 13) albo różnica luminancji poniżej progu.
+      for (const p of w.pary || []) {
+        const e = (ekrany[p.ekran] ||= { kadry: 0, a11yKadry: 0, a11yIds: {}, a11yGdzie: [], harness404: 0, konsolaPochodna: 0, inneBledy: [], zleStatusy: [], zwinieteNieznane: [], paryZle: [], tekst: {} });
+        if (p.powod || (p.roznicaLuminancji != null && p.roznicaLuminancji < 30)) e.paryZle.push(`${komb}: ${p.powod || `ΔL=${p.roznicaLuminancji.toFixed(1)}`}`);
+      }
       for (const r of w.wyniki) {
-        const e = (ekrany[r.ekran] ||= { kadry: 0, a11yKadry: 0, a11yIds: {}, a11yGdzie: [], harness404: 0, konsolaPochodna: 0, inneBledy: [], zleStatusy: [], zwinieteNieznane: [] });
+        const e = (ekrany[r.ekran] ||= { kadry: 0, a11yKadry: 0, a11yIds: {}, a11yGdzie: [], harness404: 0, konsolaPochodna: 0, inneBledy: [], zleStatusy: [], zwinieteNieznane: [], paryZle: [], tekst: {} });
         e.kadry += 1;
+        // Tekst renderu per język (do kontroli PL≠EN): bierzemy kadr light przy 1440.
+        if (r.motyw === 'light' && komb.endsWith('-1440')) e.tekst[komb.slice(0, 2)] = (r.tekst || '').replace(/\s+/g, ' ').trim();
         const real = (r.a11yNaruszenia || []).filter((v) => !SZUM_HOSTA.has(v.id));
         if (real.length) {
           e.a11yKadry += 1;
@@ -72,6 +80,12 @@ for (const mod of moduly) {
     }
   }
   const lista = Object.entries(ekrany).sort(([a], [b]) => a.localeCompare(b));
+  // PL=EN: identyczny tekst renderu w obu językach = język się nie przełączył
+  // (albo harness przybija język — kształt 18; albo ekran jest realnie nieprzetłumaczony).
+  for (const [, e] of lista) {
+    e.plRownaEn = Boolean(e.tekst.pl && e.tekst.en && e.tekst.pl === e.tekst.en);
+    e.brakTekstu = !e.tekst.pl || e.tekst.pl.length < 40;
+  }
   const suma = {
     ekrany: lista.length,
     kadry: lista.reduce((s, [, e]) => s + e.kadry, 0),
@@ -81,6 +95,9 @@ for (const mod of moduly) {
     ekranyZinnymiBledami: lista.filter(([, e]) => e.inneBledy.length).length,
     ekranyZKonsolaPochodna: lista.filter(([, e]) => e.konsolaPochodna).length,
     ekranyZeZlymStatusem: lista.filter(([, e]) => e.zleStatusy.length).length,
+    ekranyPlRownaEn: lista.filter(([, e]) => e.plRownaEn).map(([n]) => n),
+    ekranyZlaPara: lista.filter(([, e]) => e.paryZle.length).map(([n]) => n),
+    ekranyBezTekstu: lista.filter(([, e]) => e.brakTekstu).map(([n]) => n),
     ekranyNiepelne: lista.filter(([, e]) => e.kadry !== 8).map(([n, e]) => `${n}(${e.kadry})`),
     brakujaceKombinacje: brakujace,
   };
@@ -89,20 +106,20 @@ for (const mod of moduly) {
 }
 
 const linie = [];
-linie.push('| Moduł | Ekranów | Kadrów | Ekrany z realnym a11y | Kadry z a11y | Reguły | Ekrany z realnym błędem konsoli | Ekrany z konsolą pochodną braku backendu | Zły status | Niepełne |');
-linie.push('| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |');
+linie.push('| Moduł | Ekranów | Kadrów | Ekrany z realnym a11y | Kadry z a11y | Reguły | Realny błąd konsoli | Konsola pochodna braku backendu | Zły status | PL=EN | Zła para jasny/ciemny | Bez tekstu | Niepełne |');
+linie.push('| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
 for (const [mod, { suma }] of Object.entries(wynik)) {
   const reguly = Object.entries(suma.a11yIds).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(', ') || '—';
-  linie.push(`| ${mod} | ${suma.ekrany} | ${suma.kadry} | **${suma.ekranyZa11y}** | ${suma.kadryZa11y} | ${reguly} | ${suma.ekranyZinnymiBledami} | ${suma.ekranyZKonsolaPochodna} | ${suma.ekranyZeZlymStatusem} | ${suma.ekranyNiepelne.join(', ') || (suma.brakujaceKombinacje.length ? `brak: ${suma.brakujaceKombinacje.join(',')}` : '—')} |`);
+  linie.push(`| ${mod} | ${suma.ekrany} | ${suma.kadry} | **${suma.ekranyZa11y}** | ${suma.kadryZa11y} | ${reguly} | ${suma.ekranyZinnymiBledami} | ${suma.ekranyZKonsolaPochodna} | ${suma.ekranyZeZlymStatusem} | ${suma.ekranyPlRownaEn.length} | ${suma.ekranyZlaPara.length} | ${suma.ekranyBezTekstu.length} | ${suma.ekranyNiepelne.join(', ') || (suma.brakujaceKombinacje.length ? `brak: ${suma.brakujaceKombinacje.join(',')}` : '—')} |`);
 }
 linie.push('');
 for (const [mod, { ekrany }] of Object.entries(wynik)) {
-  const zle = Object.entries(ekrany).filter(([, e]) => e.a11yKadry || e.inneBledy.length || e.zleStatusy.length);
+  const zle = Object.entries(ekrany).filter(([, e]) => e.a11yKadry || e.inneBledy.length || e.zleStatusy.length || e.plRownaEn || e.paryZle.length || e.brakTekstu);
   if (!zle.length) continue;
   linie.push(`### ${mod} — ekrany z długiem`);
   for (const [n, e] of zle) {
     const ids = Object.entries(e.a11yIds).map(([k, v]) => `${k}×${v}`).join(', ');
-    linie.push(`- \`${n}\`: a11y ${e.a11yKadry}/${e.kadry} kadrów${ids ? ` (${ids})` : ''}${e.zleStatusy.length ? `; ★ status: ${[...new Set(e.zleStatusy)].slice(0, 2).join(' · ')}` : ''}${e.inneBledy.length ? `; inne błędy: ${[...new Set(e.inneBledy.map((x) => x.replace(/^[^:]+: /, '')))].slice(0, 3).join(' · ')}` : ''}`);
+    linie.push(`- \`${n}\`: a11y ${e.a11yKadry}/${e.kadry} kadrów${ids ? ` (${ids})` : ''}${e.zleStatusy.length ? `; ★ status: ${[...new Set(e.zleStatusy)].slice(0, 2).join(' · ')}` : ''}${e.inneBledy.length ? `; inne błędy: ${[...new Set(e.inneBledy.map((x) => x.replace(/^[^:]+: /, '')))].slice(0, 3).join(' · ')}` : ''}${e.plRownaEn ? '; ★ PL=EN (tekst identyczny w obu językach)' : ''}${e.paryZle.length ? `; ★ para jasny/ciemny: ${[...new Set(e.paryZle)].slice(0, 2).join(' · ')}` : ''}${e.brakTekstu ? '; ★ BEZ TEKSTU (<40 znaków)' : ''}`);
   }
   linie.push('');
 }
