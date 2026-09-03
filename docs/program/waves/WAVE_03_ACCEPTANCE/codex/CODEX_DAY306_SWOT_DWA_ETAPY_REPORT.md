@@ -10,3 +10,6 @@ Pomiar i tabela są w `docs/program/prototypy/SWOT_SIEDEM_ETAPOW_20260903.md`. K
 
 Korekta tezy instrukcji: spośród 19 paczek 14 ma pięć faz, jedna osiem, cztery po cztery; wszystkie pięć klocków SWOT ma konsumentów.
 
+## R3 — CZĘŚCIOWE
+
+Jedna flaga `VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES` jest fail-closed i domyślnie OFF. OFF zwraca ten sam obiekt pięciofazowy; ON układa `recommendations` przed `outputs` i `review` po nim oraz dodaje po jednej bramie. Testy flagi 3/3. Zmiana dotyczy packa/rejestru; realny store sesji nadal ma pięć kroków, więc nie ogłaszam pełnej budowy runtime.
