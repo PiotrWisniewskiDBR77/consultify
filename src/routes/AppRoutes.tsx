@@ -2956,7 +2956,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
                 }
                 noPadding
               >
@@ -2985,7 +2985,7 @@ export const AppRoutes: React.FC = () => {
                 breadcrumbs={
                   breadcrumbs || [
                     t('sidebar.results', 'Results'),
-                    t('results.kpi', 'KPI'),
+                    'KPI',
                     t('results.kpiScorecard', 'Scorecard'),
                   ]
                 }
@@ -3018,7 +3018,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
                 }
                 noPadding
               >
@@ -3042,7 +3042,7 @@ export const AppRoutes: React.FC = () => {
                 breadcrumbs={
                   breadcrumbs || [
                     t('sidebar.results', 'Results'),
-                    t('results.kpi', 'KPI'),
+                    'KPI',
                     t('results.kpiDeviationCase', 'Deviation case'),
                   ]
                 }
@@ -3066,7 +3066,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'ROI']
                 }
                 noPadding
               >
@@ -3096,7 +3096,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'ROI']
                 }
                 noPadding
               >
@@ -3124,7 +3124,7 @@ export const AppRoutes: React.FC = () => {
                 breadcrumbs={
                   breadcrumbs || [
                     t('sidebar.results', 'Results'),
-                    t('results.roi', 'ROI'),
+                    'ROI',
                     t('results.roiPirOutcomes', 'PIR outcomes'),
                   ]
                 }
@@ -3148,7 +3148,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'OKR']
                 }
                 noPadding
               >
@@ -3173,7 +3173,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'OKR']
                 }
                 noPadding
               >
@@ -3201,7 +3201,7 @@ export const AppRoutes: React.FC = () => {
                 breadcrumbs={
                   breadcrumbs || [
                     t('sidebar.results', 'Results'),
-                    t('results.okr', 'OKR'),
+                    'OKR',
                     t('results.okrPrograms', 'Programs'),
                   ]
                 }
@@ -3227,7 +3227,7 @@ export const AppRoutes: React.FC = () => {
                 breadcrumbs={
                   breadcrumbs || [
                     t('sidebar.results', 'Results'),
-                    t('results.okr', 'OKR'),
+                    'OKR',
                     t('results.okrCycles', 'Cycles'),
                   ]
                 }

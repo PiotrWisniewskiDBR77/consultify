@@ -169,11 +169,18 @@ import { AgentProcessTemplatesPanel } from './AgentProcessTemplatesPanel';
 import { TransformationCasesPanel } from './TransformationCasesPanel';
 
 type AgentHubTab =
-  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'approvals' | 'operations';
+  | 'processes'
+  | 'templates'
+  | 'governed_templates'
+  | 'transformations'
+  | 'approvals'
+  | 'operations';
+
+const TRANSFORMATION_CASE_ITEM_PREFIX = 'transformation-case:';
 
 function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
   const labels: Record<AgentHubTab, [string, string]> = {
-    processes: ['Przebiegi i historia', 'Runs and history'],
+    processes: ['Archiwum procesów', 'Process archive'],
     templates: ['Start i szablony', 'Start and templates'],
     governed_templates: ['Governance szablonów', 'Template governance'],
     transformations: ['Sprawy, akceptacje i wyniki', 'Cases, approvals and outputs'],
@@ -426,11 +433,7 @@ export const AgentHubShell: React.FC = () => {
       ? requestedView
       : null;
 
-  const [tab, setTab] = useState<AgentHubTab>(
-    () =>
-      validRequestedView ??
-      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes')
-  );
+  const [tab, setTab] = useState<AgentHubTab>(() => validRequestedView ?? 'transformations');
   const [plans, setPlans] = useState<AgentPlan[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewPlanId, setPreviewPlanId] = useState<string | null>(null);
@@ -441,9 +444,7 @@ export const AgentHubShell: React.FC = () => {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
-    const next =
-      validRequestedView ??
-      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes');
+    const next = validRequestedView ?? 'transformations';
     setTab(next);
   }, [searchParams, validRequestedView]);
 
@@ -480,6 +481,29 @@ export const AgentHubShell: React.FC = () => {
     (context: { transformationCaseId: string; canonicalRunId: string }) =>
       writeWorkspaceContext('operations', context),
     [writeWorkspaceContext]
+  );
+  const handleOpenTransformationCase = useCallback(
+    (
+      transformationCase: import('@/services/api/v8/transformation-cases').TransformationCaseDto
+    ) => {
+      const id = `${TRANSFORMATION_CASE_ITEM_PREFIX}${transformationCase.transformationCaseId}`;
+      setOpenItems((current) =>
+        current.some((item) => item.id === id)
+          ? current
+          : [
+              ...current,
+              {
+                id,
+                type: 'tool',
+                subType: 'transformation-case',
+                name: transformationCase.mandate,
+                status: transformationCase.status === 'cancelled' ? 'CANCELLED' : 'PLANNING',
+              },
+            ]
+      );
+      setActiveItemId(id);
+    },
+    []
   );
 
   // Triada MUST #7 — checkbox selection "Moje procesy" (patrz nagłówek pliku
@@ -748,7 +772,7 @@ export const AgentHubShell: React.FC = () => {
   // utworzony plan z "Nowy proces"/"Użyj szablonu" ma to od razu z odpowiedzi
   // create; reopens z tabeli/tabów dociągają tu).
   useEffect(() => {
-    if (!activeItemId) {
+    if (!activeItemId || activeItemId.startsWith(TRANSFORMATION_CASE_ITEM_PREFIX)) {
       setActivePlanDetail(null);
       setActivePlanError(null);
       return;
@@ -1661,7 +1685,10 @@ export const AgentHubShell: React.FC = () => {
   const workspaceBusy = Boolean(
     (tab === 'processes' && !activeItemId && plans === null) ||
     (tab === 'templates' && !activeItemId && templates === null) ||
-    (activeItemId && !activePlanDetail && !activePlanError)
+    (activeItemId &&
+      !activeItemId.startsWith(TRANSFORMATION_CASE_ITEM_PREFIX) &&
+      !activePlanDetail &&
+      !activePlanError)
   );
 
   return (
@@ -1687,21 +1714,6 @@ export const AgentHubShell: React.FC = () => {
           {isPolish ? 'Bieżący obszar Agent Hub' : 'Current Agent Hub area'}:{' '}
           {agentHubTabLabel(tab, isPolish)}.
         </p>
-        <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-c-text-muted">
-          <div>
-            <dt className="inline font-semibold">{isPolish ? 'Sprawa' : 'Case'}: </dt>
-            <dd className="inline break-all">
-              {searchParams.get('transformationCaseId') ||
-                (isPolish ? 'nie wybrano' : 'not selected')}
-            </dd>
-          </div>
-          <div>
-            <dt className="inline font-semibold">{isPolish ? 'Przebieg' : 'Run'}: </dt>
-            <dd className="inline break-all">
-              {searchParams.get('canonicalRunId') || (isPolish ? 'nie wybrano' : 'not selected')}
-            </dd>
-          </div>
-        </dl>
       </section>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {unauthorizedOperationsRequest ? (
@@ -1724,23 +1736,32 @@ export const AgentHubShell: React.FC = () => {
             className="h-full"
           />
         ) : activeItemId ? (
-          <div className="flex h-full min-h-0 overflow-hidden">
-            <div className="flex-1 min-w-0 overflow-y-auto p-4">
-              {activePlanError ? (
-                <EmptyState variant="error" title={activePlanError} className="h-full" />
-              ) : activePlanDetail && activePlanDetail.id === activeItemId ? (
-                <PlanSummaryCard plan={activePlanDetail} isPolish={isPolish} />
-              ) : (
-                <LoadingState template="list" rows={4} />
-              )}
-              <AgentMaterializationPanel planId={activeItemId} isPolish={isPolish} />
-            </div>
-            <AgentPlanWorkspace
-              key={activeItemId}
-              initialPlanId={activeItemId}
-              onClose={() => handleCloseItem(activeItemId)}
+          activeItemId.startsWith(TRANSFORMATION_CASE_ITEM_PREFIX) ? (
+            <TransformationCasesPanel
+              workspaceCaseId={activeItemId.slice(TRANSFORMATION_CASE_ITEM_PREFIX.length)}
+              fullView
+              onCanonicalContextChange={handleCanonicalContextChange}
+              onOpenOperations={isOperator ? handleOpenOperations : undefined}
             />
-          </div>
+          ) : (
+            <div className="flex h-full min-h-0 overflow-hidden">
+              <div className="flex-1 min-w-0 overflow-y-auto p-4">
+                {activePlanError ? (
+                  <EmptyState variant="error" title={activePlanError} className="h-full" />
+                ) : activePlanDetail && activePlanDetail.id === activeItemId ? (
+                  <PlanSummaryCard plan={activePlanDetail} isPolish={isPolish} />
+                ) : (
+                  <LoadingState template="list" rows={4} />
+                )}
+                <AgentMaterializationPanel planId={activeItemId} isPolish={isPolish} />
+              </div>
+              <AgentPlanWorkspace
+                key={activeItemId}
+                initialPlanId={activeItemId}
+                onClose={() => handleCloseItem(activeItemId)}
+              />
+            </div>
+          )
         ) : tab === 'processes' ? (
           renderProcesses()
         ) : tab === 'templates' ? (
@@ -1755,6 +1776,7 @@ export const AgentHubShell: React.FC = () => {
           <TransformationCasesPanel
             onCanonicalContextChange={handleCanonicalContextChange}
             onOpenOperations={isOperator ? handleOpenOperations : undefined}
+            onOpenCase={handleOpenTransformationCase}
           />
         )}
       </div>

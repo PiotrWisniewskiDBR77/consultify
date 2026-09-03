@@ -356,7 +356,6 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
           value: row.programId,
           mono: true,
         },
-        { id: 'cycle', label: isPolish ? 'Cykl' : 'Cycle', value: row.cycleId, mono: true },
         {
           id: 'progress',
           label: isPolish ? 'Ogólny postęp' : 'Overall progress',

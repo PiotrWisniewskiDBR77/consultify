@@ -140,7 +140,11 @@ vi.mock('@/components/shared/PreviewPane', () => ({
   PreviewMetaCard: () => <div data-testid="preview-meta" />,
 }));
 
-import { deriveMobilizationDates, TransformationCasesPanel } from '../TransformationCasesPanel';
+import {
+  deriveMobilizationDates,
+  deriveTransformationCaseTitle,
+  TransformationCasesPanel,
+} from '../TransformationCasesPanel';
 
 function makeCase(): TransformationCaseDto {
   return {
@@ -190,6 +194,15 @@ function makeCase(): TransformationCaseDto {
 }
 
 describe('TransformationCasesPanel', () => {
+  it('uses a concise business outcome instead of exposing the full mandate in the registry', () => {
+    const item = makeCase();
+    item.desiredOutcomes = ['Skrócić czas od decyzji do mierzalnego rezultatu.'];
+    item.mandate = 'Bardzo długi mandat z pełnym zakresem technicznym i operacyjnym.';
+    expect(deriveTransformationCaseTitle(item)).toBe(
+      'Skrócić czas od decyzji do mierzalnego rezultatu.'
+    );
+  });
+
   it('derives future mobilization dates deterministically from the current clock', () => {
     vi.useFakeTimers();
     try {
@@ -240,6 +253,7 @@ describe('TransformationCasesPanel', () => {
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
         <TransformationCasesPanel
+          fullView
           onCanonicalContextChange={contextChange}
           onOpenOperations={openOperations}
         />
@@ -250,7 +264,9 @@ describe('TransformationCasesPanel', () => {
     expect(await screen.findByText('Przygotuj plan transformacji operacyjnej')).toBeInTheDocument();
     expect(screen.getAllByText('NOT_CONNECTED')).toHaveLength(14);
     expect(screen.getByRole('button', { name: 'Uruchom (zablokowane)' })).toBeDisabled();
-    expect(screen.getByText(/wymagane adaptery downstream/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/część etapów wymaga konfiguracji technicznej albo przypisania człowiekowi/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('Kanoniczny przebieg agenta')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Plany transformacji' })).toBeInTheDocument();
     expect(screen.getByTestId('canonical-runtime')).toHaveAttribute('role', 'status');
@@ -288,7 +304,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -364,7 +380,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -422,7 +438,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -440,7 +456,7 @@ describe('TransformationCasesPanel', () => {
     listMock.mockResolvedValue([makeCase()]);
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -464,7 +480,7 @@ describe('TransformationCasesPanel', () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('11111111-2222-4333-8444-555555555555');
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
     fireEvent.change(await screen.findByLabelText('Cel biznesowy stage-0'), {
@@ -528,7 +544,7 @@ describe('TransformationCasesPanel', () => {
     listMock.mockResolvedValue([makeCase()]);
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
     fireEvent.change(await screen.findByLabelText('Zależności stage-1'), {
@@ -556,7 +572,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -606,7 +622,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -675,7 +691,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -720,7 +736,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 

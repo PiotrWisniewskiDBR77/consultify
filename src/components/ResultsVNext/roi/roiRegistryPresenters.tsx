@@ -312,6 +312,7 @@ export function buildRoiCaseRowMenu(
 export interface RoiPreviewDeps {
   isPolish: boolean;
   onClose: () => void;
+  onOpenWorkspace?: (row: RoiCaseListItem) => void;
   /** `undefined` while the lazy calculation-run fetch is in flight, `null`
    * once settled with no run found. Distinguishes "still loading" from
    * "genuinely no run yet" so the preview never flashes a fabricated value. */
@@ -324,7 +325,13 @@ export function buildRoiCasePreview(
   row: RoiCaseListItem,
   deps: RoiPreviewDeps
 ): StandardPreviewProps {
-  const { isPolish, onClose, calculationRun, resolveMemberName = () => null } = deps;
+  const {
+    isPolish,
+    onClose,
+    calculationRun,
+    onOpenWorkspace,
+    resolveMemberName = () => null,
+  } = deps;
   const lock = getRoiCaseLockInfo(row.status);
   const runResolved = calculationRun !== undefined;
   const run = runResolved ? calculationRun : null;
@@ -363,9 +370,13 @@ export function buildRoiCasePreview(
           ? isPolish
             ? `Następny krok: ${humanizeActionType(row.nextActionType, true)}`
             : `Next step: ${humanizeActionType(row.nextActionType, false)}`
-          : isPolish
-            ? 'Podgląd rejestru — pełna edycja sprawy ROI jeszcze nie zbudowana w tym pakiecie.'
-            : 'Registry preview — full ROI case editing is not built in this package yet.',
+          : onOpenWorkspace
+            ? isPolish
+              ? 'Otwórz pełną kartę ROI, aby przejść do modelu, bazowej wartości i przeglądu korzyści.'
+              : 'Open the full ROI workspace for the model, baseline and benefits review.'
+            : isPolish
+              ? 'Podgląd sprawy ROI.'
+              : 'ROI case preview.',
     },
     details: {
       showWordCount: false,
@@ -380,12 +391,6 @@ export function buildRoiCasePreview(
           label: isPolish ? 'Właściciel' : 'Owner',
           value: resolveMemberName(row.ownerUserId) || row.ownerUserId,
           mono: !resolveMemberName(row.ownerUserId),
-        },
-        {
-          id: 'initiative',
-          label: isPolish ? 'Inicjatywa' : 'Initiative',
-          value: row.initiativeId,
-          mono: true,
         },
         {
           id: 'analysisWindow',
@@ -467,7 +472,19 @@ export function buildRoiCasePreview(
       disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
     },
     relations: [],
-    // No `actions` block: the 7 wired lifecycle transitions live in the ROW
+    actions: onOpenWorkspace
+      ? {
+          informational: [
+            {
+              id: 'open-workspace',
+              variant: 'primary',
+              label: isPolish ? 'Otwórz kartę ROI' : 'Open ROI workspace',
+              onClick: () => onOpenWorkspace(row),
+            },
+          ],
+        }
+      : undefined,
+    // The 7 lifecycle transitions live in the ROW
     // KEBAB only (`buildRoiCaseRowMenu` above), deliberately NOT duplicated
     // here — `StandardPreviewAction` has no `note`/tooltip slot for a
     // disabled reason (unlike `StandardRowMenuAction.note`), so a preview

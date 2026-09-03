@@ -5,9 +5,9 @@ import { buildCanonicalRedirectTarget } from '../canonicalRedirect';
 import { getAppViewFromPath, getRouteFromAppView, ROUTES } from '../routeConfig';
 
 describe('Results canonical route', () => {
-  it('emits /results for both historical Results app views', () => {
-    expect(getRouteFromAppView(AppView.BENEFITS_REALIZATION)).toBe(ROUTES.RESULTS);
-    expect(getRouteFromAppView(AppView.KPI_OKR_DASHBOARD)).toBe(ROUTES.RESULTS);
+  it('emits the KPI registry for both historical Results app views', () => {
+    expect(getRouteFromAppView(AppView.BENEFITS_REALIZATION)).toBe(ROUTES.RESULTS_KPI.ROOT);
+    expect(getRouteFromAppView(AppView.KPI_OKR_DASHBOARD)).toBe(ROUTES.RESULTS_KPI.ROOT);
   });
 
   it.each([ROUTES.RESULTS, ROUTES.BENEFITS, ROUTES.KPI_OKR])(
@@ -17,12 +17,12 @@ describe('Results canonical route', () => {
     }
   );
 
-  it('preserves legacy Results query and hash', () => {
+  it('builds the canonical KPI registry target with legacy query and hash', () => {
     expect(
-      buildCanonicalRedirectTarget(ROUTES.RESULTS, {
+      buildCanonicalRedirectTarget(ROUTES.RESULTS_KPI.ROOT, {
         search: '?tab=results_kpi&mode=scorecards&initiativeId=i-1',
         hash: '#owner',
       })
-    ).toBe('/results?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner');
+    ).toBe('/results/kpi?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner');
   });
 });
