@@ -20,10 +20,10 @@ const FINANCE_EXPORT_IMPORT_FLAG: FeatureFlag = {
   description:
     'Włącza samodzielny panel eksportu/importu Finance v3 (export-import.routes.ts, 4 ' +
     'endpointy): eksport .xlsx z manifestem (wersja/jednostka/źródło), import trzystopniowy ' +
-    '(parse → podgląd różnic → zastosowanie transakcyjne, wszystko-albo-nic). OFF = komponent ' +
-    'nieosiągalny — dostępny wyłącznie przez dev-render do akceptu Piotra na zrzutach ' +
-    '(CLAUDE.md #7). Domyślnie OFF.',
-  defaultValue: false,
+    '(parse → podgląd różnic → zastosowanie transakcyjne, wszystko-albo-nic). DEC 03.09 ' +
+    'wieczór (A2, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 — ' +
+    '6 paneli Finansów) — domyślnie ON. Override OFF nadal możliwy (allowLocalOverride).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

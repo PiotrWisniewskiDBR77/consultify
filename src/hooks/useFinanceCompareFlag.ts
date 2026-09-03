@@ -23,10 +23,10 @@ const FINANCE_COMPARE_FLAG: FeatureFlag = {
   name: 'Finance: Compare panel (5 osi — okres/actual-forecast/wersja/scenariusz/metoda)',
   description:
     'Włącza samodzielny panel porównań Finance v3 (compare.routes.ts, 6 endpointów): ' +
-    'wartości bezwzględne, Δ i %, filtr istotności, eksport różnic. OFF = komponent ' +
-    'nieosiągalny (brak montażu produkcyjnego) — dostępny wyłącznie przez dev-render do ' +
-    'akceptu Piotra na zrzutach (CLAUDE.md #7). Domyślnie OFF.',
-  defaultValue: false,
+    'wartości bezwzględne, Δ i %, filtr istotności, eksport różnic. DEC 03.09 wieczór (A2, ' +
+    'docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A2 — 6 paneli ' +
+    'Finansów) — domyślnie ON. Override OFF nadal możliwy (allowLocalOverride).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };
