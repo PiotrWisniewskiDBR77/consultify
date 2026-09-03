@@ -181,7 +181,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
             hasClaims
-              ? 'bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400'
+              ? 'bg-c-ai/10 text-c-ai'
               : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-500'
           }`}
         >
@@ -210,7 +210,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
               onClick={() => navigate(ROUTES.ORGANIZATION.PROFILE)}
               className="group inline-flex items-center gap-1.5 text-left"
             >
-              <span className="text-sm font-medium text-slate-700 group-hover:text-crimson-600 dark:text-slate-200 dark:group-hover:text-crimson-400">
+              <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-white">
                 {t(
                   'organization.context.banner.empty',
                   "Add org profile details to improve Teresa's answers"
@@ -218,7 +218,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
               </span>
               <ArrowRight
                 size={14}
-                className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-crimson-600 dark:group-hover:text-crimson-400"
+                className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-900 dark:group-hover:text-white"
               />
             </button>
           )}
