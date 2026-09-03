@@ -8,16 +8,16 @@ Stan: R1 — pomiar wejściowy. Baza: `ebfcf3d580`.
 | --- | --- | --- |
 | Klient, opis, branża | profil organizacji + `DrdReportMeta.industry` | jest |
 | Data, wersja, status | `MethodSession` + rewizja `method_report_snapshots` | jest |
-| Zespół doradczy i klienta | brak pola w `MethodSession` | brak |
-| Terminy, zakres, wyłączenia | brak pola w `MethodSession` | brak |
+| Zespół doradczy i klienta | addytywne `method_session_report_metadata` | backend jest; karta UI brak |
+| Terminy, zakres, wyłączenia | addytywne `method_session_report_metadata` | backend jest; karta UI brak |
 | Osie, obszary, skale | `server/src/data/drdStructure.ts` / `src/services/drdStructure.ts` | jest: 7 osi, skale 7/5/5/7/6/6/5 |
 | Polskie tytuły poziomów | struktura DRD | częściowo; osie 1–4 i 7 nadal mają angielskie tytuły |
 | AS-IS / TO-BE | zdarzenia sesji i snapshot Output | jest |
 | Pytania | bank wiedzy DRD | jest |
 | Odpowiedzi klienta | zdarzenia `answer` | jest |
 | Dowody | zdarzenia dowodowe z siłą E0–E4 | jest; brak jednej reguły 4 etykiet zaakceptowanego raportu |
-| Rekomendacja: priorytet/horyzont/właściciel | brak pola sesji | brak |
-| Uzasadnienie rekomendowanego sufitu per oś | brak pola sesji | brak |
+| Rekomendacja: priorytet/horyzont/właściciel | `method_session_report_metadata.recommendations` | backend jest |
+| Uzasadnienie rekomendowanego sufitu per oś | `method_session_report_metadata.recommended_ceiling_rationales` | backend jest |
 | Benchmark | `drdIndustryBenchmark.ts` | jest jako hipoteza ekspercka, nie pomiar |
 | Plik DOCX/PDF | brak magazynu plików na ścieżce Method Core | brak |
 
