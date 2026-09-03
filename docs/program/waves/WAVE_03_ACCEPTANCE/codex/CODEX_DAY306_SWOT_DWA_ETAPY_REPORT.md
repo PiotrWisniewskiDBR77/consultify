@@ -25,3 +25,15 @@ Co zrobiłbym, gdyby zapadła decyzja X: rozszerzył model stanu sesji addytywni
 Rekomendacja dla nadzorcy: osobno licencjonować zmianę runtime/store; nie uznawać tej gałęzi za dowód wznawialności siedmiu kroków.  
 Stan: zacommitowano częściowo w `b65776b7e1`.  
 Czy kontynuowałem pozostałe pozycje: TAK.
+
+## STOP — R5
+
+Rodzaj: MERYTORYCZNY  
+Powód: kanoniczny ekran montuje pięcioetapowy runtime, więc cztery kadry nie pokazałyby prototypu siedmiu etapów.  
+Licencja, którą sprawdziłem: R5 wymaga realnej powłoki `tools-swot-session-workspace`, czterech kadr light/dark × pl/en i oględzin każdego.  
+Dowód: R4 wykazał brak konsumenta nowych faz w store sesji.  
+Co dostarczyłem ZAMIAST zmiany: brak atrap i brak mylących PNG; flaga pozostaje OFF.  
+Co zrobiłbym, gdyby zapadła decyzja X: po integracji store uruchomiłbym wyłącznie kanoniczny runtime na 5290/5291 i wykonał cztery inspekcjonowane kadry.  
+Rekomendacja dla nadzorcy: nie prosić właściciela o akceptację wizualną przed rzeczywistym montażem.  
+Stan: zacommitowano częściowo w `b65776b7e1`.  
+Czy kontynuowałem pozostałe pozycje: TAK.
