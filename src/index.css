@@ -452,6 +452,33 @@
     color: var(--c-danger-table);
   }
 
+  /* MW-DROBIAZGI (03.09) — rodzeństwo naprawy G06 wyżej, ale INNY mechanizm:
+   * `opacity-60` na CAŁEJ `<tr>` ukończonego zadania (MyTasksListContent.tsx,
+   * dwa wystąpienia: `isCompleted ? 'opacity-60' : ''`) miesza KAŻDY potomny
+   * kolor z tłem strony razy 0,6 — to przezroczystość całego wiersza, nie
+   * podbarwione tło komórki, więc `--c-text-muted-table` (kalibrowany na TŁO,
+   * nie na przezroczystość) wciąż nie wystarcza. Zmierzone axe (harness 5440,
+   * mywork-tasks, jedyny wiersz „Zrobione", 5 węzłów, light I dark):
+   * tytuł/priorytet/termin (`text-c-text-muted`) i osoba przypisana
+   * (`text-c-text-secondary`) ok. 2,8:1, plakietka statusu (StatusChip tone
+   * success, `text-emerald-800`/`dark:text-emerald-300`) 3,2–3,3:1 — próg
+   * 4,5:1. W takim wierszu tekst dostaje ciemniejszy wariant: wizualnie
+   * wiersz i tak czyta się jako przygaszony (cała `<tr>` nadal na 60%
+   * opacity) — po zmieszaniu z tłem efektywny kontrast wraca >4,5:1
+   * (zmierzone po naprawie: 0 naruszeń, oba motywy). */
+  tr.opacity-60 .text-c-text-muted,
+  tr.opacity-60 .text-c-text-secondary {
+    color: var(--c-text);
+  }
+  tr.opacity-60 .text-emerald-800 {
+    /* Zmierzone: samo emerald-950 (#022c22) dawało 4,07:1 po rozcieńczeniu
+       0,6 — wciąż poniżej progu. `--c-text` (niemal czarny) daje zapas. */
+    color: var(--c-text);
+  }
+  .dark tr.opacity-60 .text-emerald-300 {
+    color: #ecfdf5; /* emerald-50 — dość jasny, by przetrwać rozcieńczenie 0,6 na ciemnym tle */
+  }
+
   .app-table-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(148, 163, 184, 0.38) transparent;
