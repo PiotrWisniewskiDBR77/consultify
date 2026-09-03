@@ -360,7 +360,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('help.knowledge.searchPlaceholder', 'Search articles...')}
             data-testid="help-knowledge-search"
-            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
           {searchQuery && (
             <button

@@ -62,7 +62,7 @@ export interface PriorityPickerProps {
 
 const BASE_CHIP =
   'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ' +
-  'transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/40';
+  'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
 const INACTIVE_CHIP =
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +

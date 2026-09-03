@@ -497,7 +497,7 @@ export const ReportGeneratorWizard: React.FC = () => {
             'reports.reportGeneratorWizard.goalPlaceholder',
             'What should this report achieve for its audience?'
           )}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>
 
@@ -511,7 +511,7 @@ export const ReportGeneratorWizard: React.FC = () => {
           value={titleOverride}
           onChange={(e) => setTitleOverride(e.target.value)}
           placeholder={selectedType ? (isPolish ? selectedType.titlePl : selectedType.title) : ''}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>
 
@@ -529,7 +529,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               type="date"
               value={periodFrom}
               onChange={(e) => setPeriodFrom(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
             />
           </label>
           <label className="block">
@@ -540,7 +540,7 @@ export const ReportGeneratorWizard: React.FC = () => {
               type="date"
               value={periodTo}
               onChange={(e) => setPeriodTo(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
             />
           </label>
         </div>
@@ -552,7 +552,7 @@ export const ReportGeneratorWizard: React.FC = () => {
             'reports.reportGeneratorWizard.scopeNotePlaceholder',
             'Scope note (e.g. only active initiatives, specific portfolio)'
           )}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>
 

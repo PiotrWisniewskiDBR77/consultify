@@ -63,7 +63,7 @@ const TRIGGER_CLASS =
   'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] ' +
   'px-3 text-left text-sm transition-colors ' +
   'hover:border-slate-300 dark:hover:border-white/20 ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary-500/40 ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 const PANEL_CLASS =

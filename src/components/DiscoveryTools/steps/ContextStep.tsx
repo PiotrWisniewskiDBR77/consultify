@@ -1836,7 +1836,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           }
           placeholder={labels.goalPlaceholder[lang]}
           rows={3}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus resize-none"
         />
         <InlineAssist hint={t('discoveryToolsSteps.contextStep.generic.goalHint')} />
       </div>
@@ -1853,7 +1853,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           }
           placeholder={labels.scopePlaceholder[lang]}
           rows={2}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus resize-none"
         />
         <InlineAssist hint={t('discoveryToolsSteps.contextStep.generic.scopeHint')} />
       </div>

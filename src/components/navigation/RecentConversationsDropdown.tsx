@@ -329,7 +329,7 @@ export const RecentConversationsDropdown: React.FC<RecentConversationsDropdownPr
         data-trigger-arrow-up={triggerArrowUpEnabled ? 'true' : 'false'}
         onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
-        className="ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary-400/50 text-slate-500 dark:text-slate-400"
+        className="ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus text-slate-500 dark:text-slate-400"
       >
         <span aria-hidden className="text-[10px] leading-none">
           ▾

@@ -169,7 +169,7 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
                   'aiAuthoring.briefPlaceholder',
                   'Describe the initiative/task/decision in 3-8 bullet points...'
                 )}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/50 dark:bg-navy-800/50 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/50 dark:bg-navy-800/50 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus resize-none"
               />
               <button
                 onClick={handleGenerate}

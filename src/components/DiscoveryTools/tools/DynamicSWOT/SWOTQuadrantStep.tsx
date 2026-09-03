@@ -121,7 +121,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={config.placeholder[lang]}
-          className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         />
         <button
           onClick={handleAddItem}
@@ -159,7 +159,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
                     onChange={(e) =>
                       handleImpactChange(item.id, e.target.value as 'high' | 'medium' | 'low')
                     }
-                    className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus"
                   >
                     <option value="high">
                       {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}

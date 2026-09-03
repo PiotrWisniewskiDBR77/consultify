@@ -255,7 +255,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         value={step.name}
                         onChange={(e) => handleUpdateStep(step.id, { name: e.target.value })}
                         placeholder={t('processFlow.workSurface.namePlaceholder', 'Name')}
-                        className="w-full min-w-[100px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full min-w-[100px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>
@@ -265,7 +265,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         value={step.actor}
                         onChange={(e) => handleUpdateStep(step.id, { actor: e.target.value })}
                         placeholder={t('processFlow.workSurface.rolePlaceholder', 'Role')}
-                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>
@@ -275,7 +275,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         value={step.system}
                         onChange={(e) => handleUpdateStep(step.id, { system: e.target.value })}
                         placeholder={t('processFlow.workSurface.systemPlaceholder', 'System')}
-                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>
@@ -290,7 +290,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                           })
                         }
                         placeholder="0"
-                        className="w-16 px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-16 px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>
@@ -306,7 +306,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                           })
                         }
                         placeholder="0"
-                        className="w-16 px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-16 px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>
@@ -318,7 +318,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                             automationPotential: e.target.value as AutomationPotential,
                           })
                         }
-                        className="px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       >
                         {AUTOMATION_OPTIONS.map((opt) => (
@@ -334,7 +334,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                         value={step.notes}
                         onChange={(e) => handleUpdateStep(step.id, { notes: e.target.value })}
                         placeholder={t('processFlow.workSurface.notesPlaceholder', 'Notes')}
-                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-primary-500/50 focus:border-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full min-w-[80px] px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-1 focus-visible:ring-c-focus focus-visible:border-c-focus disabled:opacity-60 disabled:cursor-not-allowed"
                         disabled={locked}
                       />
                     </td>

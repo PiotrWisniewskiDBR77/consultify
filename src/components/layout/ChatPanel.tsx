@@ -777,7 +777,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     ? 'Listening...'
                     : 'Type your answer...'
               }
-              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-danger-400 ring-1 ring-danger-400 animate-pulse' : ''}`}
+              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus-visible:outline-none focus-visible:border-c-focus focus-visible:ring-1 focus-visible:ring-c-focus transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-danger-400 ring-1 ring-danger-400 animate-pulse' : ''}`}
             />
             {isRecording && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">

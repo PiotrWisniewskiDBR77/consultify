@@ -756,7 +756,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
             }
             rows={6}
             placeholder={'{\n  "densityBudgets": { "balanced": { "titleMaxChars": 100 } }\n}'}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-sm focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
             disabled={overrideFlow.pending !== null}
             data-testid={`${testId}-overrides-json`}
           />
@@ -775,7 +775,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
               }))
             }
             placeholder="e.g. tightening title cap for executive decks"
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
             disabled={overrideFlow.pending !== null}
             data-testid={`${testId}-overrides-reason`}
           />
@@ -884,7 +884,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
               setResetFlow((prev) => ({ ...prev, reason: e.target.value, ticket: null }))
             }
             placeholder="e.g. returning to defaults after S17 experiment"
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:disabled:bg-slate-800"
             disabled={resetFlow.pending !== null}
             data-testid={`${testId}-reset-reason`}
           />
