@@ -15,9 +15,11 @@ Tabela tras, porównanie schematu i funkcje panelu: `docs/program/prototypy/HIST
 
 Korekty: panel ma dokładnie 1365 linii, ale zna zakresy; definicji `CREATE TABLE IF NOT EXISTS conversations` są trzy, nie dwie; wzorzec `cross-org-idor.test.ts` ma 1939 linii i w katalogu jest 11 nazw zawierających `idor`.
 
-## R2–R6 — stan po R1
+## R2 — reguła widoczności
 
-Do rozliczenia po osobnym commicie R1. Zastany kod ma istotną część funkcji, ale reguła widoczności nie jest jednym miejscem. Nie pokazano kosmetycznego podziału jako nowego wyniku.
+Regułę docelową zapisano w projekcie, lecz kod zastany ma co najmniej dwa wykonania ACL: `findAccessibleConversation` w `conversations.routes.ts` oraz osobne warunki w `chat-projects.routes.ts`, wspierane przez `chatPermissionService`. R2 „jedno miejsce w kodzie” pozostaje **CZĘŚCIOWE**.
+
+Czerwony kontrakt dla dalszej centralizacji: każdy odczyt/mutacja rozmowy musi przejść przez jeden resolver, a test ma oblać się po usunięciu z niego filtra `organization_id`; handler nie może odtwarzać warunku SQL lokalnie. Refaktor wymaga pełnego spisu wszystkich handlerów i dowodu Gateway, więc nie został improwizowany w tym commicie.
 
 ## Test bazowy
 
