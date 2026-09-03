@@ -638,9 +638,10 @@
           "id": "mywork-inbox",
           "nazwa": "Skrzynka (Inbox) — zakładka domyślna",
           "ocena": "B",
-          "co": "StandardTable (ff_m03InboxStandardTable ON), 9 pozycji.",
+          "co": "StandardTable (ff_m03InboxStandardTable ON), 11 pozycji.",
           "naprawione": [
-            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma."
+            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma.",
+            "2026-09-03 (MYW-PHOTO-001/007, jeszcze BEZ ponownego zrzutu do akceptu Piotra): dołożone 2 pozycje (inbox-10 `fyi_system`, inbox-11 `other`) — brakowały 2 z 9 wartości `InboxSection`, licznik filtra byłby zawsze zero dla tych sekcji. 9 pozycji cytowanych wcześniej niezmienione."
           ],
           "wyjatki": [
             "Powłoka MyWorkHub ma ~87 surowych klas navy-*/slate-* — dług systemowy całego huba, nie tylko tego ekranu.",
@@ -652,10 +653,11 @@
           "id": "mywork-calendar",
           "nazwa": "Kalendarz (widok bazowy)",
           "ocena": "B",
-          "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
+          "co": "CalendarView (ff_myWorkCalendarV2 OFF), 8 wydarzeń.",
           "naprawione": [
             "Tytuły wydarzeń ucinały się bez wielokropka („1(\" zamiast „10:00\") — FullCalendar ma domyślnie text-overflow: clip. Dodany wielokropek i pełny tekst w podpowiedzi po najechaniu. SPROSTOWANIE: „Mene[dżer]\" NIE jest ucięciem — to świadomie przewijalny pasek zakładek, tekst jest pełny (2026-09-02)",
-            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma."
+            "2026-09-02: Ekran pokazuje to, co widzi klient w aplikacji — zdjęte zostały panele i szerokości, których w produkcie nie ma.",
+            "2026-09-03 (MYW-PHOTO-001/007, jeszcze BEZ ponownego zrzutu do akceptu Piotra): dołożone 2 wydarzenia (`evt-manual-przeglad-tygodniowy` źródło `event`, `evt-outlook-kickoff-atelier-toys` źródło `outlook`) — brakowały 2 z 7 wartości `CalendarEventSource`, filtr/legenda źródła w `CalendarSidebar.tsx` byłyby zawsze puste dla nich. 6 wydarzeń cytowanych wcześniej niezmienione."
           ],
           "wyjatki": [
             "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
