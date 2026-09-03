@@ -270,8 +270,8 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
     >
       {/* Prompt input */}
       {showPromptInput && (
-        <div className="mb-1 flex items-center gap-1 rounded-lg border border-primary-200 dark:border-primary-500/30 bg-white dark:bg-navy-800 px-2 py-1 shadow-lg">
-          <Sparkles size={14} className="text-primary-500 shrink-0" />
+        <div className="mb-1 flex items-center gap-1 rounded-lg border border-c-border dark:border-c-border bg-white dark:bg-navy-800 px-2 py-1 shadow-lg">
+          <Sparkles size={14} className="text-c-text-secondary shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -293,7 +293,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           <button
             onClick={handleCustomPrompt}
             disabled={!customPrompt.trim() || isProcessing}
-            className="p-1 rounded text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 disabled:opacity-40"
+            className="p-1 rounded text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover disabled:opacity-40"
           >
             {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
           </button>
@@ -337,7 +337,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       {explainState && (
         <div className="mb-1 w-80 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 shadow-lg">
           <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
-            <HelpCircle size={13} className="text-primary-500 shrink-0" />
+            <HelpCircle size={13} className="text-c-text-secondary shrink-0" />
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex-1">
               {t('canvas.aiMenu.explanation', 'Explanation')}
             </span>
@@ -352,7 +352,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           <div className="px-3 pb-2.5 max-h-56 overflow-y-auto">
             {explainState.status === 'loading' && (
               <div className="flex items-center gap-2 py-1 text-sm text-slate-500 dark:text-slate-400">
-                <Loader2 size={14} className="animate-spin text-primary-500" />
+                <Loader2 size={14} className="animate-spin text-c-text-secondary" />
                 <span>{t('canvas.aiMenu.explaining', 'Teresa is explaining...')}</span>
               </div>
             )}
@@ -379,7 +379,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
             setShowToneMenu(false);
             setExplainState(null);
           }}
-          className="flex items-center gap-1 px-2 py-1 rounded text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded text-sm font-medium text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
           title={t('canvas.aiMenu.askTeresaTitle', 'Ask Teresa')}
         >
           <Sparkles size={14} />

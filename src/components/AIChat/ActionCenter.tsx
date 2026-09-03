@@ -146,7 +146,7 @@ export const ActionCenter: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-300 font-semibold">
+        <p className="text-xs uppercase tracking-wide text-c-text-secondary dark:text-c-text-secondary font-semibold">
           Consultify AI OS
         </p>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Action Center</h1>

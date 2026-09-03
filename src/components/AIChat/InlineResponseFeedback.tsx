@@ -379,7 +379,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
               onClick={() => setLengthFeedback(opt)}
               className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
                 lengthFeedback === opt
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -403,7 +403,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
               onClick={() => setDetailFeedback(opt)}
               className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
                 detailFeedback === opt
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -418,7 +418,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       {/* Toggle advanced options */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="flex items-center gap-1 text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
+        className="flex items-center gap-1 text-[10px] text-c-text-secondary dark:text-c-text-secondary hover:underline"
       >
         {showAdvanced ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         {t('aiChat.feedback.advancedOptions', 'Więcej opcji')}
@@ -470,7 +470,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   onClick={() => setExpectedFormat(opt.value)}
                   className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
                     expectedFormat === opt.value
-                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                      ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >

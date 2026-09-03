@@ -362,7 +362,7 @@ const GateBadge: React.FC<{ gate: GateId }> = ({ gate }) => {
     },
     D: {
       label: 'Gate D: Overreach',
-      className: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+      className: 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary',
     },
   };
 
@@ -436,12 +436,12 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
   if (source.type === 'web_source' && source.url) {
     return (
       <div className="text-[11px] flex items-center gap-1.5">
-        <ExternalLink size={12} className="flex-shrink-0 text-primary-500" />
+        <ExternalLink size={12} className="flex-shrink-0 text-c-text-secondary" />
         <a
           href={source.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary-600 hover:text-primary-700 underline truncate"
+          className="text-c-text-secondary hover:text-c-text underline truncate"
         >
           {source.title || source.domain || source.url}
         </a>
@@ -518,7 +518,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
+          <div className="p-2 bg-c-surface-raised dark:bg-c-surface-raised rounded-lg text-c-text-secondary dark:text-c-text-secondary">
             <Shield size={18} />
           </div>
           <div className="text-left">
@@ -559,7 +559,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                 onClick={() => setViewMode('overview')}
                 className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${
                   viewMode === 'overview'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -569,7 +569,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                 onClick={() => setViewMode('detail')}
                 className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${
                   viewMode === 'detail'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary'
                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -579,7 +579,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
             {onExportAuditTrail && (
               <button
                 onClick={() => onExportAuditTrail(orchestratorRunId)}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-c-text dark:hover:text-c-text hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
                 title={isPl ? 'Eksportuj ścieżkę audytu' : 'Export audit trail'}
               >
                 <Download size={10} />
@@ -652,7 +652,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                       onClick={() => setActiveAgentId(review.agentId)}
                       className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                         isActive
-                          ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                           : isRejected
                             ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-800 text-danger-600 dark:text-danger-400 line-through'
                             : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
@@ -685,7 +685,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                         {activeReview.verdict.toUpperCase()}
                       </span>
                       {activeReview.overreach !== 'none' && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-primary-100 text-primary-700">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-c-surface-raised text-c-text-secondary">
                           Overreach: {activeReview.overreach}
                         </span>
                       )}
@@ -779,7 +779,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
             <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700">
               <button
                 onClick={() => setShowFollowups(!showFollowups)}
-                className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600"
+                className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-c-text"
               >
                 <CheckCircle2 size={14} />
                 {t('agentAudit.actionableFollowups', 'Actionable Followups')} (

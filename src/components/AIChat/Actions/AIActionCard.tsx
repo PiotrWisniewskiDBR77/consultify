@@ -100,28 +100,28 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     green: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20',
     blue: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
     amber: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
-    purple: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
+    purple: 'border-c-border dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised',
     cyan: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
-    indigo: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
+    indigo: 'border-c-border dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised',
     orange: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
     red: 'border-danger-200 dark:border-danger-800 bg-danger-50 dark:bg-danger-900/20',
     emerald: 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
     slate: 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50',
-    violet: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
+    violet: 'border-c-border dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised',
   };
 
   const iconColorClasses: Record<string, string> = {
     green: 'text-green-600 dark:text-green-400',
     blue: 'text-blue-600 dark:text-blue-400',
     amber: 'text-amber-600 dark:text-amber-400',
-    purple: 'text-primary-600 dark:text-primary-400',
+    purple: 'text-c-text-secondary dark:text-c-text-secondary',
     cyan: 'text-blue-600 dark:text-blue-400',
-    indigo: 'text-primary-600 dark:text-primary-400',
+    indigo: 'text-c-text-secondary dark:text-c-text-secondary',
     orange: 'text-amber-600 dark:text-amber-400',
     red: 'text-danger-600 dark:text-danger-400',
     emerald: 'text-emerald-600 dark:text-emerald-400',
     slate: 'text-slate-600 dark:text-slate-400',
-    violet: 'text-primary-600 dark:text-primary-400',
+    violet: 'text-c-text-secondary dark:text-c-text-secondary',
   };
 
   // Render payload summary based on action type

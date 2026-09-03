@@ -149,7 +149,7 @@ function outcomeIcon(outcome?: string) {
 function typeIcon(type: string) {
   switch (type) {
     case 'decision':
-      return <Flag size={12} className="text-primary-500" />;
+      return <Flag size={12} className="text-c-text-secondary" />;
     case 'milestone':
       return <Check size={12} className="text-blue-500" />;
     case 'risk':
@@ -287,7 +287,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
         </div>
         <div className="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-c-surface-raised to-c-surface-raised rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -352,7 +352,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
                     {event.outcome && outcomeIcon(event.outcome)}
                     {typeIcon(event.type)}
                   </div>
-                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200 group-hover:text-c-text dark:group-hover:text-c-text transition-colors">
                     {event.label}
                   </p>
                 </button>

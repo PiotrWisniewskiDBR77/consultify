@@ -210,7 +210,7 @@ export const CoThinkerMenu: React.FC<{
           ${activePersona ? 'px-2.5 py-2' : 'p-2'}
           ${
             activePersona
-              ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
+              ? 'text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised'
               : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}

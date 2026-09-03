@@ -50,8 +50,8 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
       label: t('focusMode.all', 'Wszystko'),
       description: t('focusMode.allDesc', 'Wszystkie dostępne źródła'),
       icon: Sparkles,
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/30',
+      color: 'text-c-text-secondary dark:text-c-text-secondary',
+      bgColor: 'bg-c-surface-raised dark:bg-c-surface-raised',
     },
     {
       value: 'pmo-docs',
@@ -120,7 +120,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
         >
           <Icon size={14} className={selectedMode.color} />
           {activeSourceCount != null && activeSourceCount > 0 && value !== 'all' && (
-            <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400">
+            <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-secondary">
               {activeSourceCount}
             </span>
           )}
@@ -240,7 +240,7 @@ export const FocusModeBadge: React.FC<{
     all: {
       label: t('focusMode.all', 'All'),
       icon: <Sparkles size={12} />,
-      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+      color: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary',
     },
     'pmo-docs': {
       label: t('focusMode.pmoDocs', 'PMO'),

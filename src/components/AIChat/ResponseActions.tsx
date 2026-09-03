@@ -138,7 +138,7 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
                                 border transition-all duration-200
                                 ${
                                   action.type === 'navigate'
-                                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50'
+                                    ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary border-c-border dark:border-c-border hover:bg-c-surface-hover dark:hover:bg-c-surface-hover'
                                     : action.type === 'execute'
                                       ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50'
                                       : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:bg-c-border-subtle hover:text-c-text'
@@ -180,7 +180,7 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({ action
                 flex items-center gap-2 px-4 py-2
                 bg-c-text text-c-bg hover:opacity-90
                 text-sm font-medium
-                rounded-lg shadow-md shadow-primary-500/20
+                rounded-lg shadow-md shadow-c-border
                 transition-all duration-200
             "
     >

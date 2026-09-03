@@ -96,7 +96,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
     pending: (
       <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
     ),
-    searching: <Loader2 size={16} className="animate-spin text-primary-500" />,
+    searching: <Loader2 size={16} className="animate-spin text-c-text-secondary" />,
     done: <CheckCircle2 size={16} className="text-green-500" />,
     error: <XCircle size={16} className="text-danger-500" />,
   };
@@ -113,7 +113,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
               Q{index + 1}
             </span>
             {isFollowUp && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary font-medium">
                 {t('research.followUp', 'Follow-up')}
               </span>
             )}
@@ -126,7 +126,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
           {query.status === 'done' && query.results && query.results.length > 0 && (
             <button
               onClick={() => setShowResults(!showResults)}
-              className="flex items-center gap-1 mt-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              className="flex items-center gap-1 mt-1 text-xs text-c-text-secondary dark:text-c-text-secondary hover:underline"
             >
               {query.results.length} {t('research.sources', 'sources')}
               {showResults ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -145,7 +145,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
                 >
                   <ExternalLink
                     size={10}
-                    className="flex-shrink-0 mt-0.5 text-slate-600 group-hover:text-primary-500"
+                    className="flex-shrink-0 mt-0.5 text-slate-600 group-hover:text-c-text"
                   />
                   <div className="min-w-0">
                     <p className="text-slate-600 dark:text-slate-300 truncate">{result.title}</p>
@@ -190,7 +190,7 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
       }}
     />
     <div className="flex-1 min-w-0">
-      <p className="text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-primary-600">
+      <p className="text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-c-text">
         {source.title}
       </p>
       <p className="text-xs text-slate-600 dark:text-slate-500">{source.domain}</p>
@@ -205,7 +205,7 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
           style={{ width: `${source.relevanceScore * 100}%` }}
         />
       </div>
-      <ExternalLink size={12} className="text-slate-600 group-hover:text-primary-500" />
+      <ExternalLink size={12} className="text-slate-600 group-hover:text-c-text" />
     </div>
   </a>
 );
@@ -307,7 +307,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   for (const q of queries) {
     if (q.status === 'searching') {
       activityItems.push({
-        icon: <Search size={12} className="text-primary-500" />,
+        icon: <Search size={12} className="text-c-text-secondary" />,
         text: `Searching: "${q.query}"`,
         isActive: true,
       });
@@ -325,7 +325,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   // Add deepening activity
   if (stage === 'deepening') {
     activityItems.push({
-      icon: <RefreshCw size={12} className="text-primary-500 animate-spin" />,
+      icon: <RefreshCw size={12} className="text-c-text-secondary animate-spin" />,
       text: t('research.generatingFollowUp', 'Analyzing gaps and generating follow-up queries...'),
       isActive: true,
     });
@@ -343,14 +343,14 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-slate-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
+      className={`bg-gradient-to-br from-slate-50 to-c-surface-raised dark:from-navy-800 dark:to-c-surface-raised rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
       {/* Header */}
       <button
         onClick={toggleExpand}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-700/50 transition-colors"
       >
-        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
+        <div className="p-2 bg-c-surface-raised dark:bg-c-surface-raised rounded-lg text-c-text-secondary dark:text-c-text-secondary">
           <Search size={18} />
         </div>
 
@@ -360,7 +360,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
               {t('research.deepResearch', 'Deep Research')}
             </h4>
             {researchType && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium capitalize">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary font-medium capitalize">
                 {researchType.replace(/_/g, ' ')}
               </span>
             )}
@@ -385,9 +385,9 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
           {/* Round indicator */}
           {round && totalRounds && totalRounds > 1 && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 rounded-full">
-              <Zap size={12} className="text-primary-600 dark:text-primary-400" />
-              <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
+            <div className="flex items-center gap-1 px-2 py-1 bg-c-surface-raised dark:bg-c-surface-raised rounded-full">
+              <Zap size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
+              <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">
                 {t('research.round', `Round ${round}/${totalRounds}`)}
               </span>
             </div>
@@ -401,7 +401,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
           </div>
           <div className="w-20 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-crimson-500 to-primary-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-c-surface-raised to-c-surface-raised rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -420,7 +420,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                   activeTab === tab
-                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                    ? 'text-c-text-secondary dark:text-c-text-secondary border-b-2 border-c-border'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
@@ -466,7 +466,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
               {followUpQueries.length > 0 && (
                 <>
-                  <h5 className="text-xs font-medium text-primary-500 dark:text-primary-400 uppercase tracking-wider mb-2 mt-4 flex items-center gap-1">
+                  <h5 className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wider mb-2 mt-4 flex items-center gap-1">
                     <RefreshCw size={12} />
                     {t('research.followUpQueries', 'Follow-up Queries (Iterative Deepening)')} (
                     {followUpQueries.length})
@@ -530,11 +530,11 @@ export const ResearchStatusBadge: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium hover:bg-primary-200 dark:hover:bg-primary-900/70 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary rounded-full text-xs font-medium hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
     >
       <Search size={12} className="animate-pulse" />
       <span>{t('research.researching', 'Researching')}</span>
-      <span className="text-primary-500">
+      <span className="text-c-text-secondary">
         {queriesCompleted}/{totalQueries}
       </span>
       {sourcesCount && sourcesCount > 0 && (
@@ -543,7 +543,7 @@ export const ResearchStatusBadge: React.FC<{
           {sourcesCount}
         </span>
       )}
-      {round && round > 1 && <span className="text-primary-500">R{round}</span>}
+      {round && round > 1 && <span className="text-c-text-secondary">R{round}</span>}
     </button>
   );
 };

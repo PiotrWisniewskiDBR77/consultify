@@ -33,7 +33,7 @@ const BUBBLE_BG: Record<TeresaVoiceStatus, string> = {
   idle: 'from-slate-600 to-slate-700',
   connecting: 'from-slate-600 to-slate-700',
   // Crimson brand moment for the live voice state.
-  live: 'from-crimson-600 to-crimson-800',
+  live: 'from-c-surface-raised to-c-surface-raised',
   error: 'from-danger-600 to-danger-700',
 };
 
@@ -154,7 +154,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
           title={statusLabel[voiceStatus]}
         >
           {voiceStatus === 'live' && (
-            <span className="absolute inset-0 animate-ping rounded-full bg-crimson-500/30" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-c-surface-raised" />
           )}
           {voiceStatus === 'connecting' ? (
             <Loader2 size={22} className="animate-spin" />
@@ -174,8 +174,8 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
     >
       <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3">
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-crimson-400" />
-          <span className="text-sm font-semibold text-crimson-300">Teresa</span>
+          <Sparkles size={14} className="text-c-text-secondary" />
+          <span className="text-sm font-semibold text-c-text-secondary">Teresa</span>
           <span
             className={`h-2 w-2 rounded-full ${STATUS_COLORS[voiceStatus]} ${voiceStatus === 'live' ? 'animate-pulse' : ''}`}
           />
@@ -242,7 +242,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
         ) : voiceStatus === 'live' ? (
           <>
             <div className="relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-crimson-600 to-crimson-800">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-c-surface-raised to-c-surface-raised">
                 <Mic size={20} className="text-white/90" />
               </div>
               <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/20" />

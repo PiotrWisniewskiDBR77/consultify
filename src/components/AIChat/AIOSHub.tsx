@@ -93,7 +93,7 @@ export const AIOSHub: React.FC = () => {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
+              <div className="inline-flex items-center gap-2 rounded-full bg-c-surface-raised px-3 py-1 text-sm font-semibold text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary">
                 <Brain size={16} />
                 Consultify AI OS
               </div>

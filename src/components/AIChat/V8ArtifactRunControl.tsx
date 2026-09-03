@@ -729,20 +729,20 @@ export function V8ArtifactRunControl({
               {currentRun.executionRunId && executionRun.data && (
                 <div
                   data-testid="v8-artifact-run-governance"
-                  className="mt-3 rounded-2xl border border-primary-200 bg-primary-50/80 p-3 dark:border-primary-900/60 dark:bg-primary-950/20"
+                  className="mt-3 rounded-2xl border border-c-border bg-c-surface-raised p-3 dark:border-c-border dark:bg-c-surface-raised"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-primary-900 dark:text-primary-100">
+                    <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text-secondary">
                       <ShieldCheck size={15} />
                       {t('v8.artifactRun.governedExecution', 'Governed execution')}
                     </div>
-                    <span className="rounded-full border border-primary-200 bg-white px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300">
+                    <span className="rounded-full border border-c-border bg-white px-2 py-0.5 text-[11px] font-medium text-c-text-secondary dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary">
                       {formatExecutionState(executionRun.data.state, t)}
                     </span>
                   </div>
 
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-primary-800 dark:text-primary-200">
-                    <div className="rounded-xl border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-c-text-secondary dark:text-c-text-secondary">
+                    <div className="rounded-xl border border-c-border bg-white/80 px-2 py-1.5 dark:border-c-border dark:bg-c-surface-raised">
                       <div className="opacity-70">
                         {t('v8.artifactRun.proposalsCount', 'Proposals')}
                       </div>
@@ -750,7 +750,7 @@ export function V8ArtifactRunControl({
                         {executionProposals.data?.length ?? 0}
                       </div>
                     </div>
-                    <div className="rounded-xl border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
+                    <div className="rounded-xl border border-c-border bg-white/80 px-2 py-1.5 dark:border-c-border dark:bg-c-surface-raised">
                       <div className="opacity-70">
                         {t('v8.artifactRun.planVersion', 'Plan version')}
                       </div>
@@ -759,7 +759,7 @@ export function V8ArtifactRunControl({
                   </div>
 
                   {latestTransition && (
-                    <div className="mt-2 flex items-center gap-2 text-[11px] text-primary-700 dark:text-primary-300">
+                    <div className="mt-2 flex items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-secondary">
                       <GitBranch size={13} />
                       <span>
                         {formatExecutionState(latestTransition.fromState, t)} {'→'}{' '}
@@ -775,7 +775,7 @@ export function V8ArtifactRunControl({
                         data-testid="v8-artifact-run-submit-review"
                         onClick={handleSubmitReview}
                         disabled={isBusy}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 dark:hover:bg-primary-900/60"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-c-border bg-white px-3 py-2 text-xs font-medium text-c-text-secondary transition hover:bg-c-surface-hover disabled:cursor-not-allowed disabled:opacity-50 dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-hover"
                       >
                         {submitExecutionReview.isPending ? (
                           <Loader2 size={14} className="animate-spin" />

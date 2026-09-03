@@ -144,10 +144,10 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
   };
 
   return (
-    <div className="mt-4 rounded-2xl border border-primary-200/70 bg-white/90 p-4 shadow-sm dark:border-primary-900/60 dark:bg-navy-900/60">
+    <div className="mt-4 rounded-2xl border border-c-border bg-white/90 p-4 shadow-sm dark:border-c-border dark:bg-navy-900/60">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
             Teresa proposal
           </div>
           <div className="text-sm font-semibold text-navy-900 dark:text-slate-100">
@@ -247,7 +247,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           <button
             onClick={() => onNavigate?.(currentProposal)}
             disabled={busyAction !== null}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-60 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:bg-primary-900/35"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover disabled:opacity-60 dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-hover"
           >
             {t('aiChat.teresaProposal.navigate', 'Open target')}
           </button>

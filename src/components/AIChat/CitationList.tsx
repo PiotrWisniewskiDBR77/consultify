@@ -364,10 +364,10 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation
         className="
                     inline-flex items-center justify-center
                     w-4 h-4 text-[9px] font-bold
-                    bg-primary-100 dark:bg-primary-900/40
-                    text-primary-700 dark:text-primary-300
+                    bg-c-surface-raised dark:bg-c-surface-raised
+                    text-c-text-secondary dark:text-c-text-secondary
                     rounded align-super mx-0.5
-                    hover:bg-primary-200 dark:hover:bg-primary-800/50
+                    hover:bg-c-surface-hover dark:hover:bg-c-surface-hover
                     transition-colors cursor-pointer
                 "
       >
@@ -387,7 +387,7 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation
                 "
         >
           <div className="flex items-start gap-2">
-            <Icon size={14} className="text-primary-500 shrink-0 mt-0.5" />
+            <Icon size={14} className="text-c-text-secondary shrink-0 mt-0.5" />
             <div>
               <div className="text-xs font-medium text-navy-900 dark:text-white">{title}</div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400">

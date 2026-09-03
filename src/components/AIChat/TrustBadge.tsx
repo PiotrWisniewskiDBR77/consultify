@@ -488,7 +488,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                           href={safeLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="underline decoration-slate-400/50 underline-offset-2 hover:text-primary-700 hover:decoration-primary-500 dark:hover:text-primary-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded-sm"
+                          className="underline decoration-slate-400/50 underline-offset-2 hover:text-c-text hover:decoration-c-border-strong dark:hover:text-c-text focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded-sm"
                           aria-label={t(
                             'trust.badge.openSource',
                             'Open source in a new tab: {{title}}',

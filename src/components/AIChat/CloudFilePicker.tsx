@@ -66,7 +66,7 @@ interface CloudFilePickerProps {
 // Get icon for file type
 const getFileIcon = (mimeType: string, isFolder: boolean) => {
   if (isFolder) return <Folder size={20} className="text-yellow-500" />;
-  if (mimeType.startsWith('image/')) return <Image size={20} className="text-primary-500" />;
+  if (mimeType.startsWith('image/')) return <Image size={20} className="text-c-text-secondary" />;
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))
     return <Table size={20} className="text-green-500" />;
   if (mimeType.includes('document') || mimeType.includes('word') || mimeType === 'application/pdf')
@@ -203,7 +203,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                 onClick={() => navigateToBreadcrumb(index)}
                 className={`text-sm px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors whitespace-nowrap ${
                   index === currentPath.length - 1
-                    ? 'text-primary-600 dark:text-primary-400 font-medium'
+                    ? 'text-c-text-secondary dark:text-c-text-secondary font-medium'
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -252,7 +252,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                   onDoubleClick={() => file.isFolder && navigateToFolder(file)}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                     selectedFile?.id === file.id
-                      ? 'bg-primary-50 dark:bg-primary-900/20'
+                      ? 'bg-c-surface-raised dark:bg-c-surface-raised'
                       : 'hover:bg-slate-50 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -261,7 +261,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                     <div
                       className={`text-sm font-medium truncate ${
                         selectedFile?.id === file.id
-                          ? 'text-primary-700 dark:text-primary-300'
+                          ? 'text-c-text-secondary dark:text-c-text-secondary'
                           : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -289,7 +289,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {selectedFile ? (
-              <span className="text-primary-600 dark:text-primary-400">{selectedFile.name}</span>
+              <span className="text-c-text-secondary dark:text-c-text-secondary">{selectedFile.name}</span>
             ) : (
               t('aiChat.cloudPicker.selectFile', 'Wybierz plik')
             )}

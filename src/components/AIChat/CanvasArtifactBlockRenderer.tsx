@@ -282,7 +282,7 @@ export function CanvasArtifactBlockRenderer({
                   >
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 hover:text-primary-600"
+                      className="inline-flex items-center gap-1 hover:text-c-text"
                       onClick={() => {
                         setSortColumn((current) => {
                           if (current === column) {
@@ -359,8 +359,8 @@ export function CanvasArtifactBlockRenderer({
         data-testid={`canvas-artifact-block-${block.id}`}
       >
         <BlockHeader block={block} onCopy={copyProjection} />
-        <div className="mt-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-400/20 dark:bg-primary-400/10">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+        <div className="mt-4 rounded-2xl border border-c-border bg-c-surface-raised p-4 dark:border-c-border dark:bg-c-surface-raised">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:text-c-text-secondary">
             Research question
           </div>
           <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
@@ -565,7 +565,7 @@ function ChartBlockView({
     >
       <BlockHeader block={block} onCopy={onCopy} />
       {spec ? (
-        <div className="mt-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-950 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-100">
+        <div className="mt-4 rounded-2xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary">
           <div className="text-xs font-semibold uppercase tracking-[0.16em]">Vega-Lite runtime</div>
           <div className="mt-2">Status: {vegaStatus}</div>
           <div className="mt-2 text-xs opacity-80">
@@ -703,8 +703,8 @@ function DiagramBlockView({
         </button>
       </div>
       {source ? (
-        <div className="mt-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-400/20 dark:bg-primary-400/10">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+        <div className="mt-4 rounded-2xl border border-c-border bg-c-surface-raised p-4 dark:border-c-border dark:bg-c-surface-raised">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:text-c-text-secondary">
             Mermaid diagram source
           </div>
           {renderedSvg ? (
@@ -714,7 +714,7 @@ function DiagramBlockView({
               dangerouslySetInnerHTML={{ __html: renderedSvg }}
             />
           ) : (
-            <div className="mt-2 text-sm text-primary-900 dark:text-primary-100">
+            <div className="mt-2 text-sm text-c-text-secondary dark:text-c-text-secondary">
               {renderError
                 ? `Mermaid render failed: ${renderError}. Fallback view is shown below.`
                 : 'Rendering Mermaid diagram...'}
@@ -817,7 +817,7 @@ function BlockHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 px-1">
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
           {block.kind} block
         </div>
         <h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{block.title}</h3>

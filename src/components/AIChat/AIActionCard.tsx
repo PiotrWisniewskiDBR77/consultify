@@ -92,9 +92,9 @@ const getColorClasses = (color: string) => {
       border: 'border-amber-200 dark:border-amber-800',
     },
     purple: {
-      bg: 'bg-primary-50 dark:bg-primary-900/20',
-      text: 'text-primary-600 dark:text-primary-400',
-      border: 'border-primary-200 dark:border-primary-800',
+      bg: 'bg-c-surface-raised dark:bg-c-surface-raised',
+      text: 'text-c-text-secondary dark:text-c-text-secondary',
+      border: 'border-c-border dark:border-c-border',
     },
     cyan: {
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -102,9 +102,9 @@ const getColorClasses = (color: string) => {
       border: 'border-blue-200 dark:border-blue-800',
     },
     indigo: {
-      bg: 'bg-primary-50 dark:bg-primary-900/20',
-      text: 'text-primary-600 dark:text-primary-400',
-      border: 'border-primary-200 dark:border-primary-800',
+      bg: 'bg-c-surface-raised dark:bg-c-surface-raised',
+      text: 'text-c-text-secondary dark:text-c-text-secondary',
+      border: 'border-c-border dark:border-c-border',
     },
     orange: {
       bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -127,9 +127,9 @@ const getColorClasses = (color: string) => {
       border: 'border-slate-200 dark:border-slate-700',
     },
     violet: {
-      bg: 'bg-primary-50 dark:bg-primary-900/20',
-      text: 'text-primary-600 dark:text-primary-400',
-      border: 'border-primary-200 dark:border-primary-800',
+      bg: 'bg-c-surface-raised dark:bg-c-surface-raised',
+      text: 'text-c-text-secondary dark:text-c-text-secondary',
+      border: 'border-c-border dark:border-c-border',
     },
   };
 
@@ -199,7 +199,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         </span>
 
         {isExecuting ? (
-          <Loader2 size={14} className="animate-spin text-primary-500" />
+          <Loader2 size={14} className="animate-spin text-c-text-secondary" />
         ) : (
           <div className="flex items-center gap-1">
             <button
@@ -326,7 +326,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
       {/* Action Buttons */}
       <div className="flex items-center gap-2 px-3 pb-3">
         {isExecuting ? (
-          <div className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400">
+          <div className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-secondary">
             <Loader2 size={16} className="animate-spin" />
             {t('aiActions.executing', 'Wykonywanie...')}
           </div>
@@ -458,7 +458,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
       {hiddenCount > 0 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full text-center py-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+          className="w-full text-center py-2 text-xs text-c-text-secondary dark:text-c-text-secondary hover:underline"
         >
           {t('aiActions.showMore', 'Pokaż więcej')} (+{hiddenCount})
         </button>

@@ -427,7 +427,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                       onClick={() => setNewScope('personal')}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         newScope === 'personal'
-                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                           : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                       }`}
                     >
@@ -438,7 +438,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                       onClick={() => setNewScope('team')}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         newScope === 'team'
-                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                           : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                       }`}
                     >
@@ -558,7 +558,7 @@ const Section: React.FC<{
               disabled={disabled}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-colors border ${
                 active
-                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                   : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
               } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
@@ -576,7 +576,7 @@ const Section: React.FC<{
         {hasMore && (
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="w-full text-center py-1.5 text-[11px] font-medium text-primary-500 hover:text-primary-400 transition-colors"
+            className="w-full text-center py-1.5 text-[11px] font-medium text-c-text-secondary hover:text-c-text transition-colors"
           >
             {showAll ? `Show less` : `Show ${items.length - MAX_VISIBLE_FOLDERS} more…`}
           </button>

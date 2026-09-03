@@ -140,10 +140,10 @@ export const ChatTableProposalCard: React.FC<Props> = ({
   }
 
   return (
-    <div className="rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 p-4 my-2">
+    <div className="rounded-xl border border-c-border dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised p-4 my-2">
       <div className="flex items-center gap-2 mb-3">
-        <Table2 size={16} className="text-primary-600 dark:text-primary-400" />
-        <span className="text-sm font-semibold text-primary-800 dark:text-primary-300">
+        <Table2 size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
+        <span className="text-sm font-semibold text-c-text-secondary dark:text-c-text-secondary">
           {isPl ? 'Propozycja schematu tabeli' : 'Table Schema Proposal'}
         </span>
         <span className="ml-auto text-xs text-slate-500">
@@ -223,7 +223,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
           <button
             onClick={() => setRefineMode(true)}
             disabled={loading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-100 dark:bg-primary-800/30 text-primary-700 dark:text-primary-300 text-xs font-medium hover:bg-primary-200 dark:hover:bg-primary-800/50 disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary text-xs font-medium hover:bg-c-surface-hover dark:hover:bg-c-surface-hover disabled:opacity-50"
           >
             <MessageSquare size={12} />
             {isPl ? 'Doprecyzuj' : 'Refine'}

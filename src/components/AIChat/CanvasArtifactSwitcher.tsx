@@ -190,7 +190,7 @@ export const CanvasArtifactSwitcher: React.FC<CanvasArtifactSwitcherProps> = ({
               onClick={() => handleSelect(entry)}
               className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
                 selected
-                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                  ? 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary'
                   : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-navy-800 dark:hover:text-slate-200'
               }`}
               title={entry.title}

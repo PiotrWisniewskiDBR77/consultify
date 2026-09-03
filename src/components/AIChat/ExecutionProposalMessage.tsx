@@ -233,8 +233,8 @@ function lifecycleVisual(
         label: t('chatProposal.state.audited', 'Audited'),
         Icon: FileSearch,
         pillClassName:
-          'bg-primary-50 dark:bg-primary-950/30 text-primary-800 dark:text-primary-200 border-primary-200 dark:border-primary-900/40',
-        cardAccentClassName: 'border-primary-200 dark:border-primary-900/40',
+          'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary border-c-border dark:border-c-border',
+        cardAccentClassName: 'border-c-border dark:border-c-border',
       };
     case 'closed':
       return {
@@ -392,10 +392,10 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
       <div className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'}`} dir={isRtl ? 'rtl' : 'ltr'}>
         {/* Avatar */}
         <div
-          className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700`}
+          className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border`}
           aria-hidden="true"
         >
-          <Gavel size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+          <Gavel size={isCompact ? 12 : 14} className="text-c-text-secondary dark:text-c-text-secondary" />
         </div>
 
         <div className="flex flex-col max-w-[85%] w-full">

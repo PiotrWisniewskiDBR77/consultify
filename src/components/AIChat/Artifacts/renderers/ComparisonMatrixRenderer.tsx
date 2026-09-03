@@ -216,7 +216,7 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-2">
-          <Award size={16} className="text-primary-500" />
+          <Award size={16} className="text-c-text-secondary" />
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {data.title || t('matrix.title', 'Scenario Comparison')}
           </h3>
@@ -246,19 +246,19 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
             key={option.id}
             className={`px-3 py-2 rounded-lg border text-xs ${
               option.id === bestOptionId
-                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
+                ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border'
                 : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700'
             }`}
           >
             <div className="flex items-center gap-1.5 mb-1">
               {option.id === bestOptionId && (
-                <Star size={12} className="text-primary-500 fill-primary-500" />
+                <Star size={12} className="text-c-text-secondary fill-c-text-secondary" />
               )}
               <span className="font-semibold text-slate-700 dark:text-slate-200">
                 {option.name}
               </span>
               {option.id === bestOptionId && (
-                <span className="ml-auto text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 px-1.5 py-0.5 rounded">
+                <span className="ml-auto text-[10px] font-medium text-c-text-secondary dark:text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised px-1.5 py-0.5 rounded">
                   {t('matrix.recommended', 'RECOMMENDED')}
                 </span>
               )}
@@ -290,7 +290,7 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
                   key={option.id}
                   className={`px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider ${
                     option.id === bestOptionId
-                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                      ? 'text-c-text-secondary dark:text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -325,7 +325,7 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
                     <td
                       key={option.id}
                       className={`px-4 py-3 ${
-                        option.id === bestOptionId ? 'bg-primary-50/30 dark:bg-primary-900/5' : ''
+                        option.id === bestOptionId ? 'bg-c-surface-raised dark:bg-c-surface-raised' : ''
                       }`}
                     >
                       <div className="flex flex-col items-center gap-1">
@@ -374,13 +374,13 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
                 return (
                   <td
                     key={option.id}
-                    className={`px-4 py-3 text-center ${isBest ? 'bg-primary-100/50 dark:bg-primary-900/20' : ''}`}
+                    className={`px-4 py-3 text-center ${isBest ? 'bg-c-surface-raised dark:bg-c-surface-raised' : ''}`}
                   >
                     <div className="flex flex-col items-center gap-1">
                       <span
                         className={`text-lg font-bold tabular-nums ${
                           isBest
-                            ? 'text-primary-600 dark:text-primary-400'
+                            ? 'text-c-text-secondary dark:text-c-text-secondary'
                             : 'text-slate-700 dark:text-slate-200'
                         }`}
                       >
@@ -398,10 +398,10 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
 
       {/* Recommendation footer */}
       {bestOptionId && (
-        <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-primary-50/50 dark:bg-primary-900/10">
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-c-surface-raised dark:bg-c-surface-raised">
           <div className="flex items-center gap-2 text-xs">
-            <ArrowRight size={14} className="text-primary-500" />
-            <span className="font-medium text-primary-700 dark:text-primary-300">
+            <ArrowRight size={14} className="text-c-text-secondary" />
+            <span className="font-medium text-c-text-secondary dark:text-c-text-secondary">
               {t('matrix.recommendationLabel', 'Recommendation')}:
             </span>
             <span className="text-slate-700 dark:text-slate-200 font-semibold">

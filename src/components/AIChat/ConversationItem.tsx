@@ -41,8 +41,8 @@ const ENTITY_CONFIG: Record<
   },
   roadmap: {
     icon: Map,
-    color: 'text-primary-500',
-    activeColor: 'text-primary-600',
+    color: 'text-c-text-secondary',
+    activeColor: 'text-c-text-secondary',
     label: 'Roadmap',
   },
   task: {
@@ -169,7 +169,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           checked={selected}
           onChange={() => onToggleSelect?.(conversation.id)}
           onClick={(e) => e.stopPropagation()}
-          className="shrink-0 h-3.5 w-3.5 accent-primary-600 cursor-pointer"
+          className="shrink-0 h-3.5 w-3.5 accent-c-focus-solid cursor-pointer"
           aria-label="Select conversation"
         />
       )}
@@ -184,7 +184,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           onKeyDown={handleRenameKeyDown}
           onBlur={handleFinishRename}
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 min-w-0 px-1.5 py-0.5 text-[13px] rounded bg-white dark:bg-navy-800 border border-primary-400 dark:border-primary-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          className="flex-1 min-w-0 px-1.5 py-0.5 text-[13px] rounded bg-white dark:bg-navy-800 border border-c-border dark:border-c-border text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         />
       ) : (
         <div className="flex-1 min-w-0">

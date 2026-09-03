@@ -199,7 +199,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
           transition-all duration-200
         `}
       >
-        <span className="text-primary-500 dark:text-primary-400 shrink-0">
+        <span className="text-c-text-secondary dark:text-c-text-secondary shrink-0">
           {workspaceContext?.type ? WORKSPACE_ICONS[workspaceContext.type] : <Sparkles size={14} />}
         </span>
 

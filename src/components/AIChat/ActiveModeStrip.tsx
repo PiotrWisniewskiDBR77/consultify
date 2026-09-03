@@ -71,7 +71,7 @@ export const ActiveModeStrip: React.FC = () => {
             key={chip.key}
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
               chip.active
-                ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
+                ? 'border-c-border bg-c-surface-raised text-c-text-secondary dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary'
                 : 'border-slate-200 bg-white text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400'
             }`}
             title={chip.label}
