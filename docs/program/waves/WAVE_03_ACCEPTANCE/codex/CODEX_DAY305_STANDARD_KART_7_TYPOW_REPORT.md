@@ -20,6 +20,8 @@ Stan: **CZĘŚCIOWE**
 - 7 wpisów typu w rejestrze; 8 ekranów `karta-*` w dev-render (jawny rozjazd pomiarowy);
 - zero zmian serwera, migracji i zachowania produktu.
 
+R3 stop-loss: istniejący dev-render ma nadmiarowy ósmy ekran, a dostępny harness nie dowodzi montażu rzeczywistej Initiative. Zgodnie z zasadą pomiaru nie dodano atrapy produktu ani flagi bez konsumenta.
+
 ## Uczciwa granica
 
 Nie powstał prototyp wizualny ani cztery zrzuty. W szczególności nie uznaję dokumentu, testu jednostkowego ani istniejącego ekranu dev-render za dowód PRZED/PO. Flaga nie została utworzona, więc nic nie zostało przypadkiem włączone.
