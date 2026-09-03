@@ -67,3 +67,4 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 | 12_AUDITS | front: `src/components/Audit/__tests__` (3 pliki; `m12-*.json`) | 17 | 4 PASS | 17 PASS | 13 przypadków dodanych; brak czerwieni | — | 17 PASS |
 | 13_CHAT | front: `AIChat`, `tests/unit/AIChat`, `tests/unit/chat` (45 plików; `m13-*.json`) | 439 | 416 PASS | 439 PASS | 23 przypadki dodane; brak czerwieni | — | 439 PASS |
 | 14_ADMIN | front: `Admin`, `tests/unit/superadmin` (38 plików; `m14-*.json`) | 248 | 235 PASS, 7 FAIL | 241 PASS, 7 FAIL | 7 ZASTANYCH; 6 przypadków dodanych | — | 241 PASS, 7 FAIL |
+| 15_SETTINGS | `settings`, `tests/unit/settings` (7 plików; `m15-*.json`) | 13 | 13 PASS | 13 PASS | bez zmiany | — | 13 PASS |

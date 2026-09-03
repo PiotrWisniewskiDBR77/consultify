@@ -59,6 +59,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 12_AUDITS | 3 | 17 | 17 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 4/4, marker 17/17; 13 nowych zielonych przypadków, zero czerwieni. Serwer Audytów pozostaje do pomiaru.` |
 | 13_CHAT | 45 | 439 | 439 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 416/416, marker 439/439; 23 nowe zielone przypadki, zero czerwieni. Serwer pozostaje do pomiaru.` |
 | 14_ADMIN | 38 | 248 | 241 | 7 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 241/248 PASS; te same 7 pełnych nazw czerwonych na bazie i markerze, 6 nowych zielonych przypadków, brak czerwieni NOWYCH. Serwer pozostaje do pomiaru.` |
+| 15_SETTINGS | 7 | 13 | 13 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — 13/13 PASS na bazie i markerze, zero zmian nazw i zero czerwieni; serwer poza mianownikiem R1.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -117,3 +118,7 @@ Pakiet jest jednostkowy; globalne atrapy AI i `fetch` oznaczają, że wynik dowo
 ### Pułapki — 14_ADMIN
 
 Pakiet jest jednostkowy i nie dowodzi realnych zapisów API mimo nazw testów sugerujących readback. Siedem czerwieni ma identyczne pełne nazwy po obu stronach; żadnej nie nazwano NOWĄ. Brak tabeli licencji pozostawia je bez zmiany.
+
+### Pułapki — 15_SETTINGS
+
+Pakiet jest jednostkowy i nie dowodzi trwałości ustawień. JSDOM zgłosił `Not implemented: navigation to another Document`, lecz JSON ma 13/13 PASS po obu stronach. Pełne nazwy są identyczne.
