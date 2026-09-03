@@ -79,7 +79,10 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
 
   if (versions.length === 0) {
     return (
-      <div className="p-4 text-sm text-slate-400">
+      // axe `color-contrast`: text-slate-400 measured 2.45:1 on this panel's
+      // (near-white) surface — well under 4.5:1, and there was no dark:
+      // variant at all. slate-600/dark:slate-400 clears both (~7.3:1 / ~7:1).
+      <div className="p-4 text-sm text-slate-600 dark:text-slate-400">
         {t(
           'finance.versions.empty',
           'No saved versions yet. Approve a model to create a snapshot.'

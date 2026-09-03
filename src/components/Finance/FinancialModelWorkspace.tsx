@@ -950,12 +950,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   {statusBadge(m.status)}
-                  <span className="text-[10px] text-slate-600">v{m.version}</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-400">v{m.version}</span>
                 </div>
               </button>
             ))}
             {models.length === 0 && (
-              <p className="text-xs text-slate-600 text-center py-8">
+              <p className="text-xs text-slate-600 dark:text-slate-400 text-center py-8">
                 {t('finance.model.noModels', 'No models yet. Create one to start.')}
               </p>
             )}
@@ -993,7 +993,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </h2>
                   {statusBadge(selectedModel.status)}
                 </div>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {selectedModel.currency} ·{' '}
                   {t(
                     `finance.model.${selectedModel.granularity}`,
@@ -1355,33 +1355,42 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         i18nKey: 'finance.model.initialFields.accountsPayable',
                         fallback: 'Accounts Payable',
                       },
-                    ].map(({ key, i18nKey, fallback }) => (
-                      <div key={key} className="flex items-center justify-between gap-4">
-                        <div className="w-48">
-                          <label className="text-sm text-slate-700 dark:text-slate-300">
-                            {t(i18nKey, fallback)}
-                          </label>
-                          {seededInputKeys.has(key) ? (
-                            <div className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                              {t('finance.model.importedFromStatement', 'Imported from statement')}
-                            </div>
-                          ) : (
-                            assumptionStatusLabel(key)
-                          )}
+                    ].map(({ key, i18nKey, fallback }) => {
+                      // axe `label`: the <label> here sat next to the input
+                      // (inside a sibling status <div>), never wrapping or
+                      // htmlFor-linked to it — 7 identical unlabeled number
+                      // inputs (initial balance sheet fields). `key` is
+                      // already a unique field id, reused as the DOM id.
+                      const fieldId = `finance-model-initial-${key}`;
+                      return (
+                        <div key={key} className="flex items-center justify-between gap-4">
+                          <div className="w-48">
+                            <label htmlFor={fieldId} className="text-sm text-slate-700 dark:text-slate-300">
+                              {t(i18nKey, fallback)}
+                            </label>
+                            {seededInputKeys.has(key) ? (
+                              <div className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                                {t('finance.model.importedFromStatement', 'Imported from statement')}
+                              </div>
+                            ) : (
+                              assumptionStatusLabel(key)
+                            )}
+                          </div>
+                          <input
+                            id={fieldId}
+                            type="number"
+                            value={assumptions[key] ?? 0}
+                            onChange={(e) =>
+                              setAssumptions((prev) => ({
+                                ...prev,
+                                [key]: parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            className="w-48 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-right font-mono"
+                          />
                         </div>
-                        <input
-                          type="number"
-                          value={assumptions[key] ?? 0}
-                          onChange={(e) =>
-                            setAssumptions((prev) => ({
-                              ...prev,
-                              [key]: parseFloat(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-48 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-right font-mono"
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="mt-2 flex items-center gap-3">
                       <button
                         onClick={handleSaveAssumptions}
@@ -1451,7 +1460,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </div>
 
                   {events.length === 0 && (
-                    <div className="text-center py-12 text-slate-600">
+                    <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                       <Calendar size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
                         {isGrounded
@@ -1480,7 +1489,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
                               {ev.name}
                             </p>
-                            <div className="flex items-center gap-3 text-xs text-slate-600 mt-0.5">
+                            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                               <span>{cfg ? t(cfg.i18nKey, cfg.fallback) : ''}</span>
                               <span className="font-mono">{formatCurrency(ev.amount)}</span>
                               <span>{ev.recurrence}</span>
@@ -1492,7 +1501,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               </span>
                             </div>
                           </div>
-                          <span className="text-xs text-slate-600">
+                          <span className="text-xs text-slate-600 dark:text-slate-400">
                             {ev.period_start}
                             {ev.period_end ? ` → ${ev.period_end}` : ''}
                           </span>
@@ -1515,12 +1524,21 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                           {t('finance.model.addEvent', 'Add Event')}
                         </h3>
+                        {/* axe `label`/`select-name`: every field below had a
+                            <label> sibling, never wrapping/htmlFor-linked to
+                            its control — 8 unlabeled fields in this modal
+                            alone. Not in the measured set (modal closed by
+                            default), but the identical pattern as the 7
+                            fields above, in the same file — fixed as one
+                            family, not just the ones that happened to be
+                            open when measured. */}
                         <div className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-type" className="text-xs text-slate-500">
                               {t('finance.model.eventType', 'Event Type')}
                             </label>
                             <select
+                              id="finance-model-event-type"
                               value={eventForm.eventType}
                               onChange={(e) => {
                                 const cfg = EVENT_TYPES.find((et) => et.value === e.target.value);
@@ -1540,10 +1558,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             </select>
                           </div>
                           <div className="col-span-2">
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-name" className="text-xs text-slate-500">
                               {t('finance.model.eventName', 'Name')}
                             </label>
                             <input
+                              id="finance-model-event-name"
                               value={eventForm.name}
                               onChange={(e) =>
                                 setEventForm((f) => ({ ...f, name: e.target.value }))
@@ -1552,10 +1571,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-amount" className="text-xs text-slate-500">
                               {t('finance.model.amount', 'Amount')}
                             </label>
                             <input
+                              id="finance-model-event-amount"
                               type="number"
                               value={eventForm.amount}
                               onChange={(e) =>
@@ -1568,10 +1588,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-recurrence" className="text-xs text-slate-500">
                               {t('finance.model.recurrence', 'Recurrence')}
                             </label>
                             <select
+                              id="finance-model-event-recurrence"
                               value={eventForm.recurrence}
                               onChange={(e) =>
                                 setEventForm((f) => ({ ...f, recurrence: e.target.value }))
@@ -1591,10 +1612,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             </select>
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-start-date" className="text-xs text-slate-500">
                               {t('finance.model.startDate', 'Start Date')}
                             </label>
                             <input
+                              id="finance-model-event-start-date"
                               type="date"
                               value={eventForm.periodStart}
                               onChange={(e) =>
@@ -1604,10 +1626,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-end-date" className="text-xs text-slate-500">
                               {t('finance.model.endDate', 'End Date')}
                             </label>
                             <input
+                              id="finance-model-event-end-date"
                               type="date"
                               value={eventForm.periodEnd}
                               onChange={(e) =>
@@ -1617,10 +1640,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-growth-rate" className="text-xs text-slate-500">
                               {t('finance.model.growthRate', 'Growth Rate (%/yr)')}
                             </label>
                             <input
+                              id="finance-model-event-growth-rate"
                               type="number"
                               step="0.1"
                               value={eventForm.growthRate}
@@ -1634,10 +1658,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label htmlFor="finance-model-event-cf-class" className="text-xs text-slate-500">
                               {t('finance.model.cfClass', 'CF Classification')}
                             </label>
                             <select
+                              id="finance-model-event-cf-class"
                               value={eventForm.cfClassification}
                               onChange={(e) =>
                                 setEventForm((f) => ({ ...f, cfClassification: e.target.value }))
@@ -1721,7 +1746,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       </div>
                     </div>
                   ) : Object.keys(outputs).length === 0 ? (
-                    <div className="text-center py-12 text-slate-600">
+                    <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                       <BarChart3 size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
                         {isGrounded
@@ -2011,12 +2036,15 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
                 />
               </div>
+              {/* axe `label`/`select-name`: same unwired sibling-<label>
+                  pattern as the "Add Event" modal above — fixed the same way. */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500">
+                  <label htmlFor="finance-model-new-start-date" className="text-xs text-slate-500">
                     {t('finance.model.startDate', 'Start Date')}
                   </label>
                   <input
+                    id="finance-model-new-start-date"
                     type="date"
                     value={newStartDate}
                     onChange={(e) => setNewStartDate(e.target.value)}
@@ -2024,10 +2052,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">
+                  <label htmlFor="finance-model-new-horizon" className="text-xs text-slate-500">
                     {t('finance.model.horizon', 'Horizon (months)')}
                   </label>
                   <input
+                    id="finance-model-new-horizon"
                     type="number"
                     value={newHorizon}
                     onChange={(e) => setNewHorizon(parseInt(e.target.value) || 60)}
@@ -2035,10 +2064,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">
+                  <label htmlFor="finance-model-new-granularity" className="text-xs text-slate-500">
                     {t('finance.model.granularity', 'Granularity')}
                   </label>
                   <select
+                    id="finance-model-new-granularity"
                     value={newGranularity}
                     onChange={(e) => setNewGranularity(e.target.value)}
                     className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
@@ -2049,10 +2079,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500">
+                  <label htmlFor="finance-model-new-currency" className="text-xs text-slate-500">
                     {t('finance.model.currency', 'Currency')}
                   </label>
                   <select
+                    id="finance-model-new-currency"
                     value={newCurrency}
                     onChange={(e) => setNewCurrency(e.target.value)}
                     className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
