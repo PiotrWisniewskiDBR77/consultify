@@ -1429,9 +1429,23 @@ export class ApiGateway {
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       app.use('/api/budget', budgetRoutes);
       app.use('/api/benefits', betaGate, benefitsRoutes);
+      // M16 Finance — POWIERZCHNIA ODCZYTOWA tego samego zamkniętego modułu
+      // (`MODULE_ECONOMICS` = 'closed'). Zapisy były zamurowane osobną ścianą
+      // członkostwa (`financeStatementsMutationAuthority` ->
+      // `requireFinanceEditorMembership`, zmierzone: rola USER dostaje 403
+      // FINANCE_EDIT_FORBIDDEN), ale ta ściana z definicji NIE dotyczy odczytu.
+      // Zmierzone przed naprawą (sonda, pozycja odczytowa
+      // `finance-statements-read`): rola USER dostawała `GET /` -> 200 i WIDZIAŁA
+      // sprawozdanie finansowe zasiane na zimno w jej organizacji. To wyciek
+      // odczytu z modułu, którego klient nie ma prawa widzieć.
+      // Wszyscy wołający tę powierzchnię to ekrany Finance/Economics (6 plików
+      // w `src/`), czyli ten sam zamknięty moduł — bramka nie odcina żadnego
+      // otwartego modułu. `gatewayVerifyToken` stoi PRZED bramką, więc rola jest
+      // realna i właściciel dalej widzi swoje dane (para dowodów w sondzie).
       app.use(
         '/api/finance-statements',
         gatewayVerifyToken,
+        createModuleGate('MODULE_ECONOMICS'),
         tenantStrictMembership,
         financeStatementsMutationAuthority,
         highRiskSurfaceGuard({ categories: ['upload', 'export'] }),

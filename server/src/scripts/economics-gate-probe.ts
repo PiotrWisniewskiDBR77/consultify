@@ -47,15 +47,20 @@ for (const [name, expected] of Object.entries(REQUIRED_ENV)) {
 const DATABASE_URL = process.env.DATABASE_URL || '';
 assert.match(
   DATABASE_URL,
-  /^postgresql:\/\/cx:cx@127\.0\.0\.1:(6278|6288)\/(cxecon|cxbramki)$/,
+  /^postgresql:\/\/cx:cx@127\.0\.0\.1:(6278|6288|6294)\/(cxecon|cxbramki|cxbramki2)$/,
   'DATABASE_URL must target a disposable local gate database'
 );
 assert.ok(process.env.JWT_SECRET, 'JWT_SECRET must be set');
 
 const port = Number(process.env.PORT || '5292');
 assert.ok(
-  port === 5282 || port === 5283 || port === 5292 || port === 5293,
-  'Harness may only use ports 5282/5283/5292/5293'
+  port === 5282 ||
+    port === 5283 ||
+    port === 5292 ||
+    port === 5293 ||
+    port === 5310 ||
+    port === 5311,
+  'Harness may only use ports 5282/5283/5292/5293/5310/5311'
 );
 
 const PASSWORD = 'EconGate-Local-Only-Password-1';
@@ -184,6 +189,44 @@ interface Position {
   okStatus: number;
 }
 
+/**
+ * Pełny przepływ intake (propose -> confirm digestem) na dowolnej z dwóch
+ * powierzchni. Zwraca odpowiedź PIERWSZEGO kroku, jeśli został zablokowany —
+ * dzięki temu negatyw pokazuje realny status bramki, a nie błąd wtórny.
+ *
+ * `case_name` powstaje z `goal` (fallback `deriveFallbackCaseName`), więc
+ * marker w `goal` jest tym, czego szukamy odczytem na zimno w `case_core`.
+ */
+async function intakeFlow(args: {
+  proposePath: (conversationId: string) => string;
+  proposeBody: (workOrder: Json) => Json;
+  confirmPath: (conversationId: string) => string;
+  who: Identity;
+  marker: string;
+  projectId: string;
+}): Promise<{ status: number; body: Json }> {
+  const conversationId = args.marker.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  const workOrder: Json = {
+    projectId: args.projectId,
+    goal: args.marker,
+    scope: ['gate probe scope'],
+    expectedOutcome: 'gate probe expected outcome',
+    contractedClosureType: 'DELIVERY_COMPLETED',
+  };
+  const proposed = await requestJson('POST', args.proposePath(conversationId), {
+    token: args.who.token,
+    body: args.proposeBody(workOrder),
+  });
+  const digest = proposed.body?.data?.workOrderDigest;
+  if (proposed.status !== 200 || typeof digest !== 'string') {
+    return proposed;
+  }
+  return requestJson('POST', args.confirmPath(conversationId), {
+    token: args.who.token,
+    body: { confirmedDigest: digest },
+  });
+}
+
 const POSITIONS: Position[] = [
   {
     id: 'economics',
@@ -255,13 +298,132 @@ const POSITIONS: Position[] = [
         [who.organizationId, marker]
       ),
   },
+  // ── Intake Case'a z CZATU ─────────────────────────────────────────────────
+  // Realna ścieżka powstania Zlecenia z rozmowy, POZA mountem
+  // `/api/v8/case-workspace`. Bramka nie może stanąć na całym `/api/v8/chat`
+  // (wygasiłaby czat — moduł OTWARTY), więc stoi na podścieżce
+  // `/conversations/:conversationId/case-intake` + `/case-intake`.
+  // Przepływ pełny: propose (200) -> confirm digestem (201 + wiersz w case_core).
+  {
+    id: 'chat-case-intake',
+    mount: '/api/v8/chat/.../case-intake',
+    moduleId: 'MODULE_CASE_WORKSPACE',
+    okStatus: 201,
+    write: (who, marker, projectId) =>
+      intakeFlow({
+        proposePath: (conversationId) =>
+          `/api/v8/chat/conversations/${conversationId}/case-intake/turn`,
+        proposeBody: (workOrder) => ({
+          message: 'Przygotuj raport z wdrozenia i plan dzialan',
+          workOrder,
+        }),
+        confirmPath: (conversationId) =>
+          `/api/v8/chat/conversations/${conversationId}/case-intake/confirm`,
+        who,
+        marker,
+        projectId,
+      }),
+    cold: (who, marker) =>
+      coldCount(
+        'SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1 AND case_name = $2',
+        [who.organizationId, marker]
+      ),
+  },
+  // ── Intake Case'a z TERESY ────────────────────────────────────────────────
+  // Bliźniak powyższego na osobnym prefiksie `/api/v8/teresa/case-intake`.
+  // Prefiks jest czysty (żadna inna trasa Teresy go nie używa), więc bramka
+  // stoi na `router.use('/case-intake', …)` w teresa.routes.ts.
+  {
+    id: 'teresa-case-intake',
+    mount: '/api/v8/teresa/case-intake',
+    moduleId: 'MODULE_CASE_WORKSPACE',
+    okStatus: 201,
+    write: (who, marker, projectId) =>
+      intakeFlow({
+        proposePath: (conversationId) =>
+          `/api/v8/teresa/case-intake/conversations/${conversationId}/summary`,
+        proposeBody: (workOrder) => workOrder,
+        confirmPath: (conversationId) =>
+          `/api/v8/teresa/case-intake/conversations/${conversationId}/confirm`,
+        who,
+        marker,
+        projectId,
+      }),
+    cold: (who, marker) =>
+      coldCount(
+        'SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1 AND case_name = $2',
+        [who.organizationId, marker]
+      ),
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POZYCJE ODCZYTOWE
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Powierzchnia, na której szkodą jest WYCIEK ODCZYTU, nie zapis. Para dowodów
+ * ma inny kształt niż przy zapisie, ale tę samą logikę:
+ *   NEG — nieuprawniony dostaje odmowę i ZERO rekordów, przy czym rekord
+ *         ISTNIEJE (zasiany na zimno w JEGO organizacji). Bez tego „zero
+ *         rekordów" znaczyłoby tylko „baza pusta" — brak pomiaru nie jest
+ *         wynikiem.
+ *   POS — uprawniony dostaje 200 i WIDZI dokładnie ten zasiany rekord.
+ */
+interface ReadPosition {
+  id: string;
+  mount: string;
+  moduleId: string;
+  /** Zasiewa rekord NA ZIMNO w organizacji wskazanej tożsamości; zwraca jego id. */
+  seedCold: (who: Identity, marker: string) => Promise<string>;
+  /** Potwierdza NA ZIMNO, że rekord istnieje w bazie (kontrola „baza nie jest pusta"). */
+  coldExists: (who: Identity, seededId: string) => Promise<number>;
+  read: (who: Identity) => Promise<{ status: number; body: Json }>;
+  /** Ile z zasianych rekordów widać w odpowiedzi HTTP. */
+  exposed: (body: Json, seededId: string) => number;
+}
+
+const READ_POSITIONS: ReadPosition[] = [
+  {
+    id: 'finance-statements-read',
+    mount: 'GET /api/finance-statements/',
+    moduleId: 'MODULE_ECONOMICS',
+    seedCold: async (who, marker) => {
+      const id = `fs-gate-${crypto.randomUUID()}`;
+      await withClient(async (client) => {
+        await client.query(
+          `INSERT INTO financial_statements
+             (id, organization_id, entity_name, statement_type, period_start, period_end,
+              period_label, currency, status)
+           VALUES ($1, $2, $3, 'BS', '2026-01-01', '2026-12-31', $4, 'PLN', 'draft')`,
+          [id, who.organizationId, marker, marker]
+        );
+      });
+      return id;
+    },
+    coldExists: (_who, seededId) =>
+      coldCount('SELECT count(*)::int AS n FROM financial_statements WHERE id = $1', [seededId]),
+    read: (who) => requestJson('GET', '/api/finance-statements/', { token: who.token }),
+    exposed: (body, seededId) => {
+      const rows = Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(body?.statements)
+          ? body.statements
+          : Array.isArray(body)
+            ? body
+            : [];
+      return rows.filter((r: any) => String(r?.id) === seededId).length;
+    },
+  },
 ];
 
 async function run(): Promise<void> {
   const nonce = Date.now();
   const only = String(process.env.GATE_PROBE_ONLY || '').trim();
   const positions = only ? POSITIONS.filter((p) => p.id === only) : POSITIONS;
-  assert.ok(positions.length > 0, `unknown GATE_PROBE_ONLY=${only}`);
+  assert.ok(
+    positions.length > 0 || READ_POSITIONS.some((p) => p.id === only),
+    `unknown GATE_PROBE_ONLY=${only}`
+  );
 
   const emailOwner = `gateprobe+owner-${nonce}@local.test`;
   const emailUser = `gateprobe+user-${nonce}@local.test`;
@@ -315,6 +477,49 @@ async function run(): Promise<void> {
     };
   }
 
+  out.readPositions = {};
+  for (const rp of READ_POSITIONS) {
+    if (only && only !== rp.id) continue;
+    const negSeed = await rp.seedCold(user, `GateProbe NEG ${rp.id} ${nonce}`);
+    const posSeed = await rp.seedCold(owner, `GateProbe POS ${rp.id} ${nonce}`);
+    const negSeedExists = await rp.coldExists(user, negSeed);
+    const posSeedExists = await rp.coldExists(owner, posSeed);
+
+    const negRead = await rp.read(user);
+    const posRead = await rp.read(owner);
+    const negExposed = rp.exposed(negRead.body, negSeed);
+    const posExposed = rp.exposed(posRead.body, posSeed);
+
+    const blocked =
+      negRead.status === 403 &&
+      negRead.body?.code === 'BETA_LOCKED' &&
+      negExposed === 0 &&
+      negSeedExists === 1;
+    const allowed = posRead.status === 200 && posExposed === 1 && posSeedExists === 1;
+
+    out.readPositions[rp.id] = {
+      mount: rp.mount,
+      moduleId: rp.moduleId,
+      negative: {
+        role: user.role,
+        status: negRead.status,
+        code: negRead.body?.code ?? null,
+        seededRowExistsCold: negSeedExists,
+        exposedRows: negExposed,
+        blocked,
+      },
+      positive: {
+        role: owner.role,
+        status: posRead.status,
+        code: posRead.body?.code ?? null,
+        seededRowExistsCold: posSeedExists,
+        exposedRows: posExposed,
+        allowed,
+      },
+      pass: blocked && allowed,
+    };
+  }
+
   // ── OBSERWACJE (mierzymy, NIE naprawiamy) ────────────────────────────────
   // Siostrzane powierzchnie tych samych zamkniętych modułów. Zapisujemy stan
   // do rejestru; decyzja o bramce należy do nadzorcy (część z nich ma własne
@@ -342,21 +547,22 @@ async function run(): Promise<void> {
     { id: 'case-workspace-subtree-read', method: 'GET', path: '/api/v8/case-workspace/cases' },
     { id: 'economics-read', method: 'GET', path: '/api/economics/analyses' },
     { id: 'conclusions-read', method: 'GET', path: '/api/conclusions' },
-    // Reszta rodziny MODULE_CASE_WORKSPACE: intake Case'a z powierzchni CHATU
-    // i TERESY (osobne prefiksy, poza mountem /case-workspace). Mierzymy
-    // wyłącznie osiągalność (brak BETA_LOCKED) — naprawa wymaga własnej pary
-    // dowodów na pełnym przepływie intake, więc zostaje w rejestrze.
+    // Odczytowe rodzeństwo intake'u (te same podścieżki, metoda GET) — musi
+    // być zamknięte razem z zapisem, inaczej bramka zasłania tylko drzwi.
     {
-      id: 'chat-case-intake',
-      method: 'POST',
-      path: '/api/v8/chat/conversations/gateprobe-x/case-intake/turn',
-      body: { message: 'probe' },
+      id: 'chat-case-intake-read',
+      method: 'GET',
+      path: '/api/v8/chat/conversations/gateprobe-x/case-intake/work-order',
     },
     {
-      id: 'teresa-case-intake',
-      method: 'POST',
-      path: '/api/v8/teresa/case-intake/conversations/gateprobe-x/confirm',
-      body: {},
+      id: 'chat-case-intake-case-read',
+      method: 'GET',
+      path: '/api/v8/chat/case-intake/cases/gateprobe-x/conversation',
+    },
+    {
+      id: 'teresa-case-intake-read',
+      method: 'GET',
+      path: '/api/v8/teresa/case-intake/conversations/gateprobe-x/work-order',
     },
     // Kontrola ANTY-WYGASZENIOWA: powierzchnie modułów OTWARTYCH, które
     // sąsiadują z naprawionymi mountami, muszą dalej działać dla roli USER.
@@ -366,6 +572,18 @@ async function run(): Promise<void> {
       path: '/api/artifact-conversions',
     },
     { id: 'anti-extinction-my-work', method: 'GET', path: '/api/my-work/inbox' },
+    // ★ Kluczowa kontrola dla bramek na PODŚCIEŻKACH: rodzeństwo pod tym samym
+    // prefiksem `/conversations/:id/…` i reszta czatu/Teresy (moduły OTWARTE)
+    // nie mogą zostać złapane przez bramkę intake'u.
+    { id: 'anti-extinction-chat-snapshots', method: 'GET', path: '/api/v8/chat/snapshots' },
+    { id: 'anti-extinction-chat-handoffs', method: 'GET', path: '/api/v8/chat/handoffs' },
+    {
+      id: 'anti-extinction-chat-conversation-sibling',
+      method: 'GET',
+      path: '/api/v8/chat/conversations/gateprobe-x/handoff-proposals',
+    },
+    { id: 'anti-extinction-teresa-contract', method: 'GET', path: '/api/v8/teresa/contract' },
+    { id: 'anti-extinction-teresa-proposals', method: 'GET', path: '/api/v8/teresa/proposals' },
   ];
   out.observations = {};
   for (const o of OBSERVED) {
@@ -379,11 +597,13 @@ async function run(): Promise<void> {
     };
   }
 
+  const allChecked: Array<[string, any]> = [
+    ...Object.entries(out.positions),
+    ...Object.entries(out.readPositions),
+  ];
   out.verdict = {
-    pass: Object.values(out.positions).every((p: any) => p.pass),
-    failing: Object.entries(out.positions)
-      .filter(([, p]: [string, any]) => !p.pass)
-      .map(([id]) => id),
+    pass: allChecked.every(([, p]) => p.pass),
+    failing: allChecked.filter(([, p]) => !p.pass).map(([id]) => id),
   };
 
   console.log(JSON.stringify(out, null, 2));
@@ -398,6 +618,10 @@ async function run(): Promise<void> {
       ]);
       await client.query(
         'DELETE FROM digitization_analyses WHERE organization_id = ANY($1::text[])',
+        [orgs]
+      );
+      await client.query(
+        'DELETE FROM financial_statements WHERE organization_id = ANY($1::text[])',
         [orgs]
       );
       await client.query('DELETE FROM projects WHERE organization_id = ANY($1::text[])', [orgs]);
