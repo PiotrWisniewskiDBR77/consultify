@@ -61,6 +61,13 @@ function Harness() {
 // Historia i AI. Governance content that used to live under the "Work" tab
 // now lives under "Właściwości"; "Context" relations now live under
 // "Powiązania". Both can be open at once.
+//
+// DEC 03.09 wieczór (R-11, MYW-NBK-CORE-001) flipped `ENABLE_NOTEBOOK_SPEC_A_SHELL`
+// to default ON — this SPEC-A accordion IS the accepted default rail now,
+// not an opt-in review override. The two tests below that used to describe
+// "no override = legacy bespoke rail" now explicitly force the OFF override
+// to keep testing that reachable killswitch path (CLAUDE.md §8), instead of
+// silently describing something that is no longer the default.
 describe('NotebookRightRail — SPEC-A accordion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,7 +75,16 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     window.localStorage.clear();
   });
 
-  it('keeps the accepted bespoke rail when ENABLE_NOTEBOOK_SPEC_A_SHELL is not enabled', () => {
+  it('renders the SPEC-A accordion by default (DEC 03.09 wieczór R-11, no override)', () => {
+    render(<Harness />);
+    expect(screen.getByLabelText('Document details and context')).toHaveClass(
+      'border-l',
+      'border-c-border-subtle'
+    );
+  });
+
+  it('keeps the legacy bespoke rail available via an explicit OFF override (awaryjny wyłącznik CLAUDE.md §8)', () => {
+    window.localStorage.setItem('ff.ENABLE_NOTEBOOK_SPEC_A_SHELL', 'false');
     render(<Harness />);
     expect(screen.getByLabelText('Document details and context')).not.toHaveClass(
       'border-l',
@@ -76,8 +92,7 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     );
   });
 
-  it('renders the shared ArtifactRightPanel only for an explicit review override', () => {
-    window.localStorage.setItem('ff.ENABLE_NOTEBOOK_SPEC_A_SHELL', 'true');
+  it('renders the shared ArtifactRightPanel by default (no override needed anymore)', () => {
     render(<Harness />);
     const panel = screen.getByLabelText('Document details and context');
     expect(panel).toHaveClass('border-l', 'border-c-border-subtle');
@@ -125,7 +140,14 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     expect(screen.getByRole('button', { name: 'Private' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('shows Powiązania (Context) content open by default alongside Właściwości', () => {
+  it('shows Powiązania (Context) content open by default in the legacy rail (explicit OFF override)', () => {
+    // DEC 03.09 wieczór R-11: the SPEC-A accordion (now the default) opens
+    // only Akcje/Właściwości by default — see 'renders the shared
+    // ArtifactRightPanel only for an explicit review override' above
+    // (`aria-expanded=false` on Powiązania). This test targets the LEGACY
+    // rail specifically, where Work/Context both render without a
+    // collapsed/expanded distinction.
+    window.localStorage.setItem('ff.ENABLE_NOTEBOOK_SPEC_A_SHELL', 'false');
     render(<Harness />);
     expect(screen.getByText('Context content')).toBeInTheDocument();
   });
