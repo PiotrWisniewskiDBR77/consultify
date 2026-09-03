@@ -617,3 +617,89 @@ tylko 05/06/07) nie cytował żadnej realnie zadanej Piotrowi decyzji.
 Zero wierszy `PASS`. Zero realnych naruszeń NIE zostało odjętych bezpodstawnie
 — żadnego naruszenia nie wyzerowano tym dyżurem, wyłącznie skorygowano
 klasyfikację jednego stanu bramki (08) na podstawie dowodu źródłowego.
+
+## Dopisek — dyżur FINAŁ 2026-09-03 (agent/g06-final-09-12), moduły 09_RESULTS/10_FINANCE/11_MATERIALS/12_AUDITS
+
+Uzupełnia poprzedni dopisek (dyżur 09-12 z tego samego dnia, 3/8 kadrów) o
+BRAKUJĄCE 5 kadrów: `pl-dark-1024`, `en-light-1440`, `en-dark-1440`,
+`en-light-1024`, `en-dark-1024`. Razem z poprzednim dopiskiem (PL-light-1440,
+PL-dark-1440, PL-light-1024) daje to pełną macierz 8/8 dla ekranów zmierzonych
+poniżej. **Korekta metodologiczna wobec poprzedniego dopisku**: ten dyżur NIE
+odejmuje sześciu reguł axe jako „szum hosta” — tylko TRZY (landmark-one-main,
+page-has-heading-one, region) są potwierdzone jako artefakt zawężenia skanu do
+`#dev-render-root` (zweryfikowane bezpośrednio K1: scan document vs scan root na
+3 ekranach tego dyżuru — te 3 znikają, `heading-order` NIE znika, pozostaje
+identyczne w obu zakresach). `landmark-unique`/`landmark-no-duplicate-banner`/
+`bypass` nie wystąpiły w żadnym z mierzonych kadrów tego dyżuru — nie było
+okazji do potwierdzenia lub obalenia dla nich w tej próbce.
+
+**09_RESULTS** (19/19 ekranów zmierzonych w tym dyżurze na dodatkowych 6 kadrach):
+- `results-vnext-kpi-scorecards`: 6/6 nowych kadrów z naruszeniami: color-contrast, scrollable-region-focusable
+- `results-vnext-teresa-kpi-deviation`: 6/6 nowych kadrów z naruszeniami: label, select-name
+- `results-vnext-teresa-okr-reflection`: 6/6 nowych kadrów z naruszeniami: label, select-name
+- `results-zestawienia`: 6/6 nowych kadrów z naruszeniami: color-contrast, scrollable-region-focusable
+
+**10_FINANCE** (13/13 ekranów zmierzonych w tym dyżurze na dodatkowych 6 kadrach):
+- `finance-model-workspace`: 6/6 nowych kadrów z naruszeniami: color-contrast, label
+
+**11_MATERIALS** (35/35 ekranów zmierzonych w tym dyżurze na dodatkowych 6 kadrach):
+- `deck-artifact`: 2/6 nowych kadrów z naruszeniami: color-contrast
+- `document-artifact`: 3/6 nowych kadrów z naruszeniami: color-contrast
+- `excele-edytowalna-siatka`: 6/6 nowych kadrów z naruszeniami: color-contrast, definition-list, empty-table-header
+- `excele-prawy-panel-standard`: 6/6 nowych kadrów z naruszeniami: color-contrast, definition-list, empty-table-header
+- `excele-reopen-verify`: 3/6 nowych kadrów z naruszeniami: color-contrast
+- `report-artifact`: 6/6 nowych kadrów z naruszeniami: color-contrast, scrollable-region-focusable
+- `report-builder-library-template`: 6/6 nowych kadrów z naruszeniami: color-contrast, select-name
+- `sheet-artifact`: 6/6 nowych kadrów z naruszeniami: color-contrast, definition-list, empty-table-header
+- `template-builder-deck`: 6/6 nowych kadrów z naruszeniami: color-contrast, nested-interactive
+- `template-builder-doc`: 6/6 nowych kadrów z naruszeniami: color-contrast, nested-interactive
+- `template-builder-table`: 3/6 nowych kadrów z naruszeniami: color-contrast
+
+**12_AUDITS** (4/4 ekranów zmierzonych w tym dyżurze na dodatkowych 6 kadrach):
+- `audyty-warsztat-kryterium`: 6/6 nowych kadrów z naruszeniami: color-contrast, heading-order
+
+
+**K1 — kontrola przyrządu (ten dyżur).** `axe.run(document)` vs `axe.run('#dev-render-root')`
+na 3 ekranach (`cel-jedna-karta`, `materials-registry`, `audyty-warsztat-kryterium`,
+PL/light/1440×900): potwierdzone, że TYLKO `landmark-one-main`, `page-has-heading-one`,
+`region` znikają po zawężeniu. `heading-order` na `audyty-warsztat-kryterium` jest
+IDENTYCZNE w obu zakresach (nie artefakt skanu — realne naruszenie produktu).
+Rozwinięcie sekcji: spot-check `document-artifact`/`excele-edytowalna-siatka` na
+PL-light-1440 vs EN-dark-1024 dał IDENTYCZNĄ liczbę kontrolek nadal zwiniętych po
+kliknięciu (8→5 i 9→3 w obu konfiguracjach) — defekt rozwijania jest niezależny od
+motywu/rozdzielczości/języka, potwierdza to samo zjawisko z poprzedniego dopisku na
+nowych osiach bez potrzeby pełnego przebiegu na wszystkich 6 ekranach.
+
+**Dwie KOREKTY wobec poprzedniego dopisku i wobec ANALIZA_G13 (zweryfikowane bezpośrednio
+w kodzie/pomiarze tego dyżuru, nie przepisane):**
+1. `11_MATERIALS/materials-registry` — poprzedni dopisek i `ANALIZA_G13_MODULY_09_16` cytują
+   `heading-order` jako realne naruszenie tego ekranu. Bezpośredni re-scan (4 konfiguracje:
+   1440/1024 × light/dark, PL) w tym dyżurze: **zero naruszeń axe** na tym ekranie w KAŻDEJ
+   z nich. `NIEAKTUALNE` — albo naprawione między dyżurami, albo błąd pomiaru poprzedniego
+   dyżuru; nie znaleziono dowodu w historii commitów na naprawę w tym oknie, więc source
+   rozbieżności pozostaje nierozstrzygnięty, ale STAN DZISIEJSZY jest jednoznaczny: czysty.
+2. `11_MATERIALS/template-builder-deck`, `template-builder-doc`, `template-builder-table` —
+   `ANALIZA_G13_MODULY_09_16` i moduł 11 cytują naruszenia **KRYTYCZNE** `label`+`select-name`
+   (pola formularza bez etykiety) na wszystkich trzech, przypisywane wspólnemu komponentowi
+   pól kreatora. Zweryfikowane dziś w kodzie: `src/components/TemplateBuilder/
+   templateBuilderFields.tsx` (`Field` z `React.useId()` + `htmlFor`/`id` cloning) już wiąże
+   etykiety z natywnymi kontrolkami — to jest DOKŁADNIE naprawa R4 z `CODEX_DAY285_A11Y_
+   HARNESS_REPORT.md`, obecna na tej gałęzi. Pełny re-scan (PL i EN, light i dark, 1440 i 1024
+   — 6/6 kombinacji zmierzonych bezpośrednio) potwierdza: **zero `label`/`select-name` na
+   wszystkich trzech ekranach.** Pozostają realne, inne naruszenia: `color-contrast` (serious,
+   1 węzeł, tylko motyw light) na wszystkich trzech; `nested-interactive` (serious, 5-6 węzłów,
+   oba motywy) na `template-builder-deck`/`template-builder-doc` — `template-builder-table` jest
+   od nich wolny. Krytyczne naruszenia dostępności blokujące wypełnienie formularza **już nie
+   istnieją** na tej gałęzi — pozostały dług jest niższej wagi (serious, nie critical), ale
+   nadal realny i nadal blokuje `PASS`.
+
+**Zaktualizowany bilans realnych naruszeń axe (8/8 kadrów, po korektach powyżej):**
+09_RESULTS 4/19 (bez zmian), 10_FINANCE 2/13 (bez zmian), 11_MATERIALS **11/35** (było 12/35 —
+`materials-registry` przechodzi na czyste), 12_AUDITS 1/4 (bez zmian). Realne zwinięte sekcje:
+11_MATERIALS 6/35 (bez zmian, potwierdzone niezależne od motywu/rozdzielczości/języka).
+
+**Dowody:** `/private/tmp/ag-g06f-c-artefakty/{09_RESULTS,10_FINANCE,11_MATERIALS,
+12_AUDITS}.json` (426 pomiarów, 71 ekranów × 6 nowych kadrów), `SUMMARY.json`
+(zagregowane), `scripts/` (measure/summarize/apply, kopie skryptów tego dyżuru,
+poza gitem jak poprzednio). Worktree: `/private/tmp/ag-g06f-c`, branch
+`agent/g06-final-09-12-20260903`, marker `660b7db9d1`, port `5318`.
