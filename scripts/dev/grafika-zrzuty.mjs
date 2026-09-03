@@ -59,6 +59,12 @@ const A11Y = arg('a11y', '0') === '1';
 // tekst w połowie przejścia opacity dawał fałszywy color-contrast (4 węzły, oba motywy).
 // Domyślnie 0, więc historyczne wywołania nie zmieniają zachowania.
 const OSIAD_PO_ROZWINIECIU = Number(arg('osiad-po-rozwinieciu', '0'));
+// Dyżur G06 03.09 (nadzorca, zmierzone): pętla rozwijania sekcji klika lejki filtrów i kebaby
+// jako „zwinięte sekcje", a klik w róg (2,2) zamykający ich nakładki ZAMYKA TEŻ podgląd otwarty
+// domyślnym klikiem w wiersz — skan a11y leciał bez podglądu (execution-tab-list: tekst
+// 1018 → 648 znaków, naruszenie w podglądzie znikało). Opt-in: po rozwinięciu kliknij wiersz
+// ponownie, żeby skan i zrzut objęły podgląd. Domyślnie 0 (historyczne wywołania bez zmian).
+const KLIK_PO_ROZWINIECIU = arg('klik-po-rozwinieciu', '0') === '1';
 /**
  * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
  *
@@ -427,6 +433,13 @@ for (const ekran of EKRANY) {
           wynikBrak.push(`zwinięte sekcje: ${sekcjeNadalZwiniete.join(' / ')}`);
         }
       }
+      if (ROZWIN_SEKCJE && KLIK_PO_ROZWINIECIU && podgladDomyslnyProbowany && !podgladDomyslnyBrak) {
+        const wierszPonownie = page.locator(DOMYSLNY_KLIK_SELEKTOR).first();
+        if ((await wierszPonownie.count()) > 0) {
+          await wierszPonownie.click({ timeout: 5000 }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+      }
       if (ROZWIN_SEKCJE && OSIAD_PO_ROZWINIECIU > 0) await page.waitForTimeout(OSIAD_PO_ROZWINIECIU);
       let a11yNaruszenia = [];
       if (A11Y) {
@@ -578,7 +591,7 @@ if (BEZ_KLIKA_DOMYSLNEGO) {
 if (WYNIK_JSON) {
   if (!path.isAbsolute(WYNIK_JSON)) throw new Error('--wynik-json musi być ścieżką absolutną');
   fs.mkdirSync(path.dirname(WYNIK_JSON), { recursive: true });
-  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, wyniki, pary: wszystkiePary }, null, 2));
+  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, klikPoRozwinieciu: KLIK_PO_ROZWINIECIU, wyniki, pary: wszystkiePary }, null, 2));
   console.log(`Wynik JSON → ${WYNIK_JSON}`);
 }
 

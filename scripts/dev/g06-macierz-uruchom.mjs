@@ -90,6 +90,9 @@ for (const mod of MODULY) {
         // 03.09: osiadanie po rozwinięciu sekcji — bez tego fade-in framer-motion (AnimatedBlock)
         // daje fałszywy color-contrast (zmierzone: deck-artifact 4 węzły → 0 przy 1500 ms).
         '--osiad-po-rozwinieciu=1500',
+        // 03.09: po rozwinięciu sekcji klik w wiersz ponownie — bez tego skan leci bez podglądu
+        // (zmierzone: execution-tab-list tekst 1018 → 648, naruszenie w podglądzie znikało).
+        '--klik-po-rozwinieciu=1',
         `--wyjscie=${katalog}`,
         `--wynik-json=${wynik}`,
       ];
