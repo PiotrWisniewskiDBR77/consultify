@@ -343,7 +343,11 @@ charakterystyka całego harnessu, nie defekt konkretnego ekranu.
 1440×900): ΔL = 215.19 (próg 150), różnica pikseli = 99.592%. Przyrząd
 sprawny.
 
-**Dowody:** 213 zrzutów PNG + 71 plików JSON (surowe wyniki axe/expansion/
-console/network per kadr) w worktree `agent/g06-modules-09-12-20260903`,
-katalog `.g06-tools/out/{09,10,11,12}/` (poza gitem — evidence lokalny, nie
-artefakt repo).
+**Dowody:** 213 zrzutów PNG + 72 plików JSON (71 per-ekran + 1 skonsolidowany
+`all-results.json`; surowe wyniki axe/expansion/console/network per kadr)
+zebrane w worktree `agent/g06-modules-09-12-20260903`, przeniesione po
+pomiarze (worktree usuwany po scaleniu, per instrukcja) do
+`/private/tmp/cx-g06c-20260903-artefakty/` — poza repo, poza gitem, jak
+artefakty dyżuru 284. Manifest `SHA256SUMS.txt` (285 wpisów); SHA-256
+manifestu: `839400cf6df4ab94c3ab6ba54c760ebd9bc58b5d9bf181843c223ab720b5a2be`.
+Skrypty pomiarowe (`measure.mjs`, `update-registry.mjs`) dołączone obok.
