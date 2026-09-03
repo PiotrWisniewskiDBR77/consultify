@@ -564,3 +564,56 @@ pomiarze (worktree usuwany po scaleniu, per instrukcja) do
 artefakty dyżuru 284. Manifest `SHA256SUMS.txt` (285 wpisów); SHA-256
 manifestu: `839400cf6df4ab94c3ab6ba54c760ebd9bc58b5d9bf181843c223ab720b5a2be`.
 Skrypty pomiarowe (`measure.mjs`, `update-registry.mjs`) dołączone obok.
+
+## Dopisek — dyżur 2026-09-03 (finał), moduły 05_INITIATIVES/06_EXECUTION/07_MY_WORK_AGENT/08_MEETINGS
+
+Worktree `agent/g06-final-05-08-20260903`, marker `2954ec8d37`, port `5316`.
+Zakres tego dyżuru: WYŁĄCZNIE wiersz `G06` w `MODULE_ACCEPTANCE.md` czterech
+modułów. Macierz 8 kadrów (PL/EN × jasny/ciemny × 1440/1024) dla wszystkich
+ekranów A/B tych czterech modułów była już zmierzona i zacommitowana w linii
+przodków tego brancha (`edece30ee5` „close R2-R5 for modules 05-08", potem
+`13dde210ca` „sprostowanie: G06 w 05/06/07 to NOT_STARTED, nie OWNER_PENDING")
+— ten worktree odziedziczył te commity, NIE mierzono macierzy od zera po raz
+drugi (byłoby to „własny zrzut obok kanonicznego").
+
+**K1 — kontrola przyrządu, zmierzona osobiście tym dyżurem.** Realny axe
+`document` vs `#dev-render-root` na 4 ekranach (`public-booking-widget`,
+`meetings-module`, `execution-tab-list`, `ev-football-field`): naprawa
+scoping usuwa `landmark-one-main`/`page-has-heading-one`/`region` w każdym
+przypadku, gdzie się pojawiły. `heading-order`/`landmark-unique`/
+`landmark-no-duplicate-banner` NIE wystąpiły w tej 4-ekranowej próbie ani
+przed, ani po scoping — nie potwierdzam ani nie zaprzeczam tezie instrukcji
+„sześć reguł krajobrazowych przestało się pojawiać" dla tych trzech; sprawdzony
+`CODEX_DAY285_A11Y_HARNESS_REPORT.md` (ten sam branch, sekcja „KOREKTY WOBEC
+INSTRUKCJI") już wcześniej sprostował identyczną tezę: te trzy potrafią
+wystąpić WEWNĄTRZ fragmentu i są klasyfikowane jako szum hosta (brak
+`MainLayout.tsx` w dev-render) z innego powodu niż scoping, nie „znikają".
+Realna naruszenie potwierdzone niezależnie: `nested-interactive` (serious) na
+`decision-record` (07) i `color-contrast` na `execution-tab-list` (06) —
+zgodne z wcześniejszym pomiarem, bez rozbieżności.
+
+**Sprawa `public-booking-widget` — rozstrzygnięta źródłem, nie hipotezą.**
+`src/views/PublicBookingView.tsx` (374 linie): zero importów/wywołań
+`useTranslation`/`i18next`/`t(`. Wszystkie stringi UI („Umów spotkanie",
+„Wybierz dzień"/„WYBIERZ DZIEŃ", „strefa", nazwy dni tygodnia, skrót „wol.")
+to twarde literały polskie. Zweryfikowano trzema drogami: grep źródła, tekst
+DOM z przebiegów `en`/`pl` (bajt-identyczny), zrzut wizualny obejrzany
+osobiście. Jedyne prawdziwe nazwy własne na ekranie („Consultify", „DBR77
+Advisory") poprawnie zostają identyczne — to NIE one są problemem. To jest
+dług inżynierski (brak wdrożonej i18n w jednym komponencie), nie pytanie
+„czy to nazwa własna" z definicji `OWNER_PENDING`. Poprzedni wpis
+`OWNER_PENDING` (dyżur 285, niesprostowany przez `13dde210ca` który objął
+tylko 05/06/07) nie cytował żadnej realnie zadanej Piotrowi decyzji.
+
+**K6 — cztery wiersze `G06`, stan końcowy tego dyżuru:**
+
+| Moduł | Stan G06 (przed tym dyżurem) | Stan G06 (po tym dyżurze) | Powód |
+| --- | --- | --- | --- |
+| 05_INITIATIVES | `NOT_STARTED` | `NOT_STARTED` (bez zmian) | `color-contrast` (`ev-football-field`), `nested-interactive` serious (`exe-002-004-ui-audit`, `initiative-record`) — dług inżynierski, potwierdzony wcześniej i niekwestionowany tym dyżurem |
+| 06_EXECUTION | `NOT_STARTED` | `NOT_STARTED` (bez zmian) | `color-contrast` na 3/8 ekranów (`exec-summary-onelook`, `execution-report-day11`, `execution-tab-list`) — potwierdzone własnym re-pomiarem `execution-tab-list` tym dyżurem |
+| 07_MY_WORK_AGENT | `NOT_STARTED` | `NOT_STARTED` (bez zmian) | 29/40 ekranów z realnymi naruszeniami axe (`nested-interactive`, `color-contrast`, `landmark-main-is-top-level`, i inne) — potwierdzone własnym re-pomiarem `decision-record` tym dyżurem |
+| 08_MEETINGS | `OWNER_PENDING` | `NOT_STARTED` (**zmienione tym dyżurem**) | `public-booking-widget` nie ma wdrożonej i18n — to dług inżynierski, nie decyzja właściciela; patrz uzasadnienie wyżej i w `modules/08_MEETINGS/MODULE_ACCEPTANCE.md` |
+
+Zero wierszy `PASS`. Zero realnych naruszeń NIE zostało odjętych bezpodstawnie
+— żadnego naruszenia nie wyzerowano tym dyżurem, wyłącznie skorygowano
+klasyfikację jednego stanu bramki (08) na podstawie dowodu źródłowego.
