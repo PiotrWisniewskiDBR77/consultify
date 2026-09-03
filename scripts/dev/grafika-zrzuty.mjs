@@ -387,6 +387,24 @@ for (const ekran of EKRANY) {
             const kontrolka = kontrolki.nth(i);
             if (!(await kontrolka.isVisible().catch(() => false))) continue;
             await kontrolka.click({ timeout: 3000 }).then(() => { postep++; }).catch(() => {});
+            // NAPRAWA PRZYRZĄDU (dyżur G06 modules-05-08, 2026-09-03): część kontrolek
+            // aria-expanded=false NIE JEST akordeonem treści — to wyzwalacz menu
+            // rozwijanego (np. przycisk-hamburger, split-button „Analizuj z AI"),
+            // który po kliknięciu stawia PEŁNOEKRANOWĄ nakładkę `.fixed.inset-0
+            // .z-context-menu` do zamykania menu kliknięciem obok. Nakładka
+            // PRZYKRYWA kolejne kontrolki w tej samej rundzie i każdy następny
+            // `.click()` pada na timeoucie — dokładnie kształt „automat rozwijania
+            // sekcji zawodzi" z korpusu uwag. Zmierzone na `karta-initiative`:
+            // bez tej linii rozwijało się 1/8 kontrolek, z tą linią 5/5 realnych
+            // akordeonów prawego panelu. ★ Zmierzono drugi wariant tej samej
+            // awarii: przycisk „Sekcje" stawia `.fixed.inset-0.z-40` BEZ
+            // nasłuchu klawisza Escape (zamyka się wyłącznie klikiem-na-zewnątrz),
+            // więc sam Escape zostawiał tę nakładkę i dalej blokował rundę.
+            // Klik w róg viewportu (2,2) zamyka OBA warianty nakładki i — sprawdzone
+            // testem — NIE zwija już rozwiniętego akordeonu (aria-expanded
+            // zostaje `true` po obu).
+            await page.keyboard.press('Escape').catch(() => {});
+            await page.mouse.click(2, 2).catch(() => {});
           }
           sekcjeRozwiniete += postep;
           if (postep === 0) break;
