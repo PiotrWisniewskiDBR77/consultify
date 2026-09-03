@@ -295,7 +295,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       style={{ paddingLeft: 8 + depth * 12 }}
                       className={`group flex items-center gap-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors ${
                         dropTargetId === project.id
-                          ? 'bg-c-surface-raised dark:bg-c-surface-raised ring-1 ring-c-border'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised ring-1 ring-c-focus'
                           : 'hover:bg-c-surface-raised'
                       }`}
                       onClick={() => onToggleExpanded(project.id)}

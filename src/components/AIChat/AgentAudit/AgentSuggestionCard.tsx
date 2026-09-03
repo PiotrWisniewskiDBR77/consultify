@@ -312,7 +312,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
               key={agent.agentId}
               className={`bg-white dark:bg-navy-950 border rounded-lg transition-all ${
                 isSelected
-                  ? 'border-c-border dark:border-c-border ring-1 ring-c-border dark:ring-c-border'
+                  ? 'border-c-border dark:border-c-border ring-1 ring-c-focus dark:ring-c-focus'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
