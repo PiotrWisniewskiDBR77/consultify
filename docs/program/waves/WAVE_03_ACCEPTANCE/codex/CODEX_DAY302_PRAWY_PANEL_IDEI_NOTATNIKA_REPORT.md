@@ -1,6 +1,6 @@
 # CODEX DAY 302 — prawy panel Idei i Notatnika
 
-Stan roboczy: R1–R5 wykonane.
+Stan końcowy: **GOTOWE w zakresie prototypu**. Flaga pozostaje domyślnie OFF, bieżące panele nie zostały zmigrowane, gałąź nie jest scalona.
 
 ## §0 — baza
 
@@ -63,6 +63,14 @@ Każda para light/dark różni się obrazem i czytelnie zmienia tokeny powierzch
 
 Pomiar nazw testów: PRZED 83/83, PO 88/88. Diff zawiera wyłącznie pięć dodanych pełnych nazw kontraktu prototypu; żadna nazwa nie zniknęła. Pliki: `/private/tmp/cx-day302-panel-idei-artefakty/przed-nazwy.txt` i `po-nazwy.txt`. Pakiet jest czysto frontendowy i nie przechodzi przez pułapki auth/DB/Gateway z §0.2d; `RUN_DB_TESTS=0 MOCK_DB=true`, `--retry=0`.
 
+## R6 — przekazanie
+
+Commity pozycji: `d7deb281f3` (R1), `8b1786e062` (R2), `7085d17e64` (R3), `1cf3af4f3f` (R4), `08eb4d2436` (R5), plus ten commit raportowy R6. Zmiany względem markera obejmują dwa dokumenty, odłączony komponent prototypu, flagę, jego test, opt-in w dev-render oraz 16 PNG. Nie zmieniono żadnego z trzech produkcyjnych paneli, serwera, migracji, wspólnych bramek ani wartości domyślnej istniejącej flagi.
+
+Pytania rozstrzygające do właściciela znajdują się w projekcie i każde przyjmuje odpowiedź TAK/NIE. Dopiero po akceptacji osobny dyżur może zaplanować migrację konsumentów i uzupełnienie modelu danych.
+
+**Gałąź `codex/day302-prawy-panel-idei-notatnika-20260903` NIE jest scalona. Flaga prototypu jest domyślnie OFF. Nic nie zostało wdrożone ani włączone.**
+
 ## Korekty wobec instrukcji
 
 - Cztery ekrany harnessu istnieją zgodnie z tezą.
@@ -72,4 +80,6 @@ Pomiar nazw testów: PRZED 83/83, PO 88/88. Diff zawiera wyłącznie pięć doda
 ## Twierdzenia niezweryfikowane
 
 - Nie zweryfikowano integracji z produkcyjną trasą ani realnym modelem danych; to celowo odłączony prototyp.
+- Nie zweryfikowano realnych relacji, komentarzy, historii ani provenance, ponieważ wspólny model tych danych nie istnieje w zakresie dyżuru.
+- Nie zweryfikowano zachowania na urządzeniu ani breakpointów innym runtime'em niż lokalny harness 1440×900.
 - Gałąź nie jest scalona i flaga nie jest włączona.
