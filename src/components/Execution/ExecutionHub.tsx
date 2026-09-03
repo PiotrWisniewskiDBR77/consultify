@@ -2234,7 +2234,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 mistaken for real customer data. */}
             {(row as any).isDemoSample && (
               <span
-                className="shrink-0 rounded-full bg-danger-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-danger-600 dark:text-danger-400"
+                // G06 „podgląd — kontrast" (2026-09-03): dark:text-danger-400
+                // (#ED5541) na tle zaznaczonego wiersza (execution-tab-list
+                // dark) mierzyło 4,11:1 (próg 4,5:1). danger-300 zamiast
+                // danger-400 w dark — 7,6–10:1 na zmierzonych tłach.
+                className="shrink-0 rounded-full bg-danger-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-danger-600 dark:text-danger-300"
                 title={t('execution.table.demoSampleTitle', 'Sample data, not real')}
               >
                 {t('execution.table.demoSampleBadge', 'Sample')}
