@@ -202,3 +202,179 @@ kalendarzowe naruszenia NIE ustąpiły i odsłoniły dodatkowe, wcześniej
 niezmierzone naruszenia w tych samych ekranach (plakietki wydarzeń,
 etykiety godzin) — całościowy stan po tej rundzie nie został potwierdzony
 pełnym przelotem 80 ekranów z powodu budżetu czasu.
+
+---
+
+# Runda 2 — 2026-09-03 (drugi robotnik naprawczy)
+
+Worktree `/private/tmp/ag-fix-a11y-07`, gałąź `agent/fix-a11y-07-20260903`
+(baza `fc6ff7ed9e`), harness na porcie 5335. Zakres: 13 kadrów, które runda 1
+zostawiła otwarte.
+
+## Wynik: PRZED → PO
+
+| Miara | PRZED (runda 2) | PO |
+|---|---|---|
+| Kadrów z realnym naruszeniem, pl-1440 | **13 / 80** | **0 / 80** |
+| Wystąpień reguł, pl-1440 | 15 | **0** |
+| Kadrów z realnym naruszeniem, en-1024 | (niemierzone w rundzie 1) | **0 / 80** |
+
+Szum hosta odjęty zgodnie z instrukcją: `landmark-one-main`,
+`page-has-heading-one`, `region`.
+
+## Mapa: reguła → węzeł → komponent → plik
+
+### 1. `nested-interactive` — mindmap-canvas + mywork-idea-topbar (4 kadry)
+
+Węzeł: `div[data-id="idea-scope-1"].react-flow__node-idea` z `role="button"
+tabindex="0"`, a w środku prawdziwe `<button>`.
+
+**Przyczyna, której runda 1 nie ustaliła**: `nodesFocusable={false}` BYŁO
+ustawione w `src/components/MyWork/IdeaRecommendationMap.tsx`, ale stało
+**przed** `{...getIdeasToolInteractionProps('mindmap', …)}`, a ta funkcja
+(`src/components/MyWork/canvas/useIdeasToolDefaults.ts:54`) zwraca
+`nodesFocusable: true`. Spread cicho nadpisywał jawny prop. Naprawa: prop
+przeniesiony ZA oba spready. Zmierzone: mindmap-canvas light+dark → 0,
+mywork-idea-topbar `nested-interactive` → 0 (ten sam komponent).
+
+### 2. `aria-required-children` — mywork-idea-topbar (2 kadry, critical)
+
+Węzeł: `div[role="tablist"].contents` („Otwarte dokumenty"), niedozwolone
+dziecko `button[aria-label]` (przycisk „zamknij kartę").
+
+`role="tablist"` może własnościowo zawierać wyłącznie `role="tab"`. Pośredni
+`<div class="group">` bez roli nie odgradza przycisku zamknięcia od tablist.
+Odrzucone warianty: przycisk pod zakładką → `nested-interactive` (zamiana
+naruszenia na inne); `role="presentation"` na przycisku → ARIA rozwiązuje
+konflikt z powrotem do `button`.
+Naprawa (`src/components/MyWork/MyWorkHub.tsx`): tablist nie zawiera pastylek
+w DOM — przejmuje same zakładki przez `aria-owns`. Zmierzone: 0.
+
+### 3. `color-contrast` — idea-table-timeline-stuck (5 węzłów, 1,04:1)
+
+**Źródło, którego runda 1 nie znalazła**: `SelectCell` w
+`src/components/MyWork/table/CellRenderer.tsx`. Naprawa z rundy 1 (`color-mix`
+z czernią) **była w tym pliku**, ale nie działała, bo fixture trzyma w
+`optionColors` NAZWY palety (`'slate'`/`'amber'`/`'emerald'`), a nie kolory
+CSS — `color-mix(in srgb, slate 65%, black 35%)` jest niepoprawne, więc
+przeglądarka odrzucała CAŁĄ deklarację tła i plakietka zostawała bez tła, z
+białym tekstem na tle strony. Zmierzone wprost: `getAttribute('style')` =
+tylko `color: var(--c-tag-foreground)`.
+
+Naprawa dwuczęściowa: (a) odsiew wartości, która nie jest kolorem CSS
+(`isCssColorValue`, fallback na token palety po indeksie opcji); (b)
+odwrócony kierunek kontrastu — tło rozjaśniane do ≥65% bieli, stały ciemny
+atrament `#0f172a`. Najgorszy możliwy przypadek (tło = czerń) daje #a6a6a6
+pod #0f172a = 7,0:1; najlepszy 17:1 — próg spełniony dla KAŻDEGO wejścia bez
+zgadywania, którego tokenu użyje dane. Ta sama rodzina naprawiona w
+`MultiSelectCell` (stały `#334155` na `var(--c-tag-1)` #3b8ea5 = 2,76:1) i
+odsiew w `StatusCell` (przy nazwie palety tło znikało, a ciemny tekst lądował
+na ciemnym tle strony w motywie ciemnym).
+
+### 4. `color-contrast` — mywork-calendar dark (14) + mw-007-calendar-narrow-viewport (light 4, dark 5)
+
+Trzy niezależne przyczyny:
+
+- **Plakietki wydarzeń**: FullCalendar pisze jasnym tekstem (tytuł `#ffffff`,
+  rodowód `#e6f2ff`/`#f9dfe2` przy `opacity: .85`), a tło bierze z
+  `CalendarGrid.tsx` — z koloru źródła albo z `e.color`, czyli wartości spoza
+  naszej kontroli. Zmierzone: 2,52:1 (tytuł na `--c-info` #58a6ff), 2,22:1
+  (rodowód), 4,40:1 (rodowód na crimson #c72839 w motywie jasnym). Naprawa:
+  tło każdego wydarzenia przyciemniane do `color-mix(in srgb, X 35%, black
+  65%)`. Najgorszy przypadek (X = biel) → #595959: 7,2:1 dla tytułu i 5,3:1
+  dla rodowodu. Odcień źródła zostaje rozpoznawalny; sprawdzone, że
+  `color-mix` z `var()` REALNIE się renderuje (computed bg = `color(srgb
+  0.12 0.23 0.35)`, nie `transparent`).
+- **Etykiety godzin** (`.fc-timegrid-slot-label`): `#64748b` na `#0a0f1e` =
+  4,01:1 → `#94a3b8` (6,96:1), motyw ciemny; jasny ma własne nadpisanie
+  `#475569` i został bez zmian.
+- **Dni sąsiedniego miesiąca**: ★ SPROSTOWANIE rundy 1 — `opacity` NIE siedzi
+  na `<td class="fc-day-other">`, tylko na jego dziecku
+  (`.fc-day-other .fc-daygrid-day-top { opacity: .3 }` w samym FullCalendar).
+  `opacity: 1` na `<td>` z rundy 1 nic nie zmieniało (zmierzone: wypadkowa
+  nadal #d1d5dc = 1,47:1 na białym). Reguła przeniesiona na właściwy element.
+
+### 5. `landmark-unique` — agent-plan-canvas (2 kadry)
+
+Runda 1 uznała to za szum hosta (harness montuje `AgentPlanPanel` dwa razy).
+Pomiar potwierdza pochodzenie z hosta, ALE przyczyną jest przybita na sztywno
+nazwa landmarku w `src/`: `AgentWorkshopControls.tsx` („Sterowanie agentem")
+i `AgentWorkshopPalette.tsx` („Paleta klocków agenta"). Dwie komplementarne
+okolice o identycznej nazwie są nierozróżnialne dla czytnika ekranu — to
+realna wada API komponentu, nie tylko przyrządu. Naprawa: nazwa niesie tytuł
+planu (`plan.title`); paleta dostała opcjonalny `ariaLabel` z dotychczasową
+wartością domyślną, więc żadne istniejące wywołanie nie zmienia zachowania.
+
+## Naprawy w HOŚCIE (dowód: węzeł pochodzi z `dev-render/`, nie z `src/`)
+
+- **`heading-order` — ideas-preview-overlay** (2 kadry): pasek harnessu
+  (`dev-render/screens/ideas-preview-overlay.tsx`, `data-dev-render-chrome`)
+  wstrzykiwał `<h1>` w ŚRODEK mierzonego drzewa, nad repliką kart zaczynającą
+  się od `<h4>` — sztuczny przeskok h1→h4, którego w aplikacji nie ma. Chrome
+  przyrządu nie ma prawa dokładać semantyki nagłówków do produktu: ten sam
+  wygląd, bez roli nagłówka. Zmierzone: 0.
+- **`color-contrast` — notatnik-centrum-mysli dark** (2 węzły): przycisk
+  „Zatwierdź" zbudowany wprost w harnessie, biel na samym `--c-success`
+  (#3fb950) = 2,54:1. Tło przyciemnione tym samym zabiegiem co plakietki
+  kalendarza. ★ Token `--c-success` z bielą pozostaje realnym ryzykiem
+  projektowym poza tym modułem — do osobnego zgłoszenia.
+
+## Co NIE zostało naprawione
+
+- **Realny `<h4>` kart w `src/components/MyWork/MyIdeasListContent.tsx:1990`.**
+  Naprawiony został TYLKO nagłówek chrome'u harnessu, bo tylko on był węzłem
+  naruszającym w mierzonym kadrze. Czy realny komponent w aplikacji siedzi pod
+  `<h3>` (poprawnie), czy pod `<h1>`/`<h2>` (przeskok), zależy od powłoki, której
+  ten ekran harnessu nie odtwarza — **nie zmierzone, więc nie twierdzę, że OK**.
+  Do sprawdzenia na realnej trasie `My Work → Ideas`.
+- **Token `--c-success` (#3fb950) z białym tekstem = 2,54:1.** Przycisk w
+  harnessie naprawiony lokalnie; sam token NIE był ruszany — to ryzyko
+  ogólnoaplikacyjne poza zakresem modułu 07 (osobne zgłoszenie).
+- **Wariant `.fc-event[data-status="ai_suggestion"]`** (kalendarz, `opacity: .5`,
+  `#7c3aed` na pasiastym tle) nie wystąpił w ŻADNYM z 80 kadrów PO — nie mam
+  dowodu ani na zgodność, ani na naruszenie. Nie dotykany.
+- **Ekrany, których przyrząd nie sfotografował** (46/80 w liczniku zrzutów,
+  identycznie w PRZED i w PO): a11y skanowane jest na wszystkich 80 kadrach
+  niezależnie od zapisu PNG, więc liczby PRZED/PO są porównywalne, ale zrzuty
+  wizualne części ekranów nie powstały — to zastany stan przyrządu, nie regresja
+  tego dyżuru.
+
+## Komendy pomiaru (odtwarzalne)
+
+```
+node scripts/dev/grafika-zrzuty.mjs --base=http://127.0.0.1:5335 \
+  --ekrany=<40 ekranow 07_MY_WORK_AGENT z scripts/dev/g06-macierz-ekrany.json> \
+  --katalog=07-po --faza=PO --jezyk=pl --szerokosc=1440 --motywy=light,dark \
+  --rozwin-sekcje=1 --a11y=1 --osiad-po-rozwinieciu=1500 \
+  --wyjscie=/private/tmp/ag-fix-a11y-07-artefakty/po-pl-1440 \
+  --wynik-json=/private/tmp/ag-fix-a11y-07-artefakty/po-pl-1440/wynik.json
+
+# analogicznie --jezyk=en --szerokosc=1024 --wyjscie=.../po-en-1024
+```
+
+Selektory, HTML i zmierzone pary kolorów pojedynczych węzłów zdobyte osobnym
+skryptem diagnostycznym poza repo
+(`/private/tmp/ag-fix-a11y-07-artefakty/wezly.mjs`), replikującym dokładnie tę
+samą sekwencję interakcji co narzędzie kanoniczne (klik w pierwszy wiersz,
+8 rund rozwijania `[aria-expanded="false"]`, `details.open`, 1500 ms
+osiadania, `AxeBuilder.include('#dev-render-root')`) — `wynik.json` zapisuje
+tylko `id`/`impact`/liczbę węzłów.
+
+## Commity
+
+- `031ea68276` fix(a11y): węzły mapy myśli bez `role=button`, tablist kart bez przycisku zamknięcia
+- `ed54b983c9` fix(a11y): kontrast plakietek tabeli idei i kalendarza
+- `b0c47dc1dc` fix(a11y): unikalne nazwy paneli agenta + trzy naprawy hosta
+- `25b0e54823` chore(a11y): uproszczenie tablist kart + formatowanie
+
+Gałąź `agent/fix-a11y-07-20260903` (baza `fc6ff7ed9e`). **Nie wypchnięta.**
+
+## Surowe dane (poza repo)
+
+- `/private/tmp/ag-fix-a11y-07-artefakty/przed-pl-1440/`
+- `/private/tmp/ag-fix-a11y-07-artefakty/po-pl-1440/`
+- `/private/tmp/ag-fix-a11y-07-artefakty/po-en-1024/`
+
+## Konsola / błędy sieci
+
+Bez zmian względem rundy 1: wyłącznie 404 na `/api/**` (harness bez backendu).
