@@ -9505,7 +9505,67 @@
       "header": "Load",
       "subtitle": "Ranges show the state of knowledge and evidence, not false precision of resource utilization.",
       "newAnalysis": "New analysis",
-      "openTools": "Open load tools"
+      "openTools": "Open load tools",
+      "loading": "Loading Capacity register…",
+      "unavailable": "Capacity register unavailable. No local shadow was created.",
+      "retry": "Retry",
+      "activeScenario": "Active capacity scenario",
+      "knowledge": {
+        "known": "Confirmed",
+        "estimated": "Estimated",
+        "unknown": "No data",
+        "unconfirmed": "Unconfirmed"
+      },
+      "confidence": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "rowKind": {
+        "period": "Period",
+        "constraint": "Constraint"
+      },
+      "criticality": {
+        "assessed": "Assessed",
+        "toAssess": "To assess"
+      },
+      "columns": {
+        "titlePeriod": "Period / constraint",
+        "roleTeam": "Role / team",
+        "kind": "Kind",
+        "demandRange": "Demand (range)",
+        "supplyRange": "Supply (range)",
+        "gap": "Gap",
+        "pressureRange": "Pressure (range)",
+        "confidence": "Confidence",
+        "weight": "Weight",
+        "owner": "Owner",
+        "affectedInitiatives": "Affected initiatives",
+        "freshness": "Assumption freshness",
+        "proposedResponse": "Proposed response"
+      },
+      "saturationBaseline": "baseline",
+      "saturationNotApplicable": "not applicable to a constraint",
+      "saturationIncompleteRange": "no full range",
+      "details": {
+        "label": "Load state and evidence",
+        "text": "Ranges are based on available evidence; missing data does not mean zero."
+      },
+      "properties": {
+        "demand": "Demand",
+        "supply": "Supply",
+        "owner": "Owner"
+      },
+      "ai": {
+        "hintChallenge": "Challenge assumptions",
+        "hintCompare": "Compare options",
+        "disabledTooltip": "AI suggestions require an explicit governed analysis request."
+      },
+      "emptyTitle": "No load data in this range",
+      "emptyDescription": "Change the filter or open the tools for the active capacity scenario.",
+      "archiveNote": "Published capacity history is immutable",
+      "destructiveNote": "Capacity scenarios are superseded, not deleted",
+      "resourceOwnerFallback": "Resource owner"
     },
     "planScenario": {
       "status": {
