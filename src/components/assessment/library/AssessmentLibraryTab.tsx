@@ -533,7 +533,11 @@ export const AssessmentLibraryTab: React.FC = () => {
                   informational: [{
                     id: 'start',
                     variant: 'neutral',
-                    label: isPolish ? 'Uruchom assessment' : 'Start assessment',
+                    // PRZEWODY ODBIORU 2026-09-03: polska gałąź mówiła
+                    // „Uruchom assessment" — pół zdania po polsku, pół po
+                    // angielsku, w module, który wszędzie indziej nazywa się
+                    // „Ocena" (assessment.hub.tabs.assessment).
+                    label: isPolish ? 'Uruchom ocenę' : 'Start assessment',
                     icon: PlayCircle,
                     onClick: () => void handleStart(item),
                   }],
