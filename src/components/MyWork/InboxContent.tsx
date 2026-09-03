@@ -1542,7 +1542,10 @@ const PreviewPane: React.FC<{
             label: i18n.t('myWork.inboxContent.linkedTask', 'Linked task'),
             title: item.linkedTaskId,
             icon: CheckSquare,
-            tone: 'text-emerald-600 dark:text-emerald-400',
+            // G06 „podgląd — kontrast" (2026-09-03): text-emerald-600 (#388A22)
+            // na tle bloku Relations w panelu podglądu (#f8fafc) mierzyło
+            // 4,16:1 (próg 4,5:1, mywork-inbox). emerald-700 — 6,6:1.
+            tone: 'text-emerald-700 dark:text-emerald-400',
             onClick: onOpenTask ? () => onOpenTask(item.linkedTaskId!) : undefined,
           } as RelationItem,
         ]
