@@ -40,7 +40,20 @@ export function AiProviderErrorNotice({
   const frame = isDanger
     ? 'border-c-danger/30 bg-c-danger/10'
     : 'border-c-warning/30 bg-c-warning/10';
-  const accent = isDanger ? 'text-c-danger' : 'text-c-warning';
+  // Ikona: grafika, prog 3:1 — `--c-danger` na wlasnym odcieniu daje 3,77:1, wiec przechodzi.
+  const ikona = isDanger ? 'text-c-danger' : 'text-c-warning';
+  // NAGLOWEK to tekst, prog 4,5:1. Zmierzone axe na tym ekranie (light):
+  // `--c-danger` #e80538 na `bg-c-danger/10` #f8e2e6 = 3,77:1 — NIE przechodzi.
+  // `--c-warning` #a3541c jest juz w src/index.css:119 przyciemniony „for AA on
+  // warning/10" i przechodzi. Dla czerwieni repo ma gotowy, skalibrowany-na-
+  // odcieniu wariant `--c-danger-table` (src/index.css:259/422, 5,3-6,0:1) —
+  // uzywamy jego, zamiast wprowadzac nowy token. Wyliczone: #c1042f na #f8e2e6
+  // = 5,12:1.
+  const naglowek = isDanger ? 'text-[color:var(--c-danger-table)]' : 'text-c-warning';
+  // Drugi wiersz byl `text-c-text-muted` — #64748b na obu odcieniach dawal
+  // 3,85-3,96:1 (4 wezly axe). src/index.css:247 opisuje dokladnie te pulapke:
+  // tokeny sa kalibrowane na zwyklym tle, nie na tincie. Zwykly tekst przechodzi.
+  const podpowiedz = 'text-c-text';
   const diagnostic = String(adminDiagnostic || '').trim();
 
   return (
@@ -51,10 +64,10 @@ export function AiProviderErrorNotice({
       className={`not-prose rounded-lg border ${frame} ${compact ? 'p-2.5' : 'p-3'}`}
     >
       <div className="flex items-start gap-2">
-        <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${accent}`} aria-hidden="true" />
+        <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${ikona}`} aria-hidden="true" />
         <div className="min-w-0 flex-1">
-          <p className={`text-sm font-medium ${accent}`}>{copy.message}</p>
-          <p className="mt-1 text-xs text-c-text-muted">{copy.action}</p>
+          <p className={`text-sm font-medium ${naglowek}`}>{copy.message}</p>
+          <p className={`mt-1 text-xs ${podpowiedz}`}>{copy.action}</p>
 
           {onRetry ? (
             <button
