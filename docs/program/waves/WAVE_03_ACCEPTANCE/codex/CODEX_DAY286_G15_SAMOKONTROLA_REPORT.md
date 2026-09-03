@@ -58,6 +58,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 11_MATERIALS | 20 | 184 | 182 | 2 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 182/184 PASS; te same dwie pełne nazwy są czerwone na bazie i markerze, brak czerwieni NOWYCH; serwer pozostaje do pomiaru.` |
 | 12_AUDITS | 3 | 17 | 17 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 4/4, marker 17/17; 13 nowych zielonych przypadków, zero czerwieni. Serwer Audytów pozostaje do pomiaru.` |
 | 13_CHAT | 45 | 439 | 439 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 416/416, marker 439/439; 23 nowe zielone przypadki, zero czerwieni. Serwer pozostaje do pomiaru.` |
+| 14_ADMIN | 38 | 248 | 241 | 7 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 241/248 PASS; te same 7 pełnych nazw czerwonych na bazie i markerze, 6 nowych zielonych przypadków, brak czerwieni NOWYCH. Serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -112,3 +113,7 @@ Pakiet frontowy jest jednostkowy; z jego zieleni nie wyprowadzono twierdzeń o t
 ### Pułapki — 13_CHAT
 
 Pakiet jest jednostkowy; globalne atrapy AI i `fetch` oznaczają, że wynik dowodzi wyłącznie renderowania/kontraktów lokalnych, nie realnej sieci ani modelu. Nie wykonano żadnego wywołania LLM. Pełne nazwy: 23 dodane, zero znikniętych i zero czerwonych.
+
+### Pułapki — 14_ADMIN
+
+Pakiet jest jednostkowy i nie dowodzi realnych zapisów API mimo nazw testów sugerujących readback. Siedem czerwieni ma identyczne pełne nazwy po obu stronach; żadnej nie nazwano NOWĄ. Brak tabeli licencji pozostawia je bez zmiany.
