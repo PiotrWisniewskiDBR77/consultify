@@ -8896,7 +8896,67 @@
       "header": "Obciążenie",
       "subtitle": "Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.",
       "newAnalysis": "Nowa analiza",
-      "openTools": "Otwórz narzędzia obciążenia"
+      "openTools": "Otwórz narzędzia obciążenia",
+      "loading": "Wczytywanie rejestru obciążenia…",
+      "unavailable": "Rejestr obciążenia jest niedostępny. Nie utworzono lokalnej kopii.",
+      "retry": "Ponów",
+      "activeScenario": "Aktywny wariant obciążenia",
+      "knowledge": {
+        "known": "Potwierdzone",
+        "estimated": "Szacowane",
+        "unknown": "Brak danych",
+        "unconfirmed": "Niepotwierdzone"
+      },
+      "confidence": {
+        "high": "Wysoka",
+        "medium": "Średnia",
+        "low": "Niska"
+      },
+      "rowKind": {
+        "period": "Okres",
+        "constraint": "Ograniczenie"
+      },
+      "criticality": {
+        "assessed": "Oceniona",
+        "toAssess": "Do oceny"
+      },
+      "columns": {
+        "titlePeriod": "Okres / ograniczenie",
+        "roleTeam": "Rola / zespół",
+        "kind": "Rodzaj",
+        "demandRange": "Potrzeby (zakres)",
+        "supplyRange": "Zasoby (zakres)",
+        "gap": "Luka",
+        "pressureRange": "Presja (zakres)",
+        "confidence": "Pewność",
+        "weight": "Waga",
+        "owner": "Opiekun",
+        "affectedInitiatives": "Dotknięte inicjatywy",
+        "freshness": "Aktualność założeń",
+        "proposedResponse": "Proponowana reakcja"
+      },
+      "saturationBaseline": "bazowo",
+      "saturationNotApplicable": "nie dotyczy ograniczenia",
+      "saturationIncompleteRange": "brak pełnego zakresu",
+      "details": {
+        "label": "Stan obciążenia i dowodów",
+        "text": "Zakresy są oparte na dostępnych dowodach; brak danych nie oznacza zera."
+      },
+      "properties": {
+        "demand": "Zapotrzebowanie",
+        "supply": "Dostępność",
+        "owner": "Właściciel"
+      },
+      "ai": {
+        "hintChallenge": "Zakwestionuj założenia",
+        "hintCompare": "Porównaj opcje",
+        "disabledTooltip": "Podpowiedzi AI wymagają jawnego, kontrolowanego wniosku o analizę."
+      },
+      "emptyTitle": "Brak danych obciążenia w tym zakresie",
+      "emptyDescription": "Zmień filtr albo otwórz narzędzia aktywnego wariantu obciążenia.",
+      "archiveNote": "Opublikowana historia obciążenia jest niezmienna",
+      "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
+      "resourceOwnerFallback": "Właściciel zasobów"
     },
     "planScenario": {
       "status": {
