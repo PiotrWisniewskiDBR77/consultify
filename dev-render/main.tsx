@@ -404,6 +404,11 @@ const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
+// M03 (dyżur 2026-09-03, "ekrany bez wpisu w harnessie"): DecisionsPanelContent
+// — następca 12 wycofanych kolejek decyzyjnych, osiągalny (MyWorkHub.tsx:135
+// import, :4202 mount), NIGDY dotąd niezmierzony ani niepokazany właścicielowi.
+// Patrz dev-render/screens/mywork-decisions.tsx.
+const MyWorkDecisionsScreen = React.lazy(() => import('./screens/mywork-decisions'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
 const IdeaTableRecordTemplatesScreen = React.lazy(
@@ -1162,6 +1167,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mywork-calendar': {
     label: '02-moja-praca — Kalendarz (widok bazowy) — 145-nowe-ekrany 2026-08-31',
     render: () => <MyWorkCalendarScreen />,
+  },
+  'mywork-decisions': {
+    label:
+      '02-moja-praca — Decyzje (DecisionsPanelContent, następca 12 wycofanych kolejek decyzyjnych) — dyżur "ekrany bez wpisu" 2026-09-03',
+    render: () => <MyWorkDecisionsScreen />,
   },
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
