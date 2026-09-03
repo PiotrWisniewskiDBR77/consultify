@@ -1,20 +1,24 @@
 /**
  * MYW-PHOTO-003 (P1) — owner-feedback contract regression.
  *
- * "Menu drugiego poziomu przelewa się przy 1280 px i pokazuje natywny
- * poziomy pasek przewijania; kontrolki ściśnięte przy prawej krawędzi." —
- * at ~1280px the main nav row (tabs + right-cluster controls) overflows and
- * scrolls, but showed the browser's thick default scrollbar with no
- * trailing space, so the last control read as cramped against the edge.
+ * "Level-2 menu overflows at 1280px with a native horizontal scrollbar;
+ * controls are cramped at the right edge." — the acceptance doc's evidence
+ * for this being partially closed pointed at `ScrollAffordance` inside
+ * `MyWorkNav.tsx` (lines ~285–286 / ~333–334). Measured (dyżur
+ * mw-skrzynka-pasek-20260903, mywork-inbox harness, 1024px/768px screenshots
+ * PRZED naprawą): `MyWorkNav` is NEVER mounted anywhere in the app —
+ * `grep -rn '<MyWorkNav' src/` has zero hits outside `MyWorkNav.tsx` itself,
+ * and `isMyWorkTwoLevelNavEnabled()` (the flag that would gate it in) is
+ * never called either. The nav bar that actually ships is the single-row
+ * `tabs.map` bar in `MyWorkHub.tsx` (Main Navigation Row) plus its Menu 2
+ * right cluster — neither had ANY scroll affordance, just a thin styled
+ * scrollbar (`app-table-scrollbar`) that gives zero visual cue more tabs
+ * exist past a hard-clipped edge. This locks in the fix: both rows now use
+ * the shared `useScrollEdges` + `ScrollEdgeFade` primitives (extracted from
+ * `MyWorkNav.tsx`'s own, never-shipped implementation).
  *
- * Fix: both horizontally-scrolling rows in the main nav bar now use the
- * app's existing thin styled scrollbar token (`app-table-scrollbar`, the
- * same one every other scrollable table surface uses) plus a small trailing
- * `pr-1` so the last chip/control never sits flush against the scroll edge.
- *
- * Source: `evidence/exact-candidate-43730-photo-gate-2026-08-23/MY_WORK_EXPERT_REVIEW_2026-08-23.md`.
- * Source-contract check, following `MyWorkHub.decisionsOwnerFeedback.test.ts`
- * in this directory (full mount pulls in the whole My Work provider stack).
+ * Source-level lock (component is too large/dependency-heavy to mount in a
+ * unit test — same pattern as `MyWorkHub.photo005.contract.test.ts`).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,25 +27,31 @@ import { describe, expect, it } from 'vitest';
 
 const hubSource = fs.readFileSync(path.resolve(__dirname, '../MyWorkHub.tsx'), 'utf8');
 
-describe('MYW-PHOTO-003 — main nav overflow rows use the styled scrollbar', () => {
-  it('applies the canonical thin scrollbar token to the main tab row and the right cluster', () => {
-    const overflowRows = hubSource
-      .split('\n')
-      .filter((line) => line.includes('overflow-x-auto') && line.includes('whitespace-nowrap'));
-
-    const styledRows = overflowRows.filter((line) => line.includes('app-table-scrollbar'));
-    // At least the main-tabs row and the right-cluster scrollable-controls
-    // row must carry the styled-scrollbar token.
-    expect(styledRows.length).toBeGreaterThanOrEqual(2);
+describe('MYW-PHOTO-003 — live nav bar (not the unmounted MyWorkNav.tsx) signals horizontal scroll', () => {
+  it('imports the shared scroll-edge affordance primitives', () => {
+    expect(hubSource).toContain("from './shared/useScrollEdges'");
+    expect(hubSource).toContain("from './shared/ScrollEdgeFade'");
   });
 
-  it('gives the scrolled rows trailing room so the last control is not flush against the edge', () => {
-    const styledClassNameRows = hubSource
-      .split('\n')
-      .filter((line) => line.includes('className=') && line.includes('app-table-scrollbar'));
-    expect(styledClassNameRows.length).toBeGreaterThanOrEqual(2);
-    for (const row of styledClassNameRows) {
-      expect(row).toContain('pr-1');
-    }
+  it('wires the Main Navigation Row tab strip to a measured scroll-edge ref', () => {
+    expect(hubSource).toContain('const [tabsRowRef, tabsRowEdges] = useScrollEdges(');
+    expect(hubSource).toContain('ref={tabsRowRef}');
+    expect(hubSource).toContain(
+      'visible={tabsRowEdges.scrollable && !tabsRowEdges.atStart}'
+    );
+    expect(hubSource).toContain('visible={tabsRowEdges.scrollable && !tabsRowEdges.atEnd}');
+  });
+
+  it('wires the Menu 2 right cluster row to a measured scroll-edge ref', () => {
+    expect(hubSource).toContain(
+      'const [rightClusterRowRef, rightClusterRowEdges] = useScrollEdges('
+    );
+    expect(hubSource).toContain('ref={rightClusterRowRef}');
+    expect(hubSource).toContain(
+      'visible={rightClusterRowEdges.scrollable && !rightClusterRowEdges.atStart}'
+    );
+    expect(hubSource).toContain(
+      'visible={rightClusterRowEdges.scrollable && !rightClusterRowEdges.atEnd}'
+    );
   });
 });
