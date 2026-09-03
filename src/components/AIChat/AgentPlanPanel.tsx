@@ -536,7 +536,13 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
         />
       </div>
 
-      <AgentWorkshopPalette onAdd={(entry) => handleAppendEntry(entry.id)} disabled={!editable} />
+      <AgentWorkshopPalette
+        onAdd={(entry) => handleAppendEntry(entry.id)}
+        disabled={!editable}
+        ariaLabel={
+          plan.title ? `Paleta klocków agenta — ${plan.title}` : 'Paleta klocków agenta'
+        }
+      />
     </div>
   );
 };

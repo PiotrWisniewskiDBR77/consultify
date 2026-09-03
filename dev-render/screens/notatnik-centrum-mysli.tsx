@@ -158,7 +158,11 @@ function ProposalCard({
         <button
           type="button"
           className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          style={{ background: 'var(--c-success)' }}
+          // axe `color-contrast`: biel na samym `--c-success` (#3fb950 w motywie
+          // ciemnym) = 2,54:1. Przyciemnienie do 35% barwy + 65% czerni domyka
+          // prog w obu motywach i zachowuje odcien „sukces" (ten sam zabieg co
+          // plakietki kalendarza, CalendarGrid.tsx).
+          style={{ background: 'color-mix(in srgb, var(--c-success) 35%, black 65%)' }}
         >
           <Check size={13} /> {isPl ? 'Zatwierdź' : 'Approve'}
         </button>

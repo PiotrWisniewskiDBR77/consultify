@@ -234,11 +234,17 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
         {/* Pasek harnessu (tytuł story + przełącznik trybu) — schowany przy
             zrzutach (bramka PODPIS, 2026-09-01). Produkt = TableWithPreviewLayout niżej. */}
         <div className="mb-3" data-dev-render-chrome="true">
-          <h1 className="text-lg font-semibold text-c-text">
+          {/* ★ axe `heading-order` (odbior G06 runda 2): pasek harnessu wstrzykiwal
+              <h1> W SRODEK mierzonego drzewa, a replika kart produktu zaczyna sie
+              od <h4> (tak jak realny MyIdeasListContent) — powstawal sztuczny
+              przeskok h1 -> h4, ktorego w aplikacji nie ma. Chrome przyrzadu nie
+              ma prawa dokladac struktury naglowkow do produktu: ten sam wyglad,
+              bez semantyki naglowka. */}
+          <div className="text-lg font-semibold text-c-text">
             {isPl
               ? 'My Work → Ideas — podgląd desktop jako overlay (#4b)'
               : 'My Work → Ideas — desktop preview overlay (#4b)'}
-          </h1>
+          </div>
           <p className="text-xs text-c-text-muted mt-0.5">
             {overlay
               ? isPl
