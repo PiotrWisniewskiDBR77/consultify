@@ -31,10 +31,23 @@ describe('MYW-PHOTO-002 — Inbox empty state no longer claims false success', (
     expect(inboxSource).toContain('myWork.inboxContent.newItemsWillAppearHere');
   });
 
-  it('keeps the existing loading and error states untouched (already honest)', () => {
+  it('keeps the existing loading state untouched (already honest)', () => {
     expect(inboxSource).toContain('<SharedLoadingState template="list" rows={6} />');
-    expect(inboxSource).toContain(
-      '<ErrorState message={loadError} retry={() => void fetchInbox()} />'
-    );
+  });
+
+  it('distinguishes access-denied (401/403) from a generic load failure — "Still open" gap', () => {
+    // The empty-vs-denied gap noted in MODULE_ACCEPTANCE.md ("a genuinely
+    // empty successful query and a silently-scoped-to-nothing query render
+    // identically") is only partially closable from the frontend: a 200
+    // with an empty array cannot be told apart from a 200 scoped to nothing
+    // without a new backend signal. What WAS already available — the HTTP
+    // status on a failed request — was not being read. This asserts that
+    // gap is closed: 401/403 gets its own title/copy/no-retry instead of
+    // the generic "Failed to load Inbox" + always-offered retry.
+    expect(inboxSource).toContain('loadErrorIsAccessDenied');
+    expect(inboxSource).toContain("httpStatus === 401 || httpStatus === 403");
+    expect(inboxSource).toContain('myWork.inboxContent.accessDeniedTitle');
+    expect(inboxSource).toContain('myWork.inboxContent.accessDeniedMessage');
+    expect(inboxSource).toContain('retry={loadErrorIsAccessDenied ? undefined : () => void fetchInbox()}');
   });
 });

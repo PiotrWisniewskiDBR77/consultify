@@ -160,6 +160,8 @@ import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
+import { ScrollEdgeFade } from './shared/ScrollEdgeFade';
+import { useScrollEdges } from './shared/useScrollEdges';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -1823,6 +1825,17 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return true;
     });
   }, [isPilotParticipant, ideasBetaLocked, isPolish, tabCounts, canViewManager]);
+
+  // MYW-PHOTO-003 (P1): the Main Navigation Row's tab strip and the Menu 2
+  // right cluster both run out of room and scroll horizontally at narrower
+  // widths (~1280px and below) — measured (1024px/768px, mywork-inbox
+  // harness, dyżur mw-skrzynka-pasek-20260903): tabs get hard-clipped
+  // mid-label with ZERO visual cue that more tabs exist past the edge.
+  // `useScrollEdges` + `ScrollEdgeFade` give both rows the same fade+chevron
+  // affordance already designed (but never shipped — dead code behind the
+  // always-off `isMyWorkTwoLevelNavEnabled` flag) in `MyWorkNav.tsx`.
+  const [tabsRowRef, tabsRowEdges] = useScrollEdges([tabs.length]);
+  const [rightClusterRowRef, rightClusterRowEdges] = useScrollEdges([activeTab]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -4341,46 +4354,61 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 scrolls — `app-table-scrollbar` swaps the OS's thick default
                 bar for the app's thin styled one (same token used by every
                 other scrollable table surface); the trailing `pr-1` keeps
-                the last chip from sitting flush against the scroll edge. */}
-            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      if (tab.isLocked) {
-                        if (tab.betaLocked) {
-                          dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
-                        } else {
-                          const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-                          dispatchPilotAccessBlocked({
-                            message: detail.message,
-                            href: detail.href,
-                          });
+                the last chip from sitting flush against the scroll edge.
+                A thin scrollbar alone is still not a real affordance at
+                1024px/768px (measured: it hard-clips the last tab mid-label
+                with no cue more exist) — `ScrollEdgeFade` adds the fade +
+                chevron edge marker, same design already built (never
+                shipped) in `MyWorkNav.tsx`. */}
+            <div className="relative min-w-0 flex-1">
+              <div
+                ref={tabsRowRef}
+                className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1"
+              >
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        if (tab.isLocked) {
+                          if (tab.betaLocked) {
+                            dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+                          } else {
+                            const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                            dispatchPilotAccessBlocked({
+                              message: detail.message,
+                              href: detail.href,
+                            });
+                          }
+                          return;
                         }
-                        return;
+                        setActiveTab(tab.id);
+                        // Close document when switching tabs to show list view
+                        setActiveDocumentId(null);
+                      }}
+                      className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
+                      data-testid={`mywork-tab-${tab.id}`}
+                      title={
+                        tab.isLocked
+                          ? tab.betaLocked
+                            ? t('access.blocked.BETA_LOCKED')
+                            : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                          : undefined
                       }
-                      setActiveTab(tab.id);
-                      // Close document when switching tabs to show list view
-                      setActiveDocumentId(null);
-                    }}
-                    className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                    data-testid={`mywork-tab-${tab.id}`}
-                    title={
-                      tab.isLocked
-                        ? tab.betaLocked
-                          ? t('access.blocked.BETA_LOCKED')
-                          : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
-                        : undefined
-                    }
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                    {tab.isLocked && <Lock size={14} className="opacity-70" />}
-                  </button>
-                );
-              })}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      {tab.isLocked && <Lock size={14} className="opacity-70" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <ScrollEdgeFade
+                side="start"
+                visible={tabsRowEdges.scrollable && !tabsRowEdges.atStart}
+              />
+              <ScrollEdgeFade side="end" visible={tabsRowEdges.scrollable && !tabsRowEdges.atEnd} />
             </div>
           </div>
 
@@ -4390,8 +4418,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* MYW-PHOTO-003 (P1): same fix as the tab row above — thin
                 styled scrollbar instead of the OS default, plus trailing
                 room so the rightmost control (Area/kebab) is never cramped
-                against the panel edge when this row is scrolled to the end. */}
-            <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1">
+                against the panel edge when this row is scrolled to the end.
+                Same `ScrollEdgeFade` addition as the tab row: a plain thin
+                scrollbar alone hard-clips the last control at 1024px/768px
+                with no cue more exist past the edge. */}
+            <div className="relative min-w-0">
+              <div
+                ref={rightClusterRowRef}
+                className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap app-table-scrollbar pr-1"
+              >
               {/* HubBarSlots — filtr zadeklarowany przez ekran-dziecko (np.
                   Run agent "Moje procesy | Szablony"). Kontrakt:
                   filterControls → lewa część prawego klastra (patrz
@@ -4684,6 +4719,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                   />
                 )}
+              </div>
+              <ScrollEdgeFade
+                side="start"
+                visible={rightClusterRowEdges.scrollable && !rightClusterRowEdges.atStart}
+              />
+              <ScrollEdgeFade
+                side="end"
+                visible={rightClusterRowEdges.scrollable && !rightClusterRowEdges.atEnd}
+              />
             </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) —
