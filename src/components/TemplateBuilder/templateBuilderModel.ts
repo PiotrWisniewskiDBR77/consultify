@@ -149,6 +149,71 @@ export const SCOPE_LABELS: Record<TemplateScope, string> = {
   private: 'Prywatny',
 };
 
+// ── Etykiety słowników (EN) ─────────────────────────────────────────────────
+// G06 i18n (2026-09-03, agent/i18n-pl-en): powyższe mapy PL nie miały
+// odpowiednika EN i nic ich nie czytało przez t() — cały moduł TemplateBuilder
+// renderował się identycznie na `?lang=pl` i `?lang=en` (pomiar PL=EN).
+// Wzorzec z Finance (`pickWorkspaceBarLabel`): pary map + `pickTemplateLabel`
+// zamiast pojedynczego globalnego t()-katalogu, bo te słowniki są strukturalne
+// (typ bloku/archetyp/typ danych), nie zdaniami UI.
+
+export const DOC_BLOCK_LABELS_EN: Record<DocBlockKind, string> = {
+  heading: 'Heading',
+  paragraph: 'Paragraph',
+  bullets: 'Bulleted list',
+  table: 'Table',
+  kpi: 'KPI bar',
+  chart: 'Chart',
+};
+
+export const SLIDE_ARCHETYPE_LABELS_EN: Record<SlideArchetype, string> = {
+  cover: 'Cover',
+  agenda: 'Agenda',
+  section: 'Section divider',
+  content: 'Content',
+  'two-column': 'Two columns',
+  kpi: 'KPI bar',
+  chart: 'Chart',
+  quote: 'Quote',
+  closing: 'Closing',
+};
+
+export const SHEET_COLUMN_TYPE_LABELS_EN: Record<SheetColumnType, string> = {
+  text: 'Text',
+  number: 'Number',
+  currency: 'Currency',
+  percent: 'Percent',
+  date: 'Date',
+  formula: 'Formula',
+};
+
+export const DEPTH_LABELS_EN: Record<TemplateDepth, string> = {
+  short: 'Short',
+  medium: 'Medium',
+  long: 'Detailed',
+};
+
+export const TEMPLATE_TYPE_LABELS_EN: Record<TemplateType, string> = {
+  doc: 'Document (Word)',
+  deck: 'Presentation (Deck)',
+  table: 'Spreadsheet (Excel)',
+};
+
+export const SCOPE_LABELS_EN: Record<TemplateScope, string> = {
+  org: 'Organization',
+  private: 'Private',
+};
+
+/** G06 i18n: wybiera mapę PL/EN wg aktywnego języka i zwraca etykietę klucza. */
+export function pickTemplateLabel<K extends string>(
+  labelsPl: Record<K, string>,
+  labelsEn: Record<K, string>,
+  key: K,
+  language: string
+): string {
+  return language.toLowerCase().startsWith('en') ? labelsEn[key] : labelsPl[key];
+}
+
 // ── Fabryki elementów ──────────────────────────────────────────────────────
 
 export function newDocSection(): DocSection {

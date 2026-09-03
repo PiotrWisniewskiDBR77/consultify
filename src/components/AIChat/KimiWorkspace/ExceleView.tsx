@@ -520,19 +520,22 @@ export const ExceleView: React.FC = () => {
       <TriModeChooser
         busy={creatingBlank}
         showTemplate
-        heading="Jak chcesz zacząć arkusz?"
-        subheading="Wybierz tryb — wszystkie trzy są równorzędne."
+        heading={t('kimi.excele.triChooser.heading', 'Jak chcesz zacząć arkusz?')}
+        subheading={t('kimi.excele.triChooser.subheading', 'Wybierz tryb — wszystkie trzy są równorzędne.')}
         clean={{
-          title: 'Czysto',
-          desc: 'Pusta siatka (1 arkusz). Wypełniasz sam, bez AI.',
+          title: t('kimi.excele.triChooser.clean.title', 'Czysto'),
+          desc: t('kimi.excele.triChooser.clean.desc', 'Pusta siatka (1 arkusz). Wypełniasz sam, bez AI.'),
         }}
         ai={{
-          title: 'Z AI',
-          desc: 'Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami.',
+          title: t('kimi.excele.triChooser.ai.title', 'Z AI'),
+          desc: t(
+            'excele.triChooser.ai.desc',
+            'Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami.'
+          ),
         }}
         template={{
-          title: 'Z szablonu',
-          desc: 'Zacznij od gotowego szablonu arkusza.',
+          title: t('kimi.excele.triChooser.template.title', 'Z szablonu'),
+          desc: t('kimi.excele.triChooser.template.desc', 'Zacznij od gotowego szablonu arkusza.'),
         }}
         onClean={handleCreateEmptyGrid}
         onAi={() => setEntryMode('ai')}

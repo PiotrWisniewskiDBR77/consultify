@@ -15,6 +15,7 @@
  * renderuje `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
 import React, { useId, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceExportImportFlag } from '@/hooks/useFinanceExportImportFlag';
@@ -52,16 +53,18 @@ type ExportState =
 // każdy krok z realnym opóźnieniem sieciowym, a wcześniej WSZYSTKIE etapy
 // ("Wczytuję plik…", "Liczę podgląd różnic…", "Zapisuję…", błędy,
 // podsumowanie) były widoczne wyłącznie wzrokowo.
-function exportStateMessage(state: ExportState): string {
+function exportStateMessage(state: ExportState, t: TFunction): string {
   switch (state.kind) {
     case 'idle':
-      return 'Eksport gotowy do uruchomienia.';
+      return t('finance.exportImport.export.idle', 'Eksport gotowy do uruchomienia.');
     case 'exporting':
-      return 'Eksportuję plik .xlsx…';
+      return t('finance.exportImport.export.exporting', 'Eksportuję plik .xlsx…');
     case 'exported':
-      return `Eksport gotowy: wersja v${state.manifest.businessVersionNo}.`;
+      return t('finance.exportImport.export.exported', 'Eksport gotowy: wersja v{{version}}.', {
+        version: state.manifest.businessVersionNo,
+      });
     case 'error':
-      return `Błąd eksportu: ${state.title}`;
+      return `${t('finance.exportImport.export.error', 'Błąd eksportu')}: ${state.title}`;
     default: {
       const _exhaustive: never = state;
       return String(_exhaustive);
@@ -69,28 +72,48 @@ function exportStateMessage(state: ExportState): string {
   }
 }
 
-function importStateMessage(state: ImportState): string {
+function importStateMessage(state: ImportState, t: TFunction): string {
   switch (state.kind) {
     case 'idle':
-      return 'Import gotowy — wybierz plik .xlsx.';
+      return t('finance.exportImport.import.idle', 'Import gotowy — wybierz plik .xlsx.');
     case 'parsing':
-      return 'Wczytuję plik…';
+      return t('finance.exportImport.import.parsing', 'Wczytuję plik…');
     case 'parsed':
       return state.manifestIssues.length > 0
-        ? `Manifest ma problemy: ${state.manifestIssues.join('; ')}`
-        : `Wczytano ${state.rows.length} wierszy. Manifest OK.`;
+        ? `${t('finance.exportImport.import.manifestIssues', 'Manifest ma problemy')}: ${state.manifestIssues.join('; ')}`
+        : t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+            count: state.rows.length,
+          });
     case 'previewing':
-      return 'Liczę podgląd różnic…';
+      return t('finance.exportImport.import.previewing', 'Liczę podgląd różnic…');
     case 'previewed':
       return state.preview.ok
-        ? `Podgląd gotowy: ${state.preview.diff.toAdd.length} dodanych, ${state.preview.diff.toChange.length} zmienionych, ${state.preview.diff.toClear.length} wyczyszczonych.`
-        : `Podgląd zablokowany: ${state.preview.rowErrors.length} błędów wierszy.`;
+        ? t(
+            'finance.exportImport.import.previewReady',
+            'Podgląd gotowy: {{add}} dodanych, {{change}} zmienionych, {{clear}} wyczyszczonych.',
+            {
+              add: state.preview.diff.toAdd.length,
+              change: state.preview.diff.toChange.length,
+              clear: state.preview.diff.toClear.length,
+            }
+          )
+        : t('finance.exportImport.import.previewBlocked', 'Podgląd zablokowany: {{count}} błędów wierszy.', {
+            count: state.preview.rowErrors.length,
+          });
     case 'applying':
-      return 'Zapisuję zmiany…';
+      return t('finance.exportImport.import.applying', 'Zapisuję zmiany…');
     case 'applied':
-      return `Zastosowano: dodane ${state.appliedCount.added}, zmienione ${state.appliedCount.changed}, wyczyszczone ${state.appliedCount.cleared}.`;
+      return t(
+        'finance.exportImport.import.applied',
+        'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+        {
+          added: state.appliedCount.added,
+          changed: state.appliedCount.changed,
+          cleared: state.appliedCount.cleared,
+        }
+      );
     case 'error':
-      return `Błąd importu: ${state.title}`;
+      return `${t('finance.exportImport.import.error', 'Błąd importu')}: ${state.title}`;
     default: {
       const _exhaustive: never = state;
       return String(_exhaustive);
@@ -128,6 +151,7 @@ export function FinanceExportImportPanel({
   expectedWorkingRevisionId,
   className,
 }: FinanceExportImportPanelProps): React.ReactElement | null {
+  const { t } = useTranslation();
   const { enabled } = useFinanceExportImportFlag();
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
   const [importState, setImportState] = useState<ImportState>({ kind: 'idle' });
@@ -214,15 +238,15 @@ export function FinanceExportImportPanel({
       data-testid="finance-export-import-panel"
     >
       <FinanceStatusAnnouncer
-        message={exportStateMessage(exportState)}
+        message={exportStateMessage(exportState, t)}
         priority={exportState.kind === 'error' ? 'assertive' : 'polite'}
       />
       <FinanceStatusAnnouncer
-        message={importStateMessage(importState)}
+        message={importStateMessage(importState, t)}
         priority={importState.kind === 'error' ? 'assertive' : 'polite'}
       />
       <div className="flex flex-col gap-1.5" data-testid="export-section">
-        <p className="text-xs font-semibold text-c-text-secondary">Eksport (.xlsx)</p>
+        <p className="text-xs font-semibold text-c-text-secondary">{t('finance.exportImport.exportTitle', 'Eksport (.xlsx)')}</p>
         <button
           type="button"
           disabled={exportState.kind === 'exporting'}
@@ -230,12 +254,13 @@ export function FinanceExportImportPanel({
           onClick={handleExport}
           data-testid="export-button"
         >
-          {exportState.kind === 'exporting' ? 'Eksportuję…' : 'Eksportuj .xlsx'}
+          {exportState.kind === 'exporting' ? t('finance.exportImport.exportingButton', 'Eksportuję…') : t('finance.exportImport.exportButton', 'Eksportuj .xlsx')}
         </button>
         {exportState.kind === 'exported' ? (
           <p className="text-[11px] text-c-text-secondary" data-testid="export-manifest-summary">
-            Wersja v{exportState.manifest.businessVersionNo} · jednostka{' '}
-            {financeUnitLabel(exportState.manifest.defaultUnit)} · źródło {exportState.manifest.source}
+            {t('finance.exportImport.version', 'Wersja')} v{exportState.manifest.businessVersionNo} ·{' '}
+            {t('finance.exportImport.unit', 'jednostka')} {financeUnitLabel(exportState.manifest.defaultUnit)} ·{' '}
+            {t('finance.exportImport.source', 'źródło')} {exportState.manifest.source}
           </p>
         ) : null}
         {exportState.kind === 'error' ? (
@@ -247,7 +272,7 @@ export function FinanceExportImportPanel({
 
       <div className="flex flex-col gap-2" data-testid="import-section">
         <p className="text-xs font-semibold text-c-text-secondary">
-          Import (.xlsx) — transakcyjny, wszystko-albo-nic
+          {t('finance.exportImport.importTitle', 'Import (.xlsx) — transakcyjny, wszystko-albo-nic')}
         </p>
         {/*
           ★ NAPRAWA a11y (Pakiet I, wymaganie #5 "dostępne nazwy"): `<input
@@ -259,7 +284,7 @@ export function FinanceExportImportPanel({
           też PROGRAMOWO powiązana).
         */}
         <label htmlFor={importFileInputId} className="text-xs font-medium text-c-text-primary">
-          Wybierz plik do importu (.xlsx)
+          {t('finance.exportImport.chooseFileLabel', 'Wybierz plik do importu (.xlsx)')}
         </label>
         {/*
           Odbiór 2026-08-30 (przegląd całości): natywny przycisk pola pliku
@@ -291,26 +316,28 @@ export function FinanceExportImportPanel({
             htmlFor={importFileInputId}
             className="cursor-pointer rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface"
           >
-            Wybierz plik
+            {t('finance.exportImport.chooseFileButton', 'Wybierz plik')}
           </label>
           <span className="text-xs text-c-text-secondary">
-            {selectedFileName ?? 'Nie wybrano pliku'}
+            {selectedFileName ?? t('finance.exportImport.noFileSelected', 'Nie wybrano pliku')}
           </span>
         </div>
 
         {importState.kind === 'parsing' ? (
-          <p className="text-xs text-c-text-secondary">Wczytuję plik…</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.parsing', 'Wczytuję plik…')}</p>
         ) : null}
 
         {importState.kind === 'parsed' ? (
           <div className="flex flex-col gap-1.5" data-testid="import-parsed">
             {importState.manifestIssues.length > 0 ? (
               <p className="text-xs text-c-danger">
-                Manifest: {importState.manifestIssues.join('; ')}
+                {t('finance.exportImport.manifest', 'Manifest')}: {importState.manifestIssues.join('; ')}
               </p>
             ) : (
               <p className="text-xs text-c-text-secondary">
-                Wczytano {importState.rows.length} wierszy. Manifest OK.
+                {t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+                  count: importState.rows.length,
+                })}
               </p>
             )}
             <button
@@ -320,30 +347,33 @@ export function FinanceExportImportPanel({
               onClick={handlePreview}
               data-testid="import-preview-button"
             >
-              Podgląd różnic
+              {t('finance.exportImport.previewButton', 'Podgląd różnic')}
             </button>
           </div>
         ) : null}
 
         {importState.kind === 'previewing' ? (
-          <p className="text-xs text-c-text-secondary">Liczę podgląd różnic…</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.previewing', 'Liczę podgląd różnic…')}</p>
         ) : null}
 
         {importState.kind === 'previewed' ? (
           <div className="flex flex-col gap-2" data-testid="import-preview">
             <div className="grid grid-cols-4 gap-2 text-xs">
-              <SummaryTile label="Dodane" value={importState.preview.diff.toAdd.length} />
-              <SummaryTile label="Zmienione" value={importState.preview.diff.toChange.length} />
-              <SummaryTile label="Wyczyszczone" value={importState.preview.diff.toClear.length} />
-              <SummaryTile label="Bez zmian" value={importState.preview.diff.unchangedCount} />
+              <SummaryTile label={t('finance.exportImport.added', 'Dodane')} value={importState.preview.diff.toAdd.length} />
+              <SummaryTile label={t('finance.exportImport.changed', 'Zmienione')} value={importState.preview.diff.toChange.length} />
+              <SummaryTile label={t('finance.exportImport.cleared', 'Wyczyszczone')} value={importState.preview.diff.toClear.length} />
+              <SummaryTile label={t('finance.exportImport.unchanged', 'Bez zmian')} value={importState.preview.diff.unchangedCount} />
             </div>
             {importState.preview.rowErrors.length > 0 ? (
               <div
                 className="rounded-md border border-c-danger/40 bg-c-danger/10 p-2 text-xs text-c-danger"
                 data-testid="import-row-errors"
               >
-                {importState.preview.rowErrors.length} błędów wierszy — import zablokowany, dopóki
-                nie zostaną naprawione.
+                {t(
+                  'finance.exportImport.rowErrors',
+                  '{{count}} błędów wierszy — import zablokowany, dopóki nie zostaną naprawione.',
+                  { count: importState.preview.rowErrors.length }
+                )}
               </div>
             ) : null}
             {!importState.preview.manifestCheck.ok ? (
@@ -363,16 +393,19 @@ export function FinanceExportImportPanel({
               title={
                 importState.preview.ok
                   ? undefined
-                  : 'Zastosowanie zablokowane — napraw błędy powyżej (wszystko-albo-nic)'
+                  : t(
+                      'finance.exportImport.applyBlockedTitle',
+                      'Zastosowanie zablokowane — napraw błędy powyżej (wszystko-albo-nic)'
+                    )
               }
             >
-              Zastosuj (transakcyjnie)
+              {t('finance.exportImport.applyButton', 'Zastosuj (transakcyjnie)')}
             </button>
           </div>
         ) : null}
 
         {importState.kind === 'applying' ? (
-          <p className="text-xs text-c-text-secondary">Zapisuję…</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.applying', 'Zapisuję…')}</p>
         ) : null}
 
         {importState.kind === 'applied' ? (
@@ -380,9 +413,18 @@ export function FinanceExportImportPanel({
             className="rounded-md border border-c-border-subtle bg-c-surface-raised p-2 text-xs text-c-text-primary"
             data-testid="import-applied"
           >
-            Zastosowano: dodane {importState.appliedCount.added}, zmienione{' '}
-            {importState.appliedCount.changed}, wyczyszczone {importState.appliedCount.cleared}.
-            Nowa robocza rewizja: {importState.newWorkingRevisionId}.
+            {t(
+              'finance.exportImport.import.applied',
+              'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+              {
+                added: importState.appliedCount.added,
+                changed: importState.appliedCount.changed,
+                cleared: importState.appliedCount.cleared,
+              }
+            )}{' '}
+            {t('finance.exportImport.newWorkingRevision', 'Nowa robocza rewizja: {{id}}.', {
+              id: importState.newWorkingRevisionId,
+            })}
           </div>
         ) : null}
 

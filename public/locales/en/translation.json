@@ -8202,7 +8202,49 @@
       "failed": "Failed to generate deck",
       "requiresApproval": "Assessment must be APPROVED to export deck"
     },
+    "qualityReview": {
+      "title": "Assessment quality review",
+      "intro1Prefix": "This screen checks the",
+      "quality": "quality",
+      "intro1Suffix": "of a completed assessment: how many areas have evidence, where evidence is missing, and whether the reviewer accepts the assessment. You can add evidence and make a decision here — but no level is set here.",
+      "notMatrix": "This is not the assessment matrix",
+      "notMatrixSuffix": "and doesn't replace it. The matrix (areas × levels) is the working tool — that's where the current and target level of each area is set. The table below is a read-out of its result, collapsed to the per-axis average.",
+      "openMatrix": "Open the assessment matrix",
+      "openMatrixHint": "Opens this assessment's session; the matrix is there under the \"Matrix\" switch in the header."
+    },
+    "presentation": {
+      "methodPack": "Method Pack",
+      "frozenAt": "Frozen on",
+      "outputVersion": "Output version",
+      "ariaLabel": "Maturity assessment presentation",
+      "prevSlide": "Previous slide",
+      "prev": "Previous",
+      "exitFullscreen": "Exit full screen",
+      "fullscreen": "Full screen",
+      "fullscreenTitle": "Full screen (F)",
+      "nextSlide": "Next slide",
+      "next": "Next"
+    },
     "report": {
+      "lifecycleSuperseded": "Frozen — superseded by a newer revision",
+      "lifecycleFrozen": "Frozen (immutable)",
+      "demoBypassBanner": "This Output comes from a session created in demo mode (readiness gate bypassed). This is NOT a production result — it can't be presented as an approved pilot/production result.",
+      "title": "Maturity assessment report",
+      "demoMode": "Demo mode",
+      "project": "Project",
+      "noProject": "No project assigned",
+      "session": "Session",
+      "outputVersion": "Output version",
+      "frozenAt": "Frozen on",
+      "approvedBy": "Approved by",
+      "noApproval": "No recorded approval",
+      "module": "Module",
+      "supersededNotice": "This Output was superseded by a newer revision{{suffix}}. The content below remains an immutable record of THIS revision — it is not updated.",
+      "chapter1": {
+        "title": "How the assessment was conducted",
+        "lede": "Scope, mode, and the reliability boundaries of this assessment — before the first number appears.",
+        "courseTitle": "Assessment course"
+      },
       "strengths": "Key Strengths",
       "dataGaps": "Data Gaps & Follow-up Items",
       "roadmap": "Transformation Roadmap",
@@ -21934,6 +21976,170 @@
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
   },
   "finance": {
+    "comments": {
+      "added": "Comment added.",
+      "resolved": "Comment marked as resolved.",
+      "reopened": "Comment reopened.",
+      "checklistItemAdded": "Checklist item added.",
+      "unchecked": "Unchecked: {{item}}.",
+      "checked": "Checked: {{item}}.",
+      "loading": "Loading comments…",
+      "loaded": "Comments loaded.",
+      "blockingBanner": "There are unresolved blocking comments — approving this version is on hold until they're resolved.",
+      "title": "Comments",
+      "none": "No comments.",
+      "blocking": "Blocking",
+      "mentions": "Mentions",
+      "resolvedAt": "Resolved",
+      "reopen": "Reopen",
+      "markResolved": "Mark as resolved",
+      "composerPlaceholder": "Add a comment…",
+      "mentionsPlaceholder": "Mentions (comma-separated user ids)",
+      "blockingFlag": "Blocking flag",
+      "submit": "Add comment",
+      "checklistTitle": "Review checklist",
+      "allRequiredChecked": "All required items checked",
+      "someRequiredUnchecked": "Some required items are unchecked",
+      "required": "required",
+      "newChecklistItemPlaceholder": "New checklist item…",
+      "addChecklistItem": "Add"
+    },
+    "lineage": {
+      "loading": "Loading lineage…",
+      "trailLoaded": "Lineage chain loaded: {{count}} items.",
+      "trail": "Lineage chain",
+      "unresolved": "{{count}} versions could not be described.",
+      "related": "Related",
+      "parents": "Parents",
+      "noParents": "No direct parents.",
+      "children": "Children",
+      "noChildren": "No direct children.",
+      "indirectAncestors": "Indirect ancestors",
+      "indirectDescendants": "Indirect descendants",
+      "none": "None.",
+      "otherVariants": "Other versions/variants",
+      "new": "New",
+      "hiddenTerminal": "{{count}} archived/invalidated links hidden.",
+      "focusFreshness": "Focus freshness"
+    },
+    "exportImport": {
+      "export": {
+        "idle": "Export ready to run.",
+        "exporting": "Exporting .xlsx file…",
+        "exported": "Export ready: version v{{version}}.",
+        "error": "Export error"
+      },
+      "import": {
+        "idle": "Import ready — choose an .xlsx file.",
+        "parsing": "Reading file…",
+        "manifestIssues": "Manifest has issues",
+        "parsed": "Loaded {{count}} rows. Manifest OK.",
+        "previewing": "Computing diff preview…",
+        "previewReady": "Preview ready: {{add}} added, {{change}} changed, {{clear}} cleared.",
+        "previewBlocked": "Preview blocked: {{count}} row errors.",
+        "applying": "Saving changes…",
+        "applied": "Applied: added {{added}}, changed {{changed}}, cleared {{cleared}}.",
+        "error": "Import error"
+      },
+      "exportTitle": "Export (.xlsx)",
+      "exportingButton": "Exporting…",
+      "exportButton": "Export .xlsx",
+      "version": "Version",
+      "unit": "unit",
+      "source": "source",
+      "importTitle": "Import (.xlsx) — transactional, all-or-nothing",
+      "chooseFileLabel": "Choose a file to import (.xlsx)",
+      "chooseFileButton": "Choose file",
+      "noFileSelected": "No file selected",
+      "manifest": "Manifest",
+      "previewButton": "Preview differences",
+      "added": "Added",
+      "changed": "Changed",
+      "cleared": "Cleared",
+      "unchanged": "Unchanged",
+      "rowErrors": "{{count}} row errors — import blocked until they're fixed.",
+      "applyBlockedTitle": "Apply blocked — fix the errors above (all-or-nothing)",
+      "applyButton": "Apply (transactionally)",
+      "newWorkingRevision": "New working revision: {{id}}."
+    },
+    "compare": {
+      "computing": "Computing comparison…",
+      "error": "Comparison error",
+      "ready": "Comparison ready.",
+      "materialityThreshold": "materiality threshold",
+      "currency": "currency",
+      "exportDiff": "Export differences (.csv)",
+      "rows": "Rows",
+      "bothSides": "Both sides",
+      "missingInA": "Missing in A",
+      "missingInB": "Missing in B",
+      "currencyMismatch": "Currency mismatch",
+      "material": "Material",
+      "onlyMaterial": "Show only material differences",
+      "dimensions": "Dimensions",
+      "state": "State",
+      "noRows": "No rows to show."
+    },
+    "savedViews": {
+      "saved": "View saved.",
+      "deleted": "View deleted.",
+      "linkCopied": "Link to view \"{{name}}\" copied.",
+      "loading": "Loading saved views…",
+      "loaded": "Saved views loaded.",
+      "title": "Saved views",
+      "team": "Team",
+      "personal": "Personal",
+      "saveCurrent": "Save current view",
+      "namePlaceholder": "View name…",
+      "scopeAria": "Visibility of the saved view",
+      "scope": {
+        "personal": "Personal",
+        "team": "Team"
+      },
+      "saveButton": "Save view",
+      "none": "None.",
+      "apply": "Apply",
+      "copied": "Copied",
+      "copyLink": "Copy link",
+      "delete": "Delete"
+    },
+    "workspaceBar": {
+      "contextField": {
+        "type": "Type",
+        "period": "Period",
+        "entity": "Entity",
+        "currencyScale": "Currency / scale",
+        "source": "Source",
+        "lastCompute": "Last calculated"
+      },
+      "saving": "Saving…",
+      "save": "Save",
+      "cancel": "Cancel",
+      "renameHint": "Click to rename",
+      "renameBlockedStatus": "The name can't be changed — this version is approved or closed. Reopen it or create a new version.",
+      "renameBlockedRole": "Your role doesn't allow renaming.",
+      "contextDetails": "Context details",
+      "contextDialogTitle": "Artifact context",
+      "unavailable": "Unavailable",
+      "status": {
+        "DRAFT": "Draft",
+        "READY_FOR_REVIEW": "Ready for review",
+        "IN_REVIEW": "In review",
+        "APPROVED": "Approved",
+        "NEEDS_CHANGES": "Needs changes",
+        "SUPERSEDED": "Superseded",
+        "ARCHIVED": "Archived",
+        "INVALIDATED": "Invalidated"
+      },
+      "draftUnsaved": "Draft — unsaved changes",
+      "draftSuffix": "draft",
+      "confirmDialog": {
+        "title": "Confirm action",
+        "body": "Are you sure you want to:",
+        "irreversible": "This action can't be undone with a single click."
+      },
+      "confirm": "Confirm"
+    },
     "sampleData": {
       "banner": "Sample data — not from the database"
     },
@@ -24156,7 +24362,36 @@
     "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
     "goToBaseline": "Go to Baseline"
   },
+  "publicBooking": {
+    "header": "Book a meeting",
+    "loading": "Loading available slots…",
+    "notFound": "Consultant not found",
+    "notFoundHint": "The booking link is invalid or has expired.",
+    "loadError": "Couldn't load available slots",
+    "retry": "Try again",
+    "meetingWith": "Meeting with {{name}}",
+    "durationTimezone": "{{minutes}} min · {{timezone}} timezone",
+    "chooseDay": "Choose a day",
+    "noSlots": "No available slots in the next 14 days.",
+    "slotsAvailable": "{{count}} free",
+    "chooseDayFromList": "Choose a day from the list on the left."
+  },
   "valuation": {
+    "basket": {
+      "empty": "Run a valuation to see the method basket.",
+      "unit": "value",
+      "eyebrow": "Valuation · method basket",
+      "title": "Enterprise Value — recommended range",
+      "recommendation": "recommendation",
+      "intersection": "intersection zone",
+      "divergence": "Divergence",
+      "threshold": "threshold",
+      "topDriver": "TOP driver of the difference",
+      "legendRange": "method range (low–high)",
+      "legendZone": "intersection zone = recommendation",
+      "engine": "engine",
+      "deterministic": "deterministic, zero LLM"
+    },
     "tabLabel": "Valuation",
     "title": "Enterprise valuation",
     "subtitle": "DCF + comps + sensitivity, deck-ready export",
@@ -25655,6 +25890,37 @@
     }
   },
   "rap": {
+    "materialsLauncher": {
+      "backgroundHint": "Materials — background (modal open below)",
+      "title": "New material",
+      "subtitle": "Choose a format",
+      "chooseMode": "How do you want to start?",
+      "modeHint": "Choose a mode — all three are equally valid.",
+      "document": "Document",
+      "presentation": "Presentation",
+      "spreadsheet": "Excel spreadsheet",
+      "blankTitle": "Blank",
+      "blankDesc": "Manual start — an empty artifact in the editor, no AI.",
+      "aiTitle": "With AI",
+      "aiDesc": "Describe a brief — AI builds the first version.",
+      "templateTitle": "From a template",
+      "templateDesc": "Pick an existing template and adjust it."
+    },
+    "templatesLauncher": {
+      "title": "New template",
+      "subtitle": "Choose a template type",
+      "moreOptions": "More template creation options",
+      "openDeckArchitect": "Template architect (Presentation)",
+      "document": "Word",
+      "presentation": "Presentation",
+      "spreadsheet": "Excel",
+      "blankTitle": "From scratch",
+      "blankDesc": "New template from zero in the architect.",
+      "aiTitle": "With AI",
+      "aiDesc": "Describe the template — the architect plans the structure.",
+      "existingTitle": "Based on an existing one",
+      "existingDesc": "Clone an approved template and adjust it."
+    },
     "tabs": {
       "templates": "Template Library",
       "reports": "Reports",
@@ -26334,6 +26600,22 @@
     "showingAllRows": "Showing all {{total}} rows",
     "showAllRows": "Show all",
     "excele": {
+      "triChooser": {
+        "heading": "How do you want to start the spreadsheet?",
+        "subheading": "Choose a mode — all three are equally valid.",
+        "clean": {
+          "title": "Blank",
+          "desc": "Empty grid (1 sheet). You fill it in yourself, no AI."
+        },
+        "ai": {
+          "title": "With AI",
+          "desc": "Describe the spreadsheet — AI builds a multi-sheet workbook with formulas."
+        },
+        "template": {
+          "title": "From a template",
+          "desc": "Start from a ready-made spreadsheet template."
+        }
+      },
       "reopenNotFound": "This spreadsheet's content could not be found — the source data was deleted or has expired.",
       "reopenNotFoundToast": "Could not open the spreadsheet — content was not found.",
       "formulaBarEmpty": "Select a cell to see its content",
@@ -27980,6 +28262,15 @@
   },
   "comingSoon": "Coming soon",
   "prezentacje": {
+    "templateOrphaned": "This template no longer has a canonical record — there's nothing to generate from. Choose another template in the Library.",
+    "templateNotIndexed": "This template isn't in your Library index. Choose another template.",
+    "templateForbidden": "You don't have access to this template.",
+    "templateDeprecated": "This template has been retired and can no longer drive generation. Choose a current template.",
+    "templateFormatUnsupported": "This template doesn't create presentations.",
+    "templateResolveFailed": "Couldn't resolve the template. Please try again.",
+    "template": {
+      "backToLibrary": "Back to Library"
+    },
     "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
     "kpi": {
       "slides": "slides",
@@ -40648,6 +40939,16 @@
       "approval": "approval"
     },
     "canvas": {
+      "vaultLevelPlaceholder": "— choose a vault —",
+      "kind": {
+        "etapModul": "Stage-module",
+        "aiTeresa": "AI / Teresa",
+        "vaultKontekst": "Vault context",
+        "bramaAkceptu": "Approval (gate)",
+        "automat": "Automation",
+        "informacja": "Information",
+        "pauza": "Wait (pause)"
+      },
       "moduleTag": {
         "assessment": "Assessment",
         "control": "Control",
@@ -40977,6 +41278,184 @@
     "resetPassword": {
       "title": "Set New Password",
       "description": "Set a new password for your Consultify account."
+    }
+  },
+  "discoveryTools": {
+    "swot": {
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "opportunities": "Opportunities",
+      "threats": "Threats",
+      "strategicField": "Strategic field",
+      "tensionsCount": "{{count}} tensions connect the quadrants"
+    },
+    "report": {
+      "execPresentation": "Executive presentation",
+      "title": "Report",
+      "rendererInfo": "Renderer {{version}} · sources: {{count}}"
+    }
+  },
+  "drd": {
+    "matrix": {
+      "title": "Digital Development Map",
+      "subtitle": "Process Digitalization Assessment Matrix",
+      "fullscreen": "Full screen",
+      "openFullscreenTitle": "Open matrix in full screen",
+      "rowHint": "Hover for preview · Click for details",
+      "rowHintClick": "Click for details",
+      "spacious": "Spacious"
+    }
+  },
+  "methodWorkspace": {
+    "tabs": {
+      "interview": "Interview",
+      "matrix": "Matrix",
+      "report": "Report"
+    },
+    "status": {
+      "draft": "Draft",
+      "prepared": "Prepared",
+      "active": "Interview in progress",
+      "inReview": "For review",
+      "frozen": "Frozen",
+      "closed": "Closed",
+      "archived": "Archived"
+    },
+    "loading": "Loading session…",
+    "exit": "Exit",
+    "methodPack": "Method Pack {{version}}",
+    "saveNow": "Save now",
+    "settings": "Settings",
+    "moreOptions": "More options",
+    "menu": {
+      "duplicate": "Duplicate as new",
+      "versionHistory": "Version history",
+      "share": "Share / copy link",
+      "archive": "Archive"
+    },
+    "unitsAnswered": "{{answered}}/{{total}} units answered",
+    "unitsMissingEvidence": "{{count}} without evidence",
+    "viewModeAria": "View mode"
+  },
+  "templateBuilder": {
+    "rightPanel": {
+      "heading": "Template properties",
+      "nameLabel": "Name",
+      "descLabel": "Description",
+      "descHint": "Briefly: what this template is for.",
+      "availabilityLabel": "Availability",
+      "themeLabel": "Theme (org branding)",
+      "themeHint": "Organization Brand Kit — separate from the structure (D19)."
+    },
+    "editors": {
+      "instructionLabel": "Instructions for the generator",
+      "aiFilledLabel": "AI-filled",
+      "doc": {
+        "emptyPick": "Pick a section from the list on the left.",
+        "heading": "Document section",
+        "titleLabel": "Section title",
+        "titlePlaceholder": "e.g. Executive summary",
+        "blockLabel": "Block type",
+        "blockHint": "What element the generator renders in this section.",
+        "depthLabel": "Length / depth",
+        "instructionHint": "Structural placeholder — what should go here. NOT the final content.",
+        "instructionPlaceholder": "e.g. 3 key takeaways + a recommendation, executive tone",
+        "aiFilledDesc": "When off — the section stays empty for manual completion."
+      },
+      "deck": {
+        "emptyPick": "Pick a slide from the list on the left.",
+        "heading": "Presentation slide",
+        "titleLabel": "Slide title",
+        "titlePlaceholder": "e.g. Market context",
+        "archetypeLabel": "Layout archetype",
+        "archetypeHint": "The slide's layout — changes composition, not content.",
+        "instructionHint": "What the slide shows; structural placeholder.",
+        "instructionPlaceholder": "e.g. market-share chart + 2 sentences of commentary",
+        "aiFilledDesc": "When off — the slide stays empty for manual completion.",
+        "untitled": "untitled"
+      },
+      "table": {
+        "emptyPick": "Pick a sheet from the list on the left.",
+        "heading": "Workbook sheet",
+        "sheetNameLabel": "Sheet name",
+        "sheetNamePlaceholder": "e.g. Financial plan",
+        "columnN": "Column {{n}}",
+        "deleteColumnN": "Delete column {{n}}",
+        "columnNameLabel": "Column name",
+        "dataTypeLabel": "Data type",
+        "numberFormatLabel": "Number format",
+        "numberFormatHint": "Optional Excel-compatible format.",
+        "formulaLabel": "Starting formula",
+        "formulaHint": "E.g. =B2*C2; will be saved in the first row.",
+        "starterValueLabel": "Starting value",
+        "starterValueHint": "Optional value for the first row.",
+        "validationLabel": "Data validation",
+        "validation": {
+          "none": "None",
+          "list": "List of values",
+          "decimal": "Decimal number",
+          "whole": "Whole number"
+        },
+        "allowedValuesLabel": "Allowed values",
+        "allowedValuesHint": "Separate values with commas.",
+        "minLabel": "Minimum",
+        "maxLabel": "Maximum",
+        "addColumn": "Add column"
+      }
+    },
+    "container": {
+      "saveChanges": "Save changes",
+      "untitled": "Untitled",
+      "unnamed": "Unnamed",
+      "columnsCount": "{{count}} columns",
+      "addSection": "Add section",
+      "addSlide": "Add slide",
+      "addSheet": "Add sheet"
+    },
+    "shell": {
+      "save": "Save as template",
+      "defaultOrgTheme": "Default org theme",
+      "typeTooltip": "Template type (set on creation)",
+      "scopeTooltip": "Visibility scope — click to change",
+      "themeTooltip": "Organization theme / branding (D19 — separate from the template)",
+      "validationOk": "Validation: OK",
+      "validationErrors": "Errors: {{count}}",
+      "validationPassedTooltip": "The template passed structural validation",
+      "versionHistory": "{{version}} · {{status}} · {{count}} changes",
+      "versionHistoryTooltip": "Version and lifecycle history",
+      "deprecate": "Deprecate",
+      "deprecateTooltip": "Retire the template from use without losing its history",
+      "deleteDraft": "Delete draft",
+      "deleteDraftTooltip": "Delete an unpublished template",
+      "approveAndPublish": "Approve and publish",
+      "approveTooltip": "Approve the template for use",
+      "saving": "Saving…",
+      "saveTooltip": "Save a reusable template",
+      "completeTemplate": "Complete the template",
+      "moduleLabel": "Template builder",
+      "back": "Back",
+      "sections": "Sections",
+      "slides": "Slides",
+      "sheets": "Sheets"
+    },
+    "wizard": {
+      "deckDesc": "Reusable slide layout: archetypes, order, placeholders.",
+      "docDesc": "Document structure: sections, block types, depth.",
+      "tableDesc": "Spreadsheet schema: columns, data types, formulas.",
+      "title": "New template",
+      "close": "Close",
+      "stepOf": "Step {{step}} of 3",
+      "nameLabel": "Template name",
+      "namePlaceholder": "e.g. Project status report",
+      "nameHint": "You can rename it later in the builder.",
+      "chooseType": "Choose a type",
+      "availability": "Availability",
+      "privateHint": "Visible only to you. Default.",
+      "orgHint": "Visible to the whole organization (may require approval).",
+      "cancel": "Cancel",
+      "back": "Back",
+      "createAndEdit": "Create and edit",
+      "next": "Next"
     }
   }
 }

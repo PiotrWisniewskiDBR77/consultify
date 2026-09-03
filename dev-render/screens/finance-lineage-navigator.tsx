@@ -107,7 +107,7 @@ const SAMPLE_NAVIGATOR = {
         outgoingEdgeType: 'MODEL_TO_SCENARIO',
         staleBadge: {
           kind: 'SOURCE_CHANGED',
-          label: { key: 'x', pl: 'Źródło się zmieniło' },
+          label: { key: 'x', pl: 'Źródło się zmieniło', en: 'Source changed' },
           severity: 'warning',
         },
         stateBadge: null,
@@ -203,7 +203,7 @@ const SAMPLE_NAVIGATOR = {
     createNew: [
       {
         targetArtifactType: 'REPORT_EXPORT',
-        label: { key: 'finance.lineage.createNew.reportExport', pl: '+ Nowy: Eksport raportu' },
+        label: { key: 'finance.lineage.createNew.reportExport', pl: '+ Nowy: Eksport raportu', en: '+ New: Report export' },
         preselectedSource: {
           artifactId: 'art-dbr77-valuation',
           artifactType: 'VALUATION_CASE',
@@ -220,7 +220,7 @@ const SAMPLE_NAVIGATOR = {
   },
   fullGraphView: {
     id: 'finance.lineage.fullGraph',
-    label: { key: 'x', pl: 'Pełny graf powiązań' },
+    label: { key: 'x', pl: 'Pełny graf powiązań', en: 'Full lineage graph' },
     auxiliary: true,
     defaultVisible: false,
   },

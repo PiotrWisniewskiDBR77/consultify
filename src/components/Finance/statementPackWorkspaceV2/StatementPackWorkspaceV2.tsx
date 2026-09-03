@@ -537,7 +537,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
     artifactType: 'STATEMENT_PACK',
     identity: {
       artifactRef: { artifactType: 'STATEMENT_PACK', businessVersionId, artifactId: artifactId ?? businessVersionId },
-      back: { targetListRoute: '/finance/statements', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance/statements', label: { key: 'back', pl: 'Wróć do listy', en: 'Back to list' } },
       name: {
         value: name,
         editable: ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(status),
@@ -552,7 +552,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
     },
     viewNavigation: {
       kind: 'tabs',
-      views: [{ id: 'statements', label: { key: 'statements', pl: 'Sprawozdanie' }, state: null }],
+      views: [{ id: 'statements', label: { key: 'statements', pl: 'Sprawozdanie', en: 'Statement' }, state: null }],
       activeViewId: 'statements',
       placement: 'in-bar',
     },
@@ -560,7 +560,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       primary: {
         kind: 'primary',
         id: 'primary.refresh',
-        label: { key: 'refresh', pl: 'Odśwież' },
+        label: { key: 'refresh', pl: 'Odśwież', en: 'Refresh' },
         enablement: ENABLEMENT_ALWAYS,
         mergesFreshness: false,
         keyboardCommandId: null,
@@ -569,7 +569,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       lifecycle: {
         kind: 'lifecycle',
         id: 'lifecycle.status',
-        label: { key: 'status', pl: lifecycleShortLabel(status) },
+        label: { key: 'status', pl: lifecycleShortLabel(status), en: lifecycleShortLabelEn(status) },
         enablement: ENABLEMENT_ALWAYS,
         transitions: lifecycleTransitionsFor(status),
       },
@@ -577,10 +577,10 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       fullscreen: {
         kind: 'fullscreen',
         id: 'fullscreen.toggle',
-        label: { key: 'fullscreen', pl: 'Pełny ekran' },
+        label: { key: 'fullscreen', pl: 'Pełny ekran', en: 'Full screen' },
         enablement: ENABLEMENT_ALWAYS,
         iconOnly: true,
-        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego' },
+        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego', en: 'Full workspace mode' },
       },
       extraDirectControls: [],
     },
@@ -774,6 +774,30 @@ function lifecycleShortLabel(status: BusinessVersionStatus): string {
       return 'Zarchiwizowane';
     case 'INVALIDATED':
       return 'Unieważnione';
+    default:
+      return status;
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `lifecycleShortLabel`. */
+function lifecycleShortLabelEn(status: BusinessVersionStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Draft';
+    case 'READY_FOR_REVIEW':
+      return 'Ready for review';
+    case 'IN_REVIEW':
+      return 'In review';
+    case 'APPROVED':
+      return 'Approved';
+    case 'NEEDS_CHANGES':
+      return 'Needs changes';
+    case 'SUPERSEDED':
+      return 'Superseded';
+    case 'ARCHIVED':
+      return 'Archived';
+    case 'INVALIDATED':
+      return 'Invalidated';
     default:
       return status;
   }

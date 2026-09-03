@@ -10,9 +10,16 @@
 
 import { type LucideIcon, Settings2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Field, Segmented, Select, TextArea, TextInput } from './templateBuilderFields';
-import { SCOPE_LABELS, type TemplateDraft, type TemplateScope } from './templateBuilderModel';
+import {
+  pickTemplateLabel,
+  SCOPE_LABELS,
+  SCOPE_LABELS_EN,
+  type TemplateDraft,
+  type TemplateScope,
+} from './templateBuilderModel';
 
 export type TemplateRightTool = 'properties';
 
@@ -38,24 +45,30 @@ export const TemplateRightPanel: React.FC<{
   themeOptions: ThemeOption[];
   onDraftChange: (patch: Partial<TemplateDraft>) => void;
 }> = ({ draft, themeOptions, onDraftChange }) => {
+  const { t, i18n } = useTranslation();
   const scopeOpts = (Object.keys(SCOPE_LABELS) as TemplateScope[]).map((k) => ({
     value: k,
-    label: SCOPE_LABELS[k],
+    label: pickTemplateLabel(SCOPE_LABELS, SCOPE_LABELS_EN, k, i18n.language || 'pl'),
   }));
   return (
     <div className="p-4 space-y-4" data-testid="template-properties-panel">
       <div className="flex items-center gap-2 text-c-text">
         <Settings2 className="w-4 h-4 text-c-text-muted" />
-        <span className="text-sm font-semibold">Właściwości szablonu</span>
+        <span className="text-sm font-semibold">
+          {t('templateBuilder.rightPanel.heading', 'Właściwości szablonu')}
+        </span>
       </div>
-      <Field label="Nazwa">
+      <Field label={t('templateBuilder.rightPanel.nameLabel', 'Nazwa')}>
         <TextInput
           value={draft.name}
           onChange={(v) => onDraftChange({ name: v })}
           testId="prop-name"
         />
       </Field>
-      <Field label="Opis" hint="Krótko: do czego służy ten szablon.">
+      <Field
+        label={t('templateBuilder.rightPanel.descLabel', 'Opis')}
+        hint={t('templateBuilder.rightPanel.descHint', 'Krótko: do czego służy ten szablon.')}
+      >
         <TextArea
           value={draft.description}
           onChange={(v) => onDraftChange({ description: v })}
@@ -63,7 +76,7 @@ export const TemplateRightPanel: React.FC<{
           testId="prop-desc"
         />
       </Field>
-      <Field label="Dostępność">
+      <Field label={t('templateBuilder.rightPanel.availabilityLabel', 'Dostępność')}>
         <Segmented
           value={draft.scope}
           options={scopeOpts}
@@ -71,10 +84,16 @@ export const TemplateRightPanel: React.FC<{
           testId="prop-scope"
         />
       </Field>
-      <Field label="Motyw (branding org)" hint="Brand Kit organizacji — osobno od struktury (D19).">
+      <Field
+        label={t('templateBuilder.rightPanel.themeLabel', 'Motyw (branding org)')}
+        hint={t('templateBuilder.rightPanel.themeHint', 'Brand Kit organizacji — osobno od struktury (D19).')}
+      >
         <Select
           value={draft.themeRef ?? ''}
-          options={[{ value: '', label: 'Domyślny motyw org' }, ...themeOptions]}
+          options={[
+            { value: '', label: t('templateBuilder.shell.defaultOrgTheme', 'Domyślny motyw org') },
+            ...themeOptions,
+          ]}
           onChange={(v) => onDraftChange({ themeRef: v === '' ? null : v })}
           testId="prop-theme"
         />

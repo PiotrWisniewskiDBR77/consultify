@@ -14,12 +14,20 @@
 
 import { Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell/ChipDescriptor';
 import type { RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-import { SCOPE_LABELS, TEMPLATE_TYPE_LABELS, type TemplateDraft } from './templateBuilderModel';
+import {
+  pickTemplateLabel,
+  SCOPE_LABELS,
+  SCOPE_LABELS_EN,
+  TEMPLATE_TYPE_LABELS,
+  TEMPLATE_TYPE_LABELS_EN,
+  type TemplateDraft,
+} from './templateBuilderModel';
 import {
   TEMPLATE_RIGHT_TOOLS,
   TemplateRightPanel,
@@ -88,33 +96,37 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
   onSave,
   saving = false,
   canSave = true,
-  saveLabel = 'Zapisz jako szablon',
+  saveLabel,
   validationErrors = [],
   lifecycle,
   onBack,
   persistRailState = true,
 }) => {
+  const { t, i18n } = useTranslation();
+  const language = i18n.language || 'pl';
+  const resolvedSaveLabel = saveLabel ?? t('templateBuilder.shell.save', 'Zapisz jako szablon');
   const themeLabel =
-    themeOptions.find((o) => o.value === draft.themeRef)?.label ?? 'Domyślny motyw org';
+    themeOptions.find((o) => o.value === draft.themeRef)?.label ??
+    t('templateBuilder.shell.defaultOrgTheme', 'Domyślny motyw org');
 
   const chips: TopBarChipDescriptor[] = useMemo(
     () => [
       {
         id: 'type-badge',
-        label: TEMPLATE_TYPE_LABELS[draft.type],
+        label: pickTemplateLabel(TEMPLATE_TYPE_LABELS, TEMPLATE_TYPE_LABELS_EN, draft.type, language),
         kind: 'standard',
         group: 'secondary',
         disabled: true,
-        tooltip: 'Typ szablonu (ustalony przy tworzeniu)',
+        tooltip: t('templateBuilder.shell.typeTooltip', 'Typ szablonu (ustalony przy tworzeniu)'),
       },
       {
         id: 'scope-badge',
-        label: SCOPE_LABELS[draft.scope],
+        label: pickTemplateLabel(SCOPE_LABELS, SCOPE_LABELS_EN, draft.scope, language),
         kind: 'standard',
         group: 'secondary',
         dotTone: draft.scope === 'org' ? 'info' : 'neutral',
         onClick: () => onActiveRightToolChange('properties'),
-        tooltip: 'Zakres widoczności — kliknij, by zmienić',
+        tooltip: t('templateBuilder.shell.scopeTooltip', 'Zakres widoczności — kliknij, by zmienić'),
       },
       {
         id: 'theme',
@@ -123,27 +135,40 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         kind: 'standard',
         group: 'secondary',
         onClick: () => onActiveRightToolChange('properties'),
-        tooltip: 'Motyw / branding organizacji (D19 — osobno od szablonu)',
+        tooltip: t(
+          'templateBuilder.shell.themeTooltip',
+          'Motyw / branding organizacji (D19 — osobno od szablonu)'
+        ),
       },
       {
         id: 'validate-template',
         label:
-          validationErrors.length === 0 ? 'Walidacja: OK' : `Błędy: ${validationErrors.length}`,
+          validationErrors.length === 0
+            ? t('templateBuilder.shell.validationOk', 'Walidacja: OK')
+            : t('templateBuilder.shell.validationErrors', 'Błędy: {{count}}', {
+                count: validationErrors.length,
+              }),
         kind: 'standard',
         group: 'secondary',
         dotTone: validationErrors.length === 0 ? 'success' : 'danger',
         onClick: lifecycle?.onValidate,
-        tooltip: validationErrors[0] || 'Szablon przeszedł walidację struktury',
+        tooltip:
+          validationErrors[0] ||
+          t('templateBuilder.shell.validationPassedTooltip', 'Szablon przeszedł walidację struktury'),
       },
       ...(lifecycle
         ? [
             {
               id: 'template-version',
-              label: `${lifecycle.version} · ${lifecycle.status} · ${lifecycle.historyCount} zmian`,
+              label: t('templateBuilder.shell.versionHistory', '{{version}} · {{status}} · {{count}} zmian', {
+                version: lifecycle.version,
+                status: lifecycle.status,
+                count: lifecycle.historyCount,
+              }),
               kind: 'standard' as const,
               group: 'secondary' as const,
               onClick: lifecycle.onValidate,
-              tooltip: 'Wersja i historia lifecycle',
+              tooltip: t('templateBuilder.shell.versionHistoryTooltip', 'Wersja i historia lifecycle'),
             },
           ]
         : []),
@@ -151,11 +176,14 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         ? [
             {
               id: 'deprecate-template',
-              label: 'Wycofaj',
+              label: t('templateBuilder.shell.deprecate', 'Wycofaj'),
               kind: 'standard' as const,
               group: 'secondary' as const,
               onClick: lifecycle.onDeprecate,
-              tooltip: 'Wycofaj szablon z użycia bez utraty historii',
+              tooltip: t(
+                'templateBuilder.shell.deprecateTooltip',
+                'Wycofaj szablon z użycia bez utraty historii'
+              ),
             },
           ]
         : []),
@@ -163,11 +191,11 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         ? [
             {
               id: 'delete-template',
-              label: 'Usuń draft',
+              label: t('templateBuilder.shell.deleteDraft', 'Usuń draft'),
               kind: 'standard' as const,
               group: 'secondary' as const,
               onClick: lifecycle.onDelete,
-              tooltip: 'Usuń nieopublikowany szablon',
+              tooltip: t('templateBuilder.shell.deleteDraftTooltip', 'Usuń nieopublikowany szablon'),
             },
           ]
         : []),
@@ -175,22 +203,24 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         ? [
             {
               id: 'approve-template',
-              label: 'Zatwierdź i opublikuj',
+              label: t('templateBuilder.shell.approveAndPublish', 'Zatwierdź i opublikuj'),
               kind: 'primary' as const,
               group: 'primary' as const,
               onClick: lifecycle.onApprove,
-              tooltip: 'Zatwierdź szablon do użycia',
+              tooltip: t('templateBuilder.shell.approveTooltip', 'Zatwierdź szablon do użycia'),
             },
           ]
         : []),
       {
         id: 'save-template',
-        label: saving ? 'Zapisywanie…' : saveLabel,
+        label: saving ? t('templateBuilder.shell.saving', 'Zapisywanie…') : resolvedSaveLabel,
         kind: 'primary',
         group: 'primary',
         disabled: saving || !canSave,
         onClick: onSave,
-        tooltip: canSave ? 'Zapisz reużywalny szablon' : validationErrors[0] || 'Uzupełnij szablon',
+        tooltip: canSave
+          ? t('templateBuilder.shell.saveTooltip', 'Zapisz reużywalny szablon')
+          : validationErrors[0] || t('templateBuilder.shell.completeTemplate', 'Uzupełnij szablon'),
       },
     ],
     [
@@ -228,14 +258,18 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         <div className="flex-1 min-w-0 flex flex-col">
           <ExecutiveModuleShell
             moduleKey={`template-builder-${draft.type}`}
-            moduleLabel="Kreator szablonu"
+            moduleLabel={t('templateBuilder.shell.moduleLabel', 'Kreator szablonu')}
             title={draft.name}
             onTitleChange={(next) => onDraftChange({ name: next })}
             onBack={onBack}
-            backLabel="Wróć"
+            backLabel={t('templateBuilder.shell.back', 'Wróć')}
             topBarChips={chips}
             leftRailTitle={
-              draft.type === 'doc' ? 'Sekcje' : draft.type === 'deck' ? 'Slajdy' : 'Arkusze'
+              draft.type === 'doc'
+                ? t('templateBuilder.shell.sections', 'Sekcje')
+                : draft.type === 'deck'
+                  ? t('templateBuilder.shell.slides', 'Slajdy')
+                  : t('templateBuilder.shell.sheets', 'Arkusze')
             }
             leftRailContent={
               <TemplateStructureList

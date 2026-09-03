@@ -227,11 +227,20 @@ async function fetchOutput(): Promise<PresentationFetchResult> {
 }
 
 export function AssessmentPresentationViewScreen(): React.ReactElement {
+  // G06 i18n (2026-09-03, agent/i18n-pl-en): ten mock nigdy nie przekazywał
+  // `locale` — komponent domyślnie brał 'pl' niezależnie od `?lang=`, więc
+  // formatowanie dat (Intl.DateTimeFormat) zawsze wychodziło polskie.
+  // Etykiety tekstowe (Pakiet metodyczny/Data zamrożenia/Wersja Outputu)
+  // naprawione osobno w `slides.tsx` przez t() — to tylko dopełnia locale
+  // dla formatowania dat, żeby cały slajd tytułowy był spójny językowo.
+  const lang = new URLSearchParams(window.location.search).get('lang');
+  const locale = lang === 'en' ? 'en-US' : 'pl-PL';
   return (
     <div style={{ height: '100vh', overflow: 'hidden' }}>
       <AssessmentPresentationView
         outputId={variant === 'noOutput' ? null : 'output-demo-drd-0001'}
         fetchOutput={fetchOutput}
+        locale={locale}
         narrative={
           withNarrative
             ? {

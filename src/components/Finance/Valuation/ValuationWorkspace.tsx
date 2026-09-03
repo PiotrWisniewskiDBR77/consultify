@@ -97,6 +97,17 @@ const STEP_LABELS: Record<ValuationStepId, string> = {
   export: 'Eksport',
 };
 
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `STEP_LABELS`. */
+const STEP_LABELS_EN: Record<ValuationStepId, string> = {
+  source: 'Source',
+  assumptions: 'Assumptions',
+  methods: 'Methods & weights',
+  results: 'Results',
+  sensitivity: 'Sensitivity',
+  advisor: 'Valuation advisor',
+  export: 'Export',
+};
+
 // ---------------------------------------------------------------------------
 // Injectable API surface — real functions by default, overridable in tests so
 // `<ValuationWorkspace>` never needs `vi.mock()` of the module path.
@@ -347,7 +358,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         },
         back: {
           targetListRoute: '/finance/valuation',
-          label: { key: 'back', pl: 'Wróć do listy' },
+          label: { key: 'back', pl: 'Wróć do listy', en: 'Back to list' },
         },
         name: {
           value: name,
@@ -369,13 +380,14 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         kind: 'stepper',
         views: VALUATION_STEP_IDS.map((id) => ({
           id,
-          label: { key: `valuation.step.${id}`, pl: STEP_LABELS[id] },
+          label: { key: `valuation.step.${id}`, pl: STEP_LABELS[id], en: STEP_LABELS_EN[id] },
           state: stepState[id]
             ? {
                 kind: stepState[id] as WorkspaceBarViewStateKind,
                 label: {
                   key: `valuation.step.${id}.state`,
                   pl: stepStateLabel(stepState[id] as WorkspaceBarViewStateKind),
+                  en: stepStateLabelEn(stepState[id] as WorkspaceBarViewStateKind),
                 },
               }
             : null,
@@ -387,7 +399,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         primary: {
           kind: 'primary',
           id: 'primary.refresh-step',
-          label: { key: 'refresh', pl: 'Odśwież krok' },
+          label: { key: 'refresh', pl: 'Odśwież krok', en: 'Refresh step' },
           enablement: ENABLEMENT_ALWAYS,
           mergesFreshness: false,
           keyboardCommandId: null,
@@ -398,10 +410,10 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         fullscreen: {
           kind: 'fullscreen',
           id: 'fullscreen.toggle',
-          label: { key: 'fullscreen', pl: 'Pełny ekran' },
+          label: { key: 'fullscreen', pl: 'Pełny ekran', en: 'Full screen' },
           enablement: ENABLEMENT_ALWAYS,
           iconOnly: true,
-          ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego' },
+          ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego', en: 'Full workspace mode' },
         },
         extraDirectControls: [],
       },
@@ -596,6 +608,26 @@ function stepStateLabel(kind: WorkspaceBarViewStateKind): string {
       return 'Zablokowane';
     case 'not-applicable':
       return 'Nie dotyczy';
+    default:
+      return '';
+  }
+}
+
+/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `stepStateLabel`. */
+function stepStateLabelEn(kind: WorkspaceBarViewStateKind): string {
+  switch (kind) {
+    case 'ready':
+      return 'Ready';
+    case 'incomplete':
+      return 'Incomplete';
+    case 'not-configured':
+      return 'Not configured';
+    case 'stale':
+      return 'Outdated';
+    case 'blocked':
+      return 'Blocked';
+    case 'not-applicable':
+      return 'Not applicable';
     default:
       return '';
   }

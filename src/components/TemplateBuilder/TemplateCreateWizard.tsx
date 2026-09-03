@@ -11,13 +11,17 @@
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, ArrowRight, Check, FileText, LayoutTemplate, Table2, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Button from '@/components/ui/primitives/Button';
 
 import { TextInput } from './templateBuilderFields';
 import {
+  pickTemplateLabel,
   SCOPE_LABELS,
+  SCOPE_LABELS_EN,
   TEMPLATE_TYPE_LABELS,
+  TEMPLATE_TYPE_LABELS_EN,
   type TemplateScope,
   type TemplateType,
 } from './templateBuilderModel';
@@ -30,15 +34,28 @@ export interface TemplateCreateWizardProps {
   initialType?: TemplateType;
 }
 
-const TYPE_CARDS: { type: TemplateType; icon: LucideIcon; desc: string }[] = [
-  {
-    type: 'deck',
-    icon: LayoutTemplate,
-    desc: 'Reużywalny układ slajdów: archetypy, kolejność, placeholdery.',
-  },
-  { type: 'doc', icon: FileText, desc: 'Struktura dokumentu: sekcje, typy bloków, głębokość.' },
-  { type: 'table', icon: Table2, desc: 'Schemat arkusza: kolumny, typy danych, formuły.' },
-];
+function typeCards(t: (key: string, fallback: string) => string): { type: TemplateType; icon: LucideIcon; desc: string }[] {
+  return [
+    {
+      type: 'deck',
+      icon: LayoutTemplate,
+      desc: t(
+        'templateBuilder.wizard.deckDesc',
+        'Reużywalny układ slajdów: archetypy, kolejność, placeholdery.'
+      ),
+    },
+    {
+      type: 'doc',
+      icon: FileText,
+      desc: t('templateBuilder.wizard.docDesc', 'Struktura dokumentu: sekcje, typy bloków, głębokość.'),
+    },
+    {
+      type: 'table',
+      icon: Table2,
+      desc: t('templateBuilder.wizard.tableDesc', 'Schemat arkusza: kolumny, typy danych, formuły.'),
+    },
+  ];
+}
 
 type Step = 1 | 2 | 3;
 
@@ -48,6 +65,8 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
   onComplete,
   initialType,
 }) => {
+  const { t, i18n } = useTranslation();
+  const TYPE_CARDS = typeCards(t);
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');
   const [type, setType] = useState<TemplateType | null>(initialType ?? null);
@@ -80,12 +99,12 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
       className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Nowy szablon"
+      aria-label={t('templateBuilder.wizard.title', 'Nowy szablon')}
       data-testid="template-create-wizard"
     >
       <button
         type="button"
-        aria-label="Zamknij"
+        aria-label={t('templateBuilder.wizard.close', 'Zamknij')}
         className="absolute inset-0 bg-black/50 z-overlay"
         onClick={cancel}
       />
@@ -93,12 +112,16 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
           <div>
-            <h2 className="text-base font-semibold text-c-text">Nowy szablon</h2>
-            <p className="text-xs text-c-text-muted mt-0.5">Krok {step} z 3</p>
+            <h2 className="text-base font-semibold text-c-text">
+              {t('templateBuilder.wizard.title', 'Nowy szablon')}
+            </h2>
+            <p className="text-xs text-c-text-muted mt-0.5">
+              {t('templateBuilder.wizard.stepOf', 'Krok {{step}} z 3', { step })}
+            </p>
           </div>
           <button
             type="button"
-            aria-label="Zamknij"
+            aria-label={t('templateBuilder.wizard.close', 'Zamknij')}
             onClick={cancel}
             className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
@@ -120,20 +143,24 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
         <div className="px-5 py-5 min-h-[220px]">
           {step === 1 && (
             <div className="space-y-3" data-testid="wizard-step-name">
-              <label className="block text-sm font-medium text-c-text">Nazwa szablonu</label>
+              <label className="block text-sm font-medium text-c-text">
+                {t('templateBuilder.wizard.nameLabel', 'Nazwa szablonu')}
+              </label>
               <TextInput
                 value={name}
                 onChange={setName}
-                placeholder="np. Raport statusu projektu"
+                placeholder={t('templateBuilder.wizard.namePlaceholder', 'np. Raport statusu projektu')}
                 testId="wizard-name"
               />
-              <p className="text-xs text-c-text-muted">Nazwę zmienisz później w builderze.</p>
+              <p className="text-xs text-c-text-muted">
+                {t('templateBuilder.wizard.nameHint', 'Nazwę zmienisz później w builderze.')}
+              </p>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-2.5" data-testid="wizard-step-type">
-              <p className="text-sm font-medium text-c-text mb-2">Wybierz typ</p>
+              <p className="text-sm font-medium text-c-text mb-2">{t('templateBuilder.wizard.chooseType', 'Wybierz typ')}</p>
               {TYPE_CARDS.map((c) => {
                 const Icon = c.icon;
                 const active = type === c.type;
@@ -161,7 +188,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
                     </span>
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-c-text">
-                        {TEMPLATE_TYPE_LABELS[c.type]}
+                        {pickTemplateLabel(TEMPLATE_TYPE_LABELS, TEMPLATE_TYPE_LABELS_EN, c.type, i18n.language || 'pl')}
                       </span>
                       <span className="block text-xs text-c-text-muted">{c.desc}</span>
                     </span>
@@ -174,7 +201,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
 
           {step === 3 && (
             <div className="space-y-2.5" data-testid="wizard-step-scope">
-              <p className="text-sm font-medium text-c-text mb-2">Dostępność</p>
+              <p className="text-sm font-medium text-c-text mb-2">{t('templateBuilder.wizard.availability', 'Dostępność')}</p>
               {(['private', 'org'] as TemplateScope[]).map((s) => {
                 const active = scope === s;
                 return (
@@ -193,12 +220,15 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
                   >
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-c-text">
-                        {SCOPE_LABELS[s]}
+                        {pickTemplateLabel(SCOPE_LABELS, SCOPE_LABELS_EN, s, i18n.language || 'pl')}
                       </span>
                       <span className="block text-xs text-c-text-muted">
                         {s === 'private'
-                          ? 'Widoczny tylko dla Ciebie. Domyślnie.'
-                          : 'Widoczny dla całej organizacji (może wymagać zatwierdzenia).'}
+                          ? t('templateBuilder.wizard.privateHint', 'Widoczny tylko dla Ciebie. Domyślnie.')
+                          : t(
+                              'templateBuilder.wizard.orgHint',
+                              'Widoczny dla całej organizacji (może wymagać zatwierdzenia).'
+                            )}
                       </span>
                     </span>
                     {active && <Check className="w-4 h-4 text-c-focus ml-auto shrink-0" />}
@@ -216,7 +246,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
             onClick={step === 1 ? cancel : () => setStep((s) => (s - 1) as Step)}
             icon={step === 1 ? undefined : <ArrowLeft className="w-4 h-4" />}
           >
-            {step === 1 ? 'Anuluj' : 'Wstecz'}
+            {step === 1 ? t('templateBuilder.wizard.cancel', 'Anuluj') : t('templateBuilder.wizard.back', 'Wstecz')}
           </Button>
           <Button
             variant="primary"
@@ -224,7 +254,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
             disabled={!canNext}
             icon={step === 3 ? <Check className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
           >
-            {step === 3 ? 'Utwórz i edytuj' : 'Dalej'}
+            {step === 3 ? t('templateBuilder.wizard.createAndEdit', 'Utwórz i edytuj') : t('templateBuilder.wizard.next', 'Dalej')}
           </Button>
         </div>
       </div>

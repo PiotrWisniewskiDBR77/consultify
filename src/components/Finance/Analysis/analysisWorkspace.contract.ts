@@ -64,6 +64,8 @@ export type AnalysisPrimaryCtaId =
 export interface AnalysisPrimaryCta {
   id: AnalysisPrimaryCtaId;
   labelPl: string;
+  /** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `labelPl`. */
+  labelEn: string;
   /** `true` ⇒ nawiguje do kroku wyboru KPI (kreator/Customize krok 3), NIE do zatwierdzenia. */
   navigatesToKpiSelection: boolean;
 }
@@ -77,22 +79,43 @@ export function resolveAnalysisPrimaryCta(
     // Kontrola negatywna obowiązkowa (brief): to jest jedyna gałąź dla
     // pustego draftu — nie istnieje ścieżka, którą pusty draft dotrze do
     // 'submit_for_review'/'reopen_or_new_version' z tej funkcji.
-    return { id: 'configure_kpis', labelPl: 'Skonfiguruj wskaźniki', navigatesToKpiSelection: true };
+    return {
+      id: 'configure_kpis',
+      labelPl: 'Skonfiguruj wskaźniki',
+      labelEn: 'Configure KPIs',
+      navigatesToKpiSelection: true,
+    };
   }
   if (status === 'APPROVED' || status === 'SUPERSEDED') {
-    return { id: 'reopen_or_new_version', labelPl: 'Otwórz ponownie', navigatesToKpiSelection: false };
+    return {
+      id: 'reopen_or_new_version',
+      labelPl: 'Otwórz ponownie',
+      labelEn: 'Reopen',
+      navigatesToKpiSelection: false,
+    };
   }
   if (status === 'IN_REVIEW') {
-    return { id: 'view_review', labelPl: 'Zobacz w przeglądzie', navigatesToKpiSelection: false };
+    return {
+      id: 'view_review',
+      labelPl: 'Zobacz w przeglądzie',
+      labelEn: 'View in review',
+      navigatesToKpiSelection: false,
+    };
   }
   if (completeness.computedValueCount === 0 || freshnessIsStale) {
     return {
       id: completeness.computedValueCount === 0 ? 'compute_first_time' : 'recompute',
       labelPl: completeness.computedValueCount === 0 ? 'Przelicz' : 'Nieaktualne · Przelicz',
+      labelEn: completeness.computedValueCount === 0 ? 'Recalculate' : 'Outdated · Recalculate',
       navigatesToKpiSelection: false,
     };
   }
-  return { id: 'submit_for_review', labelPl: 'Przekaż do przeglądu', navigatesToKpiSelection: false };
+  return {
+    id: 'submit_for_review',
+    labelPl: 'Przekaż do przeglądu',
+    labelEn: 'Submit for review',
+    navigatesToKpiSelection: false,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -357,7 +380,7 @@ export function buildAnalysisWorkspaceBarConfig(
     artifactType: 'HISTORICAL_ANALYSIS',
     identity: {
       artifactRef: { artifactType: 'HISTORICAL_ANALYSIS', businessVersionId: input.businessVersionId, artifactId: input.artifactId },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy', en: 'Back to list' } },
       name: {
         value: input.name,
         editable: rename.editable,
@@ -376,7 +399,7 @@ export function buildAnalysisWorkspaceBarConfig(
     },
     viewNavigation: {
       kind: 'tabs',
-      views: [{ id: 'kpis', label: { key: 'kpis', pl: 'Wskaźniki' }, state: null }],
+      views: [{ id: 'kpis', label: { key: 'kpis', pl: 'Wskaźniki', en: 'KPIs' }, state: null }],
       activeViewId: 'kpis',
       placement: 'in-bar',
     },
@@ -384,7 +407,7 @@ export function buildAnalysisWorkspaceBarConfig(
       primary: {
         kind: 'primary',
         id: `primary.${cta.id}`,
-        label: { key: cta.id, pl: cta.labelPl },
+        label: { key: cta.id, pl: cta.labelPl, en: cta.labelEn },
         enablement: ENABLEMENT_ALWAYS,
         mergesFreshness: cta.id === 'recompute' || cta.id === 'compute_first_time',
         keyboardCommandId: null,
@@ -395,7 +418,7 @@ export function buildAnalysisWorkspaceBarConfig(
           ? {
               kind: 'lifecycle',
               id: 'lifecycle.status',
-              label: { key: 'status', pl: analysisStatusLabelPl(input.status) },
+              label: { key: 'status', pl: analysisStatusLabelPl(input.status), en: analysisStatusLabelEn(input.status) },
               enablement: ENABLEMENT_ALWAYS,
               transitions,
             }
@@ -403,22 +426,22 @@ export function buildAnalysisWorkspaceBarConfig(
       more: {
         kind: 'more',
         id: 'more.menu',
-        label: { key: 'more', pl: 'Więcej' },
+        label: { key: 'more', pl: 'Więcej', en: 'More' },
         enablement: ENABLEMENT_ALWAYS,
         items: [
-          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.export', label: { key: 'export', pl: 'Eksportuj' }, group: 'report', enablement: requireKpisGate(), destructive: false, requiresConfirmation: false },
-          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
+          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj', en: 'Duplicate' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
+          { id: 'more.export', label: { key: 'export', pl: 'Eksportuj', en: 'Export' }, group: 'report', enablement: requireKpisGate(), destructive: false, requiresConfirmation: false },
+          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji', en: 'Version history' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
+          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj', en: 'Archive' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
         ],
       },
       fullscreen: {
         kind: 'fullscreen',
         id: 'fullscreen.toggle',
-        label: { key: 'fullscreen', pl: 'Pełny ekran' },
+        label: { key: 'fullscreen', pl: 'Pełny ekran', en: 'Full screen' },
         enablement: ENABLEMENT_ALWAYS,
         iconOnly: true,
-        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego' },
+        ariaLabel: { key: 'fullscreen.aria', pl: 'Tryb pełnego obszaru roboczego', en: 'Full workspace mode' },
       },
       extraDirectControls: [],
     },
@@ -443,6 +466,31 @@ function analysisStatusLabelPl(status: BusinessVersionStatus): string {
       return 'Zarchiwizowane';
     case 'INVALIDATED':
       return 'Unieważnione';
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
+
+function analysisStatusLabelEn(status: BusinessVersionStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Draft';
+    case 'READY_FOR_REVIEW':
+      return 'Ready for review';
+    case 'IN_REVIEW':
+      return 'In review';
+    case 'APPROVED':
+      return 'Approved';
+    case 'NEEDS_CHANGES':
+      return 'Needs changes';
+    case 'SUPERSEDED':
+      return 'Superseded';
+    case 'ARCHIVED':
+      return 'Archived';
+    case 'INVALIDATED':
+      return 'Invalidated';
     default: {
       const _exhaustive: never = status;
       return _exhaustive;
