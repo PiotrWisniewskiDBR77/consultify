@@ -16,7 +16,7 @@
  *   3. `import.meta.env.VITE_SSO_SELF_SERVICE` — override build-time.
  *   4. Default: ON (flip 2026-07-15, akcept Piotra; galeria fala7).
  *
- * Wzorzec: src/utils/commandCenterFlag.ts (HP-10…13), src/utils/clientVaultFlag.ts (HP-22).
+ * Wzorzec: src/utils/clientVaultFlag.ts (HP-22).
  */
 
 const LS_KEY = 'ff.sso_self_service';

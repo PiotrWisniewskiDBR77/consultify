@@ -2,9 +2,13 @@
  * Command Center — "DLP" (F-CC3, blok Harvey-Parity HP-10…13).
  *
  * Reguły data-loss-prevention: lista (StandardTable, kebab toggle/delete) +
- * formularz dodania reguły + test-scan bez zapisu. Wszystko za flagą
- * `?ff_commandCenter=1` (patrz `commandCenterFlag.ts`) — moduł-rodzic
- * (`AdminCommandCenterPanel`) gejtuje widoczność całej sekcji.
+ * formularz dodania reguły + test-scan bez zapisu.
+ *
+ * G14 13-16 (dyżur 2026-09-03) — KOREKTA: `commandCenterFlag.ts` (flaga
+ * `?ff_commandCenter=1`) opisana tu jako brama widoczności NIE MIAŁA żadnego
+ * wołającego w całym `src/` (`isCommandCenterEnabled` nigdzie importowane) —
+ * usunięta jako martwy kod (TRIAZ_UWAG_20260902.md UW-14-02). Sekcja Command
+ * Center jest dziś widoczna zawsze, bez gejtowania flagą.
  *
  * Endpointy (`enterpriseComplianceApi.ts`): getDlpRules · createDlpRule ·
  * toggleDlpRule · deleteDlpRule · scanDlpContent.
