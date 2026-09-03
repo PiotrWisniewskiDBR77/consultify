@@ -12,15 +12,24 @@ Poprzednie przekazanie (poranne, 245/336) zastąpione tym plikiem; jego treść 
 
 ## 1. Gdzie jesteśmy — trzy zdania
 
-**272 z 336 bramek** (rano 245, wieczorem 256, po decyzjach nocnych 272 — zmierzone własnoręcznie:
-`grep -hE '^\|\s*G[0-9]{2}\b' .../MODULE_ACCEPTANCE.md` licząc `` `PASS` ``). Skok +16 to **G14 16/16**,
-przełączone z `PARTIAL/OWNER_DECISION_PENDING` na `PASS` decyzjami właściciela DEC-347…385
-(`04faaa11ff`); G06 pozostaje 16/16 z wieczora. **Staging niesie dwa wdrożenia**: pierwsze
-`58ef0771d7` (potwierdzone `/api/health`, `database: connected`), drugie `53c3da2918` (flagi ON +
-8 scaleń nocnych) **URUCHOMIONE, ale w chwili tego pomiaru (03.09 ok. 20:02 UTC) jeszcze
-`in_progress`** na GitHub Actions (run `33799377961`) — `/api/health` na staging wciąż zwracał sha
-pierwszego wdrożenia. Nie ogłaszaj drugiego wdrożenia gotowym bez świeżego `curl .../api/health`.
-Pozostałe 64 bramki zależą od przelotu właściciela po stagingu (G16) i od raportów Codexa (G15/G19/G20).
+**273 z 336 bramek** (rano 245, wieczorem 256, po decyzjach nocnych 272, po odbiorach części 2 nocy
+**273** — zmierzone własnoręcznie o 23:2x: `grep -hE '^\|\s*G[0-9]{2}\b' .../MODULE_ACCEPTANCE.md`
+licząc `` `PASS` ``; policz sam, nie ufaj tej liczbie bez przeliczenia). Skok +16 na 272 to **G14
+16/16**, przełączone z `PARTIAL/OWNER_DECISION_PENDING` na `PASS` decyzjami właściciela DEC-347…385
+(`04faaa11ff`); G06 pozostaje 16/16 z wieczora. **G15 ma 16/16 wierszy wpisanych** (rozkład: 1×`PASS`,
+5×`PARTIAL_PASS / SERVER_NOT_MEASURED`, 2×`PARTIAL_PASS / RED_LEGACY_7`, 1×`PARTIAL_PASS /
+RED_LEGACY_2`, 1×`PARTIAL_PASS / RED_LEGACY_2_PLUS_RED_NEW_1`, 2×`PARTIAL_PASS / RED_LEGACY_1`,
+1×`NOT_MEASURED / RED_LEGACY_2_CONFIRMED`, 3×`NOT_MEASURED / RED_LEGACY_1_CONFIRMED` — żaden z tych
+16 wierszy nie liczy się jako `` `PASS` `` w liczniku 273, poza tym jednym). **G19 ma 16/16 wierszy
+wpisanych, wszystkie `NOT_PROVEN / OWNER_RETEST_PENDING`** (odbiorca odrzucił propozycję Codexa
+`TECHNICAL_REGRESSION_PASS` — patrz §3c). **Staging** — trzy zdarzenia zmierzone: pierwsze wdrożenie
+`58ef0771d7` (potwierdzone), drugie `53c3da2918` potwierdzone `success` o 20:06Z (§8), **trzeci
+redeploy zapowiedziany na ok. 00:20 z HEAD `120bb2db81` (§3c) NIE jest jeszcze widoczny** — świeży
+`curl https://staging.consultify.ai/api/health` o 23:19Z/21:19 UTC nadal zwraca `gitSha
+53c3da29189eb...` (drugie wdrożenie, potwierdzony ancestor `120bb2db81`, 122 commity za HEAD-em) —
+o tej godzinie to **oczekiwane** (00:20 lokalnego jeszcze nie było), ale **następny nadzorca musi
+sam sprawdzić świeżym `curl`, nie zakładać, że trzeci redeploy doszedł**. Pozostałe bramki zależą od
+przelotu właściciela po stagingu (G16, na trzecim redeployu) i od domknięcia G20 (§3c, §4).
 
 ## 2. ★★★ Co zmieniło obraz programu tego wieczoru
 
@@ -127,6 +136,58 @@ sesji, skład DOCX/PDF, metryka badania, etykiety dowodu E0–E4, narracja za fl
    własnego wzorca) — używać wzorca z nawiasem znakowym, np. `uruch[o]m`, żeby proces `pgrep` sam
    siebie nie widział.
 
+## 3c. Noc 03.09 część 2 (23:00–00:30): odbiory 13 dyżurów, paczka 299–312, łańcuchy nocne
+
+**Odbiór adwersaryjny wszystkich 13 dyżurów 286–298**, cztery sesje Opus, każda na osobnym worktree
+z realnym PostgreSQL, dowody w `docs/program/waves/WAVE_03_ACCEPTANCE/codex/ODBIOR_DYZUROW_*_20260903.md`
+(4 pliki, 363–511 linii). Pełne zdania i cytaty w `REJESTR_ZNALEZISK_20260903.md` §I — poniżej skrót
+z werdyktem i stanem scalenia zmierzonym własnoręcznie na HEAD (`git merge-base --is-ancestor <sha> HEAD`).
+
+| Dyżur | Werdykt odbioru | Scalone na HEAD? | Zastrzeżenie / powód |
+| --- | --- | --- | --- |
+| 286 (G15 samokontrola) | SCALIĆ Z ZASTRZEŻENIEM | TAK — `465ec539b7` | Odbiorca skorygował klasyfikację 13 czerwieni `NOWA`→`ZASTANA` (baza `f65c4ff6a0` miała nierozstrzygnięty marker konfliktu w `PreviewAIHintStrip.tsx:110` — pomiar na niej dawał `Test Files failed`/`0 tests`, odczytane błędnie jako „baza zielona”, patrz lekcja 1 niżej) |
+| 287 (fokus `c-focus`) | SCALIĆ Z ZASTRZEŻENIEM → **po naprawie SCALONE** | TAK — `120bb2db81` (`agent/287-naprawa-20260903`) | Pierwotnie 174 wystąpień fokusa, czerwony test, 6 konfliktów; po naprawie: **174→28**, `VIOLATION_RE` przywrócony, baseline zregenerowany **64/45**, 6 konfliktów rozwiązanych, test 2/2 |
+| 288 (bramka finansów) | SCALIĆ Z ZASTRZEŻENIEM → **po naprawie SCALONE** | TAK — `4d5c0c2d5c` (`agent/288-naprawa-20260903`) | Pierwotnie 2 testy czerwone; po naprawie 2 stubów: para USER 403 / OWNER 200 **8/8** na 7 prefiksów `/api/v8/finance*`, rejestr mountów **50/50**, mutacja 47/50 — T1 sprostowane w `G20_BLOKERY_P0P1_20260903.md` (`d936152c77`) |
+| 289 (martwe trasy / help) | SCALIĆ | TAK — `a905bce0aa` | Jedyny z trójki 288/289/296 zgodny z rdzeniem instrukcji od razu; D5 zamknięte, D6 naprawione (migracja addytywna `20260904_help_shape_alignment.sql`) |
+| 290 (G19 regresja) | SCALIĆ Z ZASTRZEŻENIEM | TAK — `0250f90ea3` | Raport twierdził blok 3 = 11/18 (baza zanieczyszczona `ORG_MEMBERSHIP_REVOKED`); odbiorca zmierzył **16/18** dwukrotnie na czystej bazie — 16/18 jest liczbą wiążącą, nie 11/18 |
+| 291 (dowody runtime P0/P1) | SCALIĆ | TAK — `7f5873f39e` | D8 NAPRAWIONE/VERIFIED_RUNTIME z zastrzeżeniem: PUT/GET escalation 200/404 poprawne, ale repo ma czerwony test `day277-decyzje-zapis.pg.test.ts` (0/2) — do naprawy dla G20 |
+| 292 (menu akcji Wywiadu) | SCALIĆ Z ZASTRZEŻENIEM | TAK (R1–R2) — `130cb3db12` | Niedokończony: brak R3–R6 (dowód, raport) — przeniesione do dyżuru 312 pozycja (d) |
+| 293 (Biblioteka metodyk) | — (0 commitów) | **NIE** | Sesja skończyła się read-only, ani jeden commit; cała instrukcja do wykonania — 312 pozycja (c) |
+| 294 (Czat: 3 defekty) | SCALIĆ | TAK — `f46cd67b02` | Dwa pliki dokumentacji, zero kodu — uczciwie nazwane; dyktowanie głosowe rozproszone na 7 plików + 3 hooki (korekta odbiorcy) |
+| 295 (Moja Praca + Inicjatywy) | SCALIĆ Z ZASTRZEŻENIEM | TAK — `9fccc4d98f`/`9d4c88c615` | Dwa nagłówkowe twierdzenia nie bronią się: enumeracja kontrolek dowodzi efektu dla **12 z 226** sygnatur (312(e) poprawia mianownik na 86/54), `idea-table` = lista Idei nie narzędzie tabeli (żyje na `idea-table-timeline-stuck`), wyścig 409 dowiedziony na trasie bez frontowego wołacza |
+| 296 (wycieki błędów tras) | SCALIĆ Z ZASTRZEŻENIEM — **DYŻUR NIEWYKONANY** | **NIE** — materiał wejściowy (merge-clean, addytywny), jeszcze nie wciągnięty na HEAD | R1–R2 zrobione (rejestr 341 wierszy, mapper 5/5 zielonych testów), R3–R6 nie: **0 z 294** miejsc zamienione, mapper ma **zero wołaczy produkcyjnych** („biblioteka bez wywołania”, 11. kształt) — do wznowienia od R3 w 312(a) |
+| 297 (martwe komponenty od korzenia) | STOP (uprawniony) | **NIE** — 0 commitów | Zatrzymany przed R1: mniej niż 5 GB wolnego dysku w chwili dyżuru (dziś 36 GiB, próg już nieaktualny) — do wznowienia w 312(b) |
+| 298 (silnik raportu Oceny DRD) | SCALIĆ Z ZASTRZEŻENIEM | TAK — `763856d76b` | Commity realne, DOCX identyczny z prototypem **21/21**; ale silnik **nie ma ani jednego wołacza produkcyjnego**, narrator LLM za flagą OFF nie powstał, `save()` odrzuca obcego tenanta dopiero przez `get()` PO `INSERT` — do domknięcia w 312(f) |
+
+**Wynik liczbowy**: 10 z 13 scalone na HEAD (286, 287, 288, 289, 290, 291, 292, 294, 295, 298), **3 nie**
+(293 — zero pracy, 296 — 0/294 wykonane, 297 — STOP dyskowy).
+
+**Paczka nocna Codexa 299–312.** Instrukcje **299–311 (13 sztuk)** napisane i scommitowane na kopii
+lokalnej (`m03`) między 22:xx a 23:20 — potwierdzone plikami `INSTRUKCJA_DYZUR_{299..311}.md` na HEAD
+tego worktree. Instrukcja **312** („domknięcia po odbiorach — 296→297→293→292→298→295, w tej
+kolejności, z prawem zatrzymania po każdej") napisana i scommitowana o 23:18 (`beee4bb9d3`, 723 linie)
+— w chwili tego pomiaru **jest już na `github-backup/grafika/m03-20260902` (świeży fetch), ale
+o 3 commity przed HEAD-em tego worktree** (`e7fd7546f8`/`904e55a645`/`beee4bb9d3` — dwa pierwsze to
+nota kolejki „299–312 wydane, następny wolny 313”, trzeci to sama instrukcja 312); zsynchronizuj
+worktree o poranku przed pracą (`git rev-list --left-right --count HEAD...github-backup/…` powinno
+dać `0 0`, teraz daje `0 3`).
+
+**★ Łańcuchy nocne A i B — WSZYSTKIE 13 pozycji zakończyły się STOP, zero commitów, powód
+techniczny (rasa z pushem), nie merytoryczny.** Właściciel uruchomił dwa łańcuchy:
+`A = [307, 310, 309, 301, 299, 308, 300]`, `B = [311, 302, 303, 304, 305, 306]`. Pliki postępu
+istnieją i są kompletne: `/private/tmp/cx-noc-A-postep.md` (7 pozycji, ostatni zapis 23:18) i
+`/private/tmp/cx-noc-B-postep.md` (6 pozycji, ostatni zapis 22:56) — **każda z 13 pozycji ma wpis
+STOP** z identycznym powodem: `git show github-backup/grafika/m03-20260902:…INSTRUKCJA_DYZUR_<n>.md`
+zwracał `fatal: path … does not exist`. **Zmierzone przeze mnie: to była rasa czasowa, nie brak
+treści.** Raporty STOP w `/private/tmp/cx-noc-{A,B}-<n>-raport.md` mają znaczniki czasu **22:55–22:57**
+— instrukcje 299–312 zostały wypchnięte na `github-backup/grafika/m03-20260902` dopiero **23:18–23:20**
+(commity `beee4bb9d3`/`904e55a645`/`e7fd7546f8`), czyli **20–25 minut po** tym, jak oba łańcuchy już
+zgłosiły STOP i zakończyły pracę. Świeży `git fetch github-backup --prune` wykonany podczas tego
+dyżuru potwierdza: **wszystkie instrukcje 299–312 są teraz obecne** na `github-backup/grafika/
+m03-20260902` (sprawdzone `git cat-file -e` dla każdej z 13). **Wniosek dla rana: oba łańcuchy trzeba
+uruchomić ponownie od zera** — treść, której im zabrakło, istnieje od 23:20, ale żaden z łańcuchów
+sam się nie wznowił (brak automatycznego retry po STOP-ie).
+
 ## 4. Czeka na właściciela (rano 04.09)
 
 1. **Przelot po stagingu wg pakietu (G16)** — `docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md`
@@ -146,8 +207,18 @@ sesji, skład DOCX/PDF, metryka badania, etykiety dowodu E0–E4, narracja za fl
 
 ## 5. Otwarte ryzyka
 
-- **Drugi redeploy stagingu niepotwierdzony** — run `33799377961` `in_progress` w chwili tego pomiaru;
-  jeśli utknął/padł, przelot G16 (pkt 4.1) trafi na stary kod bez flag ON.
+- **Trzeci redeploy stagingu (HEAD `120bb2db81`, zapowiedziany ok. 00:20) niepotwierdzony** — o 23:19
+  `/api/health` nadal zwracał `gitSha` drugiego wdrożenia (`53c3da2918`); przed przelotem G16 zrób
+  świeży `curl` i porównaj z `120bb2db81` (§1/§3c) — jeśli redeploy nie doszedł albo padł, przelot
+  trafi na kod bez 10 dzisiaj scalonych naprawionych dyżurów (286–292, 294, 295, 298).
+- **Oba łańcuchy nocne (A i B, 13 pozycji łącznie) trzeba uruchomić ponownie** — STOP wszystkich
+  13 pozycji był techniczny (rasa: instrukcje 299–312 doszły na `github-backup` 20–25 min PO tym, jak
+  łańcuchy już się zakończyły STOP-em), nie merytoryczny; treść jest teraz na miejscu. Szczegóły i
+  dowód czasowy w §3c.
+- **10 z 13 odbiorów nocy 2 scalone na HEAD, 3 nie** (293 — zero pracy, cała instrukcja do zrobienia;
+  296 — 0/294 miejsc, materiał wejściowy tylko; 297 — STOP dyskowy, 0 commitów) — domknięcia
+  wszystkich sześciu pozostawionych pozycji (296, 297, 293, 292 R3–R6, 298 zastrzeżenia, 295
+  zastrzeżenia) czeka w instrukcji 312, jeszcze nie scalonej na HEAD (§3c).
 - **4 pre-istniejące czerwone testy a11y kreatora wywiadu** po włączeniu A4 (`interview-creator-shell`
   ON) — plik `src/components/Interview/__tests__/InsightCreatorModal.a11y.test.tsx` istnieje, stan
   czerwony niepotwierdzony własnym uruchomieniem w tej sesji (zero-kod, brak testów w tym dyżurze) —
@@ -163,23 +234,37 @@ sesji, skład DOCX/PDF, metryka badania, etykiety dowodu E0–E4, narracja za fl
   `ASM-OWN-001..028` między dwoma rejestrami.
 - FALA 2 (21 pozycji odłożonych, `FALA_2_PO_STAGINGU.md`) startuje dopiero po przelocie G16 — nie
   zaczynać wcześniej, żeby nie powtórzyć błędu „wiele flag naraz” (reguła 9 kodeksu).
+- 8 lekcji metodycznych z nocy część 2 (baza niekompilująca się fałszywie klasyfikuje czerwienie jako
+  nowe, `git merge-tree` stara forma daje 0 znaczników przy realnych konfliktach, `grep -c` na wielkim
+  wyjściu zwraca pustkę zamiast 0, generator instrukcji wkleja opis zamiast komendy w §0.2c i inne) —
+  pełna lista w `REJESTR_ZNALEZISK_20260903.md` §J, skrót w pamięci `przekazanie-sesja-fable-17.md`.
 
 ## 6. Pierwsze kroki dla następnego
 
 1. Audyt jak rano: `git -C /private/tmp/m03 fetch github-backup && git rev-list --left-right --count
-   HEAD...github-backup/grafika/m03-20260902` → 0 0; `git status --short` pusty; znaczniki konfliktu;
-   `initiativeRecordCanon` 6/6; policz licznik G sam (komenda w §1), nie ufaj liczbie z tego pliku
-   bez przeliczenia.
-2. Świeży `curl https://staging.consultify.ai/api/health`, porównaj `gitSha` z `53c3da2918` — jeśli
-   drugi deploy nie doszedł, to pierwsza rzecz do naprawienia przed jakimkolwiek przelotem.
-3. **Odbiór adwersaryjny 13 raportów Codexa** (286–298) w kolejności wartości z §3b/§4 — para dowodów
-   + mutacja per raport, nie „testy przeszły”.
-4. **Zasada minimum Fable** (słowa właściciela 03.09 ~22:30, patrz pamięć `zasada-minimum-fable`):
+   HEAD...github-backup/grafika/m03-20260902` → 0 0 (o 23:2x dawało **0 3** — trzy commity paczki
+   instrukcji 312 jeszcze do ściągnięcia, zsynchronizuj przed pracą); `git status --short` pusty;
+   znaczniki konfliktu; `initiativeRecordCanon` 6/6; policz licznik G sam (komenda w §1), nie ufaj
+   liczbie z tego pliku bez przeliczenia.
+2. Świeży `curl https://staging.consultify.ai/api/health`, porównaj `gitSha` z `120bb2db81` (trzeci
+   redeploy, zapowiedziany ok. 00:20 — §1/§3c/§5). Jeśli nadal `53c3da2918`, to pierwsza rzecz do
+   naprawienia przed jakimkolwiek przelotem właściciela.
+3. **Uruchom ponownie oba łańcuchy nocne (A: 307/310/309/301/299/308/300; B: 311/302/303/304/305/306)**
+   — poprzedni przebieg zakończył się STOP-em na wszystkich 13 pozycjach z powodu technicznego (rasa
+   z pushem instrukcji, nie brak treści — dowód w §3c), treść jest teraz na `github-backup`.
+4. **Odbierz adwersaryjnie instrukcję 312** (domknięcia 296→297→293→292→298→295, 723 linie, jeszcze
+   nie scalona) tą samą metodą co 286–298 — 4 sesje Opus, worktree z realnym PostgreSQL, para dowodów
+   + mutacja per pozycja.
+5. **Napraw szkielet generatora instrukcji §0.2c** — lekcja 8 z nocy część 2: generator wkleja opis
+   zamiast komendy w tej sekcji szablonu (`REJESTR_ZNALEZISK_20260903.md` §J).
+6. **Osobny mały dyżur na 64 pierścienie zaznaczenia** (decyzja wizualna, odłożona z nocy część 2 —
+   nie mylić z fokusem `c-focus` dyżuru 287, to inna rodzina).
+7. **Zasada minimum Fable** (słowa właściciela 03.09 ~22:30, patrz pamięć `zasada-minimum-fable`):
    Fable robi TYLKO scalenia z kontrolą, rejestry, wklejki, meldunki. Cała analiza/kod/dokumenty
    robocze → Sonnet/Opus/Codex. Nie czytać całych plików źródłowych samemu, gdy robotnik może to
    zrobić taniej.
-5. Po przelocie G16 → start FALI 2 (`FALA_2_PO_STAGINGU.md`), kolejność startu jak w dokumencie.
-6. Sprzątać worktree po każdym scaleniu; stare `cx-day2xx`/`wt-*` z 02.09 do przeglądu jeśli jeszcze
+8. Po przelocie G16 → start FALI 2 (`FALA_2_PO_STAGINGU.md`), kolejność startu jak w dokumencie.
+9. Sprzątać worktree po każdym scaleniu; stare `cx-day2xx`/`wt-*` z 02.09 do przeglądu jeśli jeszcze
    żyją.
 
 ## 7. Prognoza (uczciwie)
