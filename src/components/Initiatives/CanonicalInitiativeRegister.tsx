@@ -1,8 +1,9 @@
-import { Copy, ExternalLink, Lightbulb } from 'lucide-react';
+import { Copy, Lightbulb } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
+import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import {
@@ -157,24 +158,21 @@ export const CanonicalInitiativeRegister = ({
       renderPreview={renderPreview}
       previewOpen={previewOpen}
       renderPreviewFooter={(initiative) => (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onOpen(initiative)}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-50 px-3 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
-          >
-            <ExternalLink size={13} />
-            Otwórz
-          </button>
-          <button
-            type="button"
-            onClick={() => void navigator.clipboard?.writeText(initiative.id)}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-          >
-            <Copy size={13} />
-            Kopiuj link
-          </button>
-        </div>
+        <PreviewActionBar
+          rows={[
+            {
+              columns: 2,
+              buttons: [
+                {
+                  label: 'Kopiuj link',
+                  icon: Copy,
+                  colorScheme: 'neutral',
+                  onClick: () => void navigator.clipboard?.writeText(initiative.id),
+                },
+              ],
+            },
+          ]}
+        />
       )}
     >
       <StandardTable
