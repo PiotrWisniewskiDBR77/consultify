@@ -197,10 +197,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       // wcze\u015Bniej ni\u00F3s\u0142 WY\u0141\u0104CZNIE `lineageText` (projekt/dostawca), wi\u0119c dla
       // wi\u0119kszo\u015Bci wydarze\u0144 (brak projektu i dostawcy) hover nie pokazywa\u0142
       // NIC. Pe\u0142ny tooltip = czas + tytu\u0142, z lineage doklejonym je\u015Bli jest.
-      const fullTooltip = [
-        [arg.timeText, arg.event.title].filter(Boolean).join(' '),
-        lineageText,
-      ]
+      const fullTooltip = [[arg.timeText, arg.event.title].filter(Boolean).join(' '), lineageText]
         .filter(Boolean)
         .join(' \u00B7 ');
 
