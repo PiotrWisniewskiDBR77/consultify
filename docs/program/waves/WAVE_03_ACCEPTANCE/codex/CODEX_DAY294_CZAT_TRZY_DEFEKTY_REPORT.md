@@ -89,6 +89,8 @@ Bazowy pakiet jednostkowy: 33 pełne nazwy, 33 PASS. Użyto `RUN_DB_TESTS=0 MOCK
 
 Pliki nazw: `/private/tmp/cx-day294-czat-trzy-artefakty/przed-nazwy.txt` oraz po końcowym przebiegu `po-nazwy.txt`. Każdy przebieg ma `--retry=0`.
 
+Końcowy przebieg: 33/33 PASS; `diff przed-nazwy.txt po-nazwy.txt` jest pusty. Oba pliki nazw mają SHA-256 `60038613ac7ec7aa9967c911ad50b6b9cb6049e711f7705cd2826722ddcc8c22`.
+
 ## Z30
 
 `BRAK ZMIENNYCH POCZTY`; tabela `settings` ma 0 wierszy `smtp%`; `Gateway.ts` nie montuje drenów. Runtime wystartował wyłącznie przez kanoniczny skrypt, z `DOTENV_DISABLED=1` i bez zabronionych kluczy w procesach.
@@ -102,6 +104,12 @@ Pliki nazw: `/private/tmp/cx-day294-czat-trzy-artefakty/przed-nazwy.txt` oraz po
 - `/private/tmp/cx-day294-czat-trzy-artefakty/chat-zimny-odczyt-dark.png`
 - `/private/tmp/cx-day294-czat-trzy-artefakty/chat-galaz-po-odczycie-light.png`
 - logi migracji, fixture i runtime w tym samym katalogu.
+
+SHA-256 zrzutów: light PRZED `18a234672a0dda1dd8b9cf4d20f9c07eaa31f196110d60255bcff54ee748a9a1`; cold light `46470ffa3ba6c4ac54f20624f8ec8b0cbebef42a29b985442d32985dd8b905c7`; cold dark `ccd4b7d2e65a3c90a4bfdc08f51251472273673b46710d3910d25a6b3b77606b`; gałąź po odczycie `74697bc36eb836c59ffd0cae3a57198fc1d30fa2a13ca33491f7d931ea1c23e6`.
+
+## Sprzątanie
+
+Kanoniczny `stop` odmówił po wymaganym commicie R1, ponieważ manifest runtime był związany z markerowym HEAD, a bieżący HEAD zawierał już raport (`state candidate identity differs`). Zatrzymano wyłącznie zapisane w manifeście własne grupy PID 59241 i 59265; porty 5266/5267 zwolnione. Fixture usunięty (`catalogMatches: 0`), a kontener `cx-day294-pg` usunięty z wolumenem; port 6298 zwolniony.
 
 ## Korekty wobec instrukcji
 
