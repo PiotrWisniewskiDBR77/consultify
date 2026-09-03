@@ -1,0 +1,44 @@
+{
+  "initiatives": [
+    {
+      "id": "8fc72125-a480-4185-bc60-c46d506608f5",
+      "title": "Automatyzacja planowania przezbrojeń",
+      "status": "DRAFT",
+      "current_stage": null,
+      "stage": null,
+      "start_date": null,
+      "end_date": null,
+      "owner_business_id": null,
+      "owner_execution_id": null,
+      "expected_roi": null,
+      "risk_level": null,
+      "confidence_level": null,
+      "value_timing": null,
+      "progress": 0
+    }
+  ],
+  "aggregate": [
+    {
+      "aggregate_id": "8fc72125-a480-4185-bc60-c46d506608f5",
+      "version": 1,
+      "payload_json": {
+        "title": "Automatyzacja planowania przezbrojeń",
+        "source": {
+          "sourceId": "w3-ini-assessment-output-v1",
+          "freshness": "CURRENT",
+          "proposalId": "05000000-0000-4000-8000-000000000021",
+          "sourceType": "assessment-finding",
+          "sourceVersion": 1,
+          "proposalVersion": 1
+        },
+        "problem": "Ręczne planowanie powoduje opóźnienia",
+        "projectId": "12bd0043-09af-4f9d-ac00-f4dec7bd2b1f",
+        "readiness": "NOT_EVALUATED",
+        "initiativeId": "8fc72125-a480-4185-bc60-c46d506608f5",
+        "lifecycleState": "IN_EXECUTION",
+        "proposedOutcome": "Planowanie krótsze o 30%",
+        "initiativeOwnerId": "05000000-0000-4000-8000-000000000011"
+      }
+    }
+  ]
+}
