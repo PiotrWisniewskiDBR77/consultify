@@ -264,7 +264,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
               onChange={(e) => setJustification(e.target.value)}
               placeholder="Explain why you need access to this assessment..."
               rows={4}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none resize-none"
+              className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid outline-none resize-none"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Your request will be sent to the assessment owner for approval.
