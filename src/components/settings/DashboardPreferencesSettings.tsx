@@ -307,6 +307,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     </div>
                     <button
                       onClick={() => toggleWidget(option.key)}
+                      role="switch"
+                      aria-checked={isEnabled}
+                      aria-label={option.label}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         isEnabled ? 'bg-navy-900' : 'bg-c-surface-raised'
                       }`}
@@ -344,6 +347,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 </div>
                 <button
                   onClick={() => updatePreference('compactMode', !preferences.compactMode)}
+                  role="switch"
+                  aria-checked={preferences.compactMode}
+                  aria-label={t('settings.dashboard.compactMode', 'Compact Mode')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     preferences.compactMode ? 'bg-navy-900' : 'bg-c-surface-raised'
                   }`}
@@ -370,6 +376,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 </div>
                 <button
                   onClick={() => updatePreference('showGreeting', !preferences.showGreeting)}
+                  role="switch"
+                  aria-checked={preferences.showGreeting}
+                  aria-label={t('settings.dashboard.showGreeting', 'Show Greeting Message')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     preferences.showGreeting ? 'bg-navy-900' : 'bg-c-surface-raised'
                   }`}

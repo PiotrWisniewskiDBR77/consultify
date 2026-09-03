@@ -184,10 +184,10 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
+          <h2 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Calendar size={20} />
             {t('settings.integrations.calendarTitle', 'Calendar Sync')}
-          </h3>
+          </h2>
           <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.integrations.calendarDesc',
@@ -239,7 +239,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               </div>
               {cal.connected ? (
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
+                  <span className="flex items-center gap-1 text-green-700 dark:text-green-400 text-sm">
                     <Check size={16} />
                     {t('common.connected', 'Connected')}
                   </span>
@@ -272,9 +272,9 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
           Kanoniczny <Switch> (src/components/ui/primitives/Switch.tsx) używa
           bg-c-focus-solid dla stanu on — przełączam na ten sam token. */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-c-text-secondary">
+        <h3 className="text-sm font-medium text-c-text-secondary">
           {t('settings.integrations.syncOptions', 'Sync Options')}
-        </h4>
+        </h3>
 
         <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
@@ -291,6 +291,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               checked={syncTasks}
               onChange={(e) => handleSaveSettings(e.target.checked, syncMeetings)}
               disabled={savingSettings}
+              aria-label={t('settings.integrations.syncTasks', 'Sync Tasks')}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
@@ -312,6 +313,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               checked={syncMeetings}
               onChange={(e) => handleSaveSettings(syncTasks, e.target.checked)}
               disabled={savingSettings}
+              aria-label={t('settings.integrations.syncMeetings', 'Sync Meetings')}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>

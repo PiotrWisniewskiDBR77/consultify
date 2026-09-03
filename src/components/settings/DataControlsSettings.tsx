@@ -604,10 +604,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Consent Management ─── */}
             <div>
-              <h4 className={sectionLabel}>
+              <h3 className={sectionLabel}>
                 <Shield size={14} className="text-c-text-secondary" />
                 {t('settings.data.consentsTitle', 'Consent Management')}
-              </h4>
+              </h3>
               <p className="text-xs text-c-text-muted mb-4">
                 {t('settings.data.consentsDesc', 'Choose how we can use your data')}
               </p>
@@ -644,10 +644,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Data Retention ─── */}
             <div>
-              <h4 className={sectionLabel}>
+              <h3 className={sectionLabel}>
                 <Clock size={14} className="text-c-text-secondary" />
                 {t('settings.data.retentionTitle', 'Data Retention')}
-              </h4>
+              </h3>
               <p className="text-xs text-c-text-muted mb-4">
                 {t('settings.data.retentionDesc', 'Choose how long we keep your data')}
               </p>
@@ -685,10 +685,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Data Portability ─── */}
             <div>
-              <h4 className={sectionLabel}>
+              <h3 className={sectionLabel}>
                 <Download size={14} className="text-c-text-secondary" />
                 {t('settings.data.portabilityTitle', 'Data Portability')}
-              </h4>
+              </h3>
               <div className={cardClass}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -763,10 +763,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Danger Zone: Delete Account ─── */}
             <div>
-              <h4 className="text-xs font-bold text-danger-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h3 className="text-xs font-bold text-danger-400 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} />
                 {t('settings.data.dangerZone', 'Danger Zone')}
-              </h4>
+              </h3>
               <div className="bg-danger-500/5 border border-danger-500/20 rounded-lg p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -931,10 +931,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Sample / Demo Data ─── */}
             <div>
-              <h4 className={sectionLabel}>
+              <h3 className={sectionLabel}>
                 <FlaskConical size={14} className="text-c-text-secondary" />
                 {t('settings.data.sampleWorkspace', 'Sample Workspace')}
-              </h4>
+              </h3>
               <div className={cardClass}>
                 <SettingsToggle
                   checked={isDemoMode}
@@ -970,10 +970,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 
             {/* ─── Legal Documents ─── */}
             <div>
-              <h4 className={sectionLabel}>
+              <h3 className={sectionLabel}>
                 <FileText size={14} className="text-c-text-secondary" />
                 {t('settings.data.relatedDocs', 'Legal Documents')}
-              </h4>
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
                 {LEGAL_DOCS.map((doc) => {
                   const Icon = doc.icon;

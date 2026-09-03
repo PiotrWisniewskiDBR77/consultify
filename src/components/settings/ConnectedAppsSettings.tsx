@@ -1105,10 +1105,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     return (
       <div className={`space-y-6 ${className}`}>
         <div>
-          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
-          </h3>
+          </h2>
         </div>
         <LoadingState variant="spinner" />
       </div>
@@ -1120,10 +1120,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Link2 size={20} />
             {t('settings.integrations.appsTitle', 'Connected Apps')}
-          </h3>
+          </h2>
           <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.integrations.appsDesc',
@@ -1133,7 +1133,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         </div>
         <div className="flex items-center gap-2">
           {connectedCount > 0 && (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2.5 py-1 rounded-full">
               <Check size={12} />
               {isPolish
                 ? `${connectedCount} ${connectedCount === 1 ? 'połączona' : 'połączone'}`
@@ -1233,9 +1233,9 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             return (
               <div key={catId}>
                 {selectedCategory === 'all' && (
-                  <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-3">
                     {t(meta.labelKey, meta.fallback)}
-                  </h4>
+                  </h3>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {apps.map((app) => {
@@ -1275,7 +1275,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm text-c-text">{app.name}</span>
                               {isConnected && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
                                   <Check size={8} /> {t('common.connected', 'Connected')}
                                 </span>
                               )}
@@ -1301,7 +1301,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </span>
                               ))}
                               <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded ${app.authType === 'oauth2' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : app.authType === 'basic' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'}`}
+                                className={`text-[10px] px-1.5 py-0.5 rounded ${app.authType === 'oauth2' ? 'text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : app.authType === 'basic' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'}`}
                               >
                                 {app.authType === 'oauth2'
                                   ? 'OAuth 2.0'
@@ -1339,7 +1339,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => handleDisconnect(app.id)}
-                                  className="px-2.5 py-1 text-xs font-medium text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                                  className="px-2.5 py-1 text-xs font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
                                 >
                                   {t('common.disconnect', 'Disconnect')}
                                 </button>
@@ -1408,11 +1408,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 {React.createElement(connectModalApp.icon)}
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-c-text">
+                <h3 className="text-sm font-semibold text-c-text">
                   {t('settings.integrations.connectProvider', 'Connect {{name}}', {
                     name: connectModalApp.name,
                   })}
-                </h4>
+                </h3>
                 <p className="text-xs text-c-text-muted mt-0.5">
                   {connectModalApp.authType === 'basic'
                     ? 'Provide your Apple ID and app-specific password.'

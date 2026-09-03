@@ -301,6 +301,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               type="checkbox"
               checked={Object.values(exportConfig).every(Boolean)}
               onChange={(e) => toggleAll(e.target.checked)}
+              aria-label={t('settings.importExport.selectAll', 'Select All')}
               className="w-5 h-5 rounded border-c-border-subtle dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
             />
           </div>

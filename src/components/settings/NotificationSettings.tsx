@@ -340,7 +340,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                   });
                   setPreferences(all);
                 }}
-                className="px-3 py-1.5 text-sm text-emerald-400 hover:text-emerald-300
+                className="px-3 py-1.5 text-sm text-emerald-700 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300
                                  bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors"
               >
                 <Check size={14} className="inline mr-1.5" />
@@ -356,7 +356,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                   };
                   setPreferences(minimal);
                 }}
-                className="px-3 py-1.5 text-sm text-amber-400 hover:text-amber-300
+                className="px-3 py-1.5 text-sm text-amber-800 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300
                                  bg-amber-500/10 hover:bg-amber-500/20 rounded-lg transition-colors"
               >
                 <AlertCircle size={14} className="inline mr-1.5" />
@@ -415,7 +415,9 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
   integrations,
   onToggle,
   isLast,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div
     className={cn(
       'grid grid-cols-12 gap-4 items-center py-4',
@@ -427,7 +429,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
         <Icon size={16} className="text-c-text-secondary" />
       </div>
       <div>
-        <h4 className="text-sm font-medium text-c-text">{title}</h4>
+        <h3 className="text-sm font-medium text-c-text">{title}</h3>
         <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
     </div>
@@ -439,12 +441,14 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
         <NotificationToggle
           checked={preferences.inApp ?? false}
           onChange={() => onToggle('inApp')}
+          label={`${title} — ${t('settings.notifications.inApp', 'In-App')}`}
         />
       </div>
       <div className="flex justify-center">
         <NotificationToggle
           checked={preferences.email ?? false}
           onChange={() => onToggle('email')}
+          label={`${title} — ${t('settings.notifications.email', 'Email')}`}
         />
       </div>
       {integrations.map((int) => (
@@ -452,22 +456,26 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
           <NotificationToggle
             checked={preferences[int.provider] ?? false}
             onChange={() => onToggle(int.provider)}
+            label={`${title} — ${int.provider}`}
           />
         </div>
       ))}
     </div>
   </div>
-);
+  );
+};
 
 // Toggle Component
-const NotificationToggle: React.FC<{ checked: boolean; onChange: () => void }> = ({
+const NotificationToggle: React.FC<{ checked: boolean; onChange: () => void; label: string }> = ({
   checked,
   onChange,
+  label,
 }) => (
   <button
     onClick={onChange}
     role="switch"
     aria-checked={checked}
+    aria-label={label}
     className={cn(
       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
       'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-c-surface',
