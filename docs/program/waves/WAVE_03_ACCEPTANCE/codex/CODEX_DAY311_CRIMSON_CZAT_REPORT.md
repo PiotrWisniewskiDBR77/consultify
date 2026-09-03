@@ -38,11 +38,15 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 - Teza `~296` wystąpień fokusu: pomiar na markerze daje 289.
 - Osiem ekranów: jako ósmy wybrano `chat-blad-ai`, bo jawny stan błędu pozwala sprawdzić, czy poprawna semantycznie czerwień pozostała czerwona.
 
-## R2–R6
+## R2 — klasyfikacja
+
+W tym samym mianowniku co R1 sklasyfikowano 262 dopasowane linie: 6 jako semantyka krytyczna, 244 jako CTA lub stan aktywny i 12 jako pierścień fokusu/pokrycie z dyżurem 287. Pełna tabela plik · linia · PRZED · PO znajduje się w `REJESTR_CRIMSON_CZAT_20260903.md`. Wpisy fokusu pozostają poza zmianami R3.
+
+## R3–R6
 
 Do uzupełnienia.
 
 ## Twierdzenia niezweryfikowane
 
-- Zrzuty PRZED/PO, kompletna klasyfikacja, zamiany, esbuildy i bramki PO nie są jeszcze wykonane.
+- Zrzuty PRZED/PO, zamiany, esbuildy i bramki PO nie są jeszcze wykonane.
 - Gałąź NIE jest scalona i czeka na akcept właściciela na zrzutach.
