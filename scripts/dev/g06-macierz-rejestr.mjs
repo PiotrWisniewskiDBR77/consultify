@@ -55,6 +55,7 @@ for (const [mod, { suma, ekrany }] of Object.entries(agregat)) {
   if (suma.ekranyZlaPara.length) dlug.push(`zła para jasny/ciemny: ${suma.ekranyZlaPara.join(', ')}`);
   if (suma.ekranyBezTekstu.length) dlug.push(`bez tekstu: ${suma.ekranyBezTekstu.join(', ')}`);
   const status = dlug.length ? 'NOT_STARTED' : 'PASS';
+  const wyjatki = (suma.wyjatki || []).length ? ` Wyjątki uzasadnione (nie blokują, wypisane): .` : '';
   const ekranyZDlugiem = Object.entries(ekrany)
     .filter(([, e]) => e.a11yKadry || e.inneBledy.length || e.zleStatusy.length || e.plRownaEn || e.paryZle.length || e.brakTekstu)
     .map(([n, e]) => `\`${n}\`${e.a11yKadry ? ` a11y ${e.a11yKadry}/${e.kadry}` : ''}${e.plRownaEn ? ' PL=EN' : ''}${e.paryZle.length ? ' para' : ''}${e.brakTekstu ? ' bez tekstu' : ''}`)
@@ -66,6 +67,7 @@ for (const [mod, { suma, ekrany }] of Object.entries(agregat)) {
     (dlug.length
       ? `**Dług: ${dlug.join('; ')}.** Ekrany: ${ekranyZDlugiem}. Bramka nie może paść, dopóki dług nie zejdzie do zera w pomiarze kontrolnym. `
       : `**Zero realnych naruszeń a11y, zero realnych błędów konsoli, zero złych statusów, PL≠EN na każdym ekranie, pary jasny/ciemny poprawne.** `) +
+    wyjatki +
     `Manifesty w repo: \`${DOWODY}/${mod}/\`; agregat: \`${DOWODY}/AGREGAT.md\`${PNG ? `; PNG poza repo: \`${PNG}/${mod}/\`` : ''}. ` +
     `Poprzedni stan bramki: \`${poprzedniStatus}\` (notatka z poprzedniego pomiaru w historii git tego pliku).`;
   const nowyWiersz = `| G06 |${opis}| \`${status}\` | ${notatka} |`;

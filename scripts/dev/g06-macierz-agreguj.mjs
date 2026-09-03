@@ -25,6 +25,14 @@ if (!WEJSCIE) {
 }
 
 const SZUM_HOSTA = new Set(['landmark-one-main', 'page-has-heading-one', 'region']);
+// Uzasadnione wyjątki (z powodem i źródłem) — patrz g06-macierz-wyjatki.json obok.
+const WYJATKI = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(new URL('./g06-macierz-wyjatki.json', import.meta.url), 'utf8'));
+  } catch {
+    return { plRownaEn: {}, brakTekstu: {} };
+  }
+})();
 const KOMBINACJE = ['pl-1440', 'pl-1024', 'en-1440', 'en-1024'];
 
 const jestHarness404 = (b) => b.status === 404 && /\/api\//.test(b.url || '');
@@ -82,9 +90,12 @@ for (const mod of moduly) {
   const lista = Object.entries(ekrany).sort(([a], [b]) => a.localeCompare(b));
   // PL=EN: identyczny tekst renderu w obu językach = język się nie przełączył
   // (albo harness przybija język — kształt 18; albo ekran jest realnie nieprzetłumaczony).
-  for (const [, e] of lista) {
+  for (const [n, e] of lista) {
     e.plRownaEn = Boolean(e.tekst.pl && e.tekst.en && e.tekst.pl === e.tekst.en);
     e.brakTekstu = !e.tekst.pl || e.tekst.pl.length < 40;
+    // Wyjątek uzasadniony: liczony osobno, nie blokuje bramki, ale jest wypisany.
+    if (e.plRownaEn && WYJATKI.plRownaEn?.[n]) { e.plRownaEn = false; e.wyjatek = `PL=EN: ${WYJATKI.plRownaEn[n]}`; }
+    if (e.brakTekstu && WYJATKI.brakTekstu?.[n]) { e.brakTekstu = false; e.wyjatek = `bez tekstu: ${WYJATKI.brakTekstu[n]}`; }
   }
   const suma = {
     ekrany: lista.length,
@@ -98,6 +109,7 @@ for (const mod of moduly) {
     ekranyPlRownaEn: lista.filter(([, e]) => e.plRownaEn).map(([n]) => n),
     ekranyZlaPara: lista.filter(([, e]) => e.paryZle.length).map(([n]) => n),
     ekranyBezTekstu: lista.filter(([, e]) => e.brakTekstu).map(([n]) => n),
+    wyjatki: lista.filter(([, e]) => e.wyjatek).map(([n, e]) => `${n} — ${e.wyjatek}`),
     ekranyNiepelne: lista.filter(([, e]) => e.kadry !== 8).map(([n, e]) => `${n}(${e.kadry})`),
     brakujaceKombinacje: brakujace,
   };
