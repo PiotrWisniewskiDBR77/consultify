@@ -12,6 +12,8 @@ Każda pozycja ma dość treści, żeby złożyć z niej instrukcję generatorem
 
 Kolejność jest ułożona wg **blokowania**, nie wg wielkości.
 
+> **NOTA NADZORCY 2026-09-03 (wieczór):** numeracja pozycji 286–291 w tej kolejce ROZJECHAŁA SIĘ z wydanymi instrukcjami. Numer dyżuru nadaje PLIK `docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_<nr>.md`, nie ta kolejka. Wydane: **286** = samokontrola testów G15 (16 modułów), **287** = pierścień fokusu `c-focus`, **288** = bramka modułu na 270 trasach finansów v8, **289** = pomoc (`help_*` schemat do kodu) + potwierdzenie martwego `NotificationSettingsV2`. Tematy zapisane tu pod 286–291 („rodzina podglądu”, „trzy dziury cross-org”, „surowe ID”, „77 uwag”, „W5 staging”, „finalny przebieg”) zachowują treść, ale dostaną numery od **292** wzwyż przy wydaniu.
+
 ## Stan wyjściowy (zmierzony 2026-09-02)
 
 - Moduły z `G17`+`G18` `PASS`: **15 z 16** (otwarty: `16_PARTNER`).

@@ -1,4 +1,4 @@
-# INSTRUKCJA DYŻURU nr 289 — Codex — „★★★ Dwie funkcje, które użytkownik widzi w produkcie, a które nie działają dla nikogo — zakładka Obserwowane w Ustawieniach (front woła `/api/settings/watchers`, serwer tej trasy nie ma: każde wejście to 404 i pusta lista, cicho) oraz pomoc (`help.routes.ts` czyta `category_id`, a migrowana tabela ma inny kształt: błąd połykany, użytkownik widzi pustkę) — ten dyżur MIERZY obie na realnej bazie od zera (czy serwer ma nieużywany serwis/repozytorium obserwatorów — kształt „zbudowane, ale niepodłączone” — i jaki DOKŁADNIE kształt ma `help_articles` po pełnym łańcuchu migracji), naprawia najmniejszym uczciwym ruchem (podłączenie istniejącej trasy albo migracja addytywna wyrównująca schemat do kodu, NIGDY odwrotnie bez decyzji), zdejmuje ciche łapanie błędu i zostawia dowód odczytu na zimno osobnym klientem `pg`. ★ Jeśli obserwatorów NIE ma po stronie serwera w żadnej postaci, NIE budujesz nowej funkcji: zapisujesz to jako STOP-pytanie do właściciela (ukryć zakładkę czy zbudować), z kosztem."
+# INSTRUKCJA DYŻURU nr 289 — Codex — „★★★ Dwie funkcje, które użytkownik widzi w produkcie, a które nie działają dla nikogo — zakładka Obserwowane w Ustawieniach (front woła `/api/settings/watchers`, serwer tej trasy nie ma: każde wejście to 404 i pusta lista, cicho) oraz pomoc (`help.routes.ts` czyta `category_id`, a migrowana tabela ma inny kształt: błąd połykany, użytkownik widzi pustkę) — ten dyżur MIERZY obie na realnej bazie od zera (czy serwer ma nieużywany serwis/repozytorium obserwatorów — kształt „zbudowane, ale niepodłączone” — i jaki DOKŁADNIE kształt ma `help_articles` po pełnym łańcuchu migracji), naprawia najmniejszym uczciwym ruchem (podłączenie istniejącej trasy albo migracja addytywna wyrównująca schemat do kodu, NIGDY odwrotnie bez decyzji), zdejmuje ciche łapanie błędu i zostawia dowód odczytu na zimno osobnym klientem `pg`. ★ Jeśli obserwatorów NIE ma po stronie serwera w żadnej postaci, NIE budujesz nowej funkcji: zapisujesz to jako STOP-pytanie do właściciela (ukryć zakładkę czy zbudować), z kosztem. ★★ SPROSTOWANIE nadzorcy z 03.09 wieczorem (pomiar statyczny, `docs/program/waves/WAVE_03_ACCEPTANCE/G20_BLOKERY_P0P1_20260903.md` T2 — PRZECZYTAJ w `W1`): `WatchingTab` żyje w `src/components/settings/NotificationSettingsV2/**`, a cały ten katalog NIE MA ANI JEDNEGO IMPORTERA poza własnym `index.tsx` — Ustawienia renderują v1 (`SettingsView.tsx:433`), w którym słowa „watch” nie ma. Czyli A to nie „martwa trasa pod żywą zakładką”, tylko MARTWY KOMPONENT wołający nieistniejącą trasę: użytkownik go nie widzi. W A zmierzasz to i potwierdzasz (albo obalasz) — usunięcie martwej rodziny robi osobno robotnik nadzorcy (dyżur „martwe komponenty runda 2” już biegnie), więc Ty NIE usuwasz i NIE podłączasz; cały ciężar dyżuru przechodzi na B (pomoc), gdzie pomiar nadzorcy mówi: 5 kolumn rozjechanych (`help_articles`: `category_id`, `body`, `status`; `help_events`: `article_id`, `metadata`), 5 miejsc cichego połykania (`help.routes.ts:187,199,216,224,274-278`), najgorsze `:274-278` zwraca `200 {success:true, stored:false}` przy trwałej utracie zdarzenia — jedyna trasa z żywym wołaczem (`HelpContext.tsx:299`), który wysyła `{playbookKey, context}`, a trasa czyta `{articleId, metadata}` (trzeci, niezależny rozjazd kontraktu). Żadna z tych liczb nie jest dowodem runtime — mierzysz je na realnej bazie."
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
 Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
@@ -670,8 +670,12 @@ Commit po `R2`.
 ## R3 — NAPRAWA B: SCHEMAT DO KODU, NIE ODWROTNIE (rdzeń)
 
 Decyzja po pomiarze: jeśli kod czyta kolumnę, której migracja nie dała — migracja ADDYTYWNA
-`server/migrations/20260903_help_articles_category_id.sql` (`ADD COLUMN IF NOT EXISTS`, wypełnienie
-z istniejących danych, jeśli jest z czego). Jeśli kolumna ma odpowiednik pod inną nazwą w
+`server/migrations/20260903_help_schema_do_kodu.sql` (`ADD COLUMN IF NOT EXISTS` dla WSZYSTKICH
+rozjechanych kolumn: wg pomiaru nadzorcy `help_articles.category_id/body/status`,
+`help_events.article_id/metadata`; wypełnienie z istniejących danych, jeśli jest z czego).
+Rozjazd kontraktu `HelpContext.tsx:299` (`{playbookKey, context}`) ↔ trasa (`{articleId, metadata}`):
+wyrównujesz PO STRONIE SERWERA (trasa przyjmuje to, co front wysyła, i mapuje), bo front jest
+zatwierdzonym wyglądem; `:274-278` przestaje zwracać `200 stored:false` — zapis albo 5xx z logiem. Jeśli kolumna ma odpowiednik pod inną nazwą w
 migrowanym kształcie — dostosowujesz zapytania, uzasadniając pomiarem. Usuwasz DDL w locie
 z `help.routes.ts` w TYM SAMYM commicie, w którym migracja go zastępuje. Każdy cichy `catch` →
 log z kontekstem (ścieżka, zapytanie, `err.message`) albo 5xx. Pułapka (2): na pustej bazie bez
@@ -679,16 +683,18 @@ migracji stary kod „działał” — Twój dowód jest tylko po pełnym łańc
 
 Commit po `R3`.
 
-## R4 — NAPRAWA A: PODŁĄCZENIE ALBO STOP (rdzeń)
+## R4 — A: POTWIERDZENIE, ŻE TO MARTWY KOMPONENT, NIE MARTWA TRASA (rdzeń, bez kodu)
 
-Jeśli R1 dał kandydata: mount `/api/settings/watchers` w `Gateway.ts` (z weryfikacją tokena jak
-sąsiedzi) do istniejącej implementacji, adapter kontraktu TYLKO jeśli kształt odpowiedzi różni
-się od tego, co czyta hook — bez nowej logiki. Jeśli R1 nie dał kandydata: **ZERO kodu**;
-w raporcie STOP-pytanie do właściciela: „ukryć zakładkę (koszt DROBNY: warunek na istniejącej
-fladze/trasie) czy zbudować obserwatorów (koszt: tabela + serwis + 3 trasy + test, ŚREDNIE)”.
-Nie rozstrzygasz tego sam.
+Sprostowanie nadzorcy (patrz pułapki): `NotificationSettingsV2/**` nie ma importera, Ustawienia
+renderują v1. Zmierz: `git grep -ln "NotificationSettingsV2\|WatchingTab" -- src dev-render`
+(oczekiwane: tylko własne pliki katalogu), `sed -n '425,440p' src/components/settings/SettingsView.tsx`,
+oraz czy hook `useUserNotificationPreferences` ma innych konsumentów poza tym katalogiem (jeśli
+tak — wołania `/api/settings/watchers` z hooka są osiągalne z żywego ekranu i to zmienia werdykt;
+zapisz który ekran). Werdykt do tabeli A: MARTWY (użytkownik nie widzi) albo ŻYWY (który ekran).
+**ZERO kodu w A** — usunięcie martwej rodziny robi osobno robotnik nadzorcy; jeśli ŻYWY,
+STOP-pytanie z kosztem, nie naprawa.
 
-Commit po `R4` (jeśli był kod).
+Commit po `R4`.
 
 ## R5 — DOWÓD PO + DOWÓD MUTACYJNY (rdzeń)
 
