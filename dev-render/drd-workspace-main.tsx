@@ -39,7 +39,7 @@ import i18n from '../src/i18n';
 import { FeatureFlagsProvider } from '../src/contexts/FeatureFlagsContext';
 import { createDrdDemoSession } from '../src/method-core/methods/drd/drdSessionRuntime';
 import { useAppStore } from '../src/store/useAppStore';
-import { DrdLibraryEntryHarness } from './screens/drd-library-entry';
+import DrdLibraryEntryHarness from './screens/drd-library-entry';
 import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMethodWorkspaceScreen';
 
 const params = new URLSearchParams(window.location.search);
