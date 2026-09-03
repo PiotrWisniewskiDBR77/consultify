@@ -54,6 +54,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 07_MY_WORK_AGENT | 93 | 566 | 554 | 2 | 1 nierozstrzygnięta | 9 pending | `G15 FAIL — ukierunkowany front: marker 554 PASS, 3 FAIL, 9 pending; para dowodzi 2 czerwieni ZASTANYCH i 1 NOWEJ (MYW-IDEAS-010). Serwer pozostaje do pomiaru.` |
 | 08_MEETINGS | 6 | 35 | 32 | 0 | 3 nierozstrzygnięte | 0 | `G15 FAIL — ukierunkowany front: baza 2/2 PASS, marker 32/35 PASS; wszystkie 3 czerwienie są NOWE (dwa uczciwe stany błędu briefu i sekcja decyzji/działań). Serwer pozostaje do pomiaru.` |
 | 09_RESULTS | 30 | 418 | 418 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 408/408, marker 418/418; 10 nowych zielonych przypadków, zero czerwieni. Flagi pozostały OFF; serwer pozostaje do pomiaru.` |
+| 10_FINANCE | 79 | 924 | 923 | 0 | 1 nowa w zmienionym zakresie | 0 | `G15 FAIL — ukierunkowany front: baza 850/851, marker 923/924. Stary czerwony benchmark 1.2M-cell zniknął, nowy benchmark 1000-cell paste-batch jest czerwony; Z37 zabrania uznać równą liczbę czerwieni za brak zmiany. Flagi pozostały OFF.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -92,3 +93,7 @@ Pakiet uruchomiono jako jednostkowy z atrapą bazy i nie jest dowodem realnego H
 ### Pułapki — 09_RESULTS
 
 Pakiet frontowy był czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`). Nie włączono żadnej flagi Wyników i nie wyprowadzono z zieleni twierdzeń o RealPG, HTTP ani uprawnieniach. Pełne nazwy z JSON potwierdzają 10 dodanych przypadków i brak znikniętych.
+
+### Pułapki — 10_FINANCE
+
+Pakiet frontowy uruchomiono bez włączania flag, jako jednostkowy i bez twierdzeń o DB/HTTP. Porównanie `fullName` wykazało wymianę czerwonego benchmarku, mimo identycznej liczby FAIL. To przykład fałszywej zieleni, przed którą chroni `Z37`; nowego benchmarku nie osłabiono ani nie zwiększono budżetu czasowego.
