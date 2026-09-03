@@ -42,3 +42,14 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 
 | Moduł | Plik | Testów | Baza `f65c4ff6a0` | Marker przed naprawą | Klasyfikacja | Commit naprawy | Wynik po |
 | --- | --- | ---: | --- | --- | --- | --- | --- |
+| 01_ORGANIZATION | `tests/unit/organization/organizationProfileLocale.contract.test.ts` | 2 | 2 PASS | 2 PASS | bez zmiany | — | 2 PASS |
+| 01_ORGANIZATION | `src/components/Organization/__tests__/OrganizationSidebar.ownerFeedback.test.tsx` | 2 | 2 PASS | 2 PASS | bez zmiany | — | 2 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/day132.documentConfidentiality.pg.test.ts` | 2 | 1 PASS, 1 FAIL | 2 PASS | NAPRAWIONA DZIŚ | — | 2 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/day205.organizationContextStoreSupersede.pg.test.ts` | 1 | 1 PASS | 1 PASS | bez zmiany | — | 1 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/day205.organizationContextStoreWisdom.pg.test.ts` | 2 | brak wykonanych przypadków | 2 PASS | ZMIANA ZAKRESU | — | 2 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/knowledgeDocsFileHashMigration15.realdb.test.ts` | 0 | 0 | 0 | plik bez wykonanych przypadków | — | 0 |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts` | 4 | 4 PASS | 4 PASS | bez zmiany | — | 4 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts` | 0 | 0 | 0 | plik bez wykonanych przypadków | — | 0 |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts` | 0 | 0 | 0 | plik bez wykonanych przypadków | — | 0 |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgOpsWorkerMounted.pg.test.ts` | 5 | 5 PASS | 5 PASS | bez zmiany | — | 5 PASS |
+| 01_ORGANIZATION | `server/src/services/organizationContext/__tests__/orgPinnedConsumersMounted.pg.test.ts` | 4 | 4 PASS | 4 PASS | bez zmiany | — | 4 PASS |

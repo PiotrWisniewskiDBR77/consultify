@@ -43,5 +43,12 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 
 ## Tabela G15 per moduł
 
-Do uzupełnienia po R2-R6. `MODULE_ACCEPTANCE.md` nie jest edytowany.
+| Moduł | Plików | Testów na markerze | Zielone | ZASTANE | NOWE naprawione | Pozostałe | Gotowe zdanie G15 |
+| --- | ---: | ---: | ---: | --- | --- | --- | --- |
+| 01_ORGANIZATION | 11 | 22 | 22 | 0 | 0 | 0; trzy pliki obecne, lecz bez wykonanych przypadków | `G15 PASS — 11 plików, 22/22 przypadki zielone na 35afcb15fd; porównanie z f65c4ff6a0 wykazało 1 czerwień naprawioną dziś i 2 nowe przypadki; brak nowych czerwieni.` |
 
+`MODULE_ACCEPTANCE.md` nie jest edytowany.
+
+### Pułapki — 01_ORGANIZATION
+
+Front jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`); atrapa `fetch` nie stanowi podstawy żadnej asercji sieciowej w tych czterech przypadkach. Pakiet serwera uruchomiono ponownie z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6290/cx286 JWT_SECRET=... --retry=0`, z cwd `server/`. Pierwsze przebiegi z `RUN_DB_TESTS=0` dały przypadki oczekujące i nie są zaliczone jako dowód. Para RealPG baza/marker jest podstawą klasyfikacji.
