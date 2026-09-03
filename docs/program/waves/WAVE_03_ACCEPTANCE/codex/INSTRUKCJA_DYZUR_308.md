@@ -1,0 +1,687 @@
+# INSTRUKCJA DYŻURU nr 308 — Codex — „★★★ Dyżur i18n z 03.09 naprawił 34 ekrany z 42, ale zamknął tylko to, co było widać na zrzutach — a pod spodem stoi mianownik, którego nikt nie policzył: **631 kluczy, gdzie polska wartość jest znak w znak angielska** (mój pomiar; sprawdź sam, bo heurystyka „brak polskich liter” daje 7405 trafień i jest zbyt hałaśliwa, żeby na niej pracować): ten dyżur (1) buduje SKRYPT `scripts/dev/i18n-pl-audyt.mjs`, który wypisuje te klucze z listą stop-słów uzasadnionych (nazwy własne, skróty, jednostki, „OK”, „Email”) i klasyfikuje każdy jako `DEFEKT` albo `UZASADNIONE + powód`, (2) naprawia klucze zaklasyfikowane jako defekt — polskim zdaniem, nie kalką, (3) mierzy i naprawia drugą rodzinę: angielskie napisy na sztywno w `src/` poza `t()`, klasyfikowane wzorcem z 03.09 na **P** (produkt), **M** (atrapa harnessu nie przekazuje propa, który komponent już ma) i **W** (udokumentowany wyjątek — treść danych, nie interfejsu), (4) stawia bezpiecznik: test, który czerwieni się przy nowym kluczu o identycznej wartości pl i en poza listą uzasadnionych, z linią bazową równą liczbie po naprawie, (5) dowodzi na 10 ekranach parą kadrów `pl` i `en` kanonicznym `scripts/dev/grafika-zrzuty.mjs`, że napisy naprawdę się różnią. ★ Pułapka, która unieważnia połowę testów tłumaczeń w tym repo: `tests/setup.ts` podmienia CAŁY `react-i18next` atrapą, w której `t(klucz, 'domyślne')` zwraca wartość domyślną — test „polskich napisów” bez `vi.mock('react-i18next', importActual)` przechodzi przy PUSTYM pliku polskim."
+
+Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
+Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
+poprzednich dyżurów. Wszystko, czego potrzebujesz, jest poniżej albo pod
+wskazanymi ścieżkami w repo.
+
+> ### ★★ ZAKAZ NR 1 — KATALOG WŁAŚCICIELA. CZYTASZ TO, ZANIM URUCHOMISZ COKOLWIEK.
+>
+> **Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani
+> do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`,
+> ani `git fetch`, ani `git worktree add`.
+> To brudny checkout właściciela produktu i jest **NIETYKALNY**.
+> Jedyny dozwolony kontakt z tą ścieżką to **symlink `node_modules` (odczyt)**
+> wg `DEC-2026-08-26-86`.
+>
+> **★★ TO JEST NAJCZĘSTSZA PRZYCZYNA STRACONEJ GODZINY W TYM PROGRAMIE.**
+> Instrukcja dyżuru 53 kazała wykonać `git fetch --all` i `git worktree add`
+> „w root-repo" — wykonawca zrobił to w katalogu właściciela, `Z5` zablokowało
+> pracę i dyżur stanął na STOP-ie, który nie miał prawa powstać.
+> **Dlatego w `§0.1` masz PEŁNĄ, DOSŁOWNĄ procedurę worktree Z VAULTA.**
+> Nie improwizuj jej i nie zastępuj „swoim sposobem". Twoje miejsce pracy to
+> **wyłącznie** `/private/tmp/cx-day308-jezyk-pl`.
+
+> ### ★★ MARKER I STAN WYDANIA
+>
+> **SHA markera: `416432abaf`**
+> **Gałąź bazowa: `github-backup/grafika/m03-20260902`**
+> **Stan dokumentu: WYDANY**
+>
+> Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
+> Jeżeli widzisz `PROJEKT` albo jakiekolwiek niewypelnione pole szablonu — **dokument nie
+> jest wydany, nie zaczynasz i zgłaszasz to nadzorcy**.
+> Ta ramka jest **jedynym** miejscem, w którym rozstrzyga się stan wydania.
+> Objaśnienia w innych blokach cytowanych **nie** są powodem do STOP-u.
+
+Data wystawienia: 2026-09-03.
+Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
+Język pracy i raportowania: **polski**.
+Zakres: ****PRZEKROJOWE — JĘZYK: kształt „klucz istnieje ≠ przetłumaczony”.** Audyt po SAMYM ISTNIENIU klucza melduje „przetłumaczone”, a klucz trzyma angielskie słowo. Mianownik z mojego pomiaru na markerze: `public/locales/pl/translation.json` ma **34 303 liście**, `en/translation.json` **32 314** (różnica 1989 — polski ma więcej wpisów, co samo w sobie wymaga wyjaśnienia). Twarda, jednoznaczna miara defektu: **631 kluczy, w których wartość polska jest DOSŁOWNIE identyczna z angielską** przy długości powyżej 3 znaków. Część z nich jest uzasadniona (nazwy własne, skróty, „OK”, „Email”, jednostki) — i to jest właśnie praca tego dyżuru: rozdzielić uzasadnione od defektów, nie policzyć na nowo. Druga rodzina to napisy angielskie wpisane na sztywno w `src/` poza `t()`. Wzorzec pracy i zmierzone pułapki: `evidence/grafika/i18n-pl-en-20260903.md` (dyżur 03.09, 42 ekrany, 34 naprawione realnym kodem, klasy defektów **P** produkt / **M** atrapa harnessu nie przekazuje propa / **W** udokumentowany wyjątek).**.
+Trasy front: ``public/locales/pl/translation.json` (34 303 liście), `public/locales/en/translation.json` (32 314), `src/**` — napisy poza `t()`. Rodziny zmierzone 03.09 i warte sprawdzenia najpierw (z `evidence/grafika/i18n-pl-en-20260903.md`): `src/components/Finance/**` (kilkanaście plików), `src/components/Excele/ExceleView.tsx`, `src/components/Materials/**` i szablony (`TemplateCreateWizard.tsx`, `TemplateBuilder.tsx`, `TemplateBuilderShell.tsx`, `TemplateCenterEditors.tsx`, `TemplateRightPanel.tsx`), `MethodWorkspaceShell.tsx`, `AssessmentReportDocument.tsx` (★ rozdziały 2 i dalsze zostały jawnie POZA zakresem 03.09 — to jest dług do domknięcia tutaj), `DRDAssessmentEditor.tsx`. Ekrany do dowodu wybierasz z `scripts/dev/g06-macierz-ekrany.json`, po jednym z możliwie różnych modułów.`. Trasy tył: `Napisy wysyłane przez serwer są osobną rodziną: sprawdź, czy jakakolwiek trasa zwraca gotowy tekst dla użytkownika (`git grep -nE "message: '" -- server/src/routes | wc -l`) i czy jest on tłumaczony. Jeżeli tak — NIE naprawiasz tego tutaj (to zakres dyżurów 296 i 300), tylko wypisujesz jako listę z liczbą.`.
+
+---
+
+### 0.1. ★★ BAZA PRACY, MARKER I GAŁĄŹ — PROCEDURA DOSŁOWNA, Z VAULTA
+
+**Repozytorium, z którego pracujesz, to BARE-vault, a nie checkout właściciela:**
+
+```
+/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+```
+
+Vault ma `extensions.worktreeConfig=true`. **To ma konsekwencję operacyjną,
+którą MUSISZ obsłużyć — krok (4).**
+
+**PIERWSZE KOMENDY DYŻURU — wklej dokładnie tak, po kolei:**
+
+```bash
+VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+WT=/private/tmp/cx-day308-jezyk-pl
+MARKER=416432abaf
+
+# (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
+df -h /
+
+# (1) fetch WYLACZNIE z github-backup — NIGDY `--all`
+git -C "$VAULT" fetch github-backup --prune
+
+# (2) marker
+git -C "$VAULT" log --oneline -25 github-backup/grafika/m03-20260902
+git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/grafika/m03-20260902 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+
+# (3) worktree — TWORZONY Z VAULTA, nigdy z katalogu wlasciciela
+git -C "$VAULT" worktree add "$WT" -b codex/day308-klucz-istnieje-nie-przetlumaczony-20260903 "$MARKER"
+
+# (4) ★★ BEZ TEGO GIT ODMOWI PRACY W WORKTREE (vault jest BARE)
+printf '[core]\n\tbare = false\n' > "$VAULT/worktrees/cx-day308-jezyk-pl/config.worktree"
+cat "$VAULT/worktrees/cx-day308-jezyk-pl/config.worktree"   # ma wypisac dwie linie
+
+# (5) node_modules przez SYMLINK — jedyny dozwolony kontakt z katalogiem
+#     wlasciciela (DEC-2026-08-26-86, odczyt)
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+
+# (6) katalogi pomocnicze POZA repo (Z13)
+mkdir -p /private/tmp/cx-day308-jezyk-pl-scratch
+mkdir -p /private/tmp/cx-day308-jezyk-pl-artefakty
+
+# (7) sanity
+git -C "$WT" rev-parse HEAD
+git -C "$WT" status --short | head -3
+```
+
+**Wynik komend (2) i (7) wklejasz do raportu dosłownie.**
+
+> **★★ PUŁAPKA — REMOTE `icloud-source` JEST MARTWY.**
+> Vault ma trzy remote'y: `github-backup` (żywy, jedyny Twój),
+> `origin` (**zakazany do pushu**, `Z1`) i `icloud-source`, wskazujący na
+> nieistniejący katalog `/private/tmp/consultify-staging-deploy-e6ca`.
+> **Dlatego NIE WOLNO Ci wołać `git fetch --all`.**
+> **Błąd `icloud-source` przy jakimkolwiek fetchu NIE JEST negatywnym wynikiem
+> markera i NIE JEST powodem do STOP-u.** Jedynym negatywnym wynikiem markera
+> jest napis `MARKER BRAK` z komendy `merge-base` powyżej.
+
+**★★ REGUŁA ROZEJŚCIA (`DEC-2026-08-26-95`).**
+Jeżeli marker **nie jest** przodkiem tipa albo gałąź nie istnieje — **STOP
+całego dyżuru**. Nie improwizujesz bazy: nie startujesz z `origin/demo`,
+`main`, `Londyn`, `codex/preserve-*`, `codex/day*-instrukcja-*` ani z żadnej
+gałęzi cudzych dyżurów.
+
+Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
+STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
+
+```bash
+git -C "$VAULT" log --oneline 416432abaf..github-backup/grafika/m03-20260902
+git -C "$VAULT" diff --name-only 416432abaf..github-backup/grafika/m03-20260902
+```
+
+Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
+**Rebase w trakcie dyżuru: ZAKAZANY** (`Z3`).
+
+**★★ PUSH PO PIERWSZYM COMMICIE** (`Z34a`), nie na koniec:
+
+```bash
+git -C "$WT" push github-backup codex/day308-klucz-istnieje-nie-przetlumaczony-20260903
+```
+
+Powtarzasz go **po każdej kolejnej pozycji**.
+
+**Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
+
+```bash
+git -C "$WT" diff --name-only 416432abaf..HEAD
+```
+
+**WERYFIKACJA STANU WEJŚCIOWEGO — `6` komend, wszystkie obowiązkowe.**
+Każda ma podany **oczekiwany wynik autora instrukcji**; rozbieżność idzie do
+„Korekt wobec instrukcji", **nie do improwizacji**.
+
+```bash
+cd "$WT"
+
+# (1) TEZA: mianownik — 34303 liscie w pl, 32314 w en
+python3 -c "import json;f=lambda o:sum(map(f,o.values())) if isinstance(o,dict) else 1;print('pl',f(json.load(open('public/locales/pl/translation.json'))),'en',f(json.load(open('public/locales/en/translation.json'))))"
+#   oczekiwane: pl 34303, en 32314 — zapisz SWOJE liczby
+
+# (2) TEZA: twarda miara defektu to 631 kluczy o identycznej wartosci pl i en
+python3 -c "import json;flat=lambda o,p='': [x for k,v in o.items() for x in (flat(v,(p+'.'+k) if p else k) if isinstance(v,dict) else [((p+'.'+k) if p else k, v)])];P=dict(flat(json.load(open('public/locales/pl/translation.json'))));E=dict(flat(json.load(open('public/locales/en/translation.json'))));same=[k for k in P if k in E and P[k]==E[k] and isinstance(P[k],str) and len(P[k])>3];print('identyczne pl==en (>3 znaki):',len(same));print(same[:8])"
+#   oczekiwane: ~631 — TO jest Twoj mianownik pracy, nie heurystyka
+
+# (3) TEZA: heurystyka „brak polskich liter” jest zbyt halasliwa, zeby na niej pracowac
+python3 -c "import json;flat=lambda o,p='': [x for k,v in o.items() for x in (flat(v,(p+'.'+k) if p else k) if isinstance(v,dict) else [((p+'.'+k) if p else k, v)])];P=dict(flat(json.load(open('public/locales/pl/translation.json'))));POL=set('acelnoszz'+chr(261)+chr(263)+chr(281)+chr(322)+chr(324)+chr(243)+chr(347)+chr(378)+chr(380));n=[k for k in P if isinstance(P[k],str) and len(P[k])>12 and not (set('\u0105\u0107\u0119\u0142\u0144\u00f3\u015b\u017a\u017c') & set(P[k].lower()))];print('bez polskich liter, dlugosc>12:',len(n));print([P[k] for k in n[:6]])"
+#   oczekiwane: ~7405, w tym jawne falszywe alarmy (np. „Rekomendowany”) — dlatego heurystyka jest LISTA DO PRZEJRZENIA, nie wynikiem
+
+# (4) TEZA: atrapa react-i18next uniewaznia testy tlumaczen
+grep -n "vi.mock('react-i18next'" tests/setup.ts | head -2
+grep -n 'importActual' evidence/grafika/i18n-pl-en-20260903.md | head -3
+#   oczekiwane: atrapa w setupie i opis pulapki w dowodzie z 03.09
+
+# (5) TEZA: dyzur 03.09 naprawil 34 z 42 ekranow i JAWNIE zostawil dlug
+grep -n 'assessment-output-report' evidence/grafika/i18n-pl-en-20260903.md | head -3
+grep -n 'POZA zakresem' evidence/grafika/i18n-pl-en-20260903.md | head -3
+#   oczekiwane: wpis o rozdzialach 2+ AssessmentReportDocument poza zakresem — to domykasz tutaj
+
+# (6) TEZA: porty i dysk wolne
+lsof -nP -iTCP:5294 -sTCP:LISTEN; lsof -nP -iTCP:5295 -sTCP:LISTEN; lsof -nP -iTCP:6315 -sTCP:LISTEN; docker ps --format '{{.Names}}' | grep -c cx-day308 || true
+df -h /
+#   oczekiwane: puste lsof, 0 kontenerow, powyzej 3 GB wolnego
+```
+
+---
+
+### §0.4a — pomiar zasięgu testów (warunek oddania raportu, patrz `Z24`)
+
+Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie liczbami:
+
+1. PRZED zmianami produktu: uruchom pakiet(y) testów wskazane w licencji z
+   `--reporter=json` (albo zapisz listę `describe/it` z wyjścia) i zapisz do
+   artefaktów plik `przed-nazwy.txt` — po jednej PEŁNEJ nazwie testu na wiersz.
+2. PO zmianach: to samo do `po-nazwy.txt`.
+3. Do raportu wchodzi: `diff przed-nazwy.txt po-nazwy.txt` — nazwy DODANE (twoje
+   nowe testy) i nazwy ZNIKNIĘTE (każda zniknięta = wyjaśnienie albo STOP).
+   `N passed` bez nazw NIE jest pomiarem. „Ta sama liczba" przy innym składzie
+   nazw to fałszywa zieleń (Z37).
+4. Przepisanie liczby z instrukcji, cudzego raportu albo rejestru = zawyżenie
+   i podstawa odrzucenia raportu. Liczysz sam, u siebie, na swojej bazie.
+
+---
+
+### 0.2. Bezwzględne ZAKAZY — `Z1`–`Z40`
+
+| # | Zakaz | Dlaczego (incydent) |
+| --- | --- | --- |
+| `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day308-klucz-istnieje-nie-przetlumaczony-20260903` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
+| `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `grafika/m03-20260902` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
+| `Z3` | **Żadnego `--force`, `--force-with-lease`, `git reset --hard` na gałęziach współdzielonych**, żadnego `rebase` w trakcie dyżuru | Krach 3/4: regresja demo z force/reset na złej bazie |
+| `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
+| `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
+| `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
+| `Z7` | **★★ Twój JEDYNY port bazy to `6315`. Twój JEDYNY port harnessu to `5294 i 5295`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day308-pg`**. **ZAKAZANE:** `Zakazane na stałe: 5000 (macOS Control Center), 5037 (adb), 5060-5061 (SIP — Chromium ERR_UNSAFE_PORT), 6000, 6665-6669 oraz reszta listy restricted ports Chromium. Zajęte przez inne prace (nie ruszasz): 3020, 3022, 3025, 3027, 3030 (tor grafiki nadzorcy), 5322, 5410-5441 (agenci nadzorcy), 5442-5449 oraz 6311-6313 (odbiorcy nadzorcy), 5432 i 5433 (Postgres hosta), 6012, 6379 (redis), 7000, 7679, 7768, 11434. Cudze — dyżury 286-307 (bazy 6290-6314, harness 5250-5293) oraz rodzeństwo z tej paczki: 309 (6316, 5296-5297), 310 (6317, 5298-5299), 311 (6318, 5300-5301). Twoje własne: baza 6315, harness 5294 i 5295. Sprawdzasz sam przed startem: lsof -nP -iTCP:PORT -sTCP:LISTEN oraz docker ps. ★ ZAKAZ `pkill`/`killall` na `node`, `vite`, `playwright`, `grafika-zrzuty` — zabijasz wyłącznie własne PID-y (zapisz `$!`).`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
+| `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
+| `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `Bez flag. Poprawka napisu nie wymaga flagi — ale jeżeli poprawka zmienia DŁUGOŚĆ napisu tak, że łamie układ (przyciski, nagłówki tabel, chipy), to jest zmiana wyglądu i idzie do raportu z kadrem PRZED/PO, a nie po cichu.`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
+| `Z11` | **★★ NIE ODSŁANIASZ NOWEGO EKRANU BEZ AKCEPTU.** Nowe wizualium ma flagę `default OFF` i idzie do właściciela **na zrzutach zrobionych przez Ciebie**. Zmiana domyślnej na `ON` = **odrzucenie pozycji** | `CLAUDE.md` reguła 7: właściciel NIGDY nie jest pierwszym testerem wizualnym (powód: załamanie 07-11) |
+| `Z12` | **★★ NIE ZMIENIASZ MODELU UPRAWNIEŃ ANI BRAMEK PLATFORMOWYCH.** Nietykalne do zapisu: ``scripts/check-list-canon.sh` · `scripts/check-focus-canon.sh --ci` · istniejące testy i18n (`git grep -ln 'translation.json' -- tests src/**/__tests__ | head`) · nowy bezpiecznik identyczności pl/en · testy komponentów, których napisy zmieniasz (uruchamiaj punktowo, nie całe `tests/unit`)`. **Wyjątek — jeżeli istnieje — jest wymieniony imiennie w tabeli licencji** | Pliki przekrojowe; dyżury 37/43/46/52 rozjechały się właśnie na nich |
+| `Z13` | **Nie tworzysz nowych dokumentów rejestrowych.** Dokładnie JEDEN plik raportu: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY308_JEZYK_PL_REPORT.md`. Dozwolone nowe pliki dokumentacyjne: raport pod `SCIEZKA_RAPORTU` oraz `docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_JEZYK_PL_20260903.md` (tabela klucz · wartość pl · wartość en · klasa · powód · commit; sekcja „uzasadnione”; sekcja „pl ma, en nie ma”). Kadry PNG do `evidence/grafika/jezyk-pl-20260903/` (`git add -f`). Kod: `scripts/dev/i18n-pl-audyt.mjs`, poprawki w `public/locales/*` i `src/`, bezpiecznik. **ZAKAZ edycji `MODULE_ACCEPTANCE.md`.**. **Zrzuty, logi i pliki wynikowe NIE wchodzą do repo** — leżą w `/private/tmp/cx-day308-jezyk-pl-artefakty`, a raport podaje ścieżki i `shasum -a 256` | Dokumentacja rośnie szybciej niż produkt |
+| `Z14` | **Nie zmieniasz `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`** i nie podważasz decyzji w kodzie. Uważasz, że decyzja się myli → **errata w raporcie** | SSOT decyzji właściciela |
+| `Z15` | **Zero modelu językowego w tym dyżurze.** Żaden pomiar, strażnik ani ekran nie woła `llmService`, `/api/ai/**` ani `GoogleGenerativeAI` | `DEC-51` — zakaz atrapy AI; bezpieczeństwo nie ma prawa zależeć od sieci |
+| `Z16` | **Nie usuwasz i nie „naprawiasz" uczciwych stanów pustych, `503 not_configured`, `null`, `UNKNOWN` ani nagrobków `410`** | „Zero placebo i atrap"; uczciwy `503` jest wzorcem POPRAWNYM |
+| `Z17` | **Zakaz wszystkiego poza zakresem tego dyżuru** — z imiennymi licencjami z tabeli licencji | Podział front/tył i rozłączność z dyżurami równoległymi |
+| `Z18` | **★★ NAJOSTRZEJSZY — ABSOLUTNY zakaz modyfikowania globalnej infrastruktury testowej:** `tests/setup.ts`, `tests/helpers/**`, `tests/__mocks__/**`, `vitest.config.ts`, każdy `vitest.*.config.ts`, `server/vitest.config*.ts`, `tests/integration/_helpers/assertRealPostgres.ts` | Jedna zmiana globalnego mocka fałszuje wynik całego korpusu |
+| `Z19` | **Nie odmontowujesz i nie kasujesz żadnego routera, middleware ani joba CI zamontowanego dziś** | Odmontowanie trasy potrafi zabić ekran, którego nie mierzysz; bramki znikają łatwiej, niż wracają |
+| `Z20` | **★★ ZAKAZ uruchamiania testów DB bez jawnego kompletu env wskazującego kontener TEGO dyżuru, W TEJ SAMEJ LINII komendy.** Kolejność BLOKU 0 jest wiążąca: **NAJPIERW kontener + pełne migracje, DOPIERO potem jakikolwiek pomiar** | Trzy incydenty zapisu do cudzej bazy |
+| `Z21` | **DoD wymaga DOWODU OSIĄGALNOŚCI, nie istnienia pliku** (`DEC-2026-08-26-104`). Pełna ścieżka: realne wejście HTTP → realny `ApiGateway` → `verifyToken` → trasa → handler → zapytanie → **wiersz w Twojej bazie** → odczyt, który ten wiersz podnosi → konsument w `src/` **albo jawne zdanie „brak konsumenta"** | Istnienie kodu ≠ działanie |
+| `Z22` | **★★ Test wstrzykujący zależności albo montujący router w gołym `express()` NIE dowodzi ścieżki produkcyjnej** (`DEC-2026-08-26-107`). Dowodem jest `ApiGateway.getInstance().initializeRoutes(app)` | Replika rozjeżdża się z produkcją i nikt tego nie zauważa |
+| `Z23` | **★★ ZERO ATRAP.** `200` z pustą kopertą tam, gdzie zapytanie padło, jest atrapą. `0` tam, gdzie wartość jest nieznana, jest atrapą. Ekran, który zapisuje do magazynu, którego nikt nie czyta, jest atrapą. Przycisk bez trasy jest atrapą | `DEC-2026-08-25-21/22`, `DEC-51` |
+| `Z24` | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
+| `Z25` | **★★ Testy realdb WYŁĄCZNIE z jawnym `DATABASE_URL` wskazującym Twój efemeryczny kontener.** `tests/setup.ts` ma bezpiecznik i rzuca błędem zamiast fallbacku | **Port `5432` NASŁUCHUJE i nie jest Twój** — fallback = zapis do cudzych danych |
+| `Z26` | **★★ Komplet env w tej samej linii — patrz `§0.2c`.** Bez `MOCK_DB=false` odczyty idą cicho na atrapę bazy; bez `ENABLE_V8_GLOBAL=true` część tras daje `404` **przed uwierzytelnieniem**; bez `ENABLE_TEST_AUTH_BYPASS=false` `verifyToken` **jest omijany** | Tak zginął dzień 23 |
+| `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day308-jezyk-pl-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
+| `Z28` | **★★ ZERO POŁĄCZEŃ DO RAILWAY, DEMO, STAGINGU I PRODUKCJI — w każdą stronę i każdym narzędziem.** Zakaz obejmuje `railway` CLI, `psql`/`docker exec psql` do hosta innego niż `127.0.0.1`, `curl`/`wget`/`fetch` do `*.railway.app`, `demo.consultify.ai`, `consultify.ai`, `staging.*` | Produkcja NIETYKALNA; demo i staging są jedną bazą. **To jedyny zakaz, którego naruszenie zatrzymuje CAŁY dyżur** |
+| `Z29` | **★★ Testy o kształcie „atak odrzucony + readback bez zmian" MUSZĄ biec BEZ PONAWIANIA: `--retry=0` w KAŻDEJ komendzie** i `retry: 0` w opcjach `describe`/`it`, jeśli plik je ustawia | `vitest.config.ts` ustawia `retry: CI ? 3 : 1`. Przy otwartej dziurze pierwszy przebieg realnie zmienia stan, asercja pada, Vitest ponawia — i test **raportuje `PASS` mimo otwartej dziury**. Udowodnione na module Partner |
+| `Z30` | **★★ ZAKAZ REALNEJ WYSYŁKI E-MAILI, ZAPROSZEŃ KALENDARZOWYCH I POWIADOMIEŃ.** Przed pierwszym przebiegiem zapisującym **udowodnij w raporcie**, że dostawca poczty jest atrapą — protokół `§0.2b` | Wysłany e-mail i zaproszenie kalendarzowe są **nieodwracalne** i trafiają do skrzynek osób trzecich |
+| `Z31` | **★★ ZAKAZ PRZYPINANIA STRAŻNIKA TESTU REALDB DO HOSTA, PORTU ALBO NAZWY BAZY.** Wołasz `await assertRealPostgresTestEnvironment()` **BEZ ARGUMENTÓW**, w szczególności bez `expectedDatabase` | Dyżur 43 przypiął strażnik do swojej bazy: po usunięciu kontenera **30 przypadków dowodowych stało się trwałym `SKIP`**, pakiet raportuje `exit 0` i wygląda jak sukces |
+| `Z32` | **★★ ZAKAZ WPISU `FIXED` / `VERIFIED` / `ZROBIONE_WG_DoD` BEZ DOWODU MUTACYJNEGO W OBIE STRONY.** Psujesz kod produkcyjny → test **CZERWONY**; cofasz → test **ZIELONY**; `git diff` po cofnięciu **pusty**. Obie komendy i oba wyniki dosłownie w raporcie. Mutację cofasz przez `cp` (`Z27`), nigdy `git stash` | Dyżur 44 wpisał `FIXED` dla podatności, **która nigdy nie istniała** — test przechodził także przed zmianą, bo asercja była tautologią |
+| `Z33` | **★★ PRZED KAŻDYM POMIAREM SPRAWDZASZ, CZY STRAŻNIK, KTÓRY MIERZYSZ, NIE WYŁĄCZA SIĘ SAM W TRYBIE TESTOWYM** — ramka `§0.2d` | Na `resultsInternalBetaVisibility.middleware.ts` zmierzono **416 fałszywych twierdzeń** o uprawnieniach jednego modułu |
+| `Z34` | **★★ GREP DOWODZI, ŻE ŁAŃCUCH ISTNIEJE, NIE ŻE DZIAŁA.** Zdanie „działa" wolno Ci napisać wyłącznie po realnym żądaniu HTTP przez realny `ApiGateway`, z podpisanym JWT, na realnym Postgresie po pełnych migracjach — **i po zapisaniu KODU ODPOWIEDZI** | 28.08 w module kalendarza zmierzono kompletny łańcuch komponent → `fetch` → trasa → handler → `INSERT`. **Każdy realny `POST` zwracał `500`**, bo `req.db` nigdy nie było ustawiane w tej gałęzi montażu |
+| `Z34a` | **★★ PO PIERWSZYM COMMICIE ROBISZ PUSH NA `github-backup`**, a potem po każdej pozycji | 28.08 trzy dyżury pracowały cały dzień bez kopii zapasowej |
+| `Z35` | **Zakaz „naprawiania" przez wyciszanie:** `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `.skip`, `.todo`, poszerzanie `exclude`/`testIgnore`, obniżanie progów pokrycia, `--max-warnings`, `continue-on-error: true` na jobie testowym. Uznajesz to za jedyne wyjście → **STOP z uzasadnieniem**, nie cichy commit | To jest choroba, którą program leczy, a nie narzędzie do jej leczenia |
+| `Z36` | **Zakaz `eslint --fix` i `prettier --write` na czymkolwiek szerszym niż plik, który i tak zmieniasz z innego powodu.** Zakaz `--fix` na katalogu, na `.`, na globie | Autofix dotknąłby tysięcy plików i skasował pracę **wszystkich** równoległych dyżurów |
+| `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
+| `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
+| `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
+| `Z40` | ★★★ **ZAKAZ meldowania wyniku na podstawie istnienia kluczy.** **ZAKAZ pracy na samej heurystyce „brak polskich liter”** — jest zbyt hałaśliwa; twarda miara to identyczność pl i en. **ZAKAZ tłumaczenia maszynowego bez przeczytania kontekstu użycia** (klucz `t('…')` bywa w przycisku o szerokości 90 pikseli). **ZAKAZ dopisywania brakujących kluczy angielskich hurtem.** **ZAKAZ naprawiania produktu tam, gdzie defekt jest w atrapie harnessu** (klasa **M**). **ZAKAZ zmian w `server/src`.** **ZAKAZ `git stash`.** **ZAKAZ `pkill`.** **ZAKAZ dotykania demo/staging/produkcji.** **ZAKAZ `--no-verify`.** **ZAKAZ edycji `MODULE_ACCEPTANCE.md`.** | Bramka `G06` (języki i motywy) i przelot właściciela po stagingu wymagają, żeby polska wersja była polska. Program ma zapisany kształt „klucz istnieje ≠ przetłumaczony”: audyt liczący ISTNIENIE kluczy melduje sukces przy angielskich wartościach. Dyżur z 03.09 naprawił to, co było widać na 42 zrzutach — czyli próbkę. Bez mianownika policzonego z pliku nie wiemy, czy naprawiliśmy 34 defekty z 40, czy z 400. |
+
+---
+
+### 0.2b. ★★ PROTOKÓŁ `Z30` — ZERO WYSYŁKI, A MIMO TO PEŁNY DOWÓD
+
+**(1) Czego NIE WOLNO Ci zrobić — nigdy:**
+- ★ **UWAGA — SPROSTOWANIE 2026-08-30.** Ten szkielet wymieniał tu wcześniej
+  przełącznik `ENABLE_LIVE_EMAIL`. **Taka flaga NIE ISTNIEJE w kodzie** — `grep`
+  po całym `server/src` i `src` daje zero trafień. Był to fantom, powielany
+  w każdej wydanej instrukcji. **Nie szukaj go i nie raportuj, że jest wyłączony.**
+  Realny warunek wysyłki jest inny i opisany w punkcie (2) poniżej: poczta wychodzi
+  wyłącznie wtedy, gdy `emailService.ts:202` zobaczy **jednocześnie** `smtpConfig.host`
+  i `smtpConfig.auth.user`, sklejone **najpierw z tabeli `settings`**, dopiero potem
+  ze zmiennych środowiskowych. Bez tych dwóch wartości serwis pisze na konsolę;
+- ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
+  w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
+- wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
+- uruchomić serwera pełnym `server/src/index.ts` **na potrzeby testów** — tam
+  startują drenaże outboxów; testy montują `ApiGateway`, nie cały serwer
+  (`Z22`);
+- uruchomić `server/src/index.ts` na potrzeby zrzutów inaczej niż przez
+  kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` i bez spełnienia
+  wszystkich warunków z punktu (4) poniżej;
+- wywołać ręcznie żadnej funkcji `drain*` / `startNotificationOutboxDrainCron`
+  / `outboxWorker`.
+
+**(2) Trzy dowody, które wklejasz do raportu ZANIM uruchomisz cokolwiek
+zapisującego:**
+
+```bash
+cd /private/tmp/cx-day308-jezyk-pl
+
+# (a) srodowisko nie ma ani jednej zmiennej poczty
+env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL)" || echo "BRAK ZMIENNYCH POCZTY"
+
+# (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
+#     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
+docker exec cx-day308-pg psql -U postgres -d cx308 \
+  -c "SELECT key, left(coalesce(value,''),8) FROM settings WHERE key LIKE 'smtp%';"
+#   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
+#   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
+
+# (c) dla TESTOW: zaden drenaz outboxu nie dziala w procesie testowym
+grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
+#   oczekiwane: 0 trafien — drenaze startuja w server/src/index.ts, ktorego NIE uruchamiasz
+```
+
+**(3) Deklaracja obowiązkowa dla TESTÓW w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
+żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
+wysłane."**
+
+**(4) Wyjątek wyłącznie dla ZRZUTÓW ODBIOROWYCH — pełny produkt, nie replika.**
+Pełny `server/src/index.ts` wolno uruchomić wyłącznie przez kanoniczny
+`scripts/dev/start-wave3-owner-runtime.mjs`, po wykonaniu dowodów (a) i (b),
+oraz tylko gdy wszystkie poniższe warunki są spełnione imiennie:
+
+- runtime pracuje wyłącznie na efemerycznej lokalnej bazie dyżuru pod
+  `127.0.0.1`, na zasobach przydzielonych w instrukcji; nie wolno adoptować
+  bazy zawierającej jakikolwiek klucz `smtp%`;
+- środowisko procesu serwera pochodzi z `childEnv(...)`, ma
+  `DOTENV_DISABLED='1'` i nie zawiera `SMTP_*`, `RESEND`, `SENDGRID` ani
+  `MAIL*`; trzeba to potwierdzić dla uruchomionego procesu, nie tylko dla
+  powłoki wywołującej;
+- zapytanie z dowodu (b), wykonane po wszystkich migracjach i seedach, zwraca
+  `0` wierszy bezpośrednio przed startem runtime'u;
+- nie ustawiasz flag drenaży na `true`, nie wywołujesz żadnego drenażu ręcznie
+  i nie wykonujesz żadnej operacji, która tworzy wiadomość, zaproszenie lub
+  powiadomienie; runtime służy wyłącznie do odczytu i wykonania zrzutów;
+- po starcie ponownie sprawdzasz środowisko należącego do Ciebie procesu oraz
+  log serwera. Trafienie konfiguracji poczty, próby realnego transportu albo
+  niejednoznaczność dowodu oznacza natychmiastowe zatrzymanie runtime'u i STOP
+  całego dyżuru (`Z30`).
+
+Brak konfiguracji nie wyłącza samych drenaży: w runtime z realną bazą startują
+one domyślnie. Ochroną jest fail-closed protokół powyżej — `emailService`
+tworzy realny transporter dopiero przy jednoczesnej obecności hosta i
+użytkownika SMTP; bez nich pozostaje atrapą konsolową. Dowody (a) i (b)
+obowiązują zatem zarówno testy, jak i zrzuty odbiorowe.
+
+**Deklaracja obowiązkowa dla ZRZUTÓW ODBIOROWYCH w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie
+przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie
+dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log
+serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani
+powiadomienie zewnętrzne nie zostało wysłane."**
+
+**Ostrzeżenie wsteczne (`DEC-2026-08-29-314`):** dyżury `70`, `72`, `73`,
+`76`, `81` i `85` uruchomiły kanoniczny runtime do zrzutów, przez co
+sześciokrotnie naruszyły wcześniejsze bezwarunkowe brzmienie `§0.2b`. Do szkody
+nie doszło, ponieważ niezależny protokół `Z30` wymagał wykazania, że dostawca
+poczty jest atrapą. To ostrzeżenie nie znosi zakazu ani nie zastępuje dowodów.
+
+---
+
+### 0.2c. ★★ KOMPLET ZMIENNYCH ŚRODOWISKOWYCH — TRZY WARIANTY, ZAWSZE W JEDNEJ LINII
+
+**Zmienna postawiona `export`-em wcześniej NIE LICZY SIĘ.** `vitest.config.ts`
+przybija część wartości (`DB_TYPE='sqlite'`), więc komplet musi stać
+**w tej samej linii komendy** — i masz **udowodnić, że nadpisał**, a nie założyć.
+
+**(A) MIGRACJE — pełny łańcuch, przed jakimkolwiek pomiarem (`Z20`):**
+
+```bash
+cd /private/tmp/cx-day308-jezyk-pl
+
+docker run -d --name cx-day308-pg \
+  -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx308 \
+  -p 127.0.0.1:6315:5432 pgvector/pgvector:pg16
+#   ★ `postgres:15` NIE PRZECHODZI migracji — brak rozszerzenia `vector`
+
+until docker exec cx-day308-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6315/cx308 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+
+# DRUGI przebieg — musi byc bezbledny i bez zmian (idempotencja):
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6315/cx308 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+```
+
+**`NODE_ENV=test` jest OBOWIĄZKOWE przy bazie lokalnej** — bez niego strażnik
+localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+(`server/scripts/migrate.postgres.ts:640-650` opisuje ten mechanizm wprost).
+**Liczbę zastosowanych migracji i wynik obu przebiegów mierzysz sam** (`Z24`).
+
+**(B) PAKIETY DOTYKAJĄCE BAZY — komplet obowiązkowy, gotowy do wklejenia:**
+
+```bash
+cd /private/tmp/cx-day308-jezyk-pl && \
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test \
+ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
+RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6315/cx308 \
+JWT_SECRET=cx308-test-secret-do-not-reuse \
+npx vitest run testy: nowy bezpiecznik identyczności pl/en (z dowodem mutacyjnym), testy komponentów o zmienionych napisach — KAŻDY test tłumaczeń MUSI mieć `vi.mock('react-i18next', importActual)`, inaczej patrzy na napisy domyślne z kodu; dowód główny = tabela klasyfikacji w repo + 10 par kadrów `pl`/`en` obejrzanych oczami --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day308-jezyk-pl-artefakty/day308-jezyk-pl.json
+```
+
+Dla testów **serwerowych** dodajesz `--config server/vitest.config.ts`.
+**Uruchomienie `vitest` z roota bez właściwego configu daje
+`No test files found` — a to NIE jest `PASS`.** Sprawdź, którego configu
+wymaga dana ścieżka, i **wpisz to do raportu**.
+
+**(C) PAKIETY CZYSTO JEDNOSTKOWE** (mockują `dbGet`, nigdy nie otwierają
+połączenia — m.in. pomiar zasięgu `§0.4a`):
+
+```bash
+cd /private/tmp/cx-day308-jezyk-pl && \
+RUN_DB_TESTS=0 MOCK_DB=true \
+npx vitest run testy: nowy bezpiecznik identyczności pl/en (z dowodem mutacyjnym), testy komponentów o zmienionych napisach — KAŻDY test tłumaczeń MUSI mieć `vi.mock('react-i18next', importActual)`, inaczej patrzy na napisy domyślne z kodu; dowód główny = tabela klasyfikacji w repo + 10 par kadrów `pl`/`en` obejrzanych oczami --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day308-jezyk-pl-artefakty/day308-jezyk-pl.json
+```
+
+**To NIE jest naruszenie `Z26`, tylko warunek `Z25`:** bez `DATABASE_URL`
+`tests/setup.ts` rzuciłby błędem przy `RUN_DB_TESTS=1`.
+**Nigdy nie mieszasz: pakiet jednostkowy NIE jest dowodem egzekucji.**
+
+**Znaczenie każdej zmiennej — musisz je znać, zanim ją wpiszesz:**
+
+| Zmienna | Co się stanie, gdy jej zabraknie |
+| --- | --- |
+| `RUN_DB_TESTS=1` | `tests/setup.ts` pomija testy bazodanowe; pakiet raportuje `exit 0` |
+| `MOCK_DB=false` | odczyty idą **cicho** na atrapę bazy, zapisy nigdzie nie lądują |
+| `DB_TYPE=postgres` | `vitest.config.ts` przybija `sqlite` — mierzysz inny silnik, niż myślisz |
+| `NODE_ENV=test` | runner migracji odmawia albo zwraca MOCK przy bazie lokalnej |
+| `ENABLE_V8_GLOBAL=true` | część tras daje **fałszywe `404` PRZED uwierzytelnieniem** |
+| `ENABLE_TEST_AUTH_BYPASS=false` | **`verifyToken` JEST OMIJANY** — każdy test uwierzytelniania przechodzi z fałszywego powodu |
+| `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce` | strażnik przepuszcza wszystko przy `NODE_ENV=test` (416 fałszywych twierdzeń) |
+| `DATABASE_URL` | fallback na `localhost:5432`, który **nasłuchuje i nie jest Twój** |
+| `JWT_SECRET` | podpisany JWT nie przejdzie przez `verifyToken`; dostaniesz `401` z niewłaściwego powodu |
+| `--retry=0` | test „atak odrzucony" **leczy się skutkiem własnego ataku** i raportuje `PASS` |
+
+---
+
+### 0.2d. ★★ ZNANE PUŁAPKI ŚRODOWISKA — OSIEMNAŚCIE, KAŻDA KOSZTOWAŁA GODZINY
+
+**Czytaj to, ZANIM uznasz cokolwiek za zepsute.**
+
+1. **Vault jest BARE + `extensions.worktreeConfig=true`.** Po `git worktree add`
+   **musisz** utworzyć `<vault>/worktrees/cx-day308-jezyk-pl/config.worktree`
+   z treścią `[core]` / `bare = false`, inaczej `git` w worktree odmawia pracy.
+   Komenda dosłowna: `§0.1` krok (4).
+2. **Remote `icloud-source` w vaulcie jest MARTWY** (wskazuje na nieistniejący
+   `/private/tmp/consultify-staging-deploy-e6ca`). **Nie wołaj `git fetch --all`.**
+   Jego błąd **NIE jest** negatywnym wynikiem markera i nie jest powodem STOP-u.
+3. **Host NIE MA binarki `psql`** (`which psql` → `psql not found`).
+   Każde zapytanie: `docker exec cx-day308-pg psql -U postgres -d cx308 -c '…'`.
+4. **Runner migracji wymaga `NODE_ENV=test` przy bazie lokalnej.** Bez tego
+   strażnik localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+   (`server/scripts/migrate.postgres.ts:640-650`).
+5. **`vitest.config.ts` (ok. `:209-210`) twardo ustawia `test.env.DB_TYPE='sqlite'`.**
+   Zmienna z powłoki bywa nadpisywana — `DB_TYPE=postgres` musi stać
+   **w tej samej linii komendy**, a Ty **udowadniasz w raporcie, że nadpisało**
+   (asercja `expect(process.env.DB_TYPE).toBe('postgres')` w pierwszym `it`
+   każdego nowego pakietu). Pliku **nie zmieniasz** (`Z18`).
+6. **`JSON.parse` na kolumnie typu `json` działa na SQLite i wywala `500` na
+   PostgreSQL** — sterownik `pg` zwraca już zdeserializowany obiekt. Jeżeli
+   kolumny są `TEXT`, kształt `500` nie występuje, ale występuje kształt
+   **cichej utraty danych**. Każdy `500` widoczny na PG a nie na SQLite sprawdź
+   najpierw pod tym kątem (`DEC-2026-08-28-245`).
+7. **CI NIE URUCHAMIA TESTÓW dla naszych gałęzi.** Joby `test-suite.yml` są
+   warunkowane na `main`/`develop`, a my jesteśmy na `Londyn`/`demo`;
+   `lint-typecheck` pada na zastanych błędach `tsc`, a `pr-gate` czyta wynik
+   pominiętego joba jako sukces (`DEC-2026-08-28-246`). **„CI zielone" nie jest
+   w tym repo żadnym dowodem.** Dowodem jest wyłącznie Twój przebieg z `--retry=0`.
+8. **`docker rm -f` bez `-v` NIE kasuje wolumenu.** Sprzątanie: `docker rm -fv cx-day308-pg`.
+9. **Reporter `basic` NIE ISTNIEJE w tej wersji vitest** (`--reporter=basic` →
+   `Failed to load custom Reporter from basic`). Do porównania nazw używasz
+   `--reporter=json --outputFile=<plik poza repo>`.
+10. **`npx vitest run` bywa kończy się `exit 0` mimo czerwonych testów** przy
+    przekierowaniu wyjścia. **Nie ufaj kodowi wyjścia** — liczby i nazwy czytasz
+    z JSON-a.
+11. **Nowe pliki w `tests/` wymagają `git add -f`** (katalog bywa ignorowany
+    częściowo). Sprawdzasz `git status --short` po każdym commicie.
+12. **`| head` na grepie sierot produkuje FAŁSZYWE SIEROTY.** Werdykt „martwy
+    komponent" wymaga grepu **bez obcięcia**, z wykluczeniem `__tests__`
+    i komentarzy.
+13. **ESM nie honoruje `NODE_PATH`.** Skrypt `.mjs` uruchamiany spoza repo nie
+    znajdzie pakietów — rozwiązuj je przez `createRequire(REPO + '/package.json')`.
+14. **Na remote `github-backup` NIE MA gałęzi `main`, `develop`, `Londyn` ani
+    `demo`** — są na `origin` (`origin/develop` **stoi od 2026-06-02**).
+    Pracujemy na linii `Londyn`/`demo`.
+15. **`postgres:15` NIE PRZECHODZI migracji** — brak rozszerzenia `vector`.
+    Obraz obowiązkowy: `pgvector/pgvector:pg16`.
+16. **`prettier` na wielkich plikach potrafi przepisać cały plik.** W repo
+    **nie ma** skryptu `format` — wołasz `npx prettier --write <pliki>` wprost.
+    Jeżeli wynik reformatu przekracza ~3× liczbę Twoich linii merytorycznych —
+    **cofasz reformat** (`cp` z kopii wg `Z27`, nigdy `git stash`), zostawiasz
+    styl zastany i wpisujesz to do raportu.
+17. **Istnieją testy tekstowe przez `readFileSync` + `toContain`,** które
+    asertują **dosłowne linie kodu**. Reformat takiej linii wywala test.
+    Jeżeli test zapali się od Twojego reformatu — **to jest regresja Twojego
+    reformatu, nie „test do poprawienia"**: cofasz reformat.
+18. **`npx vitest` z roota bez właściwego configu daje `No test files found`.**
+    To **nie jest `PASS`** — to jest brak pomiaru.
+
+---
+
+> **★★ RAMKA DO `Z33` — PUŁAPKI, KTÓRE FAŁSZUJĄ ZIELONY PRZEBIEG.**
+> **Zielona suita w tym repozytorium NIE JEST DOWODEM, dopóki nie wiesz, którą
+> pułapkę omija.**
+>
+> **(a) `ENABLE_V8_GLOBAL` nieustawione → fałszywe `404` PRZED uwierzytelnieniem.**
+> `server/src/middleware/v8FeatureGate.middleware.ts:15` czyta
+> `process.env.ENABLE_V8_GLOBAL === 'true'`; przy braku zmiennej bramka odcina
+> trasę **zanim** cokolwiek sprawdzi tożsamość. Twój test „obcy tenant dostaje
+> `404`" przechodzi wtedy z całkiem innego powodu, niż myślisz.
+>
+> **(b) `resultsInternalBetaVisibility.middleware.ts` przepuszcza wszystko przy
+> `NODE_ENV=test`,** dopóki nie ustawisz
+> `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`. **Na tym strażniku
+> zmierzono 416 fałszywych twierdzeń o uprawnieniach.**
+>
+> **(c) `vitest.config.ts` twardo ustawia `test.env.DB_TYPE='sqlite'`.** Część
+> „testów bazodanowych" idzie na atrapę. `MOCK_DB=false DB_TYPE=postgres`
+> w tej samej linii to jedyne wyjście; pliku nie zmieniasz (`Z18`).
+>
+> **(d) `ENABLE_TEST_AUTH_BYPASS`.** `server/src/middleware/auth.middleware.ts`
+> zawiera gałąź: `if (NODE_ENV === 'test' && ENABLE_TEST_AUTH_BYPASS === 'true')`
+> — czyli **`verifyToken` potrafi wyłączyć się sam w trybie testowym**.
+>
+> **(e) ★★★ OSIEM PUŁAPEK. (1) ★ **`tests/setup.ts` podmienia CAŁY `react-i18next`** atrapą, której `t(klucz, 'domyślne')` zawsze zwraca wartość domyślną — czyli angielszczyznę wpisaną w kodzie. Bez `vi.mock('react-i18next', importActual)` test „polskich napisów” patrzy na napisy angielskie i przechodzi przy PUSTYM `pl/translation.json`. Zmierzone i opisane w `evidence/grafika/i18n-pl-en-20260903.md`. (2) ★ **Klucz istnieje ≠ przetłumaczony**: audyt po istnieniu klucza jest bezwartościowy; mierzysz WARTOŚCI. (3) ★ **Heurystyka kłamie w obie strony**: „brak polskich liter” daje 7405 trafień, w tym jawne fałszywe alarmy („Rekomendowany”, „Wybierz scenariusz”). Pracujesz na twardej mierze (pl identyczne z en) i traktujesz heurystykę wyłącznie jako listę do przejrzenia, nigdy jako wynik. (4) **Próbka zamiast zbioru**: 42 ekrany to próbka; nie wolno przenosić jej wyniku na całość. (5) **`grep` z `--include` w `zsh` zwraca pustkę zamiast wyników** — pustka nie jest wynikiem, dopóki nie sprawdzisz, że polecenie się wykonało. (6) **Atrapa harnessu nie przekazuje propa** (klasa **M** z 03.09): ekran świeci PL=EN, choć produkt ma tłumaczenie — poprawiasz przyrząd, nie produkt; klasyfikacja PRZED naprawą jest obowiązkowa. (7) **Duplikat zamiast motywu**: para kadrów `pl`/`en`, która jest tym samym obrazem, to defekt kadru — porównuj długość i treść tekstu, nie samą jasność. (8) **Polski ma 1989 liści więcej niż angielski** — to znaczy, że gdzieś angielski jest niekompletny; policz i wypisz, ale NIE dopisuj angielskich tłumaczeń hurtem bez decyzji (to osobny zakres i osobny koszt).**
+>
+> **Obowiązek dowodowy.** Dla **każdego** pakietu uruchomionego jako dowód
+> czegokolwiek raport zawiera akapit: *która z pułapek (a)–(e) dotyczy tego
+> pakietu, jak ją wyłączyłem, i co konkretnie dowodzi, że wyłączyłem*.
+> Akapit „nie dotyczy" jest dopuszczalny **tylko** z komendą pokazującą, że dany
+> strażnik nie leży na ścieżce. **Pomiar bez tego akapitu nie liczy się jako dowód.**
+
+---
+
+### 0.5. Reguła STOP
+
+**Przy jakiejkolwiek wątpliwości MERYTORYCZNEJ: STOP tej POZYCJI i wpis
+w raporcie — nigdy improwizacja. W tym programie zasadny STOP jest NAGRADZANY,
+a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
+`DEC-2026-08-26-130`).
+
+**Rozróżnij dwa rodzaje:**
+
+- **STOP MERYTORYCZNY** (mile widziany): zmierzyłeś i wyszło inaczej, niż mówi
+  ta instrukcja; brakuje informacji, której nikt poza właścicielem nie
+  dostarczy; naprawa wymaga decyzji produktowej. **Wpisujesz do raportu
+  i IDZIESZ DALEJ do następnej pozycji.**
+- **STOP PROCEDURALNY** (zakazany): „instrukcja jest sprzeczna", „ścieżka nie
+  istnieje", „nie mam licencji na plik". **Ten rodzaj NIE zatrzymuje niczego** —
+  patrz tabela niżej i sekcja końcowa.
+
+### ★★ TABELA: STOP PROCEDURALNY ZAKAZANY — DZIAŁANIE ZASTĘPCZE
+
+| Powód, dla którego chciałbyś stanąć | Co robisz ZAMIAST STOP-u |
+| --- | --- |
+| „Musiałbym zmienić plik przekrojowy (`auth.middleware.ts` / `Gateway.ts` / bramkę platformową)" | **Czerwony kontrakt testowy + brief wynikowy** (tabela licencji, wiersz 1). Pozycja jest wtedy **ZROBIONA**, nie STOP |
+| „Plik, którego potrzebuję, nie jest w tabeli licencji" | Traktujesz go jako **tylko do odczytu** i dajesz czerwony kontrakt + brief. Pozycja **ZROBIONA** |
+| „Instrukcja jest wewnętrznie sprzeczna" | Sekcja **„JEŚLI COŚ JEST SPRZECZNE"** na końcu dokumentu. Wybierasz interpretację **bezpieczniejszą**, opisujesz w „Korektach", **kontynuujesz pozostałe pozycje** |
+| „Ścieżka podana w instrukcji nie istnieje" | Sprawdzasz `ls`, wpisujesz **swój wynik** do „Korekt", szukasz realnego odpowiednika i **idziesz dalej**. Rozbieżność pomiaru z instrukcją **nie jest sprzecznością — jest WYNIKIEM** |
+| „Instrukcja podaje dwie różne liczby" | Mierzysz sam, podajesz **swoją** liczbę z komendą (`Z24`). To **nie jest** powód do STOP-u |
+| „`git fetch` zwrócił błąd `icloud-source`" | To **nie jest** błąd. `§0.2d` pkt 2. Idziesz dalej |
+| „`psql` nie istnieje na hoście" | `docker exec cx-day308-pg psql …`. `§0.2d` pkt 3 |
+| „Hook pre-commit blokuje commit" | **Naprawiasz kodem, nie omijasz.** `--no-verify` jest zakazem, nie STOP-em |
+| „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day308-jezyk-pl-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
+| „Test przeszkadza" | **Nie osłabiasz asercji.** Opisujesz, co blokuje. Osłabienie = odrzucenie pozycji, nie STOP |
+| „Nie zdążę zrobić wszystkich pozycji" | Robisz **rdzeń** (`R1 (mianownik: `scripts/dev/i18n-pl-audyt.mjs` — liczba liści w obu plikach, lista kluczy o identycznej wartości pl i en, lista stop-słów uzasadnionych z powodem per pozycja; osobno liczba kluczy obecnych w pl, a brakujących w en) · R2 (klasyfikacja: każdy klucz z listy dostaje `DEFEKT` albo `UZASADNIONE + powód`; klasyfikacja jest w repo jako plik, nie w głowie) · R3 (naprawa kluczy zaklasyfikowanych jako defekt — polskim zdaniem, z przeczytanym kontekstem użycia; commit per grupa modułów) · R4 (druga rodzina: napisy angielskie na sztywno w `src/` poza `t()`; klasyfikacja **P**/**M**/**W** wzorcem z 03.09; naprawa właściwej warstwy; domknięcie długu `AssessmentReportDocument.tsx` rozdziały 2 i dalsze) · R5 (bezpiecznik: test czerwieniący się przy nowym kluczu identycznym pl/en poza listą uzasadnionych, linia bazowa = stan po naprawie; dowód mutacyjny: dodaj jeden taki klucz, pokaż czerwień, usuń) · R6 (dowód: 10 ekranów z możliwie różnych modułów, para kadrów `pl` i `en` kanonicznym narzędziem, każdy obejrzany przez `Read`, porównanie treścią; raport z tabelą PRZED/PO i TWIERDZENIAMI NIEZWERYFIKOWANYMI)`) i **uczciwie opisujesz resztę jako niezrobioną**. Odwrotna kolejność (inwentarze zrobione, rdzeń „częściowo") jest podstawą odrzucenia |
+| „Port `6315` albo `5294 i 5295` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
+
+**Zatrzymanie CAŁEGO dyżuru jest dopuszczalne WYŁĄCZNIE przy:**
+1. **`MARKER BRAK`** (`§0.1`);
+2. **faktycznym połączeniu do bazy zdalnej, demo, stagingu albo produkcji**
+   (`Z28`) — „przecież to był tylko `SELECT`" nie jest okolicznością łagodzącą;
+3. **ryzyku utraty danych** albo realnej wysyłki e-maila (`Z30`);
+4. **mniej niż 5 GB wolnego dysku** (`§0.1` krok 0);
+5. **zajętym porcie `6315` albo `5294 i 5295`** (`Z7`).
+
+Format wpisu STOP:
+
+```
+### STOP — <pozycja>
+Rodzaj: MERYTORYCZNY / PROCEDURALNY
+Powód: <jedno zdanie>
+Licencja, którą sprawdziłem: <cytat wiersza z tabeli licencji + wynik>
+Dowód: <plik:linia albo komenda + wynik>
+Co dostarczyłem ZAMIAST zmiany: <czerwony kontrakt / pomiar / gotowy diff / brief>
+Co zrobiłbym, gdyby zapadła decyzja X: <2-3 zdania>
+Rekomendacja dla nadzorcy: <co zmienić, gdzie, jaki promień rażenia>
+Stan: NIE ZACOMMITOWANO / zacommitowano częściowo w <SHA>
+Czy kontynuowałem pozostałe pozycje: TAK / NIE + dlaczego
+```
+
+**★★ STOP bez wypełnionego pola „Licencja, którą sprawdziłem" jest NIEZASADNY
+z definicji. STOP bez wypełnionego pola „Co dostarczyłem ZAMIAST zmiany" jest
+NIEZASADNY z definicji.**
+
+---
+
+## ★★ JEŚLI COŚ W TEJ INSTRUKCJI JEST SPRZECZNE LUB NIEWYKONALNE
+
+**Ta instrukcja była pisana i sprawdzana przez człowieka i model. Może mieć
+błędy. Nie zatrzymuj przez nie dyżuru.**
+
+**Procedura, dosłownie:**
+
+1. **Opisz sprzeczność w raporcie**, w sekcji „Korekty wobec instrukcji":
+   **cytat obu wykluczających się zdań z numerami paragrafów**, na czym polega
+   konflikt, jaki masz dowód i co zrobiłeś.
+2. **Wybierz interpretację BEZPIECZNIEJSZĄ.** Reguły rozstrzygające,
+   w tej kolejności:
+   - **nie ruszaj cudzego pliku** — gdy nie wiesz, czy masz licencję, **nie
+     masz**; traktuj plik jako tylko do odczytu i dostarcz czerwony kontrakt
+     + brief;
+   - **nie osłabiaj asercji** — gdy test przeszkadza, opisujesz go, nie
+     zmieniasz;
+   - **nie kasuj** — gdy werdykt jest niepewny, wpisz `DO DECYZJI WŁAŚCICIELA`
+     ze zdaniem **„czego konkretnie mi zabrakło, żeby rozstrzygnąć
+     samodzielnie"** (wiersz bez tego zdania liczy się jako nierozstrzygnięty);
+   - **nie włączaj** — gdy nie wiesz, czy flaga ma być `ON`, zostaje `OFF`
+     (`Z10`/`Z11`);
+   - **nie wysyłaj niczego na zewnątrz** — gdy nie masz pewności co do `Z30`,
+     nie klikasz;
+   - **nie poszerzaj dostępu** — gdy bramka jest niejednoznaczna, **odmawiasz
+     zamiast przepuszczać**;
+   - **mierz zamiast zgadywać** — gdy instrukcja podaje liczbę, a Twój pomiar
+     daje inną, **wiążący jest Twój pomiar z komendą** (`Z24`).
+3. **KONTYNUUJESZ POZOSTAŁE POZYCJE.** Sprzeczność w jednym paragrafie nie
+   zwalnia z pozostałych ani z raportu.
+4. **Zatrzymanie CAŁEGO dyżuru** — wyłącznie z pięciu powodów wymienionych
+   w `§0.5`.
+5. **Nigdy nie „naprawiaj" instrukcji przez improwizację w kodzie.**
+   Sprzeczność w dokumencie rozwiązuje się **wpisem w raporcie**, nie zmianą
+   w produkcie.
+6. **★ Rozbieżność między pomiarem a tą instrukcją NIE JEST sprzecznością —
+   jest WYNIKIEM.** Każda liczba, linia i teza w tym dokumencie to **rozkaz
+   pomiarowy**, nie prawda objawiona.
+
+**★ Trzy najcenniejsze rzeczy, jakie możesz oddać:** dowód, że coś, co uchodziło
+za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne;
+i uczciwe zdanie „tego nie zmierzyłem, bo…".
+
+**★ Ostatnie zdanie tej instrukcji i najważniejsze: obalenie którejkolwiek tezy
+z sekcji „TEZY ZLECENIA…" jest SUKCESEM dyżuru, a nie porażką. Zapisz to
+w „Korektach wobec instrukcji" z dowodem i idź dalej.**
+
+---
+
+
+## Po co ten dyżur istnieje
+
+Program ma zapisany kształt fałszywego gotowe: audyt liczący ISTNIENIE kluczy melduje
+„przetłumaczone”, a klucz trzyma angielskie słowo. Dyżur z 03.09 naprawił 34 ekrany z 42 — czyli
+próbkę widoczną na zrzutach. Bez mianownika policzonego z pliku nie wiemy, czy naprawiliśmy
+34 defekty z 40, czy z 400.
+
+## ★ Zmierz moje liczby sam
+
+Twierdzę: plik polski ma 34 303 liście, angielski 32 314; kluczy o wartości polskiej **znak
+w znak** równej angielskiej jest 631; heurystyka „brak polskich liter” daje 7405 trafień
+i jest zbyt hałaśliwa, żeby na niej pracować. Komendy z §0.3 to sprawdzają.
+**Jeśli Twój pomiar przeczy mojej liczbie, obowiązuje Twój.**
+
+## R1 — MIANOWNIK (rdzeń)
+
+`scripts/dev/i18n-pl-audyt.mjs`. Liczba liści w obu plikach. Lista kluczy identycznych.
+Osobno: klucze obecne po polsku, a brakujące po angielsku — policz i wypisz, ale nie dopisuj
+hurtem, bo to osobny zakres i osobny koszt.
+
+Commit po `R1`.
+
+## R2 — KLASYFIKACJA (rdzeń)
+
+Każdy klucz z listy dostaje `DEFEKT` albo `UZASADNIONE` z powodem. Klasyfikacja jest plikiem
+w repo, nie decyzją w głowie — ktoś po Tobie musi umieć ją zakwestionować pozycja po pozycji.
+
+Commit po `R2`.
+
+## R3 — NAPRAWA KLUCZY (rdzeń)
+
+Polskim zdaniem, z przeczytanym kontekstem użycia. Klucz bywa w przycisku o szerokości
+dziewięćdziesięciu pikseli — tłumaczenie bez spojrzenia na miejsce użycia psuje układ.
+Commit per grupa modułów.
+
+Commit per grupa.
+
+## R4 — NAPISY POZA `t()` (rdzeń)
+
+Druga rodzina. Klasyfikacja przed naprawą: produkt, atrapa harnessu, udokumentowany wyjątek.
+Naprawiasz właściwą warstwę — poprawianie produktu tam, gdzie zepsuty jest przyrząd, dokłada
+defekt zamiast go usuwać. Domykasz też dług jawnie zostawiony 03.09 w dokumencie raportu Oceny.
+
+Commit po `R4`.
+
+## R5 — BEZPIECZNIK (rdzeń)
+
+Test czerwieniący się przy nowym kluczu identycznym w obu językach poza listą uzasadnionych.
+Linia bazowa równa stanowi po naprawie. Dowód mutacyjny: dodaj jeden taki klucz, pokaż czerwień,
+usuń, pokaż zieleń.
+
+Commit po `R5`.
+
+## R6 — DOWÓD I RAPORT
+
+Dziesięć ekranów z możliwie różnych modułów, para kadrów w obu językach, każdy obejrzany przez
+`Read`. Porównanie treścią i długością tekstu — identyczny obraz pod dwiema nazwami to defekt
+kadru. Raport z tabelą PRZED/PO. TWIERDZENIA NIEZWERYFIKOWANE.
+
+## Prawo zatrzymania
+
+„631 kluczy sklasyfikowanych, 412 naprawionych, 219 uzasadnionych z powodem, bezpiecznik stoi”
+jest wynikiem. „Tłumaczenia poprawione”, bez mianownika i bez klasyfikacji w repo, jest dokładnie
+tym audytem po istnieniu klucza, który ten dyżur ma zastąpić.
