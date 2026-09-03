@@ -126,12 +126,25 @@ Kolejka pozycji: `docs/program/KOLEJKA_CODEX_INTEGRACJA.md`.
 
 ## 11. Pierwsze kroki dla następnego
 
-1. ★★★ **NAJPIERW: scal `agent/fix-a11y-01-04-20260903`.** Gałąź **żyje w `/private/tmp/m03`**
-   i ma już commity (ostatni widziany: `d4d2470d2e fix(a11y): 04_ASSESSMENT — button-name…`).
-   Robotnik commitował po każdym module, więc jego praca jest bezpieczna **nawet jeśli sesja,
-   która go uruchomiła, już nie istnieje**. Sprawdź stan komendą:
-   `git -C /private/tmp/m03 log --oneline 17160f7cd8..agent/fix-a11y-01-04-20260903`
-   Potem **przemierz `G06`** dla modułów 01-04 — jeśli naruszenia spadły do zera, bramki się zamkną.
+1. ★★★ **NAJPIERW: przemierz `G06` PEŁNĄ MACIERZĄ i domknij bramki.** Obie naprawy dostępności
+   są **już scalone** (`agent/fix-a11y-01-04-20260903` i `agent/fix-a11y-09-12-20260903`).
+
+   **Zmierzony wynik napraw — 202 naruszenia w modułach 01-04 zeszły do zera:**
+
+   | Moduł | Kadrów z naruszeniem PRZED | PO |
+   | --- | ---: | ---: |
+   | 01 Organizacja | 101 (346 błędów) | **0 / 42** |
+   | 02 Wywiad | 44 (72 błędy) | **0 / 12** |
+   | 03 Narzędzia | 18 (152 błędy) | **0 / 14** |
+   | 04 Ocena | 39 (108 błędów) | **0 / 34** |
+
+   Moduły 09-12: zero na 15 zmierzonych ekranach.
+
+   ★★★ **Dlaczego bramki NIE zostały jeszcze zamknięte:** weryfikacja końcowa objęła
+   **`pl-1440`**, a `G06` wymaga pełnej macierzy `PL/EN × jasny/ciemny × 1440/1024`.
+   Naprawiane reguły (kontrast, ARIA, nazwy) są niezależne od szerokości i języka, więc wynik
+   jest najprawdopodobniej reprezentatywny — **ale to jest przypuszczenie, nie pomiar**.
+   Przemierz pełną macierzą i dopiero wtedy zamykaj. Nie zamykaj na podstawie tej tabeli.
 2. **Wydaj `G14`/`G15`/`G16` razem z naprawami**, nie po nich. Ślad znalezisko→commit zapisuj
    w trakcie naprawy, nie osobnym dyżurem.
 3. **Zapytaj właściciela o `develop`** — promocja jest fast-forward i bezpieczna, ale uruchamia
