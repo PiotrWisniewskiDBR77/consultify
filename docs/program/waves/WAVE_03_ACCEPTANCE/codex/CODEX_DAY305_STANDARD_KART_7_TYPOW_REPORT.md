@@ -29,3 +29,7 @@ R5 kontrole: test bazowy i końcowy `initiativeRecordCanon.test.ts` po 8/8; `che
 ## Uczciwa granica
 
 Nie powstał prototyp wizualny ani cztery zrzuty. W szczególności nie uznaję dokumentu, testu jednostkowego ani istniejącego ekranu dev-render za dowód PRZED/PO. Flaga nie została utworzona, więc nic nie zostało przypadkiem włączone.
+
+## R6 — rekomendacja
+
+Gałąź pozostaje do przeglądu dokumentacyjnego, nie do scalenia produktu. Następny bezpieczny krok to osobny harness rzeczywistej Initiative oraz dopiero wtedy pojedyncza flaga OFF i cztery inspekcjonowane zrzuty. Plan kolejności siedmiu typów znajduje się w dokumencie projektu.
