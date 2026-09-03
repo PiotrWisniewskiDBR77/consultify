@@ -59,11 +59,20 @@ const daysAgo = (d: number) => new Date(now - d * 86_400_000).toISOString();
 const daysFromNow = (d: number) => new Date(now + d * 86_400_000).toISOString();
 
 /**
- * Osiem pozycji Skrzynki — ten sam uniwersum demo co `karta-task.tsx`
+ * Jedenaście pozycji Skrzynki — ten sam uniwersum demo co `karta-task.tsx`
  * (klienci Grupa Termika/NordFarm/Bielmar/Kolej Wschodnia, inicjatywa DRD,
  * zespół Piotr/Anna/Marek/Kasia) dla ciągłości między ekranami odbioru.
- * Sześć `pending` (widoczne domyślnie w zakładce "Otwarte"), po jednej w
+ * Dziewięć `pending` (widoczne domyślnie w zakładce "Otwarte"), po jednej w
  * `resolved`/`snoozed` (widoczne w "Zamknięte"/"Zapisane"/"Wszystkie").
+ *
+ * MYW-PHOTO-001/007 (dyżur 2026-09-03): pomiar wobec `InboxSection`
+ * (InboxContent.tsx:201-210, 9 wartości) pokazał, że pierwsza wersja tego
+ * mocka (inbox-1..9) nie miała ani jednej pozycji w `fyi_system` ani `other`
+ * — dwie z dziewięciu sekcji filtra (`INBOX_SECTION_FILTER_OPTIONS`,
+ * InboxContent.tsx:1001-1034) zawsze pokazywałyby licznik zero. Dołożone
+ * `inbox-10` (`fyi_system`) i `inbox-11` (`other`), bez zmiany istniejących
+ * dziewięciu pozycji cytowanych w `docs/program/grafika/status.json` (wpis
+ * `mywork-inbox`, „9 pozycji" — zaktualizowany razem z tym commitem).
  */
 const ALL_ITEMS: V8CanonicalInboxItem[] = [
   {
@@ -206,6 +215,34 @@ const ALL_ITEMS: V8CanonicalInboxItem[] = [
     section: 'decisions_required',
     status: 'snoozed',
     createdAt: daysAgo(5),
+  },
+  {
+    id: 'inbox-10',
+    userId: USER_ID,
+    organizationId: ORG_ID,
+    itemType: 'signal',
+    sourceEntityType: 'system',
+    sourceEntityId: 'integration-google-calendar-sync',
+    title: 'Synchronizacja z kalendarzem Google zakończona',
+    description: 'Zaimportowano 2 nowe spotkania z klientem Bielmar — sprawdź, czy nie kolidują z warsztatem.',
+    priority: 'low',
+    section: 'fyi_system',
+    status: 'pending',
+    createdAt: hoursAgo(2),
+  },
+  {
+    id: 'inbox-11',
+    userId: USER_ID,
+    organizationId: ORG_ID,
+    itemType: 'signal',
+    sourceEntityType: 'document',
+    sourceEntityId: 'template-raport-koncowy-v3',
+    title: 'Nowa wersja szablonu raportu końcowego DRD',
+    description: 'Zespół metodyczny opublikował wersję 3 szablonu — poprzednie raporty zostają bez zmian.',
+    priority: 'low',
+    section: 'other',
+    status: 'pending',
+    createdAt: daysAgo(1),
   },
 ];
 

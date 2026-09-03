@@ -82,10 +82,19 @@ const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 const isoDateTime = (d: Date) => d.toISOString();
 
 /**
- * Sześć wydarzeń różnych typów w tym samym uniwersum demo co karta-task/
+ * Osiem wydarzeń różnych typów w tym samym uniwersum demo co karta-task/
  * mywork-inbox (klienci Grupa Termika/NordFarm/Bielmar, inicjatywa DRD) —
  * rozłożone wokół "dziś", żeby były widoczne w domyślnym widoku miesiąca
  * niezależnie od dnia uruchomienia zrzutu.
+ *
+ * MYW-PHOTO-001/007 (dyżur 2026-09-03): pomiar wobec `CalendarEventSource`
+ * (calendarTypes.ts:1-8, 7 wartości) pokazał, że pierwsza wersja tego mocka
+ * (sześć zdarzeń) nie miała ani jednego `event` (ręcznie dodane spotkanie
+ * bez źródła task/decision/initiative) ani `outlook` — mimo że
+ * `CalendarSidebar.tsx:49/180` renderuje osobny filtr/legendę dla obu.
+ * Dołożone dwa zdarzenia poniżej, bez zmiany sześciu istniejących cytowanych
+ * w `docs/program/grafika/status.json` (wpis `mywork-calendar`, „6 wydarzeń"
+ * — zaktualizowany razem z tym commitem).
  */
 (Api as any).getMyWorkCalendarUnified = async () => ({
   events: [
@@ -165,11 +174,37 @@ const isoDateTime = (d: Date) => d.toISOString();
       provider: 'internal',
       editAuthority: 'local_only',
     },
+    {
+      id: 'evt-manual-przeglad-tygodniowy',
+      title: 'Przegląd tygodniowy zespołu — status projektów',
+      start: isoDateTime(atDay(3, 9, 0)),
+      end: isoDateTime(atDay(3, 9, 30)),
+      allDay: false,
+      source: 'event',
+      sourceId: 'evt-manual-przeglad-tygodniowy',
+      projectName: undefined,
+      provider: 'internal',
+      editAuthority: 'local_only',
+    },
+    {
+      id: 'evt-outlook-kickoff-atelier-toys',
+      title: 'Spotkanie kick-off — Atelier Toys',
+      start: isoDateTime(atDay(2, 15, 0)),
+      end: isoDateTime(atDay(2, 16, 0)),
+      allDay: false,
+      source: 'outlook',
+      sourceId: 'outlook-evt-kickoff-atelier-toys',
+      projectName: 'Atelier Toys — Kickoff',
+      provider: 'outlook',
+      editAuthority: 'remote_owner',
+      syncState: 'in_sync',
+    },
   ],
 });
 
 (Api as any).getIntegrations = async () => [
   { provider: 'google', status: 'connected', onboarding_status: null },
+  { provider: 'outlook', status: 'connected', onboarding_status: null },
 ];
 
 (Api as any).getMyWorkCalendarConflicts = async (dateKey: string) => ({
