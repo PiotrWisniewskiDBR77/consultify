@@ -12,10 +12,9 @@ Poprzednie przekazanie (poranne, 245/336) zastąpione tym plikiem; jego treść 
 
 ## 1. Gdzie jesteśmy — trzy zdania
 
-**255 z 336 bramek** (rano 245; wieczorem chwilowo 256, potem uczciwe cofnięcie jednej).
-G06 zamknięte dla 15/16 na markerze `fee24bddb0` (pomiar #3, 72 kombinacje, zero) z uzupełnieniem
-#4 na `cfb21c0959` dla 30 ekranów ze ślepą plamą; 13_CHAT cofnięte do długu 1 ekran
-(`canvas-new-doc`, kontrast light, 1 węzeł, ukryty w #3 — robotnik naprawia). Pozostałe 81 bramek
+**256 z 336 bramek** (rano 245). G06 zamknięte 16/16: pomiar #3 na `fee24bddb0` (72 kombinacje, zero),
+uzupełnienie #4 na `cfb21c0959` dla 30 ekranów ze ślepą plamą (zero na 29), naruszenie ukryte w #3
+na `canvas-new-doc` naprawione (`81b5c6ba4c`) i zmierzone kontrolnie (8 kadrów, zero). Pozostałe 81 bramek
 zależy od właściciela (decyzje, „wdrażaj”, przelot) i od czterech dyżurów Codexa wydanych wieczorem.
 
 ## 2. ★★★ Co zmieniło obraz programu tego wieczoru
@@ -64,9 +63,6 @@ w `KOLEJKA_CODEX_INTEGRACJA.md` (numer nadaje plik instrukcji; tematy z kolejki 
 
 ## 5. Otwarte ryzyka
 
-- `canvas-new-doc` kontrast light (robotnik `agent/canvas-new-doc-kontrast-20260903` w toku przy
-  zamknięciu sesji; po scaleniu: pomiar kontrolny tego ekranu bez rozwijania, 8 kadrów, i powrót
-  13_CHAT G06 na PASS z dopiskiem).
 - Dwa ekrany canvas (`canvas-kebab-restructure`, `canvas-new-doc`) i `interview-preview-canon`:
   mechanizm Escape w pętli rozwijania — mierzone bez rozwijania; poprawka pętli odłożona (2/248).
 - 237 komponentów bez importera zostaje (dług decyzyjny `SETTINGS_DAY55`, SuperAdmin); metoda
@@ -80,8 +76,7 @@ w `KOLEJKA_CODEX_INTEGRACJA.md` (numer nadaje plik instrukcji; tematy z kolejki 
 
 1. `git -C /private/tmp/m03 fetch github-backup && git rev-list --left-right --count HEAD...github-backup/grafika/m03-20260902` → 0 0;
    `git status --short` pusty; znaczniki konfliktu; `initiativeRecordCanon` 6/6.
-2. Jeśli gałąź `agent/canvas-new-doc-kontrast-20260903` ma commity: scal z kontrolą, pomiar
-   kontrolny `canvas-new-doc` (8 kadrów, bez `--rozwin-sekcje`), wiersz G06 13_CHAT → PASS.
+2. (wykonane w nocy: kontrast `canvas-new-doc` scalony `81b5c6ba4c`, pomiar kontrolny zero, G06 16/16.)
 3. Decyzje właściciela → numery DEC → `g14-g16-rejestr.mjs` (G14 PASS per moduł) i ledger.
 4. Po „wdrażaj": `consultify-promocja-demo`, obserwować `gitSha` z `/api/health`.
 5. Raporty Codexa 286–291 → odbiór adwersaryjny (para dowodów, mutacja), scalenia, wpisy G15/G19,
@@ -90,7 +85,7 @@ w `KOLEJKA_CODEX_INTEGRACJA.md` (numer nadaje plik instrukcji; tematy z kolejki 
 
 ## 7. Prognoza (uczciwie)
 
-G06 16/16 jutro rano po naprawie kontrastu. G14 16/16 w dniu decyzji. G16 po przelocie właściciela
+G06 16/16 zamknięte. G14 16/16 w dniu decyzji. G16 po przelocie właściciela
 (4–5.09). G15/G19 po raportach Codexa 286/290 (5–7.09). G20 wymaga: reguły E1, decyzji dla 20 rodzin,
 25,5 dnia robotnika na 22 pozycje TERAZ (4–5 dni kalendarzowych przy 6 równoległych), zamrożonego
 markera i finalnego replay. **Realny termin: 10–12 września**, jeśli przebudowa Oceny idzie po
