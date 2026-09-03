@@ -55,7 +55,7 @@ for (const [mod, { suma, ekrany }] of Object.entries(agregat)) {
   if (suma.ekranyZlaPara.length) dlug.push(`zła para jasny/ciemny: ${suma.ekranyZlaPara.join(', ')}`);
   if (suma.ekranyBezTekstu.length) dlug.push(`bez tekstu: ${suma.ekranyBezTekstu.join(', ')}`);
   const status = dlug.length ? 'NOT_STARTED' : 'PASS';
-  const wyjatki = (suma.wyjatki || []).length ? ` Wyjątki uzasadnione (nie blokują, wypisane): .` : '';
+  const wyjatki = (suma.wyjatki || []).length ? `Wyjątki uzasadnione (nie blokują, wypisane): ${suma.wyjatki.join('; ')}. ` : '';
   const ekranyZDlugiem = Object.entries(ekrany)
     .filter(([, e]) => e.a11yKadry || e.inneBledy.length || e.zleStatusy.length || e.plRownaEn || e.paryZle.length || e.brakTekstu)
     .map(([n, e]) => `\`${n}\`${e.a11yKadry ? ` a11y ${e.a11yKadry}/${e.kadry}` : ''}${e.plRownaEn ? ' PL=EN' : ''}${e.paryZle.length ? ' para' : ''}${e.brakTekstu ? ' bez tekstu' : ''}`)
