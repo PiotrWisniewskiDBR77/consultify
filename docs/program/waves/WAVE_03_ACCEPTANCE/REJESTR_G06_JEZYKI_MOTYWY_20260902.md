@@ -617,3 +617,25 @@ tylko 05/06/07) nie cytował żadnej realnie zadanej Piotrowi decyzji.
 Zero wierszy `PASS`. Zero realnych naruszeń NIE zostało odjętych bezpodstawnie
 — żadnego naruszenia nie wyzerowano tym dyżurem, wyłącznie skorygowano
 klasyfikację jednego stanu bramki (08) na podstawie dowodu źródłowego.
+
+## Pomiar 2026-09-03 — moduły 01-04, pełna macierz po naprawie skanu (dyżur 285)
+
+★ Pomiar wykonany na markerze `2954ec8d37`, czyli **po** naprawie zakresu skanu dostępności
+(`axe.run('#dev-render-root')`), po podniesieniu kontrastu tokenów ostrzegawczych i po naprawie
+czterech współdzielonych źródeł nazw. Liczby poniżej są więc **po** tych naprawach.
+
+★★★ **Uczciwe zastrzeżenie o pochodzeniu:** dane zebrał robotnik, który następnie **zablokował się
+w pętli czekania na monitor i nie zacommitował ich ani razu** (0 commitów przy 90 wywołaniach).
+Nadzorca zatrzymał go, uratował 280 zrzutów i 13 plików wyników z katalogu roboczego i zagregował
+je tym wpisem. Surowe pliki: `/private/tmp/ag-g06f-a-artefakty/`.
+
+| Moduł | Ekranów | Kombinacji | Kadrów z naruszeniem dostępności | Błędów konsoli/HTTP |
+| --- | ---: | ---: | ---: | ---: |
+| 01_ORGANIZATION Organizacja | 21 | 8/8 | 101 | 346 |
+| 02_INTERVIEW Wywiad | 6 | 8/8 | 44 | 72 |
+| 03_TOOLS Narzędzia | 7 | 8/8 | 18 | 152 |
+| 04_ASSESSMENT Ocena | 17 | 8/8 | 39 | 108 |
+
+**Wniosek:** macierz kompletna we wszystkich czterech modułach, ale **realne naruszenia dostępności
+pozostają po naprawach z dyżuru 285** — od 18 kadrów w Narzędziach do 101 w Organizacji.
+Żadna z czterech bramek `G06` nie może zostać zamknięta.
