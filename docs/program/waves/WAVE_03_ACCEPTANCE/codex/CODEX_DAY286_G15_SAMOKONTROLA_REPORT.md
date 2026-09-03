@@ -51,6 +51,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 04_ASSESSMENT | 17 | 620 | 620 po korekcie kontraktu | 0 | 1 (`AssessmentLibraryTab.day178.empty-state`) | 0 | `G15 PARTIAL — ukierunkowany front: baza 608/608 PASS; marker przed korektą 619/620, po korekcie 620/620. NOWA czerwień była nieaktualną asercją wobec zatwierdzonego napisu produktu; serwerowe katalogi Assessment pozostają do pomiaru.` |
 | 05_INITIATIVES | 61 | 868 | 840 | 6 | 13 nierozstrzygniętych | 8 pending; 1 czerwień naprawiona dziś | `G15 FAIL — ukierunkowany front: marker 840 PASS, 19 FAIL, 8 pending. Para z f65c4ff6a0 dowodzi 13 czerwieni NOWYCH, 6 ZASTANYCH oraz 1 naprawionej dziś. Bezpiecznik initiativeRecordCanon 2/2 PASS. Brak wydanej tabeli licencji blokuje bezpieczną korektę nowych kontraktów/harnessu.` |
 | 06_EXECUTION | 102 | 440 | 426 | 0 | 14 nierozstrzygniętych | 0 | `G15 FAIL — ukierunkowany front: baza 404/404 PASS, marker 426/440 PASS. Wszystkie 14 czerwieni są NOWE, w tym sześć executionWorkResources; brak tabeli licencji blokuje zmianę harnessu/testów lub produktu.` |
+| 07_MY_WORK_AGENT | 93 | 566 | 554 | 2 | 1 nierozstrzygnięta | 9 pending | `G15 FAIL — ukierunkowany front: marker 554 PASS, 3 FAIL, 9 pending; para dowodzi 2 czerwieni ZASTANYCH i 1 NOWEJ (MYW-IDEAS-010). Serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -77,3 +78,7 @@ Pakiet jednostkowy uruchomiono identycznie po obu stronach z `RUN_DB_TESTS=0 MOC
 ### Pułapki — 06_EXECUTION
 
 Pakiet jednostkowy uruchomiono identycznie po obu stronach z `RUN_DB_TESTS=0 MOCK_DB=true --retry=0`. Baza jest w całości zielona; marker ma 14 nowych pełnych nazw czerwonych, więc klasyfikacja NOWA jest jednoznaczna. Sześć `executionWorkResources` nie znajduje filtra zarejestrowanego przez `onRegisterFilterControl`; osiem dalszych czerwieni obejmuje `ExecutionControlSurface`, parytet rejestru Inicjatyw, intake oraz mobilny dialog `TableWithPreviewLayout`. Wynik nie dowodzi sieci ani DB i nie jest tak przedstawiany. Zamiast nieautoryzowanej zmiany pozostawiono czerwony kontrakt i brief.
+
+### Pułapki — 07_MY_WORK_AGENT
+
+Pakiet uruchomiono jako jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true --retry=0`). Konsola JSDOM zgłaszała `Not implemented: navigation to another Document`; nie uznano jej ani za PASS, ani osobny FAIL poza JSON. NOWA czerwień dotyczy tekstowego kontraktu ścieżki `MYW-IDEAS-010`, a nie sieci. Dwie pozostałe pełne nazwy są czerwone na obu markerach.
