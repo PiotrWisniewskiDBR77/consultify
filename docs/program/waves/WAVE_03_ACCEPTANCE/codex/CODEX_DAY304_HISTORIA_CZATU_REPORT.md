@@ -36,3 +36,7 @@ Pułapki Z33: komplet env wymusił PG, auth bypass=false; suite sama ustawia E2E
 Przed/po: 12 pełnych nazw, 12 PASS, pusty diff nazw; listy mają SHA-256 `8f3e90b3b078827251448cb480e0fe31bf85bcf618fb87f6062f2cddd9fae133`. Para obejmuje członka zespołu, który widzi rozmowę, oraz użytkownika obcej organizacji, który jej nie widzi, na realnym PG i z `--retry=0`.
 
 Werdykt R4: **CZĘŚCIOWE**. Nie wykonano wymaganego dowodu mutacyjnego ani przejścia przez `ApiGateway.initializeRoutes`; obecna suite montuje router bezpośrednio. Nie wpisuję `VERIFIED` ani `ZROBIONE_WG_DoD`.
+
+## R5 — prototyp panelu
+
+Nie dodano nowej etykiety ani alternatywnego panelu: R2 i R4 nie spełniają jeszcze ostrych warunków, a kryterium właściciela zakazuje kosmetycznego podziału. Zastany realny `ChatHistorySidebar` już renderuje prywatne i organizacyjne foldery oraz operacje historii, ale nie ma odrębnej flagi default-OFF dla nowego wariantu. Nowe kadry: `NIE WYKONANO`; stan R5: **NIEUKOŃCZONE**. Bezpieczna kontynuacja to najpierw scentralizowany resolver + Gateway/mutacja, potem wariant wizualny za flagą OFF i 4 obejrzane kadry.
