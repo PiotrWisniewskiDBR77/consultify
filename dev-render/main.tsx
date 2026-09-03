@@ -415,6 +415,11 @@ const MyWorkDecisionsScreen = React.lazy(() => import('./screens/mywork-decision
 // (Api.getPersonalTasks tam zwraca celowo []) — to osobny, dotąd nieujęty
 // ekran. Patrz dev-render/screens/mywork-tasks.tsx.
 const MyWorkTasksScreen = React.lazy(() => import('./screens/mywork-tasks'));
+// M03 (dyżur 2026-09-03, "ekrany bez wpisu w harnessie"): ReportsHub —
+// moduł raportów zarządczych PMO, trasa /reports/management, osiągalny
+// (AppRoutes.tsx lazy import + mount), zero wpisu w harnessie. Patrz
+// dev-render/screens/reports-hub-management.tsx.
+const ReportsHubManagementScreen = React.lazy(() => import('./screens/reports-hub-management'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
 const IdeaTableRecordTemplatesScreen = React.lazy(
@@ -1183,6 +1188,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '02-moja-praca — Zadania, widok LISTY (MyTasksListContent, różny od pojedynczej karty karta-task.tsx) — dyżur "ekrany bez wpisu" 2026-09-03',
     render: () => <MyWorkTasksScreen />,
+  },
+  'reports-hub-management': {
+    label:
+      'Wyniki — Raporty zarządcze PMO (ReportsHub: Team Meeting/Steering Committee/Portfolio Health/RAID) — dyżur "ekrany bez wpisu" 2026-09-03',
+    render: () => <ReportsHubManagementScreen />,
   },
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
