@@ -651,6 +651,21 @@ Zasięg: **16 z 21** ekranów Organizacji, **5 z 6** Wywiadu, **10 z 15** zmierz
 
 Twierdzę: sześć reguł krajobrazowych to szum harnessu, kontrast wynosi `3,95:1`, zasięg to 16 z 21 / 5 z 6 / 10 z 15. **Komendy weryfikacyjne to sprawdzają.** Jeśli któraś liczba jest inna — pracuj na swojej i wpisz moją do `KOREKTY`. W tym programie wykonawcy prostowali zlecenie nadzorcy wielokrotnie i za każdym razem mieli rację.
 
+## ★★★ SPROSTOWANIE DO TEJ INSTRUKCJI — przeczytaj przed R1
+
+Instrukcja niżej mówi, że przyczyną fałszywych naruszeń jest **brak `MainLayout` w harnessie**, i każe naprawić hosta. **To była diagnoza niepełna.**
+
+Kolejny pomiar (moduły 09-12, 213 przebiegów) znalazł przyczynę **ostrzejszą i tańszą w naprawie**:
+
+**`scripts/dev/pkgi-a11y-audit.mjs:38` wywołuje `axe.run(document, …)` — skanuje CAŁY dokument zamiast fragmentu harnessu.** Gdy ten sam pomiar zawęzi się do `#dev-render-root`, **reguły poziomu strony nie pojawiają się w ogóle** — `axe-core` sam je pomija przy skanie fragmentu. Potwierdzone na wszystkich 213 przebiegach.
+
+**Co to zmienia dla Ciebie:**
+- **Właściwa naprawa `R1` to zawężenie zakresu skanu**, nie montowanie `MainLayout` w harnessie. Jedna linia zamiast przebudowy hosta.
+- Warunek zaliczenia `R1` **zostaje ten sam**: liczba naruszeń sześciu reguł krajobrazowych spada do zera, a liczba pozostałych reguł się nie zmienia.
+- ★ **Zweryfikuj to sam** przed naprawą — obie diagnozy dają ten sam objaw, więc sprawdź, która jest prawdziwa u Ciebie. Jeśli po zawężeniu zakresu reguły krajobrazowe nadal się pojawiają, to znaczy, że problem jest głębszy i wtedy wróć do wariantu z `MainLayout`.
+
+Reszta instrukcji obowiązuje bez zmian — zwłaszcza kolejność: **najpierw ucisz przyrząd, potem napraw produkt.**
+
 ## R1 — UCISZ PRZYRZĄD (rdzeń)
 
 Zmierz liczbę naruszeń tych **sześciu** reguł przed zmianą. Napraw hosta `dev-render` tak, żeby montował realny `MainLayout` (albo dokładnie te elementy krajobrazowe, które on daje). Zmierz po.
