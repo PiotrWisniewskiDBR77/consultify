@@ -114,7 +114,7 @@ while (changed) {
 const dbSignal = /\b(?:db(?:All|Get|Run)?|query(?:All|First|One|Run)?|pool|SELECT|FROM|JOIN)\b/i;
 const orgSignal = /\b(?:organizationId|organization_id|orgId|org_id|req\.user|req\.organization)\b/i;
 const publicSignal = /(?:^|\/)(?:health|ready|ping|status|auth|public|webhooks?)(?:\/|$)/i;
-const externalOrAiSignal = /(?:^|\/)(?:ai|cloud|connectors?|integrations?|mcp|webhooks?)(?:\/|$)/i;
+const externalOrAiSignal = /(?:^|\/)(?:ai|llm|cloud|connectors?|integrations?|mcp|webhooks?)(?:\/|$)/i;
 const guardPatterns = [
   'verifyToken',
   'requireOrganization',
