@@ -148,6 +148,7 @@ import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from './teresaRuntimeCopy';
+import { readAiErrorCode } from './aiProviderErrorCopy';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
 import { getHydratedTeresaWelcomeFirstName } from './teresaWelcome';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
@@ -2011,10 +2012,24 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const roleLowerErr =
         typeof currentUser?.role === 'string' ? currentUser.role.trim().toLowerCase() : '';
       const isPrivilegedErr = ['admin', 'owner', 'superadmin'].includes(roleLowerErr);
-      const friendly = getTeresaStartFailureMessage(
-        i18n.language,
-        isPrivilegedErr ? formatTeresaAdminDiagnostic(err) : null
-      );
+      // CHAT-OWN-016: kod bledu decyduje o zdaniu (limit / konfiguracja / czas /
+      // przerwany strumien), nie jeden ogolnik na wszystko. Diagnostyka trafia
+      // wylacznie do admina; do metadanych wiadomosci idzie KOD, nie surowa
+      // tresc dostawcy (wczesniej zapisywalismy tam `err.message`).
+      const providerErrorCode = readAiErrorCode({
+        errorCode: (err as any)?.errorCode,
+        code: (err as any)?.code,
+      });
+      const adminDiagnostic = isPrivilegedErr ? formatTeresaAdminDiagnostic(err) : null;
+      const friendly = getTeresaStartFailureMessage(i18n.language, adminDiagnostic, {
+        errorCode: providerErrorCode,
+      });
+      const providerErrorMetadata = {
+        aiProviderError: {
+          code: providerErrorCode,
+          ...(adminDiagnostic ? { adminDiagnostic } : {}),
+        },
+      };
 
       try {
         if (activeConversationId) {
@@ -2023,7 +2038,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'ai',
             content: friendly,
             messageType: 'text',
-            metadata: { error: (err as Error)?.message || String(err) },
+            metadata: providerErrorMetadata,
           });
         } else {
           addChatMessage({
@@ -2031,7 +2046,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'ai',
             content: friendly,
             timestamp: new Date(),
-          });
+            metadata: providerErrorMetadata,
+          } as never);
         }
       } catch (persistErr) {
         console.error('[UnifiedChatPanel] Failed to persist stream error message:', persistErr);
@@ -2040,7 +2056,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content: friendly,
           timestamp: new Date(),
-        });
+          metadata: providerErrorMetadata,
+        } as never);
       }
 
       // Fallback save on hard stream error.

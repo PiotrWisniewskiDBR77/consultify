@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -2323,6 +2324,12 @@ function WorkCanvasMarkdownDocumentPanel({
   // without threading the editor instance back through the chat tree.
   const { isStreaming, streamToCanvas, stopStream } = useCanvasAIStream({
     editor: richEditor,
+    // CHAT-OWN-016: dotad hak nie dostawal `onError` w ogole — gdy dostawca
+    // odmowil, kanwa po prostu przestawala pisac i uzytkownik nie widzial nic.
+    // Tresc pochodzi z `aiProviderErrorCopy` (hak ja juz zbudowal).
+    onError: (message) => {
+      toast.error(message);
+    },
     onComplete: (finalMd) => {
       // BUG N-1: a chat-driven append/replace MUST be flushed with the FRESH
       // content, not left to the debounced autosave which would capture a

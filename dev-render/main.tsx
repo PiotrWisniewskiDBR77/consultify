@@ -251,6 +251,7 @@ const CanvasToolbarMdHistoryScreen = React.lazy(
   () => import('./screens/canvas-toolbar-md-history')
 );
 const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
+const ChatBladAiScreen = React.lazy(() => import('./screens/chat-blad-ai'));
 const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
 const ChatToolStepsDay206Screen = React.lazy(() => import('./screens/chat-tool-steps-day206'));
 const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
@@ -1979,6 +1980,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '#87d: restrukturyzacja kebaba „⋯" w nazwane grupy — REALNY <WorkCanvasDocumentPanel>, harness sam klika trigger [data-testid="canvas-menu-root"]',
     render: () => <CanvasKebabRestructureScreen />,
+  },
+  'chat-blad-ai': {
+    label: 'CHAT-OWN-016 — Czat w stanie błędu dostawcy AI (?stan=blad-ai&wariant=przed|po)',
+    render: () => <ChatBladAiScreen />,
   },
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',

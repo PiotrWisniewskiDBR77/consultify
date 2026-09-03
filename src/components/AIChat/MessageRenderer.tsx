@@ -43,6 +43,7 @@ import { Api } from '../../services/api';
 import type { GovernedChatHandoffProposal } from '../../services/api/v8/chat';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
+import { AiProviderErrorNotice } from './AiProviderErrorNotice';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ArtifactChip } from './ArtifactChip';
 import { shouldOfferDocumentEmission } from './canvasEmissionHeuristic';
@@ -614,6 +615,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
       ? dtPendingConfirm.confirm
       : (msg as any).metadata?.deepThinkingConfirm;
+  // CHAT-OWN-016 — blad dostawcy AI. UnifiedChatPanel.onStreamError wklada
+  // `metadata.aiProviderError = { code, adminDiagnostic? }`; renderer zamienia
+  // to na blok `AiProviderErrorNotice` (tokeny c-danger/c-warning) zamiast
+  // surowego napisu w tresci wiadomosci.
+  const aiProviderError = (msg as any).metadata?.aiProviderError as
+    | { code?: string; adminDiagnostic?: string }
+    | undefined;
   const policyDecision = (msg as any).metadata?.policyDecision;
   const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
     ? ((msg as any).metadata.policyNotices as any[])
@@ -717,8 +725,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           {/* AI Message Content */}
           {msg.role === 'ai' ? (
             <div
-              className={`${isDeepThinkingConfirm || isTeresaConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
+              className={`${isDeepThinkingConfirm || isTeresaConfirm || aiProviderError || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
             >
+              {/* CHAT-OWN-016: blad dostawcy AI zamiast surowego napisu. */}
+              {aiProviderError ? (
+                <AiProviderErrorNotice
+                  source={{ errorCode: aiProviderError.code }}
+                  adminDiagnostic={aiProviderError.adminDiagnostic}
+                  compact={isCompact}
+                />
+              ) : null}
               {/* Policy gateway (P34-B): refusal + uncertainty visibility */}
               {isPolicyRefusal && (
                 <div className="not-prose mb-3 p-3 rounded-lg border border-danger-200 dark:border-danger-900/40 bg-danger-50/70 dark:bg-danger-900/30">
@@ -1144,7 +1160,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : aiProviderError ? null : ( // CHAT-OWN-016: tresc bledu pokazuje blok wyzej — nie dublujemy jej markdownem
                 <>
                   {(() => {
                     const ideaHintRegex = /💡\s*IDEA_HINT:\s*(.+?)\s*\|\s*(.+)/g;
