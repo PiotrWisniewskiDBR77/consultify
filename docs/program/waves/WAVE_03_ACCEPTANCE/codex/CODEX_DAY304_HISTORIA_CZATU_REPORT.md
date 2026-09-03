@@ -30,3 +30,9 @@ Nie dodano migracji: wymagane dane już mają reprezentację. Zakres wynika z `c
 `conversations.search.realdb.test.ts`: 12/12, pełne nazwy w `/private/tmp/cx-day304-historia-czatu-artefakty/przed.json`, `--retry=0`, realny PG 6308 i podpisany JWT. Ograniczenie Z22: test montuje `conversationsRoutes` w gołym Express, nie przez `ApiGateway.initializeRoutes`, więc **nie jest dowodem produkcyjnego montażu**; potwierdza zachowanie routera na PG, w tym parę członek widzi / obca org nie widzi.
 
 Pułapki Z33: komplet env wymusił PG, auth bypass=false; suite sama ustawia E2E_MODE dla części ścieżek, a negatyw członkostwa używa podpisanego JWT. Nie używam jej jako dowodu Gateway ani jako pełnego R4.
+
+## R4 — izolacja
+
+Przed/po: 12 pełnych nazw, 12 PASS, pusty diff nazw; listy mają SHA-256 `8f3e90b3b078827251448cb480e0fe31bf85bcf618fb87f6062f2cddd9fae133`. Para obejmuje członka zespołu, który widzi rozmowę, oraz użytkownika obcej organizacji, który jej nie widzi, na realnym PG i z `--retry=0`.
+
+Werdykt R4: **CZĘŚCIOWE**. Nie wykonano wymaganego dowodu mutacyjnego ani przejścia przez `ApiGateway.initializeRoutes`; obecna suite montuje router bezpośrednio. Nie wpisuję `VERIFIED` ani `ZROBIONE_WG_DoD`.
