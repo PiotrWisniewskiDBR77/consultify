@@ -57,6 +57,7 @@ Każdy dalszy pakiet otrzyma indywidualny wpis: atrapa `fetch`, mock bazy, cwd/c
 | 10_FINANCE | 79 | 924 | 923 | 0 | 1 nowa w zmienionym zakresie | 0 | `G15 FAIL — ukierunkowany front: baza 850/851, marker 923/924. Stary czerwony benchmark 1.2M-cell zniknął, nowy benchmark 1000-cell paste-batch jest czerwony; Z37 zabrania uznać równą liczbę czerwieni za brak zmiany. Flagi pozostały OFF.` |
 | 11_MATERIALS | 20 | 184 | 182 | 2 | 0 | 0 | `G15 PARTIAL — ukierunkowany front: marker 182/184 PASS; te same dwie pełne nazwy są czerwone na bazie i markerze, brak czerwieni NOWYCH; serwer pozostaje do pomiaru.` |
 | 12_AUDITS | 3 | 17 | 17 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 4/4, marker 17/17; 13 nowych zielonych przypadków, zero czerwieni. Serwer Audytów pozostaje do pomiaru.` |
+| 13_CHAT | 45 | 439 | 439 | 0 | 0 | 0 | `G15 PARTIAL/PASS front — baza 416/416, marker 439/439; 23 nowe zielone przypadki, zero czerwieni. Serwer pozostaje do pomiaru.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
 
@@ -107,3 +108,7 @@ Pakiet frontowy uruchomiono jednostkowo z `--retry=0`; dwie czerwienie dotyczą 
 ### Pułapki — 12_AUDITS
 
 Pakiet frontowy jest jednostkowy; z jego zieleni nie wyprowadzono twierdzeń o trasach, uwierzytelnianiu ani Postgresie. Pełne nazwy wykazują 13 dodanych zielonych przypadków i zero znikniętych.
+
+### Pułapki — 13_CHAT
+
+Pakiet jest jednostkowy; globalne atrapy AI i `fetch` oznaczają, że wynik dowodzi wyłącznie renderowania/kontraktów lokalnych, nie realnej sieci ani modelu. Nie wykonano żadnego wywołania LLM. Pełne nazwy: 23 dodane, zero znikniętych i zero czerwonych.
