@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "fixture": "wave3-partner-owner-review-v1",
+  "fixtureId": "W3-PARTNER-OWNER-v1",
+  "ownershipState": "FINAL",
+  "ownershipNonce": "4a769b98e6992c6859fda50502cbbf700c2b50e4095edcc32b903cf9c2b36204",
+  "databaseName": "cxresztki",
+  "marker": {
+    "table": "wave3_owner_fixture_markers",
+    "fixtureId": "W3-PARTNER-OWNER-v1",
+    "ownershipNonce": "4a769b98e6992c6859fda50502cbbf700c2b50e4095edcc32b903cf9c2b36204"
+  },
+  "fixtureState": "READY_FOR_LOCAL_OWNER_REVIEW",
+  "ownerReviewReady": true,
+  "database": {
+    "name": "cxresztki",
+    "disposable": true,
+    "loopbackOnly": true
+  },
+  "deepLinkVerified": false,
+  "deepLinks": {
+    "partner": "/partner",
+    "anonymousReferral": "/r/w3-partner-owner"
+  },
+  "personas": {
+    "owner": {
+      "email": "wave3.partner.owner.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000001",
+      "userId": "b1610000-0000-4000-8000-000000000001"
+    },
+    "admin": {
+      "email": "wave3.partner.admin.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000001",
+      "userId": "b1610000-0000-4000-8000-000000000002"
+    },
+    "member": {
+      "email": "wave3.partner.member.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000001",
+      "userId": "b1610000-0000-4000-8000-000000000003"
+    },
+    "sameUserForeignTenant": {
+      "email": "wave3.partner.owner.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000002"
+    },
+    "revoked": {
+      "email": "wave3.partner.revoked.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000001"
+    },
+    "unbound": {
+      "email": "wave3.partner.unbound.20260821@local.test",
+      "organizationId": "b1600000-0000-4000-8000-000000000001"
+    },
+    "anonymousReferral": {
+      "authenticated": false,
+      "referralCode": "W3PARTNER"
+    }
+  },
+  "partner": {
+    "organizationId": "b1620000-0000-4000-8000-000000000001",
+    "profileState": "active_certified",
+    "referralCode": "W3PARTNER",
+    "certificationIds": [
+      "b1650000-0000-4000-8000-000000000001",
+      "b1650000-0000-4000-8000-000000000002"
+    ],
+    "participantLedgerId": "b1640000-0000-4000-8000-000000000001",
+    "participantOrganizationId": "b1600000-0000-4000-8000-000000000003"
+  },
+  "economics": {
+    "policyDisabled": true,
+    "historicalReadOnly": true,
+    "accrualEnabled": false,
+    "payoutEnabled": false,
+    "commissionsSeeded": 0,
+    "payoutsSeeded": 0
+  },
+  "negativeReadback": {
+    "sameUserForeignTenantBoundRows": 0,
+    "revokedActiveMembershipRows": 0,
+    "unboundRowsWithOwner": 0,
+    "economicRows": 0
+  },
+  "credentials": {
+    "storedInManifest": false,
+    "suppliedByEnvironment": true
+  },
+  "reproducibility": {
+    "stableIds": true,
+    "manifestExclusiveCreate": true,
+    "resetCommand": "rerun this script with --reset and the same guarded environment"
+  }
+}
