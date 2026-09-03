@@ -69,6 +69,7 @@ import {
   formatRoiDate,
   formatRoiNumber,
   formatRoiPercent,
+  formatRoiRatioPercent,
   getRoiCaseLockInfo,
 } from './roiRegistryMappers';
 
@@ -324,7 +325,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
         <HonestValueCell
           isPolish={isPolish}
           value={row.status === 'failed' ? 'not_calculable' : row.simpleRoi}
-          format={(v) => formatRoiPercent(v, isPolish)}
+          format={(v) => formatRoiRatioPercent(v, isPolish)}
           align="right"
         />
       ),
@@ -413,7 +414,7 @@ export function buildRoiCalculationRunPreview(
             <HonestValueCell
               isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.simpleRoi}
-              format={(v) => formatRoiPercent(v, isPolish)}
+              format={(v) => formatRoiRatioPercent(v, isPolish)}
             />
           ),
         },
@@ -1319,7 +1320,7 @@ export function buildRoiActualSnapshotPreview(
             <HonestValueCell
               isPolish={isPolish}
               value={s.actualSimpleRoi}
-              format={(v) => formatRoiPercent(v, isPolish)}
+              format={(v) => formatRoiRatioPercent(v, isPolish)}
             />
           ),
         },

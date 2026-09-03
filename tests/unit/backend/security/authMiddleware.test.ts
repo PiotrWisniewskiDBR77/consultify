@@ -873,7 +873,6 @@ describe('verifyToken (L1)', () => {
     expect(isCanonicalTenantHostname(undefined)).toBe(false);
     expect(CANONICAL_TENANT_HOSTS.has('staging.consultify.ai')).toBe(true);
   });
-
   it('rejects token issued before a revoke-all marker', async () => {
     const iatSec = Math.floor(Date.now() / 1000) - 10; // issued 10s ago
     const tokenIssuedAt = iatSec * 1000;

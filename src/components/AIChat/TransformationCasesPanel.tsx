@@ -1,4 +1,4 @@
-import { Ban, GitBranch, ListChecks, PlayCircle, RefreshCw } from 'lucide-react';
+import { Ban, GitBranch, ListChecks, PlayCircle, Plus, RefreshCw, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -289,6 +289,13 @@ interface TransformationCaseRow extends TableRow {
   transformationCase: TransformationCaseDto;
 }
 
+export function deriveTransformationCaseTitle(item: TransformationCaseDto): string {
+  const outcome = item.desiredOutcomes.find((value) => value.trim().length > 0)?.trim();
+  const source = outcome || item.mandate.trim();
+  const firstSentence = source.split(/(?<=[.!?])\s+/u)[0]?.trim() || source;
+  return firstSentence.length > 120 ? `${firstSentence.slice(0, 117).trimEnd()}…` : firstSentence;
+}
+
 function capabilityTone(status: TransformationPlanStepDto['capabilityStatus']) {
   if (status === 'REAL') return 'success' as const;
   if (status === 'PARTIAL' || status === 'PROPOSAL_ONLY') return 'warning' as const;
@@ -389,18 +396,156 @@ export const TransformationQualityTrustSection: React.FC<{
   );
 };
 
+const TransformationCaseExecutiveOverview: React.FC<{
+  transformationCase: TransformationCaseDto;
+  isPolish: boolean;
+}> = ({ transformationCase, isPolish }) => {
+  const steps = transformationCase.activePlan?.steps ?? [];
+  const phases = [
+    { label: isPolish ? 'Ustalenie kierunku' : 'Frame', range: [0, 1] },
+    { label: isPolish ? 'Diagnoza' : 'Diagnose', range: [1, 5] },
+    { label: isPolish ? 'Wybór rozwiązania' : 'Decide', range: [5, 9] },
+    { label: isPolish ? 'Realizacja' : 'Deliver', range: [9, 12] },
+    { label: isPolish ? 'Rezultaty i domknięcie' : 'Realize', range: [12, 15] },
+  ].map((phase) => {
+    const phaseSteps = steps.slice(phase.range[0], phase.range[1]);
+    const real = phaseSteps.filter((step) => step.capabilityStatus === 'REAL').length;
+    const partial = phaseSteps.filter((step) =>
+      ['PARTIAL', 'PROPOSAL_ONLY'].includes(step.capabilityStatus)
+    ).length;
+    return { ...phase, total: phaseSteps.length, real, partial };
+  });
+  const executable = steps.filter((step) => step.capabilityStatus === 'REAL').length;
+  const needsAttention = Math.max(0, steps.length - executable);
+  const nextAction =
+    transformationCase.status === 'plan_proposed'
+      ? isPolish
+        ? 'Przejrzyj plan i zdecyduj, czy można go zatwierdzić.'
+        : 'Review the plan and decide whether it can be approved.'
+      : needsAttention > 0
+        ? isPolish
+          ? 'Uzupełnij brakujące połączenia albo przypisz niewykonalne etapy człowiekowi.'
+          : 'Complete missing connections or assign unavailable stages to a person.'
+        : isPolish
+          ? 'Plan jest gotowy do rozpoczęcia.'
+          : 'The plan is ready to start.';
+
+  return (
+    <section className="space-y-4" data-testid="transformation-case-executive-overview">
+      <div className="rounded-xl border border-c-border bg-c-surface p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+          {isPolish ? 'Cel i mandat transformacji' : 'Transformation outcome and mandate'}
+        </p>
+        <p className="mt-2 text-base font-semibold leading-6 text-c-text">
+          {transformationCase.desiredOutcomes[0] || transformationCase.mandate}
+        </p>
+        {transformationCase.desiredOutcomes[0] ? (
+          <p className="mt-2 line-clamp-3 text-xs leading-5 text-c-text-secondary">
+            {transformationCase.mandate}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-c-border bg-c-surface p-3">
+          <p className="text-[11px] text-c-text-muted">{isPolish ? 'Stan' : 'Status'}</p>
+          <p className="mt-1 text-sm font-semibold text-c-text">
+            {transformationCase.status === 'plan_proposed'
+              ? isPolish
+                ? 'Plan wymaga przeglądu'
+                : 'Plan needs review'
+              : transformationCase.status === 'plan_approved'
+                ? isPolish
+                  ? 'Plan zatwierdzony'
+                  : 'Plan approved'
+                : transformationCase.status}
+          </p>
+        </div>
+        <div className="rounded-lg border border-c-border bg-c-surface p-3">
+          <p className="text-[11px] text-c-text-muted">
+            {isPolish ? 'Gotowe do automatycznego wykonania' : 'Ready for automated execution'}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-c-text">
+            {executable}/{steps.length} {isPolish ? 'etapów' : 'stages'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-c-border bg-c-surface p-3">
+          <p className="text-[11px] text-c-text-muted">
+            {isPolish ? 'Wymaga przygotowania' : 'Needs preparation'}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-c-text">
+            {needsAttention} {isPolish ? 'etapów' : 'stages'}
+          </p>
+        </div>
+      </div>
+
+      <section className="rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-c-text">
+            {isPolish ? 'Plan transformacji' : 'Transformation plan'}
+          </h3>
+          <span className="text-[11px] text-c-text-muted">v{transformationCase.version}</span>
+        </div>
+        <ol className="mt-4 grid gap-2 lg:grid-cols-5">
+          {phases.map((phase, index) => {
+            const ready = phase.total > 0 && phase.real === phase.total;
+            const started = phase.real > 0 || phase.partial > 0;
+            return (
+              <li key={phase.label} className="rounded-lg border border-c-border bg-c-card p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  {String(index + 1).padStart(2, '0')}
+                </p>
+                <p className="mt-2 text-xs font-semibold text-c-text">{phase.label}</p>
+                <p className="mt-2 text-[11px] text-c-text-secondary">
+                  {ready
+                    ? isPolish
+                      ? 'Gotowe'
+                      : 'Ready'
+                    : started
+                      ? isPolish
+                        ? 'Częściowo przygotowane'
+                        : 'Partly prepared'
+                      : isPolish
+                        ? 'Wymaga konfiguracji'
+                        : 'Configuration required'}
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className="rounded-xl border border-amber-300/40 bg-amber-50/60 p-4 dark:border-amber-500/25 dark:bg-amber-500/5">
+        <p className="text-xs font-semibold text-c-text">
+          {isPolish ? 'Następna decyzja' : 'Next decision'}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-c-text-secondary">{nextAction}</p>
+      </section>
+    </section>
+  );
+};
+
 export const TransformationCasesPanel: React.FC<{
   onCanonicalContextChange?: (context: {
     transformationCaseId: string;
     canonicalRunId?: string;
   }) => void;
   onOpenOperations?: (context: { transformationCaseId: string; canonicalRunId: string }) => void;
-}> = ({ onCanonicalContextChange, onOpenOperations }) => {
+  onOpenCase?: (transformationCase: TransformationCaseDto) => void;
+  workspaceCaseId?: string | null;
+  fullView?: boolean;
+}> = ({
+  onCanonicalContextChange,
+  onOpenOperations,
+  onOpenCase,
+  workspaceCaseId = null,
+  fullView = false,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [searchParams] = useSearchParams();
   const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
-  const linkedCaseId = searchParams.get('transformationCaseId');
+  const linkedCaseId = workspaceCaseId ?? searchParams.get('transformationCaseId');
   const [cases, setCases] = useState<TransformationCaseDto[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(linkedCaseId);
   const [error, setError] = useState<string | null>(null);
@@ -470,6 +615,9 @@ export const TransformationCasesPanel: React.FC<{
   const [synthesisProposal, setSynthesisProposal] = useState<
     OpportunitySynthesisProposalDto | null | undefined
   >(undefined);
+  const [newMandate, setNewMandate] = useState('');
+  const [newOutcome, setNewOutcome] = useState('');
+  const [creatingCase, setCreatingCase] = useState(false);
 
   const loadCases = useCallback(async () => {
     setError(null);
@@ -518,11 +666,37 @@ export const TransformationCasesPanel: React.FC<{
     void loadCases();
   }, [loadCases]);
 
+  const handleCreateCase = useCallback(async () => {
+    const mandate = newMandate.trim();
+    if (!mandate) return;
+    setCreatingCase(true);
+    setError(null);
+    try {
+      const created = await TransformationCasesApi.create(
+        {
+          mandate,
+          desiredOutcomes: newOutcome.trim() ? [newOutcome.trim()] : [],
+        },
+        `agent-hub-${crypto.randomUUID()}`
+      );
+      setNewMandate('');
+      setNewOutcome('');
+      await loadCases();
+      setSelectedId(created.transformationCaseId);
+    } catch (createError) {
+      setError(
+        createError instanceof Error ? createError.message : 'Failed to create transformation'
+      );
+    } finally {
+      setCreatingCase(false);
+    }
+  }, [loadCases, newMandate, newOutcome]);
+
   const rows = useMemo<TransformationCaseRow[]>(
     () =>
       (cases ?? []).map((transformationCase) => ({
         id: transformationCase.transformationCaseId,
-        title: transformationCase.mandate,
+        title: deriveTransformationCaseTitle(transformationCase),
         transformationCase,
       })),
     [cases]
@@ -2127,16 +2301,98 @@ export const TransformationCasesPanel: React.FC<{
   }
   if (cases.length === 0) {
     return (
-      <EmptyState
-        icon={PlayCircle}
-        title={isPolish ? 'Brak planów transformacji' : 'No transformation plans'}
-        description={
-          isPolish
-            ? 'Napisz do Teresy: „Przygotuj plan transformacji”, aby utworzyć pierwszy trwały Transformation Case.'
-            : 'Ask Teresa to “Prepare a transformation plan” to create the first durable Transformation Case.'
-        }
-        className="h-full"
-      />
+      <section className="mx-auto flex min-h-full w-full max-w-5xl items-center px-4 py-8">
+        <div className="w-full overflow-hidden rounded-xl border border-c-border bg-c-surface shadow-sm">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="p-6 sm:p-8">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-c-primary/10 text-c-primary">
+                <Sparkles size={22} aria-hidden />
+              </div>
+              <h2 className="text-xl font-semibold text-c-text">
+                {isPolish ? 'Rozpocznij pracę Agenta' : 'Start Agent work'}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-c-text-secondary">
+                {isPolish
+                  ? 'Opisz rezultat biznesowy. Agent utworzy trwałą sprawę, plan, punkty akceptacji i historię wykonania.'
+                  : 'Describe the business result. Agent will create a durable case with a plan, approval gates and execution history.'}
+              </p>
+              <div className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-c-text">
+                    {isPolish ? 'Co ma zostać osiągnięte?' : 'What needs to be achieved?'}
+                  </span>
+                  <textarea
+                    value={newMandate}
+                    onChange={(event) => setNewMandate(event.target.value)}
+                    placeholder={
+                      isPolish
+                        ? 'Np. skrócić czas realizacji zamówienia o 30%'
+                        : 'E.g. reduce order fulfilment time by 30%'
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-c-border bg-c-bg px-3 py-2.5 text-sm text-c-text outline-none placeholder:text-c-text-muted focus:border-c-primary focus:ring-2 focus:ring-c-primary/20"
+                    data-testid="agent-case-mandate"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-c-text">
+                    {isPolish ? 'Pierwszy mierzalny rezultat' : 'First measurable outcome'}
+                  </span>
+                  <input
+                    value={newOutcome}
+                    onChange={(event) => setNewOutcome(event.target.value)}
+                    placeholder={isPolish ? 'Np. lead time ≤ 5 dni' : 'E.g. lead time ≤ 5 days'}
+                    className="w-full rounded-lg border border-c-border bg-c-bg px-3 py-2.5 text-sm text-c-text outline-none placeholder:text-c-text-muted focus:border-c-primary focus:ring-2 focus:ring-c-primary/20"
+                    data-testid="agent-case-outcome"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void handleCreateCase()}
+                  disabled={!newMandate.trim() || creatingCase}
+                  className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  data-testid="agent-case-create"
+                >
+                  <Plus size={16} aria-hidden />
+                  {creatingCase
+                    ? isPolish
+                      ? 'Tworzenie…'
+                      : 'Creating…'
+                    : isPolish
+                      ? 'Utwórz sprawę i plan'
+                      : 'Create case and plan'}
+                </button>
+              </div>
+              {error ? <p className="mt-4 text-sm text-c-danger">{error}</p> : null}
+            </div>
+            <aside className="border-t border-c-border bg-c-bg/60 p-6 sm:p-8 lg:border-l lg:border-t-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                {isPolish ? 'Co powstanie' : 'What you will get'}
+              </p>
+              <ol className="mt-5 space-y-4">
+                {[
+                  isPolish
+                    ? 'Sprawa z mandatem i miernikami sukcesu'
+                    : 'Case with mandate and success measures',
+                  isPolish
+                    ? 'Plan etapów z właścicielami i zależnościami'
+                    : 'Stage plan with owners and dependencies',
+                  isPolish
+                    ? 'Akceptacje, wyniki i pełna historia działań'
+                    : 'Approvals, outputs and complete activity history',
+                ].map((label, index) => (
+                  <li key={label} className="flex gap-3 text-sm text-c-text-secondary">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-c-border bg-c-surface text-xs font-semibold text-c-text">
+                      {index + 1}
+                    </span>
+                    <span className="pt-0.5">{label}</span>
+                  </li>
+                ))}
+              </ol>
+            </aside>
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -2155,1471 +2411,1611 @@ export const TransformationCasesPanel: React.FC<{
         selectedId={selectedId}
         selectedItem={selectedRow ? { id: selectedRow.id, title: selectedRow.title } : null}
         onSelect={selectCase}
+        onOpenFull={
+          !fullView && onOpenCase && selectedRow
+            ? () => onOpenCase(selectedRow.transformationCase)
+            : undefined
+        }
         itemIds={rows.map((row) => row.id)}
+        fullView={fullView}
         renderPreview={() => {
           if (!selectedRow) return null;
           const item = selectedRow.transformationCase;
           const steps = item.activePlan?.steps ?? [];
+          if (!fullView) {
+            return (
+              <div className="space-y-4" data-testid="transformation-case-preview">
+                <PreviewMetaCard
+                  pills={[
+                    {
+                      label: 'Status',
+                      value:
+                        item.status === 'plan_proposed'
+                          ? isPolish
+                            ? 'Plan do przeglądu'
+                            : 'Plan needs review'
+                          : item.status === 'plan_approved'
+                            ? isPolish
+                              ? 'Plan zatwierdzony'
+                              : 'Plan approved'
+                            : item.status === 'active'
+                              ? isPolish
+                                ? 'W realizacji'
+                                : 'Active'
+                              : item.status === 'cancelled'
+                                ? isPolish
+                                  ? 'Anulowany'
+                                  : 'Cancelled'
+                                : isPolish
+                                  ? 'Szkic'
+                                  : 'Draft',
+                    },
+                    { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
+                    { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
+                  ]}
+                />
+                <PreviewDetailsSection text={item.mandate} />
+                <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                  <h3 className="text-xs font-semibold text-c-text">
+                    {isPolish ? 'Rezultaty' : 'Outcomes'}
+                  </h3>
+                  {item.desiredOutcomes.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-xs text-c-text-secondary">
+                      {item.desiredOutcomes.slice(0, 3).map((outcome) => (
+                        <li key={outcome} className="flex gap-2">
+                          <span aria-hidden>•</span>
+                          <span>{outcome}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-c-text-muted">
+                      {isPolish ? 'Nie zdefiniowano rezultatów.' : 'No outcomes defined.'}
+                    </p>
+                  )}
+                </section>
+                <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                  <h3 className="text-xs font-semibold text-c-text">
+                    {isPolish ? 'Następny krok' : 'Next step'}
+                  </h3>
+                  <p className="mt-1 text-xs text-c-text-secondary">
+                    {item.status === 'plan_proposed'
+                      ? isPolish
+                        ? 'Otwórz kartę, przejrzyj plan i zdecyduj o jego zatwierdzeniu.'
+                        : 'Open the card, review the plan and decide whether to approve it.'
+                      : isPolish
+                        ? 'Otwórz kartę, aby kontynuować pracę.'
+                        : 'Open the card to continue work.'}
+                  </p>
+                </section>
+              </div>
+            );
+          }
           return (
             <div className="space-y-4" data-testid="transformation-case-preview">
-              <PreviewMetaCard
-                pills={[
-                  { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
-                  {
-                    label: isPolish ? 'Autonomia' : 'Autonomy',
-                    value: item.autonomyLevel,
-                    tone: 'warning',
-                  },
-                  { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
-                ]}
-              />
-              <PreviewDetailsSection text={item.mandate} />
-              <TransformationQualityTrustSection transformationCase={item} isPolish={isPolish} />
-              <ProjectTeamCard
-                caseId={item.transformationCaseId}
-                caseVersion={item.version}
-                projectId={item.projectId}
-                currentUserId={currentUserId}
-                isPolish={isPolish}
-                onProjectBound={async () => {
-                  await loadCases();
-                }}
-              />
-              {canonicalRuntime ? (
-                <div
-                  className={`rounded-lg border p-3 ${
-                    canonicalRuntime.stateDrift
-                      ? 'border-amber-300/50 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/5'
-                      : 'border-c-border bg-c-surface'
-                  }`}
-                  data-testid="canonical-runtime"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Kanoniczny przebieg agenta' : 'Canonical agent run'}
-                  </p>
-                  <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                    Run ID: {canonicalRuntime.canonicalRunId}
-                  </p>
-                  <p className="mt-1 text-[11px] text-c-text-muted">
-                    {isPolish ? 'Stan zapisany' : 'Persisted state'}: {canonicalRuntime.actualState}
-                    {' · '}
-                    {isPolish ? 'Stan wynikający z procesu' : 'Projected state'}:{' '}
-                    {canonicalRuntime.projectedState}
-                  </p>
-                  {onOpenOperations ? (
-                    <button
-                      type="button"
-                      className="mt-2 rounded-md border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
-                      onClick={() =>
-                        onOpenOperations({
-                          transformationCaseId: item.transformationCaseId,
-                          canonicalRunId: canonicalRuntime.canonicalRunId,
-                        })
-                      }
+              <TransformationCaseExecutiveOverview transformationCase={item} isPolish={isPolish} />
+              <details className="rounded-xl border border-c-border bg-c-surface">
+                <summary className="cursor-pointer list-none px-4 py-3 text-xs font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus">
+                  {isPolish
+                    ? 'Plan szczegółowy, zespół i diagnostyka'
+                    : 'Detailed plan, team and diagnostics'}
+                  <span className="ml-2 font-normal text-c-text-muted">
+                    {isPolish ? 'Widok zaawansowany' : 'Advanced view'}
+                  </span>
+                </summary>
+                <div className="space-y-4 border-t border-c-border p-4">
+                  <PreviewMetaCard
+                    pills={[
+                      { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
+                      {
+                        label: isPolish ? 'Autonomia' : 'Autonomy',
+                        value: item.autonomyLevel,
+                        tone: 'warning',
+                      },
+                      { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
+                    ]}
+                  />
+                  <TransformationQualityTrustSection
+                    transformationCase={item}
+                    isPolish={isPolish}
+                  />
+                  <ProjectTeamCard
+                    caseId={item.transformationCaseId}
+                    caseVersion={item.version}
+                    projectId={item.projectId}
+                    currentUserId={currentUserId}
+                    isPolish={isPolish}
+                    onProjectBound={async () => {
+                      await loadCases();
+                    }}
+                  />
+                  {canonicalRuntime ? (
+                    <div
+                      className={`rounded-lg border p-3 ${
+                        canonicalRuntime.stateDrift
+                          ? 'border-amber-300/50 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/5'
+                          : 'border-c-border bg-c-surface'
+                      }`}
+                      data-testid="canonical-runtime"
+                      role="status"
+                      aria-live="polite"
                     >
-                      {isPolish ? 'Otwórz diagnostykę przebiegu' : 'Open run diagnostics'}
-                    </button>
-                  ) : null}
-                  <p className="mt-1 text-[11px] text-c-text-muted">
-                    Lineage: {canonicalRuntime.lineageId} · Identity:{' '}
-                    {canonicalRuntime.identityRegistered ? 'registered' : 'missing'}
-                  </p>
-                  {canonicalRuntime.stateDrift ? (
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                        {isPolish
-                          ? 'Wykryto rozbieżność stanu. Automatyczna spójność nie jest jeszcze dowiedziona.'
-                          : 'State drift detected. Automatic consistency is not yet proven.'}
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Kanoniczny przebieg agenta' : 'Canonical agent run'}
                       </p>
+                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                        Run ID: {canonicalRuntime.canonicalRunId}
+                      </p>
+                      <p className="mt-1 text-[11px] text-c-text-muted">
+                        {isPolish ? 'Stan zapisany' : 'Persisted state'}:{' '}
+                        {canonicalRuntime.actualState}
+                        {' · '}
+                        {isPolish ? 'Stan wynikający z procesu' : 'Projected state'}:{' '}
+                        {canonicalRuntime.projectedState}
+                      </p>
+                      {onOpenOperations ? (
+                        <button
+                          type="button"
+                          className="mt-2 rounded-md border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
+                          onClick={() =>
+                            onOpenOperations({
+                              transformationCaseId: item.transformationCaseId,
+                              canonicalRunId: canonicalRuntime.canonicalRunId,
+                            })
+                          }
+                        >
+                          {isPolish ? 'Otwórz diagnostykę przebiegu' : 'Open run diagnostics'}
+                        </button>
+                      ) : null}
+                      <p className="mt-1 text-[11px] text-c-text-muted">
+                        Lineage: {canonicalRuntime.lineageId} · Identity:{' '}
+                        {canonicalRuntime.identityRegistered ? 'registered' : 'missing'}
+                      </p>
+                      {canonicalRuntime.stateDrift ? (
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                            {isPolish
+                              ? 'Wykryto rozbieżność stanu. Automatyczna spójność nie jest jeszcze dowiedziona.'
+                              : 'State drift detected. Automatic consistency is not yet proven.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void reconcileRuntime()}
+                            disabled={reconcilingRuntime}
+                            className="rounded-md border border-amber-400/50 px-2 py-1 text-xs font-semibold text-c-text disabled:opacity-50"
+                          >
+                            {reconcilingRuntime
+                              ? isPolish
+                                ? 'Uzgadnianie…'
+                                : 'Reconciling…'
+                              : isPolish
+                                ? 'Uzgodnij stan'
+                                : 'Reconcile state'}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {finalOutputRun ? (
+                    <div className="rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Końcowy Word + PowerPoint' : 'Final Word + PowerPoint'}
+                      </p>
+                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                        {isPolish ? 'Digest faktów' : 'Facts digest'}: {finalOutputRun.factsDigest}
+                      </p>
+                      <p className="mt-1 text-[11px] text-c-text-muted">
+                        DOCX {finalOutputRun.docxSha256.slice(0, 12)}… · PPTX{' '}
+                        {finalOutputRun.pptxSha256.slice(0, 12)}…
+                      </p>
+                      <div className="mt-2 flex gap-3 text-xs font-semibold text-c-info">
+                        <a
+                          href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/docx/download`}
+                        >
+                          Word
+                        </a>
+                        <a
+                          href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/pptx/download`}
+                        >
+                          PowerPoint
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
+                  {finalOutputPublication ? (
+                    <section
+                      className="rounded-lg border border-c-border bg-c-surface p-3"
+                      aria-labelledby={`final-publication-${item.transformationCaseId}`}
+                      data-testid="final-output-publication"
+                    >
+                      <h3
+                        id={`final-publication-${item.transformationCaseId}`}
+                        className="text-xs font-semibold text-c-text"
+                      >
+                        {isPolish ? 'Zgoda na publikację końcową' : 'Final publication approval'}
+                      </h3>
+                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                        {isPolish ? 'Dokładny digest faktów' : 'Exact facts digest'}:{' '}
+                        {finalOutputPublication.factsDigest}
+                      </p>
+                      <p
+                        id={`final-publication-state-${item.transformationCaseId}`}
+                        className="mt-1 break-words text-[11px] text-c-text-muted"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                      >
+                        {isPolish ? 'Wersja Case' : 'Case version'}: v
+                        {finalOutputPublication.caseVersion} · {isPolish ? 'Zakres' : 'Scope'}:{' '}
+                        {finalOutputPublication.scopeKey} · {finalPublicationStateReason}
+                      </p>
+                    </section>
+                  ) : item.lifecycleStage === 'final_outputs' ? (
+                    <p
+                      id={`final-publication-state-${item.transformationCaseId}`}
+                      className="sr-only"
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {finalPublicationStateReason}
+                    </p>
+                  ) : null}
+                  {item.missingInputs.length > 0 ? (
+                    <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 p-3 dark:border-amber-500/20 dark:bg-amber-500/5">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Brakujące dane' : 'Missing inputs'}
+                      </p>
+                      <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-c-text-secondary">
+                        {item.missingInputs.map((input) => (
+                          <li key={input}>{input}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <GovernedProposalReview
+                    proposal={activeStageProposal}
+                    isLoading={proposalsLoading && !activeStageProposal}
+                    isPolish={isPolish}
+                    busy={Boolean(stageAction)}
+                    onScopeDecision={(scopeKey, decision) =>
+                      void handleScopeGovernanceDecision(scopeKey, decision)
+                    }
+                    onRevise={() => void handleReviseGovernedProposal()}
+                    onRebaseline={() => void handleRebaselineGovernedProposal()}
+                  />
+                  {ideasProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Propozycja początkowych idei' : 'Initial Ideas proposal'}
+                        </p>
+                        <StatusChip
+                          label={ideasProposal.status}
+                          tone={ideasProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      {ideasProposal.candidates.map((candidate) => (
+                        <div
+                          key={candidate.candidateId}
+                          className="rounded-md border border-c-border bg-c-card p-2.5"
+                        >
+                          <p className="text-xs font-semibold text-c-text">{candidate.title}</p>
+                          <p className="mt-1 text-[11px] text-c-text-secondary">
+                            {candidate.hypothesis}
+                          </p>
+                        </div>
+                      ))}
+                      {ideasProposal.artifactIds?.length ? (
+                        <p className="text-[11px] text-c-text-muted">
+                          {isPolish
+                            ? `Utworzono w My Ideas: ${ideasProposal.artifactIds.length}`
+                            : `Created in My Ideas: ${ideasProposal.artifactIds.length}`}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
+                      </p>
+                      <input
+                        aria-label={
+                          isPolish ? 'ID użytkownika interesariusza' : 'Stakeholder user ID'
+                        }
+                        value={stakeholderUserId}
+                        onChange={(event) => setStakeholderUserId(event.target.value)}
+                        placeholder={isPolish ? 'ID użytkownika' : 'User ID'}
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                      <input
+                        aria-label={isPolish ? 'Rola interesariusza' : 'Stakeholder role'}
+                        value={stakeholderRole}
+                        onChange={(event) => setStakeholderRole(event.target.value)}
+                        placeholder={
+                          isPolish
+                            ? 'Rola, np. Dyrektor Operacyjny'
+                            : 'Role, e.g. Operations Director'
+                        }
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                      <input
+                        aria-label={isPolish ? 'Obszary rozmowy' : 'Interview focus areas'}
+                        value={stakeholderFocus}
+                        onChange={(event) => setStakeholderFocus(event.target.value)}
+                        placeholder={
+                          isPolish
+                            ? 'Obszary oddzielone przecinkami'
+                            : 'Comma-separated focus areas'
+                        }
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                    </div>
+                  ) : null}
+                  {interviewsProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Plan Interview' : 'Interview plan'}
+                        </p>
+                        <StatusChip
+                          label={interviewsProposal.status}
+                          tone={interviewsProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      {interviewsProposal.candidates.map((candidate) => (
+                        <div
+                          key={candidate.candidateId}
+                          className="rounded-md border border-c-border bg-c-card p-2.5"
+                        >
+                          <p className="text-xs font-semibold text-c-text">
+                            {candidate.stakeholderRole} · {candidate.assigneeUserId}
+                          </p>
+                          <p className="mt-1 text-[11px] text-c-text-secondary">
+                            {candidate.objective}
+                          </p>
+                          <p className="mt-1 text-[11px] text-c-text-muted">
+                            {isPolish ? 'Pytania' : 'Questions'}: {candidate.questions.length}
+                          </p>
+                        </div>
+                      ))}
+                      {interviewsProposal.artifactIds?.length ? (
+                        <p className="text-[11px] text-c-text-muted">
+                          {isPolish
+                            ? `Utworzone assignmenty: ${interviewsProposal.artifactIds.length}`
+                            : `Created assignments: ${interviewsProposal.artifactIds.length}`}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {interviewsProposal?.status === 'applied' &&
+                  item.lifecycleStage === 'interviews' ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Zamknij Interview po review' : 'Close Interview after review'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Wymagane są ukończone sesje, zaakceptowane assignmenty i insighty po governance review.'
+                          : 'Completed sessions, approved assignments and governance-reviewed insights are required.'}
+                      </p>
+                      <input
+                        aria-label={
+                          isPolish ? 'ID zaakceptowanych insightów' : 'Approved insight IDs'
+                        }
+                        value={acceptedInsightIds}
+                        onChange={(event) => setAcceptedInsightIds(event.target.value)}
+                        placeholder={
+                          isPolish
+                            ? 'ID insightów oddzielone przecinkami'
+                            : 'Comma-separated insight IDs'
+                        }
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'drd' && drdProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Przygotuj diagnozę DRD' : 'Prepare DRD diagnosis'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Agent utworzy propozycję opartą na zaakceptowanych insightach Interview. Assessment powstanie dopiero po akceptacji.'
+                          : 'The Agent will prepare a proposal from accepted Interview Insights. The assessment is created only after approval.'}
+                      </p>
+                      <input
+                        aria-label={isPolish ? 'Nazwa assessmentu DRD' : 'DRD assessment name'}
+                        value={drdName}
+                        onChange={(event) => setDrdName(event.target.value)}
+                        placeholder={isPolish ? 'Nazwa diagnozy DRD' : 'DRD diagnosis name'}
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                    </div>
+                  ) : null}
+                  {drdProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-c-text">
+                          {drdProposal.assessmentName}
+                        </p>
+                        <StatusChip
+                          label={drdProposal.status}
+                          tone={drdProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish ? 'Źródłowe insighty Interview' : 'Source Interview Insights'}:{' '}
+                        {drdProposal.sourceInsightIds.length}
+                      </p>
+                      {drdProposal.assessmentId ? (
+                        <a
+                          href={`/assessment/drd/${encodeURIComponent(drdProposal.assessmentId)}`}
+                          className="inline-flex text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {isPolish ? 'Otwórz assessment DRD' : 'Open DRD assessment'}
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'opportunity_synthesis' && synthesisProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Agent połączy lineage Ideas, zaakceptowanych Interview Insights i immutable wyniku DRD. Candidate powstanie dopiero po akceptacji.'
+                          : 'The Agent will join Ideas, accepted Interview Insights and immutable DRD lineage. The Candidate is created only after approval.'}
+                      </p>
+                    </div>
+                  ) : null}
+                  {synthesisProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
+                        </p>
+                        <StatusChip
+                          label={synthesisProposal.status}
+                          tone={synthesisProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {synthesisProposal.synthesisSummary}
+                      </p>
+                      <p className="text-[11px] text-c-text-muted">
+                        Ideas: {synthesisProposal.sourceIdeaIds.length} · Interview Insights:{' '}
+                        {synthesisProposal.sourceInsightIds.length}
+                      </p>
+                      {synthesisProposal.candidateId ? (
+                        <p className="text-[11px] font-semibold text-c-text">
+                          Candidate: {synthesisProposal.candidateId}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'finance_kpi' && financeProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Business case i karta KPI' : 'Business case and KPI card'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(
+                          [
+                            ['capex', 'CAPEX'],
+                            ['opexAnnual', 'OPEX / rok'],
+                            ['benefitAnnual', 'Korzyść / rok'],
+                            ['horizonYears', 'Horyzont (lata)'],
+                            ['waccPct', 'WACC %'],
+                            ['baselineValue', 'KPI baseline'],
+                            ['targetValue', 'KPI target'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <input
+                            key={key}
+                            aria-label={label}
+                            value={financeInputs[key]}
+                            onChange={(event) =>
+                              setFinanceInputs((current) => ({
+                                ...current,
+                                [key]: event.target.value,
+                              }))
+                            }
+                            placeholder={label}
+                            className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                          />
+                        ))}
+                        <input
+                          aria-label="KPI name"
+                          value={financeInputs.kpiName}
+                          onChange={(event) =>
+                            setFinanceInputs((current) => ({
+                              ...current,
+                              kpiName: event.target.value,
+                            }))
+                          }
+                          className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                        <input
+                          aria-label="KPI unit"
+                          value={financeInputs.kpiUnit}
+                          onChange={(event) =>
+                            setFinanceInputs((current) => ({
+                              ...current,
+                              kpiUnit: event.target.value,
+                            }))
+                          }
+                          className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  {financeProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-c-text">
+                          Finance/KPI · {financeProposal.businessCase.verdict.toUpperCase()}
+                        </p>
+                        <StatusChip
+                          label={financeProposal.status}
+                          tone={financeProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {financeProposal.businessCase.summary}
+                      </p>
+                      <p className="text-[11px] text-c-text-muted">
+                        KPI: {financeProposal.kpi.name} · {financeProposal.kpi.baselineValue} →{' '}
+                        {financeProposal.kpi.targetValue} {financeProposal.kpi.unit}
+                      </p>
+                      {financeProposal.financialAnalysisId ? (
+                        <p className="text-[11px] font-semibold text-c-text">
+                          Analysis: {financeProposal.financialAnalysisId} · KPI:{' '}
+                          {financeProposal.kpiId}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'portfolio_decision' && portfolioProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Decyzja portfelowa GO/NO-GO' : 'Portfolio GO/NO-GO decision'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Agent przygotuje pakiet z zatwierdzonej analizy, KPI i pełnego lineage. Sama decyzja powstanie po akceptacji.'
+                          : 'The Agent prepares a packet from approved Finance, KPI and full lineage. The decision is created only after approval.'}
+                      </p>
+                      <input
+                        aria-label={isPolish ? 'ID właściciela decyzji' : 'Decision owner ID'}
+                        value={decisionMakerId}
+                        onChange={(event) => setDecisionMakerId(event.target.value)}
+                        placeholder={
+                          isPolish ? 'ID sponsora / decision makera' : 'Sponsor / decision maker ID'
+                        }
+                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                      />
+                    </div>
+                  ) : null}
+                  {portfolioProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-c-text">
+                          {portfolioProposal.title}
+                        </p>
+                        <StatusChip
+                          label={portfolioProposal.status}
+                          tone={portfolioProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {portfolioProposal.description}
+                      </p>
+                      <p className="text-[11px] text-c-text-muted">
+                        Decision maker: {portfolioProposal.decisionMakerId}
+                      </p>
+                      {portfolioProposal.decisionId ? (
+                        <a
+                          href={`/decisions/${encodeURIComponent(portfolioProposal.decisionId)}`}
+                          className="text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {isPolish ? 'Otwórz decyzję GO/NO-GO' : 'Open GO/NO-GO decision'}
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'mobilization' && mobilizationProposal === null ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Mobilizacja Initiative' : 'Initiative mobilization'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Agent przygotuje WBS, zależności, kamienie milowe i obsadę. Rekordy powstaną dopiero po akceptacji.'
+                          : 'The Agent prepares WBS, dependencies, milestones and staffing. Records are created only after approval.'}
+                      </p>
+                      {(['ownerUserId', 'startDate', 'endDate'] as const).map((key) => (
+                        <input
+                          key={key}
+                          aria-label={key}
+                          type={key === 'ownerUserId' ? 'text' : 'date'}
+                          value={mobilizationInputs[key]}
+                          onChange={(event) =>
+                            setMobilizationInputs((current) => ({
+                              ...current,
+                              [key]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {mobilizationProposal ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Blueprint mobilizacji' : 'Mobilization blueprint'}
+                        </p>
+                        <StatusChip
+                          label={mobilizationProposal.status}
+                          tone={mobilizationProposal.status === 'applied' ? 'success' : 'warning'}
+                          size="sm"
+                        />
+                      </div>
+                      <p className="text-[11px] text-c-text-secondary">
+                        WBS: {mobilizationProposal.wbs.length} · Milestones:{' '}
+                        {mobilizationProposal.milestones.length} · Dependencies:{' '}
+                        {mobilizationProposal.dependencies.length} · Resources:{' '}
+                        {mobilizationProposal.resources.length}
+                      </p>
+                      {mobilizationProposal.blueprintId ? (
+                        <p className="text-[11px] font-semibold text-c-text">
+                          Blueprint: {mobilizationProposal.blueprintId} · Tasks:{' '}
+                          {mobilizationProposal.taskIds?.length ?? 0}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'execution' ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Kontrola wykonania' : 'Execution checkpoint'}
+                        </p>
+                        {executionCheckpoint ? (
+                          <StatusChip
+                            label={executionCheckpoint.initiativeStatus}
+                            tone={
+                              executionCheckpoint.initiativeStatus === 'DONE'
+                                ? 'success'
+                                : 'warning'
+                            }
+                            size="sm"
+                          />
+                        ) : null}
+                      </div>
+                      {executionCheckpoint ? (
+                        <>
+                          <p className="text-[11px] text-c-text-secondary">
+                            Tasks: {executionCheckpoint.tasks.completed}/
+                            {executionCheckpoint.tasks.total}
+                            {' · '}Blocked: {executionCheckpoint.tasks.blocked}
+                          </p>
+                          <p className="text-[11px] text-c-text-secondary">
+                            Milestones: {executionCheckpoint.milestones.completed}/
+                            {executionCheckpoint.milestones.total}
+                            {' · '}Delayed: {executionCheckpoint.milestones.delayed}
+                          </p>
+                          <p className="text-[11px] text-c-text-secondary">
+                            KPI on target: {executionCheckpoint.kpis.onTarget}/
+                            {executionCheckpoint.kpis.total}
+                            {' · '}
+                            {executionCheckpoint.executionStarted
+                              ? isPolish
+                                ? 'Start wykonania przyjęty'
+                                : 'Execution start accepted'
+                              : isPolish
+                                ? 'Start wykonania oczekuje na przyjęcie'
+                                : 'Execution start awaits acceptance'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Ustaw Initiative w kanonicznym workspace na EXECUTING, a po zakończeniu na DONE. Agent weryfikuje stan, nie omija workflow.'
+                            : 'Move the Initiative to EXECUTING, then DONE, in the canonical workspace. The Agent verifies state without bypassing the workflow.'}
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'delivery' ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Odbiór korzyści' : 'Benefits handoff'}
+                      </p>
+                      {benefitsCheckpoint ? (
+                        <>
+                          <p className="text-[11px] text-c-text-secondary">
+                            Benefits measured: {benefitsCheckpoint.benefits.measured}/
+                            {benefitsCheckpoint.benefits.total}
+                            {' · '}Owned: {benefitsCheckpoint.benefits.owned}/
+                            {benefitsCheckpoint.benefits.total}
+                          </p>
+                          <p className="text-[11px] text-c-text-secondary">
+                            Achieved: {benefitsCheckpoint.benefits.achieved}
+                            {' · '}At risk: {benefitsCheckpoint.benefits.atRisk}
+                            {' · '}Finance actuals: {benefitsCheckpoint.financeActuals.verified}/
+                            {benefitsCheckpoint.financeActuals.total}
+                          </p>
+                          <select
+                            aria-label={
+                              isPolish ? 'Klasyfikacja efektu' : 'Effectiveness classification'
+                            }
+                            value={effectiveness}
+                            onChange={(event) =>
+                              setEffectiveness(
+                                event.target.value as 'confirmed' | 'partial' | 'not_achieved'
+                              )
+                            }
+                            className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                          >
+                            <option value="confirmed">confirmed</option>
+                            <option value="partial">partial</option>
+                            <option value="not_achieved">not_achieved</option>
+                          </select>
+                        </>
+                      ) : (
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Delivery nie jest dowodem wartości. Uzupełnij właścicieli, pomiary KPI i finansowe wartości rzeczywiste w Results.'
+                            : 'Delivery is not proof of value. Complete owners, KPI measurements and finance actuals in Results.'}
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'benefits' ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Weryfikacja efektu' : 'Effectiveness verification'}
+                      </p>
+                      <p className="text-[11px] text-c-text-secondary">
+                        {isPolish
+                          ? 'Każda korzyść musi mieć status achieved/exceeded oraz zweryfikowany pomiar. Dopiero wtedy rozpoczyna się niezależne okno trwałości.'
+                          : 'Every benefit must be achieved/exceeded with a verified measurement before the independent sustainability window begins.'}
+                      </p>
+                    </div>
+                  ) : null}
+                  {item.lifecycleStage === 'sustainability' ? (
+                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                      <p className="text-xs font-semibold text-c-text">
+                        {isPolish ? 'Przegląd trwałości' : 'Sustainability review'}
+                      </p>
+                      {sustainabilityCheckpoint ? (
+                        <p className="text-[11px] text-c-text-secondary">
+                          Two verified measurements:{' '}
+                          {sustainabilityCheckpoint.benefits.withTwoVerifiedMeasurements}/
+                          {sustainabilityCheckpoint.benefits.total}
+                          {' · '}Sustained ≥30 days:{' '}
+                          {sustainabilityCheckpoint.benefits.sustainedAcrossWindow}/
+                          {sustainabilityCheckpoint.benefits.total}
+                          {' · '}Minimum window:{' '}
+                          {sustainabilityCheckpoint.benefits.minimumWindowDays ?? '—'} days
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="space-y-2">
+                    {(editableSteps ?? steps).map((step, stepIndex, renderedSteps) => (
+                      <div
+                        key={step.stepId}
+                        className="rounded-lg border border-c-border bg-c-card p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold text-c-text">
+                              {step.stepIndex + 1}. {step.businessPurpose}
+                            </p>
+                            <p className="mt-1 text-[11px] text-c-text-secondary">
+                              {step.moduleTarget}
+                            </p>
+                          </div>
+                          <StatusChip
+                            label={step.capabilityStatus}
+                            tone={capabilityTone(step.capabilityStatus)}
+                            size="sm"
+                          />
+                        </div>
+                        {step.blockerReason ? (
+                          <p className="mt-2 text-[11px] text-c-text-muted">{step.blockerReason}</p>
+                        ) : null}
+                        {editableSteps ? (
+                          <div className="mt-2 space-y-2 border-t border-c-border pt-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Cel biznesowy' : 'Business purpose'}
+                                <textarea
+                                  aria-label={`${isPolish ? 'Cel biznesowy' : 'Business purpose'} ${step.lifecycleStage}`}
+                                  value={step.businessPurpose}
+                                  onChange={(event) =>
+                                    updatePlanStep(stepIndex, 'businessPurpose', event.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Moduł docelowy' : 'Target module'}
+                                <input
+                                  aria-label={`${isPolish ? 'Moduł docelowy' : 'Target module'} ${step.lifecycleStage}`}
+                                  value={step.moduleTarget}
+                                  onChange={(event) =>
+                                    updatePlanStep(stepIndex, 'moduleTarget', event.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Wejścia (po przecinku)' : 'Inputs (comma-separated)'}
+                                <input
+                                  aria-label={`${isPolish ? 'Wejścia' : 'Inputs'} ${step.lifecycleStage}`}
+                                  value={step.inputs.join(', ')}
+                                  onChange={(event) =>
+                                    updatePlanStep(
+                                      stepIndex,
+                                      'inputs',
+                                      event.target.value
+                                        .split(',')
+                                        .map((value) => value.trim())
+                                        .filter(Boolean)
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Wyjścia (po przecinku)' : 'Outputs (comma-separated)'}
+                                <input
+                                  aria-label={`${isPolish ? 'Wyjścia' : 'Outputs'} ${step.lifecycleStage}`}
+                                  value={step.outputs.join(', ')}
+                                  onChange={(event) =>
+                                    updatePlanStep(
+                                      stepIndex,
+                                      'outputs',
+                                      event.target.value
+                                        .split(',')
+                                        .map((value) => value.trim())
+                                        .filter(Boolean)
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Właściciel' : 'Owner'}
+                                <input
+                                  aria-label={`${isPolish ? 'Właściciel' : 'Owner'} ${step.lifecycleStage}`}
+                                  value={step.ownerRole}
+                                  onChange={(event) =>
+                                    updatePlanStep(stepIndex, 'ownerRole', event.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Szacowany wysiłek' : 'Estimated effort'}
+                                <input
+                                  aria-label={`${isPolish ? 'Szacowany wysiłek' : 'Estimated effort'} ${step.lifecycleStage}`}
+                                  value={step.estimatedEffort}
+                                  onChange={(event) =>
+                                    updatePlanStep(stepIndex, 'estimatedEffort', event.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Klasa akceptacji' : 'Approval class'}
+                                <select
+                                  aria-label={`${isPolish ? 'Klasa akceptacji' : 'Approval class'} ${step.lifecycleStage}`}
+                                  value={step.approvalClass}
+                                  onChange={(event) =>
+                                    updatePlanStep(
+                                      stepIndex,
+                                      'approvalClass',
+                                      event.target
+                                        .value as TransformationPlanStepDto['approvalClass']
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                >
+                                  <option value="none">none</option>
+                                  <option value="policy_approvable">policy_approvable</option>
+                                  <option value="requires_human_approval">
+                                    requires_human_approval
+                                  </option>
+                                </select>
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Klasa ryzyka' : 'Risk class'}
+                                <select
+                                  aria-label={`${isPolish ? 'Klasa ryzyka' : 'Risk class'} ${step.lifecycleStage}`}
+                                  value={step.riskClass}
+                                  onChange={(event) =>
+                                    updatePlanStep(
+                                      stepIndex,
+                                      'riskClass',
+                                      event.target.value as TransformationPlanStepDto['riskClass']
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                >
+                                  <option value="read_only">read_only</option>
+                                  <option value="safe_additive">safe_additive</option>
+                                  <option value="safe_update">safe_update</option>
+                                  <option value="sensitive_update">sensitive_update</option>
+                                  <option value="governance_transition">
+                                    governance_transition
+                                  </option>
+                                </select>
+                              </label>
+                              <label className="text-[11px] text-c-text-secondary">
+                                {isPolish ? 'Tryb wykonania' : 'Execution mode'}
+                                <select
+                                  aria-label={`${isPolish ? 'Tryb wykonania' : 'Execution mode'} ${step.lifecycleStage}`}
+                                  value={step.executionMode}
+                                  onChange={(event) =>
+                                    updatePlanStep(
+                                      stepIndex,
+                                      'executionMode',
+                                      event.target
+                                        .value as TransformationPlanStepDto['executionMode']
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                >
+                                  <option value="foreground">foreground</option>
+                                  <option value="background">background</option>
+                                  <option value="scheduled">scheduled</option>
+                                  <option value="human_activity">human_activity</option>
+                                </select>
+                              </label>
+                            </div>
+                            <p className="text-[11px] text-c-text-muted">
+                              {step.lifecycleStage} · {step.capabilityStatus} · {step.blockerReason}
+                            </p>
+                            <label className="block text-[11px] text-c-text-secondary">
+                              {isPolish
+                                ? 'Zależności (etapy, po przecinku)'
+                                : 'Dependencies (stages, comma-separated)'}
+                              <input
+                                aria-label={`${isPolish ? 'Zależności' : 'Dependencies'} ${step.lifecycleStage}`}
+                                value={step.dependsOn.join(', ')}
+                                onChange={(event) =>
+                                  updatePlanDependencies(stepIndex, event.target.value)
+                                }
+                                className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                              />
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                aria-label={`${isPolish ? 'Przesuń w górę' : 'Move up'} ${step.lifecycleStage}`}
+                                disabled={stepIndex === 0}
+                                onClick={() => movePlanStep(stepIndex, -1)}
+                                className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`${isPolish ? 'Przesuń w dół' : 'Move down'} ${step.lifecycleStage}`}
+                                disabled={stepIndex === renderedSteps.length - 1}
+                                onClick={() => movePlanStep(stepIndex, 1)}
+                                className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`${isPolish ? 'Usuń krok' : 'Remove step'} ${step.lifecycleStage}`}
+                                onClick={() => removePlanStep(stepIndex)}
+                                className="rounded border border-c-danger/40 px-2 py-1 text-xs text-c-danger"
+                              >
+                                {isPolish ? 'Usuń' : 'Remove'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                  {editableSteps ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => void reconcileRuntime()}
-                        disabled={reconcilingRuntime}
-                        className="rounded-md border border-amber-400/50 px-2 py-1 text-xs font-semibold text-c-text disabled:opacity-50"
+                        onClick={addPlanStep}
+                        disabled={Boolean(stageAction)}
+                        className="w-full rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text disabled:opacity-50"
                       >
-                        {reconcilingRuntime
+                        {isPolish ? 'Dodaj krok' : 'Add step'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void savePlanWorkshop()}
+                        disabled={Boolean(stageAction)}
+                        className="w-full rounded-lg border border-c-border-strong bg-c-surface-raised px-3 py-2 text-xs font-semibold text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                      >
+                        {stageAction === 'save-plan-workshop'
                           ? isPolish
-                            ? 'Uzgadnianie…'
-                            : 'Reconciling…'
+                            ? 'Zapisywanie nowej wersji…'
+                            : 'Saving new version…'
                           : isPolish
-                            ? 'Uzgodnij stan'
-                            : 'Reconcile state'}
+                            ? 'Zapisz nową wersję planu'
+                            : 'Save new plan version'}
                       </button>
                     </div>
                   ) : null}
-                </div>
-              ) : null}
-              {finalOutputRun ? (
-                <div className="rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Końcowy Word + PowerPoint' : 'Final Word + PowerPoint'}
-                  </p>
-                  <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                    {isPolish ? 'Digest faktów' : 'Facts digest'}: {finalOutputRun.factsDigest}
-                  </p>
-                  <p className="mt-1 text-[11px] text-c-text-muted">
-                    DOCX {finalOutputRun.docxSha256.slice(0, 12)}… · PPTX{' '}
-                    {finalOutputRun.pptxSha256.slice(0, 12)}…
-                  </p>
-                  <div className="mt-2 flex gap-3 text-xs font-semibold text-c-info">
-                    <a
-                      href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/docx/download`}
-                    >
-                      Word
-                    </a>
-                    <a
-                      href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/pptx/download`}
-                    >
-                      PowerPoint
-                    </a>
-                  </div>
-                </div>
-              ) : null}
-              {finalOutputPublication ? (
-                <section
-                  className="rounded-lg border border-c-border bg-c-surface p-3"
-                  aria-labelledby={`final-publication-${item.transformationCaseId}`}
-                  data-testid="final-output-publication"
-                >
-                  <h3
-                    id={`final-publication-${item.transformationCaseId}`}
-                    className="text-xs font-semibold text-c-text"
-                  >
-                    {isPolish ? 'Zgoda na publikację końcową' : 'Final publication approval'}
-                  </h3>
-                  <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                    {isPolish ? 'Dokładny digest faktów' : 'Exact facts digest'}:{' '}
-                    {finalOutputPublication.factsDigest}
-                  </p>
-                  <p
-                    id={`final-publication-state-${item.transformationCaseId}`}
-                    className="mt-1 break-words text-[11px] text-c-text-muted"
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                  >
-                    {isPolish ? 'Wersja Case' : 'Case version'}: v
-                    {finalOutputPublication.caseVersion} · {isPolish ? 'Zakres' : 'Scope'}:{' '}
-                    {finalOutputPublication.scopeKey} · {finalPublicationStateReason}
-                  </p>
-                </section>
-              ) : item.lifecycleStage === 'final_outputs' ? (
-                <p
-                  id={`final-publication-state-${item.transformationCaseId}`}
-                  className="sr-only"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  {finalPublicationStateReason}
-                </p>
-              ) : null}
-              {item.missingInputs.length > 0 ? (
-                <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 p-3 dark:border-amber-500/20 dark:bg-amber-500/5">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Brakujące dane' : 'Missing inputs'}
-                  </p>
-                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-c-text-secondary">
-                    {item.missingInputs.map((input) => (
-                      <li key={input}>{input}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              <GovernedProposalReview
-                proposal={activeStageProposal}
-                isLoading={proposalsLoading && !activeStageProposal}
-                isPolish={isPolish}
-                busy={Boolean(stageAction)}
-                onScopeDecision={(scopeKey, decision) =>
-                  void handleScopeGovernanceDecision(scopeKey, decision)
-                }
-                onRevise={() => void handleReviseGovernedProposal()}
-                onRebaseline={() => void handleRebaselineGovernedProposal()}
-              />
-              {ideasProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-c-text">
-                      {isPolish ? 'Propozycja początkowych idei' : 'Initial Ideas proposal'}
-                    </p>
-                    <StatusChip
-                      label={ideasProposal.status}
-                      tone={ideasProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  {ideasProposal.candidates.map((candidate) => (
-                    <div
-                      key={candidate.candidateId}
-                      className="rounded-md border border-c-border bg-c-card p-2.5"
-                    >
-                      <p className="text-xs font-semibold text-c-text">{candidate.title}</p>
-                      <p className="mt-1 text-[11px] text-c-text-secondary">
-                        {candidate.hypothesis}
-                      </p>
-                    </div>
-                  ))}
-                  {ideasProposal.artifactIds?.length ? (
-                    <p className="text-[11px] text-c-text-muted">
-                      {isPolish
-                        ? `Utworzono w My Ideas: ${ideasProposal.artifactIds.length}`
-                        : `Created in My Ideas: ${ideasProposal.artifactIds.length}`}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
-                  </p>
-                  <input
-                    aria-label={isPolish ? 'ID użytkownika interesariusza' : 'Stakeholder user ID'}
-                    value={stakeholderUserId}
-                    onChange={(event) => setStakeholderUserId(event.target.value)}
-                    placeholder={isPolish ? 'ID użytkownika' : 'User ID'}
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                  <input
-                    aria-label={isPolish ? 'Rola interesariusza' : 'Stakeholder role'}
-                    value={stakeholderRole}
-                    onChange={(event) => setStakeholderRole(event.target.value)}
-                    placeholder={
-                      isPolish ? 'Rola, np. Dyrektor Operacyjny' : 'Role, e.g. Operations Director'
-                    }
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                  <input
-                    aria-label={isPolish ? 'Obszary rozmowy' : 'Interview focus areas'}
-                    value={stakeholderFocus}
-                    onChange={(event) => setStakeholderFocus(event.target.value)}
-                    placeholder={
-                      isPolish ? 'Obszary oddzielone przecinkami' : 'Comma-separated focus areas'
-                    }
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                </div>
-              ) : null}
-              {interviewsProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-c-text">
-                      {isPolish ? 'Plan Interview' : 'Interview plan'}
-                    </p>
-                    <StatusChip
-                      label={interviewsProposal.status}
-                      tone={interviewsProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  {interviewsProposal.candidates.map((candidate) => (
-                    <div
-                      key={candidate.candidateId}
-                      className="rounded-md border border-c-border bg-c-card p-2.5"
-                    >
-                      <p className="text-xs font-semibold text-c-text">
-                        {candidate.stakeholderRole} · {candidate.assigneeUserId}
-                      </p>
-                      <p className="mt-1 text-[11px] text-c-text-secondary">
-                        {candidate.objective}
-                      </p>
-                      <p className="mt-1 text-[11px] text-c-text-muted">
-                        {isPolish ? 'Pytania' : 'Questions'}: {candidate.questions.length}
-                      </p>
-                    </div>
-                  ))}
-                  {interviewsProposal.artifactIds?.length ? (
-                    <p className="text-[11px] text-c-text-muted">
-                      {isPolish
-                        ? `Utworzone assignmenty: ${interviewsProposal.artifactIds.length}`
-                        : `Created assignments: ${interviewsProposal.artifactIds.length}`}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {interviewsProposal?.status === 'applied' && item.lifecycleStage === 'interviews' ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Zamknij Interview po review' : 'Close Interview after review'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
+                  <div className="rounded-lg border border-c-border bg-c-surface p-3 text-xs text-c-text-secondary">
                     {isPolish
-                      ? 'Wymagane są ukończone sesje, zaakceptowane assignmenty i insighty po governance review.'
-                      : 'Completed sessions, approved assignments and governance-reviewed insights are required.'}
-                  </p>
-                  <input
-                    aria-label={isPolish ? 'ID zaakceptowanych insightów' : 'Approved insight IDs'}
-                    value={acceptedInsightIds}
-                    onChange={(event) => setAcceptedInsightIds(event.target.value)}
-                    placeholder={
-                      isPolish
-                        ? 'ID insightów oddzielone przecinkami'
-                        : 'Comma-separated insight IDs'
-                    }
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'drd' && drdProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Przygotuj diagnozę DRD' : 'Prepare DRD diagnosis'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish
-                      ? 'Agent utworzy propozycję opartą na zaakceptowanych insightach Interview. Assessment powstanie dopiero po akceptacji.'
-                      : 'The Agent will prepare a proposal from accepted Interview Insights. The assessment is created only after approval.'}
-                  </p>
-                  <input
-                    aria-label={isPolish ? 'Nazwa assessmentu DRD' : 'DRD assessment name'}
-                    value={drdName}
-                    onChange={(event) => setDrdName(event.target.value)}
-                    placeholder={isPolish ? 'Nazwa diagnozy DRD' : 'DRD diagnosis name'}
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                </div>
-              ) : null}
-              {drdProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-c-text">
-                      {drdProposal.assessmentName}
-                    </p>
-                    <StatusChip
-                      label={drdProposal.status}
-                      tone={drdProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
+                      ? 'Nie można jeszcze rozpocząć całego planu. Część etapów wymaga konfiguracji technicznej albo przypisania człowiekowi.'
+                      : 'The complete plan cannot start yet. Some stages require technical configuration or assignment to a person.'}
                   </div>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish ? 'Źródłowe insighty Interview' : 'Source Interview Insights'}:{' '}
-                    {drdProposal.sourceInsightIds.length}
-                  </p>
-                  {drdProposal.assessmentId ? (
-                    <a
-                      href={`/assessment/drd/${encodeURIComponent(drdProposal.assessmentId)}`}
-                      className="inline-flex text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {isPolish ? 'Otwórz assessment DRD' : 'Open DRD assessment'}
-                    </a>
-                  ) : null}
                 </div>
-              ) : null}
-              {item.lifecycleStage === 'opportunity_synthesis' && synthesisProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish
-                      ? 'Agent połączy lineage Ideas, zaakceptowanych Interview Insights i immutable wyniku DRD. Candidate powstanie dopiero po akceptacji.'
-                      : 'The Agent will join Ideas, accepted Interview Insights and immutable DRD lineage. The Candidate is created only after approval.'}
-                  </p>
-                </div>
-              ) : null}
-              {synthesisProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-c-text">
-                      {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
-                    </p>
-                    <StatusChip
-                      label={synthesisProposal.status}
-                      tone={synthesisProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {synthesisProposal.synthesisSummary}
-                  </p>
-                  <p className="text-[11px] text-c-text-muted">
-                    Ideas: {synthesisProposal.sourceIdeaIds.length} · Interview Insights:{' '}
-                    {synthesisProposal.sourceInsightIds.length}
-                  </p>
-                  {synthesisProposal.candidateId ? (
-                    <p className="text-[11px] font-semibold text-c-text">
-                      Candidate: {synthesisProposal.candidateId}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'finance_kpi' && financeProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Business case i karta KPI' : 'Business case and KPI card'}
-                  </p>
+              </details>
+            </div>
+          );
+        }}
+        renderPreviewFooter={
+          fullView
+            ? () => {
+                if (!selectedRow) return null;
+                const cancelled = selectedRow.transformationCase.status === 'cancelled';
+                return (
                   <div className="grid grid-cols-2 gap-2">
-                    {(
-                      [
-                        ['capex', 'CAPEX'],
-                        ['opexAnnual', 'OPEX / rok'],
-                        ['benefitAnnual', 'Korzyść / rok'],
-                        ['horizonYears', 'Horyzont (lata)'],
-                        ['waccPct', 'WACC %'],
-                        ['baselineValue', 'KPI baseline'],
-                        ['targetValue', 'KPI target'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <input
-                        key={key}
-                        aria-label={label}
-                        value={financeInputs[key]}
-                        onChange={(event) =>
-                          setFinanceInputs((current) => ({ ...current, [key]: event.target.value }))
+                    <PreviewActionButton
+                      variant="neutral"
+                      icon={RefreshCw}
+                      label={isPolish ? 'Odśwież' : 'Refresh'}
+                      onClick={() => void loadCases()}
+                    />
+                    <PreviewActionButton
+                      variant="positive"
+                      icon={PlayCircle}
+                      label={isPolish ? 'Uruchom (zablokowane)' : 'Run (blocked)'}
+                      onClick={() => undefined}
+                      disabled
+                    />
+                    {selectedRow.transformationCase.status === 'plan_proposed' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          stageAction === 'approve-plan'
+                            ? isPolish
+                              ? 'Zatwierdzanie…'
+                              : 'Approving…'
+                            : isPolish
+                              ? 'Zatwierdź plan'
+                              : 'Approve plan'
                         }
-                        placeholder={label}
-                        className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                    ))}
-                    <input
-                      aria-label="KPI name"
-                      value={financeInputs.kpiName}
-                      onChange={(event) =>
-                        setFinanceInputs((current) => ({ ...current, kpiName: event.target.value }))
-                      }
-                      className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                    />
-                    <input
-                      aria-label="KPI unit"
-                      value={financeInputs.kpiUnit}
-                      onChange={(event) =>
-                        setFinanceInputs((current) => ({ ...current, kpiUnit: event.target.value }))
-                      }
-                      className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                    />
-                  </div>
-                </div>
-              ) : null}
-              {financeProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-c-text">
-                      Finance/KPI · {financeProposal.businessCase.verdict.toUpperCase()}
-                    </p>
-                    <StatusChip
-                      label={financeProposal.status}
-                      tone={financeProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {financeProposal.businessCase.summary}
-                  </p>
-                  <p className="text-[11px] text-c-text-muted">
-                    KPI: {financeProposal.kpi.name} · {financeProposal.kpi.baselineValue} →{' '}
-                    {financeProposal.kpi.targetValue} {financeProposal.kpi.unit}
-                  </p>
-                  {financeProposal.financialAnalysisId ? (
-                    <p className="text-[11px] font-semibold text-c-text">
-                      Analysis: {financeProposal.financialAnalysisId} · KPI: {financeProposal.kpiId}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'portfolio_decision' && portfolioProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Decyzja portfelowa GO/NO-GO' : 'Portfolio GO/NO-GO decision'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish
-                      ? 'Agent przygotuje pakiet z zatwierdzonej analizy, KPI i pełnego lineage. Sama decyzja powstanie po akceptacji.'
-                      : 'The Agent prepares a packet from approved Finance, KPI and full lineage. The decision is created only after approval.'}
-                  </p>
-                  <input
-                    aria-label={isPolish ? 'ID właściciela decyzji' : 'Decision owner ID'}
-                    value={decisionMakerId}
-                    onChange={(event) => setDecisionMakerId(event.target.value)}
-                    placeholder={
-                      isPolish ? 'ID sponsora / decision makera' : 'Sponsor / decision maker ID'
-                    }
-                    className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                  />
-                </div>
-              ) : null}
-              {portfolioProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-c-text">{portfolioProposal.title}</p>
-                    <StatusChip
-                      label={portfolioProposal.status}
-                      tone={portfolioProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {portfolioProposal.description}
-                  </p>
-                  <p className="text-[11px] text-c-text-muted">
-                    Decision maker: {portfolioProposal.decisionMakerId}
-                  </p>
-                  {portfolioProposal.decisionId ? (
-                    <a
-                      href={`/decisions/${encodeURIComponent(portfolioProposal.decisionId)}`}
-                      className="text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    >
-                      {isPolish ? 'Otwórz decyzję GO/NO-GO' : 'Open GO/NO-GO decision'}
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'mobilization' && mobilizationProposal === null ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Mobilizacja Initiative' : 'Initiative mobilization'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish
-                      ? 'Agent przygotuje WBS, zależności, kamienie milowe i obsadę. Rekordy powstaną dopiero po akceptacji.'
-                      : 'The Agent prepares WBS, dependencies, milestones and staffing. Records are created only after approval.'}
-                  </p>
-                  {(['ownerUserId', 'startDate', 'endDate'] as const).map((key) => (
-                    <input
-                      key={key}
-                      aria-label={key}
-                      type={key === 'ownerUserId' ? 'text' : 'date'}
-                      value={mobilizationInputs[key]}
-                      onChange={(event) =>
-                        setMobilizationInputs((current) => ({
-                          ...current,
-                          [key]: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                    />
-                  ))}
-                </div>
-              ) : null}
-              {mobilizationProposal ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-c-text">
-                      {isPolish ? 'Blueprint mobilizacji' : 'Mobilization blueprint'}
-                    </p>
-                    <StatusChip
-                      label={mobilizationProposal.status}
-                      tone={mobilizationProposal.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                  </div>
-                  <p className="text-[11px] text-c-text-secondary">
-                    WBS: {mobilizationProposal.wbs.length} · Milestones:{' '}
-                    {mobilizationProposal.milestones.length} · Dependencies:{' '}
-                    {mobilizationProposal.dependencies.length} · Resources:{' '}
-                    {mobilizationProposal.resources.length}
-                  </p>
-                  {mobilizationProposal.blueprintId ? (
-                    <p className="text-[11px] font-semibold text-c-text">
-                      Blueprint: {mobilizationProposal.blueprintId} · Tasks:{' '}
-                      {mobilizationProposal.taskIds?.length ?? 0}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'execution' ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-c-text">
-                      {isPolish ? 'Kontrola wykonania' : 'Execution checkpoint'}
-                    </p>
-                    {executionCheckpoint ? (
-                      <StatusChip
-                        label={executionCheckpoint.initiativeStatus}
-                        tone={
-                          executionCheckpoint.initiativeStatus === 'DONE' ? 'success' : 'warning'
-                        }
-                        size="sm"
+                        onClick={() => void handleApprovePlan()}
+                        disabled={Boolean(stageAction)}
                       />
                     ) : null}
-                  </div>
-                  {executionCheckpoint ? (
-                    <>
-                      <p className="text-[11px] text-c-text-secondary">
-                        Tasks: {executionCheckpoint.tasks.completed}/
-                        {executionCheckpoint.tasks.total}
-                        {' · '}Blocked: {executionCheckpoint.tasks.blocked}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        Milestones: {executionCheckpoint.milestones.completed}/
-                        {executionCheckpoint.milestones.total}
-                        {' · '}Delayed: {executionCheckpoint.milestones.delayed}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        KPI on target: {executionCheckpoint.kpis.onTarget}/
-                        {executionCheckpoint.kpis.total}
-                        {' · '}
-                        {executionCheckpoint.executionStarted
-                          ? isPolish
-                            ? 'Start wykonania przyjęty'
-                            : 'Execution start accepted'
-                          : isPolish
-                            ? 'Start wykonania oczekuje na przyjęcie'
-                            : 'Execution start awaits acceptance'}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-[11px] text-c-text-secondary">
-                      {isPolish
-                        ? 'Ustaw Initiative w kanonicznym workspace na EXECUTING, a po zakończeniu na DONE. Agent weryfikuje stan, nie omija workflow.'
-                        : 'Move the Initiative to EXECUTING, then DONE, in the canonical workspace. The Agent verifies state without bypassing the workflow.'}
-                    </p>
-                  )}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'delivery' ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Odbiór korzyści' : 'Benefits handoff'}
-                  </p>
-                  {benefitsCheckpoint ? (
-                    <>
-                      <p className="text-[11px] text-c-text-secondary">
-                        Benefits measured: {benefitsCheckpoint.benefits.measured}/
-                        {benefitsCheckpoint.benefits.total}
-                        {' · '}Owned: {benefitsCheckpoint.benefits.owned}/
-                        {benefitsCheckpoint.benefits.total}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        Achieved: {benefitsCheckpoint.benefits.achieved}
-                        {' · '}At risk: {benefitsCheckpoint.benefits.atRisk}
-                        {' · '}Finance actuals: {benefitsCheckpoint.financeActuals.verified}/
-                        {benefitsCheckpoint.financeActuals.total}
-                      </p>
-                      <select
-                        aria-label={
-                          isPolish ? 'Klasyfikacja efektu' : 'Effectiveness classification'
+                    {selectedRow.transformationCase.status === 'plan_approved' &&
+                    ideasProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          stageAction === 'propose-ideas'
+                            ? isPolish
+                              ? 'Przygotowywanie…'
+                              : 'Preparing…'
+                            : isPolish
+                              ? 'Przygotuj listę idei'
+                              : 'Prepare Ideas list'
                         }
-                        value={effectiveness}
-                        onChange={(event) =>
-                          setEffectiveness(
-                            event.target.value as 'confirmed' | 'partial' | 'not_achieved'
-                          )
-                        }
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      >
-                        <option value="confirmed">confirmed</option>
-                        <option value="partial">partial</option>
-                        <option value="not_achieved">not_achieved</option>
-                      </select>
-                    </>
-                  ) : (
-                    <p className="text-[11px] text-c-text-secondary">
-                      {isPolish
-                        ? 'Delivery nie jest dowodem wartości. Uzupełnij właścicieli, pomiary KPI i finansowe wartości rzeczywiste w Results.'
-                        : 'Delivery is not proof of value. Complete owners, KPI measurements and finance actuals in Results.'}
-                    </p>
-                  )}
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'benefits' ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Weryfikacja efektu' : 'Effectiveness verification'}
-                  </p>
-                  <p className="text-[11px] text-c-text-secondary">
-                    {isPolish
-                      ? 'Każda korzyść musi mieć status achieved/exceeded oraz zweryfikowany pomiar. Dopiero wtedy rozpoczyna się niezależne okno trwałości.'
-                      : 'Every benefit must be achieved/exceeded with a verified measurement before the independent sustainability window begins.'}
-                  </p>
-                </div>
-              ) : null}
-              {item.lifecycleStage === 'sustainability' ? (
-                <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                  <p className="text-xs font-semibold text-c-text">
-                    {isPolish ? 'Przegląd trwałości' : 'Sustainability review'}
-                  </p>
-                  {sustainabilityCheckpoint ? (
-                    <p className="text-[11px] text-c-text-secondary">
-                      Two verified measurements:{' '}
-                      {sustainabilityCheckpoint.benefits.withTwoVerifiedMeasurements}/
-                      {sustainabilityCheckpoint.benefits.total}
-                      {' · '}Sustained ≥30 days:{' '}
-                      {sustainabilityCheckpoint.benefits.sustainedAcrossWindow}/
-                      {sustainabilityCheckpoint.benefits.total}
-                      {' · '}Minimum window:{' '}
-                      {sustainabilityCheckpoint.benefits.minimumWindowDays ?? '—'} days
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              <div className="space-y-2">
-                {(editableSteps ?? steps).map((step, stepIndex, renderedSteps) => (
-                  <div
-                    key={step.stepId}
-                    className="rounded-lg border border-c-border bg-c-card p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold text-c-text">
-                          {step.stepIndex + 1}. {step.businessPurpose}
-                        </p>
-                        <p className="mt-1 text-[11px] text-c-text-secondary">
-                          {step.moduleTarget}
-                        </p>
-                      </div>
-                      <StatusChip
-                        label={step.capabilityStatus}
-                        tone={capabilityTone(step.capabilityStatus)}
-                        size="sm"
+                        onClick={() => void handleProposeIdeas()}
+                        disabled={Boolean(stageAction)}
                       />
-                    </div>
-                    {step.blockerReason ? (
-                      <p className="mt-2 text-[11px] text-c-text-muted">{step.blockerReason}</p>
                     ) : null}
-                    {editableSteps ? (
-                      <div className="mt-2 space-y-2 border-t border-c-border pt-2">
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Cel biznesowy' : 'Business purpose'}
-                            <textarea
-                              aria-label={`${isPolish ? 'Cel biznesowy' : 'Business purpose'} ${step.lifecycleStage}`}
-                              value={step.businessPurpose}
-                              onChange={(event) =>
-                                updatePlanStep(stepIndex, 'businessPurpose', event.target.value)
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Moduł docelowy' : 'Target module'}
-                            <input
-                              aria-label={`${isPolish ? 'Moduł docelowy' : 'Target module'} ${step.lifecycleStage}`}
-                              value={step.moduleTarget}
-                              onChange={(event) =>
-                                updatePlanStep(stepIndex, 'moduleTarget', event.target.value)
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Wejścia (po przecinku)' : 'Inputs (comma-separated)'}
-                            <input
-                              aria-label={`${isPolish ? 'Wejścia' : 'Inputs'} ${step.lifecycleStage}`}
-                              value={step.inputs.join(', ')}
-                              onChange={(event) =>
-                                updatePlanStep(
-                                  stepIndex,
-                                  'inputs',
-                                  event.target.value
-                                    .split(',')
-                                    .map((value) => value.trim())
-                                    .filter(Boolean)
-                                )
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Wyjścia (po przecinku)' : 'Outputs (comma-separated)'}
-                            <input
-                              aria-label={`${isPolish ? 'Wyjścia' : 'Outputs'} ${step.lifecycleStage}`}
-                              value={step.outputs.join(', ')}
-                              onChange={(event) =>
-                                updatePlanStep(
-                                  stepIndex,
-                                  'outputs',
-                                  event.target.value
-                                    .split(',')
-                                    .map((value) => value.trim())
-                                    .filter(Boolean)
-                                )
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Właściciel' : 'Owner'}
-                            <input
-                              aria-label={`${isPolish ? 'Właściciel' : 'Owner'} ${step.lifecycleStage}`}
-                              value={step.ownerRole}
-                              onChange={(event) =>
-                                updatePlanStep(stepIndex, 'ownerRole', event.target.value)
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Szacowany wysiłek' : 'Estimated effort'}
-                            <input
-                              aria-label={`${isPolish ? 'Szacowany wysiłek' : 'Estimated effort'} ${step.lifecycleStage}`}
-                              value={step.estimatedEffort}
-                              onChange={(event) =>
-                                updatePlanStep(stepIndex, 'estimatedEffort', event.target.value)
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            />
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Klasa akceptacji' : 'Approval class'}
-                            <select
-                              aria-label={`${isPolish ? 'Klasa akceptacji' : 'Approval class'} ${step.lifecycleStage}`}
-                              value={step.approvalClass}
-                              onChange={(event) =>
-                                updatePlanStep(
-                                  stepIndex,
-                                  'approvalClass',
-                                  event.target.value as TransformationPlanStepDto['approvalClass']
-                                )
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            >
-                              <option value="none">none</option>
-                              <option value="policy_approvable">policy_approvable</option>
-                              <option value="requires_human_approval">
-                                requires_human_approval
-                              </option>
-                            </select>
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Klasa ryzyka' : 'Risk class'}
-                            <select
-                              aria-label={`${isPolish ? 'Klasa ryzyka' : 'Risk class'} ${step.lifecycleStage}`}
-                              value={step.riskClass}
-                              onChange={(event) =>
-                                updatePlanStep(
-                                  stepIndex,
-                                  'riskClass',
-                                  event.target.value as TransformationPlanStepDto['riskClass']
-                                )
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            >
-                              <option value="read_only">read_only</option>
-                              <option value="safe_additive">safe_additive</option>
-                              <option value="safe_update">safe_update</option>
-                              <option value="sensitive_update">sensitive_update</option>
-                              <option value="governance_transition">governance_transition</option>
-                            </select>
-                          </label>
-                          <label className="text-[11px] text-c-text-secondary">
-                            {isPolish ? 'Tryb wykonania' : 'Execution mode'}
-                            <select
-                              aria-label={`${isPolish ? 'Tryb wykonania' : 'Execution mode'} ${step.lifecycleStage}`}
-                              value={step.executionMode}
-                              onChange={(event) =>
-                                updatePlanStep(
-                                  stepIndex,
-                                  'executionMode',
-                                  event.target.value as TransformationPlanStepDto['executionMode']
-                                )
-                              }
-                              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                            >
-                              <option value="foreground">foreground</option>
-                              <option value="background">background</option>
-                              <option value="scheduled">scheduled</option>
-                              <option value="human_activity">human_activity</option>
-                            </select>
-                          </label>
-                        </div>
-                        <p className="text-[11px] text-c-text-muted">
-                          {step.lifecycleStage} · {step.capabilityStatus} · {step.blockerReason}
-                        </p>
-                        <label className="block text-[11px] text-c-text-secondary">
-                          {isPolish
-                            ? 'Zależności (etapy, po przecinku)'
-                            : 'Dependencies (stages, comma-separated)'}
-                          <input
-                            aria-label={`${isPolish ? 'Zależności' : 'Dependencies'} ${step.lifecycleStage}`}
-                            value={step.dependsOn.join(', ')}
-                            onChange={(event) =>
-                              updatePlanDependencies(stepIndex, event.target.value)
-                            }
-                            className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                    {ideasProposal &&
+                    ['pending_review', 'approved'].includes(ideasProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            ideasProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie Ideas'
+                                : 'Resume Ideas materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz Ideas'
+                                : 'Approve and create Ideas'
+                          }
+                          onClick={() => void handleReviewIdeas('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {ideasProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
+                            onClick={() => void handleReviewIdeas('reject')}
+                            disabled={Boolean(stageAction)}
                           />
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            aria-label={`${isPolish ? 'Przesuń w górę' : 'Move up'} ${step.lifecycleStage}`}
-                            disabled={stepIndex === 0}
-                            onClick={() => movePlanStep(stepIndex, -1)}
-                            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`${isPolish ? 'Przesuń w dół' : 'Move down'} ${step.lifecycleStage}`}
-                            disabled={stepIndex === renderedSteps.length - 1}
-                            onClick={() => movePlanStep(stepIndex, 1)}
-                            className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
-                          >
-                            ↓
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`${isPolish ? 'Usuń krok' : 'Remove step'} ${step.lifecycleStage}`}
-                            onClick={() => removePlanStep(stepIndex)}
-                            className="rounded border border-c-danger/40 px-2 py-1 text-xs text-c-danger"
-                          >
-                            {isPolish ? 'Usuń' : 'Remove'}
-                          </button>
-                        </div>
-                      </div>
+                        )}
+                      </>
+                    ) : null}
+                    {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
+                        onClick={() => void handleProposeInterviews()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          !stakeholderUserId.trim() ||
+                          !stakeholderRole.trim() ||
+                          !stakeholderFocus.trim()
+                        }
+                      />
+                    ) : null}
+                    {interviewsProposal &&
+                    ['pending_review', 'approved'].includes(interviewsProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            interviewsProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów przypisanie Interview'
+                                : 'Resume Interview assignment'
+                              : isPolish
+                                ? 'Zatwierdź i przypisz Interview'
+                                : 'Approve and assign Interviews'
+                          }
+                          onClick={() => void handleReviewInterviews('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {interviewsProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
+                            onClick={() => void handleReviewInterviews('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {interviewsProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'interviews' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zaakceptuj wyniki i otwórz DRD'
+                            : 'Accept results and open DRD'
+                        }
+                        onClick={() => void handleAcceptInterviewResults()}
+                        disabled={Boolean(stageAction) || !acceptedInsightIds.trim()}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'drd' &&
+                    drdProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj propozycję DRD' : 'Prepare DRD proposal'}
+                        onClick={() => void handleProposeDrd()}
+                        disabled={Boolean(stageAction) || !drdName.trim()}
+                      />
+                    ) : null}
+                    {drdProposal && ['pending_review', 'approved'].includes(drdProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            drdProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie DRD'
+                                : 'Resume DRD materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz DRD'
+                                : 'Approve and create DRD'
+                          }
+                          onClick={() => void handleReviewDrd('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {drdProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
+                            onClick={() => void handleReviewDrd('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {drdProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'drd' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij wynik DRD' : 'Accept DRD result'}
+                        onClick={() => void handleAcceptDrdResults()}
+                        disabled={Boolean(stageAction) || !drdProposal.assessmentId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'opportunity_synthesis' &&
+                    synthesisProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Przygotuj syntezę szans' : 'Prepare opportunity synthesis'
+                        }
+                        onClick={() => void handleProposeSynthesis()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {synthesisProposal &&
+                    ['pending_review', 'approved'].includes(synthesisProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            synthesisProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie Candidate'
+                                : 'Resume Candidate materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz Candidate'
+                                : 'Approve and create Candidate'
+                          }
+                          onClick={() => void handleReviewSynthesis('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {synthesisProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
+                            onClick={() => void handleReviewSynthesis('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {synthesisProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'initiative_candidates' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj zaakceptowaną Initiative'
+                            : 'Verify accepted Initiative'
+                        }
+                        onClick={() => void handleAcceptInitiativeResults()}
+                        disabled={Boolean(stageAction) || !synthesisProposal.candidateId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'finance_kpi' &&
+                    financeProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Policz Finance i KPI' : 'Calculate Finance and KPI'}
+                        onClick={() => void handleProposeFinance()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {financeProposal &&
+                    ['pending_review', 'approved'].includes(financeProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            financeProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów Finance i KPI'
+                                : 'Resume Finance and KPI'
+                              : isPolish
+                                ? 'Zatwierdź Finance i KPI'
+                                : 'Approve Finance and KPI'
+                          }
+                          onClick={() => void handleReviewFinance('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {financeProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
+                            onClick={() => void handleReviewFinance('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {financeProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'finance_kpi' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Zweryfikuj zatwierdzoną analizę' : 'Verify approved analysis'
+                        }
+                        onClick={() => void handleAcceptFinance()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          !financeProposal.financialAnalysisId ||
+                          !financeProposal.kpiId
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' &&
+                    portfolioProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Przygotuj decyzję GO/NO-GO' : 'Prepare GO/NO-GO decision'
+                        }
+                        onClick={() => void handleProposePortfolio()}
+                        disabled={Boolean(stageAction) || !decisionMakerId.trim()}
+                      />
+                    ) : null}
+                    {portfolioProposal &&
+                    ['pending_review', 'approved'].includes(portfolioProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            portfolioProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie decyzji'
+                                : 'Resume decision materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz decyzję'
+                                : 'Approve and create decision'
+                          }
+                          onClick={() => void handleReviewPortfolio('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {portfolioProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
+                            onClick={() => void handleReviewPortfolio('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {portfolioProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj GO i APPROVED Initiative'
+                            : 'Verify GO and APPROVED Initiative'
+                        }
+                        onClick={() => void handleAcceptPortfolio()}
+                        disabled={Boolean(stageAction) || !portfolioProposal.decisionId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'mobilization' &&
+                    mobilizationProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj mobilizację' : 'Prepare mobilization'}
+                        onClick={() => void handleProposeMobilization()}
+                        disabled={Boolean(stageAction) || !mobilizationInputs.ownerUserId.trim()}
+                      />
+                    ) : null}
+                    {mobilizationProposal &&
+                    ['pending_review', 'approved'].includes(mobilizationProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            mobilizationProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie planu wykonania'
+                                : 'Resume execution-plan materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz plan wykonania'
+                                : 'Approve and create execution plan'
+                          }
+                          onClick={() => void handleReviewMobilization('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {mobilizationProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
+                            onClick={() => void handleReviewMobilization('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {mobilizationProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'mobilization' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj SCHEDULED Initiative'
+                            : 'Verify SCHEDULED Initiative'
+                        }
+                        onClick={() => void handleAcceptMobilization()}
+                        disabled={Boolean(stageAction) || !mobilizationProposal.blueprintId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież wykonanie' : 'Refresh execution'}
+                        onClick={() => void refreshExecution()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' &&
+                    executionCheckpoint &&
+                    !executionCheckpoint.executionStarted ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij start wykonania' : 'Accept execution start'}
+                        onClick={() => void handleAcceptExecutionStart()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          executionCheckpoint.initiativeStatus !== 'EXECUTING'
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'final_outputs' ? (
+                      <>
+                        <PreviewActionButton
+                          variant="neutral"
+                          label={
+                            stageAction === 'prepare-final-output-publication'
+                              ? isPolish
+                                ? 'Przygotowywanie zgody…'
+                                : 'Preparing approval…'
+                              : finalOutputPublication
+                                ? isPolish
+                                  ? 'Odśwież zgodę publikacji'
+                                  : 'Refresh publication approval'
+                                : isPolish
+                                  ? 'Przygotuj publikację'
+                                  : 'Prepare publication'
+                          }
+                          onClick={() => void handlePrepareFinalOutputPublication()}
+                          disabled={Boolean(stageAction)}
+                          ariaBusy={stageAction === 'prepare-final-output-publication'}
+                        />
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            finalOutputRun
+                              ? isPolish
+                                ? 'Odtwórz końcowy Word + PowerPoint'
+                                : 'Regenerate final Word + PowerPoint'
+                              : isPolish
+                                ? 'Wygeneruj końcowy Word + PowerPoint'
+                                : 'Generate final Word + PowerPoint'
+                          }
+                          onClick={() => void handleGenerateFinalOutputs()}
+                          disabled={Boolean(stageAction) || !finalPublicationExecutable}
+                          ariaBusy={stageAction === 'generate-final-outputs'}
+                          ariaDescribedBy={`final-publication-state-${selectedRow.id}`}
+                        />
+                      </>
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'delivery' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież korzyści' : 'Refresh benefits'}
+                        onClick={() => void refreshBenefits()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'delivery' &&
+                    benefitsCheckpoint ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij odbiór korzyści' : 'Accept benefits handoff'}
+                        onClick={() => void handleAcceptDeliveryHandoff()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          benefitsCheckpoint.benefits.total < 1 ||
+                          benefitsCheckpoint.benefits.measured !==
+                            benefitsCheckpoint.benefits.total ||
+                          benefitsCheckpoint.benefits.owned !== benefitsCheckpoint.benefits.total ||
+                          benefitsCheckpoint.financeActuals.verified !==
+                            benefitsCheckpoint.financeActuals.total
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'benefits' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Zweryfikuj osiągnięte korzyści' : 'Verify achieved benefits'
+                        }
+                        onClick={() => void handleAcceptBenefitsReview()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'sustainability' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież trwałość' : 'Refresh sustainability'}
+                        onClick={() => void refreshSustainability()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'sustainability' &&
+                    sustainabilityCheckpoint ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={isPolish ? 'Potwierdź trwały efekt' : 'Confirm sustained outcome'}
+                          onClick={() => void handleSustainabilityReview('sustained')}
+                          disabled={
+                            Boolean(stageAction) ||
+                            sustainabilityCheckpoint.benefits.total < 1 ||
+                            sustainabilityCheckpoint.benefits.sustainedAcrossWindow !==
+                              sustainabilityCheckpoint.benefits.total
+                          }
+                        />
+                        <PreviewActionButton
+                          variant="warning"
+                          label={isPolish ? 'Uruchom korektę' : 'Start corrective continuation'}
+                          onClick={() => void handleSustainabilityReview('corrective_continuation')}
+                          disabled={Boolean(stageAction)}
+                        />
+                      </>
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' &&
+                    executionCheckpoint?.executionStarted ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij wynik wykonania' : 'Accept execution results'}
+                        onClick={() => void handleAcceptExecutionResults()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          executionCheckpoint.initiativeStatus !== 'DONE' ||
+                          executionCheckpoint.tasks.completed !== executionCheckpoint.tasks.total ||
+                          executionCheckpoint.milestones.completed !==
+                            executionCheckpoint.milestones.total
+                        }
+                      />
+                    ) : null}
+                    {!cancelled ? (
+                      <PreviewActionButton
+                        variant="destructive"
+                        icon={Ban}
+                        label={
+                          cancelling
+                            ? isPolish
+                              ? 'Anulowanie…'
+                              : 'Cancelling…'
+                            : isPolish
+                              ? 'Anuluj plan'
+                              : 'Cancel plan'
+                        }
+                        onClick={() => void handleCancel()}
+                        disabled={cancelling}
+                      />
                     ) : null}
                   </div>
-                ))}
-              </div>
-              {editableSteps ? (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={addPlanStep}
-                    disabled={Boolean(stageAction)}
-                    className="w-full rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text disabled:opacity-50"
-                  >
-                    {isPolish ? 'Dodaj krok' : 'Add step'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void savePlanWorkshop()}
-                    disabled={Boolean(stageAction)}
-                    className="w-full rounded-lg border border-c-border-strong bg-c-surface-raised px-3 py-2 text-xs font-semibold text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
-                  >
-                    {stageAction === 'save-plan-workshop'
-                      ? isPolish
-                        ? 'Zapisywanie nowej wersji…'
-                        : 'Saving new version…'
-                      : isPolish
-                        ? 'Zapisz nową wersję planu'
-                        : 'Save new plan version'}
-                  </button>
-                </div>
-              ) : null}
-              <div className="rounded-lg border border-c-border bg-c-surface p-3 text-xs text-c-text-secondary">
-                {isPolish
-                  ? 'Uruchomienie całego planu jest zablokowane, ponieważ wymagane adaptery downstream nie mają statusu REAL.'
-                  : 'Running the full plan is blocked because required downstream adapters are not REAL.'}
-              </div>
-            </div>
-          );
-        }}
-        renderPreviewFooter={() => {
-          if (!selectedRow) return null;
-          const cancelled = selectedRow.transformationCase.status === 'cancelled';
-          return (
-            <div className="grid grid-cols-2 gap-2">
-              <PreviewActionButton
-                variant="neutral"
-                icon={RefreshCw}
-                label={isPolish ? 'Odśwież' : 'Refresh'}
-                onClick={() => void loadCases()}
-              />
-              <PreviewActionButton
-                variant="positive"
-                icon={PlayCircle}
-                label={isPolish ? 'Uruchom (zablokowane)' : 'Run (blocked)'}
-                onClick={() => undefined}
-                disabled
-              />
-              {selectedRow.transformationCase.status === 'plan_proposed' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    stageAction === 'approve-plan'
-                      ? isPolish
-                        ? 'Zatwierdzanie…'
-                        : 'Approving…'
-                      : isPolish
-                        ? 'Zatwierdź plan'
-                        : 'Approve plan'
-                  }
-                  onClick={() => void handleApprovePlan()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.status === 'plan_approved' &&
-              ideasProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    stageAction === 'propose-ideas'
-                      ? isPolish
-                        ? 'Przygotowywanie…'
-                        : 'Preparing…'
-                      : isPolish
-                        ? 'Przygotuj listę idei'
-                        : 'Prepare Ideas list'
-                  }
-                  onClick={() => void handleProposeIdeas()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {ideasProposal && ['pending_review', 'approved'].includes(ideasProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      ideasProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie Ideas'
-                          : 'Resume Ideas materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz Ideas'
-                          : 'Approve and create Ideas'
-                    }
-                    onClick={() => void handleReviewIdeas('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {ideasProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
-                      onClick={() => void handleReviewIdeas('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
-                  onClick={() => void handleProposeInterviews()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    !stakeholderUserId.trim() ||
-                    !stakeholderRole.trim() ||
-                    !stakeholderFocus.trim()
-                  }
-                />
-              ) : null}
-              {interviewsProposal &&
-              ['pending_review', 'approved'].includes(interviewsProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      interviewsProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów przypisanie Interview'
-                          : 'Resume Interview assignment'
-                        : isPolish
-                          ? 'Zatwierdź i przypisz Interview'
-                          : 'Approve and assign Interviews'
-                    }
-                    onClick={() => void handleReviewInterviews('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {interviewsProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
-                      onClick={() => void handleReviewInterviews('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {interviewsProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'interviews' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zaakceptuj wyniki i otwórz DRD' : 'Accept results and open DRD'
-                  }
-                  onClick={() => void handleAcceptInterviewResults()}
-                  disabled={Boolean(stageAction) || !acceptedInsightIds.trim()}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'drd' && drdProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj propozycję DRD' : 'Prepare DRD proposal'}
-                  onClick={() => void handleProposeDrd()}
-                  disabled={Boolean(stageAction) || !drdName.trim()}
-                />
-              ) : null}
-              {drdProposal && ['pending_review', 'approved'].includes(drdProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      drdProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie DRD'
-                          : 'Resume DRD materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz DRD'
-                          : 'Approve and create DRD'
-                    }
-                    onClick={() => void handleReviewDrd('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {drdProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
-                      onClick={() => void handleReviewDrd('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {drdProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'drd' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij wynik DRD' : 'Accept DRD result'}
-                  onClick={() => void handleAcceptDrdResults()}
-                  disabled={Boolean(stageAction) || !drdProposal.assessmentId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'opportunity_synthesis' &&
-              synthesisProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj syntezę szans' : 'Prepare opportunity synthesis'}
-                  onClick={() => void handleProposeSynthesis()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {synthesisProposal &&
-              ['pending_review', 'approved'].includes(synthesisProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      synthesisProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie Candidate'
-                          : 'Resume Candidate materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz Candidate'
-                          : 'Approve and create Candidate'
-                    }
-                    onClick={() => void handleReviewSynthesis('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {synthesisProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
-                      onClick={() => void handleReviewSynthesis('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {synthesisProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'initiative_candidates' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zweryfikuj zaakceptowaną Initiative' : 'Verify accepted Initiative'
-                  }
-                  onClick={() => void handleAcceptInitiativeResults()}
-                  disabled={Boolean(stageAction) || !synthesisProposal.candidateId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'finance_kpi' &&
-              financeProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Policz Finance i KPI' : 'Calculate Finance and KPI'}
-                  onClick={() => void handleProposeFinance()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {financeProposal &&
-              ['pending_review', 'approved'].includes(financeProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      financeProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów Finance i KPI'
-                          : 'Resume Finance and KPI'
-                        : isPolish
-                          ? 'Zatwierdź Finance i KPI'
-                          : 'Approve Finance and KPI'
-                    }
-                    onClick={() => void handleReviewFinance('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {financeProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
-                      onClick={() => void handleReviewFinance('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {financeProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'finance_kpi' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Zweryfikuj zatwierdzoną analizę' : 'Verify approved analysis'}
-                  onClick={() => void handleAcceptFinance()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    !financeProposal.financialAnalysisId ||
-                    !financeProposal.kpiId
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' &&
-              portfolioProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj decyzję GO/NO-GO' : 'Prepare GO/NO-GO decision'}
-                  onClick={() => void handleProposePortfolio()}
-                  disabled={Boolean(stageAction) || !decisionMakerId.trim()}
-                />
-              ) : null}
-              {portfolioProposal &&
-              ['pending_review', 'approved'].includes(portfolioProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      portfolioProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie decyzji'
-                          : 'Resume decision materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz decyzję'
-                          : 'Approve and create decision'
-                    }
-                    onClick={() => void handleReviewPortfolio('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {portfolioProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
-                      onClick={() => void handleReviewPortfolio('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {portfolioProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish
-                      ? 'Zweryfikuj GO i APPROVED Initiative'
-                      : 'Verify GO and APPROVED Initiative'
-                  }
-                  onClick={() => void handleAcceptPortfolio()}
-                  disabled={Boolean(stageAction) || !portfolioProposal.decisionId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'mobilization' &&
-              mobilizationProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj mobilizację' : 'Prepare mobilization'}
-                  onClick={() => void handleProposeMobilization()}
-                  disabled={Boolean(stageAction) || !mobilizationInputs.ownerUserId.trim()}
-                />
-              ) : null}
-              {mobilizationProposal &&
-              ['pending_review', 'approved'].includes(mobilizationProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      mobilizationProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie planu wykonania'
-                          : 'Resume execution-plan materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz plan wykonania'
-                          : 'Approve and create execution plan'
-                    }
-                    onClick={() => void handleReviewMobilization('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {mobilizationProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
-                      onClick={() => void handleReviewMobilization('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {mobilizationProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'mobilization' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zweryfikuj SCHEDULED Initiative' : 'Verify SCHEDULED Initiative'
-                  }
-                  onClick={() => void handleAcceptMobilization()}
-                  disabled={Boolean(stageAction) || !mobilizationProposal.blueprintId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież wykonanie' : 'Refresh execution'}
-                  onClick={() => void refreshExecution()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' &&
-              executionCheckpoint &&
-              !executionCheckpoint.executionStarted ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij start wykonania' : 'Accept execution start'}
-                  onClick={() => void handleAcceptExecutionStart()}
-                  disabled={
-                    Boolean(stageAction) || executionCheckpoint.initiativeStatus !== 'EXECUTING'
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'final_outputs' ? (
-                <>
-                  <PreviewActionButton
-                    variant="neutral"
-                    label={
-                      stageAction === 'prepare-final-output-publication'
-                        ? isPolish
-                          ? 'Przygotowywanie zgody…'
-                          : 'Preparing approval…'
-                        : finalOutputPublication
-                          ? isPolish
-                            ? 'Odśwież zgodę publikacji'
-                            : 'Refresh publication approval'
-                          : isPolish
-                            ? 'Przygotuj publikację'
-                            : 'Prepare publication'
-                    }
-                    onClick={() => void handlePrepareFinalOutputPublication()}
-                    disabled={Boolean(stageAction)}
-                    ariaBusy={stageAction === 'prepare-final-output-publication'}
-                  />
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      finalOutputRun
-                        ? isPolish
-                          ? 'Odtwórz końcowy Word + PowerPoint'
-                          : 'Regenerate final Word + PowerPoint'
-                        : isPolish
-                          ? 'Wygeneruj końcowy Word + PowerPoint'
-                          : 'Generate final Word + PowerPoint'
-                    }
-                    onClick={() => void handleGenerateFinalOutputs()}
-                    disabled={Boolean(stageAction) || !finalPublicationExecutable}
-                    ariaBusy={stageAction === 'generate-final-outputs'}
-                    ariaDescribedBy={`final-publication-state-${selectedRow.id}`}
-                  />
-                </>
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'delivery' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież korzyści' : 'Refresh benefits'}
-                  onClick={() => void refreshBenefits()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'delivery' &&
-              benefitsCheckpoint ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij odbiór korzyści' : 'Accept benefits handoff'}
-                  onClick={() => void handleAcceptDeliveryHandoff()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    benefitsCheckpoint.benefits.total < 1 ||
-                    benefitsCheckpoint.benefits.measured !== benefitsCheckpoint.benefits.total ||
-                    benefitsCheckpoint.benefits.owned !== benefitsCheckpoint.benefits.total ||
-                    benefitsCheckpoint.financeActuals.verified !==
-                      benefitsCheckpoint.financeActuals.total
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'benefits' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Zweryfikuj osiągnięte korzyści' : 'Verify achieved benefits'}
-                  onClick={() => void handleAcceptBenefitsReview()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'sustainability' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież trwałość' : 'Refresh sustainability'}
-                  onClick={() => void refreshSustainability()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'sustainability' &&
-              sustainabilityCheckpoint ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={isPolish ? 'Potwierdź trwały efekt' : 'Confirm sustained outcome'}
-                    onClick={() => void handleSustainabilityReview('sustained')}
-                    disabled={
-                      Boolean(stageAction) ||
-                      sustainabilityCheckpoint.benefits.total < 1 ||
-                      sustainabilityCheckpoint.benefits.sustainedAcrossWindow !==
-                        sustainabilityCheckpoint.benefits.total
-                    }
-                  />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Uruchom korektę' : 'Start corrective continuation'}
-                    onClick={() => void handleSustainabilityReview('corrective_continuation')}
-                    disabled={Boolean(stageAction)}
-                  />
-                </>
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' &&
-              executionCheckpoint?.executionStarted ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij wynik wykonania' : 'Accept execution results'}
-                  onClick={() => void handleAcceptExecutionResults()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    executionCheckpoint.initiativeStatus !== 'DONE' ||
-                    executionCheckpoint.tasks.completed !== executionCheckpoint.tasks.total ||
-                    executionCheckpoint.milestones.completed !==
-                      executionCheckpoint.milestones.total
-                  }
-                />
-              ) : null}
-              {!cancelled ? (
-                <PreviewActionButton
-                  variant="destructive"
-                  icon={Ban}
-                  label={
-                    cancelling
-                      ? isPolish
-                        ? 'Anulowanie…'
-                        : 'Cancelling…'
-                      : isPolish
-                        ? 'Anuluj plan'
-                        : 'Cancel plan'
-                  }
-                  onClick={() => void handleCancel()}
-                  disabled={cancelling}
-                />
-              ) : null}
-            </div>
-          );
-        }}
+                );
+              }
+            : undefined
+        }
       >
         <div className="p-4 pt-3">
           <StandardTable

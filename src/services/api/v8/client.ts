@@ -16,6 +16,11 @@ export async function v8Get<T>(path: string, params?: Record<string, string>): P
   const res = await fetchWithRetry(url.toString(), {
     method: 'GET',
     headers: getHeaders(),
+    // V8 registries are live operational state. Browser/proxy reuse of an
+    // earlier empty GET made freshly seeded Cases and Finance rows remain
+    // invisible until the cache expired, even though the database and the
+    // domain service already returned them. Always revalidate these reads.
+    cache: 'no-store',
   });
   const json = await handleResponse<{ data: T }>(res, `V8 GET ${path}`);
   return json.data;

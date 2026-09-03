@@ -687,6 +687,11 @@ export const ResultsRoiHub: React.FC = () => {
                 onClose: () => setSelectedCaseId(null),
                 calculationRun,
                 resolveMemberName,
+                onOpenWorkspace: (row) =>
+                  navigate({
+                    pathname: ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', row.caseId),
+                    search: window.location.search,
+                  }),
               })
             : null
         }
