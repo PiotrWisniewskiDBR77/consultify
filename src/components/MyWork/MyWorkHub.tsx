@@ -2831,112 +2831,131 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </>
             )}
 
-            {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
+            {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox)
+                ★ axe `aria-required-children` (odbior G06, 07_MY_WORK_AGENT):
+                `role="tablist"` moze WLASNOSCIOWO zawierac WYLACZNIE `role="tab"`.
+                Dotad tablist opakowywal cale pastylki, a w kazdej pastylce obok
+                zakladki siedzi przycisk „zamknij karte" (`button[aria-label]`) —
+                posredni `<div class="group">` bez roli nie odgradza go od tablist,
+                wiec axe widzial niedozwolone dziecko (zmierzone: mywork-idea-topbar
+                light+dark, critical). Przeniesienie przycisku „X" pod zakladke
+                dalo by `nested-interactive` (zamiana jednego naruszenia na drugie),
+                a `role="presentation"` na fokusowalnym przycisku jest rozwiazywane
+                przez ARIA z powrotem do `button`.
+                Naprawa zgodna z ARIA 1.2: tablist NIE zawiera pastylek w DOM —
+                przejmuje na wlasnosc same zakladki przez `aria-owns` (mechanizm
+                wprost przewidziany dla przypadku „wlasciciel i dziecko rozdzielone
+                w DOM"). Czytnik ekranu dalej slyszy pelna liste zakladek, a przycisk
+                zamkniecia zostaje normalnym, fokusowalnym przyciskiem. */}
             <div
               role="tablist"
               aria-label={t('myWork.openDocuments', 'Open documents')}
+              aria-owns={
+                visibleHubDocs.length > 0
+                  ? visibleHubDocs.map((doc) => `my-work-document-tab-${doc.id}`).join(' ')
+                  : undefined
+              }
               className="contents"
-            >
-              {visibleHubDocs.map((doc, docIndex) => {
-                const isActive = doc.id === activeDocumentId;
-                const ideaTool =
-                  doc.type === 'idea'
-                    ? ideaWorkspaceStateById[doc.id]?.activeTool ||
-                      normalizePreferredSystem(doc.data?.initialTool) ||
-                      'mindmap'
-                    : null;
-                const ideaVisual = ideaTool ? IDEA_TOOL_TAB_VISUALS[ideaTool] : null;
-                const leftBorderColor = ideaVisual?.border || TYPE_COLORS[doc.type];
-                const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
-                const IdeaToolIcon = ideaVisual?.icon;
-                const renderDocumentActivator = (renameControls?: {
-                  ref: React.RefObject<HTMLButtonElement | null>;
-                  onDoubleClick: (event: React.MouseEvent) => void;
-                  onKeyDown: (event: React.KeyboardEvent) => void;
-                }) => (
+            />
+            {visibleHubDocs.map((doc, docIndex) => {
+              const isActive = doc.id === activeDocumentId;
+              const ideaTool =
+                doc.type === 'idea'
+                  ? ideaWorkspaceStateById[doc.id]?.activeTool ||
+                    normalizePreferredSystem(doc.data?.initialTool) ||
+                    'mindmap'
+                  : null;
+              const ideaVisual = ideaTool ? IDEA_TOOL_TAB_VISUALS[ideaTool] : null;
+              const leftBorderColor = ideaVisual?.border || TYPE_COLORS[doc.type];
+              const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
+              const IdeaToolIcon = ideaVisual?.icon;
+              const renderDocumentActivator = (renameControls?: {
+                ref: React.RefObject<HTMLButtonElement | null>;
+                onDoubleClick: (event: React.MouseEvent) => void;
+                onKeyDown: (event: React.KeyboardEvent) => void;
+              }) => (
+                <button
+                  ref={renameControls?.ref}
+                  type="button"
+                  role="tab"
+                  id={`my-work-document-tab-${doc.id}`}
+                  aria-controls={`my-work-document-panel-${doc.id}`}
+                  aria-selected={isActive}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveDocumentId(doc.id)}
+                  onDoubleClick={renameControls?.onDoubleClick}
+                  onKeyDown={(event) => {
+                    renameControls?.onKeyDown(event);
+                    if (event.defaultPrevented) return;
+                    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                    event.preventDefault();
+                    const nextIndex =
+                      event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? visibleHubDocs.length - 1
+                          : (docIndex +
+                              (event.key === 'ArrowRight' ? 1 : -1) +
+                              visibleHubDocs.length) %
+                            visibleHubDocs.length;
+                    const nextDoc = visibleHubDocs[nextIndex];
+                    if (!nextDoc) return;
+                    setActiveDocumentId(nextDoc.id);
+                    document.getElementById(`my-work-document-tab-${nextDoc.id}`)?.focus();
+                  }}
+                  className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {doc.type === 'task' && <CheckSquare size={14} />}
+                  {doc.type === 'idea' && IdeaToolIcon && (
+                    <IdeaToolIcon size={14} aria-hidden={true} />
+                  )}
+                  {doc.type === 'idea' && ideaTool && (
+                    <span className="sr-only">
+                      {getIdeaWorkspaceToolLabel(ideaTool, Boolean(isPolish))}
+                    </span>
+                  )}
+                  {doc.type === 'decision' && <Scale size={14} />}
+                  {doc.type === 'notification' && <Bell size={14} />}
+                  {doc.type === 'initiative' && <Rocket size={14} />}
+                  <span className={docNameClass}>{doc.name}</span>
+                  <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+                </button>
+              );
+
+              return (
+                <div
+                  key={doc.id}
+                  className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                >
+                  {doc.type === 'idea' ? (
+                    <IdeaDocumentTabRename
+                      ideaId={doc.id}
+                      name={doc.name}
+                      onPersist={handleIdeaTabRename}
+                      renderActivator={renderDocumentActivator}
+                    />
+                  ) : (
+                    renderDocumentActivator()
+                  )}
+
+                  {/* Close Button */}
                   <button
-                    ref={renameControls?.ref}
                     type="button"
-                    role="tab"
-                    id={`my-work-document-tab-${doc.id}`}
-                    aria-controls={`my-work-document-panel-${doc.id}`}
-                    aria-selected={isActive}
-                    tabIndex={isActive ? 0 : -1}
-                    onClick={() => setActiveDocumentId(doc.id)}
-                    onDoubleClick={renameControls?.onDoubleClick}
-                    onKeyDown={(event) => {
-                      renameControls?.onKeyDown(event);
-                      if (event.defaultPrevented) return;
-                      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-                      event.preventDefault();
-                      const nextIndex =
-                        event.key === 'Home'
-                          ? 0
-                          : event.key === 'End'
-                            ? visibleHubDocs.length - 1
-                            : (docIndex +
-                                (event.key === 'ArrowRight' ? 1 : -1) +
-                                visibleHubDocs.length) %
-                              visibleHubDocs.length;
-                      const nextDoc = visibleHubDocs[nextIndex];
-                      if (!nextDoc) return;
-                      setActiveDocumentId(nextDoc.id);
-                      document.getElementById(`my-work-document-tab-${nextDoc.id}`)?.focus();
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseDocument(doc.id);
                     }}
-                    className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
+                    // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
+                    title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                    aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
+                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
                   >
-                    {doc.type === 'task' && <CheckSquare size={14} />}
-                    {doc.type === 'idea' && IdeaToolIcon && (
-                      <IdeaToolIcon size={14} aria-hidden={true} />
-                    )}
-                    {doc.type === 'idea' && ideaTool && (
-                      <span className="sr-only">
-                        {getIdeaWorkspaceToolLabel(ideaTool, Boolean(isPolish))}
-                      </span>
-                    )}
-                    {doc.type === 'decision' && <Scale size={14} />}
-                    {doc.type === 'notification' && <Bell size={14} />}
-                    {doc.type === 'initiative' && <Rocket size={14} />}
-                    <span className={docNameClass}>{doc.name}</span>
-                    <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+                    <X size={14} aria-hidden="true" />
                   </button>
-                );
-
-                return (
-                  <div
-                    key={doc.id}
-                    className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
-                  >
-                    {doc.type === 'idea' ? (
-                      <IdeaDocumentTabRename
-                        ideaId={doc.id}
-                        name={doc.name}
-                        onPersist={handleIdeaTabRename}
-                        renderActivator={renderDocumentActivator}
-                      />
-                    ) : (
-                      renderDocumentActivator()
-                    )}
-
-                    {/* Close Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCloseDocument(doc.id);
-                      }}
-                      // Sam „X" nie mowi czytnikowi ekranu NIC, a takich przyciskow
-                      // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
-                      title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                      aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
-                    >
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
 
             {/* Child cards DOKLEJONE z HubBarSlots (np. Run agent — otwarte
                 procesy). Te same klasy TAB_ACTIVE/TAB_INACTIVE co karty huba

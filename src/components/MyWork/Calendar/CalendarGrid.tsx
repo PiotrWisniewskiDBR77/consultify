@@ -87,13 +87,27 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             start: e.start,
             end: e.end || undefined,
             allDay: e.allDay ?? false,
-            backgroundColor: v2
-              ? e.source === 'task'
-                ? 'var(--c-warning)'
-                : e.source === 'event'
-                  ? '#475569'
-                  : 'var(--c-info)'
-              : e.color || SOURCE_COLORS[e.source] || '#64748b',
+            // ★ axe `color-contrast` (odbior G06 runda 2, mywork-calendar dark
+            // + mw-007-calendar-narrow-viewport light): FullCalendar pisze na
+            // plakietce wydarzenia JASNYM tekstem (tytul #ffffff, rodowod
+            // #e6f2ff/#f9dfe2 przy opacity 0.85), a tlo bierze STAD — z koloru
+            // zrodla albo z `e.color`, czyli wartosci, ktorej nie kontrolujemy
+            // (kalendarz Google potrafi oddac blady zolty). Zmierzone: tytul na
+            // `--c-info` #58a6ff = 2,52:1, rodowod = 2,22:1, rodowod na crimson
+            // #c72839 = 4,40:1. Zamiast zgadywac, ktory kolor akurat przejdzie,
+            // przyciemniamy KAZDE wejscie do 35% barwy + 65% czerni: najgorszy
+            // mozliwy przypadek (tlo = biel) daje #595959, czyli 7,2:1 dla
+            // tytulu i 5,3:1 dla rodowodu — prog spelniony niezaleznie od
+            // wejscia, a odcien zrodla zostaje rozpoznawalny.
+            backgroundColor: `color-mix(in srgb, ${
+              v2
+                ? e.source === 'task'
+                  ? 'var(--c-warning)'
+                  : e.source === 'event'
+                    ? '#475569'
+                    : 'var(--c-info)'
+                : e.color || SOURCE_COLORS[e.source] || '#64748b'
+            } 35%, black 65%)`,
             borderColor: isConflict
               ? 'var(--c-danger)'
               : e.status === 'ai_suggestion'
@@ -183,10 +197,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       // wcze\u015Bniej ni\u00F3s\u0142 WY\u0141\u0104CZNIE `lineageText` (projekt/dostawca), wi\u0119c dla
       // wi\u0119kszo\u015Bci wydarze\u0144 (brak projektu i dostawcy) hover nie pokazywa\u0142
       // NIC. Pe\u0142ny tooltip = czas + tytu\u0142, z lineage doklejonym je\u015Bli jest.
-      const fullTooltip = [
-        [arg.timeText, arg.event.title].filter(Boolean).join(' '),
-        lineageText,
-      ]
+      const fullTooltip = [[arg.timeText, arg.event.title].filter(Boolean).join(' '), lineageText]
         .filter(Boolean)
         .join(' \u00B7 ');
 

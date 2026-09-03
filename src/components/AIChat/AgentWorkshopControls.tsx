@@ -116,7 +116,10 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
 
   return (
     <ArtifactRightPanel
-      ariaLabel="Sterowanie agentem"
+      // axe `landmark-unique`: dwa panele agenta na jednym ekranie mialy
+      // IDENTYCZNA nazwe landmarku, wiec czytnik ekranu nie odroznial, ktorym
+      // planem steruje. Nazwa niesie teraz tytul planu (jest tu pod reka).
+      ariaLabel={plan.title ? `Sterowanie agentem — ${plan.title}` : 'Sterowanie agentem'}
       width={width}
       className="border-l-0 border-r border-c-border-subtle"
       statusBar={

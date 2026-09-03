@@ -6073,7 +6073,6 @@ function MindMapInner({
                 // dla calego plotna, bo mamy WLASNA nawigacje klawiatura (patrz komentarz
                 // wyzej) i przyciski wewnatrz wezlow zostaja fokusowalne niezaleznie
                 // (prawdziwe <button>, tabIndex nie jest im potrzebny od rodzica).
-                nodesFocusable={false}
                 {...getIdeasToolInteractionProps('mindmap', {
                   locked,
                   connectMode: interactionMode === 'connect',
@@ -6087,6 +6086,12 @@ function MindMapInner({
                 // rusza ani nie zaznacza). Spread MUSI być po
                 // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
                 {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
+                // ★ MUSI stac PO obu spreadach: `getIdeasToolInteractionProps`
+                // zwraca `nodesFocusable: true`, wiec ten sam prop postawiony
+                // WYZEJ byl cicho nadpisywany i wezly `idea` dalej dostawaly
+                // role="button" tabindex="0" (zmierzone axe: nested-interactive
+                // na `div[data-id="idea-scope-1"]`, mindmap-canvas light+dark).
+                nodesFocusable={false}
                 className={`mm-canvas bg-c-bg ${
                   interactionMode === 'connect'
                     ? 'cursor-crosshair'

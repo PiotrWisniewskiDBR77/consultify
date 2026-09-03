@@ -86,6 +86,13 @@ export interface AgentWorkshopPaletteProps {
    * pasa w aplikacji. Nie wpisuj liczby.
    */
   width?: number | string;
+  /**
+   * Nazwa landmarku panelu. Domyslnie „Paleta klocków agenta". Wolajacy podaje
+   * wlasna, gdy na jednym ekranie stoi WIECEJ NIZ JEDNA paleta — dwie
+   * komplementarne okolice o tej samej nazwie sa nierozroznialne dla czytnika
+   * ekranu (axe `landmark-unique`).
+   */
+  ariaLabel?: string;
 }
 
 const PaletteItem: React.FC<{
@@ -166,6 +173,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
   onAdd,
   disabled = false,
   width = 'var(--ntype-right-panel-width)',
+  ariaLabel = 'Paleta klocków agenta',
 }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -208,9 +216,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
     defaultOpen: query.trim().length > 0,
     children: (
       <div className="space-y-1.5">
-        <p className="text-[10px] text-c-text-muted">
-          {t(catalogGroupHintKey(group), group.hint)}
-        </p>
+        <p className="text-[10px] text-c-text-muted">{t(catalogGroupHintKey(group), group.hint)}</p>
         {group.entries.map((entry) => (
           <PaletteItem key={entry.id} entry={entry} disabled={disabled} onAdd={onAdd} />
         ))}
@@ -220,7 +226,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
 
   return (
     <ArtifactRightPanel
-      ariaLabel="Paleta klocków agenta"
+      ariaLabel={ariaLabel}
       width={width}
       className="agent-workshop-palette"
       statusBar={
