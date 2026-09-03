@@ -22,6 +22,8 @@ Stan: **CZĘŚCIOWE**
 
 R3 stop-loss: istniejący dev-render ma nadmiarowy ósmy ekran, a dostępny harness nie dowodzi montażu rzeczywistej Initiative. Zgodnie z zasadą pomiaru nie dodano atrapy produktu ani flagi bez konsumenta.
 
+R4 stop-loss: nie zapisano zrzutów, ponieważ identyczny stan PRZED/PO albo ekran zastępczy byłby fałszywym dowodem przemalowania.
+
 ## Uczciwa granica
 
 Nie powstał prototyp wizualny ani cztery zrzuty. W szczególności nie uznaję dokumentu, testu jednostkowego ani istniejącego ekranu dev-render za dowód PRZED/PO. Flaga nie została utworzona, więc nic nie zostało przypadkiem włączone.
