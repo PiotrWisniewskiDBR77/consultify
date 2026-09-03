@@ -1752,7 +1752,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t(`interview.insightCreatorModal.analysisTypeName.${type.id}`, type.name)}
           </div>
-          <p className="truncate text-[13px] text-slate-500 dark:text-slate-400">
+          {/* slate-600, nie slate-500: w stanie zaznaczonym wiersz ma podbarwione
+              tło (bg-c-info/10) — slate-500 dawał 3.98:1 zamiast 4,5:1 (axe:
+              color-contrast, zmierzone na interview-creator-shell). */}
+          <p className="truncate text-[13px] text-slate-600 dark:text-slate-400">
             {t(
               `interview.insightCreatorModal.analysisTypeDescription.${type.id}`,
               type.description
@@ -1784,7 +1787,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               gwiazdka (ta była szara, ale wciąż trzecia konwencja obok
               czerwonej gwiazdki i neutralnego tekstu — ujednolicone).
             */}
-            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
               ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
             </span>
           </label>
@@ -1815,7 +1818,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {t('interview.insightCreatorModal.outputType')}{' '}
-              <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
                 ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
               </span>
             </label>
@@ -1831,7 +1834,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               if (items.length === 0) return null;
               return (
                 <div key={cat.key} className="space-y-2">
-                  <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                     {t(
                       `interview.insightCreatorModal.analysisCategoryLabel.${cat.key}`,
                       cat.labelEn

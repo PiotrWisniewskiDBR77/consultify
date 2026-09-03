@@ -108,10 +108,14 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                   className={[
                     PREVIEW_META_PILL,
                     pill.className ??
+                      // emerald/amber-600 na własnym /10 tle dawały 3.4:1 / 2.9:1
+                      // zamiast 4,5:1 (axe: color-contrast, zmierzone na
+                      // interview-preview-canon) — o jeden-dwa odcienie ciemniej,
+                      // danger/slate (poniżej) już przechodziły bez zmian.
                       (pill.tone === 'success'
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                         : pill.tone === 'warning'
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                          ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300'
                           : pill.tone === 'danger'
                             ? 'bg-danger-500/10 text-danger-600 dark:text-danger-300'
                             : pill.tone === 'info'

@@ -78,7 +78,12 @@ const NodeRow: React.FC<{
   };
 
   return (
-    <li>
+    // role="none": <li> nie niesie własnej semantyki ARIA-tree — treeitem jest na
+    // <div> poniżej. Bez tego axe łapie trzy powiązane naruszenia na raz
+    // (aria-required-children na <ul role="tree">, aria-required-parent na
+    // treeitem, listitem na gołym <li>) — zmierzone na drd-http-workspace.
+    // Standardowy wzorzec ul[role=tree] > li[role=none] > div[role=treeitem].
+    <li role="none">
       <div
         className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors ${
           active ? 'bg-c-surface-raised text-c-text font-semibold' : 'text-c-text-secondary hover:bg-c-surface-raised'

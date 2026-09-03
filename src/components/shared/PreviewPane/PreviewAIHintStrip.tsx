@@ -107,7 +107,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
         </div>
@@ -127,7 +127,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
             <>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+                className="p-1 rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
               >
                 <MoreVertical size={13} />
               </button>

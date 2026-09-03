@@ -146,7 +146,11 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
               } ${locked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
             >
               {isRecommended && (
-                <span className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-token-pill text-[10px] font-medium bg-[var(--c-info)] text-white">
+                // text-white dark:text-navy-950: --c-info w dark to jasny błękit
+                // (#58a6ff, skalibrowany na tekst NA niej) — biały dawał 2.52:1
+                // zamiast 4,5:1 (axe: color-contrast, zmierzone na karta-interview
+                // dark). Ten sam wzorzec co odznaka "Rekomendowany" w ScenarioCard.
+                <span className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-token-pill text-[10px] font-medium bg-[var(--c-info)] text-white dark:text-navy-950">
                   <Sparkles size={10} />
                   {t('interview.runtimeMode.recommended')}
                 </span>
@@ -162,9 +166,11 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-semibold text-[var(--c-text)]">
+                  {/* h3: bezpośredni następnik h2 "Pytania" (karta-interview) — h4
+                      łamał kolejność (axe: heading-order). */}
+                  <h3 className="text-sm font-semibold text-[var(--c-text)]">
                     {t(config.titleKey)}
-                  </h4>
+                  </h3>
                   <p className="mt-0.5 text-xs text-[var(--c-text-secondary)] leading-relaxed">
                     {t(config.descKey)}
                   </p>

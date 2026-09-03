@@ -20,6 +20,14 @@ export interface ProgressCellProps {
   /** Bar height. `sm` = h-1 (table), `md` = h-1.5. Default `sm`. */
   size?: 'sm' | 'md';
   className?: string;
+  /**
+   * Accessible name for the `role="progressbar"` div — a caller-supplied name
+   * (e.g. "Postęp sesji") gives screen-reader users context the bare percent
+   * doesn't. Falls back to a generic "Postęp: N%" so the bar always has SOME
+   * name (axe: aria-progressbar-name, zmierzone na interview-sessions-status —
+   * the bar had none at all).
+   */
+  ariaLabel?: string;
 }
 
 /**
@@ -31,6 +39,7 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
   showLabel = true,
   size = 'sm',
   className,
+  ariaLabel,
 }) => {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   const complete = pct >= 100;
@@ -46,6 +55,7 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-label={ariaLabel ?? `Postęp: ${pct}%`}
       >
         <div
           className={cn(

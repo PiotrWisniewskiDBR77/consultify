@@ -139,7 +139,7 @@ function SessionScreen() {
             />
           )}
         >
-          <div className="p-4 text-xs text-slate-400">
+          <div className="p-4 text-xs text-slate-600 dark:text-slate-400">
             (Tabela Sesje — poza zakresem tego zrzutu; patrz preview po prawej.)
           </div>
         </TableWithPreviewLayout>
@@ -237,7 +237,7 @@ function InitiativeScreen() {
             />
           )}
         >
-          <div className="p-4 text-xs text-slate-400">
+          <div className="p-4 text-xs text-slate-600 dark:text-slate-400">
             (Tabela Inicjatywy — poza zakresem tego zrzutu; patrz preview po prawej.)
           </div>
         </TableWithPreviewLayout>
