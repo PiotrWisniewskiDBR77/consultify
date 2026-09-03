@@ -28098,7 +28098,8 @@
         "insertLink": "Insert link"
       },
       "stop": "Stop",
-      "startTypingPlaceholder": "Start typing or press / for commands..."
+      "startTypingPlaceholder": "Start typing or press / for commands...",
+      "ariaLabel": "Document content"
     },
     "versionHistory": {
       "justNow": "just now",

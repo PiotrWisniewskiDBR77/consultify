@@ -81,6 +81,7 @@ export const ChatSignalsFeed: React.FC<{
             <div className="flex items-center gap-2 font-semibold text-c-text">
               {row.dto.isMine && (
                 <span
+                  role="img"
                   aria-label={t('chatSignals.mine')}
                   className="h-2 w-2 shrink-0 rounded-full bg-c-focus"
                 />

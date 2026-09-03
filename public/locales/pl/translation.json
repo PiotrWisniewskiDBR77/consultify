@@ -30455,7 +30455,8 @@
         "insertLink": "Wstaw link"
       },
       "stop": "Zatrzymaj",
-      "startTypingPlaceholder": "Zacznij pisać lub wciśnij / po komendy..."
+      "startTypingPlaceholder": "Zacznij pisać lub wciśnij / po komendy...",
+      "ariaLabel": "Treść dokumentu"
     },
     "versionHistory": {
       "justNow": "przed chwilą",
