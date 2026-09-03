@@ -1,6 +1,6 @@
 # CODEX DAY 286 — G15 samokontrola integratora
 
-Stan: W TOKU. Marker `35afcb15fd`; baza porównawcza `f65c4ff6a0`; gałąź `codex/day286-g15-samokontrola-20260903`.
+Stan: PARTIAL / G15 NIE MOŻE BYĆ ZAMKNIĘTE. Marker `35afcb15fd`; baza porównawcza `f65c4ff6a0`; gałąź `codex/day286-g15-samokontrola-20260903`.
 
 ## Dowód wejścia
 
@@ -75,6 +75,24 @@ Współdzielone testy były jednostkowe i nie dowodzą sieci. Serwer uruchomiono
 | 16_PARTNER | 42 uruchomione | 195 | 186 | 0 | 9 nierozstrzygniętych | 0 | `G15 FAIL — ukierunkowany front/unit: baza 112/112 PASS, marker 186/195 PASS. Dziewięć czerwieni jest NOWYCH i dotyczy fail-closed oraz pierwszeństwa tras V8 dla payout/company-info/regions/specializations. Testy RealPG Partnera nie są w tym przebiegu.` |
 
 `MODULE_ACCEPTANCE.md` nie jest edytowany.
+
+## Granica wykonanego pomiaru
+
+Zmierzono parę baza/marker dla ukierunkowanych pakietów frontowych wszystkich 16 modułów (łącznie 5757 uruchomionych przypadków na markerze według tabeli; suma zawiera pakiety przypisane modułowo, więc wspólne przypadki mogą występować w więcej niż jednym module). Dodatkowo zmierzono RealPG dla Organizacji oraz wymagany przez R6 pakiet aiSettings/help. Nie zmierzono wszystkich katalogów serwerowych wpisanych w mianowniku R1 dla modułów 02–14. Dlatego zielone moduły frontowe mają werdykt `PARTIAL/PASS front`, a nie pełne G15 PASS.
+
+Nowe czerwienie pozostające bez naprawy: 13 w zakresie 05, 14 w 06, 1 w 07, 3 w 08, 1 zmieniony benchmark w 10, 9 w 16 oraz 2 we współdzielonych komponentach. Część nazw zachodzi między modułami 05 i 06; nie wolno sumować ich jako unikalnych defektów bez deduplikacji. Jedyna zmiana kodu/testu dyżuru to dokładna korekta zatwierdzonego napisu Assessment, zakończona 1/1 PASS.
+
+## Testy PUSTE — pułapka globalnego `fetch`
+
+Skan uruchomionych katalogów nie znalazł asercji, która traktowałaby samo `global.fetch` `ok:true` jako dowód sieciowy. Trafienia `.ok` dotyczą lokalnych rezultatów silników/gate'ów, nie `Response.ok`. Lista PUSTYCH testów sieciowych w zmierzonym zakresie: brak. Nie oznacza to audytu całego repo ani dowodu realnego HTTP.
+
+## Pliki zmienione względem markera
+
+- `docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_G15_SAMOKONTROLA_20260903.md`
+- `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY286_G15_SAMOKONTROLA_REPORT.md`
+- `src/components/assessment/__tests__/AssessmentLibraryTab.day178.empty-state.test.ts`
+
+Artefakty JSON i listy nazw pozostają wyłącznie w `/private/tmp/cx-day286-g15-artefakty`. `MODULE_ACCEPTANCE.md`, globalna infrastruktura testowa, flagi, trasy, middleware i Railway nie zostały zmienione.
 
 ### Pułapki — 01_ORGANIZATION
 
