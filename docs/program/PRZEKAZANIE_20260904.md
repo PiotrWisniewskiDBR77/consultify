@@ -192,3 +192,7 @@ utrzymany decyzją właściciela DEC-384** — wprost mimo że pięć pozycji ch
 CTO (koszt +17 dni), bo świadomie przeniósł je do FALI 2 zamiast rozciągać termin. Zależności krytyczne
 dla dotrzymania: potwierdzony drugi deploy → przelot właściciela po stagingu (G16) → 13 raportów
 Codexa odebrane adwersaryjnie → zamknięcie G15/G19/G20.
+
+## 8. Sprostowanie po zamknięciu (03.09 22:10)
+
+Drugi redeploy stagingu POTWIERDZONY: run `33799377961` zakończony `success`, `/api/health` o 20:06Z zwraca `gitSha 53c3da2918` (flagi ON, 8 scaleń nocnych). Ryzyko H8 z rejestru zamknięte. Rozjazd czasu w §3b (brief „23:20” vs `createdAt 19:56Z`) = pomyłka nadzorcy w strefie: run ruszył 21:56 czasu lokalnego.
