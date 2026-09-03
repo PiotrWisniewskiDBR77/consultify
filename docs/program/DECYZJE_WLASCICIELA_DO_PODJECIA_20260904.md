@@ -60,3 +60,14 @@ nie „zero".
 Robotnicy zamykają dziś i jutro wszystko DROBNE i ŚREDNIE (dostępność, język, przewody, luki
 podglądu, martwy kod, migracje). Pozycje z tej listy stoją. Przy `G14` każdego modułu wpisuję
 „odłożone decyzją właściciela DEC-…" albo „w budowie" — nie „gotowe".
+
+## E. Dopisane wieczorem 03.09 (po pomiarach robotników)
+
+| # | Co | Co widzi użytkownik dziś | Koszt | Rekomendacja CTO |
+| --- | --- | --- | --- | --- |
+| A5 | Zakładka „Obserwowane” w Ustawieniach: cały katalog `NotificationSettingsV2` (8 plików + hook wołający trasę, której serwer nie ma) NIE jest podłączony — Ustawienia renderują starą wersję | nic — funkcji nie widać | usunięcie DROBNE; podłączenie ŚREDNIE (trasa + tabela + 3 operacje + test) | **USUNĄĆ** (kod bez wołacza to dług, nie funkcja; jeśli obserwowanie obiektów ma wrócić, wraca jako projekt po MVP) |
+| E1 | Reguła liczenia bramki G20 „zero otwartych P0/P1”: rejestry mają 121 pozycji, z czego 48 to Twoje życzenia produktowe z 22–23.08 bez decyzji, 8 czeka na rozmowę, 23 są zamknięte/odłożone Twoimi decyzjami | — | 0 linii kodu | **Przyjąć regułę**: pozycje ZAMKNIĘTE/ODŁOŻONE decyzją (z numerem DEC) nie blokują; blokują tylko pozycje bez decyzji. Bez tej reguły G20 nie ma matematycznej szansy przejść w tym tygodniu |
+| E2 | Pakiet 56 pozycji P0/P1 do decyzji „teraz / po MVP” — rodzinami, z rekomendacją per rodzina | — | wg pakietu | Osobny plik `DECYZJE_WLASCICIELA_P0P1_20260904.md` (w przygotowaniu przez robotnika; rano gotowy) |
+| E3 | Staging jest 507 commitów za linią dowodów | Twój przelot po stagingu ogląda kod sprzed tygodnia | 0 linii, jedno słowo | **„wdrażaj”** — bez tego G16 nie rusza |
+
+Wydane dziś wieczorem dyżury Codexa: 288 (bramka modułu na 270 trasach finansów), 289 (pomoc), 290 (dowody G19), 291 (dowody runtime P0/P1). Wklejki masz w rozmowie; instrukcje w `docs/program/waves/WAVE_03_ACCEPTANCE/codex/`.
