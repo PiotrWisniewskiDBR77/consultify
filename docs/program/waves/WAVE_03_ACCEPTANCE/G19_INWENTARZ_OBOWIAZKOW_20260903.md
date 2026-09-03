@@ -351,3 +351,55 @@ a `BLOCKED` jako `open` — w obu przypadkach NIE jako zamknięte. Sprawdziłem 
 `… / OWNER_REPLAY_PENDING`: wpada do `open`, bo słowo `REPLAY` nie jest na liście kluczowych.
 Dlatego proponowany status używa `OWNER_RETEST_PENDING`, spójnie z istniejącym `G16` — zmiana
 w klasyfikatorze nie jest potrzebna.
+
+---
+
+## R5 — Blokery bramki wejściowej `G20`
+
+Źródło pozycji: `docs/program/waves/WAVE_03_ACCEPTANCE/FINAL_16_MODULE_REPLAY.md:33-41`
+(sekcja `## Entry gate`, siedem pozycji, wszystkie odhaczone jako `[ ]`).
+Do tego jedna pozycja spoza listy, nazwana w tym samym pliku jako jawny bloker: `FINAL_16_MODULE_REPLAY.md:29`.
+
+| # | Pozycja bramki wejściowej | Stan dzisiaj | Dowód (zmierzony) | Co trzeba zrobić | Szacunek |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `All 16 modules reached MODULE_ACCEPTED_ON_SHA at least once` (`:35`) | **SPEŁNIONA w rejestrach, SPORNA co do podstawy** | Zmierzone: wiersz `G18` = `` `PASS` `` w **16/16** modułach; wszystkie 16 cytowanych SHA istnieją (`git cat-file -t`) i są przodkami HEAD. ALE `MASTER_STATUS_REGISTER.md` (sekcja „2026-09-02 — owner card review”) mówi „**Finally closed modules: 2 of 16**”, a kolumna „Current gate” tej samej tabeli pokazuje dla 16/16 stany nie-akceptowane (`OWNER_REVIEW_PENDING`, `EXPERT_NO_GO`, …). **Rozbieżność: dwa rejestry, dwie odpowiedzi.** Dodatkowo wpisy `G18` opisują akcept warstwy ekranowej („bramek technicznych G05/G06 ani napraw G13–G16 ten wpis NIE podnosi”) | Rozstrzygnąć jednym zdaniem właściciela, czy `G18` na akceptcie kart z 02.09 liczy się jako `MODULE_ACCEPTED_ON_SHA` dla G20. Zsynchronizować `MASTER_STATUS_REGISTER.md` z wierszami `G18` (albo obniżyć `G18`, albo poprawić rejestr — ale nie zostawiać obu) | **ŚREDNIE** |
+| 2 | `All shared-component regression obligations are closed` (`:36`) | **NIESPEŁNIONA — 0/16** | `G19` = `NOT_STARTED` we wszystkich 16 modułach (zmierzone). Rejestr wdrożeń/regresji pusty w 16/16 (0 wierszy danych). Mianownik obowiązku zmierzony w R2: 28–49 plików na moduł | Wykonać plan z R3: macierz G06 na zamrożonym markerze + bloki 1–2 testów + zamknięcie czterech dziur D-a1…D-a4 + wpisy wg R4 | **DUŻE** |
+| 3 | `One clean final product SHA is frozen` (`:37`) | **NIESPEŁNIONA** | `FINAL_16_MODULE_REPLAY.md:5` → `Final product SHA: UNSET`; `:3` → `Status: NOT_READY` | Zamrożenie markera (kandydat: `fee24bddb0` — dziś `git diff` w ścieżkach współdzielonych `fee24bddb0..HEAD` = **0 plików**) i zakaz scaleń w powierzchnię współdzieloną do końca replayu | **ŚREDNIE** (decyzja + dyscyplina, nie kod) |
+| 4 | `Client and server SHA readback match the frozen candidate` (`:38`) | **NIESPEŁNIONA** | Ostatni potwierdzony odczyt runtime: `PRZEKAZANIE_20260902.md:53` — `origin/develop` = staging = `0eff12615b`, potwierdzone `gitSha` z `/api/health`. Zmierzone: `git rev-list --count 0eff12615b..HEAD` = **500 commitów**. Staging biegnie 500 commitów za linią, na której stoją dowody z 03.09 | Promocja na `develop` (czeka na słowo właściciela), po niej odczyt `gitSha` z `/api/health` i porównanie z zamrożonym markerem. Pułapka do obejścia: duży push pomija workflow z filtrem `paths` w ciszy — dowodem jest `gitSha`, nie zielony run | **ŚREDNIE** |
+| 5 | `Isolated non-production database and persona fixtures are identified` (`:39`) | **NIESPEŁNIONA** | `OWNER_FIXTURE_INVENTORY.md:2-9` — ostrzeżenie `DATABASE_ABSENT_AT_REVALIDATION`, „the tables below … must not be read as current catalog state”. Sprawdziłem cytowaną ścieżkę spoza repo z `G01` modułu 01: `ls /private/tmp/consultify-wave3-runtime-manifest-org-final-replay-20260822.json` → **No such file or directory** (w `/private/tmp` jest 16 innych manifestów, ale nie ten). Ten sam fakt jest już przyznany w treści `G01` modułu 01 | Wskazać JEDNĄ izolowaną bazę do replayu (nie 16 historycznych), odbudować fikstury person na łańcuchu migracji z zamrożonego markera i zapisać manifest **w repo**, nie w `/private/tmp` | **DUŻE** |
+| 6 | `Zero open P0/P1 across all registers` (`:40`) | **NIESPEŁNIONA — 22 × P0, 38 × P1** | Zliczone maszynowo z tabeli `MASTER_STATUS_REGISTER.md`: `ASM` 7/1, `INI` 3/6, `MYW` 11/18, `CHAT` 1/13 → **P0 = 22, P1 = 38**. Pozostałe 12 modułów: 0/0. `docs/program/REJESTR_ZNALEZISK_20260903.md` sekcja D ma dodatkowo **13 pozycji otwartych** bez przypisanej ostrości (D1–D13), z których co najmniej D5 (`/api/settings/watchers` nie istnieje — funkcja martwa w produkcji), D6 (`help_articles` — migracja w innym kształcie niż kod, błąd cicho łapany) i D7 (34 trasy `/api/v8/finance/*` bez bramki modułu) mają charakter P0/P1 i nie są policzone w liczbie 22/38 | Zamknąć albo jawnie zreklasyfikować 60 pozycji P0/P1 z czterech modułów; nadać ostrość 13 pozycjom z rejestru D i wciągnąć je do liczników modułowych (dziś są poza mianownikiem) | **DUŻE** |
+| 7 | `Every P2/P3 has an explicit disposition` (`:41`) | **NIESPEŁNIONA — 16 × P2 bez dyspozycji** | Zliczone: P2 = 16 (`TLS` 1, `INI` 3, `MYW` 9, `CHAT` 3), P3 = 0. Pole „P2/P3 dispositions complete” z `MODULE_TEMPLATE.md` **nie istnieje w ogóle** w 15 z 16 plików modułów — sekcja `Owner verdict` została w nich skrócona do pięciu linii bez tego pola (jedyne trafienie na ciąg `P2/P3`: `06_EXECUTION/MODULE_ACCEPTANCE.md:315`, i to w innym kontekście). `MASTER_STATUS_REGISTER.md` też nie ma takiej kolumny (0 trafień). Nie ma więc miejsca, w którym dyspozycja miałaby stanąć | Jedna decyzja właściciela na pozycję: naprawa / `ACCEPTED_OUT` / `DEFERRED_TO_WAVE_4_PLUS` z podaniem fali, powodu, właściciela i warunku ponownego otwarcia (wymóg `README.md:62-63`) | **DROBNE** (16 decyzji, zero kodu) |
+| 8 | `XMOD-SEC-001` — rotacja poświadczenia Railway (`:29`, jawny bloker P0) | **NIESPEŁNIONA — brak jakiegokolwiek zamknięcia** | `CROSS_MODULE_FINDINGS.md:8` — status `CODE_FIXED_AND_CURRENT_TREE_SCAN_PASS / EXTERNAL_ROTATION_UNVERIFIED`. Przeszukałem cały `docs/` po `XMOD-SEC-001`: **4 trafienia, żadne nie meldujące rotacji**. Jedyna wzmianka o rotacji w raporcie poświadczeń: `CREDENTIALS_CLEANUP_DAY39_REPORT_20260828.md:320` — „Nie wykonano … rotacji hasła”. `PRZEKAZANIE_20260902.md:40` notuje osobno „Redis stagingu bez rotacji” | Rotacja poświadczenia po stronie Railway przez właściciela środowiska (nieodwracalna, poza mandatem agenta), następnie: skan drzewa, próba połączenia bez sekretu i **dowód odrzucenia starej wartości** | **ŚREDNIE** (jedna operacja właściciela + jeden dowód) |
+
+### Poza bramką wejściową, ale w tym samym pliku
+
+- **Macierz replayu**: 16 wierszy, wszystkie `NOT_RUN` (zliczone: `grep -c NOT_RUN` = 16). To jest treść samego `G20`, nie bramka wejściowa.
+- **Sekcja `## Closure`**: 5 pozycji, wszystkie `[ ]`, w tym „Piotr recorded `WAVE_3_OWNER_ACCEPTED` with date and exact SHA”.
+
+### Podsumowanie R5
+
+**8 pozycji blokujących, z tego DUŻE: 3** — pozycja 2 (obowiązki regresji współdzielonej — czyli
+całe `G19`), pozycja 5 (izolowana baza i fikstury person — dowód spoza repo już wyparował) oraz
+pozycja 6 (60 otwartych P0/P1 plus 13 nieskategoryzowanych pozycji z rejestru D).
+ŚREDNIE: 4 (pozycje 1, 3, 4, 8). DROBNE: 1 (pozycja 7).
+
+Kolejność, która odblokowuje najwięcej najmniejszym kosztem:
+**3 → 2 → 4 → 5** (zamroź marker, zrób regresję na zamrożonym, dopiero potem promocja i baza).
+Pozycje 6, 7 i 8 biegną równolegle i nie zależą od markera: 7 to 16 decyzji właściciela,
+8 to jedna operacja właściciela środowiska, 6 to praca produktowa czterech modułów.
+
+---
+
+## Ograniczenia tego pomiaru (co się w nim może mylić)
+
+1. **Zakres „powierzchni współdzielonej” jest zlecony, nie udokumentowany** (G19-Z1). Jeśli program
+   uzna za współdzielone także `src/hooks`, `src/lib`, `src/i18n` albo `server/src/services`, liczby
+   z R2 wzrosną — ten inwentarz ich nie mierzy.
+2. **Osiągalność z grafu importów to nie renderowanie** (D-a4). Komponent może być osiągalny i nigdy
+   nie pojawić się na zrzucie w danym stanie danych.
+3. **Kotwicą jest `G18`, nie `G07–G13`.** Zlecenie wskazywało `G07–G13`; zmierzyłem, że te wiersze
+   cytują jeden wspólny SHA linii grafiki (`316bce9dd9`) dla 15 modułów i żaden dla `16_PARTNER`,
+   więc jako mianownik per moduł są bezużyteczne. Zapisuję tę rozbieżność jawnie: **liczby w R2
+   liczone od `G18`; gdyby liczyć od `316bce9dd9` dla wszystkich, każdy moduł miałby 49 plików.**
+4. **Nie uruchamiałem żadnego testu ani macierzy.** Ten dokument mierzy `git` i treść rejestrów;
+   liczby wyników testów (`X/X`) w szablonie R4 są miejscami do wypełnienia, nie deklaracją.
