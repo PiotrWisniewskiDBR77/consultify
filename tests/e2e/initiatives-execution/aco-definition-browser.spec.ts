@@ -310,86 +310,8 @@ test('Assessment finding → Submit Proposal → validate → Register → exact
   });
 });
 
-test('signed mounted schedule request renders a real stale conflict and reloads authoritative truth', async ({
-  page,
-}) => {
-  const initiativeId = `initiative-signed-stale-${Date.now()}`;
-  const projectId = 'operations-transformation-2027';
-  await pool.query(
-    `INSERT INTO ie_aggregate_state
-       (organization_id,aggregate_type,aggregate_id,version,payload_json)
-     VALUES($1,'initiative',$2,1,$3::jsonb)`,
-    [
-      signedOrg,
-      initiativeId,
-      JSON.stringify({
-        initiativeId,
-        projectId,
-        lifecycleState: 'APPROVED_BACKLOG',
-        title: 'Signed stale schedule initiative',
-        initiativeOwnerId: signedOwner,
-      }),
-    ]
-  );
-  const bearer = jwt.sign(
-    {
-      id: signedOwner,
-      email: `${signedOwner}@test.invalid`,
-      organizationId: signedOrg,
-      organization_id: signedOrg,
-      role: 'OWNER',
-    },
-    config.JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: '10m' }
-  );
-  await page.setExtraHTTPHeaders({ Authorization: `Bearer ${bearer}` });
-  await page.goto(
-    `/tests/e2e/fixtures/initiatives-execution-aco.html?initiativeId=${encodeURIComponent(initiativeId)}`
-  );
-  await expect(page.getByRole('region', { name: 'Initiative Card' })).toBeVisible();
-  await expect(page.getByText('Aggregate v1')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Schedule readiness' })).toBeVisible();
-
-  await page.getByLabel('Schedule Portfolio reference').fill('portfolio-signed@1');
-  await page.getByLabel('Schedule Plan reference').fill('plan-signed@1');
-  await page.getByLabel('Schedule Capacity reference').fill('capacity-signed@1');
-  await page.getByLabel('Schedule authority').fill('schedule-authority');
-  await page.getByLabel('Schedule Execution Manager').fill('execution-manager');
-  await page.getByLabel('Schedule Decision due').fill('2026-08-21T12:00');
-
-  await pool.query(
-    `UPDATE ie_aggregate_state
-        SET version=2,
-            payload_json=jsonb_set(payload_json,'{title}',to_jsonb('Authoritative v2'::text)),
-            updated_at=NOW()
-      WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
-    [signedOrg, initiativeId]
-  );
-
-  await page.getByRole('button', { name: 'Request Schedule Decision' }).click();
-  await expect(page.getByRole('alert')).toContainText(
-    'Schedule decision request conflicted with newer truth'
-  );
-  expect(
-    (
-      await pool.query(
-        `SELECT COUNT(*)::int AS count FROM ie_aggregate_state
-          WHERE organization_id=$1 AND aggregate_type='decision'
-            AND payload_json->>'initiativeId'=$2`,
-        [signedOrg, initiativeId]
-      )
-    ).rows[0].count
-  ).toBe(0);
-
-  await page.getByRole('button', { name: 'Reload current truth' }).click();
-  await expect(page.getByText('Aggregate v2')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Authoritative v2' })).toBeVisible();
-  await pool.query(
-    `DELETE FROM ie_aggregate_state
-      WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
-    [signedOrg, initiativeId]
-  );
-});
+// Test „signed mounted schedule request …" usunięty 2026-09-03 razem z CanonicalInitiativeCardWorkspace
+// (decyzja właściciela: jedyny widok karty to zatwierdzony InitiativeDocumentView w produkcie).
 
 test('READY_FOR_DECISION → persistent published Portfolio Scenario without lifecycle mutation', async ({
   page,
