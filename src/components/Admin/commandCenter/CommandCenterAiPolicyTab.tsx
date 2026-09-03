@@ -150,10 +150,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-fields-citationMode" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.citationMode', 'Required citation mode')}
           </label>
           <select
+                id="ai-policy-fields-citationMode"
             className={selectClass}
             value={citationMode}
             onChange={(e) => setCitationMode(e.target.value as OrgAiPolicy['requiredCitationMode'])}
@@ -179,10 +180,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-fields-maxTokensPerMessage" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.maxTokensPerMessage', 'Max tokens per message')}
           </label>
           <input
+                id="ai-policy-fields-maxTokensPerMessage"
             type="number"
             min={1}
             className={inputClass}
@@ -192,13 +194,17 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label
+            htmlFor="ai-policy-maxTokensPerConversation"
+            className="mb-1 block text-xs font-medium text-c-text-secondary"
+          >
             {t(
               'commandCenter.aiPolicy.fields.maxTokensPerConversation',
               'Max tokens per conversation'
             )}
           </label>
           <input
+            id="ai-policy-maxTokensPerConversation"
             type="number"
             min={1}
             className={inputClass}
@@ -208,10 +214,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-fields-dataResidencyRegion" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.dataResidencyRegion', 'Data residency region')}
           </label>
           <input
+                id="ai-policy-fields-dataResidencyRegion"
             className={inputClass}
             value={dataResidencyRegion}
             onChange={(e) => setDataResidencyRegion(e.target.value)}
@@ -219,10 +226,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-allowedModels" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.allowedModels', 'Allowed models (comma-separated)')}
           </label>
           <input
+            id="ai-policy-allowedModels"
             className={inputClass}
             value={allowedModelsText}
             onChange={(e) => setAllowedModelsText(e.target.value)}
@@ -230,10 +238,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-allowedTopics" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.allowedTopics', 'Allowed topics (comma-separated)')}
           </label>
           <input
+            id="ai-policy-allowedTopics"
             className={inputClass}
             value={allowedTopicsText}
             onChange={(e) => setAllowedTopicsText(e.target.value)}
@@ -241,10 +250,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-blockedTopics" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.blockedTopics', 'Blocked topics (comma-separated)')}
           </label>
           <input
+            id="ai-policy-blockedTopics"
             className={inputClass}
             value={blockedTopicsText}
             onChange={(e) => setBlockedTopicsText(e.target.value)}
@@ -252,10 +262,11 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="ai-policy-blockedTools" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.aiPolicy.fields.blockedTools', 'Blocked tools (comma-separated)')}
           </label>
           <input
+            id="ai-policy-blockedTools"
             className={inputClass}
             value={blockedToolsText}
             onChange={(e) => setBlockedToolsText(e.target.value)}
@@ -263,13 +274,17 @@ export const CommandCenterAiPolicyTab: React.FC = () => {
         </div>
 
         <div className="md:col-span-2">
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label
+            htmlFor="ai-policy-mandatoryDisclaimers"
+            className="mb-1 block text-xs font-medium text-c-text-secondary"
+          >
             {t(
               'commandCenter.aiPolicy.fields.mandatoryDisclaimers',
               'Mandatory disclaimers (one per line)'
             )}
           </label>
           <textarea
+            id="ai-policy-mandatoryDisclaimers"
             rows={3}
             className={inputClass}
             value={disclaimersText}

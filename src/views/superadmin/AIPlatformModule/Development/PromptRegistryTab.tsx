@@ -91,7 +91,7 @@ const normalizeRegistry = (value: unknown): { prompts: PromptRegistryRow[]; drif
 };
 
 const CHECKSUM_TONE: Record<PromptChecksumStatus, string> = {
-  ok: 'bg-success-500/15 text-success-600 dark:text-success-400',
+  ok: 'bg-success-500/15 text-success-700 dark:text-success-400',
   drifted: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
   unverifiable: 'bg-c-surface-raised text-c-text-secondary',
 };

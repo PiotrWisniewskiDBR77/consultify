@@ -118,10 +118,11 @@ export const CommandCenterResidencyTab: React.FC = () => {
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="residency-fields-region" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.residency.fields.region', 'Data residency region')}
           </label>
           <input
+                id="residency-fields-region"
             className={inputClass}
             value={region}
             placeholder={t('commandCenter.residency.fields.regionPlaceholder', 'e.g. eu, us, uk')}
@@ -142,13 +143,17 @@ export const CommandCenterResidencyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label
+            htmlFor="residency-allowedRegions"
+            className="mb-1 block text-xs font-medium text-c-text-secondary"
+          >
             {t(
               'commandCenter.residency.fields.allowedRegions',
               'Allowed regions (comma-separated)'
             )}
           </label>
           <input
+            id="residency-allowedRegions"
             className={inputClass}
             value={allowedRegionsText}
             onChange={(e) => setAllowedRegionsText(e.target.value)}
@@ -156,10 +161,11 @@ export const CommandCenterResidencyTab: React.FC = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-c-text-secondary">
+          <label htmlFor="residency-deniedRegions" className="mb-1 block text-xs font-medium text-c-text-secondary">
             {t('commandCenter.residency.fields.deniedRegions', 'Denied regions (comma-separated)')}
           </label>
           <input
+            id="residency-deniedRegions"
             className={inputClass}
             value={deniedRegionsText}
             onChange={(e) => setDeniedRegionsText(e.target.value)}

@@ -351,7 +351,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span>
-            <span className="font-medium text-emerald-400">
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
               €{(row.commissionAmount as number).toLocaleString()}
             </span>
             <span className="text-xs text-c-text-muted ml-1">({row.commissionRate}%)</span>

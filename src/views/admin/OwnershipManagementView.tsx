@@ -282,7 +282,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {ownerUser?.firstName} {ownerUser?.lastName}
                   </h3>
-                  <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded-full font-medium">
+                  <span className="px-2 py-0.5 bg-amber-800 text-white text-xs rounded-full font-medium">
                     {t('admin.ownership.ownerCard.badge', 'OWNER')}
                   </span>
                 </div>
