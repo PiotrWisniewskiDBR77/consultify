@@ -62,7 +62,7 @@ for (const [mod, { suma, ekrany }] of Object.entries(agregat)) {
     .join('; ');
   const notatka =
     `ZMIERZONE ${DATA} PEŁNĄ MACIERZĄ na markerze \`${MARKER}\` (nadzorca; \`scripts/dev/g06-macierz-uruchom.mjs\` → kanoniczny \`grafika-zrzuty.mjs\` z domyślnym klikiem w wiersz, ` +
-    `\`--rozwin-sekcje=1 --a11y=1\`, skan na \`#dev-render-root\`): ${suma.ekrany} ekranów A/B × 8 kadrów (PL/EN × jasny/ciemny × 1440/1024) = ${suma.kadry} kadrów. ` +
+    `\`--rozwin-sekcje=1 --klik-po-rozwinieciu=1 --osiad-po-rozwinieciu=1500 --a11y=1\` (od 03.09: klik w wiersz PONOWNIE po rozwinięciu sekcji i 1500 ms osiadania — bez tego skan leciał bez podglądu albo w fade-in), skan na \`#dev-render-root\`): ${suma.ekrany} ekranów A/B × 8 kadrów (PL/EN × jasny/ciemny × 1440/1024) = ${suma.kadry} kadrów. ` +
     `Odjęte WYŁĄCZNIE trzy reguły hosta (\`landmark-one-main\`, \`page-has-heading-one\`, \`region\`); 404 na \`/api/*\` i komunikaty pochodne braku backendu liczone osobno (${suma.ekranyZKonsolaPochodna} ekranów), nie jako defekt. ` +
     (dlug.length
       ? `**Dług: ${dlug.join('; ')}.** Ekrany: ${ekranyZDlugiem}. Bramka nie może paść, dopóki dług nie zejdzie do zera w pomiarze kontrolnym. `
