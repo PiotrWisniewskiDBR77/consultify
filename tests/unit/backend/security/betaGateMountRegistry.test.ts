@@ -1,3 +1,9 @@
+// ★ SPROSTOWANIE NADZORCY 2026-09-03: uzasadnienie umiejscowienia tego pliku
+// w oryginalnym raporcie było BŁĘDNE. Autor napisał, że `vitest.config.ts` nie
+// ma `server/src/**/__tests__/**` w `include` — ma, w liniach 297-298. Test
+// uruchomiłby się także obok kodu serwera. Plik zostaje tutaj (działa, 43/43),
+// ale nikt nie powinien powielać tamtego uzasadnienia jako reguły.
+
 /**
  * BEZPIECZNIK MOUNTÓW BRAMKOWANYCH MODUŁÓW — „uzbrojone na przyszłość".
  *
