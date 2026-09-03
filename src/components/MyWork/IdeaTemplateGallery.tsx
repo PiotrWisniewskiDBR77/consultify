@@ -2185,8 +2185,10 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                 {t('myWorkIdeas.templateGallery.chooseTemplateGetStartedQuickly')}
               </p>
             </div>
+            {/* axe `button-name`: przycisk-X bez tekstu dla czytnika ekranu. */}
             <button
               onClick={onClose}
+              aria-label={t('common.close', 'Zamknij')}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               <X size={16} className="text-slate-500" />
@@ -2202,7 +2204,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                 className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
                   scopeFilter === scope
                     ? 'bg-c-info/10 text-c-info'
-                    : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >
                 {isPl ? SCOPE_FILTER_LABELS_PL[scope] : scope}
@@ -2217,7 +2219,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                   className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
                     categoryFilter === category
                       ? 'bg-c-info/10 text-c-info'
-                      : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+                      : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
                   }`}
                 >
                   {isPl ? CATEGORY_FILTER_LABELS_PL[category] : category}

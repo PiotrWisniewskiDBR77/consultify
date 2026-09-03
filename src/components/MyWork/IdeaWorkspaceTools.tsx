@@ -424,10 +424,13 @@ const Section: React.FC<{
   );
 };
 
+// axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): text-amber-700 na
+// bg-amber-50 dawal 4.21:1 zamiast 4,5:1 (identyczna para na
+// CONFIDENTIALITY_COLORS.confidential nizej) — amber-800 daje 6.61:1.
 const PRIORITY_COLORS: Record<number, string> = {
   25: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
   50: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
-  75: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  75: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300',
   100: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
 };
 
@@ -443,7 +446,7 @@ const PRIORITY_COLORS: Record<number, string> = {
 type IdeaConfidentialityLevel = 'standard' | 'confidential' | 'restricted';
 const CONFIDENTIALITY_COLORS: Record<IdeaConfidentialityLevel, string> = {
   standard: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
-  confidential: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  confidential: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300',
   restricted: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
 };
 const CONFIDENTIALITY_LEVELS: readonly IdeaConfidentialityLevel[] = [

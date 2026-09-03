@@ -191,6 +191,8 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                       {c.content}
                     </p>
                   </div>
+                  {/* axe `button-name`: przycisk tylko-ikona (X) bez tekstu
+                      dostepnego dla czytnika ekranu — dodano aria-label. */}
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}

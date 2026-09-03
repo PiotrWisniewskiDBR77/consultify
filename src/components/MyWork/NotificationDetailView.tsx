@@ -154,7 +154,11 @@ const SEVERITY_CONFIG = {
   WARNING: {
     label: { en: 'Warning', pl: 'Ostrzeżenie' },
     color: 'bg-amber-500',
-    textColor: 'text-amber-500',
+    // axe `color-contrast`: text-amber-500 (#e87d1e) na bg-amber-500/10
+    // (~#fdf2e9) dawal 2.58:1 zamiast 4,5:1 — amber-800 daje 6.43:1 w
+    // light; dark: amber-500 zostaje (juz przechodzi, nie zmierzone jako
+    // naruszenie).
+    textColor: 'text-amber-800 dark:text-amber-500',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/30',
     icon: AlertTriangle,
@@ -3146,24 +3150,34 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           {notifRelationItems.map((item) => {
             const isClickable = Boolean(onNavigateToSource);
             const itemType = item.type.toLowerCase();
+            const badgeAndTitle = (
+              <>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised shrink-0">
+                  {linkedTypeLabel(item.type, isPolish)}
+                </span>
+                {item.title ? (
+                  <span className="truncate text-xs text-c-text">{item.title}</span>
+                ) : null}
+              </>
+            );
             return (
-              <div
-                key={item.id}
-                className={`group flex flex-col gap-1 rounded-md px-1 py-1 -mx-1 transition-colors ${
-                  isClickable ? 'hover:bg-c-surface-raised cursor-pointer' : ''
-                }`}
-                onClick={isClickable ? () => onNavigateToSource!(itemType, item.id) : undefined}
-                role={isClickable ? 'button' : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-c-border text-c-text-muted bg-c-surface-raised shrink-0">
-                    {linkedTypeLabel(item.type, isPolish)}
-                  </span>
-                  {item.title ? (
-                    <span className="truncate text-xs text-c-text">{item.title}</span>
-                  ) : null}
-                </div>
+              // axe `nested-interactive` (odbior G06, 07_MY_WORK_AGENT): outer
+              // <div role="button"> zawieral prawdziwy <button> (Copy ID) —
+              // dwie interaktywne kontrolki jedna w drugiej. Naprawa: klikalny
+              // wiersz to teraz PRAWDZIWY <button> (gdy isClickable), a Copy ID
+              // jest RODZENSTWEM, nie dzieckiem, obaj w tym samym <div>.
+              <div key={item.id} className="group flex flex-col gap-1 rounded-md px-1 py-1 -mx-1">
+                {isClickable ? (
+                  <button
+                    type="button"
+                    className="flex min-w-0 items-center gap-2 rounded-md text-left transition-colors hover:bg-c-surface-raised cursor-pointer"
+                    onClick={() => onNavigateToSource!(itemType, item.id)}
+                  >
+                    {badgeAndTitle}
+                  </button>
+                ) : (
+                  <div className="flex min-w-0 items-center gap-2">{badgeAndTitle}</div>
+                )}
                 {/* Wiersz DRUKOWAŁ surowy identyfikator („decision-dbr77-demo-1")
                     tylko po to, żeby dało się go skopiować. Funkcja zostaje —
                     znika WYPISANY na ekranie identyfikator deweloperski

@@ -552,9 +552,15 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
   const dropActive = editable && dragging;
 
   return (
+    // axe `scrollable-region-focusable` (odbior G06, 07_MY_WORK_AGENT): przy
+    // pustym planie (blocks.length===0) srodek nie ma zadnego elementu
+    // fokusowalnego, a kontener jest overflow-y-auto — bez klawiatury nie da
+    // sie do niego dotrzec. tabIndex={0} czyni scrollowalny obszar
+    // fokusowalny (standardowa naprawa APG dla scrollable region).
     <div
       className="flex h-full w-full flex-col items-center overflow-y-auto px-6 py-6"
       data-testid="agent-plan-canvas"
+      tabIndex={0}
       onDragOver={(e) => {
         // Bez tego strefy zrzutu pojawiłyby się dopiero po wejściu kursora
         // dokładnie na 7-pikselową przerwę — czyli praktycznie nigdy.

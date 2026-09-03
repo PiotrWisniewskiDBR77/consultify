@@ -103,12 +103,18 @@ const PaletteItem: React.FC<{
   if (soon) {
     // Wyszarzona pozycja mapy drogowej — świadomie NIE jest <button>: nic nie
     // robi, więc nie udaje kontrolki. `title` niesie powód (soonReason).
+    // axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): `opacity-55` na
+    // CALYM wierszu mnozyl sie z juz-zgodnym text-c-text-muted (4.76:1 na
+    // bieli) i zbijal efektywny kontrast do 2.11:1 — ten sam ksztalt awarii
+    // co PreviewAIHintStrip (opacity x kolor). Stan "wkrotce" jest juz
+    // czytelny bez opacity: przerywana ramka + plakietka „Wkrotce" + title
+    // z powodem — tekst zostaje w pelni czytelny.
     return (
       <div
         title={entry.soonReason ? t(catalogSoonReasonKey(entry), entry.soonReason) : undefined}
         data-testid={`palette-entry-${entry.id}`}
         data-status="soon"
-        className="flex items-start gap-2 rounded-lg border border-dashed border-c-border-subtle px-2 py-1.5 opacity-55"
+        className="flex items-start gap-2 rounded-lg border border-dashed border-c-border-subtle px-2 py-1.5"
       >
         <Icon size={14} className="mt-0.5 shrink-0 text-c-text-muted" />
         <div className="min-w-0 flex-1">

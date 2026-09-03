@@ -674,12 +674,19 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     const inRange = !!rangeCellIds?.has(id);
 
     return (
+      // axe `aria-required-parent` (odbior G06, 07_MY_WORK_AGENT): rola
+      // gridcell na tym divie wymagala kontekstu grid/treegrid ktorego nie
+      // ma (zwykla tabela semantyczna). Zamiana na role="cell" NADAL padala —
+      // zmierzone empirycznie: ten div siedzi wewnatrz prawdziwego <td>, ktory
+      // JUZ ma WLASNA, implicit role "cell" — zagniezdzenie cell-w-cell myli
+      // sprawdzenie wymaganego rodzica. Div zostaje BEZ wlasnej roli (<td>
+      // rodzic juz poprawnie niesie semantyke komorki dla czytnika ekranu);
+      // tabIndex/onKeyDown/focus zostaja bez zmian.
       <div
         ref={(el) => {
           if (el) cellRefs.current.set(id, el);
           else cellRefs.current.delete(id);
         }}
-        role="gridcell"
         tabIndex={isFocused ? 0 : -1}
         className={`min-w-0 ${densityCellMinH} flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text ${
           isFocused ? 'ring-1 ring-c-focus' : ''
@@ -751,8 +758,13 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   };
 
   const renderRow = (row: TableNode) => (
+    // axe `aria-required-parent` doesn't credit the row's IMPLICIT role from
+    // native table-row display for the required-context check on the child
+    // cell role below — explicit role makes it count (zmierzone empirycznie,
+    // implicit display:table-row nie wystarczyl).
     <tr
       key={row.id}
+      role="row"
       className="hover:bg-c-surface-raised"
       onContextMenu={(e) => {
         e.preventDefault();
@@ -885,7 +897,13 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
         >
           <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
             <tr>
-              <th className="w-10 border-b border-r border-c-border-subtle" />
+              {/* axe `empty-table-header`: kolumna checkboxow zaznaczenia
+                  wiersza — sr-only etykieta bez zmiany wygladu. */}
+              <th className="w-10 border-b border-r border-c-border-subtle">
+                <span className="sr-only">
+                  {t('myWorkTable.gridView.selectRow', 'Select row')}
+                </span>
+              </th>
               {visibleColumns.map((col) => {
                 const missing = isMissingField(col.key, viewConfig);
                 const missingFieldName =

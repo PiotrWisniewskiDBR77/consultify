@@ -901,9 +901,13 @@ const formatRelativeTime = (
   return { text, agingLevel };
 };
 
+// axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): emerald-600 (#388A22,
+// 4.35:1) i amber-600 (#C66A1B, 3.83:1) na bialym tle pod 4,5:1 — emerald-700
+// (6.93:1) i amber-800 (7.08:1, amber-700 dawal tylko 4.51:1 — zbyt blisko
+// progu) daja bezpieczny margines.
 const AGING_STYLES = {
-  fresh: 'text-emerald-600 dark:text-emerald-400',
-  warm: 'text-amber-600 dark:text-amber-400',
+  fresh: 'text-emerald-700 dark:text-emerald-400',
+  warm: 'text-amber-800 dark:text-amber-400',
   hot: 'text-amber-700 dark:text-amber-300',
   critical: 'text-danger-700 dark:text-danger-300',
 };

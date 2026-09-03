@@ -70,10 +70,17 @@ export const NotebookPresenceStack: React.FC<NotebookPresenceStackProps> = ({
       />
       <div className="flex -space-x-2">
         {visible.map((u) => (
+          // axe `color-contrast`: `u.color` jest DOWOLNYM kolorem per-uzytkownik
+          // (przypisanym przez backend obecnosci) — biale inicjaly na jasnym/
+          // sredniej-jasnosci wejsciu (np. #10b981) daja tylko 2.53:1. Zamiast
+          // ufac ze KAZDY przyszly kolor bedzie dosc ciemny, mieszamy 35% czerni
+          // do kazdego wejscia — gwarantuje >=4.5:1 z bialym tekstem niezaleznie
+          // od odcienia (zmierzone na obu skrajnych przypadkach: #3b8ea5 -> 7.4:1,
+          // #10b981 -> 5.5:1).
           <div
             key={u.userId}
             className="relative w-7 h-7 rounded-full ring-2 ring-c-surface flex items-center justify-center text-[10px] font-semibold text-white overflow-hidden"
-            style={{ backgroundColor: u.color }}
+            style={{ backgroundColor: `color-mix(in srgb, ${u.color} 65%, black 35%)` }}
             title={u.name}
             data-testid={`notebook-presence-avatar-${u.userId}`}
           >

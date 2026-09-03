@@ -2282,6 +2282,9 @@ export const TransformationCasesPanel: React.FC<{
   }, [currentUserId, governanceErrorText, isPolish, selectedRow]);
 
   if (error && cases === null) {
+    // axe `heading-order` (odbior G06, 07_MY_WORK_AGENT, agent-hub): ten panel
+    // renderuje sie bezposrednio po h1 hosta bez h2 pomiedzy — h3 domyslny
+    // w EmptyState skakal poziom.
     return (
       <EmptyState
         variant="error"
@@ -2289,6 +2292,7 @@ export const TransformationCasesPanel: React.FC<{
         description={error}
         onRetry={() => void loadCases()}
         className="h-full"
+        headingLevel="h2"
       />
     );
   }

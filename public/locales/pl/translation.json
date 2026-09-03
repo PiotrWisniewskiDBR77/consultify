@@ -987,7 +987,9 @@
     "expandRightRail": "Rozwiń prawy panel",
     "collapseRightRail": "Zwiń prawy panel",
     "resizeRightRail": "Zmień szerokość prawego panelu",
-    "discussWithTeresa": "Porozmawiaj z Teresą"
+    "discussWithTeresa": "Porozmawiaj z Teresą",
+    "leftRailPanel": "Panel narzędzi (lewy)",
+    "rightRailPanel": "Panel narzędzi (prawy)"
   },
   "presentations": {
     "comments": {

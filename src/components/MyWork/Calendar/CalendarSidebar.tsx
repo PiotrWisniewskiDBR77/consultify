@@ -125,6 +125,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           </button>
         </div>
 
+        {/* axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): `dark:text-slate-500`
+            (identyczny odcien co light) dawal tylko 4.01:1 na ciemnym tle
+            (#0a0f1e) — 3 wystapienia w tym pliku (dni tygodnia + 2 naglowki
+            sekcji), wszystkie na `dark:text-slate-400` (7.45:1). */}
         <div className="grid grid-cols-7 gap-0.5 text-center">
           {(
             t('myWork.calendarSidebar.weekdaysShort', {
@@ -133,7 +137,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           ).map((d) => (
             <div
               key={d}
-              className="text-[10px] font-medium text-slate-500 dark:text-slate-500 py-1"
+              className="text-[10px] font-medium text-slate-500 dark:text-slate-400 py-1"
             >
               {d}
             </div>
@@ -168,7 +172,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
 
       {/* Source filters */}
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
           {t('myWork.calendarSidebar.sources', 'Sources')}
         </h4>
         <div className="space-y-1.5">
@@ -182,12 +186,18 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               : true;
             const active = isAvailable && filter.sources.includes(source);
             return (
+              // axe `color-contrast` (odbior G06, 07_MY_WORK_AGENT): opacity-70
+              // na przycisku mnozyla sie z juz-zgodnym text-slate-500 (4.76:1)
+              // i text-blue-600 (5.17:1), zbijajac oba ponizej 4,5:1 — ten sam
+              // ksztalt awarii co PreviewAIHintStrip/AgentWorkshopPalette
+              // (opacity x kolor). Przycisk zostaje w pelni klikalny mimo
+              // "niedostepne" wygladu, wiec tekst musi zostac czytelny.
               <button
                 key={source}
                 onClick={() => toggleSource(source)}
                 className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
                   !isAvailable && isExternalSource
-                    ? 'cursor-pointer text-slate-500 dark:text-slate-400 opacity-70'
+                    ? 'cursor-pointer text-slate-500 dark:text-slate-400'
                     : active
                       ? 'text-slate-800 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 line-through'
@@ -284,7 +294,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
           {t('myWork.calendarSidebar.ownership', 'Ownership')}
         </h4>
         <div className="space-y-1.5">
