@@ -5,30 +5,31 @@ import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { validateOrgMembership } from '../../middleware/auth.middleware.js';
+import { createModuleGate } from '../../middleware/betaGate.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
-import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 import { TARGET_KINDS } from '../../services/artifactHandoff/handoffSpineService.js';
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import { ChatHandoffError } from '../../services/chatHandoff/chatHandoffService.js';
 import * as chatHandoffService from '../../services/chatHandoff/chatHandoffService.js';
-import { GovernedSnapshotBindingError } from '../../services/organizationContext/governedSnapshotConsumerBindingService.js';
-import {
-  ChatTargetOwnerIngressError,
-  claimNextChatOwnerIngress,
-  claimChatOwnerIngress,
-  completeChatOwnerIngress,
-  deliverApprovedChatProposal,
-} from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
 import {
   ChatTargetMappingError,
   materializeClaimedChatTarget,
 } from '../../services/chatHandoff/chatTargetMappingService.js';
+import {
+  ChatTargetOwnerIngressError,
+  claimChatOwnerIngress,
+  claimNextChatOwnerIngress,
+  completeChatOwnerIngress,
+  deliverApprovedChatProposal,
+} from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
+import { GovernedSnapshotBindingError } from '../../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 
 const router = Router();
 
@@ -303,6 +304,38 @@ router.post(
  * digest_stale -> 409, digest_mismatch -> 422, project_not_found -> 404,
  * not_org_member -> 403, case_access_denied -> 404.
  */
+
+/**
+ * ★ BRAMKA MODUŁU NA PODŚCIEŻCE (a nie na całym `/api/v8/chat`).
+ *
+ * `MODULE_CASE_WORKSPACE` jest 'closed' w SSOT
+ * (`server/src/sharedRuntime/utils/betaMenuStatus.ts`), a te trasy są REALNĄ
+ * ścieżką powstania Zlecenia z rozmowy — poza mountem `/api/v8/case-workspace`,
+ * który bramkę dostał 2026-09-02. Zmierzone przed naprawą (sonda
+ * `server/src/scripts/economics-gate-probe.ts`, pozycja `chat-case-intake`,
+ * odczyt na zimno osobnym klientem pg): rola USER przechodziła propose -> confirm
+ * i dostawała 201 z wierszem w `case_core`. Bramka w menu klienta nie zasłania
+ * API.
+ *
+ * ★ DLACZEGO NIE `v8Router.use('/chat', createModuleGate(...))`: czat jest
+ * modułem OTWARTYM. Bramka na całym prefiksie wygasiłaby go dla wszystkich
+ * użytkowników bez roli admina — czyli zamieniłaby dziurę na regresję, która
+ * wygląda na sukces. Bramka stoi więc dokładnie na dwóch podścieżkach intake'u
+ * i na niczym więcej; rodzeństwo pod tym samym `/conversations/:id/…`
+ * (handoff-proposals) i reszta czatu przechodzą bez zmian — mierzone
+ * obserwacjami `anti-extinction-chat-*` w sondzie.
+ *
+ * ★ `verifyToken` stoi wyżej, na całym `v8Router` (`routes/v8/index.ts`), więc
+ * bramka widzi realną rolę. Bez tego negatyw byłby zielony (403), ale i
+ * właściciel dostawałby 403 — zmierzony wczoraj kształt fałszywego sukcesu.
+ *
+ * ★ `router.use` MUSI stać PRZED rejestracją tras poniżej (Express dopasowuje
+ * warstwy w kolejności rejestracji) i obejmuje także trasy dołożone w
+ * przyszłości pod tymi prefiksami.
+ */
+const caseIntakeModuleGate = createModuleGate('MODULE_CASE_WORKSPACE');
+router.use('/conversations/:conversationId/case-intake', caseIntakeModuleGate);
+router.use('/case-intake', caseIntakeModuleGate);
 
 const intakeClosureTypeEnum = z.enum([
   'DELIVERY_COMPLETED',

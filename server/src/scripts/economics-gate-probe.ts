@@ -47,15 +47,20 @@ for (const [name, expected] of Object.entries(REQUIRED_ENV)) {
 const DATABASE_URL = process.env.DATABASE_URL || '';
 assert.match(
   DATABASE_URL,
-  /^postgresql:\/\/cx:cx@127\.0\.0\.1:(6278|6288)\/(cxecon|cxbramki)$/,
+  /^postgresql:\/\/cx:cx@127\.0\.0\.1:(6278|6288|6294)\/(cxecon|cxbramki|cxbramki2)$/,
   'DATABASE_URL must target a disposable local gate database'
 );
 assert.ok(process.env.JWT_SECRET, 'JWT_SECRET must be set');
 
 const port = Number(process.env.PORT || '5292');
 assert.ok(
-  port === 5282 || port === 5283 || port === 5292 || port === 5293,
-  'Harness may only use ports 5282/5283/5292/5293'
+  port === 5282 ||
+    port === 5283 ||
+    port === 5292 ||
+    port === 5293 ||
+    port === 5310 ||
+    port === 5311,
+  'Harness may only use ports 5282/5283/5292/5293/5310/5311'
 );
 
 const PASSWORD = 'EconGate-Local-Only-Password-1';
@@ -184,6 +189,44 @@ interface Position {
   okStatus: number;
 }
 
+/**
+ * Pełny przepływ intake (propose -> confirm digestem) na dowolnej z dwóch
+ * powierzchni. Zwraca odpowiedź PIERWSZEGO kroku, jeśli został zablokowany —
+ * dzięki temu negatyw pokazuje realny status bramki, a nie błąd wtórny.
+ *
+ * `case_name` powstaje z `goal` (fallback `deriveFallbackCaseName`), więc
+ * marker w `goal` jest tym, czego szukamy odczytem na zimno w `case_core`.
+ */
+async function intakeFlow(args: {
+  proposePath: (conversationId: string) => string;
+  proposeBody: (workOrder: Json) => Json;
+  confirmPath: (conversationId: string) => string;
+  who: Identity;
+  marker: string;
+  projectId: string;
+}): Promise<{ status: number; body: Json }> {
+  const conversationId = args.marker.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  const workOrder: Json = {
+    projectId: args.projectId,
+    goal: args.marker,
+    scope: ['gate probe scope'],
+    expectedOutcome: 'gate probe expected outcome',
+    contractedClosureType: 'DELIVERY_COMPLETED',
+  };
+  const proposed = await requestJson('POST', args.proposePath(conversationId), {
+    token: args.who.token,
+    body: args.proposeBody(workOrder),
+  });
+  const digest = proposed.body?.data?.workOrderDigest;
+  if (proposed.status !== 200 || typeof digest !== 'string') {
+    return proposed;
+  }
+  return requestJson('POST', args.confirmPath(conversationId), {
+    token: args.who.token,
+    body: { confirmedDigest: digest },
+  });
+}
+
 const POSITIONS: Position[] = [
   {
     id: 'economics',
@@ -248,6 +291,63 @@ const POSITIONS: Position[] = [
           caseName: marker,
           contractedClosureType: 'DELIVERY_COMPLETED',
         },
+      }),
+    cold: (who, marker) =>
+      coldCount(
+        'SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1 AND case_name = $2',
+        [who.organizationId, marker]
+      ),
+  },
+  // ── Intake Case'a z CZATU ─────────────────────────────────────────────────
+  // Realna ścieżka powstania Zlecenia z rozmowy, POZA mountem
+  // `/api/v8/case-workspace`. Bramka nie może stanąć na całym `/api/v8/chat`
+  // (wygasiłaby czat — moduł OTWARTY), więc stoi na podścieżce
+  // `/conversations/:conversationId/case-intake` + `/case-intake`.
+  // Przepływ pełny: propose (200) -> confirm digestem (201 + wiersz w case_core).
+  {
+    id: 'chat-case-intake',
+    mount: '/api/v8/chat/.../case-intake',
+    moduleId: 'MODULE_CASE_WORKSPACE',
+    okStatus: 201,
+    write: (who, marker, projectId) =>
+      intakeFlow({
+        proposePath: (conversationId) =>
+          `/api/v8/chat/conversations/${conversationId}/case-intake/turn`,
+        proposeBody: (workOrder) => ({
+          message: 'Przygotuj raport z wdrozenia i plan dzialan',
+          workOrder,
+        }),
+        confirmPath: (conversationId) =>
+          `/api/v8/chat/conversations/${conversationId}/case-intake/confirm`,
+        who,
+        marker,
+        projectId,
+      }),
+    cold: (who, marker) =>
+      coldCount(
+        'SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1 AND case_name = $2',
+        [who.organizationId, marker]
+      ),
+  },
+  // ── Intake Case'a z TERESY ────────────────────────────────────────────────
+  // Bliźniak powyższego na osobnym prefiksie `/api/v8/teresa/case-intake`.
+  // Prefiks jest czysty (żadna inna trasa Teresy go nie używa), więc bramka
+  // stoi na `router.use('/case-intake', …)` w teresa.routes.ts.
+  {
+    id: 'teresa-case-intake',
+    mount: '/api/v8/teresa/case-intake',
+    moduleId: 'MODULE_CASE_WORKSPACE',
+    okStatus: 201,
+    write: (who, marker, projectId) =>
+      intakeFlow({
+        proposePath: (conversationId) =>
+          `/api/v8/teresa/case-intake/conversations/${conversationId}/summary`,
+        proposeBody: (workOrder) => workOrder,
+        confirmPath: (conversationId) =>
+          `/api/v8/teresa/case-intake/conversations/${conversationId}/confirm`,
+        who,
+        marker,
+        projectId,
       }),
     cold: (who, marker) =>
       coldCount(
@@ -342,21 +442,22 @@ async function run(): Promise<void> {
     { id: 'case-workspace-subtree-read', method: 'GET', path: '/api/v8/case-workspace/cases' },
     { id: 'economics-read', method: 'GET', path: '/api/economics/analyses' },
     { id: 'conclusions-read', method: 'GET', path: '/api/conclusions' },
-    // Reszta rodziny MODULE_CASE_WORKSPACE: intake Case'a z powierzchni CHATU
-    // i TERESY (osobne prefiksy, poza mountem /case-workspace). Mierzymy
-    // wyłącznie osiągalność (brak BETA_LOCKED) — naprawa wymaga własnej pary
-    // dowodów na pełnym przepływie intake, więc zostaje w rejestrze.
+    // Odczytowe rodzeństwo intake'u (te same podścieżki, metoda GET) — musi
+    // być zamknięte razem z zapisem, inaczej bramka zasłania tylko drzwi.
     {
-      id: 'chat-case-intake',
-      method: 'POST',
-      path: '/api/v8/chat/conversations/gateprobe-x/case-intake/turn',
-      body: { message: 'probe' },
+      id: 'chat-case-intake-read',
+      method: 'GET',
+      path: '/api/v8/chat/conversations/gateprobe-x/case-intake/work-order',
     },
     {
-      id: 'teresa-case-intake',
-      method: 'POST',
-      path: '/api/v8/teresa/case-intake/conversations/gateprobe-x/confirm',
-      body: {},
+      id: 'chat-case-intake-case-read',
+      method: 'GET',
+      path: '/api/v8/chat/case-intake/cases/gateprobe-x/conversation',
+    },
+    {
+      id: 'teresa-case-intake-read',
+      method: 'GET',
+      path: '/api/v8/teresa/case-intake/conversations/gateprobe-x/work-order',
     },
     // Kontrola ANTY-WYGASZENIOWA: powierzchnie modułów OTWARTYCH, które
     // sąsiadują z naprawionymi mountami, muszą dalej działać dla roli USER.
@@ -366,6 +467,18 @@ async function run(): Promise<void> {
       path: '/api/artifact-conversions',
     },
     { id: 'anti-extinction-my-work', method: 'GET', path: '/api/my-work/inbox' },
+    // ★ Kluczowa kontrola dla bramek na PODŚCIEŻKACH: rodzeństwo pod tym samym
+    // prefiksem `/conversations/:id/…` i reszta czatu/Teresy (moduły OTWARTE)
+    // nie mogą zostać złapane przez bramkę intake'u.
+    { id: 'anti-extinction-chat-snapshots', method: 'GET', path: '/api/v8/chat/snapshots' },
+    { id: 'anti-extinction-chat-handoffs', method: 'GET', path: '/api/v8/chat/handoffs' },
+    {
+      id: 'anti-extinction-chat-conversation-sibling',
+      method: 'GET',
+      path: '/api/v8/chat/conversations/gateprobe-x/handoff-proposals',
+    },
+    { id: 'anti-extinction-teresa-contract', method: 'GET', path: '/api/v8/teresa/contract' },
+    { id: 'anti-extinction-teresa-proposals', method: 'GET', path: '/api/v8/teresa/proposals' },
   ];
   out.observations = {};
   for (const o of OBSERVED) {
