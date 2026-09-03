@@ -36,6 +36,14 @@ import { TableWithPreviewLayout } from '../../src/components/shared/TableWithPre
 const params = new URLSearchParams(window.location.search);
 const variant = params.get('variant') === 'initiative' ? 'initiative' : 'session';
 const openKebabOnLoad = params.get('kebab') === '1';
+// i18n-reszta 20260903: było przybite `isPolish` (JSX boolean shorthand =
+// zawsze `true`), niezależnie od `?lang=` — PL i EN renderowały identyczny
+// DOM (pomiar nadzorcy 03.09, interview-preview-canon). Ten sam wzorzec co
+// gospodarz aplikacji (`InterviewHub.tsx:602`: `i18n.language?.startsWith('pl')`),
+// tu liczony z parametru URL zamiast z `i18n.language`, bo `dev-render/main.tsx`
+// już wcześniej ustawia `i18n.language` z tego samego `?lang=` (linia ok. 2509)
+// — obie ścieżki dają ten sam wynik.
+const isPolish = params.get('lang') !== 'en';
 
 async function copyToClipboard(text: string) {
   try {
@@ -97,7 +105,7 @@ function SessionScreen() {
             <InterviewSessionPreviewBody
               session={mockSession}
               ownerName="Piotr Wiśniewski"
-              isPolish
+              isPolish={isPolish}
               statusConfig={{ label: { pl: 'Zatwierdzony', en: 'Approved' } }}
               progress={100}
               detailsExpanded={detailsExpanded}
@@ -111,25 +119,39 @@ function SessionScreen() {
           renderPreviewFooter={() => (
             <InterviewSessionPreviewFooter
               session={mockSession}
-              isPolish
+              isPolish={isPolish}
               canRunAi
-              aiHints={['Podsumuj', 'Ryzyka', 'Następne kroki']}
+              aiHints={
+                isPolish
+                  ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                  : ['Summarize', 'Risks', 'Next steps']
+              }
               onRunAiHint={() => {}}
               relations={[
                 // Etykiety 1:1 z produkcją (InterviewHub.tsx ~L7092: `t('interview.hub.assignee3')`
                 // = "Przypisany", nie "Assignee") — harness miał literalny angielski napis w
                 // polskich mock-danych, co wyglądało jak defekt produktu, a było artefaktem
                 // przyrządu pomiarowego (mock nie zgodny z i18n, który realnie renderuje ekran).
-                { label: 'Przypisany: Ala Kowalska', tone: 'text-slate-600 dark:text-slate-300' },
+                //
+                // i18n-reszta 20260903: te trzy etykiety były na sztywno po polsku,
+                // niezależnie od `?lang=` — dopisany wariant EN (dane osobowe/nazwy
+                // własne — Ala Kowalska, szablon, organizacja — zostają nietknięte,
+                // tłumaczony jest wyłącznie prefiks pola).
                 {
-                  label: 'Szablon: Diagnoza jakości przekazania klienta',
+                  label: isPolish ? 'Przypisany: Ala Kowalska' : 'Assignee: Ala Kowalska',
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
+                {
+                  label: isPolish
+                    ? 'Szablon: Diagnoza jakości przekazania klienta'
+                    : 'Template: Diagnoza jakości przekazania klienta',
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
                 {
                   // Poprzednia wartość "W3 Interview Owner Review" była nazwą wewnętrznego
                   // zadania roboczego (fala 3, przegląd modułu Wywiad), nie nazwą organizacji
                   // klienta — myliła zrzut z realną treścią produktu.
-                  label: 'Organizacja: Grupa Norden',
+                  label: isPolish ? 'Organizacja: Grupa Norden' : 'Organization: Grupa Norden',
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
               ]}
@@ -140,7 +162,9 @@ function SessionScreen() {
           )}
         >
           <div className="p-4 text-xs text-slate-600 dark:text-slate-400">
-            (Tabela Sesje — poza zakresem tego zrzutu; patrz preview po prawej.)
+            {isPolish
+              ? '(Tabela Sesje — poza zakresem tego zrzutu; patrz preview po prawej.)'
+              : '(Sessions table — out of scope for this screenshot; see preview on the right.)'}
           </div>
         </TableWithPreviewLayout>
       </div>
@@ -200,12 +224,12 @@ function InitiativeScreen() {
                 priority: mockInitiative.priority,
                 description: mockInitiative.description,
               }}
-              statusLabel="Szkic"
+              statusLabel={isPolish ? 'Szkic' : 'Draft'}
               priorityLevel="medium"
               hasSourceInsight
               dateStr="25.08.2026"
               promoted={false}
-              isPolish
+              isPolish={isPolish}
               detailsExpanded={detailsExpanded}
               onToggleDetailsExpanded={() => setDetailsExpanded((v) => !v)}
               onCopyDetails={() => copyToClipboard(mockInitiative.description)}
@@ -214,22 +238,30 @@ function InitiativeScreen() {
           )}
           renderPreviewFooter={() => (
             <InterviewInitiativePreviewFooter
-              isPolish
+              isPolish={isPolish}
               status={mockInitiative.status}
               canReview
               relations={[
+                // i18n-reszta 20260903: te trzy etykiety były na sztywno po polsku,
+                // niezależnie od `?lang=` — dopisany wariant EN (patrz uwaga
+                // analogiczna w SessionScreen wyżej).
                 {
-                  label: 'Wniosek: Przekazanie klienta ze sprzedaży do wdrożenia',
+                  label: isPolish
+                    ? 'Wniosek: Przekazanie klienta ze sprzedaży do wdrożenia'
+                    : 'Insight: Customer hand-off from sales to delivery',
                   tone: 'text-amber-600 dark:text-amber-300',
                 },
                 {
                   // Był surowy enum "medium" zamiast etykiety — ta sama pułapka co w
                   // InterviewHub.tsx (naprawione tam osobno, ZGŁASZAM: literówka
                   // "Sredni" bez ogonka w public/locales/pl/translation.json:7024).
-                  label: 'Priorytet: Średni',
+                  label: isPolish ? 'Priorytet: Średni' : 'Priority: Medium',
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
-                { label: 'Aktualizacja: 25.08.2026', tone: 'text-slate-600 dark:text-slate-300' },
+                {
+                  label: isPolish ? 'Aktualizacja: 25.08.2026' : 'Updated: 25.08.2026',
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
               ]}
               onSendToReview={() => {}}
               onOpenInModule={() => {}}
@@ -238,7 +270,9 @@ function InitiativeScreen() {
           )}
         >
           <div className="p-4 text-xs text-slate-600 dark:text-slate-400">
-            (Tabela Inicjatywy — poza zakresem tego zrzutu; patrz preview po prawej.)
+            {isPolish
+              ? '(Tabela Inicjatywy — poza zakresem tego zrzutu; patrz preview po prawej.)'
+              : '(Initiatives table — out of scope for this screenshot; see preview on the right.)'}
           </div>
         </TableWithPreviewLayout>
       </div>

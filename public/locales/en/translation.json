@@ -9501,7 +9501,11 @@
       "applied": "Options were saved and reloaded.",
       "noPressure": "No overload — there is nothing to resolve",
       "conflict": "The scenario changed. Refresh the data before trying again.",
-      "failed": "Options could not be proposed."
+      "failed": "Options could not be proposed.",
+      "header": "Load",
+      "subtitle": "Ranges show the state of knowledge and evidence, not false precision of resource utilization.",
+      "newAnalysis": "New analysis",
+      "openTools": "Open load tools"
     },
     "planScenario": {
       "status": {
@@ -12114,7 +12118,14 @@
       "team": "Team",
       "reports": "Reporting",
       "peopleChange": "Management",
-      "summary": "Dashboard"
+      "summary": "Dashboard",
+      "moduleBar": {
+        "list": "Deliveries",
+        "work": "Work",
+        "resources": "Resources",
+        "control": "Control",
+        "reports": "Reports"
+      }
     },
     "manager": {
       "noInitiatives": "No executing initiatives",
@@ -12492,7 +12503,8 @@
       "weeksLeft": "w left"
     },
     "filters": {
-      "all": "All"
+      "all": "All",
+      "allCases": "All deliveries"
     },
     "portfolio": {
       "onTrack": "On Track",
@@ -12554,7 +12566,8 @@
       "export": "Export",
       "report": "Report",
       "aiChat": "AI Chat",
-      "copyLink": "Copy link"
+      "copyLink": "Copy link",
+      "newMilestone": "New milestone"
     },
     "raidLog": {
       "title": "RAID Log",
@@ -13027,6 +13040,55 @@
       "loading": "Loading prediction…",
       "empty": "No high-risk initiatives — everything on track.",
       "suggestedActions": "Suggested actions"
+    },
+    "control": {
+      "columns": {
+        "title": "Intervention",
+        "status": "Status",
+        "owner": "Owner",
+        "authority": "Approver",
+        "slaAt": "Review deadline"
+      },
+      "signalColumns": {
+        "title": "Signal",
+        "rule": "Type",
+        "source": "Source",
+        "severity": "Severity",
+        "occurrences": "Occurrences",
+        "updatedAt": "Updated"
+      },
+      "actions": {
+        "addSignal": "Add signal",
+        "prepareIntervention": "Prepare intervention"
+      }
+    },
+    "work": {
+      "columns": {
+        "title": "Work item",
+        "kind": "Type",
+        "status": "Status",
+        "owner": "Owner / decision maker",
+        "dueAt": "Due / SLA"
+      }
+    },
+    "resources": {
+      "columns": {
+        "person": "Person / team / role",
+        "period": "Period",
+        "availability": "Availability",
+        "demand": "Allocated",
+        "remaining": "Remaining",
+        "load": "Load range",
+        "skillMatch": "Skill match",
+        "affectedWork": "Affected work",
+        "cost": "Cost / forecast",
+        "conflict": "Conflict",
+        "freshness": "Freshness",
+        "nextAction": "Next action"
+      },
+      "actions": {
+        "proposeAllocation": "Propose allocation"
+      }
     }
   },
   "benefits": {

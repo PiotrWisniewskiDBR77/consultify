@@ -2186,27 +2186,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     () => [
       {
         id: 'list' as ModuleTab,
-        label: 'Realizacje',
+        label: t('execution.tabs.moduleBar.list', 'Deliveries'),
         icon: <LayoutDashboard size={16} />,
       },
       {
         id: 'work' as ModuleTab,
-        label: 'Praca',
+        label: t('execution.tabs.moduleBar.work', 'Work'),
         icon: <ClipboardList size={16} />,
       },
       {
         id: 'resources' as ModuleTab,
-        label: 'Zasoby',
+        label: t('execution.tabs.moduleBar.resources', 'Resources'),
         icon: <Users size={16} />,
       },
       {
         id: 'control' as ModuleTab,
-        label: 'Sterowanie',
+        label: t('execution.tabs.moduleBar.control', 'Control'),
         icon: <Target size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
-        label: 'Raporty',
+        label: t('execution.tabs.moduleBar.reports', 'Reports'),
         icon: <FileText size={16} />,
       },
     ],

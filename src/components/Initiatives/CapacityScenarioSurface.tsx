@@ -805,9 +805,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   return (
     <section aria-label="Capacity scenarios" className="flex h-full min-h-0 flex-col p-4">
       <header className="mb-3">
-        <h2 className="font-semibold">Obciążenie</h2>
+        <h2 className="font-semibold">{t('initiatives.capacityAdvisor.header', 'Load')}</h2>
         <p className="text-xs text-c-text-muted">
-          Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.
+          {t(
+            'initiatives.capacityAdvisor.subtitle',
+            'Ranges show the state of knowledge and evidence, not false precision of resource utilization.'
+          )}
         </p>
       </header>
       <div className="mb-3 flex justify-end">
@@ -816,7 +819,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           className="btn-primary"
           onClick={() => setShowCreate((open) => !open)}
         >
-          <Plus size={15} /> Nowa analiza
+          <Plus size={15} /> {t('initiatives.capacityAdvisor.newAnalysis', 'New analysis')}
         </button>
       </div>
       {showCreate && (
@@ -891,7 +894,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           disabled={!selectedId}
           onClick={showWorkspace}
         >
-          <Eye size={15} /> Otwórz narzędzia obciążenia
+          <Eye size={15} /> {t('initiatives.capacityAdvisor.openTools', 'Open load tools')}
         </button>
       </div>
       {/*
@@ -916,7 +919,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             title={row.title}
             onClose={() => setSelectedConstraintId(null)}
             onOpenFull={showWorkspace}
-            openLabel="Otwórz narzędzia obciążenia"
+            openLabel={t('initiatives.capacityAdvisor.openTools', 'Open load tools')}
             meta={{
               pills: [
                 { label: rowKindLabel[row.kind] ?? row.kind, tone: 'neutral' },
@@ -954,7 +957,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                 {
                   id: 'open-workspace',
                   variant: 'neutral',
-                  label: 'Otwórz narzędzia obciążenia',
+                  label: t('initiatives.capacityAdvisor.openTools', 'Open load tools'),
                   icon: Eye,
                   shortcut: 'O',
                   onClick: showWorkspace,
@@ -1053,7 +1056,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             primary: [
               {
                 id: 'open-workspace',
-                label: 'Otwórz narzędzia obciążenia',
+                label: t('initiatives.capacityAdvisor.openTools', 'Open load tools'),
                 icon: Eye,
                 onClick: showWorkspace,
               },
