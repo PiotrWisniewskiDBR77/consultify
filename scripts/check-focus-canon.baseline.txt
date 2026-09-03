@@ -9,7 +9,7 @@
 # nowa regresje.
 #
 # WYGENEROWANO: 2026-09-03 (scripts/check-focus-canon.sh --update-baseline)
-# RAZEM: 227 wystapien w 112 plikach
+# RAZEM: 218 wystapien w 111 plikach
 #
 # Posortowane po sciezce (stabilny diff). Dlug maleje = wiersze znikaja / liczby spadaja.
 1	src/components/AIChat/AgentAudit/AgentSuggestionCard.tsx
@@ -71,7 +71,6 @@
 3	src/components/SuperAdmin/ContentCategoriesManager.tsx
 5	src/components/SuperAdmin/ContentFilters.tsx
 5	src/components/SuperAdmin/ContentSearch.tsx
-9	src/components/SuperAdmin/FeatureFlagsPanel.tsx
 1	src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx
 4	src/components/SuperAdmin/PlaybookTemplateComments.tsx
 5	src/components/SuperAdmin/PlaybookTemplateReviews.tsx
