@@ -26,6 +26,28 @@ Rekomendacja dla nadzorcy: osobno licencjonować zmianę runtime/store; nie uzna
 Stan: zacommitowano częściowo w `b65776b7e1`.  
 Czy kontynuowałem pozostałe pozycje: TAK.
 
+## R6 — raport końcowy
+
+Stan dyżuru: **CZĘŚCIOWE**. R1–R2 gotowe, R3 dostarcza bezpieczny prototyp packa za flagą OFF, R4–R5 zatrzymane z dowodem braku runtime siedmiu kroków.
+
+Testy przed/po porównano pełnymi nazwami. Dodano dokładnie trzy przypadki: brak zmiennej = OFF, jawne OFF i ON = siedem faz z dwiema bramami. Nie zniknęła żadna nazwa. Artefakty poza repo:
+
+- `przed.json` SHA-256 `2a2afd765209f2ac915b4945ab0509f8baa4bacae68390dc5bdd987332c4a341`;
+- `po.json` SHA-256 `c3cd5142eeb70d85f9f065ad4bd9fee7ea30e3a56d559e7256a4e3ae7b579ed2`;
+- `przed-nazwy.txt` SHA-256 `9f3106e3e88d87d102da7061e11c83515dfbefeb0666f395abfd68c5834f36fa`;
+- `po-nazwy.txt` SHA-256 `f94f8d9726628a480f320923c0379c5b9bd5e86790ef1e9eb4435f8870930f44`.
+
+Pułapki: pakiet flagi jest czysto jednostkowy, nie otwiera bazy i nie przechodzi przez V8/auth/results middleware; uruchomiono go z `RUN_DB_TESTS=0 MOCK_DB=true --retry=0`. Nie jest dowodem HTTP, zapisu ani wznawialności.
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+### Twierdzenia niezweryfikowane
+
+- siedmioetapowa sesja zapisuje i wznawia oba nowe kroki;
+- ekran produkcyjny pokazuje nowe kroki w którymkolwiek motywie lub języku;
+- model dwóch dodatkowych etapów pasuje bez zmian do pozostałych 18 paczek;
+- określenie §6.16 „ostatni” miało znaczyć „ostatni przed Review”.
+
 ## STOP — R5
 
 Rodzaj: MERYTORYCZNY  
