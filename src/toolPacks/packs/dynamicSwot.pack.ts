@@ -12,7 +12,8 @@
  * wprowadza równoległej nomenklatury.
  */
 
-import { type ToolPack } from '../contract';
+import { isDynamicSwotSevenStagesEnabled } from '@/utils/dynamicSwotSevenStagesFlag';
+import { type PackPhase, type PackQuestion, type ToolPack } from '../contract';
 
 export const dynamicSwotPack: ToolPack = {
   toolType: 'dynamic-swot',
@@ -299,3 +300,51 @@ export const dynamicSwotPack: ToolPack = {
       'Każdy ruch podaje: wybrane, odrzucone i dlaczego (W2). Ruch bez odrzuconej alternatywy nie przechodzi.',
   },
 };
+
+const WAVE_2_PHASES: PackPhase[] = [
+  {
+    id: 'recommendations',
+    title: { pl: 'Rekomendacje', en: 'Recommendations' },
+    goal: { pl: 'Złożyć ugruntowany kierunek i alternatywy.', en: 'Compose a grounded direction and alternatives.' },
+    whatGoodLooksLike: 'Kierunek, alternatywy, trade-offy i działania zachowują lineage do zatwierdzonej syntezy.',
+    evidenceToAskFor: 'Zaakceptowane napięcia i drabinka fakt → interpretacja → implikacja z src/config/swot/swotInsightStaircase.ts.',
+    completionCriterion: 'Konsultant jawnie zatwierdził kierunek; konkluzja spełnia reguły src/config/swot/conclusionPrompts.ts.',
+  },
+  {
+    id: 'review',
+    title: { pl: 'Przegląd', en: 'Review' },
+    goal: { pl: 'Zatwierdzić albo zwrócić wynik z komentarzem.', en: 'Approve or return the result with a comment.' },
+    whatGoodLooksLike: 'Uprawniona osoba podejmuje jawną decyzję bez automatycznej promocji obiektów.',
+    evidenceToAskFor: 'Wynik bram jakości, dowodów i zaakceptowanych pozycji z src/config/swot/swotAcceptGate.ts.',
+    completionCriterion: 'Jawne approve albo return-with-comment zapisane w sesji.',
+  },
+];
+
+const WAVE_2_QUESTIONS: PackQuestion[] = [
+  {
+    id: 'swot-recommendations-direction', phaseId: 'recommendations', answerType: 'choice',
+    prompt: { pl: 'Który kierunek zatwierdzasz i jakie odrzucasz?', en: 'Which direction do you approve, and which do you reject?' },
+    challengeRule: 'Nie przepuszczaj rekomendacji bez lineage, trade-offu i odrzuconej alternatywy.',
+  },
+  {
+    id: 'swot-review-decision', phaseId: 'review', answerType: 'choice',
+    prompt: { pl: 'Zatwierdzasz wynik czy zwracasz go z komentarzem?', en: 'Do you approve the result or return it with a comment?' },
+    challengeRule: 'Brak jawnej decyzji uprawnionej osoby nie kończy Review.',
+  },
+];
+
+/** OFF zachowuje dokładnie dotychczasowy obiekt; ON dodaje tylko dwie fazy i ich bramy. */
+export function getDynamicSwotPackForCurrentFlags(): ToolPack {
+  if (!isDynamicSwotSevenStagesEnabled()) return dynamicSwotPack;
+  const outputsIndex = dynamicSwotPack.phases.findIndex((phase) => phase.id === 'outputs');
+  return {
+    ...dynamicSwotPack,
+    phases: [
+      ...dynamicSwotPack.phases.slice(0, outputsIndex),
+      WAVE_2_PHASES[0],
+      dynamicSwotPack.phases[outputsIndex],
+      WAVE_2_PHASES[1],
+    ],
+    questions: [...dynamicSwotPack.questions, ...WAVE_2_QUESTIONS],
+  };
+}

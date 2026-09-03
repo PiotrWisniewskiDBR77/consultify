@@ -20,7 +20,7 @@ import type { ToolType } from '@/store/useToolStore';
 import { getToolReadinessRecord } from './readiness/manifests';
 
 // --- 19 packów spisanych (Dynamic SWOT + 18 z fali treści) ------------------
-import { dynamicSwotPack } from './packs/dynamicSwot.pack';
+import { getDynamicSwotPackForCurrentFlags } from './packs/dynamicSwot.pack';
 import { marketForcesPack } from './packs/marketForces.pack';
 import { growthPathsPack } from './packs/growthPaths.pack';
 import { valueChainPack } from './packs/valueChain.pack';
@@ -42,7 +42,7 @@ import { processAutomationPack } from './packs/processAutomation.pack';
 
 /** Packi spisane z realnych silników. */
 const AUTHORED_PACKS: ToolPack[] = [
-  dynamicSwotPack,
+  getDynamicSwotPackForCurrentFlags(),
   marketForcesPack,
   growthPathsPack,
   valueChainPack,
