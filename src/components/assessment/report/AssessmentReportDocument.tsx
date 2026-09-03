@@ -495,7 +495,10 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         render: (row) => (
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-c-text">{row.unitName as string}</div>
-            <div className="truncate text-[11px] font-mono text-c-text-muted">{row.unitId as string}</div>
+            {/* c-text-secondary, nie c-text-muted: renderuje się też na podbarwionym
+                tle wiersza zaznaczonego — 4.21:1 zamiast 4,5:1 (axe: color-contrast,
+                zmierzone na assessment-output-report po otwarciu podglądu). */}
+            <div className="truncate text-[11px] font-mono text-c-text-secondary">{row.unitId as string}</div>
           </div>
         ),
       },
@@ -533,8 +536,13 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         sortable: true,
         render: (row) => {
           const gap = row.gap as number | null;
-          if (gap === null || gap === undefined) return <span className="text-c-text-muted">—</span>;
-          const tone = gap > 0 ? 'text-c-danger' : 'text-c-success';
+          if (gap === null || gap === undefined) return <span className="text-c-text-secondary">—</span>;
+          // `text-c-danger` renderuje się też na podbarwionym tle wiersza
+          // zaznaczonego — 4.12:1 (light) / 4.47:1 (dark) zamiast 4,5:1 (axe:
+          // color-contrast, zmierzone na assessment-output-report po otwarciu
+          // podglądu); danger-700/danger-300 (skala Tailwind) mają margines na
+          // obu tłach bez zmiany globalnego tokenu --c-danger.
+          const tone = gap > 0 ? 'text-danger-700 dark:text-danger-300' : 'text-c-success';
           return <span className={`text-xs font-semibold tabular-nums ${tone}`}>{gap > 0 ? `+${gap}` : gap}</span>;
         },
       },

@@ -65,8 +65,13 @@ export const ProgressCell: React.FC<ProgressCellProps> = ({
           style={{ width: `${pct}%` }}
         />
       </div>
+      {/* c-text-secondary, nie c-text-muted: muted jest kalibrowany na --c-bg,
+          ale ta komórka renderuje się też na podbarwionym tle wiersza
+          zaznaczonego (bg-state-selected) — muted dawał tam 3.98:1 zamiast
+          4,5:1 (axe: color-contrast, zmierzone na interview-sessions-status
+          po otwarciu podglądu). secondary ma bezpieczny margines na obu tłach. */}
       {showLabel && (
-        <span className="shrink-0 tabular-nums text-[11px] text-c-text-muted">{pct}%</span>
+        <span className="shrink-0 tabular-nums text-[11px] text-c-text-secondary">{pct}%</span>
       )}
     </div>
   );

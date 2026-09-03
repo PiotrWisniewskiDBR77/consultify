@@ -297,7 +297,11 @@ const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
         style={{ width: `${progress}%` }}
       />
     </div>
-    <span className="text-xs text-slate-500 dark:text-slate-400 w-8">{progress}%</span>
+    {/* slate-600, nie slate-500: ta komórka renderuje się też na podbarwionym
+        tle wiersza zaznaczonego — slate-500 dawał tam ~4.0-4.3:1 zamiast 4,5:1
+        (axe: color-contrast, zmierzone na kilku ekranach Assessment po
+        otwarciu podglądu; ten sam komponent renderuje się szeroko w apce). */}
+    <span className="text-xs text-slate-600 dark:text-slate-400 w-8">{progress}%</span>
   </div>
 );
 
@@ -1702,7 +1706,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         ) : column.id === 'progress' ? (
                           <ProgressBar progress={row.progress} />
                         ) : column.id === 'updatedAt' ? (
-                          <span className="text-sm text-slate-500 dark:text-slate-400">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
                             {formatRelativeTime(row.updatedAt)}
                           </span>
                         ) : isEmptyCell(row[column.id]) ? (

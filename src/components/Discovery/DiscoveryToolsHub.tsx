@@ -2214,10 +2214,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const d = new Date(row?.updatedAt);
           if (Number.isNaN(d.getTime())) {
-            return <span className="text-sm text-c-text-muted">—</span>;
+            return <span className="text-sm text-c-text-secondary">—</span>;
           }
           return (
-            <span className="text-sm text-c-text-muted">
+            <span className="text-sm text-c-text-secondary">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',

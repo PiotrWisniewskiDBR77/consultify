@@ -350,7 +350,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                     <ArrowRight size={14} />
                   </button>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
+                {/* slate-600, nie slate-500: renderuje się też na podbarwionym tle
+                    wiersza zaznaczonego — 4.21:1 zamiast 4,5:1 (axe: color-contrast,
+                    zmierzone na assessment-initiatives-table po otwarciu podglądu). */}
+                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-1">
                   {initiative.description}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mt-1">

@@ -332,7 +332,10 @@ export const AssessmentLibraryTab: React.FC = () => {
         render: (row: any) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-c-text">{row.name}</span>
-            <span className="font-mono text-[11px] font-bold text-c-text-muted">{row.id}</span>
+            {/* c-text-secondary, nie c-text-muted: ta komórka renderuje się też na
+                podbarwionym tle wiersza zaznaczonego — muted dawał tam 4.02:1
+                zamiast 4,5:1 (axe: color-contrast, zmierzone po otwarciu podglądu). */}
+            <span className="font-mono text-[11px] font-bold text-c-text-secondary">{row.id}</span>
           </div>
         ),
       },

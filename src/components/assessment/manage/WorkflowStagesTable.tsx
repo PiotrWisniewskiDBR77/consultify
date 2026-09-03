@@ -406,7 +406,10 @@ const StageNameCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+        {/* slate-600, nie slate-500: ta komórka renderuje się też na podbarwionym
+            tle wiersza zaznaczonego — 4.21:1 zamiast 4,5:1 (axe: color-contrast,
+            zmierzone na assessment-manage-panel po otwarciu podglądu). */}
+        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">
           {t(`assessment.workflowStages.stage.${stage.labelKey}.description`, stage.description)}
         </p>
       </div>

@@ -442,9 +442,9 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-c-text truncate">{report.name}</div>
-                <div className="text-xs text-c-text-muted truncate">{report.assessmentName}</div>
+                <div className="text-xs text-c-text-secondary truncate">{report.assessmentName}</div>
                 {report.provenance?.assessmentRunId ? (
-                  <div className="text-[10px] text-c-text-muted truncate">
+                  <div className="text-[10px] text-c-text-secondary truncate">
                     {t('assessment.reportsManagePanel.provenance.run', {
                       run: report.provenance.assessmentRunId,
                     })}
@@ -507,7 +507,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         render: (row) => {
           const report = row as unknown as Report;
           if (!report.initiativesGenerated) {
-            return <span className="text-xs text-c-text-muted">—</span>;
+            return <span className="text-xs text-c-text-secondary">—</span>;
           }
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
@@ -527,7 +527,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         render: (row) => {
           const report = row as unknown as Report;
           return (
-            <span className="text-xs text-c-text-muted">{formatReportDate(report.updatedAt)}</span>
+            <span className="text-xs text-c-text-secondary">{formatReportDate(report.updatedAt)}</span>
           );
         },
       },

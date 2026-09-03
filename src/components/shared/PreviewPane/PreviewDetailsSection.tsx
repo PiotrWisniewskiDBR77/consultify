@@ -184,9 +184,11 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* slate-400/slate-500 dawały 2.53:1 zamiast 4,5:1 (axe: color-contrast,
+              zmierzone na tools-outputs-insights-tab po otwarciu podglądu). */}
           {showWordCount && wordCount > 0 ? (
             <span
-              className="text-[10px] text-slate-400 dark:text-slate-500"
+              className="text-[10px] text-slate-600 dark:text-slate-400"
               aria-label={`${wordCount} ${t('sharedComponents.previewDetailsSection.words')}`}
             >
               ~{wordCount} {t('sharedComponents.previewDetailsSection.words')}

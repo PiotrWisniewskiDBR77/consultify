@@ -87,7 +87,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
         ),
         h(
           'span',
-          { className: 'block truncate text-xs text-c-text-muted' },
+          { className: 'block truncate text-xs text-c-text-secondary' },
           row.summary || row.description || 'Brak opisu problemu'
         )
       );
@@ -184,7 +184,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
         ),
         h(
           'span',
-          { className: 'text-c-text-muted' },
+          { className: 'text-c-text-secondary' },
           `Pewność: ${INITIATIVE_IMPACT_CONFIDENCE_LABELS[confidence] || confidence}`
         )
       );
@@ -198,7 +198,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
       const label = formatPlannedWindow((raw as InitiativeRegisterRow).plannedWindow);
       return h(
         'span',
-        { className: 'block truncate text-xs text-c-text-muted', title: label },
+        { className: 'block truncate text-xs text-c-text-secondary', title: label },
         label
       );
     },
@@ -212,7 +212,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
       const label = INITIATIVE_HEALTH_STATE_LABELS[value] || value;
       return h(
         'span',
-        { className: 'block truncate text-xs text-c-text-muted', title: label },
+        { className: 'block truncate text-xs text-c-text-secondary', title: label },
         label
       );
     },
@@ -232,7 +232,7 @@ export const createInitiativeRegisterColumns = (): TableColumn[] => [
       const relative = formatRelativeHint(value, new Date());
       return h(
         'span',
-        { className: 'text-xs tabular-nums text-c-text-muted', title: formatListDate(value, '') },
+        { className: 'text-xs tabular-nums text-c-text-secondary', title: formatListDate(value, '') },
         relative || '—'
       );
     },
