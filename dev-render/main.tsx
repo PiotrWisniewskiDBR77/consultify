@@ -409,6 +409,12 @@ const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'
 // import, :4202 mount), NIGDY dotąd niezmierzony ani niepokazany właścicielowi.
 // Patrz dev-render/screens/mywork-decisions.tsx.
 const MyWorkDecisionsScreen = React.lazy(() => import('./screens/mywork-decisions'));
+// M03 (dyżur 2026-09-03, "ekrany bez wpisu w harnessie"): MyTasksListContent
+// — widok LISTY zadań, osiągalny (MyWorkHub.tsx:159 import, :4093 mount).
+// karta-task.tsx/karta-task-pelna.tsx montują tylko pojedynczą kartę zadania
+// (Api.getPersonalTasks tam zwraca celowo []) — to osobny, dotąd nieujęty
+// ekran. Patrz dev-render/screens/mywork-tasks.tsx.
+const MyWorkTasksScreen = React.lazy(() => import('./screens/mywork-tasks'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
 const IdeaTableRecordTemplatesScreen = React.lazy(
@@ -1172,6 +1178,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '02-moja-praca — Decyzje (DecisionsPanelContent, następca 12 wycofanych kolejek decyzyjnych) — dyżur "ekrany bez wpisu" 2026-09-03',
     render: () => <MyWorkDecisionsScreen />,
+  },
+  'mywork-tasks': {
+    label:
+      '02-moja-praca — Zadania, widok LISTY (MyTasksListContent, różny od pojedynczej karty karta-task.tsx) — dyżur "ekrany bez wpisu" 2026-09-03',
+    render: () => <MyWorkTasksScreen />,
   },
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
