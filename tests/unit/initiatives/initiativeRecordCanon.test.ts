@@ -70,3 +70,17 @@ describe('martwe komponenty odbioru 2026-09-03 nie wracają', () => {
     expect(fs.existsSync(path.join(ROOT, 'src/components/Audit/AuditsHub.tsx'))).toBe(false);
   });
 });
+
+/**
+ * Runda 2 (03.09, rejestr D11 + rodzina „komponent bez importera"):
+ * OrganizationV8CanonPanel.tsx zastąpiony przez OrgContextSummaryBanner.tsx
+ * (M16 P0-2) — zero żywych wołaczy, 10 wystąpień crimson `primary-*`, brak
+ * testów dedykowanych, brak montowania w dev-render.
+ */
+describe('martwe komponenty odbioru 2026-09-03 runda 2 nie wracają', () => {
+  it('OrganizationV8CanonPanel.tsx (Organization) nie istnieje', () => {
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/components/Organization/OrganizationV8CanonPanel.tsx'))
+    ).toBe(false);
+  });
+});
