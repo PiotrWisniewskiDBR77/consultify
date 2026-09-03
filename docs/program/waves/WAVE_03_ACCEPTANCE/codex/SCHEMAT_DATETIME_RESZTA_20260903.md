@@ -212,7 +212,10 @@ zasadą „mierz zanim naprawisz" — naprawa martwego kodu nie zmieniłaby
 
 ## SHA commitów
 
-(uzupełnione po commitach — patrz `git log --oneline -5` na tej gałęzi)
+- `4861db8904` — `docs(schemat): czerwony dowód — ai_user_tiers i help_categories poza migracjami`
+- `ae0d204556` — `fix(ai-settings): migracja + TIMESTAMPTZ dla ai_user_tiers (schemat poza migracjami)`
+- `72d49c9dbf` — `fix(help): migracja + TIMESTAMPTZ dla help_categories, napraw cichy swallow w ensureHelpSchema`
+- (ten commit) — `docs(schemat): odtworzenie od zera — dowód zielony R3 + SHA`
 
 ## Ścieżka worktree
 
