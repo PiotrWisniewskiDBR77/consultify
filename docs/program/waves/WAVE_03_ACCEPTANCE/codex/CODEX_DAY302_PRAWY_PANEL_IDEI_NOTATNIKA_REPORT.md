@@ -1,6 +1,6 @@
 # CODEX DAY 302 — prawy panel Idei i Notatnika
 
-Stan roboczy: R1–R4 wykonane.
+Stan roboczy: R1–R5 wykonane.
 
 ## §0 — baza
 
@@ -43,12 +43,33 @@ Kanoniczne narzędzie wykonało 16/16 kadrów (cztery ekrany × PL/EN × light/d
 
 Każda para light/dark różni się obrazem i czytelnie zmienia tokeny powierzchni. PL/EN zmienia tytuły, akcje, właściwości i puste komunikaty. Harness raportuje 0 błędów konsoli po wymuszeniu query. Jednocześnie łańcuch przodków kończy się na `PrototypeHarness` w `dev-render/main.tsx`, a nie na produkcyjnych `IdeaContextPanel`/`NotebookContextPanel`/`NotebookRightRail`; kadry są dowodem projektu wizualnego, nie dowodem migracji ani realnej trasy.
 
+## R5 — literalna lista odbioru §18.1
+
+- `Menu 1`: **n/d** — zakres prototypu to wyłącznie prawy panel, bez powłoki całego artefaktu.
+- `Powłoka wg archetypu`: **CZĘŚCIOWE** — wspólny panel jest identyczny, centrum/Menu2/rail nie należą do prototypu.
+- `Prawy panel — stała kolejność`: **PASS** — Akcje, Właściwości, Powiązania, Źródła i założenia, Komentarze, Historia; zgodnie z nowszym SSOT kodu obowiązkowa jest także sekcja evidence.
+- `Powiązania klikalne`: **n/d na pustym stanie** — model prototypu nie dostarcza relacji; nie dodano atrap linków.
+- `Slot AI`: **n/d** — decyzja kanonu kodu przenosi Teresę do Akcji i zabrania dopisku AI w Historii; sam mechanizm AI jest poza zakresem.
+- `Otwieranie §12.2 / guard`: **n/d** — prototyp nie migruje wejść produkcyjnych ani edycji.
+- `empty/loading/error`: **PASS komponentowo** — wszystkie trzy stany są jawne; kadr pokazuje stan empty/ready, testy nie udają ścieżki HTTP.
+- `light/dark + tokeny c-*`: **PASS** — 16 obejrzanych kadrów; zero navy/slate/hex i zero `primary-*` w prototypie.
+- `zero crimson fokus/status/badge/selection`: **PASS statycznie** — fokus używa `c-focus`, status neutralnego tekstu.
+- `Tab/Shift+Tab`: **PASS punktowo** — test przechodzi od przycisku zamknięcia do nagłówka Akcji bez pułapki; kompletna powłoka Menu 1 jest n/d.
+- `Esc zamyka lokalną warstwę`: **PASS punktowo** — event na panelu wywołuje `onClose` raz i zatrzymuje propagację.
+- `fokus widoczny`: **PASS dla własnych kontrolek i kanonicznych nagłówków** — każda ma `focus-visible:ring-2` z `c-focus`/`var(--c-focus)`.
+- `streaming Teresy role=log`: **n/d** — prototyp nie renderuje strumienia ani nie wywołuje AI.
+- `generator/wizard`: **n/d** — panel nie jest generatorem ani wizardem.
+- `Canvas zakres AI` i `minimalny zestaw klawiaturowy`: **n/d** — prototyp panelu nie jest canvasem.
+
+Pomiar nazw testów: PRZED 83/83, PO 88/88. Diff zawiera wyłącznie pięć dodanych pełnych nazw kontraktu prototypu; żadna nazwa nie zniknęła. Pliki: `/private/tmp/cx-day302-panel-idei-artefakty/przed-nazwy.txt` i `po-nazwy.txt`. Pakiet jest czysto frontendowy i nie przechodzi przez pułapki auth/DB/Gateway z §0.2d; `RUN_DB_TESTS=0 MOCK_DB=true`, `--retry=0`.
+
 ## Korekty wobec instrukcji
 
 - Cztery ekrany harnessu istnieją zgodnie z tezą.
 - Z trzech paneli `NotebookRightRail` już używa `ArtifactRightPanel`; teza o trzech implementacjach oznacza trzy komponenty, nie trzy całkowicie odłączone od kanonu powłoki.
+- Instrukcja streszcza §11.2 jako pięć sekcji i „Historia / AI”, natomiast aktualny SSOT `ArtifactRightPanel.tsx` na markerze wymaga sześciu sekcji, dodając „Źródła i założenia”, i jawnie zabrania nazwy „Historia / AI”. Wybrano bezpieczniejszy, nowszy kanon kodu bez modyfikowania wspólnego komponentu.
 
 ## Twierdzenia niezweryfikowane
 
-- Odbiór §18.1 nie jest jeszcze wykonany.
+- Nie zweryfikowano integracji z produkcyjną trasą ani realnym modelem danych; to celowo odłączony prototyp.
 - Gałąź nie jest scalona i flaga nie jest włączona.

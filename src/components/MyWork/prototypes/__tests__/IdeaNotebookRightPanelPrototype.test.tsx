@@ -1,6 +1,7 @@
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IdeaNotebookRightPanelPrototypeGate } from '../IdeaNotebookRightPanelPrototype';
 
@@ -35,5 +36,19 @@ describe('IdeaNotebookRightPanelPrototype flag contract', () => {
     render(<IdeaNotebookRightPanelPrototypeGate context="notebook" legacy={<div>Legacy</div>} />);
     expect(screen.getByLabelText('Szczegóły notatki')).toBeTruthy();
     expect(document.querySelector('[data-artifact-section="relations"]')).toBeTruthy();
+  });
+
+  it('supports a visible-focus Tab cycle and closes one panel layer with Escape', async () => {
+    window.localStorage.setItem('ff.ideaNotebookRightPanelPrototype', '1');
+    const onClose = vi.fn();
+    render(<IdeaNotebookRightPanelPrototypeGate context="idea" onClose={onClose} legacy={<div>Legacy</div>} />);
+    const user = userEvent.setup();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Zamknij panel' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Zamknij panel' }).className).toContain('focus-visible:ring-2');
+    await user.tab();
+    expect(screen.getByRole('button', { name: /Actions|Akcje/ })).toHaveFocus();
+    fireEvent.keyDown(screen.getByLabelText('Szczegóły idei'), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

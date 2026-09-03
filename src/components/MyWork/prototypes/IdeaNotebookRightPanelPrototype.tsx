@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Link2, MessageSquare, RotateCcw, Share2, Sparkles } from 'lucide-react';
+import { Link2, MessageSquare, RotateCcw, Share2, Sparkles, X } from 'lucide-react';
 
 import {
   ArtifactRightPanel,
@@ -22,13 +22,13 @@ const copy = {
     idea: 'Szczegóły idei', notebook: 'Szczegóły notatki', loading: 'Ładowanie panelu…',
     error: 'Nie udało się pobrać danych panelu.', retry: 'Spróbuj ponownie', share: 'Udostępnij',
     link: 'Kopiuj link', owner: 'Właściciel', status: 'Status', draft: 'Szkic', relations: 'Brak powiązań.',
-    evidence: 'Brak zapisanych źródeł i założeń.', comments: 'Brak komentarzy.', history: 'Brak zapisanej historii.',
+    evidence: 'Brak zapisanych źródeł i założeń.', comments: 'Brak komentarzy.', history: 'Brak zapisanej historii.', close: 'Zamknij panel',
   },
   en: {
     idea: 'Idea details', notebook: 'Note details', loading: 'Loading panel…',
     error: 'Panel data could not be loaded.', retry: 'Try again', share: 'Share', link: 'Copy link',
     owner: 'Owner', status: 'Status', draft: 'Draft', relations: 'No relations.',
-    evidence: 'No sources or assumptions recorded.', comments: 'No comments.', history: 'No history recorded.',
+    evidence: 'No sources or assumptions recorded.', comments: 'No comments.', history: 'No history recorded.', close: 'Close panel',
   },
 } as const;
 
@@ -70,8 +70,8 @@ export const IdeaNotebookRightPanelPrototype: React.FC<PrototypeProps> = ({
   ];
 
   return (
-    <aside className="flex max-h-[calc(100vh-2rem)] w-[min(360px,100vw)] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-hig-lg max-[1279px]:w-[min(420px,100vw)]" aria-label={title}>
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-c-border-subtle px-4"><div><p className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">{context === 'idea' ? 'Idea' : 'Notebook'}</p><h2 className="text-sm font-semibold text-c-text">{title}</h2></div>{onClose ? <button aria-label="Close" onClick={onClose} className="rounded-lg p-2 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"><ExternalLink size={16} /></button> : null}</header>
+    <aside onKeyDown={(event) => { if (event.key === 'Escape' && onClose) { event.stopPropagation(); onClose(); } }} className="flex max-h-[calc(100vh-2rem)] w-[min(360px,100vw)] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-hig-lg max-[1279px]:w-[min(420px,100vw)]" aria-label={title}>
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-c-border-subtle px-4"><div><p className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">{context === 'idea' ? 'Idea' : 'Notebook'}</p><h2 className="text-sm font-semibold text-c-text">{title}</h2></div>{onClose ? <button aria-label={t.close} onClick={onClose} className="rounded-lg p-2 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"><X size={16} /></button> : null}</header>
       <ArtifactRightPanel sections={sections} width="100%" className="min-h-0 flex-1 border-0" />
     </aside>
   );
