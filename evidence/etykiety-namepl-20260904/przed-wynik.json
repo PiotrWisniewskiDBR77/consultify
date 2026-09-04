@@ -1,0 +1,57 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 0,
+  "klikPoRozwinieciu": false,
+  "cofnijJesliSkraca": true,
+  "wyniki": [
+    {
+      "ekran": "tools-portfolio-priority-session-workspace",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day364-namepl-rodzina-artefakty/day364-przed/tools-portfolio-priority-session-workspace__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Biblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nDodaj narzędzie\nLista\nportfolio-priority\nPriorytety portfela 2027\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nPriorytety portfela 2027\nSzkic\nZapisano\nSESJA\nPortfolio Mission & Context\nInput & Exploration\nANALIZA\nPortfolio Items & Matrix\nTrade-offs & Priorities\nREZULTATY\nOutputs & Actions\nWSPÓŁPRACA\nAI Collaboration Panel\nKontekst Portfolio\nTo jest lekki start: opisz cel, zakres i efekt końcowy, a AI pomoże zbudować dalszą strukturę rozmowy i analizy.\nCel Portfolio *\nDodaj konkretne KPI lub oczekiwany wynik.\nZakres Portfolio *\nWskaz obszar biznesowy i interesariuszy.\nHoryzont Czasowy\nKrótki\n< 1 rok\nŚredni\n1-3 lata\nDługi\n3+ lata\n\n💡 Jasno zdefiniowany cel pomoże AI generować bardziej trafne sugestie w kolejnych krokach.\n\nPoprzedni\nKrok 1/5\nNastępny\nAKCJE\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nTyp narzędzia\tportfolio-priority\nKategoria\tStrategia\nStatus\tSzkic\nEtap konsultingowy\tWejście i cel\nAktualny krok\tPortfolio Mission & Context\nPostęp\t40%\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\n0\nKOMENTARZE\n0\nHISTORIA",
+      "hasResultMarker": null,
+      "obrazJasnosc": 245.38977798804012,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "tools-portfolio-priority-session-workspace",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day364-namepl-rodzina-artefakty/day364-przed/tools-portfolio-priority-session-workspace__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Biblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nDodaj narzędzie\nLista\nportfolio-priority\nPriorytety portfela 2027\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nPriorytety portfela 2027\nSzkic\nZapisano\nSESJA\nPortfolio Mission & Context\nInput & Exploration\nANALIZA\nPortfolio Items & Matrix\nTrade-offs & Priorities\nREZULTATY\nOutputs & Actions\nWSPÓŁPRACA\nAI Collaboration Panel\nKontekst Portfolio\nTo jest lekki start: opisz cel, zakres i efekt końcowy, a AI pomoże zbudować dalszą strukturę rozmowy i analizy.\nCel Portfolio *\nDodaj konkretne KPI lub oczekiwany wynik.\nZakres Portfolio *\nWskaz obszar biznesowy i interesariuszy.\nHoryzont Czasowy\nKrótki\n< 1 rok\nŚredni\n1-3 lata\nDługi\n3+ lata\n\n💡 Jasno zdefiniowany cel pomoże AI generować bardziej trafne sugestie w kolejnych krokach.\n\nPoprzedni\nKrok 1/5\nNastępny\nAKCJE\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nTyp narzędzia\tportfolio-priority\nKategoria\tStrategia\nStatus\tSzkic\nEtap konsultingowy\tWejście i cel\nAktualny krok\tPortfolio Mission & Context\nPostęp\t40%\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\n0\nKOMENTARZE\n0\nHISTORIA",
+      "hasResultMarker": null,
+      "obrazJasnosc": 28.413832237268515,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "tools-portfolio-priority-session-workspace",
+      "roznicaLuminancji": 216.97594575077161,
+      "procentRoznychPikseli": 99.98948688271605,
+      "powod": null
+    }
+  ],
+  "porownania": []
+}
