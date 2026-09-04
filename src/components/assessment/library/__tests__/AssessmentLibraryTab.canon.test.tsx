@@ -10,7 +10,12 @@ const captured = vi.hoisted(() => ({
 }));
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'pl' } }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'pl' },
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key,
+  }),
+}));
 vi.mock('react-hot-toast', () => ({
   default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
@@ -73,5 +78,17 @@ describe('AssessmentLibraryTab B2 canonical contract', () => {
     expect(captured.preview.details.text).toContain('Osie i obszary');
     expect(captured.preview.details.text).toContain('•');
     expect(screen.getByRole('button', { name: 'Rozpocznij ocenę' })).toBeInTheDocument();
+  });
+
+  it('renders the real StandardTable structure instead of a bespoke table', async () => {
+    vi.resetModules();
+    vi.doUnmock('@/components/standard');
+    const { AssessmentLibraryTab: AssessmentLibraryTabWithRealStandardTable } = await import(
+      '../AssessmentLibraryTab'
+    );
+
+    const { container } = render(<AssessmentLibraryTabWithRealStandardTable />);
+    expect(container.querySelector('table[data-min-table-width]')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.viewSettings' })).toBeInTheDocument();
   });
 });
