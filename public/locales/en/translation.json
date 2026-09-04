@@ -5780,7 +5780,7 @@
       "toastInputRequested": "Input requested",
       "toastCoDecisionRequested": "Co-decision requested"
     },
-    "closeOpenDocument": "Close: {{name}}",
+    "closeOpenDocument": "Close: {{nazwa}}",
     "knowledge": {
       "cardNodes": {
         "evidenceDefault": "Evidence",
