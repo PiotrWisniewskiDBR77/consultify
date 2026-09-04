@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { buildDrdReportConclusion } from '../../../server/src/services/conclusions/reportConclusionBridge';
 import { buildDrdReportModel as buildServerModel } from '../../../server/src/services/report/drdReportModel';
 import { buildDrdReportModel as buildFrontendModel } from '../../../src/services/report/drdReportModel';
+import { buildDemoLayoutLabel } from '../../../scripts/dev/day339-porownanie-silnikow.mjs';
 
 type Score = { actual: number; target: number };
 type Scores = Record<string, Score>;
@@ -24,6 +25,12 @@ const meta = {
 };
 
 describe('Dyżur 346 — prawdziwa kompletność raportu DRD', () => {
+  it('buduje jawną etykietę hybrydy silnika 298 z identyfikatorem sesji', () => {
+    expect(buildDemoLayoutLabel('session-39-of-39')).toBe(
+      'DEMO UKŁADU — treść prototypowa, liczby z sesji session-39-of-39'
+    );
+  });
+
   it('liczy 7/39 odpowiedzi jako 18% w obu modelach i przekazuje 18% do narratora', async () => {
     const server = await buildServerModel(manifest.input.areaScores, meta);
     const frontend = await buildFrontendModel(manifest.input.areaScores, meta);

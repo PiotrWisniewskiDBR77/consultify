@@ -98,3 +98,7 @@ Pakiet R6: `2/2 PASS`, `--retry=0`, `DB_TYPE=postgres` sprawdzone w `beforeAll`,
 **Rekomendacja:** wybrać model 298 jako docelowy kontrakt układu, ale nie podłączać go w obecnej postaci; najpierw nadzorca powinien zlecić osobny etap mapowania całej realnej sesji i metadanych do tego modelu, z ApiGateway/JWT/PostgreSQL, zimnym odczytem eksportu oraz akceptem właściciela na pliku wynikowym. Ta rekomendacja nie została wykonana.
 
 Nie zmierzono: zachowania produkcyjnej trasy HTML przy rzeczywiście skonfigurowanym kluczu dostawcy; wywołania tej trasy dla tej samej `MethodSession` (brak takiego wejścia); pełnej sesji z odpowiedziami dla wszystkich 39 obszarów i zamrożonym Outputem; trwałego magazynu wyeksportowanych plików; produkcyjnego runtime, urządzeń i przeglądarek; akceptu właściciela dla któregokolwiek nowego wyniku; PDF generowanego natywnie przez produkt (kontrolne PDF-y powstały przez LibreOffice); 4-stronicowego wyciągu zarządczego z tej sesji; zachowania narratora z obecnym kluczem dostawcy.
+
+## Dyżur 346 — sprostowanie przyrządu porównawczego
+
+Proza w `03-silnik-298.pdf`, w tym dane „TechProd Manufacturing”, nie pochodzi z `buildAcceptedDrdReportModel`; podał ją skrypt `scripts/dev/day339-porownanie-silnikow.mjs`, importując statyczny prototyp `scripts/prototypes/raport-oceny-tresc.mjs` i łącząc go z liczbami sesji. Przyrząd ma teraz opcjonalne, jawne parametry katalogów wyjściowych oraz etykietę hybrydy na pierwszej stronie; produkcyjnego wołacza silnika 298 nie dodano.
