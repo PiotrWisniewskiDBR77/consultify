@@ -1567,6 +1567,10 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
 export async function initDb(): Promise<void> {
   logger.info('[Postgres] Checking/Initializing Schema...');
 
+  const initLockClient = await getPool().connect();
+  await initLockClient.query(
+    `SELECT pg_advisory_lock(hashtext('consultify:postgres-schema-initialization'))`
+  );
   try {
     // Test connection first
     const connected = await testConnection();
@@ -3873,6 +3877,10 @@ export async function initDb(): Promise<void> {
     }
     // Re-throw to ensure initialization failure is noticed
     throw err;
+  } finally {
+    await initLockClient
+      .query(`SELECT pg_advisory_unlock(hashtext('consultify:postgres-schema-initialization'))`)
+      .finally(() => initLockClient.release());
   }
 }
 
