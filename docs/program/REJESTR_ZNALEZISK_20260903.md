@@ -287,3 +287,11 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Dyżur 353 — G19 wymaga reguły ważności dowodu
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| R1 | Day307 nadal broni workloadu: obcy 404/64 B, właściciel 200/243 B; usunięcie filtra organizacji daje dokładnie 200 zamiast 404. Nie jest jednak dowodem Meetings ani całego mianownika G19. | `01` ma jedną udowodnioną izolację, `08` potrzebuje własnej pary `/api/meetings/:id`; zero wierszy podniesionych. | OTWARTE / NOT PROVEN | `evidence/g19/day353/r2-day307-orzeczenie.md`, `r4-orzeczenie.md` |
+| R2 | Pięć pozostałych modułów A nie ma dopuszczonego pełnego dowodu mutacyjnego; istniejące suity są zielone, lecz nie bronią wszystkich właściwych strażników. Powstało 5 czerwonych kontraktów. | `04/05/06/11/13` wymagają osobnych kontraktów i mutacji; zielony scenariusz nie jest zaliczeniem G19. | OTWARTE / NOT PROVEN | `evidence/g19/day353/r3-piec-modulow-i-bloki.md` |
+| R3 | Mianownik rośnie (49 w macierzy, 106 dziś), a dystans 615 jest nieodtwarzalny; jawne warianty dają 1216/1015/315. Bez reguły ważności każdy dowód wygasa przy następnym merge. | Właściciel musi wybrać: ZAMROŻONA / PRÓG / WARSTWY / ZDARZENIOWA. | DO DECYZJI WŁAŚCICIELA | `evidence/g19/day353/r5-podniesienie-i-pytanie-o-kotwice.md` |
