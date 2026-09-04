@@ -13,7 +13,9 @@ zatwierdzony na fikstrurze ≠ ekran, który dostajesz z listy) straciliśmy tyd
 ## Zanim zaczniesz
 
 - **Adres**: `https://staging.consultify.ai`
-- **Wersja**: kod wdrożony 03.09 o 21:15 (znacznik `58ef0771d7`). To najświeższy stan.
+- **Wersja**: znacznik `fb6547b7d0` — potwierdzony `/api/health` 04.09 o 05:33 (`database: connected`,
+  `redis: connected`). To najświeższy stan. (Poprzednie brzmienie `58ef0771d7` było już nieaktualne —
+  po nim weszły kolejne redeploye.)
 - **Logowanie**: konto odbiorowe jest w Twoim menedżerze haseł (szukaj „staging.consultify.ai”
   albo „Consultify staging”). Nie podaję tu hasła — wpisz je sam z menedżera.
 - **Złota zasada**: w każdym module otwórz rekord z **prawdziwą nazwą** (klient, projekt,
