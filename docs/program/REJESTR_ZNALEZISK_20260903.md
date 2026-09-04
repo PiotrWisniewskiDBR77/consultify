@@ -303,3 +303,8 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 **Uczciwe nazwanie tego, co bramka wtedy mówi.** `PASS` na ruchomej kotwicy znaczy: *„na dzień X, na markerze Y, nie ma regresji na współdzielonych ścieżkach"*. Nie znaczy: *„nigdy nie będzie"*. To jest słabsze twierdzenie niż to, które próbowaliśmy postawić — i **jedyne, które da się utrzymać prawdziwym**.
 
 **Ryzyko przyjęte świadomie.** Przed demo trzeba odświeżyć wygasłe wiersze. Jeśli tego nie zrobimy, macierz pokaże `PASS_STALE` zamiast `PASS` — czyli zawoła o siebie sama, zamiast po cichu kłamać. To jest cała różnica.
+## S. Dyżur 357 — zdania runtime bez kotwicy w pakiecie przelotu
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| S1 | Dwa twierdzenia pakietu o widoczności nie mają SHA ani kotwicy `plik:linia`: OKR/ROI widoczne niezależnie od przełącznika oraz flagi Wyników/Finansów/Organizacji/kreatora „mogą jeszcze nie być widoczne”. | Są długiem informacyjnym: dyżur 357 nie łączył się ze stagingiem (`Z28`) i nie ustalił, że twierdzenia są fałszywe. | OTWARTE — powiązać z kodem/SHA albo usunąć po decyzji nadzorcy | `evidence/day357/r2-kotwice.md` |
