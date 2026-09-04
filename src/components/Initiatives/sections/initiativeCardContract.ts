@@ -13,7 +13,8 @@
  *   · rola 'pisze'/'asystuje' bez `aiPrompt`    → błąd kompilacji,
  *   · rola 'dane'/'systemowa'/'transakcyjna'    → MUSI jawnie nazwać brak promptu.
  *
- * 29 kluczy → 27 kart kanonicznych (26 żywych #17-37/#47-51 + `watchers` placeholder) +
+ * 29 kluczy registry + 9 własnych deskryptorów boardu → 36 kart kanonicznych
+ * (35 żywych + `watchers` placeholder) +
  * 2 martwe zwinięte przez alias (`initiativeTeam`→`team`, `linkedItems`→`attachments`).
  * Aliasy dedup (KANON §2.2): `history`→`activity-log`, `raciEscalation`→`governance`
  * (DB `key='raci'`, R2). `idWArtefakcie` niesie id, pod którym silnik RENDERUJE kartę.
@@ -50,7 +51,7 @@ import { definiujKarteKanoniczna } from '../../standard/cardContract.types';
 import type { SectionTypeInfo } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// (1) KATALOG KANONICZNY INITIATIVE — 27 kart (26 żywych + `watchers` placeholder).
+// (1) KATALOG KANONICZNY INITIATIVE — 36 kart (35 żywych + `watchers` placeholder).
 //     Kolejność deklaracji = kolejność w registry (lewa kolumna, potem prawa).
 //     `kolumna`/`kolejnosc` = nadzbiór B (`column_position`/`default_order`, 529_...sql).
 //     `idWArtefakcie` obecne TYLKO przy aliasie dedup (id renderu ≠ id kanoniczny).
@@ -597,8 +598,139 @@ const WATCHERS = definiujKarteKanoniczna({
   },
 });
 
+// DEC-388: board i registry są różnymi przestrzeniami nazw. Każdy z dziewięciu
+// board-id bez własnej karty registry dostaje osobny, addytywny deskryptor.
+const DELIVERABLES_MILESTONES = definiujKarteKanoniczna({
+  id: 'deliverables-milestones',
+  label: { en: 'Deliverables & Milestones', pl: 'Produkty i kamienie milowe' },
+  grupa: 'EXECUTION',
+  ikona: 'PackageCheck',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'produkty i kamienie milowe są danymi planu inicjatywy' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 16 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const SUGGESTED_CHANGES = definiujKarteKanoniczna({
+  id: 'suggested-changes',
+  label: { en: 'Suggested Changes', pl: 'Sugerowane zmiany' },
+  grupa: 'EXECUTION',
+  ikona: 'Sparkles',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'lista przechowuje propozycje zmian, nie generuje treści karty' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 17 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const CHANGE_LOG = definiujKarteKanoniczna({
+  id: 'change-log',
+  label: { en: 'Change Log', pl: 'Dziennik zmian' },
+  grupa: 'META',
+  ikona: 'History',
+  rolaAI: 'systemowa',
+  aiPrompt: { none: true, reason: 'dziennik zmian powstaje z operacji systemu i użytkowników' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 11 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const OKR = definiujKarteKanoniczna({
+  id: 'okr',
+  label: { en: 'OKR', pl: 'OKR' },
+  grupa: 'OUTCOME',
+  ikona: 'Goal',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'cele i kluczowe rezultaty zatwierdza człowiek' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 18 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const HYPOTHESIS = definiujKarteKanoniczna({
+  id: 'hypothesis',
+  label: { en: 'Hypothesis', pl: 'Hipoteza' },
+  grupa: 'OUTCOME',
+  ikona: 'FlaskConical',
+  rolaAI: 'pisze',
+  aiPrompt: {
+    szablon: 'Sformułuj falsyfikowalną hipotezę wartości inicjatywy i sposób jej pomiaru.',
+    kluczPromptu: 'initiative.hypothesis',
+  },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 19 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const WORKSTREAM_OWNERS = definiujKarteKanoniczna({
+  id: 'workstream-owners',
+  label: { en: 'Workstream Owners', pl: 'Właściciele strumieni' },
+  grupa: 'GOVERNANCE',
+  ikona: 'UsersRound',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'obsadę strumieni zatwierdza człowiek' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 12 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const USED_IN = definiujKarteKanoniczna({
+  id: 'used-in',
+  label: { en: 'Used in (backlinks)', pl: 'Użyte w (powiązania)' },
+  grupa: 'META',
+  ikona: 'Network',
+  rolaAI: 'systemowa',
+  aiPrompt: { none: true, reason: 'powiązania zwrotne wylicza system' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 13 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const ARTIFACTS = definiujKarteKanoniczna({
+  id: 'artifacts',
+  label: { en: 'Artifacts', pl: 'Artefakty' },
+  grupa: 'META',
+  ikona: 'Files',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'rejestr artefaktów opisuje istniejące wyjścia inicjatywy' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 14 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
+const LESSONS_LEARNED = definiujKarteKanoniczna({
+  id: 'lessons-learned',
+  label: { en: 'Lessons Learned', pl: 'Wnioski i lekcje' },
+  grupa: 'OUTCOME',
+  ikona: 'BookOpenCheck',
+  rolaAI: 'dane',
+  aiPrompt: { none: true, reason: 'wnioski po fakcie zatwierdza zespół inicjatywy' },
+  prog: { rodzaj: 'do-decyzji-piotra' },
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 20 },
+  ],
+  statusKanonu: { stan: 'czysta' },
+});
+
 /**
- * Deskryptor kanoniczny Initiative — 27 kart (26 żywych + `watchers` placeholder).
+ * Deskryptor kanoniczny Initiative — 36 kart (35 żywych + `watchers` placeholder).
  * Typ elementu = `KanonicznaKarta`: dopisanie karty bez kompletu pól NIE skompiluje się.
  */
 export const INITIATIVE_CANONICAL_CARDS: readonly KanonicznaKarta[] = [
@@ -631,7 +763,45 @@ export const INITIATIVE_CANONICAL_CARDS: readonly KanonicznaKarta[] = [
   TAGS,
   REMINDERS,
   WATCHERS,
+  // Własne deskryptory boardu DEC-388 — addytywnie, bez aliasowania registry.
+  DELIVERABLES_MILESTONES,
+  SUGGESTED_CHANGES,
+  CHANGE_LOG,
+  OKR,
+  HYPOTHESIS,
+  WORKSTREAM_OWNERS,
+  USED_IN,
+  ARTIFACTS,
+  LESSONS_LEARNED,
 ];
+
+/** DEC-388: jawne mapowanie wszystkich 24 board-id na deskryptory kontraktu. */
+export const INITIATIVE_BOARD_DESCRIPTOR_BY_ID: Readonly<Record<string, KanonicznaKarta>> = {
+  'initiative-definition': OVERVIEW,
+  tasks: TASKS,
+  timeline: TIMELINE,
+  'deliverables-milestones': DELIVERABLES_MILESTONES,
+  dependencies: DEPENDENCIES,
+  decisions: DECISIONS,
+  'risk-raid': RAID,
+  gates: GATES,
+  'suggested-changes': SUGGESTED_CHANGES,
+  'change-log': CHANGE_LOG,
+  'target-state-scope': TARGET_STATE,
+  kpi: KPIS,
+  okr: OKR,
+  hypothesis: HYPOTHESIS,
+  'financial-analysis': FINANCIAL_ANALYSIS,
+  'financial-impact': FINANCIAL_IMPACT,
+  team: TEAM,
+  'workstream-owners': WORKSTREAM_OWNERS,
+  raci: GOVERNANCE,
+  resources: RESOURCES,
+  'attachments-links': ATTACHMENTS,
+  'used-in': USED_IN,
+  artifacts: ARTIFACTS,
+  'lessons-learned': LESSONS_LEARNED,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // (2) MARTWE KLUCZE — zwinięte przez alias (przepis §1.2). NIE renderowane jako
@@ -912,7 +1082,7 @@ function matchDbRow(
 /**
  * Buduje kanoniczne karty Initiative z żywych wierszy DB, nakładając ich etykiety/opisy
  * na statyczny katalog. Zachowuje kolejność deklaracji i całą semantykę kontraktu
- * (rola AI, kompozycja, statusKanonu). Zwraca 27 kart (nie mnoży org-custom — patrz wyżej).
+ * (rola AI, kompozycja, statusKanonu). Zwraca 36 kart (nie mnoży org-custom — patrz wyżej).
  */
 export function buildInitiativeCanonicalCards(dbRows: SectionTypeInfo[]): KanonicznaKarta[] {
   return INITIATIVE_CANONICAL_CARDS.map((karta) => {

@@ -191,3 +191,68 @@ Promień rażenia: wyłącznie zapisane układy kart Task/Decision/Notification 
 Kadr obecnego, kompletnego stanu za flagą ON: `evidence/kompletnosc-24-sekcji-20260904/r2/on-niepusty.png`.
 
 Czego konkretnie mi zabrakło, żeby rozstrzygnąć samodzielnie: brak decyzji właściciela, czy sześć nazw standardu jest docelową taksonomią Menu 3 wymagającą przegrupowania 24 sekcji, czy warstwą semantyczną, którą wolno mapować na pięć obecnych grup produktu.
+
+## Dyżur 343 — R1: pomiar wejściowy i odtworzenie luki zabezpieczenia
+
+Rekord harnessu: `init-smed-linia-pakowania`; wariant niepusty: `initiativeTemplateId=tpl-quick-win`; każdy przelot odbył się w świeżym kontekście przeglądarki.
+
+| Szablon | Flaga build-time harnessu | Pozycje DOM | Grupy DOM | `localStorage["ff.initiative.sections_complete"]` | Błędy konsoli |
+| --- | --- | ---: | ---: | --- | ---: |
+| `quick_win` | OFF | 6 | 3 | `null` | 0 |
+| `quick_win` | ON | 24 | 5 | `null` | 0 |
+| pusty | OFF | 24 | 5 | `null` | 0 |
+| pusty | ON | 24 | 5 | `null` | 0 |
+
+Artefakty maszynowe: `/private/tmp/cx-day343-dec388-domkniecie-artefakty/r1-{off,on}-{niepusty,pusty}.json`.
+
+Mutacja A — ponowne filtrowanie wyniku selektora innym wyrażeniem — zostawiła zastany pakiet **GREEN 4/4**, a realny DOM dla `quick_win` + ON spadł do **6 pozycji / 3 grup**. Wyniki: `r1-mutacja-a-test.json`, `r1-mutacja-a-on.json`.
+
+Mutacja B — resolver flagi `void raw; return false` — zostawiła zastany pakiet **GREEN 4/4**, a realny DOM dla build-time ON spadł do **6 pozycji / 3 grup**. Wyniki: `r1-mutacja-b-test.json`, `r1-mutacja-b-on.json`.
+
+Obie mutacje cofnięto przez `cp` z kopii w katalogu scratch; `git diff -- src/components/Initiatives/InitiativeDocumentView.tsx` po każdym cofnięciu był pusty. Werdykt R1: **ZROBIONE — zastane zabezpieczenie nie broni zachowania**.
+
+## Dyżur 343 — R3: deskryptory wszystkich 24 sekcji boardu
+
+Reguła prostego przecięcia id przed zmianą dała **17** braków, ponieważ board i registry używają dwóch przestrzeni nazw. Reguła semantyczna z rejestru 338 dała **9** board-id bez własnego deskryptora; zgodnie z rozstrzygnięciem DEC-388 właśnie te dziewięć dostało osobne, addytywne karty. Katalog wzrósł z 27 do **36** kart; komentarz `buildInitiativeCanonicalCards` został zaktualizowany, a zastanej asercji liczby 27 nie znaleziono.
+
+| Sekcja boardu | Ma deskryptor po R3 | Deskryptor `plik:linia` | Dopisany w dyżurze 343 |
+| --- | --- | --- | --- |
+| `initiative-definition` | tak | `initiativeCardContract.ts:63` (`OVERVIEW`) | nie |
+| `tasks` | tak | `initiativeCardContract.ts:142` | nie |
+| `timeline` | tak | `initiativeCardContract.ts:457` | nie |
+| `deliverables-milestones` | tak | `initiativeCardContract.ts:603` | **tak** |
+| `dependencies` | tak | `initiativeCardContract.ts:504` | nie |
+| `decisions` | tak | `initiativeCardContract.ts:160` | nie |
+| `risk-raid` | tak | `initiativeCardContract.ts:177` (`RAID`) | nie |
+| `gates` | tak | `initiativeCardContract.ts:200` | nie |
+| `suggested-changes` | tak | `initiativeCardContract.ts:617` | **tak** |
+| `change-log` | tak | `initiativeCardContract.ts:631` | **tak** |
+| `target-state-scope` | tak | `initiativeCardContract.ts:103` (`TARGET_STATE`) | nie |
+| `kpi` | tak | `initiativeCardContract.ts:259` (`KPIS`) | nie |
+| `okr` | tak | `initiativeCardContract.ts:645` | **tak** |
+| `hypothesis` | tak | `initiativeCardContract.ts:659` | **tak** |
+| `financial-analysis` | tak | `initiativeCardContract.ts:220` | nie |
+| `financial-impact` | tak | `initiativeCardContract.ts:241` | nie |
+| `team` | tak | `initiativeCardContract.ts:408` | nie |
+| `workstream-owners` | tak | `initiativeCardContract.ts:676` | **tak** |
+| `raci` | tak | `initiativeCardContract.ts:426` (`GOVERNANCE`) | nie |
+| `resources` | tak | `initiativeCardContract.ts:471` | nie |
+| `attachments-links` | tak | `initiativeCardContract.ts:522` (`ATTACHMENTS`) | nie |
+| `used-in` | tak | `initiativeCardContract.ts:690` | **tak** |
+| `artifacts` | tak | `initiativeCardContract.ts:704` | **tak** |
+| `lessons-learned` | tak | `initiativeCardContract.ts:718` | **tak** |
+
+Jawna mapa 24/24: `initiativeCardContract.ts:779`; pomiar po zmianie: `board=24`, `mapped=24`, `cards=36`, `missing=[]`. Osiem par kluczy etykiet było już obecnych pod `initiatives.*`; brakujący klucz `initiatives.okr` dopisano równolegle w PL i EN. Liście i18n po zmianie: PL **35199**, EN **33066** — żaden mianownik nie zmalał.
+
+Test `initiativeBoardDescriptors.day343.test.ts` jest GREEN 3/3. Kontrolne usunięcie `LESSONS_LEARNED` z katalogu dało RED z komunikatem `brak nowej karty kanonicznej: lessons-learned`; po cofnięciu przez `cp` wróciło GREEN 3/3.
+
+## Dyżur 343 — R5: para odbiorowa OFF/ON
+
+Ten sam realny rekord harnessu `init-smed-linia-pakowania`, niepusty szablon `tpl-quick-win`, pełne dane, motyw jasny, viewport 1440×900. Flaga była sterowana finalnym wejściem produktu `?ff_initiative_sections_complete=0|1`; w obu świeżych kontekstach `localStorage["ff.initiative.sections_complete"]` pozostał `null`.
+
+| Stan | Pozycje / grupy z DOM | Rozwinięte sekcje prawego panelu | Błędy konsoli / HTTP | Średnia jasność | SHA-256 |
+| --- | --- | ---: | --- | ---: | --- |
+| OFF | 6 / 3 | 5 | 0 / 0 | 243.2951538771219 | `189d6f3c1d680ada28a0c40a3f51e023cf89e544d3237125ad9b3c6523a1decb` |
+| ON | 24 / 5 | 5 | 0 / 0 | 242.91789594675924 | `0cf20b0033fc277ddc01f28fbcb37f39839450163a902ee3c62dfcffb4458602` |
+
+Pliki: `/private/tmp/cx-day343-dec388-domkniecie-artefakty/r5/karta-initiative__{PRZED,PO}__pl__1440__light.png`; metadane: `r5-off.json`, `r5-on.json`. Sumy są różne, więc para nie jest bajtowym duplikatem. Kontrolki harnessu nie weszły w kadr; aktywna sekcja „Zakres inicjatywy” ma realną, rozwiniętą treść, a pięć zwiniętych sekcji panelu artefaktu rozwinięto przed skanem i zrzutem. Flaga kończy dyżur domyślnie OFF.
