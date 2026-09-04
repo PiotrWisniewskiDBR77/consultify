@@ -35,3 +35,13 @@ Pomiar: 11 wierszy, 4 typy z kontraktem, 7 bez kontraktu.
 | Change Request | nie | brak samodzielnego ekranu rekordu; istnieją typy i sekcje osadzone |
 | Stage Gate | nie | brak samodzielnego ekranu rekordu; istnieją API, typy i sekcje osadzone |
 | Action Proposal | nie | tak — `views/ActionProposalView.tsx` i `components/ai/ActionProposalDetail.tsx` |
+
+## DO DECYZJI WŁAŚCICIELA — nazwy Menu 3 Initiative
+
+| §13.1 | Produkt dzisiaj |
+| --- | --- |
+| Zadania · Definicja · Wdrożenie · Ekonomia · Governance · Zespół | Zakres i plan · Decyzje i ryzyko · Rezultaty · Ludzie · Zapisy |
+
+Kadr obecnego stanu: `evidence/kompletnosc-kart-20260904/r3-pl-light-PARTIAL.png` (w lewym menu na wariancie `quick_win` widoczne są tylko trzy z pięciu grup: Zakres i plan, Rezultaty, Zapisy).
+
+Czego konkretnie mi zabrakło, żeby rozstrzygnąć samodzielnie: brak decyzji właściciela, czy sześć nazw §13.1 jest docelową taksonomią, czy opisem semantycznym, który wolno mapować na pięć zaakceptowanych grup produktu.
