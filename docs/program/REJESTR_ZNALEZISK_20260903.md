@@ -70,6 +70,7 @@ Wszystkie commity na `github-backup/grafika/m03-20260902`.
 | D11 | `OrganizationV8CanonPanel.tsx` martwy (zero importerów, 10 wystąpień crimson) | Usunąć osobno |
 | D12 | Nazwy sesji DRD renderują się jako „DRD · sess-drd" — kontrakt `MethodSession` nie ma pola nazwy | Zmiana kernela |
 | D13 | Szerokość kolumn (ucięte nagłówki) — rodzina `FilterableTable` | W toku w repo głównym |
+| D14 | Wycieki surowych treści błędów w trasach (dyżur 296): WIP Codexa zdjął 341 z 396 wystąpień, ale **35 realnych wycieków HTTP zostało** — wariant `(e as Error)` i pole `details` w `table-platform.routes.ts` (28) i `data-collection.routes.ts` (7), objęte ratchetem 35 w `tests/unit/backend/security/noRawErrorMessage.test.ts`; przy okazji komunikaty domenowe zastąpione angielskim generykiem, bo klasy błędów nie dziedziczą `AppError` | SCALIĆ Z ZASTRZEŻENIEM — 3 dyżury następcze; `docs/program/waves/WAVE_03_ACCEPTANCE/codex/ODBIOR_DYZURU_296_WIP_20260904.md` |
 
 ## E. Stan bramek na koniec dnia
 
