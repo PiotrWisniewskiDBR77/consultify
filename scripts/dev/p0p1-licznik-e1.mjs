@@ -47,14 +47,14 @@ export function collectUniverse(settlement, decisions) {
   const positions = new Map();
   for (const line of settlement.split('\n')) {
     const cell = tableFirstCell(line);
-    for (const id of expandIds(cell)) positions.set(id, { id, evidence: [line], origins: ['settlement'] });
+    for (const id of expandIds(cell)) positions.set(id, { id, evidence: [line], directEvidence: [line], inheritedDecisions: [], origins: ['settlement'] });
   }
   const r1c = decisions.split(/^## R1c/m)[1]?.split(/^## /m)[0] || '';
   for (const line of r1c.split('\n')) {
     const cell = tableFirstCell(line);
     for (const id of expandIds(cell)) {
       if (!id.endsWith('[OF]') && !id.startsWith('TLS-')) continue;
-      positions.set(id, { id, evidence: [line], origins: ['decisions-r1c'] });
+      positions.set(id, { id, evidence: [line], directEvidence: [line], inheritedDecisions: [], origins: ['decisions-r1c'] });
     }
   }
   return positions;
@@ -71,7 +71,7 @@ function evidenceId(positions, id, origin) {
   return id;
 }
 
-function addEvidence(positions, text, origin) {
+function addEvidence(positions, text, origin, inheritance = null) {
   for (const line of text.split('\n')) {
     const ids = expandIds(line);
     for (const rawId of ids) {
@@ -79,11 +79,18 @@ function addEvidence(positions, text, origin) {
       const position = positions.get(id);
       if (!position) continue;
       position.evidence.push(line);
+      position.directEvidence.push(inheritance ? inheritance.originalLine : line);
+      if (inheritance && !/DEC-\d{4}-\d{2}-\d{2}-\d+/.test(inheritance.originalLine)) {
+        position.inheritedDecisions.push({ family: inheritance.family, decision: inheritance.decision });
+      }
       position.origins.push(origin);
     }
   }
 }
 
+// Pozycja bez własnego cytatu DEC dziedziczy decyzję rodziny `## R-N.`.
+// Pakiet właściciela ustanawia decyzję na poziomie rodziny, a kolejne wiersze
+// wyliczają obiekty objęte tą decyzją; dziedziczenie zachowuje tę jawną relację.
 function addOwnerEvidence(positions, owner) {
   const familyDec = new Map();
   for (const line of owner.split('\n')) {
@@ -96,7 +103,12 @@ function addOwnerEvidence(positions, owner) {
     const heading = line.match(/^##\s+(R-\d+)\./);
     if (heading) activeFamily = heading[1];
     const inherited = familyDec.get(activeFamily);
-    addEvidence(positions, inherited ? `${line} ${inherited}` : line, 'owner');
+    addEvidence(
+      positions,
+      inherited ? `${line} ${inherited}` : line,
+      'owner',
+      inherited ? { family: activeFamily, decision: inherited, originalLine: line } : null,
+    );
   }
 }
 
@@ -155,11 +167,17 @@ export function evaluateCorpus({ settlement, decisions, owner, wave2, ledger }, 
   addOwnerEvidence(positions, owner);
   addEvidence(positions, wave2, 'wave2');
   const ledgerSet = ledgerDecisions(ledger);
-  return [...positions.values()].sort((a, b) => a.id.localeCompare(b.id, 'en')).map((position) => ({
-    id: position.id,
-    ...classify(position, ledgerSet, root, options.shaCheck),
-    origins: [...new Set(position.origins)].join(', '),
-  }));
+  return [...positions.values()].sort((a, b) => a.id.localeCompare(b.id, 'en')).map((position) => {
+    const classification = classify(position, ledgerSet, root, options.shaCheck);
+    const directDecisions = existingDecs(position.directEvidence.join('\n'), ledgerSet).cited;
+    const inherited = position.inheritedDecisions.find(({ decision }) => classification.proof.includes(decision));
+    return {
+      id: position.id,
+      ...classification,
+      inheritance: directDecisions.length === 0 && inherited ? `${inherited.family} → ${inherited.decision}` : '—',
+      origins: [...new Set(position.origins)].join(', '),
+    };
+  });
 }
 
 export function defaultSnapshotMetadata(root = defaultRoot) {
@@ -193,17 +211,17 @@ export function renderRegister(rows, metadata) {
   const lines = [
     '# Rejestr P0/P1 blokujących G20 — E1',
     '',
-    `Data migawki: ${metadata.snapshotDate}  `,
-    `Marker: \`${metadata.marker}\`  `,
+    `Data migawki: ${metadata.snapshotDate}`,
+    `Marker: \`${metadata.marker}\``,
     `Odtworzenie: \`node scripts/dev/p0p1-licznik-e1.mjs --marker ${metadata.marker} --snapshot-date ${metadata.snapshotDate}\``,
     '',
     `Mianownik: ${rows.length}. NAPRAWIONE: ${counts.NAPRAWIONE}; ZAMKNIETE_DEC: ${counts.ZAMKNIETE_DEC}; ODLOZONE_DEC: ${counts.ODLOZONE_DEC}; W_BUDOWIE: ${counts.W_BUDOWIE}.`,
     '',
     `**BLOKUJE: ${blockers}**`,
     '',
-    '| ID | Werdykt | Powód | Dowód | Źródła |',
-    '|---|---|---|---|---|',
-    ...rows.map((row) => `| \`${row.id}\` | ${row.verdict} | ${row.reason} | ${row.proof.replaceAll('|', '\\|')} | ${row.origins} |`),
+    '| ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |',
+    '|---|---|---|---|---|---|',
+    ...rows.map((row) => `| \`${row.id}\` | ${row.verdict} | ${row.reason} | ${row.proof.replaceAll('|', '\\|')} | ${row.inheritance || '—'} | ${row.origins} |`),
     '',
   ];
   return lines.join('\n');

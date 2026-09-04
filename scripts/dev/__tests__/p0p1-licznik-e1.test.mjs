@@ -69,7 +69,7 @@ test('bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informac
 });
 
 test('nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów', () => {
-  const rows = [{ id: 'INT-OWN-001', verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: 'brak', origins: 'settlement' }];
+  const rows = [{ id: 'INT-OWN-001', verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: 'brak', inheritance: '—', origins: 'settlement' }];
   const first = renderRegister(rows, { marker: 'aaaaaaaaaa', snapshotDate: '2026-09-04' });
   const second = renderRegister(rows, { marker: 'bbbbbbbbbb', snapshotDate: '2026-12-31' });
 
@@ -79,4 +79,22 @@ test('nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę w
   assert.match(second, /--marker bbbbbbbbbb --snapshot-date 2026-12-31/);
   assert.notEqual(first.split('\n| ID |')[0], second.split('\n| ID |')[0]);
   assert.equal(first.split('\n| ID |')[1], second.split('\n| ID |')[1]);
+});
+
+test('dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje', () => {
+  const decision = 'DEC-2026-09-03-777';
+  const withFamilyDecision = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+    owner: `| R-7 | decyzja rodziny | ${decision} |\n## R-7. Rodzina\n| \`INT-OWN-001\` | pozycja bez własnego cytatu |`,
+    ledger: `| ${decision} | decyzja istnieje |`,
+  }), { floor: 1 });
+  assert.equal(withFamilyDecision[0].verdict, 'ZAMKNIETE_DEC');
+  assert.equal(withFamilyDecision[0].inheritance, `R-7 → ${decision}`);
+
+  const withoutFamilyDecision = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+    owner: '## R-7. Rodzina\n| `INT-OWN-001` | pozycja bez własnego cytatu |',
+  }), { floor: 1 });
+  assert.equal(withoutFamilyDecision[0].verdict, 'BLOKUJE');
+  assert.equal(withoutFamilyDecision[0].inheritance, '—');
 });

@@ -173,6 +173,37 @@ diff tabel kod = 0
 
 Nowy test `nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów` przechodzi; pełny pakiet po R4: 7 testów, 7 pass, 0 fail. Domyślny przebieg wygenerował rejestr z markerem realnego HEAD w chwili wykonania: `19774200491bc7c665c95b0218c263419a200976` i datą `2026-09-04`. Marker w wygenerowanym pliku jest tożsamością wejścia przebiegu, nie samoodwołującym SHA przyszłego commita zawierającego ten plik.
 
+## R5 — jawne dziedziczenie DEC
+
+Komentarz przy `addOwnerEvidence()` zapisuje kontrakt: pozycja bez własnego cytatu dziedziczy decyzję ustanowioną dla aktywnej rodziny `## R-N.`, ponieważ kolejne wiersze wyliczają obiekty tej decyzji. Rejestr ma nową kolumnę `Dziedziczenie DEC`; `—` oznacza brak zależności, a `R-N → DEC-*` wskazuje dokładne źródło.
+
+Pomiar na pełnym korpusie:
+
+```text
+z dziedziczeniem:    BLOKUJE: 25
+bez dziedziczenia:   BLOKUJE: 47
+różnica:             22
+po cofnięciu mutacji BLOKUJE: 25
+```
+
+Imienna lista 22 pozycji, których nieblokujący werdykt opiera się na dziedziczeniu:
+
+| Pozycja | Rodzina → decyzja |
+|---|---|
+| `ASM-OWN-001[OF]`, `ASM-OWN-002[OF]` | `R-4 → DEC-2026-09-03-367` |
+| `CHAT-OWN-002`, `CHAT-OWN-003`, `CHAT-OWN-015`, `CHAT-OWN-016`, `CHAT-OWN-017` | `R-14 → DEC-2026-09-03-377` |
+| `INI-OWN-009` | `R-15 → DEC-2026-09-03-378` |
+| `MYW-IDEAS-008`, `MYW-IDEAS-011`, `MYW-IDEAS-013` | `R-9 → DEC-2026-09-03-372` |
+| `MYW-INB-REC-001` | `R-12 → DEC-2026-09-03-375` |
+| `MYW-NBK-CORE-001` | `R-11 → DEC-2026-09-03-374` |
+| `MYW-PHOTO-001`, `MYW-PHOTO-002`, `MYW-PHOTO-007`, `MYW-PHOTO-010`, `MYW-PHOTO-011` | `R-7 → DEC-2026-09-03-370` |
+| `MYW-PHOTO-003`, `MYW-PHOTO-004`, `MYW-PHOTO-005` | `R-8 → DEC-2026-09-03-371` |
+| `RES-OWN-005` | `R-17 → DEC-2026-09-03-380` |
+
+Nowy test `dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje` sprawdza oba ramiona. Zielony pełny pakiet: 8/8. Mutacja wyłączająca doklejenie decyzji rodzinnej dała dokładnie jeden czerwony test (7 pass, 1 fail), `actual: BLOKUJE`, `expected: ZAMKNIETE_DEC`, kod 1. Po cofnięciu przez `cp` pakiet wrócił do kodu 0.
+
+Artefakty: `r5-with-inheritance.txt` SHA-256 `8c98ee6d8440643a352d7da21aec817f2b5a5fd94372f46ea7da1451df33bd3f`; `r5-without-inheritance.txt` SHA-256 `1da2a0ae33fce94b6f7feb819c1b459234c610c55f0a0e39548eb757d09d6687`; `r5-inherited-list.txt` SHA-256 `8fb0d963023ba94167b9aabe6173f55a9f57c5fa75b892772f8090c04571e988`.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -180,7 +211,7 @@ Nowy test `nagłówek: marker i data z argumentów zmieniają metadane, nie tabe
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R5–R7 nie zostały jeszcze wykonane ani zweryfikowane.
+- R6–R7 nie zostały jeszcze wykonane ani zweryfikowane.
 - Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
 - Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
 - Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.
