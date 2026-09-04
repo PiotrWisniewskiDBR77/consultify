@@ -123,3 +123,11 @@ Rodzaj: **MERYTORYCZNY**. `grep -rn 'CasesListScreen\|RealizacjaView\|RezultatyV
 Brakuje kompletnej fixture `CaseCoreView`, kontekstu routera i stubów Case API dla `CasesListScreen`; dla `RealizacjaView` i `RezultatyView` dodatkowo danych kroków, oczekiwań, propozycji, uruchomień, artefaktów, pomiarów i ich stanów async. Szacuję 2–4 godziny na trzy realne hosty wraz z kontrolą, że nie są replikami. Wpisy miałyby postać `case-workspace-list`, `case-workspace-realizacja`, `case-workspace-rezultaty`, każdy importujący komponent z `src/components/CaseWorkspace/` i korzystający ze wspólnej fixture Case.
 
 Co dostarczyłem zamiast zmiany: własny pomiar 7 użyć bez `relations`, klasyfikację `app`, listę wymaganych zależności i projekt trzech wpisów. Nie dosypałem `relations` do wołaczy. Pozostałe pozycje kontynuuję.
+
+## R5 — rekomendacja i decyzja właściciela
+
+Rekomendacja: **zostawić pojedynczą pustą kartę jako jawny stan „Brak powiązań”, ale osobno usunąć dublowanie w Finance po decyzji właściciela**. Podstawa: 13 obejrzanych powierzchni jest spójnych wizualnie, 1 wygląda źle wyłącznie dlatego, że pokazuje dwie karty, a 2 wpisy Results nie zmieniły runtime. Pojedyncza karta nie usunęła treści; realny koszt 107 px stał się defektem dopiero przy duplikacie 214 px.
+
+SSOT jest sprzeczny: `docs/ui-standards/TRIADA_KANON.md:70` i checklista `:132` wymagają Relations albo „No relations”, czyli bloku zawsze; `docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md:337` mówi „Relations … jeśli są”, czyli blok tylko przy danych.
+
+**DO DECYZJI WŁAŚCICIELA.** Czy pojedyncza karta „Brak powiązań” ma pozostać na ekranach, które nie deklarują powiązań — **tak/nie**? Do samodzielnego rozstrzygnięcia zabrakło mi wskazania, który z dwóch sprzecznych zapisów SSOT ma pierwszeństwo; oględziny rozstrzygają jakość kompozycji, lecz nie intencję produktową.
