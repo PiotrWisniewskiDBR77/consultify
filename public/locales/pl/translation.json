@@ -13858,24 +13858,24 @@
         "director": "Dyrektor",
         "seniorManager": "Starszy manager",
         "manager": "Manager",
-        "projectManager": "Project Manager",
-        "productManager": "Product Manager",
-        "programManager": "Program Manager",
+        "projectManager": "Menedżer projektu",
+        "productManager": "Menedżer produktu",
+        "programManager": "Menedżer programu",
         "teamLead": "Lider zespołu",
-        "techLead": "Tech Lead",
+        "techLead": "Lider techniczny",
         "engineeringLead": "Lider inżynierii",
         "seniorDeveloper": "Starszy developer",
-        "developer": "Developer",
-        "softwareEngineer": "Software Engineer",
+        "developer": "Programista",
+        "softwareEngineer": "Inżynier oprogramowania",
         "businessAnalyst": "Analityk biznesowy",
         "dataAnalyst": "Analityk danych",
-        "dataScientist": "Data Scientist",
+        "dataScientist": "Specjalista ds. danych",
         "consultant": "Konsultant",
         "seniorConsultant": "Starszy konsultant",
-        "principalConsultant": "Principal Consultant",
-        "designer": "Designer",
-        "uxDesigner": "UX Designer",
-        "productDesigner": "Product Designer",
+        "principalConsultant": "Główny konsultant",
+        "designer": "Projektant",
+        "uxDesigner": "Projektant UX",
+        "productDesigner": "Projektant produktu",
         "other": "Inne"
       },
       "timezones": {
@@ -14603,7 +14603,7 @@
         "type_milestone": "Kamienie milowe",
         "sound_default": "Domyślny",
         "sound_chime": "Dzwonek",
-        "sound_bell": "Bell",
+        "sound_bell": "Dzwonek",
         "sound_pop": "Pop",
         "sound_none": "Brak",
         "pos_top-right": "Prawy górny róg",
@@ -14963,7 +14963,7 @@
       "type_milestone": "Kamienie milowe",
       "sound_default": "Domyślny",
       "sound_chime": "Dzwonek",
-      "sound_bell": "Bell",
+      "sound_bell": "Dzwonek",
       "sound_pop": "Pop",
       "sound_none": "Brak",
       "enableBrowserAlerts": "Zezwól na powiadomienia w przeglądarce",
@@ -16324,7 +16324,7 @@
       "watchVideo": "Obejrzyj wideo",
       "tryFree": "Wypróbuj za darmo",
       "methodologyIntro": "Wprowadzenie do metodologii",
-      "framework": "Framework",
+      "framework": "Metodyka",
       "learnOurMethods": "Poznaj nasze metody",
       "watchTeaser": "Obejrzyj nasz 90-sekundowy teaser wyjaśniający tę metodologię.",
       "readyToTry": "Gotowy do wypróbowania? Rozpocznij transformację już dziś.",
@@ -16949,7 +16949,7 @@
     "howItWorksPage": {
       "title": "Jak to działa",
       "subtitle": "Poniżej teasery publiczne. Pełne wersje odblokujesz po zalogowaniu.",
-      "teaserLabel": "Teaser",
+      "teaserLabel": "Zapowiedź",
       "afterTeaser": "Pełna wersja po zalogowaniu.",
       "watchFull": "Oglądaj pełną wersję",
       "watchFullAfterLogin": "Pełna wersja po zalogowaniu",
@@ -16998,7 +16998,7 @@
           ]
         },
         "deliverables": {
-          "badge": "Deliverables",
+          "badge": "Rezultaty",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
           "highlights": [
@@ -17048,11 +17048,11 @@
       },
       "film5": {
         "title": "Zasoby (5)",
-        "description": "Teaser"
+        "description": "Zapowiedź"
       },
       "film6": {
         "title": "Zasoby (6)",
-        "description": "Teaser"
+        "description": "Zapowiedź"
       },
       "after": {
         "title": "Gotowy, żeby wystartować?",
@@ -17674,7 +17674,7 @@
       "title": "Masz pytania? Porozmawiajmy!",
       "subtitle": "Twój dedykowany Partner Manager jest tutaj, aby pomóc Ci osiągnąć sukces",
       "name": "Bartosz Sotomski",
-      "role": "Partner Success Manager",
+      "role": "Menedżer sukcesu partnerów",
       "quote": "Jestem tutaj, aby pomóc Ci rozwijać biznes z Consultify. Czy masz pytania o program, potrzebujesz pomocy z prezentacją dla klienta, czy chcesz omówić możliwości co-marketingu — skontaktujmy się!",
       "bookCall": "Umów rozmowę",
       "bookCallDesc": "Zaplanuj 15-minutową rozmowę wstępną",
@@ -18404,7 +18404,7 @@
       "executionMoves": "Ruchy egzekucyjne"
     },
     "chip": {
-      "governance": "Governance",
+      "governance": "Nadzór",
       "risk": "Ryzyko",
       "leadership": "Przywództwo",
       "roi": "ROI",
@@ -18481,7 +18481,7 @@
     "deleteConfirm": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
   },
   "businessCase": {
-    "title": "Business Case",
+    "title": "Uzasadnienie biznesowe",
     "subtitle": "Rekomendacja wsparta AI, ugruntowana w silniku. Każda liczba pochodzi z deterministycznego modelu — żadnych zmyślonych wartości.",
     "promptLabel": "Opisz decyzję lub inwestycję",
     "promptPlaceholder": "np. Czy wdrożyć nowy CRM we wszystkich zespołach? Oczekiwany koszt licencji, tempo adopcji i wzrost produktywności, który chcemy uchwycić.",
@@ -18932,7 +18932,7 @@
           "monteCarlo": {
             "title": "Symulacja Monte Carlo NPV",
             "subtitle": "Symuluj wyniki NPV w zakresach niepewności driverów.",
-            "driverLabel": "Driver",
+            "driverLabel": "Czynnik",
             "min": "Min",
             "mode": "Moda",
             "max": "Max",
@@ -20957,7 +20957,7 @@
           "desc": "Weryfikacja i routing domen najemcy"
         },
         "branding": {
-          "label": "Branding",
+          "label": "Identyfikacja wizualna",
           "desc": "Tożsamość, ustawienia regionalne i profil zaufania"
         },
         "competencies": {
@@ -21950,7 +21950,7 @@
         },
         "columns": {
           "version": "Wersja",
-          "preset": "Preset",
+          "preset": "Ustawienie wstępne",
           "status": "Status",
           "prompt": "Prompt",
           "model": "Model",
@@ -22813,7 +22813,7 @@
       "problems": "Problemy",
       "hypotheses": "Hipotezy",
       "candidates": "Kandydaci",
-      "sizing": "Sizing"
+      "sizing": "Szacowanie"
     },
     "wizard": {
       "assumptions": "założenia",
@@ -24576,7 +24576,7 @@
       "scenarioApplied": "Scenariusz zastosowany.",
       "scenarioApplyError": "Nie udało się zastosować scenariusza.",
       "scenarioTimeBoxed": "Time-boxed",
-      "scenarioBudgetBoxed": "Budget-boxed",
+      "scenarioBudgetBoxed": "Ograniczony budżetem",
       "scenarioBalanced": "Balanced (baseline AI)",
       "scenarioBalancedAiSummary": "Używa baseline harmonogramu AI, aby zbalansować quick wins i obciążenie.",
       "scenarioTimeSummary": "Priorytetyzuje szybsze dowiezienie, przesuwając kluczowe elementy do przodu.",
@@ -26732,11 +26732,11 @@
       "powered": "Szybkie akcje"
     },
     "nav": {
-      "dashboard": "Dashboard",
+      "dashboard": "Pulpit",
       "dashboardDesc": "Przegląd dla executive",
       "focus": "Focus board",
       "focusDesc": "Dzienne priorytety",
-      "inbox": "Inbox",
+      "inbox": "Skrzynka odbiorcza",
       "inboxDesc": "Triage nowych elementów",
       "tasks": "Wszystkie zadania",
       "tasksDesc": "Lista zadań",
@@ -26877,7 +26877,7 @@
     "columns": {
       "name": "Nazwa",
       "initiative": "Inicjatywa",
-      "baseline": "Baseline",
+      "baseline": "Poziom bazowy",
       "target": "Cel",
       "current": "Obecna",
       "status": "Status",
@@ -26911,7 +26911,7 @@
       "create": "Utwórz KPI"
     },
     "drawer": {
-      "baseline": "Baseline",
+      "baseline": "Poziom bazowy",
       "gap": "Różnica",
       "chartTitle": "Wartość w czasie",
       "noMeasurements": "Brak pomiarów",
@@ -27325,7 +27325,7 @@
     "sourceType": {
       "tool_session": "Workspace pomysłu",
       "mywork": "MyWork",
-      "assessment": "Assessment",
+      "assessment": "Ocena",
       "financial_analysis": "Analiza finansowa",
       "interview": "Wywiad",
       "manual": "Ręcznie"
@@ -27855,7 +27855,7 @@
     "footnote": "Cennik jest przejrzysty w zakresie stanowisk, projektów, eksportów i użycia AI — zespoły mogą skalować się przewidywalnie.",
     "plans": {
       "trial": {
-        "name": "Trial",
+        "name": "Okres próbny",
         "price": "Za darmo",
         "subtitle": "7 dni",
         "description": "7 dni na sprawdzenie workflow przed decyzją.",
@@ -27869,7 +27869,7 @@
         "cta": "Rozpocznij trial"
       },
       "user": {
-        "name": "User",
+        "name": "Użytkownik",
         "price": "EUR 29",
         "subtitle": "za stanowisko / miesiąc",
         "description": "Dla samodzielnych konsultantów i operatorów potrzebujących stałego miesięcznego użycia.",
@@ -27901,7 +27901,7 @@
       "enterprise": {
         "name": "Enterprise",
         "price": "Indywidualnie",
-        "subtitle": "custom setup",
+        "subtitle": "konfiguracja niestandardowa",
         "description": "Dla firm konsultingowych i zespołów enterprise z wymaganiami bezpieczeństwa i wdrożeniowymi.",
         "features": [
           "Własne stanowiska i pakiety użycia",
@@ -28060,7 +28060,7 @@
         "benefitsLabel": "Korzyści",
         "items": {
           "registered": {
-            "title": "Registered",
+            "title": "Zarejestrowany",
             "description": "Dla rozpoczynających współpracę",
             "requirements": [
               "Rejestracja",
@@ -28073,7 +28073,7 @@
             ]
           },
           "certified": {
-            "title": "Certified",
+            "title": "Certyfikowany",
             "description": "Dla doświadczonych konsultantów",
             "requirements": [
               "Egzamin certyfikacyjny",
@@ -28319,7 +28319,7 @@
         "empty": "Brak szablonów w statusie \"{{status}}\".",
         "featured": "⭐ Wyróżniony · ",
         "used": "Użyć",
-        "governanceTitle": "Governance",
+        "governanceTitle": "Nadzór",
         "governanceShort": "Govern."
       },
       "governance": {
@@ -29697,7 +29697,7 @@
       }
     },
     "followUpRecords": {
-      "titlePlaceholder": "Follow-up…",
+      "titlePlaceholder": "Dalsze działania…",
       "ownerPlaceholder": "Właściciel",
       "add": "Dodaj follow-up",
       "notifications": {
@@ -29767,7 +29767,7 @@
     "noFollowUpsYet": "Brak follow-upów",
     "completed": "Zamknięte",
     "scheduled": "Zaplanowane",
-    "followUp2": "Follow-up",
+    "followUp2": "Dalsze działania",
     "operatorBrief": "Brief operatora",
     "preparingMeetingBrief": "Przygotowuję briefing spotkania...",
     "noOperatorBriefForThisMeeting": "Brak briefingu operatora dla tego spotkania.",
@@ -31484,7 +31484,7 @@
         "backToDraft": "Cofnij do draftu",
         "publishAndCreateTasks": "Publikuj i utwórz taski",
         "backToReview": "Cofnij do review",
-        "label": "Workflow"
+        "label": "Przepływ pracy"
       },
       "quickArgs": {
         "proLowerCost": "Niższy koszt",
@@ -31549,7 +31549,7 @@
         "viewSource": "Pokaż źródło →"
       },
       "header": {
-        "workflowBadgeLabel": "Workflow"
+        "workflowBadgeLabel": "Przepływ pracy"
       },
       "actions": {
         "approve": "Zatwierdź",
@@ -31625,7 +31625,7 @@
         "edit": "Edytuj",
         "delete": "Usuń",
         "remindersTitle": "Przypomnienia",
-        "remindersTitlePlain": "Reminders",
+        "remindersTitlePlain": "Przypomnienia",
         "addReminder": "Dodaj reminder",
         "add": "Dodaj",
         "colType": "Typ",
@@ -31636,7 +31636,7 @@
         "beforeDue": "Przed terminem",
         "afterDue": "Po terminie",
         "escalationTitle": "Eskalacja i zasady",
-        "escalationTitlePlain": "Escalation",
+        "escalationTitlePlain": "Eskalacja",
         "addEscalation": "Dodaj eskalację",
         "colStatus": "Status",
         "colThresholds": "Progi W/C",
@@ -31718,7 +31718,7 @@
         "save": "Zapisz"
       },
       "clickupTabs": {
-        "overview": "Overview",
+        "overview": "Przegląd",
         "resources": "Załączniki + Linki",
         "risk": "Ryzyko",
         "options": "Opcje",
@@ -33002,7 +33002,7 @@
     "confirmDelete": "Potwierdź",
     "tplBlank": "Pusty",
     "tplBlankDesc": "Puste płótno",
-    "tplDashboard": "Dashboard",
+    "tplDashboard": "Pulpit",
     "tplDashboardDesc": "Wstępnie skonfigurowany z blokami wykresów",
     "tplFormView": "Widok formularza",
     "tplFormViewDesc": "Zoptymalizowany pod wprowadzanie danych",
@@ -33127,7 +33127,7 @@
       "siri": "Ocena SIRI",
       "adma": "Ocena ADMA",
       "interview": "Wywiad",
-      "readout": "Readout",
+      "readout": "Podsumowanie",
       "other": "Inne"
     },
     "confidence": {
@@ -33590,14 +33590,14 @@
       "templates": "Szablony",
       "distribute": "Dystrybucja",
       "frameworkGenerator": "Generator frameworków",
-      "framework": "Framework",
+      "framework": "Metodyka",
       "conditionalFormatting": "Formatowanie warunkowe",
       "colorPalette": "Paleta kolorów",
       "data": "Dane",
       "forms": "Formularze",
       "interfaces": "Interfejsy",
       "models": "Modele",
-      "workflow": "Workflow",
+      "workflow": "Przepływ pracy",
       "interfaceDesigner": {
         "label": "Projektant interfejsu",
         "addBlock": "Dodaj blok",
@@ -33664,9 +33664,9 @@
       "build": "Budowanie",
       "connectors": "Konektory",
       "consultifyLink": "Połączenie z Consultify",
-      "scoring": "Scoring",
+      "scoring": "Punktacja",
       "presentation": "Prezentacja",
-      "pipeline": "Pipeline",
+      "pipeline": "Lejek",
       "relations": "Relacje",
       "history2": "Historia",
       "formatting": "Formatowanie",
@@ -34145,7 +34145,7 @@
       "viewPreset": {
         "default": "Domyślny",
         "triage": "Triażowanie",
-        "scoring": "Scoring",
+        "scoring": "Punktacja",
         "decisionLog": "Log decyzji"
       },
       "failedToLoadMap": "Nie udało się wczytać mapy",
@@ -35405,7 +35405,7 @@
       "label86": "Przejrzyj i popraw outline przed utworzeniem artefaktu.",
       "label87": "Tytuł",
       "label88": "Typ oceny",
-      "label89": "Outline",
+      "label89": "Konspekt",
       "label90": "Anuluj",
       "label91": "Utwórz artefakt",
       "classifyPrompt": "Ta notatka wygląda jak {{typeLabel}}. Konwertować?",
@@ -35474,7 +35474,7 @@
       "label5": "Najpierw dopracuj treść",
       "title": "1. Dodaj źródła",
       "label6": "Załącz pliki i materiały wejściowe.",
-      "label7": "Attachments",
+      "label7": "Załączniki",
       "title2": "2. Zrób propozycję AI",
       "label8": "Uruchom AI action plan dla tej notatki.",
       "label9": "Propozycja AI",
@@ -37146,8 +37146,8 @@
       "lockTypeRow": "Wiersz",
       "lockTypeSection": "Sekcja",
       "lockTypeSchema": "Schema",
-      "lockTypeDocument": "Document",
-      "lockTypePhase": "Phase",
+      "lockTypeDocument": "Dokument",
+      "lockTypePhase": "Etap",
       "lockTypeObject": "Object",
       "workspaceLocks": "Blokady we workspace",
       "workspaceLocksUnavailable": "Blokady workspace niedostępne",
@@ -37759,10 +37759,10 @@
       "createFromNote": "Utwórz z notatki",
       "convertToHint": "Convert to… utworzy najpierw MyWork session.",
       "convertInitiative": "Inicjatywa",
-      "convertTask": "Task",
+      "convertTask": "Zadanie",
       "convertDecision": "Decyzja",
-      "convertIdea": "Idea",
-      "convertAssessment": "Assessment",
+      "convertIdea": "Pomysł",
+      "convertAssessment": "Ocena",
       "convertReport": "Raport",
       "convertPresentation": "Prezentacja",
       "page": "Strona",
@@ -37891,7 +37891,7 @@
     },
     "convertChecklistModal": {
       "fromNote": "Z notatki",
-      "taskSingular": "task",
+      "taskSingular": "zadanie",
       "taskPlural": "tasków",
       "tasksCreated": "Utworzono {{count}} {{noun}}",
       "createButton": "Utwórz {{count}} {{noun}}",
@@ -38128,7 +38128,7 @@
     },
     "category": {
       "visual": "Tryby widoku",
-      "workflow": "Workflow",
+      "workflow": "Przepływ pracy",
       "collab": "Współpraca",
       "analytics": "Analityka",
       "formatting": "Formatowanie"
@@ -38215,7 +38215,7 @@
         "columns": "Kolumny",
         "view": "Widok galerii — przełącza tabelę na kafelki",
         "filter": "Filtruj",
-        "dashboard": "Dashboard"
+        "dashboard": "Pulpit"
       },
       "importExport": "Import / Eksport",
       "moreTools": "Więcej narzędzi",
@@ -38459,7 +38459,7 @@
       "risk": "Ryzyko",
       "action": "Akcja",
       "decision_point": "Punkt decyzyjny",
-      "insight": "Insight",
+      "insight": "Wniosek",
       "question": "Pytanie",
       "evidence": "Dowód"
     },
@@ -38773,7 +38773,7 @@
       "close": "Zamknij",
       "context": "Kontekst",
       "downstreamLimits": "Ograniczenia downstream",
-      "template": "Template",
+      "template": "Szablon",
       "noTemplateAiComposesStructure": "Bez template - AI układa strukturę",
       "executiveReadout": "Read-out zarządczy",
       "consultingWorkpaper": "Workpaper konsultingowy",
@@ -38828,7 +38828,7 @@
         "report": "Raport",
         "presentation": "Prezentacja",
         "table": "Tabela",
-        "idea": "Idea",
+        "idea": "Pomysł",
         "note": "Notatka",
         "initiative": "Inicjatywa",
         "decision": "Decyzja"
