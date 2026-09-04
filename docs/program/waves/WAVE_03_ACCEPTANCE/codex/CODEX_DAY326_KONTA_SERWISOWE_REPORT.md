@@ -1,7 +1,9 @@
 # CODEX DAY 326 — konta serwisowe
 
-Data: 2026-09-04  
-Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`  
+Data: 2026-09-04
+
+Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`
+
 Gałąź: `codex/day326-konta-serwisowe-20260904`
 
 ## Werdykt
@@ -88,14 +90,22 @@ Pełny próg nie jest osiągnięty. Niezalogowane żądanie jest przechwytywane 
 
 ### STOP — R2 pełna koperta 401
 
-Rodzaj: MERYTORYCZNY  
-Powód: wcześniejszy mount `/api/admin` odpowiada przed licencjonowanym routerem.  
-Licencja, którą sprawdziłem: `Gateway.ts` i bramki są TYLKO DO ODCZYTU; produkt zastępczy to czerwony kontrakt + brief.  
-Dowód: `final-realpg-full.json`: 9 PASS, 1 FAIL; ciało `{"error":"No token provided"}`.  
-Co dostarczyłem ZAMIAST zmiany: czerwony kontrakt oraz działającą naprawę wszystkich osiągalnych gałęzi w routerze kont.  
-Co zrobiłbym, gdyby zapadła decyzja X: zamontowałbym path-specific normalizer przed szerokimi routerami admin albo uporządkował kolejność mountów i ponownie zmierzył wszystkie admin routes.  
-Rekomendacja dla nadzorcy: osobny dyżur przekrojowy dla kopert błędów wcześniejszych mountów `/api/admin`; promień rażenia obejmuje inne trasy administracyjne.  
-Stan: zacommitowano częściowo w `a9d23a8215`.  
+Rodzaj: MERYTORYCZNY
+
+Powód: wcześniejszy mount `/api/admin` odpowiada przed licencjonowanym routerem.
+
+Licencja, którą sprawdziłem: `Gateway.ts` i bramki są TYLKO DO ODCZYTU; produkt zastępczy to czerwony kontrakt + brief.
+
+Dowód: `final-realpg-full.json`: 9 PASS, 1 FAIL; ciało `{"error":"No token provided"}`.
+
+Co dostarczyłem ZAMIAST zmiany: czerwony kontrakt oraz działającą naprawę wszystkich osiągalnych gałęzi w routerze kont.
+
+Co zrobiłbym, gdyby zapadła decyzja X: zamontowałbym path-specific normalizer przed szerokimi routerami admin albo uporządkował kolejność mountów i ponownie zmierzył wszystkie admin routes.
+
+Rekomendacja dla nadzorcy: osobny dyżur przekrojowy dla kopert błędów wcześniejszych mountów `/api/admin`; promień rażenia obejmuje inne trasy administracyjne.
+
+Stan: zacommitowano częściowo w `a9d23a8215`.
+
 Czy kontynuowałem pozostałe pozycje: TAK; R3–R6 są rozłączne.
 
 ### Mutacja R2
