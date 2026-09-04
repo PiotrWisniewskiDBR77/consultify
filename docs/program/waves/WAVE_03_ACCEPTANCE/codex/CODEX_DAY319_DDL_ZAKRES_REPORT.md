@@ -106,6 +106,14 @@ Migracja `20261250_day319_runtime_ddl_gap.sql` addytywnie pokrywa wszystkie 7 ta
 
 Po tym dowodzie usunięto 9 postgresowych DDL runtime: 5 z `PostgresDatabase.ts`, 2 z postgresowej gałęzi `DatabaseInitializer.ts` i 2 z `effectiveAccessService.ts`. Definicje SQLite w `DatabaseInitializer.ts` pozostają, bo `information_schema` dowodziło wyłącznie ścieżki PostgreSQL. Po usunięciu pusta baza ponownie przyjęła 892 migracje, drugi przebieg 0, wszystkie 7 tabel istniało, a bezpiecznik miał 2/2 PASS. Dowody: `r3-po-usunieciu-1.txt`, `r3-po-usunieciu-2.txt`, `r3-po-usunieciu-tabele.txt`, `r3-bezpiecznik-green.txt`.
 
+## R4 — `llm_providers.markup_multiplier`
+
+Zastany defekt nie pochodzi z dyżuru 310: kolumna nie powstawała ani w migracji, ani w runtime DDL. Kod jednak ją czytał/zapisywał w `AIPipeline.ts`, `modelRouter.ts`, `LLMController.ts`, `llm.routes.ts`, `llmConfigService.ts`, a ekran `AdminLLMMultipliers.tsx` oczekiwał jej w odpowiedzi.
+
+PRZED: `information_schema.columns` miało 29 kolumn `llm_providers`, bez `markup_multiplier`; realny `GET /api/llm/providers` zwrócił 200, lecz obiekt providera nie zawierał pola. PO addytywnej migracji `20261251_day319_llm_provider_markup_multiplier.sql`: świeży strict chain 893/0, kolumna `real DEFAULT 2.0`, a ten sam realny GET zwrócił 200 z `"markup_multiplier":2`.
+
+Wartość 2.0 zachowuje dotychczasowy fallback rozliczeniowy `AIPipeline` (kolumna → env → 2.0); 1.0 zmieniłoby cennik dla istniejących wierszy, więc nie zostało użyte jako default migracji. Jawny insert 1.0 w `llm.routes.ts` pozostał bez zmian. Dowody: `r4-kolumny-przed.txt`, `r2-gateway-http.txt`, `r4-migracja-1.txt`, `r4-migracja-2.txt`, `r4-kolumna-po.txt`, `r4-gateway-http-po.txt`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R3–R6 pozostają niewykonane na tym etapie raportu.
