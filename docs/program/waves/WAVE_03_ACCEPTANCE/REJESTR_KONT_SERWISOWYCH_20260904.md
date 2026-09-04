@@ -60,3 +60,23 @@ SELECT id, name, status FROM organizations WHERE id = 'system';
 ```
 
 Nie ma dziury w odtworzeniu tego seeda na badanym markerze. Osobna niespójność typów pozostaje realna: organizacja tekstowa istnieje, ale `tp_service_accounts.organization_id uuid` nie może jej reprezentować. R2 zabezpiecza tę sytuację jawnym `400 INVALID_IDENTIFIER` zamiast wyjątku PostgreSQL.
+
+## R5 — powierzchnia `.catch(` w trasach
+
+Stan: **ZROBIONE**.
+
+Pomiar tekstowy zgodny z komendami instrukcji, po plikach `.ts` pod `server/src/routes`, bez ścieżek `__tests__`:
+
+- 267 linii z `.catch(`;
+- 251 linii pasujących do `.catch\(\s*\(`.
+
+Pomiar semantyczny AST ma celowo inną definicję: liczy `CallExpression`, którego callee jest property access o nazwie `catch`, a następnie analizuje tekst pierwszego callbacku. Wynik: 264 wywołania `.catch`, w tym 255 callbacków zaczynających się nawiasem. W tej grupie:
+
+- 1 callback zawiera zapis do odpowiedzi HTTP;
+- 66 zawiera wywołanie loggera;
+- 1 należy do obu grup;
+- 189 nie należy do żadnej z tych grup;
+- 28 przekazuje surową treść błędu wyłącznie do loggera;
+- 0 przekazuje surową treść błędu do odpowiedzi HTTP.
+
+Jedyny callback łączący logger i odpowiedź jest w `table-platform.routes.ts`: surowy komunikat trafia do loggera, natomiast odpowiedź `503` zawiera stały komunikat i kod `SCHEMA_CHECK_FAILED`. Artefakt klasyfikacji: `/private/tmp/cx-day326-konta-serwisowe-artefakty/catch-ast-classification.txt`.
