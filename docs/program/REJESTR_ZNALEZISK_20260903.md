@@ -342,3 +342,19 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AA. Akcept właściciela 04.09 — DEC-393
+
+| Nr | Rzecz | Słowa właściciela | Skutek | Ślad |
+|---|---|---|---|---|
+| AA1 | **DEC-393 — akcept trzech wzorców.** Para zrzutów karty inicjatywy (6 sekcji / 3 grupy → **24 / 5**, realny rekord `init-smed-linia-pakowania`, ścieżka produkcyjna) oraz sesja SWOT z polskimi kaflami obok polskiego drzewa | **„Wszystkie trzy rzeczy do akceptacji przychodzą z pełną akceptacją. Dajemy pełne OK na wszystkie wzorce, które pokazałeś."** | **Flaga `ff_initiative_sections_complete` przechodzi na domyślne ON** (CLAUDE.md §7: po akcepcie → flaga domyślna). Etykiety narzędzi były już na żywo — kafle nie są za flagą | DEC-393 |
+
+**Awaryjny wyłącznik zachowany i udowodniony** (CLAUDE.md §8 wymaga go dla każdej flagi). Trzy warstwy nadal natychmiast wracają do 6 sekcji:
+`?ff_initiative_sections_complete=0` · `localStorage ff.initiative.sections_complete=0` · `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE=0`.
+
+**Dowód mutacyjny wyłącznika:** wypatroszenie warstwy `localStorage` (`return true` zamiast `return stored`) → **test CZERWONY**; cofnięcie przez `cp` → **5/5 zielone**. Czyli wyłącznik jest realnie broniony, a nie tylko opisany.
+
+**Czego ten akcept NIE obejmuje** — żeby nikt tego później nie rozciągnął:
+- flaga siedmiu etapów SWOT (`VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES`) **zostaje wyłączona** — pokazany był zrzut etykiet, nie para OFF/ON siedmiu etapów;
+- flaga prawego panelu Idei/Notatnika **zostaje wyłączona** — para Notatnika została odrzucona jako niezdatna do pokazania (szkielet ładowania i 9 błędów konsoli);
+- pozostałych 6 typów kart **nie było pokazane** i ich kontrakt nadal wymaga pomiaru (dyżur 314 mierzył je przy poprzednim kształcie kontraktu).

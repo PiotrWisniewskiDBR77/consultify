@@ -18,9 +18,12 @@ describe('initiativeSectionsCompleteFlag — query → localStorage → env → 
     vi.unstubAllEnvs();
   });
 
-  it('bez query, localStorage i env zwraca false', () => {
+  // DEC-393 (04.09): wlasciciel zaakceptowal pare zrzutow 6/3 -> 24/5 slowami 'pelna akceptacja',
+  // wiec domyslna wartosc przeszla z OFF na ON (CLAUDE.md §7). Trzy warstwy wylacznika ponizej
+  // ZOSTAJA i sa tu bronione — CLAUDE.md §8 wymaga awaryjnego wylacznika dla kazdej flagi.
+  it('bez query, localStorage i env zwraca true (domyslne ON po akcepcie DEC-393)', () => {
     vi.stubEnv(INITIATIVE_SECTIONS_COMPLETE_FLAG_KEYS.env, '');
-    expect(isInitiativeSectionsCompleteEnabled()).toBe(false);
+    expect(isInitiativeSectionsCompleteEnabled()).toBe(true);
   });
 
   it('query ma pierwszeństwo przed localStorage i env', () => {
@@ -48,9 +51,9 @@ describe('initiativeSectionsCompleteFlag — query → localStorage → env → 
     expect(isInitiativeSectionsCompleteEnabled()).toBe(true);
   });
 
-  it('bez window zwraca false także przy env ON', () => {
+  it('bez window zwraca true (render serwerowy dostaje komplet sekcji)', () => {
     vi.stubEnv(INITIATIVE_SECTIONS_COMPLETE_FLAG_KEYS.env, '1');
     vi.stubGlobal('window', undefined);
-    expect(isInitiativeSectionsCompleteEnabled()).toBe(false);
+    expect(isInitiativeSectionsCompleteEnabled()).toBe(true);
   });
 });
