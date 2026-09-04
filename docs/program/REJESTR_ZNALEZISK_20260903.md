@@ -287,3 +287,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Dyżur 354 — etykiety narzędzi fazowych
+
+- Własny parser wielowierszowych wariantów języka wykazał większy mianownik niż instrukcja: rodzina 350 ternary, A=8, B=55.
+- Naprawiono 20 etykiet z nazw title.pl; dodano ratchet importujący wspólny rejestr justification i podłogę liczebności.
+- R4 pozostaje PARTIAL: ekran dynamic-swot był już poprawny na markerze, więc kadry PRZED/PO są identyczne i nie dowodzą zmian portfolio/risk.
+- Gałąź odbiorowa: `codex/day354-etykiety-narzedzi-20260904`; szczegóły i propozycje w `CODEX_DAY354_ETYKIETY_NARZEDZI_REPORT.md`.
