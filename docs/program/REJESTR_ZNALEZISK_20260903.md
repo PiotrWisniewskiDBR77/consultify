@@ -287,3 +287,19 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Decyzja CTO 04.09 — kotwica bramki G19 (DEC-392)
+
+| Nr | Rzecz | Pomiar, na którym stoi decyzja | Rozstrzygnięcie | Ślad |
+|---|---|---|---|---|
+| R1 | **DEC-392 — kotwica G19 jest RUCHOMA, dowód ważny na dzień odbioru, z terminem ważności 7 dni.** Właściciel oddał decyzję CTO słowami „Ty jesteś CTO, decyduj" | Dowód G19 stał na zamrożonym punkcie. Od tamtej pory zmieniło się **106 plików** (90 bez testów) na ścieżkach, które ta bramka mierzy z definicji — i liczba rośnie z każdym dniem naszej pracy (104 → 106 w jedną dobę). Dystans policzony od kotwicy wpisanej w wiersz macierzy (`316bce9dd9`) daje **1216** (wszystkie), **1015** (`--no-merges`), **315** (`--first-parent`) — **żaden nie daje 615**, które podawały dwa dyżury. Macierz wpisuje mianownik **49**, a dryf mierzy **106** | **PRZYJĘTE** — uzasadnienie niżej | DEC-392 |
+
+**Dlaczego ruchoma, a nie stała.** Kotwica stała ma jedną zaletę — jest prosta — i jedną wadę, która ją przekreśla: **bramka o „późniejszych zmianach" zaczyna mierzyć przeszłość w dniu, w którym ją zamykamy**. Dokładnie to zdiagnozowaliśmy 04.09: zapis `G19-Z3 = 0` był prawdą w chwili pomiaru i fałszem tydzień później, a nikt tego nie zauważył, bo bramka wyglądała na zamkniętą. Zamrożenie punktu odniesienia zamienia bramkę w pamiątkę.
+
+**Co dokładnie znaczy „ruchoma".** Wiersz `G19` przechodzi na `PASS` na podstawie pomiaru wykonanego na **markerze odbioru**, a nie na historycznym punkcie. Wpis niesie **datę i SHA pomiaru**. Po **7 dniach** wiersz sam wygasa do `PASS_STALE` i wymaga powtórzenia — pomiar jest tani (skrypt), więc odświeżenie kosztuje minuty, nie dzień.
+
+**Czego ta decyzja NIE robi.** Nie obniża progu i nie zamyka ani jednego wiersza z góry. Wiersz nadal zmienia stan **wyłącznie z dowodem załączonym w tym samym commicie**, a `TECHNICAL_REGRESSION_PASS` pozostaje odrzucony. Zmienia się punkt odniesienia, nie wymóg dowodu.
+
+**Uczciwe nazwanie tego, co bramka wtedy mówi.** `PASS` na ruchomej kotwicy znaczy: *„na dzień X, na markerze Y, nie ma regresji na współdzielonych ścieżkach"*. Nie znaczy: *„nigdy nie będzie"*. To jest słabsze twierdzenie niż to, które próbowaliśmy postawić — i **jedyne, które da się utrzymać prawdziwym**.
+
+**Ryzyko przyjęte świadomie.** Przed demo trzeba odświeżyć wygasłe wiersze. Jeśli tego nie zrobimy, macierz pokaże `PASS_STALE` zamiast `PASS` — czyli zawoła o siebie sama, zamiast po cichu kłamać. To jest cała różnica.
