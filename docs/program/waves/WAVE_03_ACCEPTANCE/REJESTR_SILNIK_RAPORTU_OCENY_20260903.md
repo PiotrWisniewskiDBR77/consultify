@@ -88,3 +88,13 @@ Przebieg R3 wykonano z usuniętymi z procesu `OPENAI_API_KEY`, `OPENROUTER_API_K
 3. `runOrThrow` nie daje serwisowi informacji, czy warunkowy `INSERT ... SELECT` utworzył wiersz. `get(organizationId, sessionId)` z linii 99 jest jedynym potwierdzeniem na poziomie serwisu; dla obcej organizacji zwraca `null`, a `save` rzuca `report metadata save refused`. Nowy przypadek realnego PostgreSQL uruchomił równolegle zapis właściciela i zapis obcego tenanta: właściciel `fulfilled`, obcy `rejected`, zimny odczyt zachował `{organization_id: ownerOrg, study_scope: 'owner concurrent value'}`. Oznacza to, że równoległy zapis innej organizacji nie nadpisuje wiersza właściciela.
 
 Pakiet R6: `2/2 PASS`, `--retry=0`, `DB_TYPE=postgres` sprawdzone w `beforeAll`, `assertRealPostgresTestEnvironment()` wywołane bez argumentów, baza `127.0.0.1:6375/cx339`. Pułapki testowe: brak trasy oznacza, że bramki V8/auth/visibility nie leżą na ścieżce tego testu; nie jest to dowód HTTP ani osiągalności produktu, tylko egzekucji SQL serwisu na RealPG.
+
+### R7 — rekomendacja dla nadzorcy
+
+- **Kontrakt/DOCX MethodSession:** jedyny silnik raportu klientowskiego zmierzony na realnej sesji przez istniejący kontrakt, lecz wynik ma 18 zamiast 21 stron, 148 jawnych braków i domyślnie wyłączony ekran pobierania.
+- **HTML + narrator:** generuje najszybciej i bez klucza poprawnie wraca do deterministycznej prozy, ale daje zwarty dokument 9-stronicowy, angielskie tytuły poziomów oraz nie ma kontraktu wejściowego z `MethodSession`.
+- **Model 298:** jako jedyny zachowuje zaakceptowany układ 21 stron, lecz w tym pomiarze z sesji przeliczył tylko wyniki liczbowe; metadane i narracja nadal były statyczną treścią prototypu, a produkcyjnych wołaczy jest zero.
+
+**Rekomendacja:** wybrać model 298 jako docelowy kontrakt układu, ale nie podłączać go w obecnej postaci; najpierw nadzorca powinien zlecić osobny etap mapowania całej realnej sesji i metadanych do tego modelu, z ApiGateway/JWT/PostgreSQL, zimnym odczytem eksportu oraz akceptem właściciela na pliku wynikowym. Ta rekomendacja nie została wykonana.
+
+Nie zmierzono: zachowania produkcyjnej trasy HTML przy rzeczywiście skonfigurowanym kluczu dostawcy; wywołania tej trasy dla tej samej `MethodSession` (brak takiego wejścia); pełnej sesji z odpowiedziami dla wszystkich 39 obszarów i zamrożonym Outputem; trwałego magazynu wyeksportowanych plików; produkcyjnego runtime, urządzeń i przeglądarek; akceptu właściciela dla któregokolwiek nowego wyniku; PDF generowanego natywnie przez produkt (kontrolne PDF-y powstały przez LibreOffice); 4-stronicowego wyciągu zarządczego z tej sesji; zachowania narratora z obecnym kluczem dostawcy.
