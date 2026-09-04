@@ -8,6 +8,7 @@ import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { serviceAccountService } from '../../services/tablePlatform/ServiceAccountService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { validateUUID } from '../../utils/validation.js';
 
 const router = Router();
@@ -155,7 +156,19 @@ router.delete(
 
 router.use((error: unknown, req: AuthRequest, res: Response, _next: NextFunction) => {
   if (res.headersSent) return;
-  return res.status(500).json({ success: false, code: 'INTERNAL_ERROR' });
+  // Ten lokalny handler przechwytuje blad ZAMIAST errorHandlerMiddleware, ktory jako jedyny
+  // robi logger.error. Bez tego wpisu wyjatek gines bez sladu — odbior 04.09 zmierzyl, ze
+  // POST i DELETE dla organizacji spoza UUID zwracaly 500 i nikt sie o tym nie dowiadywal.
+  const correlationId =
+    (req.headers['x-correlation-id'] as string | undefined) ?? randomUUID();
+  logger.error('[service-accounts] nieobsluzony blad trasy', {
+    correlationId,
+    method: req.method,
+    path: req.originalUrl,
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  });
+  return res.status(500).json({ success: false, code: 'INTERNAL_ERROR', correlationId });
 });
 
 export default router;

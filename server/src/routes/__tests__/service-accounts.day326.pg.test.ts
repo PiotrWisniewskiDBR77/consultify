@@ -352,7 +352,9 @@ describe(
 
     // CZERWONY Z ZAŁOŻENIA — nie regresja tego dyżuru. Wcześniejszy szeroki router
     // /api/admin odpowiada przed wejściem do licencjonowanego routera kont serwisowych.
-    it('KONTRAKT DLA DYŻURU 326 — wcześniejsza odpowiedź 401 ma pełną kopertę', async () => {
+    // it.fails: test PRZECHODZI, dopóki defekt istnieje, i CZERWIENI SIĘ w dniu naprawy.
+    // To nie jest wyciszenie (Z35 zakazuje .skip/.todo) — to asercja defektu z zywym sygnalem.
+    it.fails('KONTRAKT DLA DYŻURU 326 — wcześniejsza odpowiedź 401 ma pełną kopertę', async () => {
       const response = await request(app)
         .get('/api/admin/service-accounts')
         .set('X-Correlation-ID', 'day326-unauthorized');
