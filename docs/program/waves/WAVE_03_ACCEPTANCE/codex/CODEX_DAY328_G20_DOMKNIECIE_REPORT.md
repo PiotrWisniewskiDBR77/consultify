@@ -65,7 +65,11 @@ Test `R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę` po
 
 ## R4 — dziedziczenie DEC
 
-Do uzupełnienia.
+Z mechanizmem: kod 1, `BLOKUJE 15`. Po tymczasowej zamianie `addOwnerEvidence(positions, owner)` na bezpośrednie `addEvidence`: kod 1, `BLOKUJE 37`; delta = 22. W dokumencie właściciela jest 20 wierszy `| R-N … DEC-…`.
+
+Rozbieżność 22 vs 20 nie jest defektem dziedziczenia: liczba 20 mierzy wszystkie wiersze-decyzje rodzin (w tym rodziny niemające obiektu w mianowniku), a delta 22 mierzy obiekty korpusu objęte dziewięcioma rodzinami. Jedna rodzina może obejmować wiele obiektów. Imienna lista 22: `ASM-OWN-001[OF]` i `002[OF]` (R-4/DEC-367); `CHAT-OWN-002/003/015/016/017` (R-14/DEC-377); `INI-OWN-009` (R-15/DEC-378); `MYW-IDEAS-008/011/013` (R-9/DEC-372); `MYW-INB-REC-001` (R-12/DEC-375); `MYW-NBK-CORE-001` (R-11/DEC-374); `MYW-PHOTO-001/002/007/010/011` (R-7/DEC-370); `MYW-PHOTO-003/004/005` (R-8/DEC-371); `RES-OWN-005` (R-17/DEC-380).
+
+Wyłączenie mechanizmu czerwieni dokładnie jeden przypadek: `dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje`. Po cofnięciu przez `cp`: pełny pakiet kod 0; `git diff -- scripts/dev/p0p1-licznik-e1.mjs` pusty. Mechanizmu nie zmieniono.
 
 ## R5 — sprostowanie raportu 301
 
