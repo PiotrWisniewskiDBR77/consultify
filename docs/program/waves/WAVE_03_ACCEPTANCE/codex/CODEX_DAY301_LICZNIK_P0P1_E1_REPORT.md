@@ -46,6 +46,8 @@ Stan dyżuru: **GOTOWE**. Odtwarzalny wynik reguły E1 to **25 pozycji BLOKUJE**
 
 Pozycje wymagające dowodu wzrokowego lub runtime, które pozostają blokujące: `INT-INIT-AI-OBS-001` (Interview → kreator inicjatywy, żywy provider; brak wskazanego dyżuru), `INI-OWN-001` (Initiatives → przegląd danych 11 kart; brak wskazanego dyżuru), `MYW-PHOTO-003` (My Work → oba poziomy paska nawigacji; brak wskazanego dyżuru), `MYW-PHOTO-005` (My Work → wspólny scroll; brak wskazanego dyżuru), `MYW-PHOTO-010` (My Work → konflikt CAS 409; brak wskazanego dyżuru) i `MYW-PHOTO-011` (My Work → Idee PL/EN, jasny/ciemny, tablet, klawiatura; brak wskazanego dyżuru). Skrypt nie dopisuje im numeru dyżuru z domysłu.
 
+**Sprostowanie 2026-09-04 (dyżur 320; oryginalne zdanie powyżej pozostaje dla śladu audytowego).** Komenda `node scripts/dev/p0p1-licznik-e1.mjs --informational --marker bc18bc7acac2ec825ebb3db2f1309738ab034d58 --snapshot-date 2026-09-04` potwierdza, że z wymienionej szóstki blokują wyłącznie `INT-INIT-AI-OBS-001` i `INI-OWN-001` (`NIEROZSTRZYGNIETE`). Oryginalna wersja błędnie nazywała blokującymi także `MYW-PHOTO-003`, `MYW-PHOTO-005`, `MYW-PHOTO-010`, `MYW-PHOTO-011`; poprawna wersja to odpowiednio `ODLOZONE_DEC` (`DEC-2026-09-03-371`), `ZAMKNIETE_DEC` (`DEC-2026-09-03-371`), `ODLOZONE_DEC` (`DEC-2026-09-03-370`) i `ZAMKNIETE_DEC` (`DEC-2026-09-03-370`). Te cztery werdykty dziedziczą jawnie decyzje rodzin `R-8`, `R-8`, `R-7`, `R-7`; są werdyktami reguły E1, nie dowodem implementacji ani odbioru runtime.
+
 ### Twierdzenia niezweryfikowane
 
 - Nie zweryfikowano żadnego ekranu, przeglądarki, bazy ani trasy HTTP; nie były potrzebne do deterministycznego licznika dokumentów.

@@ -96,6 +96,9 @@ jobs:
       - name: Artefakt shell ratchet gate (crimson w powłoce SPEC-A)
         run: npm run check:artefakt
 
+      - name: P0/P1 E1 zero-blockers gate (G20)
+        run: npm run check:p0p1-e1
+
       - name: Canonical-16 module bindings gate (AppRoutes/menuConfig/manifest parity)
         run: npm run verify:canonical-16
 
