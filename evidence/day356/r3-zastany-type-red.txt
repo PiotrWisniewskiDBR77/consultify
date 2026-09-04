@@ -1,0 +1,8 @@
+TYPE_GUARD analyzedFiles=1 heapMb=8192 target=src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx diagnostics=5
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:16:35 TS2741 Property 'ariaLabel' is missing in type '{ context: "idea"; legacy: Element; }' but required in type 'PrototypeProps'.
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:22:13 TS2741 Property 'ariaLabel' is missing in type '{ context: "notebook"; legacy: Element; }' but required in type 'PrototypeProps'.
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:29:13 TS2741 Property 'ariaLabel' is missing in type '{ context: "idea"; legacy: Element; }' but required in type 'PrototypeProps'.
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:36:13 TS2741 Property 'ariaLabel' is missing in type '{ context: "notebook"; legacy: Element; }' but required in type 'PrototypeProps'.
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:44:13 TS2741 Property 'ariaLabel' is missing in type '{ context: "idea"; onClose: Mock<Procedure>; legacy: Element; }' but required in type 'PrototypeProps'.
+
+EXIT_CODE=1

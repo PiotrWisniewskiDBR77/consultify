@@ -1,0 +1,3 @@
+TYPE_GUARD analyzedFiles=1 heapMb=8192 target=src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx diagnostics=0
+
+EXIT_CODE=0
