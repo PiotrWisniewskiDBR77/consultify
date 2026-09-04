@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { evaluateCorpus } from '../p0p1-licznik-e1.mjs';
+
+const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
+  '| ID | Werdykt | Dowód |',
+  '|---|---|---|',
+  ...ids.map((id) => `| \`${id}\` | ${verdict} | ${proof} |`),
+].join('\n');
+
+const corpus = ({ settlement = '', decisions = '', owner = '', wave2 = '', ledger = '' } = {}) => ({
+  settlement,
+  decisions,
+  owner,
+  wave2,
+  ledger,
+});
+
+test('mutacja: kolizja ASM z owner-feedback zachowuje dwa obiekty', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-001']),
+    decisions: `## R1c\n${table(['ASM-OWN-001[OF]'])}\n## Koniec`,
+  }), { floor: 2, shaCheck: () => 'OK' });
+  assert.deepEqual(rows.map(({ id }) => id), ['ASM-OWN-001', 'ASM-OWN-001[OF]']);
+});
+
+test('mutacja: nieistniejący DEC czerwieni pozycję', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+    owner: '| R-1 | `INT-OWN-001` | `DEC-2026-09-03-999` |',
+  }), { floor: 1, shaCheck: () => 'OK' });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.match(rows[0].reason, /^DEC_NIEISTNIEJACY:/);
+});
+
+test('mutacja: nieistniejący SHA czerwieni pozycję', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001'], 'NAPRAWIONE', 'commit deadbeef00'),
+  }), { floor: 1, shaCheck: () => 'SHA_NIEISTNIEJACY' });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
+});
+
+test('mutacja: mianownik poniżej podłogi zatrzymuje parser', () => {
+  assert.throws(
+    () => evaluateCorpus(corpus({ settlement: table(['INT-OWN-001']) }), { floor: 2 }),
+    /mianownik mniejszy niż spodziewany/,
+  );
+});
+
+test('mutacja: pozycja bez werdyktu ląduje w BLOKUJE', () => {
+  const rows = evaluateCorpus(corpus({ settlement: table(['INT-OWN-001']) }), { floor: 1 });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'NIEROZSTRZYGNIETE');
+});
