@@ -51,7 +51,7 @@ Bazowy skład przed zmianami: `numTotalTests=5`, 4 wykonane PASS, 0 FAIL, 1 pend
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R3–R4 nie zostały jeszcze wykonane; nie deklaruję jeszcze rodzinnego zasięgu fałszywego twierdzenia ani nowego pokrycia efektu.
+- R4 nie został jeszcze wykonany; nie deklaruję jeszcze nowego pokrycia efektu.
 - Nie wykonano dowodu bazodanowego, ponieważ wiążący wariant C zabrania stawiania kontenera i dyżur nie dotyka bazy.
 
 ## §0.2e — pakiety uruchomione dotychczas
@@ -67,6 +67,14 @@ Zachowano wpis `idea-table` dla listy i dodano piąty wpis `idea-table-timeline-
 Mutacja a11y: pełny przypadek `Idea tools — complete DOM control inventory idea-table-timeline-stuck: accounts for the base and opened-menu passes` był RED dokładnie na `expect(base.every(({ name }) => name.length > 0)).toBe(true)` po dodaniu bezimiennego przycisku, a po cofnięciu GREEN z właściwym hashem. Diff produktu po przywróceniu pusty. Szczegóły: `evidence/day337/r2-pomiar-i-a11y.md`.
 
 Pierwsze trzy próby polecenia pomiarowego były nieważne: `ReferenceError: sel is not defined`, a brak `pipefail` został zamaskowany przez `tee`. Nie są liczone jako pomiar. Poprawne przebiegi miały literał selektora i `set -o pipefail`.
+
+## R3 — ślad po fałszywym twierdzeniu
+
+Pozycja sprostowania jest bezprzedmiotowa. Specyficzny grep raportu 295 nie znalazł trafień (`kod grepa=1`), a historia pliku kończy się na `1dc4b60f54`. Fałszywe twierdzenie nigdy nie dotarło na mierzoną linię integracyjną, dlatego raportu 295 nie zmieniono.
+
+Rodzinny `rg` w `docs/` i `evidence/` również zwrócił pustą listę (`kod rodziny=1`). Szczegóły komend: `evidence/day337/r3-rodzina-falszywego-twierdzenia.md`.
+
+Do istniejącego rejestru znalezisk dopisano jeden wiersz N1: próg minimalny może zwolnić sondę w połowie renderu, a sama stabilność wymaga odrzucenia stabilnej powłoki startowej.
 
 ## Z30
 
