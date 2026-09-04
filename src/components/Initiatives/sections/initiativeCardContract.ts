@@ -848,6 +848,23 @@ export function sekcjeBoarduPozaKontraktem(ids: readonly string[]): string[] {
   return ids.filter((id) => !INITIATIVE_BOARD_CANONICAL_ORDER.includes(id));
 }
 
+/**
+ * DEC-388 — szablon może zawężać nawigację wyłącznie przed akceptem
+ * kompletnej karty. Po włączeniu nowej flagi wszystkie sekcje pozostają
+ * dostępne; `visibleSections` nadal opisuje priorytety szablonu i nie jest
+ * kasowane ani przepisywane.
+ */
+export function wybierzDostepneSekcjeBoarduInicjatywy<T extends { id: string }>(
+  wszystkie: readonly T[],
+  sekcjeSzablonu: ReadonlySet<string> | null,
+  kompletnaNawigacja: boolean
+): T[] {
+  if (kompletnaNawigacja || !sekcjeSzablonu || sekcjeSzablonu.size === 0) {
+    return [...wszystkie];
+  }
+  return wszystkie.filter((sekcja) => sekcjeSzablonu.has(sekcja.id));
+}
+
 /** Render-idy w kolejności deklaracji — do lekkiej asercji zgodności (R2). */
 export const INITIATIVE_CARD_RENDER_IDS: readonly string[] =
   INITIATIVE_CANONICAL_CARDS.map(initiativeRenderId);

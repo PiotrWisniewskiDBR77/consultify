@@ -62,3 +62,16 @@ Własna różnica zbiorów dla `quick_win` (po usunięciu dynamicznych licznikó
 Rozbieżność wobec listy osiemnastu z instrukcji: **brak** — skład zbioru jest identyczny. Zrzuty `off-niepusty.png` i `on-niepusty.png` są bajtowo identyczne (`38781015…`), co potwierdza, że zastana flaga kontraktu nie usuwa sufitu narzuconego wcześniej przez szablon.
 
 Granica dowodu: harness montuje produkcyjny `InitiativeDocumentView`, ale podstawia transport HTTP. Pomiar dowodzi zachowania DOM komponentu, nie ścieżki ApiGateway/JWT/PostgreSQL ani wdrożenia.
+
+## Dyżur 338 — R2: DEC-388 za flagą domyślnie OFF
+
+Nowa flaga `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE` jest odczytywana wyłącznie z `import.meta.env`; brak wartości oznacza OFF. Nie dodano jej do `.env*`, `docker-compose*` ani `railway*`.
+
+| Szablon | Nowa flaga | Pozycji | Grup | Stan `localStorage` | Dowód |
+| --- | --- | ---: | ---: | --- | --- |
+| `quick_win` | OFF (zmienna nieobecna) | 6 | 3 | `ff.cardContract="1"`; klucz kolejności `null` | `evidence/kompletnosc-24-sekcji-20260904/r2/r2-off-niepusty.json` |
+| `quick_win` | ON (`VITE_VF1_INITIATIVE_SECTIONS_COMPLETE=1`) | 24 | 5 | `ff.cardContract="1"`; klucz kolejności `null` | `evidence/kompletnosc-24-sekcji-20260904/r2/r2-on-niepusty.json` |
+| brak | OFF | 24 | 5 | `ff.cardContract="1"`; klucz kolejności `null` | `evidence/kompletnosc-24-sekcji-20260904/r2/r2-off-pusty.json` |
+| brak | ON | 24 | 5 | `ff.cardContract="1"`; klucz kolejności `null` | `evidence/kompletnosc-24-sekcji-20260904/r2/r2-on-pusty.json` |
+
+Przebieg ON z `quick_win` zawiera wszystkie osiemnaście nazw brakujących w R1. `visibleSections` i zawartość szablonu nie zostały usunięte ani zmienione; nowa funkcja wyboru zwraca pełną listę wyłącznie przy fladze ON, a przy OFF zachowuje zastany filtr.
