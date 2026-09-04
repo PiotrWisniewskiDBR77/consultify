@@ -6,6 +6,7 @@
 - Pliki: 163.
 - Pliki w `server/src/services`: 99.
 - Rozstrzygnięcia pomiarowe: DODAJ_MIGRACJE=93, DO_DECYZJI_PARSER=20, POMINIĘTE_TEST=58, USUN_DDL_W_LOCIE=355.
+- PRZED zmianami: 531 wystąpień / 164 pliki / 100 plików usług. PO pierwszej bezpiecznej grupie: 526 / 163 / 99.
 - „Cichy błąd” jest konserwatywnym sygnałem statycznym: blok `catch` w oknie 20 linii przed/24 po DDL. Wymaga ręcznego potwierdzenia przed zmianą.
 
 ## Pozycje
@@ -538,6 +539,16 @@
 | server/src/services/workbook/workbookCommandService.ts | 60 | NIE_ROZPOZNANO | BRAK | NIE | NIEJEDNOZNACZNY | DO_DECYZJI_PARSER | NIEZREALIZOWANE |
 | server/src/services/workbook/workbookSchemaGuard.ts | 8 | NIE_ROZPOZNANO | BRAK | NIE | NIEJEDNOZNACZNY | DO_DECYZJI_PARSER | NIEZREALIZOWANE |
 | server/src/utils/ensureUserOnboardingStatusTable.ts | 12 | user_onboarding_status | server/migrations/100_user_onboarding_flow.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
+
+## Pozycje zrealizowane w pierwszej grupie
+
+| Plik PRZED | Tabela | Działanie | Commit |
+|---|---|---|---|
+| server/src/services/ai/llmConfigService.ts | llm_logs | usunięto DDL; tabela i indeksy już mają migracje | `530d1e7a9f` |
+| server/src/services/ai/proactiveNudges.ts | ai_dismissed_nudges | usunięto samonaprawę DDL; istniejąca migracja pozostaje SSOT | `530d1e7a9f` |
+| server/src/services/ai/proactiveNudges.ts | ai_nudge_activity | dodano migrację PG i usunięto DDL SQLite | `64d6469f59`, `530d1e7a9f` |
+| server/src/services/ai/proactiveNudges.ts | ai_nudge_actions | dodano migrację PG i usunięto runtime DDL | `64d6469f59`, `530d1e7a9f` |
+| server/src/services/ai/proactiveNudges.ts | ai_nudge_suppressions | dodano migrację PG i usunięto runtime DDL | `64d6469f59`, `530d1e7a9f` |
 
 ## Funkcje, które nigdy nie działały na czystej bazie
 
