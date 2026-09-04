@@ -25,6 +25,8 @@ Tip `github-backup/grafika/m03-20260902` jest nowszy od markera. Pracę rozpocz�
 
 - Zakres `src/services src/api src/hooks src/components`: 642 trafienia — zgodnie z instrukcją.
 - Całe `src`: 786 trafień, nie 790. Wiążący jest pomiar `git grep -nE 'data\\.error|err\\.message|error\\.message' -- src | wc -l` wykonany na `bc18bc7...`.
+- Teza, że przeglądarka zignoruje ustawione przez front `Accept-Language`, została obalona w użytym realnym Chromium: lokalny harness na 5472 otrzymał `{"acceptLanguage":"pl","appLanguage":"pl"}` po `fetch` ustawiającym oba nagłówki na `pl`.
+- Teza „około 204 komunikaty są po angielsku” jest zbyt mocna: wywołań jest dokładnie 204, lecz analiza AST potwierdza bezpośrednio 156 angielskich literałów; po rozwiązaniu dwóch stałych dochodzi sześć dalszych angielskich wywołań, czyli potwierdzone minimum 162/204 (79,4%).
 
 ## R1 — mianownik i klasyfikacja
 
@@ -86,7 +88,38 @@ Test renderujący montuje realny `src/components/ui/primitives/ErrorState.tsx` p
 
 Wynik: 14/14 przypadków pakietu zielonych (`/private/tmp/cx-day316-front-bledy-artefakty/r5-render-final.json`), w tym trzy pełne przypadki renderu. ESLint zmienionego testu: 0 błędów i 0 ostrzeżeń.
 
-## R6–R7
+## R6 — warunek brzegowy języka
+
+### 1. `new AppError(...)`
+
+Pełny pomiar AST objął wszystkie pliki `server/src` poza zakazanym `_backup`: dokładnie 204 wywołania. Surowy wynik: 156 literalnych/template angielskich (76,5%) oraz 48 dynamicznych (23,5%). Audyt 48 dynamicznych rozstrzygnął dodatkowo sześć wywołań stałych jako EN (`QUEUE_UNAVAILABLE_MESSAGE` ×1, `MEGATREND_UNAVAILABLE_MESSAGE` ×5), jedną ekspresję PL, jedną dwujęzyczną, dwa wywołania z liczbą `500` w pozycji komunikatu oraz 38 zależnych od błędu/argumentu runtime. Potwierdzone minimum EN to zatem 162/204 = 79,4%; dokładnego odsetka nie wolno podać bez danych runtime dla pozostałych 38. Artefakt: `/private/tmp/cx-day316-front-bledy-artefakty/r6-app-errors.json`.
+
+Dodatkowe znalezisko tylko do rekomendacji: `server/src/services/stageGateService.ts:446,453` wywołuje `new AppError(500, 'Failed…', code)`, podczas gdy konstruktor oczekuje najpierw komunikatu; mapper może więc wysłać użytkownikowi tekst `500`.
+
+### 2. Realny `Accept-Language`
+
+Uruchomiłem lokalny harness HTTP na wyłącznym porcie 5472. Strona w realnym Codex In-app Chromium wykonała `fetch('/echo', {headers: {'Accept-Language': 'pl', 'X-App-Language': 'pl'}})`. Widoczny wynik DOM był dokładnie `{"acceptLanguage":"pl","appLanguage":"pl"}`. W tym środowisku oba nagłówki realnie doszły; komentarz `api.ts` o bezwarunkowym ignorowaniu `Accept-Language` nie opisuje tego przebiegu. Harness został zatrzymany po pomiarze.
+
+### 3. Odsetek polskich komunikatów bez dyżuru 321
+
+Po R3 rodzina trafień spadła 642→515 w zadanych katalogach i 786→659 w całym `src`, czyli rdzeń usunął 127 surowych ujść. Dla tych 127/127 objętych ujść tekst pochodzi z frontowego `errors.app` i przy polskim UI jest polski niezależnie od surowego języka serwera: 100% objętego rdzenia. W pełnej klasyfikacji R1 było 435 pozycji `NA EKRAN`; 127/435 = 29,2% widocznych miejsc ma obecnie udowodnioną podmianę, a 308 pozostaje w ogonie lub cudzym terenie. Odsetek realnych zdarzeń użytkowników jest `NOT_PROVEN`, bo repo nie zawiera rozkładu ruchu/błędów per ujście.
+
+**Zdanie cytowalne:** Bez dyżuru 321 użytkownik z polskim UI zobaczy polski komunikat w 100% objętego rdzenia (127/127 usuniętych surowych ujść), lecz dla całego mianownika udowodnione jest tylko 127/435 = 29,2% widocznych miejsc; globalny odsetek zdarzeń pozostaje `NOT_PROVEN`.
+
+### Rekomendacja dla dyżuru 321 — diff nienałożony
+
+```diff
+diff --git a/server/src/middleware/appErrorMapper.ts b/server/src/middleware/appErrorMapper.ts
+@@
+-  const message = operational ? raw : MESSAGES[language][mappedCode];
++  // Public response is always canonical and localized. Keep raw text only in
++  // structured logs and development-only `debug` below.
++  const message = MESSAGES[language][mappedCode];
+```
+
+Dyżur 321 powinien osobno poprawić kolejność argumentów dwóch wywołań w `stageGateService.ts` i dodać kontrakt, że operacyjny `AppError` z niestandardowym `errorCode` nadal dostaje kanoniczny tekst według sklasyfikowanego statusu. Niczego w `server/src` nie zmieniłem.
+
+## R7
 
 W TOKU.
 
