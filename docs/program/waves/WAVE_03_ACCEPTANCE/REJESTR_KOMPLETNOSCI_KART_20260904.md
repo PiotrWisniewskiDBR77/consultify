@@ -210,3 +210,38 @@ Mutacja A — ponowne filtrowanie wyniku selektora innym wyrażeniem — zostawi
 Mutacja B — resolver flagi `void raw; return false` — zostawiła zastany pakiet **GREEN 4/4**, a realny DOM dla build-time ON spadł do **6 pozycji / 3 grup**. Wyniki: `r1-mutacja-b-test.json`, `r1-mutacja-b-on.json`.
 
 Obie mutacje cofnięto przez `cp` z kopii w katalogu scratch; `git diff -- src/components/Initiatives/InitiativeDocumentView.tsx` po każdym cofnięciu był pusty. Werdykt R1: **ZROBIONE — zastane zabezpieczenie nie broni zachowania**.
+
+## Dyżur 343 — R3: deskryptory wszystkich 24 sekcji boardu
+
+Reguła prostego przecięcia id przed zmianą dała **17** braków, ponieważ board i registry używają dwóch przestrzeni nazw. Reguła semantyczna z rejestru 338 dała **9** board-id bez własnego deskryptora; zgodnie z rozstrzygnięciem DEC-388 właśnie te dziewięć dostało osobne, addytywne karty. Katalog wzrósł z 27 do **36** kart; komentarz `buildInitiativeCanonicalCards` został zaktualizowany, a zastanej asercji liczby 27 nie znaleziono.
+
+| Sekcja boardu | Ma deskryptor po R3 | Deskryptor `plik:linia` | Dopisany w dyżurze 343 |
+| --- | --- | --- | --- |
+| `initiative-definition` | tak | `initiativeCardContract.ts:63` (`OVERVIEW`) | nie |
+| `tasks` | tak | `initiativeCardContract.ts:142` | nie |
+| `timeline` | tak | `initiativeCardContract.ts:457` | nie |
+| `deliverables-milestones` | tak | `initiativeCardContract.ts:603` | **tak** |
+| `dependencies` | tak | `initiativeCardContract.ts:504` | nie |
+| `decisions` | tak | `initiativeCardContract.ts:160` | nie |
+| `risk-raid` | tak | `initiativeCardContract.ts:177` (`RAID`) | nie |
+| `gates` | tak | `initiativeCardContract.ts:200` | nie |
+| `suggested-changes` | tak | `initiativeCardContract.ts:617` | **tak** |
+| `change-log` | tak | `initiativeCardContract.ts:631` | **tak** |
+| `target-state-scope` | tak | `initiativeCardContract.ts:103` (`TARGET_STATE`) | nie |
+| `kpi` | tak | `initiativeCardContract.ts:259` (`KPIS`) | nie |
+| `okr` | tak | `initiativeCardContract.ts:645` | **tak** |
+| `hypothesis` | tak | `initiativeCardContract.ts:659` | **tak** |
+| `financial-analysis` | tak | `initiativeCardContract.ts:220` | nie |
+| `financial-impact` | tak | `initiativeCardContract.ts:241` | nie |
+| `team` | tak | `initiativeCardContract.ts:408` | nie |
+| `workstream-owners` | tak | `initiativeCardContract.ts:676` | **tak** |
+| `raci` | tak | `initiativeCardContract.ts:426` (`GOVERNANCE`) | nie |
+| `resources` | tak | `initiativeCardContract.ts:471` | nie |
+| `attachments-links` | tak | `initiativeCardContract.ts:522` (`ATTACHMENTS`) | nie |
+| `used-in` | tak | `initiativeCardContract.ts:690` | **tak** |
+| `artifacts` | tak | `initiativeCardContract.ts:704` | **tak** |
+| `lessons-learned` | tak | `initiativeCardContract.ts:718` | **tak** |
+
+Jawna mapa 24/24: `initiativeCardContract.ts:779`; pomiar po zmianie: `board=24`, `mapped=24`, `cards=36`, `missing=[]`. Osiem par kluczy etykiet było już obecnych pod `initiatives.*`; brakujący klucz `initiatives.okr` dopisano równolegle w PL i EN. Liście i18n po zmianie: PL **35199**, EN **33066** — żaden mianownik nie zmalał.
+
+Test `initiativeBoardDescriptors.day343.test.ts` jest GREEN 3/3. Kontrolne usunięcie `LESSONS_LEARNED` z katalogu dało RED z komunikatem `brak nowej karty kanonicznej: lessons-learned`; po cofnięciu przez `cp` wróciło GREEN 3/3.
