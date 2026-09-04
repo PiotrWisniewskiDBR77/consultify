@@ -88,24 +88,32 @@ const result = {
 const baselinePath = path.join(repo, 'docs/program/waves/WAVE_03_ACCEPTANCE/reachability.baseline.json');
 if (process.argv.includes('--update-baseline')) {
   const unreachable = rows.filter((item) => item.classification === 'unreachable').map((item) => item.file);
-  const previous = fs.existsSync(baselinePath) ? JSON.parse(fs.readFileSync(baselinePath, 'utf8')).files : null;
-  if (previous && unreachable.some((file) => !previous.includes(file))) {
+  const testOnly = rows.filter((item) => item.classification === 'test-only').map((item) => item.file);
+  const previous = fs.existsSync(baselinePath) ? JSON.parse(fs.readFileSync(baselinePath, 'utf8')) : null;
+  if (previous?.files && unreachable.some((file) => !previous.files.includes(file))) {
     throw new Error('Baseline update refused: the unreachable set grew');
   }
-  fs.writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 1, files: unreachable }, null, 2) + '\n');
-  console.log(`Updated ${path.relative(repo, baselinePath)} (${unreachable.length} files)`);
+  if (previous?.testOnlyFiles && testOnly.some((file) => !previous.testOnlyFiles.includes(file))) {
+    throw new Error('Baseline update refused: the test-only set grew');
+  }
+  fs.writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 2, files: unreachable, testOnlyFiles: testOnly }, null, 2) + '\n');
+  console.log(`Updated ${path.relative(repo, baselinePath)} (${unreachable.length} unreachable, ${testOnly.length} test-only files)`);
   process.exit(0);
 }
 
 if (process.argv.includes('--check-baseline')) {
   if (!fs.existsSync(baselinePath)) throw new Error(`Missing baseline: ${path.relative(repo, baselinePath)}`);
-  const baseline = new Set(JSON.parse(fs.readFileSync(baselinePath, 'utf8')).files);
-  const additions = rows.filter((item) => item.classification === 'unreachable' && !baseline.has(item.file)).map((item) => item.file);
-  if (additions.length) {
-    console.error(`New unreachable files (${additions.length}):\n${additions.join('\n')}`);
+  const baselineDocument = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+  const unreachableBaseline = new Set(baselineDocument.files);
+  const testOnlyBaseline = new Set(baselineDocument.testOnlyFiles || []);
+  const unreachableAdditions = rows.filter((item) => item.classification === 'unreachable' && !unreachableBaseline.has(item.file)).map((item) => item.file);
+  const testOnlyAdditions = rows.filter((item) => item.classification === 'test-only' && !testOnlyBaseline.has(item.file)).map((item) => item.file);
+  if (unreachableAdditions.length || testOnlyAdditions.length) {
+    if (unreachableAdditions.length) console.error(`New unreachable files (${unreachableAdditions.length}):\n${unreachableAdditions.join('\n')}`);
+    if (testOnlyAdditions.length) console.error(`New test-only files (${testOnlyAdditions.length}):\n${testOnlyAdditions.join('\n')}`);
     process.exit(1);
   }
-  console.log(`Reachability baseline OK (${baseline.size} accepted unreachable files)`);
+  console.log(`Reachability baseline OK (${unreachableBaseline.size} accepted unreachable, ${testOnlyBaseline.size} accepted test-only files)`);
   process.exit(0);
 }
 
