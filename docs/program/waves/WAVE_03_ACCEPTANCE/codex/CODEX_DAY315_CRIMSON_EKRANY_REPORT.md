@@ -132,6 +132,24 @@ Pierwszy `npm run build` po transformacji 10 595 modułów zakończył się RC=1
 
 Pełny licencjonowany pakiet jednostkowy po usunięciu: 95/95 suit i 367/367 testów PASS. Żywa funkcja audytu pozostaje w `UnifiedChatPanel`/`MessageRenderer`; pakiet obejmuje m.in. przypadki `deep thinking flow: confirm, proceed, and post-run agent audit (streamed verdict path)` oraz `agent audit accept handler persists acknowledgement and updates stores`. Usunięto zatem wyłącznie równoległe, nieosiągalne komponenty prezentacyjne, nie handlery ani produkcyjny przepływ audytu.
 
+## Bramki i testy — PO
+
+| Bramka | Wynik PO |
+|---|---|
+| `check-focus-canon.sh --ci` | PASS, baseline 61 plików / 169 wystąpień, dług nie rośnie w żadnym pliku |
+| `check-artefakt.sh` | PASS, 8 aktualnych / baseline 9 |
+| `check-list-canon.sh` | PASS po pełnym skanie fallback: 157 plików, 368 naruszeń / baseline 368 |
+
+Po naprawie `git grep -n 'primary-' -- src/components/AIChat` zwraca 10 linii, z czego 5 poza testami. Wszystkie to wcześniej sklasyfikowane komentarze albo literały; realnych tokenów kolorów `primary-*` w zakresie R2 pozostało zero. Logi bramek: `/private/tmp/cx-day315-crimson-ekrany-artefakty/{focus-final.log,artefakt-final.log,list-final.log}`.
+
+Testy PO: 95/95 suit i 367/367 pełnych przypadków PASS. `diff -u przed-nazwy.txt po-nazwy.txt` jest pusty (RC=0): zero nazw dodanych i zero znikniętych. Pliki: `/private/tmp/cx-day315-crimson-ekrany-artefakty/{przed-nazwy.txt,po-nazwy.txt,test-names.diff}`.
+
+Każdy z pięciu nowych ekranów przeszedł osobny `check-dev-render-parytet.mjs --ekran=<id>` z R1=0, R2=0, R3=0, PODPIS=0 i RC=0. Pełny `--all` ma RC=1 przez pięć nowych względem starego baseline, lecz niezwiązanych z tym dyżurem naruszeń R1 (`assessment-initiatives-table`, `assessment-list`, `assessment-reports-table`, `drd-library-entry`, `reports-hub-management`); żadne nie jest ekranem ani plikiem zmienionym przez dyżur 315. Baseline nie został poluzowany. Log: `/private/tmp/cx-day315-crimson-ekrany-artefakty/dev-render-parity-final.log`.
+
+## Granice dowodu i stan przekazania
+
+Nie ustawiłem żadnych danych SMTP ani dostawcy poczty. Nie uruchomiłem `server/src/index.ts`, outboxu ani transportu pocztowego; uruchomiony był wyłącznie lokalny Vite dev-render na porcie 5471. Gałąź `codex/day315-crimson-ekrany-20260904` **NIE jest scalona i czeka na akcept właściciela na zrzutach**.
+
 ## Korekty wobec instrukcji
 
 - Pomiar potwierdził 15 trafień ogółem i 10 poza testami, a nie 22 z zamówienia nadzorcy.
@@ -140,6 +158,7 @@ Pełny licencjonowany pakiet jednostkowy po usunięciu: 95/95 suit i 367/367 tes
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie zweryfikowano jeszcze nowych ekranów w realnym dev-render ani par PRZED/PO.
-- Nie zweryfikowano jeszcze rozszerzonego bezpiecznika mutacją w obie strony.
-- Nie rozstrzygnięto jeszcze usunięcia martwego poddrzewa `AgentAudit/` testem i buildem.
+- Nie zweryfikowano akceptacji wizualnej właściciela; zrzuty są materiałem do jego decyzji, nie akceptem.
+- Nie zweryfikowano scalenia, wdrożenia ani zachowania w runtime produkcyjnym; wszystkie są poza zakresem i pozostają niewykonane.
+- Nie zweryfikowano realnego HTTP/JWT/PostgreSQL dla Czatu; dyżur nie zmieniał serwera, a pakiet `MOCK_DB=true RUN_DB_TESTS=0` jest wyłącznie dowodem jednostkowym.
+- Pełny audyt parytetu wszystkich ekranów nie jest zielony z powodu pięciu zastanych naruszeń R1 poza zakresem; zielony jest pomiar każdego z pięciu nowych ekranów dyżuru.
