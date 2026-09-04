@@ -73,7 +73,7 @@ Wyłączenie mechanizmu czerwieni dokładnie jeden przypadek: `dziedziczenie DEC
 
 ## R5 — sprostowanie raportu 301
 
-Do uzupełnienia.
+Pozycja bezprzedmiotowa: sprostowanie już istnieje w linii 49, wprowadzone przez commit `5b1aab2bb4` (`fix(day320): rozstrzygnij brakujace dowody E1`). Nie dopisano drugiego rejestru tej samej korekty. Komenda `node scripts/dev/p0p1-licznik-e1.mjs 2>/dev/null | rg 'MYW-PHOTO-'` sprawdziła całe rodzeństwo akapitu: `001/002/007/010` = `ODLOZONE_DEC` przez R-7/DEC-370; `003` = `ODLOZONE_DEC` przez R-8/DEC-371; `004/005` = `ZAMKNIETE_DEC` przez R-8/DEC-371; `011` = `ZAMKNIETE_DEC` przez R-7/DEC-370. Oryginalna szóstka z akapitu obejmuje ponadto `INT-INIT-AI-OBS-001` i `INI-OWN-001`; oba nadal są `BLOKUJE / NIEROZSTRZYGNIETE`.
 
 ## Korekty wobec instrukcji
 
