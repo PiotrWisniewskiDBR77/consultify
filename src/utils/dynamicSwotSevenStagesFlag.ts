@@ -7,8 +7,9 @@ function parse(raw: unknown): boolean {
 /** Fala 2: brak zmiennej i każda nierozpoznana wartość oznaczają OFF. */
 export function isDynamicSwotSevenStagesEnabled(): boolean {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return parse(meta.env?.[ENV_KEY]);
+    // Keep the access static: Vite replaces this expression in the browser
+    // bundle, while a computed `import.meta.env[ENV_KEY]` remains unresolved.
+    return parse(import.meta.env.VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES);
   } catch {
     return false;
   }

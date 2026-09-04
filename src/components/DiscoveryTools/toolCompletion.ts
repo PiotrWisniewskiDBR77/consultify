@@ -9,10 +9,14 @@ import type {
   SWOTOutputReadiness,
   ToolType,
 } from '@/store/useToolStore';
+import {
+  dynamicSwotPack,
+  getDynamicSwotPackForCurrentFlags,
+} from '@/toolPacks/packs/dynamicSwot.pack';
 
 export type ToolCompletionItem = { label: string; done: boolean; anchorId?: string };
 export type DynamicSwotPhaseSummary = {
-  id: 'mission' | 'input' | 'swot' | 'insights' | 'outputs';
+  id: 'mission' | 'input' | 'swot' | 'insights' | 'recommendations' | 'outputs' | 'review';
   label: string;
   done: boolean;
   gapCount: number;
@@ -184,6 +188,37 @@ export function computeDynamicSwotPhaseSummaries(
           : undefined,
     },
   ];
+
+  const activePack = getDynamicSwotPackForCurrentFlags();
+  if (activePack !== dynamicSwotPack) {
+    const recommendations = activePack.phases.find((phase) => phase.id === 'recommendations');
+    const review = activePack.phases.find((phase) => phase.id === 'review');
+    const outputsIndex = summaries.findIndex((summary) => summary.id === 'outputs');
+    summaries.splice(outputsIndex, 0, {
+      id: 'recommendations',
+      label: recommendations?.title[isPolish ? 'pl' : 'en'] || 'Recommendations',
+      done: acceptedMoves > 0,
+      gapCount: acceptedMoves > 0 ? 0 : 1,
+      primaryGap:
+        acceptedMoves > 0
+          ? undefined
+          : isPolish
+            ? 'Zatwierdź kierunek i alternatywy'
+            : 'Approve a direction and alternatives',
+    });
+    summaries.push({
+      id: 'review',
+      label: review?.title[isPolish ? 'pl' : 'en'] || 'Review',
+      done: acceptedSummary && acceptedOutputs > 0,
+      gapCount: [!acceptedSummary, !(acceptedOutputs > 0)].filter(Boolean).length,
+      primaryGap:
+        acceptedSummary && acceptedOutputs > 0
+          ? undefined
+          : isPolish
+            ? 'Zatwierdź albo zwróć wynik z komentarzem'
+            : 'Approve or return the result with a comment',
+    });
+  }
 
   return summaries.map((summary) => ({
     ...summary,
