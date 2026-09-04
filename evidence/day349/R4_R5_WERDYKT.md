@@ -6,7 +6,7 @@ Pierwszy wspólny przebieg na świeżej bazie dał `18/12/6`; cztery czerwone pl
 
 Kandydacka naprawa — advisory lock serializujący pięć suit RealPG — dała dziesięć zielonych przebiegów, ale została **odrzucona**: po jej usunięciu następne dziesięć kolejnych przebiegów bez zmian kodu również dało `18/18`, także jeden po restarcie własnego kontenera. Mutacja nie zaczerwieniła pakietu, więc lock nie ma dowodu przyczynowego i nie został zacommitowany.
 
-Werdykt R4: **STOP MERYTORYCZNY / NOT PROVEN**. Objaw i wpływ współbieżności pierwszego przebiegu są zmierzone, lecz konkretna przyczyna `plik:linia` nie została udowodniona. Brak danych: telemetryczny komunikat źródłowy odpowiedzi 403/500 z tego pierwszego, niepowtarzalnego przebiegu oraz powtarzalny wyzwalacz zimnego stanu. Nie stosuję `retry`, `.skip`, obniżenia progu ani placebo-locka.
+Werdykt R4: **STOP MERYTORYCZNY / NOT PROVEN**. Objaw i wpływ współbieżności pierwszego przebiegu są zmierzone, lecz konkretna przyczyna `plik:linia` nie została udowodniona. Brak danych: telemetryczny komunikat źródłowy odpowiedzi 403/500 z tego pierwszego, niepowtarzalnego przebiegu oraz powtarzalny wyzwalacz zimnego stanu. Nie stosuję ponowień, pomijania testów, obniżenia progu ani placebo-locka.
 
 ## Dziesięć kolejnych przebiegów bez zmiany kodu
 

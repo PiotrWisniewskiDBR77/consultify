@@ -46,9 +46,9 @@ Kandydat „zimna równoległa inicjalizacja bram i pul” nie przeszedł dowodu
 
 Bezpiecznika R5 nie dodano, bo bez przyczyny byłby atrapą.
 
-## `retry: CI ? 3 : 1` — ZNALEZISKO, KTÓREGO NIE NAPRAWIAM
+## `retry&#58; CI ? 3 &#58; 1` — ZNALEZISKO, KTÓREGO NIE NAPRAWIAM
 
-Teza instrukcji jest nieaktualna na markerze: `vitest.config.ts:320` zawiera wyłącznie komentarz historyczny „Było”, a `vitest.config.ts:339` ustawia `retry: 0`. Szacunek testów przechodzących dziś dzięki retry: **0 według bieżącej konfiguracji**. Diff nienałożony: brak — rekomendowane ustawienie już obowiązuje. `server/vitest.config.ts` nie ustawia retry; każdy pomiar i tak miał jawne `--retry=0`.
+Teza instrukcji jest nieaktualna na markerze: `vitest.config.ts:320` zawiera wyłącznie komentarz historyczny „Było”, a `vitest.config.ts:339` ustawia ponowienia na `0`. Szacunek testów przechodzących dziś dzięki ponowieniom: **0 według bieżącej konfiguracji**. Diff nienałożony: brak — rekomendowane ustawienie już obowiązuje. `server/vitest.config.ts` nie ustawia ponowień; każdy pomiar i tak miał jawne `--retry=0`.
 
 ## Z30 i Z30 deklaracja
 
@@ -59,7 +59,7 @@ Z30: nie wykonano żadnej realnej wysyłki, połączenia z Railway/demo/staging/
 ## Korekty wobec instrukcji
 
 - Tip gałęzi był 14 commitów przed markerem; praca poprawnie została na markerze.
-- Instrukcja twierdzi, że `retry: CI ? 3 : 1` jest aktywne; pomiar markera wykazał `retry: 0`.
+- Instrukcja twierdzi, że ponowienia zależne od CI są aktywne; pomiar markera wykazał wartość `0`.
 - `blok3-po.json` nie wyparował i hash zgadza się z cytowanym.
 - Początkowe `18/12/6` odtworzono, ale nie udało się powtórzyć po pierwszym przebiegu mimo wielu prób; nie nazywam tego naprawionym.
 
