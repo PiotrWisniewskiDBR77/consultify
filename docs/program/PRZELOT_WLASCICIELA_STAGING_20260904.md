@@ -56,9 +56,14 @@ bocznym → kliknij realną, starszą rozmowę (nie pustą) → z kebaba wiadomo
 **Co się zmieniło od 22–23.08**: naprawiony błąd, który wywalał cały panel sygnałów Czatu
 („feed.signals is not iterable”); komunikat błędu od dostawcy AI jest teraz zrozumiały i nie
 pokazuje technicznego żargonu; dostępność klawiaturowa i kontrast doprowadzone do zera błędów.
+Preferencja chipów sugestii jest teraz zapisywana per użytkownik w bazie; ustawienie przełączasz
+w menu Czatu. Widoczne, jeżeli staging został zredeployowany po `15309dd3a6`.
+(zdezaktualizowane przez `15309dd3a6` — realizacja `DEC-386`). Martwe, równoległe poddrzewo
+wiadomości i stary `ChatPanel` usunięto; kroki powyżej odnoszą się do żywego panelu.
+(zdezaktualizowane przez `1c4b5a5635` — usunięcie martwego poddrzewa Czatu).
 
-**Czego NIE zgłaszaj**: restrukturyzacja menu kanw (kebab) w Czacie, nowa funkcja preferencji
-Czatu, rozdzielenie historii na rozmowy prywatne/organizacyjne, przemalowanie czerwieni Czatu na
+**Czego NIE zgłaszaj**: restrukturyzacja menu kanw (kebab) w Czacie,
+rozdzielenie historii na rozmowy prywatne/organizacyjne, przemalowanie czerwieni Czatu na
 neutralne kolory — wszystko to świadomie odłożone do fali 2.
 
 **Pytania (TAK/NIE)**:
@@ -81,7 +86,11 @@ trzech zakładek; status „eskalacja” przy decyzjach zapisuje się trwale do 
 po odświeżeniu strony); dane pokazowe Skrzynki i Kalendarza pokrywają teraz wszystkie stany
 (pusty/pełny/błąd).
 
-**Czego NIE zgłaszaj**: nowy prawy panel Idei/Notatnika, konwersja Idei na Notatkę, zakres
+Prawy panel Idei/Notatnika został podłączony do ścieżki produkcyjnej. Widoczne, jeżeli staging
+został zredeployowany po `660482d485`. (zdezaktualizowane przez `660482d485` — podłączenie
+panelu Idei do produkcji).
+
+**Czego NIE zgłaszaj**: konwersja Idei na Notatkę, zakres
 przycisku „AI Advice”, historia wersji w Notatniku, zawężanie wyszukiwania w Notatniku po
 cechach, Pulpit Menedżera liczony z realnej aktywności zespołu, funkcja „Tworzy raport” w
 doradcy obciążenia — wszystko odłożone do fali 2.
@@ -102,6 +111,10 @@ wieczór — to jest właśnie ekran, który masz dziś ocenić na żywym stagin
 klawiaturowa i kontrast doprowadzone do zera błędów. Nawigacja osi pytań (jedna oś rozwinięta na
 raz) jest zamierzonym zachowaniem drzewa, nie usterką.
 
+Menu akcji kart Wywiadu i Wniosku ma teraz jawny kontrakt dostępnych działań. Widoczne, jeżeli
+staging został zredeployowany po `924ebd3c7a`. (zdezaktualizowane przez `924ebd3c7a` — scalenie
+menu akcji Wywiadu).
+
 **Czego NIE zgłaszaj**: —
 
 **Pytania (TAK/NIE)**:
@@ -117,8 +130,11 @@ otwórz podgląd → uruchom narzędzie z realnym kontekstem inicjatywy.
 
 **Co się zmieniło od 22–23.08**: dostępność klawiaturowa i kontrast doprowadzone do zera błędów.
 
-**Czego NIE zgłaszaj**: rozszerzenie modelu sesji SWOT (5→7 etapów), wspólny kreator inicjatyw
-z Narzędzi — oba odłożone do fali 2.
+**Czego NIE zgłaszaj**: wspólny kreator inicjatyw z Narzędzi — odłożony do fali 2.
+
+Siedmioetapowy SWOT jest już podłączony w kodzie, ale pozostaje za flagą domyślnie wyłączoną;
+bez decyzji o włączeniu nadal zobaczysz pięć etapów i nie jest to defekt. (zdezaktualizowane
+przez `937f2d3193` — podłączenie siedmiu etapów SWOT, flaga nadal OFF).
 
 **Pytania (TAK/NIE)**:
 - Narzędzie otworzyło się z realnym kontekstem, nie pustym?
@@ -159,6 +175,11 @@ ten, który zaakceptowałeś na zrzutach (dostawałeś dokument zamiast roboczej
 otwarcie realnej inicjatywy z listy pokazuje teraz dokładnie tę kartę, którą zaakceptowałeś.
 Dodano też bezpiecznik w testach, żeby to się nie cofnęło. Dostępność doprowadzona do zera
 błędów.
+
+Kontrakty kart zachowujące komplet sekcji są scalone, ale pozostają za flagą domyślnie OFF
+(`DEC-387`). Przy niepustym szablonie karta nadal może pokazać tylko 6 z 24 sekcji niezależnie
+od tej flagi (`DEC-388`); to stan oczekiwany do decyzji/wdrożenia, nie nowy defekt przelotu.
+(zdezaktualizowane przez `500ae7d68c` i `e25eb19b64` — kontrakty kart i pomiar 24 sekcji).
 
 **Czego NIE zgłaszaj**: kreator inicjatywy od jednego zdania z propozycją AI — odłożony do fali 2.
 

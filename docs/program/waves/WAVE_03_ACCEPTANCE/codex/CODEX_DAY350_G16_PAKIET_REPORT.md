@@ -1,6 +1,6 @@
 # CODEX DAY 350 — G16 PAKIET — RAPORT
 
-Stan roboczy: R0 i R1 wykonane; R2–R6 w toku.
+Stan roboczy: R0–R2 wykonane; R3–R6 w toku.
 
 ## R0 — twarde zasady
 
@@ -35,6 +35,29 @@ Wynik sanity (dosłownie):
 - pełny inwentarz, reguły mapowania, lista 49 scaleń i tabela 16 modułów: `evidence/g16/day350/dryf-pakietu.md`.
 
 Rozbieżności wobec instrukcji: brak w mianownikach R1.
+
+## R2 — przegląd 16 modułów
+
+| Moduł | Werdykt |
+| --- | --- |
+| Chat | poprawione: preferencje per użytkownik (`15309dd3a6`) i usunięcie martwego poddrzewa (`1c4b5a5635`) |
+| My Work | poprawione: prawy panel Idei podłączony (`660482d485`) |
+| Interview | poprawione: kontrakt menu akcji (`924ebd3c7a`) |
+| Tools | poprawione: 7-etapowy SWOT podłączony za flagą OFF (`937f2d3193`) |
+| Assessment | sprawdzona, bez zmiany kroków pakietu; wybór silnika `DEC-389` nie jest jeszcze rozstrzygniętym ekranem |
+| Initiatives | poprawione: kontrakty kart i ograniczenie 6/24 (`500ae7d68c`, `e25eb19b64`, `DEC-387`, `DEC-388`) |
+| Execution | sprawdzona, bez zmian |
+| Results | sprawdzona, bez zmian |
+| Finance | sprawdzona, bez zmian |
+| Materials | sprawdzona, bez zmian |
+| Audits | sprawdzona, bez zmian |
+| Meeting | sprawdzona, bez zmian |
+| Organization | sprawdzona, bez zmian |
+| Admin Panel | sprawdzona, bez zmian |
+| Settings | sprawdzona, bez zmian |
+| Partner Portal | sprawdzona, bez zmian |
+
+Każdy moduł sprawdzono pod kątem kroków, nowych zmian i pozycji „Czego NIE zgłaszaj”. Weryfikacja była statyczna w repo; nie łączono się ze stagingiem (`Z28`).
 
 ## Kontrole przed commitem R1
 
