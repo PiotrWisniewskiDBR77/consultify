@@ -44,3 +44,10 @@ Skaner szuka sygnału sieci/bazy, więc nie widzi testów, które z produktem ni
 1. Rozszerzyć skaner o wykrywanie podmiotu testu zdefiniowanego w pliku testu.
 2. Rozstrzygnąć mutacją pozostałe 16 kandydatów (2 z 21 już rozstrzygnięte jako `PUSTY`).
 3. Usunąć albo naprawić `api-extensions.test.ts`.
+
+## Dyżur 318 — dowody własne
+
+| ID | Kandydat | Mutacja produktu | Przed | Po mutacji | Klasa na markerze | Działanie |
+|---|---|---|---|---|---|---|
+| E0016 | `billingCron.test.ts:111` — `should handle database errors` | `server/cron/billingCron.ts::checkAndTriggerAlerts` → natychmiastowy `return` | PASS | PASS | **PUSTY** | Mock bazy zmieniony na odrzucany Promise; dodano asercję zapytania i braku wywołania serwisu. Po naprawie: PASS; ta sama mutacja: FAIL. |
+| E0017 | `billingCron.test.ts:119` — `should continue processing even if one org fails` | `server/cron/billingCron.ts::checkAndTriggerAlerts` → natychmiastowy `return` | PASS | PASS | **PUSTY** | Mock bazy zmieniony na Promise z dwiema organizacjami; dodano asercje obu wywołań serwisu. Po naprawie: PASS; ta sama mutacja: FAIL. |
