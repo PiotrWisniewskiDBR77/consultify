@@ -44,3 +44,9 @@ Stan dyżuru: **CZĘŚCIOWE**. R1 wykonane; R2 rozstrzygnięte pomiarem, lecz na
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
 
 Baza dyżuru nie została utworzona; zdanie o konfiguracji SMTP oznacza brak możliwego źródła tych wierszy, nie wykonane zapytanie SQL.
+
+## Wznowienie 2026-09-04 — korekta klasyfikacji R2
+
+Pełny ponowny odczyt instrukcji wykazał, że wcześniejszy nagłówek „STOP — R2” był klasyfikacją zbyt ostrą. Tabela w §0.5 stanowi wprost, że brak pliku w tabeli licencji jest STOP-em proceduralnym zakazanym, a działaniem zastępczym jest czerwony kontrakt i brief. Te dostarczono: cztery bazowe przypadki są czerwonym kontraktem dla starych nazw dostępnych, a raport podaje dokładny brief czterech zmian i wymagany RED/GREEN po mutacji `htmlFor`. R2 ma zatem stan **ZROBIONE DZIAŁANIEM ZASTĘPCZYM**, bez edycji pliku jawnie nietykalnego w Z12.
+
+Nie zmienia to wyniku całego dyżuru: R3–R5 nadal nie mają wymaganej tabeli 43×2, kompletu obejrzanych kadrów obu powierzchni ani dowodu pełnego cyklu `Tab`/`Shift+Tab` i jednopoziomowego `Esc`. Stan dyżuru pozostaje **CZĘŚCIOWE**, a powodem nie jest już brak licencji dla R2, tylko brak tych trzech odbiorów wykonawczych.
