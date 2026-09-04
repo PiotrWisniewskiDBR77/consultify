@@ -21,6 +21,7 @@ const exact = new Map([
   ['Slack', 'nazwa własna'], ['Teams', 'nazwa własna'], ['Consultify', 'nazwa produktu'],
   ['Excel', 'nazwa produktu'], ['PowerPoint', 'nazwa produktu'], ['LinkedIn', 'nazwa własna'],
   ['Markdown', 'nazwa formatu'], ['JavaScript', 'nazwa języka'], ['TypeScript', 'nazwa języka'],
+  ['Tempo', 'poprawny polski termin identyczny z angielskim'],
   ['OK', 'skrót międzynarodowy'], ['URL', 'skrót techniczny'], ['API', 'skrót techniczny'],
 ]);
 
