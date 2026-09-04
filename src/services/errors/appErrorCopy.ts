@@ -20,7 +20,7 @@ export interface AppErrorCopy {
   correlationLabel: string | null;
 }
 
-type TFunc = (key: string, defaultValue?: string) => string;
+type TFunc = (key: string, defaultValue?: string) => unknown;
 
 const CODES = new Set<AppErrorCode>([
   'NOT_FOUND',
@@ -101,12 +101,12 @@ export function getAppErrorCopy(t: TFunc, source: unknown): AppErrorCopy {
   const slug = SLUG[code];
   const fallback = FALLBACK_EN[code];
   const correlationId = readCorrelationId(source);
-  const label = t('errors.app.reportId', 'Report identifier');
+  const label = String(t('errors.app.reportId', 'Report identifier'));
 
   return {
     code,
-    message: t(`errors.app.${slug}.message`, fallback.message),
-    action: t(`errors.app.${slug}.action`, fallback.action),
+    message: String(t(`errors.app.${slug}.message`, fallback.message)),
+    action: String(t(`errors.app.${slug}.action`, fallback.action)),
     correlationId,
     correlationLabel: correlationId ? `${label}: ${correlationId}` : null,
   };

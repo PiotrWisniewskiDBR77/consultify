@@ -134,6 +134,30 @@ const _normalizedEnvApiUrl =
 export const API_URL = (_normalizedEnvApiUrl || '/api') as string;
 const ideaConversionIntentKeys = new Map<string, string>();
 
+export class ApiError extends Error {
+  readonly errorCode: string;
+  readonly correlationId: string | null;
+  readonly status?: number;
+  readonly data: unknown;
+
+  constructor(payload: unknown, fallbackMessage: string, status?: number) {
+    super(fallbackMessage);
+    this.name = 'ApiError';
+    const envelope =
+      payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    this.errorCode =
+      String(envelope.errorCode ?? 'INTERNAL')
+        .trim()
+        .toUpperCase() || 'INTERNAL';
+    this.correlationId = String(envelope.correlationId ?? '').trim() || null;
+    this.status = status;
+    this.data = payload;
+  }
+}
+
+const createApiError = (payload: unknown, fallbackMessage: string, status?: number): ApiError =>
+  new ApiError(payload, fallbackMessage, status);
+
 const buildApiUrl = (url: string): string => {
   if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith('/api')) {
@@ -1101,10 +1125,8 @@ const handleResponse = async (res: Response, defaultError: string) => {
     }
   }
 
-  const err: any = new Error(normalizedMessage || defaultError);
-  err.status = res.status;
+  const err: any = createApiError(data, defaultError, res.status);
   err.url = res.url;
-  err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
   // FIX-1: surface Retry-After on 429 so callers can back off / show a clean
   // state. We deliberately do NOT auto-retry 429 anywhere — retrying is what
@@ -1923,7 +1945,7 @@ export const Api = {
       body: formData,
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to upload avatar');
+    if (!res.ok) throw createApiError(data, 'Failed to upload avatar', res.status);
     return data;
   },
 
@@ -2946,9 +2968,8 @@ export const Api = {
                   // `aiProviderErrorCopy.ts` (klucze `aiChat.providerError.*`
                   // w obu translation.json) — te same zdania widzi rozmowa,
                   // kanwa Czatu i dymki bledu.
-                  const { getAiErrorLine, readAiErrorCode } = await import(
-                    '../components/AIChat/aiProviderErrorCopy'
-                  );
+                  const { getAiErrorLine, readAiErrorCode } =
+                    await import('../components/AIChat/aiProviderErrorCopy');
                   const canonicalCode = readAiErrorCode({
                     errorCode: (data as any).errorCode,
                     code: dataCode,
@@ -3280,7 +3301,7 @@ export const Api = {
       body: JSON.stringify(user),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create super admin');
+    if (!res.ok) throw createApiError(data, 'Failed to create super admin', res.status);
     return data;
   },
 
@@ -3300,7 +3321,7 @@ export const Api = {
       body: JSON.stringify({ email, role, organizationId }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to invite user');
+    if (!res.ok) throw createApiError(data, 'Failed to invite user', res.status);
     return data;
   },
 
@@ -3310,7 +3331,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to generate reset link');
+    if (!res.ok) throw createApiError(data, 'Failed to generate reset link', res.status);
     return data;
   },
 
@@ -3319,7 +3340,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch tables');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch tables', res.status);
     return data;
   },
 
@@ -3328,7 +3349,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch rows');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch rows', res.status);
     return data;
   },
 
@@ -3344,7 +3365,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch files');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch files', res.status);
     return data;
   },
 
@@ -3374,7 +3395,7 @@ export const Api = {
       body: JSON.stringify({ token, newPassword }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+    if (!res.ok) throw createApiError(data, 'Failed to reset password', res.status);
   },
 
   revertImpersonation: async (): Promise<{ user: User; token: string }> => {
@@ -3383,7 +3404,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to revert impersonation');
+    if (!res.ok) throw createApiError(data, 'Failed to revert impersonation', res.status);
     return data;
   },
 
@@ -4645,7 +4666,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Indexing failed');
+    if (!res.ok) throw createApiError(data, 'Indexing failed', res.status);
     return data;
   },
 
@@ -6273,7 +6294,7 @@ export const Api = {
       body: JSON.stringify({ content }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to add comment');
+    if (!res.ok) throw createApiError(data, 'Failed to add comment', res.status);
     return data;
   },
 
@@ -6311,7 +6332,7 @@ export const Api = {
       body: JSON.stringify(team),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create team');
+    if (!res.ok) throw createApiError(data, 'Failed to create team', res.status);
     return data;
   },
 
@@ -8390,7 +8411,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to suggest tasks');
+    if (!res.ok) throw createApiError(data, 'Failed to suggest tasks', res.status);
     return data;
   },
 
@@ -8406,7 +8427,7 @@ export const Api = {
       body: JSON.stringify({ axis, input }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Diagnosis failed');
+    if (!res.ok) throw createApiError(data, 'Diagnosis failed', res.status);
     return data;
   },
 
@@ -8418,7 +8439,7 @@ export const Api = {
       body: JSON.stringify({ diagnosisReport }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Recommendation failed');
+    if (!res.ok) throw createApiError(data, 'Recommendation failed', res.status);
     return data;
   },
 
@@ -8430,7 +8451,7 @@ export const Api = {
       body: JSON.stringify({ initiatives }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Roadmap generation failed');
+    if (!res.ok) throw createApiError(data, 'Roadmap generation failed', res.status);
     return data;
   },
 
@@ -8442,7 +8463,7 @@ export const Api = {
       body: JSON.stringify({ initiatives, revenue }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Simulation failed');
+    if (!res.ok) throw createApiError(data, 'Simulation failed', res.status);
     return data;
   },
 
@@ -8454,7 +8475,7 @@ export const Api = {
       body: JSON.stringify({ initiative }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Validation failed');
+    if (!res.ok) throw createApiError(data, 'Validation failed', res.status);
     return data;
   },
 
@@ -8465,7 +8486,7 @@ export const Api = {
       body: JSON.stringify({ query }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Verification failed');
+    if (!res.ok) throw createApiError(data, 'Verification failed', res.status);
     return data;
   },
 
@@ -8659,7 +8680,7 @@ export const Api = {
   aiGetStats: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/ai/stats`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch AI stats');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch AI stats', res.status);
     return data;
   },
 
@@ -8668,7 +8689,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch benchmarks');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch benchmarks', res.status);
     return data;
   },
 
@@ -8680,7 +8701,7 @@ export const Api = {
       body: JSON.stringify({ text, source }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to extract insights');
+    if (!res.ok) throw createApiError(data, 'Failed to extract insights', res.status);
     return data;
   },
 
@@ -8689,7 +8710,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch candidates');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch candidates', res.status);
     return data;
   },
 
@@ -8723,7 +8744,7 @@ export const Api = {
   getGlobalStrategies: async (): Promise<any[]> => {
     const res = await fetch(`${API_URL}/knowledge/strategies`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch strategies');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch strategies', res.status);
     return data;
   },
 
@@ -8754,7 +8775,7 @@ export const Api = {
       body: JSON.stringify({ isActive }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to toggle strategy');
+    if (!res.ok) throw createApiError(data, 'Failed to toggle strategy', res.status);
     return data;
   },
 
@@ -8779,7 +8800,7 @@ export const Api = {
   > => {
     const res = await fetch(`${API_URL}/knowledge/vault-safes`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch vault safes');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch vault safes', res.status);
     return Array.isArray(data?.safes) ? data.safes : [];
   },
 
@@ -8859,7 +8880,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch docs');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch docs', res.status);
     return data;
   },
 
@@ -8895,7 +8916,7 @@ export const Api = {
       body: formData,
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to upload document');
+    if (!res.ok) throw createApiError(data, 'Failed to upload document', res.status);
     return data;
   },
 
@@ -8978,7 +8999,7 @@ export const Api = {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to upload document');
+    if (!res.ok) throw createApiError(data, 'Failed to upload document', res.status);
     return data;
   },
   // --- FEEDBACK ---
@@ -9605,7 +9626,7 @@ export const Api = {
   getUsagePricingTiers: async () => {
     const res = await fetch(`${API_URL}/billing/usage-pricing-tiers`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch usage pricing tiers');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch usage pricing tiers', res.status);
     return data;
   },
 
@@ -9625,7 +9646,7 @@ export const Api = {
       body: JSON.stringify(tier),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create usage pricing tier');
+    if (!res.ok) throw createApiError(data, 'Failed to create usage pricing tier', res.status);
     return data;
   },
 
@@ -9636,7 +9657,7 @@ export const Api = {
       body: JSON.stringify(updates),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update usage pricing tier');
+    if (!res.ok) throw createApiError(data, 'Failed to update usage pricing tier', res.status);
     return data;
   },
 
@@ -9646,7 +9667,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to delete usage pricing tier');
+    if (!res.ok) throw createApiError(data, 'Failed to delete usage pricing tier', res.status);
     return data;
   },
 
@@ -9654,7 +9675,7 @@ export const Api = {
   getTokenBalance: async () => {
     const res = await fetch(`${API_URL}/token-billing/balance`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get balance');
+    if (!res.ok) throw createApiError(data, 'Failed to get balance', res.status);
     const raw = (data as any)?.balance;
     const value =
       raw && typeof raw === 'object' && 'balance' in raw ? (raw as any).balance : (raw ?? 0);
@@ -9665,7 +9686,7 @@ export const Api = {
   getTokenPackages: async () => {
     const res = await fetch(`${API_URL}/token-billing/packages`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get packages');
+    if (!res.ok) throw createApiError(data, 'Failed to get packages', res.status);
     return data.packages;
   },
 
@@ -9677,14 +9698,14 @@ export const Api = {
       }
     );
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get transactions');
+    if (!res.ok) throw createApiError(data, 'Failed to get transactions', res.status);
     return data.transactions;
   },
 
   getApiKeys: async () => {
     const res = await fetch(`${API_URL}/token-billing/api-keys`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get API keys');
+    if (!res.ok) throw createApiError(data, 'Failed to get API keys', res.status);
     return data.keys;
   },
 
@@ -9700,7 +9721,7 @@ export const Api = {
       body: JSON.stringify(keyData),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to add API key');
+    if (!res.ok) throw createApiError(data, 'Failed to add API key', res.status);
     return data.key;
   },
 
@@ -9710,7 +9731,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to delete API key');
+    if (!res.ok) throw createApiError(data, 'Failed to delete API key', res.status);
     return data;
   },
 
@@ -9721,7 +9742,7 @@ export const Api = {
       body: JSON.stringify({ packageId }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Purchase failed');
+    if (!res.ok) throw createApiError(data, 'Purchase failed', res.status);
     return data;
   },
 
@@ -9729,7 +9750,7 @@ export const Api = {
   getBillingMargins: async () => {
     const res = await fetch(`${API_URL}/token-billing/margins`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get margins');
+    if (!res.ok) throw createApiError(data, 'Failed to get margins', res.status);
     return data.margins;
   },
 
@@ -9740,7 +9761,7 @@ export const Api = {
       body: JSON.stringify(marginData),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update margin');
+    if (!res.ok) throw createApiError(data, 'Failed to update margin', res.status);
     return data;
   },
 
@@ -9751,7 +9772,7 @@ export const Api = {
       body: JSON.stringify(packageData),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to save package');
+    if (!res.ok) throw createApiError(data, 'Failed to save package', res.status);
     return data.package;
   },
 
@@ -9761,7 +9782,7 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to get analytics');
+    if (!res.ok) throw createApiError(data, 'Failed to get analytics', res.status);
     return data.analytics;
   },
 
@@ -13171,13 +13192,13 @@ export const Api = {
       headers: getHeaders(),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch approved ideas');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch approved ideas', res.status);
     return data;
   },
   getAllGlobalStrategies: async (): Promise<any[]> => {
     const res = await fetch(`${API_URL}/knowledge/strategies`, { headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch strategies');
+    if (!res.ok) throw createApiError(data, 'Failed to fetch strategies', res.status);
     return data;
   },
   updateGlobalStrategy: async (id: string, data: any) => {
@@ -14791,7 +14812,7 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to save Google SSO config');
+    if (!res.ok) throw createApiError(data, 'Failed to save Google SSO config', res.status);
     return data;
   },
   toggleSsoConfig: async (configId: string, isActive: boolean) => {
@@ -17560,7 +17581,7 @@ export const Api = {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to remove avatar');
+      throw createApiError(data, 'Failed to remove avatar', res.status);
     }
     return { success: true };
   },
