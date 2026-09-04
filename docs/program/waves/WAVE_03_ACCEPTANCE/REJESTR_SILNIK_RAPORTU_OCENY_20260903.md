@@ -66,3 +66,17 @@ Marker: `74c07919ce`. Wspólna sesja pomiarowa: `2e87758d-bd31-459f-b073-28080cb
 | Metadane raportu | `methodSessionReportMetadataService.ts:59-105` | brak | brak | Jedyny importer jest w teście day331; **zero wołaczy produkcyjnych, dług integracyjny**. |
 
 Sprostowanie nazwy: `grep -rn "AssessmentReportDocxDownload" src/ | grep -v __tests__` zwrócił **0 trafień**. Realnym konsumentem pobrania DOCX jest `AssessmentReportContractView.tsx:360`; `AssessmentReportDocxDownload` występuje wyłącznie w nazwie pliku testowego.
+
+### R5 — co realnie dopisuje narrator LLM
+
+| Pole / sekcja raportu | Czy narrator nadpisuje | Dowód | Co konkretnie wstawia |
+| --- | --- | --- | --- |
+| Streszczenie zarządcze | Tak, wyłącznie warstwę prozy | `drdReportModel.ts:389-410`; prompt `drdLlmNarrator.ts:307-311` | Dokładnie 5 akapitów: stan, znaczenie, trzy luki, pierwsze działanie i efekt z horyzontem; limit 350 słów. Fakty wejściowe obejmują procent bieżący/docelowy, najsilniejszą i najsłabszą oś, fazę oraz kompletność. |
+| Trzy największe karty luk | Tak, wyłącznie 4 akapity prozy każdej karty | `drdReportModel.ts:412-448`; prompt `drdLlmNarrator.ts:313-316` | „Co jest → co to znaczy → co robić najpierw z rolą → jaki efekt z horyzontem”, na faktach obszaru, osi, AS-IS, TO-BE, skali i tytułów poziomów. |
+| Werdykt rozdziału każdej z 7 osi | Tak, wyłącznie zdanie-werdykt | `drdReportModel.ts:468-490`; prompt `drdLlmNarrator.ts:318-320` | Jeden akapit do 20 słów, wprowadzający tabelę obszarów; fakty to nazwa osi, wynik bieżący, cel i maksymalna skala. |
+| Liczby, tabele, kolejność luk i roadmapa | Nie | `drdReportModel.ts:348-376,412-466`; `drdLlmNarrator.ts:377-405` | Pozostają deterministyczne. Walidator odrzuca liczby spoza `facts`, wymaga istniejących `factRefs` i oznacza zaakceptowaną prozę `aiGenerated:true`, `narrative:'llm'`. |
+| Źródła metodologiczne | Nie nadpisuje; może dodać dowody do wsadu narratora | `drdReportGrounding.ts:74-130` | Do 3 fragmentów książki na oś jako `drd_methodology_kb`; błąd KB daje `[]`. Fragmenty mogą wspierać cytowanie jakościowe, ale nie pozwalają wnieść nowych liczb. |
+
+Zasady promptu (`drdLlmNarrator.ts:268-302`): język polski, closed grounding wyłącznie `facts + evidence`, answer-first, brak zewnętrznych statystyk, JSON bez Markdownu. Walidacja (`:363-407`) wymaga właściwej liczby akapitów, liczb pochodzących z silnika oraz istniejących odwołań dowodowych. Jedna niepoprawna odpowiedź powoduje ponowienie, druga lub wyjątek zwraca narrator deterministyczny (`:430-483`).
+
+Przebieg R3 wykonano z usuniętymi z procesu `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY` i `GOOGLE_AI_API_KEY` oraz bez przekazania klienta `llm`; silnik zwrócił `narrative: "deterministic"` i kompletny HTML. Nie nastąpiło ani jedno wywołanie modelu. Zachowanie produkcyjnej trasy, która importuje obiekt `llmService` nawet bez klucza, nie zostało wykonawczo sprawdzone ze względu na bezwzględny zakaz wywołania `llmService`; statyczny kontrakt narratora deklaruje fallback przy wyjątku.
