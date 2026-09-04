@@ -158,4 +158,13 @@ describe('Dynamic SWOT phase overview — reachable DOM contract', () => {
     await waitFor(() => expect(outputTile).toHaveAttribute('aria-current', 'step'));
     expect(screen.getByTestId('phase-canvas')).toHaveTextContent('outputs');
   });
+
+  it('renders the computed session readiness through a reachable DOM handle', async () => {
+    vi.stubEnv('VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES', 'false');
+    render(<ToolDocumentView toolType="dynamic-swot" sessionId="sess-day344" onBack={vi.fn()} />);
+
+    const badge = await screen.findByTestId('dynamic-swot-readiness-badge');
+    expect(badge).toHaveTextContent(/Blocked by gaps|Decision-ready|Needs refinement/);
+    expect(screen.getByTestId('dynamic-swot-phase-overview')).toContainElement(badge);
+  });
 });

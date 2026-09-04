@@ -1119,6 +1119,22 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const sections: NModeSection[] = useMemo(() => {
     const renderDynamicSwotPhaseOverview = () => (
       <div className="space-y-3" data-testid="dynamic-swot-phase-overview">
+        {dynamicSwotReadiness ? (
+          <div className="flex justify-end">
+            <span
+              data-testid="dynamic-swot-readiness-badge"
+              className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+                dynamicSwotReadiness.readiness === 'ready'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                  : dynamicSwotReadiness.readiness === 'needs-work'
+                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                    : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
+              }`}
+            >
+              {dynamicSwotReadiness.label}
+            </span>
+          </div>
+        ) : null}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-3">
           {dynamicSwotPhaseSummaries.map((phase, index) => {
             const isActive = activeSection === phase.id;
