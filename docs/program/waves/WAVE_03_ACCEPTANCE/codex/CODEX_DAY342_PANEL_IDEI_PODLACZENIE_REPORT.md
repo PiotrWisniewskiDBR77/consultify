@@ -161,3 +161,14 @@ nie raportuje go jako PASS ani FAIL.
 
 Wymaga plikow przekrojowych: **NIE** — diff R3 obejmuje tylko licencjonowany prototyp,
 punkty montazu Idei/Notatnika i ich testy.
+
+## R4 — trwalosc i zimny odczyt
+
+Stan: **n/d z dowodem**. Komenda `rg -n
+"localStorage|sessionStorage|fetch\\(|Api\\.|db(Get|Run|All)|INSERT|UPDATE|DELETE|persist|save"
+IdeaNotebookRightPanelPrototype.tsx ArtifactRightPanel.tsx` zwrocila `BRAK ZAPISU W
+POWLOCE`. Rozwiniecie sekcji jest lokalnym `useState<Set<string>>`; przewod nie
+dodaje zapisu szerokosci, zakladki ani sekcji. Realne akcje hostow zachowuja swoje
+istniejace handlery, ale R3 nie zmienia ich kontraktu trwałości.
+
+Wymaga plikow przekrojowych: **NIE** — R4 zmienia tylko raport i nie wymaga migracji.
