@@ -36,3 +36,11 @@ Stan: **PARTIAL / STOP MERYTORYCZNY dla pełnego progu „każda odpowiedź bł�
 - Pełny próg nie jest osiągnięty: niezalogowane żądanie do `/api/admin/service-accounts` zatrzymuje wcześniejszy szeroki mount `/api/admin` i zwraca `401 {"error":"No token provided"}` zanim wejdzie do licencjonowanego routera. Czerwony kontrakt pozostaje w teście. Naprawa wymagałaby zmiany `Gateway.ts` albo wcześniejszego routera, oba poza licencją dyżuru.
 
 Dowód mutacyjny bramki POST: po usunięciu bramki test `R2 rejects non-UUID POST and DELETE before PostgreSQL with stable envelopes` jest czerwony (`expected 500 to be 400`); po przywróceniu przez `cp` jest zielony.
+
+## R3 — strażnik wycieków
+
+Stan: **ZROBIONE**.
+
+Ekstrakcja nazw obejmuje teraz `catch (x)`, `.catch((x) => ...)`, wariant `async`, parametr z typem oraz `.catch(function (x) { ... })`. Zakres plików nie został zawężony. Progi pozostają bez zmian: `ALTERNATE_LEAK_BASELINE = 44`, `VARIABLE_AGNOSTIC_LEAK_BASELINE = 47`.
+
+Pakiet po zmianie: 5/5 przypadków zielonych. Mutacja `.catch((problem) => res.json({ error: problem.message }))` zwiększa zmierzony dług z 47 do 48 i czerwieni właściwy test; po przywróceniu pliku przez `cp` pakiet wraca do 5/5.
