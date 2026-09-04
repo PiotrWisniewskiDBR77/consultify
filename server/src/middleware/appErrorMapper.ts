@@ -44,6 +44,21 @@ const MESSAGES: Record<'pl' | 'en', Record<AppErrorCode, string>> = {
   },
 };
 
+const OPERATIONAL_MESSAGES: Record<'pl' | 'en', Record<string, string>> = {
+  pl: {
+    PROGRAM_NOT_ACTIVE: 'Program OKR nie jest aktywny, dlatego nie mozna otworzyc nowego cyklu.',
+    FINANCE_SETTINGS_INVALID: 'Ustawienia finansowe sa nieprawidlowe.',
+    NOT_FOUND: 'Nie znaleziono szablonu.',
+    COMMAND_CAPABILITY_DENIED: 'Nie masz uprawnien do wykonania tej operacji.',
+  },
+  en: {
+    PROGRAM_NOT_ACTIVE: 'The OKR program is not active, so a new cycle cannot be opened.',
+    FINANCE_SETTINGS_INVALID: 'The finance settings are invalid.',
+    NOT_FOUND: 'Template not found.',
+    COMMAND_CAPABILITY_DENIED: 'You are not authorized to perform this action.',
+  },
+};
+
 function statusOf(error: unknown): number | undefined {
   if (!error || typeof error !== 'object') return undefined;
   const candidate = Number((error as { statusCode?: unknown; status?: unknown }).statusCode ?? (error as { status?: unknown }).status);
@@ -93,7 +108,9 @@ export function mapAppErrorResponse(
   const language = /^pl(?:-|,|$)/i.test(req?.get?.('Accept-Language') ?? '') ? 'pl' : 'en';
   const operational = error instanceof AppError && error.isOperational;
   const publicCode = operational && codeOf(error) ? codeOf(error) : mappedCode;
-  const message = operational ? raw : MESSAGES[language][mappedCode];
+  const message = operational
+    ? OPERATIONAL_MESSAGES[language][publicCode] ?? raw
+    : MESSAGES[language][mappedCode];
 
   logger.error('[AppErrorMapper] route error', {
     correlationId: id,
