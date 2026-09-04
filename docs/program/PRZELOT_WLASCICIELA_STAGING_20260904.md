@@ -364,6 +364,9 @@ przelot to potwierdzenie na żywym stagingu.
 - Karta inicjatywy może nadal pokazywać 6 z 24 sekcji: pełne kontrakty są scalone, lecz
   `VITE_VF1_INITIATIVE_CARD_CONTRACT` i `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE` są domyślnie
   OFF (`DEC-387`, `DEC-388`; `500ae7d68c`, `e25eb19b64`).
+  To stan naprawiony, nie zepsuty: poprawka z dyżurów 338 i 343 na mocy `DEC-388` jest scalona,
+  lecz pozostaje za flagą `ff_initiative_sections_complete`, domyślnie OFF
+  (`src/utils/initiativeSectionsCompleteFlag.ts:1,13-15,39`).
 - SWOT może nadal mieć pięć etapów: siedem etapów jest podłączone za domyślnie wyłączoną flagą
   `VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES` (`DEC-2026-09-03-383`; `937f2d3193`).
 - Nowe warianty kart Decyzji pozostają niewidoczne przy domyślnie wyłączonych
