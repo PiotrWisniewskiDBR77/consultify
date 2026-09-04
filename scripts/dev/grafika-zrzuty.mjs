@@ -263,6 +263,36 @@ const BEZ_KLIKA_DOMYSLNEGO = arg('bez-klika-domyslnego', '0') === '1';
  */
 const WYNIK_SELEKTOR = arg('wynik-selektor', '').split(',').map((s) => s.trim()).filter(Boolean);
 
+/**
+ * `--zlicz=<nazwa>:<css>[;<nazwa>:<css>...]` — OPT-IN (DEC-387, 2026-09-04).
+ *
+ * POWÓD ISTNIENIA: dowód „kontrakt karty niczego nie ucina" wymaga LICZBY
+ * pozycji na zrzucie, a nie wrażenia z oglądania. Do dziś narzędzie liczyło
+ * wyłącznie jasność, wymiary i obecność selektora wyniku (tak/nie) — kiedy
+ * odbiorca dyżuru 305 napisał „ON kasuje 11 z 15 sekcji", tę liczbę policzył
+ * OKIEM na obrazku, poza narzędziem, więc nikt nie mógł jej powtórzyć.
+ *
+ * Zamiast pisać własny skrypt zrzutowy obok kanonicznego (udokumentowana
+ * pułapka „nie pisz własnego zrzutu obok kanonicznego"), brakująca zdolność
+ * wchodzi TU, jako parametr:
+ *   · liczy `document.querySelectorAll(css).length` w chwili zrzutu,
+ *   · zapisuje PIERWSZE 60 tekstów trafionych węzłów (do porównania nazw),
+ *   · wynik ląduje w `wyniki[].zliczenia` (a więc i w `--wynik-json`),
+ *   · wypisuje liczbę w podsumowaniu konsoli.
+ *
+ * ZERO trafień jest RAPORTOWANE jako `0`, nigdy pomijane — „brak pomiaru nie
+ * jest wynikiem". Bez parametru zachowanie narzędzia jest bit w bit dawne.
+ */
+const ZLICZ = arg('zlicz', '')
+  .split(';')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((para) => {
+    const i = para.indexOf(':');
+    if (i < 0) throw new Error(`--zlicz: oczekiwano <nazwa>:<css>, dostano "${para}"`);
+    return { nazwa: para.slice(0, i).trim(), css: para.slice(i + 1).trim() };
+  });
+
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
   process.exit(1);
@@ -532,6 +562,26 @@ for (const ekran of EKRANY) {
       let hasResultMarker = null;
       const obrazJasnosc = await meanLuma(plik);
       const tekst = await page.locator('body').innerText().catch(() => '');
+      // --zlicz (DEC-387): policz elementy DOKŁADNIE w chwili zrzutu — ten sam
+      // DOM, który poszedł na PNG, więc liczba i obrazek nie mogą się rozjechać.
+      let zliczenia = undefined;
+      if (ZLICZ.length > 0) {
+        zliczenia = await page.evaluate(
+          (pary) =>
+            pary.map(({ nazwa, css }) => {
+              const wezly = Array.from(document.querySelectorAll(css));
+              return {
+                nazwa,
+                css,
+                ile: wezly.length,
+                teksty: wezly
+                  .slice(0, 60)
+                  .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80)),
+              };
+            }),
+          ZLICZ
+        );
+      }
       if (WYNIK_SELEKTOR.length > 0) {
         hasResultMarker = await page.evaluate(
           (sels) => sels.every((s) => document.querySelector(s) !== null),
@@ -554,6 +604,7 @@ for (const ekran of EKRANY) {
         wynikSelektor: WYNIK_SELEKTOR.length > 0 ? WYNIK_SELEKTOR : undefined,
         hasResultMarker,
         obrazJasnosc,
+        zliczenia,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
         sekcjeCofniete: ROZWIN_SEKCJE && COFNIJ_JESLI_SKRACA ? sekcjeCofniete : undefined,
@@ -632,6 +683,15 @@ for (const w of wyniki) {
     `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(24)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}${podgladNota}`
   );
 }
+if (ZLICZ.length > 0) {
+  console.log('\n--zlicz (policzone w chwili zrzutu):');
+  for (const w of wyniki) {
+    for (const z of w.zliczenia || []) {
+      console.log(`  ${w.ekran} ${w.motyw.padEnd(6)} ${z.nazwa.padEnd(28)} ${String(z.ile).padStart(4)}  (${z.css})`);
+    }
+  }
+}
+
 const zle = wyniki.filter((w) => w.status !== 'OK').length;
 console.log(`\n${wyniki.length - zle}/${wyniki.length} zrzutów wykonanych.`);
 if (zle > 0) process.exitCode = 1;
