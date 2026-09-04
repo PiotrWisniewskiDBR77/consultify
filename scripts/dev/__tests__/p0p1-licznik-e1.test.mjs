@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { evaluateCorpus, gateResult } from '../p0p1-licznik-e1.mjs';
+import { evaluateCorpus, gateResult, renderRegister } from '../p0p1-licznik-e1.mjs';
 
 const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
   '| ID | Werdykt | Dowód |',
@@ -66,4 +66,17 @@ test('bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informac
 
   const informational = gateResult([{ verdict: 'BLOKUJE' }], output, { informational: true });
   assert.equal(informational.exitCode, 0);
+});
+
+test('nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów', () => {
+  const rows = [{ id: 'INT-OWN-001', verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: 'brak', origins: 'settlement' }];
+  const first = renderRegister(rows, { marker: 'aaaaaaaaaa', snapshotDate: '2026-09-04' });
+  const second = renderRegister(rows, { marker: 'bbbbbbbbbb', snapshotDate: '2026-12-31' });
+
+  assert.match(first, /Marker: `aaaaaaaaaa`/);
+  assert.match(first, /--marker aaaaaaaaaa --snapshot-date 2026-09-04/);
+  assert.match(second, /Marker: `bbbbbbbbbb`/);
+  assert.match(second, /--marker bbbbbbbbbb --snapshot-date 2026-12-31/);
+  assert.notEqual(first.split('\n| ID |')[0], second.split('\n| ID |')[0]);
+  assert.equal(first.split('\n| ID |')[1], second.split('\n| ID |')[1]);
 });

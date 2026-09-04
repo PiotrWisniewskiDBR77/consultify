@@ -151,6 +151,28 @@ To zamierzona czerwień: brak progu, `if:` i `continue-on-error`. Artefakty: `r3
 
 Wyzwalacze workflow: `push` oraz `pull_request` wyłącznie dla `main`, `develop`, `Londyn`, `demo`, plus ręczny `workflow_dispatch`. Nie ma filtra `paths`, więc dla wymienionych gałęzi zmiana dokumentów/skryptu nie jest pomijana przez filtr ścieżek. Gałąź `codex/day320-licznik-g20-20260904` nie znajduje się w filtrze `push`, dlatego bieżący push nie uruchomi tej bramki. Z39 zabrania ręcznego realnego workflow; dowód tej pozycji jest statyczny plus lokalne wykonanie identycznej komendy. Dodatkowo job może nie dojść do nowego kroku, jeżeli wcześniejszy lint/typecheck lub bramka zapadkowa zakończy się czerwono — to ograniczenie kolejności joba, nie fałszywa zieleń samego licznika.
 
+## R4 — marker i data przebiegu
+
+Usunięto stałe `MARKER`/`SNAPSHOT_DATE`. Domyślny marker pochodzi z `git rev-parse HEAD`, a data z chwili przebiegu; `--marker` i `--snapshot-date` pozwalają odtworzyć historyczny nagłówek. Parser odrzuca nieznane argumenty i brakujące wartości. Rejestr zawiera pełną komendę odtworzenia.
+
+Dwa nagłówki z argumentów:
+
+```text
+Data migawki: 2026-09-04
+Marker: `aaaaaaaaaa`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker aaaaaaaaaa --snapshot-date 2026-09-04`
+
+Data migawki: 2026-12-31
+Marker: `bbbbbbbbbb`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker bbbbbbbbbb --snapshot-date 2026-12-31`
+
+diff -u r4-a-table.txt r4-b-table.txt
+<pusto>
+diff tabel kod = 0
+```
+
+Nowy test `nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów` przechodzi; pełny pakiet po R4: 7 testów, 7 pass, 0 fail. Domyślny przebieg wygenerował rejestr z markerem realnego HEAD w chwili wykonania: `19774200491bc7c665c95b0218c263419a200976` i datą `2026-09-04`. Marker w wygenerowanym pliku jest tożsamością wejścia przebiegu, nie samoodwołującym SHA przyszłego commita zawierającego ten plik.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -158,7 +180,7 @@ Wyzwalacze workflow: `push` oraz `pull_request` wyłącznie dla `main`, `develop
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R4–R7 nie zostały jeszcze wykonane ani zweryfikowane.
+- R5–R7 nie zostały jeszcze wykonane ani zweryfikowane.
 - Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
 - Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
 - Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.

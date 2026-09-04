@@ -13,8 +13,6 @@ export const VERDICTS = Object.freeze([
 ]);
 
 export const DEFAULT_FLOOR = 100;
-export const MARKER = '416432abaf';
-export const SNAPSHOT_DATE = '2026-09-04';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const defaultRoot = resolve(scriptDir, '../..');
@@ -164,15 +162,40 @@ export function evaluateCorpus({ settlement, decisions, owner, wave2, ledger }, 
   }));
 }
 
-export function renderRegister(rows) {
+export function defaultSnapshotMetadata(root = defaultRoot) {
+  return {
+    marker: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+    snapshotDate: new Date().toISOString().slice(0, 10),
+  };
+}
+
+export function parseCliArgs(args) {
+  const options = { informational: false };
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === '--informational') {
+      options.informational = true;
+    } else if (argument === '--marker' || argument === '--snapshot-date') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) throw new Error(`brak wartości dla ${argument}`);
+      options[argument === '--marker' ? 'marker' : 'snapshotDate'] = value;
+      index += 1;
+    } else {
+      throw new Error(`nieznany argument: ${argument}`);
+    }
+  }
+  return options;
+}
+
+export function renderRegister(rows, metadata) {
   const blockers = rows.filter((row) => row.verdict === 'BLOKUJE').length;
   const counts = Object.fromEntries(VERDICTS.map((verdict) => [verdict, rows.filter((row) => row.verdict === verdict).length]));
   const lines = [
     '# Rejestr P0/P1 blokujących G20 — E1',
     '',
-    `Data migawki: ${SNAPSHOT_DATE}  `,
-    `Marker: \`${MARKER}\`  `,
-    'Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs`',
+    `Data migawki: ${metadata.snapshotDate}  `,
+    `Marker: \`${metadata.marker}\`  `,
+    `Odtworzenie: \`node scripts/dev/p0p1-licznik-e1.mjs --marker ${metadata.marker} --snapshot-date ${metadata.snapshotDate}\``,
     '',
     `Mianownik: ${rows.length}. NAPRAWIONE: ${counts.NAPRAWIONE}; ZAMKNIETE_DEC: ${counts.ZAMKNIETE_DEC}; ODLOZONE_DEC: ${counts.ODLOZONE_DEC}; W_BUDOWIE: ${counts.W_BUDOWIE}.`,
     '',
@@ -190,7 +213,12 @@ export function run(root = defaultRoot, options = {}) {
   const paths = pathsFor(root);
   const corpus = Object.fromEntries(['settlement', 'decisions', 'owner', 'wave2', 'ledger'].map((key) => [key, readFileSync(paths[key], 'utf8')]));
   const rows = evaluateCorpus(corpus, { ...options, root });
-  const markdown = renderRegister(rows);
+  const defaults = defaultSnapshotMetadata(root);
+  const metadata = {
+    marker: options.marker ?? defaults.marker,
+    snapshotDate: options.snapshotDate ?? defaults.snapshotDate,
+  };
+  const markdown = renderRegister(rows, metadata);
   if (options.write !== false) writeFileSync(paths.output, markdown);
   return { rows, markdown, output: paths.output };
 }
@@ -206,10 +234,10 @@ export function gateResult(rows, output, { informational = false } = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const informational = process.argv.slice(2).includes('--informational');
-  const result = run();
+  const cliOptions = parseCliArgs(process.argv.slice(2));
+  const result = run(defaultRoot, cliOptions);
   process.stdout.write(result.markdown);
-  const gate = gateResult(result.rows, result.output, { informational });
+  const gate = gateResult(result.rows, result.output, { informational: cliOptions.informational });
   process.stderr.write(gate.message);
   process.exitCode = gate.exitCode;
 }
