@@ -52,7 +52,12 @@ jobs:
           # check:a11y-focus (VF0-7) diffs against the PR base / previous commit —
           # needs history beyond the default depth-1 shallow clone (same pattern
           # as the test-impact job below).
-          fetch-depth: 50
+          # ★ 04.09: fetch-depth 0, nie 50. check:p0p1-e1 rozstrzyga pozycje przez SHA,
+          # ktore leza 3864-4507 commitow od HEAD — przy plytkim klonie skrypt widzial
+          # NAPRAWIONE: 1 i BLOKUJE: 49 (32 wiersze SHA_NIEISTNIEJACY) zamiast 33/17,
+          # wiec bramka G20 NIE MOGLA sie zazielenic nigdy. Zmierzone klonem --depth 50.
+          # check:a11y-focus (VF0-7) dziala tym bardziej — 0 to nadzbior 50.
+          fetch-depth: 0
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
