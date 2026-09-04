@@ -114,6 +114,12 @@ wzorcowego, którego nie ma — patrz `DELIVERABLES_QUALITY_RUBRIC.md` §7.
 ### Status pracy i historia
 
 - Bieżące zadania/odbiór: `rejestr/`
+- Rejestr znalezisk sesji nadzorczej (na żywo, dopisywany codziennie):
+  [`program/REJESTR_ZNALEZISK_20260903.md`](program/REJESTR_ZNALEZISK_20260903.md);
+  lekcje metodyczne wydzielone dnia 04.09:
+  [`program/LEKCJE_20260904.md`](program/LEKCJE_20260904.md); najnowsze przekazanie
+  między sesjami: [`program/PRZEKAZANIE_20260905.md`](program/PRZEKAZANIE_20260905.md)
+  (sprawdź, czy nie istnieje jeszcze nowszy plik `program/PRZEKAZANIE_202….md`)
 - Program Harvard/Vegas/Oxford: [`../Harvard/wdrozenie-100/README.md`](../Harvard/wdrozenie-100/README.md)
 - Historyczne wdrożenia: [`../wdrozenia/README.md`](../wdrozenia/README.md)
 - Zasady klasyfikacji starych drzew:
