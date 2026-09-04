@@ -109,7 +109,7 @@ export function computeDynamicSwotPhaseSummaries(
   const summaries: Array<Omit<DynamicSwotPhaseSummary, 'readiness'>> = [
     {
       id: 'mission',
-      label: isPolish ? 'Mission & Context' : 'Mission & Context',
+      label: isPolish ? 'Misja i kontekst' : 'Mission & Context',
       done: !!swot?.context?.goal && !!swot?.context?.scope && !!swot?.context?.successSignal,
       gapCount: [!swot?.context?.goal, !swot?.context?.scope, !swot?.context?.successSignal].filter(
         Boolean
@@ -130,7 +130,7 @@ export function computeDynamicSwotPhaseSummaries(
     },
     {
       id: 'input',
-      label: isPolish ? 'Input & Exploration' : 'Input & Exploration',
+      label: isPolish ? 'Wejście i eksploracja' : 'Input & Exploration',
       done: (swot?.signals?.length || 0) >= 3,
       gapCount: (swot?.signals?.length || 0) >= 3 ? 0 : 3 - (swot?.signals?.length || 0),
       primaryGap:
@@ -142,7 +142,7 @@ export function computeDynamicSwotPhaseSummaries(
     },
     {
       id: 'swot',
-      label: isPolish ? 'SWOT Build' : 'SWOT Build',
+      label: isPolish ? 'Budowa SWOT' : 'SWOT Build',
       done: Object.values(quadrants).every((count) => count > 0),
       gapCount: Object.values(quadrants).filter((count) => count === 0).length,
       primaryGap: Object.values(quadrants).every((count) => count > 0)
@@ -153,7 +153,7 @@ export function computeDynamicSwotPhaseSummaries(
     },
     {
       id: 'insights',
-      label: isPolish ? 'Synthesis & Insights' : 'Synthesis & Insights',
+      label: isPolish ? 'Synteza i napięcia' : 'Synthesis & Insights',
       done:
         (acceptedTensions > 0 || acceptedCorrelations > 0) &&
         (acceptedMoves > 0 || acceptedSummary),
@@ -174,12 +174,12 @@ export function computeDynamicSwotPhaseSummaries(
     },
     {
       id: 'outputs',
-      label: isPolish ? 'Outputs & Actions' : 'Outputs & Actions',
+      label: isPolish ? 'Wyniki i działania' : 'Outputs & Actions',
       done: acceptedSummary && acceptedOutputs > 0,
       gapCount: [!acceptedSummary, !(acceptedOutputs > 0)].filter(Boolean).length,
       primaryGap: !acceptedSummary
         ? isPolish
-          ? 'Przygotuj final source summary'
+          ? 'Przygotuj końcowe podsumowanie źródeł'
           : 'Prepare the final source summary'
         : acceptedOutputs === 0
           ? isPolish
