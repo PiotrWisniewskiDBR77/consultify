@@ -1,0 +1,16 @@
+NOWY — DYŻUR 331
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/grafika/m03-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_331_MOJAPRACA_I_SILNIK.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 331.
+
+Marker: 1c3d3da844ae03c87985a8f5dc74846a073c0220
+Zasoby wyłączne: baza 6357, runtime 5497.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
