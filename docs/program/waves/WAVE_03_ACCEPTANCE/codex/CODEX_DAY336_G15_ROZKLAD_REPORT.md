@@ -1,6 +1,6 @@
 # CODEX DAY 336 — rozkład bramki G15
 
-Stan dyżuru: `W TOKU`  
+Stan dyżuru: `PARTIAL — POMIAR DOMKNIĘTY, DŁUG NIE NAPRAWIANY`  
 Marker pracy: `1c4b5a5635bafd38ef375227824ada9b62be186e`  
 Gałąź: `codex/day336-g15-rozklad-20260904`
 
@@ -134,6 +134,50 @@ Ukierunkowany przebieg HEAD wykonał 4 przypadki: 3 PASS i 1 FAIL. Czerwona peł
 | MYW-IDEAS-CORE-002 | `ODLOZONE_DEC / DEC_OK / DEC-2026-08-25-27` |
 
 Artefakt: `/private/tmp/cx-day336-g15-rozklad-artefakty/r5-myw-ideas-010.json`, SHA-256 `f4595cc638e7a55f5a7b19fbe6569b3f96cb0a6f640e50a6b65be5578c856560`.
+
+## Stan PRZED / PO 16 wierszy
+
+| Moduł | PRZED | PO |
+| --- | --- | --- |
+| 01 | PASS | PASS, lecz świeży bieg ma 3 błędy suity serwera — stan wymaga niezależnego odbioru |
+| 02 | PARTIAL / LEGACY_7 | bez zmiany; nowa czerwień front + 2 zastane serwerowe |
+| 03 | PARTIAL / LEGACY_1 | bez zmiany; dług front + błąd suity serwera |
+| 04 | PARTIAL / SERVER_NOT_MEASURED | bez zmiany; serwer 113/113, ale front ma 11 zastanych czerwieni |
+| 05 | NOT_MEASURED / CONFIRMED | bez zmiany; klasy zmierzone, lecz dług/nowa/błędy pozostają |
+| 06 | NOT_MEASURED / CONFIRMED | bez zmiany; klasy zmierzone, lecz dług/nowa/błędy pozostają |
+| 07 | PARTIAL / 2 LEGACY + 1 NEW | bez zmiany; MYW-IDEAS-010 nadal 1 FAIL, druga nowa czerwień i dług |
+| 08 | NOT_MEASURED / CONFIRMED | bez zmiany; 3 front + 8 serwerowych czerwieni zastanych |
+| 09 | PARTIAL / SERVER_NOT_MEASURED | bez zmiany; 4 nowe front, 413 zastanych serwerowych, 2 błędy suity |
+| 10 | PARTIAL / LEGACY_1 | bez zmiany; front 924/924, serwer 114 zastanych + 2 błędy suity |
+| 11 | PARTIAL / LEGACY_2 | bez zmiany; 2 front + 1 serwerowa zastana, 1 błąd suity |
+| 12 | PARTIAL / SERVER_NOT_MEASURED | bez zmiany; serwer zmierzony jako 1 czerwień zastana |
+| 13 | PARTIAL / SERVER_NOT_MEASURED | PASS: front 462/462 + serwer 67/67 |
+| 14 | PARTIAL / LEGACY_7 | bez zmiany; 7 zastanych front, serwer 3/3 |
+| 15 | PARTIAL / SERVER_NOT_MEASURED | bez zmiany; brak serwerowej ścieżki w R1 wymaga decyzji |
+| 16 | NOT_MEASURED / CONFIRMED | bez zmiany; 9 zastanych front i 1 błąd suity serwera |
+
+## Korekty wobec instrukcji
+
+- Dystanse wynoszą 661/598 commitów, nie 662/599.
+- R1 rejestru nie zawiera ścieżki serwerowej dla Settings, mimo tezy instrukcji, że serwer należy do mianownika każdego modułu.
+- Aktualny mianownik frontu różni się od historycznego; m.in. Assessment wykonuje 768, Chat 462, Results 419, a Finance 924/924.
+- `MYW-IDEAS-010` figuruje jako naprawione, ale jego własny pakiet ma nadal 1 czerwoną asercję tekstową.
+- Historyczne etykiety nie opisują aktualnego rozkładu: Interview ma nową czerwień, Finance nie ma już czerwieni frontowej, Results ma 4 nowe czerwienie frontowe.
+
+## PYTANIA DO WŁAŚCICIELA O KRYTERIUM
+
+1. Czy `15_SETTINGS` ma mieć warstwę serwerową w mianowniku G15, mimo że R1 rejestru wymienia wyłącznie dwa katalogi frontowe?
+2. Czy potwierdzony dług zastany ma nadal blokować `PASS` G15, czy G15 ma raportować osobno regresję względem bazy i bezwzględną zieleń bieżącego mianownika?
+
+## Werdykt
+
+Pomiar G15 został wykonany bez zmian produktu. Jedyny bezspornie domknięty wiersz to `13_CHAT`; pozostałe nie zostały zazielenione przez zawężenie. Główny wynik falsyfikacyjny: brak pomiaru serwera ukrywał przede wszystkim 542 zastane czerwienie i 10 błędów uruchomienia, a nie prostą pulę zielonych testów.
+
+## Mianowniki plików na HEAD
+
+Zmierzona liczba plików testowych na moduł (front + wskazany serwer): `01=11`, `02=27`, `03=41`, `04=53`, `05=76`, `06=115`, `07=101`, `08=12`, `09=69`, `10=107`, `11=27`, `12=40`, `13=52`, `14=39`, `15=7`, `16=40`. Różnice względem rejestru historycznego są wynikiem pomiaru; Partner liczono na czterech imiennie dobranych plikach serwera, nie na całych szerokich katalogach.
+
+Warunki wspólne PO ostatnich zmianach dokumentacyjnych: liście `pl=35198`, `en=33065`; `focus-canon=0`, `list-canon=0`, `artefakt=0`. Kontener `cx-day336-pg` usunięto przez `docker rm -fv`; po sprzątaniu było 45 GiB wolnego.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
