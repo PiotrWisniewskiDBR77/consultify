@@ -20,3 +20,27 @@ Artefakty: `/private/tmp/cx-day299-kreator-wywiadu-artefakty/r1-static.txt`, `pr
 ## Korekty wobec instrukcji
 
 Tezy liczbowe zostały potwierdzone. Instrukcja nie zawiera zapowiadanej „tabeli licencji”. Jednocześnie Z12 nazywa `src/components/Interview/__tests__/InsightCreatorModal.a11y.test.tsx` nietykalnym do zapisu, a R2 nakazuje naprawić cztery zestarzałe asercje właśnie w tym pliku. Bez imiennego wyjątku bezpieczniejsza interpretacja zabrania tej edycji.
+
+### STOP — R2 cztery czerwone
+
+Rodzaj: MERYTORYCZNY  
+Powód: produkt ma poprawne wiązanie i nową zatwierdzoną nazwę dostępną, lecz jedyny plik z błędnymi asercjami jest jawnie nietykalny, a instrukcja nie zawiera tabeli licencji ani wyjątku.  
+Licencja, którą sprawdziłem: Z12 — „Nietykalne do zapisu: `src/components/Interview/__tests__/InsightCreatorModal.a11y.test.tsx`”; wynik: brak tabeli licencji i brak imiennego wyjątku w całym dokumencie.  
+Dowód: `przed.json` — 4/12 FAIL na wzorcach kończących się ` *`; DOM pokazuje istniejące `label[for=insight-creator-title]` i `input#insight-creator-title`.  
+Co dostarczyłem ZAMIAST zmiany: pomiar 12 pełnych nazw, rozstrzygnięcie przyczyny i gotowy brief: cztery wywołania `getByLabelText` powinny oczekiwać odpowiednio `/^Insight Title \\(required\\)$/` i `/^Tytuł wniosków \\(wymagane\\)$/`, po czym wymagany jest RED po usunięciu `htmlFor` i GREEN po przywróceniu.  
+Co zrobiłbym, gdyby zapadła decyzja X: po jawnej licencji zmieniłbym wyłącznie cztery wzorce, wykonał mutację `htmlFor`, porównał pełne nazwy przed/po i nie dotykał produktu.  
+Rekomendacja dla nadzorcy: dopisać do instrukcji tabelę licencji z wyjątkiem dla jednego testu; promień zmiany to cztery asercje bez zmiany produkcji.  
+Stan: zacommitowano częściowo w `3c15d51ee5`.  
+Czy kontynuowałem pozostałe pozycje: TAK pomiarem zależności; R3–R5 nie otrzymują fałszywego odbioru, ponieważ wymagają zielonego kontraktu R2 i pełnego lokalnego przebiegu wizualnego.
+
+## R3–R5 — stan
+
+Nie utworzono rejestru 43×2 ani kadrów: brak kompletnego wykonania, a więc brak podstaw do znaków ✓/✗. Nie uruchomiono runtime'u, portów ani bazy. Blok A11Y 41–43, pełny cykl fokusa i zachowanie zagnieżdżonego `Esc` pozostają **NIEZWERYFIKOWANE**. Skan statyczny ujawnił dodatkowo użycie `--color-primary-600` w dekoracji nagłówka `WizardModal`; bez pełnej listy i oględzin nie kwalifikuję go jako naprawiony ani jako defekt.
+
+## R6 — werdykt
+
+Stan dyżuru: **CZĘŚCIOWE**. R1 wykonane; R2 rozstrzygnięte pomiarem, lecz naprawa jest zablokowana brakiem licencji; R3–R5 niewykonane. Twierdzenia o przejściu listy 43×2, ośmiu obejrzanych kadrach, Tab/Shift+Tab, jednopoziomowym Esc i pełnym `focus-visible` są **NIEZWERYFIKOWANE**.
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+Baza dyżuru nie została utworzona; zdanie o konfiguracji SMTP oznacza brak możliwego źródła tych wierszy, nie wykonane zapytanie SQL.
