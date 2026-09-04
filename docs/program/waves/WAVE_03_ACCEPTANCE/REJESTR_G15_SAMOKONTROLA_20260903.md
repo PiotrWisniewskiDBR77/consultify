@@ -71,3 +71,13 @@ Liczby są wynikiem lokalnego `find`/`rg` na `35afcb15fd`; nie są liczbami prze
 | 16_PARTNER | `src/views/partner`, `tests/components/partner` i wskazane unit (42 uruchomione pliki; `m16-*.json`) | 195 | 112 PASS | 186 PASS, 9 FAIL | 9 NOWYCH; 83 przypadki dodane | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
 | WSPÓLNE | `standard`, `shared`, `ui`, `tests/unit/shared*` (12 plików; `r6-shared-*.json`) | 204 | 166 PASS, 2 FAIL | 200 PASS, 4 FAIL | 2 ZASTANE; 2 NOWE (`Relations`) | nierozstrzygnięte — brak tabeli licencji | bez ponownego przebiegu produktu |
 | R6_SERVER | `aiSettingsFallback.test.ts`; `help.routes.test.ts` | 9 | 9 PASS | 9 PASS | bez zmiany | — | 9 PASS |
+
+## Aktualizacja dyżuru 336 — 2026-09-04
+
+Pomiar na `1c4b5a5635`, baza porównawcza `f65c4ff6a0` po jawnej kopii `PreviewAIHintStrip.tsx` z HEAD. Pełny raport: `codex/CODEX_DAY336_G15_ROZKLAD_REPORT.md`; manifesty: `evidence/g15/day336-*.md`.
+
+- Front uruchomiono dla 16 modułów, serwer dla 15 modułów z niepustą ścieżką R1; `15_SETTINGS` nie ma w tej tabeli ścieżki serwerowej i nie dostał fałszywego PASS 0/0.
+- Serwer: 542 czerwienie mają te same pełne nazwy na bazie i HEAD (`ZASTANE`); 10 plików/suit nie wykonało czerwonej asercji (`BŁĄD KOMENDY/NIEORZECZONA`).
+- Cztery dawne `NOT_MEASURED`: 05 = 16 ZASTANA + 1 NOWA + 5 błędów pliku; 06 = 12 ZASTANA + 1 NOWA + 3 błędy pliku; 08 = 3 ZASTANA; 16 = 9 ZASTANA.
+- `13_CHAT`: front 462/462 i serwer 67/67, dlatego G15 zmieniono na `PASS` z dowodem w tym samym commicie.
+- `MYW-IDEAS-010`: 3/4 PASS; produktowy render-path kontrakt przechodzi, ale tekstowy sentinel `activeBranchEnd` nadal pada. Etykieta czerwieni pozostaje.
