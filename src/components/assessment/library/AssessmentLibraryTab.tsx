@@ -21,16 +21,26 @@
  * `status === 'published'` client-side, picking the newest version. Do not
  * ask the backend for a new endpoint here — one already exists.
  */
-import { AlertTriangle, BookOpen, Clock3, Library as LibraryIcon, PlayCircle, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  BookOpen,
+  Library as LibraryIcon,
+  PlayCircle,
+  RefreshCw,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
-import { StandardPreview, type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
+import {
+  StandardPreview,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+} from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
-import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
 import {
   createSession as createMethodCoreSession,
   getSession as getMethodCoreSession,
@@ -38,11 +48,15 @@ import {
   newIdempotencyKey,
 } from '@/method-core/api/methodCoreApi';
 import {
+  compileDrdPack,
   DRD_METHOD_PACK_ID,
   DRD_METHOD_PACK_VERSION,
 } from '@/method-core/methods/drd/compileDrdPack';
+import { compileSiriPackOnly } from '@/method-core/methods/siri/compileSiriPack';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
 
-type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+export type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
 // Etykieta dwujęzyczna — reszta pliku już stosuje ten wzorzec przez `isPolish`
 // (nagłówki kolumn, przyciski, panel podglądu). Dane katalogu poniżej go NIE
@@ -54,7 +68,7 @@ interface Bilingual {
   en: string;
 }
 
-interface MethodologyRow {
+export interface MethodologyRow {
   id: MethodologyId;
   name: string;
   description: Bilingual;
@@ -63,12 +77,33 @@ interface MethodologyRow {
   accessCondition: Bilingual;
   whatYouGet: Bilingual[];
   legalNotice: string | null;
+  axes: Bilingual[];
+  questionCount: number | null;
+  duration: null;
+  lastUsed: null;
+  status: 'active' | 'draft';
 }
+
+const bilingual = (value: string): Bilingual => ({ pl: value, en: value });
+const configuredAxes = (id: MethodologyId): Bilingual[] => {
+  if (id === 'DRD') {
+    return DRD_STRUCTURE.map((axis) => ({
+      pl: axis.namePL || axis.name,
+      en: axis.name,
+    }));
+  }
+  return (FRAMEWORK_CONFIGS[id].categories ?? []).map((category) => bilingual(category.name));
+};
+
+const QUESTION_COUNTS: Partial<Record<MethodologyId, number>> = {
+  DRD: compileDrdPack().pack.questions.length,
+  SIRI: compileSiriPackOnly().questions.length,
+};
 
 // Static catalog — only DRD has a real published-definition-backed engine
 // today. The other four are declared (not hidden) so the Library reads as a
 // complete map of what Consultify assesses, not just what's finished.
-const METHODOLOGY_CATALOG: MethodologyRow[] = [
+export const METHODOLOGY_CATALOG: MethodologyRow[] = [
   {
     id: 'DRD',
     name: 'Digital Readiness Diagnosis',
@@ -85,6 +120,11 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Dane wejściowe do raportu i inicjatyw', en: 'Report and initiative inputs' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.DRD.legalNotice ?? null,
+    axes: configuredAxes('DRD'),
+    questionCount: QUESTION_COUNTS.DRD ?? null,
+    duration: null,
+    lastUsed: null,
+    status: 'active',
   },
   {
     id: 'SIRI',
@@ -100,11 +140,19 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       en: 'Knowledge available; execution coming soon',
     },
     whatYouGet: [
-      { pl: 'Widok procesu, technologii i organizacji', en: 'Process, technology and organization view' },
+      {
+        pl: 'Widok procesu, technologii i organizacji',
+        en: 'Process, technology and organization view',
+      },
       { pl: 'Skala dojrzałości Przemysłu 4.0', en: 'Industry 4.0 maturity scale' },
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.SIRI.legalNotice ?? null,
+    axes: configuredAxes('SIRI'),
+    questionCount: QUESTION_COUNTS.SIRI ?? null,
+    duration: null,
+    lastUsed: null,
+    status: 'draft',
   },
   {
     id: 'ADMA',
@@ -125,6 +173,11 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.ADMA.legalNotice ?? null,
+    axes: configuredAxes('ADMA'),
+    questionCount: null,
+    duration: null,
+    lastUsed: null,
+    status: 'draft',
   },
   {
     id: 'CMMI',
@@ -145,6 +198,11 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.CMMI.legalNotice ?? null,
+    axes: configuredAxes('CMMI'),
+    questionCount: null,
+    duration: null,
+    lastUsed: null,
+    status: 'draft',
   },
   {
     id: 'LEAN',
@@ -160,11 +218,19 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
       en: 'Knowledge available; execution coming soon',
     },
     whatYouGet: [
-      { pl: 'Ścieżka Zmierz → Optymalizuj → Automatyzuj', en: 'Measure → Optimize → Automate path' },
+      {
+        pl: 'Ścieżka Zmierz → Optymalizuj → Automatyzuj',
+        en: 'Measure → Optimize → Automate path',
+      },
       { pl: 'Perspektywa dojrzałości Lean', en: 'Lean maturity perspective' },
       { pl: 'Kontekst szans automatyzacji i AI', en: 'Automation and AI opportunity context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.LEAN.legalNotice ?? null,
+    axes: configuredAxes('LEAN'),
+    questionCount: null,
+    duration: null,
+    lastUsed: null,
+    status: 'draft',
   },
 ];
 
@@ -208,13 +274,33 @@ export function getOrCreateStartIdempotencyKey(
   return created;
 }
 
-export const AssessmentLibraryTab: React.FC = () => {
+interface AssessmentLibraryTabProps {
+  areaFilter?: MethodologyId | 'all';
+  statusFilter?: MethodologyRow['status'] | 'all';
+}
+
+export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
+  areaFilter = 'all',
+  statusFilter = 'all',
+}) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const [startingId, setStartingId] = useState<MethodologyId | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<MethodologyId | null>(null);
+  useState(() => {
+    if (typeof window === 'undefined') return false;
+    const key = 'filterableTable.cols.assessment.hub.library';
+    if (window.localStorage.getItem(key)) return true;
+    const compact = window.innerWidth < 1200;
+    const visibility = Object.fromEntries(
+      ['name', 'area', 'description', 'questionCount', 'duration', 'status', 'lastUsed'].map(
+        (id) => [id, compact ? ['name', 'area', 'description', 'status'].includes(id) : true]
+      )
+    );
+    window.localStorage.setItem(key, JSON.stringify({ visibility }));
+    return true;
+  });
 
   // ASM-BVP-001 production cutover: the mounted DRD Library row has exactly
   // one writer. It always creates a method-core session and the editor always
@@ -246,7 +332,6 @@ export const AssessmentLibraryTab: React.FC = () => {
       // so a double-click can never dispatch two legacy creates either.
       if (!shouldDispatchMethodCoreStart(startInFlightRef.current, row.id)) return;
 
-      setStartingId(row.id);
       setStartError(null);
       failedStartRowRef.current = row;
       const toastId = toast.loading(`Starting ${row.name}…`);
@@ -317,7 +402,6 @@ export const AssessmentLibraryTab: React.FC = () => {
           setStartError(reason);
         }
       } finally {
-        setStartingId(null);
         startInFlightRef.current.delete(row.id);
       }
     },
@@ -328,7 +412,8 @@ export const AssessmentLibraryTab: React.FC = () => {
     () => [
       {
         id: 'name',
-        label: isPolish ? 'Metodyka' : 'Framework',
+        label: isPolish ? 'Nazwa metodyki' : 'Methodology name',
+        sortable: true,
         render: (row: any) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-c-text">{row.name}</span>
@@ -342,66 +427,71 @@ export const AssessmentLibraryTab: React.FC = () => {
       {
         id: 'area',
         label: isPolish ? 'Obszar' : 'Area',
-        width: '220px',
+        width: '180px',
+        sortable: true,
+        filterable: true,
+        filterOptions: METHODOLOGY_CATALOG.map((row) => ({
+          value: isPolish ? row.area.pl : row.area.en,
+          label: isPolish ? row.area.pl : row.area.en,
+        })),
         render: (row: MethodologyRow) => (isPolish ? row.area.pl : row.area.en),
+      },
+      {
+        id: 'description',
+        label: isPolish ? 'Opis w jednym zdaniu' : 'One-sentence description',
+        width: '280px',
+        render: (row: MethodologyRow) => (isPolish ? row.description.pl : row.description.en),
+      },
+      {
+        id: 'questionCount',
+        label: isPolish ? 'Liczba pytań' : 'Questions',
+        width: '120px',
+        align: 'right',
+        render: (row: MethodologyRow) => row.questionCount ?? '—',
+      },
+      {
+        id: 'duration',
+        label: isPolish ? 'Czas trwania' : 'Duration',
+        width: '120px',
+        render: () => '—',
       },
       {
         id: 'status',
         label: 'Status',
-        width: '220px',
+        width: '120px',
+        sortable: true,
+        filterable: true,
+        filterOptions: [
+          { value: 'active', label: isPolish ? 'Aktywna' : 'Active' },
+          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft' },
+        ],
         render: (row: MethodologyRow) => {
-          if (row.id !== 'DRD') {
-            // 2026-08-26 assessment cleanup: "Wkrótce"/"Coming soon" ->
-            // "Planowane"/"Planned" (program rule — never "Coming soon" on
-            // the client's face). Row stays visible/disabled on purpose
-            // (TRIADA_KANON.md C3, cited in this file's own header: a
-            // disabled catalog row explains WHY, it never lies by omission
-            // — only the wording changes here, not the visibility).
-            return <StatusChip label={isPolish ? 'Planowane' : 'Planned'} tone="neutral" />;
-          }
-          return <StatusChip label={isPolish ? 'Rdzeń metody' : 'Method Core'} tone="success" />;
-        },
-      },
-      {
-        id: 'action',
-        label: isPolish ? 'Działania' : 'Actions',
-        width: '140px',
-        render: (row: MethodologyRow) => {
-          const disabled = !canStartRow(row) || startingId === row.id;
-          return (
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={(e) => {
-                e.stopPropagation();
-                void handleStart(row);
-              }}
-              className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--c-border)] bg-[var(--c-surface)] px-3 text-sm font-medium text-[var(--c-text)] transition-colors hover:bg-[var(--c-surface-raised)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
-              title={
-                canStartRow(row)
-                  ? isPolish
-                    ? `Uruchom nową ocenę ${row.name}`
-                    : `Start a new ${row.name} assessment`
-                  : isPolish
-                    ? 'Niedostępne w tym MVP'
-                    : 'Not available in this MVP'
-              }
-            >
-              {startingId === row.id ? (
-                <Clock3 size={14} className="animate-spin" />
-              ) : (
-                <PlayCircle size={14} />
-              )}
-              {isPolish ? 'Uruchom' : 'Start'}
-            </button>
+          return row.status === 'active' ? (
+            <StatusChip label={isPolish ? 'Aktywna' : 'Active'} tone="success" />
+          ) : (
+            <StatusChip label={isPolish ? 'Szkic' : 'Draft'} tone="info" />
           );
         },
       },
+      {
+        id: 'lastUsed',
+        label: isPolish ? 'Ostatnio użyta' : 'Last used',
+        width: '130px',
+        render: () => '—',
+      },
     ],
-    [canStartRow, startingId, handleStart, isPolish]
+    [canStartRow, handleStart, isPolish]
   );
 
-  const data = useMemo(() => METHODOLOGY_CATALOG.map((row) => ({ ...row })), []);
+  const data = useMemo(
+    () =>
+      METHODOLOGY_CATALOG.filter(
+        (row) =>
+          (areaFilter === 'all' || row.id === areaFilter) &&
+          (statusFilter === 'all' || row.status === statusFilter)
+      ).map((row) => ({ ...row })),
+    [areaFilter, statusFilter]
+  );
 
   const rowMenu = useCallback(
     (row: any): StandardRowMenu => {
@@ -416,13 +506,13 @@ export const AssessmentLibraryTab: React.FC = () => {
           },
           ...(canStartRow(methodology)
             ? [
-              {
-                id: 'start',
-                label: isPolish ? 'Uruchom' : 'Start',
-                icon: PlayCircle,
-                onClick: () => void handleStart(methodology),
-              },
-            ]
+                {
+                  id: 'start',
+                  label: isPolish ? 'Uruchom' : 'Start',
+                  icon: PlayCircle,
+                  onClick: () => void handleStart(methodology),
+                },
+              ]
             : []),
         ],
         universalHandlers: { preview: () => setSelectedId(methodology.id) },
@@ -434,50 +524,55 @@ export const AssessmentLibraryTab: React.FC = () => {
   return (
     <div className="flex h-full min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto p-4">
-      {startError && (
-        <div
-          role="alert"
-          className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
-        >
-          <div className="flex min-w-0 items-start gap-2">
-            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-            <span>{startError}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
-            }
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+        {startError && (
+          <div
+            role="alert"
+            className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
           >
-            <RefreshCw size={13} />
-            {isPolish ? 'Ponów' : 'Retry'}
-          </button>
-        </div>
-      )}
-      <StandardTable
-        columns={columns}
-        data={data}
-        loading={false}
-        rowMenu={rowMenu}
-        selectedRowId={selectedId}
-        onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
-        rowDescription={(row: any) =>
-          isPolish ? (row as MethodologyRow).description.pl : (row as MethodologyRow).description.en
-        }
-        persistKey="assessment.hub.library"
-        empty={{
-          icon: LibraryIcon,
-          title: isPolish ? 'Brak dostępnych metodyk oceny' : 'No assessment frameworks available',
-          // Stan PUSTY, nie stan bledu. Oryginal (obie wersje jezykowe) mowil
-          // "nie udalo sie wczytac" w bloku opisujacym pustke — czyli komunikat
-          // o awarii tam, gdzie awarii nie ma. Uzgodnione z torem grafiki 2026-09-01.
-          // Osobny stan bledu wczytywania to zadanie na osobny dyzur.
-          description: isPolish
-            ? 'Katalog metodyk jest pusty.'
-            : 'The methodology catalog is empty.',
-        }}
-      />
+            <div className="flex min-w-0 items-start gap-2">
+              <AlertTriangle className="mt-0.5 shrink-0" size={16} />
+              <span>{startError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
+              }
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+            >
+              <RefreshCw size={13} />
+              {isPolish ? 'Ponów' : 'Retry'}
+            </button>
+          </div>
+        )}
+        <StandardTable
+          columns={columns}
+          data={data}
+          loading={false}
+          rowMenu={rowMenu}
+          selectedRowId={selectedId}
+          onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
+          rowDescription={(row: any) =>
+            isPolish
+              ? (row as MethodologyRow).description.pl
+              : (row as MethodologyRow).description.en
+          }
+          persistKey="assessment.hub.library"
+          defaultSort={{ columnId: 'name', direction: 'asc' }}
+          empty={{
+            icon: LibraryIcon,
+            title: isPolish
+              ? 'Brak dostępnych metodyk oceny'
+              : 'No assessment frameworks available',
+            // Stan PUSTY, nie stan bledu. Oryginal (obie wersje jezykowe) mowil
+            // "nie udalo sie wczytac" w bloku opisujacym pustke — czyli komunikat
+            // o awarii tam, gdzie awarii nie ma. Uzgodnione z torem grafiki 2026-09-01.
+            // Osobny stan bledu wczytywania to zadanie na osobny dyzur.
+            description: isPolish
+              ? 'Katalog metodyk jest pusty.'
+              : 'The methodology catalog is empty.',
+          }}
+        />
       </div>
       {selectedId ? (
         <PreviewPaneAside>
@@ -493,8 +588,12 @@ export const AssessmentLibraryTab: React.FC = () => {
                     { label: item.id, tone: 'neutral' },
                     {
                       label: item.supported
-                        ? isPolish ? 'Dostępna' : 'Available'
-                        : isPolish ? 'Planowane' : 'Planned',
+                        ? isPolish
+                          ? 'Dostępna'
+                          : 'Available'
+                        : isPolish
+                          ? 'Planowane'
+                          : 'Planned',
                       tone: item.supported ? 'success' : 'neutral',
                     },
                   ],
@@ -502,6 +601,8 @@ export const AssessmentLibraryTab: React.FC = () => {
                 details={{
                   text: `${isPolish ? item.description.pl : item.description.en}\n\n${item.whatYouGet
                     .map((value) => `• ${isPolish ? value.pl : value.en}`)
+                    .join('\n')}\n\n${isPolish ? 'Osie i obszary' : 'Axes and areas'}:\n${item.axes
+                    .map((axis) => `• ${isPolish ? axis.pl : axis.en}`)
                     .join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
                   /* ★ 2026-09-02 — było `showWordCount: false`. Kanon §7.3 pkt 3
                      mówi: licznik słów widoczny, gdy treść > 0. Wyłączenie go
@@ -523,25 +624,33 @@ export const AssessmentLibraryTab: React.FC = () => {
                     {
                       id: 'commercial',
                       label: isPolish ? 'Warunki komercyjne' : 'Commercial terms',
-                      value: isPolish ? 'Nie skonfigurowano w katalogu' : 'Not configured in catalog',
+                      value: isPolish
+                        ? 'Nie skonfigurowano w katalogu'
+                        : 'Not configured in catalog',
                     },
                   ],
                   propertyLabel: isPolish ? 'Właściwość' : 'Property',
                   valueLabel: isPolish ? 'Wartość' : 'Value',
                 }}
-                actions={item.supported ? {
-                  informational: [{
-                    id: 'start',
-                    variant: 'neutral',
-                    // PRZEWODY ODBIORU 2026-09-03: polska gałąź mówiła
-                    // „Uruchom assessment" — pół zdania po polsku, pół po
-                    // angielsku, w module, który wszędzie indziej nazywa się
-                    // „Ocena" (assessment.hub.tabs.assessment).
-                    label: isPolish ? 'Uruchom ocenę' : 'Start assessment',
-                    icon: PlayCircle,
-                    onClick: () => void handleStart(item),
-                  }],
-                } : undefined}
+                actions={
+                  item.supported
+                    ? {
+                        informational: [
+                          {
+                            id: 'start',
+                            variant: 'neutral',
+                            // PRZEWODY ODBIORU 2026-09-03: polska gałąź mówiła
+                            // „Uruchom assessment" — pół zdania po polsku, pół po
+                            // angielsku, w module, który wszędzie indziej nazywa się
+                            // „Ocena" (assessment.hub.tabs.assessment).
+                            label: isPolish ? 'Rozpocznij ocenę' : 'Start assessment',
+                            icon: PlayCircle,
+                            onClick: () => void handleStart(item),
+                          },
+                        ],
+                      }
+                    : undefined
+                }
               />
             );
           })()}
