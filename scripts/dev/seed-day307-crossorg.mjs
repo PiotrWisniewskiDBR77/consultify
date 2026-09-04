@@ -61,6 +61,20 @@ try {
       [fixture.memberId, fixture.orgId, fixture.userId]
     );
   }
+  await client.query(
+    `INSERT INTO projects (id, organization_id, name, status)
+     VALUES ('day307-project-owner', 'day307-org-owner', 'Day307 Owner Project', 'active')
+     ON CONFLICT (id) DO UPDATE SET organization_id=EXCLUDED.organization_id,
+       name=EXCLUDED.name, status='active'`
+  );
+  await client.query(
+    `INSERT INTO tasks (id, project_id, organization_id, title, status, priority, assignee_id)
+     VALUES ('day307-task-owner', 'day307-project-owner', 'day307-org-owner',
+       'Day307 owner-only workload evidence', 'IN_PROGRESS', 'high', 'day307-user-owner')
+     ON CONFLICT (id) DO UPDATE SET project_id=EXCLUDED.project_id,
+       organization_id=EXCLUDED.organization_id, title=EXCLUDED.title,
+       status='IN_PROGRESS', priority='high', assignee_id='day307-user-owner'`
+  );
   await client.query('COMMIT');
 } catch (error) {
   await client.query('ROLLBACK');
