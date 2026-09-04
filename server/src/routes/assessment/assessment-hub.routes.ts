@@ -7,6 +7,7 @@ import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/index.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { hasAssessmentResponse } from '../../services/report/assessmentCompleteness.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import logger from '../../utils/Logger.js';
@@ -60,7 +61,7 @@ function computeProgressFields(row: any) {
     const axisHasData = new Set<number>();
     for (const [areaId, areaData] of Object.entries(answers.drd.areas)) {
       const data = areaData as any;
-      if (data && (data.achievedLevel > 0 || data.targetLevel > 0)) {
+      if (hasAssessmentResponse(data)) {
         const axisNum = parseInt(areaId, 10);
         if (!isNaN(axisNum)) {
           axisHasData.add(axisNum);
@@ -72,13 +73,9 @@ function computeProgressFields(row: any) {
     }
     completedAxes = axisHasData.size;
   } else if (type === 'SIRI' && answers.siri?.dimensions) {
-    completedAxes = Object.values(answers.siri.dimensions).filter(
-      (d: any) => d && (d.current > 0 || d.target > 0)
-    ).length;
+    completedAxes = Object.values(answers.siri.dimensions).filter(hasAssessmentResponse).length;
   } else if (type === 'ADMA' && answers.adma?.dimensions) {
-    completedAxes = Object.values(answers.adma.dimensions).filter(
-      (d: any) => d && (d.current > 0 || d.target > 0)
-    ).length;
+    completedAxes = Object.values(answers.adma.dimensions).filter(hasAssessmentResponse).length;
   } else if (scoreSummary?.byAxis) {
     completedAxes = Object.keys(scoreSummary.byAxis).length;
   } else if (scoreSummary?.byDimension) {

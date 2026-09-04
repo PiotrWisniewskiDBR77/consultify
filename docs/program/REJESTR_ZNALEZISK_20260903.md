@@ -326,3 +326,8 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | W1 | Pięć wywołań bramki w zielonym teście nie przekazywało wymaganego `ariaLabel`; pełny `tsc` miał 5×TS2741. Testy runtime flag pozostawały 28/28 zielone po cofnięciu statycznego dostępu do wariantu obliczonego. | Sam Vitest nie chronił kontraktu typów ani podstawienia `import.meta.env` przez Vite. | ZAMKNIĘTE dla trzech jawnych flag i jednego punktowego celu typów; rodzina pozostaje otwarta | `evidence/day356/`, `scripts/check-idea-notebook-prototype-types.mjs`, `scripts/check-static-vite-flag-access.mjs` |
 | W2 | Pełny inwentarz wykazał 109 plików z dostępem obliczonym: 105 osiągalnych od `src/index.tsx`, 2 nieosiągalne i 2 test/harness-only. | 105 żywych plików stanowi realny dług osobnego zlecenia; dyżur 356 ich nie zmieniał. | OTWARTE | `evidence/day356/rodzina-env.tsv`, `evidence/day356/wzorcowy-diff-nienalozony.patch` |
+## X. Dyżur 351 — jedna definicja kompletności
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| X1 | Wzorzec `X > 0 || target > 0` miał 12 trafień, z czego 9 liczyło kompletność; instrukcja zaniżała rdzeń do 7. Cele metodyki podnosiły licznik w żywej trasie i minach UI. | Jedna definicja per drzewo objęła 9 miejsc; 9 osobnych mutacji RED, parytet bliźniaków RED po jednostronnej zmianie, realny ApiGateway/JWT/PG potwierdził 7/39 niepełne i 39/39 pełne. | ZAMKNIĘTE lokalnie; produkcja i flagowany ekran NIEZWERYFIKOWANE | `CODEX_DAY351_LICZNIK_KOMPLETNOSCI_REPORT.md`, `evidence/licznik-kompletnosci-20260904/` |

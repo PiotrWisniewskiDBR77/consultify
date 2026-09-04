@@ -31,6 +31,7 @@ import DRD_STRUCTURE, {
   getTotalAreaCount,
 } from '../../data/drdStructure.js';
 import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles.js';
+import { hasAssessmentResponse } from './assessmentCompleteness.js';
 import {
   type ConclusionEvidenceRef,
   type ConclusionOutput,
@@ -354,9 +355,7 @@ export async function buildDrdReportModel(
   );
 
   const totalAreas = getTotalAreaCount();
-  const assessedAreas = Object.values(areaScores).filter(
-    (s) => s && Number(s.actual) > 0
-  ).length;
+  const assessedAreas = Object.values(areaScores).filter(hasAssessmentResponse).length;
   const completionPercent = totalAreas > 0 ? Math.round((assessedAreas / totalAreas) * 100) : 0;
 
   // Overall percent = mean of dimension actual-percents (normalizes mixed 5/6/7 scales).

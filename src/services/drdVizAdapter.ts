@@ -16,6 +16,7 @@ import DRD_STRUCTURE, {
   DRD_AXIS_KEY_MAP,
   getTotalAreaCount,
 } from './drdStructure';
+import { hasAssessmentResponse } from './assessmentCompleteness';
 
 /**
  * Calm, low-saturation palette per axis (blue / teal / slate family).
@@ -55,9 +56,7 @@ export const buildDRDVisualizationData = (
   const overall = calculateOverallScore(areaScores);
 
   const totalAreas = getTotalAreaCount();
-  const assessedAreas = Object.values(areaScores).filter(
-    (s) => s && (s.actual > 0 || s.target > 0)
-  ).length;
+  const assessedAreas = Object.values(areaScores).filter(hasAssessmentResponse).length;
   const completionPercent = totalAreas > 0 ? Math.round((assessedAreas / totalAreas) * 100) : 0;
 
   return {
@@ -102,7 +101,7 @@ export const buildDRDVisualizationDataFromAxes = (
 
   const avg = (nums: number[]) =>
     nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10 : 0;
-  const assessed = dimensions.filter((d) => d.current > 0 || d.target > 0).length;
+  const assessed = dimensions.filter(hasAssessmentResponse).length;
 
   return {
     framework: 'DRD',
