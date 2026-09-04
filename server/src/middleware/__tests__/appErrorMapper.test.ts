@@ -39,6 +39,18 @@ describe('appErrorMapper', () => {
     expect(result).toMatchObject({ error: 'Dokument wygasl.', errorCode: 'DOCUMENT_EXPIRED' });
   });
 
+  it.each([
+    ['PROGRAM_NOT_ACTIVE', 409, 'The OKR program is not active, so a new cycle cannot be opened.', 'Program OKR nie jest aktywny, dlatego nie mozna otworzyc nowego cyklu.'],
+    ['FINANCE_SETTINGS_INVALID', 400, 'The finance settings are invalid.', 'Ustawienia finansowe sa nieprawidlowe.'],
+    ['NOT_FOUND', 404, 'Template not found.', 'Nie znaleziono szablonu.'],
+    ['COMMAND_CAPABILITY_DENIED', 403, 'You are not authorized to perform this action.', 'Nie masz uprawnien do wykonania tej operacji.'],
+  ])('localizes the %s operational contract without changing its code', (code, status, english, polish) => {
+    process.env.NODE_ENV = 'production';
+    const error = new AppError('raw English business detail', status, code);
+    expect(mapAppErrorResponse(error, req())).toMatchObject({ error: english, errorCode: code });
+    expect(mapAppErrorResponse(error, req('pl-PL'))).toMatchObject({ error: polish, errorCode: code });
+  });
+
   it('never includes debug detail in production', () => {
     process.env.NODE_ENV = 'production';
     expect(mapAppErrorResponse(new Error('/private/secret/path'), req())).not.toHaveProperty('debug');

@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import routes from '../admin/service-accounts.routes.js';
 const dbGet = vi.fn();
 const list = vi.fn();
-let user: any = { id: 'u1', organizationId: 'org-1', role: 'admin' };
+const USER_ID = '00000000-0000-4000-8000-000000000001';
+const ORG_ID = '00000000-0000-4000-8000-000000000002';
+let user: any = { id: USER_ID, organizationId: ORG_ID, role: 'admin' };
 vi.mock('../../utils/DbPromise.js', () => ({ get: (...args: any[]) => dbGet(...args) }));
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, res: any, next: any) => {
@@ -32,7 +34,7 @@ const app = () => {
 };
 describe('service accounts admin route', () => {
   beforeEach(() => {
-    user = { id: 'u1', organizationId: 'org-1', role: 'admin' };
+    user = { id: USER_ID, organizationId: ORG_ID, role: 'admin' };
     dbGet.mockReset();
     dbGet.mockResolvedValue({ role: 'ADMIN', status: 'ACTIVE' });
     list.mockResolvedValue([]);
@@ -48,7 +50,7 @@ describe('service accounts admin route', () => {
   });
   it('lists only the token organization', async () => {
     expect((await request(app()).get('/api/admin/service-accounts')).status).toBe(200);
-    expect(list).toHaveBeenCalledWith('org-1');
+    expect(list).toHaveBeenCalledWith(ORG_ID);
   });
 
   it('deletes a service account owned by the token organization', async () => {
@@ -59,7 +61,7 @@ describe('service accounts admin route', () => {
     expect(revoke).toHaveBeenCalledWith('sa-1');
     expect(dbGet).toHaveBeenLastCalledWith(
       'SELECT id FROM tp_service_accounts WHERE id = ? AND organization_id = ?',
-      ['sa-1', 'org-1'],
+      ['sa-1', ORG_ID],
       { fallback: false }
     );
   });
