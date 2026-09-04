@@ -1,0 +1,16 @@
+NOWY — DYŻUR 317
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/grafika/m03-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_317_JEZYK_PL.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 317.
+
+Marker: bc18bc7acac2ec825ebb3db2f1309738ab034d58
+Zasoby wyłączne: baza 6333, runtime 5473.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
