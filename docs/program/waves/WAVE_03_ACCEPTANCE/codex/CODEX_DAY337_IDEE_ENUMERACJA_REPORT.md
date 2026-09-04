@@ -39,14 +39,24 @@ Komendy dowodowe: obowiązkowe komendy (1), (2), (3) i (6) z §0.3 instrukcji, w
 
 Na R0: brak rozbieżności pomiarowych. Tip linii integracyjnej wyprzedza marker o commity instrukcyjne; zgodnie z instrukcją nie jest to STOP.
 
+## R1 — stabilizacja sondy
+
+Krzywa własna: `200 ms → 1`, `400 ms → 1`, `800 ms → 86`, następnie 86 do 20 s. Szczegóły: `evidence/day337/sonda-krzywa.md`.
+
+Sonda czeka na pięć identycznych próbek co 200 ms, wymaga jednocześnie progu kontraktu i odrzuca znaną jednokontrolkową powłokę startową. Sam pierwszy wariant okna 5 × 200 ms został sfalsyfikowany trzema wynikami `1`; został poprawiony przed commitem.
+
+Dowód mutacyjny na pełnej nazwie `Idea tools — complete DOM control inventory idea-table-timeline-stuck: waits for a stable terminal control inventory`: stara sonda przeszła z `DAY337_STABLE_PROBE 1`; nowa na tym samym opóźnieniu poczekała i zwróciła `DAY337_STABLE_PROBE 86`. Po przywróceniu ekranu trzy przebiegi końcowe: `86 / 86 / 86`. Diff ekranu po przywróceniu pusty.
+
+Bazowy skład przed zmianami: `numTotalTests=5`, 4 wykonane PASS, 0 FAIL, 1 pending; pełne nazwy w `/private/tmp/cx-day337-idee-enumeracja-artefakty/przed-nazwy.txt`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R1–R4 nie zostały jeszcze wykonane; nie deklaruję stabilności sondy, mianowników właściwego ekranu, skuteczności bramki a11y ani pokrycia efektu.
+- R2–R4 nie zostały jeszcze wykonane; nie deklaruję jeszcze kontraktowych mianowników właściwego ekranu, skuteczności bramki a11y ani pokrycia efektu.
 - Nie wykonano dowodu bazodanowego, ponieważ wiążący wariant C zabrania stawiania kontenera i dyżur nie dotyka bazy.
 
 ## §0.2e — pakiety uruchomione dotychczas
 
-Nie uruchomiono jeszcze pakietu Vitest. Bramki kanonu są skryptami statycznymi; zakończyły się kodem 0. Pułapki `describe.runIf` i zerowej liczby wykonanych przypadków zostaną rozliczone przy pierwszym przebiegu enumeracji z jawnie ustawionym `DAY295_IDEA_HARNESS_URL`.
+Pakiet enumeracji uruchamiano z `RUN_DB_TESTS=0 MOCK_DB=true`, jawnym `DAY295_IDEA_HARNESS_URL=http://127.0.0.1:5513` i `--retry=0`. JSON bazowy wykazał `numTotalTests=5`, 4 wykonane i 1 pending; po dodaniu przypadku sondy pełne przebiegi wykazały 5 wykonanych i 1 pending. Tym samym `describe.runIf` nie wyłączył pakietu. Test jest czysto przeglądarkowy i nie dowodzi bazy, uwierzytelnienia ani ścieżki ApiGateway.
 
 ## Z30
 

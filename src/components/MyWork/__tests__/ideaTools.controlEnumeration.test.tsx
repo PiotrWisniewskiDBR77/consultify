@@ -40,6 +40,29 @@ async function visibleControls(page: Page): Promise<Control[]> {
     })));
 }
 
+const STABLE_SAMPLE_COUNT = 5;
+const STABLE_SAMPLE_INTERVAL_MS = 200;
+const INITIAL_SHELL_MAX_CONTROLS = 1;
+
+async function waitForStableControls(page: Page, minimumBase: number): Promise<Control[]> {
+  let stableSamples = 0;
+  let previousCount: number | undefined;
+
+  await expect.poll(async () => {
+    const count = (await visibleControls(page)).length;
+    const passedReadinessFloor = count >= minimumBase && count > INITIAL_SHELL_MAX_CONTROLS;
+    stableSamples = passedReadinessFloor && count === previousCount ? stableSamples + 1 : 1;
+    previousCount = count;
+    return passedReadinessFloor && stableSamples >= STABLE_SAMPLE_COUNT;
+  }, {
+    timeout: 30_000,
+    interval: STABLE_SAMPLE_INTERVAL_MS,
+    message: `control inventory did not stabilize for ${STABLE_SAMPLE_COUNT} consecutive samples`,
+  }).toBe(true);
+
+  return visibleControls(page);
+}
+
 describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control inventory', () => {
   let browser: Browser;
 
@@ -51,6 +74,18 @@ describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control invent
     await browser?.close();
   });
 
+  it('idea-table-timeline-stuck: waits for a stable terminal control inventory', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${HARNESS_URL}/?screen=idea-table-timeline-stuck&lang=pl&theme=light&probeDelay=1`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    const base = await waitForStableControls(page, 1);
+    console.info('DAY337_STABLE_PROBE', base.length);
+    expect(base.every(({ name }) => name.length > 0)).toBe(true);
+    await page.close();
+  }, 60_000);
+
   for (const [screen, expected] of Object.entries(contract)) {
     it(`${screen}: accounts for the base and opened-menu passes`, async () => {
       const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -58,10 +93,7 @@ describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control invent
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
       });
-      await expect.poll(async () => (await visibleControls(page)).length, { timeout: 30_000 })
-        .toBeGreaterThanOrEqual(expected.minimumBase);
-
-      const base = await visibleControls(page);
+      const base = await waitForStableControls(page, expected.minimumBase);
       expect(base.every(({ name }) => name.length > 0)).toBe(true);
       const inventory = [...base];
       let openedMenus = 0;
