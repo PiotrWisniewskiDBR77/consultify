@@ -342,3 +342,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AA. Dyżur 359 — G20 pomierzone, lecz nadal zablokowane
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AA1 | Archeologia 13 pozycji dała 2 kwalifikowane SHA i 11 pozycji wymagających decyzji właściciela; mianownik pozostał 121. | G20 ma teraz dowód we wszystkich 16 modułach, ale nie może brzmieć jak zaliczenie: G19 pozostaje 16/16 NOT_PROVEN, a P0/P1 ma 11 BLOKUJE. | ENTRY_GATE_MEASURED / BLOCKED | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY359_G20_ZAMKNIECIE_REPORT.md`, `evidence/g20/day359/` |
+| AA2 | Dane rozstrzygnięć i funkcje miernika są w jednym pliku. | Recenzent merytoryczny ma techniczny dostęp do bezpieczników; przygotowano nienałożony rozdział danych. | OTWARTE / PATCH DO DECYZJI | `evidence/g20/day359/r5-rozdzial-danych.patch` |
