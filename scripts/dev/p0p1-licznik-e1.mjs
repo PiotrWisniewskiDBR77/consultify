@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,9 +17,23 @@ export const DEFAULT_FLOOR = 100;
 // Audyt R6 dyżuru 320 rozstrzyga wyłącznie dwanaście zastanych pozycji
 // BRAK_SHA_DLA_NAPRAWIONE. Źródła właściciela pozostają bez zmian; tabela
 // utrwala znaleziony commit albo uczciwy brak jednoznacznego SHA naprawy.
+//
+// ★ NAPRAWA PO ODBIORZE DYŻURU 334 (2026-09-04). Dyżur 334 przypisał pięciu
+// pozycjom SHA; trzy z nich upadły w odbiorze adwersaryjnym, bo cytowany commit
+// jest STARSZY niż zgłoszenie defektu i nie dotyka obiektu z dowodu. Wracają
+// do UNRESOLVED z jawnym powodem. Od tej wersji ten sam błąd łapie mechanicznie
+// bezpiecznik R3 w `gitShaState` (stan `SHA_STARSZY_NIZ_ZGLOSZENIE`), więc
+// tabela nie jest już jedyną obroną.
 export const DAY320_RESOLUTIONS = Object.freeze({
-  'ASM-OWN-001': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA wykonania biblioteki metodyk' },
-  'ASM-OWN-002': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA zmiany kolumn katalogu' },
+  // UCZCIWIE ZAMKNIĘTE (odbiór 334 potwierdził kod na HEAD): commit e4dc14df6e
+  // (2026-09-04, MŁODSZY niż zgłoszenie 2026-08-22) daje siedem kolumn dokładnie
+  // wg DEC-2026-09-03-353 i podgląd z opisem, osiami i CTA „Rozpocznij ocenę".
+  // ★ UJAWNIENIE: kolumny `duration` i `lastUsed` renderują twarde '—'
+  // (AssessmentLibraryTab.tsx:453-456 i 477-481, typ pola dosłownie `null`).
+  // Kolumna jest, danych nie ma — dług do rozliczenia osobno.
+  'ASM-OWN-001': { type: 'SHA', sha: 'e4dc14df6e' },
+  // j.w. — ta sama zmiana katalogu; to samo ujawnienie o `duration`/`lastUsed`.
+  'ASM-OWN-002': { type: 'SHA', sha: 'e4dc14df6e' },
   'ASM-OWN-003': { type: 'DECISION', decision: 'DEC-2026-09-03-364' },
   'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
   'EXE-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-24-03' },
@@ -32,18 +46,115 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI' },
   'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
   'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
-  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint af75a84e37 obejmuje 156 plików i nie izoluje zmiany Vault table/preview' },
+  // COFNIĘTE po odbiorze 334. Dyżur podstawił `d0b5172c19` (2026-07-24), a uwaga
+  // właściciela jest z 2026-08-22 — commit jest o MIESIĄC STARSZY od zgłoszenia.
+  // Jego wersja pliku ma 152 linie i nie zawiera ani `TableWithPreviewLayout`,
+  // ani `PreviewMetaCard`, które dowód cytuje w liniach 356-460.
+  // ★ Dokument źródłowy (07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md, „Fala 4") stawia
+  // tej pozycji status FALA_4_OWNER_DECISION i wymaga ŚWIEŻEGO ZRZUTU przed CLOSED.
+  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22' },
   'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
-  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 obejmuje 82 pliki i nie izoluje zmiany Decisions list' },
+  // COFNIĘTE po odbiorze 334. Dyżur podstawił `7b7ec198aa` (2026-07-15) — PIĘĆ
+  // TYGODNI przed zgłoszeniem z 2026-08-22. `--stat` tego commita dotyka wyłącznie
+  // DecisionsPanelContent.tsx, a dowód pozycji wskazuje MyWorkHub.tsx:4137,
+  // którego ten commit w ogóle nie rusza.
+  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137' },
   'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
-  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 jest tylko wspólną migawką dla MYW-DEC-REC-001' },
+  // COFNIĘTE po odbiorze 334 — ten sam `7b7ec198aa` i ta sama wada co wyżej.
+  // Pozycja to duplikat zgłoszenia MYW-DEC-REC-001 (rejestr modułu: 2026-08-23).
+  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'duplikat MYW-DEC-REC-001; checkpoint 4a36e8a745 to wspólna migawka, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-23' },
   'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
   'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-MENU-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-REC-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA ZGŁOSZENIA POZYCJI — źródło bezpiecznika R3
+//
+// Bezpiecznik `gitShaState` sprawdzał dotąd tylko, czy commit istnieje, jest
+// przodkiem HEAD i nie jest „checkpointem". NIE sprawdzał, czy commit jest
+// MŁODSZY od zgłoszenia defektu. Dzięki temu dowolną pozycję dało się zamknąć
+// commitem sprzed jej powstania (dyżur 334 zrobił to trzy razy: `d0b5172c19`
+// z 2026-07-24 i `7b7ec198aa` z 2026-07-15 pod uwagi właściciela z 2026-08-22).
+//
+// Datę zgłoszenia bierzemy z trzech źródeł, od najbardziej do najmniej
+// precyzyjnego; przy wielu trafieniach obowiązuje NAJWCZEŚNIEJSZA data
+// (pierwsze zgłoszenie obiektu):
+//   1. kolumna daty w wierszu rejestru właściciela
+//      `docs/program/waves/WAVE_03_ACCEPTANCE/modules/*/MODULE_ACCEPTANCE.md`
+//      (format `| \`ID\` | 2026-08-22 | …` lub `| \`ID\` | \`2026-08-22 21:05 …\` | …`);
+//   2. nagłówek `Intake date: \`YYYY-MM-DD\`` w
+//      `owner_feedback/*/OWNER_FEEDBACK_REGISTER.md` — dotyczy każdego ID w pliku;
+//   3. data w NAZWIE pliku przeglądu właściciela
+//      (`*OWNER_REVIEW*`, `*OWNER_FEEDBACK*`, `*OWNER_NOTES*` z `YYYY-MM-DD`).
+// Pozycja bez daty z żadnego z tych źródeł NIE jest przepuszczana po cichu —
+// dostaje stan `SHA_BRAK_DATY_ZGLOSZENIA` i blokuje (brak pomiaru to nie wynik).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const REPORT_ROOT = 'docs/program/waves/WAVE_03_ACCEPTANCE';
+const ID_PATTERN = /^[A-Z][A-Z0-9-]*-\d{3}(?:\[OF\])?$/;
+
+function markdownFiles(dir, out = []) {
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const entry of entries) {
+    const full = resolve(dir, entry.name);
+    if (entry.isDirectory()) markdownFiles(full, out);
+    else if (entry.name.endsWith('.md')) out.push(full);
+  }
+  return out;
+}
+
+function noteDate(dates, id, date) {
+  if (!id || !date) return;
+  const previous = dates.get(id);
+  if (!previous || date < previous) dates.set(id, date);
+}
+
+export function collectReportedDates(root = defaultRoot) {
+  const dates = new Map();
+  const base = resolve(root, REPORT_ROOT);
+
+  // Źródło 1 — kolumna daty w rejestrze modułu.
+  for (const file of markdownFiles(resolve(base, 'modules'))) {
+    if (!file.endsWith('MODULE_ACCEPTANCE.md')) continue;
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      if (!line.startsWith('|')) continue;
+      const cells = line.split('|');
+      if (cells.length < 4) continue;
+      const id = (cells[1] || '').replaceAll('`', '').replaceAll('**', '').trim();
+      if (!ID_PATTERN.test(id)) continue;
+      const date = (cells[2] || '').replaceAll('`', '').trim().match(/^(\d{4}-\d{2}-\d{2})/);
+      if (date) noteDate(dates, id, date[1]);
+    }
+  }
+
+  // Źródła 2 i 3 — data na poziomie pliku przeglądu właściciela.
+  for (const file of markdownFiles(base)) {
+    const text = readFileSync(file, 'utf8');
+    const intake = text.match(/Intake date:\s*`?(\d{4}-\d{2}-\d{2})`?/);
+    const named = /OWNER_REVIEW|OWNER_FEEDBACK|OWNER_NOTES/i.test(file)
+      ? file.match(/(\d{4}-\d{2}-\d{2})/)
+      : null;
+    const date = intake?.[1] || named?.[1];
+    if (!date) continue;
+    for (const match of text.matchAll(/\b[A-Z][A-Z0-9-]*-\d{3}\b/g)) noteDate(dates, match[0], date);
+  }
+  return dates;
+}
+
+// Pozycja `X[OF]` to ten sam obiekt właściciela co `X`, tylko odzyskany z
+// owner-feedback — dziedziczy datę zgłoszenia bazowego ID, gdy sama jej nie ma.
+export function reportedDateFor(dates, id) {
+  return dates.get(id) ?? (id.endsWith('[OF]') ? dates.get(id.slice(0, -4)) : undefined);
+}
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const defaultRoot = resolve(scriptDir, '../..');
@@ -91,8 +202,21 @@ export function collectUniverse(settlement, decisions) {
   return positions;
 }
 
+// Ledger jest mapą DEC -> pełny wiersz, nie zbiorem samych identyfikatorów.
+// Dyspozycję ("teraz" vs "po bramkach") czytamy z TEGO wiersza, nie z całego
+// tekstu dowodowego pozycji — inaczej przypadkowe słowo "NIE" w cudzej linii
+// odkłada decyzję, którą właściciel nakazał wykonać.
 function ledgerDecisions(ledger) {
-  return new Set([...ledger.matchAll(/^\|\s*(DEC-\d{4}-\d{2}-\d{2}-\d+)\s*\|/gm)].map((m) => m[1]));
+  return new Map(
+    ledger
+      .split('\n')
+      .map((line) => [line.match(/^\|\s*(DEC-\d{4}-\d{2}-\d{2}-\d+)\s*\|/)?.[1], line])
+      .filter(([decision]) => decision),
+  );
+}
+
+export function isDeferredDecision(text) {
+  return /ODŁOŻ|ODLOZ|FALA 2|PO BRAMKACH|POZA MVP|przeniesion/i.test(text);
 }
 
 function evidenceId(positions, id, origin) {
@@ -149,7 +273,7 @@ function existingDecs(text, ledgerSet) {
   return { cited, missing };
 }
 
-export function gitShaState(root, sha) {
+export function gitShaState(root, sha, reportedDate) {
   try {
     execFileSync('git', ['cat-file', '-e', `${sha}^{commit}`], { cwd: root, stdio: 'ignore' });
   } catch {
@@ -161,11 +285,23 @@ export function gitShaState(root, sha) {
     return 'SHA_NIE_JEST_PRZODKIEM_HEAD';
   }
   const subject = execFileSync('git', ['log', '-1', '--format=%s', sha], { cwd: root, encoding: 'utf8' }).trim();
-  return /\bcheckpoint\b/i.test(subject) ? 'SHA_CHECKPOINT' : 'OK';
+  if (/\bcheckpoint\b/i.test(subject)) return 'SHA_CHECKPOINT';
+  // R3: commit uznany za DOWÓD NAPRAWY musi być młodszy niż zgłoszenie defektu.
+  // Bez tego warunku dowolną pozycję da się zamknąć commitem sprzed jej powstania.
+  if (!reportedDate) return 'SHA_BRAK_DATY_ZGLOSZENIA';
+  // Bierzemy WCZEŚNIEJSZĄ z dat autora i commitera — cherry-pick/forward-port
+  // przesuwa datę commitera do przodu i mógłby ukryć stary commit.
+  const stamps = execFileSync('git', ['log', '-1', '--format=%aI%n%cI', sha], { cwd: root, encoding: 'utf8' })
+    .trim()
+    .split('\n')
+    .map((value) => value.slice(0, 10));
+  const commitDate = stamps.sort()[0];
+  return commitDate < reportedDate ? 'SHA_STARSZY_NIZ_ZGLOSZENIE' : 'OK';
 }
 
-function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions = DAY320_RESOLUTIONS) {
+function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions = DAY320_RESOLUTIONS, reportedDates = new Map()) {
   const text = position.evidence.join('\n');
+  const reportedDate = reportedDateFor(reportedDates, position.id);
   const { cited, missing } = existingDecs(text, ledgerSet);
   if (missing.length) return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${missing.join(',')}`, proof: missing.join(', ') };
 
@@ -174,10 +310,14 @@ function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions
     if (!ledgerSet.has(resolution.decision)) {
       return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${resolution.decision}`, proof: resolution.decision };
     }
-    return { verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK', proof: resolution.decision };
+    return {
+      verdict: isDeferredDecision(ledgerSet.get(resolution.decision)) ? 'ODLOZONE_DEC' : 'ZAMKNIETE_DEC',
+      reason: 'DEC_OK',
+      proof: resolution.decision,
+    };
   }
   if (resolution?.type === 'SHA') {
-    const state = shaCheck(root, resolution.sha);
+    const state = shaCheck(root, resolution.sha, reportedDate);
     return state === 'OK'
       ? { verdict: 'NAPRAWIONE', reason: 'SHA_OK', proof: resolution.sha }
       : { verdict: 'BLOKUJE', reason: state, proof: `${resolution.sha}:${state}` };
@@ -194,14 +334,16 @@ function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions
   if (/NAPRAWIONE|FIXED_BROWSER_VERIFIED|TECHNICAL_PASS/i.test(text)) {
     const shas = [...new Set(text.match(/\b[0-9a-f]{10,40}\b/gi) || [])];
     if (!shas.length) return { verdict: 'BLOKUJE', reason: 'BRAK_SHA_DLA_NAPRAWIONE', proof: 'brak SHA' };
-    const states = shas.map((sha) => [sha, shaCheck(root, sha)]);
+    const states = shas.map((sha) => [sha, shaCheck(root, sha, reportedDate)]);
     const valid = states.find(([, state]) => state === 'OK');
     if (valid) return { verdict: 'NAPRAWIONE', reason: 'SHA_OK', proof: valid[0] };
     return { verdict: 'BLOKUJE', reason: states[0][1], proof: states.map(([sha, state]) => `${sha}:${state}`).join(', ') };
   }
 
   if (cited.length) {
-    const deferred = /ODŁOŻ|ODLOZ|FALA 2|PO BRAMKACH|POZA MVP|\bNIE\b|przeniesion/i.test(text);
+    // Ta sama, zawężona reguła co dla jawnych rozstrzygnięć: dyspozycja pochodzi
+    // z wierszy ledgeru cytowanych decyzji, nie z całego tekstu dowodowego.
+    const deferred = cited.some((decision) => isDeferredDecision(ledgerSet.get(decision) || ''));
     return { verdict: deferred ? 'ODLOZONE_DEC' : 'ZAMKNIETE_DEC', reason: 'DEC_OK', proof: cited.join(', ') };
   }
   return { verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: 'brak SHA, DEC i numeru dyżuru' };
@@ -216,8 +358,11 @@ export function evaluateCorpus({ settlement, decisions, owner, wave2, ledger }, 
   addOwnerEvidence(positions, owner);
   addEvidence(positions, wave2, 'wave2');
   const ledgerSet = ledgerDecisions(ledger);
+  const reportedDates = options.reportedDates instanceof Map
+    ? options.reportedDates
+    : new Map(Object.entries(options.reportedDates ?? {}));
   return [...positions.values()].sort((a, b) => a.id.localeCompare(b.id, 'en')).map((position) => {
-    const classification = classify(position, ledgerSet, root, options.shaCheck, options.resolutions);
+    const classification = classify(position, ledgerSet, root, options.shaCheck, options.resolutions, reportedDates);
     const directDecisions = existingDecs(position.directEvidence.join('\n'), ledgerSet).cited;
     const inherited = position.inheritedDecisions.find(({ decision }) => classification.proof.includes(decision));
     return {
@@ -279,7 +424,7 @@ export function renderRegister(rows, metadata) {
 export function run(root = defaultRoot, options = {}) {
   const paths = pathsFor(root);
   const corpus = Object.fromEntries(['settlement', 'decisions', 'owner', 'wave2', 'ledger'].map((key) => [key, readFileSync(paths[key], 'utf8')]));
-  const rows = evaluateCorpus(corpus, { ...options, root });
+  const rows = evaluateCorpus(corpus, { reportedDates: collectReportedDates(root), ...options, root });
   const defaults = defaultSnapshotMetadata(root);
   const metadata = {
     marker: options.marker ?? defaults.marker,

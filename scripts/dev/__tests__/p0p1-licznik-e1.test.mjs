@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DAY320_RESOLUTIONS, evaluateCorpus, gateResult, gitShaState, renderRegister } from '../p0p1-licznik-e1.mjs';
+import { DAY320_RESOLUTIONS, collectReportedDates, defaultRoot, evaluateCorpus, gateResult, gitShaState, renderRegister } from '../p0p1-licznik-e1.mjs';
 
 const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
   '| ID | Werdykt | Dowód |',
@@ -139,4 +139,138 @@ test('R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak 
     { id: 'EXE-OWN-001', verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK' },
     { id: 'EXE-OWN-006', verdict: 'NAPRAWIONE', reason: 'SHA_OK' },
   ]);
+});
+
+// ── Zawężone dopasowanie dyspozycji decyzji (przeniesione z dyżuru 334, R3) ──
+// Reguła czyta WIERSZ LEDGERU cytowanej decyzji, a nie cały tekst dowodowy
+// pozycji. Testy idą realną ścieżką `classify` — bez wstrzykiwania `shaCheck`.
+
+test('R3: jawna decyzja PO BRAMKACH klasyfikuje pozycję jako ODLOZONE_DEC', () => {
+  const decision = 'DEC-2026-09-03-364';
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-003']),
+    ledger: `| ${decision} | ASM-OWN-003 | OWNER_DECISION | właściciel PO BRAMKACH (fala 2) |`,
+  }), {
+    floor: 1,
+    resolutions: { 'ASM-OWN-003': { type: 'DECISION', decision } },
+  });
+  assert.equal(rows[0].verdict, 'ODLOZONE_DEC');
+  assert.equal(rows[0].reason, 'DEC_OK');
+});
+
+test('R3: samo słowo NIE w ledgerze nie odkłada jawnej decyzji', () => {
+  const decision = 'DEC-2026-09-03-365';
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-004']),
+    ledger: `| ${decision} | ASM-OWN-004 | OWNER_DECISION | naprawić teraz, nie usuwać ekranu |`,
+  }), {
+    floor: 1,
+    resolutions: { 'ASM-OWN-004': { type: 'DECISION', decision } },
+  });
+  assert.equal(rows[0].verdict, 'ZAMKNIETE_DEC');
+});
+
+test('R3: gałąź fallback też czyta ledger, a nie cały tekst dowodowy', () => {
+  const decision = 'DEC-2026-09-03-367';
+  // Tekst dowodowy zawiera słowo "nie" (kiedyś odkładało pozycję), ale wiersz
+  // ledgeru mówi "TAK, teraz" — o dyspozycji decyduje ledger.
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-001[OF]'], 'OTWARTE', `nie ma jeszcze zrzutu; ${decision}`),
+    ledger: `| ${decision} | R-4 | OWNER_DECISION | właściciel TAK, teraz |`,
+  }), { floor: 1 });
+  assert.equal(rows[0].verdict, 'ZAMKNIETE_DEC');
+
+  const deferred = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-001[OF]'], 'OTWARTE', `zrobione i zamknięte; ${decision}`),
+    ledger: `| ${decision} | R-4 | OWNER_DECISION | właściciel PO BRAMKACH (fala 2) |`,
+  }), { floor: 1 });
+  assert.equal(deferred[0].verdict, 'ODLOZONE_DEC');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// R3 — bezpiecznik „SHA musi być MŁODSZY niż zgłoszenie defektu".
+//
+// ★ Te testy NIE wstrzykują `shaCheck`. Wstrzyknięcie `shaCheck: () => '...'`
+// omija badane zabezpieczenie i nie dowodzi niczego — dyżur 334 właśnie tak
+// „udowodnił" swój bezpiecznik. Poniżej domyślny `gitShaState` liczy realną
+// datę realnego commita w realnym repozytorium.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// `7b7ec198aa` = 2026-07-15, `d0b5172c19` = 2026-07-24 — dokładnie te SHA,
+// którymi dyżur 334 zamknął uwagi właściciela zgłoszone 2026-08-22.
+const STARY_SHA = '7b7ec198aa';
+
+test('R3: SHA starszy niż zgłoszenie blokuje (realna ścieżka, bez wstrzykiwania)', () => {
+  const rows = evaluateCorpus(corpus({ settlement: table(['MYW-DEC-REC-001']) }), {
+    floor: 1,
+    root: defaultRoot,
+    resolutions: { 'MYW-DEC-REC-001': { type: 'SHA', sha: STARY_SHA } },
+    reportedDates: { 'MYW-DEC-REC-001': '2026-08-22' },
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_STARSZY_NIZ_ZGLOSZENIE');
+  assert.equal(rows[0].proof, `${STARY_SHA}:SHA_STARSZY_NIZ_ZGLOSZENIE`);
+});
+
+test('R3: ten sam SHA pod zgłoszeniem WCZEŚNIEJSZYM od commita przechodzi', () => {
+  const rows = evaluateCorpus(corpus({ settlement: table(['MYW-DEC-REC-001']) }), {
+    floor: 1,
+    root: defaultRoot,
+    resolutions: { 'MYW-DEC-REC-001': { type: 'SHA', sha: STARY_SHA } },
+    reportedDates: { 'MYW-DEC-REC-001': '2026-07-01' },
+  });
+  assert.equal(rows[0].verdict, 'NAPRAWIONE');
+  assert.equal(rows[0].reason, 'SHA_OK');
+});
+
+test('R3: brak daty zgłoszenia NIE przepuszcza po cichu', () => {
+  const rows = evaluateCorpus(corpus({ settlement: table(['MYW-DEC-REC-001']) }), {
+    floor: 1,
+    root: defaultRoot,
+    resolutions: { 'MYW-DEC-REC-001': { type: 'SHA', sha: STARY_SHA } },
+    reportedDates: {},
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_BRAK_DATY_ZGLOSZENIA');
+});
+
+test('R3: bezpiecznik obejmuje też SHA znalezione w wolnym tekście NAPRAWIONE', () => {
+  // ID spoza DAY320_RESOLUTIONS — wymuszamy gałąź „SHA z wolnego tekstu".
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001'], 'NAPRAWIONE', `commit ${STARY_SHA}`),
+  }), {
+    floor: 1,
+    root: defaultRoot,
+    reportedDates: { 'INT-OWN-001': '2026-08-22' },
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_STARSZY_NIZ_ZGLOSZENIE');
+});
+
+test('R3: gitShaState wprost — ta sama para SHA/data w obie strony', () => {
+  assert.equal(gitShaState(defaultRoot, STARY_SHA, '2026-08-22'), 'SHA_STARSZY_NIZ_ZGLOSZENIE');
+  assert.equal(gitShaState(defaultRoot, STARY_SHA, '2026-07-01'), 'OK');
+  assert.equal(gitShaState(defaultRoot, STARY_SHA, undefined), 'SHA_BRAK_DATY_ZGLOSZENIA');
+});
+
+test('R3: pozycja [OF] dziedziczy datę zgłoszenia bazowego ID', () => {
+  const rows = evaluateCorpus(corpus({ settlement: table(['ASM-OWN-001[OF]']) }), {
+    floor: 1,
+    root: defaultRoot,
+    resolutions: { 'ASM-OWN-001[OF]': { type: 'SHA', sha: STARY_SHA } },
+    reportedDates: { 'ASM-OWN-001': '2026-08-22' },
+  });
+  assert.equal(rows[0].reason, 'SHA_STARSZY_NIZ_ZGLOSZENIE');
+});
+
+test('R3: daty zgłoszeń czytane z repo pokrywają wszystkie pozycje z SHA', () => {
+  const dates = collectReportedDates(defaultRoot);
+  const withSha = Object.entries(DAY320_RESOLUTIONS)
+    .filter(([, resolution]) => resolution.type === 'SHA')
+    .map(([id]) => id);
+  assert.ok(withSha.length > 0, 'tabela rozstrzygnięć nie ma ani jednej pozycji SHA');
+  for (const id of withSha) {
+    const date = dates.get(id) ?? dates.get(id.replace('[OF]', ''));
+    assert.match(date ?? '', /^\d{4}-\d{2}-\d{2}$/, `brak daty zgłoszenia dla ${id}`);
+  }
 });
