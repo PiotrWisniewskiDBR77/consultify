@@ -57,6 +57,32 @@ Semantyka krytyczna sprawdzona i pozostawiona: ramka błędu AI w `AiProviderErr
 
 Pakiet jednostkowy uruchomiony jako `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 --reporter=json`: 95/95 suit i 367/367 pełnych przypadków PASS. Pełne nazwy: `/private/tmp/cx-day315-crimson-ekrany-artefakty/przed-nazwy.txt`. To dowodzi wyłącznie zachowania jednostkowego; nie jest dowodem DB, HTTP ani produkcyjnego runtime. Pułapki `ENABLE_V8_GLOBAL`, beta visibility, `DB_TYPE=sqlite` i auth bypass nie leżą na tej czysto jednostkowej ścieżce; wymuszone `RUN_DB_TESTS=0 MOCK_DB=true` jawnie wyklucza dowód egzekucyjny.
 
+## R2 — naprawa realnego crimsona
+
+| Plik | Zmiana | Dowód |
+|---|---|---|
+| `ConversationSearch.tsx` | `group-focus-within:text-primary-500` → `group-focus-within:text-c-focus` | `esbuild` PASS, commit `e98a4bbbb5` |
+| `PrivateModeDetails.tsx` | hover `primary-100/900` → `c-surface-hover`; ring `primary-400/50` → `c-focus` | `esbuild` PASS, commit `8e37e69f4c` |
+| `ProjectMembersModal.tsx` | 3 × `focus:border-primary-500` → `focus:border-c-focus-solid` | `esbuild` PASS, commit `f650615ebf` |
+
+Łącznie zmieniono dokładnie 5 linii i 7 tokenów klas. Hover i fokus w `PrivateModeDetails` są dwiema odrębnymi klasami naprawy mimo wspólnej linii `className`.
+
+## R3 — rozszerzenie bezpiecznika
+
+| Pomiar | Wynik |
+|---|---|
+| Wzorzec PRZED | `ring-(primary|crimson)-|outline-(primary|crimson)-|ring-offset-(primary|crimson)-` |
+| Wzorzec PO | wzorzec PRZED + `(focus|focus-visible|group-focus-within):(border|text)-(primary|crimson)-` |
+| Stan po R2 ze starym wzorcem | 40 plików / 59 wystąpień |
+| Stan po rozszerzeniu przed baseline | 61 plików / 169 wystąpień, RC=1 |
+| Dług odsłonięty | +21 plików / +110 wystąpień |
+| Mutacja zabezpieczenia | pojedyncze `focus:border-primary-500` w `ProjectMembersModal.tsx` → RC=1, nowe naruszenie 1 |
+| Po cofnięciu mutacji przez `cp` | RC=0, baseline 61 / 169; diff pliku produktu pusty |
+
+**Cytowalne rozstrzygnięcie:** Do baseline weszło 110 wystąpień w 21 plikach jako dług odsłonięty przez poszerzenie miary, nie jako nowa regresja; jednocześnie `PrivateModeDetails.tsx` zniknął z baseline po naprawie R2, a trzy pliki dyżuru 315 mają baseline zero.
+
+Nie użyto `--update-baseline`. Baseline zbudowano z jawnego pełnego pomiaru per plik, zapisano metadane 61/169 i zachowano ratchet per plik. Logi: `/private/tmp/cx-day315-crimson-ekrany-artefakty/focus-expanded-before-baseline.log`, `focus-expanded-counts.txt`, `focus-mutation-red.log`, `focus-mutation-green.log`.
+
 ## Korekty wobec instrukcji
 
 - Pomiar potwierdził 15 trafień ogółem i 10 poza testami, a nie 22 z zamówienia nadzorcy.
@@ -68,4 +94,3 @@ Pakiet jednostkowy uruchomiony jako `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 -
 - Nie zweryfikowano jeszcze nowych ekranów w realnym dev-render ani par PRZED/PO.
 - Nie zweryfikowano jeszcze rozszerzonego bezpiecznika mutacją w obie strony.
 - Nie rozstrzygnięto jeszcze usunięcia martwego poddrzewa `AgentAudit/` testem i buildem.
-
