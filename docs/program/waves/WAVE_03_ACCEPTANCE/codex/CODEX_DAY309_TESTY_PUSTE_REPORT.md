@@ -106,3 +106,7 @@ Końcowy raport/rejestr jest osobnym commitem R6. Brak commitów R3/R4 odzwierci
 - `no-empty-restored-green.json`: `166f698fbc909be201a5f38578e7cc1fcfed22e241a262717ef42be3c217e693`
 
 TWIERDZENIA NIEZWERYFIKOWANE: istnienie bloków PUSTYCH poza ścisłym skanerem; wszystkie 21 kandydatów wobec mutacji produktu; wszystkie 37/50 plików DB-prefix wobec realnych workflow; zachowanie E2E/CI; zachowanie demo/staging/produkcji (nie dotykano).
+
+## Wznowienie 2026-09-04
+
+Ponownie przeczytano pełną instrukcję i zweryfikowano czysty stan worktree oraz wszystkie 21 pozycji rejestru. Rejestr nadal nie wskazuje mapowania 20 bloków testowych na 20 jednoznacznych ciał funkcji produkcyjnych, a bez wykonania każdej wymaganej mutacji nie wolno zmienić klasy na `PUSTY` ani uznać R3/R4 za wykonane. Stan pozostaje **CZĘŚCIOWE**; nie zastąpiono dowodu mutacyjnego heurystyką ani mutacją atrapy.
