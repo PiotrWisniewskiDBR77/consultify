@@ -380,3 +380,7 @@ Trzeci redeploy stagingu POTWIERDZONY: run success, `/api/health` zwraca `gitSha
 ## 11. Sprostowanie 04.09 05:50
 
 307 SCALONE po rozwiązaniu 2 konfliktów (bramka 288 zachowana, duplikat odrzucony) i z naprawą luki workload (obcy 404, mutacja czerwona); czwarty redeploy stagingu uruchomiony z HEAD po scaleniu. Instrukcja 313 (domknięcia 2: 35 wycieków, AppError, 8 tras 500) w przygotowaniu.
+
+## 12. Sprostowanie 04.09 06:10
+
+Czwarty redeploy stagingu POTWIERDZONY (patrz `gitSha` w `/api/health` = `fb6547b7d0`): 296 (mapper błędów), 307 (macierz cross-org + luka workload), fala 2 za flagami OFF (302–306). Instrukcja 313 na kopii. Dysk 66 GB wolne po sprzątnięciu worktree Codexa scalonych dyżurów.
