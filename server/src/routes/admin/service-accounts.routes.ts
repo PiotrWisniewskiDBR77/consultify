@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { type NextFunction, type Response, Router } from 'express';
 
 import verifyAdmin from '../../middleware/admin.middleware.js';
@@ -9,6 +11,33 @@ import { get as dbGet } from '../../utils/DbPromise.js';
 import { validateUUID } from '../../utils/validation.js';
 
 const router = Router();
+
+function requestCorrelationId(req: AuthRequest): string {
+  const existing =
+    (req as AuthRequest & { correlationId?: unknown }).correlationId ?? req.get('X-Correlation-ID');
+  return typeof existing === 'string' && existing.trim() ? existing.trim() : randomUUID();
+}
+
+router.use((req: AuthRequest, res: Response, next: NextFunction) => {
+  const originalJson = res.json.bind(res);
+  res.json = ((body: unknown) => {
+    if (res.statusCode < 400) return originalJson(body);
+    const payload = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+    const code =
+      typeof payload.errorCode === 'string'
+        ? payload.errorCode
+        : typeof payload.code === 'string'
+          ? payload.code
+          : `HTTP_${res.statusCode}`;
+    return originalJson({
+      ...payload,
+      errorCode: code,
+      correlationId: requestCorrelationId(req),
+    });
+  }) as Response['json'];
+  next();
+});
+
 router.use(verifyToken);
 router.use(
   asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -67,6 +96,8 @@ router.post(
     const scopes = Array.isArray(req.body?.scopes)
       ? req.body.scopes.map(String).filter(Boolean)
       : [];
+    if (!validateUUID(organizationId))
+      return res.status(400).json({ success: false, code: 'INVALID_IDENTIFIER' });
     if (!name || scopes.length === 0)
       return res.status(400).json({ success: false, error: 'name and scopes are required' });
     const result = await serviceAccountService.createServiceAccount(organizationId, {
@@ -95,6 +126,8 @@ router.delete(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = String(req.user?.organizationId || '');
+    if (!validateUUID(organizationId))
+      return res.status(400).json({ success: false, code: 'INVALID_IDENTIFIER' });
     const found = await dbGet<{ id: string }>(
       'SELECT id FROM tp_service_accounts WHERE id = ? AND organization_id = ?',
       [req.params.id, organizationId],
@@ -119,5 +152,10 @@ router.delete(
     return res.status(204).send();
   })
 );
+
+router.use((error: unknown, req: AuthRequest, res: Response, _next: NextFunction) => {
+  if (res.headersSent) return;
+  return res.status(500).json({ success: false, code: 'INTERNAL_ERROR' });
+});
 
 export default router;

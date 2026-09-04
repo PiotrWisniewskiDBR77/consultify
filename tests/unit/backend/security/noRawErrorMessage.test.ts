@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 const routesRoot = resolve(process.cwd(), 'server/src/routes');
 
 // Dyzur 296 naprawil TYLKO ten wariant (pola `error`/`message` z `err`/`error`/`e` bez castu `e`).
-const day296Pattern = /(?:error|message):\s*(?:\((?:err|error) as Error\)|(?:err|error|e))\.message/;
+const day296Pattern =
+  /(?:error|message):\s*(?:\((?:err|error) as Error\)|(?:err|error|e))\.message/;
 // Pelna rodzina wyciekow: dochodzi cast `(e as Error)` oraz pole `details`.
 const fullFamilyPattern =
   /(?:error|message|details):\s*(?:\((?:err|error|e) as Error\)|(?:err|error|e))\.message/;
@@ -54,7 +55,8 @@ function violationsInFile(file: string, pattern: RegExp): string[] {
     if (/logger\.\w+\(/.test(line)) loggerWindow = 3;
     if (pattern.test(line) && isResponseLine(line)) {
       const insideLoggerCall = loggerWindow > 0 && !/res\.|\.json\(/.test(line);
-      if (!insideLoggerCall) out.push(`${relative(process.cwd(), file)}:${index + 1}:${line.trim()}`);
+      if (!insideLoggerCall)
+        out.push(`${relative(process.cwd(), file)}:${index + 1}:${line.trim()}`);
     }
     if (loggerWindow > 0) loggerWindow -= 1;
   });
@@ -65,13 +67,23 @@ function violations(pattern: RegExp): string[] {
   return routeFiles(routesRoot).flatMap((file) => violationsInFile(file, pattern));
 }
 
+function caughtIdentifiers(source: string): string[] {
+  const patterns = [
+    /(?<!\.)\bcatch\s*\(\s*([A-Za-z_$][\w$]*)/g,
+    /\.catch\s*\(\s*(?:async\s*)?\(\s*([A-Za-z_$][\w$]*)(?:\s*:\s*[^,)]+)?/g,
+    /\.catch\s*\(\s*(?:async\s*)?function(?:\s+[A-Za-z_$][\w$]*)?\s*\(\s*([A-Za-z_$][\w$]*)(?:\s*:\s*[^,)]+)?/g,
+  ];
+  return [
+    ...new Set(
+      patterns.flatMap((pattern) => [...source.matchAll(pattern)].map((match) => match[1]))
+    ),
+  ];
+}
+
 function catchVariableViolations(): string[] {
   return routeFiles(routesRoot).flatMap((file) => {
     const source = readFileSync(file, 'utf8');
-    const identifiers = [...source.matchAll(/catch\s*\(\s*([A-Za-z_$][\w$]*)/g)].map(
-      (match) => match[1]
-    );
-    return [...new Set(identifiers)].flatMap((identifier) =>
+    return caughtIdentifiers(source).flatMap((identifier) =>
       variableAgnosticLeakPatterns(identifier).flatMap((pattern) => violationsInFile(file, pattern))
     );
   });
@@ -103,8 +115,19 @@ describe('raw route error response guard', () => {
 
   it('does not depend on the exception variable name', () => {
     const found = catchVariableViolations();
-    expect(found.length, `variable-agnostic leak debt grew:\n${found.join('\n')}`).toBeLessThanOrEqual(
-      VARIABLE_AGNOSTIC_LEAK_BASELINE
-    );
+    expect(
+      found.length,
+      `variable-agnostic leak debt grew:\n${found.join('\n')}`
+    ).toBeLessThanOrEqual(VARIABLE_AGNOSTIC_LEAK_BASELINE);
+  });
+
+  it('recognizes catch clauses and promise callbacks independently of variable names', () => {
+    const source = [
+      'try {} catch (classic) {}',
+      '.catch((problem) => problem.message)',
+      '.catch(async (typed: unknown) => typed)',
+      '.catch(function (legacy) { return legacy; })',
+    ].join('\n');
+    expect(caughtIdentifiers(source)).toEqual(['classic', 'problem', 'typed', 'legacy']);
   });
 });
