@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 // Podłoga chroni przed odwrotnym fałszem: skaner, który nagle nic nie widzi, przechodziłby
 // bezwarunkowo (brak pomiaru nie jest wynikiem).
 const BASELINE = {
-  files: 5399,
-  candidates: 21,
+  files: 5403,
+  candidates: 17,
   skipped: 0,
 };
 

@@ -109,23 +109,26 @@ describe('BillingCron', () => {
         });
 
         it('should handle database errors', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('DB Error'));
 
             await expect(BillingCron.checkAndTriggerAlerts()).resolves.not.toThrow();
+            expect(mockDb.all).toHaveBeenCalledWith(
+                'SELECT id FROM organizations WHERE status = ?',
+                ['active']
+            );
+            expect(mockAdminAlertService.checkAndTriggerAlerts).not.toHaveBeenCalled();
         });
 
         it('should continue processing even if one org fails', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'org-1' }, { id: 'org-2' }]);
-            });
+            mockDb.all.mockResolvedValue([{ id: 'org-1' }, { id: 'org-2' }]);
 
             mockAdminAlertService.checkAndTriggerAlerts
                 .mockResolvedValueOnce({ triggeredCount: 1 })
                 .mockRejectedValueOnce(new Error('Org 2 failed'));
 
             await expect(BillingCron.checkAndTriggerAlerts()).resolves.not.toThrow();
+            expect(mockAdminAlertService.checkAndTriggerAlerts).toHaveBeenNthCalledWith(1, 'org-1');
+            expect(mockAdminAlertService.checkAndTriggerAlerts).toHaveBeenNthCalledWith(2, 'org-2');
         });
     });
 
@@ -174,7 +177,6 @@ describe('BillingCron', () => {
         });
     });
 });
-
 
 
 
