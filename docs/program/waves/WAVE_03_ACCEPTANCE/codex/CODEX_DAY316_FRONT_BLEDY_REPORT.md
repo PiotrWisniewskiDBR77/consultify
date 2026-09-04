@@ -80,7 +80,13 @@ Ogon nie został jeszcze podmieniony; pozostaje jawnie policzony po zakończeniu
 
 Dowód zielony: 7/7 przypadków (`r4-green-2.json`). Mutacja dodała poprawne składniowo `<span>{err.message}</span>` do objętego `PresentationTemplateArchitectView.tsx`; dokładnie jego przypadek spadł, wynik 6/7 PASS i 1/7 FAIL (`r4-red.json`). Po przywróceniu pliku przez `cp` wynik wrócił do 7/7 PASS (`r4-restored-green.json`). Mutacja została cofnięta, a produktowy diff po cofnięciu nie zawiera sondy.
 
-## R5–R7
+## R5 — dowód widoku użytkownika
+
+Test renderujący montuje realny `src/components/ui/primitives/ErrorState.tsx` przez prawdziwy `I18nextProvider`. Dla `NOT_FOUND`, `FORBIDDEN` i `INTERNAL` asercje dotyczą widocznego polskiego zdania, podpowiedzi działania oraz tekstu `Identyfikator zgłoszenia: corr-…`; nie sprawdzają jedynie obecności propsa.
+
+Wynik: 14/14 przypadków pakietu zielonych (`/private/tmp/cx-day316-front-bledy-artefakty/r5-render-final.json`), w tym trzy pełne przypadki renderu. ESLint zmienionego testu: 0 błędów i 0 ostrzeżeń.
+
+## R6–R7
 
 W TOKU.
 

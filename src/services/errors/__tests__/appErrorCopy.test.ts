@@ -1,11 +1,15 @@
+import { cleanup, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import React from 'react';
 import { initReactI18next } from 'react-i18next';
+import { I18nextProvider } from 'react-i18next';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', async () => await vi.importActual('react-i18next'));
 
 import en from '../../../../public/locales/en/translation.json';
 import pl from '../../../../public/locales/pl/translation.json';
+import { ErrorState } from '../../../components/ui/primitives/ErrorState';
 import { getAppErrorCopy, getAppErrorLine, readAppErrorCode } from '../appErrorCopy';
 
 const CODES = [
@@ -25,6 +29,29 @@ beforeAll(async () => {
     resources: { pl: { translation: pl }, en: { translation: en } },
     interpolation: { escapeValue: false },
   });
+});
+
+describe('DAY316 widoczny komunikat aplikacyjny', () => {
+  it.each(['NOT_FOUND', 'FORBIDDEN', 'INTERNAL'] as const)(
+    '%s renderuje polskie zdanie i identyfikator zgłoszenia',
+    (errorCode) => {
+      cleanup();
+      const correlationId = `corr-${errorCode.toLowerCase()}-316`;
+      const copy = getAppErrorCopy(t, { errorCode, correlationId });
+      render(
+        React.createElement(
+          I18nextProvider,
+          { i18n },
+          React.createElement(ErrorState, { source: { errorCode, correlationId } })
+        )
+      );
+
+      expect(screen.getByText(copy.message)).toBeTruthy();
+      expect(screen.getByText(copy.action)).toBeTruthy();
+      expect(screen.getByText(`Identyfikator zgłoszenia: ${correlationId}`)).toBeTruthy();
+      expect(document.body.textContent).not.toContain('raw-server-message-do-not-show');
+    }
+  );
 });
 
 const t = (key: string, fallback?: string) => i18n.t(key, { defaultValue: fallback }) as string;
