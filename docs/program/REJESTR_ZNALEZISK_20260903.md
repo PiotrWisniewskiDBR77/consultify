@@ -358,3 +358,6 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 - flaga siedmiu etapów SWOT (`VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES`) **zostaje wyłączona** — pokazany był zrzut etykiet, nie para OFF/ON siedmiu etapów;
 - flaga prawego panelu Idei/Notatnika **zostaje wyłączona** — para Notatnika została odrzucona jako niezdatna do pokazania (szkielet ładowania i 9 błędów konsoli);
 - pozostałych 6 typów kart **nie było pokazane** i ich kontrakt nadal wymaga pomiaru (dyżur 314 mierzył je przy poprzednim kształcie kontraktu).
+## AB. Dyżur 361 — etykieta oczu właściciela wyprzedziła dowód
+
+Pomiar dziewięciu wierszy kubełka C wykazał: wspólny dowód jest hurtowy w 9/9, lecz diagnozy są indywidualne; triaż daje osiem braków scenariusza, jeden brak realnego łańcucha (`03_TOOLS`) i zero pozycji, dla których udowodniono, że brakuje wyłącznie oczu właściciela. Macierz pozostaje bez zmian. Pakiet obserwacyjny G19 powstał, ale nie jest dowodem. Ślad: `evidence/g19/day361/r1-etykieta.md`, `r2-triaz.md`, `docs/program/PRZELOT_WLASCICIELA_G19_20260904.md`.
