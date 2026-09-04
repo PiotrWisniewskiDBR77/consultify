@@ -41,6 +41,14 @@ Testy R3 + mapper: 10/10. Ratchet pozostałej rodziny: 251 unikalnych eksportowa
 
 Pakiet jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`), zatem pułapki Gateway/DB/auth (a)-(d) nie leżą na ścieżce. Pułapka (e6) jest sednem testu: operacyjność i kod są asertowane per klasa, a pozostała rodzina jest spięta osobnym ratchetem zamiast masowej zmiany.
 
+## R4
+
+AST-owy `scripts/dev/codemod-error-mapper-req.mjs` zmierzył 255 kwalifikujących się wywołań w 43 plikach oraz 112 wywołań bez parametru `req` w najbliższym zakresie funkcji. Zmiany wykonano w pięciu grupach: 10+10+10+10+3 pliki, z esbuildem każdego pliku i osobnym commitem. Po zmianie AST: kwalifikujące się 0, bez `req` 112. Pełna lista pozostawionych: `/private/tmp/cx-day313-domkniecia2-artefakty/r4-bez-req.txt`, SHA-256 `f3dcc3e8c52fd04f007df3b979d179899ca29b07ed745cbc3b202dd6f75d9687`.
+
+Test R4 + mapper: 7/7. Żądanie z `Accept-Language: pl-PL` daje polski bezpieczny komunikat, bez nagłówka angielski. Mutacja jednego wywołania `req → undefined`: 1 pass / 1 fail (`r4-mutation-undefined-red.json`); po cofnięciu 2/2 (`r4-final-green.json`).
+
+Pułapki (a)-(d) nie leżą na ścieżce tego czysto jednostkowego/statycznego pakietu; nie jest on dowodem Gateway/RealPG. Pułapka (e) jest wyłączona analizą AST zakresu, listą 112 wyjątków i mutacją pojedynczego wywołania.
+
 ## Bezpieczeństwo wysyłki
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -49,4 +57,4 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 - Osiem kodów i ciał odpowiedzi przez ApiGateway/JWT/RealPG: oczekują na R5.
 - Osiągalność runtime całej rodziny 255 klas: poza czterema klasami R3 pozostaje ratchet/inwentarz, nie twierdzenie o wykonaniu.
-- R4-R6: oczekują na kolejne commity i dowody mutacyjne.
+- R5-R6: oczekują na kolejne commity i dowody mutacyjne.
