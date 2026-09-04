@@ -1873,7 +1873,7 @@ router.post(
       if (error instanceof WorkbookCommandError) {
         res
           .status(error.statusCode)
-          .json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code, ...error.details });
+          .json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code, ...error.details });
       } else {
         throw error;
       }
@@ -1937,7 +1937,7 @@ router.post(
     } catch (error) {
       if (error instanceof WorkbookCommandError) {
         res.status(error.statusCode).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: error.code,
           ...(error.details || {}),
         });

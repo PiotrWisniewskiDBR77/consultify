@@ -2958,7 +2958,7 @@ router.post(
     } catch (error) {
       if (error instanceof ScimGroupMappingError) {
         const status = error.code === 'PROJECT_NOT_IN_ORG' ? 404 : 400;
-        return res.status(status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

@@ -2465,7 +2465,7 @@ publicPartnerRouter.post(
       if (error instanceof PartnerPublicClickError) {
         return res
           .status(error.status)
-          .json({ success: false, ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+          .json({ success: false, ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       next(error);
     }
@@ -2853,7 +2853,7 @@ superAdminPartnerRouter.post(
         }
         return res.status(400).json({
           success: false,
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code,
           ...(whatNext.length ? { whatNext } : {}),
         });
@@ -2942,7 +2942,7 @@ superAdminPartnerRouter.post(
       return res.status(result.duplicate ? 200 : 201).json({ success: true, data: result });
     } catch (error) {
       if (error instanceof PartnerParticipantLedgerConflict) {
-        return res.status(409).json({ success: false, code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
+        return res.status(409).json({ success: false, code: error.code, ...mapAppErrorResponse(error, req, 'error') });
       }
       next(error);
     }

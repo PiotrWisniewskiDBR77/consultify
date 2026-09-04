@@ -357,7 +357,7 @@ router.post(
       return res.status(201).json({ success: true, data: evaluation });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }
@@ -390,7 +390,7 @@ router.post(
       return res.status(201).json({ success: true, data: release });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }
@@ -406,7 +406,7 @@ router.post(
       return res.json({ success: true, data: release });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }
@@ -427,7 +427,7 @@ router.post(
       return res.json({ success: true, data: preview });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

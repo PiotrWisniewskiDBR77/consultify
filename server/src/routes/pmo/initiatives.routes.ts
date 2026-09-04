@@ -3090,7 +3090,7 @@ router.put('/:id/profile', requireOrgRole('OWNER', 'ADMIN'), async (req: any, re
     return res.status(result.idempotentReplay ? 200 : 201).json(result);
   } catch (error) {
     if (error instanceof InitiativeProfileError) {
-      return res.status(error.statusCode).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
+      return res.status(error.statusCode).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
     }
     throw error;
   }
@@ -3943,7 +3943,7 @@ router.post(
       });
     } catch (err: any) {
       if (err instanceof InitiativeLifecycleGateDecisionError) {
-        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       return failInitiative500(
         res,

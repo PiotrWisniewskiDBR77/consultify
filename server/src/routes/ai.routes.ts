@@ -6811,7 +6811,7 @@ router.post(
       const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
       if (error.isBudgetError) {
         return res.status(403).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'AI_BUDGET_EXHAUSTED',
           budgetStatus: error.budgetStatus,
         });
@@ -6836,7 +6836,7 @@ router.get(
       return res.json(info);
     } catch (err: any) {
       logger.error('[AI Routes] Policy GET error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6856,7 +6856,7 @@ router.patch(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI Routes] Policy PATCH error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6878,7 +6878,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6904,7 +6904,7 @@ router.get(
       const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
       return res.json(memory);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6942,7 +6942,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6956,7 +6956,7 @@ router.get(
       const preferences = await AIMemoryManager.getUserPreferences(req.userId!);
       return res.json(preferences);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6971,7 +6971,7 @@ router.patch(
       const result = await AIMemoryManager.updateUserPreferences(req.userId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -6999,7 +6999,7 @@ router.delete(
       const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7017,7 +7017,7 @@ router.get(
         ...memory,
       });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7035,7 +7035,7 @@ router.patch(
       const result = await AIMemoryManager.updateOrganizationMemory(req.organizationId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7053,7 +7053,7 @@ router.delete(
       const result = await AIMemoryManager.clearOrganizationMemory(req.organizationId!);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7088,7 +7088,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7108,7 +7108,7 @@ router.get(
       );
       return res.json(actions);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7128,7 +7128,7 @@ router.patch(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7148,7 +7148,7 @@ router.patch(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7167,7 +7167,7 @@ router.post(
       });
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7220,7 +7220,7 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[AI] Action Center error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error'), actions: [] });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), actions: [] });
     }
   })
 );
@@ -7264,7 +7264,7 @@ router.get(
       return res.json({ success: true, runs });
     } catch (err: any) {
       logger.error('[AI] Run Ledger error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error'), runs: [] });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), runs: [] });
     }
   })
 );
@@ -7289,7 +7289,7 @@ router.get(
       return res.json({ success: true, audit });
     } catch (err: any) {
       logger.error('[AI] Action audit error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7317,7 +7317,7 @@ router.get(
       return res.json({ proposals });
     } catch (err: any) {
       logger.error('[AI] Unified proposals read error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7369,13 +7369,13 @@ router.get(
       const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
       if (error.isBudgetError) {
         return res.status(403).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'AI_BUDGET_EXHAUSTED',
           budgetStatus: error.budgetStatus,
         });
         return;
       }
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7884,7 +7884,7 @@ router.get(
       });
       return res.json(logs);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7903,7 +7903,7 @@ router.get(
       );
       return res.json(stats);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7920,7 +7920,7 @@ router.post(
       const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
       return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -7965,7 +7965,7 @@ router.get(
         explanations,
       });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8038,7 +8038,7 @@ router.get(
       );
       return res.json(exportData);
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8071,7 +8071,7 @@ router.get(
     } catch (err: any) {
       return res.status(500).json({
         status: 'error',
-        ...mapAppErrorResponse((err as Error), undefined, 'error'),
+        ...mapAppErrorResponse((err as Error), req, 'error'),
       });
     }
   })
@@ -8113,7 +8113,7 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Suggestions error:', err);
       return res.status(500).json({
-        ...mapAppErrorResponse((err as Error), undefined, 'error'),
+        ...mapAppErrorResponse((err as Error), req, 'error'),
         suggestions: [],
       });
     }
@@ -8141,7 +8141,7 @@ router.post(
     } catch (err: any) {
       logger.error('[AI] Suggestions error:', err);
       return res.status(500).json({
-        ...mapAppErrorResponse((err as Error), undefined, 'error'),
+        ...mapAppErrorResponse((err as Error), req, 'error'),
         suggestions: [],
       });
     }
@@ -8166,7 +8166,7 @@ router.get(
       return res.json({ success: true, patterns: [] });
     } catch (err: any) {
       logger.error('[AI] Get patterns error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8237,7 +8237,7 @@ router.post(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI] Approve action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8260,7 +8260,7 @@ router.post(
       return res.json(result);
     } catch (err: any) {
       logger.error('[AI] Reject action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8293,7 +8293,7 @@ router.get(
       return res.json({ success: true, actions: actionsWithPatterns });
     } catch (err: any) {
       logger.error('[AI] Get pending actions error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error'), actions: [] });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error'), actions: [] });
     }
   })
 );
@@ -8378,7 +8378,7 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Feedback error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8436,7 +8436,7 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Report error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8587,7 +8587,7 @@ router.get(
       return res.json({ success: true, suggestions });
     } catch (err: any) {
       logger.error('[AI] Proactive suggestions error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8611,7 +8611,7 @@ router.post(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Suggestion action error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8633,7 +8633,7 @@ router.get(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Suggestion metrics error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8662,7 +8662,7 @@ router.post(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Quality calculation error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8681,7 +8681,7 @@ router.get(
       return res.json({ success: true, metrics });
     } catch (err: any) {
       logger.error('[AI] Aggregate quality metrics error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8700,7 +8700,7 @@ router.get(
       return res.json({ success: true, trends });
     } catch (err: any) {
       logger.error('[AI] Quality trends error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8778,7 +8778,7 @@ router.get(
       return res.json({ success: true, ...status });
     } catch (err: any) {
       logger.error('[AI] Soft cap status error:', err);
-      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8804,7 +8804,7 @@ router.post(
       return res.json({ success: true, initiative: result });
     } catch (err: any) {
       logger.error('[AI] Generate initiative error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8823,7 +8823,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Sense-check error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8847,7 +8847,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Risk score error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8873,7 +8873,7 @@ router.post(
       return res.json({ success: true, narrative });
     } catch (err: any) {
       logger.error('[AI] Narrate error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8946,7 +8946,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Decision room error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8967,7 +8967,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Monte Carlo error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -8991,7 +8991,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Document extraction error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9016,7 +9016,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Assessment question error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9036,7 +9036,7 @@ router.post(
       return res.json({ success: true, ...result });
     } catch (err: any) {
       logger.error('[AI] Assessment score error:', err);
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9053,7 +9053,7 @@ router.get(
       const tier = (req as any).subscriptionTier || 'free';
       return res.json({ success: true, tier, limits: getTierLimits(tier) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9070,7 +9070,7 @@ router.post(
       const { estimateTokenCount } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, estimatedTokens: estimateTokenCount(text, language) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9084,7 +9084,7 @@ router.get(
       const { getCacheStats } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, ...getCacheStats() });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9100,7 +9100,7 @@ router.get(
       const { getIndustryBenchmark } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, benchmark: getIndustryBenchmark(industry) });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );
@@ -9113,7 +9113,7 @@ router.get(
       const { getAllIndustryBenchmarks } = await import('../services/ai/platformServices.js');
       return res.json({ success: true, benchmarks: getAllIndustryBenchmarks() });
     } catch (err: any) {
-      return res.status(500).json({ ...mapAppErrorResponse((err as Error), undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse((err as Error), req, 'error') });
     }
   })
 );

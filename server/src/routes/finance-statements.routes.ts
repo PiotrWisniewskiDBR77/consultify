@@ -2445,7 +2445,7 @@ router.post(
       });
     } catch (error) {
       if (error instanceof StatementGovernanceError) {
-        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }
@@ -2468,7 +2468,7 @@ router.get(
       return res.json({ receipt });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2495,7 +2495,7 @@ router.get(
       return res.download(objectPath, String(receipt.original_file_name));
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2533,7 +2533,7 @@ router.post(
       return res.json({ decision });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2730,7 +2730,7 @@ router.post(
         );
         return res.status(409).json({
           success: false,
-          ...mapAppErrorResponse(e, undefined, 'error'),
+          ...mapAppErrorResponse(e, req, 'error'),
           code: e.code,
           packId: e.packId,
           violations: e.violations,
@@ -3373,7 +3373,7 @@ router.get(
       const result = await computeRatios(String(req.params.id), orgId);
       res.json(result);
     } catch (e: any) {
-      return res.status(404).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(404).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   })
 );

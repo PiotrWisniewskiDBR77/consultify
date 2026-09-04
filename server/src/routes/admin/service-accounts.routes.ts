@@ -6,6 +6,7 @@ import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { serviceAccountService } from '../../services/tablePlatform/ServiceAccountService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
+import { validateUUID } from '../../utils/validation.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -21,6 +22,12 @@ router.use(
         success: false,
         code: 'ADMIN_BOUNDARY_VIOLATION',
         error: 'Cross-organization admin access is blocked',
+      });
+    if (!validateUUID(organizationId) || !validateUUID(userId))
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_IDENTIFIER',
+        error: 'Organization and user identifiers must be valid UUIDs',
       });
     const membership = await dbGet<{ role?: string; status?: string }>(
       'SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1',

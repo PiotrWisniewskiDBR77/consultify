@@ -102,7 +102,7 @@ router.post(
       });
     } catch (error: any) {
       if (error?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
+        return res.status(403).json({ ...mapAppErrorResponse(error, req, 'error'), code: 'LEGAL_HOLD' });
       }
       logger.error('[DataExport] Failed to create export request:', {
         err: error,
@@ -239,7 +239,7 @@ router.get(
       res.send(exportData);
     } catch (error: any) {
       if (error?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
+        return res.status(403).json({ ...mapAppErrorResponse(error, req, 'error'), code: 'LEGAL_HOLD' });
       }
       logger.error('[DataExport] Failed to download export:', {
         err: error,

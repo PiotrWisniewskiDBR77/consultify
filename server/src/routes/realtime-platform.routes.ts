@@ -707,11 +707,11 @@ router.put(
       );
     } catch (error) {
       if (error instanceof UnknownPhaseError) {
-        res.status(400).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        res.status(400).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
         return;
       }
       if (error instanceof InvalidPhaseTransitionError) {
-        res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        res.status(409).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
         return;
       }
       if (isRealtimeSubstrateUnavailableError(error)) {

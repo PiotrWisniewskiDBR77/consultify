@@ -4663,7 +4663,7 @@ router.get(
     try {
       res.json(await previewIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
       throw error;
     }
   })
@@ -4678,7 +4678,7 @@ router.get(
     try {
       res.json(await readIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
       throw error;
     }
   })
@@ -4706,7 +4706,7 @@ router.post(
       });
       res.status(result.created ? 201 : 200).json(result);
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
       throw error;
     }
   })

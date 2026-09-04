@@ -501,7 +501,7 @@ router.post(
       await addKpiToScorecard(organizationId, scorecardId, kpiId, sortOrder);
     } catch (err) {
       if (err instanceof ScorecardKpiNotFoundError) {
-        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: 'SCORECARD_KPI_NOT_FOUND' });
+        return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error'), code: 'SCORECARD_KPI_NOT_FOUND' });
       }
       throw err;
     }
@@ -2978,7 +2978,7 @@ router.post(
       });
     } catch (error) {
       if (error instanceof ResultsKpiReportSnapshotError) {
-        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

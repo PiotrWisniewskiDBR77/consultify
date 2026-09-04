@@ -517,7 +517,7 @@ router.post(
           };
         }
       } catch (err) {
-        refreshResult = { success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') };
+        refreshResult = { success: false, ...mapAppErrorResponse((err as Error), req, 'error') };
       }
     }
 

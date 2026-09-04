@@ -21,6 +21,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { PoolClient } from 'pg';
 
+import { AppError } from '../../../utils/ErrorHandler.js';
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
   executeAtomicCommand,
@@ -58,10 +59,13 @@ export const OKR_CYCLE_CAPABILITIES = {
 
 /** Fail-closed error for `createCycle` when the parent Program is not
  * `active` (design §6.4, OKR-F-001-AC-02). */
-export class OkrCycleProgramNotActiveError extends Error {
-  code = 'PROGRAM_NOT_ACTIVE';
+export class OkrCycleProgramNotActiveError extends AppError {
   constructor(programId: string, actualStatus: string) {
-    super(`OKR Program ${programId} is not active (status: ${actualStatus}) — cannot open a new Cycle`);
+    super(
+      `OKR Program ${programId} is not active (status: ${actualStatus}) — cannot open a new Cycle`,
+      409,
+      'PROGRAM_NOT_ACTIVE'
+    );
     this.name = 'OkrCycleProgramNotActiveError';
   }
 }

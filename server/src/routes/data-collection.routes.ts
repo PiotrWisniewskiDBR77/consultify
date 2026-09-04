@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { featureFlags } from '../config/FeatureFlags.js';
 import { getDatabase } from '../database/Database.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
@@ -138,7 +139,7 @@ router.post('/connectors', async (req: Request, res: Response) => {
     logger.error('[DataCollection] create connector failed', { error: (e as Error).message });
     return res
       .status(500)
-      .json({ error: 'Failed to create connector', details: (e as Error).message });
+      .json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -260,7 +261,7 @@ router.patch('/connectors/:id', async (req: Request, res: Response) => {
     logger.error('[DataCollection] update connector failed', { error: (e as Error).message });
     return res
       .status(500)
-      .json({ error: 'Failed to update connector', details: (e as Error).message });
+      .json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -309,7 +310,7 @@ router.post('/connectors/:id/test', async (req: Request, res: Response) => {
     return res.status(200).json(testResult);
   } catch (e) {
     logger.error('[DataCollection] test connector failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Test failed', details: (e as Error).message });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -332,7 +333,7 @@ router.post('/connectors/:id/run', async (req: Request, res: Response) => {
     return res.status(200).json(result);
   } catch (e) {
     logger.error('[DataCollection] run connector failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Run failed', details: (e as Error).message });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -415,7 +416,7 @@ router.post('/connectors/:id/schedule', async (req: Request, res: Response) => {
     return res.status(200).json({ connectorId: id, schedule });
   } catch (e) {
     logger.error('[DataCollection] set schedule failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Failed to set schedule', details: (e as Error).message });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -447,7 +448,7 @@ router.delete('/connectors/:id/schedule', async (req: Request, res: Response) =>
     logger.error('[DataCollection] delete schedule failed', { error: (e as Error).message });
     return res
       .status(500)
-      .json({ error: 'Failed to delete schedule', details: (e as Error).message });
+      .json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -502,7 +503,7 @@ router.post('/connectors/:id/auto-map', async (req: Request, res: Response) => {
     });
   } catch (e) {
     logger.error('[DataCollection] auto-map failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Auto-map failed', details: (e as Error).message });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 

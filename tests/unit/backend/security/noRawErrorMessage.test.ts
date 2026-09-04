@@ -10,6 +10,12 @@ const day296Pattern = /(?:error|message):\s*(?:\((?:err|error) as Error\)|(?:err
 // Pelna rodzina wyciekow: dochodzi cast `(e as Error)` oraz pole `details`.
 const fullFamilyPattern =
   /(?:error|message|details):\s*(?:\((?:err|error|e) as Error\)|(?:err|error|e))\.message/;
+const alternateLeakPatterns = [
+  /(?:error|message|details):\s*String\((?:err|error|e)\)/,
+  /res\.send\(\s*(?:err|error|e)\.stack\s*\)/,
+  /(?:error|message|details):\s*(?:err|error|e)\?\.message/,
+];
+const ALTERNATE_LEAK_BASELINE = 44;
 
 // Wyciek liczy sie tylko w ODPOWIEDZI HTTP. Logger ma prawo (i obowiazek) do surowej tresci,
 // a linie komentarza nie sa kodem.
@@ -56,11 +62,18 @@ describe('raw route error response guard', () => {
   // Odbior 04.09: dyzur 296 zamknal jedna galaz rodziny. Wariant `(e as Error)` oraz pole
   // `details` nigdy nie byly objete ani codemodem, ani pierwotnym guardem 312 — to dlug
   // policzony, nie naprawiony. Ratchet pilnuje, zeby nie rosl.
-  const REMAINING_LEAK_BASELINE = 35;
+  const REMAINING_LEAK_BASELINE = 0;
   it('does not grow the remaining (e as Error) / details leak debt', () => {
     const found = violations(fullFamilyPattern);
     expect(found.length, `dlug wyciekow wzrosl:\n${found.join('\n')}`).toBeLessThanOrEqual(
       REMAINING_LEAK_BASELINE
+    );
+  });
+
+  it('rejects alternate raw error response spellings', () => {
+    const found = alternateLeakPatterns.flatMap(violations);
+    expect(found.length, `alternate leak debt grew:\n${found.join('\n')}`).toBeLessThanOrEqual(
+      ALTERNATE_LEAK_BASELINE
     );
   });
 });

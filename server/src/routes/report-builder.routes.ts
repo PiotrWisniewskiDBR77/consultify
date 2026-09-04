@@ -2334,7 +2334,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunc
   } catch (err: any) {
     logger.error('[ReportBuilder] Error duplicating report:', err);
     if (err.message === 'Report not found') {
-      return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+      return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error') });
     }
     next(err);
   }

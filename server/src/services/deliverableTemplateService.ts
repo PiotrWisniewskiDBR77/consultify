@@ -10,6 +10,7 @@
 
 import { createHash } from 'node:crypto';
 
+import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { queryAll, queryOne, queryRun, withPgTransaction } from '../utils/queryHelpers.js';
 import type {
@@ -582,9 +583,9 @@ export class TemplateForbiddenError extends Error {
   }
 }
 
-export class TemplateNotFoundError extends Error {
+export class TemplateNotFoundError extends AppError {
   constructor(id: string) {
-    super(`Template not found: ${id}`);
+    super(`Template not found: ${id}`, 404, 'NOT_FOUND');
     this.name = 'TemplateNotFoundError';
   }
 }

@@ -961,7 +961,7 @@ router.post(
       if (err instanceof MeetingBoundaryError || err instanceof HandoffSpineError) {
         return res
           .status(statusForSpineErrorCode(err.code))
-          .json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+          .json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       throw err;
     }
@@ -1009,7 +1009,7 @@ router.post(
       if (err instanceof MeetingBoundaryError || err instanceof HandoffSpineError) {
         return res
           .status(statusForSpineErrorCode(err.code))
-          .json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+          .json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       throw err;
     }
@@ -1114,7 +1114,7 @@ router.post(
       if (err instanceof HandoffSpineError || err instanceof MeetingBoundaryError) {
         return res
           .status(statusForSpineErrorCode(err.code))
-          .json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+          .json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       throw err;
     }
@@ -1145,7 +1145,7 @@ router.post(
       if (err instanceof HandoffSpineError || err instanceof MeetingBoundaryError) {
         return res
           .status(statusForSpineErrorCode(err.code))
-          .json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+          .json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       throw err;
     }
@@ -1189,7 +1189,7 @@ router.post(
           error.code === 'NOTE_NOT_APPROVED' || error.code === 'TASK_IDEMPOTENCY_COLLISION'
             ? 409
             : 404;
-        return res.status(status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(status).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

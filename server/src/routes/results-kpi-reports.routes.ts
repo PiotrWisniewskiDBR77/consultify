@@ -342,7 +342,7 @@ router.post(
       if (error instanceof ResultsKpiReportSnapshotError) {
         return res
           .status(error.status)
-          .json({ success: false, ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+          .json({ success: false, ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

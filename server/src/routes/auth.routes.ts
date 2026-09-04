@@ -2707,7 +2707,7 @@ router.post(
     } catch (error: unknown) {
       logger.error('MFA Setup error:', error);
       if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       return res.status(500).json({ error: 'MFA setup failed' });
     }
@@ -2730,7 +2730,7 @@ router.post(
     } catch (error: unknown) {
       logger.error('MFA Enable error:', error);
       if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       return res.status(500).json({ error: 'MFA activation failed' });
     }
@@ -2753,7 +2753,7 @@ router.post(
     } catch (error: unknown) {
       logger.error('MFA Disable error:', error);
       if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       return res.status(500).json({ error: 'MFA disable failed' });
     }

@@ -314,7 +314,7 @@ router.post(
       res.status(result.deduped ? 200 : 201).json(result);
     } catch (err) {
       if (err instanceof ArtifactLineageError && err.code === 'INVALID_ARGUMENT') {
-        res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        res.status(400).json({ ...mapAppErrorResponse(err, req, 'error') });
         return;
       }
       logger.error('[ArtifactLineage] failed to record lineage event', {

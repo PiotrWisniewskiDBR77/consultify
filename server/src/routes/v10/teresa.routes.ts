@@ -166,7 +166,7 @@ router.post(
               ? 503
               : 502;
         return res.status(status).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'TERESA_TTS_UNAVAILABLE',
           reason: error.reason,
           recoverable: true,
