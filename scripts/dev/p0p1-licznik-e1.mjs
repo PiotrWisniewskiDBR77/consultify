@@ -66,15 +66,39 @@ function ledgerDecisions(ledger) {
   return new Set([...ledger.matchAll(/^\|\s*(DEC-\d{4}-\d{2}-\d{2}-\d+)\s*\|/gm)].map((m) => m[1]));
 }
 
+function evidenceId(positions, id, origin) {
+  if ((origin === 'owner' || origin === 'wave2') && id.startsWith('ASM-OWN-') && positions.has(`${id}[OF]`)) {
+    return `${id}[OF]`;
+  }
+  return id;
+}
+
 function addEvidence(positions, text, origin) {
   for (const line of text.split('\n')) {
     const ids = expandIds(line);
-    for (const id of ids) {
+    for (const rawId of ids) {
+      const id = evidenceId(positions, rawId, origin);
       const position = positions.get(id);
       if (!position) continue;
       position.evidence.push(line);
       position.origins.push(origin);
     }
+  }
+}
+
+function addOwnerEvidence(positions, owner) {
+  const familyDec = new Map();
+  for (const line of owner.split('\n')) {
+    const family = line.match(/^\|\s*(R-\d+)\b/);
+    const dec = line.match(/DEC-\d{4}-\d{2}-\d{2}-\d+/);
+    if (family && dec) familyDec.set(family[1], dec[0]);
+  }
+  let activeFamily = '';
+  for (const line of owner.split('\n')) {
+    const heading = line.match(/^##\s+(R-\d+)\./);
+    if (heading) activeFamily = heading[1];
+    const inherited = familyDec.get(activeFamily);
+    addEvidence(positions, inherited ? `${line} ${inherited}` : line, 'owner');
   }
 }
 
@@ -130,7 +154,7 @@ export function evaluateCorpus({ settlement, decisions, owner, wave2, ledger }, 
   const positions = collectUniverse(settlement, decisions);
   if (positions.size < floor) throw new Error(`mianownik mniejszy niż spodziewany — parser zgubił źródło: ${positions.size} < ${floor}`);
   addEvidence(positions, decisions, 'decisions');
-  addEvidence(positions, owner, 'owner');
+  addOwnerEvidence(positions, owner);
   addEvidence(positions, wave2, 'wave2');
   const ledgerSet = ledgerDecisions(ledger);
   return [...positions.values()].sort((a, b) => a.id.localeCompare(b.id, 'en')).map((position) => ({

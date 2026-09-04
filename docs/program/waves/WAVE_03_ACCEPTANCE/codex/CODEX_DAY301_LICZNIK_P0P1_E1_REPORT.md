@@ -20,3 +20,22 @@ Dowód wejścia: `/private/tmp/cx-day301-licznik-p0p1-artefakty/r1-wejscie.txt`.
 ## Korekty wobec instrukcji
 
 Brak korekt dla sześciu tez wejściowych. Składnia przykładowej komendy testowej w §0.2c zawiera opis zamiast wykonywalnej ścieżki; repozytoryjny wzorzec potwierdził runner `node:test`, dlatego pakiet R4 używa `node --test`.
+
+## R2–R4 — skrypt, rejestr i mutacje
+
+Skrypt parsuje 121 odrębnych obiektów, zachowuje `[OF]`, sprawdza pełne numery DEC w ledgerze oraz sprawdza SHA przez `git cat-file` i `git merge-base --is-ancestor`. Rejestr ma stałą datę migawki, marker i komendę odtworzenia; dwa kolejne uruchomienia dały pliki identyczne bajtowo.
+
+`RUN_DB_TESTS=0 MOCK_DB=true node --test scripts/dev/__tests__/p0p1-licznik-e1.test.mjs`: 5/5 PASS. Każdy test wprowadza osobną mutację: kolizję tożsamości, obcy DEC, obcy SHA, zbyt mały mianownik albo brak werdyktu. Dowód: `/private/tmp/cx-day301-licznik-p0p1-artefakty/r4-tests.txt`.
+
+## R5 — realne źródła
+
+| Werdykt | Liczba |
+|---|---:|
+| NAPRAWIONE | 26 |
+| ZAMKNIETE_DEC | 12 |
+| ODLOZONE_DEC | 58 |
+| W_BUDOWIE | 0 |
+| BLOKUJE | 25 |
+| Mianownik | 121 |
+
+Wynik jest o 3 wyższy od ręcznej tezy 22. Różnicę stanowią `ASM-OWN-001`, `ASM-OWN-002` i `ASM-OWN-003` z pierwotnego rozliczenia. Pakiet decyzji R-4 rozstrzyga identycznie ponumerowane pozycje z rejestru owner-feedback, czyli `ASM-OWN-001[OF]` i `ASM-OWN-002[OF]`; `ASM-OWN-003[OF]` rozstrzyga R-1. Bez sufiksu ręczne odejmowanie scaliło te obiekty. Błąd leży zatem w ręcznym zdaniu 22, nie w źródłowym mianowniku ani parserze. Pełna lista 25 pozycji i powody są w generowanym rejestrze.
