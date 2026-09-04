@@ -87,7 +87,7 @@ const result = Object.fromEntries(
           role: 'OWNER',
         },
         jwtSecret,
-        { algorithm: 'HS256', expiresIn: '2h' }
+        { algorithm: 'HS256', expiresIn: '24h' }
       ),
     },
   ])
