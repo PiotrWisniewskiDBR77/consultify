@@ -1,6 +1,47 @@
 # Dyżur 333 — schemat: domknięcie po 310/319
 
-Stan: W TOKU. Marker `1c3d3da844ae03c87985a8f5dc74846a073c0220`, gałąź `codex/day333-schemat-domkniecie-20260904`.
+Stan: ZAKOŃCZONY LOKALNIE I WYPCHNIĘTY. Marker `1c3d3da844ae03c87985a8f5dc74846a073c0220`, gałąź `codex/day333-schemat-domkniecie-20260904`.
+
+## Wejście i rozjazd tipa
+
+Wynik §0.1 (2), dosłownie:
+
+```text
+7dca03967d Merge agent/instr-E — instrukcje dyzurow 327, 328, 329
+9ab1826c28 docs(dyzury): 328 — warunki wspolne serii (liscie slownikow, trzy bramki kanonu) jako kontrola braku szkody ubocznej
+c4fa089b20 docs(dyzury): instrukcja 329 (martwe od korzenia + Biblioteka metodyk) + adnotacje sciezek nieistniejacych na markerze w 327/328
+0d67f8f575 Merge agent/instr-F — instrukcje dyzurow 330, 331, 332, 333
+db2b277df0 docs(dyzury): instrukcje 330-333 (wywiad menu, mojapraca+silnik, testy puste reszta, schemat domkniecie)
+58e22fba09 Merge agent/instr-D — instrukcje dyzurow 324, 325, 326
+440b5d8f5c docs(dyzury): instrukcja 328 — domkniecie bramki G20 (dowod fetch-depth para klonow, 17 pozycji, 3 checkpointy)
+502782e183 docs(dyzury): instrukcje 324 (szablon tnie karte inicjatywy), 325 (komunikaty PL — jedno zrodlo prawdy), 326 (konta serwisowe — 500 z pustym cialem)
+97cf766dae docs(dyzury): instrukcja 327 — bezpieczniki, ktore nie mierza (rodzina + inwentarz R0)
+1c3d3da844 Merge codex/day314 (odbiór adwersaryjny: SCALIC; POKAZAC WLASCICIELOWI — ale parami odbiorcy, nie z raportu)
+1abcb5deab fix(day315): przywroc canvas-toolbar-md-history do macierzy 13_CHAT
+f8ba9dac0d Merge codex/day315 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM; POKAZAC WLASCICIELOWI tylko 3 pary)
+d0976f7d90 fix(day317): audyt i18n wycina wnetrze {{...}} z klasyfikacji jezykowej
+1d42e78827 fix(ci): fetch-depth 0 dla joba z bramka G20 — przy plytkim klonie nie mogla sie zazielenic nigdy
+a19c11c17d Merge codex/day320 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM — bramka NADAL nie zamyka sie sama)
+ee5cb420a3 Merge codex/day319 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM)
+4d7ef3c968 Merge codex/day321 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM)
+fbe7fdf02c Merge codex/day316 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM)
+38bd4df30d fix(day317): przywroc placeholder {{nazwa}} w en.closeOpenDocument — regresja z dyzuru 317
+49f70ac3d1 Merge codex/day317 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM — po naprawie regresji, osobny commit)
+7d5df22197 Merge codex/day322 (odbiór adwersaryjny: SCALIC Z ZASTRZEZENIEM — 0 z 5 pozycji domknietych, ale rejestr nie klamie)
+35ce7a8421 Merge codex/day323 (odbiór adwersaryjny: SCALIC)
+bffaaa5494 Merge codex/day318 (odbiór adwersaryjny: SCALIC — jedyny z pelnym dowodem, ktory odbiorca odtworzyl sam)
+e3b9741f07 Merge agent/konsolidacja — rejestr M13-M27, lekcje 04.09, przekazanie na 05.09
+6459b06de0 docs(indeks): dopisz wskazania na REJESTR_ZNALEZISK/LEKCJE/PRZEKAZANIE 04-05.09
+MARKER OK
+```
+
+Wynik §0.1 (7), dosłownie:
+
+```text
+1c3d3da844ae03c87985a8f5dc74846a073c0220
+```
+
+Tip `github-backup/grafika/m03-20260902` uciekł do `7dca03967d`; zgodnie z DEC-95 praca startowała dokładnie z markera, bez rebase. Nowsze commity dotyczą instrukcji 324–333 i ich merge'y; integrację wykonuje nadzorca.
 
 ## R0 — baza od zera i pomiar A
 
@@ -72,3 +113,12 @@ PRZED zmianami: 2 pełne nazwy w `/private/tmp/cx-day333-schemat-domkniecie-arte
 
 - Nie zweryfikowano zachowania produkcji, demo, stagingu ani Railway; kontakt z nimi był zakazany.
 - Pomiar B obejmuje rejestrację i kontrolowaną ścieżkę Slack, nie wszystkie możliwe ścieżki DDL-w-locie.
+
+## Commity i zakres
+
+- `88534c3abb` — R1 pomiar A/B;
+- `6ca1bf64b0` — R2 klasyfikacja `073_conversations.sql`;
+- `ed39969ed6` — R3 addytywna migracja `slack_router_dedupe`;
+- `91c1e7f204` — R4 uzasadnienia 24 wyjątków.
+
+Zakres względem markera to dokładnie cztery pliki: rejestr 310/319, ten raport, nowa migracja `20262020_day333_slack_router_dedupe.sql` i `noRuntimeDdl.test.ts`. Pełny manifest hashy leży w `/private/tmp/cx-day333-schemat-domkniecie-artefakty/SHA256SUMS`.
