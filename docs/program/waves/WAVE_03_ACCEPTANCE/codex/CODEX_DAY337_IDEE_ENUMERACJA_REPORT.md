@@ -51,12 +51,22 @@ Bazowy skład przed zmianami: `numTotalTests=5`, 4 wykonane PASS, 0 FAIL, 1 pend
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R2–R4 nie zostały jeszcze wykonane; nie deklaruję jeszcze kontraktowych mianowników właściwego ekranu, skuteczności bramki a11y ani pokrycia efektu.
+- R3–R4 nie zostały jeszcze wykonane; nie deklaruję jeszcze rodzinnego zasięgu fałszywego twierdzenia ani nowego pokrycia efektu.
 - Nie wykonano dowodu bazodanowego, ponieważ wiążący wariant C zabrania stawiania kontenera i dyżur nie dotyka bazy.
 
 ## §0.2e — pakiety uruchomione dotychczas
 
 Pakiet enumeracji uruchamiano z `RUN_DB_TESTS=0 MOCK_DB=true`, jawnym `DAY295_IDEA_HARNESS_URL=http://127.0.0.1:5513` i `--retry=0`. JSON bazowy wykazał `numTotalTests=5`, 4 wykonane i 1 pending; po dodaniu przypadku sondy pełne przebiegi wykazały 5 wykonanych i 1 pending. Tym samym `describe.runIf` nie wyłączył pakietu. Test jest czysto przeglądarkowy i nie dowodzi bazy, uwierzytelnienia ani ścieżki ApiGateway.
+
+## R2 — kontrakt właściwego ekranu
+
+Trzy własne stabilne pomiary dały identycznie: `base 86`, `unique 82`, `menus 3`, bez nazwy `0`, SHA-256 `2ccdd150921460e4c625d469f7cc73bf1604a6b45f52bb62947b92a627f78db1`. Trzy JSON-y kontraktu: każdy `numTotalTests=7`, 6 wykonanych PASS, 0 FAIL, 1 pending.
+
+Zachowano wpis `idea-table` dla listy i dodano piąty wpis `idea-table-timeline-stuck` dla narzędzia. Nowy mianownik `unique` wynosi `308`.
+
+Mutacja a11y: pełny przypadek `Idea tools — complete DOM control inventory idea-table-timeline-stuck: accounts for the base and opened-menu passes` był RED dokładnie na `expect(base.every(({ name }) => name.length > 0)).toBe(true)` po dodaniu bezimiennego przycisku, a po cofnięciu GREEN z właściwym hashem. Diff produktu po przywróceniu pusty. Szczegóły: `evidence/day337/r2-pomiar-i-a11y.md`.
+
+Pierwsze trzy próby polecenia pomiarowego były nieważne: `ReferenceError: sel is not defined`, a brak `pipefail` został zamaskowany przez `tee`. Nie są liczone jako pomiar. Poprawne przebiegi miały literał selektora i `set -o pipefail`.
 
 ## Z30
 

@@ -21,6 +21,7 @@ const contract = {
   'mindmap-canvas': { minimumBase: 57, unique: 65, menus: 2, sha256: 'dc89abd5e1aa49ad2e98d201e7eb5ecd36c57d8aace31dcaa6022656ce2a8b1d' },
   'processflow-canvas': { minimumBase: 63, unique: 81, menus: 3, sha256: 'dfdd6efae65f523fee1bf339b96d22313506839a880fe15c13e92530fe177335' },
   'idea-table': { minimumBase: 21, unique: 27, menus: 5, sha256: '3864b4540d732c2d21cce8c6e4bafa8e7036f6809c96a4aa57e52307a3f7f46a' },
+  'idea-table-timeline-stuck': { minimumBase: 86, unique: 82, menus: 3, sha256: '2ccdd150921460e4c625d469f7cc73bf1604a6b45f52bb62947b92a627f78db1' },
 } as const;
 
 async function visibleControls(page: Page): Promise<Control[]> {
