@@ -350,8 +350,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
 
   const actionRows = orderPreviewActionRows(actions);
 
-  const footer =
-    ai || relations || actionRows.length > 0 || whatsNext ? (
+  const footer = (
       // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
       <div className="space-y-2.5">
         {/* Blok 4 — ramka AI. Ramkę rysuje sam `PreviewAIHintStrip` (jedno
@@ -360,15 +359,13 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
         {ai ? <PreviewAIHintStrip {...ai} /> : null}
 
         {/* Blok 5 — Relations */}
-        {relations ? (
-          <PreviewRelations
-            items={relations}
-            emptyLabel={
-              relationsEmptyLabel ??
-              t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
-            }
-          />
-        ) : null}
+        <PreviewRelations
+          items={relations ?? []}
+          emptyLabel={
+            relationsEmptyLabel ??
+            t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+          }
+        />
 
         {/* Blok 6 — pełny blok akcji na dole */}
         {actionRows.length > 0 ? (
@@ -413,7 +410,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
           </PreviewWhatsNextCard>
         ) : null}
       </div>
-    ) : undefined;
+    );
 
   return (
     <PreviewPaneShell

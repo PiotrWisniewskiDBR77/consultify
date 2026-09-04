@@ -1562,7 +1562,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     // `tabIndex` dostają wyłącznie wiersze, które faktycznie coś
                     // robią. Wiersz bez handlera zostaje nieinteraktywny, żeby
                     // nie zaśmiecać kolejności fokusa pustymi przystankami.
-                    tabIndex={onRowClick || onRowDoubleClick ? 0 : undefined}
+                    tabIndex={
+                      onRowClick ||
+                      onRowDoubleClick ||
+                      (!hideRowActions && (getRowActionSections || getRowActions))
+                        ? 0
+                        : undefined
+                    }
                     onKeyDown={(event) => {
                       if (
                         (onRowClick || onRowDoubleClick) &&
