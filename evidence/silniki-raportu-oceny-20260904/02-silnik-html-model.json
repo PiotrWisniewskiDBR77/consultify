@@ -1,0 +1,2259 @@
+{
+  "meta": {
+    "organizationName": "Fabryka Pomiarowa 339",
+    "language": "pl",
+    "reportDate": "2026-09-04",
+    "assessmentName": "Sesja 2e87758d-bd31-459f-b073-28080cbd7a9c",
+    "benchmark": null
+  },
+  "credibility": {
+    "assessedAreas": 39,
+    "totalAreas": 39,
+    "completionPercent": 100,
+    "confidenceLabel": "Wysoka"
+  },
+  "overall": {
+    "actual": 0.4,
+    "target": 2.4,
+    "gap": 2,
+    "actualPercent": 7,
+    "targetPercent": 41,
+    "maturityStage": "Inicjacja Cyfrowa"
+  },
+  "executiveSummary": {
+    "paragraphs": [
+      "Fabryka Pomiarowa 339 osiąga zagregowaną dojrzałość cyfrową na poziomie 7% wobec celu 41% (luka 34 p.p.), co plasuje organizację w fazie „Inicjacja Cyfrowa”. Ocena objęła 39 obszarów w 7 osiach transformacji cyfrowej metodyki DRD.",
+      "Najsilniejszą osią jest „Produkty Cyfrowe”, gdzie fundamenty cyfrowe są najlepiej ugruntowane. Największy potencjał wzrostu koncentruje się w osi „Produkty Cyfrowe”, która wyznacza priorytet kolejnej fali inwestycji.",
+      "Profil dojrzałości jest nierównomierny: dojrzałe procesy operacyjne współistnieją z lukami w obszarach o wyższej dźwigni strategicznej. Zamknięcie tych luk wymaga sekwencjonowania działań według relacji wpływ/nakład, a nie równoległego frontu inwestycji.",
+      "Rekomendowana ścieżka to trzy fale wdrożeniowe (F1–F3): najpierw „szybkie zwycięstwa” o wysokim wpływie i niskim nakładzie, następnie inicjatywy strukturalne, na końcu przedsięwzięcia transformacyjne o horyzoncie wieloletnim.",
+      "Wszystkie wartości liczbowe w raporcie pochodzą wyłącznie z silnika oceny DRD i odzwierciedlają stan zarejestrowany w assessmencie. Warstwa narracyjna interpretuje te dane, nie modyfikując ich."
+    ],
+    "confidence": "medium",
+    "limits": "Interpretacja oparta na danych assessmentu; przed egzekucją zaleca się walidację warsztatową z zespołem klienta.",
+    "evidence": [
+      {
+        "type": "drd_axis",
+        "ref": "1",
+        "excerpt": "Procesy Cyfrowe: 0.2/7"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "2",
+        "excerpt": "Produkty Cyfrowe: 0.4/5"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "3",
+        "excerpt": "Cyfrowe Modele Biznesowe: 0.4/5"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "4",
+        "excerpt": "Zarządzanie Danymi: 0.4/7"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "5",
+        "excerpt": "Kultura Transformacji: 0.4/6"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "6",
+        "excerpt": "Cyberbezpieczeństwo: 0.4/6"
+      },
+      {
+        "type": "drd_axis",
+        "ref": "7",
+        "excerpt": "Dojrzałość AI: 0.4/5"
+      }
+    ],
+    "aiGenerated": false,
+    "narrative": "deterministic"
+  },
+  "dimensions": [
+    {
+      "id": "1",
+      "axisId": 1,
+      "name": "Procesy Cyfrowe",
+      "namePL": "Procesy Cyfrowe",
+      "actual": 0.2,
+      "target": 2.2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 3,
+      "targetPercent": 31,
+      "color": "#3b82f6"
+    },
+    {
+      "id": "2",
+      "axisId": 2,
+      "name": "Produkty Cyfrowe",
+      "namePL": "Produkty Cyfrowe",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 8,
+      "targetPercent": 48,
+      "color": "#0ea5e9"
+    },
+    {
+      "id": "3",
+      "axisId": 3,
+      "name": "Cyfrowe Modele Biznesowe",
+      "namePL": "Cyfrowe Modele Biznesowe",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 8,
+      "targetPercent": 48,
+      "color": "#06b6d4"
+    },
+    {
+      "id": "4",
+      "axisId": 4,
+      "name": "Zarządzanie Danymi",
+      "namePL": "Zarządzanie Danymi",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 6,
+      "targetPercent": 34,
+      "color": "#14b8a6"
+    },
+    {
+      "id": "5",
+      "axisId": 5,
+      "name": "Kultura Transformacji",
+      "namePL": "Kultura Transformacji",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 7,
+      "targetPercent": 40,
+      "color": "#0d9488"
+    },
+    {
+      "id": "6",
+      "axisId": 6,
+      "name": "Cyberbezpieczeństwo",
+      "namePL": "Cyberbezpieczeństwo",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 7,
+      "targetPercent": 40,
+      "color": "#64748b"
+    },
+    {
+      "id": "7",
+      "axisId": 7,
+      "name": "Dojrzałość AI",
+      "namePL": "Dojrzałość AI",
+      "actual": 0.4,
+      "target": 2.4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 8,
+      "targetPercent": 48,
+      "color": "#475569"
+    }
+  ],
+  "areas": [
+    {
+      "areaId": "1A",
+      "areaName": "Procesy Sprzedaży",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 29,
+      "targetPercent": 57,
+      "currentLevelTitle": "Workstation Control",
+      "targetLevelTitle": "Automation",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1B",
+      "areaName": "Procesy Marketingowe",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1C",
+      "areaName": "Technologia Procesowa i R&D",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1D",
+      "areaName": "Procesy Zakupowe",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1E",
+      "areaName": "Procesy Logistyczne",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1F",
+      "areaName": "Procesy Produkcyjne",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1G",
+      "areaName": "Procesy Jakości",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1H",
+      "areaName": "Zarządzanie Finansami",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "1I",
+      "areaName": "Procesy HR",
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Basic Data Registration",
+      "targetLevelTitle": "Workstation Control",
+      "severity": "medium"
+    },
+    {
+      "areaId": "2A",
+      "areaName": "Produkty Cyfrowe",
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 40,
+      "targetPercent": 80,
+      "currentLevelTitle": "Intermediate",
+      "targetLevelTitle": "Interactive",
+      "severity": "high"
+    },
+    {
+      "areaId": "2B",
+      "areaName": "Produkty Społecznościowe",
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "2C",
+      "areaName": "Produkty ICT",
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "2D",
+      "areaName": "Dopasowanie Produktu do Oczekiwań Klienta",
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "2E",
+      "areaName": "Skalowalność Produktu",
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "3A",
+      "areaName": "Modele E-commerce",
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 40,
+      "targetPercent": 80,
+      "currentLevelTitle": "Intermediate",
+      "targetLevelTitle": "Advanced Personalization",
+      "severity": "high"
+    },
+    {
+      "areaId": "3B",
+      "areaName": "Rozwiązania Platformowe",
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "3C",
+      "areaName": "Model As-a-Service",
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "3D",
+      "areaName": "Modele Współdzielenia Zasobów",
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "3E",
+      "areaName": "Modele Monetyzacji Danych",
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Basic",
+      "targetLevelTitle": "Intermediate",
+      "severity": "high"
+    },
+    {
+      "areaId": "4A",
+      "areaName": "Zbieranie Danych",
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 29,
+      "targetPercent": 57,
+      "currentLevelTitle": "Graphic Symbols",
+      "targetLevelTitle": "Data from Machines and Devices",
+      "severity": "medium"
+    },
+    {
+      "areaId": "4B",
+      "areaName": "Metodologia Przechowywania Danych",
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Traditional Methods",
+      "targetLevelTitle": "Single Local Digital Storage",
+      "severity": "medium"
+    },
+    {
+      "areaId": "4C",
+      "areaName": "Komunikacja Danych",
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "Hard-copy Reporting",
+      "targetLevelTitle": "Email Reporting",
+      "severity": "medium"
+    },
+    {
+      "areaId": "4D",
+      "areaName": "Analiza Big Data",
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "DBMS",
+      "targetLevelTitle": "ETL Systems",
+      "severity": "medium"
+    },
+    {
+      "areaId": "4E",
+      "areaName": "Przetwarzanie Danych",
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 7,
+      "actualPercent": 0,
+      "targetPercent": 29,
+      "currentLevelTitle": "PC Computation",
+      "targetLevelTitle": "Server Computation",
+      "severity": "medium"
+    },
+    {
+      "areaId": "5A",
+      "areaName": "Postawy przywódcze",
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 33,
+      "targetPercent": 67,
+      "currentLevelTitle": "Autokratyczny",
+      "targetLevelTitle": "Wspierający",
+      "severity": "high"
+    },
+    {
+      "areaId": "5B",
+      "areaName": "Gotowość na zmianę",
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Rozpoznanie potrzeby",
+      "targetLevelTitle": "Koalicja zmiany",
+      "severity": "high"
+    },
+    {
+      "areaId": "5C",
+      "areaName": "Ciągły rozwój kompetencji",
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Kontakt zewnętrzny",
+      "targetLevelTitle": "Szkolenia wewnętrzne",
+      "severity": "high"
+    },
+    {
+      "areaId": "5D",
+      "areaName": "Kultura innowacji",
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Promowanie pomysłów",
+      "targetLevelTitle": "Eksperymentowanie",
+      "severity": "high"
+    },
+    {
+      "areaId": "5E",
+      "areaName": "Dostępność zasobów",
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Kapitał",
+      "targetLevelTitle": "Szkolenia",
+      "severity": "high"
+    },
+    {
+      "areaId": "6A",
+      "areaName": "Strategia i zarządzanie ryzykiem",
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 33,
+      "targetPercent": 67,
+      "currentLevelTitle": "Analiza ryzyka",
+      "targetLevelTitle": "Polityki bezpieczeństwa",
+      "severity": "high"
+    },
+    {
+      "areaId": "6B",
+      "areaName": "Ochrona sieci i systemów",
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Firewalle",
+      "targetLevelTitle": "Antywirus",
+      "severity": "high"
+    },
+    {
+      "areaId": "6C",
+      "areaName": "Ochrona danych",
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Szyfrowanie",
+      "targetLevelTitle": "Polityka haseł",
+      "severity": "high"
+    },
+    {
+      "areaId": "6D",
+      "areaName": "Edukacja i jakość systemów",
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Opis systemu szkoleń",
+      "targetLevelTitle": "Plan wdrożenia szkoleń",
+      "severity": "high"
+    },
+    {
+      "areaId": "6E",
+      "areaName": "Plany awaryjne",
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 6,
+      "actualPercent": 0,
+      "targetPercent": 33,
+      "currentLevelTitle": "Identyfikacja zagrożeń",
+      "targetLevelTitle": "Priorytety w incydencie",
+      "severity": "high"
+    },
+    {
+      "areaId": "7A",
+      "areaName": "Dane i Fundamenty AI",
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 40,
+      "targetPercent": 80,
+      "currentLevelTitle": "Structured Data in Silos",
+      "targetLevelTitle": "Fully AI-Ready Data Architecture",
+      "severity": "high"
+    },
+    {
+      "areaId": "7B",
+      "areaName": "Procesy Wspierane przez AI",
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "Isolated AI Experiments",
+      "targetLevelTitle": "Assisted Work Automation",
+      "severity": "high"
+    },
+    {
+      "areaId": "7C",
+      "areaName": "AI w Produktach i Usługach",
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "No AI Components in Products",
+      "targetLevelTitle": "Add-On AI Features",
+      "severity": "high"
+    },
+    {
+      "areaId": "7D",
+      "areaName": "Governance, Bezpieczeństwo i Etyka",
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "No AI Governance, Uncontrolled Use",
+      "targetLevelTitle": "Basic AI Usage Policies",
+      "severity": "high"
+    },
+    {
+      "areaId": "7E",
+      "areaName": "Kompetencje i Kultura AI",
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "actualPercent": 0,
+      "targetPercent": 40,
+      "currentLevelTitle": "No Competencies",
+      "targetLevelTitle": "Ad-hoc Usage",
+      "severity": "high"
+    }
+  ],
+  "gapCards": [
+    {
+      "areaId": "2A",
+      "areaName": "Produkty Cyfrowe",
+      "axisName": "Produkty Cyfrowe",
+      "actual": 2,
+      "target": 4,
+      "gap": 2,
+      "maxLevel": 5,
+      "narrative": {
+        "paragraphs": [
+          "Co jest: obszar „Produkty Cyfrowe” (Produkty Cyfrowe) znajduje się na poziomie 2/5 — „Intermediate”.",
+          "Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 4/5 („Interactive”), co ogranicza efektywność i skalowalność w tym obszarze.",
+          "Co robić: zaplanować przejście na poziom 4, wdrażając zdolności opisane dla „Interactive”.",
+          "Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne."
+        ],
+        "confidence": "medium",
+        "limits": "Karta luki opisuje różnicę poziomów zmierzoną przez silnik; szczegółowy zakres prac wymaga doprecyzowania.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "2A",
+            "excerpt": "2→4"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "areaId": "2B",
+      "areaName": "Produkty Społecznościowe",
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "narrative": {
+        "paragraphs": [
+          "Co jest: obszar „Produkty Społecznościowe” (Produkty Cyfrowe) znajduje się na poziomie 0/5 — „Basic”.",
+          "Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 2/5 („Intermediate”), co ogranicza efektywność i skalowalność w tym obszarze.",
+          "Co robić: zaplanować przejście na poziom 2, wdrażając zdolności opisane dla „Intermediate”.",
+          "Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne."
+        ],
+        "confidence": "medium",
+        "limits": "Karta luki opisuje różnicę poziomów zmierzoną przez silnik; szczegółowy zakres prac wymaga doprecyzowania.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "2B",
+            "excerpt": "0→2"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "areaId": "2C",
+      "areaName": "Produkty ICT",
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0,
+      "target": 2,
+      "gap": 2,
+      "maxLevel": 5,
+      "narrative": {
+        "paragraphs": [
+          "Co jest: obszar „Produkty ICT” (Produkty Cyfrowe) znajduje się na poziomie 0/5 — „Basic”.",
+          "Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 2/5 („Intermediate”), co ogranicza efektywność i skalowalność w tym obszarze.",
+          "Co robić: zaplanować przejście na poziom 2, wdrażając zdolności opisane dla „Intermediate”.",
+          "Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne."
+        ],
+        "confidence": "medium",
+        "limits": "Karta luki opisuje różnicę poziomów zmierzoną przez silnik; szczegółowy zakres prac wymaga doprecyzowania.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "2C",
+            "excerpt": "0→2"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    }
+  ],
+  "roadmap": [
+    {
+      "areaId": "1A",
+      "areaName": "Procesy Sprzedaży",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1B",
+      "areaName": "Procesy Marketingowe",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1C",
+      "areaName": "Technologia Procesowa i R&D",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1D",
+      "areaName": "Procesy Zakupowe",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1E",
+      "areaName": "Procesy Logistyczne",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1F",
+      "areaName": "Procesy Produkcyjne",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1G",
+      "areaName": "Procesy Jakości",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1H",
+      "areaName": "Zarządzanie Finansami",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "1I",
+      "areaName": "Procesy HR",
+      "axisName": "Procesy Cyfrowe",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "2A",
+      "areaName": "Produkty Cyfrowe",
+      "axisName": "Produkty Cyfrowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "2B",
+      "areaName": "Produkty Społecznościowe",
+      "axisName": "Produkty Cyfrowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "2C",
+      "areaName": "Produkty ICT",
+      "axisName": "Produkty Cyfrowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "2D",
+      "areaName": "Dopasowanie Produktu do Oczekiwań Klienta",
+      "axisName": "Produkty Cyfrowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "2E",
+      "areaName": "Skalowalność Produktu",
+      "axisName": "Produkty Cyfrowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "3A",
+      "areaName": "Modele E-commerce",
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "3B",
+      "areaName": "Rozwiązania Platformowe",
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "3C",
+      "areaName": "Model As-a-Service",
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "3D",
+      "areaName": "Modele Współdzielenia Zasobów",
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "3E",
+      "areaName": "Modele Monetyzacji Danych",
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "4A",
+      "areaName": "Zbieranie Danych",
+      "axisName": "Zarządzanie Danymi",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "4B",
+      "areaName": "Metodologia Przechowywania Danych",
+      "axisName": "Zarządzanie Danymi",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "4C",
+      "areaName": "Komunikacja Danych",
+      "axisName": "Zarządzanie Danymi",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "4D",
+      "areaName": "Analiza Big Data",
+      "axisName": "Zarządzanie Danymi",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "4E",
+      "areaName": "Przetwarzanie Danych",
+      "axisName": "Zarządzanie Danymi",
+      "gap": 2,
+      "impact": "medium",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "5A",
+      "areaName": "Postawy przywódcze",
+      "axisName": "Kultura Transformacji",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "5B",
+      "areaName": "Gotowość na zmianę",
+      "axisName": "Kultura Transformacji",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "5C",
+      "areaName": "Ciągły rozwój kompetencji",
+      "axisName": "Kultura Transformacji",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "5D",
+      "areaName": "Kultura innowacji",
+      "axisName": "Kultura Transformacji",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "5E",
+      "areaName": "Dostępność zasobów",
+      "axisName": "Kultura Transformacji",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "6A",
+      "areaName": "Strategia i zarządzanie ryzykiem",
+      "axisName": "Cyberbezpieczeństwo",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "6B",
+      "areaName": "Ochrona sieci i systemów",
+      "axisName": "Cyberbezpieczeństwo",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "6C",
+      "areaName": "Ochrona danych",
+      "axisName": "Cyberbezpieczeństwo",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "6D",
+      "areaName": "Edukacja i jakość systemów",
+      "axisName": "Cyberbezpieczeństwo",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "6E",
+      "areaName": "Plany awaryjne",
+      "axisName": "Cyberbezpieczeństwo",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "7A",
+      "areaName": "Dane i Fundamenty AI",
+      "axisName": "Dojrzałość AI",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "7B",
+      "areaName": "Procesy Wspierane przez AI",
+      "axisName": "Dojrzałość AI",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "7C",
+      "areaName": "AI w Produktach i Usługach",
+      "axisName": "Dojrzałość AI",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "7D",
+      "areaName": "Governance, Bezpieczeństwo i Etyka",
+      "axisName": "Dojrzałość AI",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    },
+    {
+      "areaId": "7E",
+      "areaName": "Kompetencje i Kultura AI",
+      "axisName": "Dojrzałość AI",
+      "gap": 2,
+      "impact": "high",
+      "effort": "medium",
+      "wave": "F2"
+    }
+  ],
+  "chapters": [
+    {
+      "axisId": 1,
+      "axisName": "Procesy Cyfrowe",
+      "actual": 0.2,
+      "target": 2.2,
+      "maxLevel": 7,
+      "areas": [
+        {
+          "areaId": "1A",
+          "areaName": "Procesy Sprzedaży",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 29,
+          "targetPercent": 57,
+          "currentLevelTitle": "Workstation Control",
+          "targetLevelTitle": "Automation",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1B",
+          "areaName": "Procesy Marketingowe",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1C",
+          "areaName": "Technologia Procesowa i R&D",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1D",
+          "areaName": "Procesy Zakupowe",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1E",
+          "areaName": "Procesy Logistyczne",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1F",
+          "areaName": "Procesy Produkcyjne",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1G",
+          "areaName": "Procesy Jakości",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1H",
+          "areaName": "Zarządzanie Finansami",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        },
+        {
+          "areaId": "1I",
+          "areaName": "Procesy HR",
+          "axisId": 1,
+          "axisName": "Procesy Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Basic Data Registration",
+          "targetLevelTitle": "Workstation Control",
+          "severity": "medium"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Procesy Cyfrowe” osiąga poziom 0.2/7 przy celu 2.2/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "1A",
+            "excerpt": "2/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1B",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1C",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1D",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1E",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1F",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1G",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1H",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "1I",
+            "excerpt": "0/7"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 2,
+      "axisName": "Produkty Cyfrowe",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 5,
+      "areas": [
+        {
+          "areaId": "2A",
+          "areaName": "Produkty Cyfrowe",
+          "axisId": 2,
+          "axisName": "Produkty Cyfrowe",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 40,
+          "targetPercent": 80,
+          "currentLevelTitle": "Intermediate",
+          "targetLevelTitle": "Interactive",
+          "severity": "high"
+        },
+        {
+          "areaId": "2B",
+          "areaName": "Produkty Społecznościowe",
+          "axisId": 2,
+          "axisName": "Produkty Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "2C",
+          "areaName": "Produkty ICT",
+          "axisId": 2,
+          "axisName": "Produkty Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "2D",
+          "areaName": "Dopasowanie Produktu do Oczekiwań Klienta",
+          "axisId": 2,
+          "axisName": "Produkty Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "2E",
+          "areaName": "Skalowalność Produktu",
+          "axisId": 2,
+          "axisName": "Produkty Cyfrowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Produkty Cyfrowe” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "2A",
+            "excerpt": "2/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "2B",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "2C",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "2D",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "2E",
+            "excerpt": "0/5"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 3,
+      "axisName": "Cyfrowe Modele Biznesowe",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 5,
+      "areas": [
+        {
+          "areaId": "3A",
+          "areaName": "Modele E-commerce",
+          "axisId": 3,
+          "axisName": "Cyfrowe Modele Biznesowe",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 40,
+          "targetPercent": 80,
+          "currentLevelTitle": "Intermediate",
+          "targetLevelTitle": "Advanced Personalization",
+          "severity": "high"
+        },
+        {
+          "areaId": "3B",
+          "areaName": "Rozwiązania Platformowe",
+          "axisId": 3,
+          "axisName": "Cyfrowe Modele Biznesowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "3C",
+          "areaName": "Model As-a-Service",
+          "axisId": 3,
+          "axisName": "Cyfrowe Modele Biznesowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "3D",
+          "areaName": "Modele Współdzielenia Zasobów",
+          "axisId": 3,
+          "axisName": "Cyfrowe Modele Biznesowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        },
+        {
+          "areaId": "3E",
+          "areaName": "Modele Monetyzacji Danych",
+          "axisId": 3,
+          "axisName": "Cyfrowe Modele Biznesowe",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Basic",
+          "targetLevelTitle": "Intermediate",
+          "severity": "high"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Cyfrowe Modele Biznesowe” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "3A",
+            "excerpt": "2/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "3B",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "3C",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "3D",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "3E",
+            "excerpt": "0/5"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 4,
+      "axisName": "Zarządzanie Danymi",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 7,
+      "areas": [
+        {
+          "areaId": "4A",
+          "areaName": "Zbieranie Danych",
+          "axisId": 4,
+          "axisName": "Zarządzanie Danymi",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 29,
+          "targetPercent": 57,
+          "currentLevelTitle": "Graphic Symbols",
+          "targetLevelTitle": "Data from Machines and Devices",
+          "severity": "medium"
+        },
+        {
+          "areaId": "4B",
+          "areaName": "Metodologia Przechowywania Danych",
+          "axisId": 4,
+          "axisName": "Zarządzanie Danymi",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Traditional Methods",
+          "targetLevelTitle": "Single Local Digital Storage",
+          "severity": "medium"
+        },
+        {
+          "areaId": "4C",
+          "areaName": "Komunikacja Danych",
+          "axisId": 4,
+          "axisName": "Zarządzanie Danymi",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "Hard-copy Reporting",
+          "targetLevelTitle": "Email Reporting",
+          "severity": "medium"
+        },
+        {
+          "areaId": "4D",
+          "areaName": "Analiza Big Data",
+          "axisId": 4,
+          "axisName": "Zarządzanie Danymi",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "DBMS",
+          "targetLevelTitle": "ETL Systems",
+          "severity": "medium"
+        },
+        {
+          "areaId": "4E",
+          "areaName": "Przetwarzanie Danych",
+          "axisId": 4,
+          "axisName": "Zarządzanie Danymi",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 7,
+          "actualPercent": 0,
+          "targetPercent": 29,
+          "currentLevelTitle": "PC Computation",
+          "targetLevelTitle": "Server Computation",
+          "severity": "medium"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Zarządzanie Danymi” osiąga poziom 0.4/7 przy celu 2.4/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "4A",
+            "excerpt": "2/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "4B",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "4C",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "4D",
+            "excerpt": "0/7"
+          },
+          {
+            "type": "drd_area",
+            "ref": "4E",
+            "excerpt": "0/7"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 5,
+      "axisName": "Kultura Transformacji",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 6,
+      "areas": [
+        {
+          "areaId": "5A",
+          "areaName": "Postawy przywódcze",
+          "axisId": 5,
+          "axisName": "Kultura Transformacji",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 33,
+          "targetPercent": 67,
+          "currentLevelTitle": "Autokratyczny",
+          "targetLevelTitle": "Wspierający",
+          "severity": "high"
+        },
+        {
+          "areaId": "5B",
+          "areaName": "Gotowość na zmianę",
+          "axisId": 5,
+          "axisName": "Kultura Transformacji",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Rozpoznanie potrzeby",
+          "targetLevelTitle": "Koalicja zmiany",
+          "severity": "high"
+        },
+        {
+          "areaId": "5C",
+          "areaName": "Ciągły rozwój kompetencji",
+          "axisId": 5,
+          "axisName": "Kultura Transformacji",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Kontakt zewnętrzny",
+          "targetLevelTitle": "Szkolenia wewnętrzne",
+          "severity": "high"
+        },
+        {
+          "areaId": "5D",
+          "areaName": "Kultura innowacji",
+          "axisId": 5,
+          "axisName": "Kultura Transformacji",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Promowanie pomysłów",
+          "targetLevelTitle": "Eksperymentowanie",
+          "severity": "high"
+        },
+        {
+          "areaId": "5E",
+          "areaName": "Dostępność zasobów",
+          "axisId": 5,
+          "axisName": "Kultura Transformacji",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Kapitał",
+          "targetLevelTitle": "Szkolenia",
+          "severity": "high"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Kultura Transformacji” osiąga poziom 0.4/6 przy celu 2.4/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "5A",
+            "excerpt": "2/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "5B",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "5C",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "5D",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "5E",
+            "excerpt": "0/6"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 6,
+      "axisName": "Cyberbezpieczeństwo",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 6,
+      "areas": [
+        {
+          "areaId": "6A",
+          "areaName": "Strategia i zarządzanie ryzykiem",
+          "axisId": 6,
+          "axisName": "Cyberbezpieczeństwo",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 33,
+          "targetPercent": 67,
+          "currentLevelTitle": "Analiza ryzyka",
+          "targetLevelTitle": "Polityki bezpieczeństwa",
+          "severity": "high"
+        },
+        {
+          "areaId": "6B",
+          "areaName": "Ochrona sieci i systemów",
+          "axisId": 6,
+          "axisName": "Cyberbezpieczeństwo",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Firewalle",
+          "targetLevelTitle": "Antywirus",
+          "severity": "high"
+        },
+        {
+          "areaId": "6C",
+          "areaName": "Ochrona danych",
+          "axisId": 6,
+          "axisName": "Cyberbezpieczeństwo",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Szyfrowanie",
+          "targetLevelTitle": "Polityka haseł",
+          "severity": "high"
+        },
+        {
+          "areaId": "6D",
+          "areaName": "Edukacja i jakość systemów",
+          "axisId": 6,
+          "axisName": "Cyberbezpieczeństwo",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Opis systemu szkoleń",
+          "targetLevelTitle": "Plan wdrożenia szkoleń",
+          "severity": "high"
+        },
+        {
+          "areaId": "6E",
+          "areaName": "Plany awaryjne",
+          "axisId": 6,
+          "axisName": "Cyberbezpieczeństwo",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 6,
+          "actualPercent": 0,
+          "targetPercent": 33,
+          "currentLevelTitle": "Identyfikacja zagrożeń",
+          "targetLevelTitle": "Priorytety w incydencie",
+          "severity": "high"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Cyberbezpieczeństwo” osiąga poziom 0.4/6 przy celu 2.4/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "6A",
+            "excerpt": "2/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "6B",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "6C",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "6D",
+            "excerpt": "0/6"
+          },
+          {
+            "type": "drd_area",
+            "ref": "6E",
+            "excerpt": "0/6"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    },
+    {
+      "axisId": 7,
+      "axisName": "Dojrzałość AI",
+      "actual": 0.4,
+      "target": 2.4,
+      "maxLevel": 5,
+      "areas": [
+        {
+          "areaId": "7A",
+          "areaName": "Dane i Fundamenty AI",
+          "axisId": 7,
+          "axisName": "Dojrzałość AI",
+          "actual": 2,
+          "target": 4,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 40,
+          "targetPercent": 80,
+          "currentLevelTitle": "Structured Data in Silos",
+          "targetLevelTitle": "Fully AI-Ready Data Architecture",
+          "severity": "high"
+        },
+        {
+          "areaId": "7B",
+          "areaName": "Procesy Wspierane przez AI",
+          "axisId": 7,
+          "axisName": "Dojrzałość AI",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "Isolated AI Experiments",
+          "targetLevelTitle": "Assisted Work Automation",
+          "severity": "high"
+        },
+        {
+          "areaId": "7C",
+          "areaName": "AI w Produktach i Usługach",
+          "axisId": 7,
+          "axisName": "Dojrzałość AI",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "No AI Components in Products",
+          "targetLevelTitle": "Add-On AI Features",
+          "severity": "high"
+        },
+        {
+          "areaId": "7D",
+          "areaName": "Governance, Bezpieczeństwo i Etyka",
+          "axisId": 7,
+          "axisName": "Dojrzałość AI",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "No AI Governance, Uncontrolled Use",
+          "targetLevelTitle": "Basic AI Usage Policies",
+          "severity": "high"
+        },
+        {
+          "areaId": "7E",
+          "areaName": "Kompetencje i Kultura AI",
+          "axisId": 7,
+          "axisName": "Dojrzałość AI",
+          "actual": 0,
+          "target": 2,
+          "gap": 2,
+          "maxLevel": 5,
+          "actualPercent": 0,
+          "targetPercent": 40,
+          "currentLevelTitle": "No Competencies",
+          "targetLevelTitle": "Ad-hoc Usage",
+          "severity": "high"
+        }
+      ],
+      "narrative": {
+        "paragraphs": [
+          "Oś „Dojrzałość AI” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi."
+        ],
+        "confidence": "medium",
+        "limits": "Opis osi agreguje wyniki obszarów z silnika oceny.",
+        "evidence": [
+          {
+            "type": "drd_area",
+            "ref": "7A",
+            "excerpt": "2/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "7B",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "7C",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "7D",
+            "excerpt": "0/5"
+          },
+          {
+            "type": "drd_area",
+            "ref": "7E",
+            "excerpt": "0/5"
+          }
+        ],
+        "aiGenerated": false,
+        "narrative": "deterministic"
+      }
+    }
+  ],
+  "methodology": {
+    "axes": [
+      {
+        "id": 1,
+        "name": "Digital Processes",
+        "namePL": "Procesy Cyfrowe",
+        "areaCount": 9,
+        "levelCount": 7
+      },
+      {
+        "id": 2,
+        "name": "Digital Products",
+        "namePL": "Produkty Cyfrowe",
+        "areaCount": 5,
+        "levelCount": 5
+      },
+      {
+        "id": 3,
+        "name": "Digital Business Models",
+        "namePL": "Cyfrowe Modele Biznesowe",
+        "areaCount": 5,
+        "levelCount": 5
+      },
+      {
+        "id": 4,
+        "name": "Data Management",
+        "namePL": "Zarządzanie Danymi",
+        "areaCount": 5,
+        "levelCount": 7
+      },
+      {
+        "id": 5,
+        "name": "Culture of Transformation",
+        "namePL": "Kultura Transformacji",
+        "areaCount": 5,
+        "levelCount": 6
+      },
+      {
+        "id": 6,
+        "name": "Cybersecurity",
+        "namePL": "Cyberbezpieczeństwo",
+        "areaCount": 5,
+        "levelCount": 6
+      },
+      {
+        "id": 7,
+        "name": "AI Maturity",
+        "namePL": "Dojrzałość AI",
+        "areaCount": 5,
+        "levelCount": 5
+      }
+    ],
+    "totalAreas": 39
+  },
+  "industryBenchmark": {
+    "industry": "process-manufacturing",
+    "industryLabel": {
+      "pl": "Produkcja procesowa",
+      "en": "Process manufacturing"
+    },
+    "narrative": {
+      "pl": "Produkcja procesowa (chemia, spożywka, farmacja, energetyka) ma naturalnie wysoką dojrzałość infrastruktury i bezpieczeństwa: instalacje ciągłe od dekad pracują na DCS/SCADA z gęstą siecią sensorów, a reżimy compliance (HACCP, GMP, Seveso, NIS2) wymuszają zarządzanie ryzykiem i reagowanie na incydenty na poziomie systemowym — liderzy sięgają poziomu V w D5 i D7 (edge przy instalacji, certyfikowany SZBI). Paradoks segmentu: dane telemetryczne istnieją w nadmiarze, ale służą sterowaniu i raportowaniu zgodności, nie decyzjom biznesowym — warstwa analityczna między OT a zarządem jest typowo najsłabszym ogniwem. Produkt (commodity, receptura) i model biznesowy (kontrakty wolumenowe) dają mało przestrzeni na cyfryzację oferty, stąd niskie D2/D3 nawet u liderów. Kultura jest zorientowana na stabilność i bezpieczeństwo („nie dotykaj instalacji, która działa\"), co jest zaletą operacyjną, ale systemowo tłumi eksperymentowanie i innowację — najtrudniejszy do podniesienia wymiar w tym segmencie.",
+      "en": "Process manufacturing (chemicals, food, pharma, energy) has naturally high infrastructure and security maturity: continuous installations have run on DCS/SCADA with dense sensor networks for decades, and compliance regimes (HACCP, GMP, Seveso, NIS2) force systemic risk management and incident response — leaders reach level V in D5 and D7 (edge at the installation, certified ISMS). The segment paradox: telemetry data exists in abundance but serves control and compliance reporting, not business decisions — the analytics layer between OT and the board is typically the weakest link. The product (commodity, recipe) and business model (volume contracts) leave little room for digitising the offer, hence low D2/D3 even among leaders. Culture is oriented toward stability and safety (\"don’t touch a running installation\"), which is an operational asset but systematically suppresses experimentation and innovation — the hardest dimension to raise in this segment."
+    },
+    "disclaimer": {
+      "pl": "Profil referencyjny ekspercki DBR77 (hipoteza, wersja v1) — nie jest benchmarkiem statystycznym. Wartości podlegają kalibracji danymi platformy od n ≥ 10 zamkniętych ocen w segmencie (mediana + kwartyle, dane zanonimizowane). Benchmark statystyczny w budowie.",
+      "en": "DBR77 expert reference profile (hypothesis, version v1) — not a statistical benchmark. Values are subject to calibration with platform data once a segment reaches n ≥ 10 closed assessments (median + quartiles, anonymised). Statistical benchmark under construction."
+    },
+    "source": "expert-hypothesis-v1",
+    "rows": [
+      {
+        "axisId": 1,
+        "dimensionId": "D1",
+        "name": "Procesy Cyfrowe",
+        "actualPercent": 3,
+        "typicalPercent": 60,
+        "leaderPercent": 80,
+        "deltaToTypical": -57,
+        "deltaToLeader": -77
+      },
+      {
+        "axisId": 2,
+        "dimensionId": "D2",
+        "name": "Produkty Cyfrowe",
+        "actualPercent": 8,
+        "typicalPercent": 40,
+        "leaderPercent": 60,
+        "deltaToTypical": -32,
+        "deltaToLeader": -52
+      },
+      {
+        "axisId": 3,
+        "dimensionId": "D3",
+        "name": "Cyfrowe Modele Biznesowe",
+        "actualPercent": 8,
+        "typicalPercent": 40,
+        "leaderPercent": 60,
+        "deltaToTypical": -32,
+        "deltaToLeader": -52
+      },
+      {
+        "axisId": 4,
+        "dimensionId": "D4",
+        "name": "Zarządzanie Danymi",
+        "actualPercent": 6,
+        "typicalPercent": 60,
+        "leaderPercent": 80,
+        "deltaToTypical": -54,
+        "deltaToLeader": -74
+      },
+      {
+        "axisId": 5,
+        "dimensionId": "D6",
+        "name": "Kultura Transformacji",
+        "actualPercent": 7,
+        "typicalPercent": 40,
+        "leaderPercent": 60,
+        "deltaToTypical": -33,
+        "deltaToLeader": -53
+      },
+      {
+        "axisId": 6,
+        "dimensionId": "D7",
+        "name": "Cyberbezpieczeństwo",
+        "actualPercent": 7,
+        "typicalPercent": 60,
+        "leaderPercent": 100,
+        "deltaToTypical": -53,
+        "deltaToLeader": -93
+      },
+      {
+        "axisId": 7,
+        "dimensionId": "D8",
+        "name": "Dojrzałość AI",
+        "actualPercent": 8,
+        "typicalPercent": 20,
+        "leaderPercent": 60,
+        "deltaToTypical": -12,
+        "deltaToLeader": -52
+      }
+    ],
+    "unmatchedDimensionIds": [
+      "D5"
+    ]
+  }
+}

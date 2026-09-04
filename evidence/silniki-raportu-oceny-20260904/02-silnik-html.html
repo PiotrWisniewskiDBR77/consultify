@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Raport Diagnozy Dojrzałości Cyfrowej — Fabryka Pomiarowa 339</title>
+<style>
+    :root { --ink:#0f172a; --muted:#64748b; --actual:#0d9488; --target:#3b82f6; --grid:#cbd5e1; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Segoe UI", Inter, Roboto, Arial, sans-serif; color: var(--ink); font-size: 13px; line-height: 1.55; background: #f8fafc; }
+    .page { background:#fff; width: 210mm; min-height: 297mm; margin: 12px auto; padding: 22mm 20mm; position: relative; box-shadow: 0 1px 6px rgba(15,23,42,.08); }
+    h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.02em; }
+    h2 { font-size: 20px; margin: 0 0 14px; padding-bottom: 6px; border-bottom: 2px solid var(--actual); color: var(--ink); }
+    h3 { font-size: 15px; margin: 0; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .section-tag { display:inline-block; font-size: 11px; letter-spacing:.14em; text-transform: uppercase; color: var(--target); font-weight: 600; margin-bottom: 4px; }
+    /* Cover */
+    .cover { display:flex; flex-direction: column; justify-content: center; min-height: 253mm; }
+    .cover__brand { font-size:12px; letter-spacing:.22em; text-transform:uppercase; color: var(--muted); margin-bottom: 28px; }
+    .cover__org { font-size: 22px; font-weight:600; margin: 16px 0 6px; color: var(--actual); }
+    .cover__meta { color: var(--muted); margin-top: 6px; }
+    .credibility { margin-top: 44px; border:1px solid var(--grid); border-radius: 14px; padding: 20px 22px; display:flex; gap: 30px; flex-wrap: wrap; background: linear-gradient(180deg,#f0f9ff, #ffffff); }
+    .metric { display:flex; flex-direction:column; }
+    .metric__label { font-size: 11px; text-transform: uppercase; letter-spacing:.08em; color: var(--muted); }
+    .metric__value { font-size: 26px; font-weight: 700; color: var(--ink); }
+    .overall-band { display:flex; gap: 22px; align-items:baseline; margin: 8px 0 18px; flex-wrap: wrap; }
+    .overall-band .big { font-size: 40px; font-weight: 800; color: var(--actual); }
+    .overall-band .stage { font-size: 14px; font-weight:600; color: var(--target); }
+    /* radar */
+    .viz { display:flex; gap: 24px; align-items:center; flex-wrap: wrap; }
+    .viz svg { display:block; width: 100%; max-width: 100%; height: auto; }
+    .legend { display:flex; gap:18px; margin-top:10px; font-size:12px; }
+    .legend span::before { content:''; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:middle; }
+    .legend .l-actual::before { background: var(--actual); }
+    .legend .l-target::before { background: var(--target); opacity:.4; }
+    /* tables */
+    .tbl { width:100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 12px; }
+    .tbl th { text-align:left; background:#f1f5f9; padding: 7px 9px; border-bottom: 1px solid var(--grid); font-weight:600; }
+    .tbl td { padding: 6px 9px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+    .tbl th.num, .tbl td.num { text-align:right; }
+    /* gap cards */
+    .gap-card { border:1px solid var(--grid); border-left: 4px solid var(--target); border-radius: 10px; padding: 14px 16px; margin: 12px 0; break-inside: avoid; }
+    .gap-card__head { display:flex; gap: 12px; align-items:center; margin-bottom: 8px; }
+    .gap-card__badge { flex:0 0 auto; width: 28px; height:28px; border-radius: 8px; background: var(--actual); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
+    .gap-card__axis { margin: 2px 0 0; font-size: 11px; color: var(--muted); }
+    .gap-card__body { display:grid; grid-template-columns: 92px 1fr; gap: 4px 12px; margin: 0; }
+    .gap-card__body dt { font-weight: 600; color: var(--target); font-size: 11px; text-transform: uppercase; letter-spacing:.04em; padding-top: 2px; }
+    .gap-card__body dd { margin: 0; }
+    /* roadmap chips */
+    .wave { margin-bottom: 14px; break-inside: avoid; }
+    .wave__title { color: var(--actual); font-size: 13px; margin-bottom: 4px; }
+    .chip { display:inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight:600; }
+    .chip--high { background:#fef3c7; color:#92400e; }
+    .chip--medium { background:#e0f2fe; color:#075985; }
+    .chip--low { background:#ccfbf1; color:#115e59; }
+    .chapter { break-inside: avoid; margin-bottom: 16px; }
+    .chapter__head { display:flex; justify-content: space-between; align-items:baseline; border-bottom:1px solid var(--grid); padding-bottom:4px; margin-bottom: 8px; }
+    .chapter__score { font-variant-numeric: tabular-nums; color: var(--actual); font-weight:600; }
+    .note { font-size: 11px; color: var(--muted); border-left: 3px solid var(--grid); padding-left: 10px; margin-top: 10px; }
+    .narrative-flag { font-size: 11px; color: var(--target); border: 1px solid var(--grid); border-left: 3px solid var(--target); border-radius: 6px; padding: 8px 10px; margin: 0 0 12px; background: #f0f9ff; }
+    .foot { position:absolute; bottom: 12mm; left: 20mm; right: 20mm; display:flex; justify-content: space-between; font-size: 10px; color: var(--muted); border-top:1px solid var(--grid); padding-top: 5px; }
+    @page { size: A4; margin: 16mm; @bottom-center { content: counter(page); } }
+    @media print {
+      body { background:#fff; }
+      .page { box-shadow:none; margin: 0; width: auto; min-height: auto; padding: 0; }
+      .page-break { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <div class="cover">
+      <div class="cover__brand">DBR77 · Digital Pathfinder</div>
+      <h1>Raport Diagnozy Dojrzałości Cyfrowej</h1>
+      <div class="cover__org">Fabryka Pomiarowa 339</div>
+      <div class="cover__meta">Digital Readiness Diagnosis (DRD) · Sesja 2e87758d-bd31-459f-b073-28080cbd7a9c</div>
+      <div class="cover__meta">Wygenerowano: 2026-09-04</div>
+      <div class="credibility">
+        <div class="metric"><span class="metric__label">Wskaźnik wiarygodności oceny</span><span class="metric__value">Wysoka</span></div>
+        <div class="metric"><span class="metric__label">Kompletność</span><span class="metric__value">100%</span></div>
+        <div class="metric"><span class="metric__label">Obszary ocenione</span><span class="metric__value">39/39</span></div>
+        <div class="metric"><span class="metric__label">Dojrzałość ogólna</span><span class="metric__value">7%</span></div>
+        
+      </div>
+    </div>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 1</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">01</span>
+    <h2>Streszczenie zarządcze</h2>
+    <div class="overall-band">
+      <span class="big">7%</span>
+      <span class="muted">→ Cel 41%</span>
+      <span class="stage">Faza: Inicjacja Cyfrowa</span>
+    </div>
+    <p class="narrative-flag">Narracja deterministyczna (bez modelu językowego). Liczby pochodzą z silnika oceny; interpretacje zostaną wzbogacone po podłączeniu narratora LLM.</p>
+    <p>Fabryka Pomiarowa 339 osiąga zagregowaną dojrzałość cyfrową na poziomie 7% wobec celu 41% (luka 34 p.p.), co plasuje organizację w fazie „Inicjacja Cyfrowa”. Ocena objęła 39 obszarów w 7 osiach transformacji cyfrowej metodyki DRD.</p><p>Najsilniejszą osią jest „Produkty Cyfrowe”, gdzie fundamenty cyfrowe są najlepiej ugruntowane. Największy potencjał wzrostu koncentruje się w osi „Produkty Cyfrowe”, która wyznacza priorytet kolejnej fali inwestycji.</p><p>Profil dojrzałości jest nierównomierny: dojrzałe procesy operacyjne współistnieją z lukami w obszarach o wyższej dźwigni strategicznej. Zamknięcie tych luk wymaga sekwencjonowania działań według relacji wpływ/nakład, a nie równoległego frontu inwestycji.</p><p>Rekomendowana ścieżka to trzy fale wdrożeniowe (F1–F3): najpierw „szybkie zwycięstwa” o wysokim wpływie i niskim nakładzie, następnie inicjatywy strukturalne, na końcu przedsięwzięcia transformacyjne o horyzoncie wieloletnim.</p><p>Wszystkie wartości liczbowe w raporcie pochodzą wyłącznie z silnika oceny DRD i odzwierciedlają stan zarejestrowany w assessmencie. Warstwa narracyjna interpretuje te dane, nie modyfikując ich.</p>
+    <p class="note">Interpretacja oparta na danych assessmentu; przed egzekucją zaleca się walidację warsztatową z zespołem klienta.</p>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 2</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">02</span>
+    <h2>Profil dojrzałości — radar wymiarów</h2>
+    <div class="viz">
+      <div style="flex:0 0 420px; width:420px; max-width:420px;"><svg viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DRD radar">
+  <polygon points="230.0,198.0 255.0,210.0 261.2,237.1 243.9,258.8 216.1,258.8 198.8,237.1 205.0,210.0" fill="none" stroke="#cbd5e1" stroke-width="1" opacity="0.7"/><polygon points="230.0,166.0 280.0,190.1 292.4,244.2 257.8,287.7 202.2,287.7 167.6,244.2 180.0,190.1" fill="none" stroke="#cbd5e1" stroke-width="1" opacity="0.7"/><polygon points="230.0,134.0 305.1,170.1 323.6,251.4 271.7,316.5 188.3,316.5 136.4,251.4 154.9,170.1" fill="none" stroke="#cbd5e1" stroke-width="1" opacity="0.7"/><polygon points="230.0,102.0 330.1,150.2 354.8,258.5 285.5,345.3 174.5,345.3 105.2,258.5 129.9,150.2" fill="none" stroke="#cbd5e1" stroke-width="1" opacity="0.7"/><polygon points="230.0,70.0 355.1,130.2 386.0,265.6 299.4,374.2 160.6,374.2 74.0,265.6 104.9,130.2" fill="none" stroke="#cbd5e1" stroke-width="1" opacity="0.7"/>
+  <line x1="230" y1="230" x2="230.0" y2="70.0" stroke="#cbd5e1" stroke-width="1"/><text x="230.0" y="48.0" font-size="11" fill="#334155" text-anchor="middle" dominant-baseline="middle">Procesy Cyfrowe</text><text x="230.0" y="61.0" font-size="10" fill="#64748b" text-anchor="middle" dominant-baseline="middle">3% / 31%</text><line x1="230" y1="230" x2="355.1" y2="130.2" stroke="#cbd5e1" stroke-width="1"/><text x="372.3" y="116.5" font-size="11" fill="#334155" text-anchor="start" dominant-baseline="middle">Produkty Cyfrowe</text><text x="372.3" y="129.5" font-size="10" fill="#64748b" text-anchor="start" dominant-baseline="middle">8% / 48%</text><line x1="230" y1="230" x2="386.0" y2="265.6" stroke="#cbd5e1" stroke-width="1"/><text x="407.4" y="270.5" font-size="11" fill="#334155" text-anchor="start" dominant-baseline="middle">Cyfrowe Modele Biznes…</text><text x="407.4" y="283.5" font-size="10" fill="#64748b" text-anchor="start" dominant-baseline="middle">8% / 48%</text><line x1="230" y1="230" x2="299.4" y2="374.2" stroke="#cbd5e1" stroke-width="1"/><text x="309.0" y="394.0" font-size="11" fill="#334155" text-anchor="start" dominant-baseline="middle">Zarządzanie Danymi</text><text x="309.0" y="407.0" font-size="10" fill="#64748b" text-anchor="start" dominant-baseline="middle">6% / 34%</text><line x1="230" y1="230" x2="160.6" y2="374.2" stroke="#cbd5e1" stroke-width="1"/><text x="151.0" y="394.0" font-size="11" fill="#334155" text-anchor="end" dominant-baseline="middle">Kultura Transformacji</text><text x="151.0" y="407.0" font-size="10" fill="#64748b" text-anchor="end" dominant-baseline="middle">7% / 40%</text><line x1="230" y1="230" x2="74.0" y2="265.6" stroke="#cbd5e1" stroke-width="1"/><text x="52.6" y="270.5" font-size="11" fill="#334155" text-anchor="end" dominant-baseline="middle">Cyberbezpieczeństwo</text><text x="52.6" y="283.5" font-size="10" fill="#64748b" text-anchor="end" dominant-baseline="middle">7% / 40%</text><line x1="230" y1="230" x2="104.9" y2="130.2" stroke="#cbd5e1" stroke-width="1"/><text x="87.7" y="116.5" font-size="11" fill="#334155" text-anchor="end" dominant-baseline="middle">Dojrzałość AI</text><text x="87.7" y="129.5" font-size="10" fill="#64748b" text-anchor="end" dominant-baseline="middle">8% / 48%</text>
+  <polygon points="230.0,180.4 290.0,182.1 304.9,247.1 253.6,279.0 202.2,287.7 167.6,244.2 170.0,182.1" fill="#3b82f6" fill-opacity="0.10" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <polygon points="230.0,225.2 240.0,222.0 242.5,232.8 234.2,238.6 225.1,240.1 219.1,232.5 220.0,222.0" fill="#0d9488" fill-opacity="0.22" stroke="#0d9488" stroke-width="2"/>
+  <circle cx="230.0" cy="225.2" r="3" fill="#0d9488"/><circle cx="240.0" cy="222.0" r="3" fill="#0d9488"/><circle cx="242.5" cy="232.8" r="3" fill="#0d9488"/><circle cx="234.2" cy="238.6" r="3" fill="#0d9488"/><circle cx="225.1" cy="240.1" r="3" fill="#0d9488"/><circle cx="219.1" cy="232.5" r="3" fill="#0d9488"/><circle cx="220.0" cy="222.0" r="3" fill="#0d9488"/>
+</svg></div>
+      <div style="flex:1 1 240px; min-width:220px;">
+        <svg viewBox="0 0 640 248" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DRD dimension bars">
+  <text x="0" y="21" font-size="11" fill="#334155">Procesy Cyfrowe</text><rect x="190" y="12" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="12" width="120.9" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="12" width="11.7" height="16" rx="8" fill="#0d9488"/><text x="588" y="24" font-size="10" fill="#64748b">3%/31%</text><text x="0" y="55" font-size="11" fill="#334155">Produkty Cyfrowe</text><rect x="190" y="46" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="46" width="187.2" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="46" width="31.2" height="16" rx="8" fill="#0d9488"/><text x="588" y="58" font-size="10" fill="#64748b">8%/48%</text><text x="0" y="89" font-size="11" fill="#334155">Cyfrowe Modele Biznesowe</text><rect x="190" y="80" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="80" width="187.2" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="80" width="31.2" height="16" rx="8" fill="#0d9488"/><text x="588" y="92" font-size="10" fill="#64748b">8%/48%</text><text x="0" y="123" font-size="11" fill="#334155">Zarządzanie Danymi</text><rect x="190" y="114" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="114" width="132.6" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="114" width="23.4" height="16" rx="8" fill="#0d9488"/><text x="588" y="126" font-size="10" fill="#64748b">6%/34%</text><text x="0" y="157" font-size="11" fill="#334155">Kultura Transformacji</text><rect x="190" y="148" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="148" width="156.0" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="148" width="27.3" height="16" rx="8" fill="#0d9488"/><text x="588" y="160" font-size="10" fill="#64748b">7%/40%</text><text x="0" y="191" font-size="11" fill="#334155">Cyberbezpieczeństwo</text><rect x="190" y="182" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="182" width="156.0" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="182" width="27.3" height="16" rx="8" fill="#0d9488"/><text x="588" y="194" font-size="10" fill="#64748b">7%/40%</text><text x="0" y="225" font-size="11" fill="#334155">Dojrzałość AI</text><rect x="190" y="216" width="390" height="16" rx="8" fill="#e2e8f0"/><rect x="190" y="216" width="187.2" height="16" rx="8" fill="#3b82f6" fill-opacity="0.30"/><rect x="190" y="216" width="31.2" height="16" rx="8" fill="#0d9488"/><text x="588" y="228" font-size="10" fill="#64748b">8%/48%</text>
+</svg>
+        <div class="legend"><span class="l-actual">Stan aktualny</span><span class="l-target">Stan docelowy</span></div>
+        <p class="note">Radar komunikuje 7 mierzonych osi transformacji (wynik silnika). Warstwa komunikacyjna 8D (MAP-1.0) zostanie uzupełniona po dostarczeniu kanonu DRD.</p>
+      </div>
+    </div>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 3</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">03</span>
+    <h2>Macierz obszarów</h2>
+    <div class="viz"><div style="flex:1 1 auto;"><svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DRD area matrix">
+  <text x="0" y="31" font-size="11" fill="#334155" dominant-baseline="middle">Procesy Cyfrowe</text><g><rect x="190" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1A</text><text x="213" y="42" font-size="9" fill="#0f172a" text-anchor="middle">2/7</text></g><g><rect x="242" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1B</text><text x="265" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="294" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1C</text><text x="317" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="346" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1D</text><text x="369" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="398" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1E</text><text x="421" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="450" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="473" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1F</text><text x="473" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="502" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="525" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1G</text><text x="525" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="554" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="577" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1H</text><text x="577" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="606" y="8" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="629" y="28" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">1I</text><text x="629" y="42" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><text x="0" y="83" font-size="11" fill="#334155" dominant-baseline="middle">Produkty Cyfrowe</text><g><rect x="190" y="60" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="80" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">2A</text><text x="213" y="94" font-size="9" fill="#7c2d12" text-anchor="middle">2/5</text></g><g><rect x="242" y="60" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="80" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">2B</text><text x="265" y="94" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="294" y="60" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="80" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">2C</text><text x="317" y="94" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="346" y="60" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="80" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">2D</text><text x="369" y="94" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="398" y="60" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="80" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">2E</text><text x="421" y="94" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><text x="0" y="135" font-size="11" fill="#334155" dominant-baseline="middle">Cyfrowe Modele Biznesowe</text><g><rect x="190" y="112" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="132" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">3A</text><text x="213" y="146" font-size="9" fill="#7c2d12" text-anchor="middle">2/5</text></g><g><rect x="242" y="112" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="132" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">3B</text><text x="265" y="146" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="294" y="112" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="132" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">3C</text><text x="317" y="146" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="346" y="112" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="132" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">3D</text><text x="369" y="146" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="398" y="112" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="132" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">3E</text><text x="421" y="146" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><text x="0" y="187" font-size="11" fill="#334155" dominant-baseline="middle">Zarządzanie Danymi</text><g><rect x="190" y="164" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="184" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">4A</text><text x="213" y="198" font-size="9" fill="#0f172a" text-anchor="middle">2/7</text></g><g><rect x="242" y="164" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="184" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">4B</text><text x="265" y="198" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="294" y="164" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="184" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">4C</text><text x="317" y="198" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="346" y="164" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="184" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">4D</text><text x="369" y="198" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><g><rect x="398" y="164" width="46" height="46" rx="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="184" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">4E</text><text x="421" y="198" font-size="9" fill="#0f172a" text-anchor="middle">0/7</text></g><text x="0" y="239" font-size="11" fill="#334155" dominant-baseline="middle">Kultura Transformacji</text><g><rect x="190" y="216" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="236" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">5A</text><text x="213" y="250" font-size="9" fill="#7c2d12" text-anchor="middle">2/6</text></g><g><rect x="242" y="216" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="236" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">5B</text><text x="265" y="250" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="294" y="216" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="236" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">5C</text><text x="317" y="250" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="346" y="216" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="236" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">5D</text><text x="369" y="250" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="398" y="216" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="236" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">5E</text><text x="421" y="250" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><text x="0" y="291" font-size="11" fill="#334155" dominant-baseline="middle">Cyberbezpieczeństwo</text><g><rect x="190" y="268" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="288" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">6A</text><text x="213" y="302" font-size="9" fill="#7c2d12" text-anchor="middle">2/6</text></g><g><rect x="242" y="268" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="288" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">6B</text><text x="265" y="302" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="294" y="268" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="288" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">6C</text><text x="317" y="302" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="346" y="268" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="288" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">6D</text><text x="369" y="302" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><g><rect x="398" y="268" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="288" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">6E</text><text x="421" y="302" font-size="9" fill="#7c2d12" text-anchor="middle">0/6</text></g><text x="0" y="343" font-size="11" fill="#334155" dominant-baseline="middle">Dojrzałość AI</text><g><rect x="190" y="320" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="213" y="340" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">7A</text><text x="213" y="354" font-size="9" fill="#7c2d12" text-anchor="middle">2/5</text></g><g><rect x="242" y="320" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="265" y="340" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">7B</text><text x="265" y="354" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="294" y="320" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="317" y="340" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">7C</text><text x="317" y="354" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="346" y="320" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="369" y="340" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">7D</text><text x="369" y="354" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g><g><rect x="398" y="320" width="46" height="46" rx="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5"/><text x="421" y="340" font-size="11" font-weight="600" fill="#7c2d12" text-anchor="middle">7E</text><text x="421" y="354" font-size="9" fill="#7c2d12" text-anchor="middle">0/5</text></g>
+</svg></div></div>
+    <p class="muted" style="font-size:11px;">Kolor = wielkość luki (brak · niska · średnia · wysoka)</p>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 4</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">04</span>
+    <h2>Kluczowe luki (Top 3)</h2>
+    
+  <div class="gap-card">
+    <div class="gap-card__head">
+      <span class="gap-card__badge">1</span>
+      <div>
+        <h3>Produkty Cyfrowe</h3>
+        <p class="gap-card__axis">Produkty Cyfrowe · 2/5 → 4/5 · Luka 2</p>
+      </div>
+    </div>
+    <dl class="gap-card__body">
+      <dt>Co jest</dt><dd>Co jest: obszar „Produkty Cyfrowe” (Produkty Cyfrowe) znajduje się na poziomie 2/5 — „Intermediate”.</dd>
+      <dt>Co to znaczy</dt><dd>Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 4/5 („Interactive”), co ogranicza efektywność i skalowalność w tym obszarze.</dd>
+      <dt>Co robić</dt><dd>Co robić: zaplanować przejście na poziom 4, wdrażając zdolności opisane dla „Interactive”.</dd>
+      <dt>Efekt</dt><dd>Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne.</dd>
+    </dl>
+  </div>
+  <div class="gap-card">
+    <div class="gap-card__head">
+      <span class="gap-card__badge">2</span>
+      <div>
+        <h3>Produkty Społecznościowe</h3>
+        <p class="gap-card__axis">Produkty Cyfrowe · 0/5 → 2/5 · Luka 2</p>
+      </div>
+    </div>
+    <dl class="gap-card__body">
+      <dt>Co jest</dt><dd>Co jest: obszar „Produkty Społecznościowe” (Produkty Cyfrowe) znajduje się na poziomie 0/5 — „Basic”.</dd>
+      <dt>Co to znaczy</dt><dd>Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 2/5 („Intermediate”), co ogranicza efektywność i skalowalność w tym obszarze.</dd>
+      <dt>Co robić</dt><dd>Co robić: zaplanować przejście na poziom 2, wdrażając zdolności opisane dla „Intermediate”.</dd>
+      <dt>Efekt</dt><dd>Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne.</dd>
+    </dl>
+  </div>
+  <div class="gap-card">
+    <div class="gap-card__head">
+      <span class="gap-card__badge">3</span>
+      <div>
+        <h3>Produkty ICT</h3>
+        <p class="gap-card__axis">Produkty Cyfrowe · 0/5 → 2/5 · Luka 2</p>
+      </div>
+    </div>
+    <dl class="gap-card__body">
+      <dt>Co jest</dt><dd>Co jest: obszar „Produkty ICT” (Produkty Cyfrowe) znajduje się na poziomie 0/5 — „Basic”.</dd>
+      <dt>Co to znaczy</dt><dd>Co to znaczy: organizacja nie wykorzystuje jeszcze możliwości poziomu 2/5 („Intermediate”), co ogranicza efektywność i skalowalność w tym obszarze.</dd>
+      <dt>Co robić</dt><dd>Co robić: zaplanować przejście na poziom 2, wdrażając zdolności opisane dla „Intermediate”.</dd>
+      <dt>Efekt</dt><dd>Efekt: domknięcie luki 2 poziomu podnosi dojrzałość osi „Produkty Cyfrowe” i odblokowuje kolejne działania zależne.</dd>
+    </dl>
+  </div>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 5</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">05</span>
+    <h2>Roadmapa transformacji — wpływ × nakład</h2>
+    
+    <div class="wave">
+      <h3 class="wave__title">Fala F2</h3>
+      <table class="tbl">
+        <thead><tr><th>Obszar</th><th>Oś</th><th>Wpływ</th><th>Nakład</th><th class="num">Luka</th></tr></thead>
+        <tbody>
+      <tr>
+        <td>Procesy Sprzedaży</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Marketingowe</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Technologia Procesowa i R&amp;D</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Zakupowe</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Logistyczne</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Produkcyjne</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Jakości</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Zarządzanie Finansami</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy HR</td>
+        <td class="muted">Procesy Cyfrowe</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Produkty Cyfrowe</td>
+        <td class="muted">Produkty Cyfrowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Produkty Społecznościowe</td>
+        <td class="muted">Produkty Cyfrowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Produkty ICT</td>
+        <td class="muted">Produkty Cyfrowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Dopasowanie Produktu do Oczekiwań Klienta</td>
+        <td class="muted">Produkty Cyfrowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Skalowalność Produktu</td>
+        <td class="muted">Produkty Cyfrowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Modele E-commerce</td>
+        <td class="muted">Cyfrowe Modele Biznesowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Rozwiązania Platformowe</td>
+        <td class="muted">Cyfrowe Modele Biznesowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Model As-a-Service</td>
+        <td class="muted">Cyfrowe Modele Biznesowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Modele Współdzielenia Zasobów</td>
+        <td class="muted">Cyfrowe Modele Biznesowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Modele Monetyzacji Danych</td>
+        <td class="muted">Cyfrowe Modele Biznesowe</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Zbieranie Danych</td>
+        <td class="muted">Zarządzanie Danymi</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Metodologia Przechowywania Danych</td>
+        <td class="muted">Zarządzanie Danymi</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Komunikacja Danych</td>
+        <td class="muted">Zarządzanie Danymi</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Analiza Big Data</td>
+        <td class="muted">Zarządzanie Danymi</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Przetwarzanie Danych</td>
+        <td class="muted">Zarządzanie Danymi</td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Postawy przywódcze</td>
+        <td class="muted">Kultura Transformacji</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Gotowość na zmianę</td>
+        <td class="muted">Kultura Transformacji</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Ciągły rozwój kompetencji</td>
+        <td class="muted">Kultura Transformacji</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Kultura innowacji</td>
+        <td class="muted">Kultura Transformacji</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Dostępność zasobów</td>
+        <td class="muted">Kultura Transformacji</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Strategia i zarządzanie ryzykiem</td>
+        <td class="muted">Cyberbezpieczeństwo</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Ochrona sieci i systemów</td>
+        <td class="muted">Cyberbezpieczeństwo</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Ochrona danych</td>
+        <td class="muted">Cyberbezpieczeństwo</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Edukacja i jakość systemów</td>
+        <td class="muted">Cyberbezpieczeństwo</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Plany awaryjne</td>
+        <td class="muted">Cyberbezpieczeństwo</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Dane i Fundamenty AI</td>
+        <td class="muted">Dojrzałość AI</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Procesy Wspierane przez AI</td>
+        <td class="muted">Dojrzałość AI</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>AI w Produktach i Usługach</td>
+        <td class="muted">Dojrzałość AI</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Governance, Bezpieczeństwo i Etyka</td>
+        <td class="muted">Dojrzałość AI</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr>
+      <tr>
+        <td>Kompetencje i Kultura AI</td>
+        <td class="muted">Dojrzałość AI</td>
+        <td><span class="chip chip--high">wysoki</span></td>
+        <td><span class="chip chip--medium">średni</span></td>
+        <td class="num">2</td>
+      </tr></tbody>
+      </table>
+    </div>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 6</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">06</span>
+    <h2>Rozdziały wymiarów</h2>
+    
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Procesy Cyfrowe</h3>
+      <span class="chapter__score">0.2/7 → 2.2/7</span>
+    </div>
+    <p>Oś „Procesy Cyfrowe” osiąga poziom 0.2/7 przy celu 2.2/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>1A · Procesy Sprzedaży</td>
+      <td class="num">2/7</td>
+      <td class="num">4/7</td>
+      <td class="num">2</td>
+      <td class="muted">Workstation Control</td>
+    </tr>
+    <tr>
+      <td>1B · Procesy Marketingowe</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1C · Technologia Procesowa i R&amp;D</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1D · Procesy Zakupowe</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1E · Procesy Logistyczne</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1F · Procesy Produkcyjne</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1G · Procesy Jakości</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1H · Zarządzanie Finansami</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr>
+    <tr>
+      <td>1I · Procesy HR</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Basic Data Registration</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Produkty Cyfrowe</h3>
+      <span class="chapter__score">0.4/5 → 2.4/5</span>
+    </div>
+    <p>Oś „Produkty Cyfrowe” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>2A · Produkty Cyfrowe</td>
+      <td class="num">2/5</td>
+      <td class="num">4/5</td>
+      <td class="num">2</td>
+      <td class="muted">Intermediate</td>
+    </tr>
+    <tr>
+      <td>2B · Produkty Społecznościowe</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>2C · Produkty ICT</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>2D · Dopasowanie Produktu do Oczekiwań Klienta</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>2E · Skalowalność Produktu</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Cyfrowe Modele Biznesowe</h3>
+      <span class="chapter__score">0.4/5 → 2.4/5</span>
+    </div>
+    <p>Oś „Cyfrowe Modele Biznesowe” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>3A · Modele E-commerce</td>
+      <td class="num">2/5</td>
+      <td class="num">4/5</td>
+      <td class="num">2</td>
+      <td class="muted">Intermediate</td>
+    </tr>
+    <tr>
+      <td>3B · Rozwiązania Platformowe</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>3C · Model As-a-Service</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>3D · Modele Współdzielenia Zasobów</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr>
+    <tr>
+      <td>3E · Modele Monetyzacji Danych</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Basic</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Zarządzanie Danymi</h3>
+      <span class="chapter__score">0.4/7 → 2.4/7</span>
+    </div>
+    <p>Oś „Zarządzanie Danymi” osiąga poziom 0.4/7 przy celu 2.4/7. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>4A · Zbieranie Danych</td>
+      <td class="num">2/7</td>
+      <td class="num">4/7</td>
+      <td class="num">2</td>
+      <td class="muted">Graphic Symbols</td>
+    </tr>
+    <tr>
+      <td>4B · Metodologia Przechowywania Danych</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Traditional Methods</td>
+    </tr>
+    <tr>
+      <td>4C · Komunikacja Danych</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">Hard-copy Reporting</td>
+    </tr>
+    <tr>
+      <td>4D · Analiza Big Data</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">DBMS</td>
+    </tr>
+    <tr>
+      <td>4E · Przetwarzanie Danych</td>
+      <td class="num">0/7</td>
+      <td class="num">2/7</td>
+      <td class="num">2</td>
+      <td class="muted">PC Computation</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Kultura Transformacji</h3>
+      <span class="chapter__score">0.4/6 → 2.4/6</span>
+    </div>
+    <p>Oś „Kultura Transformacji” osiąga poziom 0.4/6 przy celu 2.4/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>5A · Postawy przywódcze</td>
+      <td class="num">2/6</td>
+      <td class="num">4/6</td>
+      <td class="num">2</td>
+      <td class="muted">Autokratyczny</td>
+    </tr>
+    <tr>
+      <td>5B · Gotowość na zmianę</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Rozpoznanie potrzeby</td>
+    </tr>
+    <tr>
+      <td>5C · Ciągły rozwój kompetencji</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Kontakt zewnętrzny</td>
+    </tr>
+    <tr>
+      <td>5D · Kultura innowacji</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Promowanie pomysłów</td>
+    </tr>
+    <tr>
+      <td>5E · Dostępność zasobów</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Kapitał</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Cyberbezpieczeństwo</h3>
+      <span class="chapter__score">0.4/6 → 2.4/6</span>
+    </div>
+    <p>Oś „Cyberbezpieczeństwo” osiąga poziom 0.4/6 przy celu 2.4/6. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>6A · Strategia i zarządzanie ryzykiem</td>
+      <td class="num">2/6</td>
+      <td class="num">4/6</td>
+      <td class="num">2</td>
+      <td class="muted">Analiza ryzyka</td>
+    </tr>
+    <tr>
+      <td>6B · Ochrona sieci i systemów</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Firewalle</td>
+    </tr>
+    <tr>
+      <td>6C · Ochrona danych</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Szyfrowanie</td>
+    </tr>
+    <tr>
+      <td>6D · Edukacja i jakość systemów</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Opis systemu szkoleń</td>
+    </tr>
+    <tr>
+      <td>6E · Plany awaryjne</td>
+      <td class="num">0/6</td>
+      <td class="num">2/6</td>
+      <td class="num">2</td>
+      <td class="muted">Identyfikacja zagrożeń</td>
+    </tr></tbody>
+    </table>
+  </section>
+  <section class="chapter">
+    <div class="chapter__head">
+      <h3>Dojrzałość AI</h3>
+      <span class="chapter__score">0.4/5 → 2.4/5</span>
+    </div>
+    <p>Oś „Dojrzałość AI” osiąga poziom 0.4/5 przy celu 2.4/5. Poniższa tabela obszarów prezentuje rozkład dojrzałości i zidentyfikowane luki, na podstawie których wyznaczono priorytety w tej osi.</p>
+    <table class="tbl">
+      <thead><tr><th>Obszar</th><th class="num">Aktualny</th><th class="num">Docelowy</th><th class="num">Luka</th><th>Poziom aktualny</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>7A · Dane i Fundamenty AI</td>
+      <td class="num">2/5</td>
+      <td class="num">4/5</td>
+      <td class="num">2</td>
+      <td class="muted">Structured Data in Silos</td>
+    </tr>
+    <tr>
+      <td>7B · Procesy Wspierane przez AI</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">Isolated AI Experiments</td>
+    </tr>
+    <tr>
+      <td>7C · AI w Produktach i Usługach</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">No AI Components in Products</td>
+    </tr>
+    <tr>
+      <td>7D · Governance, Bezpieczeństwo i Etyka</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">No AI Governance, Uncontrolled Use</td>
+    </tr>
+    <tr>
+      <td>7E · Kompetencje i Kultura AI</td>
+      <td class="num">0/5</td>
+      <td class="num">2/5</td>
+      <td class="num">2</td>
+      <td class="muted">No Competencies</td>
+    </tr></tbody>
+    </table>
+  </section>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 7</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">07</span>
+    <h2>Załącznik metodyczny</h2>
+    <p class="muted">Metodyka DRD ocenia dojrzałość cyfrową w 7 osiach transformacji i 39 obszarach. Osie 1 i 4 stosują skalę 1–7, pozostałe 1–5; wartości procentowe normalizują skale dla porównań między osiami. Wszystkie liczby pochodzą wyłącznie z silnika oceny.</p>
+    <table class="tbl">
+      <thead><tr><th>Oś</th><th class="num">Obszary</th><th class="num">Skala</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>Oś 1 · Procesy Cyfrowe</td>
+      <td class="num">9</td>
+      <td class="num">1–7</td>
+    </tr>
+    <tr>
+      <td>Oś 2 · Produkty Cyfrowe</td>
+      <td class="num">5</td>
+      <td class="num">1–5</td>
+    </tr>
+    <tr>
+      <td>Oś 3 · Cyfrowe Modele Biznesowe</td>
+      <td class="num">5</td>
+      <td class="num">1–5</td>
+    </tr>
+    <tr>
+      <td>Oś 4 · Zarządzanie Danymi</td>
+      <td class="num">5</td>
+      <td class="num">1–7</td>
+    </tr>
+    <tr>
+      <td>Oś 5 · Kultura Transformacji</td>
+      <td class="num">5</td>
+      <td class="num">1–6</td>
+    </tr>
+    <tr>
+      <td>Oś 6 · Cyberbezpieczeństwo</td>
+      <td class="num">5</td>
+      <td class="num">1–6</td>
+    </tr>
+    <tr>
+      <td>Oś 7 · Dojrzałość AI</td>
+      <td class="num">5</td>
+      <td class="num">1–5</td>
+    </tr></tbody>
+    </table>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 8</span></div>
+  </div>
+
+  <div class="page page-break">
+    <span class="section-tag">08</span>
+    <h2>Benchmark branżowy</h2>
+    <p class="muted"><strong>Produkcja procesowa</strong> — Produkcja procesowa (chemia, spożywka, farmacja, energetyka) ma naturalnie wysoką dojrzałość infrastruktury i bezpieczeństwa: instalacje ciągłe od dekad pracują na DCS/SCADA z gęstą siecią sensorów, a reżimy compliance (HACCP, GMP, Seveso, NIS2) wymuszają zarządzanie ryzykiem i reagowanie na incydenty na poziomie systemowym — liderzy sięgają poziomu V w D5 i D7 (edge przy instalacji, certyfikowany SZBI). Paradoks segmentu: dane telemetryczne istnieją w nadmiarze, ale służą sterowaniu i raportowaniu zgodności, nie decyzjom biznesowym — warstwa analityczna między OT a zarządem jest typowo najsłabszym ogniwem. Produkt (commodity, receptura) i model biznesowy (kontrakty wolumenowe) dają mało przestrzeni na cyfryzację oferty, stąd niskie D2/D3 nawet u liderów. Kultura jest zorientowana na stabilność i bezpieczeństwo („nie dotykaj instalacji, która działa&quot;), co jest zaletą operacyjną, ale systemowo tłumi eksperymentowanie i innowację — najtrudniejszy do podniesienia wymiar w tym segmencie.</p>
+    <table class="tbl">
+      <thead><tr><th>Wymiar</th><th class="num">Dojrzałość ogólna</th><th class="num">Typowa firma</th><th class="num">Lider branży</th><th class="num">Różnica vs typowa</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>Procesy Cyfrowe</td>
+      <td class="num">3%</td>
+      <td class="num">60%</td>
+      <td class="num">80%</td>
+      <td class="num">-57</td>
+    </tr>
+    <tr>
+      <td>Produkty Cyfrowe</td>
+      <td class="num">8%</td>
+      <td class="num">40%</td>
+      <td class="num">60%</td>
+      <td class="num">-32</td>
+    </tr>
+    <tr>
+      <td>Cyfrowe Modele Biznesowe</td>
+      <td class="num">8%</td>
+      <td class="num">40%</td>
+      <td class="num">60%</td>
+      <td class="num">-32</td>
+    </tr>
+    <tr>
+      <td>Zarządzanie Danymi</td>
+      <td class="num">6%</td>
+      <td class="num">60%</td>
+      <td class="num">80%</td>
+      <td class="num">-54</td>
+    </tr>
+    <tr>
+      <td>Kultura Transformacji</td>
+      <td class="num">7%</td>
+      <td class="num">40%</td>
+      <td class="num">60%</td>
+      <td class="num">-33</td>
+    </tr>
+    <tr>
+      <td>Cyberbezpieczeństwo</td>
+      <td class="num">7%</td>
+      <td class="num">60%</td>
+      <td class="num">100%</td>
+      <td class="num">-53</td>
+    </tr>
+    <tr>
+      <td>Dojrzałość AI</td>
+      <td class="num">8%</td>
+      <td class="num">20%</td>
+      <td class="num">60%</td>
+      <td class="num">-12</td>
+    </tr></tbody>
+    </table>
+    <p class="note">Wymiar D5 (Technologia i infrastruktura) profilu branżowego nie ma jeszcze odpowiednika w mierzonych osiach silnika — pominięty, nie wymyślony.</p>
+    <p class="note">Profil referencyjny ekspercki DBR77 (hipoteza, wersja v1) — nie jest benchmarkiem statystycznym. Wartości podlegają kalibracji danymi platformy od n ≥ 10 zamkniętych ocen w segmencie (mediana + kwartyle, dane zanonimizowane). Benchmark statystyczny w budowie.</p>
+    <div class="foot"><span>Fabryka Pomiarowa 339 · Digital Readiness Diagnosis (DRD)</span><span>Strona 9</span></div>
+  </div>
+</body>
+</html>
