@@ -2174,7 +2174,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     <div>
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {t('interview.insightCreatorModal.selectSourceSessions')} *
+          {t('interview.insightCreatorModal.selectSourceSessions')}{' '}
+          <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
+            ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+          </span>
         </label>
         {filteredSessions.length > 0 && (
           <button
