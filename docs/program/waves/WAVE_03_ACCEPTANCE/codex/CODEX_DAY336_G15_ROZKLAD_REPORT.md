@@ -65,8 +65,42 @@ Na stanie wejściowym wyłącznie na długu zastanym stoi `0` wierszy: każdy ni
 
 Imienna lista 63 świeżo potwierdzonych czerwieni zastanych znajduje się w `evidence/g15/day336-dlug-zastany.md`. Nowe czerwienie nie zostały przemianowane na dług.
 
+## R3 — brakujące pomiary serwerowe
+
+Kontener `cx-day336-pg` pracował wyłącznie na `127.0.0.1:6372/cx336`, obraz `pgvector/pgvector:pg16`. Pierwszy przebieg wykonał pełny łańcuch migracji i zakończył się `Postgres migrations complete`; drugi podał `Applying migrations: 0` i zakończył się poprawnie. Przed startem było 53 GiB wolnego.
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+Każdy poniższy pakiet uruchomiono z `cwd=server`, `--config vitest.config.ts`, `--retry=0`, realnym `DATABASE_URL`, `RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `NODE_ENV=test`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce` i lokalnym `JWT_SECRET`. W ten sposób wyłączono pułapki §0.2e(a)–(e): flaga V8 i enforcement były jawne, auth bypass był jawnie wyłączony, SQLite/mock zostały nadpisane, liczono `numTotalTests`, a mianownik pochodził wprost z R1 rejestru. Błędy suity przy zerze asercji pozostają błędami komendy, nie PASS.
+
+| Moduł | Ścieżki serwerowe z mianownika | Total | Passed | Failed | Pending | Błędy pliku/suity bez czerwonej asercji | JSON |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 01 | `organizationContext/__tests__` | 18 | 18 | 0 | 0 | 3 | `01-organization-serwer.json` |
+| 02 | `interview`, `interviewCandidate`, `interviewDelivery` | 63 | 51 | 2 | 10 | 0 | `02-interview-serwer.json` |
+| 03 | `tools`, `toolCatalog`, `toolFreeze` | 27 | 21 | 0 | 6 | 1 | `03-tools-serwer.json` |
+| 04 | `routes/assessment*`, `services/assessment*` | 113 | 113 | 0 | 0 | 0 | `04-assessment-serwer.json` |
+| 05 | `services/initiative` | 125 | 124 | 1 | 0 | 0 | `05-initiatives-serwer.json` |
+| 06 | `domain/initiatives-execution`, `services/execution*` | 101 | 101 | 0 | 0 | 0 | `06-execution-serwer.json` |
+| 07 | `routes/my-work`, `services/myWork` | 43 | 41 | 2 | 0 | 0 | `07-my-work-serwer.json` |
+| 08 | `services/meeting*` | 33 | 25 | 8 | 0 | 0 | `08-meetings-serwer.json` |
+| 09 | `routes/resultsVnext`, `services/results*/**` | 567 | 136 | 413 | 18 | 2 | `09-results-serwer.json` |
+| 10 | `routes/v8/finance-v2`, `services/finance` | 277 | 143 | 114 | 20 | 2 | `10-finance-serwer.json` |
+| 11 | `materials`, `materialExport`, `presentationExport` | 64 | 59 | 1 | 4 | 1 | `11-materials-serwer.json` |
+| 12 | `routes/audits`, `services/audits`, `services/auditProgram*` | 317 | 244 | 1 | 72 | 0 | `12-audits-serwer.json` |
+| 13 | `chatHandoff`, `chatToSchema` | 67 | 67 | 0 | 0 | 0 | `13-chat-serwer.json` |
+| 14 | `services/invitation` | 3 | 3 | 0 | 0 | 0 | `14-admin-serwer.json` |
+| 15 | brak ścieżki serwerowej w R1 rejestru | 0 | 0 | 0 | 0 | — | `BRAK_POMIARU: brak mianownika` |
+| 16 | cztery partnerowe pliki wskazane nazwą/semantyką w szerokich katalogach R1 | 7 | 7 | 0 | 0 | 1 | `16-partner-serwer.json` |
+
+Pięć wierszy `SERVER_NOT_MEASURED`: `04` jest 113/113; `09` wykonał 567 przypadków, ale 413 jest czerwonych i 2 pliki nie wystartowały; `12` wykonał 317, z 1 czerwienią; `13` jest 67/67; `15` nie ma żadnej ścieżki serwerowej w rejestrze. Zatem brak pomiaru zamknął się maszynowo tylko dla 04 i 13; 09 i 12 zostały zmierzone jako czerwone, a 15 pozostaje nierozstrzygnięty z powodu pustego mianownika.
+
+Wszystkie 542 wykonane czerwienie serwerowe na HEAD mają tę samą pełną nazwę czerwoną na naprawionej bazie (`2+1+2+8+413+114+1+1=542`), więc są `ZASTANE`; nie wykryto serwerowej czerwieni klasy `NOWA`. Osobno 10 plików/suit na HEAD nie wykonało czerwonej asercji i pozostaje `NIEORZECZONE/BŁĄD KOMENDY`. Pełne nazwy pozostają w JSON-ach poza repo; raport nie redukuje ich do samego exit code.
+
+Pomiar zasięgu: agregat zawiera 7610 nazw przypadków; `przed-nazwy.txt` i `po-nazwy.txt` mają identyczny SHA-256 `537ad270840fb0af9fc23d17114ab77955d6c60433d91af1c30355bf50ea72f4`, a `diff` zakończył się kodem 0. Nie było zmian produktu ani testów między przebiegami.
+
+Ścieżka artefaktów: `/private/tmp/cx-day336-g15-rozklad-artefakty`. Sumy SHA-256 serwerowych JSON-ów są w `evidence/g15/day336-r3-serwer.md`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Wyniki bieżących pakietów serwerowych dla 16 modułów są jeszcze niezmierzone.
 - Klasy czerwieni czterech modułów na naprawionej bazie są jeszcze nieorzeczone.
 - Aktualny wynik `MYW-IDEAS-010` na HEAD jest jeszcze niezmierzony.
