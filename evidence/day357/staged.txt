@@ -1,3 +1,2 @@
 docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md
-evidence/day357/g16-przed.txt
-evidence/day357/r1-flagi-wierszy.md
+evidence/day357/r2-kotwice.md

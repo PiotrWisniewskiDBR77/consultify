@@ -13,7 +13,7 @@ zatwierdzony na fikstrurze ≠ ekran, który dostajesz z listy) straciliśmy tyd
 ## Zanim zaczniesz
 
 - **Adres**: `https://staging.consultify.ai`
-- **Wersja**: nadzorca podał znacznik `1c4b5a5635`; Dyżur 350 nie zweryfikował go na stagingu,
+- **Wersja**: nadzorca podał sporny znacznik wersji stagingu `1c4b5a5635`; Dyżur 350 nie zweryfikował go na stagingu,
   ponieważ obowiązuje bezwzględny zakaz połączenia (`Z28`). Poprzednie brzmienie pakietu
   wskazywało `fb6547b7d0`, potwierdzone 04.09 o 05:33. Rozbieżność wymaga odpowiedzi nadzorcy
   przed przelotem.
@@ -62,7 +62,7 @@ Preferencja chipów sugestii jest teraz zapisywana per użytkownik w bazie; usta
 w menu Czatu. Widoczne, jeżeli staging został zredeployowany po `15309dd3a6`.
 (zdezaktualizowane przez `15309dd3a6` — realizacja `DEC-386`). Martwe, równoległe poddrzewo
 wiadomości i stary `ChatPanel` usunięto; kroki powyżej odnoszą się do żywego panelu.
-(zdezaktualizowane przez `1c4b5a5635` — usunięcie martwego poddrzewa Czatu).
+(zdezaktualizowane przez commit `1c4b5a5635` usuwający martwe poddrzewo Czatu).
 
 **Czego NIE zgłaszaj**: restrukturyzacja menu kanw (kebab) w Czacie,
 rozdzielenie historii na rozmowy prywatne/organizacyjne, przemalowanie czerwieni Czatu na
@@ -387,7 +387,7 @@ przelot to potwierdzenie na żywym stagingu.
 | Moduł | Ekran | Co było | Co jest | Warunek i SHA |
 | --- | --- | --- | --- | --- |
 | Chat | menu Czatu | preferencja lokalna | zapis per użytkownik w bazie | widoczne, jeżeli staging zredeployowany po `15309dd3a6` |
-| Chat | panel wiadomości | martwe równoległe poddrzewo | jedna żywa ścieżka | widoczne, jeżeli staging zredeployowany po `1c4b5a5635` |
+| Chat | panel wiadomości | martwe równoległe poddrzewo | jedna żywa ścieżka | widoczne, jeżeli staging zredeployowany po commicie `1c4b5a5635` usuwającym martwe poddrzewo Czatu |
 | My Work | Idee/Notatnik | prototyp poza ścieżką | prawy panel podłączony | kod po `660482d485`; flaga `ff_idea_notebook_right_panel_prototype` domyślnie OFF, więc bez decyzji nadal zobaczysz stary panel i nie jest to defekt (`src/utils/ideaNotebookRightPanelPrototypeFlag.ts:1,27`; `src/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype.tsx:97`) |
 | Interview | karty | niespójne akcje | kontrakt menu akcji | widoczne, jeżeli staging zredeployowany po `924ebd3c7a` |
 | Tools | SWOT | pięć etapów | siedem etapów po włączeniu flagi | kod po `937f2d3193`; domyślnie OFF, więc bez decyzji nadal niewidoczne |
