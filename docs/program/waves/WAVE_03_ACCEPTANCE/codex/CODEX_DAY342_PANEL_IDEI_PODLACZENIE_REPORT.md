@@ -172,3 +172,62 @@ dodaje zapisu szerokosci, zakladki ani sekcji. Realne akcje hostow zachowuja swo
 istniejace handlery, ale R3 nie zmienia ich kontraktu trwałości.
 
 Wymaga plikow przekrojowych: **NIE** — R4 zmienia tylko raport i nie wymaga migracji.
+
+## R5 — kadry z realnego ekranu
+
+Werdykt: **PARTIAL 2/4 ekranow**. Pierwszy przelot ujawnil, ze
+`PrototypeHarness` przy ON podmienial caly ekran na samotny prototyp z atrapami
+`Anna Kowalska`/`Szkic`. W ramach waskiej licencji R5 usunalem te podmiane;
+harness zawsze montuje realny ekran, a flage konsumuje produkcyjny host.
+
+| Ekran / motyw | SHA OFF | SHA ON | Para | luma OFF/ON | tekst OFF/ON |
+| --- | --- | --- | --- | --- | --- |
+| ideas-teresa / light | `3d6c4560b987` | `bfa23543d96a` | ROZNE | 249.25/249.33 | 761/783 |
+| ideas-teresa / dark | `a5b436ebb84f` | `58fefdb6578f` | ROZNE | 31.66/31.45 | 761/783 |
+| notebook-rail / light | `a22dad923967` | `9fd24ab83647` | ROZNE | 249.62/249.70 | 934/944 |
+| notebook-rail / dark | `636f56f2e4d9` | `06a3edc25de0` | ROZNE | 30.51/30.17 | 934/944 |
+| centrum-mysli / light | `a162d4591d6c` | `a162d4591d6c` | **IDENTYCZNE** | 247.29/247.29 | 1092/1092 |
+| centrum-mysli / dark | `8ef1bcf344e2` | `8ef1bcf344e2` | **IDENTYCZNE** | 27.11/27.11 | 1092/1092 |
+| inspector-lekki / light | `765d80f4631f` | `765d80f4631f` | **IDENTYCZNE** | 249.12/249.12 | 1344/1344 |
+| inspector-lekki / dark | `75e08833ab30` | `75e08833ab30` | **IDENTYCZNE** | 18.88/18.88 | 1344/1344 |
+
+Pelne SHA i JSON: `/private/tmp/cx-day342-panel-idei-podlaczenie-artefakty/{off,on}-real-pl`.
+Dodatkowe ON EN light/dark dla `ideas-teresa-panel` i
+`mywork-notebook-rail-speca`: `on-real-en` (4/4 wykonane).
+
+Obejrzane kadry: `ideas-teresa-panel` pokazuje mape po lewej i wspolny panel z
+realnymi Wlasciwosciami, Powiazaniami, Zrodlami, Komentarzami i Historia po prawej;
+`mywork-notebook-rail-speca` pokazuje centrum dokumentu oraz realne metadane,
+governance i powiazania. `notatnik-centrum-mysli` pozostaje ekranem notatki +
+makiety rozmowy Teresy bez produkcyjnego `NotebookRightRail`; `inspector-lekki`
+pozostaje inspektorem elementu, nie hostem panelu artefaktu. Ostatnie dwa prawidlowo
+pozostaly identyczne i nie sa dowodem warstwy 4.
+
+Rozwijanie nie skrocilo tekstu (`sekcjeCofniete=[]`). Light/dark sa mechanicznie
+rozne; wszystkie dark maja luma 18.88-31.66, light 247.29-249.70. Ekran Notatnika
+raportuje 9 bledow konsoli w obu stanach i motywach; pozostale 0. Nie maskuje tego.
+
+### Bramki i §18.1
+
+- `check-artefakt`: PASS, 8 wobec baseline 9.
+- `check-list-canon`: PASS, 368 wobec baseline 368.
+- `check-focus-canon --ci`: PASS, 61 plikow/169 naruszen bez wzrostu.
+- §18.1 panel: kolejnosc sekcji, tokeny `c-*`, zero nowego crimsona, widoczny
+  fokus, Tab i Esc: PASS w zakresie panelu. Menu 1, canvas AI, generator i streaming:
+  n/d, nie sa produktem przewodu. Pelna warstwa 4: PARTIAL 2/4.
+
+Wymaga plikow przekrojowych: **NIE** — `dev-render/main.tsx` ma waska licencje R5;
+usunieto tylko podmiane realnego ekranu na izolowany prototyp. Kanonicznego skryptu
+zrzutow i macierzy nie zmieniono.
+
+### Cztery pytania dyzuru 302
+
+1. Historia / AI razem: **NIE, rozstrzygniete** przez nowszy kanon: Historia bez AI.
+2. Akcje domyslnie rozwiniete w obu kontekstach: **TAK, rozstrzygniete w kodzie**.
+3. Ponizej 1280 px zawsze drawer: **NIE ROZSTRZYGNIETE**; brak pomiaru breakpointu.
+4. Lokalne podgrupy Powiazan w jednej sekcji: **TAK, zachowane** przez przekazanie
+   realnych sekcji hostow bez splaszczania.
+
+Flaga konczy dyzur domyslnie **OFF**. Do decyzji wlasciciela nadaja sie w tej
+kolejnosci kadry ON: ideas-teresa light, notebook-rail light, potem ich pary dark
+i EN. Dwa identyczne ekrany nie sa materialem do akceptacji wlaczenia.
