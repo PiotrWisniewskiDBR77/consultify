@@ -39487,10 +39487,10 @@
         "org": "Organizacja"
       },
       "sourceType": {
-        "ASSESSMENT": "Assessment",
-        "INTERVIEW": "Interview",
-        "TOOL": "Tool",
-        "INITIATIVE": "Initiative"
+        "ASSESSMENT": "Ocena",
+        "INTERVIEW": "Wywiad",
+        "TOOL": "Narzędzie",
+        "INITIATIVE": "Inicjatywa"
       },
       "audience": {
         "executive": "Zarząd",
@@ -39560,7 +39560,7 @@
       "title": "Nowy raport z assessmentu",
       "subtitle": "Wybierz assessment i szablon. Wersja robocza zostanie wygenerowana.",
       "close": "Zamknij",
-      "assessment": "Assessment",
+      "assessment": "Ocena",
       "noApprovedAssessments": "Brak zatwierdzonych assessmentów",
       "selectAssessmentPlaceholder": "Wybierz assessment…",
       "onlyApprovedWarning": "Tylko zatwierdzone assessmenty mogą być użyte do utworzenia raportu. Najpierw zatwierdź assessment.",
@@ -39622,7 +39622,7 @@
       "mixed": "Mieszany",
       "goal": "Cel",
       "diagnosis": "Diagnoza",
-      "roadmap": "Roadmap",
+      "roadmap": "Mapa drogowa",
       "investment": "Decyzja inwest.",
       "update": "Aktualizuj",
       "summary": "Podsumowanie",
@@ -39636,7 +39636,7 @@
       "length": "Długość",
       "short": "Krótki",
       "long": "Długi",
-      "preset": "Preset",
+      "preset": "Ustawienie wstępne",
       "contentCoherence": "Spójność treści",
       "narrativeThread": "Główna teza raportu",
       "eGTheOrganizationNeedsA": "Np. \"Organizacja potrzebuje fundamentalnej zmiany w podejściu do danych...\"",
@@ -39847,7 +39847,7 @@
       "sellConvince": "Sprzedać / przekonać",
       "alignStakeholders": "Zgrać zespół",
       "communicationRegister": "Rejestr komunikacji",
-      "executive": "Executive",
+      "executive": "Kadra zarządzająca",
       "professional": "Profesjonalny",
       "technical": "Techniczny",
       "narrative": "Narracyjny",
@@ -39945,7 +39945,7 @@
       "send": "Wyślij",
       "client": "Klient",
       "close": "Zamknij",
-      "workflow": "Workflow",
+      "workflow": "Przepływ pracy",
       "distribution": "Dystrybucja",
       "revise": "Popraw",
       "reject": "Odrzuć",
@@ -40862,8 +40862,8 @@
       "targetErrorRate": "Cel: wskaźnik błędów (%)",
       "targetErrorRatePlaceholder": "np. 1",
       "estimatedHoursPerWeek": "Szacowane godziny / tydzień",
-      "baselineLabel": "Baseline",
-      "targetLabel": "Target"
+      "baselineLabel": "Poziom bazowy",
+      "targetLabel": "Cel"
     },
     "impactHypothesisStep": {
       "title": "Hipoteza wpływu",
@@ -40872,9 +40872,9 @@
       "metricPlaceholder": "np. czas cyklu, koszt, błędy...",
       "unit": "Jednostka",
       "unitPlaceholder": "np. min/tydzień, %, PLN",
-      "baseline": "Baseline",
+      "baseline": "Poziom bazowy",
       "baselinePlaceholder": "Wartość bazowa",
-      "target": "Target",
+      "target": "Cel",
       "targetPlaceholder": "Wartość docelowa",
       "timeframe": "Horyzont",
       "timeframePlaceholder": "np. 6 tygodni / Q2",
@@ -41782,7 +41782,7 @@
       "comment": "Komentarz",
       "sendBackReasonPlaceholder": "Powod odeslania do Draft",
       "confirmApproval": "Potwierdzam zatwierdzenie",
-      "approve": "Approve",
+      "approve": "Zatwierdź",
       "sendBackToDraft": "Odeślij do szkicu"
     },
     "knownToolPreviewV3": {
@@ -41918,7 +41918,7 @@
       "swotCards": "Karty SWOT",
       "moves": "Ruchy",
       "accepted": "zaakceptowanych",
-      "readiness": "Readiness",
+      "readiness": "Gotowość",
       "ready": "gotowe",
       "needsWork": "wymaga pracy",
       "aiCoachBrief": "Brief coacha AI",
@@ -41982,8 +41982,8 @@
       "next": "Dalej",
       "appliedConclusionsReadiness": "Applied conclusions i gotowość",
       "status": "Status",
-      "progress": "Progress",
-      "created2": "Created",
+      "progress": "Postęp",
+      "created2": "Utworzono",
       "lastModified": "Ostatnia zmiana",
       "appliedConclusions": "Zastosowane wnioski",
       "finalSourceSummary": "Końcowe podsumowanie źródeł",
@@ -42008,7 +42008,7 @@
       "noLinksYet": "Brak powiązań",
       "requestReview": "Poproś o przegląd",
       "approveThisSession": "Zatwierdź sesję",
-      "approve": "Approve",
+      "approve": "Zatwierdź",
       "sendBackToDraftWithAComment": "Odeślij do draftu z komentarzem",
       "sendBack": "Odeślij",
       "generateInitiatives": "Generuj inicjatywy",
@@ -42017,7 +42017,7 @@
       "decisionOwner": "Właściciel decyzji",
       "select": "-- Wybierz --",
       "dueDate": "Termin",
-      "priority": "Priority",
+      "priority": "Priorytet",
       "cancel": "Anuluj",
       "sendReview": "Wyślij prośbę o przegląd",
       "sessionVisibilityDescription": "Sesja ma pokazywać pytanie decyzyjne, jakość dowodów, warstwę syntezy i gotowość outputów bez ukrywania pracy AI.",
@@ -42772,7 +42772,7 @@
       },
       "inputExplorationPhase": {
         "consultantProposal": "Propozycja konsultanta",
-        "draft": "Draft",
+        "draft": "Wersja robocza",
         "totalAccepted": "Zaakceptowane punkty",
         "confirmedAreas": "Potwierdzone obszary",
         "activeDialogue": "Aktywne dialogi",
@@ -43169,15 +43169,15 @@
         "title": "KPI i progi",
         "description": "Zdefiniuj KPI, targety i ownerów.",
         "kpiPlaceholder": "KPI...",
-        "targetPlaceholder": "Target...",
+        "targetPlaceholder": "Cel...",
         "frequencyPlaceholder": "Częstotliwość...",
-        "ownerPlaceholder": "Owner...",
+        "ownerPlaceholder": "Właściciel...",
         "addKpi": "Dodaj KPI",
         "hint": "KPI powinny mieć jasny target i ownera.",
         "empty": "Brak KPI",
-        "targetLabel": "Target",
+        "targetLabel": "Cel",
         "frequencyLabel": "Częstotliwość",
-        "ownerLabel": "Owner"
+        "ownerLabel": "Właściciel"
       },
       "smedStepsStep": {
         "title": "Kroki przezbrojenia",
@@ -43217,12 +43217,12 @@
         "description": "Zdefiniuj progi i właścicieli eskalacji.",
         "rulePlaceholder": "Reguła...",
         "thresholdPlaceholder": "Próg...",
-        "ownerPlaceholder": "Owner...",
+        "ownerPlaceholder": "Właściciel...",
         "addRule": "Dodaj regułę",
         "hint": "Reguły powinny mieć próg i właściciela eskalacji.",
         "empty": "Brak reguł",
         "thresholdLabel": "Próg",
-        "ownerLabel": "Owner"
+        "ownerLabel": "Właściciel"
       },
       "a3CountermeasuresStep": {
         "title": "Środki zaradcze",
@@ -43232,7 +43232,7 @@
         "targetPlaceholder": "KPI / cel...",
         "hint": "Powiąż działanie z mierzalnym KPI.",
         "empty": "Brak działań",
-        "ownerLabel": "Owner",
+        "ownerLabel": "Właściciel",
         "targetLabel": "Cel"
       },
       "sopStandardsStep": {
@@ -43254,7 +43254,7 @@
         "ownerPlaceholder": "Owner / Rola...",
         "hint": "Każdy punkt powinien mieć odpowiedzialną rolę.",
         "empty": "Brak checklist",
-        "ownerLabel": "Owner"
+        "ownerLabel": "Właściciel"
       },
       "inventoryClassificationStep": {
         "title": "Klasyfikacja ABC/XYZ",

@@ -1,7 +1,7 @@
 # Rejestr języka polskiego — identyczne wartości PL/EN
 
 Generator: `node scripts/dev/i18n-pl-audyt.mjs`  
-Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; UZASADNIONE: 518; PL bez EN: 2005.
+Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZASADNIONE: 518; PL bez EN: 2005.
 
 | Klucz | Wartość PL | Wartość EN | Klasa | Powód | Commit |
 |---|---|---|---|---|---|
@@ -11,7 +11,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `common.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `common.statusLabel` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `common.bulk.done` | {{count}} {{noun}} | {{count}} {{noun}} | UZASADNIONE | tekst techniczny z placeholderem danych | — |
-| `common.chatAbout` | Chat | Chat | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `superadmin.playbookTemplates.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `superadmin.emailTemplates.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `superadmin.ai.observatory.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -29,20 +28,13 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `sidebar.superAdmin` | SuperAdmin | SuperAdmin | UZASADNIONE | nazwa roli produktowej | — |
 | `sidebar.mcpIris` | MCP IRIS | MCP IRIS | UZASADNIONE | skrót lub kod techniczny | — |
 | `sidebar.mcpMarketplace` | MCP Marketplace | MCP Marketplace | UZASADNIONE | nazwa modułu produktowego | — |
-| `myWork.home` | Home | Home | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.manager` | Manager | Manager | UZASADNIONE | poprawny polski termin | — |
-| `myWork.radar.blocks.momentum` | Momentum | Momentum | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.radar.benchmark` | Benchmark | Benchmark | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWork.radar.visibility.demo` | Demo | Demo | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `myWork.radar.triage.category.governance_compliance` | Governance | Governance | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.whiteboard.facilitation.start` | Start | Start | UZASADNIONE | poprawny polski termin | — |
 | `myWork.whiteboard.nodes.defaultLink` | Link | Link | UZASADNIONE | poprawny polski termin techniczny | — |
-| `myWork.whiteboard.toolbarExtra.title` | Whiteboard | Whiteboard | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `myWork.notebook.createTask` | Task | Task | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.filters.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `myWork.hub.label26` | Inbox | Inbox | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.hub.name9` | Folder | Folder | UZASADNIONE | poprawny polski termin techniczny | — |
-| `myWork.hub.label52` | Inbox | Inbox | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWork.inboxContent.label16` | System | System | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `myWork.inboxContent.typeFilter.system` | System | System | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `myWork.inboxContent.sourceFilter.system` | System | System | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -75,7 +67,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `interview.inference.categories.trend` | Trend | Trend | UZASADNIONE | poprawny polski termin | — |
 | `interview.reviewer.link` | Link | Link | UZASADNIONE | poprawny polski termin techniczny | — |
 | `interview.hub.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `interview.insightViewer.insight` | Insight | Insight | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `interview.insightViewer.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `interview.workspace.status` | Status: | Status: | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `interview.singleQuestionRuntime.stop` | Stop | Stop | UZASADNIONE | poprawny polski termin | — |
@@ -86,10 +77,7 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `interview.templateLibraryMeta.areaTag.compliance` | Compliance | Compliance | UZASADNIONE | termin branżowy | — |
 | `assessment.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `assessment.aiSuggestions.quickWins` | Quick Wins | Quick Wins | UZASADNIONE | nazwa metodyki | — |
-| `assessment.preview.framework` | Framework | Framework | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `assessment.preview.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `assessment.preview.frameworkLabel` | Framework | Framework | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `assessment.preview.assessmentLabel` | Assessment | Assessment | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `assessment.adma.editor.viewRadar` | Radar | Radar | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `assessment.team.partner` | Partner | Partner | UZASADNIONE | poprawny polski termin | — |
 | `assessment.workflowStages.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -112,16 +100,11 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `initiatives.analysis.completeness.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `initiatives.problem` | Problem | Problem | UZASADNIONE | poprawny polski termin | — |
 | `initiatives.plan` | Plan | Plan | UZASADNIONE | poprawny polski termin | — |
-| `initiatives.tracking` | Tracking | Tracking | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `initiatives.insight` | Insight | Insight | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.problem2` | Problem | Problem | UZASADNIONE | poprawny polski termin | — |
 | `initiatives.plan2` | Plan | Plan | UZASADNIONE | poprawny polski termin | — |
-| `initiatives.tracking2` | Tracking | Tracking | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.format2` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `initiatives.initiativeSourceLink.insight` | Insight | Insight | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.initiativeCharterWizard.lever.compliance` | Compliance | Compliance | UZASADNIONE | termin branżowy | — |
-| `initiatives.initiativeCharterWizard.owner` | Owner | Owner | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.initiativeCharterWizard.sponsor` | Sponsor | Sponsor | UZASADNIONE | poprawny polski termin | — |
 | `initiatives.tasksMilestonesSection.columnStatus` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `initiatives.decisionsSection.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -131,7 +114,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `initiatives.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `initiatives.calendarView.gantt` | Gantt | Gantt | UZASADNIONE | nazwa metodyki | — |
 | `initiatives.observability.kpiCount` | {{count}} KPI | {{count}} KPI | UZASADNIONE | tekst techniczny z placeholderem danych | — |
-| `initiatives.initiativeDocumentView.targetSuccessDeliverablesPlaceholder` | Deliverable... | Deliverable... | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `initiatives.panel.raid` | RAID | RAID | UZASADNIONE | skrót lub kod techniczny | — |
 | `execution.demo.label` | Demo | Demo | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `execution.execSnapshot.risks.raids` | RAID log | RAID log | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -140,12 +122,10 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `execution.rollout.closure.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `execution.reports.intelligence.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `execution.reports.intelligence.control.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `execution.reports.intelligence.control.severity` | Severity | Severity | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `execution.reports.intelligence.control.metrics.notVerified` | NOT_VERIFIED | NOT_VERIFIED | UZASADNIONE | skrót lub kod techniczny | — |
 | `execution.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `execution.mitigation.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `execution.changeSignals.championRole.sponsor` | Sponsor | Sponsor | UZASADNIONE | poprawny polski termin | — |
-| `execution.changeSignals.championRole.champion` | Champion | Champion | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `execution.whatIf.reset` | Reset | Reset | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `execution.whatIf.intervention.addResource` | +1 FTE | +1 FTE | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `execution.control.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -157,21 +137,9 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `reports.automation.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `reports.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `reports.toast.templateNameRequired` | Nazwa szablonu jest wymagana | Nazwa szablonu jest wymagana | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `help.sidePanel.modules.dashboard` | Dashboard | Dashboard | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `help.sidePanel.modules.superadmin` | Super Admin | Super Admin | UZASADNIONE | nazwa roli produktowej | — |
 | `settings.ownership.modules.copilot` | AI / Copilot | AI / Copilot | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.profile.jobTitleSuggestions.manager` | Manager | Manager | UZASADNIONE | poprawny polski termin | — |
-| `settings.profile.jobTitleSuggestions.projectManager` | Project Manager | Project Manager | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.productManager` | Product Manager | Product Manager | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.programManager` | Program Manager | Program Manager | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.techLead` | Tech Lead | Tech Lead | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.developer` | Developer | Developer | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.softwareEngineer` | Software Engineer | Software Engineer | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.dataScientist` | Data Scientist | Data Scientist | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.principalConsultant` | Principal Consultant | Principal Consultant | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.designer` | Designer | Designer | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.uxDesigner` | UX Designer | UX Designer | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `settings.profile.jobTitleSuggestions.productDesigner` | Product Designer | Product Designer | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `settings.profile.timezones.Europe/Berlin` | Berlin (CET/CEST) | Berlin (CET/CEST) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.profile.timezones.America/Chicago` | Chicago (CST/CDT) | Chicago (CST/CDT) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.profile.timezones.America/Denver` | Denver (MST/MDT) | Denver (MST/MDT) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -194,11 +162,9 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `settings.notifications.channels.channel.teams` | Microsoft Teams | Microsoft Teams | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.notifications.channels.channel.whatsapp` | WhatsApp | WhatsApp | UZASADNIONE | nazwa produktu | — |
 | `settings.notifications.digest.format_html` | HTML | HTML | UZASADNIONE | skrót lub kod techniczny | — |
-| `settings.notifications.sounds.sound_bell` | Bell | Bell | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `settings.integrations.calendarProviders.outlook` | Outlook | Outlook | UZASADNIONE | nazwa produktu | — |
 | `settings.emailDigest.cat_marketing` | Marketing | Marketing | UZASADNIONE | poprawny polski termin | — |
 | `settings.emailDigest.format_html` | HTML | HTML | UZASADNIONE | skrót lub kod techniczny | — |
-| `settings.desktopSounds.sound_bell` | Bell | Bell | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `settings.shortcuts.presets.vscode.label` | VS Code | VS Code | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.shortcuts.presets.sublime.label` | Sublime Text | Sublime Text | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.shortcuts.editor.categories.system` | System | System | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -226,17 +192,12 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `settings.tabs.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `settings.approvalPatterns.modeAuto` | Auto | Auto | UZASADNIONE | poprawny polski termin | — |
 | `settings.authAccess.phonePlaceholder` | +48... | +48... | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `showcase.common.framework` | Framework | Framework | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `showcase.audits.items.siri.fullName` | Smart Industry Readiness Index | Smart Industry Readiness Index | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `showcase.audits.items.adma.fullName` | Advanced Digital Maturity Assessment | Advanced Digital Maturity Assessment | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `showcase.audits.items.lean-4-0.name` | Lean 4.0 | Lean 4.0 | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `landing.topBar.menu` | Menu | Menu | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `landing.howItWorks.tech.vector` | DBR77 Vector | DBR77 Vector | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `landing.howItWorksPage.teaserLabel` | Teaser | Teaser | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `landing.whereItHappens.features.aiCore.badge` | AI Core | AI Core | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `landing.whereItHappens.features.deliverables.badge` | Deliverables | Deliverables | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `landing.films.film5.description` | Teaser | Teaser | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `landing.films.film6.description` | Teaser | Teaser | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `landing.compliance.badges.iso27001` | ISO 27001 | ISO 27001 | UZASADNIONE | skrót lub kod techniczny | — |
 | `landing.compliance.badges.soc2` | SOC2 Type II | SOC2 Type II | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `landing.footer.knowledge.blog` | Blog | Blog | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -246,7 +207,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `partner.beta.stories.1.company` | TransformACE Consulting | TransformACE Consulting | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `partner.onboarding.bonus` | Bonus | Bonus | UZASADNIONE | poprawny polski termin | — |
 | `partner.contact.name` | Bartosz Sotomski | Bartosz Sotomski | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `partner.contact.role` | Partner Success Manager | Partner Success Manager | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `partner.footer.community.slack` | Partner Slack | Partner Slack | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `partner.sidebar.subtitle` | DBR77 Consultify | DBR77 Consultify | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `partner.clientAccess.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -258,17 +218,14 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `partner.home.academy.courses.success.duration` | 30 min | 30 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `partner.home.onboarding.bonusLabel` | Bonus | Bonus | UZASADNIONE | poprawny polski termin | — |
 | `partner.earnings.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `kb.chip.governance` | Governance | Governance | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `cloud.providers.google_drive` | Google Drive | Google Drive | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `cloud.providers.onedrive` | OneDrive | OneDrive | UZASADNIONE | nazwa produktu | — |
 | `cloud.providers.dropbox` | Dropbox | Dropbox | UZASADNIONE | nazwa produktu | — |
 | `cloud.providers.sharepoint` | SharePoint | SharePoint | UZASADNIONE | nazwa produktu | — |
-| `businessCase.title` | Business Case | Business Case | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `chat.coThinker.title` | Co-Thinker | Co-Thinker | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `chat.orgMemory.problemLabel` | Problem: | Problem: | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `aiChat.composer.commands.agents.label` | Multi-agent | Multi-agent | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `aiChat.chatMenuTitle` | Menu | Menu | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `aiChat.homeCards.finance.m16.monteCarlo.driverLabel` | Driver | Driver | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `aiChat.homeCards.finance.m16.monteCarlo.addDriver` | + driver | + driver | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `aiChat.homeCards.finance.m16.monteCarlo.seed` | Seed | Seed | UZASADNIONE | termin techniczny | — |
 | `aiChat.homeCards.finance.m16.monteCarlo.probPositive` | P(NPV > 0) | P(NPV > 0) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -300,7 +257,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `admin.security.break-glass.title` | Break-glass | Break-glass | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `admin.security.break-glass.columns.administrator` | Administrator | Administrator | UZASADNIONE | poprawny polski termin | — |
 | `admin.membersRoles.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `admin.operations.tabs.branding.label` | Branding | Branding | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `admin.aiControlCenter.policyGovernance.levels.autopilot.title` | Autopilot | Autopilot | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `admin.aiControlCenter.missionControl.resultLatency` | {{status}} ({{latency}}ms) | {{status}} ({{latency}}ms) | UZASADNIONE | tekst techniczny z placeholderem danych | — |
 | `admin.aiControlCenter.accessLimits.tiers.premium.name` | Premium | Premium | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -314,7 +270,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `admin.aiControlCenter.llmView.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `admin.aiControlCenter.llmView.test` | Test | Test | UZASADNIONE | poprawny polski termin | — |
 | `admin.aiControlCenter.orgAISettings.levels.autopilot.title` | Autopilot | Autopilot | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `admin.ai.configuration-versions.columns.preset` | Preset | Preset | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `admin.ai.configuration-versions.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `admin.ai.configuration-versions.columns.prompt` | Prompt | Prompt | UZASADNIONE | termin techniczny AI | — |
 | `admin.ai.configuration-versions.columns.model` | Model | Model | UZASADNIONE | poprawny polski termin | — |
@@ -331,7 +286,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `tools.hub.outputs.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `tools.hub.table.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `tools.hub.initiatives.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `tools.domain.sizing` | Sizing | Sizing | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `finance.exportImport.manifest` | Manifest | Manifest | UZASADNIONE | poprawny polski termin techniczny | — |
 | `finance.model.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `finance.cta.importPdf` | Import PDF | Import PDF | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -356,7 +310,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `finance.versions.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `finance.driverPlanner.reset` | Reset | Reset | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `portfolio.ai.scenarioTimeBoxed` | Time-boxed | Time-boxed | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `portfolio.ai.scenarioBudgetBoxed` | Budget-boxed | Budget-boxed | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `organization.synthesis.risks.modal.aiSuggestedIndustry` | Automotive | Automotive | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `organization.governance.visibilityScopes.demo` | Demo | Demo | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `organization.governance.claimPaths.profile.linkedinUrl` | LinkedIn | LinkedIn | UZASADNIONE | nazwa własna | — |
@@ -383,13 +336,9 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `feedback.panelContext.modules.admin` | Admin | Admin | UZASADNIONE | skrót roli administratora | — |
 | `feedback.panelContext.modules.superadmin` | SuperAdmin | SuperAdmin | UZASADNIONE | nazwa roli produktowej | — |
 | `feedback.panelContext.device.tablet` | tablet | tablet | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `command.nav.dashboard` | Dashboard | Dashboard | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `command.nav.inbox` | Inbox | Inbox | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `results.summary.columns.monitoring` | Monitoring | Monitoring | UZASADNIONE | poprawny polski termin | — |
-| `results.columns.baseline` | Baseline | Baseline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `results.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `results.columns.trend` | Trend | Trend | UZASADNIONE | poprawny polski termin | — |
-| `results.drawer.baseline` | Baseline | Baseline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `results.roi.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `results.roi.rowCapex` | CAPEX | CAPEX | UZASADNIONE | skrót lub kod techniczny | — |
 | `results.reconciliation.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -398,7 +347,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `results.strategic.bdn` | Benefits Dependency Network | Benefits Dependency Network | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `results.ai.premiumBadge` | AI premium | AI premium | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `traceability.sourceType.mywork` | MyWork | MyWork | UZASADNIONE | nazwa modułu produktowego | — |
-| `traceability.sourceType.assessment` | Assessment | Assessment | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `rap.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `rap.actions.askAI` | Zapytaj AI | Zapytaj AI | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `rap.preview.scope` | Zakres | Zakres | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -411,15 +359,10 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `rap.outputs.visibility.demo` | Demo | Demo | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `rbHub.tabs.r1r4` | R1–R4 | R1–R4 | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `rbHub.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `pricing.plans.trial.name` | Trial | Trial | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `pricing.plans.user.name` | User | User | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `pricing.plans.user.price` | EUR 29 | EUR 29 | UZASADNIONE | skrót lub kod techniczny | — |
 | `pricing.plans.manager.name` | Admin | Admin | UZASADNIONE | skrót roli administratora | — |
 | `pricing.plans.manager.price` | EUR 49 | EUR 49 | UZASADNIONE | skrót lub kod techniczny | — |
 | `pricing.plans.enterprise.name` | Enterprise | Enterprise | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `pricing.plans.enterprise.subtitle` | custom setup | custom setup | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `pages.partner.tiers.items.registered.title` | Registered | Registered | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `pages.partner.tiers.items.certified.title` | Certified | Certified | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `pages.partner.tiers.items.premier.title` | Premier | Premier | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `pages.partner.process.steps.onboarding.title` | Onboarding | Onboarding | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.remix` | Remix | Remix | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -427,7 +370,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `kimi.tabele.preview.statusKpi` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `kimi.tabele.preview.formatKpi` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `kimi.artifactHome.laneLabel.excele` | Excel | Excel | UZASADNIONE | nazwa produktu | — |
-| `kimi.template.grid.governanceTitle` | Governance | Governance | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `kimi.template.grid.governanceShort` | Govern. | Govern. | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.shell.lane.prezentacje` | Prezentacje | Prezentacje | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.tabeleShell.aiEditor.levelTitle` | {{label}} — {{description}} | {{label}} — {{description}} | UZASADNIONE | tekst techniczny z placeholderem danych | — |
@@ -436,10 +378,8 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `contact.email` | Email | Email | UZASADNIONE | międzynarodowy termin interfejsowy | — |
 | `chatOutputTool.auto` | Auto | Auto | UZASADNIONE | poprawny polski termin | — |
 | `meeting.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `meeting.followUpRecords.titlePlaceholder` | Follow-up… | Follow-up… | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `meeting.preRead` | Pre-read | Pre-read | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `meeting.agenda` | Agenda | Agenda | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `meeting.followUp2` | Follow-up | Follow-up | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `manager.col.problem` | Problem | Problem | UZASADNIONE | poprawny polski termin | — |
 | `audit.program` | Program | Program | UZASADNIONE | poprawny polski termin | — |
 | `audit.iso27001` | ISO 27001 | ISO 27001 | UZASADNIONE | skrót lub kod techniczny | — |
@@ -463,14 +403,9 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `canvas.workShell.readBack.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `integrations.syncHub.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `decisions.detail.toast.aiFailedWithReason` | {{what}} — {{reason}}. | {{what}} — {{reason}}. | UZASADNIONE | tekst techniczny z placeholderem danych | — |
-| `decisions.detail.workflow.label` | Workflow | Workflow | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `decisions.detail.header.workflowBadgeLabel` | Workflow | Workflow | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `decisions.detail.governance.colEmail` | Email | Email | UZASADNIONE | międzynarodowy termin interfejsowy | — |
-| `decisions.detail.governance.remindersTitlePlain` | Reminders | Reminders | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `decisions.detail.governance.escalationTitlePlain` | Escalation | Escalation | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `decisions.detail.governance.colStatus` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `decisions.detail.governance.raciTitleShort` | RACI | RACI | UZASADNIONE | skrót lub kod techniczny | — |
-| `decisions.detail.clickupTabs.overview` | Overview | Overview | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `decisions.detail.linkedItems.colStatus` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `decisions.detail.infoPane.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `decisions.detail.integrations.placeholderOps` | slack:#ops, jira:DRD | slack:#ops, jira:DRD | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -481,14 +416,8 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `documentStudio.view.title` | Consultify Document Studio | Consultify Document Studio | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `documentStudio.panel.shareToken` | Token | Token | UZASADNIONE | termin techniczny | — |
 | `task.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `interfacesIndex.tplDashboard` | Dashboard | Dashboard | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `conclusions.source.readout` | Readout | Readout | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `mindmap.persistence.branchProblem` | Problem | Problem | UZASADNIONE | poprawny polski termin | — |
-| `ideas.table.framework` | Framework | Framework | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `ideas.table.workflow` | Workflow | Workflow | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `ideas.table.interfaceDesigner.config.placeholder` | Placeholder | Placeholder | UZASADNIONE | termin techniczny | — |
-| `ideas.table.scoring` | Scoring | Scoring | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `ideas.table.pipeline` | Pipeline | Pipeline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `ideas.table.import` | Import | Import | UZASADNIONE | poprawny polski termin | — |
 | `ideas.table.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `ideas.table.wizardStep.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
@@ -497,7 +426,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `ideas.table.channel.teams` | Teams | Teams | UZASADNIONE | nazwa własna | — |
 | `ideas.table.channel.webhook` | Webhook | Webhook | UZASADNIONE | termin techniczny | — |
 | `ideas.table.column.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `ideas.table.viewPreset.scoring` | Scoring | Scoring | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `ideas.table.phonePlaceholder` | +48... | +48... | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `ideas.table.emailPlaceholder` | email@... | email@... | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `ideas.table.publicForm.urlPlaceholder` | https://... | https://... | UZASADNIONE | adres URL — dane techniczne | — |
@@ -512,8 +440,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `ideas.financial.chart.sensitivity.low` | -20% | -20% | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `ideas.financial.chart.sensitivity.high` | +20% | +20% | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `notebook.notebookContent.placeholder2` | + tag | + tag | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `notebook.notebookContent.label89` | Outline | Outline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `notebook.canonicalPathStrip.label7` | Attachments | Attachments | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `notebook.canonicalPathStrip.label12` | Review | Review | UZASADNIONE | termin branżowy | — |
 | `notebook.exportMenu.label2` | Word (.docx) — beta | Word (.docx) — beta | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `notebook.bubbleToolbar.link` | Link | Link | UZASADNIONE | poprawny polski termin techniczny | — |
@@ -537,91 +463,52 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 631; DEFEKT: 113; U
 | `myWorkTable.fieldManager.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `myWorkTable.distributionBuilder.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `myWorkTable.collaborationPresence.lockTypeSchema` | Schema | Schema | UZASADNIONE | termin techniczny | — |
-| `myWorkTable.collaborationPresence.lockTypeDocument` | Document | Document | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `myWorkTable.collaborationPresence.lockTypePhase` | Phase | Phase | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWorkTable.collaborationPresence.lockTypeObject` | Object | Object | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkTable.collaborationPresence.online` | online | online | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkTable.ideaStartupTemplates.problem` | Problem | Problem | UZASADNIONE | poprawny polski termin | — |
 | `myWorkTable.ideaStartupTemplates.start` | Start | Start | UZASADNIONE | poprawny polski termin | — |
 | `myWorkTable.inlineAIFill.aiFillButton` | AI Fill ({{count}}) | AI Fill ({{count}}) | UZASADNIONE | tekst techniczny z placeholderem danych | — |
 | `myWorkTable.offlineIndicator.offline` | Offline | Offline | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `myWorkNotebook.aiChatInlinePanel.convertTask` | Task | Task | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `myWorkNotebook.aiChatInlinePanel.convertIdea` | Idea | Idea | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `myWorkNotebook.aiChatInlinePanel.convertAssessment` | Assessment | Assessment | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `myWorkNotebook.convertChecklistModal.taskSingular` | task | task | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWorkNotebook.toolbar.link` | Link (Ctrl+K) | Link (Ctrl+K) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkMindmap.importExport.xmindFreemindOpml` | XMind / FreeMind / OPML | XMind / FreeMind / OPML | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkMindmap.importExport.json` | JSON | JSON | UZASADNIONE | skrót lub kod techniczny | — |
 | `myWorkMindmap.importExport.mermaidPlantuml` | Mermaid / PlantUML | Mermaid / PlantUML | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkMindmap.importExport.csvExcel` | CSV (Excel) | CSV (Excel) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkMindmap.moreTools.minimap` | Minimap | Minimap | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `myWorkMindmap.category.workflow` | Workflow | Workflow | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWorkMindmap.template.pf-o2c` | Order to Cash | Order to Cash | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `myWorkMindmap.template.wb-bmc` | Business Model Canvas | Business Model Canvas | UZASADNIONE | nazwa metodyki | — |
 | `myWorkMindmap.template.wb-lean-canvas` | Lean Canvas | Lean Canvas | UZASADNIONE | nazwa metodyki | — |
-| `myWorkMindmap.toolbar.tbl.dashboard` | Dashboard | Dashboard | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWorkMindmap.inspector.theme.ocean` | Ocean | Ocean | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `myWorkMindmap.semanticOption.insight` | Insight | Insight | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `myWorkMindmap.ideaSemanticOption.blocker` | Blocker | Blocker | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `sharedComponents.artifactActionPanel.template` | Template | Template | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `sharedComponents.artifactActionPanel.titlePrefix.idea` | Idea | Idea | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `sharedComponents.raidCanvas.raidLog` | RAID Log | RAID Log | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `sharedComponents.aiFieldEnhancer.failedWithReason` | {{what}} — {{reason}}. | {{what}} — {{reason}}. | UZASADNIONE | tekst techniczny z placeholderem danych | — |
 | `sharedComponents.artifactPreviewCard.metaStatus` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `reportBuilder.blockTypesManager.render.markdown` | Markdown | Markdown | UZASADNIONE | nazwa formatu | — |
 | `reportBuilder.blockTypesManager.render.json` | JSON | JSON | UZASADNIONE | skrót lub kod techniczny | — |
 | `reportBuilder.blockTypesManager.modal.sourcesPlaceholder` | ASSESSMENT, TOOL | ASSESSMENT, TOOL | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `reportBuilder.templatesManager.sourceType.ASSESSMENT` | Assessment | Assessment | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.templatesManager.sourceType.INTERVIEW` | Interview | Interview | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.templatesManager.sourceType.TOOL` | Tool | Tool | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.templatesManager.sourceType.INITIATIVE` | Initiative | Initiative | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `reportBuilder.templatesManager.columns.format` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `reportBuilder.templatesManager.systemAuthor` | System | System | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `reportBuilder.newAssessmentReportModal.assessment` | Assessment | Assessment | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.settingsPanel.roadmap` | Roadmap | Roadmap | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.settingsPanel.preset` | Preset | Preset | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `reportBuilder.settingsPanel.font` | Font | Font | UZASADNIONE | poprawny polski termin techniczny | — |
 | `reportBuilder.editor.agent` | Agent | Agent | UZASADNIONE | poprawny polski termin | — |
 | `reportBuilder.blockCard.feedback` | Feedback | Feedback | UZASADNIONE | termin branżowy | — |
-| `reportBuilder.intentStep.executive` | Executive | Executive | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `reportBuilder.reviewPanel.workflow` | Workflow | Workflow | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `reportBuilder.exportSharePanel.docx` | DOCX | DOCX | UZASADNIONE | skrót lub kod techniczny | — |
 | `discoveryToolsSteps.summaryStep.generic.metrics.stars` | Stars | Stars | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `discoveryToolsSteps.summaryStep.generic.metrics.dogs` | Dogs | Dogs | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `discoveryToolsSteps.processAutomationMeasurementStep.baselineLabel` | Baseline | Baseline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsSteps.processAutomationMeasurementStep.targetLabel` | Target | Target | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsSteps.impactHypothesisStep.baseline` | Baseline | Baseline | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsSteps.impactHypothesisStep.target` | Target | Target | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsSteps.prepareStep.timeline` | Timeline | Timeline | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `discoveryToolsMain.generateInitiativesModal.customPlaceholder` | Custom (1-7) | Custom (1-7) | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `discoveryToolsMain.toolReviewPanel.reviewTitle` | Review | Review | UZASADNIONE | termin branżowy | — |
-| `discoveryToolsMain.toolReviewPanel.approve` | Approve | Approve | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsMain.knownToolPreviewV3.categoryDigital` | Digital | Digital | UZASADNIONE | międzynarodowa etykieta domeny | — |
 | `discoveryToolsMain.knownToolPreviewV3.snippets.dynamic-swot.duration` | 60-90 min | 60-90 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `discoveryToolsMain.knownToolPreviewV3.snippets.market-forces.duration` | 60-90 min | 60-90 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `discoveryToolsMain.knownToolPreviewV3.snippets.growth-paths.duration` | 60-90 min | 60-90 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `discoveryToolsMain.knownToolPreviewV3.snippets.portfolio-priority.duration` | 60-90 min | 60-90 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
 | `discoveryToolsMain.knownToolPreviewV3.snippets.risk-uncertainty.duration` | 60-90 min | 60-90 min | UZASADNIONE | wartość liczbowa albo jednostka | — |
-| `discoveryToolsMain.toolContextPanel.readiness` | Readiness | Readiness | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsMain.toolDocumentView.review` | Review | Review | UZASADNIONE | termin branżowy | — |
 | `discoveryToolsMain.toolDocumentView.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `discoveryToolsMain.toolDocumentView.progress` | Progress | Progress | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsMain.toolDocumentView.created2` | Created | Created | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsMain.toolDocumentView.methodology` | Methodology | Methodology | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `discoveryToolsMain.toolDocumentView.approve` | Approve | Approve | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsMain.toolDocumentView.priority` | Priority | Priority | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.dynamicSwot.inputExplorationPhase.draft` | Draft | Draft | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsTools.marketForces.trend` | Trend | Trend | UZASADNIONE | poprawny polski termin | — |
 | `discoveryToolsTools.marketForces.step.trend` | Trend | Trend | UZASADNIONE | poprawny polski termin | — |
 | `discoveryToolsTools.operational.dmsKpisStep.kpiPlaceholder` | KPI... | KPI... | UZASADNIONE | skrót lub kod techniczny | — |
-| `discoveryToolsTools.operational.dmsKpisStep.targetPlaceholder` | Target... | Target... | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.dmsKpisStep.ownerPlaceholder` | Owner... | Owner... | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.dmsKpisStep.targetLabel` | Target | Target | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.dmsKpisStep.ownerLabel` | Owner | Owner | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.dmsEscalationStep.ownerPlaceholder` | Owner... | Owner... | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.dmsEscalationStep.ownerLabel` | Owner | Owner | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.a3CountermeasuresStep.ownerLabel` | Owner | Owner | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
-| `discoveryToolsTools.operational.sopChecklistsStep.ownerLabel` | Owner | Owner | DEFEKT-PL | angielskie pojęcie interfejsu ma polski odpowiednik | — |
 | `discoveryToolsTools.operational.a3ProblemStep.problemPlaceholder` | Problem... | Problem... | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `agentPlan.section.plan` | Plan | Plan | UZASADNIONE | poprawny polski termin | — |
 | `agentPlan.launcher.planTitlePrefix` | Agent | Agent | UZASADNIONE | poprawny polski termin | — |
