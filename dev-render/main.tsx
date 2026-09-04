@@ -20,13 +20,12 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
-import { IdeaNotebookRightPanelPrototype } from '../src/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype';
-import { isIdeaNotebookRightPanelPrototypeEnabled } from '../src/utils/ideaNotebookRightPanelPrototypeFlag';
-
 const PrototypeHarness = ({ context, legacy }: { context: 'idea' | 'notebook'; legacy: React.ReactNode }) => {
-  if (!isIdeaNotebookRightPanelPrototypeEnabled()) return <>{legacy}</>;
-  const language = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'pl';
-  return <div className="flex h-screen w-screen justify-end bg-c-bg p-4"><IdeaNotebookRightPanelPrototype context={context} language={language} /></div>;
+  // Day342: never replace a complete acceptance screen with the isolated
+  // prototype. Production hosts below consume the flag themselves; screens
+  // without a production mount must remain unchanged and expose that gap.
+  void context;
+  return <>{legacy}</>;
 };
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
 const Day235MaterialyDokumentyScreen = React.lazy(

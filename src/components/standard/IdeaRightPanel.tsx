@@ -95,6 +95,7 @@ import {
   ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { IdeaNotebookRightPanelPrototypeGate } from '@/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 /** Która sekcja ma być otwarta na starcie (mapowana z aktywnego klawisza paska). */
@@ -409,11 +410,21 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
     );
   }
 
-  return (
+  const currentPanel = (
     <ArtifactRightPanel
       sections={sections}
       width={width}
       ariaLabel={isPolish ? 'Panel narzędzi idei' : 'Idea tools panel'}
+    />
+  );
+
+  return (
+    <IdeaNotebookRightPanelPrototypeGate
+      context="idea"
+      language={isPolish ? 'pl' : 'en'}
+      title={title}
+      sections={sections}
+      legacy={currentPanel}
     />
   );
 };

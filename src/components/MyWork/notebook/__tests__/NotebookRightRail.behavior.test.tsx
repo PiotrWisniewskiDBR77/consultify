@@ -107,6 +107,15 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     );
   });
 
+  it('renders the Day342 shared shell with the real Notebook sections when its flag is ON', () => {
+    window.localStorage.setItem('ff.ideaNotebookRightPanelPrototype', '1');
+    render(<Harness />);
+    expect(screen.getByLabelText('Decision note')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Akcje/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Właściwości/ })).toBeTruthy();
+    expect(screen.getByText('Alex Owner')).toBeTruthy();
+  });
+
   it('renders the six canonical sections in the fixed order', () => {
     render(<Harness />);
     const headers = screen
