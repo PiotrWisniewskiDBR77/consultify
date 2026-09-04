@@ -1,0 +1,14 @@
+--- /private/tmp/cx-day353-g19-wznowienie-artefakty/przed-nazwy.txt	2026-09-04 19:55:15
++++ /private/tmp/cx-day353-g19-wznowienie-artefakty/po-nazwy.txt	2026-09-04 19:55:15
+@@ -217,6 +217,11 @@
+ FilterableTable — łamanie tekstu w komórce ŻADEN element kanonu tabeli nie wpuszcza `break-all` (rozrywa wyraz zawsze)
+ Interview PreviewActionBar owner behavior closes overflow with Escape and restores trigger focus
+ Interview PreviewActionBar owner behavior invokes direct actions, preserves disabled truth and routes secondary actions through overflow
++KONTRAKT DLA DYŻURU 353 — 04 Assessment broni cross-org odczytu istniejącej oceny mutacją strażnika
++KONTRAKT DLA DYŻURU 353 — 05 Initiatives broni cross-org zapisu decyzji mutacją strażnika
++KONTRAKT DLA DYŻURU 353 — 06 Execution odmawia obcemu tenantowi odczytu istniejącego execution case
++KONTRAKT DLA DYŻURU 353 — 11 Materials broni cross-org zapisu workbook mutacją strażnika
++KONTRAKT DLA DYŻURU 353 — 13 Chat izoluje istniejącą rozmowę lub plan agenta między tenantami
+ Notebook right rail owner contract (SPEC-A accordion) declares the five canonical sections in the fixed order, sourced from the ArtifactRightPanel canon (not a private copy)
+ Notebook right rail owner contract (SPEC-A accordion) embeds NotebookContextPanel without its own card chrome
+ Notebook right rail owner contract (SPEC-A accordion) is a token-width accordion rail, not a tablist

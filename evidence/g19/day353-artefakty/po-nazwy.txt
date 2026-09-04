@@ -1,0 +1,376 @@
+Agent Hub rate-limit routing keeps the database GET /agent-manifests outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-manifests/manifest-1 outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan/plan-1 outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan/processes outside the generative AI bucket
+Agent Hub rate-limit routing retains the generative limiter for GET /chat
+Agent Hub rate-limit routing retains the generative limiter for PATCH /agent-plan/plan-1/steps
+Agent Hub rate-limit routing retains the generative limiter for POST /agent-plan
+Agent Hub rate-limit routing retains the generative limiter for POST /chat
+AuthMiddleware getDeps uses default export when config module exposes default
+AuthMiddleware getDeps uses module export when jsonwebtoken lacks default
+AuthMiddleware isAuthenticated should call next if user is attached
+AuthMiddleware isAuthenticated should call next when req.userId exists even if req.user is missing
+AuthMiddleware isAuthenticated should return 401 if attached user id is whitespace-only
+AuthMiddleware isAuthenticated should return 401 if user is not attached
+AuthMiddleware isAuthenticated should return 401 when user id accessor throws
+AuthMiddleware optionalAuth accepts frozen decoded payload in optionalAuth by cloning before normalization
+AuthMiddleware optionalAuth continues without user when JWT_SECRET is missing
+AuthMiddleware optionalAuth continues without user when decoded payload id exceeds max user-id length
+AuthMiddleware optionalAuth continues without user when decoded payload id getter throws
+AuthMiddleware optionalAuth continues without user when decoded payload id is missing
+AuthMiddleware optionalAuth continues without user when jwt.verify throws synchronously
+AuthMiddleware optionalAuth continues without user when optional auth hydration fails
+AuthMiddleware optionalAuth continues without user when optionalAuth JWT_SECRET is oversized
+AuthMiddleware optionalAuth continues without user when optionalAuth JWT_SECRET is whitespace-only
+AuthMiddleware optionalAuth continues without user when optionalAuth verified payload is null
+AuthMiddleware optionalAuth continues without verification for control-character token in optionalAuth
+AuthMiddleware optionalAuth continues without verification for disallowed unicode token in optionalAuth
+AuthMiddleware optionalAuth continues without verification for non-compact JWT token shape in optionalAuth
+AuthMiddleware optionalAuth continues without verification for oversized raw authorization header
+AuthMiddleware optionalAuth normalizes decoded payload id before attaching optional auth user
+AuthMiddleware optionalAuth should attach user if valid token exists
+AuthMiddleware optionalAuth should continue without user if no token exists
+AuthMiddleware optionalAuth should continue without user if token is invalid
+AuthMiddleware optionalAuth should continue without verification for oversized token
+AuthMiddleware requireOrganization should allow if organizationId is present
+AuthMiddleware requireOrganization should deny if organizationId accessor throws
+AuthMiddleware requireOrganization should deny if organizationId is missing
+AuthMiddleware requireOrganization should deny if organizationId is whitespace-only
+AuthMiddleware requireOrganization should deny if organizationId setter throws while normalizing
+AuthMiddleware requireOrganization should normalize organizationId before passing control
+AuthMiddleware requirePermission should allow if user has permission
+AuthMiddleware requirePermission should deny if req.can returns truthy non-boolean value
+AuthMiddleware requirePermission should deny if user lacks permission
+AuthMiddleware requirePermission should deny safely when req.can throws
+AuthMiddleware requirePermission should deny when req.can is missing (no permission helper attached)
+AuthMiddleware requirePermission should deny when required capability is empty after normalization
+AuthMiddleware requirePermission should deny without calling req.can when capability contains control chars
+AuthMiddleware requirePermission should deny without calling req.can when capability exceeds max length
+AuthMiddleware requirePermission should return 401 when user is missing
+AuthMiddleware requireRole should allow access if user has required role
+AuthMiddleware requireRole should allow access when required role contains surrounding whitespace
+AuthMiddleware requireRole should allow access when role match differs only by casing
+AuthMiddleware requireRole should deny access if role differs
+AuthMiddleware requireRole should fail closed when attached roles are non-string values
+AuthMiddleware requireRole should fail closed when isSuperAdmin accessor throws in role check
+AuthMiddleware requireRole should fail closed when required role list normalizes to empty
+AuthMiddleware requireRole should fail closed when user role accessor throws
+AuthMiddleware requireRole should not grant superadmin role when isSuperAdmin is truthy but not boolean true
+AuthMiddleware requireRole should return 401 when user is missing
+AuthMiddleware requireSuperAdmin should allow if user is superadmin
+AuthMiddleware requireSuperAdmin should deny if isSuperAdmin accessor throws
+AuthMiddleware requireSuperAdmin should deny if isSuperAdmin is truthy but not boolean true
+AuthMiddleware requireSuperAdmin should deny if user is not superadmin
+AuthMiddleware requireSuperAdmin should return 401 when user is missing
+AuthMiddleware validateOrgMembership helpers builds portable revoke-all lookup SQL using CURRENT_TIMESTAMP
+AuthMiddleware validateOrgMembership helpers builds portable session activity update SQL using CURRENT_TIMESTAMP
+AuthMiddleware validateOrgMembership helpers does not bypass membership validation for truthy non-boolean superadmin flag
+AuthMiddleware validateOrgMembership helpers does not bypass membership validation when isSuperAdmin accessor throws
+AuthMiddleware validateOrgMembership helpers extracts issued-at seconds safely from payload
+AuthMiddleware validateOrgMembership helpers falls back to req.user.id when req.userId accessor throws
+AuthMiddleware validateOrgMembership helpers logs and refuses when membership DB lookup fails
+AuthMiddleware validateOrgMembership helpers normalizes context identifiers for membership checks
+AuthMiddleware validateOrgMembership helpers normalizes membership status case-insensitively
+AuthMiddleware validateOrgMembership helpers parses revoke-all timestamp only from numeric marker suffix
+AuthMiddleware validateOrgMembership helpers reads optional string claim safely from payload
+AuthMiddleware validateOrgMembership helpers reads strict boolean true claim safely from payload
+AuthMiddleware validateOrgMembership helpers refuses when assigning normalized organizationId throws
+AuthMiddleware validateOrgMembership helpers refuses when membership context accessor throws
+AuthMiddleware validateOrgMembership helpers refuses when req.organizationId getter throws during normalization
+AuthMiddleware verifyToken E2E_MODE is disabled in production (does not bypass verification)
+AuthMiddleware verifyToken E2E_MODE: accepts decoded token with e2e claim without signature verification
+AuthMiddleware verifyToken E2E_MODE: accepts frozen decoded payload by cloning before normalization
+AuthMiddleware verifyToken E2E_MODE: falls through to verification when decoded e2e id getter throws
+AuthMiddleware verifyToken E2E_MODE: falls through to verification when decoded e2e token id is whitespace-only
+AuthMiddleware verifyToken E2E_MODE: falls through to verification when decoded token lacks e2e claim
+AuthMiddleware verifyToken E2E_MODE: normalizes whitespace org id and role before bypass attach
+AuthMiddleware verifyToken accepts frozen decoded payload by normalizing id on a cloned object
+AuthMiddleware verifyToken attaches user when jti present but no revoke-all marker exists
+AuthMiddleware verifyToken continues auth flow when header accessor throws in verifyToken path
+AuthMiddleware verifyToken continues when revocation DB lookup fails (does not block user)
+AuthMiddleware verifyToken defaults role to team_member when role is missing
+AuthMiddleware verifyToken does not crash when req.path accessor throws during verifyToken debug logging
+AuthMiddleware verifyToken does not treat whitespace-only impersonator claim as active impersonation
+AuthMiddleware verifyToken enforces impersonation read-only even when req.path accessor throws
+AuthMiddleware verifyToken extractToken should fall back to cookie when authorization accessor throws
+AuthMiddleware verifyToken fails closed to team_member when decoded role claim is non-string
+AuthMiddleware verifyToken forces SUPERADMIN for configured emails even when decoded payload is frozen
+AuthMiddleware verifyToken forces SUPERADMIN role for configured emails
+AuthMiddleware verifyToken handles revoke-all marker with missing timestamp and decoded iat missing (fail open)
+AuthMiddleware verifyToken handles revoke-all marker with non-numeric timestamp as fail-open
+AuthMiddleware verifyToken ignores oversized organizationId claim and keeps auth flow stable
+AuthMiddleware verifyToken ignores oversized x-org-context header for org override membership lookup
+AuthMiddleware verifyToken maps legacy role "'admin'" to "'administrator'"
+AuthMiddleware verifyToken maps legacy role "'client'" to "'guest'"
+AuthMiddleware verifyToken maps legacy role "'manager'" to "'project_manager'"
+AuthMiddleware verifyToken maps legacy role "'super_admin'" to "'owner'"
+AuthMiddleware verifyToken normalizes invalid name/email claims without crashing verifyToken flow
+AuthMiddleware verifyToken normalizes organizationId claim and drops whitespace-only values
+AuthMiddleware verifyToken normalizes permission role PROJECT_MANAGER when decoded role is PROJECT_MANAGER
+AuthMiddleware verifyToken normalizes permission role VIEWER when decoded role is VIEWER
+AuthMiddleware verifyToken normalizes permission role for req.can: 'administrator' -> 'ADMIN'
+AuthMiddleware verifyToken normalizes permission role for req.can: 'guest' -> 'VIEWER'
+AuthMiddleware verifyToken normalizes permission role for req.can: 'member' -> 'TEAM_MEMBER'
+AuthMiddleware verifyToken normalizes permission role for req.can: 'superadmin' -> 'SUPERADMIN'
+AuthMiddleware verifyToken normalizes permission role for req.can: 'user' -> 'TEAM_MEMBER'
+AuthMiddleware verifyToken passes jwt clockTolerance option when verify supports options arity
+AuthMiddleware verifyToken production mode ignores body token fallback when authorization and cookies are missing
+AuthMiddleware verifyToken production mode ignores query token fallback when authorization and cookies are missing
+AuthMiddleware verifyToken rejects jti with control characters before revocation DB lookup
+AuthMiddleware verifyToken rejects jti with disallowed unicode before revocation DB lookup
+AuthMiddleware verifyToken rejects token when revoke-all exists and decoded iat is non-numeric
+AuthMiddleware verifyToken rejects tokens with oversized jti before revocation DB lookup
+AuthMiddleware verifyToken req.can denies control-char capability before PermissionService.can invocation
+AuthMiddleware verifyToken req.can denies oversized capability before PermissionService.can invocation
+AuthMiddleware verifyToken returns 401 when decoded id exceeds max user-id length
+AuthMiddleware verifyToken should allow bypass if ENABLE_TEST_AUTH_BYPASS is true
+AuthMiddleware verifyToken should allow token issued after revoke-all marker
+AuthMiddleware verifyToken should continue token extraction from body when cookies accessor throws
+AuthMiddleware verifyToken should continue token extraction from query when body accessor throws
+AuthMiddleware verifyToken should extract token from Bearer header
+AuthMiddleware verifyToken should extract token from body.token when header/cookie missing
+AuthMiddleware verifyToken should extract token from cookie if header is missing
+AuthMiddleware verifyToken should extract token from query.token when header/cookie/body missing
+AuthMiddleware verifyToken should fall back to token cookie when access_token is missing
+AuthMiddleware verifyToken should handle missing JWT_SECRET config by failing unauthorized
+AuthMiddleware verifyToken should handle token revocation check
+AuthMiddleware verifyToken should ignore body token with control characters and treat request as missing token
+AuthMiddleware verifyToken should ignore cookie token with control characters and treat request as missing token
+AuthMiddleware verifyToken should ignore empty cookie token and fall back to body token
+AuthMiddleware verifyToken should ignore oversized body token and treat request as missing token
+AuthMiddleware verifyToken should ignore oversized cookie token and treat request as missing token
+AuthMiddleware verifyToken should ignore oversized query token and treat request as missing token
+AuthMiddleware verifyToken should ignore query token with control characters and treat request as missing token
+AuthMiddleware verifyToken should ignore whitespace cookie token and fall back to body token
+AuthMiddleware verifyToken should map role "guest" and normalize permission role to VIEWER
+AuthMiddleware verifyToken should not accept non-string query.token values
+AuthMiddleware verifyToken should not overwrite existing req.user in test bypass mode
+AuthMiddleware verifyToken should parse bearer token when separator contains tabs and mixed whitespace
+AuthMiddleware verifyToken should prefer access_token cookie over token cookie
+AuthMiddleware verifyToken should prefer header token over cookie/body/query
+AuthMiddleware verifyToken should read legacy organization_id claim into req.organizationId
+AuthMiddleware verifyToken should reject control-character token before jwt.verify
+AuthMiddleware verifyToken should reject oversized raw authorization header before parsing
+AuthMiddleware verifyToken should reject oversized token before jwt.verify
+AuthMiddleware verifyToken should reject token issued before revoke-all marker (jti-based)
+AuthMiddleware verifyToken should reject token with disallowed unicode separator characters before jwt.verify
+AuthMiddleware verifyToken should reject token with empty JWT segment before jwt.verify
+AuthMiddleware verifyToken should reject token with non-compact JWT shape before jwt.verify
+AuthMiddleware verifyToken should reject verification when JWT_SECRET is oversized
+AuthMiddleware verifyToken should reject verification when JWT_SECRET is whitespace-only
+AuthMiddleware verifyToken should reject verified payload when it is an array
+AuthMiddleware verifyToken should reject verified payload when it is null
+AuthMiddleware verifyToken should reject verified payloads when id getter throws
+AuthMiddleware verifyToken should reject verified payloads with missing id
+AuthMiddleware verifyToken should return 401 if no token is provided
+AuthMiddleware verifyToken should return 401 if token is expired
+AuthMiddleware verifyToken should route demo requests to the interactive session tenant
+AuthMiddleware verifyToken should skip bare Bearer entry in Authorization array when later entry has valid token
+AuthMiddleware verifyToken should skip revocation DB check when decoded token has no jti
+AuthMiddleware verifyToken should skip revocation DB check when decoded token jti is whitespace-only
+AuthMiddleware verifyToken should treat Bearer with only trailing whitespace as missing token
+AuthMiddleware verifyToken should treat bare Bearer header without token as missing token
+AuthMiddleware verifyToken should treat non-Bearer authorization header as token
+AuthMiddleware verifyToken should treat non-boolean decoded isDemo claim as false when demo header is absent
+AuthMiddleware verifyToken should trim bearer token and support case-insensitive bearer prefix
+AuthMiddleware verifyToken should use first non-empty Authorization value when header is an array
+AuthMiddleware verifyToken test bypass continues when req.user accessor throws and still attaches default test user
+AuthMiddleware verifyToken test bypass fails closed when req.user assignment throws
+AuthMiddleware verifyToken treats non-boolean isSuperAdmin claim as false
+AuthMiddleware verifyToken uses decoded userRole when decoded role is whitespace for permission normalization
+AuthMiddleware verifyToken uses raw role value when role is unknown and normalizes permission role
+CriterionWorkspaceV2 Komentarze section is an honest "planned" empty state, not a fabricated stub (no comments API exists yet)
+CriterionWorkspaceV2 Menu 1 primary is honestly disabled (not a fake handler) for the finding-response reminder, which has no backing endpoint
+CriterionWorkspaceV2 groups the 18-link chain into exactly 4 phase cards, in order, with correct done/total counts
+CriterionWorkspaceV2 right panel opens only Akcje and Właściwości by default, in ARTIFACT_PANEL_SECTION_ORDER
+CriterionWorkspaceV2 shows the criterion's real program name (not a placeholder) in the Menu 1 breadcrumb once auditsMethodApi.getProgram resolves
+Day 274 — inicjatywa z Oceny dociera do listy runtime-v1 POST z Oceny jest widoczny przez GET runtime-v1
+Day 274 — inicjatywa z Oceny dociera do listy runtime-v1 obcy tenant nie widzi inicjatyw właściciela
+Day 275 — panel jakości czyta dokładne answers.drd przez ApiGateway i RealPG zwraca dokładny stan obszaru oraz scoring z tej samej tenantowej bazy
+Day 276 deck autosave persistence through ApiGateway and real PostgreSQL autosave changes deck_json, advances version and snapshots the prior version
+Day 276 deck autosave persistence through ApiGateway and real PostgreSQL returns 409 for a stale X-Deck-Version and preserves the saved deck
+Day 276 workbook cell persistence through ApiGateway and real PostgreSQL foreign tenant cannot see or mutate the workbook
+Day 276 workbook cell persistence through ApiGateway and real PostgreSQL owner persists a setCell value, advances version and creates a revision row
+Day 277 decision enhancements through ApiGateway and PostgreSQL foreign tenant cannot see or overwrite the decision enhancements
+Day 277 decision enhancements through ApiGateway and PostgreSQL owner writes all five fields, SQL sees them, and detail reads them back
+Day 307 paired cross-org GET flight through ApiGateway denies foreign workload lookup while the owner reads the seeded task
+Day 307 paired cross-org GET flight through ApiGateway records foreign and owner response for every mechanically included route
+ExecutionHub Portfolio preview — source relation (real render) (a) shows a human source label plus the framework, never the raw sourceType
+ExecutionHub Portfolio preview — source relation (real render) (b) shows the label alone when there is no source framework
+ExecutionHub Portfolio preview — source relation (real render) (c) leaves the relations section empty when there is no sourceType
+FilterableTable — shared column-filter accessible contract (real PL) communicates the active count in real Polish
+FilterableTable — shared column-filter accessible contract (real PL) names the filter trigger in real Polish, no active filter
+FilterableTable — shared column-filter accessible contract (real PL) opens a group labelled in real Polish and Escape closes it, returning focus
+FilterableTable — shared column-filter accessible contract Escape closes the panel and returns focus to the trigger
+FilterableTable — shared column-filter accessible contract closes the panel once focus leaves it (Tab out), without forcing focus back
+FilterableTable — shared column-filter accessible contract communicates the active count once a filter is applied
+FilterableTable — shared column-filter accessible contract does not trap Tab: pressing Tab inside the panel is not intercepted
+FilterableTable — shared column-filter accessible contract exposes aria-expanded and opens a labelled group on activation
+FilterableTable — shared column-filter accessible contract keeps an interactive row keyboard-operable without an invalid button role
+FilterableTable — shared column-filter accessible contract keeps the empty-state card pinned to the visible horizontal viewport
+FilterableTable — shared column-filter accessible contract moving focus between two controls inside the panel does not close it
+FilterableTable — shared column-filter accessible contract names the filter trigger with the column and communicates no active filter
+FilterableTable — łamanie tekstu w komórce goły tekst dalej dostaje wielokropek na warstwie tekstu
+FilterableTable — łamanie tekstu w komórce treść renderowana jako ELEMENTY dostaje warstwę zbijającą overflow-wrap
+FilterableTable — łamanie tekstu w komórce warstwa elementowa NIE przycina (popovery komórek muszą wychodzić poza obrys)
+FilterableTable — łamanie tekstu w komórce ŻADEN element kanonu tabeli nie wpuszcza `break-all` (rozrywa wyraz zawsze)
+Interview PreviewActionBar owner behavior closes overflow with Escape and restores trigger focus
+Interview PreviewActionBar owner behavior invokes direct actions, preserves disabled truth and routes secondary actions through overflow
+KONTRAKT DLA DYŻURU 353 — 04 Assessment broni cross-org odczytu istniejącej oceny mutacją strażnika
+KONTRAKT DLA DYŻURU 353 — 05 Initiatives broni cross-org zapisu decyzji mutacją strażnika
+KONTRAKT DLA DYŻURU 353 — 06 Execution odmawia obcemu tenantowi odczytu istniejącego execution case
+KONTRAKT DLA DYŻURU 353 — 11 Materials broni cross-org zapisu workbook mutacją strażnika
+KONTRAKT DLA DYŻURU 353 — 13 Chat izoluje istniejącą rozmowę lub plan agenta między tenantami
+Notebook right rail owner contract (SPEC-A accordion) declares the five canonical sections in the fixed order, sourced from the ArtifactRightPanel canon (not a private copy)
+Notebook right rail owner contract (SPEC-A accordion) embeds NotebookContextPanel without its own card chrome
+Notebook right rail owner contract (SPEC-A accordion) is a token-width accordion rail, not a tablist
+Notebook right rail owner contract (SPEC-A accordion) names the close control and reveals Właściwości/Powiązania from activeTab
+Notebook right rail owner contract (SPEC-A accordion) renders the shared ArtifactRightPanel behind the default-off rollout flag
+Notebook right rail owner contract (SPEC-A accordion) reuses ArtifactRightPanel-style accordion header semantics (h-11, chevron, aria-expanded)
+PreviewRelations business labels does not rewrite an explicit business title
+PreviewRelations business labels keeps a UUID available for audit but not as primary chip copy
+R03-1 · Relations jest blokiem obowiązkowym renderuje empty state dla pustej tablicy
+R03-1 · Relations jest blokiem obowiązkowym renderuje empty state, gdy ekran NIE poda propa relations
+R03-1 · Relations jest blokiem obowiązkowym renderuje realne relacje, gdy są
+R03-1 · Relations jest blokiem obowiązkowym respektuje własną etykietę pustego stanu
+R03-1 · dokładnie jeden Open nie renderuje Open, gdy ekran go nie deklaruje
+R03-1 · dokładnie jeden Open renderuje Open raz, w headerze
+R03-1 · dokładnie jeden Open wykrywa drugi Open wstawiony do siatki akcji
+R03-1 · kolejność bloków kanon deklaruje sześć bloków w stałej kolejności
+R03-1 · kolejność bloków renderuje meta → details → AI → relations → actions w tej kolejności DOM
+R03-1 · kolory, kształty i stany disabled jest widoczny, jaśniejszy i BEZ komentarza
+R03-1 · kolory, kształty i stany focus jest niebieski, nigdy crimson (§9)
+R03-1 · kolory, kształty i stany positive i neutral nie są czerwone
+R03-1 · kolory, kształty i stany przycisk akcji ma kanoniczne 36 px i kształt pigułki
+R03-1 · kolory, kształty i stany tylko destructive jest czerwony
+R03-1 · parity actionId z menu wiersza (R01) preview nie wprowadza akcji o tym samym id, lecz innym skutku
+R03-1 · parity actionId z menu wiersza (R01) wspólne actionId mają identyczną etykietę i ikonę w preview i w kebabie
+R03-1 · siatka akcji NIE gubi akcji przy przekroczeniu limitu — raportuje, nie obcina
+R03-1 · siatka akcji destructive ląduje na końcu, choćby ekran podał go pierwszego
+R03-1 · siatka akcji nigdy nie renderuje więcej niż trzech rzędów
+R03-1 · siatka akcji pojedyncza akcja destructive zajmuje pierwszą kolumnę, bez atrapy-wypełniacza
+R03-1 · siatka akcji zgłasza przekroczenie sześciu akcji bezpośrednich
+R03-1 · skróty klawiszowe akcja reaguje na kliknięcie
+R03-1 · skróty klawiszowe pomija skróty akcji wyłączonych
+R03-1 · skróty klawiszowe zbiera skróty ze wszystkich rzędów
+R03-1 · unikalność akcji kanoniczny zestaw przechodzi bez naruszeń
+R03-1 · unikalność akcji wykrywa etykietę dłuższą niż limit kanonu
+R03-1 · unikalność akcji wykrywa zduplikowany actionId (wzorzec T43)
+R03-1 · unikalność akcji wykrywa zduplikowaną etykietę
+R03-1 · zgodność wsteczna publicznego API nadal renderuje opcjonalny blok What’s next
+R03-1 · zgodność wsteczna publicznego API nadal renderuje properties zamiast prozy bez licznika słów
+R03-1 · zgodność wsteczna publicznego API renderuje skeleton w stanie loading
+R03-2 · PreviewPaneShell nie renderuje stopki, gdy jej nie podano
+R03-2 · PreviewPaneShell pełny tytuł pozostaje dostępny mimo truncate
+R03-2 · PreviewPaneShell × ma dostępną nazwę i cel co najmniej 32 px
+R03-2 · PreviewPaneShell × woła onClose dokładnie raz
+R03-2 · geometria kontenera preview odstęp preview ↔ tabela to 6 px (gap-1.5)
+R03-2 · geometria kontenera preview preview NIE ma własnego border-left (§6)
+R03-2 · geometria kontenera preview szerokość jest złożona z kanonu: clamp(340px, 28%, 480px)
+R03-2 · geometria kontenera preview szerokość nie może zdryfować od kanonu
+R03-2 · zamykanie i focus return Escape oddaje focus elementowi, z którego preview otwarto
+R03-2 · zamykanie i focus return Escape zamyka preview
+R03-2 · zamykanie i focus return gdy element otwierający zniknął, focus wraca na kontener — skróty żyją dalej
+R03-2 · zamykanie i focus return × i Escape prowadzą do tej samej ścieżki zamknięcia
+R04-2A · brak clippingu przy 1280 tabela żyje w kontenerze z jawnym poziomym overflow
+R04-2A · checkbox tylko przy zadeklarowanym selection BEZ propa selection nie ma ani jednego checkboxa
+R04-2A · checkbox tylko przy zadeklarowanym selection Z propem selection są checkboxy nagłówka i wierszy
+R04-2A · checkbox tylko przy zadeklarowanym selection klik checkboxa NIE uruchamia preview ani full detail
+R04-2A · empty state rozróżnia przyczynę brak danych — powód „no-data"
+R04-2A · empty state rozróżnia przyczynę dane są, ale filtr nic nie zwrócił — powód „no-filter-results"
+R04-2A · empty state rozróżnia przyczynę empty state ZACHOWUJE nagłówek i jego geometrię
+R04-2A · empty state rozróżnia przyczynę respektuje własny komunikat dla stanu przefiltrowanego
+R04-2A · empty state rozróżnia przyczynę stan „brak wyniku filtra" oferuje reset, a nie tylko komunikat
+R04-2A · interakcja wiersza Shift+F10 na wierszu otwiera ten sam kontekst co kebab
+R04-2A · interakcja wiersza podwójny klik otwiera pełny szczegół
+R04-2A · interakcja wiersza pojedynczy klik wiersza otwiera preview
+R04-2A · sort i filtr nadal działają renderuje wszystkie wiersze bez filtrów
+R04-2A · sort i filtr nadal działają sortowalna kolumna reaguje na klik nagłówka
+R04-2A · wysokość nagłówka i wiersza każda komórka nagłówka deklaruje 56 px
+R04-2A · wysokość nagłówka i wiersza każda komórka wiersza deklaruje 56 px
+R04-2A · wysokość nagłówka i wiersza klasa h-14 odpowiada kanonicznym 56 px
+R04-2A · wysokość nagłówka i wiersza tryb comfortable ma ten sam wymiar końcowy
+R04-2A · wysokość nagłówka i wiersza tryb compact NIE obniża wysokości — padding tak, wysokość nie
+RightRail — P-01 icon strip never disappears clicking a tool icon while collapsed selects the tool AND expands the panel
+RightRail — P-01 icon strip never disappears clicking the toggle handle while collapsed calls onToggleCollapse
+RightRail — P-01 icon strip never disappears hides the side panel when collapsed even if a tool is active
+RightRail — P-01 icon strip never disappears keeps tool icons in the DOM and clickable when collapsed (regression guard)
+RightRail — P-01 icon strip never disappears panel width stays at the icon-strip width (56px equivalent) when collapsed
+RightRail — P-01 icon strip never disappears re-clicking the active tool while expanded closes the panel without collapsing
+RightRail — P-01 icon strip never disappears renders the icon strip when expanded
+StandardPreview can suppress the word counter for metadata-only details
+StandardPreview openDisabledReason (FIX-1) FORBIDDEN: no onOpenFull + openDisabledReason renders a disabled Open button with a different reason
+StandardPreview openDisabledReason (FIX-1) NO_ROUTE: no onOpenFull + openDisabledReason renders a disabled Open button with the reason as tooltip
+StandardPreview openDisabledReason (FIX-1) active: onOpenFull present renders an enabled Open button, ignoring openDisabledReason
+StandardPreview openDisabledReason (FIX-1) null/neither prop: no onOpenFull and no openDisabledReason renders nothing (unchanged legacy behavior)
+StandardPreview renders action rows as 2-column grids with shortcut badges
+StandardPreview renders the 6 blocks in the iron order (header, meta, details, AI, relations, actions)
+StandardPreview shows pin toggle and loading skeleton
+StandardPreview standardPreviewShortcuts collects enabled shortcuts across rows
+StandardPreview — Escape zamyka podgląd inne klawisze nie zamykają podglądu
+StandardPreview — Escape zamyka podgląd nasłuch znika po odmontowaniu — brak wycieku i wywołań po zamknięciu
+StandardPreview — Escape zamyka podgląd nie przechwytuje Escape, który obsłużyła bardziej lokalna warstwa
+StandardPreview — Escape zamyka podgląd podgląd bez onClose nie rejestruje nasłuchu i nie wybucha na Escape
+StandardPreview — Escape zamyka podgląd wywołuje onClose po naciśnięciu Escape
+TableWithPreviewLayout canonical keyboard accessibility supports arrows, input-safe Enter, Esc and focus return
+TableWithPreviewLayout mobile dialog accessibility uses an aria-modal dialog, traps Tab and returns focus on Escape
+TableWithPreviewLayout mobile overlay continuity closes the mobile overlay from the backdrop
+TableWithPreviewLayout mobile overlay continuity keeps the desktop side pane outside mobile breakpoints
+TableWithPreviewLayout mobile overlay continuity renders the preview as a mobile overlay instead of a side pane
+auth.middleware E2E_MODE bypass bypasses signature verification for e2e tokens and uses safe defaults
+auth.middleware E2E_MODE bypass falls back to normal verification when token is not an e2e token
+auth.middleware getDeps (runtime sanity) returns 401 for an invalid token
+auth.middleware getDeps (runtime sanity) verifies a real JWT using Config.JWT_SECRET and attaches req.user
+auth.middleware private helpers extractToken reads Bearer token from authorization header
+auth.middleware private helpers extractToken reads raw authorization header when not Bearer
+auth.middleware private helpers extractToken reads token from body
+auth.middleware private helpers extractToken reads token from cookies
+auth.middleware private helpers extractToken reads token from query
+auth.middleware private helpers mapRole maps admin to administrator
+auth.middleware private helpers mapRole preserves the distinct superadmin role
+auth.middleware private helpers normalizePermissionRole maps guest to VIEWER
+auth.middleware private helpers normalizePermissionRole maps manager to PROJECT_MANAGER
+auth.middleware verifyToken + optionalAuth + requirePermission optionalAuth attaches user for valid token
+auth.middleware verifyToken + optionalAuth + requirePermission optionalAuth calls next when no token present
+auth.middleware verifyToken + optionalAuth + requirePermission requirePermission returns 401 when no user attached
+auth.middleware verifyToken + optionalAuth + requirePermission requirePermission returns 403 when capability denied
+auth.middleware verifyToken + optionalAuth + requirePermission verifyToken attaches user and calls next for valid token
+auth.middleware verifyToken + optionalAuth + requirePermission verifyToken returns 401 unauthorized for invalid token
+auth.middleware verifyToken + optionalAuth + requirePermission verifyToken returns token expired for expired token
+auth.middleware verifyToken + optionalAuth + requirePermission verifyToken uses test bypass when enabled and no token is provided
+initiatives execution runtime — dropdown title on real PostgreSQL returns the initiative name for Wybierz realizację instead of only the raw executionCaseId
+initiatives execution runtime — dropdown title on real PostgreSQL uses the explicitly selected PostgreSQL engine
+orderPreviewActionRows — destrukcyjne zawsze na końcu gdy destrukcyjna jest jedyną akcją — tworzy własny rząd, nie znika
+orderPreviewActionRows — destrukcyjne zawsze na końcu kilka destrukcyjnych z różnych rzędów ląduje razem na końcu
+orderPreviewActionRows — destrukcyjne zawsze na końcu nie rusza pary Approve/Reject (Decisions) — Reject już jest ostatni
+orderPreviewActionRows — destrukcyjne zawsze na końcu przenosi Delete z resolutions za Duplicate z informational (przypadek Tools/Portfolio)
+orderPreviewActionRows — destrukcyjne zawsze na końcu pusty wejściowy zestaw nie produkuje pustych rzędów
+orderPreviewActionRows — destrukcyjne zawsze na końcu zachowuje kolejność i podział rzędów, gdy nie ma akcji destrukcyjnych
+podgląd — blok „Co dalej" bez deklaracji blok w ogóle się nie renderuje (addytywność)
+podgląd — blok „Co dalej" klik w przejście woła handler modułu
+podgląd — blok „Co dalej" pokazuje zadeklarowane przejścia i JEDEN wspólny dopisek
+requireAudit.middleware caps audit emissions per request and rejects once cap is exceeded
+requireAudit.middleware captures deep snapshot of nested metadata before later mutation
+requireAudit.middleware captures shallow snapshot of metadata and is not affected by later mutation
+requireAudit.middleware clamps and trims resourceId before logging
+requireAudit.middleware clamps very long actorId and organizationId values before logging
+requireAudit.middleware clamps very long user agent and ip values before logging
+requireAudit.middleware does not count validation failures toward the per-request emission cap
+requireAudit.middleware does not forward arbitrary caller properties to auditEventsService.log
+requireAudit.middleware does not replace emitAuditEvent when middleware is mounted twice
+requireAudit.middleware logs persistence failures as errors (not validation warnings)
+requireAudit.middleware normalizes invalid actorType values to USER
+requireAudit.middleware rejects blank audit event ids returned by persistence layer
+requireAudit.middleware rejects circular metadata payload before logging
+requireAudit.middleware rejects invalid emitAuditEvent payload types before logging
+requireAudit.middleware rejects missing action or resourceType before logging
+requireAudit.middleware rejects non-string audit event ids returned by persistence layer
+requireAudit.middleware rejects oversized serialized metadata payload before logging
+requireAudit.middleware returns trimmed audit event id when persistence returns padded string
+requireAudit.middleware serializes concurrent emitAuditEvent calls per request
+requireAudit.middleware strips control characters from action and resourceType before logging
+requireAudit.middleware strips control characters from resourceId before logging
+requireAudit.middleware tolerates throwing req.get while emitting audit event
+requireAudit.middleware treats non-callable req.get as missing user-agent
+requireAudit.middleware uses fallback actor/org from req.userId and req.organizationId when user accessor throws
