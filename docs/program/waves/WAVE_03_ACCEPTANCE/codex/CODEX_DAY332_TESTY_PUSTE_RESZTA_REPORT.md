@@ -1,8 +1,11 @@
 # CODEX — dyżur 332 — testy puste, reszta
 
-Data: 2026-09-04  
-Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`  
-Gałąź: `codex/day332-testy-puste-reszta-20260904`  
+Data: 2026-09-04
+
+Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`
+
+Gałąź: `codex/day332-testy-puste-reszta-20260904`
+
 Stan: **CZĘŚCIOWO — R0 i R1 kompletne, R2 częściowe, R3 kompletne jako pomiar, R4 kompletne**
 
 ## Wynik
