@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `964fadfb807706678c7391ad08ab7f326297e2b0`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 964fadfb807706678c7391ad08ab7f326297e2b0 --snapshot-date 2026-09-04`
+Marker: `fc7de78352fc4200cc0f0a989d0a323778ec5d2a`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker fc7de78352fc4200cc0f0a989d0a323778ec5d2a --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -86,7 +86,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt dołączania artefaktów i linku dla zaproszonych; DEC-222 pozostawia wdrożenie otwarte i brak SHA obiektu | — | settlement, decisions |
 | `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi ocenić świeży zrzut exact-candidate; FALA_4_OWNER_DECISION zabrania zamknięcia samym SHA, a af75a84e37 jest checkpointem | — | settlement |
 | `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; checkpoint af75a84e37 odpada, a późniejsze commity nie izolują naprawy right-click/kebab | — | settlement |
-| `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137 | — | settlement |
+| `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA lub decyzję; 4a36e8a745 jest checkpointem, a 7837e750e0 dotyka tylko testu, nie MyWorkHub.tsx:4137 | — | settlement |
 | `MYW-IDEA-REC-001` | NAPRAWIONE | SHA_OK | 655d629675 | — | settlement |
 | `MYW-IDEA-REC-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-29, DEC-2026-09-03-372 | — | settlement, decisions, owner, wave2 |
 | `MYW-IDEAS-008` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |

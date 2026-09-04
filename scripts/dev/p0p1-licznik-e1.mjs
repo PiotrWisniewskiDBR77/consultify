@@ -58,7 +58,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   // TYGODNI przed zgłoszeniem z 2026-08-22. `--stat` tego commita dotyka wyłącznie
   // DecisionsPanelContent.tsx, a dowód pozycji wskazuje MyWorkHub.tsx:4137,
   // którego ten commit w ogóle nie rusza.
-  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137' },
+  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA lub decyzję; 4a36e8a745 jest checkpointem, a 7837e750e0 dotyka tylko testu, nie MyWorkHub.tsx:4137' },
   'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
   // COFNIĘTE po odbiorze 334 — ten sam `7b7ec198aa` i ta sama wada co wyżej.
