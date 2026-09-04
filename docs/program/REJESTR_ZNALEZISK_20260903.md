@@ -287,3 +287,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Dyżur 356 — zielone testy nie chroniły typów ani statycznego dostępu Vite
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| R1 | Pięć wywołań bramki w zielonym teście nie przekazywało wymaganego `ariaLabel`; pełny `tsc` miał 5×TS2741. Testy runtime flag pozostawały 28/28 zielone po cofnięciu statycznego dostępu do wariantu obliczonego. | Sam Vitest nie chronił kontraktu typów ani podstawienia `import.meta.env` przez Vite. | ZAMKNIĘTE dla trzech jawnych flag i jednego punktowego celu typów; rodzina pozostaje otwarta | `evidence/day356/`, `scripts/check-idea-notebook-prototype-types.mjs`, `scripts/check-static-vite-flag-access.mjs` |
+| R2 | Pełny inwentarz wykazał 109 plików z dostępem obliczonym: 105 osiągalnych od `src/index.tsx`, 2 nieosiągalne i 2 test/harness-only. | 105 żywych plików stanowi realny dług osobnego zlecenia; dyżur 356 ich nie zmieniał. | OTWARTE | `evidence/day356/rodzina-env.tsv`, `evidence/day356/wzorcowy-diff-nienalozony.patch` |
