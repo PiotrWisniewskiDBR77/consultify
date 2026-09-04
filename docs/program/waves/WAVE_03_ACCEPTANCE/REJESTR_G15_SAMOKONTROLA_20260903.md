@@ -81,3 +81,15 @@ Pomiar na `1c4b5a5635`, baza porównawcza `f65c4ff6a0` po jawnej kopii `PreviewA
 - Cztery dawne `NOT_MEASURED`: 05 = 16 ZASTANA + 1 NOWA + 5 błędów pliku; 06 = 12 ZASTANA + 1 NOWA + 3 błędy pliku; 08 = 3 ZASTANA; 16 = 9 ZASTANA.
 - `13_CHAT`: front 462/462 i serwer 67/67, dlatego G15 zmieniono na `PASS` z dowodem w tym samym commicie.
 - `MYW-IDEAS-010`: 3/4 PASS; produktowy render-path kontrakt przechodzi, ale tekstowy sentinel `activeBranchEnd` nadal pada. Etykieta czerwieni pozostaje.
+
+## Aktualizacja dyżuru 347 — 2026-09-04
+
+Pomiar różnicowy na markerze `6a4919f72d` wykazał, że wspólny wariant serwerowy dyżuru 336 wymusił `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce` także na izolowanych pakietach kontraktu tras, które nie tworzą bazy członkostwa. `server/src/routes/resultsVnext/__tests__/okr.routes.test.ts` wykonał te same 118 przypadków: z `enforce` 0 PASS / 118 FAIL, bez tej jednej zmiennej 118 PASS / 0 FAIL.
+
+Reguła kolejnych pomiarów G15:
+
+- pakiety dowodzące koperty widoczności (`tests/acceptance/res-internal-beta-visibility.mounted.pg.test.ts` oraz `tests/integration/results/day46.*.realpg.test.ts`) uruchamiać na realnym PostgreSQL zawsze z `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`;
+- izolowane pakiety kontraktu HTTP, które zastępują middleware i nie tworzą realnej fixtury `organization_members`, uruchamiać w `NODE_ENV=test` bez `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`;
+- pakiet realnego Gateway/PG wolno uruchomić bez `enforce` tylko wtedy, gdy jego celem nie jest dowód koperty i raport jawnie uzasadnia brak strażnika; domyślnie dowody uprawnień pozostają fail-closed z `enforce`.
+
+Ta korekta zmienia metodę pomiaru, nie warunek produktu ani dozwolone role. Pełne artefakty i klasyfikacja po `fullName`: `evidence/g15/day347/`.

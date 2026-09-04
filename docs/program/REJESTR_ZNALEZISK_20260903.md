@@ -273,3 +273,11 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | O1 | Próg minimalny w `expect.poll` może zwolnić sondę w połowie renderu; na `idea-table-timeline-stuck` własna krzywa wyniosła 1 kontrolkę przy 200/400 ms i 86 od 800 ms. Sama stabilność też nie wystarcza bez odrzucenia stabilnej powłoki startowej. | Zaniżony mianownik, hash i bramka a11y mogą opisywać niepełny DOM, a nie produkt. | ZAMKNIĘTE DLA SONDY DAY337 — warunek końcowy + readiness floor + próg kontraktu | `evidence/day337/sonda-krzywa.md`, `evidence/day337/r1-stabilizacja-sondy.md` |
+
+## P. Dyżur 347 — 401 czerwieni Results było jednym błędem wariantu pomiarowego
+
+- Pomiar różnicowy `okr.routes.test.ts`: `enforce` 0/118 PASS, bez tej jednej zmiennej 118/118 PASS. Przyczyna: izolowane kontrakty tras uruchomiono z aktywną kopertą, ale bez fixtury członkostwa.
+- Po rozdzieleniu wariantu pomiarowego `09_RESULTS` spadł z 413 do 12 FAIL przy tym samym mianowniku 567; z pełnej puli 542 zniknęło 401 nazw.
+- `10_FINANCE` pozostał 114/277; teza 415/415 jednej przyczyny została obalona w części Finance. Pozostaje 139 nazw ZASTANA, 2 REGRESJA, 1 NIEORZECZONA.
+- Koperta pozostała nienaruszona: mounted PG 4/4 przed i po, Day46 real ApiGateway/PG 77/77 przed i po; mutacja dopuszczająca MEMBER daje 2/4 FAIL, po cofnięciu 4/4 PASS.
+- Raport: `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY347_403_PRZYCZYNA_REPORT.md`; artefakty: `../../evidence/g15/day347/`.

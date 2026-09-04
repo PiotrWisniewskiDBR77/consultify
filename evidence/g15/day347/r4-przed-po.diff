@@ -1,0 +1,622 @@
+--- evidence/g15/day347/przed-nazwy.txt	2026-09-04 15:30:14
++++ evidence/g15/day347/po-nazwy.txt	2026-09-04 15:50:16
+@@ -1,541 +1,141 @@
+-02-interview-serwer.json | interviewPublishedAssignmentDelivery.pg.test.ts | published interview assignment delivery (real PostgreSQL) upgrade quarantines historical duplicate sessions without rewriting them and blocks a third
++02-interview-serwer.json | interviewAiReviewTimeoutFallback.pg.test.ts | evaluateSessionAnswers server-side timeout — real PostgreSQL HEADLINE: responds within the bound with an explicit, non-fabricated fallback — and the persisted answer is untouched
+ 02-interview-serwer.json | interviewCandidateExactlyOnce.pg.test.ts | INT-BVP-001 — migration applies safely on pre-existing duplicates applies without error and leaves exactly one active row for the duplicated key
++02-interview-serwer.json | interviewPublishedAssignmentDelivery.pg.test.ts | published interview assignment delivery (real PostgreSQL) upgrade quarantines historical duplicate sessions without rewriting them and blocks a third
+ 05-initiatives-serwer.json | initiativeLifecycleCanon.test.ts | initiativeLifecycleCanon (P11) InitiativeController records audited status transitions (regression / P11 acceptance)
+-07-my-work-serwer.json | signals.routes.org-isolation.test.ts | GET /my-work/signals — organization isolation returns the own-org canonical signal and never a same-user foreign-org signal
+ 07-my-work-serwer.json | signals.routes.org-isolation.test.ts | GET /my-work/signals — organization isolation preserves the role filter and does not trust a query role
++07-my-work-serwer.json | signals.routes.org-isolation.test.ts | GET /my-work/signals — organization isolation returns the own-org canonical signal and never a same-user foreign-org signal
+ 08-meetings-serwer.json | meetingBoundaryMountedAuth.pg.test.ts | MTG-BVP-001 mounted production router with real auth and PostgreSQL creates agenda/materials metadata and proposes durable notes through real member auth
+-08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) generate-notes DEFAULT no longer auto-persists into decisions_json / meeting_follow_ups, and creates a proposal instead
+-08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) replays a completed command before invoking meeting intelligence again
+-08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) generate-notes with persist:true fails closed and performs no direct legacy write
+ 08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) a regular member cannot approve/reject a note (403); an admin can
+ 08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) an invalid decision action is rejected 400
+ 08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) an unknown noteId is 404
++08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) generate-notes DEFAULT no longer auto-persists into decisions_json / meeting_follow_ups, and creates a proposal instead
++08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) generate-notes with persist:true fails closed and performs no direct legacy write
+ 08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) org B cannot read or decide an org A meeting note (404), and org A data is untouched
+-09-results-serwer.json | kpi.routes.test.ts | POST /api/vnext/results/kpi + GET /:kpiId — create -> get roundtrip creates a KPI draft and the same id is fetchable via GET
+-09-results-serwer.json | kpi.routes.test.ts | POST /api/vnext/results/kpi + GET /:kpiId — create -> get roundtrip honors a client-supplied idempotencyKey instead of generating one
+-09-results-serwer.json | kpi.routes.test.ts | POST /api/vnext/results/kpi + GET /:kpiId — create -> get roundtrip 404s GET for a KPI the repository does not return (not found / not visible)
+-09-results-serwer.json | kpi.routes.test.ts | POST /api/vnext/results/kpi + GET /:kpiId — create -> get roundtrip 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionVersion (F1B) returns the current definition version for a visible KPI (the read a second reviewer needs)
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionVersion (F1B) returns a GENERIC 404 (D06) when the repository returns null — covers BOTH "does not exist" and "not visible to this actor", indistinguishably
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionVersion (F1B) propagates a repository error through the same error mapper as every other KPI route (no bespoke handling)
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) happy path: 200 with a computed trend body, listMeasurements limited to the default window (12)
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) honors an explicit ?window= as the listMeasurements limit
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) passes periodStart/periodEnd through to listMeasurements untouched
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) 400s (Zod) when window is combined with periodStart — the schema .refine(), never reaching the repository
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) 400s (Zod) when window exceeds the max of 60
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) 400s (Zod) on a malformed kpiId (KpiIdParamsSchema requires a UUID)
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) 404s (generic, D06) when the repository returns null — covers a foreign-tenant KPI indistinguishably from a missing one: the repository join in kpiRepository.ts scopes strictly by the auth-derived organizationId, so a KPI belonging to a different org never reaches this route as a row to leak
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) always resolves organizationId from the authenticated token (req.user), never from request input — the repository call is the tenant boundary, and this route has no organizationId field in its query/body a caller could even try to spoof
+-09-results-serwer.json | kpi.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/trend — buildKpiTrend HTTP boundary (Day 14 K.1) propagates a repository error through the same error mapper as every other KPI route (500)
+-09-results-serwer.json | kpi.routes.test.ts | X-Correlation-ID validation (RN-G6 P0 fix — F1) rejects a non-UUID X-Correlation-ID header — the command layer receives undefined, NEVER the malformed value (this is the exact shape the old client bug produced)
+-09-results-serwer.json | kpi.routes.test.ts | X-Correlation-ID validation (RN-G6 P0 fix — F1) passes through a well-formed UUID header unchanged
+-09-results-serwer.json | kpi.routes.test.ts | X-Correlation-ID validation (RN-G6 P0 fix — F1) resolves to undefined (letting the command layer mint its own) when no header is sent at all
+-09-results-serwer.json | kpi.routes.test.ts | X-Correlation-ID validation (RN-G6 P0 fix — F1) rejects an empty-string header the same way as a malformed one
+-09-results-serwer.json | kpi.routes.test.ts | X-Correlation-ID validation (RN-G6 P0 fix — F1) rejects a header that is merely alphanumeric-safe but not UUID-shaped (the apiLoggingMiddleware sanitizer alone would accept this — this route must not)
+-09-results-serwer.json | kpi.routes.test.ts | POST .../definition-versions/:versionId/approve — self-approval denial returns 403 with code SELF_APPROVAL_DENIED when the command rejects self-approval
+-09-results-serwer.json | kpi.routes.test.ts | POST .../definition-versions/:versionId/approve — self-approval denial 404s when the versionId in the URL does not belong to the kpiId in the URL
+-09-results-serwer.json | kpi.routes.test.ts | POST .../activate — STALE_VERSION conflict returns 409 with code STALE_VERSION when the command reports an optimistic-concurrency conflict
+-09-results-serwer.json | kpi.routes.test.ts | POST .../activate — STALE_VERSION conflict returns 404 when the command reports the aggregate does not exist
+-09-results-serwer.json | kpi.routes.test.ts | POST .../activate — STALE_VERSION conflict maps an invalid-transition domain error to 409 (DEVIATION note: no DefinitionVersionNotSubmittedError exists)
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements + GET .../measurements — record -> list roundtrip evaluates performanceStatus server-side from the definition version bounds and records the measurement
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements + GET .../measurements — record -> list roundtrip evaluates a below-warning-band actual value as critical (threshold_min, no warning match)
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements + GET .../measurements — record -> list roundtrip 404s when the KPI has no current definition version and none is supplied
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements/:measurementId/{corrections,verify,dispute} correctMeasurement re-evaluates performanceStatus against the original measurement definition version
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements/:measurementId/{corrections,verify,dispute} 404s correction when the measurement does not belong to the kpiId in the URL
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements/:measurementId/{corrections,verify,dispute} verifyMeasurement sets data quality without touching actualValue
+-09-results-serwer.json | kpi.routes.test.ts | POST .../measurements/:measurementId/{corrections,verify,dispute} disputeMeasurement requires a non-empty disputeReason (Zod 400, command never called)
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../measurements (kpi.routes.ts) + GET .../deviation-cases/:caseId — roundtrip records a critical measurement, then the resulting case is fetchable by id
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../measurements (kpi.routes.ts) + GET .../deviation-cases/:caseId — roundtrip 404s GET for a case the repository does not return (not found / not visible)
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../measurements (kpi.routes.ts) + GET .../deviation-cases/:caseId — roundtrip 400s GET for a non-UUID caseId (Zod validation) instead of falling through to kpi.routes.ts
+-09-results-serwer.json | kpiDeviation.routes.test.ts | GET /api/vnext/results/kpi/deviation-cases — listDeviationCases resolves via THIS router, not kpi.routes.ts GET /:kpiId (mount-order fix)
+-09-results-serwer.json | kpiDeviation.routes.test.ts | GET /api/vnext/results/kpi/deviation-cases — listDeviationCases passes query filters through to the repository
+-09-results-serwer.json | kpiDeviation.routes.test.ts | acknowledge -> root-cause -> corrective-action -> plan submit/approve walks the full state machine to "approved"
+-09-results-serwer.json | kpiDeviation.routes.test.ts | PATCH .../corrective-actions/:actionId updates the action when it belongs to the case in the URL
+-09-results-serwer.json | kpiDeviation.routes.test.ts | PATCH .../corrective-actions/:actionId 404s when the actionId does not belong to the caseId in the URL
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../recovery-observation and .../effectiveness-verifications records a recovery observation
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../recovery-observation and .../effectiveness-verifications submits an effective verification and returns both case and verification
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../close — effectiveness not verified returns 409 EFFECTIVENESS_NOT_VERIFIED when the command rejects the close
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../close — effectiveness not verified closes successfully once the command reports "verification" satisfied
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../plan/approve — self-approval denial returns 403 with code SELF_APPROVAL_DENIED when the command rejects self-approval
+-09-results-serwer.json | kpiDeviation.routes.test.ts | optimistic-concurrency and not-found error mapping returns 409 STALE_VERSION when the command reports an optimistic-concurrency conflict
+-09-results-serwer.json | kpiDeviation.routes.test.ts | optimistic-concurrency and not-found error mapping returns 404 when the command reports the aggregate does not exist
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../escalate, .../deescalate, .../reopen escalates the overlay flag without changing case status
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../escalate, .../deescalate, .../reopen deescalates the overlay flag
+-09-results-serwer.json | kpiDeviation.routes.test.ts | POST .../escalate, .../deescalate, .../reopen reopens a closed case as a NEW row (executeAtomicCreate — no expectedVersion in the body)
+-09-results-serwer.json | kpiDeviation.routes.test.ts | request-shape validation 400s acknowledge when expectedVersion is missing
+-09-results-serwer.json | kpiDeviation.routes.test.ts | request-shape validation 400s addCorrectiveAction when required fields are missing
+-09-results-serwer.json | kpiDeviation.routes.test.ts | request-shape validation 400s recovery-observation when recoveryObservationMeasurementId is not a UUID
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/my — listMyKpis resolves via THIS router, not kpi.routes.ts GET /:kpiId (mount-order fix)
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/my — listMyKpis passes limit/offset through to the repository
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/attention — listOrganizationKpiAttention resolves via THIS router, not kpi.routes.ts GET /:kpiId (mount-order fix)
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/attention — listOrganizationKpiAttention passes includeSelf/recurrenceWindowDays query filters through
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/:kpiId still resolves via kpi.routes.ts falls through to kpi.routes.ts when the path is a UUID kpiId, not "my"/"attention"
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST /api/vnext/results/kpi/initiative-impacts — proposeInitiativeKpiImpact proposes an impact and returns 201 with outcome=applied
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST /api/vnext/results/kpi/initiative-impacts — proposeInitiativeKpiImpact 400s when a required field is missing
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST /api/vnext/results/kpi/initiative-impacts — proposeInitiativeKpiImpact maps ACTIVE_IMPACT_EXISTS to 409
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/commit — commitInitiativeKpiImpact commits the impact
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/commit — commitInitiativeKpiImpact maps NOT_PROPOSED to 409
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/commit — commitInitiativeKpiImpact 400s for a non-UUID impactId
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/review — recordReviewedAttribution records the reviewed attribution
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/review — recordReviewedAttribution maps self-approval denial to 403
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/review — recordReviewedAttribution 400s when reviewRationale is missing
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/supersede — supersedeInitiativeKpiImpact supersedes the impact and returns both rows
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/supersede — supersedeInitiativeKpiImpact returns 409 STALE_VERSION on an optimistic-concurrency conflict
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | POST .../initiative-impacts/:impactId/supersede — supersedeInitiativeKpiImpact returns 404 when the aggregate does not exist
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/initiative-impacts — listInitiativeImpactsForKpi lists impacts for the KPI
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/kpi/:kpiId/initiative-impacts — listInitiativeImpactsForKpi passes status/limit/offset query filters through
+-09-results-serwer.json | kpiPerspectives.routes.test.ts | GET /api/vnext/results/initiatives/:initiativeId/kpi-impacts — listKpiImpactsForInitiative lists impacts for the initiative
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST /api/vnext/results/kpi/scorecards — createScorecard creates a scorecard and returns 201 with outcome=applied
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST /api/vnext/results/kpi/scorecards — createScorecard 400s when a required field is missing
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST /api/vnext/results/kpi/scorecards — createScorecard maps KpiNoActiveVisibilityPolicyError to 409
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET /api/vnext/results/kpi/scorecards — listScorecards resolves via THIS router, not kpi.routes.ts (mount-order sanity)
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET /api/vnext/results/kpi/scorecards — listScorecards passes query filters through to the repository
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET /api/vnext/results/kpi/scorecards/:scorecardId — getScorecard 200s with the scorecard when the local visibility-scoped read finds a row
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET /api/vnext/results/kpi/scorecards/:scorecardId — getScorecard 404s when the row is not found (or not visible)
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET /api/vnext/results/kpi/scorecards/:scorecardId — getScorecard 400s for a non-UUID scorecardId instead of hitting the DB
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items GET .../items lists items via the repository
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items POST .../items adds an item and returns 201
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items POST .../items maps ITEM_ALREADY_EXISTS to 409
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items DELETE .../items/:itemId removes an item
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items PATCH .../items/reorder reorders items
+-09-results-serwer.json | kpiScorecard.routes.test.ts | scorecard items 400s reorder when items array is empty
+-09-results-serwer.json | kpiScorecard.routes.test.ts | GET .../status — getScorecardStatusDistribution returns the distribution
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST .../activate | .../suspend | .../archive activates the scorecard
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST .../activate | .../suspend | .../archive maps NO_MEMBERS to 409 on activate
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST .../activate | .../suspend | .../archive suspends the scorecard
+-09-results-serwer.json | kpiScorecard.routes.test.ts | POST .../activate | .../suspend | .../archive archives the scorecard
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots POST .../review-snapshots creates a draft snapshot (201)
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots GET .../review-snapshots lists snapshot history
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots GET .../review-snapshots/published returns the current published snapshot
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots GET .../review-snapshots/published 404s when there is none
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots POST .../review-snapshots/:snapshotId/publish publishes the snapshot
+-09-results-serwer.json | kpiScorecard.routes.test.ts | review snapshots maps NOT_A_DRAFT to 409 on publish
+-09-results-serwer.json | kpiScorecard.routes.test.ts | optimistic-concurrency and not-found error mapping returns 409 STALE_VERSION when the command reports an optimistic-concurrency conflict
+-09-results-serwer.json | kpiScorecard.routes.test.ts | optimistic-concurrency and not-found error mapping returns 404 when the command reports the aggregate does not exist
+-09-results-serwer.json | okr.routes.test.ts | POST /programs + GET /programs/:programId — create -> get roundtrip creates a Program and the same id is fetchable via GET
+-09-results-serwer.json | okr.routes.test.ts | POST /programs + GET /programs/:programId — create -> get roundtrip 404s GET for a program the repository does not return
+-09-results-serwer.json | okr.routes.test.ts | POST /programs + GET /programs/:programId — create -> get roundtrip 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | GET /programs — listPrograms passes status/limit/offset through to the repository
+-09-results-serwer.json | okr.routes.test.ts | PATCH /programs/:programId/draft — editProgramDraft 404s when the program does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | PATCH /programs/:programId/draft — editProgramDraft edits and maps STALE_VERSION to 409
+-09-results-serwer.json | okr.routes.test.ts | PATCH /programs/:programId/draft — editProgramDraft maps OkrProgramValidationError (NOT_EDITABLE) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /programs/:programId/publish — publishProgram publishes and returns program + policyVersion
+-09-results-serwer.json | okr.routes.test.ts | POST /programs/:programId/publish — publishProgram 404s when the program does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles + GET /cycles/:cycleId — create -> get roundtrip creates a Cycle and the same id is fetchable via GET
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles + GET /cycles/:cycleId — create -> get roundtrip maps OkrCycleProgramNotActiveError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles + GET /cycles/:cycleId — create -> get roundtrip maps AtomicWriteAggregateNotFoundError to 404 (referenced Program does not exist)
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles + GET /cycles/:cycleId — create -> get roundtrip 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles + GET /cycles/:cycleId — create -> get roundtrip 404s GET for a cycle the repository does not return
+-09-results-serwer.json | okr.routes.test.ts | GET /cycles — listCycles passes programId/status/limit/offset through to the repository
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles/:cycleId/{open-drafting|activate|open-review|close|cancel} open-drafting: 200 on success
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles/:cycleId/{open-drafting|activate|open-review|close|cancel} cancel: maps OkrCycleValidationError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /cycles/:cycleId/{open-drafting|activate|open-review|close|cancel} 404s when the cycle does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /sets + GET /sets/:setId — create -> get roundtrip creates a Set (created:true -> 201) and the same id is fetchable via GET
+-09-results-serwer.json | okr.routes.test.ts | POST /sets + GET /sets/:setId — create -> get roundtrip D3 found-existing branch (created:false) returns 200, not 201
+-09-results-serwer.json | okr.routes.test.ts | POST /sets + GET /sets/:setId — create -> get roundtrip 404s GET for a Set the repository does not return
+-09-results-serwer.json | okr.routes.test.ts | POST /sets + GET /sets/:setId — create -> get roundtrip 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /sets + GET /sets/:setId — create -> get roundtrip maps OkrSetNoActiveVisibilityPolicyError to 409
+-09-results-serwer.json | okr.routes.test.ts | GET /sets — listOkrSets passes cycleId/scopeType/status/attentionState/limit/offset through to the repository
+-09-results-serwer.json | okr.routes.test.ts | GET /company — listOkrSets pinned to scope_type company always passes scopeType:"company", regardless of query
+-09-results-serwer.json | okr.routes.test.ts | GET /my — listMyOkrSets passes userId/organizationId/limit/offset through to the repository
+-09-results-serwer.json | okr.routes.test.ts | GET /team-health — listOrganizationOkrTeamHealth passes managerId/organizationId through to the repository, no query params
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/draft — updateOkrSetDraft 404s when the Set does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/draft — updateOkrSetDraft edits and maps STALE_VERSION to 409
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/draft — updateOkrSetDraft maps OkrSetValidationError (NOT_EDITABLE) to 409
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/visibility — narrowOkrSetVisibility narrows and returns the new visibilityMode
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/visibility — narrowOkrSetVisibility maps OkrSetVisibilityWideningDeniedError to 409
+-09-results-serwer.json | okr.routes.test.ts | PATCH /sets/:setId/visibility — narrowOkrSetVisibility 400s on an invalid visibilityMode (Zod enum)
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/submit — submitOkrSetForApproval submits: 200 on success
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/submit — submitOkrSetForApproval maps OkrSetNotReadyForSubmissionError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/submit — submitOkrSetForApproval 404s when the Set does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/approve — approveOkrSet approves and returns set + snapshot
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/approve — approveOkrSet maps OkrSetSelfApprovalDeniedError to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/request-changes — requestChangesOnOkrSet requests changes: 200 on success
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/request-changes — requestChangesOnOkrSet 400s when changeRequestNotes is missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/{activate|cancel} activate: 200 on success
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/{activate|cancel} cancel: maps OkrSetValidationError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/{activate|cancel} 404s when the Set does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/request-revision — recordOkrSetMaterialChange records a material change: 200 on success
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/request-revision — recordOkrSetMaterialChange maps OkrSetValidationError (NOT_ACTIVE) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/request-revision — recordOkrSetMaterialChange 400s on an invalid fieldName (Zod enum)
+-09-results-serwer.json | okr.routes.test.ts | GET /sets/:setId/approval-snapshots(/:snapshotId) lists approval snapshots
+-09-results-serwer.json | okr.routes.test.ts | GET /sets/:setId/approval-snapshots(/:snapshotId) gets a single approval snapshot
+-09-results-serwer.json | okr.routes.test.ts | GET /sets/:setId/approval-snapshots(/:snapshotId) 404s when the snapshot is not found/visible
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet creates an Objective (201) when the Set exists
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet 404s when the Set does not exist/is not visible, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet maps AMBITION_TYPE_DISABLED (OkrObjectiveValidationError) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet maps OkrObjectiveSetNotEditableError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet lists Objectives with nested KeyResults for the Set
+-09-results-serwer.json | okr.routes.test.ts | GET /objectives/:objectiveId — getObjective returns the Objective with nested KeyResults
+-09-results-serwer.json | okr.routes.test.ts | GET /objectives/:objectiveId — getObjective 404s when not found/visible
+-09-results-serwer.json | okr.routes.test.ts | PATCH /objectives/:objectiveId — updateObjective 404s when the Objective does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | PATCH /objectives/:objectiveId — updateObjective updates and returns the Objective
+-09-results-serwer.json | okr.routes.test.ts | PATCH /objectives/:objectiveId — updateObjective maps CONFIDENCE_NOT_OWNER_EDITABLE (OkrObjectiveValidationError) to 409
+-09-results-serwer.json | okr.routes.test.ts | PATCH /objectives/:objectiveId — updateObjective maps STALE_VERSION to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/cancel — cancelObjective 404s when the Objective does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/cancel — cancelObjective cancels and returns the Objective
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/key-results — createKeyResult creates a KeyResult (201) when the Objective exists
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/key-results — createKeyResult 404s when the Objective does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/key-results — createKeyResult 400s when currency is missing for measurementType="currency" (Zod refine)
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/key-results — createKeyResult 400s when range_min/range_max are missing for direction="maintain_range" (Zod refine)
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/key-results — createKeyResult maps MEASUREMENT_TYPE_NOT_IMPLEMENTED (OkrKeyResultValidationError) to 409
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId — getKeyResult returns the KeyResult
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId — getKeyResult 404s when not found/visible
+-09-results-serwer.json | okr.routes.test.ts | PATCH /key-results/:keyResultId — updateKeyResult 404s when the KeyResult does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | PATCH /key-results/:keyResultId — updateKeyResult updates and returns the KeyResult
+-09-results-serwer.json | okr.routes.test.ts | PATCH /key-results/:keyResultId — updateKeyResult rejects status="cancelled" via plain update (Zod excludes it — use the cancel route instead)
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/cancel — cancelKeyResult 404s when the KeyResult does not exist, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/cancel — cancelKeyResult cancels and returns the KeyResult
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/cancel — cancelKeyResult maps AtomicWriteAggregateNotFoundError to 404
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId/check-ins — listCheckIns 404s when the KeyResult does not exist/visible, without calling listCheckIns
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId/check-ins — listCheckIns returns the check-in list
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId/check-ins — listCheckIns passes currentOnly=false through to the repository when requested
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn 404s when the KeyResult does not exist/visible, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn 400s when note is missing (required field)
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn 400s when confidence="numeric" is sent without confidenceNumericValue
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn records and returns the check-in (201 on applied)
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn maps OkrCheckInAlreadyExistsForOccurrenceError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins — recordCheckIn maps OkrCheckInValidationError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn 404s when the KeyResult does not exist/visible, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn 404s when the CheckIn does not exist/visible, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn 400s when correctionReason is missing (required field)
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn corrects and returns original + superseding rows
+-09-results-serwer.json | okr.routes.test.ts | POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn maps OkrCheckInNotFoundError to 404
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId/suggested-next-check-in-value — suggestNextCheckInValue 404s when the KeyResult does not exist/visible
+-09-results-serwer.json | okr.routes.test.ts | GET /key-results/:keyResultId/suggested-next-check-in-value — suggestNextCheckInValue returns the pure suggestion computed from listCheckIns history
+-09-results-serwer.json | okr.routes.test.ts | Mount order — GET /objectives/:objectiveId and /key-results/:keyResultId are reachable without swallowing sibling routes GET /sets/:setId/objectives still resolves to the Set-scoped list route, not the single-Objective route
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment proposes an alignment (201 when created:true) when the source Objective exists
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment returns 200 (not 201) when a pre-existing edge is returned (created:false)
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment 404s when the source Objective does not exist/is not visible, without calling the command
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment 400s when targetObjectiveId is missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment maps OkrAlignmentValidationError (SELF_LOOP) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment maps OkrAlignmentNotOwnerError (NOT_SOURCE_OWNER) to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment maps OkrAlignmentVisibilityDeniedError to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment maps OkrAlignmentCycleMismatchError to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /objectives/:objectiveId/alignments — proposeAlignment maps OkrAlignmentCycleDetectedError to 409
+-09-results-serwer.json | okr.routes.test.ts | GET /objectives/:objectiveId/alignments — listAlignmentsForObjective lists alignments for the given direction
+-09-results-serwer.json | okr.routes.test.ts | GET /objectives/:objectiveId/alignments — listAlignmentsForObjective 400s when direction is missing/invalid (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | GET /objectives/:objectiveId/alignment-tree — getAlignmentTreeUnderObjective returns the alignment tree nodes
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment accepts and returns the alignment
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment maps OkrAlignmentValidationError (NOT_PROPOSED) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment maps OkrAlignmentCycleDetectedError (accept-time re-check) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment maps AtomicWriteConflictError (STALE_VERSION) to 409
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment maps AtomicWriteAggregateNotFoundError to 404
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/accept — acceptAlignment 400s when expectedVersion is missing (Zod validation)
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/reject — rejectAlignment rejects and returns the alignment
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/reject — rejectAlignment maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/remove — removeAlignment removes and returns the alignment
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/remove — removeAlignment maps OkrAlignmentNotOwnerError (NOT_OWNER) to 403
+-09-results-serwer.json | okr.routes.test.ts | POST /alignments/:alignmentId/remove — removeAlignment maps OkrAlignmentValidationError (NOT_REMOVABLE) to 409
+-09-results-serwer.json | okr.routes.test.ts | Mount order — /alignments/:alignmentId/accept|reject|remove are reachable dynamic sub-paths POST /alignments/:alignmentId/accept resolves to acceptAlignment, not a stray :alignmentId handler
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/open-review 200s on success (reuses runOkrSetLifecycleTransition with OKR_SET_OPEN_REVIEW_SPEC)
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/open-review 404s when the Set does not exist
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/final-score 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/final-score maps OkrSetValidationError(NOT_IN_REVIEW) to 409
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../objectives/:objectiveId/reflection 200s on success (create path, expectedVersion=0)
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../objectives/:objectiveId/reflection 404s when the Objective does not exist
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../objectives/:objectiveId/reflection 400s when setId is missing from the body
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/self/submit 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/manager/submit 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/manager/approve 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/manager/approve maps OkrManagerReviewSelfApprovalDeniedError to 403 (D6 — never a SelfReviewDenied* class)
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/manager/approve maps AtomicWriteConflictError to 409
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/manager/request-changes 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/:reviewType/comments 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/reviews/:reviewType/comments 400s on an invalid reviewType param
+-09-results-serwer.json | okrReview.routes.test.ts | GET .../sets/:setId/reviews 200s with the list
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/close 200s on success
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/close maps OkrSetManagerReviewRequiredError to 409
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/close maps OkrSetSelfReviewRequiredError to 409
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/close maps OkrSetReflectionRequiredError to 409, carrying missingObjectiveIds
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/close 404s when the Set does not exist
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/carry-forward 201s when a new carried Set was created
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/carry-forward 200s when dedupe reused an existing carried Set (created=false)
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/carry-forward maps OkrSetValidationError(SOURCE_NOT_CLOSED) to 409
+-09-results-serwer.json | okrReview.routes.test.ts | POST .../sets/:setId/carry-forward 404s when the Set does not exist
+-09-results-serwer.json | okrReview.routes.test.ts | GET .../sets/:setId/history 200s with the merged entries + nextCursor
+-09-results-serwer.json | okrReview.routes.test.ts | GET .../sets/:setId/history passes cursor/limit query params through
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip creates a ROI case and the same id is fetchable via GET
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip returns 200 (not 201) when AC-02 returned a pre-existing case (created:false)
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip 404s GET for a case the repository does not return (not found / not visible)
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip AMD-FLOW-ROI-VISIBILITY-002: 404s GET when the governed gate denies — same NOT_FOUND shape as an absent case, never a 403, and never calls the repository at all
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip 400s create when required fields are missing (Zod validation)
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> get roundtrip maps RoiCaseNoActiveVisibilityPolicyError to 409
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases passes status/includeArchived/limit/offset through to the repository
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases AMD-FLOW-ROI-VISIBILITY-002: returns an empty list, never a 403, when the governed gate denies — and never calls the repository at all
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases passes a validated q through to the repository alongside the existing filters (happy path)
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases a q that matches nothing round-trips as 200 + an empty array, not an error
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases a q shorter than 2 characters 400s (Zod ListRoiCasesQuerySchema) before the repository is ever called
+-09-results-serwer.json | roi.routes.test.ts | GET /api/vnext/results/roi/cases — listRoiCases omitting q entirely is unchanged behavior — repository receives q: undefined, identical to the pre-S.2 call shape (DEC-65 backward compatibility)
+-09-results-serwer.json | roi.routes.test.ts | PATCH /api/vnext/results/roi/cases/:caseId — updateRoiCaseDetails 404s when the case does not exist/is not visible, without calling the command
+-09-results-serwer.json | roi.routes.test.ts | PATCH /api/vnext/results/roi/cases/:caseId — updateRoiCaseDetails updates details and maps STALE_VERSION to 409
+-09-results-serwer.json | roi.routes.test.ts | PATCH /api/vnext/results/roi/cases/:caseId — updateRoiCaseDetails maps RoiCaseValidationError (NOT_EDITABLE) to 409
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases/:caseId/archive — archiveRoiCase archives a case regardless of status (no status guard at the HTTP layer)
+-09-results-serwer.json | roi.routes.test.ts | POST /api/vnext/results/roi/cases/:caseId/archive — archiveRoiCase looks up the case with includeArchived:true so re-archiving an already-archived case is not a false 404
+-09-results-serwer.json | roi.routes.test.ts | POST .../transitions/start-modeling | ready-for-review startModeling: 200 on success
+-09-results-serwer.json | roi.routes.test.ts | POST .../transitions/start-modeling | ready-for-review markReadyForReview: maps RoiCaseNotReadyForReviewError to 409
+-09-results-serwer.json | roi.routes.test.ts | POST .../transitions/start-modeling | ready-for-review 404s when the case does not exist, without calling the command
+-09-results-serwer.json | roi.routes.test.ts | POST .../transitions/start-modeling | ready-for-review maps AtomicWriteAggregateNotFoundError to 404
+-09-results-serwer.json | roi.routes.test.ts | GET/PUT .../cases/:caseId/baseline GET returns the baseline
+-09-results-serwer.json | roi.routes.test.ts | GET/PUT .../cases/:caseId/baseline GET 404s when the baseline is not found/visible
+-09-results-serwer.json | roi.routes.test.ts | GET/PUT .../cases/:caseId/baseline PUT captures/updates the baseline
+-09-results-serwer.json | roi.routes.test.ts | GET/PUT .../cases/:caseId/baseline PUT maps RoiBaselineFrozenError to 409
+-09-results-serwer.json | roi.routes.test.ts | GET/PUT .../cases/:caseId/baseline PUT 404s when the parent case does not exist, without calling the command
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/start-benefits-realization 200s on success
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/start-benefits-realization maps RoiCaseValidationError to 409
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/start-benefits-realization 404s when the case does not exist
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/start-benefits-realization maps AtomicWriteConflictError (stale version) to 409
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/cancel 200s on success with a reason
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/cancel 400s (validation) when reason is missing — mandatory field, Decision D8
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/cancel 400s (validation) when reason is an empty string
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/cancel maps RoiCaseValidationError to 409 (guard scope — Decision D7)
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | POST .../transitions/cancel 404s when the case does not exist
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../benefits-realization 200s with the view, 2-reason typed slot
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../benefits-realization 200s with not_yet_approved when the view has no approved snapshot
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../benefits-realization 404s when the case is not visible/does not exist
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../benefits-realization D14: no status restriction — readable regardless of the (mocked, not itself asserted) case status
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../org/benefits-realization 200s with the org rollup, and managerId is derived from auth.userId, never client-supplied
+-09-results-serwer.json | roiBenefitsRealization.routes.test.ts | GET .../org/benefits-realization does NOT fall through to roi.routes.ts's /cases/:caseId family — mount-order regression guard
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/submit-for-approval 200s on success
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/submit-for-approval maps RoiCaseNotReadyForReviewError to 409 (AC-01)
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/submit-for-approval 404s when the case does not exist, without calling the command
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/approve 200s on success — approver identity from auth.userId, not the body
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/approve maps RoiSelfApprovalDeniedError to 403, checked FIRST ahead of the generic 409 branches
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/approve maps STALE_VERSION to 409
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/approve 404s when the case does not exist, without calling the command
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reject 200s on success, rejectionReason required by the schema
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reject 400s when rejectionReason is missing (Zod validation)
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reject maps RoiCaseValidationError (NOT_SUBMITTED_FOR_APPROVAL) to 409
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/request-changes 200s on success, changeRequestNotes required by the schema
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/request-changes 400s when changeRequestNotes is missing (Zod validation)
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reopen-for-revision 200s on success, reason REQUIRED (unlike every other transition)
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reopen-for-revision 400s when reason is missing (Zod validation — reason is required here, unlike other transitions)
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reopen-for-revision maps RoiCaseValidationError (INVALID_ROI_CASE_STATUS_TRANSITION) to 409 when case is not approved
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reopen-after-rejection 200s on success
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | POST .../transitions/reopen-after-rejection 404s when the case does not exist, without calling the command
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | GET .../approval-snapshots 200s with a list of summaries
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | GET .../approval-snapshots 200s with an empty list when the reader can see nothing
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | GET .../approval-snapshots/:snapshotId 200s with the full redacted detail
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | GET .../approval-snapshots/:snapshotId 404s when the snapshot is not found/visible — non-distinguishing between the two
+-09-results-serwer.json | roiCaseApproval.routes.test.ts | GET .../approval-snapshots/:snapshotId 400s on a malformed snapshotId (Zod uuid validation)
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | GET/PUT /cases/:caseId/calculation-policy GET returns the policy, 404s when repository returns null
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | GET/PUT /cases/:caseId/calculation-policy PUT 404s when the case does not exist, else applies the update
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | GET/PUT /cases/:caseId/calculation-policy maps RoiEconomicModelNotEditableError to 409
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | assumptions: GET (list+single)/POST/PATCH/DELETE lists and fetches a single assumption
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | assumptions: GET (list+single)/POST/PATCH/DELETE POST 400s on missing required fields, 201s on success
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | assumptions: GET (list+single)/POST/PATCH/DELETE PATCH applies the update; DELETE (soft) applies the removal
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | cost-lines: POST 201s on success and forwards the typed body to addCostLine
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | benefit-lines: POST + financial/non-financial validation error mapping 201s on success
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | benefit-lines: POST + financial/non-financial validation error mapping maps RoiBenefitLineValidationError (isFinancial/amount mismatch) to 409
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | benefit-lines/:benefitLineId/kpi-evidence-links: GET/POST/DELETE GET lists links (with optional hydration flag), POST adds one, DELETE removes one
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | scenarios + overrides POST scenario, POST override, DELETE override — all applied
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | scenarios + overrides maps RoiScenarioValidationError (override on a non-custom scenario) to 409
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | calculation-runs: POST/GET POST creates a run (201), GET lists runs, GET fetches a single run
+-09-results-serwer.json | roiEconomicModel.routes.test.ts | calculation-runs: POST/GET maps RoiCalculationRunValidationError (case not runnable) to 409
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /finance-owner-grants derives tenant and governor from auth and returns applied/replayed receipts
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /finance-owner-grants rejects missing idempotency and unknown fields before the service
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | GET .../finance-links 200s with the list
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-links 201s on success — full pinned envelope forwarded
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-links 404s when the case does not exist
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-links 400s when a required field is missing
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-links maps RoiEconomicModelNotEditableError to 409 (case in a NON_EDITABLE_STATUSES status)
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | DELETE .../finance-links/:linkId 200s on success
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | DELETE .../finance-links/:linkId maps AtomicWriteConflictError to 409
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | GET .../finance-reconciliations 200s with the list
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-reconciliations 201s on success
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-reconciliations maps RoiFinanceLinkNotFoundError to 404
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-reconciliations 400s when roiValue/financeValue are missing
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | PATCH .../finance-reconciliations/:reconciliationId 200s on success — Decision D1
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | PATCH .../finance-reconciliations/:reconciliationId maps RoiFinanceReconciliationNotFoundError to 404
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | PATCH .../finance-reconciliations/:reconciliationId maps RoiFinanceReconciliationValidationError to 409
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | PATCH .../finance-reconciliations/:reconciliationId 400s for an invalid status enum value
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../kpi-evidence-links/:linkId/freshness-check 200s on success — empty body accepted
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../kpi-evidence-links/:linkId/freshness-check maps RoiBenefitEvidenceLinkValidationError to 409
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../kpi-evidence-links/:linkId/freshness-check accepts an optional reason and forwards it
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /visibility-policy derives org/actor from auth and always publishes the one pinned canonical policy (never client-supplied)
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /visibility-policy 200s (not 201) on a replayed outcome
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /visibility-policy maps RoiGovernedVisibilityPolicyCollisionError to 409
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /visibility-policy maps RoiGovernedVisibilityPolicyMismatchError to 400 (defense in depth — the route never actually sends a mismatched policy)
+-09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST /visibility-policy 400s on an unknown body field (idempotencyKey is the only accepted field)
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../transitions/start-tracking 200s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../forecast-versions 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../forecast-versions maps RoiForecastVersionValidationError to 409
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../forecast-versions 404s when the case does not exist
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../forecast-versions 200s with a list
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../forecast-versions/:forecastVersionId 404s when not found
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../compare 200s with the 3-slot compare view
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../compare 404s when the case is not visible/does not exist
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals maps RoiActualEntryValidationError to 409
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../actuals 200s with a list
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../actuals/:entryId 404s when not found
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals/:entryId/corrections 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals/:entryId/corrections maps RoiActualEntryNotFoundError to 404
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals/:entryId/verify — Decision D10 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals/:entryId/verify — Decision D10 maps RoiActualSelfVerificationDeniedError to 403 (D10) — checked ahead of the generic 409 branch
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actuals/:entryId/dispute 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../actual-snapshots 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../actual-snapshots/:actualSnapshotId 404s when not found
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../variances 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../variances maps RoiVarianceValidationError to 409
+-09-results-serwer.json | roiForecastActual.routes.test.ts | GET .../variances/:varianceId maps RoiVarianceNotFoundError-shaped 404 via a null repository result
+-09-results-serwer.json | roiForecastActual.routes.test.ts | PATCH .../variances/:varianceId 200s on success (CAS on the variance's own row_version)
+-09-results-serwer.json | roiForecastActual.routes.test.ts | PATCH .../variances/:varianceId maps AtomicWriteConflictError to 409 on a stale expectedVersion
+-09-results-serwer.json | roiForecastActual.routes.test.ts | PATCH .../variances/:varianceId maps RoiVarianceNotFoundError to 404
+-09-results-serwer.json | roiForecastActual.routes.test.ts | POST .../variances/:varianceId/causes 201s on success
+-09-results-serwer.json | roiForecastActual.routes.test.ts | DELETE .../variances/:varianceId/causes/:causeId 200s on success
+-09-results-serwer.json | roiPir.routes.test.ts | PUT .../post-investment-review-schedule 200s on success
+-09-results-serwer.json | roiPir.routes.test.ts | PUT .../post-investment-review-schedule 400s when nextReviewAt is missing
+-09-results-serwer.json | roiPir.routes.test.ts | PUT .../post-investment-review-schedule 404s when the case does not exist
+-09-results-serwer.json | roiPir.routes.test.ts | PUT .../post-investment-review-schedule maps RoiCaseValidationError to 409 (guard scope)
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/mark-pir-due 200s on success
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/mark-pir-due maps AtomicWriteConflictError to 409
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/start-pir 200s on success — result shape is { case, pir }
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/start-pir 404s when the case does not exist
+-09-results-serwer.json | roiPir.routes.test.ts | GET .../post-investment-reviews 200s with the list
+-09-results-serwer.json | roiPir.routes.test.ts | GET .../post-investment-reviews/:pirId 200s with the single PIR
+-09-results-serwer.json | roiPir.routes.test.ts | GET .../post-investment-reviews/:pirId 404s when not found/not visible
+-09-results-serwer.json | roiPir.routes.test.ts | PATCH .../post-investment-reviews/:pirId 200s on success
+-09-results-serwer.json | roiPir.routes.test.ts | PATCH .../post-investment-reviews/:pirId maps RoiPirValidationError (NOT_EDITABLE) to 409
+-09-results-serwer.json | roiPir.routes.test.ts | PATCH .../post-investment-reviews/:pirId maps RoiPirNotFoundError to 404
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../post-investment-reviews/:pirId/teresa-draft-disposition 200s for 'rejected' with no finalLessonsText
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../post-investment-reviews/:pirId/teresa-draft-disposition 200s for 'accepted' with finalLessonsText
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../post-investment-reviews/:pirId/teresa-draft-disposition maps RoiPirValidationError (FINAL_LESSONS_TEXT_REQUIRED) to 409
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../post-investment-reviews/:pirId/teresa-draft-disposition 400s for an invalid disposition enum value
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close 200s on success — result shape is { case, pir }
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close D6: maps RoiPirSelfCloseDeniedError to 403
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close maps RoiPirNotFoundError (no active draft PIR) to 404
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close AC-03: maps RoiPirValidationError (OPEN_VARIANCES_UNRESOLVED) to 409
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close AC-03: maps RoiPirValidationError (PIR_INCOMPLETE) to 409
+-09-results-serwer.json | roiPir.routes.test.ts | POST .../transitions/close accepts an optional openVarianceWaiverReason and forwards it
+-09-results-serwer.json | roiPir.routes.test.ts | GET .../org/pir-outcomes 200s with the org rollup, and managerId is derived from auth.userId, never client-supplied
+-09-results-serwer.json | roiPir.routes.test.ts | GET .../org/pir-outcomes does NOT fall through to roi.routes.ts's /cases/:caseId family — mount-order regression guard
+-09-results-serwer.json | resultsWriterInventory.denominator.test.ts | Results writer inventory — denominator gate accounts for EVERY write site in each Results route file it names
++08-meetings-serwer.json | meetingBoundaryRoutes.pg.test.ts | meeting boundary — route layer (real Postgres) replays a completed command before invoking meeting intelligence again
+ 09-results-serwer.json | resultsWriterInventory.denominator.test.ts | Results writer inventory — denominator gate DISCOVERS Results route files from the filesystem and leaves no writer-bearing file unlisted
++09-results-serwer.json | resultsWriterInventory.denominator.test.ts | Results writer inventory — denominator gate accounts for EVERY write site in each Results route file it names
+ 09-results-serwer.json | resultsWriterInventory.denominator.test.ts | Results writer inventory — denominator gate matches the real number of observation call sites in each instrumented file
+-09-results-serwer.json | operationalAlertWiring.pg.test.ts | OPS-OBS-001 production signal wiring (real PostgreSQL) records oldest outbox age and a terminal dispatcher failure from the real tick
++09-results-serwer.json | roiFinanceSeam.routes.test.ts | POST .../finance-reconciliations 201s on success
+ 09-results-serwer.json | roiGovernedVisibility20.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres) migration is idempotent on repeat application (repeat 0: no error, no duplicate side effects)
+ 09-results-serwer.json | roiGovernedVisibility20.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres) structural guard: the AMD-FLOW-ROI-VISIBILITY-002 section of visibilityResolver.ts never references hasEffectiveCapability, resolveEffectiveAccess, or effectiveAccessService.js — a durable regression guard against ever reintroducing the '*' wildcard into this narrower gate
+-09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) running the backfill migration: scoped correctly, idempotent on repeat
+-09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) AFTER the backfill: the gap is closed — an ordinary member with no grant, a revoked member, an unmembered caller, and an ACTIVE ADMIN of a DIFFERENT (foreign) tenant are ALL denied the exact same case that was visible before — no existence leak (null/empty, never an error)
+ 09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) AFTER the backfill: same-tenant ACTIVE OWNER, ADMIN, and a current Finance-authority-grant holder all still see the legacy case — but ONLY once the governed policy is actually published for this org (fail-closed until then)
++09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) AFTER the backfill: the gap is closed — an ordinary member with no grant, a revoked member, an unmembered caller, and an ACTIVE ADMIN of a DIFFERENT (foreign) tenant are ALL denied the exact same case that was visible before — no existence leak (null/empty, never an error)
+ 09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) createRoiCase: a real OWNER succeeds and the new case is stamped ROI_GOVERNED (never OPEN_ORG)
+-09-results-serwer.json | roiReadSurfaceInventory.test.ts | ROI read surface inventory — ratchet gate (inventory only, NOT an authority audit) SANITY: the detection rule finds a non-zero number of files (a silently-empty regex is a false green)
++09-results-serwer.json | roiOpenOrgBackfillVariantB.realdb.test.ts | AMD-FLOW-ROI-VISIBILITY-002 Variant B — OPEN_ORG backfill (real Postgres) running the backfill migration: scoped correctly, idempotent on repeat
+ 09-results-serwer.json | roiReadSurfaceInventory.test.ts | ROI read surface inventory — ratchet gate (inventory only, NOT an authority audit) FAILS on any ROI read surface on disk that is not in the inventory — unlisted means RED
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) viewer cannot approve an IN_REVIEW version — 403 FORBIDDEN, row unchanged (independent SQL)
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) preparer (not approver/finance_admin) cannot approve an IN_REVIEW version — 403 FORBIDDEN, row unchanged (independent SQL)
++09-results-serwer.json | roiReadSurfaceInventory.test.ts | ROI read surface inventory — ratchet gate (inventory only, NOT an authority audit) SANITY: the detection rule finds a non-zero number of files (a silently-empty regex is a false green)
+ 10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) approver CAN approve an IN_REVIEW version — 200, row APPROVED (independent SQL)
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) finance_admin CAN approve an IN_REVIEW version — 200, row APPROVED (independent SQL)
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) service-level gate: role "reviewer" (HTTP-unreachable today) is still rejected by approveVersion() directly
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=submit_for_review (from DRAFT): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=withdraw (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=start_review (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=request_changes (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=resume_editing (from NEEDS_CHANGES): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=approve (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=archive (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=invalidate (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=reopen (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=start_review (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=request_changes (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+ 10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=approve (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+ 10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=archive (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+ 10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=invalidate (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+ 10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=reopen (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /artifacts creates an artifact + v1 DRAFT business version
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /artifacts with an invalid artifactType -> 400 INVALID_ARTIFACT_TYPE
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id returns the artifact with its current version summary
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=request_changes (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=preparer action=start_review (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=approve (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=archive (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=invalidate (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=reopen (from APPROVED): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=request_changes (from IN_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=resume_editing (from NEEDS_CHANGES): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=start_review (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=submit_for_review (from DRAFT): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) capability<->endpoint agree for role=viewer action=withdraw (from READY_FOR_REVIEW): capabilities correctly excludes it AND the real endpoint rejects it (403 FORBIDDEN), row unchanged
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) finance_admin CAN approve an IN_REVIEW version — 200, row APPROVED (independent SQL)
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) preparer (not approver/finance_admin) cannot approve an IN_REVIEW version — 403 FORBIDDEN, row unchanged (independent SQL)
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) service-level gate: role "reviewer" (HTTP-unreachable today) is still rejected by approveVersion() directly
++10-finance-serwer.json | approveRbacGate.pg.test.ts | Finance v2 P0 fix — approve role gate + capability/endpoint consistency (real HTTP + real PostgreSQL) viewer cannot approve an IN_REVIEW version — 403 FORBIDDEN, row unchanged (independent SQL)
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id for an unknown id -> 404 NOT_FOUND
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id/versions lists versions in version_no order
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id returns the artifact with its current version summary
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id/capabilities reflects role + status via lifecycleService.allowedActionsFromStatus
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /artifacts/:id/versions lists versions in version_no order
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /compute/jobs/:id for an unknown id -> 404 NOT_FOUND
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /versions/:id + POST /versions/:id/transitions drive DRAFT -> READY_FOR_REVIEW -> IN_REVIEW
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions with a stale expectedVersion -> 409 VERSION_CONFLICT
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions missing expectedVersion -> 400 EXPECTED_VERSION_REQUIRED
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions with action=approve -> 400 INVALID_ACTION (approve routes through /models/:id/approve)
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/compute-snapshot freezes a snapshot for the current working revision (T8a)
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /artifacts creates an artifact + v1 DRAFT business version
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /artifacts with an invalid artifactType -> 400 INVALID_ARTIFACT_TYPE
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /compute/jobs enqueues, GET returns queued status, POST cancel moves to cancelled
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /compute/jobs without Idempotency-Key -> 400 IDEMPOTENCY_KEY_REQUIRED
+-10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) GET /compute/jobs/:id for an unknown id -> 404 NOT_FOUND
+ 10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /compute/jobs/:id/cancel on an already-terminal job -> 404 (not cancellable, no leak of "already done" vs "never existed")
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/compute-snapshot freezes a snapshot for the current working revision (T8a)
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions missing expectedVersion -> 400 EXPECTED_VERSION_REQUIRED
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions with a stale expectedVersion -> 409 VERSION_CONFLICT
++10-finance-serwer.json | artifacts-lifecycle-compute.routes.pg.test.ts | Finance v2 Pakiet B — artifacts/versions/compute (real HTTP + real PostgreSQL) POST /versions/:id/transitions with action=approve -> 400 INVALID_ACTION (approve routes through /models/:id/approve)
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B creating a comment on org A's businessVersionId -> 404 NOT_FOUND (pre-check), not a raw FK-violation 500; SQL confirms zero org-B comments
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B listing org A's checklist -> empty (org-scoped query, no cross-tenant leak)
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B reading org A's comment by id -> 404; org A can still read it
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments — neither artifactId nor businessVersionId -> 400 INVALID_QUERY
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments/:id — round-trips the created comment
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments/mentions/me — the mentioned same-org user (userA2) sees it, the comment author (userA) does not, org B (cross-tenant) does not either
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments?artifactId= — lists it
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /review-checklist/:businessVersionId — lists the item
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /review-checklist/:businessVersionId/all-required-checked — false before check, true after
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) MOUNT PROOF: valid context + REAL router, random commentId -> 404 WITH {code:"NOT_FOUND"}
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) MOUNT PROOF: valid context, path no router in this tree handles -> 404 WITHOUT a code field
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /comments — create artifact-level comment
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /comments — empty body -> 400 BODY_REQUIRED
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments/:id — round-trips the created comment
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments?artifactId= — lists it
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments — neither artifactId nor businessVersionId -> 400 INVALID_QUERY
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /comments/mentions/me — the mentioned same-org user (userA2) sees it, the comment author (userA) does not, org B (cross-tenant) does not either
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /comments/:id/assign then GET .../assignment — round-trips
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /comments/:id/resolve then reopen — round-trips resolved_at null<->set
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) blocking comment: GET .../has-unresolved-blocking-comments flips true -> false across resolve
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /review-checklist — add item
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /review-checklist/:businessVersionId/all-required-checked — false before check, true after
+ 10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) POST /review-checklist/:id/required=false then uncheck — item no longer blocks all-required-checked even unchecked
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) GET /review-checklist/:businessVersionId — lists the item
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B creating a comment on org A's businessVersionId -> 404 NOT_FOUND (pre-check), not a raw FK-violation 500; SQL confirms zero org-B comments
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B reading org A's comment by id -> 404; org A can still read it
+-10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) CROSS-TENANT: org B listing org A's checklist -> empty (org-scoped query, no cross-tenant leak)
++10-finance-serwer.json | comments.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Comments + Review checklist (real HTTP + real PostgreSQL) blocking comment: GET .../has-unresolved-blocking-comments flips true -> false across resolve
++10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) CROSS-TENANT (a): org B forges artifactRef.organizationId=orgA while authenticated as org B -> 403 ORGANIZATION_MISMATCH
++10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) CROSS-TENANT (b): org B supplies its OWN organizationId but org A's real businessVersionId -> 404 ARTIFACT_NOT_FOUND, SQL confirms org A's finance_stmt_lines rows are untouched
+ 10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) MOUNT PROOF: valid context + REAL router, artifactRef pointing at a random business_version_id -> 404 WITH {code:"ARTIFACT_NOT_FOUND"}
+ 10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) MOUNT PROOF: valid context, path no router in this tree handles -> 404 WITHOUT a code field
+-10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) VALIDATION: missing periodIdA/B -> 400 INVALID_BODY (proves body validation runs before any DB call)
+-10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) POST /compare/periods — real finance_stmt_lines diff, BOTH_PRESENT + materiality
+ 10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) POST /compare/periods — onlyMaterial=true with a threshold above the real delta -> rows filtered but summary stays full
+-10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) CROSS-TENANT (a): org B forges artifactRef.organizationId=orgA while authenticated as org B -> 403 ORGANIZATION_MISMATCH
+-10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) CROSS-TENANT (b): org B supplies its OWN organizationId but org A's real businessVersionId -> 404 ARTIFACT_NOT_FOUND, SQL confirms org A's finance_stmt_lines rows are untouched
+-10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) GET /versions/:id/freshness-events — real propagation ledger row round-trips through HTTP, matches independent SQL read
+-10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) GET /versions/:id/freshness-events?limit=not-a-number — non-numeric limit -> 400 INVALID_QUERY
++10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) POST /compare/periods — real finance_stmt_lines diff, BOTH_PRESENT + materiality
++10-finance-serwer.json | compare.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Compare engine (real HTTP + real PostgreSQL) VALIDATION: missing periodIdA/B -> 400 INVALID_BODY (proves body validation runs before any DB call)
++10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) CROSS-TENANT GET /exceptions/inbox — org B never sees org A's real exception (empty result, not an error leak)
+ 10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) CROSS-TENANT GET /versions/:id/freshness-events — org B never sees org A's real ledger row (empty result, not an error leak)
+ 10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) GET /exceptions/inbox — real tie_out_fail row surfaces with the correct category/severity/deep link, SQL confirms the raw exception row
+-10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) CROSS-TENANT GET /exceptions/inbox — org B never sees org A's real exception (empty result, not an error leak)
++10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) GET /versions/:id/freshness-events — real propagation ledger row round-trips through HTTP, matches independent SQL read
++10-finance-serwer.json | crosscutting.routes.pg.test.ts | Finance v2 Pakiet B2 — crosscutting freshness-events + exceptions/inbox (real HTTP + real PostgreSQL) GET /versions/:id/freshness-events?limit=not-a-number — non-numeric limit -> 400 INVALID_QUERY
+ 10-finance-serwer.json | day116-approved-valuation-wacc-conflict.realpg.test.ts | Dyżur 116 — zatwierdzona wersja wyceny odmawia zapisu WACC zwraca kontrolowane 409 w 3 z 3 prób i nie zmienia zatwierdzonego WACC
+ 10-finance-serwer.json | models.routes.pg.test.ts | Finance v2 adapter — /models/:modelId/{approve,reopen} (real HTTP + real PostgreSQL) POST /models/:modelId/approve success is BIT-IDENTICAL to WP-A02 fixture F4 success_200
+ 10-finance-serwer.json | models.routes.pg.test.ts | Finance v2 adapter — /models/:modelId/{approve,reopen} (real HTTP + real PostgreSQL) POST /models/:modelId/approve version conflict is BIT-IDENTICAL to WP-A02 fixture F4 error_409_version_conflict
+ 10-finance-serwer.json | models.routes.pg.test.ts | Finance v2 adapter — /models/:modelId/{approve,reopen} (real HTTP + real PostgreSQL) POST /models/:modelId/reopen round-trips over real HTTP (no legacy fixture — new canonical-only route)
+-10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /statements/:id/lines — org B on org A Statement Pack -> 404, SQL confirms lines still exist for org A
+-10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /statements/:id/reconcile — org B attempting to reconcile org A version -> 404, SQL confirms zero reconciliation runs for org B
+ 10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /analysis/:id/kpi-values — org B on org A Analysis -> 404
+-10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /analysis/:id/compute — org B attempting to compute org A Analysis -> 404 (NO_SOURCE_STATEMENT_PACK_EDGE, org-scoped edge lookup finds nothing), no compute_jobs row for org B
+ 10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /baseline/:id/assumptions and POST — org B on org A Baseline Model -> 404 both ways, SQL confirms zero assumption rows for org B
+-10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /prediction/:id/preflight — org B on org A scenario -> 404, SQL confirms zero preflight runs for org B
+ 10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /compute/jobs/:id/output (D2) — org B on org A job -> 404, org B never sees org A output
+-10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /artifacts/:id/rename (D3) — org B renaming org A artifact -> 404, SQL confirms natural_key unchanged
++10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /statements/:id/lines — org B on org A Statement Pack -> 404, SQL confirms lines still exist for org A
+ 10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) GET /versions/:id/lineage and /exceptions/open — org B never sees org A rows (empty result, not an error leak)
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) MOUNT PROOF: valid context + REAL router, random viewId -> 404 WITH {code:"NOT_FOUND"}
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) MOUNT PROOF: valid context, path no router in this tree handles -> 404 WITHOUT a code field
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) POST /saved-views — create PERSONAL view
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) POST /saved-views — invalid filters -> 400 INVALID_FILTERS
++10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /analysis/:id/compute — org B attempting to compute org A Analysis -> 404 (NO_SOURCE_STATEMENT_PACK_EDGE, org-scoped edge lookup finds nothing), no compute_jobs row for org B
++10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /artifacts/:id/rename (D3) — org B renaming org A artifact -> 404, SQL confirms natural_key unchanged
++10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /prediction/:id/preflight — org B on org A scenario -> 404, SQL confirms zero preflight runs for org B
++10-finance-serwer.json | pkg-b2-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B2 — cross-tenant matrix (real HTTP + real PostgreSQL) POST /statements/:id/reconcile — org B attempting to reconcile org A version -> 404, SQL confirms zero reconciliation runs for org B
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B POSTing a MALFORMED (missing name) saved view against org A's artifactId -> SAME uniform 404 ARTIFACT_NOT_FOUND, NOT 400 NAME_REQUIRED
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B POSTing a WELL-FORMED saved view against org A's artifactId -> uniform 404 ARTIFACT_NOT_FOUND, no row created
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B deleting org A's TEAM view -> 404 (not FORBIDDEN — org-scoped lookup fails first), row untouched
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B listing org A's artifactId -> empty list (org-scoped query, no leak)
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B reading org A's TEAM view by id -> 404; SQL confirms the row still exists for org A
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) DELETE /saved-views/:id — a second same-org user gets 403 on a TEAM view they do not own; owner can delete
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) DELETE /saved-views/:id — owner (org A) can finally delete the TEAM view
+ 10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views/:id — owner round-trips it; a second same-org user gets 404 (personal, not theirs)
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views/shared/:token — a PERSONAL view's token does NOT resolve for a non-owner same-org user
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views/shared/:token — resolves for any same-org user (TEAM scope); wrong org -> 404
+ 10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views?artifactId= — owner sees own PERSONAL view; a second same-org user does not
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) MOUNT PROOF: valid context + REAL router, random viewId -> 404 WITH {code:"NOT_FOUND"}
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) MOUNT PROOF: valid context, path no router in this tree handles -> 404 WITHOUT a code field
+ 10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) PATCH /saved-views/:id — owner can rename; a second same-org user gets 403 FORBIDDEN
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) POST /saved-views — create PERSONAL view
+ 10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) POST /saved-views — create TEAM view, visible to a second same-org user
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) DELETE /saved-views/:id — a second same-org user gets 403 on a TEAM view they do not own; owner can delete
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views/shared/:token — resolves for any same-org user (TEAM scope); wrong org -> 404
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) GET /saved-views/shared/:token — a PERSONAL view's token does NOT resolve for a non-owner same-org user
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B listing org A's artifactId -> empty list (org-scoped query, no leak)
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B POSTing a WELL-FORMED saved view against org A's artifactId -> uniform 404 ARTIFACT_NOT_FOUND, no row created
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B POSTing a MALFORMED (missing name) saved view against org A's artifactId -> SAME uniform 404 ARTIFACT_NOT_FOUND, NOT 400 NAME_REQUIRED
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B reading org A's TEAM view by id -> 404; SQL confirms the row still exists for org A
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) CROSS-TENANT: org B deleting org A's TEAM view -> 404 (not FORBIDDEN — org-scoped lookup fails first), row untouched
+-10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) DELETE /saved-views/:id — owner (org A) can finally delete the TEAM view
+-10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) ★ REGRESSION (found+fixed in review): a REPEAT POST .../sensitivity for the SAME (methodId, gridLabel) returns the SAME gridId as the first call, and that gridId owns exactly 25 cells — not an orphaned id
++10-finance-serwer.json | saved-views.routes.pg.test.ts | Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP + real PostgreSQL) POST /saved-views — invalid filters -> 400 INVALID_FILTERS
++10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) DISCOVERY: a second, byte-identical POST .../compute/dcf call (same entity/years/terminal, hence same idempotency key in computeJobService) — documents whether the endpoint replays idempotently or errors
+ 10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) GET .../methods/:methodId/sensitivity/:gridLabel — same-org but nonexistent gridLabel -> 404 NOT_FOUND (route ran); wrong-org methodId -> 404 NOT_FOUND (method ownership check ran first)
+ 10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) ★ KONTROLA NEGATYWNA (DB layer, N/A!=zero): a raw SQL INSERT with readiness=READY and result_value_status=MISSING — bypassing every app-layer guard — is rejected by chk_finance_methods_result_matches_readiness itself
+ 10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) ★ KONTROLA NEGATYWNA (DB layer, weight-sum=100): a raw SQL basket totalling 60% — bypassing setBasketWeights()/the route entirely — is rejected AT COMMIT by trg_finance_valuation_methods_weight_sum
++10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) ★ REGRESSION (found+fixed in review): a REPEAT POST .../sensitivity for the SAME (methodId, gridLabel) returns the SAME gridId as the first call, and that gridId owns exactly 25 cells — not an orphaned id
+ 10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) ★ TRZY STANY, nigdy ze sobą pomylone: MISSING (brak danych) vs. PRESENT_ZERO (prawdziwe zero) vs. PRESENT_NONZERO — GET .../methods i GET .../results rozróżniają wszystkie trzy jednocześnie
+-10-finance-serwer.json | valuation-b3-review.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation, independent review supplement (real HTTP + real PostgreSQL) DISCOVERY: a second, byte-identical POST .../compute/dcf call (same entity/years/terminal, hence same idempotency key in computeJobService) — documents whether the endpoint replays idempotently or errors
+ 10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET /valuation/cases/:caseId — org B on org A case -> 404; GET /valuation/cases (list) for org B never includes org A case
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/cases/:caseId/variants — org B posting a variant against org A caseId -> 404 CASE_NOT_FOUND, no row written
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET /valuation/variants/:id/results — org B on org A variant -> 404 (ORGANIZATION_MISMATCH mapped fail-closed), zero data leaked in the body
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET method (terminal/sensitivity) with a methodId belonging to org A, requested by org B -> 404, zero leakage
+ 10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET/PATCH /valuation/variants/:id — org B on org A variant -> 404 both ways, SQL confirms name unchanged
+ 10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET/POST /valuation/variants/:id/methods and POST .../basket — org B on org A variant -> 404 all three, zero rows for org B
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET method (terminal/sensitivity) with a methodId belonging to org A, requested by org B -> 404, zero leakage
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET/PUT /valuation/variants/:id/wacc-inputs — org B on org A variant -> 404 both ways, no row for org B
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/variants/:id/compute/dcf — org B attempting to compute org A variant -> 404, no compute_jobs row for org B
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET /valuation/variants/:id/results — org B on org A variant -> 404 (ORGANIZATION_MISMATCH mapped fail-closed), zero data leaked in the body
+ 10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET/PUT /valuation/variants/:id/bridge — org B on org A variant -> 404 both ways, SQL confirms no bridge row for org B
+-10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/variants/:id/advisor/generate and GET .../advisor — org B on org A variant -> 404 both, zero advisor rows for org B
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) GET/PUT /valuation/variants/:id/wacc-inputs — org B on org A variant -> 404 both ways, no row for org B
+ 10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/cases/:caseId/compare-variants — org B supplying org A caseId + org A variant ids -> 404 (ORGANIZATION_MISMATCH), no advisor rows written for either side
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/cases/:caseId/variants — org B posting a variant against org A caseId -> 404 CASE_NOT_FOUND, no row written
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/variants/:id/advisor/generate and GET .../advisor — org B on org A variant -> 404 both, zero advisor rows for org B
++10-finance-serwer.json | valuation-cross-tenant.routes.pg.test.ts | Finance v2 Pakiet B3 — valuation cross-tenant matrix (real HTTP + real PostgreSQL) POST /valuation/variants/:id/compute/dcf — org B attempting to compute org A variant -> 404, no compute_jobs row for org B
+ 10-finance-serwer.json | valuation-independent-verifier.pg.test.ts | INDEPENDENT VERIFIER — Pakiet B3 claim #8 (DCF idempotent replay, post-fix) a byte-identical repeat POST .../compute/dcf replays IDEMPOTENTLY — same jobId, HTTP 200, exactly ONE compute_job_outputs row (independent SQL read), never a re-run
+ 10-finance-serwer.json | valuation-independent-verifier.pg.test.ts | INDEPENDENT VERIFIER — Pakiet B3 claim #8 (DCF idempotent replay, post-fix) a repeat POST while the FIRST attempt is still `running` (not yet committed) is a HARD 409 JOB_NOT_RUNNING error — never silently resumed, and never conflated with the succeeded-replay case above
+ 11-materials-serwer.json | materialExportPolicy17.realdb.test.ts | MAT-POL-001 approved engine lock binds the four approved in-process engines to the installed lock versions and MIT
