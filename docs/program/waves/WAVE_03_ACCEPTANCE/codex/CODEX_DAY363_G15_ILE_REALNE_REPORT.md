@@ -51,7 +51,7 @@ Wszystkie dziesięć przebiegów było czysto frontowych z `RUN_DB_TESTS=0 MOCK_
 | --- | ---: | --- | --- | --- |
 | 02_INTERVIEW | 1 | kontrakt stopki `InterviewPreviewFooter.ownerContract.test.ts:37` wobec `InterviewTemplatePreviewFooter.tsx` | `REALNY_DEFEKT` | własny przebieg: brak autoryzowanej etykiety Edit |
 | 03_TOOLS | 1 | fallback nierozpoznanego kroku w `ToolCanvas.tsx`, asercja `toolCanvas.smoke.test.tsx:95` | `REALNY_DEFEKT` | własny render: brak uczciwego tekstu „This step is being prepared” |
-| 05_INITIATIVES | 18 | sześć rodzin: `chatActionHandler`, Menu 3, kanoniczny rejestr, `ExecutionControlSurface`, `ExecutionWork/ResourcesSurface`, narrative marker | `REALNY_DEFEKT` | 18 własnych nazw i komunikatów; 13 nazw współdzielonych z 06 |
+| 05_INITIATIVES | 18 przed / 17 po | sześć rodzin: `chatActionHandler`, Menu 3, kanoniczny rejestr, `ExecutionControlSurface`, `ExecutionWork/ResourcesSurface`, narrative marker | `NIEORZECZONY` dla Menu 3; pozostałe `REALNY_DEFEKT` | Menu 3 zmieniło status bez zmiany kodu; pozostałe 17 nazw reprodukuje się |
 | 06_EXECUTION | 13 | `canonicalInitiativeRegisterParity`, `ExecutionControlSurface`, `ExecutionWorkSurface.tsx:597`, `ExecutionResourcesSurface.tsx:405`, nawigacja `InitiativesHub` | `REALNY_DEFEKT` | własny przebieg; brak oczekiwanych kontrolek/etykiet i kontraktu nawigacji |
 | 07_MY_WORK_AGENT | 4 | dwa testy oczekują Postgresa przy komendzie unit, jedna zmiana `activeTool`, jeden brak harnessu 5268 | `NIEORZECZONY` | wiersz miesza co najmniej trzy mechanizmy; przebieg z `DB_TYPE=postgres` usunął dwie pierwotne nazwy, ale zmienił skład i uruchomił pięć real-DB nazw mimo `RUN_DB_TESTS=0`, więc nie jest kwalifikowanym A/B |
 | 08_MEETINGS | 3 | `MeetingHub` operuje na `null` po błędzie; `MeetingObjectPage` nie renderuje decyzji fixture | `REALNY_DEFEKT` | własny render i trzy odrębne komunikaty |
@@ -60,7 +60,7 @@ Wszystkie dziesięć przebiegów było czysto frontowych z `RUN_DB_TESTS=0 MOCK_
 | 14_ADMIN | 7 | siedem paneli Admin nie zachowuje kontraktów surowej wartości/i18n/unikalności | `REALNY_DEFEKT` | własne pełne nazwy i komunikaty per panel |
 | 16_PARTNER | 9 | `EarningsSection`/`CommissionView.tsx:356` oraz mutacje company-info/regions/specializations w `PartnerPortalView` | `REALNY_DEFEKT` | własny render: brak oczekiwanych danych i kontrolek |
 
-Na świeżym mianowniku 58: **0 bieżących czerwieni dowiedzionych jako artefakt**, **54 bieżące czerwienie jako realny defekt**, **4 nieorzeczone**. Historyczny wiersz Finansów jest dowiedzionym artefaktem/starym pomiarem, lecz wnosi dziś zero czerwonych nazw. Listy 54 i 4 są dokładnie sumą odpowiednich plików `r1-nazwy-*`; dla `07` wszystkie cztery nazwy pozostają nieorzeczone.
+Przy stałym mianowniku 4230 pełnych nazw dwa przebiegi dały 58 i 57 czerwieni: **0 bieżących czerwieni dowiedzionych jako artefakt**, **53 stabilnie reprodukowane realne defekty**, **5 nieorzeczonych** (cztery z 07 oraz niestabilny Menu 3). Historyczny wiersz Finansów wnosi dziś zero czerwonych nazw.
 
 ## R3 — mutacja trafiająca we właściwego strażnika
 
@@ -101,7 +101,7 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 | --- | --- | --- | ---: | --- |
 | 02_INTERVIEW | 0 / 1 / 0 | `NAPRAWIAMY` wąski footer Interview | 1 | pozostać `PARTIAL_PASS` do zielonego pakietu |
 | 03_TOOLS | 0 / 1 / 0 | `NAPRAWIAMY` fallback ToolCanvas | 1 | pozostać `PARTIAL_PASS` do 621/621 |
-| 05_INITIATIVES | 0 / 18 / 0 | `NAPRAWIAMY` razem z 06 | 6 | pozostać `NOT_MEASURED` |
+| 05_INITIATIVES | 0 / 17 / 1 | `NAPRAWIAMY` 17 razem z 06; `DOMIERZYĆ` Menu 3 | 6 | pozostać `NOT_MEASURED` |
 | 06_EXECUTION | 0 / 13 / 0 | `NAPRAWIAMY` wspólną paczką 05/06 | 5, w tym 4 wspólne z 05 | pozostać `NOT_MEASURED` |
 | 07_MY_WORK_AGENT | 0 / 0 / 4 | `DOMIERZYĆ`: oddzielić unit, real-PG i harness 5268 | 3 | pozostać `PARTIAL_PASS` |
 | 08_MEETINGS | 0 / 3 / 0 | `NAPRAWIAMY` MeetingHub/MeetingObjectPage | 2 | pozostać `NOT_MEASURED` |
@@ -120,15 +120,15 @@ Przed pomiarem baza miała 8.4 GiB wolnego. Sparse worktree `/private/tmp/cx-day
 
 ### Co naprawiamy, a co przyjmujemy jako dług
 
-Naprawiamy 54 nazwane czerwienie z modułów 02, 03, 05, 06, 08, 11, 14 i 16, pogrupowane w 28 rodzin przed deduplikacją wspólnych rodzin 05/06. Dokładne nazwy są w ośmiu plikach `r1-nazwy-*`; nie należy planować ich jako 54 osobnych napraw.
+Naprawiamy 53 stabilnie reprodukowane czerwienie z modułów 02, 03, 05, 06, 08, 11, 14 i 16. Dokładne nazwy są w ośmiu plikach `r1-nazwy-*`, z wyłączeniem niestabilnej nazwy Menu 3; nie należy planować ich jako 53 osobnych napraw.
 
-Jako dług proponuję przyjąć zero bieżących czerwieni Finansów i historyczny, niereprodukujący się wpis G15 pod nowym numerem `DEC-394`; decyzja wymaga akceptacji właściciela. Czterech nazw 07 nie przyjmuję jako długu ani defektu — wymagają domiaru.
+Jako dług proponuję przyjąć zero bieżących czerwieni Finansów i historyczny wpis G15 pod `DEC-394`; decyzja wymaga akceptacji właściciela. Pięciu nazw nie przyjmuję jako długu ani stabilnego defektu — cztery z 07 oraz Menu 3 wymagają domiaru.
 
 ### Trzy jawne liczby i listy
 
 - **Artefakt: 0 bieżących czerwonych nazw.** Finansowy artefakt historyczny ma dziś pustą listę `r1-nazwy-10_FINANCE.txt`.
-- **Realny defekt: 54 nazwy.** Lista = `r1-nazwy-02_INTERVIEW`, `03_TOOLS`, `05_INITIATIVES`, `06_EXECUTION`, `08_MEETINGS`, `11_MATERIALS`, `14_ADMIN`, `16_PARTNER`.
-- **Nieorzeczone: 4 nazwy.** Wszystkie są w `r1-nazwy-07_MY_WORK_AGENT.txt`.
+- **Realny defekt: 53 stabilne nazwy.** Lista = wskazane osiem plików, bez testu Menu 3 z `r1-nazwy-05_INITIATIVES.txt`.
+- **Nieorzeczone: 5 nazw.** Cztery z `r1-nazwy-07_MY_WORK_AGENT.txt` oraz test Menu 3 z modułu 05.
 
 ### Gdzie użyłem analogii
 
@@ -144,7 +144,7 @@ Marker: `MARKER OK`. Sanity: `2a7273e087cbd3e44344725b524f6ddd79d5badc`, czysty 
 
 ### Zasięg przed/po
 
-Dyżur nie zmienił produktu ani testów. R3 ma kwalifikowane porównanie nazw: 68/3 baza, mutacja i final, bez nazw dodanych ani znikniętych. Pełne pakiety R1 zostaną powtórzone po ostatnim commicie.
+Dyżur nie zmienił produktu ani testów. R3 ma kwalifikowane porównanie nazw: 68/3 baza, mutacja i final, bez nazw dodanych ani znikniętych. R1 przed/po ma identyczne 4230 pełnych nazw we wszystkich modułach; status jednej nazwy Menu 3 zmienił się FAIL→PASS bez zmiany kodu, więc jest jawnie nieorzeczona.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
