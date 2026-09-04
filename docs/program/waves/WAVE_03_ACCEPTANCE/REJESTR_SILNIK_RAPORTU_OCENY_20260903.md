@@ -50,3 +50,19 @@ Pomiar modelu przykładowego przez wspólny skład; nie jest to raport z realnej
 | 1–21 | każda `mean_abs_rgb = 0.0000` | wszystkie obejrzane; brak ucięć, nakładania i sierot |
 
 Różnice nazwane: brak. Każda z 21 stron jest piksel-w-piksel identyczna z odpowiadającą stroną zaakceptowanego prototypu. Wyciąg 4-stronicowy obejrzany osobno; zawiera strony pełnego modelu 1, 18, 20 i 21.
+
+## Pomiar porównawczy — dyżur 339
+
+Marker: `74c07919ce`. Wspólna sesja pomiarowa: `2e87758d-bd31-459f-b073-28080cbd7a9c`, organizacja `day339-report-engine-org`.
+
+### R1 — silniki, trasy, konsumenci i osiągalność
+
+| Silnik | Definicja / wołacz | Trasa | Konsument we froncie | Osiągalność od korzenia produktu |
+| --- | --- | --- | --- | --- |
+| Kontrakt raportu MethodSession | `assessmentReportContractService.ts`; route `method-core.routes.ts:535` | `GET /api/method/sessions/:sessionId/assessment-report-contract` | `methodCoreApi.ts:234` oraz `AssessmentReportContractView.tsx` | Importy prowadzą `src/index.tsx:99,124,137` → `src/App.tsx:29,580` → `AppRoutes.tsx:2286` → `AssessmentSessionEditorView.tsx:40,1753` → `DrdMethodWorkspaceScreen.tsx:897-907` → `DrdHttpMethodWorkspaceScreen.tsx:88-90,1147`, ale ostatnia gałąź wymaga `drdHttpSourceOfTruthV1`; flaga ma `defaultValue:false` (`useFeatureFlags.ts:261-270`). **Nieosiągalny domyślnie, osiągalny wyłącznie po jawnym włączeniu zastanej flagi.** |
+| DOCX MethodSession | `buildAssessmentDrdReportSchema`; route `method-core.routes.ts:553` | `GET /api/method/sessions/:sessionId/assessment-report.docx` | `AssessmentReportContractView.tsx:360` | Ten sam łańcuch i ta sama domyślnie wyłączona bramka co wyżej. **Nieosiągalny domyślnie.** |
+| HTML + narrator | `buildDrdReportHtmlServer` → `generateDrdReport`; route `assessment-reports.routes.ts:1065` | `GET /api/assessment-reports/:reportId/drd-report` | `api.ts:10463` → `DRDAuditReportView.tsx`; route UI `AppRoutes.tsx:1702` | `src/index.tsx` → `App.tsx` → `AppRoutes.tsx:541-542,1702`; `DRDAuditReportRoute` przekierowuje przy `isDrdReportEnabled()===false` (`AppRoutes.tsx:793-806`). **Osiągalny wyłącznie po zastanej fladze, domyślnie OFF.** |
+| Model 298 | `acceptedDrdReportModel.ts:94` | brak | brak | `grep -rn "buildAcceptedDrdReportModel" server/src src tests` zwraca tylko definicję i własny test; **zero wołaczy produkcyjnych, dług integracyjny**. |
+| Metadane raportu | `methodSessionReportMetadataService.ts:59-105` | brak | brak | Jedyny importer jest w teście day331; **zero wołaczy produkcyjnych, dług integracyjny**. |
+
+Sprostowanie nazwy: `grep -rn "AssessmentReportDocxDownload" src/ | grep -v __tests__` zwrócił **0 trafień**. Realnym konsumentem pobrania DOCX jest `AssessmentReportContractView.tsx:360`; `AssessmentReportDocxDownload` występuje wyłącznie w nazwie pliku testowego.
