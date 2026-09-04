@@ -13,9 +13,10 @@ zatwierdzony na fikstrurze ≠ ekran, który dostajesz z listy) straciliśmy tyd
 ## Zanim zaczniesz
 
 - **Adres**: `https://staging.consultify.ai`
-- **Wersja**: znacznik `fb6547b7d0` — potwierdzony `/api/health` 04.09 o 05:33 (`database: connected`,
-  `redis: connected`). To najświeższy stan. (Poprzednie brzmienie `58ef0771d7` było już nieaktualne —
-  po nim weszły kolejne redeploye.)
+- **Wersja**: nadzorca podał znacznik `1c4b5a5635`; Dyżur 350 nie zweryfikował go na stagingu,
+  ponieważ obowiązuje bezwzględny zakaz połączenia (`Z28`). Poprzednie brzmienie pakietu
+  wskazywało `fb6547b7d0`, potwierdzone 04.09 o 05:33. Rozbieżność wymaga odpowiedzi nadzorcy
+  przed przelotem.
 - **Logowanie**: konto odbiorowe jest w Twoim menedżerze haseł (szukaj „staging.consultify.ai”
   albo „Consultify staging”). Nie podaję tu hasła — wpisz je sam z menedżera.
 - **Złota zasada**: w każdym module otwórz rekord z **prawdziwą nazwą** (klient, projekt,
@@ -23,6 +24,8 @@ zatwierdzony na fikstrurze ≠ ekran, który dostajesz z listy) straciliśmy tyd
   pusta — zapisz to jako uwagę, nie improwizuj na rekordzie pokazowym.
 - **Język i motyw**: przełącz PL↔EN raz i jasny↔ciemny raz — wystarczy zrobić to **jeden raz w
   całym przelocie**, nie w każdym module osobno (chyba że coś rzuci się w oczy).
+- Nie musisz robić wszystkich 16 modułów naraz. Możesz rozłożyć przelot na raty; wpisuj datę
+  każdej części w tabeli na końcu.
 
 ## Jak zgłaszać uwagę
 
@@ -35,10 +38,9 @@ znajdziemy po tym jednym zdaniu.
 
 ## Czego NIE zgłaszaj nigdy (dotyczy całego przelotu)
 
-1. **Wyniki, Finanse, Organizacja, kreator wywiadu wyglądają „po staremu”.** Włączyłeś te flagi
-   wieczorem 03.09 — robotnik jeszcze wdraża przełącznik. Jeśli ekran jest stary, flaga po
-   prostu nie zdążyła na to wdrożenie. To nie defekt do zgłoszenia, zgłoś tylko jeśli po
-   ODŚWIEŻENIU następnego dnia dalej tak jest.
+1. **Wyniki, Finanse, Organizacja, kreator wywiadu wyglądają „po staremu”.** Decyzje o włączeniu
+   zapadły 03.09 (`DEC-2026-09-03-347`…`350`), ale Dyżur 350 nie potwierdził ich widoczności na
+   stagingu (`Z28`). Stary ekran zgłoś dopiero po potwierdzeniu przez nadzorcę właściwego SHA.
 2. **Dane wyglądają jak dane pokazowe (przykładowe firmy, wygenerowane nazwiska).** Staging
    dzieli bazę z demo — to jest normalne i zamierzone (nie jest to Twoja produkcyjna baza,
    której nikt nie rusza).
@@ -56,9 +58,14 @@ bocznym → kliknij realną, starszą rozmowę (nie pustą) → z kebaba wiadomo
 **Co się zmieniło od 22–23.08**: naprawiony błąd, który wywalał cały panel sygnałów Czatu
 („feed.signals is not iterable”); komunikat błędu od dostawcy AI jest teraz zrozumiały i nie
 pokazuje technicznego żargonu; dostępność klawiaturowa i kontrast doprowadzone do zera błędów.
+Preferencja chipów sugestii jest teraz zapisywana per użytkownik w bazie; ustawienie przełączasz
+w menu Czatu. Widoczne, jeżeli staging został zredeployowany po `15309dd3a6`.
+(zdezaktualizowane przez `15309dd3a6` — realizacja `DEC-386`). Martwe, równoległe poddrzewo
+wiadomości i stary `ChatPanel` usunięto; kroki powyżej odnoszą się do żywego panelu.
+(zdezaktualizowane przez `1c4b5a5635` — usunięcie martwego poddrzewa Czatu).
 
-**Czego NIE zgłaszaj**: restrukturyzacja menu kanw (kebab) w Czacie, nowa funkcja preferencji
-Czatu, rozdzielenie historii na rozmowy prywatne/organizacyjne, przemalowanie czerwieni Czatu na
+**Czego NIE zgłaszaj**: restrukturyzacja menu kanw (kebab) w Czacie,
+rozdzielenie historii na rozmowy prywatne/organizacyjne, przemalowanie czerwieni Czatu na
 neutralne kolory — wszystko to świadomie odłożone do fali 2.
 
 **Pytania (TAK/NIE)**:
@@ -81,7 +88,11 @@ trzech zakładek; status „eskalacja” przy decyzjach zapisuje się trwale do 
 po odświeżeniu strony); dane pokazowe Skrzynki i Kalendarza pokrywają teraz wszystkie stany
 (pusty/pełny/błąd).
 
-**Czego NIE zgłaszaj**: nowy prawy panel Idei/Notatnika, konwersja Idei na Notatkę, zakres
+Prawy panel Idei/Notatnika został podłączony do ścieżki produkcyjnej. Widoczne, jeżeli staging
+został zredeployowany po `660482d485`. (zdezaktualizowane przez `660482d485` — podłączenie
+panelu Idei do produkcji).
+
+**Czego NIE zgłaszaj**: konwersja Idei na Notatkę, zakres
 przycisku „AI Advice”, historia wersji w Notatniku, zawężanie wyszukiwania w Notatniku po
 cechach, Pulpit Menedżera liczony z realnej aktywności zespołu, funkcja „Tworzy raport” w
 doradcy obciążenia — wszystko odłożone do fali 2.
@@ -102,6 +113,10 @@ wieczór — to jest właśnie ekran, który masz dziś ocenić na żywym stagin
 klawiaturowa i kontrast doprowadzone do zera błędów. Nawigacja osi pytań (jedna oś rozwinięta na
 raz) jest zamierzonym zachowaniem drzewa, nie usterką.
 
+Menu akcji kart Wywiadu i Wniosku ma teraz jawny kontrakt dostępnych działań. Widoczne, jeżeli
+staging został zredeployowany po `924ebd3c7a`. (zdezaktualizowane przez `924ebd3c7a` — scalenie
+menu akcji Wywiadu).
+
 **Czego NIE zgłaszaj**: —
 
 **Pytania (TAK/NIE)**:
@@ -117,8 +132,11 @@ otwórz podgląd → uruchom narzędzie z realnym kontekstem inicjatywy.
 
 **Co się zmieniło od 22–23.08**: dostępność klawiaturowa i kontrast doprowadzone do zera błędów.
 
-**Czego NIE zgłaszaj**: rozszerzenie modelu sesji SWOT (5→7 etapów), wspólny kreator inicjatyw
-z Narzędzi — oba odłożone do fali 2.
+**Czego NIE zgłaszaj**: wspólny kreator inicjatyw z Narzędzi — odłożony do fali 2.
+
+Siedmioetapowy SWOT jest już podłączony w kodzie, ale pozostaje za flagą domyślnie wyłączoną;
+bez decyzji o włączeniu nadal zobaczysz pięć etapów i nie jest to defekt. (zdezaktualizowane
+przez `937f2d3193` — podłączenie siedmiu etapów SWOT, flaga nadal OFF).
 
 **Pytania (TAK/NIE)**:
 - Narzędzie otworzyło się z realnym kontekstem, nie pustym?
@@ -159,6 +177,11 @@ ten, który zaakceptowałeś na zrzutach (dostawałeś dokument zamiast roboczej
 otwarcie realnej inicjatywy z listy pokazuje teraz dokładnie tę kartę, którą zaakceptowałeś.
 Dodano też bezpiecznik w testach, żeby to się nie cofnęło. Dostępność doprowadzona do zera
 błędów.
+
+Kontrakty kart zachowujące komplet sekcji są scalone, ale pozostają za flagą domyślnie OFF
+(`DEC-387`). Przy niepustym szablonie karta nadal może pokazać tylko 6 z 24 sekcji niezależnie
+od tej flagi (`DEC-388`); to stan oczekiwany do decyzji/wdrożenia, nie nowy defekt przelotu.
+(zdezaktualizowane przez `500ae7d68c` i `e25eb19b64` — kontrakty kart i pomiar 24 sekcji).
 
 **Czego NIE zgłaszaj**: kreator inicjatywy od jednego zdania z propozycją AI — odłożony do fali 2.
 
@@ -334,6 +357,40 @@ przelot to potwierdzenie na żywym stagingu.
 ---
 
 ## Znane ograniczenia stagingu (żeby nic z tego nie zgłaszać jako defekt)
+
+### Stan oczekiwany — nie zgłaszaj
+
+- Karta inicjatywy może nadal pokazywać 6 z 24 sekcji: pełne kontrakty są scalone, lecz
+  `VITE_VF1_INITIATIVE_CARD_CONTRACT` i `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE` są domyślnie
+  OFF (`DEC-387`, `DEC-388`; `500ae7d68c`, `e25eb19b64`).
+- SWOT może nadal mieć pięć etapów: siedem etapów jest podłączone za domyślnie wyłączoną flagą
+  `VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES` (`DEC-2026-09-03-383`; `937f2d3193`).
+- Nowe warianty kart Decyzji pozostają niewidoczne przy domyślnie wyłączonych
+  `VITE_VF1_DECISION_CARD_CONTRACT` i `VITE_VF1_DECISION_SPECA` (`e25eb19b64`).
+- Rejestr fali 2 zawierał prawy panel Idei/Notatnika (`DEC-2026-09-03-354`) i preferencje
+  Czatu (`DEC-2026-09-03-357`), ale te dwie pozycje zostały później scalone odpowiednio przez
+  `660482d485` i `15309dd3a6`; nie zgłaszaj ich jako „brak”, dopóki nadzorca nie potwierdzi SHA
+  stagingu. Pozostała fala 2 obejmuje: historię prywatną/organizacyjną
+  (`DEC-2026-09-03-377`), wspólny standard siedmiu kart (`DEC-2026-09-03-381`), siedem etapów
+  SWOT (`DEC-2026-09-03-383`), przebudowa Oceny (`DEC-2026-09-03-364`), karty pytań Oceny
+  (`DEC-2026-09-03-365`), trzy karty pod Oceną (`DEC-2026-09-03-368`), uprawnienia/komentarze
+  Oceny (`DEC-2026-09-03-369`), „Tworzy raport” (`DEC-2026-09-03-355`), menu kanw Czatu
+  (`DEC-2026-09-03-356`), crimson poza semantyką (`DEC-2026-09-03-359`), status konwersji i
+  foldery Idei (`DEC-2026-09-03-372`), konwersja Idei i zakres AI Advice
+  (`DEC-2026-09-03-373`), historia i wyszukiwanie Notatnika (`DEC-2026-09-03-374`), Pulpit
+  Menedżera (`DEC-2026-09-03-376`), kreator inicjatyw (`DEC-2026-09-03-378`) oraz wspólny
+  kreator z Narzędzi (`DEC-2026-09-03-382`). Źródło pełnego rozbicia: `FALA_2_PO_STAGINGU.md`.
+
+### Zobaczysz inaczej niż wczoraj — tylko po właściwym redeployu
+
+| Moduł | Ekran | Co było | Co jest | Warunek i SHA |
+| --- | --- | --- | --- | --- |
+| Chat | menu Czatu | preferencja lokalna | zapis per użytkownik w bazie | widoczne, jeżeli staging zredeployowany po `15309dd3a6` |
+| Chat | panel wiadomości | martwe równoległe poddrzewo | jedna żywa ścieżka | widoczne, jeżeli staging zredeployowany po `1c4b5a5635` |
+| My Work | Idee/Notatnik | prototyp poza ścieżką | prawy panel podłączony | widoczne, jeżeli staging zredeployowany po `660482d485` |
+| Interview | karty | niespójne akcje | kontrakt menu akcji | widoczne, jeżeli staging zredeployowany po `924ebd3c7a` |
+| Tools | SWOT | pięć etapów | siedem etapów po włączeniu flagi | kod po `937f2d3193`; domyślnie OFF, więc bez decyzji nadal niewidoczne |
+| Initiatives | karta | kontrakt gubił sekcje | kontrakt zachowuje komplet | kod po `500ae7d68c`; domyślnie OFF |
 
 - **Backend 404 na części tras w przyrządzie deweloperskim (harness) NIE dotyczy stagingu.**
   Przyrząd, którym my mierzymy ekrany offline, czasem nie ma podłączonego backendu — to nasz
