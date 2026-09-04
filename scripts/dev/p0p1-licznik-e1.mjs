@@ -91,8 +91,21 @@ export function collectUniverse(settlement, decisions) {
   return positions;
 }
 
+// Ledger jest mapą DEC -> pełny wiersz, nie zbiorem samych identyfikatorów.
+// Dyspozycję ("teraz" vs "po bramkach") czytamy z TEGO wiersza, nie z całego
+// tekstu dowodowego pozycji — inaczej przypadkowe słowo "NIE" w cudzej linii
+// odkłada decyzję, którą właściciel nakazał wykonać.
 function ledgerDecisions(ledger) {
-  return new Set([...ledger.matchAll(/^\|\s*(DEC-\d{4}-\d{2}-\d{2}-\d+)\s*\|/gm)].map((m) => m[1]));
+  return new Map(
+    ledger
+      .split('\n')
+      .map((line) => [line.match(/^\|\s*(DEC-\d{4}-\d{2}-\d{2}-\d+)\s*\|/)?.[1], line])
+      .filter(([decision]) => decision),
+  );
+}
+
+export function isDeferredDecision(text) {
+  return /ODŁOŻ|ODLOZ|FALA 2|PO BRAMKACH|POZA MVP|przeniesion/i.test(text);
 }
 
 function evidenceId(positions, id, origin) {
@@ -174,7 +187,11 @@ function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions
     if (!ledgerSet.has(resolution.decision)) {
       return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${resolution.decision}`, proof: resolution.decision };
     }
-    return { verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK', proof: resolution.decision };
+    return {
+      verdict: isDeferredDecision(ledgerSet.get(resolution.decision)) ? 'ODLOZONE_DEC' : 'ZAMKNIETE_DEC',
+      reason: 'DEC_OK',
+      proof: resolution.decision,
+    };
   }
   if (resolution?.type === 'SHA') {
     const state = shaCheck(root, resolution.sha);
@@ -201,7 +218,9 @@ function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions
   }
 
   if (cited.length) {
-    const deferred = /ODŁOŻ|ODLOZ|FALA 2|PO BRAMKACH|POZA MVP|\bNIE\b|przeniesion/i.test(text);
+    // Ta sama, zawężona reguła co dla jawnych rozstrzygnięć: dyspozycja pochodzi
+    // z wierszy ledgeru cytowanych decyzji, nie z całego tekstu dowodowego.
+    const deferred = cited.some((decision) => isDeferredDecision(ledgerSet.get(decision) || ''));
     return { verdict: deferred ? 'ODLOZONE_DEC' : 'ZAMKNIETE_DEC', reason: 'DEC_OK', proof: cited.join(', ') };
   }
   return { verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: 'brak SHA, DEC i numeru dyżuru' };

@@ -140,3 +140,49 @@ test('R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak 
     { id: 'EXE-OWN-006', verdict: 'NAPRAWIONE', reason: 'SHA_OK' },
   ]);
 });
+
+// ── Zawężone dopasowanie dyspozycji decyzji (przeniesione z dyżuru 334, R3) ──
+// Reguła czyta WIERSZ LEDGERU cytowanej decyzji, a nie cały tekst dowodowy
+// pozycji. Testy idą realną ścieżką `classify` — bez wstrzykiwania `shaCheck`.
+
+test('R3: jawna decyzja PO BRAMKACH klasyfikuje pozycję jako ODLOZONE_DEC', () => {
+  const decision = 'DEC-2026-09-03-364';
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-003']),
+    ledger: `| ${decision} | ASM-OWN-003 | OWNER_DECISION | właściciel PO BRAMKACH (fala 2) |`,
+  }), {
+    floor: 1,
+    resolutions: { 'ASM-OWN-003': { type: 'DECISION', decision } },
+  });
+  assert.equal(rows[0].verdict, 'ODLOZONE_DEC');
+  assert.equal(rows[0].reason, 'DEC_OK');
+});
+
+test('R3: samo słowo NIE w ledgerze nie odkłada jawnej decyzji', () => {
+  const decision = 'DEC-2026-09-03-365';
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-004']),
+    ledger: `| ${decision} | ASM-OWN-004 | OWNER_DECISION | naprawić teraz, nie usuwać ekranu |`,
+  }), {
+    floor: 1,
+    resolutions: { 'ASM-OWN-004': { type: 'DECISION', decision } },
+  });
+  assert.equal(rows[0].verdict, 'ZAMKNIETE_DEC');
+});
+
+test('R3: gałąź fallback też czyta ledger, a nie cały tekst dowodowy', () => {
+  const decision = 'DEC-2026-09-03-367';
+  // Tekst dowodowy zawiera słowo "nie" (kiedyś odkładało pozycję), ale wiersz
+  // ledgeru mówi "TAK, teraz" — o dyspozycji decyduje ledger.
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-001[OF]'], 'OTWARTE', `nie ma jeszcze zrzutu; ${decision}`),
+    ledger: `| ${decision} | R-4 | OWNER_DECISION | właściciel TAK, teraz |`,
+  }), { floor: 1 });
+  assert.equal(rows[0].verdict, 'ZAMKNIETE_DEC');
+
+  const deferred = evaluateCorpus(corpus({
+    settlement: table(['ASM-OWN-001[OF]'], 'OTWARTE', `zrobione i zamknięte; ${decision}`),
+    ledger: `| ${decision} | R-4 | OWNER_DECISION | właściciel PO BRAMKACH (fala 2) |`,
+  }), { floor: 1 });
+  assert.equal(deferred[0].verdict, 'ODLOZONE_DEC');
+});
