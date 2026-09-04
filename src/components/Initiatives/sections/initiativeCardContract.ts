@@ -748,6 +748,106 @@ export const INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS: readonly string[] = [
   'kpi',
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// (3b) DEC-387 — KONTRAKT PORZĄDKUJE, NIE UCINA.
+//
+// STAN ZASTANY (zmierzony 2026-09-04 kanonicznym `scripts/dev/grafika-zrzuty.mjs
+// --zlicz`, ekran `karta-initiative`, realna ścieżka fetchowa, id
+// `init-smed-linia-pakowania`): flaga OFF → 24 pozycje nawigacji w 5 grupach;
+// flaga ON → 4 pozycje w 2 grupach. Kontrakt KASOWAŁ 20 z 24 sekcji i 3 z 5 grup
+// (a nie „11 z 15" — tamta liczba powstała z oglądania kadru, na którym lewy
+// panel ma własne przewijanie i mieści ~15 pozycji naraz).
+//
+// PRZYCZYNA: `INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS` był używany jako ZIARNO
+// `hiddenSectionIds` — ALLOWLIST czterech id, a wszystko poza nią było ukrywane
+// jednorazowym efektem przy montażu. To nie brak odpowiedników w kontrakcie
+// (kontrakt zna 27 kart) — to celowe zwężenie domyślnego widoku.
+//
+// DECYZJA WŁAŚCICIELA DEC-387: karta inicjatywy ma być KOMPLETNA. Kontrakt ma
+// sekcje ZACHOWYWAĆ. Dlatego:
+//   · `INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS` zostaje WYŁĄCZNIE presetem
+//     przycisku „Rdzeń inicjatywy" (świadomy wybór użytkownika w menu „Sekcje"),
+//     NIE ziarnem domyślnym;
+//   · flaga ON nie ukrywa NICZEGO (`INITIATIVE_CONTRACT_HIDDEN_SEED` = pusty);
+//   · flaga ON wnosi PORZĄDEK: kolejność kanoniczną boardu poniżej.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * DEC-387 — ZIARNO UKRYĆ PRZY FLADZE ON. Pusty z definicji: kontrakt nie ma prawa
+ * schować ani jednej sekcji za użytkownika. Stała istnieje po to, żeby powrót do
+ * ukrywania wymagał ZMIANY TEJ LINII (a więc i zmiany czerwieniejącego testu
+ * `initiativeCardContractCompleteness.test.ts`), a nie cichego dopisania id gdzieś
+ * w 12-tysięcznym komponencie.
+ */
+export const INITIATIVE_CONTRACT_HIDDEN_SEED: readonly string[] = [];
+
+/**
+ * DEC-387 — KOLEJNOŚĆ KANONICZNA SEKCJI BOARDU (to, co kontrakt REALNIE wnosi).
+ * Grupy w kolejności deklarowanej przez `groupLabels` w `InitiativeDocumentView`
+ * (Zakres i plan · Decyzje i ryzyko · Rezultaty · Ludzie · Zapisy), a wewnątrz
+ * grupy — kolejność ról kontraktu (rdzeń → domyślna → dodawalna).
+ *
+ * ★ Ta lista MUSI pokrywać KAŻDE id boardu produktu. Pilnuje tego
+ * `tests/unit/initiatives/initiativeCardContractCompleteness.test.ts`, który
+ * czyta listę id wprost ze źródła `InitiativeDocumentView.tsx` — usunięcie
+ * choćby jednego wpisu poniżej czerwieni test (dowód mutacyjny w raporcie DEC-387).
+ */
+export const INITIATIVE_BOARD_CANONICAL_ORDER: readonly string[] = [
+  // 0 — Zakres i plan
+  'initiative-definition',
+  'tasks',
+  'timeline',
+  'deliverables-milestones',
+  'dependencies',
+  // 1 — Decyzje i ryzyko
+  'decisions',
+  'risk-raid',
+  'gates',
+  'suggested-changes',
+  'change-log',
+  // 2 — Rezultaty
+  'target-state-scope',
+  'kpi',
+  'okr',
+  'hypothesis',
+  'financial-analysis',
+  'financial-impact',
+  // 3 — Ludzie
+  'team',
+  'workstream-owners',
+  'raci',
+  // 4 — Zapisy
+  'resources',
+  'attachments-links',
+  'used-in',
+  'artifacts',
+  'lessons-learned',
+];
+
+/**
+ * DEC-387 — uporządkuj sekcje boardu wg kontraktu. GWARANCJA (asercja niżej):
+ * wynik jest PERMUTACJĄ wejścia — ta sama liczebność, ten sam zbiór id. Sekcja,
+ * której kontrakt nie zna, ląduje na końcu, ale NIGDY nie wypada.
+ */
+export function uporzadkujSekcjeBoarduInicjatywy(ids: readonly string[]): string[] {
+  const wejscie = Array.from(new Set(ids));
+  const znane = INITIATIVE_BOARD_CANONICAL_ORDER.filter((id) => wejscie.includes(id));
+  const nieznane = wejscie.filter((id) => !INITIATIVE_BOARD_CANONICAL_ORDER.includes(id));
+  const wynik = [...znane, ...nieznane];
+  // Pas bezpieczeństwa na wypadek przyszłej edycji: gdyby wynik kiedykolwiek
+  // zgubił id, wracamy do wejścia zamiast oddać krótszą listę do renderu.
+  if (wynik.length !== wejscie.length) return wejscie;
+  return wynik;
+}
+
+/**
+ * DEC-387 — id boardu, których kontrakt NIE nazywa. Pusta lista = kontrakt pokrywa
+ * cały board. Używane przez test kompletności i przez ostrzeżenie DEV w widoku.
+ */
+export function sekcjeBoarduPozaKontraktem(ids: readonly string[]): string[] {
+  return ids.filter((id) => !INITIATIVE_BOARD_CANONICAL_ORDER.includes(id));
+}
+
 /** Render-idy w kolejności deklaracji — do lekkiej asercji zgodności (R2). */
 export const INITIATIVE_CARD_RENDER_IDS: readonly string[] =
   INITIATIVE_CANONICAL_CARDS.map(initiativeRenderId);
