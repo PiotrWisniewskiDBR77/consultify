@@ -104,6 +104,8 @@ Pułapki Z33: komplet env stał w tej samej linii (`RUN_DB_TESTS=1`, `MOCK_DB=fa
 
 Migracja `20261250_day319_runtime_ddl_gap.sql` addytywnie pokrywa wszystkie 7 tabel B−A. Pusta baza od zera przyjęła 892 migracje, drugi przebieg 0. `information_schema` po samym strict chain zwrócił każdą z siedmiu nazw. Dowody: `r3-migracja-1.txt`, `r3-migracja-2.txt`, `r3-tabele-po-migracji.txt`.
 
+Po tym dowodzie usunięto 9 postgresowych DDL runtime: 5 z `PostgresDatabase.ts`, 2 z postgresowej gałęzi `DatabaseInitializer.ts` i 2 z `effectiveAccessService.ts`. Definicje SQLite w `DatabaseInitializer.ts` pozostają, bo `information_schema` dowodziło wyłącznie ścieżki PostgreSQL. Po usunięciu pusta baza ponownie przyjęła 892 migracje, drugi przebieg 0, wszystkie 7 tabel istniało, a bezpiecznik miał 2/2 PASS. Dowody: `r3-po-usunieciu-1.txt`, `r3-po-usunieciu-2.txt`, `r3-po-usunieciu-tabele.txt`, `r3-bezpiecznik-green.txt`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R3–R6 pozostają niewykonane na tym etapie raportu.

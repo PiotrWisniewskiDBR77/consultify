@@ -3227,42 +3227,6 @@ export async function initDb(): Promise<void> {
         )`);
     await query(`CREATE INDEX IF NOT EXISTS idx_gdpr_requests_user ON gdpr_requests(user_id)`);
 
-    // User Consents
-    await query(`CREATE TABLE IF NOT EXISTS user_consents(
-            id VARCHAR(36) PRIMARY KEY,
-            user_id VARCHAR(36) NOT NULL REFERENCES users(id),
-            organization_id VARCHAR(36) NOT NULL REFERENCES organizations(id),
-            consent_type VARCHAR(100) NOT NULL,
-            consent_version VARCHAR(50),
-            consent_status VARCHAR(50) NOT NULL,
-            ip_address VARCHAR(45),
-            user_agent TEXT,
-            granted_at TIMESTAMP,
-            withdrawn_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, organization_id, consent_type)
-        )`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id)`);
-
-    // AI Ideas Board
-    await query(`CREATE TABLE IF NOT EXISTS ai_ideas(
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            title TEXT NOT NULL,
-            description TEXT,
-            status VARCHAR(50) DEFAULT 'new',
-            priority VARCHAR(50) DEFAULT 'medium',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-    // AI System Observations
-    await query(`CREATE TABLE IF NOT EXISTS ai_observations(
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            content TEXT NOT NULL,
-            category VARCHAR(50),
-            confidence_score REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-
     // Approval Assignments
     await query(`CREATE TABLE IF NOT EXISTS approval_assignments(
             id TEXT PRIMARY KEY,
@@ -3294,25 +3258,6 @@ export async function initDb(): Promise<void> {
     );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`
-    );
-
-    // MFA Attempts
-    await query(`CREATE TABLE IF NOT EXISTS mfa_attempts(
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            attempt_type TEXT NOT NULL CHECK(attempt_type IN('TOTP', 'BACKUP_CODE', 'SMS', 'EMAIL')),
-            success INTEGER NOT NULL DEFAULT 0,
-            ip_address TEXT,
-            user_agent TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_time ON mfa_attempts(user_id, created_at DESC)`
-    );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_mfa_attempts_ip ON mfa_attempts(ip_address, created_at DESC)`
     );
 
     // Trusted Devices
@@ -3401,25 +3346,6 @@ export async function initDb(): Promise<void> {
     );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at)`
-    );
-
-    // Scheduled Emails
-    await query(`CREATE TABLE IF NOT EXISTS scheduled_emails(
-            id TEXT PRIMARY KEY,
-            report_id TEXT NOT NULL,
-            recipients TEXT NOT NULL,
-            scheduled_time TIMESTAMP NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN('PENDING', 'SENT', 'FAILED')),
-            sent_at TIMESTAMP,
-            error TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`
-    );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_scheduled_emails_report ON scheduled_emails(report_id)`
     );
 
     // Add MFA columns to existing tables if they don't exist (migration)

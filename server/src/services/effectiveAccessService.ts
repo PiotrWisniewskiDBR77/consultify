@@ -595,42 +595,6 @@ export async function ensureProjectRoleTemplateSchema(): Promise<void> {
 
   await queryHelpers
     .queryRun(
-      `CREATE TABLE IF NOT EXISTS project_role_templates (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT,
-        role_key TEXT NOT NULL,
-        label TEXT NOT NULL,
-        description TEXT,
-        is_factory INTEGER DEFAULT 0,
-        is_required INTEGER DEFAULT 0,
-        is_enabled INTEGER DEFAULT 1,
-        capabilities_json TEXT DEFAULT '[]',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(organization_id, role_key)
-      )`
-    )
-    .catch(() => undefined);
-
-  await queryHelpers
-    .queryRun(
-      `CREATE TABLE IF NOT EXISTS project_role_overrides (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT NOT NULL,
-        project_id TEXT NOT NULL,
-        role_key TEXT NOT NULL,
-        capabilities_json TEXT DEFAULT '[]',
-        is_enabled INTEGER DEFAULT 1,
-        fallback_role_key TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(project_id, role_key)
-      )`
-    )
-    .catch(() => undefined);
-
-  await queryHelpers
-    .queryRun(
       `CREATE TABLE IF NOT EXISTS role_change_audit_events (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
