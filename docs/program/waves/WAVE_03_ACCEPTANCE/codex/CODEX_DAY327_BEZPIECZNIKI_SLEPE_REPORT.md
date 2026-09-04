@@ -93,3 +93,9 @@ Dług imienny: `/private/tmp/cx-day327-bezpieczniki-slepe-artefakty/i18n-dlug.tx
 Fizyczny odczyt rozszerzono z 3 do 6 plików i jest on asertowany niepustą treścią każdego wejścia. Wzorzec obejmuje bezpośrednie interpolacje `x.message`, `x?.message`, `(x as Error|any).message` i `String(x)`. Baseline odsłonił 4 miejsca: 3 w `DocumentStudioDocumentPanel.tsx`, 1 w `DocumentStudioTemplateArchitectView.tsx`; pliki produktu pozostają niezmienione. Mutacja `{err.message}` w `src/services/api.ts` po naprawie: exit 1, dokładny komunikat `expected ... length 0 but got 1`; po `cp` diff produktu pusty. Artefakt: `r2-mutacja-po.txt`.
 
 Dowód PRZED tej mutacji nie został uruchomiony lokalnie przed zmianą kodu bezpiecznika; znana z instrukcji zieleń nie jest przeze mnie przedstawiana jako własny pomiar. Mutacja odwrotna również nie została wykonana. R2 jest zatem `PARTIAL`, mimo zielonego stanu końcowego i skutecznej mutacji PO.
+
+## R3 — `.catch(callback)`
+
+Zbieracz identyfikatorów obejmuje `catch (x)`, `.catch((x)=>)`, `.catch(async (x)=>)`, `.catch(function (x){})`, `.catch(x=>)` oraz parametr z adnotacją typu. Własny pomiar formy `.catch((ident)…)`: 71. Baseline’y pozostają `ALTERNATE=44`, `VARIABLE_AGNOSTIC=47`; rozszerzenie nie podniosło istniejącego długu na czystym drzewie. Mutacja `.catch((problem) => res.json({ error: problem.message }))` w `health.routes.ts:291` po naprawie: exit 1, licznik 48 > 47; po `cp` diff produktu pusty. Pełna imienna lista z komunikatu jest w `r3-mutacja-po.txt`.
+
+Dowód PRZED i mutacja odwrotna nie zostały wykonane lokalnie; R3 pozostaje `PARTIAL`. Rozróżnienie: 71 to wystąpienia formy callback, a 47 to wykryty dług odpowiedzi HTTP — nie są tą samą liczbą.

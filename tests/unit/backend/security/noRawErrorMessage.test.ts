@@ -68,7 +68,7 @@ function violations(pattern: RegExp): string[] {
 function catchVariableViolations(): string[] {
   return routeFiles(routesRoot).flatMap((file) => {
     const source = readFileSync(file, 'utf8');
-    const identifiers = [...source.matchAll(/catch\s*\(\s*([A-Za-z_$][\w$]*)/g)].map(
+    const identifiers = [...source.matchAll(/(?:catch\s*\(\s*|\.catch\s*\(\s*(?:async\s+)?(?:function\s*\(\s*|\(\s*)?)([A-Za-z_$][\w$]*)(?:\s*:\s*[^)=]+)?/g)].map(
       (match) => match[1]
     );
     return [...new Set(identifiers)].flatMap((identifier) =>
