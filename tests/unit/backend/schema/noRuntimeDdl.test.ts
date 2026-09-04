@@ -150,6 +150,37 @@ function files(dir: string): string[] {
   });
 }
 
+/*
+ * Documented __tests__ DDL exceptions (day 333). These files are excluded
+ * below because their SQL is test-fixture, mutation-control, or source-text
+ * assertion code, never a production runtime schema producer:
+ *
+ * - database/__tests__/closeoutCo8RuntimeDdlInitiativesStatusDefault.pg.test.ts:680 — legal; mutation marker used to prove a runtime DDL removal against an isolated scratch database.
+ * - controllers/__tests__/ini005-negative-controls.pg.test.ts:127 — legal; RealPG fixture tables are created and dropped by this suite.
+ * - controllers/__tests__/ini005-portfolio-resources-roadmap.pg.test.ts:123 — legal; isolated RealPG fixture/replay schema with suite cleanup.
+ * - routes/v8/__tests__/p08-teresa-e2e-lifecycle.test.ts:421 — legal; mocked SQL-call assertion for the Teresa schema bootstrap.
+ * - routes/my-work/__tests__/calendar-events.migration.test.ts:15 — legal; reads migration source and asserts its DDL text.
+ * - services/demo/__tests__/atelierFinancePinnedTransaction.pg.test.ts:1136 — legal; transient, namespaced fault-injection table removed in cleanup.
+ * - services/demo/__tests__/atelierFinanceLateWrite.pg.test.ts:436 — legal; transient fault-injection table removed by the suite.
+ * - services/demo/__tests__/demoSeedFailurePropagation.test.ts:132 — legal; mocked database fixture for failure-propagation tests.
+ * - services/demo/__tests__/atelierPresentationDeckSeedPostgres.test.ts:144 — legal; isolated PostgreSQL fixture truncated/cleaned by the suite.
+ * - services/demo/__tests__/atelierPresentationDeckSeed.test.ts:159 — legal; SQLite test fixture created and cleaned by hooks.
+ * - services/materialExport/__tests__/templateProvenanceApproval19.realdb.test.ts:266 — legal; source/comment assertion describing forbidden unconditional DDL, not production execution.
+ * - services/audits/__tests__/independenceScanCursor.realdb.test.ts:494 — legal; destructive mutation controls run only in a guarded disposable database.
+ * - services/__tests__/auditProgramService.e2e-sqlite.test.ts:137 — legal; in-memory SQLite fixture schema.
+ * - services/__tests__/statementOwnerAcceptance.pg.test.ts:105 — legal; per-suite marker table in a dedicated owner-acceptance database.
+ * - services/__tests__/organizationSuspensionGuard.pg.test.ts:17 — legal; guarded scratch-database negative control.
+ * - services/__tests__/integrationOwnershipService.test.ts:24 — legal; mocked SQL-call assertion.
+ * - services/__tests__/executionActionRegistryService.pg.test.ts:23 — legal; namespaced RealPG unit-of-work probe dropped in cleanup.
+ * - services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts:4 — legal; source/comment and schema-shape negative assertions in a guarded RealPG suite.
+ * - services/__tests__/meetingService.test.ts:85 — legal; SQLite fixture tables initialized only for the unit suite.
+ * - services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts:1947 — legal; mutation-control table used in a guarded RealPG suite and restored/removed.
+ * - services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts:99 — legal; isolated prerequisite fixture removed in afterAll.
+ * - services/documentStudio/__tests__/documentVersionLineage.pg.test.ts:306 — legal; source/comment assertion around a mocked schema guard.
+ * - services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts:74 — legal; namespaced scratch tables created and dropped by the suite.
+ * - services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts:576 — legal; guarded mutation-control table in a disposable RealPG database.
+ */
+
 describe('runtime DDL schema guard', () => {
   it('rejects every new CREATE TABLE in server/src outside the explicit legacy allowlist', () => {
     const actual: Record<string, number> = {};

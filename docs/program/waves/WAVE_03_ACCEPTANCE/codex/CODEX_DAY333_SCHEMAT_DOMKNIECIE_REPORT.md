@@ -40,6 +40,18 @@ Istniejąca migracja `20261670_p2_runtime_schema_repairs.sql` była no-op na czy
 
 DDL w `slackRouter.ts` pozostaje jako kompatybilnościowy strażnik: plik ma w tym dyżurze licencję tylko do odczytu. Usunięcie można wykonać osobno po potwierdzeniu wdrożenia migracji we wszystkich środowiskach. Artefakty: `r3-migracje-1.txt`, `r3-migracje-2.txt`, `r3-result.txt`.
 
+## R4 — 24 wyjątki `__tests__`
+
+Własny mianownik to 24 pliki. Każdy został odczytany i ma teraz obok wyjątku `__tests__` w `noRuntimeDdl.test.ts` wiersz: ścieżka, linia, powód i werdykt `legal`. Klasyfikacje obejmują izolowane fixture SQLite/RealPG, nazewniczo izolowane tabele sond, kontrolowane mutacje odtwarzane w cleanupie oraz asercje tekstu SQL. Kontrola kompletności przeszła z `missing=0`; linia `if (file.includes('/__tests__/')) continue;` nie została zmieniona.
+
+Dowód mutacyjny bezpiecznika:
+
+- RED: tymczasowe `CREATE TABLE IF NOT EXISTS day333_guard_probe` w `server/src/controllers/AssessmentController.ts` dało `mutation_rc=1`; strażnik wykrył 136 plików wobec 135 w allowliście;
+- GREEN po odtworzeniu pliku przez `cp`: oba przypadki przeszły;
+- `git diff -- server/src/controllers/AssessmentController.ts` był pusty.
+
+Pułapki Z33: pakiet jest statycznym strażnikiem plikowym, nie dotyka bazy, JWT ani bramek V8. Uruchomiono go jawnie z `RUN_DB_TESTS=0 MOCK_DB=true --retry=0`; nie służy jako dowód runtime/HTTP.
+
 ## Korekty wobec instrukcji
 
 - Instrukcja podaje A/B `1914→1915`; na markerze dyżuru 333 własny pomiar daje **`1802→1803`**. Różnica nazw pozostaje zgodna: wyłącznie `slack_router_dedupe`.
@@ -54,7 +66,7 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 ## Pomiar zasięgu testów
 
-PRZED zmianami: 2 pełne nazwy w `/private/tmp/cx-day333-schemat-domkniecie-artefakty/przed-nazwy.txt`.
+PRZED zmianami: 2 pełne nazwy w `/private/tmp/cx-day333-schemat-domkniecie-artefakty/przed-nazwy.txt`. PO zmianach: te same 2 pełne nazwy w `po-nazwy.txt`; `diff` jest pusty — 0 dodanych i 0 znikniętych przypadków.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
