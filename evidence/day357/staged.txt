@@ -1,2 +1,2 @@
-docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md
-evidence/day357/r4-stan-oczekiwany.md
+docs/program/REJESTR_ZNALEZISK_20260903.md
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY357_PAKIET_POPRAWKA_REPORT.md
