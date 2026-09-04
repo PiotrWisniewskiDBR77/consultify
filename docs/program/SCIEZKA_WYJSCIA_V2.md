@@ -42,7 +42,7 @@ odbiorów potrzeba znacznie mniej** — i to jest sedno tej aktualizacji.
 
 | Dyżur | Dlaczego blokuje |
 | --- | --- |
-| **242 Uprawnienia** | **3 dziury cross-org wciąż otwarte** (wnioski o uprawnienia, wideo, kontekst AI — ten ostatni ma **dwie** trasy, nie jedną). Dziś wygaszone flagą na demo, **żywe kodowo wszędzie indziej**. Nie pokazujemy produktu, w którym obca firma kasuje cudze dane. |
+| **242 Uprawnienia** | Dawne „3 dziury cross-org” nie są trzema otwartymi wyciekami: **wnioski o uprawnienia i kontekst AI są zamknięte kodowo**, natomiast `videos` należy do rodziny **„schemat mieszka poza migracjami”** (brak tabeli i produkcyjnego DDL, router jest zaślepką). Dyżur 307 wykrył i zamknął osobno realny odczyt workload bez granicy organizacji oraz brak bramki `MODULE_ECONOMICS` na powierzchniach `/api/v8/finance*`; szeroki rejestr nadal zawiera twierdzenia niezweryfikowane. Dla `videos` potrzebna jest decyzja: migracja schematu albo odmontowanie trasy — ten dokument jej nie podejmuje. |
 | **243 Podgląd** | **Trzecia część kanonu list nie została sfotografowana ANI RAZU** — 12/12 zrzutów toru grafiki i 0/20 naszych ekranów dowodowych. Bez tego każdy werdykt dotyczy dwóch części z trzech. |
 | **244 Organizacja + Ustawienia** | Jedyne dwa moduły liczone jako zamknięte — **oba zakwestionowane**. Organizacja zamknięta na akcepcie **prototypu**, Ustawienia przy **nierozpoczętym** przeglądzie. Dopóki to stoi, **żadne inne zamknięcie nie jest wiarygodne.** |
 
