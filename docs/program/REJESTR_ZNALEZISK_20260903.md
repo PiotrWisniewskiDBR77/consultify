@@ -342,3 +342,11 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AA. Dyżur 365 — przyrząd i dublet Relations
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AA1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
+| AA2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
+| AA3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
