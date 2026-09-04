@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `8af25661dbbfdac330aa4cc4316e8be9f99b2d03`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 8af25661dbbfdac330aa4cc4316e8be9f99b2d03 --snapshot-date 2026-09-04`
+Marker: `e9325cc8d706ac15c45f9e03cef9f47b6063ecd2`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker e9325cc8d706ac15c45f9e03cef9f47b6063ecd2 --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -84,7 +84,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYW-CAL-REC-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
 | `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt attendees/guests/organizer/invitation-status; wskazany handler 2779–2822 nadal nie ma tych pól | — | settlement, decisions |
 | `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt dołączania artefaktów i linku dla zaproszonych; DEC-222 pozostawia wdrożenie otwarte i brak SHA obiektu | — | settlement, decisions |
-| `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22 | — | settlement |
+| `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi ocenić świeży zrzut exact-candidate; FALA_4_OWNER_DECISION zabrania zamknięcia samym SHA, a af75a84e37 jest checkpointem | — | settlement |
 | `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
 | `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137 | — | settlement |
 | `MYW-IDEA-REC-001` | NAPRAWIONE | SHA_OK | 655d629675 | — | settlement |
