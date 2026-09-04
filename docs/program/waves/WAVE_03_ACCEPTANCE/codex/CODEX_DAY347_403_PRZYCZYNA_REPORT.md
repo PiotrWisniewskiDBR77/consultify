@@ -1,8 +1,10 @@
 # Dyżur 347 — przyczyna czerwieni 403
 
-Data: 2026-09-04  
-Marker: `6a4919f72db338e7f49a2cacb3787d20cc649883`  
-Gałąź: `codex/day347-403-przyczyna-20260904`  
+Data: 2026-09-04
+
+Marker: `6a4919f72db338e7f49a2cacb3787d20cc649883`
+
+Gałąź: `codex/day347-403-przyczyna-20260904`
 Werdykt: **PRZYCZYNA POTWIERDZONA DLA 09_RESULTS; TEZA 415/415 OBALONA DLA 10_FINANCE; 401 Z 542 CZERWIENI ZNIKNĘŁO**
 
 ## Stan startowy i rozjazd tipa
@@ -160,4 +162,3 @@ Nie wykonano połączeń do Railway, demo, stagingu ani produkcji. Jedyna baza t
 - `4f62e62b4e` — R5, 139 nazw długu i 142 klasy.
 
 Żaden z tych commitów nie dotyka kodu koperty; jedyna mutacja kodu była tymczasowa, cofnięta przez `cp` i miała pusty diff przed commitem.
-
