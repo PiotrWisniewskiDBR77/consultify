@@ -33,7 +33,7 @@ Twoje 250+ obrazów oglądałeś na przyrządzie, który montuje komponent wpros
 | 13 | [Organizacja](13_Organizacja.md) | 22 | 0 | 0 | 1 | 1 | 0 |
 | 14 | [Panel administratora](14_Panel_administratora.md) | 75 | 3 | 1 | 1 | 30 | 0 |
 | 15 | [Ustawienia](15_Ustawienia.md) | 11 | 0 | 0 | 0 | 3 | 0 |
-| 16 | [Portal partnerski](16_Portal_partnerski.md) | 0 | 0 | 0 | 0 | 0 | 0 |
+| 16 | [Portal partnerski](16_Portal_partnerski.md) | 12 (poza rejestrem status.json, odbiór 02.09) | 1 | 0 | 0 | 0 | 0 |
 | | **Razem** | **300** | **87** | **41** | **65** | **52** | **4** |
 
 Do tego aneks 17: elementy wspólne (13 ekranów kanonu) i ekrany przed zalogowaniem (6).

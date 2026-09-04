@@ -12,7 +12,7 @@ Staging: `b852ade6` (wdrożony 04.09 23:33, 30 przełączników włączonych). L
 |---|---|---|
 | — | `—` | portal bez flag, bramkowany tylko logowaniem (/partner/*) |
 
-## A. Zatwierdzone obrazy — 0 ekranów (Twoje decyzje z 30.08–02.09)
+## A. Zatwierdzone obrazy — 12 ekranów portalu (odbiór w rozmowie 02.09, poza rejestrem status.json)
 
 Ocena: A = do odbioru, B = do odbioru z wyjątkami, C = nie pokazujemy, D = odłożone. Decyzja: Twoje kliknięcie. Uwaga: Twoje słowa, dosłownie.
 
