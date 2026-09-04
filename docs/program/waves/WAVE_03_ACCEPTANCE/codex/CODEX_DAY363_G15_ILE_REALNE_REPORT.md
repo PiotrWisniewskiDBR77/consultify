@@ -45,8 +45,58 @@ Wszystkie dziesięć przebiegów było czysto frontowych z `RUN_DB_TESTS=0 MOCK_
 
 ## Korekty wobec instrukcji
 
-Do uzupełnienia po R2–R5.
+## R2 — orzeczenie per wiersz
+
+| Moduł | Świeża czerwień | Mechanizm | Werdykt | Na czym stoi |
+| --- | ---: | --- | --- | --- |
+| 02_INTERVIEW | 1 | kontrakt stopki `InterviewPreviewFooter.ownerContract.test.ts:37` wobec `InterviewTemplatePreviewFooter.tsx` | `REALNY_DEFEKT` | własny przebieg: brak autoryzowanej etykiety Edit |
+| 03_TOOLS | 1 | fallback nierozpoznanego kroku w `ToolCanvas.tsx`, asercja `toolCanvas.smoke.test.tsx:95` | `REALNY_DEFEKT` | własny render: brak uczciwego tekstu „This step is being prepared” |
+| 05_INITIATIVES | 18 | sześć rodzin: `chatActionHandler`, Menu 3, kanoniczny rejestr, `ExecutionControlSurface`, `ExecutionWork/ResourcesSurface`, narrative marker | `REALNY_DEFEKT` | 18 własnych nazw i komunikatów; 13 nazw współdzielonych z 06 |
+| 06_EXECUTION | 13 | `canonicalInitiativeRegisterParity`, `ExecutionControlSurface`, `ExecutionWorkSurface.tsx:597`, `ExecutionResourcesSurface.tsx:405`, nawigacja `InitiativesHub` | `REALNY_DEFEKT` | własny przebieg; brak oczekiwanych kontrolek/etykiet i kontraktu nawigacji |
+| 07_MY_WORK_AGENT | 4 | dwa testy oczekują Postgresa przy komendzie unit, jedna zmiana `activeTool`, jeden brak harnessu 5268 | `NIEORZECZONY` | wiersz miesza co najmniej trzy mechanizmy; przebieg z `DB_TYPE=postgres` usunął dwie pierwotne nazwy, ale zmienił skład i uruchomił pięć real-DB nazw mimo `RUN_DB_TESTS=0`, więc nie jest kwalifikowanym A/B |
+| 08_MEETINGS | 3 | `MeetingHub` operuje na `null` po błędzie; `MeetingObjectPage` nie renderuje decyzji fixture | `REALNY_DEFEKT` | własny render i trzy odrębne komunikaty |
+| 10_FINANCE | 0 | historyczna czerwień nie reprodukuje się | `ARTEFAKT_DOWIEDZIONY` | własny pełny przebieg 924/924; plik nazw jest pusty |
+| 11_MATERIALS | 2 | mapowanie poufności `DocumentStudioDocumentPanel.tsx:242` i klasa alarmu `PresentationStudioLayoutCapacityAdminPanel.tsx:628-650` | `REALNY_DEFEKT` | własny render: surowy kod poufności i brak klasy rose |
+| 14_ADMIN | 7 | siedem paneli Admin nie zachowuje kontraktów surowej wartości/i18n/unikalności | `REALNY_DEFEKT` | własne pełne nazwy i komunikaty per panel |
+| 16_PARTNER | 9 | `EarningsSection`/`CommissionView.tsx:356` oraz mutacje company-info/regions/specializations w `PartnerPortalView` | `REALNY_DEFEKT` | własny render: brak oczekiwanych danych i kontrolek |
+
+Na świeżym mianowniku 58: **0 bieżących czerwieni dowiedzionych jako artefakt**, **54 bieżące czerwienie jako realny defekt**, **4 nieorzeczone**. Historyczny wiersz Finansów jest dowiedzionym artefaktem/starym pomiarem, lecz wnosi dziś zero czerwonych nazw. Listy 54 i 4 są dokładnie sumą odpowiednich plików `r1-nazwy-*`; dla `07` wszystkie cztery nazwy pozostają nieorzeczone.
+
+## R3 — mutacja trafiająca we właściwego strażnika
+
+Warunek potwierdzono w `server/src/services/legacyCutover/requireActiveMembership.ts:34`, odpowiedź 403 w linii 35. Kopię wykonano komendą:
+
+`cp server/src/services/legacyCutover/requireActiveMembership.ts /private/tmp/cx-day363-g15-ile-realne-scratch/requireActiveMembership.ts.before`
+
+Mutacja zmieniła wyłącznie `!== 'ACTIVE'` na `=== '\0NIGDY'`. Przebiegi, zawsze jednym wywołaniem trzech pakietów, dały:
+
+- baza: 68/68 PASS, 3 pakiety; SHA-256 `8611761f406842c771ce8472fffe129f356316aae571bbdfeabd0591aecde3d5`;
+- mutacja: 47 PASS / 21 FAIL / 68 total, 3 pakiety; SHA-256 `01dbe4ae95bab34ca25feee177b1c73b68c207ab566f1e89552ee27dadb4a343`;
+- po cofnięciu: 68/68 PASS, 3 pakiety; SHA-256 `f5998efa0b982dfa9ec873e4b6ce731f086783330bb855a6052d3e7e4edad179`.
+
+Pełne listy 68 nazw są identyczne: diff baza↔mutacja = 0 dodanych / 0 znikniętych, baza↔final = 0/0. Dwadzieścia jeden czerwonych nazw mutacji zapisano w `evidence/g15/day363/r3-mutacja-czerwone-nazwy.txt`. Mutację cofnięto przez `cp /private/tmp/cx-day363-g15-ile-realne-scratch/requireActiveMembership.ts.before src/services/legacyCutover/requireActiveMembership.ts` z `cwd=server`; diff strażnika jest pusty.
+
+Pierwsze cofnięcie miało błędną ścieżkę względem `cwd=server`, zwróciło `No such file or directory` i nie zostało uznane; poprawne cofnięcie wykonano natychmiast przed kwalifikowanym przebiegiem finalnym. Mutacja obejmowała warunek statusu `requireActiveMembership`, lecz **nie** obejmowała odrębnego strażnika roli `requireFinanceEditorMembership`; wynik nie dowodzi ochrony jego warunku roli.
+
+Wymagane dodatkowe parametry, których nie zawierała kompletna linia przykładowa instrukcji, ale wymagają ich same testy: kanoniczny `JWT_SECRET=test-jwt-secret-key-min-32-chars-long-for-validation`, `FINANCE_MEMBERSHIP_GATE_TEST_DB_PREFIX=cx` i `--no-file-parallelism`. Bez nich dwa pakiety miały po 0 przypadków; te przebiegi odrzucono jako błędy komendy.
+
+### §0.2e — pakiety R3
+
+Wszystkie trzy pakiety biegły z `RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `NODE_ENV=test`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, lokalnym `DATABASE_URL` na `127.0.0.1:6434/cx363`, kanonicznym JWT i `--retry=0`. To wyłącza pułapki (a)–(d). Pułapka (e) została wyłączona realnym PostgreSQL i identyczną listą nazw 68/3 po obu stronach mutacji. Pakiet `financeIntelligence` jest kontrolą braku writerów; jego sześć nazw pozostaje zielonych. `auditsStrictMembership` również pozostaje zielony, bo nie montuje mutowanego strażnika. Całe 21 czerwieni pochodzi z `financeValue.membershipGate` i dowodzi egzekucji dokładnie mutowanego warunku.
+
+### Protokół Z30
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+## Korekty wobec instrukcji
+
+- Komenda licząca `PARTIAL_PASS / SERVER_NOT_MEASURED` przeszukuje całe pliki, dlatego zwraca 5 mimo czterech takich wierszy G15.
+- Świeży pomiar zbioru B to 58, nie historyczne 66; szczegóły w R1.
+- W mutacji właściwego strażnika czerwieni 21 z 44 testów financeValue, nie 11; mianownik pozostaje 68/3.
+- Przykładowy komplet env R3 nie zawiera dwóch bramek wymaganych przez same pliki testowe i nie wymusza sekwencyjności; bez korekty pakiety nie wykonują 68 przypadków.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Na etapie R1 nie rozstrzygnięto jeszcze mechanizmu każdej czerwieni ani jej statusu artefakt/defekt.
+- Cztery nazwy 07 pozostają `NIEORZECZONY`: kwalifikowany, stałomianownikowy A/B dla trzech mechanizmów nie został uzyskany.
+- R3 dowodzi ochrony `requireActiveMembership`, ale nie ochrony osobnego warunku roli `requireFinanceEditorMembership`.
