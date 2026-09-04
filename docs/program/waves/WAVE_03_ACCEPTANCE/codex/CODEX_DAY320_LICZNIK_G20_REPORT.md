@@ -1,7 +1,7 @@
 # Dyżur 320 — licznik P0/P1 jako bramka G20
 
-Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`  
-Gałąź: `codex/day320-licznik-g20-20260904`  
+Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`
+Gałąź: `codex/day320-licznik-g20-20260904`
 Stan: **GOTOWE OD STRONY NARZĘDZIA / G20 NADAL BLOKUJE (17 pozycji)**
 
 ## Start z vaulta
