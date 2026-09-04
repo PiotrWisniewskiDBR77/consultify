@@ -167,4 +167,18 @@ describe('Dynamic SWOT phase overview — reachable DOM contract', () => {
     expect(badge).toHaveTextContent(/Blocked by gaps|Decision-ready|Needs refinement/);
     expect(screen.getByTestId('dynamic-swot-phase-overview')).toContainElement(badge);
   });
+
+  it('keeps the active tile neutral, focus-visible, and inside the flexible grid', async () => {
+    vi.stubEnv('VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES', 'true');
+    render(<ToolDocumentView toolType="dynamic-swot" sessionId="sess-day344" onBack={vi.fn()} />);
+
+    const tiles = await screen.findAllByTestId('dynamic-swot-phase-tile');
+    const active = tiles.find((tile) => tile.getAttribute('aria-current') === 'step');
+    const grid = tiles[0]?.parentElement;
+
+    expect(tiles).toHaveLength(7);
+    expect(grid).toHaveClass('grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))]');
+    expect(active).toHaveClass('c-focus', 'border-slate-400', 'bg-slate-100');
+    expect(active?.className).not.toMatch(/primary-|crimson-|c-accent/);
+  });
 });
