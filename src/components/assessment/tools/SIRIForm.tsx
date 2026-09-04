@@ -37,6 +37,7 @@ import {
   SIRIDimension,
   SIRIPrioritisationArea,
 } from '../../../services/siriStructure';
+import { hasAssessmentResponse } from '../../../services/assessmentCompleteness';
 
 // Types
 interface DimensionScore {
@@ -139,9 +140,7 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
 
   const progress = useMemo(() => {
     const dimensions = data.dimensions || {};
-    const filledDims = Object.values(dimensions).filter(
-      (d) => d && (d.current > 0 || d.target > 0)
-    ).length;
+    const filledDims = Object.values(dimensions).filter(hasAssessmentResponse).length;
     const withEvidence = Object.values(dimensions).filter(
       (d) => d && d.evidence && d.evidence.trim().length > 0
     ).length;

@@ -38,6 +38,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DRD_STRUCTURE, DRDArea, DRDAxis, DRDLevel } from '../../../services/drdStructure';
+import { hasAssessmentResponse } from '../../../services/assessmentCompleteness';
 
 // Types
 interface AxisScore {
@@ -104,7 +105,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
     let count = 0;
 
     Object.entries(data).forEach(([key, axisData]) => {
-      if (axisData && (axisData.actual > 0 || axisData.target > 0)) {
+      if (hasAssessmentResponse(axisData)) {
         filledAxes++;
         totalScore += axisData.actual || 0;
         count++;
