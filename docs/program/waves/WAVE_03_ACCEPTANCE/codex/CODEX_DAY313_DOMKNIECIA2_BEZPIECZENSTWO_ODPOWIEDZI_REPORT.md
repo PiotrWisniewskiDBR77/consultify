@@ -49,6 +49,36 @@ Test R4 + mapper: 7/7. Żądanie z `Accept-Language: pl-PL` daje polski bezpiecz
 
 Pułapki (a)-(d) nie leżą na ścieżce tego czysto jednostkowego/statycznego pakietu; nie jest on dowodem Gateway/RealPG. Pułapka (e) jest wyłączona analizą AST zakresu, listą 112 wyjątków i mutacją pojedynczego wywołania.
 
+## R5 — PARTIAL / NOT_PROVEN runtime
+
+Zaimplementowano trzy bezpiecznie rozstrzygnięte zmiany:
+
+- `adaptQuery()` tłumaczy znalezione kształty: zwykły, separator i `DISTINCT`; test 3/3;
+- migracja `20261913_imported_reports_coverage_percent.sql` dodaje istniejącej tabeli wyłącznie brakującą kolumnę; przebiegi po dodaniu: 1, następnie 0; readback potwierdził `real DEFAULT 0`;
+- `/api/admin/service-accounts` odrzuca nie-UUID organizacji/użytkownika kodem 400 przed pierwszym SQL. To jedyna zadeklarowana zmiana HTTP 500→400.
+
+Nie wykonano wymaganego pełnego przelotu ośmiu tras przez realny ApiGateway, podpisany JWT i RealPG ani mutacji walidacji identyfikatora. Dlatego żadnej z ośmiu tras nie oznaczam `VERIFIED`, a pięć nienazwanych przyczyn pozostaje `UNKNOWN`. Test adaptacji jest jednostkowy; pułapki (a)-(d) nie dotyczą go, ale właśnie dlatego nie dowodzi runtime. Migracje użyły jawnego `DATABASE_URL` 127.0.0.1:6323/cx313 i kompletnego env; nie użyto mocka.
+
+### STOP — R5 pełny przelot
+
+Rodzaj: MERYTORYCZNY
+
+Powód: bez ukończenia nowego ośmiotrasowego pakietu `.pg.test.ts` nie ma dowodu, że trzy zmiany usuwają 500 ani diagnozy pozostałych pięciu.
+
+Licencja, którą sprawdziłem: nowe `.pg.test.ts` są dozwolone, lecz dowód wymaga pełnej ścieżki ApiGateway/JWT/PG i mutacji; nie zastępuję jej gołym routerem.
+
+Dowód: sekcja R5 instrukcji oraz brak nowego pakietu `.pg.test.ts` w diffie.
+
+Co dostarczyłem ZAMIAST zmiany: trzy ograniczone poprawki, test kształtów SQL, dwa przebiegi migracji i jawny status `NOT_PROVEN` dla tras.
+
+Co zrobiłbym dalej: zbudował jeden pakiet Gateway z fixture użytkownika/organizacji UUID, zapisał kody i ciała PRZED/PO wszystkich ośmiu tras, a następnie wykonał mutację walidacji UUID.
+
+Rekomendacja dla nadzorcy: nie scalać R5 jako zamknięcia ośmiu 500 bez brakującego przelotu; R2-R4 można oceniać niezależnie.
+
+Stan: zacommitowano częściowo w commicie R5.
+
+Czy kontynuowałem pozostałe pozycje: TAK — R6 raport i porównanie nazw.
+
 ## Bezpieczeństwo wysyłki
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -57,4 +87,4 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 - Osiem kodów i ciał odpowiedzi przez ApiGateway/JWT/RealPG: oczekują na R5.
 - Osiągalność runtime całej rodziny 255 klas: poza czterema klasami R3 pozostaje ratchet/inwentarz, nie twierdzenie o wykonaniu.
-- R5-R6: oczekują na kolejne commity i dowody mutacyjne.
+- R5 pozostaje `PARTIAL`; R6 kończy raport i dowody nazw testów.

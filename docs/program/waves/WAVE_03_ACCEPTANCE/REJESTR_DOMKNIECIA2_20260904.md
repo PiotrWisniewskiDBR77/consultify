@@ -41,6 +41,16 @@ Po R3 ratchet pozostałych unikalnych eksportowanych klas `extends Error` wynosi
 | `/api/table-platform/admin/service-accounts` | `NOT_PROVEN` — przelot własny w R5 | do pomiaru |
 | `/api/table-platform/admin/sso` | `NOT_PROVEN` — przelot własny w R5 | do pomiaru |
 
+Stan R5: centralna adaptacja trzech znalezionych kształtów `GROUP_CONCAT` i addytywna migracja `coverage_percent` są zaimplementowane; walidacja UUID przed zapytaniem jest zaimplementowana dla `/api/admin/service-accounts`. Żaden wiersz tabeli C nie zostaje podniesiony do `VERIFIED`, ponieważ pełny przelot ośmiu tras nie został wykonany.
+
+## Zmienione kody
+
+| Trasa | Było | Jest | Warunek |
+| --- | --- | --- | --- |
+| `/api/admin/service-accounts` | 500 z PostgreSQL dla nie-UUID organizacji/użytkownika | 400 `INVALID_IDENTIFIER` | wyłącznie nieprawidłowy UUID wykryty przed zapytaniem; runtime `NOT_PROVEN` |
+
+Pozostałych kodów nie zmieniono.
+
 ## D. Front i kody do decyzji
 
 `src/utils/apiError.ts` czyta `details`, ale `flattenValidationDetails` zwraca `null` dla stringa; obsługuje obiekty i tablice błędów pól. Wszystkie 35 miejsc przekazują string `.message`, więc surowe `details` można usunąć bez utraty strukturalnej walidacji. Pole `error` pozostaje. Pomiar `.details`: wadliwy grep z `\b` = 0, kontrolny grep = 125.

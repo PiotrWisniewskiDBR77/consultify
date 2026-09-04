@@ -899,6 +899,23 @@ export function adaptQuery(sql: string): string {
 
   // sqlite_master -> information_schema (PostgreSQL)
   let adapted = sql;
+
+  // SQLite GROUP_CONCAT(expr[, separator]) -> PostgreSQL STRING_AGG.
+  // Runtime callers use simple column expressions in three shapes: plain,
+  // DISTINCT, and an explicit string separator.
+  adapted = adapted.replace(
+    /GROUP_CONCAT\(\s*DISTINCT\s+([A-Za-z_][A-Za-z0-9_.]*)\s*\)/gi,
+    "STRING_AGG(DISTINCT $1::text, ',')"
+  );
+  adapted = adapted.replace(
+    /GROUP_CONCAT\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*,\s*('(?:[^']|'')*')\s*\)/gi,
+    'STRING_AGG($1::text, $2)'
+  );
+  adapted = adapted.replace(
+    /GROUP_CONCAT\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\)/gi,
+    "STRING_AGG($1::text, ',')"
+  );
+
   if (adapted.includes('sqlite_master')) {
     adapted = adapted.replace(
       /SELECT\s+name\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s*=\s*\?/gi,
