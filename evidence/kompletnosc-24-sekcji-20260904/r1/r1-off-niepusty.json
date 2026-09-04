@@ -1,0 +1,58 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 0,
+  "klikPoRozwinieciu": false,
+  "cofnijJesliSkraca": false,
+  "wyniki": [
+    {
+      "ekran": "karta-initiative",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r1-off-niepusty/karta-initiative__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Skrócenie przezbrojeń linii pakowania L3 (SMED)\nW realizacji\nZapisano\nSekcje\nEdycja\nPodgląd\nWypełnij z AI\nAnalizuj z AI\nZAKRES I PLAN\nZakres inicjatywy\nZadania\n9\nREZULTATY\nKryteria sukcesu\nKPI i korzyści\nZAPISY\nZałączniki i powiązania\nArtefakty\nZakres inicjatywy\nPROBLEM\n\nJaki problem rozwiązuje ta inicjatywa\n\nOPIS ROZWIĄZANIA\n\nProponowane podejście i sposób realizacji\n\nKOSZT BEZCZYNNOŚCI\n\nKonsekwencje braku działania\n\nKONTEKST RYNKOWY\n\nOtoczenie rynkowe, konkurencja i trendy\n\nAKCJE\n0\nZapytaj Teresę o tę inicjatywę\n\nW trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie inicjatywę — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\t\nW realizacji\n\nFaza\t\nRealizacja\n\nNastępna brama\t\nZakończenie realizacji\n\nPriorytet\t\nWysoki\n\nWłaściciel\t\nMarek Zieliński\n\nTermin\t\n15 lis 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\nKOMENTARZE\n4\nHISTORIA\n6",
+      "hasResultMarker": null,
+      "obrazJasnosc": 243.1325585958719,
+      "zliczenia": [
+        {
+          "nazwa": "pozycje",
+          "css": "[data-nmode-section-item]",
+          "ile": 6,
+          "teksty": [
+            "Zakres inicjatywy",
+            "Zadania9",
+            "Kryteria sukcesu",
+            "KPI i korzyści",
+            "Załączniki i powiązania",
+            "Artefakty"
+          ]
+        },
+        {
+          "nazwa": "grupy",
+          "css": "[data-nmode-section-group]",
+          "ile": 3,
+          "teksty": [
+            "Zakres i plan",
+            "Rezultaty",
+            "Zapisy"
+          ]
+        }
+      ],
+      "localStorageState": {
+        "ff.cardContract": "0",
+        "ff.initiativeCardContract": null,
+        "initiative:nmode:section-order:v2:init-smed-linia-pakowania": null
+      },
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [],
+  "porownania": []
+}

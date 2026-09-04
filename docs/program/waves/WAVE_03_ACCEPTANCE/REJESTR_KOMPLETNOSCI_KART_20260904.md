@@ -45,3 +45,20 @@ Pomiar: 11 wierszy, 4 typy z kontraktem, 7 bez kontraktu.
 Kadr obecnego stanu: `evidence/kompletnosc-kart-20260904/r3-pl-light-PARTIAL.png` (w lewym menu na wariancie `quick_win` widoczne są tylko trzy z pięciu grup: Zakres i plan, Rezultaty, Zapisy).
 
 Czego konkretnie mi zabrakło, żeby rozstrzygnąć samodzielnie: brak decyzji właściciela, czy sześć nazw §13.1 jest docelową taksonomią, czy opisem semantycznym, który wolno mapować na pięć zaakceptowanych grup produktu.
+
+## Dyżur 338 — R1: własny pomiar wejściowy
+
+Rekord we wszystkich czterech przebiegach: `init-smed-linia-pakowania`. Każdy przebieg dostał świeży kontekst Playwrighta. Liczby pochodzą wyłącznie z uchwytów DOM, a stan `localStorage` zapisano w tym samym JSON-ie i w tej samej chwili co zliczenie.
+
+| Szablon | Flaga zastanego kontraktu | Pozycji | Grup | `ff.cardContract` | Klucz kolejności sekcji | Dowód |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| `quick_win` | OFF | 6 | 3 | `"0"` | `null` | `evidence/kompletnosc-24-sekcji-20260904/r1/r1-off-niepusty.json` |
+| `quick_win` | ON | 6 | 3 | `"1"` | `null` | `evidence/kompletnosc-24-sekcji-20260904/r1/r1-on-niepusty.json` |
+| brak | OFF | 24 | 5 | `"0"` | `null` | `evidence/kompletnosc-24-sekcji-20260904/r1/r1-off-pusty.json` |
+| brak | ON | 24 | 5 | `"1"` | `null` | `evidence/kompletnosc-24-sekcji-20260904/r1/r1-on-pusty.json` |
+
+Własna różnica zbiorów dla `quick_win` (po usunięciu dynamicznych liczników z tekstów DOM): Harmonogram; Zależności; Produkty i kamienie milowe; Decyzje; Ryzyko i RAID; Bramy; Sugerowane zmiany; Dziennik zmian; Zespół; RACI; Właściciele strumieni; Analiza finansowa; Wpływ finansowy; OKR; Hipoteza; Zasoby; Użyte w (powiązania); Wnioski i lekcje.
+
+Rozbieżność wobec listy osiemnastu z instrukcji: **brak** — skład zbioru jest identyczny. Zrzuty `off-niepusty.png` i `on-niepusty.png` są bajtowo identyczne (`38781015…`), co potwierdza, że zastana flaga kontraktu nie usuwa sufitu narzuconego wcześniej przez szablon.
+
+Granica dowodu: harness montuje produkcyjny `InitiativeDocumentView`, ale podstawia transport HTTP. Pomiar dowodzi zachowania DOM komponentu, nie ścieżki ApiGateway/JWT/PostgreSQL ani wdrożenia.
