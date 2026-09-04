@@ -51,6 +51,7 @@
  */
 import type { AccessContext } from '../../effectiveAccessService.js';
 import { hasEffectiveCapability } from '../../effectiveAccessService.js';
+import { AppError } from '../../../utils/ErrorHandler.js';
 
 // ==========================================
 // TYPES
@@ -92,19 +93,18 @@ export interface EvaluateCommandAccessParams {
  * domain-specific subclass) so route error-mappers have one rule: this type
  * maps to 403, always, with the same fixed public message.
  */
-export class CommandCapabilityDeniedError extends Error {
-  code = 'COMMAND_CAPABILITY_DENIED';
+export class CommandCapabilityDeniedError extends AppError {
   /**
    * Deliberately NOT included: whether the record exists, its current
    * owner/manager, or which capability would have sufficed — any of those
    * would let an unauthorized caller learn something about a resource they
    * were just told they cannot touch (Decision D06).
    */
-  details: Record<string, unknown>;
   constructor(capability: string) {
-    super('You are not authorized to perform this action.');
+    super('You are not authorized to perform this action.', 403, 'COMMAND_CAPABILITY_DENIED', {
+      capability,
+    });
     this.name = 'CommandCapabilityDeniedError';
-    this.details = { capability };
   }
 }
 

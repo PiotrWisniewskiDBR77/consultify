@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type PgTransactionClient, withPgTransaction } from '../../../utils/queryHelpers.js';
+import { AppError } from '../../../utils/ErrorHandler.js';
 
 export type FinanceSettings = {
   defaultWacc: number;
@@ -18,14 +19,17 @@ const DEFAULTS: FinanceSettings = {
   defaultHorizonYears: 5,
 };
 
-export class FinanceSettingsCommandError extends Error {
+export class FinanceSettingsCommandError extends AppError {
+  declare status: any;
   constructor(
-    public readonly code: string,
-    public readonly status: number,
+    code: string,
+    status: number,
     message: string,
-    public readonly details?: Record<string, unknown>
+    details?: Record<string, unknown>
   ) {
-    super(message);
+    super(message, status, code, details);
+    // Compatibility for existing route callers; AppError.statusCode is canonical.
+    this.status = status;
     this.name = 'FinanceSettingsCommandError';
   }
 }

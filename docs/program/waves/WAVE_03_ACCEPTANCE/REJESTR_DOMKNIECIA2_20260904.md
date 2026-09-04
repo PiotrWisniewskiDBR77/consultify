@@ -21,10 +21,12 @@ Pomiar: 267 linii `extends Error` poza testami, **255 unikalnych nazw klas**. Pe
 
 | Klasa | Lokalizacja wejściowa | AppError/status/code przed R3 | Osiągalność |
 | --- | --- | --- | --- |
-| `OkrCycleProgramNotActiveError` | `okrCycleCommands.ts:61` | NIE/NIE/NIE | nazwana w ścieżce wyników; do dowodu testem R3 |
-| `FinanceSettingsCommandError` | `financeSettingsCommandService.ts:21` | NIE/częściowo/częściowo | nazwana w ścieżce finansów; do dowodu testem R3 |
-| `TemplateNotFoundError` | `deliverableTemplateService.ts:585` | NIE/NIE/NIE | osiągalna z trasy szablonów; kontrakt 404 istnieje |
-| `CommandCapabilityDeniedError` | `commandCapabilityGuard.ts:95` | NIE/NIE/NIE | osiągalna z tras komend platformy |
+| `OkrCycleProgramNotActiveError` | `okrCycleCommands.ts:62` | TAK/409/`PROGRAM_NOT_ACTIVE` | test kontraktu R3 |
+| `FinanceSettingsCommandError` | `financeSettingsCommandService.ts:22` | TAK/własny status/wniesiony kod | test kontraktu R3 |
+| `TemplateNotFoundError` | `deliverableTemplateService.ts:586` | TAK/404/`NOT_FOUND` | test mappera: HTTP 404 i `errorCode != INTERNAL` |
+| `CommandCapabilityDeniedError` | `commandCapabilityGuard.ts:96` | TAK/403/`COMMAND_CAPABILITY_DENIED` | test kontraktu R3 |
+
+Po R3 ratchet pozostałych unikalnych eksportowanych klas `extends Error` wynosi **251** i nie może rosnąć.
 
 ## C. Osiem tras z odbioru 312
 

@@ -33,6 +33,14 @@ Dowody mutacyjne, każdy `--retry=0`:
 
 Pułapki (a)-(d) nie dotyczą tekstowego guardu bez Gateway/DB. Pułapki (e1-e4) wyłączono przez: własny mianownik, trzy różne od naprawianego zapisy, kontrolny grep i zachowanie logów. Po każdym cofnięciu produkt odtwarzano przez `cp` z kopii w scratchu; nie użyto stash/reset.
 
+## R3
+
+Cztery imienne klasy dziedziczą teraz `AppError`, mają `isOperational`, `statusCode` i jawny kod. Statusy pozostają: OKR 409, Finance status konstruktora, Template 404, capability denial 403. Dla `TemplateNotFoundError` mapper zwraca biznesowy komunikat i `errorCode: NOT_FOUND`, nie `INTERNAL`.
+
+Testy R3 + mapper: 10/10. Ratchet pozostałej rodziny: 251 unikalnych eksportowanych klas `extends Error`. Mutacja usuwająca dziedziczenie/status z `TemplateNotFoundError`: 3 pass / 1 fail (`r3-mutation-no-status-red.json`); po cofnięciu 4/4 (`r3-final-green.json`).
+
+Pakiet jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`), zatem pułapki Gateway/DB/auth (a)-(d) nie leżą na ścieżce. Pułapka (e6) jest sednem testu: operacyjność i kod są asertowane per klasa, a pozostała rodzina jest spięta osobnym ratchetem zamiast masowej zmiany.
+
 ## Bezpieczeństwo wysyłki
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -41,4 +49,4 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 - Osiem kodów i ciał odpowiedzi przez ApiGateway/JWT/RealPG: oczekują na R5.
 - Osiągalność runtime całej rodziny 255 klas: poza czterema klasami R3 pozostaje ratchet/inwentarz, nie twierdzenie o wykonaniu.
-- R3-R6: oczekują na kolejne commity i dowody mutacyjne.
+- R4-R6: oczekują na kolejne commity i dowody mutacyjne.
