@@ -72,6 +72,10 @@ function caughtIdentifiers(source: string): string[] {
     /(?<!\.)\bcatch\s*\(\s*([A-Za-z_$][\w$]*)/g,
     /\.catch\s*\(\s*(?:async\s*)?\(\s*([A-Za-z_$][\w$]*)(?:\s*:\s*[^,)]+)?/g,
     /\.catch\s*\(\s*(?:async\s*)?function(?:\s+[A-Za-z_$][\w$]*)?\s*\(\s*([A-Za-z_$][\w$]*)(?:\s*:\s*[^,)]+)?/g,
+    // Goła strzałka bez nawiasów: .catch(problem => ...). Dziś zero wystąpień w trasach
+    // (zmierzone przy odbiorze 327), ale wzorzec dyżuru 327 ją obejmował — zachowujemy
+    // nadzbiór obu podejść, żeby uszczelnienie nie cofnęło się przy pierwszym takim zapisie.
+    /\.catch\s*\(\s*(?:async\s+)?([A-Za-z_$][\w$]*)\s*=>/g,
   ];
   return [
     ...new Set(

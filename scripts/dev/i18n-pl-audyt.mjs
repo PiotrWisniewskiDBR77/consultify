@@ -90,6 +90,7 @@ export const defectPlTranslations = new Map([
 ]);
 
 const polishWordsInEnglish = /\b(?:zakres|prezentacje|nazwa|szablonu|jest|wymagan(?:a|e|y)|zapytaj|proszę|błąd|ustawienia|utwórz|dodaj|usuń|zapisz|anuluj|wybierz|brak|nie|oraz|dla|edytuj|właściciel|zadanie|ocena|wniosek|inicjatywa|wywiad|załączniki|przypomnienia|przegląd|gotowość|dane|zebrania|sugerowana|wizualizacja|kategoria|nowy|wzorzec|sekcje|tabele|walidacja|zamiennik)\b/i;
+const polishWithoutDiacritics = /\b(?:zamknij|otworz|pokaz|ukryj|wybierz|usun|utworz|dodaj|zapisz|anuluj)\s+[a-z]{3,}|\b(?:oraz|dla|bez|przez|aby|jezeli|ktory|ktora|ktore)\b|\b[a-z]{4,}(?:anie|enie|owego|owej|ami|ach)\b/i;
 const allowedPolishNames = new Set(['Guided by Dr. Piotr Wiśniewski', 'Paweł Bochniarz']);
 
 // Wnetrze {{...}} to NAZWA ZMIENNEJ i18next, nie tekst dla uzytkownika. Bez tego wyciecia
@@ -102,6 +103,7 @@ export function polishTextReason(value) {
   const trimmed = bezPlaceholderow(value.trim());
   if (allowedPolishNames.has(value.trim())) return null;
   if (polishWordsInEnglish.test(trimmed)) return 'polskie słowo w wartości słownika EN';
+  if (polishWithoutDiacritics.test(trimmed)) return 'polska składnia albo fleksja bez znaków diakrytycznych w słowniku EN';
   if (/[ąćęłńóśźż]/i.test(trimmed)) return 'polskie znaki w wartości słownika EN';
   return null;
 }
@@ -119,7 +121,7 @@ export function justification(value) {
   if (/\((?:CET|CEST|CST|CDT|MST|MDT|PST|PDT|AEST|AEDT)\)$/.test(trimmed)) return 'strefa czasowa';
   if (/^(?:DD|MM|YYYY)[A-Z./()0-9 -]+$/.test(trimmed)) return 'format daty';
   if (/^[A-Z][A-Z0-9]*(?:[ /+.-][A-Z0-9%]+)+$/.test(trimmed)) return 'skrót, standard albo kod branżowy';
-  return 'termin dopuszczony po przeglądzie semantycznym';
+  return null;
 }
 
 export function audit(plObject, enObject) {

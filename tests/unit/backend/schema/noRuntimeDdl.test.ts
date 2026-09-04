@@ -141,6 +141,33 @@ const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = {
   "server/src/utils/ensureUserOnboardingStatusTable.ts": 1
 };
 
+const ALLOWED_TEST_DDL_BY_FILE: Record<string, number> = {
+  "server/src/controllers/__tests__/ini005-negative-controls.pg.test.ts": 5,
+  "server/src/controllers/__tests__/ini005-portfolio-resources-roadmap.pg.test.ts": 11,
+  "server/src/database/__tests__/closeoutCo8RuntimeDdlInitiativesStatusDefault.pg.test.ts": 4,
+  "server/src/routes/my-work/__tests__/calendar-events.migration.test.ts": 1,
+  "server/src/routes/v8/__tests__/p08-teresa-e2e-lifecycle.test.ts": 3,
+  "server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts": 4,
+  "server/src/services/__tests__/executionActionRegistryService.pg.test.ts": 1,
+  "server/src/services/__tests__/integrationOwnershipService.test.ts": 1,
+  "server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts": 4,
+  "server/src/services/__tests__/meetingService.test.ts": 3,
+  "server/src/services/__tests__/organizationSuspensionGuard.pg.test.ts": 1,
+  "server/src/services/__tests__/statementOwnerAcceptance.pg.test.ts": 1,
+  "server/src/services/audits/__tests__/independenceScanCursor.realdb.test.ts": 1,
+  "server/src/services/demo/__tests__/atelierFinanceLateWrite.pg.test.ts": 1,
+  "server/src/services/demo/__tests__/atelierFinancePinnedTransaction.pg.test.ts": 1,
+  "server/src/services/demo/__tests__/atelierPresentationDeckSeed.test.ts": 1,
+  "server/src/services/demo/__tests__/atelierPresentationDeckSeedPostgres.test.ts": 1,
+  "server/src/services/demo/__tests__/demoSeedFailurePropagation.test.ts": 1,
+  "server/src/services/documentStudio/__tests__/documentVersionLineage.pg.test.ts": 1,
+  "server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts": 1,
+  "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts": 1,
+  "server/src/services/initiative/__tests__/initiativeCapabilityMatrix.pg.test.ts": 8,
+  "server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts": 1,
+  "server/src/services/materialExport/__tests__/templateProvenanceApproval19.realdb.test.ts": 1,
+};
+
 function files(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     // Owner/WIP backups are explicitly outside this guard's readable scope.
@@ -167,5 +194,15 @@ describe('runtime DDL schema guard', () => {
       .filter((file) => fs.readFileSync(file, 'utf8').includes('AUTOINCREMENT'))
       .map((file) => path.relative(process.cwd(), file));
     expect(offenders).toEqual([]);
+  });
+
+  it('rejects new CREATE TABLE in __tests__ outside the explicit test-fixture allowlist', () => {
+    const actual: Record<string, number> = {};
+    for (const file of files(path.join(process.cwd(), 'server/src'))) {
+      if (!file.includes('/__tests__/')) continue;
+      const count = fs.readFileSync(file, 'utf8').match(/CREATE TABLE IF NOT EXISTS/g)?.length ?? 0;
+      if (count > 0) actual[path.relative(process.cwd(), file)] = count;
+    }
+    expect(actual).toEqual(ALLOWED_TEST_DDL_BY_FILE);
   });
 });
