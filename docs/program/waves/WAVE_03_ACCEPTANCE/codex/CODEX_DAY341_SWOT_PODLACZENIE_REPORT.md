@@ -1,6 +1,6 @@
 # CODEX DAY 341 — SWOT PODLACZENIE
 
-Stan: W TOKU. Baza: marker `74c07919cea7ab55dc9fde5fbd911f7f955ed425`, gałąź `codex/day341-swot-podlaczenie-20260904`.
+Stan: TECHNICAL_COMPLETE / OWNER_RETEST_PENDING. Baza: marker `74c07919cea7ab55dc9fde5fbd911f7f955ed425`, gałąź `codex/day341-swot-podlaczenie-20260904`.
 
 ## R1 — pomiar szwu i dwóch powierzchni
 
@@ -112,3 +112,35 @@ Artefakty (poza repo):
 Brak uruchamiania drugiej bazy: `start-wave3-owner-runtime.mjs` odrzuca przydzieloną nazwę `cx341`, dopuszczając tylko rodziny `consultify_w3_*`. Warstwę wizualną wykonano więc zgodnie z instrukcją w kanonicznym `dev-render`, a realny HTTP/PG pozostaje oddzielnym dowodem R4.
 
 Kanoniczne bramki po zmianie: `check-artefakt.sh` PASS, `check-list-canon.sh` PASS, `check-focus-canon.sh --ci` PASS. `node --check scripts/dev/grafika-zrzuty.mjs` i `git diff --check` PASS. Odbiór właściciela pozostaje osobnym warunkiem i nie jest deklarowany.
+
+## R6 — bilans końcowy
+
+Stan techniczny dyżuru: **TECHNICAL_COMPLETE / OWNER_RETEST_PENDING**. Flaga pozostaje domyślnie OFF; nie pozostawiono uruchomionego runtime z flagą ON. Nie wykonano promocji, wdrożenia ani akceptu właścicielskiego.
+
+| Warstwa | Dowód | Wynik |
+| --- | --- | --- |
+| 1. Deskryptor | paczka ma 7 faz i osobne pytania/bramy przy ON; mutacja usunięcia fazy daje RED | PASS |
+| 2. Przewód produktu | store i podsumowania używają paczki; OFF zachowuje tę samą referencję pięciu kroków; inne 30 definicji bez zmiany | PASS |
+| 3. Render | prawdziwy bundle Vite: DOM 5 faz OFF i 7 faz ON; cztery odczytane zrzuty light/dark | PASS techniczny; odbiór właściciela oczekuje |
+| 4. Persistencja | realny ApiGateway, podpisany JWT, PostgreSQL, osobny zimny GET; etap `review` i kolejność 7 faz przeżywają | PASS |
+
+Marker został sprawdzony jako dokładny punkt startu `74c07919cea7ab55dc9fde5fbd911f7f955ed425`; `git merge-base --is-ancestor` zwrócił `MARKER OK`. W chwili startu `github-backup/grafika/m03-20260902` był sześć commitów przed markerem (tip `52a041a910`), wyłącznie z instrukcjami 334–342/merge'ami; nie włączano tej rozbieżności do drzewa produktu.
+
+Końcowy mianownik tej samej paczki testów: 438, w tym 436 PASS i 2 FAIL. Na markerze było 432, w tym 430 PASS i te same 2 FAIL. Doszło dokładnie 6 pełnych nazw testów przewodu, nie zniknął żaden. Czerwienie zastane i niepogorszone:
+
+1. `dynamic SWOT step locale contract keeps distinct, complete English and Polish labels for every live step`;
+2. `ToolCanvas — guard for unresolved steps never renders the raw "not implemented" string for an unknown step`.
+
+Koszt dla pozostałych 18 paczek (`5473` linii): zero edycji w ich plikach; zero zmian ich obiektów w teście referencji; dwie współdzielone powierzchnie (`getStepDefinitions`, podsumowania) rozgałęziają się wyłącznie dla `dynamic-swot`. Raport osiągalności zmienił `src/toolPacks` z 31 plików `test-only` na 32 pliki: `app=3`, `test-only=29`; repo z `app=3044/harness-only=30/test-only=1017/unreachable=719` na `app=3048/harness-only=30/test-only=1014/unreachable=719`. Czerwony `--check-baseline` oznacza jedynie nowy, jawny plik testowy; baseline nie został poluzowany.
+
+Korekty i granice dowodu:
+
+- regex ujemnego lookahead z instrukcji nie działa w `grep -E`; kontrolę wykonano pełną listą staged;
+- żywym konsumentem store poza badaną powierzchnią jest także `ToolWorkspace`;
+- kanoniczny skrypt runtime odrzuca przydzieloną nazwę bazy `cx341`; nie obchodzono walidatora ani nie tworzono drugiej bazy;
+- `/api/test-support/cleanup` ma zastany konflikt FK z `admin_audit_logs`; test sprzątał wyłącznie własne rekordy w efemerycznej bazie;
+- pełny `tsc --noEmit` nie zakończył się w 180 sekund: **NIEZWERYFIKOWANE**, nie PASS;
+- zrzuty pochodzą z realnie zbundlowanego mockowego harnessu, nie z produkcyjnego HTTP; produkcyjny deploy i urządzenia są **NIEZWERYFIKOWANE**;
+- zewnętrzny odbiór czterech nowych kadrów przez Piotra jest **OCZEKUJĄCY**.
+
+Commity dyżuru: R1 `071aa9a9bd`, R2 `cdd3874ad3`, R3 `ec6462e6b3`, R4 `2e7c68f191`, R5 `8027143486`, aktualizacja istniejącego wiersza R-20 w module `b4ad4f439d`; każdy został wypchnięty na `github-backup/codex/day341-swot-podlaczenie-20260904`. Niniejszy bilans R6 jest osobnym ostatnim committem raportowym.
