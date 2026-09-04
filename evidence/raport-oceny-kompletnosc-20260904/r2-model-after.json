@@ -1,0 +1,22 @@
+{
+  "sparseSession": {
+    "answers": 7,
+    "totalAreas": 39,
+    "assessedAreas": 7,
+    "completionPercent": 18,
+    "confidenceLabel": "Niewystarczająca",
+    "narratorContextContains": "(18% assessed,"
+  },
+  "completeSession": {
+    "answers": 39,
+    "totalAreas": 39,
+    "assessedAreas": 39,
+    "completionPercent": 100,
+    "confidenceLabel": "Wysoka"
+  },
+  "mutationEvidence": {
+    "counter": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r2-mutation-counter-red.json",
+    "narratorContext": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r2-mutation-narrator-red.json",
+    "restoredGreen": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r2-final-green.json"
+  }
+}

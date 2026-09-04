@@ -5,13 +5,28 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, extname, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 import { Client } from 'pg';
 
 const repo = resolve(import.meta.dirname, '..', '..');
-const artifacts = '/private/tmp/cx-day339-silnik-raportu-wybor-artefakty';
-const evidence = resolve(repo, 'evidence', 'silniki-raportu-oceny-20260904');
-const sessionArtifact = resolve(artifacts, 'day339-session.json');
+
+const option = (name) => {
+  const prefix = `--${name}=`;
+  return process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+};
+
+const artifacts = resolve(
+  option('artifacts-dir') || '/private/tmp/cx-day339-silnik-raportu-wybor-artefakty'
+);
+const evidence = resolve(
+  option('evidence-dir') || resolve(repo, 'evidence', 'silniki-raportu-oceny-20260904')
+);
+const sessionArtifact = resolve(option('session-artifact') || resolve(artifacts, 'day339-session.json'));
+const demoLayoutSessionId = option('demo-label-session');
+
+export const buildDemoLayoutLabel = (sessionId) =>
+  `DEMO UKŁADU — treść prototypowa, liczby z sesji ${sessionId}`;
 
 const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 
@@ -183,6 +198,10 @@ async function main() {
     },
     areaScores,
   });
+  if (demoLayoutSessionId) {
+    accepted.META.tytul = buildDemoLayoutLabel(demoLayoutSessionId);
+    accepted.META.metodyka = `Raport z Oceny Dojrzałości Cyfrowej · ${accepted.META.metodyka}`;
+  }
   const acceptedJson = await writeMeasured(
     '03-silnik-298-model.json',
     `${JSON.stringify(accepted, null, 2)}\n`,
@@ -235,7 +254,9 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
-  process.exit(1);
-});
+if (resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
+    process.exit(1);
+  });
+}

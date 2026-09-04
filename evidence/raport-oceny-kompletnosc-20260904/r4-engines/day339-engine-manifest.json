@@ -1,0 +1,446 @@
+{
+  "measuredAt": "2026-09-04T13:37:16.753Z",
+  "session": {
+    "sessionId": "3c016470-a5f9-449d-9e99-822eaede71de",
+    "organizationId": "day346-report-engine-org",
+    "userId": "day346-report-engine-owner",
+    "answers": 39,
+    "http": [
+      {
+        "step": "POST /api/method/sessions",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1F",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1G",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1H",
+        "status": 201
+      },
+      {
+        "step": "POST answer 1I",
+        "status": 201
+      },
+      {
+        "step": "POST answer 2A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 2B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 2C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 2D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 2E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 3A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 3B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 3C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 3D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 3E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 4A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 4B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 4C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 4D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 4E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 5A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 5B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 5C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 5D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 5E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 6A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 6B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 6C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 6D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 6E",
+        "status": 201
+      },
+      {
+        "step": "POST answer 7A",
+        "status": 201
+      },
+      {
+        "step": "POST answer 7B",
+        "status": 201
+      },
+      {
+        "step": "POST answer 7C",
+        "status": 201
+      },
+      {
+        "step": "POST answer 7D",
+        "status": 201
+      },
+      {
+        "step": "POST answer 7E",
+        "status": 201
+      },
+      {
+        "step": "GET events",
+        "status": 200
+      },
+      {
+        "step": "GET assessment-report-contract",
+        "status": 200
+      }
+    ]
+  },
+  "input": {
+    "postgresSession": {
+      "id": "3c016470-a5f9-449d-9e99-822eaede71de",
+      "organization_id": "day346-report-engine-org",
+      "method_pack_id": "drd",
+      "method_pack_version": "day346-v1",
+      "state": "draft",
+      "version": 1
+    },
+    "eventCount": 39,
+    "answerCount": 39,
+    "evidenceEventCount": 0,
+    "areaScores": {
+      "1A": {
+        "actual": 2,
+        "target": 4
+      },
+      "1B": {
+        "actual": 2,
+        "target": 4
+      },
+      "1C": {
+        "actual": 2,
+        "target": 4
+      },
+      "1D": {
+        "actual": 2,
+        "target": 4
+      },
+      "1E": {
+        "actual": 2,
+        "target": 4
+      },
+      "1F": {
+        "actual": 2,
+        "target": 4
+      },
+      "1G": {
+        "actual": 2,
+        "target": 4
+      },
+      "1H": {
+        "actual": 2,
+        "target": 4
+      },
+      "1I": {
+        "actual": 2,
+        "target": 4
+      },
+      "2A": {
+        "actual": 2,
+        "target": 4
+      },
+      "2B": {
+        "actual": 2,
+        "target": 4
+      },
+      "2C": {
+        "actual": 2,
+        "target": 4
+      },
+      "2D": {
+        "actual": 2,
+        "target": 4
+      },
+      "2E": {
+        "actual": 2,
+        "target": 4
+      },
+      "3A": {
+        "actual": 2,
+        "target": 4
+      },
+      "3B": {
+        "actual": 2,
+        "target": 4
+      },
+      "3C": {
+        "actual": 2,
+        "target": 4
+      },
+      "3D": {
+        "actual": 2,
+        "target": 4
+      },
+      "3E": {
+        "actual": 2,
+        "target": 4
+      },
+      "4A": {
+        "actual": 2,
+        "target": 4
+      },
+      "4B": {
+        "actual": 2,
+        "target": 4
+      },
+      "4C": {
+        "actual": 2,
+        "target": 4
+      },
+      "4D": {
+        "actual": 2,
+        "target": 4
+      },
+      "4E": {
+        "actual": 2,
+        "target": 4
+      },
+      "5A": {
+        "actual": 2,
+        "target": 4
+      },
+      "5B": {
+        "actual": 2,
+        "target": 4
+      },
+      "5C": {
+        "actual": 2,
+        "target": 4
+      },
+      "5D": {
+        "actual": 2,
+        "target": 4
+      },
+      "5E": {
+        "actual": 2,
+        "target": 4
+      },
+      "6A": {
+        "actual": 2,
+        "target": 4
+      },
+      "6B": {
+        "actual": 2,
+        "target": 4
+      },
+      "6C": {
+        "actual": 2,
+        "target": 4
+      },
+      "6D": {
+        "actual": 2,
+        "target": 4
+      },
+      "6E": {
+        "actual": 2,
+        "target": 4
+      },
+      "7A": {
+        "actual": 2,
+        "target": 4
+      },
+      "7B": {
+        "actual": 2,
+        "target": 4
+      },
+      "7C": {
+        "actual": 2,
+        "target": 4
+      },
+      "7D": {
+        "actual": 2,
+        "target": 4
+      },
+      "7E": {
+        "actual": 2,
+        "target": 4
+      }
+    }
+  },
+  "engines": [
+    {
+      "engine": "assessmentReportContractService -> buildAssessmentDrdReportSchema -> DOCX",
+      "narrative": "deterministic",
+      "files": [
+        {
+          "name": "01-kontrakt-method-session.json",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/01-kontrakt-method-session.json",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/01-kontrakt-method-session.json",
+          "bytes": 46015,
+          "sha256": "19bde160c8f9a63816b3b0dac4477d8c34a84b38765b0ea65f78888345f3376f",
+          "generationMs": 1618.04
+        },
+        {
+          "name": "01-silnik-method-session.docx",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/01-silnik-method-session.docx",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/01-silnik-method-session.docx",
+          "bytes": 165063,
+          "sha256": "57e687daa64c492b54b455cb66e70e75259ef6ed9ea12e05c81139d4c1c774f9",
+          "generationMs": 2616.37
+        },
+        {
+          "name": "01-silnik-method-session.pdf",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/01-silnik-method-session.pdf",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/01-silnik-method-session.pdf",
+          "bytes": 472634,
+          "sha256": "e4dae262b786a00df1b2cc626105ceba66be2c9bd308094c81d868cd808fed35",
+          "generationMs": 6985.56,
+          "pages": 18
+        }
+      ]
+    },
+    {
+      "engine": "buildDrdReportHtmlServer -> generateDrdReport",
+      "narrative": "deterministic",
+      "files": [
+        {
+          "name": "02-silnik-html.html",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/02-silnik-html.html",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/02-silnik-html.html",
+          "bytes": 60082,
+          "sha256": "00f775a2e77c85d1ade83bdb0d6e881d8524d11af9291270c36624d83775f096",
+          "generationMs": 477.74
+        },
+        {
+          "name": "02-silnik-html-model.json",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/02-silnik-html-model.json",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/02-silnik-html-model.json",
+          "bytes": 63686,
+          "sha256": "564acb47681193a3a598d0d2e21de3d78fbcbb704284d06f0f63ff1880e1c7c3",
+          "generationMs": 494.96
+        },
+        {
+          "name": "02-silnik-html.pdf",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/02-silnik-html.pdf",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/02-silnik-html.pdf",
+          "bytes": 313376,
+          "sha256": "008ae45da78fad7db787dabddac502f43b6bc3734c901cdff4bd97f40a2006f2",
+          "generationMs": 3485.78,
+          "pages": 9
+        }
+      ]
+    },
+    {
+      "engine": "buildAcceptedDrdReportModel -> accepted prototype DOCX renderer",
+      "narrative": "accepted static content with numeric scores recalculated from the R2 session",
+      "files": [
+        {
+          "name": "03-silnik-298-model.json",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/03-silnik-298-model.json",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/03-silnik-298-model.json",
+          "bytes": 46912,
+          "sha256": "1e3d89a1df1b833a2a4f0c8b065c6c195335ed16bc002bec9134187f69a50518",
+          "generationMs": 34.14
+        },
+        {
+          "name": "03-silnik-298.docx",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/03-silnik-298.docx",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/03-silnik-298.docx",
+          "bytes": 69429,
+          "sha256": "5d165a4f77a8ddb65088965c696b128d2df2b31fb4b78d6e1d98cdc51b2cf36f",
+          "generationMs": 856.64
+        },
+        {
+          "name": "03-silnik-298.pdf",
+          "artifactPath": "/private/tmp/cx-day346-falszywa-kompletnosc-artefakty/r4-engines/03-silnik-298.pdf",
+          "evidencePath": "/private/tmp/cx-day346-falszywa-kompletnosc/evidence/raport-oceny-kompletnosc-20260904/r4-engines/03-silnik-298.pdf",
+          "bytes": 589636,
+          "sha256": "4426acc863e1cc48bd90569d04c575ba3113c0a8e15df6909ab0588baf5ec2c2",
+          "generationMs": 3974.15,
+          "pages": 21
+        }
+      ]
+    }
+  ],
+  "boundary": "The HTML route stores assessment_reports and has no method_session_id input. The existing buildDrdReportHtmlServer engine is therefore invoked directly with area scores derived from this same MethodSession; no production caller or route is added."
+}

@@ -390,7 +390,7 @@ export async function buildDrdReportModel(
 
   const totalAreas = getTotalAreaCount();
   const assessedAreas = Object.values(areaScores).filter(
-    (s) => s && (Number(s.actual) > 0 || Number(s.target) > 0)
+    (s) => s && Number(s.actual) > 0
   ).length;
   const completionPercent = totalAreas > 0 ? Math.round((assessedAreas / totalAreas) * 100) : 0;
 

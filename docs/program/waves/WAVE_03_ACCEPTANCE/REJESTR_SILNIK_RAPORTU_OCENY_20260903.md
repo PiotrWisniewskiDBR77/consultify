@@ -98,3 +98,25 @@ Pakiet R6: `2/2 PASS`, `--retry=0`, `DB_TYPE=postgres` sprawdzone w `beforeAll`,
 **Rekomendacja:** wybrać model 298 jako docelowy kontrakt układu, ale nie podłączać go w obecnej postaci; najpierw nadzorca powinien zlecić osobny etap mapowania całej realnej sesji i metadanych do tego modelu, z ApiGateway/JWT/PostgreSQL, zimnym odczytem eksportu oraz akceptem właściciela na pliku wynikowym. Ta rekomendacja nie została wykonana.
 
 Nie zmierzono: zachowania produkcyjnej trasy HTML przy rzeczywiście skonfigurowanym kluczu dostawcy; wywołania tej trasy dla tej samej `MethodSession` (brak takiego wejścia); pełnej sesji z odpowiedziami dla wszystkich 39 obszarów i zamrożonym Outputem; trwałego magazynu wyeksportowanych plików; produkcyjnego runtime, urządzeń i przeglądarek; akceptu właściciela dla któregokolwiek nowego wyniku; PDF generowanego natywnie przez produkt (kontrolne PDF-y powstały przez LibreOffice); 4-stronicowego wyciągu zarządczego z tej sesji; zachowania narratora z obecnym kluczem dostawcy.
+
+## Dyżur 346 — sprostowanie przyrządu porównawczego
+
+Proza w `03-silnik-298.pdf`, w tym dane „TechProd Manufacturing”, nie pochodzi z `buildAcceptedDrdReportModel`; podał ją skrypt `scripts/dev/day339-porownanie-silnikow.mjs`, importując statyczny prototyp `scripts/prototypes/raport-oceny-tresc.mjs` i łącząc go z liczbami sesji. Przyrząd ma teraz opcjonalne, jawne parametry katalogów wyjściowych oraz etykietę hybrydy na pierwszej stronie; produkcyjnego wołacza silnika 298 nie dodano.
+
+### R4 — powtórzenie na pełnej sesji 39/39
+
+Sesja `3c016470-a5f9-449d-9e99-822eaede71de` została utworzona przez realny `ApiGateway`, podpisany JWT i 39 żądań `ANSWER_CONFIRMED`, a następnie zimny odczyt z lokalnego PostgreSQL `cx346` potwierdził 39 zdarzeń. Wszystkie trzy silniki dostały liczby wyprowadzone z tej samej sesji.
+
+| Silnik | Strony | Jawne braki / nieodpowiedziane obszary | Kompletność | Czas do PDF | Zgodność stron z prototypem 21 stron |
+| --- | ---: | --- | ---: | ---: | ---: |
+| MethodSession DOCX | 18 | 39 dosłownych komunikatów `nie oceniono — brak danych źródłowych` | n/d | 6985,56 ms | 18/21 |
+| HTML | 9 | 0 obszarów z `actual=0`; jeden legendowy wyraz „brak” | 100%, 39/39, „Wysoka” | 3485,78 ms | 9/21 |
+| Model 298 | 21 | 0 braków zależnych od sesji; nadal statyczna proza prototypu, teraz jawnie oznaczona | n/d | 3974,15 ms | 21/21 |
+
+Po dosypaniu danych zniknęła wyłącznie kara silnika HTML za 32 nieodpowiedziane obszary: model ma teraz 39 dodatnich wyników. Nie zniknęły różnice strukturalne 18/9/21 stron ani hybrydowość modelu 298. Co ważniejsze, 39 komunikatów braku w DOCX pozostało także przy 39 odpowiedziach; to dowód, że sam kontrakt MethodSession nie mapuje tych zdarzeń do pól raportu i nie wolno przypisywać całych 148 braków wyłącznie rzadkości danych.
+
+### R5 — rekomendacja po pomiarze 39/39
+
+**Rekomendacja pozostaje zgodna z R7 dyżuru 339:** model 298 powinien pozostać docelowym kontraktem układu 21 stron, ale obecnego modułu nie wolno podłączać jako silnika klientowskiego. Pełna sesja usunęła 32 zera z modelu HTML, lecz nie zmieniła przewagi układu 298 (21/21 wobec 18/21 i 9/21); jednocześnie potwierdziła, że 298 nadal łączy liczby sesji ze statyczną prozą i metadanymi prototypu. Następny krok to osobny, licencjonowany etap mapowania realnych metadanych, odpowiedzi, dowodów i narracji MethodSession do kontraktu 298 oraz odbiór gotowego pliku przez właściciela. Do tego czasu HTML po naprawie licznika jest najuczciwszym działającym modelem liczbowym, ale nie docelowym układem dokumentu.
+
+**DO DECYZJI WŁAŚCICIELA:** czy priorytetem integracji ma być najpierw układ 21 stron modelu 298, czy najpierw osiągalny raport HTML. Nie rozstrzygnąłem tego samodzielnie, ponieważ zabrakło mi zatwierdzonego kryterium ważenia zgodności układu wobec gotowości produkcyjnej oraz akceptu właściciela na pliku z pełnej sesji; dyżur nie miał też licencji na podłączenie któregokolwiek silnika.
