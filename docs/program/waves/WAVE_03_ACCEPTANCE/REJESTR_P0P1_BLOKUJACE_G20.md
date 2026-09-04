@@ -1,12 +1,12 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `eff37d993910c34a064571453691d81b639f31f8`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker eff37d993910c34a064571453691d81b639f31f8 --snapshot-date 2026-09-04`
+Marker: `02f80c1014562ccbfc4f47a492383c2cdeb9e7ba`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 02f80c1014562ccbfc4f47a492383c2cdeb9e7ba --snapshot-date 2026-09-04`
 
-Mianownik: 121. NAPRAWIONE: 26; ZAMKNIETE_DEC: 12; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
+Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
 
-**BLOKUJE: 25**
+**BLOKUJE: 17**
 
 | ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |
 |---|---|---|---|---|---|
@@ -35,7 +35,7 @@ Mianownik: 121. NAPRAWIONE: 26; ZAMKNIETE_DEC: 12; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `ASM-OWN-021[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-24-02 | — | decisions-r1c, decisions |
 | `ASM-OWN-022[OF]` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-02 | — | decisions-r1c, decisions |
 | `ASM-OWN-023[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-369 | — | decisions-r1c, decisions, owner, wave2 |
-| `ASM-OWN-024[OF]` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | decisions-r1c, decisions |
+| `ASM-OWN-024[OF]` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-151 | — | decisions-r1c, decisions |
 | `ASM-OWN-025[OF]` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-46, DEC-2026-09-03-365 | — | decisions-r1c, decisions, owner |
 | `ASM-OWN-026[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-28-154 | — | decisions-r1c, decisions |
 | `ASM-OWN-027[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-369 | — | decisions-r1c, decisions, owner, wave2 |
@@ -54,15 +54,15 @@ Mianownik: 121. NAPRAWIONE: 26; ZAMKNIETE_DEC: 12; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `CHAT-OWN-015` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner |
 | `CHAT-OWN-016` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner |
 | `CHAT-OWN-017` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner, wave2 |
-| `EXE-OWN-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `EXE-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | źródło wskazuje uncommitted local review worktree | — | settlement |
 | `EXE-OWN-002` | NAPRAWIONE | SHA_OK | 673363f63c | — | settlement |
 | `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
 | `EXE-OWN-004` | NAPRAWIONE | SHA_OK | 14da3e6d0757 | — | settlement |
 | `EXE-OWN-005` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
-| `EXE-OWN-006` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
-| `EXE-OWN-007` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `EXE-OWN-006` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
+| `EXE-OWN-007` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-008` | NAPRAWIONE | SHA_OK | 4cd0ce6589 | — | settlement |
-| `FIN-OWN-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `FIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy | — | settlement |
 | `INI-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
 | `INI-OWN-002` | NAPRAWIONE | SHA_OK | aed131a2ab | — | settlement, decisions |
 | `INI-OWN-003` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-29-344 | — | settlement, decisions |
@@ -84,14 +84,14 @@ Mianownik: 121. NAPRAWIONE: 26; ZAMKNIETE_DEC: 12; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `MYW-CAL-REC-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
 | `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement, decisions |
 | `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement, decisions |
-| `MYW-CV-REC-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
-| `MYW-CV-REC-002` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
-| `MYW-DEC-REC-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
-| `MYW-IDEA-REC-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `MYW-CV-REC-001` | NAPRAWIONE | SHA_OK | af75a84e37 | — | settlement |
+| `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
+| `MYW-DEC-REC-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
+| `MYW-IDEA-REC-001` | NAPRAWIONE | SHA_OK | 655d629675 | — | settlement |
 | `MYW-IDEA-REC-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-29, DEC-2026-09-03-372 | — | settlement, decisions, owner, wave2 |
 | `MYW-IDEAS-008` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |
 | `MYW-IDEAS-009` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | — | settlement, decisions, owner, wave2 |
-| `MYW-IDEAS-010` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `MYW-IDEAS-010` | NAPRAWIONE | SHA_OK | a995ca4c20 | — | settlement |
 | `MYW-IDEAS-011` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |
 | `MYW-IDEAS-012` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-373 | — | settlement, decisions, owner, wave2 |
 | `MYW-IDEAS-013` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |
@@ -112,11 +112,11 @@ Mianownik: 121. NAPRAWIONE: 26; ZAMKNIETE_DEC: 12; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `MYW-PHOTO-007` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-010` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-011` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
-| `MYWORK-DEC-OWN-001` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `MYWORK-DEC-OWN-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
 | `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
-| `RES-OWN-004` | BLOKUJE | BRAK_SHA_DLA_NAPRAWIONE | brak SHA | — | settlement |
+| `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | źródło mówi pre-existing bez SHA naprawy | — | settlement |
 | `RES-OWN-005` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-380 | R-17 → DEC-2026-09-03-380 | settlement, decisions, owner, wave2 |
 | `RES-OWN-006` | NAPRAWIONE | SHA_OK | 27345491d5 | — | settlement |
 | `RES-OWN-007` | NAPRAWIONE | SHA_OK | 77eb754f72 | — | settlement, decisions |

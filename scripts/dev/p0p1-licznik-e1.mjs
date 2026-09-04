@@ -14,6 +14,24 @@ export const VERDICTS = Object.freeze([
 
 export const DEFAULT_FLOOR = 100;
 
+// Audyt R6 dyżuru 320 rozstrzyga wyłącznie dwanaście zastanych pozycji
+// BRAK_SHA_DLA_NAPRAWIONE. Źródła właściciela pozostają bez zmian; tabela
+// utrwala znaleziony commit albo uczciwy brak jednoznacznego SHA naprawy.
+export const DAY320_RESOLUTIONS = Object.freeze({
+  'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
+  'EXE-OWN-001': { type: 'UNRESOLVED', detail: 'źródło wskazuje uncommitted local review worktree' },
+  'EXE-OWN-006': { type: 'SHA', sha: 'b470536a91' },
+  'EXE-OWN-007': { type: 'SHA', sha: 'b470536a91' },
+  'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy' },
+  'MYW-CV-REC-001': { type: 'SHA', sha: 'af75a84e37' },
+  'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
+  'MYW-DEC-REC-001': { type: 'SHA', sha: '4a36e8a745' },
+  'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
+  'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
+  'MYWORK-DEC-OWN-001': { type: 'SHA', sha: '4a36e8a745' },
+  'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
+});
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const defaultRoot = resolve(scriptDir, '../..');
 
@@ -136,6 +154,23 @@ function classify(position, ledgerSet, root, shaCheck = gitShaState) {
   const text = position.evidence.join('\n');
   const { cited, missing } = existingDecs(text, ledgerSet);
   if (missing.length) return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${missing.join(',')}`, proof: missing.join(', ') };
+
+  const resolution = DAY320_RESOLUTIONS[position.id];
+  if (resolution?.type === 'DECISION') {
+    if (!ledgerSet.has(resolution.decision)) {
+      return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${resolution.decision}`, proof: resolution.decision };
+    }
+    return { verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK', proof: resolution.decision };
+  }
+  if (resolution?.type === 'SHA') {
+    const state = shaCheck(root, resolution.sha);
+    return state === 'OK'
+      ? { verdict: 'NAPRAWIONE', reason: 'SHA_OK', proof: resolution.sha }
+      : { verdict: 'BLOKUJE', reason: state, proof: `${resolution.sha}:${state}` };
+  }
+  if (resolution?.type === 'UNRESOLVED') {
+    return { verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE', proof: resolution.detail };
+  }
 
   const duty = text.match(/(?:dyżur|d[yY]żuru|Codex)\s*(?:nr\s*)?(\d{2,3})/i);
   if (/W_BUDOWIE|W BUDOWIE/i.test(text) && duty) {

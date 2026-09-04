@@ -204,6 +204,48 @@ Nowy test `dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a b
 
 Artefakty: `r5-with-inheritance.txt` SHA-256 `8c98ee6d8440643a352d7da21aec817f2b5a5fd94372f46ea7da1451df33bd3f`; `r5-without-inheritance.txt` SHA-256 `1da2a0ae33fce94b6f7feb819c1b459234c610c55f0a0e39548eb757d09d6687`; `r5-inherited-list.txt` SHA-256 `8fb0d963023ba94167b9aabe6173f55a9f57c5fa75b892772f8090c04571e988`.
 
+## R6 — audyt 12 pozycji BRAK_SHA i sprostowanie raportu 301
+
+### Tabela rozstrzygnięć
+
+| Pozycja | Rozstrzygnięcie | Dowód i sprawdzenie |
+|---|---|---|
+| `ASM-OWN-024[OF]` | `ZAMKNIETE_DEC` | `DEC-2026-08-28-151` istnieje w ledgerze `:202` i jest bezpośrednio cytowana w wierszu pozycji; to jakościowy akcept właściciela, nie naprawa kodu wymagająca SHA. |
+| `EXE-OWN-001` | nadal `BLOKUJE / NIEROZSTRZYGNIETE` | Źródło mówi `uncommitted local review worktree`; dedykowany test opisuje obecny kod, ale nie identyfikuje commita naprawy. `2b6c8c3608` nie został przypisany, bo samo podobieństwo tematu nie jest dowodem tej konkretnej naprawy. |
+| `EXE-OWN-006` | `NAPRAWIONE / SHA_OK` | `b470536a91 feat(execution): add unified governed report generator (E.4)`; `merge-base --is-ancestor ... HEAD` rc=0. |
+| `EXE-OWN-007` | `NAPRAWIONE / SHA_OK` | Ten sam `b470536a91`; źródło jawnie łączy pozycję z `ExecutionReportsSurface` i zunifikowanym generatorem; rc=0. |
+| `FIN-OWN-001` | nadal `BLOKUJE / NIEROZSTRZYGNIETE` | `d8561ed5c2` jest markerem runtime/candidate, nie jednoznacznym SHA naprawy. Nie zamieniono markera środowiska w dowód implementacji. |
+| `MYW-CV-REC-001` | `NAPRAWIONE / SHA_OK` | Rejestr modułu mówi „landed in checkpoint `af75a84e37`”; commit `checkpoint: preserve wave 3 owner review work`; rc=0. |
+| `MYW-CV-REC-002` | nadal `BLOKUJE / NIEROZSTRZYGNIETE` | Rejestr opisuje działający stan plików, ale nie cytuje SHA naprawy; nie wybrano dowolnego wcześniejszego commita z historii wspólnych tabel. |
+| `MYW-DEC-REC-001` | `NAPRAWIONE / SHA_OK` | Rejestr modułu podaje fix `4a36e8a745` (oraz późniejszy lock `7837e750e0`); użyto SHA produktu, rc=0. |
+| `MYW-IDEA-REC-001` | `NAPRAWIONE / SHA_OK` | `655d629675 feat(mywork): wire Ideas table right-click menu + canon folder dialog (MYW-IDEA-REC-001/002)`; rc=0. |
+| `MYW-IDEAS-010` | `NAPRAWIONE / SHA_OK` | `a995ca4c20 fix(mywork): extend candidate->initiative path beyond Process Flow (MYW-IDEAS-010)`; rc=0. |
+| `MYWORK-DEC-OWN-001` | `NAPRAWIONE / SHA_OK` | To jawny alias tego samego outcome co `MYW-DEC-REC-001`; rejestr mówi „Same evidence”, więc użyto tego samego `4a36e8a745`; rc=0. |
+| `RES-OWN-004` | nadal `BLOKUJE / NIEROZSTRZYGNIETE` | Źródło mówi `pre-existing` i `LOCAL_BROWSER_VERIFIED`, ale nie identyfikuje commita naprawy. `aa0cefc347` jest markerem bieżącego replay/wiersza, nie wykazaną zmianą CTA. |
+
+Bilans: 7 pozycji dostało SHA, wszystkie siedem ma `merge-base rc=0`; jedna dostała istniejącą decyzję; cztery pozostają blokujące po usunięciu fałszywej przesłanki „naprawione bez SHA”. Pięć dokumentów wejściowych pozostało nietkniętych. Rozstrzygnięcia są w jawnej, testowanej tabeli `DAY320_RESOLUTIONS` w narzędziu; rejestr pozostaje wyłącznie produktem skryptu.
+
+### Tabela decyzji o regule E1
+
+| Przypadek | Stara reguła faktyczna | Nowa jawna reguła | Powód |
+|---|---|---|---|
+| Pozycja `NAPRAWIONE` bez cytatu SHA | zawsze `BLOKUJE / BRAK_SHA_DLA_NAPRAWIONE` | Audyt imienny: znaleziony i istniejący ancestor SHA → `NAPRAWIONE`; brak jednoznacznego SHA → nadal `BLOKUJE / NIEROZSTRZYGNIETE`. | Powód ma opisywać stan obiektu po audycie, nie brak procedury w źródle. |
+| Pozycja jakościowo zamknięta istniejącą decyzją właściciela, której opis zawiera także słowo „NAPRAWIONE” | kolejność klasyfikatora wymuszała SHA | Jawne rozstrzygnięcie `DECISION` wymaga obecności DEC w ledgerze i daje `ZAMKNIETE_DEC`. | Reguła raportu 301 `:54` mówi, że pozycje oznaczone decyzją nie blokują według E1; nie udajemy naprawy kodu. |
+| Marker runtime lub „pre-existing” | mógł zostać omyłkowo uznany za SHA naprawy | Nie jest automatycznie SHA naprawy; bez jednoznacznego powiązania pozostaje `NIEROZSTRZYGNIETE`. | Marker stanu nie dowodzi przyczynowego commita naprawy. |
+
+Stan po R6:
+
+```text
+Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
+BLOKUJE: 17
+```
+
+Nowy test `R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje` przypina trzy ramiona. Pakiet: 9/9 PASS. Mutacja `EXE-OWN-006` z `b470536a91` na `deadbeef00` czerwieni dokładnie test R6: 8 pass, 1 fail, `SHA_NIEISTNIEJACY` zamiast `SHA_OK`, kod 1. Po cofnięciu przez `cp`: 9/9, kod 0. Artefakt pełnego rejestru po R6: `/private/tmp/cx-day320-licznik-g20-artefakty/r6-after.txt`, SHA-256 `624e652c1e919829fc551f2b5d23a976de4073c6152255da160b4f7e737965dd`.
+
+### Sprostowanie raportu 301
+
+Oryginalny akapit pozostał. Bezpośrednio pod nim dopisano datowane sprostowanie z komendą: spośród sześciu wymienionych pozycji blokują `INT-INIT-AI-OBS-001` i `INI-OWN-001`; cztery `MYW-PHOTO-*` mają `ODLOZONE_DEC`/`ZAMKNIETE_DEC` z jawną rodziną i decyzją. Jest to korekta prozy, nie dowód runtime.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -211,7 +253,7 @@ Artefakty: `r5-with-inheritance.txt` SHA-256 `8c98ee6d8440643a352d7da21aec817f2b
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R6–R7 nie zostały jeszcze wykonane ani zweryfikowane.
+- R7 (końcowy pomiar nazw, pełny diff i domknięcie raportu) nie został jeszcze wykonany.
 - Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
 - Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
 - Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.
