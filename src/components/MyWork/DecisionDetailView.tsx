@@ -501,10 +501,29 @@ const VF1_DECISION_SPECA = import.meta.env.VITE_VF1_DECISION_SPECA === 'true';
 // (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
 function useDecisionCardContractEnabled(): boolean {
   return useMemo(() => {
-    if (import.meta.env.VITE_VF1_DECISION_CARD_CONTRACT === 'true') return true;
-    if (import.meta.env.DEV && typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).get('cardContract') === '1';
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const query = new URLSearchParams(window.location.search).get('cardContract');
+        if (query === '1' || query === '0') {
+          try {
+            window.localStorage.setItem('ff.cardContract', query);
+          } catch {
+            /* storage may be unavailable; the explicit query still wins */
+          }
+          return query === '1';
+        }
+      } catch {
+        /* malformed/unavailable location falls through to storage and env */
+      }
+      try {
+        const stored = window.localStorage.getItem('ff.cardContract');
+        if (stored === '1' || stored === 'true' || stored === 'on') return true;
+        if (stored === '0' || stored === 'false' || stored === 'off') return false;
+      } catch {
+        /* storage may be unavailable; fall through to env */
+      }
     }
+    if (import.meta.env.VITE_VF1_DECISION_CARD_CONTRACT === 'true') return true;
     return false;
   }, []);
 }
