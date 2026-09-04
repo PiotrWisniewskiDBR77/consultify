@@ -272,3 +272,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | O1 | Próg minimalny w `expect.poll` może zwolnić sondę w połowie renderu; na `idea-table-timeline-stuck` własna krzywa wyniosła 1 kontrolkę przy 200/400 ms i 86 od 800 ms. Sama stabilność też nie wystarcza bez odrzucenia stabilnej powłoki startowej. | Zaniżony mianownik, hash i bramka a11y mogą opisywać niepełny DOM, a nie produkt. | ZAMKNIĘTE DLA SONDY DAY337 — warunek końcowy + readiness floor + próg kontraktu | `evidence/day337/sonda-krzywa.md`, `evidence/day337/r1-stabilizacja-sondy.md` |
+
+## P. Dyżur 349 — czerwienie UI i niepowtarzalna niestabilność Bloku 3
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| P1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
+| P2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
