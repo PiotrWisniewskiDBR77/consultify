@@ -82,3 +82,45 @@ Przebieg ON z `quick_win` zawiera wszystkie osiemnaście nazw brakujących w R1.
 2. Pozostawienie 24 pozycji w kanonie, ale przywrócenie bezpośredniego `allSections.filter(...)` w widoku dało RED: trzy przypadki zachowania funkcji przeszły, a przypadek przewodu do realnej nawigacji upadł. Po cofnięciu przez `cp`: 4/4 GREEN i `GIT DIFF PUSTY PO COFNIĘCIU MUTACJI 2`.
 
 Pełne komendy i wyniki: `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r3-mutacja-kanon-{red,green}.log` oraz `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r3-mutacja-filtr-{red,green}.log`.
+
+## Dyżur 338 — R4: inwentarz deskryptorów 24 sekcji boardu
+
+`INITIATIVE_CANONICAL_CARDS` jest obecnie katalogiem 27 kluczy registry, a board ma osobną przestrzeń 24 identyfikatorów. Za istniejący deskryptor uznaję jawny deskryptor o tej samej semantyce, także gdy zastany adapter `nModeMap` mapuje camelCase/registry-id na board-id.
+
+| Sekcja boardu | Deskryptor | Plik:linia | Dopisany w 338? |
+| --- | --- | --- | --- |
+| `initiative-definition` | tak — `OVERVIEW` + `PROBLEM_DEFINITION` | `initiativeCardContract.ts:62,80` | nie |
+| `tasks` | tak — `TASKS` | `:141` | nie |
+| `timeline` | tak — `TIMELINE` | `:456` | nie |
+| `deliverables-milestones` | **nie** | — | nie |
+| `dependencies` | tak — `DEPENDENCIES` | `:503` | nie |
+| `decisions` | tak — `DECISIONS` | `:159` | nie |
+| `risk-raid` | tak — `RAID` | `:176` | nie |
+| `gates` | tak — `GATES` | `:199` | nie |
+| `suggested-changes` | **nie** | — | nie |
+| `change-log` | **nie** | — | nie |
+| `target-state-scope` | tak — `TARGET_STATE` + `SCOPE` | `:102,120` | nie |
+| `kpi` | tak — `KPIS` | `:258` | nie |
+| `okr` | **nie** | — | nie |
+| `hypothesis` | **nie** | — | nie |
+| `financial-analysis` | tak — `FINANCIAL_ANALYSIS` | `:219` | nie |
+| `financial-impact` | tak — `FINANCIAL_IMPACT` | `:240` | nie |
+| `team` | tak — `TEAM` | `:407` | nie |
+| `workstream-owners` | **nie** | — | nie |
+| `raci` | tak semantycznie — `GOVERNANCE` + `STAKEHOLDERS` | `:425,487` | nie |
+| `resources` | tak — `RESOURCES` | `:470` | nie |
+| `attachments-links` | tak — `ATTACHMENTS` | `:521` | nie |
+| `used-in` | **nie** | — | nie |
+| `artifacts` | **nie** | — | nie |
+| `lessons-learned` | **nie** | — | nie |
+
+### STOP — R4
+Rodzaj: MERYTORYCZNY  
+Powód: dziewięć sekcji boardu nie ma deskryptora, ale dopisanie ich jako nowych kart do katalogu registry tworzyłoby równoległy kanon bez decyzji, czy board-id ma być nową kartą, czy dodatkową przynależnością istniejącego deskryptora.  
+Licencja, którą sprawdziłem: `initiativeCardContract.ts` — pełna licencja wyłącznie na dopisywanie deskryptorów i funkcji pomocniczych; niczego nie usunąłem ani nie przestawiłem.  
+Dowód: tabela wyżej oraz `INITIATIVE_CANONICAL_CARDS` w `initiativeCardContract.ts:604`.  
+Co dostarczyłem ZAMIAST zmiany: pełny inwentarz 24/24 i imienna lista dziewięciu braków.  
+Co zrobiłbym, gdyby zapadła decyzja X: po decyzji „osobne deskryptory boardu” dopisałbym dziewięć wpisów addytywnie. Po decyzji „alias/przynależność” rozszerzyłbym istniejące deskryptory, ale to nie jest dozwolone przez dzisiejszą licencję.  
+Rekomendacja dla nadzorcy: najpierw rozstrzygnąć SSOT registry-id vs board-id; promień rażenia obejmuje adapter DB→kanon, zestawy kart i walidatory kompletności.  
+Stan: zacommitowano wyłącznie pomiar.  
+Czy kontynuowałem pozostałe pozycje: TAK — zgodnie z prawem zatrzymania per pozycja.
