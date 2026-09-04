@@ -62,6 +62,7 @@ import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 import type { ConvertTarget } from './AIChatInlinePanel';
 import { NotebookContextPanel } from './NotebookContextPanel';
 import { isNotebookSpecAShellEnabled } from './notebookSpecAShellFlag';
+import { IdeaNotebookRightPanelPrototypeGate } from '../prototypes/IdeaNotebookRightPanelPrototype';
 
 interface NotebookRailPage {
   id: string;
@@ -1003,9 +1004,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     );
   }
 
-  if (!specAShellEnabled) return legacyRail;
-
-  return (
+  const specAPanel = (
     <div className="flex h-full shrink-0 flex-col overflow-hidden bg-c-surface">
       <div className="flex h-11 items-center gap-2 border-b border-c-border-subtle px-4">
         <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-c-text">
@@ -1033,5 +1032,16 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         sections={specASections}
       />
     </div>
+  );
+
+  return (
+    <IdeaNotebookRightPanelPrototypeGate
+      context="notebook"
+      language={isPolishRail ? 'pl' : 'en'}
+      title={activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+      onClose={onClose}
+      sections={specASections}
+      legacy={specAShellEnabled ? specAPanel : legacyRail}
+    />
   );
 };

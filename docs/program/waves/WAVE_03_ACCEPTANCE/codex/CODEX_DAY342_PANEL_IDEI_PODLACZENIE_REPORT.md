@@ -125,3 +125,39 @@ exit 1, poniewaz grep `ArtifactRightPanel|PreviewPaneShell` znalazl w prototypie
 
 - Warstwa 4 po zmianie, parytet bajtowy OFF i bilans znakow ON czekaja na R5.
 - Akceptacja wlasciciela i gotowosc do wlaczenia flagi nie sa dowiedzione.
+
+## R3 — przewod
+
+Implementacja przekazuje realne tablice sekcji z `IdeaRightPanel` i
+`NotebookRightRail` do istniejacej powloki prototypu. Kolejnosc jest jawna:
+`artifactRightRailFlag` wygrywa; dopiero potem flaga prototypu; w Notatniku
+`notebookSpecAShellFlag` rozstrzyga tylko wtedy, gdy prototyp jest OFF.
+
+Pakiet `RUN_DB_TESTS=0 MOCK_DB=true npx vitest run
+src/components/MyWork/prototypes/__tests__ src/components/MyWork/notebook/__tests__
+--retry=0`: 16 plikow / 88 testow PASS przed dopisaniem kontraktow; po zmianie
+pelny wynik JSON jest w `day342-r3-green.json`. Pulapki Z33(a-d) nie dotycza:
+testy sa czysto DOM/jednostkowe, nie montuja Gateway ani bazy. Pulapka (e) jest
+neutralizowana asercja DOM na produkcyjnych komponentach, nie samym harnessem.
+
+Nowe kontrakty:
+
+1. OFF zachowuje realny panel Idei bez powloki prototypu.
+2. ON montuje powloke i realne sekcje Idei w produkcyjnym `IdeaRightPanel`.
+3. `artifactRightRailFlag=ON` wygrywa nad prototypem.
+4. ON montuje powloke oraz realny tytul, wlasciciela i sekcje Notatnika.
+
+Dowod mutacyjny defaultu: po zmianie fallbacku flagi `false -> true` czerwone byly
+dokladnie trzy testy OFF: dwa istniejace kontrakty gate oraz nowy kontrakt OFF
+produkcyjnego `IdeaRightPanel`. Po `cp` plik flagi nie ma diffu.
+
+Dowod mutacyjny przewodu: po zastapieniu gate w `IdeaRightPanel` przez `currentPanel`
+czerwony byl dokladnie test `renders the shared shell with real Idea sections in the
+production component when ON`; exit 1. Po `cp` przewod wrocil, `git diff --check`
+jest czysty. W zmienionych plikach nie ma `primary-*`.
+
+`npx tsc --noEmit --pretty false` nie zakonczyl sie w 150 s i zostal przerwany;
+nie raportuje go jako PASS ani FAIL.
+
+Wymaga plikow przekrojowych: **NIE** — diff R3 obejmuje tylko licencjonowany prototyp,
+punkty montazu Idei/Notatnika i ich testy.

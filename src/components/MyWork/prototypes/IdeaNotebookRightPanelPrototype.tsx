@@ -15,6 +15,10 @@ interface PrototypeProps {
   state?: IdeaNotebookPanelState;
   language?: 'pl' | 'en';
   onClose?: () => void;
+  /** Real sections supplied by the production host. When present, the shell
+   * never falls back to the demonstration owner/status or empty placeholders. */
+  sections?: ArtifactRightPanelSection[];
+  title?: string;
 }
 
 const copy = {
@@ -41,11 +45,13 @@ export const IdeaNotebookRightPanelPrototype: React.FC<PrototypeProps> = ({
   state = 'ready',
   language = 'pl',
   onClose,
+  sections: hostSections,
+  title: hostTitle,
 }) => {
   const t = copy[language];
-  const title = context === 'idea' ? t.idea : t.notebook;
+  const title = hostTitle || (context === 'idea' ? t.idea : t.notebook);
 
-  const sections: ArtifactRightPanelSection[] = [
+  const fallbackSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions', label: '', defaultOpen: true,
       children: (
@@ -68,6 +74,7 @@ export const IdeaNotebookRightPanelPrototype: React.FC<PrototypeProps> = ({
     { id: 'comments', label: '', badge: 0, showZeroBadge: true, icon: MessageSquare, children: <EmptyLine>{t.comments}</EmptyLine> },
     { id: 'history', label: '', badge: 0, showZeroBadge: true, icon: Sparkles, children: <EmptyLine>{t.history}</EmptyLine> },
   ];
+  const sections = hostSections ?? fallbackSections;
 
   return (
     <aside onKeyDown={(event) => { if (event.key === 'Escape' && onClose) { event.stopPropagation(); onClose(); } }} className="flex max-h-[calc(100vh-2rem)] w-[min(360px,100vw)] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-hig-lg max-[1279px]:w-[min(420px,100vw)]" aria-label={title}>
