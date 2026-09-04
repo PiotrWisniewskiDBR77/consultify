@@ -1,0 +1,16 @@
+NOWY — DYŻUR 357
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/grafika/m03-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_357_PAKIET_POPRAWKA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 357.
+
+Marker: 29fcbd4de20ca26d2febc50d9455128cab47ffce
+Zasoby wyłączne: baza 6416, runtime 5556.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

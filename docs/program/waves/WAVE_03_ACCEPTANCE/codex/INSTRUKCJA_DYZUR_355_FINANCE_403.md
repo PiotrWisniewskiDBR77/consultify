@@ -645,9 +645,8 @@ Sekcja wyżej obowiązuje w całości. Poniższe dwa zdania mają **pierwszeńst
 przed jej brzmieniem — pierwszego w niej nie ma, a drugie odsyła do sekcji,
 która w tym dokumencie nazywa się inaczej.
 
-1. **★ Jeśli Twój pomiar przeczy liczbie podanej w tej instrukcji, obowiązuje
-   TWÓJ pomiar — zapisz rozbieżność wprost.** Dotyczy KAŻDEJ liczby w tym
-   dokumencie, także tych, które autor zmierzył sam przy wydaniu.
+1. **★ Jeśli Twój pomiar przeczy liczbie podanej w tej instrukcji, obowiązuje TWÓJ pomiar — zapisz rozbieżność wprost.**
+   Dotyczy KAŻDEJ liczby w tym dokumencie, także tych, które autor zmierzył sam przy wydaniu.
 2. **★ Obalenie którejkolwiek tezy z sekcji „MOJA HIPOTEZA" albo „Zmierz moje
    liczby sam" jest SUKCESEM dyżuru, a nie porażką.** Zapisz to w „Korektach
    wobec instrukcji" z dowodem i idź dalej. (Sekcja wyżej mówi „TEZY
