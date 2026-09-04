@@ -1,0 +1,70 @@
+{
+  "target": "/api/meeting/day360-meeting-owner",
+  "meetingId": "day360-meeting-owner",
+  "foreign": {
+    "status": 200,
+    "bytes": 640,
+    "body": {
+      "meeting": {
+        "id": "day360-meeting-owner",
+        "organizationId": "day307-org-owner",
+        "projectId": "day307-project-owner",
+        "title": "Day 360 owner meeting",
+        "startAt": "2026-09-04T10:00:00Z",
+        "endAt": "2026-09-04T11:00:00Z",
+        "timezone": null,
+        "recurrenceRule": null,
+        "recurrenceParentId": null,
+        "recurrenceExceptionAt": null,
+        "recurrenceStatus": null,
+        "splitFromMeetingId": null,
+        "invitationSequence": 0,
+        "participantCount": 0,
+        "attachmentCount": 0,
+        "location": "",
+        "attendees": [],
+        "preRead": [],
+        "agenda": [],
+        "decisions": [],
+        "followUps": [],
+        "status": "scheduled",
+        "createdBy": "day307-user-owner",
+        "createdAt": "2026-09-04 19:51:28.363687+00",
+        "updatedAt": "2026-09-04 19:51:28.363687+00"
+      }
+    }
+  },
+  "owner": {
+    "status": 200,
+    "bytes": 640,
+    "body": {
+      "meeting": {
+        "id": "day360-meeting-owner",
+        "organizationId": "day307-org-owner",
+        "projectId": "day307-project-owner",
+        "title": "Day 360 owner meeting",
+        "startAt": "2026-09-04T10:00:00Z",
+        "endAt": "2026-09-04T11:00:00Z",
+        "timezone": null,
+        "recurrenceRule": null,
+        "recurrenceParentId": null,
+        "recurrenceExceptionAt": null,
+        "recurrenceStatus": null,
+        "splitFromMeetingId": null,
+        "invitationSequence": 0,
+        "participantCount": 0,
+        "attachmentCount": 0,
+        "location": "",
+        "attendees": [],
+        "preRead": [],
+        "agenda": [],
+        "decisions": [],
+        "followUps": [],
+        "status": "scheduled",
+        "createdBy": "day307-user-owner",
+        "createdAt": "2026-09-04 19:51:28.363687+00",
+        "updatedAt": "2026-09-04 19:51:28.363687+00"
+      }
+    }
+  }
+}

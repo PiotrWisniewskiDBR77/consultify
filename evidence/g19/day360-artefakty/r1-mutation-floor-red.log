@@ -1,0 +1,37 @@
+▶ G19 evidence validity guard
+  ✔ marks a 30-day-old closed row PASS_STALE after the seven-day validity window (1.697709ms)
+  ✔ blocks a row claiming closure without measurement date or SHA (0.30925ms)
+  ✖ fails closed when fewer than sixteen G19 rows are examined (9.427416ms)
+  ✔ accepts sixteen open rows as not applicable without requiring dates (16.124125ms)
+✖ G19 evidence validity guard (28.497459ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.505625
+
+✖ failing tests:
+
+test at tests/unit/g19-waznosc-dowodu.test.mjs:36:3
+✖ fails closed when fewer than sixteen G19 rows are examined (9.427416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///private/tmp/cx-day360-g19-kubelek-a/tests/unit/g19-waznosc-dowodu.test.mjs:40:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:788:18)
+      at Test.postRun (node:internal/test_runner/test:1235:19)
+      at Test.run (node:internal/test_runner/test:1163:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,14 @@
+▶ G19 evidence validity guard
+  ✔ marks a 30-day-old closed row PASS_STALE after the seven-day validity window (2.095625ms)
+  ✔ blocks a row claiming closure without measurement date or SHA (0.321042ms)
+  ✔ fails closed when fewer than sixteen G19 rows are examined (7.883125ms)
+  ✔ accepts sixteen open rows as not applicable without requiring dates (18.474167ms)
+✔ G19 evidence validity guard (30.473667ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 288.261584

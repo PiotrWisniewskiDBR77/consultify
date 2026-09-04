@@ -1,0 +1,11 @@
+--- /private/tmp/cx-day360-g19-kubelek-a-artefakty/przed-nazwy.txt	2026-09-04 22:12:12
++++ /private/tmp/cx-day360-g19-kubelek-a-artefakty/po-nazwy.txt	2026-09-04 22:12:12
+@@ -5,3 +5,8 @@
+ Day 277 decision enhancements through ApiGateway and PostgreSQL foreign tenant cannot see or overwrite the decision enhancements
+ Day 277 decision enhancements through ApiGateway and PostgreSQL owner writes all five fields, SQL sees them, and detail reads them back
+ Day 307 paired cross-org GET flight through ApiGateway denies foreign workload lookup while the owner reads the seeded task
++Day 360 G19 01 Organization cross-org workload isolation through ApiGateway denies a foreign organization while the owner reads the same seeded workload user
++Day 360 G19 04 Assessment cross-org record isolation through ApiGateway denies a foreign organization while the owner reads the same seeded assessment
++Day 360 G19 05 Initiatives decision isolation through ApiGateway denies a foreign organization while the owner reads the same seeded decision detail
++Day 360 G19 08 Meetings cross-org record isolation through ApiGateway denies a foreign organization while the owner reads the same seeded meeting
++Day 360 G19 13 Chat private conversation isolation through ApiGateway denies a foreign organization while the owner reads the same seeded private conversation

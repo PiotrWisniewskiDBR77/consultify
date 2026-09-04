@@ -1,0 +1,38 @@
+{
+  "target": "/api/pmo/tasks/workload/day307-user-owner",
+  "sameUserId": "day307-user-owner",
+  "foreign": {
+    "status": 200,
+    "bytes": 119,
+    "body": {
+      "userId": "day307-user-owner",
+      "total": 0,
+      "overdue": 0,
+      "atRisk": 0,
+      "byProject": [],
+      "generatedAt": "2026-09-04T19:49:02.436Z"
+    }
+  },
+  "owner": {
+    "status": 200,
+    "bytes": 243,
+    "body": {
+      "userId": "day307-user-owner",
+      "total": 1,
+      "overdue": 0,
+      "atRisk": 0,
+      "byProject": [
+        {
+          "projectId": "day307-project-owner",
+          "projectName": "Day307 Owner Project",
+          "count": 1,
+          "overdue": 0,
+          "byStatus": {
+            "IN_PROGRESS": 1
+          }
+        }
+      ],
+      "generatedAt": "2026-09-04T19:49:02.461Z"
+    }
+  }
+}

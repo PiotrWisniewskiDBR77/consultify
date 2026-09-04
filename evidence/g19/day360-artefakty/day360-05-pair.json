@@ -1,0 +1,12 @@
+{
+  "target": "/api/decisions/day360-decision-owner/detail",
+  "id": "day360-decision-owner",
+  "foreign": {
+    "status": 404,
+    "bytes": 30
+  },
+  "owner": {
+    "status": 200,
+    "bytes": 684
+  }
+}

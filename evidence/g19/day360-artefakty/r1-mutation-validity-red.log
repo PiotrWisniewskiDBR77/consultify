@@ -1,0 +1,42 @@
+▶ G19 evidence validity guard
+  ✖ marks a 30-day-old closed row PASS_STALE after the seven-day validity window (16.058042ms)
+  ✔ blocks a row claiming closure without measurement date or SHA (7.170625ms)
+  ✔ fails closed when fewer than sixteen G19 rows are examined (17.26775ms)
+  ✔ accepts sixteen open rows as not applicable without requiring dates (12.008958ms)
+✖ G19 evidence validity guard (55.95425ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 255.215583
+
+✖ failing tests:
+
+test at tests/unit/g19-waznosc-dowodu.test.mjs:26:3
+✖ marks a 30-day-old closed row PASS_STALE after the seven-day validity window (16.058042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'WAZNY'
+  - 'PASS_STALE'
+  
+      at TestContext.<anonymous> (file:///private/tmp/cx-day360-g19-kubelek-a/tests/unit/g19-waznosc-dowodu.test.mjs:28:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at node:internal/test_runner/test:1516:71
+      at node:internal/per_context/primordials:466:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:435:3)
+      at node:internal/per_context/primordials:466:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'WAZNY',
+    expected: 'PASS_STALE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

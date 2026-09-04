@@ -1,0 +1,14 @@
+{
+  "owner": {
+    "organizationId": "day307-org-owner",
+    "userId": "day307-user-owner",
+    "email": "day307-owner@test.invalid",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImRheTMwNy11c2VyLW93bmVyIiwidXNlcklkIjoiZGF5MzA3LXVzZXItb3duZXIiLCJlbWFpbCI6ImRheTMwNy1vd25lckB0ZXN0LmludmFsaWQiLCJvcmdhbml6YXRpb25JZCI6ImRheTMwNy1vcmctb3duZXIiLCJvcmdhbml6YXRpb25faWQiOiJkYXkzMDctb3JnLW93bmVyIiwicm9sZSI6Ik9XTkVSIiwiaWF0IjoxNzg4NTUwOTk5LCJleHAiOjE3ODg2MzczOTl9.Aa36BKTAJp_G_5yS1xvnePJawj8SFDZxe8ImdJ3a3Bo"
+  },
+  "foreign": {
+    "organizationId": "day307-org-foreign",
+    "userId": "day307-user-foreign",
+    "email": "day307-foreign@test.invalid",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImRheTMwNy11c2VyLWZvcmVpZ24iLCJ1c2VySWQiOiJkYXkzMDctdXNlci1mb3JlaWduIiwiZW1haWwiOiJkYXkzMDctZm9yZWlnbkB0ZXN0LmludmFsaWQiLCJvcmdhbml6YXRpb25JZCI6ImRheTMwNy1vcmctZm9yZWlnbiIsIm9yZ2FuaXphdGlvbl9pZCI6ImRheTMwNy1vcmctZm9yZWlnbiIsInJvbGUiOiJPV05FUiIsImlhdCI6MTc4ODU1MDk5OSwiZXhwIjoxNzg4NjM3Mzk5fQ.ieFo7DarfU6sgqhBdYGuVrqwE1XOHV-omUiQ-2pc2s4"
+  }
+}

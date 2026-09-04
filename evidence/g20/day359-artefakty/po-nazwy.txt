@@ -1,0 +1,21 @@
+mutacja: kolizja ASM z owner-feedback zachowuje dwa obiekty
+mutacja: nieistniejący DEC czerwieni pozycję
+mutacja: nieistniejący SHA czerwieni pozycję
+R1: SHA_NIEISTNIEJACY z DAY320_RESOLUTIONS blokuje z dokładnym powodem
+R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę
+mutacja: mianownik poniżej podłogi zatrzymuje parser
+mutacja: pozycja bez werdyktu ląduje w BLOKUJE
+bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni
+nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów
+dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje
+R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje
+R3: jawna decyzja PO BRAMKACH klasyfikuje pozycję jako ODLOZONE_DEC
+R3: samo słowo NIE w ledgerze nie odkłada jawnej decyzji
+R3: gałąź fallback też czyta ledger, a nie cały tekst dowodowy
+R3: SHA starszy niż zgłoszenie blokuje (realna ścieżka, bez wstrzykiwania)
+R3: ten sam SHA pod zgłoszeniem WCZEŚNIEJSZYM od commita przechodzi
+R3: brak daty zgłoszenia NIE przepuszcza po cichu
+R3: bezpiecznik obejmuje też SHA znalezione w wolnym tekście NAPRAWIONE
+R3: gitShaState wprost — ta sama para SHA/data w obie strony
+R3: pozycja [OF] dziedziczy datę zgłoszenia bazowego ID
+R3: daty zgłoszeń czytane z repo pokrywają wszystkie pozycje z SHA

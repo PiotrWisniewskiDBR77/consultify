@@ -1,0 +1,34 @@
+{
+  "target": "/api/pmo/tasks/workload/day307-user-owner",
+  "sameUserId": "day307-user-owner",
+  "foreign": {
+    "status": 404,
+    "bytes": 64,
+    "body": {
+      "error": "User not found",
+      "code": "TASK_WORKLOAD_USER_NOT_FOUND"
+    }
+  },
+  "owner": {
+    "status": 200,
+    "bytes": 243,
+    "body": {
+      "userId": "day307-user-owner",
+      "total": 1,
+      "overdue": 0,
+      "atRisk": 0,
+      "byProject": [
+        {
+          "projectId": "day307-project-owner",
+          "projectName": "Day307 Owner Project",
+          "count": 1,
+          "overdue": 0,
+          "byStatus": {
+            "IN_PROGRESS": 1
+          }
+        }
+      ],
+      "generatedAt": "2026-09-04T19:49:45.267Z"
+    }
+  }
+}

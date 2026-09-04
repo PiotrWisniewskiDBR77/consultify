@@ -1,0 +1,29 @@
+✔ mutacja: kolizja ASM z owner-feedback zachowuje dwa obiekty (14.485167ms)
+✔ mutacja: nieistniejący DEC czerwieni pozycję (0.509167ms)
+✔ mutacja: nieistniejący SHA czerwieni pozycję (0.393416ms)
+✔ R1: SHA_NIEISTNIEJACY z DAY320_RESOLUTIONS blokuje z dokładnym powodem (0.206792ms)
+✔ R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę (85.55225ms)
+✔ mutacja: mianownik poniżej podłogi zatrzymuje parser (0.55675ms)
+✔ mutacja: pozycja bez werdyktu ląduje w BLOKUJE (0.220709ms)
+✔ bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni (0.182916ms)
+✔ nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów (0.321542ms)
+✔ dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje (0.751625ms)
+✔ R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje (0.322542ms)
+✔ R3: jawna decyzja PO BRAMKACH klasyfikuje pozycję jako ODLOZONE_DEC (0.5805ms)
+✔ R3: samo słowo NIE w ledgerze nie odkłada jawnej decyzji (0.237542ms)
+✔ R3: gałąź fallback też czyta ledger, a nie cały tekst dowodowy (0.234167ms)
+✔ R3: SHA starszy niż zgłoszenie blokuje (realna ścieżka, bez wstrzykiwania) (123.911625ms)
+✔ R3: ten sam SHA pod zgłoszeniem WCZEŚNIEJSZYM od commita przechodzi (132.68675ms)
+✔ R3: brak daty zgłoszenia NIE przepuszcza po cichu (118.454917ms)
+✔ R3: bezpiecznik obejmuje też SHA znalezione w wolnym tekście NAPRAWIONE (116.4975ms)
+✔ R3: gitShaState wprost — ta sama para SHA/data w obie strony (338.019917ms)
+✔ R3: pozycja [OF] dziedziczy datę zgłoszenia bazowego ID (131.455958ms)
+✔ R3: daty zgłoszeń czytane z repo pokrywają wszystkie pozycje z SHA (505.07ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1651.373958

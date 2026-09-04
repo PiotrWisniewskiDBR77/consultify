@@ -1,0 +1,70 @@
+{
+  "target": "/api/v8/assessment/day360-assessment-owner",
+  "id": "day360-assessment-owner",
+  "foreign": {
+    "status": 404,
+    "bytes": 62,
+    "body": {
+      "error": "Assessment not found",
+      "code": "ASSESSMENT_NOT_FOUND"
+    }
+  },
+  "owner": {
+    "status": 200,
+    "bytes": 1176,
+    "body": {
+      "data": {
+        "assessment": {
+          "id": "day360-assessment-owner",
+          "organization_id": "day307-org-owner",
+          "project_id": "day307-project-owner",
+          "status": "DRAFT",
+          "created_at": "2026-09-04T19:57:09.019Z",
+          "updated_at": "2026-09-04T19:57:09.019Z",
+          "framework_type": "DRD",
+          "framework_data": {},
+          "description": null,
+          "framework": null,
+          "overall_score": null,
+          "maturity_level": null,
+          "source_type": null,
+          "source_reference": null,
+          "started_at": null,
+          "completed_at": null,
+          "report_generated_at": null,
+          "initiatives_generated": 0,
+          "p28_workbench_v1": null,
+          "assessment_definition_id": null,
+          "assessment_definition_version": null,
+          "name": "Day 360 assessment",
+          "assessment_type": "DRD",
+          "answers_json": "{}",
+          "score_summary": null,
+          "context_snapshot": null,
+          "completion_percent": null,
+          "approved_at": null,
+          "created_by": "day307-user-owner",
+          "confidence_avg": 0,
+          "current_section_id": null,
+          "navigation_json": "{}",
+          "review_requested_at": null,
+          "report_approved_at": null,
+          "updated_by": null,
+          "type": "DRD",
+          "backendStatus": "DRAFT",
+          "answers": {},
+          "contextSnapshot": {},
+          "scoreSummary": {},
+          "navigation": {},
+          "assessmentDefinitionId": null,
+          "assessmentDefinitionVersion": null
+        }
+      },
+      "meta": {
+        "version": "v8",
+        "contract": "assessment_runtime_read_v1",
+        "readScope": "persisted_database"
+      }
+    }
+  }
+}
