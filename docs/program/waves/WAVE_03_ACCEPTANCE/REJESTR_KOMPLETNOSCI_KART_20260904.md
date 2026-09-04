@@ -191,3 +191,22 @@ Promień rażenia: wyłącznie zapisane układy kart Task/Decision/Notification 
 Kadr obecnego, kompletnego stanu za flagą ON: `evidence/kompletnosc-24-sekcji-20260904/r2/on-niepusty.png`.
 
 Czego konkretnie mi zabrakło, żeby rozstrzygnąć samodzielnie: brak decyzji właściciela, czy sześć nazw standardu jest docelową taksonomią Menu 3 wymagającą przegrupowania 24 sekcji, czy warstwą semantyczną, którą wolno mapować na pięć obecnych grup produktu.
+
+## Dyżur 343 — R1: pomiar wejściowy i odtworzenie luki zabezpieczenia
+
+Rekord harnessu: `init-smed-linia-pakowania`; wariant niepusty: `initiativeTemplateId=tpl-quick-win`; każdy przelot odbył się w świeżym kontekście przeglądarki.
+
+| Szablon | Flaga build-time harnessu | Pozycje DOM | Grupy DOM | `localStorage["ff.initiative.sections_complete"]` | Błędy konsoli |
+| --- | --- | ---: | ---: | --- | ---: |
+| `quick_win` | OFF | 6 | 3 | `null` | 0 |
+| `quick_win` | ON | 24 | 5 | `null` | 0 |
+| pusty | OFF | 24 | 5 | `null` | 0 |
+| pusty | ON | 24 | 5 | `null` | 0 |
+
+Artefakty maszynowe: `/private/tmp/cx-day343-dec388-domkniecie-artefakty/r1-{off,on}-{niepusty,pusty}.json`.
+
+Mutacja A — ponowne filtrowanie wyniku selektora innym wyrażeniem — zostawiła zastany pakiet **GREEN 4/4**, a realny DOM dla `quick_win` + ON spadł do **6 pozycji / 3 grup**. Wyniki: `r1-mutacja-a-test.json`, `r1-mutacja-a-on.json`.
+
+Mutacja B — resolver flagi `void raw; return false` — zostawiła zastany pakiet **GREEN 4/4**, a realny DOM dla build-time ON spadł do **6 pozycji / 3 grup**. Wyniki: `r1-mutacja-b-test.json`, `r1-mutacja-b-on.json`.
+
+Obie mutacje cofnięto przez `cp` z kopii w katalogu scratch; `git diff -- src/components/Initiatives/InitiativeDocumentView.tsx` po każdym cofnięciu był pusty. Werdykt R1: **ZROBIONE — zastane zabezpieczenie nie broni zachowania**.
