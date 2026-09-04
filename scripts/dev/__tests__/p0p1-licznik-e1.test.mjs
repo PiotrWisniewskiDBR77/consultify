@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { evaluateCorpus } from '../p0p1-licznik-e1.mjs';
+import { evaluateCorpus, gateResult } from '../p0p1-licznik-e1.mjs';
 
 const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
   '| ID | Werdykt | Dowód |',
@@ -52,4 +52,18 @@ test('mutacja: pozycja bez werdyktu ląduje w BLOKUJE', () => {
   const rows = evaluateCorpus(corpus({ settlement: table(['INT-OWN-001']) }), { floor: 1 });
   assert.equal(rows[0].verdict, 'BLOKUJE');
   assert.equal(rows[0].reason, 'NIEROZSTRZYGNIETE');
+});
+
+test('bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni', () => {
+  const output = '/tmp/rejestr.md';
+  const clear = gateResult([{ verdict: 'NAPRAWIONE' }], output);
+  assert.equal(clear.exitCode, 0);
+
+  const blocked = gateResult([{ verdict: 'BLOKUJE' }], output);
+  assert.equal(blocked.exitCode, 1);
+  assert.match(blocked.message, /BLOKUJE: 1/);
+  assert.match(blocked.message, /\/tmp\/rejestr\.md/);
+
+  const informational = gateResult([{ verdict: 'BLOKUJE' }], output, { informational: true });
+  assert.equal(informational.exitCode, 0);
 });

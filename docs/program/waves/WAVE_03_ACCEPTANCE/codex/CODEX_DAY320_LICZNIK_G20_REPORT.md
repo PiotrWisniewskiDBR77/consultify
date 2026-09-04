@@ -87,6 +87,43 @@ Pułapki §0.2d/Z33 dla tego pakietu: (a)–(d) nie leżą na ścieżce, bo test
 - `/private/tmp/cx-day320-licznik-g20-artefakty/r1-przed-testy-spec.txt` — SHA-256 `e4e10194bde66007df5cf30969382172a141a4496ecb455277777a0069a16c60`.
 - `/private/tmp/cx-day320-licznik-g20-artefakty/przed-nazwy.txt` — pięć pełnych nazw, SHA-256 `4f645276c5d6e955ff3c272088e676e9f687fb48b692a2fe828d2400372930f9`.
 
+## R2 — kod wyjścia bramki
+
+Domyślny przebieg jest fail-closed. Kod wynika z liczby wierszy o werdykcie `BLOKUJE`; jawny argument `--informational` generuje rejestr i zachowuje kod 0. `stderr` podaje liczbę oraz pełną ścieżkę rejestru.
+
+```text
+korpus BLOKUJE=0, kod wyjscia = 0
+korpus BLOKUJE=1, kod wyjscia = 1
+
+node scripts/dev/p0p1-licznik-e1.mjs
+BLOKUJE: 25. Rejestr: /private/tmp/cx-day320-licznik-g20/docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_P0P1_BLOKUJACE_G20.md
+kod wyjscia = 1
+
+node scripts/dev/p0p1-licznik-e1.mjs --informational
+BLOKUJE: 25. Rejestr: /private/tmp/cx-day320-licznik-g20/docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_P0P1_BLOKUJACE_G20.md
+kod wyjscia = 0
+```
+
+Nowy test: `bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni`. Zielony przebieg: 6 testów, 6 pass, 0 fail, kod 0.
+
+Dowód mutacyjny warunku bramki, dosłownie:
+
+```text
+mutacja: exitCode ustawione bezwarunkowo na 0
+✖ bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+0 !== 1
+ℹ tests 6
+ℹ pass 5
+ℹ fail 1
+mutacja bez warunku, kod wyjscia testow = 1
+
+cp /private/tmp/cx-day320-licznik-g20-scratch/p0p1-licznik-e1.r2-green.mjs scripts/dev/p0p1-licznik-e1.mjs
+po cofnieciu mutacji, kod wyjscia testow = 0
+```
+
+Mutacja była lokalna, cofnięta przez `cp` zgodnie z Z27; nie weszła do commita.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -94,8 +131,7 @@ Pułapki §0.2d/Z33 dla tego pakietu: (a)–(d) nie leżą na ścieżce, bo test
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R2–R7 nie zostały jeszcze wykonane ani zweryfikowane.
+- R3–R7 nie zostały jeszcze wykonane ani zweryfikowane.
 - Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
 - Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
 - Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.
-

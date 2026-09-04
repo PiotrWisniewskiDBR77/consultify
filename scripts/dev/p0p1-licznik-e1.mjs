@@ -195,7 +195,21 @@ export function run(root = defaultRoot, options = {}) {
   return { rows, markdown, output: paths.output };
 }
 
+export function gateResult(rows, output, { informational = false } = {}) {
+  const blockers = rows.filter((row) => row.verdict === 'BLOKUJE').length;
+  return {
+    exitCode: blockers > 0 && !informational ? 1 : 0,
+    message: blockers > 0
+      ? `BLOKUJE: ${blockers}. Rejestr: ${output}\n`
+      : `BLOKUJE: 0. Rejestr: ${output}\n`,
+  };
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const informational = process.argv.slice(2).includes('--informational');
   const result = run();
   process.stdout.write(result.markdown);
+  const gate = gateResult(result.rows, result.output, { informational });
+  process.stderr.write(gate.message);
+  process.exitCode = gate.exitCode;
 }
