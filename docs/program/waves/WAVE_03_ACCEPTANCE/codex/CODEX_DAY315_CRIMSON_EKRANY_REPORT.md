@@ -83,6 +83,22 @@ Pakiet jednostkowy uruchomiony jako `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 -
 
 Nie użyto `--update-baseline`. Baseline zbudowano z jawnego pełnego pomiaru per plik, zapisano metadane 61/169 i zachowano ratchet per plik. Logi: `/private/tmp/cx-day315-crimson-ekrany-artefakty/focus-expanded-before-baseline.log`, `focus-expanded-counts.txt`, `focus-mutation-red.log`, `focus-mutation-green.log`.
 
+## R4 — brakujące ekrany produktu
+
+| Ekran | Realne komponenty i widoczny stan |
+|---|---|
+| `chat-crimson-search-research` | `ConversationSearch` w rozmiarze wywołania produktu, z aktywnym fokusem |
+| `chat-crimson-private-message` | rozwinięty `PrivateModeDetails` z aktywnym fokusem |
+| `chat-crimson-project-members` | realny `ProjectMembersModal`, dane API ograniczone do deterministycznego harnessu; widoczne trzy naprawione pola formularza |
+| `chat-message-required-surfaces` | jeden realny `MessageRenderer`: `ResearchProgress`, `abortFeedback`, treść `⚠️`, retry, deep-thinking hint, CTA raportu i `msg.options` |
+| `chat-v8-artifact-run-search` | realny, rozwinięty `V8ArtifactRunControl` pod `V8Provider`/router/query provider |
+
+Każdy ekran przeszedł osobny bundle `esbuild` i został obejrzany w przeglądarce na `127.0.0.1:5471`. Kadry są czyste, bez panelu uwag. `ResearchProgress` pokazuje temat/źródła/postęp; tryb prywatny pokazuje popover; `MessageRenderer` pokazuje wszystkie wymagane gałęzie; modal pokazuje widoczność, członków i wiedzę; kontrolka V8 jest rozwinięta i pokazuje uczciwy brak migawki oraz dostępne kolejne działanie.
+
+Pierwsza wersja dwóch ekranów zestawiała obok siebie komponenty bez precedensu produkcyjnego. `check-dev-render-parytet.mjs --all` słusznie zwrócił R2=2/RC=1. Te kompozycje usunięto przed commitem; pięć finalnych ekranów sprawdzono osobno przez `--ekran=<id>` i każdy ma R1=0, R2=0, R3=0, PODPIS=0, RC=0.
+
+Duplikat macierzy rozstrzygnięto przez usunięcie wpisu `canvas-toolbar-md-history` wyłącznie z `13_CHAT`. Jego light SHA był identyczny z `canvas-kebab-restructure` (`2d134eaa…`), więc dwa wpisy zawyżały pokrycie. Plik ekranu i rejestr w `main.tsx` pozostają nietknięte; usunięto wyłącznie fałszywy licznik macierzy modułu Czatu.
+
 ## Korekty wobec instrukcji
 
 - Pomiar potwierdził 15 trafień ogółem i 10 poza testami, a nie 22 z zamówienia nadzorcy.
