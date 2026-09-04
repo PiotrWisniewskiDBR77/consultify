@@ -37,7 +37,6 @@ import { useTranslation } from 'react-i18next';
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
 import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
-import { usePresentationImageStyleUiFlag } from '@/hooks/usePresentationImageStyleUiFlag';
 import {
   FilterableTable,
   type FilterChip,
@@ -46,6 +45,8 @@ import {
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
 import { ConfirmModal, Modal } from '@/components/ui/primitives/Modal';
+import { usePresentationImageStyleUiFlag } from '@/hooks/usePresentationImageStyleUiFlag';
+import { getAppErrorLine } from '@/services/errors/appErrorCopy';
 import {
   approvePresentationTemplate,
   clonePresentationTemplate,
@@ -122,7 +123,11 @@ const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   { value: 'align', labelKey: 'presentations.templates.goal.align', fallback: 'Align' },
 ];
 
-const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; labelKey: string; fallback: string }[] = [
+const THEME_OPTIONS: {
+  value: 'corporate' | 'minimal' | 'modern';
+  labelKey: string;
+  fallback: string;
+}[] = [
   { value: 'corporate', labelKey: 'presentations.themes.corporate', fallback: 'Corporate' },
   { value: 'minimal', labelKey: 'presentations.themes.minimal', fallback: 'Minimal' },
   { value: 'modern', labelKey: 'presentations.themes.modern', fallback: 'Modern' },
@@ -346,11 +351,7 @@ export const PresentationTemplateArchitectView: React.FC<
       const list = await listPresentationTemplates();
       setTemplates(list);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('presentations.templateArchitect.errLoadTemplates', 'Failed to load templates')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoadingList(false);
     }
@@ -395,11 +396,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setLastDraftRefined(useLlm ? result.llmRefined : null);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('presentations.templateArchitect.errDraftTemplate', 'Failed to draft template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setDrafting(false);
     }
@@ -533,11 +530,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
       onTemplateSaved?.(fresh);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('presentations.templateArchitect.errSaveTemplate', 'Failed to save template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSavingOutline(false);
     }
@@ -555,11 +548,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(cloned.id);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('presentations.templateArchitect.errCloneTemplate', 'Failed to clone template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setCloningId(null);
     }
@@ -576,7 +565,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(result.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restore version as a new draft');
+      setError(getAppErrorLine(t, err));
     } finally {
       setCloningId(null);
     }
@@ -595,7 +584,7 @@ export const PresentationTemplateArchitectView: React.FC<
         `v${version.lineageVersion} vs v${selectedTemplate.lineage_version || 1}: ${candidateTitles.length} → ${currentTitles.length} slides; ${Math.max(0, changed)} position(s) changed.`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to compare template versions');
+      setError(getAppErrorLine(t, err));
     }
   };
 
@@ -610,14 +599,7 @@ export const PresentationTemplateArchitectView: React.FC<
       await approvePresentationTemplate(selectedTemplate.id);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t(
-              'presentations.templateArchitect.errApproveTemplate',
-              'Failed to approve and publish template'
-            )
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setApprovingId(null);
     }
@@ -676,11 +658,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('presentations.templateArchitect.errDeprecateTemplate', 'Failed to withdraw template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setDeprecatingId(null);
     }
@@ -696,7 +674,7 @@ export const PresentationTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete draft template');
+      setError(getAppErrorLine(t, err));
       setDeleteConfirmOpen(false);
     } finally {
       setDeprecatingId(null);
@@ -1724,7 +1702,9 @@ export const PresentationTemplateArchitectView: React.FC<
                 className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
               >
                 {validationIssues.length === 0 ? (
-                  <p className="font-medium">Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.</p>
+                  <p className="font-medium">
+                    Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.
+                  </p>
                 ) : (
                   <>
                     <p className="font-medium">

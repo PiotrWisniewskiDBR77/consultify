@@ -11,6 +11,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { getAppErrorLine } from '../services/errors/appErrorCopy';
 
 // Types
 export type SectionType =
@@ -125,6 +128,7 @@ interface UseReportSectionsReturn {
 }
 
 export const useReportSections = (reportId: string | null): UseReportSectionsReturn => {
+  const { t } = useTranslation();
   // State
   const [report, setReport] = useState<FullReport | null>(null);
   const [sections, setSections] = useState<ReportSection[]>([]);
@@ -164,7 +168,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
       setReport(data);
       setSections(data.sections || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = getAppErrorLine(t, err);
       setError(message);
       console.error('[useReportSections] Fetch error:', err);
     } finally {
@@ -215,7 +219,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
         setHasUnsavedChanges(false);
         return true;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] Update error:', err);
         // Refetch to restore correct state
@@ -272,7 +276,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
 
         return newSection;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] Add section error:', err);
         return null;
@@ -311,7 +315,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
 
         return true;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] Delete section error:', err);
         // Restore on error
@@ -364,7 +368,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
 
         return true;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] Reorder error:', err);
         setSections(prevSections);
@@ -431,7 +435,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
 
         return true;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] AI action error:', err);
         return false;
@@ -469,7 +473,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
         await fetchReport();
         return true;
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
+        const message = getAppErrorLine(t, err);
         setError(message);
         console.error('[useReportSections] Regenerate error:', err);
         return false;
@@ -504,7 +508,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
       setReport((prev) => (prev ? { ...prev, status: 'FINAL', isComplete: true } : null));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = getAppErrorLine(t, err);
       setError(message);
       console.error('[useReportSections] Finalize error:', err);
       return false;
@@ -534,7 +538,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
       setReport((prev) => (prev ? { ...prev, status: 'APPROVED', isComplete: true } : null));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = getAppErrorLine(t, err);
       setError(message);
       console.error('[useReportSections] Approve error:', err);
       return false;
@@ -570,7 +574,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = getAppErrorLine(t, err);
       setError(message);
       console.error('[useReportSections] Export PDF error:', err);
     }
@@ -603,7 +607,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = getAppErrorLine(t, err);
       setError(message);
       console.error('[useReportSections] Export Excel error:', err);
     }
