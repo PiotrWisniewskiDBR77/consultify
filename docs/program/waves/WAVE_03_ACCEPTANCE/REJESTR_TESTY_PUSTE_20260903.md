@@ -2,8 +2,8 @@
 
 ## Mianownik i metoda
 
-- Pliki testowe: 5403.
-- Bloki `it/test` rozpoznane przez AST: 42474.
+- Pliki testowe: 5414.
+- Bloki `it/test` rozpoznane przez AST: 42513.
 - Kandydaci ze słabymi-only asercjami i sygnałem sieci/bazy: 17.
 - Pliki pominięte z powodu błędu odczytu/parsera: 0.
 - `PUSTY` wymaga dowodu mutacyjnego; skaner nigdy nie nadaje tej klasy na podstawie tekstu.
@@ -32,9 +32,9 @@
 
 ## Podmiot testu zdefiniowany lokalnie
 
-Wykryto 190 plików. To osobna lista do ręcznego przeglądu, nie automatyczny werdykt `PUSTY`.
+Wykryto 189 plików. To osobna lista do ręcznego przeglądu, nie automatyczny werdykt `PUSTY`.
 
-W tym 64 plików nie ma żadnego statycznego importu z `src/` ani `server/src/`.
+W tym 63 plików nie ma żadnego statycznego importu z `src/` ani `server/src/`.
 
 | Plik | Import produktu | Podmiot (linia) |
 |---|---|---|
@@ -98,7 +98,6 @@ W tym 64 plików nie ma żadnego statycznego importu z `src/` ani `server/src/`.
 | server/src/services/__tests__/docChangelogParityService.test.ts | TAK | SAMPLE_CHANGELOG (45) |
 | tests/components/AIChat/ArtifactsPanel.test.tsx | NIE | ArtifactsPanel (7) |
 | tests/components/AIChat/FocusModeSelector.test.tsx | NIE | FocusModeSelector (7) |
-| tests/components/AIChat/MessageBubble.test.tsx | NIE | MessageBubble (7) |
 | tests/components/AIChat/ThinkingBlock.test.tsx | NIE | ThinkingBlock (7) |
 | tests/components/Admin/AIModule.test.tsx | TAK | AIModule (14) |
 | tests/components/Admin/AIPerformanceDashboard.test.tsx | TAK | AIPerformanceDashboard (14) |
