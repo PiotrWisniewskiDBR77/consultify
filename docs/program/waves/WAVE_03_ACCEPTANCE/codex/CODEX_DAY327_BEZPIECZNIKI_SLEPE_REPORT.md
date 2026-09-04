@@ -105,3 +105,37 @@ Dowód PRZED i mutacja odwrotna nie zostały wykonane lokalnie; R3 pozostaje `PA
 Decyzja: OBJĘCIE, nie ciche wyłączenie. Osobna allowlista obejmuje 24 pliki i 58 wystąpień. Liczby per plik: `11, 8, 5, 4, 4, 4, 3, 3` oraz po `1` w pozostałych 16 plikach; pełne ścieżki są jawnie zapisane w `ALLOWED_TEST_DDL_BY_FILE`. Mutacja `CREATE TABLE IF NOT EXISTS __day327_probe__ (id INT);` w `ini005-negative-controls.pg.test.ts` po naprawie: exit 1; po `cp` diff produktu pusty. Artefakt: `r4-mutacja-po.txt`.
 
 Dowód PRZED tej mutacji nie został uruchomiony lokalnie przed zmianą guarda; R4 jest `PARTIAL`, choć nowy pomiar jest jawny i mutacja PO czerwieni bezpiecznik.
+
+## R5 — martwy kod, tylko brief
+
+Odczyt z cudzej gałęzi potwierdza: `--check-baseline` filtruje wyłącznie `classification === 'unreachable'`. Nie pilnuje `test-only` ani `harness-only`. `reachable()` traktuje wszystkie testy jako korzenie, więc pojedynczy test może uczynić martwy produkt „osiągalnym”. Liczby cytowane z cudzego raportu, niezweryfikowane własnym przebiegiem: mianownik 4808; `app=3040`, `harness-only=29`, `test-only=1010`, `unreachable=729`.
+
+Nienałożony kierunek diffu:
+
+```diff
+- const baseline = new Set(JSON.parse(fs.readFileSync(baselinePath, 'utf8')).files);
+- const additions = rows.filter((item) => item.classification === 'unreachable' && !baseline.has(item.file))
++ const saved = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
++ const unreachableBaseline = new Set(saved.unreachable ?? saved.files);
++ const testOnlyBaseline = new Set(saved.testOnly ?? []);
++ const additions = rows.filter((item) =>
++   (item.classification === 'unreachable' && !unreachableBaseline.has(item.file)) ||
++   (item.classification === 'test-only' && !testOnlyBaseline.has(item.file)))
+    .map((item) => item.file);
+```
+
+To wymaga osobnego baseline `testOnly`, migracji schematu pliku i mutacji „nowy plik produktowy + jeden test”; teren należy do dyżuru 329. R5: ZROBIONE jako pomiar + brief, bez zmiany cudzych plików.
+
+## R6 — dług odsłonięty
+
+| bezpiecznik | próg PRZED | próg PO | co nowego widzi | odsłonięte | realne | fałszywe |
+|---|---:|---:|---|---:|---:|---:|
+| i18n DEFEKT-PL | 0 | 134 | każdy identyczny PL=EN bez jawnego uzasadnienia | 134 | NIEZWERYFIKOWANE | NIEZWERYFIKOWANE |
+| i18n DEFEKT-EN | 0 | 17 | polska składnia/fleksja bez diakrytyków | 17 | NIEZWERYFIKOWANE | NIEZWERYFIKOWANE |
+| noRawErrorInJsx | 0 per plik | 3 + 1 w dwóch plikach | 3 pliki `.ts` i nowe kształty interpolacji | 4 | NIEZWERYFIKOWANE | NIEZWERYFIKOWANE |
+| noRawErrorMessage | 44 / 47 | 44 / 47 | identyfikatory z `.catch(callback)` | 0 netto w progu | 0 nowych | 0 nowych |
+| noRuntimeDdl | brak pomiaru testów | 24 pliki / 58 DDL | DDL w `__tests__` | 58 | 58 dozwolonych fixture w jawnej allowliście | 0 |
+
+Kierunek: dług i18n wymaga osobnego przeglądu językowego z właścicielem treści; cztery miejsca JSX powinien ocenić właściciel Document Studio/API w osobnym dyżurze, bo produkt był tylko do odczytu; 47 istniejących wycieków HTTP wymaga osobnego dyżuru tras; DDL testowe jest jawnie zamrożonym długiem fixture i każdy nowy przypadek jest teraz czerwony.
+
+Surowe liście słowników: PL 35198, EN 33065. Audytowe liście: PL 34325, EN 32336. Żaden słownik nie został zmieniony.
