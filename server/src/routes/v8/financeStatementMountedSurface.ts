@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
+import { createModuleGate } from '../../middleware/betaGate.middleware.js';
 import { mutationAbortCanary } from '../../middleware/mutationGuard.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
@@ -50,6 +51,7 @@ export function isMountedFinanceStatementSurface(method: string, path: string): 
 
 type MountedSurfaceDependencies = {
   verifyToken: RequestHandler;
+  moduleGate: RequestHandler;
   requireOrgContext: RequestHandler;
   attachContext: RequestHandler;
   metrics: RequestHandler;
@@ -60,6 +62,7 @@ type MountedSurfaceDependencies = {
 
 const defaults: MountedSurfaceDependencies = {
   verifyToken,
+  moduleGate: createModuleGate('MODULE_ECONOMICS'),
   requireOrgContext: requireV8OrgContext,
   attachContext: attachV8Context,
   metrics: v8MetricsMiddleware,
@@ -87,6 +90,7 @@ export function createMountedFinanceStatementRouter(
   });
   router.use(
     dependencies.verifyToken,
+    dependencies.moduleGate,
     dependencies.requireOrgContext,
     dependencies.attachContext,
     dependencies.metrics,
