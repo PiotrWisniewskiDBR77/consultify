@@ -16,6 +16,23 @@ Własne liczby: guard 35 (28+7), szeroki grep 106, mapper 406 wywołań/71 plik�
 
 Pakiet bazowy `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 --reporter=json`: 7/7, pełne nazwy w `/private/tmp/cx-day313-domkniecia2-artefakty/przed-nazwy.txt`. Pułapki (a)-(d) nie leżą na ścieżce, bo oba testy są tekstowym/jednostkowym odczytem bez Gateway i DB; pułapka (e) dotyczy mianownika i została wyłączona przez niezależny kontrolny grep oraz reprodukcję algorytmu guardu.
 
+## R2
+
+Codemod `scripts/dev/codemod-day313-raw-response-leaks.mjs` zmienił dokładnie 35 odpowiedzi w dwóch licencjonowanych plikach; logi pozostały nietknięte. `REMAINING_LEAK_BASELINE` zmalał 35 → 0. `details` ze stringiem usunięto, a `error`, `errorCode` i `correlationId` daje mapper. Oba pliki przeszły esbuild.
+
+Guard końcowy: 3/3. Niezależny ratchet innych zapisów ma zmierzony zastany baseline 44; nie jest deklarowany jako dług zamknięty.
+
+Dowody mutacyjne, każdy `--retry=0`:
+
+| Mutacja innego kształtu | RED | Artefakt |
+| --- | --- | --- |
+| `error: String(e)` | 2 pass / 1 fail | `r2-mutation-string-e-red.json` |
+| `res.send(err.stack)` | 2 pass / 1 fail | `r2-mutation-stack-red.json` |
+| `details: e?.message` | 2 pass / 1 fail | `r2-mutation-optional-red.json` |
+| cofnięcie mutacji | 3 pass / 0 fail | `r2-final-green.json` |
+
+Pułapki (a)-(d) nie dotyczą tekstowego guardu bez Gateway/DB. Pułapki (e1-e4) wyłączono przez: własny mianownik, trzy różne od naprawianego zapisy, kontrolny grep i zachowanie logów. Po każdym cofnięciu produkt odtwarzano przez `cp` z kopii w scratchu; nie użyto stash/reset.
+
 ## Bezpieczeństwo wysyłki
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
@@ -24,4 +41,4 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 - Osiem kodów i ciał odpowiedzi przez ApiGateway/JWT/RealPG: oczekują na R5.
 - Osiągalność runtime całej rodziny 255 klas: poza czterema klasami R3 pozostaje ratchet/inwentarz, nie twierdzenie o wykonaniu.
-- R2-R6: oczekują na kolejne commity i dowody mutacyjne.
+- R3-R6: oczekują na kolejne commity i dowody mutacyjne.
