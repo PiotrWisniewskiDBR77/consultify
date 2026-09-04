@@ -30,9 +30,13 @@ for (const file of files(sourceRoot)) {
     const fragment = lines.slice(index, Math.min(index + 4, lines.length)).join(' ');
     const match = fragment.match(/CREATE TABLE IF NOT EXISTS\s+["'`]?([A-Za-z0-9_.$\-{}]+)["'`]?/i);
     const table = match?.[1] ?? 'NIE_ROZPOZNANO';
+    const escapedTable = table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const migration = table === 'NIE_ROZPOZNANO'
       ? null
-      : migrations.find((candidate) => new RegExp(`CREATE\\s+TABLE(?:\\s+IF\\s+NOT\\s+EXISTS)?\\s+["']?${table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?`, 'i').test(candidate.text));
+      : migrations.find((candidate) => new RegExp(
+        `CREATE\\s+TABLE(?:\\s+IF\\s+NOT\\s+EXISTS)?\\s+(?:["']?[A-Za-z_][A-Za-z0-9_]*["']?\\s*\\.\\s*)?["']?${escapedTable}["']?`,
+        'i'
+      ).test(candidate.text));
     const window = lines.slice(Math.max(0, index - 20), Math.min(lines.length, index + 25)).join('\n');
     const catchNearby = /catch\s*(?:\([^)]*\))?\s*\{/.test(window);
     const dialect = /AUTOINCREMENT|PRAGMA\s|strftime\(|INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT/i.test(fragment)
