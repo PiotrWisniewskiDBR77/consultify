@@ -153,6 +153,8 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
         </span>
       )}
       <button
+        /* DEC-387 — ten sam uchwyt pomiarowy co w `renderItem` (ścieżka z drag&drop). */
+        data-nmode-section-item={section.id}
         onClick={() => onSectionChange(section.id)}
         className={`flex-1 min-w-0 flex items-center gap-2 text-left py-2.5 pr-3 ${readMode ? 'pl-3' : ''} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)]`}
       >
@@ -284,6 +286,12 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     return (
       <button
         key={section.id}
+        /* DEC-387 — UCHWYT POMIAROWY (nie wygląd): kanoniczne narzędzie zrzutowe
+           `scripts/dev/grafika-zrzuty.mjs --zlicz=...` liczy pozycje nawigacji
+           DOKŁADNIE w chwili zrzutu. Bez stabilnego atrybutu liczbę „ile sekcji
+           widzi właściciel" trzeba było liczyć okiem na obrazku — i tak powstała
+           nieweryfikowalna teza „kontrakt kasuje 11 z 15". */
+        data-nmode-section-item={section.id}
         onClick={() => onSectionChange(section.id)}
         className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
           isActive
@@ -411,6 +419,8 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
                  artefaktu (check-artefakt.sh). */
               <button
                 type="button"
+                /* DEC-387 — uchwyt pomiarowy nagłówka grupy (liczba grup na zrzucie). */
+                data-nmode-section-group={label}
                 onClick={() => toggleGroup(label)}
                 aria-expanded={!isGroupCollapsed}
                 className="sticky top-0 z-10 flex w-full items-center justify-between gap-1 bg-c-surface-raised/90 backdrop-blur-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary transition-colors hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] rounded-sm"

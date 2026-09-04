@@ -20,6 +20,7 @@
  * Wynik: evidence/grafika/<katalog>/<ekran>__<FAZA>__<light|dark>.png
  * Konwencja z docs/program/grafika/00_ZASADY_PRACY.md.
  */
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -262,6 +263,52 @@ const BEZ_KLIKA_DOMYSLNEGO = arg('bez-klika-domyslnego', '0') === '1';
  * których nikt nie podał selektora wyniku.
  */
 const WYNIK_SELEKTOR = arg('wynik-selektor', '').split(',').map((s) => s.trim()).filter(Boolean);
+
+/**
+ * `--zlicz=<nazwa>:<css>[;<nazwa>:<css>...]` — OPT-IN (DEC-387, 2026-09-04).
+ *
+ * POWÓD ISTNIENIA: dowód „kontrakt karty niczego nie ucina" wymaga LICZBY
+ * pozycji na zrzucie, a nie wrażenia z oglądania. Do dziś narzędzie liczyło
+ * wyłącznie jasność, wymiary i obecność selektora wyniku (tak/nie) — kiedy
+ * odbiorca dyżuru 305 napisał „ON kasuje 11 z 15 sekcji", tę liczbę policzył
+ * OKIEM na obrazku, poza narzędziem, więc nikt nie mógł jej powtórzyć.
+ *
+ * Zamiast pisać własny skrypt zrzutowy obok kanonicznego (udokumentowana
+ * pułapka „nie pisz własnego zrzutu obok kanonicznego"), brakująca zdolność
+ * wchodzi TU, jako parametr:
+ *   · liczy `document.querySelectorAll(css).length` w chwili zrzutu,
+ *   · zapisuje PIERWSZE 60 tekstów trafionych węzłów (do porównania nazw),
+ *   · wynik ląduje w `wyniki[].zliczenia` (a więc i w `--wynik-json`),
+ *   · wypisuje liczbę w podsumowaniu konsoli.
+ *
+ * ZERO trafień jest RAPORTOWANE jako `0`, nigdy pomijane — „brak pomiaru nie
+ * jest wynikiem". Bez parametru zachowanie narzędzia jest bit w bit dawne.
+ */
+/**
+ * `--porownaj-z=<katalog>` — OPT-IN (DEC-387, 2026-09-04). Porównaj KAŻDY właśnie
+ * zrobiony zrzut z jednoimiennym motywowo zrzutem z podanego katalogu (para
+ * PRZED/PO, OFF/ON) i wypisz: sumy SHA-256 obu plików oraz procent różnych
+ * pikseli.
+ *
+ * POWÓD ISTNIENIA: narzędzie umiało dotąd porównywać wyłącznie parę
+ * light↔dark WEWNĄTRZ jednego przelotu (`porownajPiksele`), więc na pytanie
+ * „czy zrzut PO różni się od zrzutu PRZED" odpowiadał człowiek, okiem albo
+ * osobnym `shasum` w terminalu — i tak powstawały meldunki „para PRZED/PO"
+ * z dwoma bitowo identycznymi obrazami (kształt „duplikat zamiast motywu",
+ * dyżur 306: `4cb0d5ba…` po obu stronach). Para bajtowo identyczna to ZERO
+ * dowodu i tu jest RAPORTOWANA jako `IDENTYCZNE` z kodem wyjścia 1.
+ */
+const POROWNAJ_Z = arg('porownaj-z', '');
+
+const ZLICZ = arg('zlicz', '')
+  .split(';')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((para) => {
+    const i = para.indexOf(':');
+    if (i < 0) throw new Error(`--zlicz: oczekiwano <nazwa>:<css>, dostano "${para}"`);
+    return { nazwa: para.slice(0, i).trim(), css: para.slice(i + 1).trim() };
+  });
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -532,6 +579,26 @@ for (const ekran of EKRANY) {
       let hasResultMarker = null;
       const obrazJasnosc = await meanLuma(plik);
       const tekst = await page.locator('body').innerText().catch(() => '');
+      // --zlicz (DEC-387): policz elementy DOKŁADNIE w chwili zrzutu — ten sam
+      // DOM, który poszedł na PNG, więc liczba i obrazek nie mogą się rozjechać.
+      let zliczenia = undefined;
+      if (ZLICZ.length > 0) {
+        zliczenia = await page.evaluate(
+          (pary) =>
+            pary.map(({ nazwa, css }) => {
+              const wezly = Array.from(document.querySelectorAll(css));
+              return {
+                nazwa,
+                css,
+                ile: wezly.length,
+                teksty: wezly
+                  .slice(0, 60)
+                  .map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80)),
+              };
+            }),
+          ZLICZ
+        );
+      }
       if (WYNIK_SELEKTOR.length > 0) {
         hasResultMarker = await page.evaluate(
           (sels) => sels.every((s) => document.querySelector(s) !== null),
@@ -554,6 +621,7 @@ for (const ekran of EKRANY) {
         wynikSelektor: WYNIK_SELEKTOR.length > 0 ? WYNIK_SELEKTOR : undefined,
         hasResultMarker,
         obrazJasnosc,
+        zliczenia,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
         sekcjeCofniete: ROZWIN_SEKCJE && COFNIJ_JESLI_SKRACA ? sekcjeCofniete : undefined,
@@ -617,6 +685,47 @@ for (const ekran of EKRANY) {
 
 await browser.close();
 
+// --porownaj-z (DEC-387): para PRZED/PO liczona maszynowo, nie okiem.
+const porownania = [];
+if (POROWNAJ_Z) {
+  const katalogOdniesienia = path.resolve(POROWNAJ_Z);
+  const sha = (plik) => crypto.createHash('sha256').update(fs.readFileSync(plik)).digest('hex');
+  for (const w of wyniki) {
+    if (w.plik === '—') continue;
+    const kandydaci = fs.existsSync(katalogOdniesienia)
+      ? fs.readdirSync(katalogOdniesienia).filter((f) => f.endsWith(`__${JEZYK}__${SZEROKOSC}__${w.motyw}.png`) && f.startsWith(`${w.ekran}__`))
+      : [];
+    if (kandydaci.length !== 1) {
+      porownania.push({ ekran: w.ekran, motyw: w.motyw, status: kandydaci.length === 0 ? 'BRAK ODNIESIENIA' : `NIEJEDNOZNACZNE (${kandydaci.length})`, });
+      continue;
+    }
+    const odniesienie = path.join(katalogOdniesienia, kandydaci[0]);
+    const piksele = await porownajPiksele(odniesienie, w.plik);
+    porownania.push({
+      ekran: w.ekran,
+      motyw: w.motyw,
+      odniesienie,
+      nowy: w.plik,
+      shaOdniesienia: sha(odniesienie),
+      shaNowy: sha(w.plik),
+      identyczneBajtowo: sha(odniesienie) === sha(w.plik),
+      procentRoznychPikseli: piksele.procentRoznychPikseli ?? null,
+      powod: piksele.powod ?? null,
+      status: sha(odniesienie) === sha(w.plik) ? 'IDENTYCZNE — ZERO DOWODU' : 'RÓŻNE',
+    });
+  }
+  console.log('\n--porownaj-z (para z katalogiem odniesienia):');
+  for (const p2 of porownania) {
+    console.log(`  ${p2.ekran} ${String(p2.motyw).padEnd(6)} ${String(p2.status).padEnd(24)} ` +
+      (p2.procentRoznychPikseli != null ? `różne piksele: ${p2.procentRoznychPikseli.toFixed(4)}%` : (p2.powod || '')));
+  }
+  const zlePary2 = porownania.filter((p2) => p2.identyczneBajtowo || p2.status !== 'RÓŻNE').length;
+  if (zlePary2 > 0) {
+    console.log(`★ ${zlePary2} PARA(Y) BEZ DOWODU (identyczne bajtowo albo brak odniesienia) — kod wyjścia 1.`);
+    process.exitCode = 1;
+  }
+}
+
 console.log(`\nZrzuty → ${OUT}\n`);
 console.log('ekran                          motyw   status      wys.strony  błędy konsoli');
 console.log('─'.repeat(82));
@@ -632,6 +741,15 @@ for (const w of wyniki) {
     `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(24)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}${podgladNota}`
   );
 }
+if (ZLICZ.length > 0) {
+  console.log('\n--zlicz (policzone w chwili zrzutu):');
+  for (const w of wyniki) {
+    for (const z of w.zliczenia || []) {
+      console.log(`  ${w.ekran} ${w.motyw.padEnd(6)} ${z.nazwa.padEnd(28)} ${String(z.ile).padStart(4)}  (${z.css})`);
+    }
+  }
+}
+
 const zle = wyniki.filter((w) => w.status !== 'OK').length;
 console.log(`\n${wyniki.length - zle}/${wyniki.length} zrzutów wykonanych.`);
 if (zle > 0) process.exitCode = 1;
@@ -654,7 +772,7 @@ if (BEZ_KLIKA_DOMYSLNEGO) {
 if (WYNIK_JSON) {
   if (!path.isAbsolute(WYNIK_JSON)) throw new Error('--wynik-json musi być ścieżką absolutną');
   fs.mkdirSync(path.dirname(WYNIK_JSON), { recursive: true });
-  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, klikPoRozwinieciu: KLIK_PO_ROZWINIECIU, cofnijJesliSkraca: COFNIJ_JESLI_SKRACA, wyniki, pary: wszystkiePary }, null, 2));
+  fs.writeFileSync(WYNIK_JSON, JSON.stringify({ jezyk: JEZYK, szerokosc: SZEROKOSC, wysokosc: WYSOKOSC, osiadPoRozwinieciu: OSIAD_PO_ROZWINIECIU, klikPoRozwinieciu: KLIK_PO_ROZWINIECIU, cofnijJesliSkraca: COFNIJ_JESLI_SKRACA, wyniki, pary: wszystkiePary, porownania }, null, 2));
   console.log(`Wynik JSON → ${WYNIK_JSON}`);
 }
 

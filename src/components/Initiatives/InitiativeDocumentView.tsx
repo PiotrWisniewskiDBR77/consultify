@@ -217,6 +217,9 @@ import {
   INITIATIVE_CORE_BOARD_IDS,
   INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS,
   isInitiativeCardContractEnabled,
+  INITIATIVE_CONTRACT_HIDDEN_SEED,
+  uporzadkujSekcjeBoarduInicjatywy,
+  sekcjeBoarduPozaKontraktem,
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
@@ -8968,24 +8971,71 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     []
   );
 
-  // MIGRACJA (D-8, ETAP 2): SEED węższego defaultu za flagą. ON → ukryj wszystko
-  // poza rdzeniem+minimal (jednorazowo, nie walczy z userem po pierwszym ziarnie).
-  // OFF → no-op → hiddenSectionIds pozostaje new Set() → 24 sekcje jak dziś (gwarancja b).
-  const didSeedHiddenRef = useRef(false);
+  // ★ DEC-387 (2026-09-04) — KONTRAKT PORZĄDKUJE, NIE UCINA.
+  //
+  // BYŁO (D-8 ETAP 2): przy fladze ON ten efekt jednorazowo ziarnował
+  // `hiddenSectionIds` WSZYSTKIM, co nie mieściło się w czteroelementowej
+  // allowliście (`INITIATIVE_CORE_BOARD_IDS` + `INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS`).
+  // Zmierzone kanonicznym narzędziem na REALNYM rekordzie (`karta-initiative`,
+  // id `init-smed-linia-pakowania`, ścieżka produkcyjna): OFF 24 pozycje / 5 grup,
+  // ON 4 pozycje / 2 grupy — kontrakt kasował 20 z 24 sekcji i całe grupy
+  // „Decyzje i ryzyko", „Ludzie" oraz „Zapisy". Komentarz w kontrakcie oznaczał to
+  // jako „DO POTWIERDZENIA PIOTRA (który board = rdzeń)".
+  //
+  // DECYZJA WŁAŚCICIELA DEC-387: karta inicjatywy ma być KOMPLETNA — kontrakt ma
+  // sekcje ZACHOWYWAĆ. JEST: ON nie ukrywa NICZEGO (ziarno ukryć jest puste
+  // z definicji, `INITIATIVE_CONTRACT_HIDDEN_SEED`), a wnosi PORZĄDEK — kolejność
+  // kanoniczną boardu (grupy w kolejności `groupLabels`, w grupie: rdzeń →
+  // domyślna → dodawalna). Zwężenie do rdzenia zostaje WYŁĄCZNIE świadomym
+  // wyborem użytkownika (przycisk „Rdzeń inicjatywy" w menu „Sekcje").
+  //
+  // Bezpiecznik: `tests/unit/initiatives/initiativeCardContractCompleteness.test.ts`
+  // (liczebność ON ≥ liczebność OFF + pokrycie całego boardu przez kontrakt).
+  // Ziarno ukryć przy fladze ON — PUSTE z definicji (patrz stała w kontrakcie).
+  // Efekt zostaje, żeby powrót do ukrywania wymagał zmiany stałej, a nie cichego
+  // dopisania id w komponencie; przy pustej stałej jest to no-op.
   useEffect(() => {
-    if (!initiativeCardContractEnabled) return; // OFF => zero zmian
-    if (didSeedHiddenRef.current) return; // one-shot: nie walcz z userem
-    if (nModeSectionsWithContent.length === 0) return; // czekaj aż board znany
-    const hide = nModeSectionsWithContent
-      .map((s) => s.id)
-      .filter((id) => !initiativeCoreBoardIdSet.has(id));
-    setHiddenSectionIds(new Set(hide));
-    didSeedHiddenRef.current = true;
-  }, [initiativeCardContractEnabled, nModeSectionsWithContent, initiativeCoreBoardIdSet]);
+    if (!initiativeCardContractEnabled) return; // OFF => zero zmian (jak dotąd)
+    if (INITIATIVE_CONTRACT_HIDDEN_SEED.length === 0) return; // DEC-387: nic nie chowamy
+    setHiddenSectionIds(new Set(INITIATIVE_CONTRACT_HIDDEN_SEED));
+  }, [initiativeCardContractEnabled]);
+
+  // DEC-387 — ostrzeżenie DEV: sekcja boardu, której kontrakt nie nazywa, jest
+  // długiem kontraktu (renderuje się dalej, na końcu listy — nie znika).
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const poza = sekcjeBoarduPozaKontraktem(nModeSectionsWithContent.map((s) => s.id));
+    if (poza.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[initiativeCardContract] DEC-387 — sekcje boardu poza kolejnością kanoniczną: ${poza.join(', ')}. ` +
+          'Dopisz je do INITIATIVE_BOARD_CANONICAL_ORDER.'
+      );
+    }
+  }, [nModeSectionsWithContent]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
     const ordered = (() => {
-      if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
+      if (!nModeSectionOrder || nModeSectionOrder.length === 0) {
+        // ★ DEC-387: to jest CAŁY wkład kontraktu w wygląd — PORZĄDEK, nie cięcie.
+        // Użytkownik bez własnej kolejności (brak wpisu w localStorage) dostaje
+        // przy fladze ON kolejność kanoniczną: grupy w kolejności `groupLabels`,
+        // w grupie rdzeń → domyślna → dodawalna. Liczebność listy jest przy tym
+        // NIEZMIENIONA (funkcja zwraca permutację wejścia — asercja w kontrakcie
+        // i w teście kompletności). Wyprowadzenie, nie ziarno stanu: ziarno
+        // przegrywało wyścig z efektem czytającym localStorage.
+        if (!initiativeCardContractEnabled) return nModeSectionsWithContent;
+        const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(
+          nModeSectionsWithContent.map((s) => s.id)
+        );
+        const wgId = new Map(nModeSectionsWithContent.map((s) => [s.id, s]));
+        const wynik = kolejnosc
+          .map((id) => wgId.get(id))
+          .filter((s): s is NModeSection => Boolean(s));
+        return wynik.length === nModeSectionsWithContent.length
+          ? wynik
+          : nModeSectionsWithContent;
+      }
 
       const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
       const inOrder = nModeSectionOrder
@@ -9000,7 +9050,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // Canon Toolbar (Slot 1): user-hidden sections drop out of the nav.
     if (hiddenSectionIds.size === 0) return ordered;
     return ordered.filter((section) => !hiddenSectionIds.has(section.id));
-  }, [nModeSectionsWithContent, nModeSectionOrder, hiddenSectionIds]);
+  }, [
+    nModeSectionsWithContent,
+    nModeSectionOrder,
+    hiddenSectionIds,
+    initiativeCardContractEnabled,
+  ]);
 
   useEffect(() => {
     if (orderedNModeSectionsWithContent.length === 0) return;
