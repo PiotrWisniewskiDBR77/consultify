@@ -56,4 +56,8 @@ Zakres: sześć powierzchni obiektów Wywiadu na markerze `58ef0771d7`. `JEST` o
 
 ## Stan PO
 
-Do uzupełnienia po R2–R5 wraz z commitami, dowodem handlerów i zrzutami.
+- Wspólny SSOT `interviewActionMatrix.ts` pozostaje używany przez kebab wiersza i pięć dedykowanych podglądów. Test kontraktowy obejmuje teraz również `InterviewInsightPreview.tsx` i klika po jednej akcji macierzowej w każdym z pięciu footerów (`01e9c84e18`; mutacja callbacku Wniosku: RED, przywrócenie: GREEN).
+- Sesje i Szablony: istniejące wiring z `73c03f41a2` zachowane; host przekazuje realne callbacki jako `additionalActions`. Nie dodano atrap ani nowych kluczy i18n.
+- Skrzynka, Wnioski i Inicjatywy Wywiadu: istniejące wiring zachowane; test `initiativeRecordCanon` 6/6 potwierdza kanoniczne wejście do rekordu inicjatywy.
+- Literał ` *` w kroku wyboru sesji źródłowych zastąpiono konwencją `requiredMarker` (`f5ed589aa9`). Zastany test a11y nadal ma cztery oczekiwania starej gwiazdki dla pola Tytuł i kończy się 8/12; nie zmieniano go poza licencją.
+- Dowód wizualny jest `PARTIAL`: osiem PNG Sesji/Inicjatywy (PL/EN, light/dark) zapisano poza repo, ale kanoniczne narzędzie zwróciło `exit 1` z powodu nieotwartego overflow i braku wiersza do kliknięcia. Skrzynka, Przydział, Szablon i Wniosek nie mają kompletnego nowego przelotu dyżuru 330.
