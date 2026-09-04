@@ -21,6 +21,7 @@ const contract = {
   'mindmap-canvas': { minimumBase: 57, unique: 65, menus: 2, sha256: 'dc89abd5e1aa49ad2e98d201e7eb5ecd36c57d8aace31dcaa6022656ce2a8b1d' },
   'processflow-canvas': { minimumBase: 63, unique: 81, menus: 3, sha256: 'dfdd6efae65f523fee1bf339b96d22313506839a880fe15c13e92530fe177335' },
   'idea-table': { minimumBase: 21, unique: 27, menus: 5, sha256: '3864b4540d732c2d21cce8c6e4bafa8e7036f6809c96a4aa57e52307a3f7f46a' },
+  'idea-table-timeline-stuck': { minimumBase: 86, unique: 82, menus: 3, sha256: '2ccdd150921460e4c625d469f7cc73bf1604a6b45f52bb62947b92a627f78db1' },
 } as const;
 
 async function visibleControls(page: Page): Promise<Control[]> {
@@ -40,6 +41,29 @@ async function visibleControls(page: Page): Promise<Control[]> {
     })));
 }
 
+const STABLE_SAMPLE_COUNT = 5;
+const STABLE_SAMPLE_INTERVAL_MS = 200;
+const INITIAL_SHELL_MAX_CONTROLS = 1;
+
+async function waitForStableControls(page: Page, minimumBase: number): Promise<Control[]> {
+  let stableSamples = 0;
+  let previousCount: number | undefined;
+
+  await expect.poll(async () => {
+    const count = (await visibleControls(page)).length;
+    const passedReadinessFloor = count >= minimumBase && count > INITIAL_SHELL_MAX_CONTROLS;
+    stableSamples = passedReadinessFloor && count === previousCount ? stableSamples + 1 : 1;
+    previousCount = count;
+    return passedReadinessFloor && stableSamples >= STABLE_SAMPLE_COUNT;
+  }, {
+    timeout: 30_000,
+    interval: STABLE_SAMPLE_INTERVAL_MS,
+    message: `control inventory did not stabilize for ${STABLE_SAMPLE_COUNT} consecutive samples`,
+  }).toBe(true);
+
+  return visibleControls(page);
+}
+
 describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control inventory', () => {
   let browser: Browser;
 
@@ -51,6 +75,33 @@ describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control invent
     await browser?.close();
   });
 
+  it('idea-table-timeline-stuck: waits for a stable terminal control inventory', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${HARNESS_URL}/?screen=idea-table-timeline-stuck&lang=pl&theme=light&probeDelay=1`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    const base = await waitForStableControls(page, 1);
+    console.info('DAY337_STABLE_PROBE', base.length);
+    expect(base.every(({ name }) => name.length > 0)).toBe(true);
+    await page.close();
+  }, 60_000);
+
+  it('idea-table-timeline-stuck: Importuj dane opens the connector wizard', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${HARNESS_URL}/?screen=idea-table-timeline-stuck&lang=pl&theme=light`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    await waitForStableControls(page, contract['idea-table-timeline-stuck'].minimumBase);
+    await page.getByTestId('idea-table-bar-overflow').click();
+    await page.getByTestId('idea-table-overflow-import-data').click();
+    const dialog = page.getByRole('dialog');
+    expect(await dialog.isVisible()).toBe(true);
+    expect(await dialog.textContent()).toContain('Nowy konektor danych');
+    await page.close();
+  }, 60_000);
+
   for (const [screen, expected] of Object.entries(contract)) {
     it(`${screen}: accounts for the base and opened-menu passes`, async () => {
       const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -58,10 +109,7 @@ describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control invent
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
       });
-      await expect.poll(async () => (await visibleControls(page)).length, { timeout: 30_000 })
-        .toBeGreaterThanOrEqual(expected.minimumBase);
-
-      const base = await visibleControls(page);
+      const base = await waitForStableControls(page, expected.minimumBase);
       expect(base.every(({ name }) => name.length > 0)).toBe(true);
       const inventory = [...base];
       let openedMenus = 0;
