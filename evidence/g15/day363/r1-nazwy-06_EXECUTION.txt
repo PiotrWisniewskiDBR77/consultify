@@ -1,0 +1,13 @@
+canonical Initiative register parity keeps identical presentation while routing Open for initiatives.canonical-register.v1
+canonical Initiative register parity keeps identical presentation while routing Open for execution.canonical.executions.v1
+ExecutionControlSurface filters the visible projection and reports counts from the same canonical rows
+ExecutionControlSurface creates governed PLANNING_BASELINE change from the exact selected RESEQUENCE option
+ExecutionControlSurface ingests a deduplicated exact occurrence and guides a multi-signal Intervention draft
+ExecutionControlSurface opens stable Intervention ID by keyboard and closes only EFFECTIVE verification
+Execution canonical work/resources keeps Work fail-closed and retries the canonical case register
+Execution canonical work/resources keeps Resources fail-closed and retries the canonical case register
+Execution canonical work/resources loads Task projection by stable executionCaseId and opens preview with keyboard
+Execution canonical work/resources creates a canonical Milestone with exact Case and Handoff baseline versions
+Execution canonical work/resources keeps allocation simulation pure and exposes literal EVIDENCE_MISSING
+Execution canonical work/resources opens Allocation preview on single click and workspace on double click
+InitiativesHub canonical intake navigation clears retired proposal context and links a scheduled initiative to Execution

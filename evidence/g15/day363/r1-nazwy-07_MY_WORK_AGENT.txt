@@ -1,0 +1,4 @@
+Day 222 AI task comment persistence persists before replacing local state with the GET readback
+Day 222 DecisionDetailView RACI row actions does not render an attachment download action for a stakeholder row
+MYW-IDEAS-010 candidate→initiative path is no longer tool-gated does not gate the floating candidate panel (mels/active render path) to activeTool === process_flow
+Idea tools — complete DOM control inventory requires the owned visual harness instead of silently passing
