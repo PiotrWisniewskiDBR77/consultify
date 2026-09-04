@@ -183,3 +183,9 @@ powodu braku treści instrukcji, tylko dlatego, że **push instrukcji 299–312 
 zgłosiły STOP** (raporty STOP z 22:55–22:57). Świeży `git fetch github-backup --prune` w chwili
 pisania tego wpisu potwierdza, że wszystkie 13 instrukcji są teraz obecne na tej gałęzi. Szczegóły,
 dowód czasowy i wniosek („uruchomić łańcuchy ponownie”) w `PRZEKAZANIE_20260904.md` §3c.
+
+## K. Incydent 04.09 04:35 — drzewo robocze m03 opróżnione
+
+| # | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| K1 | `git status` w `/private/tmp/m03` pokazał **14 139 usuniętych plików śledzonych** (server/migrations 555, codex 314, services 262, tests/acceptance 153…), niezacommitowanych; HEAD i kopia nietknięte (0 0). Wykryte przez bezpiecznik: `initiativeRecordCanon` → `Cannot find module tests/setup.ts` („no tests” ≠ PASS). Przywrócone `git restore --source=HEAD --worktree -- .`, 29/29 testów. Sprawca nieustalony (między 00:25 a 04:35; w tym oknie biegły łańcuchy Codexa B/A i dyżur 312; inne worktree bez braków). | Merge’e docs w tym oknie przeszły, bo nie dotykały usuniętych ścieżek; każdy test uruchamiany z m03 dawałby fałszywe „no tests” | PRZYWRÓCONE; przyczyna OTWARTA | rejestr; reguła: `git status --short \| grep -c "^ D"` przed każdym scaleniem |
