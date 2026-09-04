@@ -49,6 +49,10 @@ const JEZYK = arg('jezyk', 'pl');
 // Domyślne zachowanie i konwencja dotychczasowych wywołań pozostają bez zmian.
 const WYJSCIE = arg('wyjscie', '');
 const WYNIK_JSON = arg('wynik-json', '');
+// Dyżur 345: opt-in pomiar tożsamości prawego panelu z dokładnie tego samego
+// DOM-u, który trafia na zrzut. Pusty selektor zachowuje dotychczasowe
+// zachowanie narzędzia bit w bit.
+const MIERZ_PANEL = arg('mierz-panel', '').trim();
 // Dyżur 284: oba pomiary są jawnie opt-in, aby nie zmieniać historycznych
 // wywołań narzędzia. Sekcje rozwijamy po interakcjach i przed zrzutem;
 // dostępność mierzymy na dokładnie tym samym, rozwiniętym DOM-ie.
@@ -619,6 +623,18 @@ for (const ekran of EKRANY) {
           ZLICZ
         );
       }
+      const panelPomiar = MIERZ_PANEL
+        ? await page.evaluate((selector) => {
+            const panel = document.querySelector(selector);
+            if (!(panel instanceof HTMLElement)) return null;
+            return {
+              selector,
+              szerokoscPx: panel.getBoundingClientRect().width,
+              ariaLabel: panel.getAttribute('aria-label'),
+              tagName: panel.tagName.toLowerCase(),
+            };
+          }, MIERZ_PANEL)
+        : undefined;
       const localStorageState =
         LOCALSTORAGE_KEYS.length > 0
           ? await page.evaluate(
@@ -649,6 +665,7 @@ for (const ekran of EKRANY) {
         hasResultMarker,
         obrazJasnosc,
         zliczenia,
+        panelPomiar,
         localStorageState,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
