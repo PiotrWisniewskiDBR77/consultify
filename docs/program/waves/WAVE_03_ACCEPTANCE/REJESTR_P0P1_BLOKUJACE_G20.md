@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `27fbe53a77d9d31db947e8c89ad36fb01622f1c7`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 27fbe53a77d9d31db947e8c89ad36fb01622f1c7 --snapshot-date 2026-09-04`
+Marker: `fd6ecd369ebacf5dc744254acc13f323e5ee7d2b`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker fd6ecd369ebacf5dc744254acc13f323e5ee7d2b --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -115,7 +115,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
-| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
+| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
 | `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | źródło mówi pre-existing bez SHA naprawy | — | settlement |
 | `RES-OWN-005` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-380 | R-17 → DEC-2026-09-03-380 | settlement, decisions, owner, wave2 |
 | `RES-OWN-006` | NAPRAWIONE | SHA_OK | 27345491d5 | — | settlement |

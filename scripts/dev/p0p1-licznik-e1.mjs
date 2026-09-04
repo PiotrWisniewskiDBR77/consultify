@@ -65,7 +65,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   // Pozycja to duplikat zgłoszenia MYW-DEC-REC-001 (rejestr modułu: 2026-08-23).
   'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137' },
   'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
-  'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
+  'RES-OWN-003': { type: 'UNRESOLVED', detail: 'właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-MENU-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-REC-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
