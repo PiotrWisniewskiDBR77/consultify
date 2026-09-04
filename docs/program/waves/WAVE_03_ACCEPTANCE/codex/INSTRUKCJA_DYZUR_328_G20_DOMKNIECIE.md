@@ -802,6 +802,31 @@ z Twojej gałęzi, bez sieci — jeden `--depth 50`, drugi pełny. **To jest dow
 namiastka**: uruchamiasz dokładnie tę samą komendę, którą woła CI, w dokładnie tym samym
 kształcie klonu.
 
+## ★★ WARUNKI WSPÓLNE SERII — obowiązują mimo że ten dyżur nie dotyka produktu
+
+Ten dyżur **nie zmienia ani jednego pliku w `src/` i `server/src/`**, więc poniższe
+warunki są u Ciebie **kontrolą braku szkody ubocznej**, a nie przedmiotem pracy. Mierzysz
+je **PRZED pierwszym commitem i PO ostatnim**, i obie liczby wpisujesz do raportu:
+
+```bash
+cd "$WT"
+# (a) liscie slownikow NIE MOGA ZMALEC
+node -e "const f=require('fs');function c(o){let n=0;const w=v=>{if(v&&typeof v==='object'){for(const k of Object.keys(v))w(v[k]);}else n++;};w(o);return n;}for(const l of ['pl','en'])console.log(l,c(JSON.parse(f.readFileSync('public/locales/'+l+'/translation.json','utf8'))));"
+#   moje liczby: pl 35198, en 33065
+
+# (b) trzy bramki kanonu maja konczyc sie kodem 0
+bash scripts/check-focus-canon.sh --ci >/dev/null 2>&1; echo "focus-canon=$?"
+bash scripts/check-list-canon.sh       >/dev/null 2>&1; echo "list-canon=$?"
+bash scripts/check-artefakt.sh         >/dev/null 2>&1; echo "artefakt=$?"
+#   moje liczby: wszystkie 0; dlug wejsciowy: list-canon 368/368, artefakt 8/9,
+#   focus-canon baseline 61 plikow / 169 wystapien
+```
+
+**Jeżeli którakolwiek liczba zmaleje albo bramka zaczerwieni się od Twojej zmiany —
+naprawiasz KODEM, nigdy progiem i nigdy `--no-verify`** (`Z35`). Jeżeli zaczerwieniła się
+z powodu zastanego, **udowodnij to komendą na markerze** i wpisz do „Korekt wobec
+instrukcji".
+
 ## ★★ TABELA MIANOWNIKÓW — każdą liczbę mierzysz sam (`Z24`)
 
 | # | Co liczę | Liczba autora | Komenda | Czy komenda obejmuje badany obiekt? |
