@@ -95,8 +95,60 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 - W mutacji właściwego strażnika czerwieni 21 z 44 testów financeValue, nie 11; mianownik pozostaje 68/3.
 - Przykładowy komplet env R3 nie zawiera dwóch bramek wymaganych przez same pliki testowe i nie wymusza sekwencyjności; bez korekty pakiety nie wykonują 68 przypadków.
 
+## R4 — tabela decyzji i rekomendacje
+
+| Moduł | Artefakt / defekt / nieorzeczone | Rekomendacja | Rodziny | Rekomendowany stan G15 |
+| --- | --- | --- | ---: | --- |
+| 02_INTERVIEW | 0 / 1 / 0 | `NAPRAWIAMY` wąski footer Interview | 1 | pozostać `PARTIAL_PASS` do zielonego pakietu |
+| 03_TOOLS | 0 / 1 / 0 | `NAPRAWIAMY` fallback ToolCanvas | 1 | pozostać `PARTIAL_PASS` do 621/621 |
+| 05_INITIATIVES | 0 / 18 / 0 | `NAPRAWIAMY` razem z 06 | 6 | pozostać `NOT_MEASURED` |
+| 06_EXECUTION | 0 / 13 / 0 | `NAPRAWIAMY` wspólną paczką 05/06 | 5, w tym 4 wspólne z 05 | pozostać `NOT_MEASURED` |
+| 07_MY_WORK_AGENT | 0 / 0 / 4 | `DOMIERZYĆ`: oddzielić unit, real-PG i harness 5268 | 3 | pozostać `PARTIAL_PASS` |
+| 08_MEETINGS | 0 / 3 / 0 | `NAPRAWIAMY` MeetingHub/MeetingObjectPage | 2 | pozostać `NOT_MEASURED` |
+| 10_FINANCE | 0 / 0 / 0 bieżących | `DŁUG`, propozycja `DEC-394` | 0 | przejść na `PASS` po akcepcie 924/924 |
+| 11_MATERIALS | 0 / 2 / 0 | `NAPRAWIAMY` dwa panele | 2 | pozostać `PARTIAL_PASS` |
+| 14_ADMIN | 0 / 7 / 0 | `NAPRAWIAMY` siedem kontraktów paneli | 7 | pozostać `PARTIAL_PASS` |
+| 16_PARTNER | 0 / 9 / 0 | `NAPRAWIAMY` payout/company-info/regions/specializations | 4 | pozostać `NOT_MEASURED` |
+
+Worktree markerowy zwrócił `DEC-390`, `DEC-391`, `DEC-392`; bieżący tip `github-backup/grafika/m03-20260902` zawiera także `DEC-393`. Dlatego propozycja, a nie decyzja właściciela, to `DEC-394`.
+
+### Zastana kontra regresja
+
+Przed pomiarem baza miała 8.4 GiB wolnego. Sparse worktree `/private/tmp/cx-day363-g15-ile-realne-artefakty/baza` na `f65c4ff6a01c1eb3b3bcb2d1e84a1d299649d711` objął 19 badanych plików produktu. Jedno wywołanie `esbuild --platform=browser --format=esm` zakończyło się kodem 0. Porównanie z pełnymi nazwami w repozytoryjnych artefaktach 336/347/351/355 znajduje 57 z 58 bieżących nazw jako wcześniej obserwowane. Jedyna nieznaleziona nazwa to test Menu 3; sam test nie istnieje na `f65c4ff6a0`, więc `REGRESJA` pozostaje `NOT_PROVEN`. Worktree bazy usunięto; po usunięciu pozostaje 8.4 GiB.
+
+## R5 — wynik końcowy
+
+### Co naprawiamy, a co przyjmujemy jako dług
+
+Naprawiamy 54 nazwane czerwienie z modułów 02, 03, 05, 06, 08, 11, 14 i 16, pogrupowane w 28 rodzin przed deduplikacją wspólnych rodzin 05/06. Dokładne nazwy są w ośmiu plikach `r1-nazwy-*`; nie należy planować ich jako 54 osobnych napraw.
+
+Jako dług proponuję przyjąć zero bieżących czerwieni Finansów i historyczny, niereprodukujący się wpis G15 pod nowym numerem `DEC-394`; decyzja wymaga akceptacji właściciela. Czterech nazw 07 nie przyjmuję jako długu ani defektu — wymagają domiaru.
+
+### Trzy jawne liczby i listy
+
+- **Artefakt: 0 bieżących czerwonych nazw.** Finansowy artefakt historyczny ma dziś pustą listę `r1-nazwy-10_FINANCE.txt`.
+- **Realny defekt: 54 nazwy.** Lista = `r1-nazwy-02_INTERVIEW`, `03_TOOLS`, `05_INITIATIVES`, `06_EXECUTION`, `08_MEETINGS`, `11_MATERIALS`, `14_ADMIN`, `16_PARTNER`.
+- **Nieorzeczone: 4 nazwy.** Wszystkie są w `r1-nazwy-07_MY_WORK_AGENT.txt`.
+
+### Gdzie użyłem analogii
+
+Nie wydałem żadnego werdyktu `ARTEFAKT_Z_ANALOGII`. Oznaczenie 57/58 jako wcześniej obserwowane korzysta z repozytoryjnych artefaktów, ale nie zastępuje własnego uruchomienia. Mutacja R3 dowodzi wyłącznie mechanizmu bramki członkostwa, nie mechanizmów frontowych.
+
+### Pytania do właściciela
+
+Czy zgadzasz się zastąpić wieloznaczną etykietę `RED_LEGACY_N` trzema jawnymi polami (`przypadki`, `rodziny`, `pliki`) w osobnym dyżurze rejestrowym? **Tak/nie.** W tym dyżurze nie zmieniłem etykiet ani macierzy.
+
+### Start i rozejście
+
+Marker: `MARKER OK`. Sanity: `2a7273e087cbd3e44344725b524f6ddd79d5badc`, czysty status. Tip był dalej niż marker; pracę wykonano dokładnie z markera, bez rebase.
+
+### Zasięg przed/po
+
+Dyżur nie zmienił produktu ani testów. R3 ma kwalifikowane porównanie nazw: 68/3 baza, mutacja i final, bez nazw dodanych ani znikniętych. Pełne pakiety R1 zostaną powtórzone po ostatnim commicie.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Na etapie R1 nie rozstrzygnięto jeszcze mechanizmu każdej czerwieni ani jej statusu artefakt/defekt.
 - Cztery nazwy 07 pozostają `NIEORZECZONY`: kwalifikowany, stałomianownikowy A/B dla trzech mechanizmów nie został uzyskany.
 - R3 dowodzi ochrony `requireActiveMembership`, ale nie ochrony osobnego warunku roli `requireFinanceEditorMembership`.
+- Baza sparse przeszła esbuild, lecz nie uruchomiono na niej pełnych pakietów; `ZASTANA/REGRESJA` dla nazwy Menu 3 pozostaje `NOT_PROVEN`.

@@ -342,3 +342,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AA. Dyżur 363 — numeral G15 nie ma jednej jednostki
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AA1 | Dziesięć podtypów `RED_LEGACY_N` sumuje się do 26, lecz treść wierszy opisuje 66 czerwieni; `N` oznacza naprzemiennie przypadki, rodziny albo pliki. Świeży pomiar daje 58 czerwonych nazw: 54 realne, 4 nieorzeczone, 0 bieżących artefaktów; Finance ma dziś 924/924. | Planowanie po samym numeralu zaniża historyczny mianownik o 40 i miesza jednostki. Potrzebna decyzja właściciela, czy rozdzielić trzy pola; propozycja długu historycznego Finance: `DEC-394`. | DO DECYZJI WŁAŚCICIELA | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY363_G15_ILE_REALNE_REPORT.md`, `evidence/g15/day363/` |
+| AA2 | Trafiona mutacja `requireActiveMembership.ts:34` zachowała 68 nazw/3 pakiety i dała 21 czerwieni; po cofnięciu wróciło 68/68. Odrębny strażnik `requireFinanceEditorMembership` nie był objęty. | Pakiet financeValue broni właściwej bramki, ale dowodu nie wolno rozszerzać na drugi strażnik roli. | ZAMKNIĘTE dla `requireActiveMembership`; NIEZWERYFIKOWANE dla roli editora | `evidence/g15/day363/r3-mutacja-czerwone-nazwy.txt` |
