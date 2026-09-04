@@ -1,12 +1,12 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `9380f5251dd554ea646b0dfc5dbf4e2c7b932ffd`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 9380f5251dd554ea646b0dfc5dbf4e2c7b932ffd --snapshot-date 2026-09-04`
+Marker: `55eb0a5ba87d73e1f54476626ad60087edf37316`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 55eb0a5ba87d73e1f54476626ad60087edf37316 --snapshot-date 2026-09-04`
 
-Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
+Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
-**BLOKUJE: 12**
+**BLOKUJE: 11**
 
 | ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |
 |---|---|---|---|---|---|
@@ -63,7 +63,7 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `EXE-OWN-007` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-008` | NAPRAWIONE | SHA_OK | 4cd0ce6589 | — | settlement |
 | `FIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać kanoniczny dataset pięciu modeli Finance i kryterium poziomów agregacji; d8561ed5c2 naprawia tylko bridge ID | — | settlement |
-| `INI-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak kompletnej fikstury 11 inicjatyw i dowodu przeglądarkowego jej pól lifecycle | — | settlement |
+| `INI-OWN-001` | NAPRAWIONE | SHA_OK | 5c6d72066f | — | settlement |
 | `INI-OWN-002` | NAPRAWIONE | SHA_OK | aed131a2ab | — | settlement, decisions |
 | `INI-OWN-003` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-29-344 | — | settlement, decisions |
 | `INI-OWN-004` | NAPRAWIONE | SHA_OK | 5c6d72066f | — | settlement |
