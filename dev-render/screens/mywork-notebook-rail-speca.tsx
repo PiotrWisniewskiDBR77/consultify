@@ -47,6 +47,25 @@ const installMocks = () => {
   api.getNotebookPages = async () => [];
   api.getBacklinks = async () => [];
   api.notebookSemanticSearch = async () => [];
+
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = String(input);
+    const mockedRead = [
+      '/api/my-work/my-ideas/suggest?',
+      '/api/initiatives?',
+      '/api/my-work/tasks?',
+      '/api/decisions?',
+      '/api/my-work/link-graph/backlinks?',
+    ].some((path) => url.includes(path));
+    if (mockedRead) {
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return realFetch(input, init);
+  };
 };
 installMocks();
 
@@ -110,23 +129,29 @@ export default function MyWorkNotebookRailSpecAScreen({
     <div className="flex h-screen w-screen items-stretch bg-c-bg p-3">
       {/* NotebookContent.tsx:3231 — byte-for-byte wrapper wokół [edytor, graf, szyna] */}
       <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
-        {/* NotebookContent.tsx:3238/3260-3274 — realny szkielet ładowania notatki
-            (aria-hidden), użyty tu jako wierny substytut edytora Tiptap, którego
-            ten harness nie montuje 1:1 (silnie stanowy, wymaga edytora/API). */}
+        {/* Statyczna treść tej samej notatki co ACTIVE_PAGE. Harness nie montuje
+            stanowego edytora Tiptap, ale odbiór pokazuje dokument, nie loader. */}
         <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface-raised">
-          <div className="flex-1 overflow-hidden">
-            <div className="mx-auto max-w-3xl px-6 py-8" aria-hidden="true">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-c-surface" />
-                <div className="h-7 w-2/3 rounded-lg bg-c-surface" />
+          <div className="flex-1 overflow-y-auto bg-c-surface">
+            <article className="mx-auto max-w-3xl px-10 py-12 text-c-text">
+              <p className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">Notatnik projektu</p>
+              <h1 className="mt-2 text-3xl font-semibold">Warsztat 3: migracja danych</h1>
+              <p className="mt-3 text-sm text-c-text-secondary">30 lipca 2026 · Anna Kowalska</p>
+              <div className="mt-10 space-y-6 text-[15px] leading-7">
+                <section>
+                  <h2 className="text-lg font-semibold">Ustalenia</h2>
+                  <p className="mt-2">Migracja wymaga jednego klucza klienta (MDM) przed importem danych historycznych. Zespół uzgodnił walidację duplikatów i próbny przebieg na kopii danych.</p>
+                </section>
+                <section>
+                  <h2 className="text-lg font-semibold">Otwarte pytania</h2>
+                  <p className="mt-2">Do potwierdzenia pozostają właściciel mapowania rekordów sprzed 2024 roku oraz kryterium akceptacji raportu rozbieżności.</p>
+                </section>
+                <section>
+                  <h2 className="text-lg font-semibold">Następne kroki</h2>
+                  <p className="mt-2">Anna przygotuje próbkę danych, a zespół wdrożeniowy zweryfikuje mapowanie i zapisze decyzję o gotowości do migracji.</p>
+                </section>
               </div>
-              <div className="space-y-3">
-                <div className="h-4 w-full rounded bg-c-surface" />
-                <div className="h-4 w-11/12 rounded bg-c-surface" />
-                <div className="h-4 w-4/5 rounded bg-c-surface" />
-                <div className="h-4 w-2/3 rounded bg-c-surface" />
-              </div>
-            </div>
+            </article>
           </div>
         </div>
       </div>

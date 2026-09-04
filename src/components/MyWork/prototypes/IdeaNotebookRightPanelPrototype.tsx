@@ -19,6 +19,7 @@ interface PrototypeProps {
    * never falls back to the demonstration owner/status or empty placeholders. */
   sections?: ArtifactRightPanelSection[];
   title?: string;
+  ariaLabel: string;
 }
 
 const copy = {
@@ -47,6 +48,7 @@ export const IdeaNotebookRightPanelPrototype: React.FC<PrototypeProps> = ({
   onClose,
   sections: hostSections,
   title: hostTitle,
+  ariaLabel,
 }) => {
   const t = copy[language];
   const title = hostTitle || (context === 'idea' ? t.idea : t.notebook);
@@ -77,10 +79,14 @@ export const IdeaNotebookRightPanelPrototype: React.FC<PrototypeProps> = ({
   const sections = hostSections ?? fallbackSections;
 
   return (
-    <aside onKeyDown={(event) => { if (event.key === 'Escape' && onClose) { event.stopPropagation(); onClose(); } }} className="flex max-h-[calc(100vh-2rem)] w-[min(360px,100vw)] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-hig-lg max-[1279px]:w-[min(420px,100vw)]" aria-label={title}>
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-c-border-subtle px-4"><div><p className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">{context === 'idea' ? 'Idea' : 'Notebook'}</p><h2 className="text-sm font-semibold text-c-text">{title}</h2></div>{onClose ? <button aria-label={t.close} onClick={onClose} className="rounded-lg p-2 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"><X size={16} /></button> : null}</header>
-      <ArtifactRightPanel sections={sections} width="100%" className="min-h-0 flex-1 border-0" />
-    </aside>
+    <div
+      onKeyDown={(event) => { if (event.key === 'Escape' && onClose) { event.stopPropagation(); onClose(); } }}
+      className="flex max-h-[calc(100vh-2rem)] shrink-0 flex-col overflow-hidden rounded-2xl bg-c-surface shadow-hig-lg ring-1 ring-inset ring-c-border-subtle"
+      style={{ width: 'var(--ntype-right-panel-width)', minWidth: 'var(--ntype-right-panel-width)' }}
+    >
+      <header aria-label={title} className="flex h-12 shrink-0 items-center justify-between border-b border-c-border-subtle px-4"><div><p className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">{context === 'idea' ? 'Idea' : 'Notebook'}</p><h2 className="text-sm font-semibold text-c-text">{title}</h2></div>{onClose ? <button aria-label={t.close} onClick={onClose} className="rounded-lg p-2 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"><X size={16} /></button> : null}</header>
+      <ArtifactRightPanel ariaLabel={ariaLabel} sections={sections} width="100%" className="min-h-0 flex-1 border-0" />
+    </div>
   );
 };
 

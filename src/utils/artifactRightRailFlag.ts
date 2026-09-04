@@ -79,8 +79,9 @@ function readLocalStorage(): boolean | null {
 
 function readEnvFlag(): boolean | null {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return parseFlag(meta?.env?.[ENV_KEY]);
+    // Static access is required: Vite replaces this expression in the browser
+    // bundle, while a computed lookup remains unresolved.
+    return parseFlag(import.meta.env.VITE_ARTIFACT_RIGHT_RAIL_ENABLED);
   } catch {
     return null;
   }

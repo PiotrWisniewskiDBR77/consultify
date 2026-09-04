@@ -39,8 +39,9 @@ export function isNotebookSpecAShellEnabled(): boolean {
       query === null && typeof window !== 'undefined'
         ? parseFlag(window.localStorage.getItem(STORAGE_KEY))
         : null;
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return query ?? local ?? parseFlag(meta.env?.[ENV_KEY]) ?? ENABLE_NOTEBOOK_SPEC_A_SHELL;
+    // Static access is required: Vite replaces this expression in the browser
+    // bundle, while a computed lookup remains unresolved.
+    return query ?? local ?? parseFlag(import.meta.env.VITE_ENABLE_NOTEBOOK_SPEC_A_SHELL) ?? ENABLE_NOTEBOOK_SPEC_A_SHELL;
   } catch {
     return ENABLE_NOTEBOOK_SPEC_A_SHELL;
   }

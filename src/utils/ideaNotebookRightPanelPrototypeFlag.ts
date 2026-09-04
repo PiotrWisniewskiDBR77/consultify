@@ -22,8 +22,9 @@ export function isIdeaNotebookRightPanelPrototypeEnabled(): boolean {
       typeof window === 'undefined' ? null : parseFlag(window.localStorage.getItem(STORAGE_KEY));
     if (stored !== null) return stored;
 
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return parseFlag(meta.env?.[ENV_KEY]) ?? false;
+    // Static access is required: Vite replaces this expression in the browser
+    // bundle, while a computed lookup remains unresolved.
+    return parseFlag(import.meta.env.VITE_IDEA_NOTEBOOK_RIGHT_PANEL_PROTOTYPE) ?? false;
   } catch {
     return false;
   }

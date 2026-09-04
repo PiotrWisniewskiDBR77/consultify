@@ -1039,6 +1039,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       context="notebook"
       language={isPolishRail ? 'pl' : 'en'}
       title={activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+      ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
       onClose={onClose}
       sections={specASections}
       legacy={specAShellEnabled ? specAPanel : legacyRail}
