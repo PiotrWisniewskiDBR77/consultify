@@ -99,3 +99,9 @@ Dowód PRZED tej mutacji nie został uruchomiony lokalnie przed zmianą kodu bez
 Zbieracz identyfikatorów obejmuje `catch (x)`, `.catch((x)=>)`, `.catch(async (x)=>)`, `.catch(function (x){})`, `.catch(x=>)` oraz parametr z adnotacją typu. Własny pomiar formy `.catch((ident)…)`: 71. Baseline’y pozostają `ALTERNATE=44`, `VARIABLE_AGNOSTIC=47`; rozszerzenie nie podniosło istniejącego długu na czystym drzewie. Mutacja `.catch((problem) => res.json({ error: problem.message }))` w `health.routes.ts:291` po naprawie: exit 1, licznik 48 > 47; po `cp` diff produktu pusty. Pełna imienna lista z komunikatu jest w `r3-mutacja-po.txt`.
 
 Dowód PRZED i mutacja odwrotna nie zostały wykonane lokalnie; R3 pozostaje `PARTIAL`. Rozróżnienie: 71 to wystąpienia formy callback, a 47 to wykryty dług odpowiedzi HTTP — nie są tą samą liczbą.
+
+## R4 — DDL w `__tests__`
+
+Decyzja: OBJĘCIE, nie ciche wyłączenie. Osobna allowlista obejmuje 24 pliki i 58 wystąpień. Liczby per plik: `11, 8, 5, 4, 4, 4, 3, 3` oraz po `1` w pozostałych 16 plikach; pełne ścieżki są jawnie zapisane w `ALLOWED_TEST_DDL_BY_FILE`. Mutacja `CREATE TABLE IF NOT EXISTS __day327_probe__ (id INT);` w `ini005-negative-controls.pg.test.ts` po naprawie: exit 1; po `cp` diff produktu pusty. Artefakt: `r4-mutacja-po.txt`.
+
+Dowód PRZED tej mutacji nie został uruchomiony lokalnie przed zmianą guarda; R4 jest `PARTIAL`, choć nowy pomiar jest jawny i mutacja PO czerwieni bezpiecznik.
