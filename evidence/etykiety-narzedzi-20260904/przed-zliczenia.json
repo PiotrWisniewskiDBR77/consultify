@@ -1,0 +1,103 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 0,
+  "klikPoRozwinieciu": false,
+  "cofnijJesliSkraca": false,
+  "wyniki": [
+    {
+      "ekran": "tools-swot-session-workspace",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day354-etykiety-narzedzi/evidence/etykiety-narzedzi-20260904/tools-swot-session-workspace__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Biblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nDodaj narzędzie\nLista\ndynamic-swot\nWejście na rynek DACH\nWejście na rynek DACH\nSzkic\nZapisano\nZapytaj Teresę\nSESJA\nMisja i kontekst\nWejście i eksploracja\nANALIZA\nBudowa SWOT\nSynteza i wnioski\nREZULTATY\nWyniki i działania\nZablokowane brakami\n1\nMisja i kontekst\nGotowe\n2\nWejście i eksploracja\nGotowe\n3\nBudowa SWOT\nGotowe\n4\nSynteza i napięcia\nGotowe\n5\n2\nWyniki i działania\nPrzygotuj końcowe podsumowanie źródeł\nMISJA I KONTEKST\nPROPOZYCJA KONSULTANTA\nSZKIC\nNajpierw uzgadniamy, jak rozumiem intencję tej sesji i jaki typ kierunku strategicznego próbujemy zaprojektować.\n1. JAKI KIERUNEK STRATEGICZNY PROJEKTUJEMY?\n1/5\nWybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.\nMożesz zaznaczyć wiele odpowiedzi\nKierunek strategiczny całej firmy\nSzukanie odpowiedzi, dokąd firma ma zmierzać jako całość.\nNowy silnik wzrostu\nWybór, skąd ma przyjść następna fala wzrostu.\nRepozycjonowanie rynkowe\nOdpowiedź, jak firma ma zmienić pozycję na rynku.\nZmiana modelu działania\nSkupienie na tym, jakie zdolności trzeba przestawić, by strategia była wykonalna.\nDalej\nKOMENTARZ\nDODAJ WIĘCEJ\nAKCJE\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nTyp narzędzia\tdynamic-swot\nKategoria\tStrategia\nStatus\tSzkic\nEtap konsultingowy\tWejście i cel\nAktualny krok\tMisja i kontekst\nPostęp\t80%\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\n0\nKOMENTARZE\n0\nHISTORIA",
+      "hasResultMarker": null,
+      "obrazJasnosc": 245.66113372781632,
+      "zliczenia": [
+        {
+          "nazwa": "kafle",
+          "css": "[data-testid=\"dynamic-swot-phase-tile\"]",
+          "ile": 5,
+          "teksty": [
+            "1Misja i kontekstGotowe",
+            "2Wejście i eksploracjaGotowe",
+            "3Budowa SWOTGotowe",
+            "4Synteza i napięciaGotowe",
+            "52Wyniki i działaniaPrzygotuj końcowe podsumowanie źródeł"
+          ]
+        },
+        {
+          "nazwa": "teksty",
+          "css": "[data-testid=\"dynamic-swot-phase-tile\"]",
+          "ile": 5,
+          "teksty": [
+            "1Misja i kontekstGotowe",
+            "2Wejście i eksploracjaGotowe",
+            "3Budowa SWOTGotowe",
+            "4Synteza i napięciaGotowe",
+            "52Wyniki i działaniaPrzygotuj końcowe podsumowanie źródeł"
+          ]
+        }
+      ],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "tools-swot-session-workspace",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day354-etykiety-narzedzi/evidence/etykiety-narzedzi-20260904/tools-swot-session-workspace__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Biblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nDodaj narzędzie\nLista\ndynamic-swot\nWejście na rynek DACH\nWejście na rynek DACH\nSzkic\nZapisano\nZapytaj Teresę\nSESJA\nMisja i kontekst\nWejście i eksploracja\nANALIZA\nBudowa SWOT\nSynteza i wnioski\nREZULTATY\nWyniki i działania\nZablokowane brakami\n1\nMisja i kontekst\nGotowe\n2\nWejście i eksploracja\nGotowe\n3\nBudowa SWOT\nGotowe\n4\nSynteza i napięcia\nGotowe\n5\n2\nWyniki i działania\nPrzygotuj końcowe podsumowanie źródeł\nMISJA I KONTEKST\nPROPOZYCJA KONSULTANTA\nSZKIC\nNajpierw uzgadniamy, jak rozumiem intencję tej sesji i jaki typ kierunku strategicznego próbujemy zaprojektować.\n1. JAKI KIERUNEK STRATEGICZNY PROJEKTUJEMY?\n1/5\nWybierz, jaki rodzaj kierunku strategicznego naprawdę próbujemy tutaj zbudować.\nMożesz zaznaczyć wiele odpowiedzi\nKierunek strategiczny całej firmy\nSzukanie odpowiedzi, dokąd firma ma zmierzać jako całość.\nNowy silnik wzrostu\nWybór, skąd ma przyjść następna fala wzrostu.\nRepozycjonowanie rynkowe\nOdpowiedź, jak firma ma zmienić pozycję na rynku.\nZmiana modelu działania\nSkupienie na tym, jakie zdolności trzeba przestawić, by strategia była wykonalna.\nDalej\nKOMENTARZ\nDODAJ WIĘCEJ\nAKCJE\nSzkic\nPoproś o przegląd\nCOPILOT AI\nPrzejrzyj AI (2)\nWyostrz z AI\nSzkicuj z AI\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nTyp narzędzia\tdynamic-swot\nKategoria\tStrategia\nStatus\tSzkic\nEtap konsultingowy\tWejście i cel\nAktualny krok\tMisja i kontekst\nPostęp\t80%\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\n0\nKOMENTARZE\n0\nHISTORIA",
+      "hasResultMarker": null,
+      "obrazJasnosc": 28.425010147762347,
+      "zliczenia": [
+        {
+          "nazwa": "kafle",
+          "css": "[data-testid=\"dynamic-swot-phase-tile\"]",
+          "ile": 5,
+          "teksty": [
+            "1Misja i kontekstGotowe",
+            "2Wejście i eksploracjaGotowe",
+            "3Budowa SWOTGotowe",
+            "4Synteza i napięciaGotowe",
+            "52Wyniki i działaniaPrzygotuj końcowe podsumowanie źródeł"
+          ]
+        },
+        {
+          "nazwa": "teksty",
+          "css": "[data-testid=\"dynamic-swot-phase-tile\"]",
+          "ile": 5,
+          "teksty": [
+            "1Misja i kontekstGotowe",
+            "2Wejście i eksploracjaGotowe",
+            "3Budowa SWOTGotowe",
+            "4Synteza i napięciaGotowe",
+            "52Wyniki i działaniaPrzygotuj końcowe podsumowanie źródeł"
+          ]
+        }
+      ],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "tools-swot-session-workspace",
+      "roznicaLuminancji": 217.23612358005397,
+      "procentRoznychPikseli": 99.946875,
+      "powod": null
+    }
+  ],
+  "porownania": []
+}

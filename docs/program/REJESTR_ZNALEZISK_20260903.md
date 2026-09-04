@@ -331,3 +331,9 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | X1 | Wzorzec `X > 0 || target > 0` miał 12 trafień, z czego 9 liczyło kompletność; instrukcja zaniżała rdzeń do 7. Cele metodyki podnosiły licznik w żywej trasie i minach UI. | Jedna definicja per drzewo objęła 9 miejsc; 9 osobnych mutacji RED, parytet bliźniaków RED po jednostronnej zmianie, realny ApiGateway/JWT/PG potwierdził 7/39 niepełne i 39/39 pełne. | ZAMKNIĘTE lokalnie; produkcja i flagowany ekran NIEZWERYFIKOWANE | `CODEX_DAY351_LICZNIK_KOMPLETNOSCI_REPORT.md`, `evidence/licznik-kompletnosci-20260904/` |
+## Y. Dyżur 354 — etykiety narzędzi fazowych
+
+- Własny parser wielowierszowych wariantów języka wykazał większy mianownik niż instrukcja: rodzina 350 ternary, A=8, B=55.
+- Naprawiono 20 etykiet z nazw title.pl; dodano ratchet importujący wspólny rejestr justification i podłogę liczebności.
+- R4 pozostaje PARTIAL: ekran dynamic-swot był już poprawny na markerze, więc kadry PRZED/PO są identyczne i nie dowodzą zmian portfolio/risk.
+- Gałąź odbiorowa: `codex/day354-etykiety-narzedzi-20260904`; szczegóły i propozycje w `CODEX_DAY354_ETYKIETY_NARZEDZI_REPORT.md`.
