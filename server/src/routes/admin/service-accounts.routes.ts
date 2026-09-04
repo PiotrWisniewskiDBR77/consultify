@@ -23,12 +23,6 @@ router.use(
         code: 'ADMIN_BOUNDARY_VIOLATION',
         error: 'Cross-organization admin access is blocked',
       });
-    if (!validateUUID(organizationId) || !validateUUID(userId))
-      return res.status(400).json({
-        success: false,
-        code: 'INVALID_IDENTIFIER',
-        error: 'Organization and user identifiers must be valid UUIDs',
-      });
     const membership = await dbGet<{ role?: string; status?: string }>(
       'SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1',
       [organizationId, userId],
@@ -57,6 +51,7 @@ router.get(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = String(req.user?.organizationId || '');
+    if (!validateUUID(organizationId)) return res.json({ success: true, data: [] });
     return res.json({
       success: true,
       data: await serviceAccountService.listServiceAccounts(organizationId),
