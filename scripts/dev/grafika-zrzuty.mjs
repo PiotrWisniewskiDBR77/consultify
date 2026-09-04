@@ -53,6 +53,10 @@ const WYNIK_JSON = arg('wynik-json', '');
 // wywołań narzędzia. Sekcje rozwijamy po interakcjach i przed zrzutem;
 // dostępność mierzymy na dokładnie tym samym, rozwiniętym DOM-ie.
 const ROZWIN_SEKCJE = arg('rozwin-sekcje', '0') === '1';
+// Day341: opt-in scope keeps global menu/search toggles out of an otherwise
+// content-only expansion pass. Empty value preserves the historical selector.
+const ROZWIN_W = arg('rozwin-w', '').trim();
+const wZakresieRozwijania = (selector) => (ROZWIN_W ? `${ROZWIN_W} ${selector}` : selector);
 const A11Y = arg('a11y', '0') === '1';
 // Dyżur G06 03.09 (nadzorca): opt-in czas osiadania PO rozwinięciu sekcji, PRZED skanem
 // dostępności i zrzutem. Zmierzone na deck-artifact: bloki mają fade-in framer-motion
@@ -474,7 +478,7 @@ for (const ekran of EKRANY) {
         // kolejne accordiony. Klikamy wyłącznie semantyczne kontrolki ze
         // stanem aria-expanded=false; natywne <details> otwieramy właściwością.
         for (let runda = 0; runda < 8; runda++) {
-          const kontrolki = page.locator('[aria-expanded="false"]');
+          const kontrolki = page.locator(wZakresieRozwijania('[aria-expanded="false"]'));
           const ile = await kontrolki.count();
           if (ile === 0) break;
           let postep = 0;
@@ -531,13 +535,21 @@ for (const ekran of EKRANY) {
           if (postep === 0) break;
           await page.waitForTimeout(150);
         }
-        sekcjeRozwiniete += await page.locator('details:not([open])').evaluateAll((elementy) => {
-          for (const element of elementy) element.open = true;
-          return elementy.length;
-        });
-        sekcjeNadalZwiniete = await page.locator('[aria-expanded="false"]:visible').evaluateAll(
-          (elementy) => elementy.map((element) => (element.textContent || element.getAttribute('aria-label') || element.tagName).trim().slice(0, 120))
-        );
+        sekcjeRozwiniete += await page
+          .locator(wZakresieRozwijania('details:not([open])'))
+          .evaluateAll((elementy) => {
+            for (const element of elementy) element.open = true;
+            return elementy.length;
+          });
+        sekcjeNadalZwiniete = await page
+          .locator(wZakresieRozwijania('[aria-expanded="false"]:visible'))
+          .evaluateAll((elementy) =>
+            elementy.map((element) =>
+              (element.textContent || element.getAttribute('aria-label') || element.tagName)
+                .trim()
+                .slice(0, 120)
+            )
+          );
         if (sekcjeNadalZwiniete.length > 0) {
           wynikBrak.push(`zwinięte sekcje: ${sekcjeNadalZwiniete.join(' / ')}`);
         }

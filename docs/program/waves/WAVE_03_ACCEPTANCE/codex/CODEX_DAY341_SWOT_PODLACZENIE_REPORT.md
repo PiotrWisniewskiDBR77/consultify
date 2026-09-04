@@ -95,3 +95,20 @@ Pierwszy przebieg był błędem transformacji Playwright przy bezpośrednim impo
 Pułapki (a)-(e): (a) `ENABLE_V8_GLOBAL=true`; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) `MOCK_DB=false DB_TYPE=postgres` oraz `DB_IDENTITY`; (d) `ENABLE_TEST_AUTH_BYPASS=false` i podpisany JWT z Gateway; (e) `RUN_DB_TESTS=1`, jawny `DATABASE_URL`, realny zapis i zimny GET. `--retries=0` wykluczył samoleczenie.
 
 Deklaracja Z30: „Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.”
+
+## R5 — prawdziwy bundle przeglądarkowy i dowód OFF/ON
+
+Pierwszy poprawny przebieg OFF w `dev-render` pokazał dokładnie pięć sekcji: `mission,input,swot,insights,outputs`. Pierwszy przebieg ON sfalsyfikował wcześniejsze zielone testy flagi: obliczony dostęp `import.meta.env[ENV_KEY]` pozostawał w module serwowanym przez Vite i zwracał OFF. Zmieniono go na statyczne `import.meta.env.VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES`; pobrany z harnessu moduł zawierał wtedy wstrzyknięte `"VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES": "true"`, a DOM pokazał dokładnie `mission,input,swot,insights,recommendations,outputs,review`. Po poprawce oba testy flagi i przewodu: 9 PASS.
+
+Narzędzie zrzutowe dostało opcjonalny zakres `--rozwin-w=main`, aby nie traktować globalnych przełączników menu jako akordeonów treści; brak parametru zachowuje dotychczasowe zachowanie. Cztery zrzuty 1440×900 light/dark zostały odczytane wizualnie. OFF zachowuje pięć etapów. ON pokazuje odrębne „Rekomendacje” i „Przegląd”, bez kolizji z zastaną sekcją sesji. Nie ma nakładania tekstu ani utraty czytelności w obu motywach.
+
+Artefakty (poza repo):
+
+- OFF light `a490c4a54b8cce01d11a6cb53c7264db1773ea801dc923e20650e90a43c66e2d`, dark `4cb0d5baf941661db2ce9b90e37f480d7d2cb20f28ad1c33bf27c3806f39a47a`;
+- ON light `4be477d57fcb030944cf97dafcba38a972e21503de459c9b540ee23777e6daf2`, dark `d9790f896f5e5a93d8d223c6edca577669265a8daf6209da61c3cd74a748ae27`.
+
+`grafika-zrzuty.mjs` zapisał oba obrazy jako `OK`; jego zbiorcze podsumowanie mimo to podało `1/2 par`, ponieważ tablica `pary` zawiera zarówno kontrolę stanu, jak i osobny rekord luminancji. Jest to błąd mianownika narzędzia, nie brak obrazu ani markera. Pomiary luminancji: light `246.616`, dark `28.584`, różnica `218.032`; oba znaczniki DOM są obecne. Zastane pięć odpowiedzi HTTP 404 pochodzi z mockowego harnessu i nie jest dowodem produkcyjnego HTTP.
+
+Brak uruchamiania drugiej bazy: `start-wave3-owner-runtime.mjs` odrzuca przydzieloną nazwę `cx341`, dopuszczając tylko rodziny `consultify_w3_*`. Warstwę wizualną wykonano więc zgodnie z instrukcją w kanonicznym `dev-render`, a realny HTTP/PG pozostaje oddzielnym dowodem R4.
+
+Kanoniczne bramki po zmianie: `check-artefakt.sh` PASS, `check-list-canon.sh` PASS, `check-focus-canon.sh --ci` PASS. `node --check scripts/dev/grafika-zrzuty.mjs` i `git diff --check` PASS. Odbiór właściciela pozostaje osobnym warunkiem i nie jest deklarowany.
