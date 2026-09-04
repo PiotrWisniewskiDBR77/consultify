@@ -337,12 +337,14 @@ const WAVE_2_QUESTIONS: PackQuestion[] = [
 export function getDynamicSwotPackForCurrentFlags(): ToolPack {
   if (!isDynamicSwotSevenStagesEnabled()) return dynamicSwotPack;
   const outputsIndex = dynamicSwotPack.phases.findIndex((phase) => phase.id === 'outputs');
+  if (outputsIndex < 0) return dynamicSwotPack;
   return {
     ...dynamicSwotPack,
     phases: [
       ...dynamicSwotPack.phases.slice(0, outputsIndex),
       WAVE_2_PHASES[0],
       dynamicSwotPack.phases[outputsIndex],
+      ...dynamicSwotPack.phases.slice(outputsIndex + 1),
       WAVE_2_PHASES[1],
     ],
     questions: [...dynamicSwotPack.questions, ...WAVE_2_QUESTIONS],

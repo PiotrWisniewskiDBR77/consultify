@@ -18,6 +18,10 @@ import type {
 } from '@/config/consultingToolsStandard';
 import { createConsultingMissionContext } from '@/config/consultingToolsStandard';
 import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '@/config/swot/swotAcceptGate';
+import {
+  dynamicSwotPack,
+  getDynamicSwotPackForCurrentFlags,
+} from '@/toolPacks/packs/dynamicSwot.pack';
 
 // ==================== TYPES ====================
 
@@ -5075,6 +5079,19 @@ export const useToolStore = create<ToolStoreState>()(
       getStepDefinitions: () => {
         const { currentSession } = get();
         if (!currentSession) return [];
+        if (currentSession.toolType === 'dynamic-swot') {
+          const pack = getDynamicSwotPackForCurrentFlags();
+          if (pack === dynamicSwotPack) return SWOT_STEPS;
+          return pack.phases.map((phase) => ({
+            id: phase.id,
+            name: phase.title.en,
+            namePl: phase.title.pl,
+            description: phase.goal.en,
+            descriptionPl: phase.goal.pl,
+            required: true,
+            aiAssisted: phase.id !== 'mission' && phase.id !== 'review',
+          }));
+        }
         return TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
       },
 

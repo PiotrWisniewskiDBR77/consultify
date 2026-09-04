@@ -1179,12 +1179,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         </div>
 
         {toolType === 'dynamic-swot' ? (
-          <div className="grid gap-3 xl:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {dynamicSwotPhaseSummaries.map((phase, index) => {
               const isActive = currentStepDef?.id === phase.id;
               return (
                 <button
                   key={phase.id}
+                  data-testid="dynamic-swot-phase-tile"
+                  data-phase-id={phase.id}
                   type="button"
                   onClick={() => setCurrentStep(index + 1)}
                   className={`rounded-2xl border px-4 py-3 text-left transition ${
@@ -1689,13 +1691,15 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       ) {
         return 1;
       }
-      if (['outputs', 'report', 'initiatives', 'results', 'summary'].includes(stepId)) return 2;
+      if (['recommendations'].includes(stepId)) return 2;
+      if (['outputs', 'report', 'initiatives', 'results', 'summary', 'review'].includes(stepId))
+        return 2;
       return 0;
     };
     // Static (non-phase) sections: group + Standard-C span/hidden hints.
     const staticGroupIndexById: Record<string, number> = {
       work: 0,
-      review: 1,
+      'session-review': 1,
       outputs: 2,
       'ai-collaboration': 3,
       comments: 4,
@@ -1704,7 +1708,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     };
     const cSpanById: Record<string, 1 | 2 | 3> = {
       work: 3, // wide step canvas + tool workspace
-      review: 2, // readiness + generation grids
+      'session-review': 2, // readiness + generation grids
       outputs: 3, // output contract grid + initiatives + candidates
       'ai-collaboration': 2,
     };
@@ -1785,7 +1789,25 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   </button>
                 </div>
               ) : null}
-              {currentSession ? (
+              {currentSession && ['recommendations', 'review'].includes(phaseStep.id) ? (
+                <div
+                  data-testid="dynamic-swot-phase-empty-state"
+                  data-phase-id={phaseStep.id}
+                  className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 dark:border-navy-700/70 dark:bg-navy-950/30"
+                >
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {isPolish ? phaseStep.namePl : phaseStep.name}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    {isPolish ? phaseStep.descriptionPl : phaseStep.description}
+                  </p>
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish
+                      ? 'Ten etap czeka na jawną decyzję w bieżącej sesji.'
+                      : 'This stage is waiting for an explicit decision in the current session.'}
+                  </p>
+                </div>
+              ) : currentSession ? (
                 <ToolCanvas
                   toolType={toolType}
                   currentStep={phaseIndex}
@@ -1879,7 +1901,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               : undefined,
             group: groupLabels[phaseGroupIndex(step.id)],
             cSpan: 3 as const, // phase canvases are wide step workspaces
-            component: renderPhaseCanvas(step),
+            component: (
+              <div data-testid="dynamic-swot-section-step" data-phase-id={step.id}>
+                {renderPhaseCanvas(step)}
+              </div>
+            ),
           };
         }),
         ...(toolType === 'dynamic-swot'
@@ -1905,7 +1931,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         component: workSection,
       },
       {
-        id: 'review',
+        id: 'session-review',
         icon: CheckCircle2,
         label: { en: 'Review', pl: 'Review' },
         badge: reviewGaps.length,

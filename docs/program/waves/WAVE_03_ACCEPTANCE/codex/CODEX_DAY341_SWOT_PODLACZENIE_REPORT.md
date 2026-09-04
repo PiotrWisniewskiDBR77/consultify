@@ -52,3 +52,29 @@ Kolizja `review` zostanie rozwiązana przez zmianę id zastanej sekcji statyczne
 
 - Warstwy 3 i 4 po podłączeniu nie są jeszcze udowodnione; wymagają testu renderowanego, realnej bazy i zrzutów OFF/ON.
 - Wznawialność siedmiu kroków po zimnym odczycie nie została jeszcze zmierzona.
+
+## R3 — przewód obu powierzchni za flagą OFF
+
+Zaimplementowano jeden szew w `getStepDefinitions()`, siedem kafli z tego samego deskryptora flagi, obsługę grup i uczciwy stan dla `recommendations`/`review`, elastyczną siatkę oraz uchwyty DOM `data-testid` + `data-phase-id` na kaflach i sekcjach. Statyczna sekcja Review ma lokalne id `session-review`; faza zachowuje id `review`. Flaga bez zmiennej nadal oznacza OFF.
+
+Napisy nowych etapów pozostają w istniejącym deskryptorze paczki (`title.pl/en`, `goal.pl/en`) i są z niego konsumowane przez store oraz kafle. Nie dopisano równoległych kluczy `public/locales`; konsekwencją jest jeden SSOT paczki, ale ogólny audyt słownikowy nadal nie obejmuje tych napisów. Liście pozostały `pl=35198`, `en=33065`.
+
+Mianownik przed: 432 testy, 430 PASS, 2 FAIL. Po R3: 438 testów, 436 PASS, 2 FAIL. Te same zastane czerwienie: `dynamic SWOT step locale contract keeps distinct, complete English and Polish labels for every live step` oraz `ToolCanvas — guard for unresolved steps never renders the raw "not implemented" string for an unknown step`. Diff pełnych nazw: 6 dodanych przypadków `Dynamic SWOT runtime wiring`, zero znikniętych. JSON: `/private/tmp/cx-day341-swot-podlaczenie-artefakty/przed.json`, `/private/tmp/cx-day341-swot-podlaczenie-artefakty/po-r3.json`.
+
+Dowód mutacyjny 1:
+
+- Mutacja: usunięcie `WAVE_2_PHASES[0]` z listy faz ON.
+- RED: `RUN_DB_TESTS=0 MOCK_DB=true npx vitest run src/toolPacks/__tests__/dynamicSwotRuntimeWiring.test.ts --retry=0` → 2 FAIL / 4 PASS; asercja kolejności wskazała brak `recommendations`.
+- Cofnięcie przez `cp`; GREEN: ta sama komenda → 6 PASS.
+- SHA pliku i kopii scratch po cofnięciu: `ddacde145ab010069fa5c1a0cc338374bbaf38f17b7a78948000825071806b0c`.
+
+Dowód mutacyjny 2:
+
+- Mutacja: brak/empty env zmieniony na domyślne `true` w parserze istniejącej flagi.
+- RED: `RUN_DB_TESTS=0 MOCK_DB=true npx vitest run src/toolPacks/__tests__/dynamicSwotRuntimeWiring.test.ts src/toolPacks/__tests__/dynamicSwotSevenStagesFlag.test.ts --retry=0` → 1 FAIL / 8 PASS; padł dokładnie zastany przypadek `brak zmiennej zachowuje dokładnie pięć dotychczasowych faz`.
+- Cofnięcie przez `cp`; GREEN: ta sama komenda → 9 PASS.
+- SHA pliku i kopii scratch po cofnięciu: `b0371e2f8f0246c3b647e4211648fb9aa3396b3da5e7d88d36ac7acfdefa647a`.
+
+Osiągalność po R3: 32 pliki pod `src/toolPacks/` (nowy plik testu zwiększył mianownik), w tym `app=3`, `test-only=29`. Żywe są `contract.ts`, `packs/dynamicSwot.pack.ts` i `runtimeReadiness.ts`; totals repo: `app=3048`, `harness-only=30`, `test-only=1014`, `unreachable=719`. `--check-baseline` jest czerwony wyłącznie przez nowy test-only plik; baseline nie został zmieniony.
+
+Pełny `tsc --noEmit` nie zakończył się w 180 sekund i został przerwany w należącej do dyżuru sesji; nie jest raportowany jako PASS.
