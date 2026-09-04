@@ -83,6 +83,7 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir, uploadsDir } from '../utils/storagePaths.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 // ==========================================
 // HELPER: Auto-version + Notify on status change
@@ -2333,7 +2334,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunc
   } catch (err: any) {
     logger.error('[ReportBuilder] Error duplicating report:', err);
     if (err.message === 'Report not found') {
-      return res.status(404).json({ error: err.message });
+      return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
     }
     next(err);
   }

@@ -341,7 +341,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       <header className="px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2">
           <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-tight">
-            {safeText(draft.label)}
+            {safeText(draft.label) || t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
           </h2>
           {onReturnToCanvas ? (
             <button

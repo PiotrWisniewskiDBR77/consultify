@@ -36,6 +36,7 @@ import tableArtifactConversionService, {
   TableConversionError,
 } from '../services/tablePlatform/TableArtifactConversionService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -80,7 +81,7 @@ function asPositiveInt(v: unknown): number | null {
 
 function mapServiceError(e: unknown, res: Response): boolean {
   if (e instanceof TableConversionError) {
-    res.status(e.status).json({ error: e.message, code: e.code });
+    res.status(e.status).json({ ...mapAppErrorResponse(e, undefined, 'error'), code: e.code });
     return true;
   }
   return false;

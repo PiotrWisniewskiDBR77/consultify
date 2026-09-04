@@ -321,7 +321,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                     value={templateId}
                     onChange={(e) => setTemplateId(e.target.value)}
                     disabled={loadingTemplates}
-                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none"
+                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm focus-visible:ring-2 focus-visible:ring-c-focus focus:border-transparent appearance-none"
                   >
                     {loadingTemplates ? (
                       <option>{t('finance.export.loadingTemplates', 'Loading...')}</option>

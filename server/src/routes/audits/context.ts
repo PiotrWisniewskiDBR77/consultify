@@ -14,6 +14,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { AuditDomainError } from '../../services/audits/auditsDb.js';
 import type { AuditActor } from '../../services/audits/types.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 export function auditActor(req: AuthRequest): AuditActor {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +43,7 @@ export function handleAuditError(res: Response, error: unknown, where: string): 
   if (error instanceof AuditDomainError) {
     res.status(error.statusCode).json({
       success: false,
-      error: error.message,
+      ...mapAppErrorResponse(error, undefined, 'error'),
       code: error.code,
     });
     return;

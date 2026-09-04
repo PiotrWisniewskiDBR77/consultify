@@ -14,6 +14,7 @@ import {
 import { resolveVoiceRuntime } from '../../services/ai/voiceRuntimeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -165,7 +166,7 @@ router.post(
               ? 503
               : 502;
         return res.status(status).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: 'TERESA_TTS_UNAVAILABLE',
           reason: error.reason,
           recoverable: true,

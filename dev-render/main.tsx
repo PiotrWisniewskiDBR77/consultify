@@ -20,6 +20,14 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+import { IdeaNotebookRightPanelPrototype } from '../src/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype';
+import { isIdeaNotebookRightPanelPrototypeEnabled } from '../src/utils/ideaNotebookRightPanelPrototypeFlag';
+
+const PrototypeHarness = ({ context, legacy }: { context: 'idea' | 'notebook'; legacy: React.ReactNode }) => {
+  if (!isIdeaNotebookRightPanelPrototypeEnabled()) return <>{legacy}</>;
+  const language = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'pl';
+  return <div className="flex h-screen w-screen justify-end bg-c-bg p-4"><IdeaNotebookRightPanelPrototype context={context} language={language} /></div>;
+};
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
 const Day235MaterialyDokumentyScreen = React.lazy(
   () => import('./screens/day235-materialy-dokumenty')
@@ -1589,14 +1597,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mywork-idea-inspector-lekki': {
     label:
       'DEC-68 — LEKKI inspektor elementu Idea (360px, accordion, bez obwódek) wg mywork-inspektor-prototyp.html',
-    render: () => <MyWorkIdeaInspectorLekkiScreen />,
+    render: () => <PrototypeHarness context="idea" legacy={<MyWorkIdeaInspectorLekkiScreen />} />,
   },
   'mywork-notebook-rail-speca': {
     label:
       'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html. ' +
       'NAPRAWA (2026-08-30): flaga ff_notebookSpecAShell jest domyślnie OFF i harness jej nie ustawiał — ten wpis teraz FORSUJE ją ON ' +
       '(localStorage), więc ekran pokazuje SPEC-A, nie stary panel. Porównanie ze STARYM: mywork-notebook-rail-speca-stary.',
-    render: () => <MyWorkNotebookRailSpecAScreen specA />,
+    render: () => <PrototypeHarness context="notebook" legacy={<MyWorkNotebookRailSpecAScreen specA />} />,
   },
   'mywork-notebook-rail-speca-stary': {
     label:
@@ -1735,7 +1743,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'notatnik-centrum-mysli': {
     label: 'Notatnik = CENTRUM MYŚLI (#16 auto-notatka · #21 przypomnij · #23 presence)',
-    render: () => <NotatnikCentrumMysliScreen />,
+    render: () => <PrototypeHarness context="notebook" legacy={<NotatnikCentrumMysliScreen />} />,
   },
   'notatnik-osierocone-graf': {
     label: '#18 Notatnik — graf połączeń (naprawiony) + osierocone notatki',
@@ -2069,7 +2077,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
-    render: () => <IdeasTeresaPanelScreen />,
+    render: () => <PrototypeHarness context="idea" legacy={<IdeasTeresaPanelScreen />} />,
   },
   'idea-confidentiality-control': {
     label:

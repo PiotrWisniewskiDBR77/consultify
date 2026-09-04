@@ -296,7 +296,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t('audit.egIso27001Readiness')}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
                   onChange={(e) => setObjective(e.target.value)}
                   rows={3}
                   placeholder={t('audit.whatIsThisAuditAssessing')}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
 

@@ -17,6 +17,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 import { normalizePlatformRole } from '../../utils/roleNormalization.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 // Apply rate limiting
 const router = Router();
@@ -564,7 +565,7 @@ router.get(
       logger.error('[AI Settings] Error getting available models:', error);
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
           details: error.details,
         });

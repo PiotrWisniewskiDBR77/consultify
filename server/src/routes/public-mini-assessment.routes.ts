@@ -10,6 +10,7 @@ import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import * as miniAssessmentService from '../services/publicMiniAssessmentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -83,10 +84,10 @@ router.post(
       res.json({ success: true, ...result });
     } catch (err: any) {
       if (err.message === 'Assessment not found') {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       }
       if (err.message === 'Assessment already completed') {
-        return res.status(409).json({ error: err.message });
+        return res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       }
       throw err;
     }
@@ -120,9 +121,9 @@ router.post(
       res.json({ success: true, ...result });
     } catch (err: any) {
       if (err.message === 'Assessment not found')
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       if (err.message === 'Assessment already completed')
-        return res.status(409).json({ error: err.message });
+        return res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       throw err;
     }
   })

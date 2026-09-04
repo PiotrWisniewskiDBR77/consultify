@@ -591,7 +591,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     border border-slate-200/60 dark:border-white/[0.08]
                     rounded-xl text-slate-800 dark:text-slate-200
                     placeholder-slate-400 dark:placeholder-slate-600
-                    focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-focus
                     resize-y transition-colors"
                 />
 
@@ -698,7 +698,7 @@ const TTSSettings: React.FC<{
                   icon: '🔊',
                 });
               }}
-              className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+              className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:outline-none"
             >
               <option value="">{t('aiChat.menu.ttsAutoVoice', 'Auto (detect language)')}</option>
               {availableVoices

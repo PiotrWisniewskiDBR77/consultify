@@ -42,6 +42,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -973,7 +974,7 @@ router.post(
         code === 'EVIDENCE_TYPE_INVALID' ||
         code === 'EVIDENCE_TITLE_REQUIRED'
       ) {
-        return res.status(400).json({ error: (err as Error).message, code });
+        return res.status(400).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
       }
       throw err;
     }
@@ -1091,7 +1092,7 @@ router.post(
     } catch (err) {
       if (err instanceof QualityReviewError) {
         return res.status(err.status).json({
-          error: err.message,
+          ...mapAppErrorResponse(err, undefined, 'error'),
           code: err.code,
           ...(err.details ? { details: err.details } : {}),
         });
@@ -1257,7 +1258,7 @@ router.post(
     } catch (err) {
       if (err instanceof CandidateHandoffError) {
         return res.status(err.status).json({
-          error: err.message,
+          ...mapAppErrorResponse(err, undefined, 'error'),
           code: err.code,
           ...(err.details ? { details: err.details } : {}),
         });

@@ -90,6 +90,8 @@ export function createMountedFinanceStatementRouter(
   });
   router.use(
     dependencies.verifyToken,
+    // Dyżur 288 (2026-09-03): ta powierzchnia omija v8FeatureGate, ale nadal
+    // należy do zamkniętego MODULE_ECONOMICS. Token musi poprzedzać bramkę.
     dependencies.moduleGate,
     dependencies.requireOrgContext,
     dependencies.attachContext,

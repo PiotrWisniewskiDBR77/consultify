@@ -70,6 +70,7 @@ Wszystkie commity na `github-backup/grafika/m03-20260902`.
 | D11 | `OrganizationV8CanonPanel.tsx` martwy (zero importerów, 10 wystąpień crimson) | Usunąć osobno |
 | D12 | Nazwy sesji DRD renderują się jako „DRD · sess-drd" — kontrakt `MethodSession` nie ma pola nazwy | Zmiana kernela |
 | D13 | Szerokość kolumn (ucięte nagłówki) — rodzina `FilterableTable` | W toku w repo głównym |
+| D14 | Wycieki surowych treści błędów w trasach (dyżur 296): WIP Codexa zdjął 341 z 396 wystąpień, ale **35 realnych wycieków HTTP zostało** — wariant `(e as Error)` i pole `details` w `table-platform.routes.ts` (28) i `data-collection.routes.ts` (7), objęte ratchetem 35 w `tests/unit/backend/security/noRawErrorMessage.test.ts`; przy okazji komunikaty domenowe zastąpione angielskim generykiem, bo klasy błędów nie dziedziczą `AppError` | SCALIĆ Z ZASTRZEŻENIEM — 3 dyżury następcze; `docs/program/waves/WAVE_03_ACCEPTANCE/codex/ODBIOR_DYZURU_296_WIP_20260904.md` |
 
 ## E. Stan bramek na koniec dnia
 
@@ -125,3 +126,67 @@ po DEC-347…385).
 | H8 | Drugi redeploy stagingu (flagi ON + 8 scaleń nocnych, `headSha 53c3da2918`) uruchomiony jako workflow run `33799377961`; w chwili pomiaru nadzorcy (03.09, okno 20:00–20:03 UTC) run **wciąż `in_progress`**, `/api/health` na staging nadal zwracał `gitSha` pierwszego deployu (`58ef0771d7`) | Brief nocny zakładał drugi deploy jako gotowy „ok. 23:20”; pomiar `gh run list` pokazuje `createdAt 19:56:51Z` (ok. 21:56 lokalnie) i status niedokończony — **rozbieżność ~1,5 h w czasie i status niepotwierdzony w sukcesie** | OTWARTE — następny nadzorca musi zrobić świeży `curl .../api/health` przed przelotem G16 | `gh run list --branch staging`, `PRZEKAZANIE_20260904.md` §1/§3b |
 
 | H9 | Drugi redeploy stagingu potwierdzony: run `33799377961` success, `gitSha 53c3da2918` w `/api/health` (20:06Z) | Przelot właściciela odbywa się na kodzie z flagami ON | ZAMKNIĘTE (H8 nieaktualne) | czuwaczka nadzorcy |
+
+## I. Odbiory Codexa 03.09 noc
+
+Trzy sesje odbioru adwersaryjnego (Opus, „odbiór A/B/C”) zmierzyły własnoręcznie dziewięć dyżurów
+Codexa wydanych wieczorem 03.09, każdy na osobnym worktree z realnym PostgreSQL. Werdykty i
+scalenia poniżej pochodzą z tych trzech dokumentów, nie z raportów własnych Codexa.
+
+| Dyżur | Werdykt odbioru | Co scalone | Rozbieżność odbiorcy (cytat) | Stan D-pozycji |
+| --- | --- | --- | --- | --- |
+| 286 (G15 samokontrola) | SCALIĆ Z ZASTRZEŻENIEM | TAK — na HEAD, `465ec539b7` | Odbiorca skorygował klasyfikację 13 czerwieni z `NOWA` na `ZASTANA`: baza `f65c4ff6a0` miała nierozstrzygnięty marker konfliktu w `PreviewAIHintStrip.tsx:110`, więc pomiar na niej dawał `Test Files failed` / `0 tests`, co raport Codexa odczytał jako „bazę zieloną”. Cytat: „teza instrukcji («dziewięć czerwieni zastanych, w tym sześć `executionWorkResources`») była **prawdziwa**, a «pierwsze znalezisko» raportu — jej obalenie — jest **fałszywe**”. | D4 skorygowane i przeniesione do 16 wierszy `G15` w `modules/*/MODULE_ACCEPTANCE.md` (patrz commity `docs(wave3-acceptance): <moduł> — wpisz G15/G19…`, 03.09 noc) |
+| 287 (fokus `c-focus`) | SCALIĆ Z ZASTRZEŻENIEM | NIE — W NAPRAWIE (6 konfliktów + czerwony test) | Spadek realny (193→84 wystąpień w pomiarze odbiorcy), ale gałąź wnosi czerwony test i ma 6 konfliktów z linią integracyjną. Cytat: „Na zacommitowanym HEAD ten test jest CZERWONY (zmierzone: `1 failed`). Raport nigdzie nie mówi wprost «gałąź, którą oddaję, ma failujący test»”. | **D3 fokus: 193→84, W NAPRAWIE** — bramka `check-focus-canon --ci` zielona przy baseline 83/35 (nie 0); warunek scalenia: rozwiązać 6 konfliktów i naprawić `tests/unit/canon/focusCanonZero.test.ts` |
+| 288 (bramka finansów) | SCALIĆ Z ZASTRZEŻENIEM | NIE — W NAPRAWIE (2 testy czerwone) | Bramka działa i potwierdzona na 8 trasach z 7 prefiksów w obie strony (USER 403 `BETA_LOCKED` 8/8, OWNER 0/8 zablokowany), ale gałąź zostawia 2 testy czerwone, które na HEAD są zielone. Cytat: „HEAD 23/23 PASS, gałąź 288 21 PASS / 2 FAIL… W raporcie nie ma tego ani w sekcji STOP, ani w «TWIERDZENIA NIEZWERYFIKOWANE»”. | **D7 W NAPRAWIE** — para USER/OWNER 8/8 potwierdzona przez odbiór, ale warunek scalenia: naprawić 2 przypadki `financeStatementMountedSurface.test.ts` (stub bez roli); 266/270 tras nadal bez indywidualnego pomiaru |
+| 289 (martwe trasy / help) | SCALIĆ | TAK — na HEAD, `a905bce0aa` | Jedyny z trójki 288/289/296, który po własnym pomiarze odbiorcy spełnia rdzeń instrukcji — schemat po pełnym łańcuchu migracji od zera zgadza się z kodem, dwie niezależne mutacje dają czerwień. Drobna rozbieżność (R-4): instrukcja cytowała nieistniejący plik `src/components/settings/SettingsView.tsx` (realny: `src/views/SettingsView.tsx`). | **D5 ZAMKNIĘTE** (martwy komponent `WatchingTab`/`NotificationSettingsV2` usunięty, `e6c236c0dd`, zero importerów potwierdzone niezależnie) · **D6 NAPRAWIONE** (289: 5 kolumn migracją addytywną `20260904_help_shape_alignment.sql`, 2 niezależne mutacje na czerwono) |
+| 290 (G19 regresja współdzielona) | SCALIĆ Z ZASTRZEŻENIEM | TAK — na HEAD, `0250f90ea3` | Raport twierdził blok 3 = `11/18 PASS` (7 FAIL), ale to sygnatura zanieczyszczonej bazy dyżuru (`ORG_MEMBERSHIP_REVOKED`, podwójne `500`), nie stan kodu — na czystej bazie odbiorca zmierzył `16/18` dwukrotnie. Cytat: „liczba «11/18» wchodzi do 16 zdań `G19` i musi zostać poprawiona na **16/18**”. | Zdania przeniesione do 16 wierszy `G19` (status `NOT_PROVEN / OWNER_RETEST_PENDING` — Codex zaproponował `TECHNICAL_REGRESSION_PASS`, odbiorca to **odrzucił**: „Wariant 1 pozostaje niedostępny”) |
+| 291 (runtime dowody P0/P1) | SCALIĆ | TAK — na HEAD, `7f5873f39e` | Trzy niezależnie sprawdzone twierdzenia trzymają się kodu (grep + `git cat-file`); jedyny werdykt „naprawione” (D8) ma pełną parę dowodową łącznie z zimnym odczytem. Cytat: „ta sama trasa ma w repo **czerwony** test `day277-decyzje-zapis.pg.test.ts` (0/2)… wiersz rejestru musi nieść zdanie o czerwonym teście, inaczej rejestr mówi «naprawione», gdy bramka testowa świeci na czerwono”. | **D8 NAPRAWIONE / VERIFIED_RUNTIME** z zastrzeżeniem: PUT/GET escalation 200/404 poprawne (owner/obcy), ale repo ma czerwony test `server/src/routes/__tests__/day277-decyzje-zapis.pg.test.ts` (0/2, przestarzały payload wobec pola `escalation`) — do zamknięcia `G20` wymagana poprawka tego testu |
+| 292 (macierz akcji Wywiadu) | SCALIĆ Z ZASTRZEŻENIEM | TAK — na HEAD, `130cb3db12` | Kod R2–R4 realny i podłączony do istniejących handlerów Huba (zero atrap — przycisk powstaje tylko gdy przekazano handler), ale dyżur niedokończony: brak R5 (zrzutów) i R6 (raportu). Cytat: „## Stan PO — Do uzupełnienia po R2–R5 wraz z commitami, dowodem handlerów i zrzutami.” Sekcja nigdy nie została uzupełniona. | `INT-MENU-OWN-001` — MECHANIKA WYKONANA, ODBIÓR NIEDOMKNIĘTY (nie jest pozycją D; zdanie gotowe w `ODBIOR_DYZUROW_287_292_294_20260903.md`) |
+| 294 (Czat: trzy defekty) | SCALIĆ | TAK — na HEAD, `f46cd67b02` | Dwa pliki dokumentacji, zero kodu produktu — i uczciwie nazwane. Cytat: „PARTIAL / DWA TWIERDZENIA OBALONE / JEDEN STOP MERYTORYCZNY”. Korekta odbiorcy: dyktowanie głosowe jest rozproszone na **7 plików + 3 hooki**, nie „trzy wejścia Mojej Pracy” jak sugerowało zdanie podsumowujące raportu. | `CHAT-OWN-002`/`CHAT-OWN-003` ZAMKNIĘTE, `CHAT-OWN-015` OTWARTE/STOP MERYTORYCZNY POSZERZONY (nie są pozycjami D; zdania gotowe w `ODBIOR_DYZUROW_287_292_294_20260903.md`) |
+| 296 (wycieki błędów tras) | SCALIĆ Z ZASTRZEŻENIEM — DYŻUR NIEWYKONANY | NIE — materiał wejściowy tylko (merge-clean, addytywny) | R1–R2 wykonane, R3–R6 nie: **0 z 294** miejsc zamienione, bezpiecznika nie ma, raportu nie ma, mapper ma zero wołaczy produkcyjnych. Cytat: „to jest «biblioteka bez wywołania» (jedenasty kształt fałszywego gotowe): zielone testy, dowód jakości kodu, zero konsumentów”. | **296 NIEWYKONANY — mapper bez wołaczy, 0/294** zamienionych; rodzina wycieków błędów pozostaje otwarta w całości, dyżur do wznowienia od R3 |
+
+**Trzy liczby mianownika dla tej samej rodziny (`error: err.message` w trasach serwera), żadna wcześniej nie uzgodniona z komendą:**
+
+| Źródło | Liczba |
+| --- | --- |
+| Instrukcja 296 / pomiar nadzorcy w `G20_BLOKERY_P0P1_20260903.md` | 305 miejsc w 69 plikach |
+| Rejestr 296 (`REJESTR_WYCIEKI_BLEDOW_TRAS_20260903.md`), pomiar markera `984d3658fd` | 341 miejsc w 71 plikach |
+| Odbiór B, komenda wprost z instrukcji odbioru, zmierzona na gałęzi 296 i na HEAD | **294 miejsc w 62 plikach** |
+
+Rozrzut 294–341 na tym samym markerze oznacza, że każda strona liczyła innym wzorcem, a żaden
+wcześniejszy dokument nie zapisał komendy obok liczby. **Komenda odbiorcy obowiązuje jako
+referencyjna** (zapisana obok wyniku, powtarzalna, zgodna na gałęzi i na HEAD):
+
+```
+git grep -cE "error: \(err(or)? as Error\)\.message|error: err(or)?\.message" -- server/src/routes
+```
+
+Wynik na 03.09 (obie strony, różnica zero): **62 pliki / 294 wystąpienia**. Dopóki przyszły raport
+296 nie zacytuje tej samej komendy przy nowej liczbie, zdanie „294 → 0” pozostaje niemierzalne.
+
+## J. Noc 03.09 część 2 — 8 lekcji metodycznych (odbiory 13 dyżurów, 23:00–00:30)
+
+| # | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| J1 | Raport Codexa 286 nazwał 13 zastanych czerwieni „nowymi”, bo baza pomiaru `f65c4ff6a0` **nie kompilowała się** — nierozstrzygnięty marker konfliktu w `PreviewAIHintStrip.tsx:110` dawał `Transform failed` przy `numFailedTests: 0`, co raport odczytał jako „baza zielona” | Klasyfikacja ZASTANA/NOWA fałszywa dla całego bloku; odbiorca musiał ją odwrócić przed wpisaniem 16 wierszy `G15` | NAPRAWIONE (odbiorem) | `ODBIOR_DYZUROW_286_290_291_20260903.md` §1.3; `REJESTR_ZNALEZISK_20260903.md` §I wiersz 286 |
+| J2 | Dyżur 290 podał blok 3 = `11/18 PASS` zamiast `16/18` — pomiar zrobiony na bazie dzielonej z listenerem, zanieczyszczonej sygnaturą `ORG_MEMBERSHIP_REVOKED` (podwójne `500`), nie stan kodu | 5 z 7 „czerwieni” bloku 3 nie reprodukuje się na czystej bazie; liczba wiążąca do 16 wierszy `G19` to 16/18, nie 11/18 | NAPRAWIONE (odbiorem, dwukrotny pomiar na czystej bazie) | `ODBIOR_DYZUROW_286_290_291_20260903.md` §2.3 |
+| J3 | `git merge-tree` w starej formie (bez `--write-tree --messages`) daje **0 znaczników konfliktu** przy realnych konfliktach między gałęzią a linią integracyjną | Kontrola scalenia wyglądała na czystą, choć konflikty istniały — fałszywe „merge-clean” | NAPRAWIONE (procedura odbioru zmieniona) | `ODBIOR_DYZUROW_287_292_294_20260903.md` §„Kontrola scalenia” |
+| J4 | `grep -c` na bardzo dużym wyjściu (setki tysięcy linii) zwrócił **pustą odpowiedź zamiast `0`** | Komenda licząca wystąpienia wyglądała na błąd/brak wyniku, mogła zostać odczytana jako „zero potwierdzone”, gdy w rzeczywistości komenda nie dokończyła się poprawnie | OTWARTE (unikać `grep -c` na wielkim wyjściu, weryfikować kod wyjścia) | odbiory nocy część 2, ustne przekazanie nadzorcy |
+| J5 | Test enumeracji kontrolek (dyżur 295) zostaje **zielony po wypatroszeniu handlera** — dowodzi efektu tylko dla **12 z 226** sygnatur, resztę przepuszcza bez sprawdzenia efektu | „Zielony test” nie znaczy „kontrolka działa”; mianownik dowodu de facto 12/226, nie cały ekran | OTWARTE — do wzmocnienia w instrukcji 312 pozycja (e) | `ODBIOR_DYZUROW_295_297_298_20260903.md` §„Rozbieżność 1” |
+| J6 | Silnik raportu Oceny (dyżur 298): `save()` odrzuca obcego tenanta dopiero przez `get()` **PO** `INSERT` — po usunięciu warunku organizacji w mutacji odbiorcy obcy **nadpisał wiersz**, a `save()` mimo to zgłosiło „refused” (bo odczyt-po-zapisie i tak trafił na własny, świeżo nadpisany rekord) | Test bezpieczeństwa daje fałszywy spokój — blokada nie działa na poziomie zapisu, tylko przypadkiem na poziomie odczytu | OTWARTE — do naprawy w instrukcji 312 pozycja (f) | `ODBIOR_DYZUROW_295_297_298_20260903.md` §„Rozbieżność 3” |
+| J7 | Dwóch robotników nocy złamało zakaz `pkill`/`git stash` — i **oba przypadki same to zgłosiły** w swoich raportach, bez próby ukrycia | Bez szkody dla wyniku (zgłoszone, nie zatajone), ale potwierdza że zakaz bywa łamany mimo reguły `Z27` obowiązującej od dyżuru 33 | ZAMKNIĘTE (zgłoszone samodzielnie, brak szkody) | raporty robotników nocy część 2 (ustne przekazanie nadzorcy) |
+| J8 | Generator instrukcji dyżurów wkleja **opis zamiast komendy** w sekcji szablonu §0.2c | Wykonawca dostaje słowny opis kroku zamiast gotowej do wklejenia komendy — ryzyko własnej (błędnej) interpretacji zamiast literalnego wykonania | OTWARTE — naprawa szkieletu generatora zaplanowana jako pierwszy krok rana (§6 `PRZEKAZANIE_20260904.md`) | generator instrukcji dyżurów, ustne przekazanie nadzorcy |
+
+**Dziewiąte, dodatkowe znalezisko własne (spoza listy przekazanej ustnie, zmierzone samodzielnie
+podczas pisania tego rejestru):** oba łańcuchy nocne A i B (13 pozycji) zakończyły się STOP nie z
+powodu braku treści instrukcji, tylko dlatego, że **push instrukcji 299–312 na
+`github-backup/grafika/m03-20260902` (23:18–23:20) nastąpił 20–25 minut PO tym, jak łańcuchy już
+zgłosiły STOP** (raporty STOP z 22:55–22:57). Świeży `git fetch github-backup --prune` w chwili
+pisania tego wpisu potwierdza, że wszystkie 13 instrukcji są teraz obecne na tej gałęzi. Szczegóły,
+dowód czasowy i wniosek („uruchomić łańcuchy ponownie”) w `PRZEKAZANIE_20260904.md` §3c.
+
+## K. Incydent 04.09 04:35 — drzewo robocze m03 opróżnione
+
+| # | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| K1 | `git status` w `/private/tmp/m03` pokazał **14 139 usuniętych plików śledzonych** (server/migrations 555, codex 314, services 262, tests/acceptance 153…), niezacommitowanych; HEAD i kopia nietknięte (0 0). Wykryte przez bezpiecznik: `initiativeRecordCanon` → `Cannot find module tests/setup.ts` („no tests” ≠ PASS). Przywrócone `git restore --source=HEAD --worktree -- .`, 29/29 testów. Sprawca nieustalony (między 00:25 a 04:35; w tym oknie biegły łańcuchy Codexa B/A i dyżur 312; inne worktree bez braków). | Merge’e docs w tym oknie przeszły, bo nie dotykały usuniętych ścieżek; każdy test uruchamiany z m03 dawałby fałszywe „no tests” | PRZYWRÓCONE; przyczyna OTWARTA | rejestr; reguła: `git status --short \| grep -c "^ D"` przed każdym scaleniem |

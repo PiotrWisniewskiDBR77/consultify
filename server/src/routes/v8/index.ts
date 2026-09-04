@@ -117,8 +117,9 @@ v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
 v8Router.use('/case-workspace', createModuleGate('MODULE_CASE_WORKSPACE'), caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', requireCanonicalExecutionWriter, executionControlRoutes);
-// Day 307: every Finance prefix belongs to the closed MODULE_ECONOMICS.
-// Authentication runs above, so the gate can preserve OWNER/ADMIN access.
+// Dyżur 288 (2026-09-03): wszystkie prefiksy Finance należą do zamkniętego
+// MODULE_ECONOMICS. verifyToken stoi na całym v8Router wyżej, więc bramka
+// widzi realną rolę i zachowuje dostęp OWNER/ADMIN.
 v8Router.use((req, res, next) => {
   if (!FINANCE_MODULE_PATH.test(req.path)) return next();
   return financeModuleGate(req, res, next);

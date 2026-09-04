@@ -319,7 +319,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
               <select
                 value={newReview.reviewerId}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))}
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="">Select reviewer...</option>
                 {users.map((user) => (
@@ -340,7 +340,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     priority: e.target.value as ContentReviewPriority,
                   }))
                 }
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>
@@ -355,7 +355,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 type="date"
                 value={newReview.dueDate}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, dueDate: e.target.value }))}
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             </div>
           </div>
@@ -379,7 +379,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     value={item.label}
                     onChange={(e) => updateChecklistItem(item.id, e.target.value)}
                     placeholder="Checklist item..."
-                    className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                    className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   />
                   <button
                     onClick={() => removeChecklistItem(item.id)}
@@ -552,7 +552,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             onChange={(e) => setReviewNotes(e.target.value)}
                             placeholder="Add review notes..."
                             rows={2}
-                            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           />
                           <div className="flex gap-2">
                             <button

@@ -1,0 +1,27 @@
+{
+  "marker": "67d235cfa0",
+  "screen": "teresa-chipy-panel-artefaktu",
+  "module": "13_CHAT",
+  "framesRequested": 8,
+  "framesCaptured": 8,
+  "languages": ["pl", "en"],
+  "widths": [1440, 1024],
+  "themes": ["light", "dark"],
+  "flags": {
+    "rozwinSekcje": true,
+    "klikPoRozwinieciu": true,
+    "osiadPoRozwinieciuMs": 1500,
+    "a11y": true
+  },
+  "a11yViolations": 0,
+  "realA11yViolationsAfterHostExclusions": 0,
+  "toolStatus": "PARTIAL",
+  "toolFindings": [
+    "Canonical expansion loop reported still-collapsed details on all 8 frames.",
+    "The screen has no table row, so the canonical post-expansion row click was attempted but not applicable.",
+    "The harness API stub returns no signals array; useSignalsFeed logged the honest contract warning on all frames."
+  ],
+  "visualInspection": "Panel rendered in all 8 frames; seeded conversation is visible and the removed suggestion chips are absent. No product fix was made.",
+  "rawResults": ["pl-1440.json", "pl-1024.json", "en-1440.json", "en-1024.json"],
+  "screenshotsRoot": "/private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel"
+}

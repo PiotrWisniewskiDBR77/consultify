@@ -26,6 +26,12 @@ const full: IdeaInspectorElement = {
 };
 
 describe('IdeaElementInspector behavior', () => {
+  it('keeps the inspector heading non-empty while an element label is blank', () => {
+    render(<IdeaElementInspector element={{ id: 'node-without-label', label: '' }} tool="mindmap" />);
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Element bez nazwy');
+  });
+
   it('renders seven sections in the fixed order with counters', () => {
     render(
       <IdeaElementInspector

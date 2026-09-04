@@ -31,6 +31,7 @@ import { CommandCapabilityDeniedError } from '../../services/resultsVnext/platfo
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import { getCorrelationId } from './correlationId.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 router.use(apiAuthRateLimiter, verifyToken, requireOrgAccess(), requireResultsInternalBetaVisibility, demoContextMiddleware);
@@ -125,13 +126,13 @@ async function context(req: AuthenticatedRequest, a: NonNullable<ReturnType<type
 function key(value?: string): string { return value?.trim() || randomUUID(); }
 function fail(res: Response, err: unknown, op: string): void {
   if (err instanceof CommandCapabilityDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code }); return;
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code }); return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
     res.status(404).json({ error: 'Recovery resource not found', code: 'NOT_FOUND' }); return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) }); return;
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) }); return;
   }
   logger.error(`[resultsVnext/kpiRecoveryChildren] ${op} failed`, {
     error: err instanceof Error ? err.message : String(err),

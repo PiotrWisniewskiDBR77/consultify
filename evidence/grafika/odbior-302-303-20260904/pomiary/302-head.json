@@ -1,0 +1,290 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 1500,
+  "klikPoRozwinieciu": true,
+  "cofnijJesliSkraca": true,
+  "wyniki": [
+    {
+      "ekran": "mywork-notebook-rail-speca",
+      "motyw": "light",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/mywork-notebook-rail-speca__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 9,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/my-ideas/suggest?q=Warsztat+3%3A+migracja+danych+warsztat+migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/initiatives?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/tasks?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/decisions?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook_page&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/my-ideas/suggest?q=Warsztat+3%3A+migracja+danych+warsztat+migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook_page&id=page-1&limit=50"
+        }
+      ],
+      "tekst": "Warsztat 3: migracja danych\nAKCJE\nEksportuj\nPDF · Word\nUdostępnij\nKopiuj link\nHistoria wersji\nWŁAŚCIWOŚCI\nStatus zapisu\nZapisano\nWłaściciel\nAnna Kowalska\nWidoczność\nPrywatne\nProjekt\nWeryfikacja\nNiezweryfikowany\nZweryfikowany\nSporny\nPrzegląd\nCo tydzień\nCo miesiąc\nCo kwartał\nNigdy\nTagi i status\nactive\ngrowing\nwarsztat\nmigracja\nZmodyfikowano: 30.07.2026, 17:04:00\nLiczba słów: 1248\nOstatnio sprawdzono: Nigdy\nOznacz jako sprawdzone\nŹródło: Ręcznie\nNastępny krok: Zweryfikuj treść dokumentu\nPOWIĄZANIA\nUżyte w (backlinks)\n0\nBrak powiązań\nBrak powiązanych outputów\nInicjatywy\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nZadania\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nDecyzje\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nŹRÓDŁA I ZAŁOŻENIA\n\nTa notatka nie ma zapisanych źródeł ani założeń.\n\nKOMENTARZE\n0\n\nBrak komentarzy do tego dokumentu.\n\nHISTORIA\n\nOtwórz historię wersji w sekcji Akcje, żeby zobaczyć poprzednie zapisy.\n\nOtwórz Teresę",
+      "hasResultMarker": null,
+      "obrazJasnosc": 249.61737618248455,
+      "sekcjeRozwiniete": 4,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "mywork-notebook-rail-speca",
+      "motyw": "dark",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/mywork-notebook-rail-speca__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 9,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/my-ideas/suggest?q=Warsztat+3%3A+migracja+danych+warsztat+migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/initiatives?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/tasks?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/decisions?q=Warsztat%203%3A%20migracja%20danych%20warsztat%20migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook_page&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/my-ideas/suggest?q=Warsztat+3%3A+migracja+danych+warsztat+migracja&limit=12"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook_page&id=page-1&limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/my-work/link-graph/backlinks?type=notebook&id=page-1&limit=50"
+        }
+      ],
+      "tekst": "Warsztat 3: migracja danych\nAKCJE\nEksportuj\nPDF · Word\nUdostępnij\nKopiuj link\nHistoria wersji\nWŁAŚCIWOŚCI\nStatus zapisu\nZapisano\nWłaściciel\nAnna Kowalska\nWidoczność\nPrywatne\nProjekt\nWeryfikacja\nNiezweryfikowany\nZweryfikowany\nSporny\nPrzegląd\nCo tydzień\nCo miesiąc\nCo kwartał\nNigdy\nTagi i status\nactive\ngrowing\nwarsztat\nmigracja\nZmodyfikowano: 30.07.2026, 17:04:00\nLiczba słów: 1248\nOstatnio sprawdzono: Nigdy\nOznacz jako sprawdzone\nŹródło: Ręcznie\nNastępny krok: Zweryfikuj treść dokumentu\nPOWIĄZANIA\nUżyte w (backlinks)\n0\nBrak powiązań\nBrak powiązanych outputów\nInicjatywy\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nZadania\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nDecyzje\n0\nWszystkie\nBrak — dodaj przez „Wszystkie”\nŹRÓDŁA I ZAŁOŻENIA\n\nTa notatka nie ma zapisanych źródeł ani założeń.\n\nKOMENTARZE\n0\n\nBrak komentarzy do tego dokumentu.\n\nHISTORIA\n\nOtwórz historię wersji w sekcji Akcje, żeby zobaczyć poprzednie zapisy.\n\nOtwórz Teresę",
+      "hasResultMarker": null,
+      "obrazJasnosc": 30.513362809027775,
+      "sekcjeRozwiniete": 4,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "notatnik-centrum-mysli",
+      "motyw": "light",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/notatnik-centrum-mysli__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Teresa\nAsystent-sekretarz\nPodsumujmy: wchodzimy w wariant B, TAM 3,2×, do sprawdzenia regulacje.\n\nZapisałam kluczowe ustalenia z tej rozmowy jako notatkę w Twoim Notatniku — sprawdź i zatwierdź:\n\nPropozycja Teresy\nNotatnik\n\nNotatka: Ustalenia z rozmowy — wejście na rynek DE\n\nWariant B wybrany jako ścieżka wejścia\nTAM DE = 3,2× rynek krajowy (4/6 wywiadów)\nZatwierdź\nWykonaj\nOdrzuć\nPrzypomnij mi jutro o telefonie do klienta w sprawie regulacji.\n\nJasne — zapiszę to jako notatkę z przypomnieniem na jutro:\n\nPropozycja Teresy\nNotatnik\n\nNotatka: Telefon do klienta — regulacje DE\n\nZadzwonić do klienta w sprawie barier regulacyjnych\nPrzypomnienie: jutro · 14.07.2026 · 09:00\nZatwierdź\nWykonaj\nOdrzuć\nUstalenia z rozmowy — wejście na rynek DE\nPW\nTA\nMK\n3 osoby tu teraz\nUtworzone przez Teresę z rozmowy\nPrzypomnienie: 14 lip 2026, 09:00\nKluczowe ustalenia\n1\n\nWariant B (partner dystrybucyjny) wybrany jako ścieżka wejścia.\n\n2\n\nTAM DE = 3,2× rynek krajowy — potwierdzone w 4 z 6 wywiadów.\n\n3\n\nDo zweryfikowania: bariery regulacyjne DE (termin: piątek).\n\nPowiązane:\n[[Strategia DE]]\n[[Wywiady Q3]]",
+      "hasResultMarker": null,
+      "obrazJasnosc": 247.2854164695216,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "notatnik-centrum-mysli",
+      "motyw": "dark",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/notatnik-centrum-mysli__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Teresa\nAsystent-sekretarz\nPodsumujmy: wchodzimy w wariant B, TAM 3,2×, do sprawdzenia regulacje.\n\nZapisałam kluczowe ustalenia z tej rozmowy jako notatkę w Twoim Notatniku — sprawdź i zatwierdź:\n\nPropozycja Teresy\nNotatnik\n\nNotatka: Ustalenia z rozmowy — wejście na rynek DE\n\nWariant B wybrany jako ścieżka wejścia\nTAM DE = 3,2× rynek krajowy (4/6 wywiadów)\nZatwierdź\nWykonaj\nOdrzuć\nPrzypomnij mi jutro o telefonie do klienta w sprawie regulacji.\n\nJasne — zapiszę to jako notatkę z przypomnieniem na jutro:\n\nPropozycja Teresy\nNotatnik\n\nNotatka: Telefon do klienta — regulacje DE\n\nZadzwonić do klienta w sprawie barier regulacyjnych\nPrzypomnienie: jutro · 14.07.2026 · 09:00\nZatwierdź\nWykonaj\nOdrzuć\nUstalenia z rozmowy — wejście na rynek DE\nPW\nTA\nMK\n3 osoby tu teraz\nUtworzone przez Teresę z rozmowy\nPrzypomnienie: 14 lip 2026, 09:00\nKluczowe ustalenia\n1\n\nWariant B (partner dystrybucyjny) wybrany jako ścieżka wejścia.\n\n2\n\nTAM DE = 3,2× rynek krajowy — potwierdzone w 4 z 6 wywiadów.\n\n3\n\nDo zweryfikowania: bariery regulacyjne DE (termin: piątek).\n\nPowiązane:\n[[Strategia DE]]\n[[Wywiady Q3]]",
+      "hasResultMarker": null,
+      "obrazJasnosc": 27.110947031828704,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "mywork-idea-inspector-lekki",
+      "motyw": "light",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/mywork-idea-inspector-lekki__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Migracja danych: braki i duplikaty\nRyzyko\nWdrożenie ERP (end-to-end)\nZapisano 16:32\nDrąż w głąb\nAI podsumuj\nAI porada\nPODSTAWOWE 3\nEtykieta\nStan\n—\nIdea\nW trakcie\nZakończone\nZablokowane\nPriorytet — 70\nWłaściciel\nTyp semantyczny\nRyzyko\nTREŚĆ I GŁĘBIA 5\n\nTrzy systemy źródłowe (sprzedażowy, magazynowy, finansowy) prowadzą własne kartoteki kontrahentów. Żadna nie jest nadrzędna.\n\nAudyt jakości danych z 8 sierpnia pokazał 12% odrzuceń walidacji na próbce 5 000 rekordów.\n\nWspólny klucz klienta (MDM) zatwierdzony przed cutoverem.\n\nBez wspólnego klucza migracja jednorazowa niesie zbyt duże ryzyko utraty danych.\n\nZamrożenie zmian w systemach źródłowych może się przesunąć, jeśli zarząd nie zatwierdzi standardu na czas.\n\nKLASYFIKACJA 3\nerp\ndane\nmigracja\nDOWODY I ŹRÓDŁA 2\n\nAudyt jakości danych · Raport · Zespół danych · 08.08\n\nLog duplikatów kontrahentów · Wyciąg · CRM · 05.08\n\nPOWIĄZANIA 2\n\nStandard klucza klienta (MDM) · Decyzja · ERP\n\nDry-run migracji na próbce 5% · Eksperyment · ERP\n\nARTEFAKTY WYJŚCIOWE 1\n\nZadanie: zdefiniować standard MDM · Zadanie · W trakcie\n\nOtwórz\nKOLUMNA 0\nHISTORIA I AI 3\n\nAnna Kowalska skomentował(a)\n\n25.08.2026 15:48\n\nPiotr zmienił(a) Priorytet\n\n25.08.2026 13:02\n\nAnna Kowalska zmienił(a) stan: idea → in_progress\n\n25.08.2026 11:14\nWygeneruj podpowiedzi AI\nRodowód: Tabela pomysłów · wiersz 2 · zmieniono 14:32",
+      "hasResultMarker": null,
+      "obrazJasnosc": 249.12191802334104,
+      "sekcjeRozwiniete": 1,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "mywork-idea-inspector-lekki",
+      "motyw": "dark",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/mywork-idea-inspector-lekki__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Migracja danych: braki i duplikaty\nRyzyko\nWdrożenie ERP (end-to-end)\nZapisano 16:32\nDrąż w głąb\nAI podsumuj\nAI porada\nPODSTAWOWE 3\nEtykieta\nStan\n—\nIdea\nW trakcie\nZakończone\nZablokowane\nPriorytet — 70\nWłaściciel\nTyp semantyczny\nRyzyko\nTREŚĆ I GŁĘBIA 5\n\nTrzy systemy źródłowe (sprzedażowy, magazynowy, finansowy) prowadzą własne kartoteki kontrahentów. Żadna nie jest nadrzędna.\n\nAudyt jakości danych z 8 sierpnia pokazał 12% odrzuceń walidacji na próbce 5 000 rekordów.\n\nWspólny klucz klienta (MDM) zatwierdzony przed cutoverem.\n\nBez wspólnego klucza migracja jednorazowa niesie zbyt duże ryzyko utraty danych.\n\nZamrożenie zmian w systemach źródłowych może się przesunąć, jeśli zarząd nie zatwierdzi standardu na czas.\n\nKLASYFIKACJA 3\nerp\ndane\nmigracja\nDOWODY I ŹRÓDŁA 2\n\nAudyt jakości danych · Raport · Zespół danych · 08.08\n\nLog duplikatów kontrahentów · Wyciąg · CRM · 05.08\n\nPOWIĄZANIA 2\n\nStandard klucza klienta (MDM) · Decyzja · ERP\n\nDry-run migracji na próbce 5% · Eksperyment · ERP\n\nARTEFAKTY WYJŚCIOWE 1\n\nZadanie: zdefiniować standard MDM · Zadanie · W trakcie\n\nOtwórz\nKOLUMNA 0\nHISTORIA I AI 3\n\nAnna Kowalska skomentował(a)\n\n25.08.2026 15:48\n\nPiotr zmienił(a) Priorytet\n\n25.08.2026 13:02\n\nAnna Kowalska zmienił(a) stan: idea → in_progress\n\n25.08.2026 11:14\nWygeneruj podpowiedzi AI\nRodowód: Tabela pomysłów · wiersz 2 · zmieniono 14:32",
+      "hasResultMarker": null,
+      "obrazJasnosc": 18.8799835001929,
+      "sekcjeRozwiniete": 1,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "ideas-teresa-panel",
+      "motyw": "light",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/ideas-teresa-panel__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Mapa myśli\n·\nEkspansja DE — mapa hipotez\nEkspansja DE\npopyt\nkanały\nryzyka\nAKCJE\nEksportuj\nKonwertuj\nRozmawiaj z Teresą\n\nKOMENDY\n\nUzupełnij puste\nSynteza\nKontrola jakości\nKontynuuj\n\nSUGESTIE TERESY\n\nRozważ gałąź „bariery regulacyjne DE\" — brakuje jej na mapie.\n\nWęzły „kanały\" i „popyt\" wyglądają na powiązane — połączyć?\n\nWŁAŚCIWOŚCI\nNAZWA\nEkspansja DE — mapa hipotez\nTAGI\nrynek\nDE\nWŁAŚCICIEL\nPiotr W.\nDOJRZAŁOŚĆ\ndojrzewa\n\nMapa hipotez wejścia na rynek DE — gałęzie: popyt, konkurencja, kanały, ryzyka.\n\nPOWIĄZANIA\n\nWEJŚCIE\n\nNotatka: wywiady z partnerami DE\nInsight: luka w kanałach B2B\n\nWYJŚCIE\n\nInicjatywa: pilotaż DACH\nPokaż graf powiązań\nŹRÓDŁA I ZAŁOŻENIA\n\nBrak zapisanych źródeł i założeń.\n\nKOMENTARZE\n\nBrak komentarzy.\n\nHISTORIA\n\nBrak zapisanej historii.",
+      "hasResultMarker": null,
+      "obrazJasnosc": 249.24833860763889,
+      "sekcjeRozwiniete": 5,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "ideas-teresa-panel",
+      "motyw": "dark",
+      "plik": "/private/tmp/odbior-e/head-off/nieprzypisane/ideas-teresa-panel__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Mapa myśli\n·\nEkspansja DE — mapa hipotez\nEkspansja DE\npopyt\nkanały\nryzyka\nAKCJE\nEksportuj\nKonwertuj\nRozmawiaj z Teresą\n\nKOMENDY\n\nUzupełnij puste\nSynteza\nKontrola jakości\nKontynuuj\n\nSUGESTIE TERESY\n\nRozważ gałąź „bariery regulacyjne DE\" — brakuje jej na mapie.\n\nWęzły „kanały\" i „popyt\" wyglądają na powiązane — połączyć?\n\nWŁAŚCIWOŚCI\nNAZWA\nEkspansja DE — mapa hipotez\nTAGI\nrynek\nDE\nWŁAŚCICIEL\nPiotr W.\nDOJRZAŁOŚĆ\ndojrzewa\n\nMapa hipotez wejścia na rynek DE — gałęzie: popyt, konkurencja, kanały, ryzyka.\n\nPOWIĄZANIA\n\nWEJŚCIE\n\nNotatka: wywiady z partnerami DE\nInsight: luka w kanałach B2B\n\nWYJŚCIE\n\nInicjatywa: pilotaż DACH\nPokaż graf powiązań\nŹRÓDŁA I ZAŁOŻENIA\n\nBrak zapisanych źródeł i założeń.\n\nKOMENTARZE\n\nBrak komentarzy.\n\nHISTORIA\n\nBrak zapisanej historii.",
+      "hasResultMarker": null,
+      "obrazJasnosc": 31.663361352237654,
+      "sekcjeRozwiniete": 5,
+      "sekcjeNadalZwiniete": [],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "mywork-notebook-rail-speca",
+      "roznicaLuminancji": 219.10401337345678,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    },
+    {
+      "ekran": "notatnik-centrum-mysli",
+      "roznicaLuminancji": 220.1744694376929,
+      "procentRoznychPikseli": 99.8605324074074,
+      "powod": null
+    },
+    {
+      "ekran": "mywork-idea-inspector-lekki",
+      "roznicaLuminancji": 230.24193452314813,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    },
+    {
+      "ekran": "ideas-teresa-panel",
+      "roznicaLuminancji": 217.58497725540124,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    }
+  ]
+}

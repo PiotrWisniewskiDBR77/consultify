@@ -978,6 +978,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Fresh server copy of the page returned by a 409 conflict response, kept
   // so the "Reload" action can load it without a second round-trip.
   const [conflictServerPage, setConflictServerPage] = useState<NotebookPage | null>(null);
+  const [showConflictComparison, setShowConflictComparison] = useState(false);
   // Same navigator.onLine + online/offline listener pattern as
   // src/components/LLMSelector.tsx — no new hook, matches an existing
   // convention already used elsewhere in this codebase.
@@ -1803,6 +1804,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     );
     setSaveState(null);
     setConflictServerPage(null);
+    setShowConflictComparison(false);
   }, [activePage, conflictServerPage]);
 
   // Explicit, user-initiated overwrite of the server's newer content with
@@ -1815,6 +1817,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     if (!current) return;
     setSaveState(null);
     setConflictServerPage(null);
+    setShowConflictComparison(false);
     void persistNotebookDraft(current);
   }, [activePage, pages, persistNotebookDraft]);
 
@@ -1830,6 +1833,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   useEffect(() => {
     setSaveState(null);
     setConflictServerPage(null);
+    setShowConflictComparison(false);
   }, [activePage?.id]);
 
   // MW-08 mobile view switch: whenever a DIFFERENT page becomes active (any
@@ -3748,16 +3752,36 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               onClick={handleReloadFromConflict}
                               className="rounded-md border border-amber-400 px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
-                              {t('notebook.notebookContent.conflictReload', 'Reload')}
+                              {t('notebook.notebookContent.conflictUseTheirs', 'Use theirs')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowConflictComparison((visible) => !visible)}
+                              aria-expanded={showConflictComparison}
+                              className="rounded-md border border-amber-400 px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            >
+                              {t('notebook.notebookContent.conflictCompare', 'Compare')}
                             </button>
                             <button
                               type="button"
                               onClick={handleRetryAfterConflict}
                               className="rounded-md px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
-                              {t('notebook.notebookContent.conflictRetry', 'Save mine anyway')}
+                              {t('notebook.notebookContent.conflictKeepMine', 'Keep mine')}
                             </button>
                           </span>
+                        </div>
+                      )}
+                      {saveState === 'conflict' && showConflictComparison && (
+                        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" role="region" aria-label={t('notebook.notebookContent.conflictComparison', 'Conflict comparison')}>
+                          <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                            <h4 className="text-xs font-semibold text-c-text-primary">{t('notebook.notebookContent.conflictMine', 'My version')}</h4>
+                            <p className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap text-xs text-c-text-secondary">{activePage?.contentText || t('notebook.notebookContent.conflictEmpty', 'No text')}</p>
+                          </section>
+                          <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                            <h4 className="text-xs font-semibold text-c-text-primary">{t('notebook.notebookContent.conflictTheirs', 'Their version')}</h4>
+                            <p className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap text-xs text-c-text-secondary">{conflictServerPage?.contentText || t('notebook.notebookContent.conflictEmpty', 'No text')}</p>
+                          </section>
                         </div>
                       )}
 

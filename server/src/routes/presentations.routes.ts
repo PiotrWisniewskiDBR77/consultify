@@ -202,6 +202,7 @@ import logger from '../utils/Logger.js';
 import { registerPdfFonts } from '../utils/pdfFonts.js';
 import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -956,7 +957,7 @@ async function enforceNoLegalHold(res: Response, organizationId: string, operati
     return true;
   } catch (error: any) {
     if (error instanceof OrgPoliciesError || error?.code === 'LEGAL_HOLD') {
-      res.status(403).json({ success: false, error: error.message, code: 'LEGAL_HOLD' });
+      res.status(403).json({ success: false, ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
       return false;
     }
     throw error;
@@ -3624,7 +3625,7 @@ function mapDeckCommentError(res: Response, err: unknown): boolean {
           : err.code === 'forbidden'
             ? 403
             : 409;
-    res.status(status).json({ success: false, error: err.message, code: err.code });
+    res.status(status).json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return true;
   }
   return false;

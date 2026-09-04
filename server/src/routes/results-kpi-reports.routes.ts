@@ -19,6 +19,7 @@ import {
 } from '../services/results/resultsWriterObservationService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -341,7 +342,7 @@ router.post(
       if (error instanceof ResultsKpiReportSnapshotError) {
         return res
           .status(error.status)
-          .json({ success: false, error: error.message, code: error.code });
+          .json({ success: false, ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }

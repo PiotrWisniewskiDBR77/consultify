@@ -133,7 +133,7 @@ export function validatePresentationStudioSetupForm(
 // ---------------------------------------------------------------------------
 
 const FIELD_BASE =
-  'block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-primary-400';
+  'block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition-colors focus-visible:border-c-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:border-c-focus';
 
 const FIELD_LABEL =
   'mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400';

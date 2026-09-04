@@ -90,6 +90,7 @@ import {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -735,30 +736,30 @@ router.post(
       return res.status(201).json({ data: review, meta: meta() });
     } catch (error) {
       if (error instanceof ReviewKeyConflictError) {
-        return res.status(409).json({ error: error.message, code: 'IDEMPOTENCY_KEY_REUSED' });
+        return res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'IDEMPOTENCY_KEY_REUSED' });
       }
       if (error instanceof ReviewInProgressError) {
         res.setHeader('Retry-After', '5');
-        return res.status(409).json({ error: error.message, code: 'REVIEW_IN_PROGRESS' });
+        return res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'REVIEW_IN_PROGRESS' });
       }
       if (error instanceof BaselineNotApprovedForReviewError) {
-        return res.status(400).json({ error: error.message, code: 'BASELINE_NOT_APPROVED' });
+        return res.status(400).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'BASELINE_NOT_APPROVED' });
       }
       if (error instanceof BaselineVersionConflictForReviewError) {
         return res.status(409).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: 'BASELINE_VERSION_CONFLICT',
           serverVersion: error.serverVersion,
         });
       }
       if (error instanceof BaselineLineNotFoundError) {
-        return res.status(422).json({ error: error.message, code: 'BASELINE_LINE_NOT_FOUND' });
+        return res.status(422).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'BASELINE_LINE_NOT_FOUND' });
       }
       if (error instanceof ActualNotFoundError) {
-        return res.status(404).json({ error: error.message, code: 'ACTUAL_NOT_FOUND' });
+        return res.status(404).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'ACTUAL_NOT_FOUND' });
       }
       if (error instanceof ActualPeriodMismatchError) {
-        return res.status(400).json({ error: error.message, code: 'ACTUAL_PERIOD_MISMATCH' });
+        return res.status(400).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'ACTUAL_PERIOD_MISMATCH' });
       }
       throw error;
     }

@@ -285,6 +285,7 @@ import {
   ScheduleRoiCasePostInvestmentReviewSchema,
   UpdateRoiPostInvestmentReviewDraftSchema,
 } from '../../validators/resultsVnextRoiPir.validators.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -377,7 +378,7 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     // RN-G5 fix: same rationale as kpi.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
     logger.warn(`[resultsVnext/roi.routes] ${op} denied`, { capability: err.details.capability });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   // AMD-FLOW-ROI-VISIBILITY-002 — checked alongside the RN-G5 coarse
@@ -388,22 +389,22 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // (malformed request) — all three are FAIL-BEFORE-MUTATION errors, never
   // reached after a partial write.
   if (err instanceof RoiVisibilityGovernanceActorNotAuthorizedError) {
-    res.status(403).json({ error: err.message, code: (err as { code: string }).code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: (err as { code: string }).code });
     return;
   }
   if (err instanceof RoiGovernedVisibilityPolicyCollisionError) {
-    res.status(409).json({ error: err.message, code: (err as { code: string }).code });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: (err as { code: string }).code });
     return;
   }
   if (err instanceof RoiGovernedVisibilityPolicyMismatchError) {
-    res.status(400).json({ error: err.message, code: (err as { code: string }).code });
+    res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: (err as { code: string }).code });
     return;
   }
   // ROI-E003 §7: checked FIRST, ahead of the generic conflict/validation 409
   // branches — self-approval denial is a 403 (authorization), not a 409
   // (state-conflict).
   if (err instanceof RoiSelfApprovalDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // ROI-E006 §9: RoiPirSelfCloseDeniedError checked ahead of the generic
@@ -412,23 +413,23 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // RoiPirNotFoundError is a 404 (internal-invariant "no active draft PIR"),
   // also checked ahead of the generic 409 branch.
   if (err instanceof RoiPirSelfCloseDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiPirNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiPirValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) });
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: 'NOT_FOUND' });
     return;
   }
   // AMD-FLOW-ROI-VISIBILITY-002 — checked ahead of the generic 409 branch
@@ -437,26 +438,26 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // ROI case now requires the same governed authority reads do.
   if (err instanceof RoiCaseCreationNotAuthorizedError) {
     logger.warn(`[resultsVnext/roi.routes] createRoiCase denied`, { reason: err.details.reason });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof RoiCaseNoActiveVisibilityPolicyError) {
     // Org/domain has no active visibility policy provisioned yet — a
     // precondition failure, not a malformed request (400) nor a missing
     // resource (404). Same 409 rationale as KpiNoActiveVisibilityPolicyError.
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiCaseNotReadyForReviewError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiBaselineFrozenError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiCaseValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // ROI-E002 typed errors — same 409 "typed precondition failure" mapping
@@ -473,7 +474,7 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     err instanceof RoiScenarioValidationError ||
     err instanceof RoiCalculationRunValidationError
   ) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // ROI-E004 §6: RoiActualSelfVerificationDeniedError checked ahead of the
@@ -483,11 +484,11 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // (referenced actual_entry_id does not exist), also checked ahead of the
   // generic 409 branch for the same "more specific status code first" reason.
   if (err instanceof RoiActualSelfVerificationDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiActualEntryNotFoundError || err instanceof RoiVarianceNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (
@@ -495,7 +496,7 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     err instanceof RoiActualEntryValidationError ||
     err instanceof RoiVarianceValidationError
   ) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // ROI-E007 §6: RoiFinanceLinkNotFoundError/RoiFinanceReconciliationNotFoundError
@@ -505,7 +506,7 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // 409, matching every other typed precondition-failure error in this
   // router.
   if (err instanceof RoiFinanceLinkNotFoundError || err instanceof RoiFinanceReconciliationNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof RoiFinanceReconciliationValidationError) {
@@ -517,10 +518,10 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
       err.code === 'FINANCE_OWNER_GRANT_SELF_DENIED' ||
       err.code === 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED'
     ) {
-      res.status(403).json({ error: err.message, code: err.code, details: err.details });
+      res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
       return;
     }
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   logger.error(`[resultsVnext/roi.routes] ${op} failed`, {

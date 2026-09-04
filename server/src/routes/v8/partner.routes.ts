@@ -53,6 +53,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { ensureUserOnboardingStatusTable } from '../../utils/ensureUserOnboardingStatusTable.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -1694,11 +1695,11 @@ router.put(
 
 router.use((error: Error, _req: AuthRequest, res: Response, next: NextFunction) => {
   if (error instanceof PartnerConnectionError) {
-    return res.status(error.status).json({ error: error.message, code: error.code });
+    return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
   }
   if (error.message === 'Idempotency replay payload mismatch') {
     return res.status(409).json({
-      error: error.message,
+      ...mapAppErrorResponse(error, undefined, 'error'),
       code: 'IDEMPOTENCY_PAYLOAD_MISMATCH',
     });
   }

@@ -34,6 +34,7 @@ import {
 } from '../services/deliverableTemplateService.js';
 import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -81,7 +82,7 @@ router.get('/templates-provenance/pending', async (req, res) => {
     res.json({ templates });
   } catch (err) {
     if (err instanceof TemplateProvenanceForbiddenError) {
-      res.status(403).json({ error: err.message, code: err.code });
+      res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       return;
     }
     logger.error('[deliverableTemplates] Failed to load pending provenance', { err });
@@ -171,11 +172,11 @@ router.put('/templates/:id', async (req, res) => {
     res.json({ template });
   } catch (err) {
     if (err instanceof TemplateForbiddenError) {
-      res.status(403).json({ error: err.message });
+      res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       return;
     }
     if (err instanceof TemplateNotFoundError) {
-      res.status(404).json({ error: err.message });
+      res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       return;
     }
     logger.error('[deliverableTemplates] Failed to update template', { err, id: req.params.id });
@@ -218,9 +219,9 @@ async function mutateWorkbookLifecycle(req: any, res: any, action: 'approve' | '
   } catch (err) {
     const code = (err as { code?: string }).code;
     if (code === 'INVALID_LIFECYCLE_TRANSITION')
-      return res.status(409).json({ error: (err as Error).message, code });
+      return res.status(409).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
     if (code === 'TEMPLATE_NOT_FOUND')
-      return res.status(404).json({ error: (err as Error).message, code });
+      return res.status(404).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
     logger.error('[deliverableTemplates] Workbook lifecycle transition failed', {
       err,
       id: req.params.id,
@@ -290,7 +291,7 @@ router.delete('/templates/:id', async (req, res) => {
     res.status(204).send();
   } catch (err) {
     if (err instanceof TemplateForbiddenError) {
-      res.status(403).json({ error: err.message });
+      res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       return;
     }
     logger.error('[deliverableTemplates] Failed to delete template', { err, id: req.params.id });
@@ -332,23 +333,23 @@ router.post('/templates/:id/provenance/approve', async (req, res) => {
     res.status(result.replayed ? 200 : 201).json(result);
   } catch (err) {
     if (err instanceof TemplateProvenanceUnsupportedRegistryError) {
-      res.status(400).json({ error: err.message, code: err.code });
+      res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       return;
     }
     if (err instanceof TemplateProvenanceInvalidError) {
-      res.status(400).json({ error: err.message, code: err.code });
+      res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       return;
     }
     if (err instanceof TemplateProvenanceForbiddenError) {
-      res.status(403).json({ error: err.message, code: err.code });
+      res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       return;
     }
     if (err instanceof TemplateProvenanceConflictError) {
-      res.status(409).json({ error: err.message, code: err.code });
+      res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       return;
     }
     if (err instanceof TemplateNotFoundError) {
-      res.status(404).json({ error: err.message });
+      res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       return;
     }
     // The failure detail is logged, never returned: an approval error must not

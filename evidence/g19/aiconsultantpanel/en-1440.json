@@ -1,0 +1,97 @@
+{
+  "jezyk": "en",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 1500,
+  "klikPoRozwinieciu": true,
+  "wyniki": [
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel/en-1440/day290-aiconsultantpanel/teresa-chipy-panel-artefaktu__PO__en__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 16,
+      "bledyKonsoli": [
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)"
+      ],
+      "httpBledy": [],
+      "tekst": "AI Consultant\nSkip to chat input\nMain\nAI sees: Presentation: Partner channel gap\nTurn this insight into a board presentation based on our template.\n\nDone — the deck has 8 slides and follows the board template. Want me to add a risks slide?\n\nInterrupted response could not be checked.\nDismiss",
+      "hasResultMarker": null,
+      "obrazJasnosc": 248.95966185185182,
+      "sekcjeRozwiniete": 16,
+      "sekcjeNadalZwiniete": [
+        "Main",
+        "Important signals",
+        "Voice modes explained"
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Main / Important signals / Voice modes explained",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel/en-1440/day290-aiconsultantpanel/teresa-chipy-panel-artefaktu__PO__en__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 16,
+      "bledyKonsoli": [
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)"
+      ],
+      "httpBledy": [],
+      "tekst": "AI Consultant\nSkip to chat input\nMain\nAI sees: Presentation: Partner channel gap\nTurn this insight into a board presentation based on our template.\n\nDone — the deck has 8 slides and follows the board template. Want me to add a risks slide?\n\nInterrupted response could not be checked.\nDismiss",
+      "hasResultMarker": null,
+      "obrazJasnosc": 17.079880321759262,
+      "sekcjeRozwiniete": 16,
+      "sekcjeNadalZwiniete": [
+        "Main",
+        "Important signals",
+        "Voice modes explained"
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Main / Important signals / Voice modes explained",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "roznicaLuminancji": 231.87978153009254,
+      "procentRoznychPikseli": 99.99749228395062,
+      "powod": null
+    }
+  ]
+}

@@ -48,6 +48,7 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { resolveStoredRelativePath } from '../utils/storagePaths.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);
@@ -128,7 +129,7 @@ function mapFinanceCandidateHandoffError(
     return {
       status: err.status,
       body: {
-        error: err.message,
+        ...mapAppErrorResponse(err, undefined, 'error'),
         code: err.code,
         ...(err.details ? { details: err.details } : {}),
       },

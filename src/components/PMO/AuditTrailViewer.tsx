@@ -229,7 +229,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
             placeholder="Search entries..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>
 
@@ -237,7 +237,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value as 'today' | 'week' | 'month' | 'all')}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="today">Today</option>
           <option value="week">Last 7 days</option>
@@ -249,7 +249,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={selectedDomain || ''}
           onChange={(e) => setSelectedDomain(e.target.value || null)}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="">All Domains</option>
           {uniqueDomains.map((domain) => (
@@ -263,7 +263,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         <select
           value={selectedAction || ''}
           onChange={(e) => setSelectedAction(e.target.value || null)}
-          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="">All Actions</option>
           {uniqueActions.map((action) => (

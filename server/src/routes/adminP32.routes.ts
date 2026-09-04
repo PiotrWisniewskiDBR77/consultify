@@ -17,6 +17,7 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { flagOn } from '../utils/pgFlags.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -2957,7 +2958,7 @@ router.post(
     } catch (error) {
       if (error instanceof ScimGroupMappingError) {
         const status = error.code === 'PROJECT_NOT_IN_ORG' ? 404 : 400;
-        return res.status(status).json({ error: error.message, code: error.code });
+        return res.status(status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }

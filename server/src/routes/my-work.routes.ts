@@ -86,6 +86,7 @@ import radarRouter from './my-work/radar.routes.js';
 import signalsRouter from './my-work/signals.routes.js';
 import statsRouter from './my-work/stats.routes.js';
 import whiteboardUploadsRouter from './my-work/whiteboard-uploads.routes.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -4662,7 +4663,7 @@ router.get(
     try {
       res.json(await previewIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       throw error;
     }
   })
@@ -4677,7 +4678,7 @@ router.get(
     try {
       res.json(await readIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       throw error;
     }
   })
@@ -4705,7 +4706,7 @@ router.post(
       });
       res.status(result.created ? 201 : 200).json(result);
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       throw error;
     }
   })

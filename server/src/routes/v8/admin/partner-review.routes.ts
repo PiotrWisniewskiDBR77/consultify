@@ -9,6 +9,7 @@ import {
   reviewPartnerCertification,
 } from '../../../services/partnerOperatorReviewService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.post(
 
 router.use((error: Error, _req: AuthRequest, res: Response, next: (error?: Error) => void) => {
   if (error instanceof PartnerOperatorReviewError) {
-    res.status(error.status).json({ error: error.message, code: error.code });
+    res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
     return;
   }
   next(error);

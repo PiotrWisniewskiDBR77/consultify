@@ -143,7 +143,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                   placeholder="e.g. Program Manager, CTO"
                   value={context.role}
                   onChange={(e) => setContext({ ...context, role: e.target.value })}
@@ -161,7 +161,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                   placeholder="e.g. Fintech, Manufacturing"
                   value={context.industry}
                   onChange={(e) => setContext({ ...context, industry: e.target.value })}
@@ -178,7 +178,7 @@ export const OnboardingWizard = () => {
                   size={18}
                 />
                 <textarea
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                   placeholder="e.g. Deadlines are slipping, team communication is siloed..."
                   rows={3}
                   value={context.problems}
@@ -191,7 +191,7 @@ export const OnboardingWizard = () => {
                 Urgency Level
               </label>
               <select
-                className="w-full p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                className="w-full p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                 value={context.urgency}
                 onChange={(e) => setContext({ ...context, urgency: e.target.value })}
               >
@@ -212,7 +212,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus-visible:ring-2 focus-visible:ring-c-focus outline-none transition-all"
                   placeholder="e.g. Launch in Q1, Reduce bugs by 50%"
                   value={context.targets}
                   onChange={(e) => setContext({ ...context, targets: e.target.value })}

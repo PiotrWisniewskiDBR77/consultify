@@ -1,0 +1,67 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1024,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 1500,
+  "klikPoRozwinieciu": true,
+  "wyniki": [
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel/pl-1024/day290-aiconsultantpanel/teresa-chipy-panel-artefaktu__PO__pl__1024__light.png",
+      "szer": 1024,
+      "wys": 900,
+      "bledy": 2,
+      "bledyKonsoli": [
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)"
+      ],
+      "httpBledy": [],
+      "tekst": "Konsultant AI\nPrzejdź do pola wiadomości\nMain\nAI uwzględnia: Prezentacja: Luka w kanale partnerskim\nZrób z tego insightu prezentację dla zarządu na bazie naszego szablonu.\n\nZrobione — deck ma 8 slajdów i trzyma się szablonu zarządczego. Chcesz, żebym dołożyła slajd z ryzykami?\n\nNie udało się sprawdzić przerwanej odpowiedzi.\nZamknij\nWażne sygnały\nSYGNAŁ\n\t\nDOMENA\n\t\nWAGA\n\t\nŹRÓDŁO\n\t\nWIEK\n\t\nSTATUS\n\n\nBrak otwartych sygnałów. Nie wiemy, czy producent sygnałów jest włączony — sprawdź przyciskiem Odśwież.",
+      "hasResultMarker": null,
+      "obrazJasnosc": 253.03512768907333,
+      "sekcjeRozwiniete": 3,
+      "sekcjeNadalZwiniete": [
+        "Main",
+        "Objaśnienie trybów głosowych"
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Main / Objaśnienie trybów głosowych",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day290-g19-regresja-artefakty/aiconsultantpanel/pl-1024/day290-aiconsultantpanel/teresa-chipy-panel-artefaktu__PO__pl__1024__dark.png",
+      "szer": 1024,
+      "wys": 900,
+      "bledy": 2,
+      "bledyKonsoli": [
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)",
+        "[useSignalsFeed] Odpowiedź /signals nie ma tablicy `signals` — kontrakt złamany, renderuję pustą listę zamiast crashować. Proxy(Object)"
+      ],
+      "httpBledy": [],
+      "tekst": "Konsultant AI\nPrzejdź do pola wiadomości\nMain\nAI uwzględnia: Prezentacja: Luka w kanale partnerskim\nZrób z tego insightu prezentację dla zarządu na bazie naszego szablonu.\n\nZrobione — deck ma 8 slajdów i trzyma się szablonu zarządczego. Chcesz, żebym dołożyła slajd z ryzykami?\n\nNie udało się sprawdzić przerwanej odpowiedzi.\nZamknij\nWażne sygnały\nSYGNAŁ\n\t\nDOMENA\n\t\nWAGA\n\t\nŹRÓDŁO\n\t\nWIEK\n\t\nSTATUS\n\n\nBrak otwartych sygnałów. Nie wiemy, czy producent sygnałów jest włączony — sprawdź przyciskiem Odśwież.",
+      "hasResultMarker": null,
+      "obrazJasnosc": 24.445346534016927,
+      "sekcjeRozwiniete": 3,
+      "sekcjeNadalZwiniete": [
+        "Main",
+        "Objaśnienie trybów głosowych"
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Main / Objaśnienie trybów głosowych",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "teresa-chipy-panel-artefaktu",
+      "roznicaLuminancji": 228.58978115505641,
+      "procentRoznychPikseli": 99.98377821180556,
+      "powod": null
+    }
+  ]
+}

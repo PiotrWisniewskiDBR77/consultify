@@ -203,7 +203,7 @@ export function DraftReviewPanel({
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-primary-500"
+              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none focus-visible:ring-2 focus-visible:ring-c-focus"
             />
           ) : (
             <div className="text-sm text-gray-600 dark:text-gray-400">

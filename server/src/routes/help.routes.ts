@@ -16,99 +16,6 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// Reproducible from server/migrations/20260903_help_categories.sql for
-// help_categories — the only one of these four tables with no migration
-// (help_articles/help_playbooks/help_events already have one: see
-// 255_help_system.sql / 551_help_playbooks_onboarding.sql /
-// 000_initdb_core_tables.sql). This runtime DDL is a compatibility fallback
-// for DBs that predate that migration, kept in sync with it. TIMESTAMPTZ
-// (not DATETIME): DbPromise's `run()` adapts DATETIME->TIMESTAMP for
-// Postgres via adaptQuery, but the type is written explicitly here so it
-// stays correct even if this call is ever moved to a DB method that
-// bypasses that adapter (see commit 5b5c0e3849 —
-// emailVerificationService hit exactly that via DbPromise.exec(), which
-// does not adaptQuery, and failed with Postgres 42704 "type \"datetime\"
-// does not exist").
-//
-// NOTE (measured 2026-09-03, out of scope for this fix): help_articles and
-// help_events already exist via migration with DIFFERENT column shapes than
-// declared here (migrated help_articles has `category`/`content`, not this
-// file's `category_id`/`body`/`status`; migrated help_events has no
-// `organization_id`/`article_id`/`metadata`). Because these tables already
-// exist, the CREATE TABLE IF NOT EXISTS below is a no-op for them — the
-// queries elsewhere in this file that reference the missing columns fail
-// silently (caught by their own try/catch) on a real Postgres DB. Flagged
-// separately; not part of this P0 DATETIME-reproducibility fix.
-let ensured = false;
-async function ensureHelpSchema(): Promise<void> {
-  if (ensured) return;
-
-  try {
-    const categoriesResult = await dbRun(
-      `CREATE TABLE IF NOT EXISTS help_categories (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        sort_order INTEGER DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      )`,
-      []
-    );
-    if (!categoriesResult?.success)
-      throw new Error(categoriesResult?.error || 'help_categories table creation failed');
-
-    const articlesResult = await dbRun(
-      `CREATE TABLE IF NOT EXISTS help_articles (
-        id TEXT PRIMARY KEY,
-        category_id TEXT,
-        title TEXT NOT NULL,
-        body TEXT,
-        status TEXT DEFAULT 'published',
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      )`,
-      []
-    );
-    if (!articlesResult?.success)
-      throw new Error(articlesResult?.error || 'help_articles table creation failed');
-
-    const playbooksResult = await dbRun(
-      `CREATE TABLE IF NOT EXISTS help_playbooks (
-        id TEXT PRIMARY KEY,
-        key TEXT,
-        title TEXT,
-        content TEXT,
-        status TEXT DEFAULT 'published',
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      )`,
-      []
-    );
-    if (!playbooksResult?.success)
-      throw new Error(playbooksResult?.error || 'help_playbooks table creation failed');
-
-    const eventsResult = await dbRun(
-      `CREATE TABLE IF NOT EXISTS help_events (
-        id TEXT PRIMARY KEY,
-        user_id TEXT,
-        organization_id TEXT,
-        event_type TEXT,
-        article_id TEXT,
-        metadata TEXT,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      )`,
-      []
-    );
-    if (!eventsResult?.success)
-      throw new Error(eventsResult?.error || 'help_events table creation failed');
-
-    ensured = true;
-  } catch (e) {
-    logger.error('[Help] ensureHelpSchema failed', {
-      error: (e as Error)?.message || e,
-    });
-    throw e;
-  }
-}
-
 /**
  * GET /api/help/playbooks
  * List all help playbooks
@@ -118,7 +25,6 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      await ensureHelpSchema();
       const playbooks = await dbAll<any>(
         `SELECT * FROM help_playbooks WHERE status = 'published' ORDER BY created_at DESC`,
         []
@@ -150,7 +56,6 @@ router.get(
     const { id } = req.params;
 
     try {
-      await ensureHelpSchema();
       const playbooks = await dbAll<any>(`SELECT * FROM help_playbooks WHERE id = ?`, [id]);
 
       if (!playbooks || playbooks.length === 0) {
@@ -173,8 +78,6 @@ router.get(
   '/articles',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { q } = req.query;
-    await ensureHelpSchema();
-
     const query = String(q || '').trim();
     if (!query) {
       const data = await dbAll<any>(
@@ -184,7 +87,10 @@ router.get(
          ORDER BY updated_at DESC
          LIMIT 50`,
         []
-      ).catch(() => []);
+      ).catch((error: any) => {
+        logger.error('[Help] Failed to list articles', { error: error?.message || error, query: '' });
+        throw error;
+      });
       return res.json({ success: true, data: data || [], query: '' });
     }
 
@@ -196,7 +102,10 @@ router.get(
        ORDER BY updated_at DESC
        LIMIT 50`,
       [like, like]
-    ).catch(() => []);
+    ).catch((error: any) => {
+      logger.error('[Help] Failed to search articles', { error: error?.message || error, query });
+      throw error;
+    });
     return res.json({ success: true, data: data || [], query });
   })
 );
@@ -208,12 +117,13 @@ router.get(
 router.get(
   '/categories',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    await ensureHelpSchema();
-
     const categories = await dbAll<any>(
       `SELECT id, name, sort_order as "sortOrder" FROM help_categories ORDER BY sort_order ASC, name ASC`,
       []
-    ).catch(() => []);
+    ).catch((error: any) => {
+      logger.error('[Help] Failed to list categories', { error: error?.message || error });
+      throw error;
+    });
 
     const counts = await dbAll<{ category_id: string; count: number }>(
       `SELECT category_id, COUNT(1) as count
@@ -221,7 +131,10 @@ router.get(
        WHERE status = 'published' AND category_id IS NOT NULL
        GROUP BY category_id`,
       []
-    ).catch(() => []);
+    ).catch((error: any) => {
+      logger.error('[Help] Failed to count articles by category', { error: error?.message || error });
+      throw error;
+    });
 
     const countMap = new Map<string, number>();
     for (const r of counts || []) {
@@ -249,39 +162,44 @@ router.post(
   '/events',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { eventType, articleId, metadata } = req.body;
+    const { eventType, articleId, metadata, playbookKey, context } = req.body;
     const userId = req.user?.id;
     const organizationId = (req as any).organizationId || req.user?.organizationId || null;
 
-    await ensureHelpSchema();
-
-    let stored = false;
     const eventId = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     try {
-      await dbRun(
-        `INSERT INTO help_events (id, user_id, organization_id, event_type, article_id, metadata)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+      const eventData = context ?? metadata ?? {};
+      const result = await dbRun(
+        `INSERT INTO help_events
+           (id, user_id, organization_id, event_type, article_id, metadata, playbook_key, event_data, route)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           eventId,
           userId || null,
           organizationId ? String(organizationId) : null,
           String(eventType || ''),
           articleId ? String(articleId) : null,
-          metadata ? JSON.stringify(metadata) : null,
+          metadata ? JSON.stringify(metadata) : context ? JSON.stringify(context) : null,
+          playbookKey ? String(playbookKey) : null,
+          JSON.stringify(eventData),
+          context?.route ? String(context.route) : null,
         ]
       );
-      stored = true;
+      if (!result?.success) throw new Error(result?.error || 'help event insert failed');
     } catch (e) {
-      logger.warn('[Help] Failed to persist help event (continuing)', {
+      logger.error('[Help] Failed to persist help event', {
         error: (e as Error)?.message || e,
+        eventType: String(eventType || ''),
+        playbookKey: playbookKey ? String(playbookKey) : null,
       });
+      return res.status(500).json({ success: false, error: 'Failed to persist help event' });
     }
 
     return res.json({
       success: true,
       message: 'Event logged',
       eventId,
-      stored,
+      stored: true,
     });
   })
 );

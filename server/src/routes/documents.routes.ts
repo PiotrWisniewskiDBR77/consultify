@@ -14,6 +14,7 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import contextDocumentService from '../services/organizationContext/ContextDocumentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 // Apply rate limiting
 const router = Router();
@@ -459,7 +460,7 @@ router.post(
         error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
       ) {
         return res.status(429).json({
-          error: error.message || 'Storage quota exceeded',
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
           document: error.document || null,
           quota: error.quota || null,
