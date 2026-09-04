@@ -9,6 +9,20 @@
 - PRZED zmianami: 531 wystąpień / 164 pliki / 100 plików usług. PO pierwszej bezpiecznej grupie: 526 / 163 / 99.
 - „Cichy błąd” jest konserwatywnym sygnałem statycznym: blok `catch` w oknie 20 linii przed/24 po DDL. Wymaga ręcznego potwierdzenia przed zmianą.
 
+### Pomiar `information_schema` — dyżur 319 / R2
+
+Na bazie zbudowanej wyłącznie przez strict runner było 1907 tabel. Po inicjalizacji realnego `ApiGateway` i żądaniach HTTP było 1914; różnica B−A wynosi 7 tabel (pomiar odbioru podawał 27 dla innej ścieżki aktywacji runtime). Klasyfikacja nie opiera się na samym statycznym trafieniu: uwzględnia reguły pomijania runnera.
+
+| Tabela B−A | Przyczyna | Plik statyczny | Reguła runnera |
+|---|---|---|---|
+| `ai_ideas` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql` | `000_initdb_*` |
+| `ai_observations` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql` | `000_initdb_*` |
+| `mfa_attempts` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql`; `never-ran/026_mfa_infrastructure.sql.sql` | `000_initdb_*`; `never-ran/`; `.sql.sql` |
+| `project_role_overrides` | `BRAK_MIGRACJI` | brak | — |
+| `project_role_templates` | `BRAK_MIGRACJI` | brak | — |
+| `scheduled_emails` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql`; `never-ran/099_create_email_tables.sql.sql` | `000_initdb_*`; `never-ran/`; `.sql.sql` |
+| `user_consents` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql`; `015_enterprise_customers_module.sql`; `106_security_privacy_enterprise.sql` | `000_initdb_*`; numer < 500 |
+
 ## Pozycje
 
 | Plik | Linia | Tabela | Migracja | Catch blisko | Dialekt | Działanie | Commit |

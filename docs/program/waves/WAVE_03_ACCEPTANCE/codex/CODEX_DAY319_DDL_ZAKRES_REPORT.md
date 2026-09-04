@@ -86,7 +86,20 @@ Pułapki Z33: pakiet jest czysto plikowy, nie montuje `ApiGateway`, auth ani baz
 
 - Pomiar 504/160 i 197/98 potwierdził liczby instrukcji.
 - Po uruchomieniu własnego kontenera `lsof :6335` pokazuje proces tunelu Dockera; to oczekiwany własny listener, nie zajęty zasób wejściowy.
+- R2: własna ścieżka realnego `ApiGateway` z rejestracją i pięcioma GET-ami zmaterializowała 7, nie 27 tabel. Wynik jest zależny od aktywowanych tras; wiążący jest zmierzony mianownik tej ścieżki.
+
+## R2 — mianownik żywej pustej bazy
+
+Strict chain: 891 migracji, drugi przebieg 0. Mianownik A po samych migracjach: 1907 tabel (`061054e05ab5a7808e5e5b882e243655998b203505e81fc4a963461b32cfbfb9`). Po realnym `ApiGateway`, `POST /api/auth/register` i pięciu GET-ach mianownik B: 1914 (`4b3938e035d2da62cf20c615d17b7b41c3b6115e31b1011ec763a3e54ca95fbf`). B−A: 7 (`6d4b040cc84cae3783b2886c09340aef78231923de2539c3b9c043341045e6ec`): `ai_ideas`, `ai_observations`, `mfa_attempts`, `project_role_overrides`, `project_role_templates`, `scheduled_emails`, `user_consents`.
+
+Rejestracja zwróciła HTTP 200. GET-y: projects 200, notifications 200, access/effective 200, organizations/current 200, llm/providers 200. Surowy plik `r2-gateway-http.txt` zawiera efemeryczny JWT i nie jest w repo; raport nie publikuje tokena.
+
+Klasyfikacja per tabela jest w rejestrze: 5 `MIGRACJA_POMIJANA`, 2 `BRAK_MIGRACJI`. Pełne listy i logi: `/private/tmp/cx-day319-ddl-zakres-artefakty/r2-tabele-A-migracje.txt`, `r2-tabele-B-runtime.txt`, `r2-roznica-B-minus-A.txt`, `migracje-wejscie-1.txt`, `migracje-wejscie-2.txt`.
+
+Protokół Z30: `env` zwrócił `BRAK ZMIENNYCH POCZTY`; `settings WHERE key LIKE 'smtp%'` zwróciło 0 wierszy; `Gateway.ts` nie zawiera startu drenażu. **Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.** Log potwierdził `Using Host: Mock (Console)`.
+
+Pułapki Z33: komplet env stał w tej samej linii (`RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `NODE_ENV=test`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawny lokalny `DATABASE_URL`, `JWT_SECRET`). Harness montował `ApiGateway.getInstance().initializeRoutes(app)`, nie goły router i nie `server/src/index.ts`. Log zawiera `DB_IDENTITY ... 127.0.0.1:6335/cx319`.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R2–R6 pozostają niewykonane na tym etapie raportu.
+- R3–R6 pozostają niewykonane na tym etapie raportu.
