@@ -16,3 +16,9 @@ sygnatur ani call-site'ów. Trasy bez pełnych par dowodowych pozostają niezmie
 203 konstrukcje poza testami: 1 ze statycznie rozpoznanym kodem obecnym w słowniku operacyjnym,
 202 bez takiego kodu. Największa rodzina: 138 bez jawnego trzeciego argumentu, następnie 34
 przypadki rodziny `FEATURE_UNAVAILABLE` (29 literałów + 5 przez stałą).
+
+## Dług `defaultError`
+
+1003 linie wołają `handleResponse(res, ...)`; 1002 mają literał jako początek drugiego argumentu
+w tej samej linii. R3 centralnie zachowuje niepusty tekst serwera; fallback pozostaje dla kopert
+bez tekstu i odpowiedzi nieparsowalnych.

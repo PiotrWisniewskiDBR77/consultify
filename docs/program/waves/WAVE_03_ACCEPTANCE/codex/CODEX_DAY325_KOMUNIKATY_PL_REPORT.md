@@ -206,10 +206,25 @@ kontroler oraz rozszerzenia słownika mappera w jednym commicie):
 Pakiet R4 jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`), nie przechodzi przez bramki
 (a)–(d) ani przez HTTP; mierzy wyłącznie gałąź mappera dla operacyjnego AppError bez kodu.
 
+## R5 — wolumen ogona `defaultError`
+
+Definicja podstawowa z instrukcji: liczba pojedynczych linii `src/services/api.ts` zawierających
+`handleResponse(res, ` wynosi **1003**. Z nich 1002 rozpoczynają drugi argument literałem
+łańcuchowym w tej samej linii. To liczba call-site'ów, nie liczba sytuacji, w których użytkownik
+realnie zobaczy literal.
+
+Centralne miejsce nadpisania było jedno: `createApiError(data, defaultError, res.status)`.
+R3 pokrywa wszystkie 1003 call-site'y wtedy, gdy odpowiedź JSON zawiera niepuste `message` albo
+`error`: konstruktor `ApiError` zachowuje tekst serwera. Dług pozostaje dla odpowiedzi bez tych pól,
+odpowiedzi tekstowych/nieparsowalnych i bezpośrednich wywołań `createApiError` poza centralnym
+`handleResponse`; dla nich angielski fallback pozostaje świadomie ostatnią deską ratunku. Nie
+udowodniono, ile z 1003 ścieżek realnie wpada w każdą kategorię.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R2 pozostaje celowo czerwony i kod produkcyjny R2 nie został zmieniony z powodu granicy licencji.
 - Pełny typecheck jest `NOT_PROVEN`: proces Node rozbił się z braku pamięci.
 - Nie rozstrzygnięto dynamicznie wszystkich kodów przekazywanych w trzecim argumencie `AppError`;
   klasyfikacja R4 jest statyczna i jawnie wydziela wyrażenia dynamiczne.
-- R5–R6 nie są jeszcze zamknięte na etapie commitu R4.
+- Nie zmierzono realnej częstości użycia fallbacku w 1003 call-site'ach `handleResponse`.
+- R6 nie jest jeszcze zamknięte na etapie commitu R5.
