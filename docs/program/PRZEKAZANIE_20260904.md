@@ -188,37 +188,121 @@ m03-20260902` (sprawdzone `git cat-file -e` dla każdej z 13). **Wniosek dla ran
 uruchomić ponownie od zera** — treść, której im zabrakło, istnieje od 23:20, ale żaden z łańcuchów
 sam się nie wznowił (brak automatycznego retry po STOP-ie).
 
+## 3d. Noc 03/04.09 część 3: odbiory 302–312, WIP 296, incydent K1
+
+**Odbiór adwersaryjny paczki 302–312 + odbiór WIP 296**, trzy sesje Opus (odbiór E: 302/303,
+worktree `ag-odbior-e`; odbiór F: 304/305/306, worktree `ag-odbior-f`; odbiór G: 307/311/312 +
+diagnoza łańcucha A, worktree `ag-odbior-g`) + jedna sesja odbioru na zacommitowanym WIP dyżuru
+296. Dowody pełne: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/ODBIOR_DYZUROW_302_303_20260904.md`,
+`ODBIOR_DYZUROW_304_305_306_20260904.md`, `ODBIOR_DYZUROW_307_311_312_20260904.md`,
+`ODBIOR_DYZURU_296_WIP_20260904.md`. Wszystko scalone poniżej jest na HEAD tego worktree
+(`git merge-base --is-ancestor <sha> HEAD` sprawdzone dla każdego wiersza).
+
+| Dyżur | Werdykt odbioru | Scalone na HEAD? | Co zostało |
+| --- | --- | --- | --- |
+| 302 (B3 — prawy panel Idei/Notatnika, `DEC-354`) | SCALIĆ — za flagą OFF, bez włączania | TAK — `b3cd94ae3e` | 8/8 kadrów bit w bit identycznych z HEAD bez flagi, zero konsumentów produkcyjnych, dowód mutacyjny wartości domyślnej. Z fladze ON: treść to 19–34 % dzisiejszego panelu (255–262 znaki vs 761–1344) — odpowiada na „jak” (`UW-07-18`), nie na „co” (`UW-07-17`) — 4 pytania TAK/NIE do właściciela w projekcie. Angielskie słowo `IDEA`/`NOTEBOOK` zaszyte poza `copy` (do naprawy przed budową docelową) |
+| 303 (B6 — preferencje Czatu, `DEC-357`) | SCALIĆ Z ZASTRZEŻENIEM (dokument, 0 kodu) | TAK — `d542b5600c` | Funkcja już istnieje (commit `fcb83a5f7d`, sprzed markera), zamknięta czterema warstwami z dowodem widoczności (993→1176 znaków po otwarciu „Narzędzia AI”). **B6 pozostaje OTWARTE do jednego słowa właściciela**: dzisiejszy wyłącznik jest GLOBALNY, właściciel prosił o „kontekstowo” — patrz §4d |
+| 304 (R-14 — historia Czatu prywatna/organizacyjna) | SCALIĆ Z ZASTRZEŻENIEM (notatka pomiarowa, 0 linii kodu) | TAK — `1dad1f0abb` | R2 (centralny resolver widoczności w jednym miejscu) niewykonany — reguła nadal żyje w 3 miejscach; R5 (prototyp panelu za flagą OFF + 4 kadry) świadomie niewykonany. Izolacja na `/api/conversations/search` potwierdzona dowodem mutacyjnym odbiorcy (RED na wycieku cross-org), ale zasługa jest kodu zastanego, nie tego dyżuru |
+| 305 (R-18 — standard kart 7 typów) | SCALIĆ Z ZASTRZEŻENIEM — *dokument, nie prototyp* | TAK — `30e85139b9` | R1 (tabela różnic pole po polu) i R2 (cytaty z §13 archetyp C) niewykonane; STOP na R3/R4 (prototyp za flagą) był **nieuzasadniony** — harness i flaga `ff_initiativeCardContract` już istnieją w repo. Odbiorca sam zrobił parę PRZED/PO i odsłonił: włączenie kontraktu kart kasuje **11 z 15 sekcji** karty Initiative (znikają grupy „Decyzje i ryzyko” i „Ludzie”) — kod sam oznacza to jako `DO POTWIERDZENIA PIOTRA`. Zrzuty `evidence/grafika/odbior-f-305-kontraktOFF/`, `…kontraktON/` — pytanie do właściciela w §4d. Rozjazd 7 typów dokumentu vs 11 archetypów §13.1 nierozstrzygnięty (przecięcie 4) |
+| 306 (R-20 — SWOT dwa brakujące etapy) | SCALIĆ Z ZASTRZEŻENIEM (kod za flagą OFF, bez liczenia jako funkcja) | TAK — `2a0a658a14` | Fail-closed potwierdzony dowodem mutacyjnym, ale **`src/toolPacks/` (warstwa, w której leżą oba nowe etapy) nie ma ani jednego konsumenta** w runtime — flagi ON i OFF dają bitowo identyczne zrzuty, bo realny warsztat SWOT (`DiscoveryTools/toolCompletion.ts`, union 5 kroków) tego katalogu nie dotyka. R4 (sesja wznawialna) i R5 (4 kadry różnicy) niewykonane — nie ma czego pokazać, dopóki przewód nie zostanie podłączony |
+| 296 — odbiór WIP (wycieki błędów tras) | SCALIĆ Z ZASTRZEŻENIEM (5 zastrzeżeń, 1 produktowy) | TAK — `b305261454` | Wcześniejszy odbiór na `HEAD` dał fałszywe „0/294 niewykonane” — praca leżała jako **73 pliki niezacommitowane** w worktree Codexa (zacommitowane przez odbiorcę, `613b455fa8`). Regex instrukcji: 305→1. Regex szerszy tej samej rodziny: 396→55, z czego **35 to realne wycieki HTTP, które zostały** (`table-platform.routes.ts` 28, `data-collection.routes.ts` 7 — ten drugi w ogóle poza zakresem dyżuru). Guard 312 miał ślepą plamkę identyczną z regexem codemodu — naprawiony, ratchet 35 wpięty. **Regresja produktowa**: klasy błędów domenowych nie dziedziczą `AppError` → ~341 komunikatów biznesowych zamienionych na generyk angielski; `req` przekazywany jako `undefined` we wszystkich 341 wywołaniach → polski słownik komunikatów nigdy się nie uruchamia |
+| 307 — przelot cross-org | odbiór: GOTOWE z zastrzeżeniami | **NIE** — 2 konflikty scalenia | Dyżur skończył się **w trakcie odbioru** (04:22→04:35, 5→12 commitów). Mianownik zgodny z instrukcją (2725), objęte 1904, ale **rozstrzygniętych tylko 75 (3,9 %)** — reszta `NIEZWERYFIKOWANA`, bo seeder nie zakłada danych domenowych (potwierdzone niezależnym przelotem 944 tras: identyczny rozkład kodów dla obcego i właściciela). Luka `workload` (200 dla obcego zamiast 404) potwierdzona i naprawiona z dowodem mutacyjnym. Bramka finansów `abe50dddc2` **dubluje** `e9a3cfb983` już na HEAD — to ona generuje oba konflikty scalenia (`financeStatementMountedSurface.ts`, `v8/index.ts`); przy scalaniu zachować wersję HEAD, odrzucić duplikat 307. Jedna suma SHA-256 w raporcie zniekształcona (poprawna jest w `SHA256SUMS.txt`) |
+| 311 — crimson w Czacie (decyzja C) | odbiór: **NIEGOTOWE DO POKAZANIA WŁAŚCICIELOWI** | **NIE** | Kod dobry (674→17 wystąpień `primary-` w `src/components/AIChat`, z czego tylko 7 to realne klasy wizualne, wszystkie fokus/hover — zero semantyki krytycznej ruszone; scalenie nie cofa dyżuru 287). **Ale 10 z 16 par zrzutów PRZED/PO jest bajtowo identycznych, a 4 z 8 wybranych ekranów mają zero pikseli crimson przed i po** — zły dobór ekranów, nie zły kod. Do naprawy: dobrać ekrany z realną masą crimson (`AIActionCard`, `MessageRenderer`, `ResearchProgress`, `AgentSuggestionCard`, `ComparisonMatrixRenderer`, `OrganizationMemoryPanel`, `V8ArtifactRunControl`) i powtórzyć zrzuty przed pokazaniem |
+| 312 — domknięcia po odbiorach | odbiór: **NIEGOTOWE** | **NIE** (raport bez kodu) | Jedyny produkt kodowy całego dyżuru: 1 commit guardu (`89619c1adf`, na gałęzi 296, wciągnięty wyżej). **5 z 6 pozycji nierozpoczęte** (297 martwe od korzenia, 293 Biblioteka metodyk, 292 R3–R6, 298 zastrzeżenia silnika raportu, 295 dowody Mojej Pracy); pozycja (a) 296 PARTIAL ze STOP-em merytorycznym. STOP potwierdzony żywym pomiarem odbiorcy: **8 tras zwracają 500 zwykłemu użytkownikowi, 3 z nich surowy SQL ze stosem i ścieżką dyskową** (`group_concat` — funkcja SQLite na Postgresie; `column “coverage_percent” does not exist` — rozjazd schematu na bazie od zera, nie artefakt środowiska) |
+
+**Łańcuch A nigdy nie wystartował** — nie „urwał się na 307”: wszystkie siedem pozycji
+(`307, 310, 309, 301, 299, 308, 300`) zakończyło się STOP-em między 22:55–22:57 03.09, bo instrukcje
+zostały wypchnięte na `github-backup` dopiero o 23:03:47 — **8 minut po tym, jak łańcuch ich szukał**.
+Dyżur 307 w powyższej tabeli to **osobne, ręczne uruchomienie 01:43–04:35**, nie produkt łańcucha A.
+Dziś ten sam plik na tym samym refie otwiera się bez błędu (sprawdzone przez odbiorcę G).
+
+**Incydent K1 — drzewo robocze `m03` opróżnione.** Między 00:25 a 04:35 (w tym oknie biegły łańcuchy
+Codexa i dyżur 312) `git status` w `/private/tmp/m03` pokazał **14 139 usuniętych plików śledzonych**
+niezacommitowanych (`server/migrations` 555, `codex` 314, `services` 262, `tests/acceptance` 153…);
+HEAD i kopia zapasowa nietknięte (`0 0`). Wykryte przez bezpiecznik: `initiativeRecordCanon` rzucił
+`Cannot find module tests/setup.ts` (przypadek „brak testów ≠ PASS”). Przywrócone
+`git restore --source=HEAD --worktree -- .`, 29/29 testów zielone po przywróceniu. **Sprawca
+nieustalony** — inne worktree z tego samego okna bez braków, merge'e docs przeszły bo nie dotykały
+usuniętych ścieżek. Rejestr: `docs/program/REJESTR_ZNALEZISK_20260903.md` §K, commit `0f98fe63e5`.
+Bezpiecznik na rano: `git status --short | grep -c “^ D”` przed KAŻDYM scaleniem, nie tylko przed
+odbiorem.
+
 ## 4. Czeka na właściciela (rano 04.09)
 
 1. **Przelot po stagingu wg pakietu (G16)** — `docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md`
    (commit `4f70f2fca8`), 16 modułów, ~70 kroków, 25 pozycji „nie zgłaszaj” (znane, odłożone do fali 2).
-   **Zanim właściciel patrzy — sprawdź świeżym `curl .../api/health`, że drugi deploy (`53c3da2918`)
-   faktycznie doszedł**, inaczej przelot odbędzie się na starszym kodzie (§1).
-2. **7 pytań prototypu raportu Oceny** — z notatki przy `RAPORT_OCENY_DRD_PROTOTYP_20260903.pdf`;
-   rozstrzygnięte wg rekomendacji CTO do odwołania (DEC-385), właściciel może je nadpisać rano zanim
-   Codex 298 zbuduje silnik.
-3. **Raporty Codexa do odbioru adwersaryjnego** — wszystkie 13 (286–298), kolejność wartości:
-   `288, 292, 293, 290, 298, 294, 295, 296, 286, 291, 297, 287, 289`. Wklejki gotowe w
+   Trzeci redeploy **POTWIERDZONY**: świeży `curl https://staging.consultify.ai/api/health` (04.09
+   ok. 04:58Z) zwraca `gitSha 120bb2db81` — dokładnie oczekiwany SHA (§1/§3c/§10). Kolejny redeploy
+   będzie potrzebny **po scaleniu 307** (dziś nie scalone — 2 konflikty, §3d) — nie wcześniej.
+2. **Łańcuch A do wklejenia od nowa.** `rm -f /private/tmp/cx-noc-A-postep.md` (plik z poprzedniego
+   przebiegu jest bezużyteczny — wszystkie 7 pozycji STOP z powodu technicznego, §3d), a następnie
+   ponowna wklejka łańcucha **bez 307** (307 już zrobione osobno, ręcznie, 01:43–04:35 — patrz §3d):
+   `299, 300, 301, 308, 309, 310`. Wklejkę z tą listą pisze nadzorca — nie jest jeszcze gotowa w tym
+   pliku.
+3. **Wklejka 312 do wklejenia ponownie** — poprzedni przebieg dał raport bez kodu (§3d, „NIEGOTOWE”),
+   5 z 6 pozycji nierozpoczęte. Instrukcja **313** (kontynuacja domknięć) pisze nadzorca — jeszcze nie
+   istnieje w `docs/program/waves/WAVE_03_ACCEPTANCE/codex/`.
+4. **Decyzje z nocy części 3** (jedno zdanie/jedno słowo każda):
+   - **B6 — globalny czy kontekstowy wyłącznik chipów sugestii Czatu?** Dzisiejszy przełącznik w
+     „Narzędzia AI” gasi chipy WSZĘDZIE naraz; właściciel prosił o „kontekstowo … tam, gdzie mamy
+     plus”. TAK = zamykamy B6 dzisiejszym stanem; NIE = dopisujemy przełącznik per kontekst (nowa
+     praca, nie wyceniona). Pełne pytanie i cytaty źródłowe: `ODBIOR_DYZUROW_302_303_20260904.md`
+     §303 pkt 4.
+   - **Kontrakt kart Inicjatywy — czy karta po włączeniu ma tracić 11 z 15 sekcji?** Włączenie
+     `ff_initiativeCardContract` kasuje grupy „Decyzje i ryzyko” i „Ludzie” z karty Initiative,
+     zostają 4 sekcje w 2 grupach. Zrzuty PRZED/PO: `evidence/grafika/odbior-f-305-kontraktOFF/`,
+     `evidence/grafika/odbior-f-305-kontraktON/` (light+dark). Bez odpowiedzi flaga nie powinna
+     zostać włączona nigdy.
+   - **7 pytań prototypu raportu Oceny** — z notatki przy `RAPORT_OCENY_DRD_PROTOTYP_20260903.pdf`;
+     rozstrzygnięte wg rekomendacji CTO do odwołania (DEC-385), właściciel może je nadpisać rano
+     zanim Codex 298 zbuduje silnik.
+5. **Zrzuty 302 do obejrzenia** (kolejność z `ODBIOR_DYZUROW_302_303_20260904.md`, katalog
+   `evidence/grafika/odbior-302-303-20260904/302-flaga-on/`):
+   1. `ideas-teresa-panel__PO__pl__1440__light.png` — panel Idei, jasny
+   2. `…__dark.png` — ten sam, ciemny
+   3. `mywork-notebook-rail-speca__PO__pl__1440__light.png` — panel Notatnika, jasny (dowód „te same zasady”)
+   4. `…__dark.png` — ten sam, ciemny
+   5. z gałęzi: `evidence/prototypy/prawy-panel-idei-20260903/mywork-notebook-rail-speca__PO__en__1440__dark.png` — wersja angielska
+
+   Przy pokazywaniu powiedzieć dwie rzeczy: (a) panel jest sfotografowany sam, na pustym tle — brak
+   Notatnika/tabeli obok nie jest defektem; (b) puste sekcje są celowe (model danych nie ma dziś
+   historii/komentarzy/provenance) — to treść 4 pytań TAK/NIE w projekcie.
+6. **Raporty Codexa do odbioru adwersaryjnego** — wszystkie 13 z pierwszej paczki (286–298), kolejność
+   wartości: `288, 292, 293, 290, 298, 294, 295, 296, 286, 291, 297, 287, 289`. Wklejki gotowe w
    `docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_{numer}.wklejka.txt` — właściciel
    wkleja sam do Codexa (jedyny kanał, patrz `format-promptow-dla-codexa`).
-4. `DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md` / `DECYZJE_WLASCICIELA_P0P1_20260904.md` — pozycje
+7. `DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md` / `DECYZJE_WLASCICIELA_P0P1_20260904.md` — pozycje
    bez decyzji z wieczora, jeśli zostały (większość zamknięta DEC-347…384, sprawdź rejestr przed
    pytaniem ponownie o to samo).
 
 ## 5. Otwarte ryzyka
 
-- **Trzeci redeploy stagingu (HEAD `120bb2db81`, zapowiedziany ok. 00:20) niepotwierdzony** — o 23:19
-  `/api/health` nadal zwracał `gitSha` drugiego wdrożenia (`53c3da2918`); przed przelotem G16 zrób
-  świeży `curl` i porównaj z `120bb2db81` (§1/§3c) — jeśli redeploy nie doszedł albo padł, przelot
-  trafi na kod bez 10 dzisiaj scalonych naprawionych dyżurów (286–292, 294, 295, 298).
-- **Oba łańcuchy nocne (A i B, 13 pozycji łącznie) trzeba uruchomić ponownie** — STOP wszystkich
-  13 pozycji był techniczny (rasa: instrukcje 299–312 doszły na `github-backup` 20–25 min PO tym, jak
-  łańcuchy już się zakończyły STOP-em), nie merytoryczny; treść jest teraz na miejscu. Szczegóły i
-  dowód czasowy w §3c.
-- **10 z 13 odbiorów nocy 2 scalone na HEAD, 3 nie** (293 — zero pracy, cała instrukcja do zrobienia;
-  296 — 0/294 miejsc, materiał wejściowy tylko; 297 — STOP dyskowy, 0 commitów) — domknięcia
-  wszystkich sześciu pozostawionych pozycji (296, 297, 293, 292 R3–R6, 298 zastrzeżenia, 295
-  zastrzeżenia) czeka w instrukcji 312, jeszcze nie scalonej na HEAD (§3c).
+- **Trzeci redeploy stagingu POTWIERDZONY** (§4/§10): świeży `curl` 04.09 ok. 04:58Z zwraca
+  `gitSha 120bb2db81`. Ryzyko z tego wiersza zamknięte — zostawione jako ślad, żeby następny
+  nadzorca nie pytał ponownie. Kolejny redeploy potrzebny dopiero **po scaleniu 307** (§3d/§4).
+- **Łańcuch A nigdy nie wystartował (nie „przeleciał na pusto”)** — 7 pozycji (307, 310, 309, 301,
+  299, 308, 300) STOP 22:55–22:57 03.09 z powodu technicznego (instrukcje doszły na `github-backup`
+  dopiero 23:03:47, 8 minut po tym jak łańcuch ich szukał). 307 zrobiony osobno i ręcznie
+  01:43–04:35 (odbiór w §3d) — **wyklucz 307 z ponownej wklejki łańcucha A**, zostaje `299, 300,
+  301, 308, 309, 310`. Łańcuch B (302–306, 311) **wystartował i dowiózł wszystkie 6 pozycji** —
+  odebrane adwersaryjnie, wynik w §3d.
+- **6 z 9 odbiorów nocy część 3 scalone na HEAD, 3 nie** (307 — 2 konflikty scalenia z bramką
+  finansów już na HEAD; 311 — zły dobór ekranów, 10/16 par identycznych; 312 — sam raport bez kodu,
+  5 z 6 pozycji nierozpoczęte) — pełna tabela i co zostało w §3d.
+- **K1 — drzewo robocze `m03` opróżnione (14 139 plików), przyczyna nieustalona** (§3d). Przywrócone,
+  bez utraty na HEAD/kopii, ale sprawca otwarty — pilnować `git status --short | grep -c "^ D"`
+  przed każdym scaleniem.
+- **35 realnych wycieków surowych błędów HTTP zostało** po dyżurze 296 (`table-platform.routes.ts`
+  28, `data-collection.routes.ts` 7) — ratchet 35 wpięty, dyżur następczy do domknięcia. Osobno:
+  komunikaty domenowe (klasy błędów bez `AppError`) zamienione na generyk angielski na ~341
+  miejscach, `req` nigdzie nie trafia do mappera → polskie komunikaty nigdy się nie uruchamiają (§3d).
+- **8 tras zwraca 500 zwykłemu użytkownikowi, 3 z nich surowy SQL ze stosem** — zmierzone żywym
+  pomiarem przy odbiorze 312; `group_concat` (SQLite) wywoływane na Postgresie,
+  `column "coverage_percent" does not exist` na bazie zmigrowanej od zera (§3d) — do dyżuru
+  następczego, nie ma decyzji do podjęcia, tylko naprawa.
+- **Luka `GET /api/pmo/tasks/workload/<cudzy>` naprawiona z dowodem mutacyjnym** (dyżur 307) — ale
+  gałąź 307 sama NIE jest scalona (2 konflikty), więc naprawa czeka na rozwiązanie konfliktów
+  scalenia zgodnie z §3d, zanim trafi na HEAD.
 - **4 pre-istniejące czerwone testy a11y kreatora wywiadu** po włączeniu A4 (`interview-creator-shell`
   ON) — plik `src/components/Interview/__tests__/InsightCreatorModal.a11y.test.tsx` istnieje, stan
   czerwony niepotwierdzony własnym uruchomieniem w tej sesji (zero-kod, brak testów w tym dyżurze) —
@@ -232,6 +316,9 @@ sam się nie wznowił (brak automatycznego retry po STOP-ie).
   mechanizm Escape w pętli rozwijania — mierzone bez rozwijania; poprawka pętli odłożona (2/248).
 - `MASTER_STATUS_REGISTER.md` niespójny (G18 PASS 16/16 vs „closed 2 of 16”); kolizja ID
   `ASM-OWN-001..028` między dwoma rejestrami.
+- **G20 05.09 (§7/§9) jest realne tylko pod dwoma warunkami: przelot właściciela rano ORAZ
+  uruchomienie łańcucha A dzisiaj** (§4 pkt 2) — bez obu warunków prognoza z §7 się przesuwa;
+  §7 sam w sobie **bez zmian**.
 - FALA 2 (21 pozycji odłożonych, `FALA_2_PO_STAGINGU.md`) startuje dopiero po przelocie G16 — nie
   zaczynać wcześniej, żeby nie powtórzyć błędu „wiele flag naraz” (reguła 9 kodeksu).
 - 8 lekcji metodycznych z nocy część 2 (baza niekompilująca się fałszywie klasyfikuje czerwienie jako
