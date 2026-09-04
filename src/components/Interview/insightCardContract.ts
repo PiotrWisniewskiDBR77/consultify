@@ -810,7 +810,8 @@ export function buildInsightCardSpec(): ArtifactCardSpec {
   const allCards = admitted.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core insight', pl: 'Rdzeń wniosku' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete insight', pl: 'Kompletny wniosek' }, cards: allCards },
+    { id: 'core', label: { en: 'Core insight', pl: 'Rdzeń wniosku' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
