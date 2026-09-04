@@ -1,0 +1,12 @@
+{
+  "basis": "buildDrdReportModel invoked with input.areaScores from evidence/silniki-raportu-oceny-20260904/day339-engine-manifest.json",
+  "actualPositive": 7,
+  "targetPositive": 39,
+  "credibility": {
+    "assessedAreas": 39,
+    "totalAreas": 39,
+    "completionPercent": 100,
+    "confidenceLabel": "Wysoka"
+  },
+  "contextSentence": "Pomiar 346 — overall 0.4→2.4 (100% assessed, narrative: deterministic)."
+}
