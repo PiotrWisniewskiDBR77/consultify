@@ -1,0 +1,530 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 1500,
+  "klikPoRozwinieciu": true,
+  "cofnijJesliSkraca": true,
+  "wyniki": [
+    {
+      "ekran": "teresa-chipy-sugestii",
+      "motyw": "light",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/teresa-chipy-sugestii__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Przejdź do pola wiadomości\nAI uwzględnia: Raport: Raport zarządczy — audyt Q3\nPrzygotuj raport dla zarządu z audytu Q3.\n\nGotowe — raport ma 4 sekcje i jest podpięty pod audyt Q3. Chcesz, żebym rozwinęła sekcję ryzyk?\n\nPrzejdź do pola wiadomości\nAI uwzględnia: Wniosek: Luka w kanale partnerskim\nCo wynika z ostatnich wywiadów o kanałach sprzedaży?\n\nCztery z sześciu rozmów wskazują lukę w kanale partnerskim — to najmocniejszy sygnał w tej próbie.\n\nWygeneruj insighty AI z ukończonych sesji\nPrześlij ten insight do recenzji\nEksportuj insight do inicjatywy",
+      "hasResultMarker": null,
+      "obrazJasnosc": 248.70573157851078,
+      "sekcjeRozwiniete": 16,
+      "sekcjeNadalZwiniete": [
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych",
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych"
+      ],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Ważne sygnały / Objaśnienie trybów głosowych / Ważne sygnały / Objaśnienie trybów głosowych",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "teresa-chipy-sugestii",
+      "motyw": "dark",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/teresa-chipy-sugestii__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Przejdź do pola wiadomości\nAI uwzględnia: Raport: Raport zarządczy — audyt Q3\nPrzygotuj raport dla zarządu z audytu Q3.\n\nGotowe — raport ma 4 sekcje i jest podpięty pod audyt Q3. Chcesz, żebym rozwinęła sekcję ryzyk?\n\nPrzejdź do pola wiadomości\nAI uwzględnia: Wniosek: Luka w kanale partnerskim\nCo wynika z ostatnich wywiadów o kanałach sprzedaży?\n\nCztery z sześciu rozmów wskazują lukę w kanale partnerskim — to najmocniejszy sygnał w tej próbie.\n\nWygeneruj insighty AI z ukończonych sesji\nPrześlij ten insight do recenzji\nEksportuj insight do inicjatywy",
+      "hasResultMarker": null,
+      "obrazJasnosc": 19.433008434799383,
+      "sekcjeRozwiniete": 16,
+      "sekcjeNadalZwiniete": [
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych",
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych"
+      ],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Ważne sygnały / Objaśnienie trybów głosowych / Ważne sygnały / Objaśnienie trybów głosowych",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "chat-signals-feed",
+      "motyw": "light",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/chat-signals-feed__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Wszystkie\n9\nTylko moje (lokalnie)\n5\nWykonanie\n4\nDecyzje\n2\nWyniki\n2\nFinanse\n1\n≥ ostrzeżenie\n8\n≥ krytyczny\n5\nOdśwież\nSYGNAŁ\n\t\nDOMENA\n\t\nWAGA\n\t\nŹRÓDŁO\n\t\nWIEK\n\t\nSTATUS\n\n\nInicjatywa bez baseline\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nBlokada\n\t\nReguła\n\t\n12 dni temu\n\t\nOtwarty\n\n\nBudżet został przekroczony\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nFinanse\n\t\nBlokada\n\t\nReguła\n\t\n14 dni temu\n\t\nOtwarty\n\n\nZablokowane zadanie bez aktualizacji\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nKrytyczny\n\t\nReguła\n\t\n13 dni temu\n\t\nOtwarty\n\n\nDecyzja blokuje zależne obiekty\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nDecyzje\n\t\nKrytyczny\n\t\nReguła\n\t\n10 dni temu\n\t\nOtwarty\n\n\nKPI przekroczył próg\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWyniki\n\t\nKrytyczny\n\t\nInterpretacja AI\n\t\n9 dni temu\n\t\nOtwarty\n\n\nZadanie po terminie\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nOstrzeżenie\n\t\nReguła\n\t\n14 dni temu\n\t\nOtwarty\n\n\nDecyzja oczekuje zbyt długo\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nDecyzje\n\t\nOstrzeżenie\n\t\nReguła\n\t\n11 dni temu\n\t\nOtwarty\n\n\nKPI przekroczył próg\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWyniki\n\t\nOstrzeżenie\n\t\nInterpretacja AI\n\t\n12 dni temu\n\t\nOtwarty\n\n\nZbliża się termin nierozpoczętego zadania\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nInformacja\n\t\nReguła\n\t\n13 dni temu\n\t\nOtwarty\nInicjatywa bez baseline\nOtwórz\nBlokada\nWykonanie\nReguła\nMetalpol — transformacja operacyjna\nMoje\n12 dni temu\nSZCZEGÓŁY\n~18 słów\n\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\nSkąd wiadomo\n\nInicjatywa: 5 · 8 dni temu\n\ninitiative.no.baseline · v1\n\nPOWIĄZANIA\nInicjatywa\n1 godz.\n4 godz.\nDo jutra\nTydzień\nWycisz typ\nUkryj\nPokaż starsze",
+      "hasResultMarker": null,
+      "obrazJasnosc": 247.21811969309414,
+      "sekcjeRozwiniete": 8,
+      "sekcjeNadalZwiniete": [
+        "Szukaj"
+      ],
+      "sekcjeCofniete": [
+        {
+          "etykieta": "Szukaj",
+          "przed": 1834,
+          "poKliku": 1719,
+          "poCofnieciu": 1834
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1834,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        }
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Szukaj",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "chat-signals-feed",
+      "motyw": "dark",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/chat-signals-feed__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Wszystkie\n9\nTylko moje (lokalnie)\n5\nWykonanie\n4\nDecyzje\n2\nWyniki\n2\nFinanse\n1\n≥ ostrzeżenie\n8\n≥ krytyczny\n5\nOdśwież\nSYGNAŁ\n\t\nDOMENA\n\t\nWAGA\n\t\nŹRÓDŁO\n\t\nWIEK\n\t\nSTATUS\n\n\nInicjatywa bez baseline\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nBlokada\n\t\nReguła\n\t\n12 dni temu\n\t\nOtwarty\n\n\nBudżet został przekroczony\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nFinanse\n\t\nBlokada\n\t\nReguła\n\t\n14 dni temu\n\t\nOtwarty\n\n\nZablokowane zadanie bez aktualizacji\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nKrytyczny\n\t\nReguła\n\t\n13 dni temu\n\t\nOtwarty\n\n\nDecyzja blokuje zależne obiekty\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nDecyzje\n\t\nKrytyczny\n\t\nReguła\n\t\n10 dni temu\n\t\nOtwarty\n\n\nKPI przekroczył próg\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWyniki\n\t\nKrytyczny\n\t\nInterpretacja AI\n\t\n9 dni temu\n\t\nOtwarty\n\n\nZadanie po terminie\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nOstrzeżenie\n\t\nReguła\n\t\n14 dni temu\n\t\nOtwarty\n\n\nDecyzja oczekuje zbyt długo\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nDecyzje\n\t\nOstrzeżenie\n\t\nReguła\n\t\n11 dni temu\n\t\nOtwarty\n\n\nKPI przekroczył próg\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\t\nWyniki\n\t\nOstrzeżenie\n\t\nInterpretacja AI\n\t\n12 dni temu\n\t\nOtwarty\n\n\nZbliża się termin nierozpoczętego zadania\nMetalpol: Marek Nowak wymaga reakcji właściciela procesu.\n\t\nWykonanie\n\t\nInformacja\n\t\nReguła\n\t\n13 dni temu\n\t\nOtwarty\nInicjatywa bez baseline\nOtwórz\nBlokada\nWykonanie\nReguła\nMetalpol — transformacja operacyjna\nMoje\n12 dni temu\nSZCZEGÓŁY\n~18 słów\n\nMetalpol: Anna Kowalska wymaga reakcji właściciela procesu.\n\nSkąd wiadomo\n\nInicjatywa: 5 · 8 dni temu\n\ninitiative.no.baseline · v1\n\nPOWIĄZANIA\nInicjatywa\n1 godz.\n4 godz.\nDo jutra\nTydzień\nWycisz typ\nUkryj\nPokaż starsze",
+      "hasResultMarker": null,
+      "obrazJasnosc": 25.75337601388889,
+      "sekcjeRozwiniete": 8,
+      "sekcjeNadalZwiniete": [
+        "Szukaj"
+      ],
+      "sekcjeCofniete": [
+        {
+          "etykieta": "Szukaj",
+          "przed": 1834,
+          "poKliku": 1719,
+          "poCofnieciu": 1834
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1834,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        },
+        {
+          "etykieta": "Szukaj",
+          "przed": 1501,
+          "poKliku": 1386,
+          "poCofnieciu": 1501
+        }
+      ],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Szukaj",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "chat-split-teresa-right",
+      "motyw": "light",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/chat-split-teresa-right__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 29,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[ChatProjectStore] Fetch error: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)",
+        "[useProposalLifecycleStore] loadForConversation failed Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async http:",
+        "[UnifiedChatPanel] Failed to load conversation branches: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async htt",
+        "[UnifiedChatPanel] Failed to load conversation branches: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async htt",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/providers"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/chat-projects"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/conversations/conv-atelier-toys-0001/proposals"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/agent-audit/agents"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/v8/chat/conversations/conv-atelier-toys-0001/handoff-proposals"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/conversations/conv-atelier-toys-0001/branches"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/providers"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/agent-audit/agents"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/work-canvas/drafts?conversationId=conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/work-canvas/drafts?conversationId=conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/sources"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/sources"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        }
+      ],
+      "tekst": "Przejdź do pola wiadomości\nMain\nRozpisz tezę wejścia na rynek niemiecki.\n\nGotowe — tezę i trzy hipotezy dopisałam do dokumentu po lewej. Rozwinąć sekcję ryzyk regulacyjnych?\n\nDocument title\nNiezapisane zmiany\nEdytor\nDokument\nMarkdown\nUtwórz w workspace\nCompany Work Note\n\nArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.\n\nContext\n\nWrite the situation, goal, constraints, and audience here.\n\nWorking Draft\n\nDefine the business question.\n\nCapture assumptions.\n\nList open decisions.\n\nDecide the next action.\n\nNotes\n\nThis is Markdown canonical. The document view and MD view read from the same source.\n\n\n",
+      "hasResultMarker": null,
+      "obrazJasnosc": 249.22276676234566,
+      "sekcjeRozwiniete": 24,
+      "sekcjeNadalZwiniete": [
+        "Historia",
+        "Main",
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych",
+        "Nowy Canvas",
+        "Menu Canvas"
+      ],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Historia / Main / Ważne sygnały / Objaśnienie trybów głosowych / Nowy Canvas / Menu Canvas",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    },
+    {
+      "ekran": "chat-split-teresa-right",
+      "motyw": "dark",
+      "plik": "/private/tmp/ag-odbior-e/evidence/grafika/odbior-302-303-20260904/czat/nieprzypisane/chat-split-teresa-right__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 29,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[ChatProjectStore] Fetch error: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)",
+        "[useProposalLifecycleStore] loadForConversation failed Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async http:",
+        "[UnifiedChatPanel] Failed to load conversation branches: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async htt",
+        "[UnifiedChatPanel] Failed to load conversation branches: Error: HTTP 404 Not Found\n    at handleResponse (http://127.0.0.1:5452/@fs/private/tmp/ag-odbior-e/src/services/api.ts:696:15)\n    at async htt",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/providers"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/chat-projects"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/conversations/conv-atelier-toys-0001/proposals"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/agent-audit/agents"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/v8/chat/conversations/conv-atelier-toys-0001/handoff-proposals"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/conversations/conv-atelier-toys-0001/branches"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/providers"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/agent-audit/agents"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/work-canvas/drafts?conversationId=conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/work-canvas/drafts?conversationId=conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/ai/stream/partial/conv-atelier-toys-0001"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/sources"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/cloud/sources"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5452/api/signals?limit=50"
+        }
+      ],
+      "tekst": "Przejdź do pola wiadomości\nMain\nRozpisz tezę wejścia na rynek niemiecki.\n\nGotowe — tezę i trzy hipotezy dopisałam do dokumentu po lewej. Rozwinąć sekcję ryzyk regulacyjnych?\n\nDocument title\nNiezapisane zmiany\nEdytor\nDokument\nMarkdown\nUtwórz w workspace\nCompany Work Note\n\nArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.\n\nContext\n\nWrite the situation, goal, constraints, and audience here.\n\nWorking Draft\n\nDefine the business question.\n\nCapture assumptions.\n\nList open decisions.\n\nDecide the next action.\n\nNotes\n\nThis is Markdown canonical. The document view and MD view read from the same source.\n\n\n",
+      "hasResultMarker": null,
+      "obrazJasnosc": 22.441814985725305,
+      "sekcjeRozwiniete": 24,
+      "sekcjeNadalZwiniete": [
+        "Historia",
+        "Main",
+        "Ważne sygnały",
+        "Objaśnienie trybów głosowych",
+        "Nowy Canvas",
+        "Menu Canvas"
+      ],
+      "sekcjeCofniete": [],
+      "a11yNaruszenia": [],
+      "status": "wynik BRAK: zwinięte sekcje: Historia / Main / Ważne sygnały / Objaśnienie trybów głosowych / Nowy Canvas / Menu Canvas",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": true
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "teresa-chipy-sugestii",
+      "roznicaLuminancji": 229.2727231437114,
+      "procentRoznychPikseli": 99.99928626543209,
+      "powod": null
+    },
+    {
+      "ekran": "chat-signals-feed",
+      "roznicaLuminancji": 221.46474367920524,
+      "procentRoznychPikseli": 99.99994212962963,
+      "powod": null
+    },
+    {
+      "ekran": "chat-split-teresa-right",
+      "roznicaLuminancji": 226.78095177662036,
+      "procentRoznychPikseli": 99.90260416666666,
+      "powod": null
+    }
+  ]
+}
