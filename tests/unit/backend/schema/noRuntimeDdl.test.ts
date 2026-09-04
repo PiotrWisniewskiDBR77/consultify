@@ -4,6 +4,61 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = {
+  "server/src/controllers/DecisionController.ts": 2,
+  "server/src/controllers/InterviewController.ts": 8,
+  "server/src/controllers/SuperAdminController.ts": 11,
+  "server/src/controllers/ToolController.ts": 6,
+  "server/src/controllers/UserController.ts": 1,
+  "server/src/cron/AIOpsReportCron.ts": 1,
+  "server/src/database/DatabaseInitializer.ts": 65,
+  "server/src/database/PostgresDatabase.ts": 68,
+  "server/src/database/migrations/add_resource_tables.sql": 2,
+  "server/src/index.ts": 1,
+  "server/src/jobs/aiWatchdog.ts": 2,
+  "server/src/middleware/demoGuard.middleware.ts": 1,
+  "server/src/routes/admin/domains.routes.ts": 1,
+  "server/src/routes/adminP32.routes.ts": 8,
+  "server/src/routes/aiSettingsFallback.ts": 1,
+  "server/src/routes/assessment-reports.routes.ts": 3,
+  "server/src/routes/assessment/assessment-level-attachments.routes.ts": 1,
+  "server/src/routes/assessment/assessment-workflow.routes.ts": 3,
+  "server/src/routes/chat-projects.routes.ts": 2,
+  "server/src/routes/client-errors.routes.ts": 1,
+  "server/src/routes/compliance.routes.ts": 1,
+  "server/src/routes/consultant-project-access.routes.ts": 1,
+  "server/src/routes/discovery.routes.ts": 1,
+  "server/src/routes/featureFlags.routes.ts": 2,
+  "server/src/routes/featureUpdates.routes.ts": 3,
+  "server/src/routes/feedback.routes.ts": 4,
+  "server/src/routes/integrations/scim.routes.ts": 5,
+  "server/src/routes/integrations/sso.routes.ts": 1,
+  "server/src/routes/integrations/webhooks.routes.ts": 1,
+  "server/src/routes/intelligence.routes.ts": 2,
+  "server/src/routes/llm.routes.ts": 7,
+  "server/src/routes/module-access.routes.ts": 1,
+  "server/src/routes/organization/approved-domains.routes.ts": 1,
+  "server/src/routes/organization/branding.routes.ts": 1,
+  "server/src/routes/organization/organization-data.routes.ts": 1,
+  "server/src/routes/organization/ownership.routes.ts": 1,
+  "server/src/routes/organization/rbac.routes.ts": 3,
+  "server/src/routes/pmo/pmoRoles.routes.ts": 2,
+  "server/src/routes/pmo/workstreams.routes.ts": 1,
+  "server/src/routes/public-contact.routes.ts": 1,
+  "server/src/routes/resultsStrategic.routes.ts": 5,
+  "server/src/routes/security/roles.routes.ts": 1,
+  "server/src/routes/securityPolicies.routes.ts": 1,
+  "server/src/routes/share.routes.ts": 2,
+  "server/src/routes/superadmin.routes.ts": 2,
+  "server/src/routes/systemHealth.routes.ts": 1,
+  "server/src/routes/testSupport.routes.ts": 11,
+  "server/src/routes/user/user-keyboard-shortcuts.routes.ts": 1,
+  "server/src/routes/v8/execution-control.routes.ts": 2,
+  "server/src/routes/v8/interview.routes.ts": 4,
+  "server/src/routes/webhooks/stripe.routes.ts": 1,
+  "server/src/routes/work-canvas.routes.ts": 4,
+  "server/src/routes/workbook.routes.ts": 1,
+  "server/src/scripts/a03PlanningClarificationRealDbProof.ts": 2,
+  "server/src/scripts/t01FinalOutputRealDbProof.ts": 7,
   "server/src/services/AuditLogger.ts": 1,
   "server/src/services/InterviewAssignmentService.ts": 3,
   "server/src/services/InterviewInsightService.ts": 1,
@@ -37,7 +92,7 @@ const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = {
   "server/src/services/deliverables/deliverablesTelemetryService.ts": 1,
   "server/src/services/demo/demoSessionService.ts": 3,
   "server/src/services/demoTrialTelemetryService.ts": 1,
-  "server/src/services/effectiveAccessService.ts": 3,
+  "server/src/services/effectiveAccessService.ts": 1,
   "server/src/services/emailVerificationService.ts": 1,
   "server/src/services/executiveAggregateService.ts": 3,
   "server/src/services/executiveInsightsService.ts": 1,
@@ -82,20 +137,23 @@ const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = {
   "server/src/services/wave9OutcomeRuntimeService.ts": 7,
   "server/src/services/workCanvasService.ts": 3,
   "server/src/services/workbook/workbookCommandService.ts": 1,
-  "server/src/services/workbook/workbookSchemaGuard.ts": 1
+  "server/src/services/workbook/workbookSchemaGuard.ts": 1,
+  "server/src/utils/ensureUserOnboardingStatusTable.ts": 1
 };
 
 function files(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    // Owner/WIP backups are explicitly outside this guard's readable scope.
+    if (entry.isDirectory() && entry.name === '_backup') return [];
     const target = path.join(dir, entry.name);
     return entry.isDirectory() ? files(target) : [target];
   });
 }
 
 describe('runtime DDL schema guard', () => {
-  it('rejects every new CREATE TABLE in services outside the explicit legacy allowlist', () => {
+  it('rejects every new CREATE TABLE in server/src outside the explicit legacy allowlist', () => {
     const actual: Record<string, number> = {};
-    for (const file of files(path.join(process.cwd(), 'server/src/services'))) {
+    for (const file of files(path.join(process.cwd(), 'server/src'))) {
       if (file.includes('/__tests__/')) continue;
       const content = fs.readFileSync(file, 'utf8');
       const count = content.match(/CREATE TABLE IF NOT EXISTS/g)?.length ?? 0;
