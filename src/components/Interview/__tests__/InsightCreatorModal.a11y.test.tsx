@@ -137,7 +137,7 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
     window.localStorage.setItem(INTERVIEW_CREATOR_SHELL_FLAG_KEYS.localStorage, '1');
     await mountAndOpen('en');
 
-    fireEvent.change(screen.getByLabelText(/^Insight Title \*$/), {
+    fireEvent.change(screen.getByLabelText(/^Insight Title \(required\)$/), {
       target: { value: 'Warehouse ownership' },
     });
     expect(screen.getByText(/Insight “Warehouse ownership”/)).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
 
     expect(screen.getByRole('button', { name: 'Next: Material' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText(/^Insight Title \*$/), {
+    fireEvent.change(screen.getByLabelText(/^Insight Title \(required\)$/), {
       target: { value: 'Warehouse ownership' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Next: Material' }));
@@ -175,7 +175,7 @@ describe('InsightCreatorModal — dialog accessible contract (EN)', () => {
 
     // The visible label appends a literal " *" required marker after the
     // translated text, so the accessible name is "Insight Title *".
-    const titleInput = screen.getByLabelText(/^Insight Title \*$/);
+    const titleInput = screen.getByLabelText(/^Insight Title \(required\)$/);
     expect(titleInput).toBeRequired();
     await waitFor(() => expect(titleInput).toHaveFocus());
   });
@@ -228,7 +228,7 @@ describe('InsightCreatorModal — dialog accessible contract (PL, legacy chrome)
 
     // Real PL string: interview.insightCreatorModal.insightTitle = "Tytuł
     // wniosków" (+ the same literal " *" required marker as EN).
-    const titleInput = screen.getByLabelText(/^Tytuł wniosków \*$/);
+    const titleInput = screen.getByLabelText(/^Tytuł wniosków \(wymagane\)$/);
     expect(titleInput).toBeRequired();
   });
 });
