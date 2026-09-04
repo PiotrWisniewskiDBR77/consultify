@@ -1,0 +1,128 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-initiatives/audyty-piec-powierzchni__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\n\nTo są lokalne szkice (Proposal Draft) z ustaleń audytu — NIE są to zarejestrowane Inicjatywy modułu Initiatives, dopóki ktoś jawnie ich nie zarejestruje.\n\nTYTUŁ\n\t\nUSTALENIA ŹRÓDŁOWE\n\t\nPRIORYTET\n\t\nSTATUS\n\t\nZAKTUALIZOWANO\n\t\n\n\nWdrożyć proces okresowej rewalidacji dostępów dostawców IT\nGrupa Metalplast — Kontrola dostawców IT\n\t\n1\n\t\nHigh\n\t\nWysłany do kandydatów\n\t\n09/08/2026\n\t\n\n\nUjednolicić rejestr incydentów bezpieczeństwa dostawców\nGrupa Metalplast — Kontrola dostawców IT\n\t\n2\n\t\nCritical\n\t\nSzkic\n\t\n09/08/2026\n\t\n\n\nSkrócić czas reakcji na reklamacje magazynowe\nVantico Logistics — Audyt QMS (Magazyn Poznań)\n\t\n1\n\t\nMedium\n\t\nZarejestrowany\n\t\n12/08/2026\n\t\nWdrożyć proces okresowej rewalidacji dostępów dostawców IT\nStatus: Wysłany do kandydatów\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Kontrola dostawców IT\nUstalenia źródłowe\t1\nPriorytet\thigh\nZaktualizowano\t09/08/2026\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 246.7078512258873,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-initiatives/audyty-piec-powierzchni__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\n\nTo są lokalne szkice (Proposal Draft) z ustaleń audytu — NIE są to zarejestrowane Inicjatywy modułu Initiatives, dopóki ktoś jawnie ich nie zarejestruje.\n\nTYTUŁ\n\t\nUSTALENIA ŹRÓDŁOWE\n\t\nPRIORYTET\n\t\nSTATUS\n\t\nZAKTUALIZOWANO\n\t\n\n\nWdrożyć proces okresowej rewalidacji dostępów dostawców IT\nGrupa Metalplast — Kontrola dostawców IT\n\t\n1\n\t\nHigh\n\t\nWysłany do kandydatów\n\t\n09/08/2026\n\t\n\n\nUjednolicić rejestr incydentów bezpieczeństwa dostawców\nGrupa Metalplast — Kontrola dostawców IT\n\t\n2\n\t\nCritical\n\t\nSzkic\n\t\n09/08/2026\n\t\n\n\nSkrócić czas reakcji na reklamacje magazynowe\nVantico Logistics — Audyt QMS (Magazyn Poznań)\n\t\n1\n\t\nMedium\n\t\nZarejestrowany\n\t\n12/08/2026\n\t\nWdrożyć proces okresowej rewalidacji dostępów dostawców IT\nStatus: Wysłany do kandydatów\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Kontrola dostawców IT\nUstalenia źródłowe\t1\nPriorytet\thigh\nZaktualizowano\t09/08/2026\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 23.38605312094907,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "roznicaLuminancji": 223.32179810493824,
+      "procentRoznychPikseli": 99.98935185185185,
+      "powod": null
+    }
+  ]
+}

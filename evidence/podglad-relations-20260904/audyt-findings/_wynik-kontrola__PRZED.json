@@ -1,0 +1,120 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-findings/audyty-piec-powierzchni__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nProgram audytowy\nElmax Industries — Audyt QMS Q3 2026\nVantico Logistics — Audyt QMS (Magazyn Poznań)\nGrupa Metalplast — Kontrola dostawców IT\nElmax Industries — Naprawa po audycie dostawców IT Q1 2026\nVantico Logistics — Weryfikacja skuteczności działań naprawczych\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nMetalpol Sp. z o.o. — Audyt wewnętrzny 2026/Q3 (Zakupy)\n0 ustaleń\nNUMER USTALENIA\n\t\nTREŚĆ\n\t\nKLASYFIKACJA\n\t\nKRYTERIUM / PROCES\n\t\nWŁAŚCICIEL\n\t\nTERMIN\n\t\nSTATUS\n\t\nOSTATNIA ZMIANA\n\t\n\n\nBrak ustaleń\n\nUstalenia powstają w warsztacie kryterium, gdy audytor wyciągnie wniosek o niezgodności.",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": false,
+      "obrazJasnosc": 249.69456291203704,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "wynik BRAK: [data-preview-block=\"details\"]",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-findings/audyty-piec-powierzchni__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nProgram audytowy\nElmax Industries — Audyt QMS Q3 2026\nVantico Logistics — Audyt QMS (Magazyn Poznań)\nGrupa Metalplast — Kontrola dostawców IT\nElmax Industries — Naprawa po audycie dostawców IT Q1 2026\nVantico Logistics — Weryfikacja skuteczności działań naprawczych\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nMetalpol Sp. z o.o. — Audyt wewnętrzny 2026/Q3 (Zakupy)\n0 ustaleń\nNUMER USTALENIA\n\t\nTREŚĆ\n\t\nKLASYFIKACJA\n\t\nKRYTERIUM / PROCES\n\t\nWŁAŚCICIEL\n\t\nTERMIN\n\t\nSTATUS\n\t\nOSTATNIA ZMIANA\n\t\n\n\nBrak ustaleń\n\nUstalenia powstają w warsztacie kryterium, gdy audytor wyciągnie wniosek o niezgodności.",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": false,
+      "obrazJasnosc": 22.190758387345678,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "wynik BRAK: [data-preview-block=\"details\"]",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "ok": false,
+      "reasons": [
+        "[ksztalt-19] audyty-piec-powierzchni: stany niezgodne lub niepełne — light ma wynik w DOM: false, dark ma wynik w DOM: false. Oba warianty muszą pokazywać POLICZONY wynik, nie sam formularz/przycisk."
+      ]
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "roznicaLuminancji": 227.50380452469136,
+      "procentRoznychPikseli": 99.9988425925926,
+      "powod": null
+    }
+  ]
+}

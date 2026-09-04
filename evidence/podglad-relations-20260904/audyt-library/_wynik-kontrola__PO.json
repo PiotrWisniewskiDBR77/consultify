@@ -1,0 +1,128 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-library/audyty-piec-powierzchni__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nWszystkie\n5\nZweryfikowane\n3\nW przeglądzie\n0\nNiezweryfikowane\n1\nBrak dowodu źródła\n1\nTYTUŁ\n\t\nŹRÓDŁO\n\t\nWERSJA\n\t\nTYP ŹRÓDŁA\n\t\nWERYFIKACJA\n\t\nSTATUS PUBLIKACJI\n\t\nKRYTERIA\n\t\nZAKTUALIZOWANO\n\t\n\n\nAudyt systemu zarządzania jakością — procedura QMS Elmax\nQMS-ELMAX-2026\n\t\nProcedura QMS Elmax Industries, wyd. 4\n\t\nv3\n\t\nProcedura wewnętrzna\n\t\nZweryfikowane\n\t\nOpublikowany\n\t\n42\n\t\n18/06/2026\n\t\n\n\nKontrola dostawców IT — framework wewnętrzny DBR77\nDBR77-ITVENDOR-INTERNAL\n\t\nDBR77 Framework wewnętrzny v3\n\t\nv2\n\t\nFramework wewnętrzny\n\t\nZweryfikowane\n\t\nOpublikowany\n\t\n27\n\t\n02/07/2026\n\t\n\n\nPakiet demonstracyjny — Gotowość NIS2 (Cyberbezpieczeństwo)\nNIS2-CYBER-DEMO\n\t\nDyrektywa NIS2 (UE) 2022/2555 — interpretacja robocza\n\t\nv1\n\t\nDemonstracja\n\t\nNiezweryfikowane\n\t\nSzkic\n\t\n18\n\t\n05/08/2026\n\t\n\n\nAudyt jakości danych — metodyka 2019\nDQ-LEGACY-2019\n\t\nWewnętrzny standard jakości danych 2019\n\t\nv1\n\t\nWycofany (historyczny)\n\t\nZweryfikowane\n\t\nWycofany\n\t\n15\n\t\n30/11/2023\n\t\n\n\nChecklist RODO — pakiet klienta Elmax Industries\nRODO-CLIENT-UNVERIFIED\n\t\n—\n\t\nv1\n\t\nRegulacja / akt prawny\n\t\nBrak dowodu źródła\n\t\nW przeglądzie\n\t\n9\n\t\n11/08/2026\n\t\nAudyt systemu zarządzania jakością — procedura QMS Elmax\nTyp źródła: Procedura wewnętrzna\nWeryfikacja: Zweryfikowane\nPublikacja: Opublikowany\nPodstawa audytu zgodności: Nie\nSZCZEGÓŁY\nWłaściwość\tWartość\nCel\tPotwierdzić zgodność systemu zarządzania jakością klienta z jego własną procedurą QMS przed przeglądem zarządzania. Odniesienie metodyczne: struktura systemu zarządzania jakością.\nZakres\tWszystkie procesy objęte certyfikatem: projektowanie, produkcja, kontrola jakości, zarządzanie dostawcami.\nŹródło\tProcedura QMS Elmax Industries, wyd. 4 (v4)\nPrawa\tLicencja zakupiona (ISO)\nWymagane role\tAudytor wiodący, Qms specialist\nTaksonomia ustaleń\tNiezgodność poważna, Niezgodność drobna, Obserwacja\nLiczba kryteriów\t42\nPOWIĄZANIA\nBrak powiązań\nRozpocznij audyt",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 245.656290175733,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-library/audyty-piec-powierzchni__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nWszystkie\n5\nZweryfikowane\n3\nW przeglądzie\n0\nNiezweryfikowane\n1\nBrak dowodu źródła\n1\nTYTUŁ\n\t\nŹRÓDŁO\n\t\nWERSJA\n\t\nTYP ŹRÓDŁA\n\t\nWERYFIKACJA\n\t\nSTATUS PUBLIKACJI\n\t\nKRYTERIA\n\t\nZAKTUALIZOWANO\n\t\n\n\nAudyt systemu zarządzania jakością — procedura QMS Elmax\nQMS-ELMAX-2026\n\t\nProcedura QMS Elmax Industries, wyd. 4\n\t\nv3\n\t\nProcedura wewnętrzna\n\t\nZweryfikowane\n\t\nOpublikowany\n\t\n42\n\t\n18/06/2026\n\t\n\n\nKontrola dostawców IT — framework wewnętrzny DBR77\nDBR77-ITVENDOR-INTERNAL\n\t\nDBR77 Framework wewnętrzny v3\n\t\nv2\n\t\nFramework wewnętrzny\n\t\nZweryfikowane\n\t\nOpublikowany\n\t\n27\n\t\n02/07/2026\n\t\n\n\nPakiet demonstracyjny — Gotowość NIS2 (Cyberbezpieczeństwo)\nNIS2-CYBER-DEMO\n\t\nDyrektywa NIS2 (UE) 2022/2555 — interpretacja robocza\n\t\nv1\n\t\nDemonstracja\n\t\nNiezweryfikowane\n\t\nSzkic\n\t\n18\n\t\n05/08/2026\n\t\n\n\nAudyt jakości danych — metodyka 2019\nDQ-LEGACY-2019\n\t\nWewnętrzny standard jakości danych 2019\n\t\nv1\n\t\nWycofany (historyczny)\n\t\nZweryfikowane\n\t\nWycofany\n\t\n15\n\t\n30/11/2023\n\t\n\n\nChecklist RODO — pakiet klienta Elmax Industries\nRODO-CLIENT-UNVERIFIED\n\t\n—\n\t\nv1\n\t\nRegulacja / akt prawny\n\t\nBrak dowodu źródła\n\t\nW przeglądzie\n\t\n9\n\t\n11/08/2026\n\t\nAudyt systemu zarządzania jakością — procedura QMS Elmax\nTyp źródła: Procedura wewnętrzna\nWeryfikacja: Zweryfikowane\nPublikacja: Opublikowany\nPodstawa audytu zgodności: Nie\nSZCZEGÓŁY\nWłaściwość\tWartość\nCel\tPotwierdzić zgodność systemu zarządzania jakością klienta z jego własną procedurą QMS przed przeglądem zarządzania. Odniesienie metodyczne: struktura systemu zarządzania jakością.\nZakres\tWszystkie procesy objęte certyfikatem: projektowanie, produkcja, kontrola jakości, zarządzanie dostawcami.\nŹródło\tProcedura QMS Elmax Industries, wyd. 4 (v4)\nPrawa\tLicencja zakupiona (ISO)\nWymagane role\tAudytor wiodący, Qms specialist\nTaksonomia ustaleń\tNiezgodność poważna, Niezgodność drobna, Obserwacja\nLiczba kryteriów\t42\nPOWIĄZANIA\nBrak powiązań\nRozpocznij audyt",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 27.322968278935186,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "roznicaLuminancji": 218.33332189679783,
+      "procentRoznychPikseli": 99.99141589506173,
+      "powod": null
+    }
+  ]
+}

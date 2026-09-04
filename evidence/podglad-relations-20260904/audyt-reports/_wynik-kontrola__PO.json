@@ -1,0 +1,128 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-reports/audyty-piec-powierzchni__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nTYTUŁ\n\t\nRODZAJ\n\t\nWERSJA\n\t\nSTATUS\n\t\nJĘZYK\n\t\nODBIORCA\n\t\nPOUFNOŚĆ\n\t\nDATA PUBLIKACJI\n\t\nZAKTUALIZOWANO\n\t\n\n\nRaport z audytu QMS 2025 — Grupa Metalplast\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nRaport audytu\n\t\n1\n\t\nZastąpiony\n\t\nPL\n\t\nZarząd\n\t\nPoufne\n\t\n16/12/2025\n\t\n18/12/2025\n\t\n\n\nRaport z audytu QMS 2025 — Grupa Metalplast (wersja poprawiona)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nRaport audytu\n\t\n2\n\t\nOpublikowany\n\t\nPL\n\t\nZarząd\n\t\nPoufne\n\t\n19/12/2025\n\t\n19/12/2025\n\t\n\n\nPostęp naprawy — Elmax Industries (sierpień 2026)\nElmax Industries — Naprawa po audycie dostawców IT Q1 2026\n\t\nPostęp naprawy\n\t\n1\n\t\nSzkic\n\t\nPL\n\t\nSponsor projektu\n\t\nWewnętrzne\n\t\n—\n\t\n11/08/2026\n\t\nRaport z audytu QMS 2025 — Grupa Metalplast\nOtwórz pełny raport\nStatus: Zastąpiony\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nRodzaj\tRaport audytu\nWersja\t1\nJęzyk\tPL\nOdbiorca\tZarząd\nPoufność\tPoufne\nData zatwierdzenia\t15/12/2025\nData publikacji\t16/12/2025\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 246.92101424131943,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-reports/audyty-piec-powierzchni__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nTYTUŁ\n\t\nRODZAJ\n\t\nWERSJA\n\t\nSTATUS\n\t\nJĘZYK\n\t\nODBIORCA\n\t\nPOUFNOŚĆ\n\t\nDATA PUBLIKACJI\n\t\nZAKTUALIZOWANO\n\t\n\n\nRaport z audytu QMS 2025 — Grupa Metalplast\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nRaport audytu\n\t\n1\n\t\nZastąpiony\n\t\nPL\n\t\nZarząd\n\t\nPoufne\n\t\n16/12/2025\n\t\n18/12/2025\n\t\n\n\nRaport z audytu QMS 2025 — Grupa Metalplast (wersja poprawiona)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nRaport audytu\n\t\n2\n\t\nOpublikowany\n\t\nPL\n\t\nZarząd\n\t\nPoufne\n\t\n19/12/2025\n\t\n19/12/2025\n\t\n\n\nPostęp naprawy — Elmax Industries (sierpień 2026)\nElmax Industries — Naprawa po audycie dostawców IT Q1 2026\n\t\nPostęp naprawy\n\t\n1\n\t\nSzkic\n\t\nPL\n\t\nSponsor projektu\n\t\nWewnętrzne\n\t\n—\n\t\n11/08/2026\n\t\nRaport z audytu QMS 2025 — Grupa Metalplast\nOtwórz pełny raport\nStatus: Zastąpiony\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nRodzaj\tRaport audytu\nWersja\t1\nJęzyk\tPL\nOdbiorca\tZarząd\nPoufność\tPoufne\nData zatwierdzenia\t15/12/2025\nData publikacji\t16/12/2025\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 24.047929679398145,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "roznicaLuminancji": 222.87308456192127,
+      "procentRoznychPikseli": 99.9994212962963,
+      "powod": null
+    }
+  ]
+}

@@ -337,3 +337,8 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 - Naprawiono 20 etykiet z nazw title.pl; dodano ratchet importujący wspólny rejestr justification i podłogę liczebności.
 - R4 pozostaje PARTIAL: ekran dynamic-swot był już poprawny na markerze, więc kadry PRZED/PO są identyczne i nie dowodzą zmian portfolio/risk.
 - Gałąź odbiorowa: `codex/day354-etykiety-narzedzi-20260904`; szczegóły i propozycje w `CODEX_DAY354_ETYKIETY_NARZEDZI_REPORT.md`.
+## Z. Dyżur 352 — pusta karta Relations na ekranach bez deklaracji
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
