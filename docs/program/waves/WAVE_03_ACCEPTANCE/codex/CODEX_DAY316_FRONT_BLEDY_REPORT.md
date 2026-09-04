@@ -1,6 +1,6 @@
 # CODEX DAY 316 — prezentacja błędów frontu
 
-Status: W TOKU. Raport jest aktualizowany po każdej pozycji; brak wpisu `FIXED` bez dowodu mutacyjnego.
+Status: `PARTIAL` — rdzeń R1–R6 wykonany i wypchnięty; ogon 308 widocznych miejsc nie został podmieniony. Brak wpisu `FIXED` bez dowodu mutacyjnego.
 
 ## Stan wejściowy i warunek startu
 
@@ -119,12 +119,52 @@ diff --git a/server/src/middleware/appErrorMapper.ts b/server/src/middleware/app
 
 Dyżur 321 powinien osobno poprawić kolejność argumentów dwóch wywołań w `stageGateService.ts` i dodać kontrakt, że operacyjny `AppError` z niestandardowym `errorCode` nadal dostaje kanoniczny tekst według sklasyfikowanego statusu. Niczego w `server/src` nie zmieniłem.
 
-## R7
+## R7 — podsumowanie i zasięg testów
+
+### PRZED → PO i commity
+
+| Pozycja / grupa | PRZED → PO | Commit |
+| --- | --- | --- |
+| R1 — mianownik i klasyfikacja | brak rejestru → 642 wiersze | `423225cbc2` |
+| R2 — kopia i prezentacja | 0 kluczy `errors.app` → 7 kodów + identyfikator PL/EN | `91fe2b95f7` |
+| R3A — klient HTTP | 68 → 20 trafień rodziny | `1ab8e6529c` |
+| R3B — pięciu konsumentów | 80 → 1 trafienie sterujące | `c34a88e077` |
+| R4 — ratchet JSX | brak → 6 plików, baseline 0 per plik | `790e757bcf` |
+| R5 — realny render | brak → 3 kody z PL + correlationId | `3e2383dded` |
+| R6 — język | przypuszczenie → pomiar 204 + browser header | `cd8e667ff5` |
+
+Cały zadany mianownik: 642→515. Całe `src`: 786→659. Ogon widoczny według klasyfikacji R1: 435−127 = 308 pozycji bez udowodnionej podmiany; w tej liczbie są także kolizje zasobowe 314/315. To jest powód statusu `PARTIAL`, nie ukryty sukces.
+
+### §0.4a — pełne nazwy
+
+- PRZED: 50 pełnych nazw, SHA-256 `9259cf9175b4aeb9b8b99868322f7e37ffb165faa0921a6d731833a6618fa2d1`.
+- PO: 71 pełnych nazw, SHA-256 `a787a18e6fa1494bd70ac9fa717c7b8c6cce9e3d4a5bbb601a5145fb6eea6e03`.
+- Diff: 21 nazw dodanych, 0 znikniętych, SHA-256 `38d1803c0c89cca9835c3c9ab10a6de9e66316d7a6f3894868c263dce248156b`.
+- Pełny przebieg PO: 19/19 suit i 71/71 testów PASS, `--retry=0`.
+
+Pliki: `/private/tmp/cx-day316-front-bledy-artefakty/przed-nazwy.txt`, `po-nazwy.txt`, `nazwy.diff`, `po.json`.
+
+### Artefakty dowodów mutacyjnych
+
+- R2 czerwony `bc89610d22879e727deee476753c6b0270394f55c4ea8953006a6f8095a27b7e`; zielony po cofnięciu `54f07873993c9328840908b990a9f01a28e63dd41d013731669c785b2b881c19`.
+- R4 czerwony `1e4e47b83f3e95ecc5362de3313f51f4ad4f0d80ecf95915309407746bd4f4da`; zielony po cofnięciu `7155ad058aad4366f80e82253c94b37bc541d8ca381382c84c1fa8d5857c4aaa`.
+- R5 render `848319e81d59fcd20401ffbea0b4a3b8474dae71f7c41e27fc26187dd67651fe`.
+- R6 AST `4d899a4a70ca82f290e458da37341424f2b74772c803f6941d8400c15fb9b8cd`.
+
+### Pułapki środowiska a dowody
+
+Pakiety R2/R4/R5 są czysto jednostkowe i uruchomiono je wariantem C (`RUN_DB_TESTS=0 MOCK_DB=true`), więc nie dowodzą egzekucji DB, `ApiGateway`, auth ani bramek (a)–(d). Pułapkę (e) wyłączono pomiarem na bieżącym markerze: 73 pliki mappera. Pułapki (f) i (g) zmierzono osobno w R6. Pułapki (h) i (i) zamknięto odpowiednio ścieżką realnego montażu `ErrorState` oraz asercją konkretnych wartości PL z mutacją zasobu. `junit.xml` z bazowego przebiegu nie został dodany do repo.
+
+### Pliki zmienione względem markera
+
+14 plików: dwa dokumenty, dwa zasoby lokalizacji, sześć plików rdzenia R3, montowany `ErrorState`, źródło tekstów i dwa testy. Dokładna lista pochodzi z `git diff --name-only bc18bc7...HEAD`; żadnego pliku `server/src` ani globalnej infrastruktury testowej nie zmieniono.
 
 W TOKU.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie zmierzyłem jeszcze w realnej przeglądarce, czy `Accept-Language` dochodzi do serwera.
-- Nie wyliczyłem jeszcze odsetka `new AppError(...)` z komunikatami angielskimi.
-- Nie potwierdziłem jeszcze widoku trzech kodów aplikacyjnych po polsku z `correlationId`.
+- Nie prześledziłem runtime każdej z 308 pozostawionych pozycji `NA EKRAN`; ich klasyfikacja jest konserwatywnym audytem statycznym, nie dowodem renderu każdej trasy.
+- Dokładny odsetek językowy 38 dynamicznych argumentów `new AppError(...)` pozostaje `UNKNOWN`; zależy od wartości runtime.
+- Globalny, ważony ruchem odsetek błędów widzianych po polsku jest `NOT_PROVEN`, ponieważ brak telemetrii częstości per ujście.
+- Nie wykonałem produkcyjnego HTTP/JWT/PG dla ekranów, ponieważ pozycje R2/R4/R5 są kontraktami frontowymi, a R6 wymagał wyłącznie realnego nagłówka przeglądarki; wyników jednostkowych nie przedstawiam jako dowodu backendu.
+- Nie podmieniłem ogona 308 widocznych pozycji; status całości pozostaje `PARTIAL`.
