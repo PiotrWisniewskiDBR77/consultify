@@ -1,0 +1,21 @@
+Wzorzec wyszukujący pliki: meta\??\.env\??\.?\[
+Wynik: 109 unikalnych plików, 109 miejsc dostępu obliczonego.
+
+Klasyfikacja pochodzi z pełnego JSON wygenerowanego przez:
+node scripts/dev/reachability-from-root.mjs
+
+ŻYWY oznacza classification=app, czyli osiągalność od src/index.tsx.
+MARTWY oznacza classification=unreachable.
+NIEORZECZONY zachowano dla classification=test-only lub harness-only; nie nazwano ich
+produkcyjnie żywymi ani martwymi bez dodatkowej decyzji zakresowej.
+
+Wynik dla 109/109 plików:
+- ŻYWY: 105
+- MARTWY: 2
+- NIEORZECZONY: 2
+- żywe i obliczone: 105
+
+Plik src/utils/artifactStudioFlags.ts ma jeden dynamiczny punkt readEnv(key), który może
+otrzymać cztery jawnie zadeklarowane klucze VITE_*. Dlatego TSV ma 112 wierszy danych dla
+109 plików: ten punkt został rozpisany na cztery klucze zamiast pozostawienia fałszywej
+wartości `key` w kolumnie wymagającej nazwy VITE_*.

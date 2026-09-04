@@ -1,0 +1,8 @@
+diff --git a/src/utils/agentPlanFlag.ts b/src/utils/agentPlanFlag.ts
+--- a/src/utils/agentPlanFlag.ts
++++ b/src/utils/agentPlanFlag.ts
+@@
+-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
++    // Static access lets Vite replace the value in the browser bundle.
++    const parsed = parseFlag(import.meta.env.VITE_AGENT_PLAN);
