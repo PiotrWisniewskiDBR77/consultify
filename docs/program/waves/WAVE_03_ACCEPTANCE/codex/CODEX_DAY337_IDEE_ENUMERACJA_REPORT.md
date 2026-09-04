@@ -51,7 +51,7 @@ Bazowy skład przed zmianami: `numTotalTests=5`, 4 wykonane PASS, 0 FAIL, 1 pend
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R4 nie został jeszcze wykonany; nie deklaruję jeszcze nowego pokrycia efektu.
+- Pełne pokrycie efektu pozostaje niezweryfikowane: 295 z 308 sygnatur nie ma dowodu skutku w tym przyrządzie.
 - Nie wykonano dowodu bazodanowego, ponieważ wiążący wariant C zabrania stawiania kontenera i dyżur nie dotyka bazy.
 
 ## §0.2e — pakiety uruchomione dotychczas
@@ -75,6 +75,16 @@ Pozycja sprostowania jest bezprzedmiotowa. Specyficzny grep raportu 295 nie znal
 Rodzinny `rg` w `docs/` i `evidence/` również zwrócił pustą listę (`kod rodziny=1`). Szczegóły komend: `evidence/day337/r3-rodzina-falszywego-twierdzenia.md`.
 
 Do istniejącego rejestru znalezisk dopisano jeden wiersz N1: próg minimalny może zwolnić sondę w połowie renderu, a sama stabilność wymaga odrzucenia stabilnej powłoki startowej.
+
+## R4 — dowód efektu
+
+Przed dobudową bezpiecznika MUTACJA B (`setShowConnectorWizard(true)` → pusty handler) pozostawiała test enumeracji GREEN oraz niezmienione inventory 82 i hash `2ccdd150921460e4c625d469f7cc73bf1604a6b45f52bb62947b92a627f78db1`.
+
+Dodano kontrakt efektu o pełnej nazwie `Idea tools — complete DOM control inventory idea-table-timeline-stuck: Importuj dane opens the connector wizard`. Sprawdza on realny skutek: po kliknięciu `Importuj dane` widoczny jest dialog `Nowy konektor danych`. Ta sama MUTACJA B po zmianie daje RED na `expect(await dialog.isVisible()).toBe(true)`; po przywróceniu przez `cp` pełny pakiet jest GREEN (7 wykonanych, 0 FAIL, 1 pending). Diff produktu po cofnięciu pusty.
+
+Nowe uczciwe pokrycie efektu: **13/308 = 4,2%**. Pozostałych 295 sygnatur nadal nie ma dowodu efektu. Szczegóły: `evidence/day337/r4-dowod-efektu.md`.
+
+Porównanie nazw PRZED/PO: dodano trzy pełne przypadki (sonda stabilności, kontrakt efektu Importuj dane, kontrakt enumeracji właściwego ekranu); nie zniknął żaden przypadek. Pliki: `/private/tmp/cx-day337-idee-enumeracja-artefakty/przed-nazwy.txt` i `po-nazwy.txt`.
 
 ## Z30
 

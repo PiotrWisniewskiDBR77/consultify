@@ -87,6 +87,21 @@ describe.runIf(Boolean(HARNESS_URL))('Idea tools — complete DOM control invent
     await page.close();
   }, 60_000);
 
+  it('idea-table-timeline-stuck: Importuj dane opens the connector wizard', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${HARNESS_URL}/?screen=idea-table-timeline-stuck&lang=pl&theme=light`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    await waitForStableControls(page, contract['idea-table-timeline-stuck'].minimumBase);
+    await page.getByTestId('idea-table-bar-overflow').click();
+    await page.getByTestId('idea-table-overflow-import-data').click();
+    const dialog = page.getByRole('dialog');
+    expect(await dialog.isVisible()).toBe(true);
+    expect(await dialog.textContent()).toContain('Nowy konektor danych');
+    await page.close();
+  }, 60_000);
+
   for (const [screen, expected] of Object.entries(contract)) {
     it(`${screen}: accounts for the base and opened-menu passes`, async () => {
       const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
