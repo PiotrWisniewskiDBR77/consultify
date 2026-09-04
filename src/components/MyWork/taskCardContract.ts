@@ -365,7 +365,8 @@ export function buildTaskCardSpec(): ArtifactCardSpec {
   const allCards = TASK_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core task', pl: 'Rdzeń zadania' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete task', pl: 'Kompletne zadanie' }, cards: allCards },
+    { id: 'core', label: { en: 'Core task', pl: 'Rdzeń zadania' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
