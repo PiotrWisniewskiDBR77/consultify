@@ -115,6 +115,26 @@ Nowe pełne nazwy to w modułach 05 i 06 ten sam przypadek `InitiativesHub canon
 
 Przed usunięciem bazowego worktree było 43 GiB wolnego, po usunięciu 45 GiB. `git worktree list` potwierdził `BRAK WORKTREE BAZOWEGO`.
 
+## R5 — MYW-IDEAS-010 i cała rodzina
+
+Commit `a995ca4c20 fix(mywork): extend candidate->initiative path beyond Process Flow (MYW-IDEAS-010)` jest przodkiem HEAD. Jego stat obejmuje 4 pliki, 68 insertions i 5 deletions: kod `IdeaMapWorkspace.tsx`, test kontraktowy oraz dwa dokumenty statusowe.
+
+Ukierunkowany przebieg HEAD wykonał 4 przypadki: 3 PASS i 1 FAIL. Czerwona pełna nazwa brzmi: `MYW-IDEAS-010 candidate→initiative path is no longer tool-gated does not gate the floating candidate panel (mels/active render path) to activeTool === process_flow`. Asercja pada wcześniej na `activeBranchEnd > 0`, ponieważ tekstowy sentinel `\n  return (\n    <div\n      ref={workspaceRootRef}` nie występuje już w źródle. Jednocześnie behawioralny kontrakt `shows the candidate panel for any real idea in the active render path` przechodzi. Werdykt: naprawa produktu wygląda na obecną, ale w bramce nadal istnieje czerwony, kruchy kontrakt źródłowy; nie ma podstaw do usunięcia `RED_NEW_1` ani do wpisania PASS bez osobnego, licencjonowanego uporządkowania testu z dowodem mutacyjnym.
+
+| Rodzina | Werdykt rejestru |
+| --- | --- |
+| MYW-IDEAS-008 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-372` |
+| MYW-IDEAS-009 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-372` |
+| MYW-IDEAS-010 | `NAPRAWIONE / SHA_OK / a995ca4c20` |
+| MYW-IDEAS-011 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-372` |
+| MYW-IDEAS-012 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-373` |
+| MYW-IDEAS-013 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-372` |
+| MYW-IDEAS-014 | `ZAMKNIETE_DEC / DEC_OK / DEC-2026-09-03-373` |
+| MYW-IDEAS-CORE-001 | `ODLOZONE_DEC / DEC_OK / DEC-2026-09-03-373` |
+| MYW-IDEAS-CORE-002 | `ODLOZONE_DEC / DEC_OK / DEC-2026-08-25-27` |
+
+Artefakt: `/private/tmp/cx-day336-g15-rozklad-artefakty/r5-myw-ideas-010.json`, SHA-256 `f4595cc638e7a55f5a7b19fbe6569b3f96cb0a6f640e50a6b65be5578c856560`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Aktualny wynik `MYW-IDEAS-010` na HEAD jest jeszcze niezmierzony.
+- Czy kruchy tekstowy sentinel `activeBranchEnd` ma zostać naprawiony w osobnym dyżurze testowym, pozostaje decyzją poza licencją tego dyżuru.
