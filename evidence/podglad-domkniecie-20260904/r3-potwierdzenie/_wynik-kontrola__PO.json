@@ -1,0 +1,400 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "finance-hub",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/finance-hub__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 7,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5576/@fs/private/tmp/cx-day365-podglad-domkniecie/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/finance-statements/packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/finance-statements/packs/pack-vantage-fy2025"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\nVantage Retail Partners\n\t\n—P&L / —BS / —CF\n\t\nFY 2025\n\t\nUSD\n\t\n0\n\t\nSzkic\n\t28.08.2026\t\n\n\t\nSTM\n\t\nElmax Industries S.A.\n\t\nP&L / —BS / —CF\n\t\nFY 2025 (H1)\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nSTM\n\t\nTechFlow Solutions Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t24.08.2026\t\n\n\t\nSTM\n\t\nNordic Bakery Group\n\t\nP&L / BS / —CF\n\t\nFY 2024\n\t\nEUR\n\t\n2\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nSTM\n\t\nSilvertree Consulting Group\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nGBP\n\t\n3\n\t\nZatwierdzone\n\t18.08.2026\t\n\n\t\nSTM\n\t\nGreenPack Logistics Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2023\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t11.04.2026\t\nVantage Retail Partners\nOtwórz\nDRAFT\n—P&L / —BS / —CF\nFY 2025\nSZCZEGÓŁY\nWłaściwość\tWartość\nWaluta\tUSD\nDok.\t0\nZmapowane linie\t0 / 0\nAI\nPodsumuj sprawozdanie\nWskaż ryzyka w danych\nPOWIĄZANIA\nBrak powiązań\nOtwórz\nO\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.27772821971448,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 72,
+      "sekcjeNadalZwiniete": [
+        "Filtruj Waluta, brak aktywnego filtra",
+        "Filtruj Status, brak aktywnego filtra",
+        "Ustawienia widoku",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza"
+      ],
+      "status": "wynik BRAK: zwinięte sekcje: Filtruj Waluta, brak aktywnego filtra / Filtruj Status, brak aktywnego filtra / Ustawienia widoku / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "finance-hub",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/finance-hub__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 7,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5576/@fs/private/tmp/cx-day365-podglad-domkniecie/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/finance-statements/packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5576/api/finance-statements/packs/pack-vantage-fy2025"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\nVantage Retail Partners\n\t\n—P&L / —BS / —CF\n\t\nFY 2025\n\t\nUSD\n\t\n0\n\t\nSzkic\n\t28.08.2026\t\n\n\t\nSTM\n\t\nElmax Industries S.A.\n\t\nP&L / —BS / —CF\n\t\nFY 2025 (H1)\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nSTM\n\t\nTechFlow Solutions Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t24.08.2026\t\n\n\t\nSTM\n\t\nNordic Bakery Group\n\t\nP&L / BS / —CF\n\t\nFY 2024\n\t\nEUR\n\t\n2\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nSTM\n\t\nSilvertree Consulting Group\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nGBP\n\t\n3\n\t\nZatwierdzone\n\t18.08.2026\t\n\n\t\nSTM\n\t\nGreenPack Logistics Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2023\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t11.04.2026\t\nVantage Retail Partners\nOtwórz\nDRAFT\n—P&L / —BS / —CF\nFY 2025\nSZCZEGÓŁY\nWłaściwość\tWartość\nWaluta\tUSD\nDok.\t0\nZmapowane linie\t0 / 0\nAI\nPodsumuj sprawozdanie\nWskaż ryzyka w danych\nPOWIĄZANIA\nBrak powiązań\nOtwórz\nO\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.830194624421296,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 72,
+      "sekcjeNadalZwiniete": [
+        "Filtruj Waluta, brak aktywnego filtra",
+        "Filtruj Status, brak aktywnego filtra",
+        "Ustawienia widoku",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza"
+      ],
+      "status": "wynik BRAK: zwinięte sekcje: Filtruj Waluta, brak aktywnego filtra / Filtruj Status, brak aktywnego filtra / Ustawienia widoku / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/results-vnext-registry-shell__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moje\nOrganizacja\nNowy KPI\nUwaga\nNAZWA\n\t\nSTATUS\n\t\nWŁAŚCICIEL\n\t\nWARTOŚĆ\n\t\nZAKTUALIZOWANO\n\t\n\n\nOEE linii pakowania\n\t\nW przeglądzie\n\t\nAnna Kowalska\n\t\n74 %\n\t\n2026-08-08\n\t\n\n\nRedukcja kosztów pracy (zdegenerowana baza odniesienia)\n\t\nZatwierdzony\n\t\nPiotr Wiśniewski\n\t\nN/A\n\t\n2026-08-05\n\t\n\n\nPokrycie audytu dostawców\n\t\nSzkic\n\t\nTomasz Nowak\n\t\n—\n\t\n2026-08-01\n\t\n\n\nCzas cyklu zamknięcia miesiąca\n\t\nZamknięty\n\t\nAnna Kowalska\n\t\n5 dni\n\t\n2026-07-30\n\t\nOEE linii pakowania\nOtwórz\nW przeglądzie\nRejestr KPI\n2026-08-08\nRekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.\nSZCZEGÓŁY\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalska\nWartość bieżąca\t74\nStatus\tW przeglądzie\nAI\nPodsumuj rekord\nZaproponuj kolejne kroki\nPOWIĄZANIA\nBrak powiązań\nZatwierdź\nDeleguj",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.81863606114968,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 48,
+      "sekcjeNadalZwiniete": [
+        "Filtruj Status, brak aktywnego filtra",
+        "Ustawienia widoku",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza"
+      ],
+      "status": "wynik BRAK: zwinięte sekcje: Filtruj Status, brak aktywnego filtra / Ustawienia widoku / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/results-vnext-registry-shell__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moje\nOrganizacja\nNowy KPI\nUwaga\nNAZWA\n\t\nSTATUS\n\t\nWŁAŚCICIEL\n\t\nWARTOŚĆ\n\t\nZAKTUALIZOWANO\n\t\n\n\nOEE linii pakowania\n\t\nW przeglądzie\n\t\nAnna Kowalska\n\t\n74 %\n\t\n2026-08-08\n\t\n\n\nRedukcja kosztów pracy (zdegenerowana baza odniesienia)\n\t\nZatwierdzony\n\t\nPiotr Wiśniewski\n\t\nN/A\n\t\n2026-08-05\n\t\n\n\nPokrycie audytu dostawców\n\t\nSzkic\n\t\nTomasz Nowak\n\t\n—\n\t\n2026-08-01\n\t\n\n\nCzas cyklu zamknięcia miesiąca\n\t\nZamknięty\n\t\nAnna Kowalska\n\t\n5 dni\n\t\n2026-07-30\n\t\nOEE linii pakowania\nOtwórz\nW przeglądzie\nRejestr KPI\n2026-08-08\nRekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.\nSZCZEGÓŁY\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalska\nWartość bieżąca\t74\nStatus\tW przeglądzie\nAI\nPodsumuj rekord\nZaproponuj kolejne kroki\nPOWIĄZANIA\nBrak powiązań\nZatwierdź\nDeleguj",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 23.770966766975306,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 48,
+      "sekcjeNadalZwiniete": [
+        "Filtruj Status, brak aktywnego filtra",
+        "Ustawienia widoku",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza",
+        "Akcje wiersza"
+      ],
+      "status": "wynik BRAK: zwinięte sekcje: Filtruj Status, brak aktywnego filtra / Ustawienia widoku / Akcje wiersza / Akcje wiersza / Akcje wiersza / Akcje wiersza",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/results-vnext-attention__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "KPI\nOKR\nKOD KPI\n\n\nDPMO-002\n\n\nDWT-003\nDPMO-002\nBrak właściciela\nSZCZEGÓŁY\nWłaściwość\tWartość\nKod KPI\tDPMO-002\nAI\nPOWIĄZANIA\nBrak powiązań\nOtwórz KPI",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 249.8248026107253,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 1,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day365-podglad-domkniecie/evidence/podglad-domkniecie-20260904/r3-potwierdzenie/results-vnext-attention__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "KPI\nOKR\nKOD KPI\n\n\nDPMO-002\n\n\nDWT-003\nDPMO-002\nBrak właściciela\nSZCZEGÓŁY\nWłaściwość\tWartość\nKod KPI\tDPMO-002\nAI\nPOWIĄZANIA\nBrak powiązań\nOtwórz KPI",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 20.62171847453704,
+      "zliczenia": [
+        {
+          "nazwa": "empty",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "relations",
+          "css": "[data-preview-block=\"relations\"]",
+          "ile": 1,
+          "teksty": [
+            "PowiązaniaBrak powiązań"
+          ]
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 1,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": true,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "finance-hub",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "finance-hub",
+      "roznicaLuminancji": 221.44753359529318,
+      "procentRoznychPikseli": 99.98721064814815,
+      "powod": null
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "roznicaLuminancji": 224.04766929417437,
+      "procentRoznychPikseli": 99.98788580246914,
+      "powod": null
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "roznicaLuminancji": 229.20308413618827,
+      "procentRoznychPikseli": 99.98846450617283,
+      "powod": null
+    }
+  ]
+}

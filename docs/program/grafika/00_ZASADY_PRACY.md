@@ -620,3 +620,41 @@ zanim pójdzie się dalej.
 **Ta sama rodzina co reguła 15 („bramka mechaniczna, nie uważność") i reguła 21 („dwa bezpieczniki
 z jednego źródła"):** wszystkie trzy mówią, że narzędzie, które wygląda na poprawne, jest
 groźniejsze od narzędzia, które widocznie zawodzi.
+
+## Zmiany w kanonicznym narzędziu zrzutów — dyżury 352 i 365 (2026-09-04)
+
+Dyżur 352 w commicie `4fcd20808e` zmienił trzy zachowania
+`scripts/dev/grafika-zrzuty.mjs`. Dyżur 365 rozliczył je osobno na tym samym
+historycznym kształcie wywołania dla `finance-hub`, `tab=analysis`, PL, 1440,
+light/dark, z `--rozwin-sekcje=1 --klik-po-rozwinieciu=1
+--osiad-po-rozwinieciu=800` i kontrolą markera
+`[data-preview-block="details"]`:
+
+| Miejsce na markerze dyżuru 365 | Opcja / zmiana | Skutek i odbiorcy | Opt-in | Werdykt dyżuru 365 |
+| --- | --- | --- | --- | --- |
+| `scripts/dev/grafika-zrzuty.mjs:56-58,671-680,712` | `--mierz-wysokosc` | Dodaje pomiar wysokości wskazanego elementu do JSON-a; bez selektora nie zmienia wyniku. | TAK | `RÓWNOWAŻNA` — w wywołaniu bez tej opcji oba motywy miały identyczne SHA-256 i ten sam stan DOM oraz exit. |
+| `scripts/dev/grafika-zrzuty.mjs:575-592` | warunek `podgladNadalOtwarty` i re-klik po `KLIK` | Nie otwiera ponownie już otwartego podglądu, a po zamknięciu odtwarza także wejście otwarte przez `--klik`; wpływa na pięć historycznych skryptów: `r1-slepa-plama-uruchom.mjs`, `r1-slepa-plama-agreguj.mjs`, `g06-macierz-uruchom.mjs`, `g06-macierz-rejestr.mjs`, `r4-dowod-uruchom.mjs`. | NIE; aktywuje się dla istniejącej opcji `--klik-po-rozwinieciu=1` | `RÓWNOWAŻNA` w zmierzonym historycznym wywołaniu — PNG light/dark są bitowo identyczne, JSON ma ten sam merytoryczny stan, oba przebiegi mają exit 1. Zmiana zostaje jawnie zadeklarowana. |
+| `scripts/dev/grafika-zrzuty.mjs:876-882` | filtr `Object.hasOwn(p, 'ok')` przed liczeniem `zlePary` | Wyłącza wpis porównania pikseli, który nie ma pola `ok`, z mianownika kontroli stanu; dotyczy wszystkich wywołań `--wynik-selektor`. | NIE; zmienia istniejącą opcję | `ZMIENIA WYNIK, PRZYJĘTA` — dla identycznego zbioru par komunikat zmienił się z `1/2` na `1/1`; w tej próbce oba przebiegi zachowały exit 1 z innej bramki. Nowy mianownik jest poprawny, bo wpis bez `ok` nie jest wynikiem kontroli markera. |
+
+W przebiegu porównawczym SHA-256 były identyczne: light
+`9efc59267744c676d90b21401b626587459af7105694c67bfe15be08d857e836`, dark
+`f515698778c6c9d267d5072a584cc5fcb9f706fc1f78e30dd4734925c612620f`.
+Pełne artefakty dyżuru są poza repo w
+`/private/tmp/cx-day365-podglad-domkniecie-artefakty/r1-przed` i
+`/private/tmp/cx-day365-podglad-domkniecie-artefakty/r1-po`.
+
+### Pomiary do przemiaru
+
+Zmiana mianownika `--wynik-selektor` może dezaktualizować liczby w:
+
+- `docs/program/grafika/00_ZASADY_PRACY.md`, reguła 19;
+- `docs/program/grafika/RAPORT_195_PRZELOT_A.md`;
+- `docs/program/grafika/PANELE_WYCENY_ZRZUTY_20260901.md`;
+- `docs/program/grafika/PRZEGLAD_BEZPIECZNIKOW_20260901.md`;
+- raporcie dyżuru 345 (`CODEX_DAY345_PANEL_IDEI_DOD_REPORT.md`), który wprost
+  zanotował fałszywy mianownik `1/2` przy `ok:true`.
+
+Zmiana re-kliku nie zmieniła wybranego przebiegu kontrolnego, lecz jawnie
+dotyczy pomiarów wykonywanych przez pięć skryptów wymienionych w tabeli, w tym
+pełnej macierzy G06 i pomiaru ślepej plamy R1; przy ich odbiorze należy zachować
+niniejszą deklarację jako informację o wersji przyrządu.

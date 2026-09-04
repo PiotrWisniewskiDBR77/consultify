@@ -1484,7 +1484,7 @@ export const FinanceHub: React.FC = () => {
   });
 
   // ---- Preview ----
-  const { renderPreviewBody, renderPreviewFooter } = useFinancePreview({
+  const { renderPreviewBody, renderPreviewFooter, getPreviewRelations } = useFinancePreview({
     statementPreviewDetail,
     statementPreviewRatios,
     modelPreviewDetail,
@@ -3230,6 +3230,10 @@ export const FinanceHub: React.FC = () => {
       </div>
     ) : null;
 
+  const selectedFinanceRelations = selectedFinanceRow
+    ? getPreviewRelations(selectedFinanceRow)
+    : null;
+
   const tableWithPreview = useMemo(
     () => (
       <div className="h-full flex overflow-hidden">
@@ -3274,6 +3278,8 @@ export const FinanceHub: React.FC = () => {
               onClose={() => deselectRow()}
               onOpenFull={() => handleOpenFull(selectedFinanceRow)}
               actions={financePreviewActionsForSelected}
+              relations={selectedFinanceRelations?.items}
+              relationsEmptyLabel={selectedFinanceRelations?.emptyLabel}
             >
               {renderPreviewBody(selectedFinanceRow)}
               {renderPreviewFooter(selectedFinanceRow)}
@@ -3298,6 +3304,7 @@ export const FinanceHub: React.FC = () => {
       deselectRow,
       renderPreviewBody,
       renderPreviewFooter,
+      selectedFinanceRelations,
     ]
   );
 

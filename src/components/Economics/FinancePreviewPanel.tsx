@@ -18,7 +18,6 @@ import {
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
-  PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { statusChipTone } from '@/components/ui/primitives/chips';
@@ -966,6 +965,44 @@ export function useFinancePreview({
     ]
   );
 
+  const getPreviewRelations = useCallback(
+    (row: FinanceRow): { items: RelationItem[]; emptyLabel: string } => {
+      const items: RelationItem[] = [];
+
+      if (row.kind === 'statements') {
+        const statementRow = row as FinanceStatementRow;
+        items.push(
+          {
+            label: `${t('finance.preview.relationsSources', 'Sources')}: ${
+              statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
+            }`,
+          },
+          {
+            label: `${t('finance.preview.relationsModelReadiness', 'Model readiness')}: ${
+              statementRow.isWorkable
+                ? t('finance.preview.readyForSeeding', 'Ready for seeding')
+                : String(statementRow.readinessStatus || '').toLowerCase() === 'rejected'
+                  ? t('finance.preview.rejectedImport', 'Rejected import')
+                  : 'Recovery queue'
+            }`,
+          }
+        );
+      }
+
+      return {
+        items,
+        emptyLabel:
+          row.canonicalArtifactId && row.canonicalBusinessVersionId
+            ? t(
+                'finance.preview.relationsInWorkspace',
+                'Verified lineage is available in the canonical workspace'
+              )
+            : t('common.noRelations', 'No relations'),
+      };
+    },
+    [statementPreviewDetail, t]
+  );
+
   const renderPreviewFooter = useCallback(
     (row: FinanceRow) => {
       const aiHints: string[] = (() => {
@@ -1009,28 +1046,10 @@ export function useFinancePreview({
         }
       })();
 
-      const relationItems: RelationItem[] = [];
-
       const actionButtons: ActionRow['buttons'] = [];
 
       if (row.kind === 'statements') {
         const statementRow = row as FinanceStatementRow;
-        relationItems.push(
-          {
-            label: `${t('finance.preview.relationsSources', 'Sources')}: ${
-              statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
-            }`,
-          },
-          {
-            label: `${t('finance.preview.relationsModelReadiness', 'Model readiness')}: ${
-              statementRow.isWorkable
-                ? t('finance.preview.readyForSeeding', 'Ready for seeding')
-                : String(statementRow.readinessStatus || '').toLowerCase() === 'rejected'
-                  ? t('finance.preview.rejectedImport', 'Rejected import')
-                  : 'Recovery queue'
-            }`,
-          }
-        );
         actionButtons.push(
           {
             label: t('finance.actions.createModelFromStatement', 'Utwórz model'),
@@ -1276,18 +1295,6 @@ export function useFinancePreview({
               window.location.assign(`/chat?context=finance&prompt=${encodeURIComponent(hint)}`)
             }
           />
-          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-          <PreviewRelations
-            items={relationItems}
-            emptyLabel={
-              row.canonicalArtifactId && row.canonicalBusinessVersionId
-                ? t(
-                    'finance.preview.relationsInWorkspace',
-                    'Verified lineage is available in the canonical workspace'
-                  )
-                : t('common.noRelations', 'No relations')
-            }
-          />
           {versionSnapshots && versionSnapshots.length > 0 && (
             <>
               <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
@@ -1302,11 +1309,9 @@ export function useFinancePreview({
     [
       t,
       i18n,
-      statementPreviewDetail,
       handleOpenFull,
       handleCreateModelFromStatement,
       handleCreateAnalysisFromStatements,
-      loadStatements,
       loadModels,
       loadPredictionPreview,
       loadAnalyses,
@@ -1320,5 +1325,5 @@ export function useFinancePreview({
     ]
   );
 
-  return { renderPreviewBody, renderPreviewFooter };
+  return { renderPreviewBody, renderPreviewFooter, getPreviewRelations };
 }
