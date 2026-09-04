@@ -300,7 +300,7 @@ router.post(
       res.status(result.replayed ? 200 : 201).json(result);
     } catch (error) {
       if (error instanceof GovernedSnapshotBindingError) {
-        res.status(error.httpStatus).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        res.status(error.httpStatus).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
         return;
       }
       if (respondToHandoffError(res, error)) return;
