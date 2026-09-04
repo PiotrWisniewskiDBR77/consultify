@@ -75,3 +75,10 @@ Nowa flaga `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE` jest odczytywana wyłącznie 
 | brak | ON | 24 | 5 | `ff.cardContract="1"`; klucz kolejności `null` | `evidence/kompletnosc-24-sekcji-20260904/r2/r2-on-pusty.json` |
 
 Przebieg ON z `quick_win` zawiera wszystkie osiemnaście nazw brakujących w R1. `visibleSections` i zawartość szablonu nie zostały usunięte ani zmienione; nowa funkcja wyboru zwraca pełną listę wyłącznie przy fladze ON, a przy OFF zachowuje zastany filtr.
+
+## Dyżur 338 — R3: dowody mutacyjne zabezpieczenia
+
+1. Usunięcie `lessons-learned` z `INITIATIVE_BOARD_CANONICAL_ORDER` dało RED: nowy test zgłosił `expected ... to have a length of 24 but got 23`, a zastany test kompletności wskazał brak imiennie: `expected [ 'lessons-learned' ] to deeply equal []`. Po cofnięciu przez `cp`: 10/10 GREEN i `GIT DIFF PUSTY PO COFNIĘCIU MUTACJI 1`.
+2. Pozostawienie 24 pozycji w kanonie, ale przywrócenie bezpośredniego `allSections.filter(...)` w widoku dało RED: trzy przypadki zachowania funkcji przeszły, a przypadek przewodu do realnej nawigacji upadł. Po cofnięciu przez `cp`: 4/4 GREEN i `GIT DIFF PUSTY PO COFNIĘCIU MUTACJI 2`.
+
+Pełne komendy i wyniki: `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r3-mutacja-kanon-{red,green}.log` oraz `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r3-mutacja-filtr-{red,green}.log`.
