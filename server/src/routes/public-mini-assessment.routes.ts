@@ -84,10 +84,10 @@ router.post(
       res.json({ success: true, ...result });
     } catch (err: any) {
       if (err.message === 'Assessment not found') {
-        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error') });
       }
       if (err.message === 'Assessment already completed') {
-        return res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        return res.status(409).json({ ...mapAppErrorResponse(err, req, 'error') });
       }
       throw err;
     }
@@ -121,9 +121,9 @@ router.post(
       res.json({ success: true, ...result });
     } catch (err: any) {
       if (err.message === 'Assessment not found')
-        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error') });
       if (err.message === 'Assessment already completed')
-        return res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        return res.status(409).json({ ...mapAppErrorResponse(err, req, 'error') });
       throw err;
     }
   })

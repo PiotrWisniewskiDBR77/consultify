@@ -52,7 +52,7 @@ router.post(
     } catch (err) {
       const status = (err as { statusCode?: number }).statusCode ?? 500;
       if (status >= 400 && status < 500) {
-        return res.status(status).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
+        return res.status(status).json({ success: false, ...mapAppErrorResponse((err as Error), req, 'error') });
       }
       logger.error(`[#24c] booking failed for ${slug}: ${(err as Error).message}`);
       return res.status(500).json({ success: false, error: 'Failed to create booking' });

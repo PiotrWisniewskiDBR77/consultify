@@ -292,7 +292,7 @@ router.post(
       if (err instanceof AppError) {
         return res
           .status(err.statusCode)
-          .json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+          .json({ success: false, ...mapAppErrorResponse(err, req, 'error'), code: err.code });
       }
       return res.status(500).json({ success: false, error: 'Test execution failed' });
     }
@@ -354,7 +354,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
     if (err instanceof AppError) {
       return res
         .status(err.statusCode)
-        .json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+        .json({ success: false, ...mapAppErrorResponse(err, req, 'error'), code: err.code });
     }
     return res.status(500).json({ success: false, error: 'Chat failed' });
   }
