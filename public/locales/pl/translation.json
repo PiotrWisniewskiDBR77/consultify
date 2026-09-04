@@ -408,7 +408,7 @@
     "archive": "Archiwizuj",
     "convertTo": "Konwertuj na",
     "openPreview": "Otwórz podgląd",
-    "chatAbout": "Chat",
+    "chatAbout": "Czat",
     "comingSoonBackend": "Wkrótce (backend)",
     "delay": "Opóźnij",
     "dismiss": "Zamknij",
@@ -1947,7 +1947,7 @@
       "statusFailedGeneric": "Nie zapisano „{{title}}\" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie."
     },
     "title": "Moja Praca",
-    "home": "Home",
+    "home": "Strona główna",
     "manager": "Manager",
     "inbox": "Skrzynka",
     "focus": {
@@ -2065,7 +2065,7 @@
         "sparkField": "Pomysły i notatki",
         "decisionTemperature": "Temperatura decyzji",
         "teamSignal": "Sygnały zespołu",
-        "momentum": "Momentum"
+        "momentum": "Impet"
       },
       "blockHints": {
         "aiPulseCore": "Skrót pulsu: headline dnia, fokus i pulse score.",
@@ -2144,7 +2144,7 @@
           "execution_delivery": "Realizacja",
           "decision_alignment": "Decyzja",
           "finance_kpi": "Finanse / KPI",
-          "governance_compliance": "Governance",
+          "governance_compliance": "Nadzór",
           "external_change": "Zmiana zewnętrzna"
         },
         "timeWindow": {
@@ -2545,7 +2545,7 @@
       },
       "toolbarExtra": {
         "ariaLabel": "Pasek narzędzi tablicy",
-        "title": "Whiteboard",
+        "title": "Tablica",
         "create": "Utwórz",
         "insert": "Wstaw",
         "role": "Rola",
@@ -2655,7 +2655,7 @@
       "maturityActionable": "Do działania",
       "readyForAction": "Ta notatka wygląda na gotową do działania",
       "createInitiative": "Inicjatywa",
-      "createTask": "Task",
+      "createTask": "Zadanie",
       "createDecision": "Decyzja",
       "aiAsk": "AI: Zapytaj",
       "aiExpand": "AI: Rozwiń",
@@ -2769,7 +2769,7 @@
       "label23": "Osobiste",
       "label24": "Cała organizacja",
       "label25": "Wszystkie",
-      "label26": "Inbox",
+      "label26": "Skrzynka odbiorcza",
       "label27": "Aktywne",
       "title": "Wróć do listy notatników",
       "notebooks": "Notatniki",
@@ -2837,7 +2837,7 @@
       "label49": "Zaległe",
       "label50": "Pilne",
       "label51": "Decyzje (pending)",
-      "label52": "Inbox",
+      "label52": "Skrzynka odbiorcza",
       "noAlerts": "Brak alertów",
       "accessRestrictedAdminOr": "Brak dostępu. Wymagana rola Admin lub Manager.",
       "title3": "Szukaj",
@@ -5911,7 +5911,7 @@
       "exported": "Eksport",
       "comment": "Komentarz",
       "edit2": "Edycja",
-      "insight": "Insight",
+      "insight": "Wniosek",
       "readyForGovernedPublish": "Gotowe do governed publish",
       "operatorReviewNeeded": "Wymaga review operatora",
       "weakDecisionMaterial": "Słaby materiał decyzyjny",
@@ -7798,7 +7798,7 @@
       "editorTitle": "Edytor Raportu DRD"
     },
     "preview": {
-      "framework": "Framework",
+      "framework": "Metodyka",
       "status": "Status",
       "progress": "Postęp",
       "created": "Utworzono",
@@ -7816,8 +7816,8 @@
       "execBrief": "Brief zarządczy",
       "title": "Sesja assessmentu",
       "aiHints": "Podpowiedzi AI",
-      "frameworkLabel": "Framework",
-      "assessmentLabel": "Assessment",
+      "frameworkLabel": "Metodyka",
+      "assessmentLabel": "Ocena",
       "descriptionLabel": "Opis",
       "whatYouGet": "Co dostajesz",
       "startAssessment": "Rozpocznij assessment",
@@ -9537,7 +9537,7 @@
     "kpi": "KPI",
     "phase": "Faza",
     "baseline": "Baza",
-    "tracking": "Tracking",
+    "tracking": "Śledzenie",
     "noKpisDefinedYetClickNew": "Brak KPI. Kliknij \"+ Nowy\", aby dodać pierwszy KPI.",
     "linked": "z katalogu",
     "manual": "ręczne",
@@ -9656,7 +9656,7 @@
     "ideaWorkspace": "Workspace pomysłu",
     "assessment": "Ocena",
     "interviewInsight": "Insight z wywiadu",
-    "insight": "Insight",
+    "insight": "Wniosek",
     "auditReadout": "Readout audytu",
     "vendor": "Dostawca",
     "english2": "Polish",
@@ -9851,7 +9851,7 @@
     "kpi2": "KPI",
     "phase2": "Faza",
     "baseline2": "Baza",
-    "tracking2": "Tracking",
+    "tracking2": "Śledzenie",
     "noKpisDefinedYetClickNew2": "Brak KPI. Kliknij \"+ Nowy\", aby dodać pierwszy KPI.",
     "linked2": "z katalogu",
     "manual2": "ręczne",
@@ -10271,7 +10271,7 @@
       "auditReadout": "Readout audytu",
       "source": "Źródło",
       "interviewInsight": "Insight z wywiadu",
-      "insight": "Insight",
+      "insight": "Wniosek",
       "task": "Zadanie",
       "decision": "Decyzja",
       "notebook": "Notatnik",
@@ -10320,7 +10320,7 @@
         "compliance": "Compliance"
       },
       "aiCardsLabel": "Karty inicjatywy (propozycja AI)",
-      "owner": "Owner",
+      "owner": "Właściciel",
       "ownerPlaceholder": "Wybierz odpowiedzialnego…",
       "sponsor": "Sponsor",
       "sponsorPlaceholder": "Opcjonalnie…",
@@ -11214,7 +11214,7 @@
       "targetSuccessSuccessPlaceholder": "Kryterium sukcesu...",
       "targetSuccessDeliverablesTitle": "Produkty",
       "targetSuccessDeliverablesDesc": "Konkretne produkty i wyniki do dostarczenia",
-      "targetSuccessDeliverablesPlaceholder": "Deliverable...",
+      "targetSuccessDeliverablesPlaceholder": "Rezultat...",
       "untitledSource": "Źródło bez tytułu"
     },
     "suggestedChangesPanel": {
@@ -11884,7 +11884,7 @@
           "kind": "Typ",
           "record": "Sygnał / interwencja",
           "status": "Status",
-          "severity": "Severity",
+          "severity": "Waga",
           "owner": "Właściciel",
           "verification": "Weryfikacja",
           "metrics": {
@@ -12466,7 +12466,7 @@
       "championRole": {
         "sponsor": "Sponsor",
         "ambassador": "Ambasador",
-        "champion": "Champion"
+        "champion": "Lider zmiany"
       },
       "championStatus": {
         "active": "Aktywny",
@@ -13565,7 +13565,7 @@
       "watchVideo": "Obejrzyj wideo",
       "modules": {
         "welcome": "Witaj",
-        "dashboard": "Dashboard",
+        "dashboard": "Pulpit",
         "assessment": "Hub narzędzi",
         "initiatives": "Inicjatywy",
         "roadmap": "Roadmapa",
