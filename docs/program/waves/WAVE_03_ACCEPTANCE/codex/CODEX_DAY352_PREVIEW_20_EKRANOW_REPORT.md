@@ -115,3 +115,11 @@ $ git diff -- src/components/standard/StandardPreview.tsx
 - `finance-hub&tab=analysis` — **WYGLĄDA ŹLE**: PO-light pokazuje dwie sąsiadujące, identyczne karty „Powiązania / Brak powiązań”, które dublują komunikat i zajmują łącznie 214 px.
 
 Miejsce potrzebne treści zabiera `finance-hub&tab=analysis` (drugi, redundantny blok 107 px). Na pozostałych obejrzanych ekranach pojedynczy blok zajmuje 107 px, ale nie przykrywa ani nie usuwa treści; jest kosztem przewijania, nie utratą informacji. Ocena dotyczy hosta harnessu 1440×900, nie realnej trasy produkcyjnej.
+
+## R4 — STOP MERYTORYCZNY dla CaseWorkspace
+
+Rodzaj: **MERYTORYCZNY**. `grep -rn 'CasesListScreen\|RealizacjaView\|RezultatyView' dev-render/` zwrócił 0 trafień. Licencja B.1 pozwala dodać nowe wpisy i ekrany tylko wtedy, gdy montują realne komponenty produktu.
+
+Brakuje kompletnej fixture `CaseCoreView`, kontekstu routera i stubów Case API dla `CasesListScreen`; dla `RealizacjaView` i `RezultatyView` dodatkowo danych kroków, oczekiwań, propozycji, uruchomień, artefaktów, pomiarów i ich stanów async. Szacuję 2–4 godziny na trzy realne hosty wraz z kontrolą, że nie są replikami. Wpisy miałyby postać `case-workspace-list`, `case-workspace-realizacja`, `case-workspace-rezultaty`, każdy importujący komponent z `src/components/CaseWorkspace/` i korzystający ze wspólnej fixture Case.
+
+Co dostarczyłem zamiast zmiany: własny pomiar 7 użyć bez `relations`, klasyfikację `app`, listę wymaganych zależności i projekt trzech wpisów. Nie dosypałem `relations` do wołaczy. Pozostałe pozycje kontynuuję.
