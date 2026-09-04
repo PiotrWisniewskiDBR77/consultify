@@ -376,3 +376,7 @@ Właściciel: „podajesz terminy w dniach ludzkich, a nie AI-owych — dyżur C
 ## 10. Sprostowanie 03.09 23:30
 
 Trzeci redeploy stagingu POTWIERDZONY: run success, `/api/health` zwraca `gitSha 120bb2db81` (wszystkie nocne scalenia). Instrukcja 312 jest na kopii. Oba łańcuchy nocne (A, B) przeleciały na pusto z powodu wyścigu czasowego — do ponownego uruchomienia rano po `rm -f /private/tmp/cx-noc-*-postep.md`.
+
+## 11. Sprostowanie 04.09 05:50
+
+307 SCALONE po rozwiązaniu 2 konfliktów (bramka 288 zachowana, duplikat odrzucony) i z naprawą luki workload (obcy 404, mutacja czerwona); czwarty redeploy stagingu uruchomiony z HEAD po scaleniu. Instrukcja 313 (domknięcia 2: 35 wycieków, AppError, 8 tras 500) w przygotowaniu.
