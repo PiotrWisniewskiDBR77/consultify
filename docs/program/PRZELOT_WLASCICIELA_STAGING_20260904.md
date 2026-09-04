@@ -361,6 +361,11 @@ przelot to potwierdzenie na żywym stagingu.
 
 ### Stan oczekiwany — nie zgłaszaj
 
+- **W każdym podglądzie, we wszystkich 16 modułach, zobaczysz sekcję „Brak powiązań" — także
+  tam, gdzie nic z niczym nie jest powiązane.** To nie jest defekt: commit `58d391d65b` usunął
+  warunek, który tę sekcję ukrywał (`StandardPreview.tsx:353-368`), bo kanon podglądu wymaga
+  bloku Relations zawsze. Zgłoś tylko wtedy, gdy ta sekcja **zasłania treść** albo wygląda źle —
+  nie samo to, że jest pusta. Zrzuty dwudziestu takich ekranów są w robocie (dyżur 352).
 - Karta inicjatywy może nadal pokazywać 6 z 24 sekcji: pełne kontrakty są scalone, lecz
   `VITE_VF1_INITIATIVE_CARD_CONTRACT` i `VITE_VF1_INITIATIVE_SECTIONS_COMPLETE` są domyślnie
   OFF (`DEC-387`, `DEC-388`; `500ae7d68c`, `e25eb19b64`).

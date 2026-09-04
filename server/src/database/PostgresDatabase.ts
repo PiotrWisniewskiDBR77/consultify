@@ -1567,10 +1567,13 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
 export async function initDb(): Promise<void> {
   logger.info('[Postgres] Checking/Initializing Schema...');
 
-  const initLockClient = await getPool().connect();
-  await initLockClient.query(
-    `SELECT pg_advisory_lock(hashtext('consultify:postgres-schema-initialization'))`
-  );
+  // ★ 04.09: lock przejmujemy WEWNATRZ try i DOPIERO po testConnection().
+  // Wczesniej `getPool().connect()` i zapytanie o lock staly PRZED blokiem try, wiec:
+  //  (1) na zimnej bazie initDb rzucal natychmiast, omijajac bramke testConnection()
+  //      z jej trzema probami i backoffem — realny scenariusz startu na Railway;
+  //  (2) gdy rzucalo samo zapytanie o lock, `finally` jeszcze nie obowiazywal
+  //      i klient NIGDY nie byl zwalniany.
+  let initLockClient: PoolClient | undefined;
   try {
     // Test connection first
     const connected = await testConnection();
@@ -1578,6 +1581,11 @@ export async function initDb(): Promise<void> {
       logger.error('[Postgres] Cannot proceed with schema initialization - connection failed');
       return;
     }
+
+    initLockClient = await getPool().connect();
+    await initLockClient.query(
+      `SELECT pg_advisory_lock(hashtext('consultify:postgres-schema-initialization'))`
+    );
 
     // Helper function for queries
     const query = async (sql: string, params?: unknown[]): Promise<void> => {
@@ -3878,9 +3886,12 @@ export async function initDb(): Promise<void> {
     // Re-throw to ensure initialization failure is noticed
     throw err;
   } finally {
-    await initLockClient
-      .query(`SELECT pg_advisory_unlock(hashtext('consultify:postgres-schema-initialization'))`)
-      .finally(() => initLockClient.release());
+    if (initLockClient) {
+      const client = initLockClient;
+      await client
+        .query(`SELECT pg_advisory_unlock(hashtext('consultify:postgres-schema-initialization'))`)
+        .finally(() => client.release());
+    }
   }
 }
 
