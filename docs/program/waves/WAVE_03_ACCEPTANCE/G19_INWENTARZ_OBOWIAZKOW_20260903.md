@@ -124,6 +124,10 @@ Praktyczny wniosek: **nie ma sensu planować 16 osobnych regresji.** Uczciwy pla
 
 ### ZNALEZISKO G19-Z3 — na dziś dług jest już domknięty w kodzie, ale nie w dowodzie
 
+#### Aktualizacja dyżuru 335 — 2026-09-04
+
+Historyczny wynik `0 plików` pozostaje poniżej bez zmian, ale nie opisuje już bieżącego markera produktu. Na `HEAD=1c4b5a5635bafd38ef375227824ada9b62be186e` komenda wzorcowa `git diff --name-only fee24bddb0 HEAD -- src/components/standard src/components/shared src/components/ui src/index.css tailwind.config.js public/locales server/src/middleware server/src/routes` zwróciła **104 pliki**, w tym **89 bez testów**, **10 pod `src/`**, **77 serwerowych bez testów** i **2 słowniki**. `fee24bddb0..HEAD` obejmuje faktycznie **543 commity**. Dowód z `fee24bddb0` nie zachowuje ważności dla bieżącego `HEAD`; pełna lista i suma kontrolna: `evidence/g19/day335-dryf.md`.
+
 Zmierzone: `git diff --name-only fee24bddb0 HEAD -- <ścieżki współdzielone>` → **0 plików**.
 Marker pomiaru #3 (`fee24bddb0`, 03.09 17:35) zawiera zatem **wszystkie** zmiany współdzielone
 z tabeli wyżej. Marker poprzedniego pomiaru G06 (`35afcb15fd`, 03.09 14:51) ich **nie** zawiera —

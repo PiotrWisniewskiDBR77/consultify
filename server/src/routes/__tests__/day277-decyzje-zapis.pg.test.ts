@@ -93,6 +93,7 @@ describe('Day 277 decision enhancements through ApiGateway and PostgreSQL', { re
     linkedItems: [{ id: 'task-1', type: 'task', title: 'Zależność' }],
     contextDetails: 'Kontekst zapisany na serwerze',
     consequenceScenarios: { pessimistic: { d7: 'Opóźnienie' } },
+    escalation: null,
   };
 
   it('owner writes all five fields, SQL sees them, and detail reads them back', async () => {
