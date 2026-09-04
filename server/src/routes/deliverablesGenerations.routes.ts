@@ -60,6 +60,7 @@ import type {
   StartGenerationRequest,
 } from '../types/deliverablesGeneration.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -184,7 +185,7 @@ function handleServiceError(res: Response, err: unknown): void {
       invalid_state: 409,
       invalid_setup: 400,
     } as const;
-    res.status(httpByCode[err.code]).json({ success: false, error: err.message, code: err.code });
+    res.status(httpByCode[err.code]).json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   const message = err instanceof Error ? err.message : String(err);

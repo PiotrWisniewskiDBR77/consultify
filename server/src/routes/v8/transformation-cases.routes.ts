@@ -46,6 +46,7 @@ import {
 } from '../../types/transformationCase.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { queryOne } from '../../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -63,7 +64,7 @@ function errorResponse(error: unknown, res: Response): Response | null {
     });
   }
   if (error instanceof transformationCaseService.TransformationCaseOperationError) {
-    return res.status(error.httpStatus).json({ error: error.message, code: error.code });
+    return res.status(error.httpStatus).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
   }
   return null;
 }

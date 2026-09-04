@@ -34,6 +34,7 @@ import rateLimit from 'express-rate-limit';
 import { featureFlags } from '../config/FeatureFlags.js';
 import formIntakeService, { FormIntakeError } from '../services/tablePlatform/FormIntakeService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ function requireIntakeEnabled(req: Request, res: Response, next: NextFunction) {
 
 function mapServiceError(e: unknown, res: Response): boolean {
   if (e instanceof FormIntakeError) {
-    res.status(e.status).json({ error: e.message, code: e.code });
+    res.status(e.status).json({ ...mapAppErrorResponse(e, undefined, 'error'), code: e.code });
     return true;
   }
   return false;

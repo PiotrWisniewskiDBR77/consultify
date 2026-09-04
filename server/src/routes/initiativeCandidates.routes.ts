@@ -39,6 +39,7 @@ import {
   FlowTransformLineageError,
   type FlowSourceKind,
 } from '../services/flowTransform/flowTransformLineageService.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -77,7 +78,7 @@ router.post(
       res.status(result.created ? 201 : 200).json(result);
     } catch (error) {
       if (error instanceof FlowTransformLineageError)
-        return void res.status(error.status).json({ error: error.message, code: error.code });
+        return void res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })

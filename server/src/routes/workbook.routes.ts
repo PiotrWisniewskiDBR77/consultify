@@ -55,6 +55,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -1872,7 +1873,7 @@ router.post(
       if (error instanceof WorkbookCommandError) {
         res
           .status(error.statusCode)
-          .json({ error: error.message, code: error.code, ...error.details });
+          .json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code, ...error.details });
       } else {
         throw error;
       }
@@ -1936,7 +1937,7 @@ router.post(
     } catch (error) {
       if (error instanceof WorkbookCommandError) {
         res.status(error.statusCode).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
           ...(error.details || {}),
         });

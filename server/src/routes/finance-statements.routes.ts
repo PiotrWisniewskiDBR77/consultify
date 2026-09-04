@@ -161,6 +161,7 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -2444,7 +2445,7 @@ router.post(
       });
     } catch (error) {
       if (error instanceof StatementGovernanceError) {
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -2467,7 +2468,7 @@ router.get(
       return res.json({ receipt });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2494,7 +2495,7 @@ router.get(
       return res.download(objectPath, String(receipt.original_file_name));
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2532,7 +2533,7 @@ router.post(
       return res.json({ decision });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })
@@ -2729,7 +2730,7 @@ router.post(
         );
         return res.status(409).json({
           success: false,
-          error: e.message,
+          ...mapAppErrorResponse(e, undefined, 'error'),
           code: e.code,
           packId: e.packId,
           violations: e.violations,
@@ -3372,7 +3373,7 @@ router.get(
       const result = await computeRatios(String(req.params.id), orgId);
       res.json(result);
     } catch (e: any) {
-      return res.status(404).json({ error: e.message });
+      return res.status(404).json({ ...mapAppErrorResponse(e, undefined, 'error') });
     }
   })
 );

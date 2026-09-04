@@ -886,20 +886,20 @@ router.post(
     } catch (error) {
       if (error instanceof BaselineNotApprovedError) {
         return res.status(400).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: 'BASELINE_NOT_APPROVED',
         });
       }
       if (error instanceof BaselineVersionConflictError) {
         return res.status(409).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: 'BASELINE_VERSION_CONFLICT',
           serverVersion: error.serverVersion,
         });
       }
       if (error instanceof RealizationKeyConflictError) {
         return res.status(409).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: 'IDEMPOTENCY_KEY_REUSED',
         });
       }
@@ -1900,6 +1900,7 @@ import {
 } from '../../services/v8/managerAiService.js';
 import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
 import { getManagerProblems } from '../../services/v8/managerProblemsService.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const VALID_LANES = new Set([
   'action-queue',

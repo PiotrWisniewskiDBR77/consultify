@@ -136,6 +136,7 @@ import {
   RecordReviewedAttributionSchema,
   SupersedeInitiativeKpiImpactSchema,
 } from '../../validators/resultsVnextKpiPerspectives.validators.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 // ==========================================
 // SHARED HELPERS (same shape as kpi.routes.ts / kpiDeviation.routes.ts /
@@ -201,23 +202,23 @@ function handlePerspectivesRouteError(res: Response, err: unknown, op: string): 
     // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
     logger.warn(`[resultsVnext/kpiPerspectives.routes] ${op} denied`, { capability: err.details.capability });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof InitiativeKpiImpactSelfApprovalDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) });
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: 'NOT_FOUND' });
     return;
   }
   if (err instanceof KpiInitiativeImpactValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   logger.error(`[resultsVnext/kpiPerspectives.routes] ${op} failed`, {

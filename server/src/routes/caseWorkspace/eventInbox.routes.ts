@@ -128,6 +128,7 @@ import { AppError } from '../../utils/ErrorHandler.js';
 import * as eventInboxService from '../../services/caseWorkspace/eventInboxService.js';
 import { classifyDomainCode } from './_shared/errors.js';
 import { parseBody, parseParams } from './_shared/validate.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -301,7 +302,7 @@ function respondForResult(res: Response, result: eventInboxService.ReceiveExtern
  */
 function respondForThrown(res: Response, err: unknown): void {
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: { code: err.code, message: err.message, details: err.details } });
+    res.status(err.statusCode).json({ error: { code: err.code, ...mapAppErrorResponse(err, undefined, 'message'), details: err.details } });
     return;
   }
   if (err instanceof Error && /^[a-z][a-z0-9_]*(:.*)?$/.test(err.message)) {

@@ -36,6 +36,7 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -1440,7 +1441,7 @@ router.post(
       }
     } catch (error) {
       if (error instanceof publishReviewService.PublishReviewError) {
-        return res.status(409).json({ error: error.message, code: error.code });
+        return res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }

@@ -32,6 +32,7 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -2660,7 +2661,7 @@ router.post(
       return res.status(201).json(attachment);
     } catch (e: any) {
       if (e?.code === 'VALIDATION_ERROR') {
-        return res.status(400).json({ error: e.message });
+        return res.status(400).json({ ...mapAppErrorResponse(e, undefined, 'error') });
       }
       logger.error('[TablePlatform] upload attachment failed', { error: (e as Error).message });
       return res.status(500).json({ error: 'Upload attachment failed' });
@@ -3038,10 +3039,10 @@ router.post('/automations/:automationId/run-now', async (req: Request, res: Resp
     return res.status(200).json(result);
   } catch (err: any) {
     if (err?.message === 'Automation not found') {
-      return res.status(404).json({ error: err.message });
+      return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
     }
     if (err?.message === 'Automation is not a scheduled type') {
-      return res.status(400).json({ error: err.message });
+      return res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error') });
     }
     handleRouteError(err, res, 'runNow');
   }
@@ -3903,10 +3904,10 @@ router.post(
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'INVALID_LIFECYCLE_TRANSITION') {
-        return res.status(409).json({ error: (err as Error).message, code });
+        return res.status(409).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
       }
       if (code === 'TEMPLATE_NOT_FOUND') {
-        return res.status(404).json({ error: (err as Error).message, code });
+        return res.status(404).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
       }
       handleRouteError(err, res, 'approveTemplate');
     }
@@ -3932,10 +3933,10 @@ router.post(
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'INVALID_LIFECYCLE_TRANSITION') {
-        return res.status(409).json({ error: (err as Error).message, code });
+        return res.status(409).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
       }
       if (code === 'TEMPLATE_NOT_FOUND') {
-        return res.status(404).json({ error: (err as Error).message, code });
+        return res.status(404).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
       }
       handleRouteError(err, res, 'deprecateTemplate');
     }

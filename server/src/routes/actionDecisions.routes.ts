@@ -12,6 +12,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 // Apply rate limiting
 const router = Router();
@@ -648,7 +649,7 @@ router.patch(
       return res.json(result);
     } catch (err: any) {
       if (err instanceof Error && err.message === 'Rule not found') {
-        return res.status(404).json({ error: err.message });
+        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
       }
       logger.error('[PolicyToggleRoute] Error:', err);
       return res.status(500).json({

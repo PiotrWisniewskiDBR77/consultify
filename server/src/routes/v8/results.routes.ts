@@ -153,13 +153,13 @@ function mapRecoveryServiceError(err: unknown, res: Response): boolean {
     CONFLICT: 409,
   };
   const status = statusByCode[err.code] || 500;
-  res.status(status).json({ error: err.message, code: `RESULTS_RECOVERY_${err.code}` });
+  res.status(status).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: `RESULTS_RECOVERY_${err.code}` });
   return true;
 }
 
 function mapRecoveryExperimentError(err: unknown, res: Response): boolean {
   if (!(err instanceof RecoveryExperimentError)) return false;
-  res.status(err.status).json({ error: err.message, code: err.code });
+  res.status(err.status).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
   return true;
 }
 
@@ -501,7 +501,7 @@ router.post(
       await addKpiToScorecard(organizationId, scorecardId, kpiId, sortOrder);
     } catch (err) {
       if (err instanceof ScorecardKpiNotFoundError) {
-        return res.status(404).json({ error: err.message, code: 'SCORECARD_KPI_NOT_FOUND' });
+        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: 'SCORECARD_KPI_NOT_FOUND' });
       }
       throw err;
     }
@@ -2978,7 +2978,7 @@ router.post(
       });
     } catch (error) {
       if (error instanceof ResultsKpiReportSnapshotError) {
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -3252,6 +3252,7 @@ import {
   P04_ACCEPTANCE_CHECKLIST,
   P04_KPI_WORKFLOW_CONTRACT,
 } from '../../services/v8/kpiWorkflowCanon.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const p04Meta = () => ({ version: 'v8' as const, contract: P04_KPI_WORKFLOW_CONTRACT });
 

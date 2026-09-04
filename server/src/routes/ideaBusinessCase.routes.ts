@@ -63,6 +63,7 @@ import { GovernedSnapshotBindingError } from '../services/organizationContext/go
 import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import { getDatabase } from '../database/Database.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -201,10 +202,10 @@ const DecisionBodySchema = z.object({
 function respondToHandoffError(res: Response, error: unknown): boolean {
   if (error instanceof IdeaHandoffError) {
     if (error.code === 'IDEA_NOT_FOUND' || error.code === 'PROPOSAL_NOT_FOUND') {
-      res.status(404).json({ error: error.message, code: error.code });
+      res.status(404).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       return true;
     }
-    res.status(400).json({ error: error.message, code: error.code });
+    res.status(400).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
     return true;
   }
   if (error instanceof HandoffSpineError) {
@@ -217,7 +218,7 @@ function respondToHandoffError(res: Response, error: unknown): boolean {
     };
     res
       .status(statusByCode[error.code] ?? 500)
-      .json({ error: error.message, code: error.code });
+      .json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
     return true;
   }
   return false;
@@ -299,7 +300,7 @@ router.post(
       res.status(result.replayed ? 200 : 201).json(result);
     } catch (error) {
       if (error instanceof GovernedSnapshotBindingError) {
-        res.status(error.httpStatus).json({ error: error.message, code: error.code });
+        res.status(error.httpStatus).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
         return;
       }
       if (respondToHandoffError(res, error)) return;

@@ -12,6 +12,7 @@ import {
 } from '../../services/objectAttachmentService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireTables, requireUser } from './_helpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 const upload = multer({
@@ -21,7 +22,7 @@ const upload = multer({
 
 function sendError(res: Response, error: unknown): void {
   if (error instanceof ObjectAttachmentError) {
-    res.status(error.status).json({ error: error.message, code: error.code });
+    res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
     return;
   }
   throw error;

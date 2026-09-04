@@ -38,6 +38,7 @@ import tableQaService, {
   TableQaError,
 } from '../services/tablePlatform/TableQaService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -72,7 +73,7 @@ function asString(v: unknown): string | null {
 
 function mapServiceError(e: unknown, res: Response): boolean {
   if (e instanceof TableQaError) {
-    res.status(e.status).json({ error: e.message, code: e.code });
+    res.status(e.status).json({ ...mapAppErrorResponse(e, undefined, 'error'), code: e.code });
     return true;
   }
   return false;

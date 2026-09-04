@@ -13,6 +13,7 @@ import {
 } from '../services/facilitationPhaseMachine.js';
 import { realtimePlatformService } from '../services/realtimePlatformService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 router.use(verifyToken);
@@ -706,11 +707,11 @@ router.put(
       );
     } catch (error) {
       if (error instanceof UnknownPhaseError) {
-        res.status(400).json({ error: error.message, code: error.code });
+        res.status(400).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
         return;
       }
       if (error instanceof InvalidPhaseTransitionError) {
-        res.status(409).json({ error: error.message, code: error.code });
+        res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
         return;
       }
       if (isRealtimeSubstrateUnavailableError(error)) {

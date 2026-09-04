@@ -230,6 +230,7 @@ import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -344,7 +345,7 @@ router.get(
       return res.json({ data: await readCanonicalFinanceSettings(organizationId) });
     } catch (error) {
       if (error instanceof FinanceSettingsCommandError) {
-        return res.status(error.status).json({ code: error.code, error: error.message });
+        return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       }
       throw error;
     }
@@ -369,7 +370,7 @@ router.put(
       if (error instanceof FinanceSettingsCommandError) {
         return res.status(error.status).json({
           code: error.code,
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           ...(error.details || {}),
         });
       }
@@ -402,7 +403,7 @@ router.post(
       if (error instanceof DigitizationAnalysisArchiveError) {
         return res.status(error.status).json({
           code: error.code,
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           ...(error.details || {}),
         });
       }
@@ -434,7 +435,7 @@ router.post(
       if (error instanceof DigitizationAnalysisDuplicateError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -455,7 +456,7 @@ router.post(
       return res.status(result.replay ? 200 : 201).json({ data: result });
     } catch (error) {
       if (error instanceof DigitizationAnalysisRegistrationError) {
-        return res.status(error.status).json({ code: error.code, error: error.message });
+        return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       }
       throw error;
     }
@@ -480,7 +481,7 @@ router.put(
       if (error instanceof DigitizationAnalysisUpdateError) {
         return res.status(error.status).json({
           code: error.code,
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           ...(error.details || {}),
         });
       }
@@ -513,7 +514,7 @@ router.post(
       if (error instanceof DigitizationAnalysisInitiativeLinkError) {
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       }
       throw error;
     }
@@ -538,7 +539,7 @@ router.put(
       if (error instanceof DigitizationAnalysisFinancialsError) {
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       }
       throw error;
     }
@@ -574,7 +575,7 @@ router.post(
       if (error instanceof DigitizationAnalysisScenarioCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -603,7 +604,7 @@ router.post(
       if (error instanceof DigitizationAnalysisScenarioCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -640,7 +641,7 @@ router.put(
       if (error instanceof DigitizationAnalysisPlannedBenefitError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -1820,7 +1821,7 @@ router.post(
       if (error instanceof BudgetDocumentImportCommandError) {
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       }
       throw error;
     } finally {
@@ -1858,7 +1859,7 @@ router.post(
       if (error instanceof BudgetInitiativeLinkCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -1893,7 +1894,7 @@ router.delete(
       if (error instanceof BudgetInitiativeUnlinkCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -1975,7 +1976,7 @@ router.post(
       return res.status(result.replay ? 200 : 201).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetRegistrationError) {
-        return res.status(error.status).json({ code: error.code, error: error.message });
+        return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error') });
       }
       throw error;
     }
@@ -2032,7 +2033,7 @@ router.put(
       if (error instanceof BudgetLineCommandError) {
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       }
       throw error;
     }
@@ -2066,7 +2067,7 @@ router.post(
       if (error instanceof BudgetProjectionCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -2106,7 +2107,7 @@ router.put(
       if (error instanceof BudgetProjectionCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -2138,7 +2139,7 @@ router.post(
       if (error instanceof BudgetApprovalCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -2169,7 +2170,7 @@ router.delete(
       if (error instanceof BudgetDiscardCommandError)
         return res
           .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+          .json({ code: error.code, ...mapAppErrorResponse(error, undefined, 'error'), ...(error.details || {}) });
       throw error;
     }
   })
@@ -2233,7 +2234,7 @@ router.delete(
       if (error instanceof StatementPackArchiveCommandError)
         return res.status(error.status).json({
           code: error.code,
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           ...(error.details || {}),
         });
       throw error;
@@ -3540,7 +3541,7 @@ router.post(
       });
     } catch (error) {
       if (error instanceof StatementGovernanceError) {
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -3577,7 +3578,7 @@ router.get(
       return res.json({ data: { receipt }, meta: financeMeta() });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })
@@ -3634,7 +3635,7 @@ router.post(
       return res.json({ data: { decision }, meta: financeMeta() });
     } catch (error) {
       if (error instanceof StatementGovernanceError)
-        return res.status(error.status).json({ error: error.message, code: error.code });
+        return res.status(error.status).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       throw error;
     }
   })
