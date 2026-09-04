@@ -1,8 +1,11 @@
 # CODEX — dyżur 318 — testy puste
 
-Data pomiaru: 2026-09-04  
-Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`  
-Gałąź: `codex/day318-testy-puste-20260904`  
+Data pomiaru: 2026-09-04
+
+Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`
+
+Gałąź: `codex/day318-testy-puste-20260904`
+
 Worktree: `/private/tmp/cx-day318-testy-puste`
 
 ## Wynik
@@ -111,4 +114,3 @@ b5669c40755965ddc075353200a7f507932f10ccc7d9ac0fce2edd06eec9ca4b  przed.json
 - Testy jednostkowe i repliki Express nie dowodzą produkcyjnej ścieżki ApiGateway/JWT/Postgres.
 - Nie mierzono CI, Railway, demo, stagingu ani produkcji.
 - Nie dowodzono działania całego korpusu testów; uruchomiono wyłącznie pakiety i przypadki wymagane do tego dyżuru.
-
