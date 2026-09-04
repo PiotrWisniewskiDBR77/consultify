@@ -886,20 +886,20 @@ router.post(
     } catch (error) {
       if (error instanceof BaselineNotApprovedError) {
         return res.status(400).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'BASELINE_NOT_APPROVED',
         });
       }
       if (error instanceof BaselineVersionConflictError) {
         return res.status(409).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'BASELINE_VERSION_CONFLICT',
           serverVersion: error.serverVersion,
         });
       }
       if (error instanceof RealizationKeyConflictError) {
         return res.status(409).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: 'IDEMPOTENCY_KEY_REUSED',
         });
       }

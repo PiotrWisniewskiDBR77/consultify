@@ -389,7 +389,7 @@ router.get('/search', async (req: Request, res: Response) => {
       })),
     });
   } catch (e) {
-    res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+    res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -440,7 +440,7 @@ router.post(
       const result = await OrgMemberSyncService.syncOrgMembersToBase(baseId, orgId);
       res.json({ success: true, ...result });
     } catch (e) {
-      res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -966,7 +966,7 @@ router.post(
       logger.error('[TablePlatform] validate-formula failed', { error: (e as Error).message });
       return res
         .status(500)
-        .json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        .json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1574,7 +1574,7 @@ router.post(
       return res.status(200).json(result);
     } catch (e) {
       logger.error('[TablePlatform] import CSV failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1598,7 +1598,7 @@ router.post('/bases/:baseId/import/csv', requireBaseAccess, async (req: Request,
     return res.status(201).json(result);
   } catch (e) {
     logger.error('[TablePlatform] import CSV as new table failed', { error: (e as Error).message });
-    return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -1631,7 +1631,7 @@ router.post(
       return res.status(201).json(result);
     } catch (e) {
       logger.error('[TablePlatform] import Google Sheet failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1671,7 +1671,7 @@ router.post(
       return res.status(200).json(result);
     } catch (e) {
       logger.error('[TablePlatform] import XLSX failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1709,7 +1709,7 @@ router.post(
       logger.error('[TablePlatform] import XLSX as new table failed', {
         error: (e as Error).message,
       });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1788,7 +1788,7 @@ router.post(
       logger.error('[TablePlatform] schema/propose failed', { error: (e as Error).message });
       return res
         .status(500)
-        .json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        .json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1812,7 +1812,7 @@ router.post(
       return res.status(200).json(result);
     } catch (e) {
       logger.error('[TablePlatform] schema/execute failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1831,7 +1831,7 @@ router.post(
       return res.status(204).send();
     } catch (e) {
       logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1854,7 +1854,7 @@ router.post(
       return res.status(201).json(proposal);
     } catch (e) {
       logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1879,7 +1879,7 @@ router.post(
       return res.status(200).json({ success: true, message: `Proposal ${proposalId} undone` });
     } catch (e) {
       logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1904,7 +1904,7 @@ router.post(
       return res.status(200).json({ success: true, message: `Proposal ${proposalId} redone` });
     } catch (e) {
       logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1921,7 +1921,7 @@ router.get(
       return res.status(200).json(history);
     } catch (e) {
       logger.error('[TablePlatform] schema-history failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1939,7 +1939,7 @@ router.get(
       return res.status(200).json(proposal);
     } catch (e) {
       logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -1957,7 +1957,7 @@ router.get(
       return res.status(200).json(proposals);
     } catch (e) {
       logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2071,7 +2071,7 @@ router.post(
           await RecordsService.deleteRecord(id, authReq.userId);
           results.push({ id, deleted: true });
         } catch (e) {
-          results.push({ id, deleted: false, ...mapAppErrorResponse(e, undefined, 'error') });
+          results.push({ id, deleted: false, ...mapAppErrorResponse(e, req, 'error') });
         }
       }
 
@@ -2109,7 +2109,7 @@ router.post(
           await RecordsService.updateRecord(recordId, data, authReq.userId);
           results.push({ id: recordId, updated: true });
         } catch (e) {
-          results.push({ id: recordId, updated: false, ...mapAppErrorResponse(e, undefined, 'error') });
+          results.push({ id: recordId, updated: false, ...mapAppErrorResponse(e, req, 'error') });
         }
       }
 
@@ -2203,7 +2203,7 @@ router.get(
       }
       logger.error('[TablePlatform] CSV export failed', { error: (e as Error).message });
       if (!res.headersSent) {
-        res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
       }
     }
   }
@@ -2321,7 +2321,7 @@ router.get(
       }
       logger.error('[TablePlatform] XLSX export failed', { error: (e as Error).message });
       if (!res.headersSent) {
-        res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
       }
     }
   }
@@ -2368,7 +2368,7 @@ router.post(
       });
       return res
         .status(500)
-        .json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        .json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2487,7 +2487,7 @@ router.post('/migrate/workspace', async (req: Request, res: Response) => {
     return res.status(201).json(result);
   } catch (e) {
     logger.error('[TablePlatform] migration failed', { error: (e as Error).message });
-    return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -2542,7 +2542,7 @@ router.post(
       return res.status(201).json({ linked: toRecordIds.length });
     } catch (e) {
       logger.error('[TablePlatform] link records failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2564,7 +2564,7 @@ router.delete(
       return res.status(200).json({ unlinked: toRecordIds.length });
     } catch (e) {
       logger.error('[TablePlatform] unlink records failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2581,7 +2581,7 @@ router.get(
       return res.status(200).json({ records: linked });
     } catch (e) {
       logger.error('[TablePlatform] get linked records failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2605,7 +2605,7 @@ router.get(
       return res.status(200).json(expanded);
     } catch (e) {
       logger.error('[TablePlatform] expand record failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
     }
   }
 );
@@ -2624,7 +2624,7 @@ router.post('/records/display-names', async (req: Request, res: Response) => {
     return res.status(200).json(displayNames);
   } catch (e) {
     logger.error('[TablePlatform] display names failed', { error: (e as Error).message });
-    return res.status(500).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+    return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
   }
 });
 
@@ -2661,7 +2661,7 @@ router.post(
       return res.status(201).json(attachment);
     } catch (e: any) {
       if (e?.code === 'VALIDATION_ERROR') {
-        return res.status(400).json({ ...mapAppErrorResponse(e, undefined, 'error') });
+        return res.status(400).json({ ...mapAppErrorResponse(e, req, 'error') });
       }
       logger.error('[TablePlatform] upload attachment failed', { error: (e as Error).message });
       return res.status(500).json({ error: 'Upload attachment failed' });
@@ -3039,10 +3039,10 @@ router.post('/automations/:automationId/run-now', async (req: Request, res: Resp
     return res.status(200).json(result);
   } catch (err: any) {
     if (err?.message === 'Automation not found') {
-      return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+      return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error') });
     }
     if (err?.message === 'Automation is not a scheduled type') {
-      return res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+      return res.status(400).json({ ...mapAppErrorResponse(err, req, 'error') });
     }
     handleRouteError(err, res, 'runNow');
   }
@@ -3904,10 +3904,10 @@ router.post(
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'INVALID_LIFECYCLE_TRANSITION') {
-        return res.status(409).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
+        return res.status(409).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
       }
       if (code === 'TEMPLATE_NOT_FOUND') {
-        return res.status(404).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
+        return res.status(404).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
       }
       handleRouteError(err, res, 'approveTemplate');
     }
@@ -3933,10 +3933,10 @@ router.post(
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'INVALID_LIFECYCLE_TRANSITION') {
-        return res.status(409).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
+        return res.status(409).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
       }
       if (code === 'TEMPLATE_NOT_FOUND') {
-        return res.status(404).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
+        return res.status(404).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
       }
       handleRouteError(err, res, 'deprecateTemplate');
     }

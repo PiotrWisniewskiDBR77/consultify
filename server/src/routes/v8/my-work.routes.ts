@@ -2139,7 +2139,7 @@ router.post(
     } catch (error) {
       if (error instanceof NotebookConversionError) {
         return res.status(error.status).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: error.code,
         });
       }

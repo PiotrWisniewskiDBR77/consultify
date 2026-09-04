@@ -509,7 +509,7 @@ router.post(
         error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
       ) {
         return res.status(429).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: error.code,
           data: {
             document: error.document || null,
@@ -2172,7 +2172,7 @@ router.delete(
       // odmawiać tak samo, inaczej guard da się obejść wyborem endpointu.
       if (error instanceof interviewInsightService.InsightReferencedError) {
         return res.status(error.status).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: error.code,
           referencingCount: error.referencingCount,
         });

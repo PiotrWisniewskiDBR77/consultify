@@ -716,7 +716,7 @@ router.post(
       res.status(data.replayed ? 200 : 201).json({ data, meta: { version: 'v8' } });
     } catch (err) {
       if (err instanceof GovernedSnapshotBindingError) {
-        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
         return;
       }
       handleChatHandoffError(err, res);
@@ -969,7 +969,7 @@ router.post(
       res.status(200).json({ data, meta: { version: 'v8', commandSchemaVersion: 'v1' } });
     } catch (err) {
       if (err instanceof ChatTargetMappingError) {
-        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
+        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, req, 'error'), code: err.code });
         return;
       }
       throw err;

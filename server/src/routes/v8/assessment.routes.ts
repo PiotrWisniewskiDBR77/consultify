@@ -974,7 +974,7 @@ router.post(
         code === 'EVIDENCE_TYPE_INVALID' ||
         code === 'EVIDENCE_TITLE_REQUIRED'
       ) {
-        return res.status(400).json({ ...mapAppErrorResponse((err as Error), undefined, 'error'), code });
+        return res.status(400).json({ ...mapAppErrorResponse((err as Error), req, 'error'), code });
       }
       throw err;
     }
@@ -1092,7 +1092,7 @@ router.post(
     } catch (err) {
       if (err instanceof QualityReviewError) {
         return res.status(err.status).json({
-          ...mapAppErrorResponse(err, undefined, 'error'),
+          ...mapAppErrorResponse(err, req, 'error'),
           code: err.code,
           ...(err.details ? { details: err.details } : {}),
         });
@@ -1258,7 +1258,7 @@ router.post(
     } catch (err) {
       if (err instanceof CandidateHandoffError) {
         return res.status(err.status).json({
-          ...mapAppErrorResponse(err, undefined, 'error'),
+          ...mapAppErrorResponse(err, req, 'error'),
           code: err.code,
           ...(err.details ? { details: err.details } : {}),
         });
