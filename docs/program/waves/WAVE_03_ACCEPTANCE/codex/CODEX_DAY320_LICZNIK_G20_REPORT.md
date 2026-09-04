@@ -2,7 +2,7 @@
 
 Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`  
 Gałąź: `codex/day320-licznik-g20-20260904`  
-Stan: **W TOKU — R1 zmierzony; R2–R7 jeszcze nie są dowodem**
+Stan: **GOTOWE OD STRONY NARZĘDZIA / G20 NADAL BLOKUJE (17 pozycji)**
 
 ## Start z vaulta
 
@@ -246,6 +246,45 @@ Nowy test `R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a 
 
 Oryginalny akapit pozostał. Bezpośrednio pod nim dopisano datowane sprostowanie z komendą: spośród sześciu wymienionych pozycji blokują `INT-INIT-AI-OBS-001` i `INI-OWN-001`; cztery `MYW-PHOTO-*` mają `ODLOZONE_DEC`/`ZAMKNIETE_DEC` z jawną rodziną i decyzją. Jest to korekta prozy, nie dowód runtime.
 
+## R7 — pomiar końcowy i zakres
+
+Pełny pakiet po zmianach: 9 testów, 9 pass, 0 fail, kod 0. Porównanie pełnych nazw zostało oczyszczone wyłącznie ze zmiennego sufiksu czasu reportera. Żadna nazwa nie zniknęła; dodano dokładnie cztery:
+
+```diff
+ ✔ mutacja: pozycja bez werdyktu ląduje w BLOKUJE
++✔ bramka: kod wyjścia wynika z rzeczywistej liczby BLOKUJE, a tryb informacyjny nie czerwieni
++✔ nagłówek: marker i data z argumentów zmieniają metadane, nie tabelę werdyktów
++✔ dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez decyzji blokuje
++✔ R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje
+```
+
+Artefakty nazw: `przed-nazwy.txt` SHA-256 `08e117ab854d948f24c1ffa4717e3b225e6d8f2c0e7c7e98c6cca5d0fbdd4acf`; `po-nazwy.txt` SHA-256 `cbcc852a2261ce924162c248ca6fc1daacf6f2c20bdc3c1a33c46cd85e4a2804`; `nazwy-przed-po.diff` SHA-256 `2f0345c6eac851e718c8b7156405721cd686ec67ebe6eed4a3b99de00fc4f33a`; pełny końcowy przebieg `r7-po-testy-spec.txt` SHA-256 `708fa9fbd2f9b92dd394b4f7afff82fca8cfeec1d8101c377d9fa493308a6ed0`.
+
+Końcowa komenda CI pozostaje zamierzenie czerwona:
+
+```text
+npm run check:p0p1-e1
+BLOKUJE: 17. Rejestr: /private/tmp/cx-day320-licznik-g20/docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_P0P1_BLOKUJACE_G20.md
+finalna bramka kod = 1
+```
+
+`r7-gate-err.txt` SHA-256 `dd19211b7e50bf8b3cde71af3ae289c37d8acbca5b46927c219f684951442238`. `node --check scripts/dev/p0p1-licznik-e1.mjs` i parsowanie `package.json` zakończyły się kodem 0. `git diff --check` jest pusty.
+
+Lista plików zmienionych względem markera:
+
+```text
+.github/workflows/test-suite.yml
+docs/program/REJESTR_ZNALEZISK_20260903.md
+docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_P0P1_BLOKUJACE_G20.md
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY301_LICZNIK_P0P1_E1_REPORT.md
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY320_LICZNIK_G20_REPORT.md
+package.json
+scripts/dev/__tests__/p0p1-licznik-e1.test.mjs
+scripts/dev/p0p1-licznik-e1.mjs
+```
+
+Kontrola zakazanych ścieżek (`src/`, `server/src/`, pięć wejść, `MODULE_ACCEPTANCE.md`) zwróciła zero. Porty 5476/6336 nadal nie mają listenera; liczba kontenerów `cx-day320` wynosi 0.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -253,7 +292,7 @@ Oryginalny akapit pozostał. Bezpośrednio pod nim dopisano datowane sprostowani
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R7 (końcowy pomiar nazw, pełny diff i domknięcie raportu) nie został jeszcze wykonany.
-- Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
-- Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
-- Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.
+- Nie uruchomiono prawdziwego GitHub Actions: Z39 tego zabrania, a filtr `push.branches` nie obejmuje gałęzi dyżuru. Dowód wołacza to statyczny workflow plus lokalny przebieg identycznej komendy.
+- Nie potwierdzono, że 17 blokad to wszystkie defekty produktu; jest to kompletny wynik mianownika 121 obiektów z pięciu wskazanych źródeł według jawnej reguły E1.
+- Nie wykonano UI, HTTP, ApiGateway, JWT, PostgreSQL ani odbioru właściciela; nie są dowodem dla czysto plikowej bramki i nie leżały w zakresie dyżuru.
+- Cztery pozycje (`EXE-OWN-001`, `FIN-OWN-001`, `MYW-CV-REC-002`, `RES-OWN-004`) nadal nie mają jednoznacznego SHA naprawy i pozostają `NIEROZSTRZYGNIETE`.

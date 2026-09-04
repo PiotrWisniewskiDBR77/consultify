@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `02f80c1014562ccbfc4f47a492383c2cdeb9e7ba`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 02f80c1014562ccbfc4f47a492383c2cdeb9e7ba --snapshot-date 2026-09-04`
+Marker: `5b1aab2bb44c540c5cfe7b2fc81b91e80836fd2b`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 5b1aab2bb44c540c5cfe7b2fc81b91e80836fd2b --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
 
