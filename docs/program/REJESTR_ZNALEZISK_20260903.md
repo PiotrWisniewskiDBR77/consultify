@@ -361,3 +361,6 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 ## AB. Dyżur 361 — etykieta oczu właściciela wyprzedziła dowód
 
 Pomiar dziewięciu wierszy kubełka C wykazał: wspólny dowód jest hurtowy w 9/9, lecz diagnozy są indywidualne; triaż daje osiem braków scenariusza, jeden brak realnego łańcucha (`03_TOOLS`) i zero pozycji, dla których udowodniono, że brakuje wyłącznie oczu właściciela. Macierz pozostaje bez zmian. Pakiet obserwacyjny G19 powstał, ale nie jest dowodem. Ślad: `evidence/g19/day361/r1-etykieta.md`, `r2-triaz.md`, `docs/program/PRZELOT_WLASCICIELA_G19_20260904.md`.
+## AC. Dyżur 360 — G19 kubełek A: pięć izolacji, dwa błędne założenia kubełka
+
+Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, podłoga 16) i podniósł pięć z siedmiu wierszy kubełka A do `IZOLACJA_UDOWODNIONA / MIANOWNIK_OTWARTY`: 01, 04, 05, 08, 13. Wiersze 06 i 11 pozostały `NOT_PROVEN`: runtime Execution nie ma mountu w realnym ApiGateway, a Materials nie ma wymaganej pary decka. Żaden wiersz nie dostał `PASS`; rozjazd mianownika 28/30/49 vs 106 pozostaje pytaniem właścicielskim. Ślad: `CODEX_DAY360_G19_KUBELEK_A_REPORT.md` i `evidence/g19/day360/`.
