@@ -102,3 +102,15 @@ Nie zmierzono: zachowania produkcyjnej trasy HTML przy rzeczywiście skonfigurow
 ## Dyżur 346 — sprostowanie przyrządu porównawczego
 
 Proza w `03-silnik-298.pdf`, w tym dane „TechProd Manufacturing”, nie pochodzi z `buildAcceptedDrdReportModel`; podał ją skrypt `scripts/dev/day339-porownanie-silnikow.mjs`, importując statyczny prototyp `scripts/prototypes/raport-oceny-tresc.mjs` i łącząc go z liczbami sesji. Przyrząd ma teraz opcjonalne, jawne parametry katalogów wyjściowych oraz etykietę hybrydy na pierwszej stronie; produkcyjnego wołacza silnika 298 nie dodano.
+
+### R4 — powtórzenie na pełnej sesji 39/39
+
+Sesja `3c016470-a5f9-449d-9e99-822eaede71de` została utworzona przez realny `ApiGateway`, podpisany JWT i 39 żądań `ANSWER_CONFIRMED`, a następnie zimny odczyt z lokalnego PostgreSQL `cx346` potwierdził 39 zdarzeń. Wszystkie trzy silniki dostały liczby wyprowadzone z tej samej sesji.
+
+| Silnik | Strony | Jawne braki / nieodpowiedziane obszary | Kompletność | Czas do PDF | Zgodność stron z prototypem 21 stron |
+| --- | ---: | --- | ---: | ---: | ---: |
+| MethodSession DOCX | 18 | 39 dosłownych komunikatów `nie oceniono — brak danych źródłowych` | n/d | 6985,56 ms | 18/21 |
+| HTML | 9 | 0 obszarów z `actual=0`; jeden legendowy wyraz „brak” | 100%, 39/39, „Wysoka” | 3485,78 ms | 9/21 |
+| Model 298 | 21 | 0 braków zależnych od sesji; nadal statyczna proza prototypu, teraz jawnie oznaczona | n/d | 3974,15 ms | 21/21 |
+
+Po dosypaniu danych zniknęła wyłącznie kara silnika HTML za 32 nieodpowiedziane obszary: model ma teraz 39 dodatnich wyników. Nie zniknęły różnice strukturalne 18/9/21 stron ani hybrydowość modelu 298. Co ważniejsze, 39 komunikatów braku w DOCX pozostało także przy 39 odpowiedziach; to dowód, że sam kontrakt MethodSession nie mapuje tych zdarzeń do pól raportu i nie wolno przypisywać całych 148 braków wyłącznie rzadkości danych.
