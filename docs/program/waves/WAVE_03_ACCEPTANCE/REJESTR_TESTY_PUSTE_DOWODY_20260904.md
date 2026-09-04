@@ -151,3 +151,20 @@ pozostaje briefem dla dyżuru 331.
 
 Pozostałe realne defekty R1 nie są tu oznaczone jako naprawione. `InboxTriage` jest poza
 licencją zapisu B.4.3; pięć pozostałych wymaga osobnych adaptacji kontraktów i mutacji.
+
+### R3 — ponowny pomiar ośmiu NOT_PROVEN
+
+| ID | Wynik własny dyżuru 332 | Klasa |
+|---|---|---|
+| E0001 | 13 przypadków: 11 PASS, dwa baseline FAIL przez `querySelector` na `null`, w tym badany przypadek linii 120. Brak zielonego kierunku, więc mutacja byłaby nierozstrzygająca. | **NOT_PROVEN** |
+| E0003 | Właściwy przebieg z cwd `server/`: 25/25 FAIL, `TypeError: argument handler must be a function`; badany test nie ma zielonego baseline. | **NOT_PROVEN** |
+| E0008 | Podana ścieżka jest zerwana, lecz nie istnieje też `src/components/Initiatives/CandidatesTable.tsx`; próba korekty ścieżki nadal dała 0 wykonanych testów i została cofnięta. Brak celu produktu do mutacji. | **NOT_PROVEN** |
+| E0009 | `OLLAMA_TEST=false`: SKIP; `true` wymaga żywego `localhost:11434` i łamie Z15. | **NOT_PROVEN** |
+| E0010 | Jak E0009; test bezpośrednio woła Ollama, bez funkcji produktu do mutacji. | **NOT_PROVEN** |
+| E0011 | Jak E0009; test bezpośrednio woła Ollama, bez funkcji produktu do mutacji. | **NOT_PROVEN** |
+| E0013 | Nie uruchomiono: statycznie importuje `server/src/index.js`; testowy pełny bootstrap jest zabroniony przez Z30. | **NOT_PROVEN** |
+| E0014 | Bez runtime 5498 cały plik raportuje 14/14 PASS; trzy bloki endpointów wracają przed asercjami. Brak zaimportowanego handlera/celu produktu, więc bez dwukierunkowej mutacji Z32 nie pozwala nadać `PUSTY`. | **NOT_PROVEN** |
+
+Wynik R3: **0 nowych rozstrzygnięć, 8/8 pozostaje NOT_PROVEN**. To wynik pomiaru, nie
+przepisanie werdyktu dyżuru 318. Artefakty: `e1-przed.json`, `e3-przed.json`,
+`e8-green.json`, `e9-e11-przed.json`, `e14-przed.json` w katalogu artefaktów dyżuru.
