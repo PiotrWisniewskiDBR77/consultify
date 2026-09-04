@@ -5780,7 +5780,7 @@
       "toastInputRequested": "Input requested",
       "toastCoDecisionRequested": "Co-decision requested"
     },
-    "closeOpenDocument": "Close: {{nazwa}}",
+    "closeOpenDocument": "Close: {{name}}",
     "knowledge": {
       "cardNodes": {
         "evidenceDefault": "Evidence",
@@ -13465,7 +13465,7 @@
       "scheduleRemoved": "Schedule removed",
       "scheduleRemoveError": "Failed to remove schedule",
       "loadTemplatesError": "Failed to load templates",
-      "templateNameRequired": "Nazwa szablonu jest wymagana",
+      "templateNameRequired": "Template name is required",
       "templateCreated": "Template created",
       "templateCreateError": "Failed to create template",
       "loadError": "Failed to load data",
@@ -21751,7 +21751,7 @@
       },
       "noContent": "Deck has no content yet. Generate slides first.",
       "loadFailed": "Failed to load presentation deck",
-      "moduleLabel": "Prezentacje",
+      "moduleLabel": "Presentations",
       "teresa": {
         "title": "Teresa"
       },
@@ -21969,9 +21969,9 @@
       "contentHintsPlaceholder": "One guidance phrase per line — what this slide should cover (no invented facts). Use \"Refine with AI\" on a new draft to auto-suggest.",
       "keyMessage": "Teza",
       "keyMessagePlaceholder": "One-sentence thesis for this slide (no invented facts).",
-      "dataNeeded": "Dane do zebrania",
+      "dataNeeded": "Data to collect",
       "dataNeededPlaceholder": "One item per line — names of data to collect, not values.",
-      "suggestedVisual": "Sugerowana wizualizacja",
+      "suggestedVisual": "Suggested visualization",
       "suggestedVisualPlaceholder": "E.g. bar chart, priority matrix, timeline.",
       "addSlide": "Add slide",
       "newSlideTypeLabel": "New slide type",
@@ -26022,7 +26022,7 @@
       "rename": "Rename",
       "openPreview": "Open preview",
       "discuss": "Discuss",
-      "askAI": "Zapytaj AI",
+      "askAI": "Ask AI",
       "submitTemplateReview": "Submit for review",
       "newDocumentStudio": "New AI document (Document Studio)",
       "duplicateAsTemplate": "Duplicate / Use as template",
@@ -26051,14 +26051,14 @@
       "openFull": "Open full",
       "slides": "slides",
       "deprecated": "Deprecated",
-      "scope": "Zakres",
-      "category": "Kategoria",
-      "sections": "Sekcje",
+      "scope": "Scope",
+      "category": "Category",
+      "sections": "Sections",
       "publishState": "Publish",
-      "validationState": "Walidacja",
+      "validationState": "Validation",
       "reviewGates": "Review gates",
-      "migrationHint": "Zamiennik",
-      "replacedBy": "Nowy wzorzec",
+      "migrationHint": "Replacement",
+      "replacedBy": "New pattern",
       "updatedAt": "Last updated"
     },
     "toast": {
@@ -26680,7 +26680,7 @@
     "laneWordy": "Documents",
     "laneExcele": "Tables",
     "lanePrezentacje": "Presentations",
-    "laneTabele": "Tabele",
+    "laneTabele": "Tables",
     "stepSnapshot": "Capture context snapshot",
     "stepPlan": "Create artifact plan",
     "stepPreflight": "Validate preflight checks",
@@ -26693,7 +26693,7 @@
     "tableReady": "Table ready — use Preview File or Download",
     "tabele": {
       "preview": {
-        "documentLabel": "Tabele operational table preview",
+        "documentLabel": "Tables operational table preview",
         "subtitle": "Operational Table",
         "untitled": "Untitled table",
         "coverDescription": "A Word-style document canvas for reviewing schema, sample records, relations, and governance rationale before opening the Table Builder.",
@@ -26834,7 +26834,7 @@
       "lane": {
         "wordy": "Wordy",
         "excele": "Excele",
-        "prezentacje": "Prezentacje",
+        "prezentacje": "Presentations",
         "tabele": "Table Studio"
       },
       "inputPlaceholder": {
@@ -26846,7 +26846,7 @@
     },
     "tabeleShell": {
       "aiEditor": {
-        "ariaLabel": "Tabele AI Editor",
+        "ariaLabel": "Tables AI Editor",
         "title": "AI Editor",
         "budgetLabel": "{{used}} / {{total}} tokens",
         "levelRadioGroup": "AI Editor level",
@@ -26910,7 +26910,7 @@
         }
       },
       "leftRail": {
-        "ariaLabel": "Tabele outline",
+        "ariaLabel": "Tables outline",
         "empty": "No sections to display.",
         "countAriaLabel": "{{label}} count",
         "cover": "Cover",
@@ -26921,7 +26921,7 @@
         "rationale": "Rationale"
       },
       "qa": {
-        "ariaLabel": "Tabele QA report",
+        "ariaLabel": "Tables QA report",
         "title": "QA Report",
         "recomputeAriaLabel": "Recompute QA report",
         "recompute": "Recompute",
@@ -26975,7 +26975,7 @@
         "markNotApplicable": "Mark not applicable"
       },
       "share": {
-        "ariaLabel": "Tabele share and conversions",
+        "ariaLabel": "Tables share and conversions",
         "title": "Share",
         "refreshAriaLabel": "Refresh share panel",
         "refresh": "Refresh",
@@ -26984,7 +26984,7 @@
         "targetDocument": "Document",
         "targetDocumentDescription": "Open in Wordy with section outline",
         "targetPresentation": "Presentation",
-        "targetPresentationDescription": "Open in Prezentacje with slide outline",
+        "targetPresentationDescription": "Open in Presentations with slide outline",
         "statusDone": "Done",
         "statusFailed": "Failed",
         "statusRunning": "Running",
@@ -27032,7 +27032,7 @@
         "atLeastOneRecord": "Add at least one record to the pack",
         "saved": "Pack \"{{name}}\" saved ({{count}} records)",
         "saveFailed": "Failed to save pack: {{reason}}",
-        "ariaLabel": "Tabele source pack builder",
+        "ariaLabel": "Tables source pack builder",
         "title": "Source Pack",
         "refreshAriaLabel": "Refresh candidate search",
         "refresh": "Refresh",
@@ -27119,12 +27119,12 @@
       "aiEditor": {
         "promptRequired": "Prompt is required",
         "proposalRejected": "Proposal rejected",
-        "panelAria": "Tabele AI Editor"
+        "panelAria": "Tables AI Editor"
       },
       "qa": {
         "reportRefreshed": "QA report refreshed",
         "suggestionDismissed": "Suggestion marked not applicable",
-        "panelAria": "Tabele QA report"
+        "panelAria": "Tables QA report"
       },
       "sourcePack": {
         "nameRequired": "Pack name is required",
@@ -27134,7 +27134,7 @@
       },
       "share": {
         "conversionFailed": "Conversion failed. See recent conversions for details.",
-        "panelAria": "Tabele share and conversions"
+        "panelAria": "Tables share and conversions"
       }
     },
     "back": "Back",
