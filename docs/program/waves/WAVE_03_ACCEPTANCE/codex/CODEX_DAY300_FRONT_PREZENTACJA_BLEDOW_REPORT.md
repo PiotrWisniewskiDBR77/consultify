@@ -20,3 +20,7 @@ Czy kontynuowałem pozostałe pozycje: NIE — instrukcja nazywa brak mappera tw
 Klasyfikacja 642 wołaczy, wybór realnego `ErrorState`, teksty kodów, codemod, linia bazowa zero, mutacje i 20 kadrów pozostają **NIEZWERYFIKOWANE**.
 
 Nie uruchomiono bazy, runtime'u ani portów. Nie ustawiono zmiennych poczty i niczego nie wysłano.
+
+## Wznowienie 2026-09-04
+
+Po ponownym `fetch github-backup --prune` i pełnym odczycie wiążącej instrukcji warunek startu sprawdzono ponownie na wymaganym markerze. `git grep -c appErrorMapper -- server/src` oraz `git grep -ln appErrorMapper -- server/src` nadal zwracają zero trafień. STOP pozostaje aktualny; nie integrowano cudzej gałęzi 296, ponieważ dyżur wymaga dokładnego markera i zabrania budowania na nieistniejącym kontrakcie.
