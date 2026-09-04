@@ -25,6 +25,12 @@ if ! bash scripts/check-artefakt.sh; then
   exit 1
 fi
 
+# Dwujęzyczne etykiety narzędzi fazowych: ratchet + podłoga liczebności.
+if ! node scripts/dev/check-etykiety-dwujezyczne.mjs; then
+  echo "  ⛔ Commit zablokowany: wzrósł dług identycznych etykiet albo pomiar jest niepełny." >&2
+  exit 1
+fi
+
 # 3) Crimson w kanonie TRIADY list (docs/ui-standards/TRIADA_KANON.md część C) —
 #    przeniesione z .claude/hooks/check-triada.sh (2026-07-19, było lokalne-tylko).
 STAGED_TRIADA=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/(components|views)/.*\.(ts|tsx)$')
