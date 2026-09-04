@@ -326,6 +326,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [activeSection, setActiveSection] = useState<string>(
     isStrategicPhaseTool ? 'mission' : 'work'
   );
+  const explicitStrategicSectionRef = useRef<string | null>(null);
   const [commandRowPortalTarget, setCommandRowPortalTarget] = useState<HTMLElement | null>(null);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
   const [showTeresaProposals, setShowTeresaProposals] = useState(false);
@@ -540,6 +541,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   useEffect(() => {
     if (!isStrategicPhaseTool) return;
+    if (explicitStrategicSectionRef.current === activeSection) {
+      explicitStrategicSectionRef.current = null;
+      return;
+    }
     if (currentStepDef?.id && activeSection !== currentStepDef.id) {
       setActiveSection(currentStepDef.id);
     }
@@ -1112,6 +1117,59 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   );
 
   const sections: NModeSection[] = useMemo(() => {
+    const renderDynamicSwotPhaseOverview = () => (
+      <div className="space-y-3" data-testid="dynamic-swot-phase-overview">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-3">
+          {dynamicSwotPhaseSummaries.map((phase, index) => {
+            const isActive = activeSection === phase.id;
+            return (
+              <button
+                key={phase.id}
+                data-testid="dynamic-swot-phase-tile"
+                data-phase-id={phase.id}
+                type="button"
+                aria-current={isActive ? 'step' : undefined}
+                onClick={() => {
+                  explicitStrategicSectionRef.current = phase.id;
+                  setCurrentStep(index + 1);
+                  setActiveSection(phase.id);
+                }}
+                className={`c-focus rounded-2xl border px-4 py-3 text-left transition ${
+                  isActive
+                    ? 'border-slate-400 bg-slate-100 shadow-sm dark:border-navy-500 dark:bg-navy-800/80'
+                    : phase.readiness === 'ready'
+                      ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/10'
+                      : phase.readiness === 'needs-work'
+                        ? 'border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/10'
+                        : 'border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900/60'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    {index + 1}
+                  </span>
+                  {phase.done ? (
+                    <Check size={12} className="text-emerald-500" />
+                  ) : (
+                    <span className="text-[11px] text-slate-600">{phase.gapCount}</span>
+                  )}
+                </div>
+                <div className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {phase.label}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {phase.primaryGap ||
+                    (phase.done
+                      ? t('discoveryToolsMain.toolDocumentView.readyStatus')
+                      : t('discoveryToolsMain.toolDocumentView.needsWorkStatus'))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+
     const workSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
@@ -1179,49 +1237,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         </div>
 
         {toolType === 'dynamic-swot' ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {dynamicSwotPhaseSummaries.map((phase, index) => {
-              const isActive = currentStepDef?.id === phase.id;
-              return (
-                <button
-                  key={phase.id}
-                  data-testid="dynamic-swot-phase-tile"
-                  data-phase-id={phase.id}
-                  type="button"
-                  onClick={() => setCurrentStep(index + 1)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition ${
-                    isActive
-                      ? 'border-primary-300 bg-primary-500/10 shadow-sm'
-                      : phase.readiness === 'ready'
-                        ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/10'
-                        : phase.readiness === 'needs-work'
-                          ? 'border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/10'
-                          : 'border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900/60'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
-                      {index + 1}
-                    </span>
-                    {phase.done ? (
-                      <Check size={12} className="text-emerald-500" />
-                    ) : (
-                      <span className="text-[11px] text-slate-600">{phase.gapCount}</span>
-                    )}
-                  </div>
-                  <div className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {phase.label}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {phase.primaryGap ||
-                      (phase.done
-                        ? t('discoveryToolsMain.toolDocumentView.readyStatus')
-                        : t('discoveryToolsMain.toolDocumentView.needsWorkStatus'))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          renderDynamicSwotPhaseOverview()
         ) : (
           <div className="flex flex-wrap gap-2">
             {stepDefs.map((step: StepDefinition, index: number) => {
@@ -1736,6 +1752,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
         return (
           <div className="space-y-6">
+            {toolType === 'dynamic-swot' ? renderDynamicSwotPhaseOverview() : null}
             {!isStrategicSessionPhase && (
               <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2107,6 +2124,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleSectionChange = useCallback(
     (sectionId: string) => {
+      if (isStrategicPhaseTool) explicitStrategicSectionRef.current = sectionId;
       setActiveSection(sectionId);
 
       if (!isStrategicPhaseTool) return;
