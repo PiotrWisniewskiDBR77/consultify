@@ -63,7 +63,7 @@ Pakiet jednostkowy uruchomiony jako `RUN_DB_TESTS=0 MOCK_DB=true ... --retry=0 -
 |---|---|---|
 | `ConversationSearch.tsx` | `group-focus-within:text-primary-500` → `group-focus-within:text-c-focus` | `esbuild` PASS, commit `e98a4bbbb5` |
 | `PrivateModeDetails.tsx` | hover `primary-100/900` → `c-surface-hover`; ring `primary-400/50` → `c-focus` | `esbuild` PASS, commit `8e37e69f4c` |
-| `ProjectMembersModal.tsx` | 3 × `focus:border-primary-500` → `focus:border-c-focus-solid` | `esbuild` PASS, commit `f650615ebf` |
+| `ProjectMembersModal.tsx` | 3 × `focus:border-primary-500` → początkowo `focus:border-c-focus-solid`, po czerwonym dowodzie dark: `focus-visible:ring-2 focus-visible:ring-c-focus` | `esbuild` PASS; commit bazowy `f650615ebf`, korekta dowodowa R5 |
 
 Łącznie zmieniono dokładnie 5 linii i 7 tokenów klas. Hover i fokus w `PrivateModeDetails` są dwiema odrębnymi klasami naprawy mimo wspólnej linii `className`.
 
@@ -98,6 +98,31 @@ Każdy ekran przeszedł osobny bundle `esbuild` i został obejrzany w przegląda
 Pierwsza wersja dwóch ekranów zestawiała obok siebie komponenty bez precedensu produkcyjnego. `check-dev-render-parytet.mjs --all` słusznie zwrócił R2=2/RC=1. Te kompozycje usunięto przed commitem; pięć finalnych ekranów sprawdzono osobno przez `--ekran=<id>` i każdy ma R1=0, R2=0, R3=0, PODPIS=0, RC=0.
 
 Duplikat macierzy rozstrzygnięto przez usunięcie wpisu `canvas-toolbar-md-history` wyłącznie z `13_CHAT`. Jego light SHA był identyczny z `canvas-kebab-restructure` (`2d134eaa…`), więc dwa wpisy zawyżały pokrycie. Plik ekranu i rejestr w `main.tsx` pozostają nietknięte; usunięto wyłącznie fałszywy licznik macierzy modułu Czatu.
+
+## R5 — pary PRZED/PO
+
+Katalog dowodów (poza repo, zgodnie z `Z13`): `/private/tmp/cx-day315-crimson-ekrany-artefakty/evidence/{PRZED,PO}`. Finalny kanoniczny przebieg `po-final.json`: 6/6 status `RÓŻNE`, 0 błędów konsoli, RC=0.
+
+| Ekran | Motyw | SHA PRZED | SHA PO | Różne piksele | Luma PRZED → PO |
+|---|---|---|---|---:|---:|
+| search | light | `590db7f412c49aabf76e4966670afe21b24ec7309af0c67cda0b3af5c46a1bce` | `b58e88bf890316f7a7525382a9ea93f5f324589f890b64074adef62bc7508686` | 0.0044% | 249.5757 → 249.5786 |
+| search | dark | `7ebf451d9475144e7b9fb72bfb092a69fd8e92d8c8b14a5c2266de0d944bd4b1` | `92f9fa31f7c64f75ee40bb9a7ea0eb9f91223d844e9ee77bb689c7b456ec7398` | 0.0044% | 15.5669 → 15.5666 |
+| private mode | light | `1a05a28856ff14261503a21e4123ae7feaec04fd4121334b744b0af044fd04cd` | `16e23d8bff3f1c1f14ee059e91582890f4730c92996db43231f8091a2dd0bbb2` | 0.0341% | 249.4005 → 249.3999 |
+| private mode | dark | `9cb64960a5af7067b0e5ac722063db6d9614551caf8ed44f7d95c8182d421a6f` | `6a8bc42e88c135561d5ee42abd527420d5b1d43818d99f6e385a9eab6bc1b872` | 0.0343% | 16.3837 → 16.3828 |
+| project members | light | `b63decf0517a4e6e4d1c42f7d1c299f6a0919e6cfdb3d57cd3836132f8ddd7d6` | `e141ce573bd8701bda06fed66026ef770da131dd6930cde345dc562816046557` | 0.1403% | 151.5056 → 151.5140 |
+| project members | dark | `3f060cda0882e333cbe90cfffc0bf7a63c40abdd1861403341f61f58ab30bf33` | `83093908ea68b7be50f96cbfd6bb99ec62d3beddaeb657c5460f72c4993428c8` | 0.0952% | 11.7967 → 11.8438 |
+
+Kontrola przyrządu z `--rozwin-sekcje=1` i bez tej opcji dała tę samą wysokość stron; finalny JSON raportuje 0 automatycznie rozwijanych sekcji dla search/private i 1 dla modala, bez cofnięcia. Żaden przelot nie skrócił widocznej treści. Light/dark mają różne SHA i radykalnie różną lumę dla każdego ekranu.
+
+Oględziny każdego kadru PO:
+
+- `chat-crimson-search-research` light/dark: realne pole rozmów, aktywny niebieski ring oraz niebieska ikona; kadr czysty.
+- `chat-crimson-private-message` light/dark: realny chip z niebieskim ringiem i otwarty popover; tekst nie jest ucięty, brak crimsonowego hover/focus.
+- `chat-crimson-project-members` light/dark: realny modal; pole zaproszenia ma wyraźny niebieski ring w obu motywach, pozostałe pola i treść są czytelne.
+
+Pierwszy pomiar modala ujawnił, że `focus:border-c-focus-solid` jest w dark przykrywane przez `dark:border-navy-700`: para dark była identyczna. To był czerwony wynik produktu, nie dowód. Zamiana w ramach trzech licencjonowanych fokusów na kanoniczny ring dała finalnie 0.0952% różnych pikseli w dark i RC=0.
+
+Do par PRZED/PO weszły trzy nowe ekrany bezpośrednio obejmujące pięć zmienionych linii R2. Dwa pozostałe nowe ekrany (`chat-message-required-surfaces`, `chat-v8-artifact-run-search`) dowodzą brakującego pokrycia R4, ale nie weszły do par, ponieważ produktowo nie zależą od R2 i ich para byłaby bajtowo identyczna. To bezpieczniejsza korekta wobec sprzecznego połączenia wymagań „w tym nowe z R4” i „żadna para identyczna”.
 
 ## Korekty wobec instrukcji
 

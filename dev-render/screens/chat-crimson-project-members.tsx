@@ -20,11 +20,11 @@ useChatProjectStore.setState({
 
 const Screen: React.FC = () => {
   React.useEffect(() => {
-    const timer = window.setTimeout(
-      () => document.querySelector<HTMLInputElement>('input[placeholder*="name@"]')?.focus(),
-      250
-    );
-    return () => window.clearTimeout(timer);
+    const focusInvite = () =>
+      document.querySelector<HTMLInputElement>('input:not([type])')?.focus();
+    focusInvite();
+    const timer = window.setInterval(focusInvite, 200);
+    return () => window.clearInterval(timer);
   }, []);
   return (
     <main className="min-h-screen bg-c-bg text-c-text">
