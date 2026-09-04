@@ -1,7 +1,7 @@
 # CODEX DAY 336 — rozkład bramki G15
 
-Stan dyżuru: `PARTIAL — POMIAR DOMKNIĘTY, DŁUG NIE NAPRAWIANY`  
-Marker pracy: `1c4b5a5635bafd38ef375227824ada9b62be186e`  
+Stan dyżuru: `PARTIAL — POMIAR DOMKNIĘTY, DŁUG NIE NAPRAWIANY`
+Marker pracy: `1c4b5a5635bafd38ef375227824ada9b62be186e`
 Gałąź: `codex/day336-g15-rozklad-20260904`
 
 ## R0 — zasady wiążące
