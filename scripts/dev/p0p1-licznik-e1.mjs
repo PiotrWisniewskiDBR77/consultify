@@ -44,7 +44,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać kanoniczny dataset pięciu modeli Finance i kryterium poziomów agregacji; d8561ed5c2 naprawia tylko bridge ID' },
   'INI-OWN-001': { type: 'SHA', sha: '5c6d72066f' },
   'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'właściciel/nadzorca musi udzielić licencji na realny provider i kryterium request/response/readback; obecność wołacza w źródle nie dowodzi osiągalności ani działania' },
-  'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
+  'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'właściciel musi zatwierdzić kontrakt attendees/guests/organizer/invitation-status; wskazany handler 2779–2822 nadal nie ma tych pól' },
   'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
   // COFNIĘTE po odbiorze 334. Dyżur podstawił `d0b5172c19` (2026-07-24), a uwaga
   // właściciela jest z 2026-08-22 — commit jest o MIESIĄC STARSZY od zgłoszenia.
