@@ -37,7 +37,16 @@ Komendy pomiarowe: `node scripts/dev/reachability-from-root.mjs`, grepy z `§0.1
 
 ## Korekty wobec instrukcji
 
-Na etapie R1 brak korekt liczbowych. Dodatkowym żywym konsumentem `getStepDefinitions()` jest `src/components/DiscoveryTools/ToolWorkspace.tsx:251`; nie zmienia to rozstrzygnięcia dwóch badanych powierzchni w `ToolDocumentView`.
+- Na etapie R1 brak korekt liczbowych. Dodatkowym żywym konsumentem `getStepDefinitions()` jest `src/components/DiscoveryTools/ToolWorkspace.tsx:251`; nie zmienia to rozstrzygnięcia dwóch badanych powierzchni w `ToolDocumentView`.
+- Kontrola rozłączności z instrukcji zawiera regex `(?!dynamicSwot)`, którego macOS `grep -E` nie obsługuje (`grep: repetition-operator operand invalid`). Kontrolę wykonuję również przez jawną inspekcję pełnej listy staged.
+
+## R2 — rozstrzygnięcie szwu i kolizji `review`
+
+Szew jest w `src/store/useToolStore.ts:5075`: `getStepDefinitions()` konsultuje istniejącą paczkę wyłącznie dla bieżącej sesji `dynamic-swot`; przy fladze OFF zwraca dokładnie istniejący obiekt `SWOT_STEPS` (ta sama referencja), przy ON mapuje siedem faz paczki do `StepDefinition`, a pozostałych 30 narzędzi nadal wraca bez zmian z `TOOL_STEP_DEFINITIONS`.
+
+Wybrano wariant A zamiast inicjalizacji stałej modułowej: odczyt flagi następuje w momencie pobrania kroków, nie podczas importu modułu; ogranicza to ryzyko kolejności inicjalizacji i umożliwia deterministyczne testy ON/OFF.
+
+Kolizja `review` zostanie rozwiązana przez zmianę id zastanej sekcji statycznej na `session-review` (wraz z mapami grupy i rozpiętości). Fazowe `review` pozostaje bez zmiany, ponieważ jest już częścią deskryptora, pytania `swot-review-decision` oraz wymaganej kolejności siedmiu faz. Etykieta i funkcja statycznej sekcji pozostają bez zmian; zmienia się wyłącznie lokalny identyfikator w liście sekcji.
 
 ## Twierdzenia niezweryfikowane
 
