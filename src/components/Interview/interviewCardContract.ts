@@ -326,7 +326,8 @@ export function buildInterviewCardSpec(): ArtifactCardSpec {
   const allCards = INTERVIEW_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core interview', pl: 'Rdzeń wywiadu' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete interview', pl: 'Kompletny wywiad' }, cards: allCards },
+    { id: 'core', label: { en: 'Core interview', pl: 'Rdzeń wywiadu' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
