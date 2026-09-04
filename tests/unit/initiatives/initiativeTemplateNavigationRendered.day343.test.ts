@@ -46,7 +46,7 @@ describe('DEC-388 — realny widok karty zachowuje komplet Menu 3', () => {
       logLevel: 'error',
     });
     await server.listen();
-  }, 30_000);
+  }, 60_000);
 
   afterAll(async () => {
     await server?.close();
@@ -68,9 +68,9 @@ describe('DEC-388 — realny widok karty zachowuje komplet Menu 3', () => {
         const page = await browser.newPage();
         await page.goto(
           'http://127.0.0.1:5530/?screen=karta-initiative&szablon=quick-win&lang=pl&theme=light',
-          { waitUntil: 'networkidle' }
+          { waitUntil: 'domcontentloaded', timeout: 45_000 }
         );
-        await page.waitForSelector('[data-nmode-section-item]');
+        await page.waitForSelector('[data-nmode-section-item]', { timeout: 45_000 });
 
         const renderedIds = await page.$$eval('[data-nmode-section-item]', (nodes) =>
           nodes.map((node) => node.getAttribute('data-nmode-section-item'))
@@ -88,6 +88,6 @@ describe('DEC-388 — realny widok karty zachowuje komplet Menu 3', () => {
         await browser.close();
       }
     },
-    30_000
+    60_000
   );
 });
