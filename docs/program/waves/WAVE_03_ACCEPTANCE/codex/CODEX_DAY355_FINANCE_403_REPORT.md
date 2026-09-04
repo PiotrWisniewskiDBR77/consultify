@@ -1,6 +1,6 @@
 # CODEX DAY355 — FINANCE 403
 
-Stan: **R1–R2 zakończone; R3–R5 w toku**.
+Stan: **R1–R2 zakończone; R3 zatrzymane merytorycznie; R4–R5 niewykonane**.
 
 ## Baza i warunki wejściowe
 
@@ -46,15 +46,17 @@ Artefakt JSON nie pokazuje 10 przechodzących przypadków `compare` ani 6 przech
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie wykonano jeszcze pary obcy `403` / właściciel `200` ani mutacji zabezpieczenia.
+- Nie udowodniono wymaganej pary przez realny `ApiGateway`; zielona para istniejąca w pakiecie `financeValue.membershipGate` montuje router bezpośrednio.
+- Nie udowodniono mutacyjnie warunku statusu `ACTIVE`: zamówiona mutacja pozostała zielona.
+- Nie wykonano kwalifikowanego R4: próba katalogowa miała inny mianownik niż artefakt 336 i nie jest porównaniem.
 
 ## CO NADAL WYMAGA OSOBNEGO ZLECENIA
 
-Nieorzeczone do czasu pomiaru R2.
+Nie wykazano realnego defektu produktu w żadnym z 12 plików. Osobnego zlecenia wymaga natomiast luka dowodowa: samowystarczalny kontrakt przez realny `ApiGateway`, który broni zarówno braku wiersza, jak i statusu `REVOKED`, oraz odtwarzalna fixture dla `day116-approved-valuation-wacc-conflict.realpg.test.ts`.
 
 ## PYTANIA DO WŁAŚCICIELA
 
-Na etapie R1 nie mam zastrzeżeń.
+Czy właściciel zatwierdza osobny dyżur na nowy kontrakt `ApiGateway` dla statusu `REVOKED` oraz kanoniczny seed fixture `day116`? Bez tego nie ma uczciwej podstawy do zastosowania rodzinnej zmiany w 12 plikach ani do wpisu `FIXED`.
 
 ## R2 — przyczyna źródłowa i podział
 
@@ -97,3 +99,30 @@ Oba pakiety biegły z `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, 
 ### Protokół Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+## R3 — STOP merytoryczny
+
+Rodzaj: **MERYTORYCZNY**.
+
+Powód: wymagany przez instrukcję dowód mutacyjny nie wykrywa osłabienia warunku statusu, a kwalifikowana para przez realny `ApiGateway` nie jest odtwarzalna na czystej bazie z dostępną fixture.
+
+Licencja, którą sprawdziłem: tabela licencji pozwala wyłącznie na tymczasową mutację `server/src/middleware/auth.middleware.ts` z cofnięciem przez `cp` oraz na uruchamianie trzech nietykalnych pakietów bramki. Mutację wykonałem i cofnąłem; trwały diff middleware jest pusty.
+
+Dowód: przebieg bazowy po ustawieniu wymaganego `JWT_SECRET` i `FINANCE_MEMBERSHIP_GATE_TEST_DB_PREFIX=cx` dał 68/68 PASS. Po zmianie `normalizeMembershipStatus(membership.status) === 'ACTIVE'` na `!!membership` wskazane `financeValue.membershipGate` + `auditsStrictMembership` dały **62/62 PASS**, zamiast wymaganej czerwieni. Zatem mutacja nie została zabita. Pakiet `financeValue.membershipGate` zawiera realne pary `MISSING/REVOKED → 403` i `ACTIVE → 200/201`, lecz montuje router przez `app.use(BASE, verifyToken, requireV8OrgContext, attachV8Context, router)`, a nie `ApiGateway.getInstance().initializeRoutes(app)`. Jedyny czerwony przypadek z realnym `ApiGateway`, `day116-approved-valuation-wacc-conflict`, na czystej bazie nie ma stałych rekordów organizacji, użytkownika ani business version (`0/0/0` z SQL), więc nie może dać właścicielskiego `200/201` bez odtworzenia osobnej, nieopisanej fixture biznesowej.
+
+Co dostarczyłem ZAMIAST zmiany: potwierdzony A/B 15 FAIL → 15 PASS dla przyczyny członkostwa, tabelę 12 plików/suma 114, dowód luki testu mutacyjnego oraz gotowy kierunek naprawy: osobny, realny `ApiGateway` kontrakt `REVOKED → 403` i `ACTIVE → 2xx` na samowystarczalnej fixture.
+
+Co zrobiłbym, gdyby zapadła decyzja X: dodałbym nowy test pod `tests/`, który montuje pełny `ApiGateway`, sam zasiewa minimalny zasób biznesowy i obie tożsamości, a następnie czerwienieje dokładnie po osłabieniu `ACTIVE`. Dopiero po jego RED→GREEN zastosowałbym wspólny seed do 12 pakietów.
+
+Rekomendacja dla nadzorcy: wydać osobny, wąski dyżur na samowystarczalny kontrakt bramki przez `ApiGateway` albo dostarczyć kanoniczny seed stałej fixture `day116`; obecne wymaganie, że istniejące pakiety zaczerwienią się od wskazanej mutacji, jest pomiarowo fałszywe.
+
+Stan: nie zacommitowano żadnej zmiany testów ani produktu; commit zawiera wyłącznie raport z pomiaru. Czy kontynuowałem pozostałe pozycje: **NIE**, ponieważ R4 bez zaakceptowanej zmiany R3 i bez zgodnego mianownika byłby fałszywym przemierzeniem.
+
+## Próba R4 odrzucona jako błąd pomiaru
+
+Na świeżej bazie uruchomienie katalogu `finance-v2/__tests__` wykonało 239 przypadków, nie 277 z artefaktu 336, i zapaliło czerwienie także w plikach kontrolnych. Wynik nie jest porównywalny po nazwach, więc nie służy do twierdzeń „przed/po”. Nie utworzyłem `po-nazwy.txt` i nie ogłaszam spadku 114.
+
+## Commity i statystyki
+
+- `6f93694d5a` — R1: 3 pliki, 287 wstawek.
+- `721a1c80f0` — R2: 2 pliki, 75 wstawek, 3 usunięcia.
