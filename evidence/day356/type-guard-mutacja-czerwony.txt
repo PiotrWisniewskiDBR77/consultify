@@ -1,0 +1,4 @@
+TYPE_GUARD analyzedFiles=1 heapMb=8192 target=src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx diagnostics=1
+src/components/MyWork/prototypes/__tests__/IdeaNotebookRightPanelPrototype.test.tsx:16:35 TS2741 Property 'ariaLabel' is missing in type '{ context: "idea"; legacy: Element; }' but required in type 'PrototypeProps'.
+
+EXIT_CODE=1
