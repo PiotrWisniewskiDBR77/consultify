@@ -1,0 +1,35 @@
+Równoległy przebieg na świeżej, dwukrotnie zmigrowanej bazie:
+
+[Postgres] InitDb Failed: column "resource_tools" of relation "initiatives" already exists
+code: 42701
+stack:
+error: column "resource_tools" of relation "initiatives" already exists
+    at query (server/src/database/PostgresDatabase.ts:1582:9)
+    at ensureColumn (server/src/database/PostgresDatabase.ts:2666:9)
+    at initDb (server/src/database/PostgresDatabase.ts:2675:5)
+    at executeWithLogging (server/src/database/PostgresDatabase.ts:731:24)
+
+[Postgres] InitDb Failed: duplicate key value violates unique constraint "pg_class_relname_nsp_index"
+code: 23505
+detail: Key (relname, relnamespace)=(idx_milestones_status, 2200) already exists.
+stack:
+error: duplicate key value violates unique constraint "pg_class_relname_nsp_index"
+    at query (server/src/database/PostgresDatabase.ts:1582:9)
+    at initDb (server/src/database/PostgresDatabase.ts:2777:5)
+    at executeWithLogging (server/src/database/PostgresDatabase.ts:731:24)
+
+[Postgres] InitDb Failed: duplicate key value violates unique constraint "pg_class_relname_nsp_index"
+code: 23505
+detail: Key (relname, relnamespace)=(idx_initiative_dependencies_to, 2200) already exists.
+stack:
+error: duplicate key value violates unique constraint "pg_class_relname_nsp_index"
+    at query (server/src/database/PostgresDatabase.ts:1582:9)
+    at initDb (server/src/database/PostgresDatabase.ts:2804:5)
+    at executeWithLogging (server/src/database/PostgresDatabase.ts:731:24)
+
+Źródło pełne (poza repo):
+/private/tmp/cx-day358-niestabilnosc-artefakty/r2-verbose.log
+
+Treść HTTP dla odpowiedzi day277 z wcześniejszego równoległego przebiegu:
+status 500, body {}, text "{}".
+

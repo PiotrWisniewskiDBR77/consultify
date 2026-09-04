@@ -1,0 +1,18 @@
+Agent Hub rate-limit routing keeps the database GET /agent-manifests outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-manifests/manifest-1 outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan/plan-1 outside the generative AI bucket
+Agent Hub rate-limit routing keeps the database GET /agent-plan/processes outside the generative AI bucket
+Agent Hub rate-limit routing retains the generative limiter for GET /chat
+Agent Hub rate-limit routing retains the generative limiter for PATCH /agent-plan/plan-1/steps
+Agent Hub rate-limit routing retains the generative limiter for POST /agent-plan
+Agent Hub rate-limit routing retains the generative limiter for POST /chat
+Day 274 — inicjatywa z Oceny dociera do listy runtime-v1 POST z Oceny jest widoczny przez GET runtime-v1
+Day 274 — inicjatywa z Oceny dociera do listy runtime-v1 obcy tenant nie widzi inicjatyw właściciela
+Day 275 — panel jakości czyta dokładne answers.drd przez ApiGateway i RealPG zwraca dokładny stan obszaru oraz scoring z tej samej tenantowej bazy
+Day 276 deck autosave persistence through ApiGateway and real PostgreSQL autosave changes deck_json, advances version and snapshots the prior version
+Day 276 deck autosave persistence through ApiGateway and real PostgreSQL returns 409 for a stale X-Deck-Version and preserves the saved deck
+Day 276 workbook cell persistence through ApiGateway and real PostgreSQL foreign tenant cannot see or mutate the workbook
+Day 276 workbook cell persistence through ApiGateway and real PostgreSQL owner persists a setCell value, advances version and creates a revision row
+Day 277 decision enhancements through ApiGateway and PostgreSQL foreign tenant cannot see or overwrite the decision enhancements
+Day 277 decision enhancements through ApiGateway and PostgreSQL owner writes all five fields, SQL sees them, and detail reads them back

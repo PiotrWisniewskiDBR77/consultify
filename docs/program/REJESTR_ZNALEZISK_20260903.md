@@ -308,3 +308,8 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | S1 | Dwa twierdzenia pakietu o widoczności nie mają SHA ani kotwicy `plik:linia`: OKR/ROI widoczne niezależnie od przełącznika oraz flagi Wyników/Finansów/Organizacji/kreatora „mogą jeszcze nie być widoczne”. | Są długiem informacyjnym: dyżur 357 nie łączył się ze stagingiem (`Z28`) i nie ustalił, że twierdzenia są fałszywe. | OTWARTE — powiązać z kodem/SHA albo usunąć po decyzji nadzorcy | `evidence/day357/r2-kotwice.md` |
+## T. Dyżur 358 — równoległy runtime initDb kolidował na DDL
+
+- Przyczyna niestabilności Bloku 3: wiele forków Vitest uruchamiało jednocześnie `initDb()` na jednej bazie; PostgreSQL zwracał `42701` i `23505 pg_class_relname_nsp_index` w `server/src/database/PostgresDatabase.ts:2666/2675/2777/2804`.
+- Naprawa w `server/src/database/PostgresDatabase.ts:1570-1573,3880-3883`: advisory lock na dedykowanym połączeniu serializuje cały runtime init schematu.
+- Dowód mutacyjny: bez locka 12/18 w pierwszym przebiegu i 18/18 w kolejnych; z lockiem 18/18 w 10/10 na świeżej bazie. Pełny raport: `CODEX_DAY358_NIESTABILNOSC_REPORT.md`.
