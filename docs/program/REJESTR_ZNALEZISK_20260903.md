@@ -313,3 +313,10 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 - Przyczyna niestabilności Bloku 3: wiele forków Vitest uruchamiało jednocześnie `initDb()` na jednej bazie; PostgreSQL zwracał `42701` i `23505 pg_class_relname_nsp_index` w `server/src/database/PostgresDatabase.ts:2666/2675/2777/2804`.
 - Naprawa w `server/src/database/PostgresDatabase.ts:1570-1573,3880-3883`: advisory lock na dedykowanym połączeniu serializuje cały runtime init schematu.
 - Dowód mutacyjny: bez locka 12/18 w pierwszym przebiegu i 18/18 w kolejnych; z lockiem 18/18 w 10/10 na świeżej bazie. Pełny raport: `CODEX_DAY358_NIESTABILNOSC_REPORT.md`.
+## U. Dyżur 353 — G19 wymaga reguły ważności dowodu
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| U1 | Day307 nadal broni workloadu: obcy 404/64 B, właściciel 200/243 B; usunięcie filtra organizacji daje dokładnie 200 zamiast 404. Nie jest jednak dowodem Meetings ani całego mianownika G19. | `01` ma jedną udowodnioną izolację, `08` potrzebuje własnej pary `/api/meetings/:id`; zero wierszy podniesionych. | OTWARTE / NOT PROVEN | `evidence/g19/day353/r2-day307-orzeczenie.md`, `r4-orzeczenie.md` |
+| U2 | Pięć pozostałych modułów A nie ma dopuszczonego pełnego dowodu mutacyjnego; istniejące suity są zielone, lecz nie bronią wszystkich właściwych strażników. Powstało 5 czerwonych kontraktów. | `04/05/06/11/13` wymagają osobnych kontraktów i mutacji; zielony scenariusz nie jest zaliczeniem G19. | OTWARTE / NOT PROVEN | `evidence/g19/day353/r3-piec-modulow-i-bloki.md` |
+| U3 | Mianownik rośnie (49 w macierzy, 106 dziś), a dystans 615 jest nieodtwarzalny; jawne warianty dają 1216/1015/315. Bez reguły ważności każdy dowód wygasa przy następnym merge. | Właściciel musi wybrać: ZAMROŻONA / PRÓG / WARSTWY / ZDARZENIOWA. | DO DECYZJI WŁAŚCICIELA | `evidence/g19/day353/r5-podniesienie-i-pytanie-o-kotwice.md` |
