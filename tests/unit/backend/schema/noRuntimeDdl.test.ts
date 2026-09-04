@@ -17,7 +17,6 @@ const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = {
   "server/src/services/ai/evalHarnessService.ts": 2,
   "server/src/services/ai/knowledgeGraphService.ts": 2,
   "server/src/services/ai/knowledgeIndexer.ts": 2,
-  "server/src/services/ai/llmConfigService.ts": 7,
   "server/src/services/ai/organizationMemoryStore.ts": 1,
   "server/src/services/ai/routingRulesService.ts": 1,
   "server/src/services/aiBudgetService.ts": 3,

@@ -2,10 +2,10 @@
 
 ## Metoda i liczby
 
-- Wystąpienia: 526.
-- Pliki: 163.
-- Pliki w `server/src/services`: 99.
-- Rozstrzygnięcia pomiarowe: DODAJ_MIGRACJE=34, DO_DECYZJI_PARSER=20, POMINIĘTE_TEST=58, USUN_DDL_W_LOCIE=414.
+- Wystąpienia: 509.
+- Pliki: 161.
+- Pliki w `server/src/services`: 98.
+- Rozstrzygnięcia pomiarowe: DODAJ_MIGRACJE=34, DO_DECYZJI_PARSER=19, POMINIĘTE_TEST=58, USUN_DDL_W_LOCIE=398.
 - PRZED zmianami: 531 wystąpień / 164 pliki / 100 plików usług. PO pierwszej bezpiecznej grupie: 526 / 163 / 99.
 - „Cichy błąd” jest konserwatywnym sygnałem statycznym: blok `catch` w oknie 20 linii przed/24 po DDL. Wymaga ręcznego potwierdzenia przed zmianą.
 
@@ -15,16 +15,6 @@
 |---|---:|---|---|---|---|---|---|
 | server/src/_backup/ts-js-collisions/jobs/aiWatchdog.js | 737 | watchdog_alerts | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
 | server/src/_backup/ts-js-collisions/jobs/aiWatchdog.js | 764 | watchdog_runs | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 314 | assessments | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 338 | NIE_ROZPOZNANO | BRAK | NIE | NIEJEDNOZNACZNY | DO_DECYZJI_PARSER | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 366 | assessment_definitions | server/migrations/20260411_p28_definition_versions.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 387 | assessment_reports | server/migrations/000_initdb_core_tables.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 404 | assessment_decisions | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 421 | assessment_initiative_batches | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 435 | assessment_initiative_links | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 448 | assessment_sessions | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 460 | assessment_user_state | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/controllers/AssessmentController.ts | 472 | assessment_area_assignments | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/controllers/DecisionController.ts | 231 | decision_impacts | server/migrations/292_decision_management.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/controllers/DecisionController.ts | 727 | decision_impacts | server/migrations/292_decision_management.sql | NIE | POSTGRES | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/controllers/InterviewController.ts | 1099 | interview_question_templates | server/migrations/20260719_baseline_gap.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
@@ -373,13 +363,6 @@
 | server/src/services/ai/knowledgeGraphService.ts | 443 | knowledge_graph_relations | server/migrations/20260719_baseline_gap.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/knowledgeIndexer.ts | 271 | knowledge_docs | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/knowledgeIndexer.ts | 287 | knowledge_chunks | server/migrations/000_initdb_core_tables.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 454 | llm_health_events | server/migrations/20260719_baseline_gap.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 491 | llm_providers | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 578 | organization_llm_settings | server/migrations/20260719_baseline_gap.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 591 | llm_tier_assignments | server/migrations/000_z_core_baseline.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 605 | ai_model_overrides | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 619 | organization_provider_settings | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 633 | tier_round_robin_state | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/organizationMemoryStore.ts | 119 | organization_memory | server/migrations/051_memory_system.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/routingRulesService.ts | 84 | llm_routing_rules | server/migrations/20260719_baseline_gap.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/aiBudgetService.ts | 16 | ai_budgets | server/migrations/000_z_core_baseline.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
@@ -560,7 +543,7 @@
 ## Pominięte i dlaczego
 
 - 58 wystąpień w testach pozostawiono bez zmian; nie są runtime produkcyjnym.
-- 20 dynamicznych nazw nie rozstrzygnięto automatycznie; wymagają ręcznej analizy, bez zgadywania.
+- 19 dynamicznych nazw nie rozstrzygnięto automatycznie; wymagają ręcznej analizy, bez zgadywania.
 
 ## Twierdzenia niezweryfikowane
 
