@@ -38,7 +38,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
   'EXE-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-24-03' },
   'EXE-OWN-003': { type: 'UNRESOLVED', detail: 'właściciel/nadzorca musi wskazać dopuszczalny dataset Execution i dowód jego pochodzenia; późniejsze commity nie dowodzą odzyskanego seeda ani trzech wymaganych stanów' },
-  'EXE-OWN-005': { type: 'UNRESOLVED', detail: 'brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy' },
+  'EXE-OWN-005': { type: 'SHA', sha: 'aa0cefc347' },
   'EXE-OWN-006': { type: 'SHA', sha: 'b470536a91' },
   'EXE-OWN-007': { type: 'SHA', sha: 'b470536a91' },
   'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy' },
