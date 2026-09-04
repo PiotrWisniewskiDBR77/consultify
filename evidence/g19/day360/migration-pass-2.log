@@ -1,0 +1,7 @@
+2026-09-04 21:36:19:3619 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-04 21:36:19:3619 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-04 21:36:19:3619 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-04 21:36:19:3619 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-04 21:36:19:3619 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+Applying migrations: 0
+✅ Postgres migrations complete
