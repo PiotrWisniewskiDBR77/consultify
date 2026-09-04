@@ -54,7 +54,13 @@ Zgodnie z tabelą licencji warunkowa licencja prezentacji przechodzi więc na `s
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
 
-## R2–R7
+## R2 — jedno źródło tekstów
+
+Dodano `src/services/errors/appErrorCopy.ts`: siedem kodów kanonicznych, bezpieczny fallback nieznanego kodu do `INTERNAL`, odczyt koperty bez pokazywania `message` oraz format identyfikatora zgłoszenia. `errors.app` zawiera oddzielne wartości PL/EN. Realnie montowany `ui/primitives/ErrorState` przyjmuje kopertę w `source`, pokazuje zdanie, działanie i zaznaczalny `correlationId`; nie przyjmuje ani nie renderuje surowego komunikatu z koperty.
+
+Dowód zielony: 11/11 pełnych przypadków w `/private/tmp/cx-day316-front-bledy-artefakty/r2-restored-green.json`. Dowód mutacyjny: po przemianowaniu polskiego bloku `errors` test był czerwony 5/11 PASS, 6/11 FAIL (`r2-red.json`); po przywróceniu kopii wrócił do 11/11 PASS. Mutacja została cofnięta przed commitem.
+
+## R3–R7
 
 W TOKU.
 

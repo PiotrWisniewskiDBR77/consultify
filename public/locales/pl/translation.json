@@ -10,6 +10,39 @@
       "refining": "Ulepszanie..."
     }
   },
+  "errors": {
+    "app": {
+      "reportId": "Identyfikator zgłoszenia",
+      "notFound": {
+        "message": "Nie znaleźliśmy wskazanego elementu.",
+        "action": "Sprawdź adres albo wróć do poprzedniego widoku."
+      },
+      "validation": {
+        "message": "Niektóre podane informacje wymagają poprawy.",
+        "action": "Sprawdź oznaczone pola i spróbuj ponownie."
+      },
+      "unauthorized": {
+        "message": "Twoja sesja nie pozwala wykonać tej czynności.",
+        "action": "Zaloguj się ponownie i spróbuj jeszcze raz."
+      },
+      "forbidden": {
+        "message": "Nie masz dostępu do tej czynności.",
+        "action": "Jeśli potrzebujesz dostępu, poproś administratora."
+      },
+      "conflict": {
+        "message": "Ten element zmienił się podczas Twojej pracy.",
+        "action": "Odśwież widok, sprawdź najnowszą wersję i spróbuj ponownie."
+      },
+      "dbError": {
+        "message": "Nie możemy teraz przetworzyć danych.",
+        "action": "Odczekaj chwilę i spróbuj ponownie."
+      },
+      "internal": {
+        "message": "Coś poszło nie tak po naszej stronie.",
+        "action": "Spróbuj ponownie. Jeśli problem wróci, zgłoś go z identyfikatorem poniżej."
+      }
+    }
+  },
   "transformationScenarios": {
     "banner": {
       "title": "Rekomendowany scenariusz transformacji",

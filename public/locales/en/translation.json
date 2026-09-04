@@ -10,6 +10,39 @@
       "refining": "Refining..."
     }
   },
+  "errors": {
+    "app": {
+      "reportId": "Report identifier",
+      "notFound": {
+        "message": "We could not find the requested item.",
+        "action": "Check the address or return to the previous view."
+      },
+      "validation": {
+        "message": "Some of the provided information needs attention.",
+        "action": "Review the marked fields and try again."
+      },
+      "unauthorized": {
+        "message": "Your session does not allow this action.",
+        "action": "Sign in again and retry."
+      },
+      "forbidden": {
+        "message": "You do not have access to this action.",
+        "action": "Ask an administrator for access if you need it."
+      },
+      "conflict": {
+        "message": "The item changed while you were working on it.",
+        "action": "Refresh the view, review the latest version, and try again."
+      },
+      "dbError": {
+        "message": "We could not process the data right now.",
+        "action": "Try again in a moment."
+      },
+      "internal": {
+        "message": "Something went wrong on our side.",
+        "action": "Try again. If the problem continues, report it using the identifier below."
+      }
+    }
+  },
   "transformationScenarios": {
     "banner": {
       "title": "Recommended transformation scenario",
