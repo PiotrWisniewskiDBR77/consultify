@@ -1,0 +1,78 @@
+{
+  "jezyk": "pl",
+  "szerokosc": 1440,
+  "wysokosc": 900,
+  "osiadPoRozwinieciu": 0,
+  "klikPoRozwinieciu": false,
+  "cofnijJesliSkraca": false,
+  "wyniki": [
+    {
+      "ekran": "karta-initiative",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r2-off-pusty/karta-initiative__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Skrócenie przezbrojeń linii pakowania L3 (SMED)\nW realizacji\nZapisano\nSekcje\nEdycja\nPodgląd\nWypełnij z AI\nAnalizuj z AI\nZAKRES I PLAN\nZakres inicjatywy\nZadania\n9\nHarmonogram\nProdukty i kamienie milowe\n5\nZależności\nDECYZJE I RYZYKO\nDecyzje\n3\nRyzyko i RAID\n5\nBramy\nSugerowane zmiany\nDziennik zmian\nREZULTATY\nKryteria sukcesu\nKPI i korzyści\nOKR\nHipoteza\nAnaliza finansowa\nWpływ finansowy\nLUDZIE\nZespół\nWłaściciele strumieni\nRACI\n5\nZAPISY\nZasoby\nZałączniki i powiązania\nUżyte w (powiązania)\nArtefakty\nWnioski i lekcje\nZakres inicjatywy\nPROBLEM\n\nJaki problem rozwiązuje ta inicjatywa\n\nOPIS ROZWIĄZANIA\n\nProponowane podejście i sposób realizacji\n\nKOSZT BEZCZYNNOŚCI\n\nKonsekwencje braku działania\n\nKONTEKST RYNKOWY\n\nOtoczenie rynkowe, konkurencja i trendy\n\nAKCJE\n0\nZapytaj Teresę o tę inicjatywę\n\nW trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie inicjatywę — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\t\nW realizacji\n\nFaza\t\nRealizacja\n\nNastępna brama\t\nZakończenie realizacji\n\nPriorytet\t\nWysoki\n\nWłaściciel\t\nMarek Zieliński\n\nTermin\t\n15 lis 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\nKOMENTARZE\n4\nHISTORIA\n6",
+      "hasResultMarker": null,
+      "obrazJasnosc": 242.74573846469906,
+      "zliczenia": [
+        {
+          "nazwa": "pozycje",
+          "css": "[data-nmode-section-item]",
+          "ile": 24,
+          "teksty": [
+            "Zakres inicjatywy",
+            "Zadania9",
+            "Harmonogram",
+            "Produkty i kamienie milowe5",
+            "Zależności",
+            "Decyzje3",
+            "Ryzyko i RAID5",
+            "Bramy",
+            "Sugerowane zmiany",
+            "Dziennik zmian",
+            "Kryteria sukcesu",
+            "KPI i korzyści",
+            "OKR",
+            "Hipoteza",
+            "Analiza finansowa",
+            "Wpływ finansowy",
+            "Zespół",
+            "Właściciele strumieni",
+            "RACI5",
+            "Zasoby",
+            "Załączniki i powiązania",
+            "Użyte w (powiązania)",
+            "Artefakty",
+            "Wnioski i lekcje"
+          ]
+        },
+        {
+          "nazwa": "grupy",
+          "css": "[data-nmode-section-group]",
+          "ile": 5,
+          "teksty": [
+            "Zakres i plan",
+            "Decyzje i ryzyko",
+            "Rezultaty",
+            "Ludzie",
+            "Zapisy"
+          ]
+        }
+      ],
+      "localStorageState": {
+        "ff.cardContract": "1",
+        "ff.initiativeCardContract": null,
+        "initiative:nmode:section-order:v2:init-smed-linia-pakowania": null
+      },
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [],
+  "porownania": []
+}

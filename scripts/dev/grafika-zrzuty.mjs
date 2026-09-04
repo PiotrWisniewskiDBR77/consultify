@@ -314,6 +314,14 @@ const ZLICZ = arg('zlicz', '')
     return { nazwa: para.slice(0, i).trim(), css: para.slice(i + 1).trim() };
   });
 
+// Dyżur 338: opt-in zapis wybranych kluczy localStorage w tym samym momencie,
+// w którym narzędzie liczy DOM i wykonuje zrzut. Domyślnie puste, więc
+// wszystkie zastane wywołania zachowują się bit w bit jak wcześniej.
+const LOCALSTORAGE_KEYS = arg('localstorage', '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
   process.exit(1);
@@ -611,6 +619,13 @@ for (const ekran of EKRANY) {
           ZLICZ
         );
       }
+      const localStorageState =
+        LOCALSTORAGE_KEYS.length > 0
+          ? await page.evaluate(
+              (keys) => Object.fromEntries(keys.map((key) => [key, window.localStorage.getItem(key)])),
+              LOCALSTORAGE_KEYS
+            )
+          : undefined;
       if (WYNIK_SELEKTOR.length > 0) {
         hasResultMarker = await page.evaluate(
           (sels) => sels.every((s) => document.querySelector(s) !== null),
@@ -634,6 +649,7 @@ for (const ekran of EKRANY) {
         hasResultMarker,
         obrazJasnosc,
         zliczenia,
+        localStorageState,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
         sekcjeCofniete: ROZWIN_SEKCJE && COFNIJ_JESLI_SKRACA ? sekcjeCofniete : undefined,

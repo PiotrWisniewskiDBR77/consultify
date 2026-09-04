@@ -214,12 +214,13 @@ import {
 // (cardContract.types.ts) — patrz sections/initiativeCardContract.ts. Za flagą (default OFF).
 import {
   INITIATIVE_CARD_RENDER_IDS,
+  INITIATIVE_CONTRACT_HIDDEN_SEED,
   INITIATIVE_CORE_BOARD_IDS,
   INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS,
   isInitiativeCardContractEnabled,
-  INITIATIVE_CONTRACT_HIDDEN_SEED,
-  uporzadkujSekcjeBoarduInicjatywy,
   sekcjeBoarduPozaKontraktem,
+  uporzadkujSekcjeBoarduInicjatywy,
+  wybierzDostepneSekcjeBoarduInicjatywy,
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
@@ -5288,6 +5289,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     return enabledIds;
   }, [initiativeTemplate, templateToNModeSectionIds]);
 
+  // DEC-388: default OFF. Szablon zachowuje swoją rolę, ale za flagą nie
+  // może już usuwać pozycji z nawigacji karty.
+  const initiativeSectionsCompleteEnabled = useMemo(() => {
+    try {
+      const raw = import.meta.env.VITE_VF1_INITIATIVE_SECTIONS_COMPLETE;
+      return ['1', 'true', 'on'].includes(String(raw ?? '').trim().toLowerCase());
+    } catch {
+      return false;
+    }
+  }, []);
+
   const initiativeNSections: NModeSection[] = useMemo(() => {
     const allSections: NModeSection[] = [
       // --- Definition (always at top) ---
@@ -5541,11 +5553,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         group: groupLabels[groupIndexById[section.id] ?? 4],
       }));
 
-    if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
-      return withGroup(allSections);
-    }
-
-    return withGroup(allSections.filter((section) => enabledNModeSectionIds.has(section.id)));
+    return withGroup(
+      wybierzDostepneSekcjeBoarduInicjatywy(
+        allSections,
+        enabledNModeSectionIds,
+        initiativeSectionsCompleteEnabled
+      )
+    );
   }, [
     isPolish,
     tasks.length,
@@ -5561,6 +5575,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     linkedItems.length,
     relatedArtifacts.length,
     enabledNModeSectionIds,
+    initiativeSectionsCompleteEnabled,
     pendingSuggestedChangesCount,
   ]);
 
