@@ -1,8 +1,10 @@
 # CODEX — DYŻUR 357 — PAKIET PRZELOTU: POPRAWKA
 
-Data: 2026-09-04  
-Marker: `29fcbd4de20ca26d2febc50d9455128cab47ffce`  
-Gałąź: `codex/day357-pakiet-poprawka-20260904`  
+Data: 2026-09-04
+
+Marker: `29fcbd4de20ca26d2febc50d9455128cab47ffce`
+
+Gałąź: `codex/day357-pakiet-poprawka-20260904`
 Zakres: dokumentacyjny; zero zmian kodu, testów i `MODULE_ACCEPTANCE.md`.
 
 ## Wynik
@@ -151,4 +153,4 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 - R2: `a267d9df58`
 - R3: `2b77207ee4`
 - R4: `18b7a9dee7`
-- R5: ten commit
+- R5: `7d98b92dc9`
