@@ -1,0 +1,37 @@
+{
+  "marker": "6a4919f72db338e7f49a2cacb3787d20cc649883",
+  "screen": "tools-swot-session-workspace",
+  "sessionId": "sess-demo-1",
+  "selectorCounts": {
+    "off": {
+      "stages": 5,
+      "tiles": 0,
+      "readinessBadges": 0
+    },
+    "on": {
+      "stages": 7,
+      "tiles": 0,
+      "readinessBadges": 0
+    }
+  },
+  "localStorage": {
+    "key": "consultify:toolSession:recoveryDraft:v1:sess-demo-1",
+    "off": null,
+    "on": null
+  },
+  "consoleErrors": {
+    "off": 5,
+    "on": 5,
+    "classification": "mock harness 404s; not an acceptance screenshot"
+  },
+  "deadBranch": {
+    "workSectionDeclarationLine": 1115,
+    "strategicBranchReturnLines": "1722-1923",
+    "defaultSectionsConsumerLine": 1931,
+    "readinessRenderLines": "1136-1148"
+  },
+  "rawArtifactsOutsideRepository": [
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r1-off.json",
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r1-on.json"
+  ]
+}

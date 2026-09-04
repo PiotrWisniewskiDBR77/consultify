@@ -113,6 +113,9 @@ const patchApi = () => {
   api.updateToolSession = async () => SESSION_ROW;
   api.createToolSession = async () => SESSION_ROW;
   api.getToolGeneratedInitiatives = async () => [];
+  api.listAssessmentsLegacy = async () => ({ items: [], total: 0, limit: 100, offset: 0 });
+  api.getAssessmentReports = async () => [];
+  api.getKnownTools = async () => ({ items: [], total: 0, limit: 50, offset: 0 });
   api.getUsers = async () => USERS;
   api.getInitiativesByStatus = async () => [];
   api.getInitiativeById = async () => null;

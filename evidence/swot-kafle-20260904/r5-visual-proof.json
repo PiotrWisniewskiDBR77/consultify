@@ -1,0 +1,52 @@
+{
+  "sessionId": "sess-demo-1",
+  "screenshots": {
+    "offLight": {
+      "sha256": "5b9a884c63bf6f0efe4ab6c3b5de16673ba919f6ded777d875f01a5b409f1d16",
+      "meanLuma": 245.68662286786264,
+      "stages": 5,
+      "tiles": 5,
+      "readinessBadges": 1,
+      "consoleErrors": 0
+    },
+    "offDark": {
+      "sha256": "b588ee9bd1d8058af5618467f2732328c534bec4d5398aa7b1b6c8fb2970f41a",
+      "meanLuma": 28.45653952353395,
+      "stages": 5,
+      "tiles": 5,
+      "readinessBadges": 1,
+      "consoleErrors": 0
+    },
+    "onLight": {
+      "sha256": "7dbaaaa31d8035672c385ae6933978b5ac686661f105da3fe6f7780adf93cd70",
+      "meanLuma": 245.43634694405864,
+      "stages": 7,
+      "tiles": 7,
+      "readinessBadges": 1,
+      "consoleErrors": 0
+    },
+    "onDark": {
+      "sha256": "ed85701e344f72ed5b29043d9e9e1fbe0d848edfaf973e4bf3c52e71edb48ee8",
+      "meanLuma": 28.261638016975308,
+      "stages": 7,
+      "tiles": 7,
+      "readinessBadges": 1,
+      "consoleErrors": 0
+    }
+  },
+  "visualInspection": {
+    "performed": true,
+    "clippedTiles": 0,
+    "harnessControlsVisible": false,
+    "sectionsStillCollapsed": 0,
+    "lightDarkByteIdentical": false,
+    "offOnByteIdentical": false
+  },
+  "rawArtifactsOutsideRepository": [
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r5-off.json",
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r5-on.json",
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r5-off/*.png",
+    "/private/tmp/cx-day344-swot-kafle-artefakty/r5-on/*.png"
+  ],
+  "instrumentNote": "The canonical tool reports 1/2 state pairs because its denominator mixes the state record and luminance record; both images per run are status OK, have the DOM marker, and have zero console or HTTP errors."
+}
