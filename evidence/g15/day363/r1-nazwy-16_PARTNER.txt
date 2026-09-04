@@ -1,0 +1,9 @@
+EarningsSection V8 payout request seam prefers governed payout history read before legacy fallback
+EarningsSection V8 payout request seam falls back to legacy payout history read on bounded compatibility statuses
+EarningsSection V8 payout request seam does not expose a payout request mutation even when historical balance is available
+PartnerPortalView company info V8 seam uses the V8 route first for company-info updates
+PartnerPortalView company info V8 seam fails closed without a legacy mutation when the governed writer fails
+PartnerPortalView regions V8 seam uses the V8 route first for region updates
+PartnerPortalView regions V8 seam fails closed without a legacy mutation when the governed writer fails
+PartnerPortalView specializations V8 seam uses the V8 route first for specialization updates
+PartnerPortalView specializations V8 seam fails closed without a legacy mutation when the governed writer fails

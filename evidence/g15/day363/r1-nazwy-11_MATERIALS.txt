@@ -1,0 +1,2 @@
+DocumentStudioDocumentPanel uses the Artifact Studio shell without a local Teresa or legacy right rail
+PresentationStudioLayoutCapacityAdminPanel — loadWarning renders a rose loadWarning banner for `signature_mismatch` (tampered persistence file)

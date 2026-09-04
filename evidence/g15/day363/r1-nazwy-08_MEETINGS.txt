@@ -1,0 +1,3 @@
+MeetingHub (smoke) shows an honest error + retry when the operator brief fetch fails (500)
+MeetingHub (smoke) surfaces a 404 brief as an honest error, not as silent emptiness
+MeetingObjectPage Decyzje i działania section shows meeting decisions and follow-ups

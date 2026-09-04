@@ -1,0 +1,7 @@
+AdminAuditExportHistoryPanel renders real receipt
+Admin day-2 i18n contract keeps the exact 26-panel denominator free of generated textN keys and Polish fallbacks
+AdminDependenciesPanel renders cached dependency status without claiming health
+AdminJobsPanel renders tenant jobs without mutation actions
+AdminSeatsLicencesPanel renders configuration, history and honest purchase boundary
+AdminSeatsLicencesPanel saves auto-add through the readback API
+AdminSecurityAlertsPanel renders and resolves with server readback

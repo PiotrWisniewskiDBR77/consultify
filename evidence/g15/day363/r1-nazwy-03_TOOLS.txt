@@ -1,0 +1,1 @@
+ToolCanvas — guard for unresolved steps never renders the raw "not implemented" string for an unknown step

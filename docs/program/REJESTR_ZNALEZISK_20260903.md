@@ -370,3 +370,9 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 |---|---|---|---|---|
 | AD1 | Archeologia 13 pozycji dała 2 kwalifikowane SHA i 11 pozycji wymagających decyzji właściciela; mianownik pozostał 121. | G20 ma teraz dowód we wszystkich 16 modułach, ale nie może brzmieć jak zaliczenie: G19 pozostaje 16/16 NOT_PROVEN, a P0/P1 ma 11 BLOKUJE. | ENTRY_GATE_MEASURED / BLOCKED | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY359_G20_ZAMKNIECIE_REPORT.md`, `evidence/g20/day359/` |
 | AD2 | Dane rozstrzygnięć i funkcje miernika są w jednym pliku. | Recenzent merytoryczny ma techniczny dostęp do bezpieczników; przygotowano nienałożony rozdział danych. | OTWARTE / PATCH DO DECYZJI | `evidence/g20/day359/r5-rozdzial-danych.patch` |
+## AE. Dyżur 363 — numeral G15 nie ma jednej jednostki
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AE1 | Dziesięć podtypów `RED_LEGACY_N` sumuje się do 26, lecz treść wierszy opisuje 66 czerwieni; `N` oznacza przypadki, rodziny albo pliki. Dwa świeże przebiegi przy tych samych 4230 nazwach dają 58 i 57 czerwieni: 53 stabilne realne, 5 nieorzeczonych, 0 bieżących artefaktów; Finance ma 924/924. | Planowanie po numeralu zaniża historyczny mianownik o 40; jedna nazwa Menu 3 jest niestabilna. Potrzebna decyzja właściciela o trzech polach; propozycja długu Finance: `DEC-394`. | DO DECYZJI WŁAŚCICIELA | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY363_G15_ILE_REALNE_REPORT.md`, `evidence/g15/day363/` |
+| AE2 | Trafiona mutacja `requireActiveMembership.ts:34` zachowała 68 nazw/3 pakiety i dała 21 czerwieni; po cofnięciu wróciło 68/68. Odrębny strażnik `requireFinanceEditorMembership` nie był objęty. | Pakiet financeValue broni właściwej bramki, ale dowodu nie wolno rozszerzać na drugi strażnik roli. | ZAMKNIĘTE dla `requireActiveMembership`; NIEZWERYFIKOWANE dla roli editora | `evidence/g15/day363/r3-mutacja-czerwone-nazwy.txt` |
