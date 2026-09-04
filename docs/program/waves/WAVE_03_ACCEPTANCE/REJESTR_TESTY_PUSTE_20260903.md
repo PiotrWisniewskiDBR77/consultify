@@ -2,8 +2,8 @@
 
 ## Mianownik i metoda
 
-- Pliki testowe: 5383.
-- Bloki `it/test` rozpoznane przez AST: 42413.
+- Pliki testowe: 5384.
+- Bloki `it/test` rozpoznane przez AST: 42414.
 - Kandydaci ze słabymi-only asercjami i sygnałem sieci/bazy: 21.
 - Pliki pominięte z powodu błędu odczytu/parsera: 0.
 - `PUSTY` wymaga dowodu mutacyjnego; skaner nigdy nie nadaje tej klasy na podstawie tekstu.
@@ -87,3 +87,14 @@ Nie uruchamiano CI i nie dowodzono dla każdego pliku, że odpowiadająca zmienn
 - Żaden kandydat nie ma klasy `PUSTY`, dopóki test nie przejdzie po celowanej mutacji funkcji produkcyjnej.
 - Statyczny sygnał fetch/bazy nie dowodzi, że wywołanie jest osiągalne ani że globalna atrapa obsłużyła żądanie.
 - Klasa `UZASADNIONY` opisuje zgodność nazwy z testem smoke, nie dowód zachowania produktu.
+
+## R3/R4 — stan dowodów i wzmocnień
+
+- 0 bloków sklasyfikowano jako `PUSTY`, ponieważ nie wykonano wymaganych 20 celowanych mutacji funkcji produkcyjnych.
+- 20 bloków `SŁABY` i 1 `UZASADNIONY` pozostają do weryfikacji/wzmocnienia; nie zmieniono ich w `test.todo`, ponieważ Z35 jednocześnie zakazuje `.todo`.
+- Nie skasowano ani nie osłabiono żadnego testu.
+
+## Pięć twierdzeń DEC-2026-08-28-186
+
+- Cztery wskazane pliki uruchomione razem z `--retry=0`: 35/35 przypadków PASS.
+- Pięć dawniej czerwonych twierdzeń (clone-on-write, bulk revoke, DLP x2, incident create) jest obecnie zielonych na markerze; bez mutacji produktu nie stanowi to ponownego dowodu naprawy.

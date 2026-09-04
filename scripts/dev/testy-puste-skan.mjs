@@ -97,6 +97,13 @@ const report = [
   '- Żaden kandydat nie ma klasy `PUSTY`, dopóki test nie przejdzie po celowanej mutacji funkcji produkcyjnej.',
   '- Statyczny sygnał fetch/bazy nie dowodzi, że wywołanie jest osiągalne ani że globalna atrapa obsłużyła żądanie.',
   '- Klasa `UZASADNIONY` opisuje zgodność nazwy z testem smoke, nie dowód zachowania produktu.', '',
+  '## R3/R4 — stan dowodów i wzmocnień', '',
+  '- 0 bloków sklasyfikowano jako `PUSTY`, ponieważ nie wykonano wymaganych 20 celowanych mutacji funkcji produkcyjnych.',
+  '- 20 bloków `SŁABY` i 1 `UZASADNIONY` pozostają do weryfikacji/wzmocnienia; nie zmieniono ich w `test.todo`, ponieważ Z35 jednocześnie zakazuje `.todo`.',
+  '- Nie skasowano ani nie osłabiono żadnego testu.', '',
+  '## Pięć twierdzeń DEC-2026-08-28-186', '',
+  '- Cztery wskazane pliki uruchomione razem z `--retry=0`: 35/35 przypadków PASS.',
+  '- Pięć dawniej czerwonych twierdzeń (clone-on-write, bulk revoke, DLP x2, incident create) jest obecnie zielonych na markerze; bez mutacji produktu nie stanowi to ponownego dowodu naprawy.', '',
 ];
 fs.writeFileSync(reportPath, report.join('\n'));
 process.stdout.write(`${JSON.stringify({ files: testFiles.length, blocks, candidates: rows.length, classes: Object.fromEntries(['SŁABY','UZASADNIONY','PUSTY'].map((name) => [name, rows.filter((row) => row.className === name).length])), skipped: skipped.length, gatedFiles: gated.length }, null, 2)}\n`);
