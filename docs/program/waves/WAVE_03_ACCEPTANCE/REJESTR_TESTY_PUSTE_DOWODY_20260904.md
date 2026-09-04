@@ -142,3 +142,12 @@ której odpowiednika-komponentu nie ma w `src/` ani `server/src/`.
 Wynik: **7 REALNYCH DEFEKTÓW, 57 UZASADNIONYCH WZORCÓW**. `InboxTriage` nie może być
 naprawiony w tym dyżurze, ponieważ B.4.3 jawnie wyłącza zapis w `src/components/MyWork/**`;
 pozostaje briefem dla dyżuru 331.
+
+### R2 — naprawa potwierdzonego przykładu
+
+| Plik | Kierunek zielony | Mutacja produktu | Wynik mutacji | Werdykt |
+|---|---|---|---|---|
+| `tests/components/AIChat/MessageBubble.test.tsx` | realny `MessageBubble` renderuje treść; 2/2 PASS | usunięto wyświetlenie `message.content` w produkcie | asercja treści FAIL, drugi przypadek PASS; po `cp` diff produktu pusty | **NAPRAWIONY, NIE PUSTY** |
+
+Pozostałe realne defekty R1 nie są tu oznaczone jako naprawione. `InboxTriage` jest poza
+licencją zapisu B.4.3; pięć pozostałych wymaga osobnych adaptacji kontraktów i mutacji.
