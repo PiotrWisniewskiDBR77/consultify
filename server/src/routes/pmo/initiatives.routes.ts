@@ -113,7 +113,7 @@ function buildPmoInitiativesFailClosedError(
 
 /**
  * INFO-DISCLOSURE GUARD (M13): legacy handlers in this file historically echoed
- * raw `err.message` into 500 bodies (`{ error, ...mapAppErrorResponse(err, undefined, 'message') }`), leaking
+ * raw `err.message` into 500 bodies (`{ error, message: err.message }`), leaking
  * DB/driver/schema internals to clients. This helper preserves the EXACT legacy
  * response shape the frontend expects (`{ error, message, code }`) but swaps the
  * leaky raw value for a stable generic message + code, and logs the real error

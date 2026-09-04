@@ -460,7 +460,7 @@ router.post(
         error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
       ) {
         return res.status(429).json({
-          ...mapAppErrorResponse(error, undefined, 'error') || 'Storage quota exceeded',
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
           document: error.document || null,
           quota: error.quota || null,

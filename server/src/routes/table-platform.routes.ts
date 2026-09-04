@@ -4945,7 +4945,7 @@ scimRouter.get('/Users', async (req: Request, res: Response) => {
     const result = await scimService.listUsers(organizationId, filter, startIndex, count);
     return res.status(200).json(result);
   } catch (err) {
-    logger.error('[SCIM] listUsers failed', { ...mapAppErrorResponse((err as Error), undefined, 'error') });
+    logger.error('[SCIM] listUsers failed', { error: (err as Error).message });
     return res.status(500).json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
       detail: 'Internal server error',
@@ -4966,7 +4966,7 @@ scimRouter.get('/Users/:id', async (req: Request, res: Response) => {
     }
     return res.status(200).json(user);
   } catch (err) {
-    logger.error('[SCIM] getUser failed', { ...mapAppErrorResponse((err as Error), undefined, 'error') });
+    logger.error('[SCIM] getUser failed', { error: (err as Error).message });
     return res.status(500).json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
       detail: 'Internal server error',
@@ -4981,7 +4981,7 @@ scimRouter.post('/Users', async (req: Request, res: Response) => {
     const user = await scimService.createUser(organizationId, req.body);
     return res.status(201).json(user);
   } catch (err) {
-    logger.error('[SCIM] createUser failed', { ...mapAppErrorResponse((err as Error), undefined, 'error') });
+    logger.error('[SCIM] createUser failed', { error: (err as Error).message });
     return res.status(500).json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
       detail: 'Internal server error',
@@ -5002,7 +5002,7 @@ scimRouter.put('/Users/:id', async (req: Request, res: Response) => {
     }
     return res.status(200).json(user);
   } catch (err) {
-    logger.error('[SCIM] updateUser failed', { ...mapAppErrorResponse((err as Error), undefined, 'error') });
+    logger.error('[SCIM] updateUser failed', { error: (err as Error).message });
     return res.status(500).json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
       detail: 'Internal server error',
@@ -5016,7 +5016,7 @@ scimRouter.delete('/Users/:id', async (req: Request, res: Response) => {
     await scimService.deactivateUser(req.params.id);
     return res.status(204).send();
   } catch (err) {
-    logger.error('[SCIM] deactivateUser failed', { ...mapAppErrorResponse((err as Error), undefined, 'error') });
+    logger.error('[SCIM] deactivateUser failed', { error: (err as Error).message });
     return res.status(500).json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
       detail: 'Internal server error',

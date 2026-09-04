@@ -373,7 +373,7 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: 'NOT_FOUND' });
     return;
   }
   if (err instanceof OkrCycleProgramNotActiveError) {

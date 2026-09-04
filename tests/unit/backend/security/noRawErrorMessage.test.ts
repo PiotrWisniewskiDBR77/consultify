@@ -4,8 +4,21 @@ import { extname, join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const routesRoot = resolve(process.cwd(), 'server/src/routes');
-const rawResponseProperty =
-  /(?:error|message):\s*(?:\((?:err|error) as Error\)|(?:err|error|e))\.message/g;
+
+// Dyzur 296 naprawil TYLKO ten wariant (pola `error`/`message` z `err`/`error`/`e` bez castu `e`).
+const day296Pattern = /(?:error|message):\s*(?:\((?:err|error) as Error\)|(?:err|error|e))\.message/;
+// Pelna rodzina wyciekow: dochodzi cast `(e as Error)` oraz pole `details`.
+const fullFamilyPattern =
+  /(?:error|message|details):\s*(?:\((?:err|error|e) as Error\)|(?:err|error|e))\.message/;
+
+// Wyciek liczy sie tylko w ODPOWIEDZI HTTP. Logger ma prawo (i obowiazek) do surowej tresci,
+// a linie komentarza nie sa kodem.
+function isResponseLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (trimmed.startsWith('*') || trimmed.startsWith('//')) return false;
+  if (/logger\.\w+\(/.test(trimmed) && !/res\.|\.json\(/.test(trimmed)) return false;
+  return true;
+}
 
 function routeFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -13,20 +26,41 @@ function routeFiles(directory: string): string[] {
     if (entry.isDirectory()) {
       return entry.name === '__tests__' ? [] : routeFiles(path);
     }
-    return extname(entry.name) === '.ts' ? [path] : [];
+    return extname(entry.name) === '.ts' && !/\.(?:test|spec)\.ts$/.test(entry.name) ? [path] : [];
+  });
+}
+
+function violations(pattern: RegExp): string[] {
+  return routeFiles(routesRoot).flatMap((file) => {
+    const lines = readFileSync(file, 'utf8').split('\n');
+    const out: string[] = [];
+    let loggerWindow = 0;
+    lines.forEach((line, index) => {
+      if (/logger\.\w+\(/.test(line)) loggerWindow = 3;
+      if (pattern.test(line) && isResponseLine(line)) {
+        const insideLoggerCall = loggerWindow > 0 && !/res\.|\.json\(/.test(line);
+        if (!insideLoggerCall) out.push(`${relative(process.cwd(), file)}:${index + 1}:${line.trim()}`);
+      }
+      if (loggerWindow > 0) loggerWindow -= 1;
+    });
+    return out;
   });
 }
 
 describe('raw route error response guard', () => {
-  it('keeps direct err.message response properties at baseline zero', () => {
-    const violations = routeFiles(routesRoot).flatMap((file) => {
-      const source = readFileSync(file, 'utf8');
-      return [...source.matchAll(rawResponseProperty)].map((match) => {
-        const line = source.slice(0, match.index).split('\n').length;
-        return `${relative(process.cwd(), file)}:${line}:${match[0]}`;
-      });
-    });
+  it('keeps the day-296 err.message response family at zero', () => {
+    const found = violations(day296Pattern);
+    expect(found, found.join('\n')).toEqual([]);
+  });
 
-    expect(violations, violations.join('\n')).toEqual([]);
+  // Odbior 04.09: dyzur 296 zamknal jedna galaz rodziny. Wariant `(e as Error)` oraz pole
+  // `details` nigdy nie byly objete ani codemodem, ani pierwotnym guardem 312 — to dlug
+  // policzony, nie naprawiony. Ratchet pilnuje, zeby nie rosl.
+  const REMAINING_LEAK_BASELINE = 35;
+  it('does not grow the remaining (e as Error) / details leak debt', () => {
+    const found = violations(fullFamilyPattern);
+    expect(found.length, `dlug wyciekow wzrosl:\n${found.join('\n')}`).toBeLessThanOrEqual(
+      REMAINING_LEAK_BASELINE
+    );
   });
 });
