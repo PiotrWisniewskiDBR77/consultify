@@ -2,9 +2,9 @@
 
 ## Mianownik i metoda
 
-- Pliki testowe: 5404.
-- Bloki `it/test` rozpoznane przez AST: 42477.
-- Kandydaci ze słabymi-only asercjami i sygnałem sieci/bazy: 21.
+- Pliki testowe: 5403.
+- Bloki `it/test` rozpoznane przez AST: 42474.
+- Kandydaci ze słabymi-only asercjami i sygnałem sieci/bazy: 17.
 - Pliki pominięte z powodu błędu odczytu/parsera: 0.
 - `PUSTY` wymaga dowodu mutacyjnego; skaner nigdy nie nadaje tej klasy na podstawie tekstu.
 
@@ -27,12 +27,8 @@
 | E0013 | tests/integration/pmo-project-members.integration.test.ts | 115 | should include all object types in RACI matrix | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
 | E0014 | tests/integration/services/workbook.p23ext.test.ts | 374 | GET /workbook/list returns workbook list | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
 | E0015 | tests/unit/backend/aiContextBuilder.test.ts | 68 | should build complete context with all layers | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0016 | tests/unit/backend/cron/billingCron.test.ts | 111 | should handle database errors | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0017 | tests/unit/backend/cron/billingCron.test.ts | 119 | should continue processing even if one org fails | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0018 | tests/unit/backend/siemService.test.ts | 232 | should allow overriding axios | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0019 | tests/unit/services/api-extensions.test.ts | 18 | should retry failed requests | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0020 | tests/unit/services/api-extensions.test.ts | 34 | should timeout long-running requests | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
-| E0021 | tests/unit/services/scimService.test.ts | 114 | should create a new group | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
+| E0016 | tests/unit/backend/siemService.test.ts | 232 | should allow overriding axios | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
+| E0017 | tests/unit/services/scimService.test.ts | 114 | should create a new group | SŁABY | Wyłącznie słabe asercje po sygnale sieci/bazy; bez mutacji nie wolno nazwać PUSTY. | DO WZMOCNIENIA / WERYFIKACJI MUTACYJNEJ |
 
 ## Podmiot testu zdefiniowany lokalnie
 
