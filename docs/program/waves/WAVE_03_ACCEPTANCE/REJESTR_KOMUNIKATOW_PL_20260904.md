@@ -3,6 +3,7 @@
 | Kod błędu | Trasa | Z językiem polskim | Bez nagłówka | `errorCode` przed/po | Commit |
 | --- | --- | --- | --- | --- | --- |
 | `PROGRAM_NOT_ACTIVE` | `POST /api/vnext/results/okr/cycles` | 409, tekst angielski — czerwony kontrakt | 409, tekst angielski | bez zmiany | R2 |
+| `COMMAND_CAPABILITY_DENIED` | warstwa prezentacji koperty błędu | komunikat serwera o braku uprawnień, nie awaria systemu | angielski fallback tylko przy braku tekstu serwera | bez zmiany w kopercie | R3 |
 
 ## Dług tras z `undefined`
 

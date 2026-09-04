@@ -124,7 +124,52 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail
 ani zaproszenie kalendarzowe nie zostało wysłane.
 
+## R3 — kod spoza siedmiu nie udaje awarii systemu
+
+Werdykt: ZROBIONE w zakresie licencji. `ApiError` zachowuje niepusty `message`/`error` z koperty
+serwera zamiast twardego `defaultError`. `getAppErrorCopy` dla niekanonicznego kodu pokazuje ten
+komunikat, ale nadal zwraca `INTERNAL` jako ostateczny kod prezentacyjny i zachowuje angielski
+fallback, gdy serwer nie poda tekstu. Pole `errorCode` w źródłowej kopercie nie jest zmieniane.
+
+Dowód zielony: `r3-mutation-restored-green.json` — 16/16. Nowe przypadki:
+
+- `COMMAND_CAPABILITY_DENIED zachowuje komunikat serwera zamiast udawać INTERNAL`;
+- `nieznany kod bez komunikatu serwera zachowuje angielski fallback INTERNAL`.
+
+Dowód mutacyjny: skopiowano zielony `appErrorCopy.ts` do scratch, usunięto wybór
+`serverMessage`, uruchomiono tę samą suitę i uzyskano 15/16: nowy przypadek zobaczył
+`Coś poszło nie tak po naszej stronie.` zamiast komunikatu o braku uprawnień. Plik przywrócono
+przez `cp`; `diff -u` kopii i przywróconego pliku był pusty; ponowny przebieg dał 16/16.
+
+Pułapka `react-i18next`: istniejąca suita jawnie wykonuje
+`vi.mock('react-i18next', async () => await vi.importActual('react-i18next'))`, ładuje realne
+pliki PL/EN i inicjuje realne i18n. Nowe przypadki biegną w tej samej suicie, więc nie korzystają
+z globalnej atrapy `tests/setup.ts`. Dodatkowo test fallbacku podaje funkcję zwracającą dokładnie
+wartość domyślną, co niezależnie dowodzi zachowania angielskiej ostatniej deski ratunku.
+
+Pakiet R3 jest czysto jednostkowy: nie leżą na jego ścieżce bramki (a), (b) ani (d), nie otwiera
+bazy (c) i został uruchomiony z `RUN_DB_TESTS=0 MOCK_DB=true`. Dowodzi selekcji komunikatu i
+renderowania przez realne i18n, nie dowodzi produkcyjnego HTTP. Dowód HTTP pozostaje w R2 i jest
+celowo czerwony z powodu granicy licencji.
+
+Typecheck: `npx tsc --noEmit --pretty false` nie jest PASS — proces Node zakończył się awarią
+pamięci i stackiem V8. Kod wyjścia potoku `tee | tail` był 0, lecz nie został uznany za wynik
+kompilatora. Artefakt: `r3-tsc.log`.
+
+## Pomiar nazw testów przed/po
+
+Przed: 159 pełnych nazw (145 czerwonych zastanych testów tras + 14 zielonych frontu). Po: 163
+pełne nazwy. `nazwy.diff` zawiera dokładnie cztery nazwy dodane: dwa przypadki R2 i dwa przypadki
+R3; nazw znikniętych: 0. Zastane 145 testów tras pozostało czerwone przed i po z tego samego
+powodu — wymuszona realna bramka członkostwa wobec atrap auth w minimalnym routerze.
+
+Liście słowników po zmianie: PL 35198, EN 33065 — bez spadku i bez modyfikacji słowników.
+
+Artefakty i sumy SHA-256 znajdują się w
+`/private/tmp/cx-day325-komunikaty-pl-artefakty/SHA256SUMS`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R2 pozostaje celowo czerwony i kod produkcyjny R2 nie został zmieniony z powodu granicy licencji.
-- R3–R6 nie są jeszcze zweryfikowane na etapie commitu R2.
+- Pełny typecheck jest `NOT_PROVEN`: proces Node rozbił się z braku pamięci.
+- R4–R6 nie są jeszcze zweryfikowane na etapie commitu R3.

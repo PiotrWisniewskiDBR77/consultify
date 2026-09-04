@@ -141,10 +141,11 @@ export class ApiError extends Error {
   readonly data: unknown;
 
   constructor(payload: unknown, fallbackMessage: string, status?: number) {
-    super(fallbackMessage);
-    this.name = 'ApiError';
     const envelope =
       payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
+    super(serverMessage || fallbackMessage);
+    this.name = 'ApiError';
     this.errorCode =
       String(envelope.errorCode ?? 'INTERNAL')
         .trim()
