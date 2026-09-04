@@ -2,8 +2,8 @@
 
 ## Mianownik i metoda
 
-- Pliki testowe: 5384.
-- Bloki `it/test` rozpoznane przez AST: 42414.
+- Pliki testowe: 5399.
+- Bloki `it/test` rozpoznane przez AST: 42458.
 - Kandydaci ze słabymi-only asercjami i sygnałem sieci/bazy: 21.
 - Pliki pominięte z powodu błędu odczytu/parsera: 0.
 - `PUSTY` wymaga dowodu mutacyjnego; skaner nigdy nie nadaje tej klasy na podstawie tekstu.
@@ -98,3 +98,26 @@ Nie uruchamiano CI i nie dowodzono dla każdego pliku, że odpowiadająca zmienn
 
 - Cztery wskazane pliki uruchomione razem z `--retry=0`: 35/35 przypadków PASS.
 - Pięć dawniej czerwonych twierdzeń (clone-on-write, bulk revoke, DLP x2, incident create) jest obecnie zielonych na markerze; bez mutacji produktu nie stanowi to ponownego dowodu naprawy.
+
+## Uzupełnienie z odbioru adwersaryjnego (04.09, Opus) — dowody mutacyjne, których dyżur nie wykonał
+
+Skaner nigdy nie nadaje klasy `PUSTY` z tekstu, więc kolumna `PUSTY` w tabeli wyżej stoi na 0.
+Odbiorca wykonał 5 mutacji funkcji produkcyjnych i rozstrzygnął:
+
+| Kandydat | Mutacja produktu | Wynik | Klasa |
+|---|---|---|---|
+| `scimService.test.ts` | `SCIMService.ts` → `export default {}` | **12/12 PASS** | **PUSTY** |
+| `contentService.test.ts` („should return dashboard data”) | funkcja zwraca `{-999,-999}` | **PASS** | **PUSTY** |
+| `billingCron` | mutacja funkcji | test czerwieni | NIE pusty |
+| `siemService` | mutacja funkcji | test czerwieni | NIE pusty |
+| `chatPolicyGateway` | mutacja funkcji | test czerwieni | NIE pusty (broni tylko literału — produkcja bezwarunkowo dopisuje dwa napisy do listy, nie ma tam egzekucji do zmutowania) |
+
+Ekstrapolacja odbiorcy: rzędu **8 pustych z 21** kandydatów.
+
+### Ślepa plama skanera (poza zasięgiem obecnej heurystyki)
+- **267 plików / 1766 bloków** bez żadnego wiązania z produktem — skaner ich nie widzi, bo szuka
+  sygnału sieci/bazy.
+- **13 plików definiuje PODMIOT TESTU wewnątrz pliku testu** (np. `const MessageBubble = () =>
+  <div data-testid=... />`) — test renderuje własną atrapę i nie dotyka produktu w ogóle.
+- `tests/unit/services/api-extensions.test.ts` **testuje moduł, którego w repo nie ma** — `find`
+  po `*api-extensions*` w `src/` i `server/` zwraca pustkę.
