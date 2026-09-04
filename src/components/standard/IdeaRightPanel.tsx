@@ -423,6 +423,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       context="idea"
       language={isPolish ? 'pl' : 'en'}
       title={title}
+      ariaLabel={isPolish ? 'Panel narzędzi idei' : 'Idea tools panel'}
       sections={sections}
       legacy={currentPanel}
     />

@@ -37,6 +37,25 @@ describe('Day342 production right-panel wire', () => {
     expect(screen.getByTestId('real-history')).toHaveTextContent('Realna historia idei');
   });
 
+  it('KONTRAKT DLA DYŻURU 345 — keeps one landmark, token width and stable accessible name when ON', () => {
+    const off = render(<IdeaRightPanel {...props} />);
+    expect(off.container.querySelector('aside')).toHaveAttribute(
+      'aria-label',
+      'Panel narzędzi idei'
+    );
+    off.unmount();
+
+    window.localStorage.setItem('ff.ideaNotebookRightPanelPrototype', '1');
+    const on = render(<IdeaRightPanel {...props} />);
+    const asides = on.container.querySelectorAll('aside');
+    expect(asides).toHaveLength(1);
+    expect(asides[0]).toHaveAttribute('aria-label', 'Panel narzędzi idei');
+    expect(on.container.firstElementChild).toHaveStyle({
+      width: 'var(--ntype-right-panel-width)',
+      minWidth: 'var(--ntype-right-panel-width)',
+    });
+  });
+
   it('keeps artifactRightRail superior when both competing flags are ON', () => {
     window.localStorage.setItem('ff.artifact.right_rail', '1');
     window.localStorage.setItem('ff.ideaNotebookRightPanelPrototype', '1');
