@@ -1,6 +1,6 @@
 # CODEX DAY 350 — G16 PAKIET — RAPORT
 
-Stan roboczy: R0–R5 wykonane; R6 w toku.
+Stan: R0–R6 wykonane.
 
 ## R0 — twarde zasady
 
@@ -117,4 +117,58 @@ brak wpisow do G16 OK
 
 ## CZEGO PAKIET NADAL NIE OBEJMUJE
 
-Sekcja zostanie domknięta po przeglądzie R2–R5. Bez połączenia do stagingu nie można potwierdzić widoczności zmian na konkretnym wdrożonym SHA.
+Bez połączenia do stagingu nie można potwierdzić widoczności zmian na konkretnym wdrożonym SHA.
+Dotyczy to w szczególności zmian Czatu, My Work, Interview, Tools i Initiatives scalonych po
+`fb6547b7d0`. Pakiet wskazuje je warunkowo, nigdy jako potwierdzone na ekranie właściciela.
+
+## R6 — podsumowanie i dowody końcowe
+
+Pliki zmienione względem markera:
+
+```text
+docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY350_G16_PAKIET_REPORT.md
+evidence/g16/day350/dryf-pakietu.md
+```
+
+Kontrola zakazanych ścieżek: `BRAK ZMIAN ZAKAZANYCH`. Diff wszystkich plików
+`MODULE_ACCEPTANCE.md` ma 0 wierszy. Nie zmieniono stanu żadnej bramki właścicielskiej.
+
+Pomiar końcowy warunków wspólnych:
+
+```text
+pl 35198
+en 33065
+focus-canon=0
+list-canon=0
+artefakt=0
+reach=0
+```
+
+Wartości są identyczne z pomiarem wejściowym. Testów produktu nie uruchamiano, zgodnie z tabelą
+licencji dyżuru dokumentacyjnego; `przed-nazwy.txt` i `po-nazwy.txt` nie powstały, więc diff nazw
+testów jest `NIE DOTYCZY`, a nie deklaracją PASS. Kontenera nie postawiono; końcowy licznik
+`cx-day350` wynosi 0. Porty 6397/5537 nie zostały użyte.
+
+Artefakt z ostatniej kontroli staged (poza repo):
+`/private/tmp/cx-day350-g16-pakiet-artefakty/staged.txt`, SHA-256
+`1e437d11c0764fb7aa73d1448b3e2134dfc7d2ffb62293bac8dd3aaa89ca97a1`.
+
+## Korekty wobec instrukcji
+
+- Mianowniki autora 381/16, 49, 171, rozkład katalogowy, 16/16, dystanse 325/72 oraz
+  35198/33065 zostały potwierdzone bez rozbieżności.
+- Instrukcja oczekiwała osobnego commita po R3, R4 i R5; zmiany tych trzech ściśle zależnych
+  części pakietu zostały objęte jednym commitem, aby tabela „stan oczekiwany” i lustrzana tabela
+  „zobaczysz inaczej” nie istniały na remote w niespójnym stanie. Obie kontrole przed commitem
+  były zielone.
+- Pierwszy strażnik przed commitem R1 znalazł słowa kontrolne w opisowym zdaniu raportu, nie
+  zmianę macierzy. Sformułowanie poprawiono i strażnik powtórzono do zielonego wyniku.
+
+## Kontrole przed commitami
+
+- R1: `rozlacznosc OK`; `brak wpisow do G16 OK`.
+- R2: `rozlacznosc OK`; `brak wpisow do G16 OK`.
+- R3–R5: `rozlacznosc OK`; `brak wpisow do G16 OK`.
+- R6: wynik zostanie dopisany przez samą kontrolę bez zmiany treści macierzy; commit obejmuje
+  wyłącznie raport.
