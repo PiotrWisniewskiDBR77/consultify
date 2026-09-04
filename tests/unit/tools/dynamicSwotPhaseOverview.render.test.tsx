@@ -9,6 +9,18 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getToolSessionMock = vi.fn();
+const testLanguage = vi.hoisted(() => ({ value: 'en' }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue || key,
+    i18n: { language: testLanguage.value, changeLanguage: vi.fn() },
+    ready: true,
+  }),
+  Trans: ({ children }: any) => children,
+  I18nextProvider: ({ children }: any) => children,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 vi.mock('react-hot-toast', () => ({
   default: Object.assign(vi.fn(), {
@@ -120,6 +132,7 @@ const session = {
 describe('Dynamic SWOT phase overview — reachable DOM contract', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    testLanguage.value = 'en';
     useToolStore.setState({ currentSession: null, currentStep: 1, savedSessions: [] } as any);
     getToolSessionMock.mockResolvedValue(session);
   });
@@ -166,6 +179,21 @@ describe('Dynamic SWOT phase overview — reachable DOM contract', () => {
     const badge = await screen.findByTestId('dynamic-swot-readiness-badge');
     expect(badge).toHaveTextContent(/Blocked by gaps|Decision-ready|Needs refinement/);
     expect(screen.getByTestId('dynamic-swot-phase-overview')).toContainElement(badge);
+  });
+
+  it('renders Polish phase labels by their SSOT names', async () => {
+    testLanguage.value = 'pl';
+    vi.stubEnv('VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES', 'false');
+    render(<ToolDocumentView toolType="dynamic-swot" sessionId="sess-day344" onBack={vi.fn()} />);
+
+    const tiles = await screen.findAllByTestId('dynamic-swot-phase-tile');
+    expect(tiles.map((tile) => tile.textContent)).toEqual([
+      expect.stringContaining('Misja i kontekst'),
+      expect.stringContaining('Wejście i eksploracja'),
+      expect.stringContaining('Budowa SWOT'),
+      expect.stringContaining('Synteza i napięcia'),
+      expect.stringContaining('Wyniki i działania'),
+    ]);
   });
 
   it('keeps the active tile neutral, focus-visible, and inside the flexible grid', async () => {

@@ -295,7 +295,7 @@ export function computeToolReviewGaps(
     const acceptedSummary =
       !!data.summary?.executiveSummary && isGovernedAccepted(data.summary?.proposalStatus);
     if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal)
-      gaps.push(isPolish ? 'Brak mission brief' : 'Missing mission');
+      gaps.push(isPolish ? 'Brak misji i kontekstu' : 'Missing mission');
     if (!(data.signals?.length || 0) && !(data.items?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
     ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
@@ -314,7 +314,7 @@ export function computeToolReviewGaps(
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
-      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+      gaps.push(isPolish ? 'Brak wyników i działań' : 'Missing final source summary');
     if (!acceptedOutputs)
       gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
@@ -346,7 +346,7 @@ export function computeToolReviewGaps(
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
-      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+      gaps.push(isPolish ? 'Brak wyników i działań' : 'Missing final source summary');
     if (!acceptedOutputs)
       gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
@@ -372,7 +372,7 @@ export function computeToolReviewGaps(
       !!growth.summary?.executiveSummary && isGovernedAccepted(growth.summary?.proposalStatus);
 
     if (!growth.context?.goal || !growth.context?.scope || !growth.context?.successSignal)
-      gaps.push(isPolish ? 'Brak growth mission' : 'Missing growth mission');
+      gaps.push(isPolish ? 'Brak misji wzrostu i kontekstu' : 'Missing growth mission');
     if (!(growth.signals?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów wzrostu' : 'Missing growth signals');
     if (!acceptedOptions)
@@ -384,7 +384,7 @@ export function computeToolReviewGaps(
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
-      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+      gaps.push(isPolish ? 'Brak wyników i działań' : 'Missing final source summary');
     if (!acceptedOutputs)
       gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
@@ -407,7 +407,7 @@ export function computeToolReviewGaps(
     const acceptedSummary =
       !!portfolio.summary?.executiveSummary && portfolio.summary?.proposalStatus !== 'rejected';
     if (!portfolio.context?.goal || !portfolio.context?.scope || !portfolio.context?.successSignal)
-      gaps.push(isPolish ? 'Brak portfolio mission' : 'Missing portfolio mission');
+      gaps.push(isPolish ? 'Brak misji portfela i kontekstu' : 'Missing portfolio mission');
     if (!(portfolio.signals?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów portfolio' : 'Missing portfolio signals');
     if (!acceptedItems)
@@ -419,7 +419,7 @@ export function computeToolReviewGaps(
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
-      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+      gaps.push(isPolish ? 'Brak wyników i działań' : 'Missing final source summary');
     if (!acceptedOutputs)
       gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
@@ -445,7 +445,7 @@ export function computeToolReviewGaps(
     const acceptedSummary =
       !!risk.summary?.executiveSummary && risk.summary?.proposalStatus !== 'rejected';
     if (!risk.context?.goal || !risk.context?.scope || !risk.context?.successSignal)
-      gaps.push(isPolish ? 'Brak risk mission' : 'Missing risk mission');
+      gaps.push(isPolish ? 'Brak misji i kontekstu' : 'Missing risk mission');
     if (!(risk.signals?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów ryzyka' : 'Missing risk signals');
     if (!acceptedAssumptions)
@@ -456,7 +456,7 @@ export function computeToolReviewGaps(
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
-      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+      gaps.push(isPolish ? 'Brak wyników i działań' : 'Missing final source summary');
     if (!acceptedOutputs)
       gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
@@ -516,7 +516,7 @@ export function computeToolCompletionItems(
   if (toolType === 'dynamic-swot') {
     const swot = data as SWOTData;
     items.push({
-      label: isPolish ? 'Mission zdefiniowana' : 'Mission defined',
+      label: isPolish ? 'Misja i kontekst zdefiniowane' : 'Mission defined',
       done: !!swot?.context?.goal && !!swot?.context?.scope && !!swot?.context?.successSignal,
       anchorId: 'tool-content',
     });
@@ -549,7 +549,7 @@ export function computeToolCompletionItems(
       anchorId: 'analysis',
     });
     items.push({
-      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      label: isPolish ? 'Wyniki i działania gotowe' : 'Final source summary ready',
       done: !!swot?.summary?.executiveSummary,
       anchorId: 'analysis',
     });
@@ -591,7 +591,7 @@ export function computeToolCompletionItems(
       anchorId: 'analysis',
     });
     items.push({
-      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      label: isPolish ? 'Wyniki i działania gotowe' : 'Final source summary ready',
       done: !!porter?.summary?.executiveSummary,
       anchorId: 'analysis',
     });
@@ -601,7 +601,7 @@ export function computeToolCompletionItems(
   if (toolType === 'growth-paths') {
     const growth = data as GrowthPathsData;
     items.push({
-      label: isPolish ? 'Growth mission zdefiniowana' : 'Growth mission defined',
+      label: isPolish ? 'Misja wzrostu i kontekst zdefiniowane' : 'Growth mission defined',
       done: !!growth?.context?.goal && !!growth?.context?.scope && !!growth?.context?.successSignal,
       anchorId: 'tool-content',
     });
@@ -641,7 +641,7 @@ export function computeToolCompletionItems(
       anchorId: 'analysis',
     });
     items.push({
-      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      label: isPolish ? 'Wyniki i działania gotowe' : 'Final source summary ready',
       done: !!growth?.summary?.executiveSummary,
       anchorId: 'analysis',
     });
@@ -651,7 +651,7 @@ export function computeToolCompletionItems(
   if (toolType === 'portfolio-priority') {
     const portfolio = data as PortfolioPriorityData;
     items.push({
-      label: isPolish ? 'Portfolio mission' : 'Portfolio mission',
+      label: isPolish ? 'Misja portfela i kontekst' : 'Portfolio mission',
       done:
         !!portfolio?.context?.goal &&
         !!portfolio?.context?.scope &&
@@ -664,12 +664,12 @@ export function computeToolCompletionItems(
       anchorId: 'tool-content',
     });
     items.push({
-      label: isPolish ? 'Elementy portfolio' : 'Portfolio items',
+      label: isPolish ? 'Elementy portfela i macierz' : 'Portfolio items',
       done: (portfolio?.initiatives?.length || 0) > 0,
       anchorId: 'tool-content',
     });
     items.push({
-      label: isPolish ? 'Trade-offy alokacji' : 'Allocation trade-offs',
+      label: isPolish ? 'Trade-offy i priorytety' : 'Allocation trade-offs',
       done: (portfolio?.tradeOffs?.length || 0) > 0,
       anchorId: 'analysis',
     });
@@ -679,7 +679,7 @@ export function computeToolCompletionItems(
       anchorId: 'analysis',
     });
     items.push({
-      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      label: isPolish ? 'Wyniki i działania gotowe' : 'Final source summary ready',
       done: !!portfolio?.summary?.executiveSummary,
       anchorId: 'tool-content',
     });
@@ -689,7 +689,7 @@ export function computeToolCompletionItems(
   if (toolType === 'risk-uncertainty') {
     const risk = data as RiskUncertaintyData;
     items.push({
-      label: isPolish ? 'Risk mission' : 'Risk mission',
+      label: isPolish ? 'Misja i kontekst' : 'Risk mission',
       done: !!risk?.context?.goal && !!risk?.context?.scope && !!risk?.context?.successSignal,
       anchorId: 'tool-content',
     });
@@ -719,7 +719,7 @@ export function computeToolCompletionItems(
       anchorId: 'analysis',
     });
     items.push({
-      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      label: isPolish ? 'Wyniki i działania gotowe' : 'Final source summary ready',
       done: !!risk?.summary?.executiveSummary,
       anchorId: 'analysis',
     });
