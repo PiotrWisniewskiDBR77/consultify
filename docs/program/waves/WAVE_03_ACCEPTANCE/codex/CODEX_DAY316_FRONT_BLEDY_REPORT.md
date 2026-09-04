@@ -74,7 +74,13 @@ Każdy zmieniony plik przeszedł osobny bundle `esbuild`; ostrzeżenia `import.m
 
 Ogon nie został jeszcze podmieniony; pozostaje jawnie policzony po zakończeniu rdzenia.
 
-## R4–R7
+## R4 — bezpiecznik surowego JSX
+
+`tests/unit/frontend/noRawErrorInJsx.test.ts` obejmuje sześć jawnych plików rdzenia. Linia bazowa wynosi 0 osobno dla każdego pliku; strażnik nie jest pusty, bo odczytuje i sprawdza sześć produkcyjnych źródeł. Wykrywa interpolację `data.error`, `err.message` albo `error.message` wewnątrz klamer JSX, pozostawiając diagnostyczne logowanie i sterowanie poza zakresem.
+
+Dowód zielony: 7/7 przypadków (`r4-green-2.json`). Mutacja dodała poprawne składniowo `<span>{err.message}</span>` do objętego `PresentationTemplateArchitectView.tsx`; dokładnie jego przypadek spadł, wynik 6/7 PASS i 1/7 FAIL (`r4-red.json`). Po przywróceniu pliku przez `cp` wynik wrócił do 7/7 PASS (`r4-restored-green.json`). Mutacja została cofnięta, a produktowy diff po cofnięciu nie zawiera sondy.
+
+## R5–R7
 
 W TOKU.
 
