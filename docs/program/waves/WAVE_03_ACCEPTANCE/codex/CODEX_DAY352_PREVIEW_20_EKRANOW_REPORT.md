@@ -1,6 +1,6 @@
 # CODEX DAY 352 — podglądy bez `relations`
 
-Stan: **R1 ZROBIONE; R2–R6 w toku**.
+Stan: **R1–R3 ZROBIONE z nazwaną granicą; R4–R6 w toku**.
 
 ## Stan wejściowy
 
@@ -78,4 +78,40 @@ Liczby autora potwierdzone. Skorygowano natomiast listę parametrów wspólnego 
 - Wygląd karty w realnej aplikacji na realnych danych; R1 dowodzi osiągalności statycznej, nie zachowania runtime.
 - Zachowanie na wąskim ekranie.
 - Wygląd trzech ekranów CaseWorkspace bez wejścia harnessu.
-- Orzeczenia wizualne i dowody DOM dla 15 ekranów pokrytych harnessem — należą do R2/R3.
+- Orzeczenie `AuditFindingsTab`, którego istniejący runner nie doprowadził do niepustego programu.
+
+## R2 — pary PRZED/PO i granica dowodu
+
+Kanoniczny runner pracował na `http://127.0.0.1:5551`, w obu motywach, z `--rozwin-sekcje=1`, `--klik-po-rozwinieciu=1`, `--osiad-po-rozwinieciu=800`. Marker `[data-preview-block="details"]` był obecny w obu motywach każdej zaliczonej pary. Pomiar DOM po zmianie: karta 107 px, pusty stan 1, pigułki 0. Pełne JSON-y kontroli i PNG są w `evidence/podglad-relations-20260904/`.
+
+Zaliczone różne bajtowo pary PRZED/PO: 24/28 par motywowych dla 12 ekranów. Cztery identyczne pliki dotyczą `results-vnext-registry-shell` i `results-vnext-attention`: oba ekrany już PRZED miały pustą kartę przez dane przekazane w spreadzie, więc zmiana `StandardPreview` nie zmieniła ich runtime. To obala założenie, że brak jawnego atrybutu `relations=` oznacza brak wartości propa.
+
+`finance-hub&tab=analysis` zmienił liczbę pustych bloków z 1 na 2: własna stopka Finance miała już blok, a domyślny blok `StandardPreview` dodał drugi.
+
+`AuditFindingsTab` nie uzyskał pary: wpis `tab=findings` działa, lecz domyślnie wybiera pierwszy program z zerem ustaleń. Właściwa fixture `prog-metalpol-zakupy` istnieje, ale komponent nie czyta `programId` z URL, a runner nie ma opcji `selectOption`. Dodanie drugiej nowej opcji naruszałoby licencję „jedna opcja opt-in”; zachowano dwa zrzuty pustej tabeli jako dowód granicy.
+
+Po cofnięciu tymczasowej mutacji:
+
+```text
+$ git diff -- src/components/standard/StandardPreview.tsx
+<pusty wynik>
+```
+
+## R3 — orzeczenie po obejrzeniu własnych zrzutów
+
+- `audyty-piec-powierzchni&tab=library` — **WYGLĄDA DOBRZE**: na pliku PO-light karta zachowuje szerokość panelu i pojawia się dopiero pod długą tabelą szczegółów, bez przykrywania treści.
+- `audyty-piec-powierzchni&tab=outputs` — **WYGLĄDA DOBRZE**: PO-light pokazuje czytelną pojedynczą kartę pod właściwościami, z zachowanym oddechem.
+- `audyty-piec-powierzchni&tab=reports` — **WYGLĄDA DOBRZE**: PO-light ma pojedynczy blok w logicznym miejscu po szczegółach raportu.
+- `audyty-piec-powierzchni&tab=initiatives` — **WYGLĄDA DOBRZE**: PO-light zachowuje krótką, uporządkowaną stopkę bez kolizji z tabelą.
+- `zwornik-projects` — **WYGLĄDA DOBRZE**: PO-light dodaje blok nad przyciskiem „Odśwież”, zachowując pełną szerokość i czytelność.
+- `report-builder-block-types` — **WYGLĄDA DOBRZE**: PO-light ma pojedynczą kartę pod szczegółami, a pusty obszar panelu pozostaje uporządkowany.
+- `report-builder-templates` — **WYGLĄDA DOBRZE**: PO-light zachowuje hierarchię Details → Relations → akcja, bez przycięcia.
+- `model-catalog-table` — **WYGLĄDA DOBRZE**: PO-light umieszcza kartę przed trzema akcjami, bez wypchnięcia ich poza kadr.
+- `drd-library-entry` — **WYGLĄDA DOBRZE**: PO-light pokazuje blok na dole przewijalnego panelu; treść szczegółów nie została przykryta.
+- `prompt-registry-tab` — **WYGLĄDA DOBRZE**: PO-light dodaje jeden spokojny blok pod krótkimi szczegółami, bez konkurencji z inną stopką.
+- `partner-settlements-view` — **WYGLĄDA DOBRZE**: PO-light zachowuje blok w granicach panelu i nie odbiera miejsca tabeli głównej.
+- `results-vnext-registry-shell` — **BEZ ZMIANY RUNTIME**: obrazy PRZED/PO są identyczne bajtowo; widoczny pojedynczy blok pochodził już z obiektu `preview`.
+- `results-vnext-attention` — **BEZ ZMIANY RUNTIME**: obrazy PRZED/PO są identyczne bajtowo; statyczny licznik dał fałszywy sygnał zmiany.
+- `finance-hub&tab=analysis` — **WYGLĄDA ŹLE**: PO-light pokazuje dwie sąsiadujące, identyczne karty „Powiązania / Brak powiązań”, które dublują komunikat i zajmują łącznie 214 px.
+
+Miejsce potrzebne treści zabiera `finance-hub&tab=analysis` (drugi, redundantny blok 107 px). Na pozostałych obejrzanych ekranach pojedynczy blok zajmuje 107 px, ale nie przykrywa ani nie usuwa treści; jest kosztem przewijania, nie utratą informacji. Ocena dotyczy hosta harnessu 1440×900, nie realnej trasy produkcyjnej.
