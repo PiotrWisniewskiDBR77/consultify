@@ -17,9 +17,23 @@ export const DEFAULT_FLOOR = 100;
 // Audyt R6 dyżuru 320 rozstrzyga wyłącznie dwanaście zastanych pozycji
 // BRAK_SHA_DLA_NAPRAWIONE. Źródła właściciela pozostają bez zmian; tabela
 // utrwala znaleziony commit albo uczciwy brak jednoznacznego SHA naprawy.
+//
+// ★ NAPRAWA PO ODBIORZE DYŻURU 334 (2026-09-04). Dyżur 334 przypisał pięciu
+// pozycjom SHA; trzy z nich upadły w odbiorze adwersaryjnym, bo cytowany commit
+// jest STARSZY niż zgłoszenie defektu i nie dotyka obiektu z dowodu. Wracają
+// do UNRESOLVED z jawnym powodem. Od tej wersji ten sam błąd łapie mechanicznie
+// bezpiecznik R3 w `gitShaState` (stan `SHA_STARSZY_NIZ_ZGLOSZENIE`), więc
+// tabela nie jest już jedyną obroną.
 export const DAY320_RESOLUTIONS = Object.freeze({
-  'ASM-OWN-001': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA wykonania biblioteki metodyk' },
-  'ASM-OWN-002': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA zmiany kolumn katalogu' },
+  // UCZCIWIE ZAMKNIĘTE (odbiór 334 potwierdził kod na HEAD): commit e4dc14df6e
+  // (2026-09-04, MŁODSZY niż zgłoszenie 2026-08-22) daje siedem kolumn dokładnie
+  // wg DEC-2026-09-03-353 i podgląd z opisem, osiami i CTA „Rozpocznij ocenę".
+  // ★ UJAWNIENIE: kolumny `duration` i `lastUsed` renderują twarde '—'
+  // (AssessmentLibraryTab.tsx:453-456 i 477-481, typ pola dosłownie `null`).
+  // Kolumna jest, danych nie ma — dług do rozliczenia osobno.
+  'ASM-OWN-001': { type: 'SHA', sha: 'e4dc14df6e' },
+  // j.w. — ta sama zmiana katalogu; to samo ujawnienie o `duration`/`lastUsed`.
+  'ASM-OWN-002': { type: 'SHA', sha: 'e4dc14df6e' },
   'ASM-OWN-003': { type: 'DECISION', decision: 'DEC-2026-09-03-364' },
   'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
   'EXE-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-24-03' },
@@ -32,12 +46,24 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI' },
   'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
   'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
-  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint af75a84e37 obejmuje 156 plików i nie izoluje zmiany Vault table/preview' },
+  // COFNIĘTE po odbiorze 334. Dyżur podstawił `d0b5172c19` (2026-07-24), a uwaga
+  // właściciela jest z 2026-08-22 — commit jest o MIESIĄC STARSZY od zgłoszenia.
+  // Jego wersja pliku ma 152 linie i nie zawiera ani `TableWithPreviewLayout`,
+  // ani `PreviewMetaCard`, które dowód cytuje w liniach 356-460.
+  // ★ Dokument źródłowy (07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md, „Fala 4") stawia
+  // tej pozycji status FALA_4_OWNER_DECISION i wymaga ŚWIEŻEGO ZRZUTU przed CLOSED.
+  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22' },
   'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
-  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 obejmuje 82 pliki i nie izoluje zmiany Decisions list' },
+  // COFNIĘTE po odbiorze 334. Dyżur podstawił `7b7ec198aa` (2026-07-15) — PIĘĆ
+  // TYGODNI przed zgłoszeniem z 2026-08-22. `--stat` tego commita dotyka wyłącznie
+  // DecisionsPanelContent.tsx, a dowód pozycji wskazuje MyWorkHub.tsx:4137,
+  // którego ten commit w ogóle nie rusza.
+  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137' },
   'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
-  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 jest tylko wspólną migawką dla MYW-DEC-REC-001' },
+  // COFNIĘTE po odbiorze 334 — ten sam `7b7ec198aa` i ta sama wada co wyżej.
+  // Pozycja to duplikat zgłoszenia MYW-DEC-REC-001 (rejestr modułu: 2026-08-23).
+  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'duplikat MYW-DEC-REC-001; checkpoint 4a36e8a745 to wspólna migawka, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-23' },
   'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
   'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
