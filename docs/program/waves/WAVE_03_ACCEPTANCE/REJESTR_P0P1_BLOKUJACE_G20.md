@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `fc7de78352fc4200cc0f0a989d0a323778ec5d2a`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker fc7de78352fc4200cc0f0a989d0a323778ec5d2a --snapshot-date 2026-09-04`
+Marker: `27fbe53a77d9d31db947e8c89ad36fb01622f1c7`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 27fbe53a77d9d31db947e8c89ad36fb01622f1c7 --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -112,7 +112,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYW-PHOTO-007` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-010` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-011` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
-| `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | duplikat MYW-DEC-REC-001; checkpoint 4a36e8a745 to wspólna migawka, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-23 | — | settlement |
+| `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
 | `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
