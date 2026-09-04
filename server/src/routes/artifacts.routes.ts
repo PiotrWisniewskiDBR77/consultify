@@ -1441,7 +1441,7 @@ router.post(
       }
     } catch (error) {
       if (error instanceof publishReviewService.PublishReviewError) {
-        return res.status(409).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
+        return res.status(409).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

@@ -649,7 +649,7 @@ router.patch(
       return res.json(result);
     } catch (err: any) {
       if (err instanceof Error && err.message === 'Rule not found') {
-        return res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') });
+        return res.status(404).json({ ...mapAppErrorResponse(err, req, 'error') });
       }
       logger.error('[PolicyToggleRoute] Error:', err);
       return res.status(500).json({

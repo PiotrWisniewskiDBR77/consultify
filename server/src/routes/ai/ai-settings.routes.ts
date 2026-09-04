@@ -565,7 +565,7 @@ router.get(
       logger.error('[AI Settings] Error getting available models:', error);
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
-          ...mapAppErrorResponse(error, undefined, 'error'),
+          ...mapAppErrorResponse(error, req, 'error'),
           code: error.code,
           details: error.details,
         });

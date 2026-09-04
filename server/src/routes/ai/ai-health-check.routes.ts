@@ -938,7 +938,7 @@ router.get(
           healthyCount: 0,
           totalCount: 6,
         },
-        ...mapAppErrorResponse((error as Error), undefined, 'error'),
+        ...mapAppErrorResponse((error as Error), req, 'error'),
       });
     }
   })
@@ -1251,7 +1251,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         timestamp: new Date().toISOString(),
-        ...mapAppErrorResponse((error as Error), undefined, 'error'),
+        ...mapAppErrorResponse((error as Error), req, 'error'),
       });
     }
   })
