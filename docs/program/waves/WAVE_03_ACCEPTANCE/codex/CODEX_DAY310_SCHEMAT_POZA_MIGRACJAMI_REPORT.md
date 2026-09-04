@@ -128,3 +128,18 @@ Artefakty są wyłącznie w `/private/tmp/cx-day310-schemat-migracje-artefakty`:
 - `no-runtime-ddl-restored-green.json`: `f728974cff672161dcad034027b231e219a5a5520922b6d2c165816289e6f254`
 
 TWIERDZENIA NIEZWERYFIKOWANE: zgodność pełnego kształtu 355 tabel z migracjami; semantyczna poprawność 93 proponowanych nowych migracji; to, czy wszystkie sygnały catch faktycznie połykają błąd DDL; zachowanie na demo/stagingu/produkcji (nie dotykano); pełne działanie piątej trasy users/search; integracja pozostałych 526 pozycji.
+
+## Wznowienie 04.09 — druga partia
+
+Ponowny start odbył się po odczytaniu całej instrukcji, na tej samej czystej gałęzi i z wolnymi portami 5298/5299/6317. Pusta baza ponownie przeszła pełny strict chain, a `settings` zwróciło 0 wierszy `smtp%`.
+
+R1 ujawniło błąd generatora: migracje z nazwą kwalifikowaną schematem, np. `CREATE TABLE "public"."assessment_user_state"`, były błędnie oznaczane jako brakujące. Parser naprawiono w `725852fac3`; liczba rzekomo brakujących migracji spadła z 93 do 34, a `USUN_DDL_W_LOCIE` wzrosło z 355 do 414 bez zmiany produktu.
+
+R4 usunęło kolejne 17 wystąpień runtime DDL z dwóch grup:
+
+- `e7adc200d9`: dziewięć tabel Assessment; wszystkie potwierdzone przez `to_regclass` po pełnym strict chain na pustej bazie;
+- `b27392d55b`: siedem tabel konfiguracji LLM; wszystkie potwierdzone przez `to_regclass` po następnym pełnym strict chain. Nie uruchomiono modelu ani dostawcy AI.
+
+Po aktualizacji ratchetu `11da17b181` inwentarz wynosi 509 wystąpień w 161 plikach, w tym 98 plików usług: 34 `DODAJ_MIGRACJE`, 19 `DO_DECYZJI_PARSER`, 58 `POMINIĘTE_TEST`, 398 `USUN_DDL_W_LOCIE`. Bezpiecznik ma 2/2 PASS z `--retry=0`.
+
+Stan pozostaje **CZĘŚCIOWE**: 509 pozycji nadal wymaga grupowej analizy i osobnego strict chain. Nie przedstawiam mechanicznego usunięcia setek inicjalizatorów jako bezpiecznego domknięcia.
