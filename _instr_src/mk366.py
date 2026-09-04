@@ -1,0 +1,279 @@
+# -*- coding: utf-8 -*-
+import json
+
+WT = "/private/tmp/cx-day366-zastrzezenia"
+
+KOMENDY = r"""```bash
+cd "$WT"
+
+# (1) ★★★ TEZA A: dwa z miejsc licznika kompletnosci bronione ASERCJA NA TEKSCIE ZRODLA
+sed -n '77,88p' tests/unit/assessment/day351.assessmentCompleteness.test.ts
+#   moje liczby: DWA bloki `it(...)` czytaja plik przez `readFileSync` i sprawdzaja
+#   `expect(source).toContain(...)` / `.not.toContain(...)` — SIRIForm (77-81) i DRDForm (83-87).
+#   ★ To jest ten sam ksztalt, ktory dzis DWA RAZY przepuscil mutacje: test broni NAPISU.
+
+# (2) TEZA: licznik kompletnosci ma JEDNA definicje i wiele wolaczy — policz je sam
+bash -c "grep -rn 'hasAssessmentResponse' --include=*.ts --include=*.tsx src/ server/src/ | grep -v __tests__ | grep -v 'import '"
+#   moje liczby: 11 wywolan w 7 plikach produktu
+#   (SIRIForm:143 · DRDForm:108 · src/services/drdVizAdapter.ts:59,104 ·
+#    src/services/report/drdReportModel.ts:393 · server assessment-hub.routes.ts:64,76,78 ·
+#    server/src/services/report/drdVizAdapter.ts:81,120 · server .../drdReportModel.ts:358)
+#   ★ RAPORT 351 MOWI O „9 MIEJSCACH”. Mianowniki sa rozne — podaj swoj i jego definicje.
+
+# (3) ★★★ TEZA B: `progress` na zywej trasie ZWIERA SIE kolumna i statusem — NIEZMIERZONE
+sed -n '84,98p' server/src/routes/assessment/assessment-hub.routes.ts
+#   moje liczby: `completionPercent > 0` (linie 85-87) OMIJA cale liczenie per os;
+#   `status === 'APPROVED'` (linie 94-97) ustawia progress=100 I completedAxes=totalAxes.
+#   ★ Dyzur 351 zasial jawnie `completion_percent='0'`, wiec ZADNEJ z tych galezi nie zmierzyl.
+
+# (4) ★★★ TEZA C: strazniki o niemal identycznym ksztalcie — mutacja 355 trafila w ZLY
+bash -c "grep -n \"toUpperCase() !== 'ACTIVE'\" server/src/services/legacyCutover/requireActiveMembership.ts"
+sed -n '1904,1910p' server/src/middleware/auth.middleware.ts
+bash -c "grep -rln 'requireActiveMembership\|requireFinanceEditorMembership' server/src/routes server/src/Gateway.ts | wc -l"
+#   moje liczby: warunek strazniczy w requireActiveMembership.ts to LINIA 34 (403 w linii 35);
+#   `validateOrgMembership` w auth.middleware.ts:1901-1911 ma niemal identyczne zapytanie.
+#   Dyzur 355 zmutowal ten DRUGI — middleware, ktorego badane testy NIE MONTUJA.
+
+# (5) ★★ TEZA D: przebieg bazowy 355 mial 68 przypadkow, zmutowany 62 — MIANOWNIK SIE ZMIENIL
+node -e "const fs=require('fs');for(const f of ['evidence/g15/day355-artefakty/r3-gates-before.json','evidence/g15/day355-artefakty/r3-gates-mutated.json']){const r=JSON.parse(fs.readFileSync(f,'utf8'));console.log(f.split('/').pop(),'total',r.numTotalTests,'pass',r.numPassedTests,'fail',r.numFailedTests,'| pakiety:',r.testResults.map(s=>s.name.split('/').pop()).join(' '));}"
+#   moje liczby: before 68/68/0 w 3 pakietach · mutated 62/62/0 w 2 pakietach
+#   ★ `financeIntelligence.membershipGate.pg.test.ts` (6 przypadkow) WYPADL miedzy A i B
+#   i nikt tego nie odnotowal. OBA przebiegi byly w 100% zielone — bo mutacja chybila.
+
+# (6) TEZA: material 355 lezy w repo i jest baza porownania
+ls evidence/g15/day355/ evidence/g15/day355-artefakty/
+wc -l evidence/g15/day355/przed-nazwy.txt evidence/g15/day355/po347-nazwy.txt
+#   moje liczby: przed-nazwy.txt i po347-nazwy.txt maja po 114 pelnych nazw;
+#   `rodzina-28.md` opisuje rodzine plikow; artefaktow pomiarowych 17
+
+# (7) TEZA: liscie slownikow i bramki kanonu na markerze
+node -e "const f=require('fs');function c(o){let n=0;const w=v=>{if(v&&typeof v==='object'){for(const k of Object.keys(v))w(v[k]);}else n++;};w(o);return n;}for(const l of ['pl','en'])console.log(l,c(JSON.parse(f.readFileSync('public/locales/'+l+'/translation.json','utf8'))));"
+bash scripts/check-focus-canon.sh --ci >/dev/null 2>&1; echo "focus=$?"
+bash scripts/check-list-canon.sh       >/dev/null 2>&1; echo "list=$?"
+bash scripts/check-artefakt.sh         >/dev/null 2>&1; echo "artefakt=$?"
+node scripts/dev/reachability-from-root.mjs --check-baseline >/dev/null 2>&1; echo "reach=$?"
+#   moje liczby: pl 35199, en 33066; focus=0, list=0, artefakt=0, reach=0
+
+# (8) zasoby: dysk, porty, kontener
+df -h /
+lsof -nP -iTCP:6437 -sTCP:LISTEN; lsof -nP -iTCP:5577 -sTCP:LISTEN
+docker ps -a --format '{{.Names}}' | grep -c cx-day366 || true
+#   oczekiwane przy wydaniu: 35 GB wolnego; oba porty puste; 0 kontenerow
+```"""
+
+cfg = {
+ "NR_DYZURU": "366",
+ "TYTUL_JEDNYM_ZDANIEM": (
+   "★★★ TRZY ZASTRZEŻENIA Z ODBIORÓW 351 I 355 — KAŻDE MAŁE, WSZYSTKIE REALNE. "
+   "**(1)** Dwa z miejsc licznika kompletności są bronione **asercją na tekście źródła**, "
+   "nie na zachowaniu (`tests/unit/assessment/day351.assessmentCompleteness.test.ts:77-87`, "
+   "`readFileSync` + `toContain`) — ten sam kształt dwa razy dziś przepuścił mutację. "
+   "**(2)** `progress` na żywej trasie **dalej zwiera się kolumną `completion_percent` "
+   "i statusem `APPROVED`** (`server/src/routes/assessment/assessment-hub.routes.ts:85-87` "
+   "i `:94-97`) — dyżur 351 zasiał jawnie `completion_percent='0'`, więc **żadnej z tych "
+   "gałęzi nie zmierzył**. **(3)** Dyżur 355 wniósł **sam raport, zero kodu**: `R3` "
+   "zatrzymany, `R4`/`R5` niewykonane, a jego wniosek `R3` obalił odbiorca, bo mutacja "
+   "chybiła strażnika. Zadanie: **dokończyć `R3`–`R5` z mutacją trafiającą "
+   "w `server/src/services/legacyCutover/requireActiveMembership.ts` (warunek w linii 34), "
+   "a nie w `auth.middleware.ts:1906`**. ★ Odbiorca zauważył też, że przebieg bazowy miał "
+   "**68** przypadków, a zmutowany **62** — `financeIntelligence.membershipGate` wypadł "
+   "między A i B i nikt tego nie odnotował; oba przebiegi były w 100% zielone. "
+   "Porównania **po nazwach**, nigdy po liczbach"
+ ),
+ "WORKTREE": WT,
+ "NAZWA_WORKTREE": "cx-day366-zastrzezenia",
+ "NAZWA": "day366-zastrzezenia",
+ "SCRATCH": WT + "-scratch",
+ "ARTEFAKTY": WT + "-artefakty",
+ "SHA_MARKERA": "2a7273e087cbd3e44344725b524f6ddd79d5badc",
+ "REMOTE": "github-backup",
+ "GALAZ_BAZOWA": "grafika/m03-20260902",
+ "GALAZ_DYZURU": "codex/day366-zastrzezenia-20260904",
+ "WYDANY": "WYDANY",
+ "DATA": "2026-09-04",
+ "PORT_DB": "6437",
+ "PORT_HARNESS": "5577",
+ "KONTENER": "cx-day366-pg",
+ "BAZA": "cx366",
+ "JWT_SECRET": "cx366-test-secret-do-not-reuse-min-32-znaki",
+ "N_KOMEND": "osiem",
+
+ "MODUL_LUB_OBSZAR": (
+   "DWA OBSZARY, TRZY ZASTRZEŻENIA. Obszar pierwszy — **`04_ASSESSMENT`**: licznik "
+   "kompletności ocen (`hasAssessmentResponse`, jedna definicja per drzewo) wraz z jego "
+   "kontraktem testowym i z żywą trasą `assessment-hub`. Obszar drugi — **`10_FINANCE`**: "
+   "dokończenie `R3`–`R5` dyżuru 355 z mutacją trafiającą we właściwego strażnika. "
+   "Produktem są trzy domknięcia: asercja zachowania zamiast asercji na napisie, pomiar "
+   "dwóch niezmierzonych gałęzi `progress`, oraz orzeczenie ARTEFAKT/DEFEKT dla 114 czerwieni "
+   "Finansów oparte na dowodzie, który **trafia**. Prawo zatrzymania PO KAŻDEJ pozycji `R`, "
+   "z commitem, i plik postępu `/private/tmp/cx-day366-postep.md` (POZA repo)"
+ ),
+
+ "TRASY_FRONT": (
+   "Front dotykasz **wyłącznie** w zakresie licznika kompletności, i **wyłącznie do odczytu**, "
+   "chyba że `R1` udowodni, że asercja zachowania wymaga uchwytu, którego dziś nie ma. "
+   "Miejsca: `src/components/assessment/tools/SIRIForm.tsx:143`, "
+   "`src/components/assessment/tools/DRDForm.tsx:108`, `src/services/assessmentCompleteness.ts`, "
+   "`src/services/drdVizAdapter.ts:59,104`, `src/services/report/drdReportModel.ts:393`. "
+   "Reszta `src/**` pozostaje `TYLKO ODCZYT` bez wyjątku"
+ ),
+
+ "TRASY_TYL": (
+   "★★ SEDNO, DWA MIEJSCA. **(a) Zwarcie `progress`:** "
+   "`server/src/routes/assessment/assessment-hub.routes.ts`, funkcja `computeProgressFields` — "
+   "wiersze **84-92** liczą `progress` z osi, ale gałąź **85-87** (`completionPercent > 0`) "
+   "omija to liczenie w całości, a wiersze **94-97** (`status === 'APPROVED'`) nadpisują "
+   "zarówno `progress`, jak i `completedAxes`. **Żadna z tych dwóch gałęzi nie została "
+   "zmierzona.** **(b) Strażnik członkostwa:** "
+   "`server/src/services/legacyCutover/requireActiveMembership.ts` — warunek `!== 'ACTIVE'` "
+   "w linii **34**, `403 ORG_MEMBERSHIP_REVOKED` w linii **35**; w tym samym pliku drugi "
+   "strażnik rodziny `requireFinanceEditorMembership`. **NIE** `auth.middleware.ts:1901-1911` "
+   "(`validateOrgMembership`) — to jest bliźniak o niemal identycznym zapytaniu, w który "
+   "trafiła chybiona mutacja dyżuru 355. Pakiety broniące zabezpieczenia: "
+   "`server/src/routes/v8/__tests__/financeValue.membershipGate.pg.test.ts` (44), "
+   "`server/src/routes/v8/__tests__/financeIntelligence.membershipGate.pg.test.ts` (6), "
+   "`server/src/middleware/__tests__/auditsStrictMembership.middleware.test.ts` (18) — "
+   "**razem 68, i to jest mianownik, który musi być identyczny przed i po mutacji**"
+ ),
+
+ "LISTA_PORTOW_ZAJETYCH": (
+   "Zakazane na stałe: 5000 (macOS Control Center), 5037 (adb), 5060-5061 (SIP — Chromium "
+   "ERR_UNSAFE_PORT), 6000, 6665-6669 oraz reszta restricted ports Chromium. "
+   "Zajęte przez hosta i tor grafiki: 3020, 3022, 3025, 3027, 3030, 5432, 5433, 6012, 6379. "
+   "Rodzeństwo TEJ paczki 04.09 — nie dotykasz: 363 (6434/5574), 364 (6435/5575), 365 (6436/5576). "
+   "Równoległa paczka 359-362 ma zarezerwowany przedział 6430-6433 i 5570-5573 — również nie dotykasz. "
+   "Starsze rodzeństwo 04.09: 351 pracował na 6410/5550, 355 na 6414/5554. "
+   "Twoje własne wyłącznie: baza 6437, harness 5577. "
+   "★ ZAKAZ `pkill`/`killall` — zabijasz wyłącznie własne PID-y (zapisz `$!`)"
+ ),
+
+ "POZYCJE_Z_FLAGAMI": (
+   "BRAK NOWYCH FLAG. Ten dyżur nie dodaje ani jednej flagi i nie zmienia wartości domyślnej "
+   "żadnej istniejącej. ★★ UWAGA SZCZEGÓLNA: `RUN_DB_TESTS`, `MOCK_DB`, `DB_TYPE`, "
+   "`ENABLE_V8_GLOBAL`, `ENABLE_TEST_AUTH_BYPASS`, "
+   "`RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE` **nie są flagami funkcyjnymi produktu** — "
+   "to przełączniki trybu pomiaru. Wolno Ci nimi sterować w komendzie i **musisz zapisać, "
+   "którą wartość miała każda z nich w każdym przebiegu**. **Nie wolno Ci zmieniać ich "
+   "wartości domyślnych w kodzie ani w konfiguracji testów**"
+ ),
+
+ "LISTA_BRAMEK": (
+   "`scripts/check-list-canon.sh`, `scripts/check-focus-canon.sh --ci`, `scripts/check-artefakt.sh`, "
+   "`scripts/dev/reachability-from-root.mjs`, `tests/setup.ts`, `tests/helpers/**`, "
+   "`tests/__mocks__/**`, `vitest*.config.ts`, `server/vitest.config*.ts`, `.github/workflows/**`, "
+   "`server/src/middleware/auth.middleware.ts`, `server/src/services/ApiGateway.ts`, "
+   "`server/src/routes/v8/__tests__/financeValue.membershipGate.pg.test.ts`, "
+   "`server/src/routes/v8/__tests__/financeIntelligence.membershipGate.pg.test.ts`, "
+   "`server/src/middleware/__tests__/auditsStrictMembership.middleware.test.ts`, "
+   "`public/locales/**`. Wszystkie **NIETYKALNE DO ZAPISU** — wolno je wołać w pomiarze; "
+   "strażnika `requireActiveMembership.ts` wolno **tymczasowo zmutować i cofnąć przez `cp`**, "
+   "nie wolno zostawić w nim ani jednej zmiany w commicie"
+ ),
+
+ "SCIEZKA_RAPORTU": "docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY366_ZASTRZEZENIA_REPORT.md",
+
+ "Jedyny": (
+   "Jedyne inne dokumenty do zmiany: **jedna nowa sekcja** w "
+   "`docs/program/REJESTR_ZNALEZISK_20260903.md` o PIERWSZEJ WOLNEJ literze — sekcje doszły "
+   "dziś do `Z`, więc następne idą `AA`, `AB`, … (literę sprawdzasz komendą tuż przed commitem) "
+   "— oraz nowe pliki dowodowe pod `evidence/g15/day366/` i "
+   "`evidence/licznik-kompletnosci-domkniecie-20260904/` (oba katalogi NIE ISTNIEJĄ na markerze "
+   "— tworzysz je). ★ Do `evidence/g15/day355/` wolno **DOPISAĆ** nowe pliki (`po-nazwy.txt`, "
+   "`dlug-po-naprawie.md`) — **istniejących nie nadpisujesz**. ★★★ **MACIERZ ODBIORU JEST "
+   "NIETYKALNA W TYM DYŻURZE** — żaden wiersz `G00`–`G20`, żaden moduł, w tym `04_ASSESSMENT` "
+   "i `10_FINANCE`; bramkami zajmują się równolegle dyżury 359-362. Plik postępu "
+   "`/private/tmp/cx-day366-postep.md` żyje POZA repo. Nowe pliki w `tests/` wymagają `git add -f`"
+ ),
+
+ "ZAKAZ_WLASCIWY_TEMU_DYZUROWI": (
+   "★★★ **ZAKAZ ASERCJI NA TEKŚCIE ŹRÓDŁA.** Nowy test nie może sprawdzać, że plik zawiera "
+   "napis. Ma wywołać funkcję albo wyrenderować komponent i sprawdzić **wynik**. To jest "
+   "cały sens zastrzeżenia (1) — `readFileSync` + `toContain` przechodzi po każdej zmianie, "
+   "która zachowa napis, i nie przechodzi po żadnej, która go przeformatuje. "
+   "★★★ **ZAKAZ MUTACJI, KTÓRA NIE TRAFIA W ZABEZPIECZENIE** (`Z32`). Mutujesz "
+   "`requireActiveMembership.ts` (warunek statusu), **nie** `auth.middleware.ts`. Jeżeli "
+   "mutacja nie czerwieni — **NAJPIERW** sprawdzasz, czy trafiła w to, co miała trafić, "
+   "i dopiero potem wolno Ci cokolwiek orzekać. Dziś dokładnie ten krok został pominięty "
+   "i obalił wniosek całego dyżuru. "
+   "★★★ **ZAKAZ ZMIANY MIANOWNIKA MIĘDZY PRZEBIEGAMI.** Przebieg bazowy i zmutowany muszą "
+   "mieć **tę samą listę pakietów i tę samą listę pełnych nazw**. `68 → 62` przy 100% zieleni "
+   "po obu stronach **nie jest pomiarem** — to jest pakiet, który nie wystartował. "
+   "★★ **ZAKAZ WYGASZENIA BRAMKI POD POZOREM NAPRAWY.** Każda zmiana dotykająca członkostwa "
+   "wymaga PARY dowodów w tym samym commicie: **(a)** użytkownik bez wiersza `ACTIVE` "
+   "**nadal** dostaje `403`; **(b)** użytkownik z takim wierszem dostaje `200`/`201`. "
+   "Jeden dowód bez drugiego jest wygaszeniem. "
+   "★★ **ZAKAZ NAPRAWY ZWARCIA `progress` BEZ DECYZJI.** Gałęzie `completionPercent > 0` "
+   "i `status === 'APPROVED'` **mierzysz i orzekasz**; jeżeli okażą się defektem produktu, "
+   "piszesz to jako pytanie do właściciela z propozycją, a nie zmieniasz zachowania trasy, "
+   "z której korzystają wszystkie oceny. "
+   "★ **ZAKAZ `.skip`, `.todo`, `--retry` innego niż `0`, poszerzania `exclude`, zmiany "
+   "oczekiwanego kodu odpowiedzi w asercji** (`Z35`). **ZAKAZ porównania po liczbach** (`Z37`)"
+ ),
+
+ "DLACZEGO": (
+   "Bo trzy niedomknięcia z dwóch odbiorów mają jedną wspólną cechę: **dowód, który wygląda "
+   "jak dowód, a nim nie jest**. Test broniący napisu przechodzi, choć zabezpieczenie zniknęło. "
+   "Pomiar, który zasiał zero w kolumnie, nie zmierzył gałęzi zależnej od tej kolumny. "
+   "Mutacja w bliźniaczym pliku zostaje zielona i zostaje odczytana jako „wymaganie pomiarowo "
+   "fałszywe”. **Każdy z tych trzech kształtów wystąpił dziś, każdy raz kosztował obalony "
+   "wniosek, i każdy jest tani do domknięcia — o ile ktoś to zrobi teraz, zanim ktoś inny "
+   "oprze na nich decyzję**"
+ ),
+
+ "PULAPKA_WLASCIWA_TEMU_MODULOWI": (
+   "★★★ **SIEDEM PUŁAPEK.** "
+   "(1) **Test broni napisu, nie zachowania.** `readFileSync` + `toContain` przechodzi po "
+   "każdej zmianie, która zachowa napis. Dwa razy dziś przepuścił mutację. "
+   "(2) **Ziarno przesądza wynik pomiaru.** Dyżur 351 zasiał `completion_percent='0'` "
+   "i przez to nie mógł zmierzyć gałęzi `completionPercent > 0`. Zanim orzekniesz, "
+   "**wypisz, co dokładnie posiałeś**. "
+   "(3) **Bliźniaczy strażnik.** `validateOrgMembership` (`auth.middleware.ts:1901-1911`) "
+   "i `requireActiveMembership` (`legacyCutover/requireActiveMembership.ts:28-36`) mają niemal "
+   "identyczne zapytanie i identyczny kod błędu. Badane testy montują ten drugi. "
+   "(4) **Zmiana mianownika ukryta w zieleni.** 68 kontra 62 przypadki, oba przebiegi "
+   "w 100% zielone — bo cały pakiet nie wystartował. **Porównuj listy nazw pakietów.** "
+   "(5) **Atrapa bazy kłamie o zapisie**: `Database.ts:686` zwraca `changes:1` dla każdego "
+   "`UPDATE` niezależnie od `WHERE`. Wszystko, co dotyka zapisu, wyłącznie na realnym "
+   "PostgreSQL (`RUN_DB_TESTS=1 MOCK_DB=false`). "
+   "(6) **`NODE_ENV=test` bez `RUN_DB_TESTS=1` podstawia atrapę pod `DbPromise`** — `pg.Pool` "
+   "widzi wiersz, kod produkcyjny nie; strażnik pyta przez `DbPromise`, więc na atrapie "
+   "zawsze przegra. "
+   "(7) **`grep --include` w `zsh` zwraca pustkę zamiast wyników** — uruchamiaj przez "
+   "`bash -c '…'` i sprawdzaj kod wyjścia; pustka nie jest wynikiem, dopóki nie wiesz, "
+   "że komenda się wykonała"
+ ),
+
+ "SCIEZKI": (
+   "Testy jednostkowe frontu z roota, `RUN_DB_TESTS=0 MOCK_DB=true`. Testy serwerowe "
+   "z cwd `server/` — uruchomienie z roota bez właściwego configu daje `No test files found`, "
+   "co jest **BŁĘDEM KOMENDY**, nie PASS; dyżur 351 zapisał to wprost jako korektę. "
+   "★ Uwaga na wyjątek: `server/src/routes/__tests__/day351.assessment-progress.gateway.pg.test.ts` "
+   "biegnie z cwd `server/`, ścieżką `src/...` i `--config vitest.config.ts`. "
+   "Pakiety broniące bramki członkostwa uruchamiasz **RAZEM, w jednym wywołaniu**, na realnym "
+   "PostgreSQL, z `RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres "
+   "DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6437/cx366`, i **sprawdzasz, że mianownik "
+   "wynosi 68 przypadków w 3 pakietach PRZED i PO**. Wszystko z `--retry=0 --reporter=json "
+   "--outputFile=/private/tmp/cx-day366-zastrzezenia-artefakty/<etykieta>.json`. "
+   "Porównanie 114 czerwieni Finansów robisz po pełnych nazwach (`fullName`) wobec "
+   "`evidence/g15/day355/przed-nazwy.txt` — **plik istnieje i ma 114 wierszy, nie odtwarzasz go**"
+ ),
+
+ "TU_WSTAWIASZ_KOMENDY_WERYFIKACJI_STANU_WEJSCIOWEGO": KOMENDY,
+
+ "POZYCJE_RDZENIA": (
+   "R0 (twarde zasady: asercja zachowania, mutacja w strażnika, mianownik identyczny, "
+   "para dowodów przy członkostwie) · "
+   "R1 (351 zastrzeżenie 1: dwie asercje na tekście źródła → asercje zachowania, "
+   "z dowodem mutacyjnym — RDZEŃ) · "
+   "R2 (351 zastrzeżenie 2: zmierzyć i orzec zwarcie `completion_percent` i `APPROVED` "
+   "na żywej trasie — RDZEŃ) · "
+   "R3 (355 `R3`: jedna zmiana + para dowodów + mutacja w `requireActiveMembership.ts:34`, "
+   "z mianownikiem 68/3 po obu stronach — RDZEŃ) · "
+   "R4 (355 `R4`: przemiar Finansów po nazwach + kontrolny przelot `09_RESULTS`) · "
+   "R5 (355 `R5`: jawna liczba ARTEFAKT/DEFEKT, raport, pytania do właściciela)"
+ ),
+}
+
+with open("_instr_src/cfg366.json", "w", encoding="utf-8") as f:
+    json.dump(cfg, f, ensure_ascii=False, indent=2)
+print("OK cfg366.json", len(cfg), "pol")
