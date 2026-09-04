@@ -112,6 +112,9 @@ Kanon: **SPEC-A, §10.2 pkt 3**, nie `PreviewPaneShell`.
 
 Wymaga plikow przekrojowych: **NIE** — R2 zmienia tylko ten raport.
 
+Decyzja R2 zostala zamrozona przed pierwsza zmiana kodu produktu; implementacja R3
+ma realizowac powyzsza kolejnosc bez zmiany wartosci domyslnej zadnej flagi.
+
 ## Korekty wobec instrukcji
 
 Na etapie R1/R2 brak rozbieznosci liczbowych. Zbiorcza komenda weryfikacyjna miala
