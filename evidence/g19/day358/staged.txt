@@ -1,0 +1,12 @@
+evidence/g19/day358/przebieg-01.json
+evidence/g19/day358/przebieg-02.json
+evidence/g19/day358/przebieg-03.json
+evidence/g19/day358/przebieg-04.json
+evidence/g19/day358/przebieg-05.json
+evidence/g19/day358/przebieg-06.json
+evidence/g19/day358/przebieg-07.json
+evidence/g19/day358/przebieg-08.json
+evidence/g19/day358/przebieg-09.json
+evidence/g19/day358/przebieg-10.json
+evidence/g19/day358/przed-nazwy.txt
+evidence/g19/day358/r1-macierz.md
