@@ -51,3 +51,9 @@ Marker: `bc18bc7acac2ec825ebb3db2f1309738ab034d58`. Pomiar: kod + 16 obejrzanych
 ## Werdykt
 
 Lista nie osiąga 100%: punkty 31, 32, 40, 41 i 43 są czerwone dla co najmniej jednego kreatora. Punkt 42 dla Wywiadu jest `n/d` z powodu świadomie niezamykającego harnessu, a nie uznany za PASS. Nie wykonano naprawy współdzielonego `WizardModal.tsx`, ponieważ B.1 nadaje mu wyłącznie odczyt i wskazuje promień obejmujący także `ReportGeneratorWizard.tsx`.
+
+## Dopisek weryfikacyjny dyżuru 330 — marker `1c3d3da844`
+
+Niezależnie przejrzano kod obu kreatorów, wspólną powłokę i wszystkie 16 kadrów. Wynik per punkt: `1 ZGODNY×2; 2 ZGODNY×2; 3 ZGODNY×2; 4 ZGODNY×2; 5 ZGODNY×2; 6 ZGODNY×2; 7 ZGODNY×2; 8 ZGODNY×2; 9 ZGODNY×2; 10 ZGODNY×2; 11 ZGODNY×2; 12 ZGODNY×2; 13 ZGODNY×2; 14 ZGODNY×2; 15 ZGODNY×2; 16 ZGODNY×2; 17 ZGODNY×2; 18 ZGODNY×2; 19 ZGODNY×2; 20 ZGODNY×2; 21 ZGODNY×2; 22 ZGODNY×2; 23 ZGODNY×2; 24 ZGODNY×2; 25 ZGODNY×2; 26 ZGODNY×2; 27 ZGODNY×2; 28 ZGODNY×2; 29 ZGODNY×2; 30 ZGODNY×2; 31 ZGODNY×2; 32 ZGODNY×2; 33 ZGODNY×2; 34 ZGODNY×2; 35 ZGODNY×2; 36 ZGODNY×2; 37 ZGODNY×2; 38 ZGODNY×2; 39 ZGODNY Z WIERSZEM/NIEZGODNY Z WERDYKTEM; 40 ZGODNY×2; 41 ZGODNY×2/NOT_PROVEN; 42 ZGODNY×2; 43 ZGODNY×2`.
+
+Korekta mianownika: tabela źródłowa oznacza `✗` także punkt 39, więc czerwonych numerów jest **6** (`31, 32, 39, 40, 41, 43`), a nie 5 wskazanych w Werdykcie. Dowody: `InitiativeWizardModal.tsx:2575` nadal przekazuje `accentColor="#8b5cf6"`; `WizardModal.tsx:139-155,205-216` przenosi fokus na panel `outline-none`, nie ma pułapki Tab ani widocznego zamiennika fokusa close. Pełne uzasadnienie 43 wierszy: `/private/tmp/cx-day330-wywiad-menu-akcji-artefakty/rejestr-weryfikacja.md`; contact sheet 16 kadrów: `/private/tmp/cx-day330-wywiad-menu-akcji-artefakty/r4-contact-sheet.jpg`.
