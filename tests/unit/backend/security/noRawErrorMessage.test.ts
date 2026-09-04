@@ -16,6 +16,16 @@ const alternateLeakPatterns = [
   /(?:error|message|details):\s*(?:err|error|e)\?\.message/,
 ];
 const ALTERNATE_LEAK_BASELINE = 44;
+function variableAgnosticLeakPatterns(identifier: string): RegExp[] {
+  const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return [
+    new RegExp(`(?:error|message|details):\\s*(?:\\(${escaped} as Error\\)|${escaped})\\.message`),
+    new RegExp(`(?:error|message|details):\\s*String\\(${escaped}\\)`),
+    new RegExp(`res\\.send\\(\\s*${escaped}\\.stack\\s*\\)`),
+    new RegExp(`(?:error|message|details):\\s*${escaped}\\?\\.message`),
+  ];
+}
+const VARIABLE_AGNOSTIC_LEAK_BASELINE = 47;
 
 // Wyciek liczy sie tylko w ODPOWIEDZI HTTP. Logger ma prawo (i obowiazek) do surowej tresci,
 // a linie komentarza nie sa kodem.
@@ -36,20 +46,34 @@ function routeFiles(directory: string): string[] {
   });
 }
 
+function violationsInFile(file: string, pattern: RegExp): string[] {
+  const lines = readFileSync(file, 'utf8').split('\n');
+  const out: string[] = [];
+  let loggerWindow = 0;
+  lines.forEach((line, index) => {
+    if (/logger\.\w+\(/.test(line)) loggerWindow = 3;
+    if (pattern.test(line) && isResponseLine(line)) {
+      const insideLoggerCall = loggerWindow > 0 && !/res\.|\.json\(/.test(line);
+      if (!insideLoggerCall) out.push(`${relative(process.cwd(), file)}:${index + 1}:${line.trim()}`);
+    }
+    if (loggerWindow > 0) loggerWindow -= 1;
+  });
+  return out;
+}
+
 function violations(pattern: RegExp): string[] {
+  return routeFiles(routesRoot).flatMap((file) => violationsInFile(file, pattern));
+}
+
+function catchVariableViolations(): string[] {
   return routeFiles(routesRoot).flatMap((file) => {
-    const lines = readFileSync(file, 'utf8').split('\n');
-    const out: string[] = [];
-    let loggerWindow = 0;
-    lines.forEach((line, index) => {
-      if (/logger\.\w+\(/.test(line)) loggerWindow = 3;
-      if (pattern.test(line) && isResponseLine(line)) {
-        const insideLoggerCall = loggerWindow > 0 && !/res\.|\.json\(/.test(line);
-        if (!insideLoggerCall) out.push(`${relative(process.cwd(), file)}:${index + 1}:${line.trim()}`);
-      }
-      if (loggerWindow > 0) loggerWindow -= 1;
-    });
-    return out;
+    const source = readFileSync(file, 'utf8');
+    const identifiers = [...source.matchAll(/catch\s*\(\s*([A-Za-z_$][\w$]*)/g)].map(
+      (match) => match[1]
+    );
+    return [...new Set(identifiers)].flatMap((identifier) =>
+      variableAgnosticLeakPatterns(identifier).flatMap((pattern) => violationsInFile(file, pattern))
+    );
   });
 }
 
@@ -74,6 +98,13 @@ describe('raw route error response guard', () => {
     const found = alternateLeakPatterns.flatMap(violations);
     expect(found.length, `alternate leak debt grew:\n${found.join('\n')}`).toBeLessThanOrEqual(
       ALTERNATE_LEAK_BASELINE
+    );
+  });
+
+  it('does not depend on the exception variable name', () => {
+    const found = catchVariableViolations();
+    expect(found.length, `variable-agnostic leak debt grew:\n${found.join('\n')}`).toBeLessThanOrEqual(
+      VARIABLE_AGNOSTIC_LEAK_BASELINE
     );
   });
 });
