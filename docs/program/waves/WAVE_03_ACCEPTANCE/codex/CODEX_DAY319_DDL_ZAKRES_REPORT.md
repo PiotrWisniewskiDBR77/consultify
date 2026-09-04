@@ -100,6 +100,10 @@ Protokół Z30: `env` zwrócił `BRAK ZMIENNYCH POCZTY`; `settings WHERE key LIK
 
 Pułapki Z33: komplet env stał w tej samej linii (`RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, `NODE_ENV=test`, `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, jawny lokalny `DATABASE_URL`, `JWT_SECRET`). Harness montował `ApiGateway.getInstance().initializeRoutes(app)`, nie goły router i nie `server/src/index.ts`. Log zawiera `DB_IDENTITY ... 127.0.0.1:6335/cx319`.
 
+## R3 — pokrycie migracyjne
+
+Migracja `20261250_day319_runtime_ddl_gap.sql` addytywnie pokrywa wszystkie 7 tabel B−A. Pusta baza od zera przyjęła 892 migracje, drugi przebieg 0. `information_schema` po samym strict chain zwrócił każdą z siedmiu nazw. Dowody: `r3-migracja-1.txt`, `r3-migracja-2.txt`, `r3-tabele-po-migracji.txt`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R3–R6 pozostają niewykonane na tym etapie raportu.
