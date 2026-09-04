@@ -89,6 +89,17 @@ export const defectPlTranslations = new Map([
   ['Tech Lead', 'Lider techniczny'], ['UX Designer', 'Projektant UX'],
 ]);
 
+const polishWordsInEnglish = /\b(?:zakres|prezentacje|nazwa|szablonu|jest|wymagan(?:a|e|y)|zapytaj|proszę|błąd|ustawienia|utwórz|dodaj|usuń|zapisz|anuluj|wybierz|brak|nie|oraz|dla|edytuj|właściciel|zadanie|ocena|wniosek|inicjatywa|wywiad|załączniki|przypomnienia|przegląd|gotowość|dane|zebrania|sugerowana|wizualizacja|kategoria|nowy|wzorzec|sekcje|tabele|walidacja|zamiennik)\b/i;
+const allowedPolishNames = new Set(['Guided by Dr. Piotr Wiśniewski', 'Paweł Bochniarz']);
+
+export function polishTextReason(value) {
+  const trimmed = value.trim();
+  if (allowedPolishNames.has(trimmed)) return null;
+  if (polishWordsInEnglish.test(trimmed)) return 'polskie słowo w wartości słownika EN';
+  if (/[ąćęłńóśźż]/i.test(trimmed)) return 'polskie znaki w wartości słownika EN';
+  return null;
+}
+
 export function justification(value) {
   const trimmed = value.trim();
   if (defectPlTranslations.has(trimmed)) return null;
@@ -111,7 +122,10 @@ export function audit(plObject, enObject) {
     .map(([key, value]) => ({ key, pl: value, en: en.get(key), reason: justification(value) }))
     .map((row) => ({ ...row, classification: row.reason ? 'UZASADNIONE' : 'DEFEKT-PL', reason: row.reason || 'angielskie pojęcie interfejsu ma polski odpowiednik' }));
   const plOnly = [...pl.keys()].filter((key) => !en.has(key)).sort();
-  return { plLeaves: pl.size, enLeaves: en.size, identical, plOnly };
+  const defektEn = [...en]
+    .filter(([, value]) => typeof value === 'string' && polishTextReason(value))
+    .map(([key, value]) => ({ key, value, reason: polishTextReason(value) }));
+  return { plLeaves: pl.size, enLeaves: en.size, identical, plOnly, defektEn };
 }
 
 function cell(value) { return String(value).replaceAll('|', '\\|').replaceAll('\n', '<br>'); }
@@ -140,5 +154,5 @@ export function run() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = run();
-  console.log(JSON.stringify({ plLeaves: result.plLeaves, enLeaves: result.enLeaves, identical: result.identical.length, defects: result.identical.filter((r) => r.classification === 'DEFEKT-PL').length, justified: result.identical.filter((r) => r.classification === 'UZASADNIONE').length, plOnly: result.plOnly.length }));
+  console.log(JSON.stringify({ plLeaves: result.plLeaves, enLeaves: result.enLeaves, identical: result.identical.length, defects: result.identical.filter((r) => r.classification === 'DEFEKT-PL').length, justified: result.identical.filter((r) => r.classification === 'UZASADNIONE').length, defektEn: result.defektEn.length, plOnly: result.plOnly.length }));
 }

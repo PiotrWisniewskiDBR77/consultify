@@ -1,7 +1,7 @@
 # Rejestr języka polskiego — identyczne wartości PL/EN
 
 Generator: `node scripts/dev/i18n-pl-audyt.mjs`  
-Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZASADNIONE: 518; PL bez EN: 2005.
+Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 505; DEFEKT: 0; UZASADNIONE: 505; PL bez EN: 2005.
 
 | Klucz | Wartość PL | Wartość EN | Klasa | Powód | Commit |
 |---|---|---|---|---|---|
@@ -17,10 +17,7 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 | `preview.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `presentations.templates.audience.sponsor` | Sponsor | Sponsor | UZASADNIONE | poprawny polski termin | — |
 | `presentations.templateArchitect.colStatus` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `presentations.templateArchitect.dataNeeded` | Dane do zebrania | Dane do zebrania | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `presentations.templateArchitect.suggestedVisual` | Sugerowana wizualizacja | Sugerowana wizualizacja | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `presentations.builder.topBar.teresa` | Teresa | Teresa | UZASADNIONE | nazwa własna | — |
-| `presentations.builder.moduleLabel` | Prezentacje | Prezentacje | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `presentations.builder.teresa.title` | Teresa | Teresa | UZASADNIONE | nazwa własna | — |
 | `presentations.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `sidebar.excele` | Excel | Excel | UZASADNIONE | nazwa produktu | — |
@@ -136,7 +133,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 | `reports.automation.deliveryWebhook` | Webhook | Webhook | UZASADNIONE | termin techniczny | — |
 | `reports.automation.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `reports.col.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `reports.toast.templateNameRequired` | Nazwa szablonu jest wymagana | Nazwa szablonu jest wymagana | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `help.sidePanel.modules.superadmin` | Super Admin | Super Admin | UZASADNIONE | nazwa roli produktowej | — |
 | `settings.ownership.modules.copilot` | AI / Copilot | AI / Copilot | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `settings.profile.jobTitleSuggestions.manager` | Manager | Manager | UZASADNIONE | poprawny polski termin | — |
@@ -348,13 +344,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 | `results.ai.premiumBadge` | AI premium | AI premium | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `traceability.sourceType.mywork` | MyWork | MyWork | UZASADNIONE | nazwa modułu produktowego | — |
 | `rap.columns.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
-| `rap.actions.askAI` | Zapytaj AI | Zapytaj AI | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.scope` | Zakres | Zakres | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.category` | Kategoria | Kategoria | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.sections` | Sekcje | Sekcje | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.validationState` | Walidacja | Walidacja | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.migrationHint` | Zamiennik | Zamiennik | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `rap.preview.replacedBy` | Nowy wzorzec | Nowy wzorzec | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `rap.outputs.preview.status` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `rap.outputs.visibility.demo` | Demo | Demo | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `rbHub.tabs.r1r4` | R1–R4 | R1–R4 | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
@@ -366,12 +355,10 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 | `pages.partner.tiers.items.premier.title` | Premier | Premier | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `pages.partner.process.steps.onboarding.title` | Onboarding | Onboarding | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.remix` | Remix | Remix | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `kimi.laneTabele` | Tabele | Tabele | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.tabele.preview.statusKpi` | Status | Status | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `kimi.tabele.preview.formatKpi` | Format | Format | UZASADNIONE | poprawny polski internacjonalizm | — |
 | `kimi.artifactHome.laneLabel.excele` | Excel | Excel | UZASADNIONE | nazwa produktu | — |
 | `kimi.template.grid.governanceShort` | Govern. | Govern. | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
-| `kimi.shell.lane.prezentacje` | Prezentacje | Prezentacje | UZASADNIONE | termin dopuszczony po przeglądzie semantycznym | — |
 | `kimi.tabeleShell.aiEditor.levelTitle` | {{label}} — {{description}} | {{label}} — {{description}} | UZASADNIONE | tekst techniczny z placeholderem danych | — |
 | `kimi.tabeleShell.share.statusAriaLabel` | Status: {{status}} | Status: {{status}} | UZASADNIONE | tekst techniczny z placeholderem danych | — |
 | `kimi.tabeleShell.share.conversionFallbackTitle` | {{target}} — {{id}} | {{target}} — {{id}} | UZASADNIONE | tekst techniczny z placeholderem danych | — |
@@ -538,10 +525,7 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 - `preview.status`: poprawny polski internacjonalizm (Status)
 - `presentations.templates.audience.sponsor`: poprawny polski termin (Sponsor)
 - `presentations.templateArchitect.colStatus`: poprawny polski internacjonalizm (Status)
-- `presentations.templateArchitect.dataNeeded`: termin dopuszczony po przeglądzie semantycznym (Dane do zebrania)
-- `presentations.templateArchitect.suggestedVisual`: termin dopuszczony po przeglądzie semantycznym (Sugerowana wizualizacja)
 - `presentations.builder.topBar.teresa`: nazwa własna (Teresa)
-- `presentations.builder.moduleLabel`: termin dopuszczony po przeglądzie semantycznym (Prezentacje)
 - `presentations.builder.teresa.title`: nazwa własna (Teresa)
 - `presentations.columns.status`: poprawny polski internacjonalizm (Status)
 - `sidebar.excele`: nazwa produktu (Excel)
@@ -657,7 +641,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 - `reports.automation.deliveryWebhook`: termin techniczny (Webhook)
 - `reports.automation.status`: poprawny polski internacjonalizm (Status)
 - `reports.col.status`: poprawny polski internacjonalizm (Status)
-- `reports.toast.templateNameRequired`: termin dopuszczony po przeglądzie semantycznym (Nazwa szablonu jest wymagana)
 - `help.sidePanel.modules.superadmin`: nazwa roli produktowej (Super Admin)
 - `settings.ownership.modules.copilot`: termin dopuszczony po przeglądzie semantycznym (AI / Copilot)
 - `settings.profile.jobTitleSuggestions.manager`: poprawny polski termin (Manager)
@@ -869,13 +852,6 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 - `results.ai.premiumBadge`: termin dopuszczony po przeglądzie semantycznym (AI premium)
 - `traceability.sourceType.mywork`: nazwa modułu produktowego (MyWork)
 - `rap.columns.status`: poprawny polski internacjonalizm (Status)
-- `rap.actions.askAI`: termin dopuszczony po przeglądzie semantycznym (Zapytaj AI)
-- `rap.preview.scope`: termin dopuszczony po przeglądzie semantycznym (Zakres)
-- `rap.preview.category`: termin dopuszczony po przeglądzie semantycznym (Kategoria)
-- `rap.preview.sections`: termin dopuszczony po przeglądzie semantycznym (Sekcje)
-- `rap.preview.validationState`: termin dopuszczony po przeglądzie semantycznym (Walidacja)
-- `rap.preview.migrationHint`: termin dopuszczony po przeglądzie semantycznym (Zamiennik)
-- `rap.preview.replacedBy`: termin dopuszczony po przeglądzie semantycznym (Nowy wzorzec)
 - `rap.outputs.preview.status`: poprawny polski internacjonalizm (Status)
 - `rap.outputs.visibility.demo`: poprawny polski internacjonalizm (Demo)
 - `rbHub.tabs.r1r4`: termin dopuszczony po przeglądzie semantycznym (R1–R4)
@@ -887,12 +863,10 @@ Liście PL: 34310; liście EN: 32321; identyczne (>3 znaki): 518; DEFEKT: 0; UZA
 - `pages.partner.tiers.items.premier.title`: termin dopuszczony po przeglądzie semantycznym (Premier)
 - `pages.partner.process.steps.onboarding.title`: termin dopuszczony po przeglądzie semantycznym (Onboarding)
 - `kimi.remix`: termin dopuszczony po przeglądzie semantycznym (Remix)
-- `kimi.laneTabele`: termin dopuszczony po przeglądzie semantycznym (Tabele)
 - `kimi.tabele.preview.statusKpi`: poprawny polski internacjonalizm (Status)
 - `kimi.tabele.preview.formatKpi`: poprawny polski internacjonalizm (Format)
 - `kimi.artifactHome.laneLabel.excele`: nazwa produktu (Excel)
 - `kimi.template.grid.governanceShort`: termin dopuszczony po przeglądzie semantycznym (Govern.)
-- `kimi.shell.lane.prezentacje`: termin dopuszczony po przeglądzie semantycznym (Prezentacje)
 - `kimi.tabeleShell.aiEditor.levelTitle`: tekst techniczny z placeholderem danych ({{label}} — {{description}})
 - `kimi.tabeleShell.share.statusAriaLabel`: tekst techniczny z placeholderem danych (Status: {{status}})
 - `kimi.tabeleShell.share.conversionFallbackTitle`: tekst techniczny z placeholderem danych ({{target}} — {{id}})
