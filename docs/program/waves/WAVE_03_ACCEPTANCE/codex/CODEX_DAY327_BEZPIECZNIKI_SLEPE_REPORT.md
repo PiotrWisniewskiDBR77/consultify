@@ -87,3 +87,9 @@ PRZED: `defects=0`, `justified=505`, `defektEn=0`. PO: `defects=134`, `justified
 Mutacja `Milestone` w obu słownikach dała `defects=135` i czerwony ratchet (exit 1). Mutacja EN `Zamknij dokument: {{nazwa}}` dała `defektEn=18` i czerwony ratchet (exit 1). Po obu mutacjach słowniki cofnięto; ich diff jest pusty. Testy klasyfikatora utrwalają oba kształty, a wycięcie wnętrza `{{…}}` pozostało bez zmian.
 
 Dług imienny: `/private/tmp/cx-day327-bezpieczniki-slepe-artefakty/i18n-dlug.txt` (134 DEFEKT-PL + 17 DEFEKT-EN). Klasyfikacja semantyczna wszystkich 151 pozycji nie została ukończona; dlatego nie przypisuję zmyślonych liczb „realne/fałszywe”. Próbka pokazuje trafienia prawdopodobnie uzasadnione (`Inter`, `Roboto`, strefy czasowe) oraz realne kandydaty (`Benchmark`, `Reset`). R1 ma stan `PARTIAL`: zabezpieczenie mierzy i czerwieni obie mutacje, lecz rozliczenie jakości całego odsłoniętego długu wymaga osobnego przeglądu językowego.
+
+## R2 — noRawErrorInJsx
+
+Fizyczny odczyt rozszerzono z 3 do 6 plików i jest on asertowany niepustą treścią każdego wejścia. Wzorzec obejmuje bezpośrednie interpolacje `x.message`, `x?.message`, `(x as Error|any).message` i `String(x)`. Baseline odsłonił 4 miejsca: 3 w `DocumentStudioDocumentPanel.tsx`, 1 w `DocumentStudioTemplateArchitectView.tsx`; pliki produktu pozostają niezmienione. Mutacja `{err.message}` w `src/services/api.ts` po naprawie: exit 1, dokładny komunikat `expected ... length 0 but got 1`; po `cp` diff produktu pusty. Artefakt: `r2-mutacja-po.txt`.
+
+Dowód PRZED tej mutacji nie został uruchomiony lokalnie przed zmianą kodu bezpiecznika; znana z instrukcji zieleń nie jest przeze mnie przedstawiana jako własny pomiar. Mutacja odwrotna również nie została wykonana. R2 jest zatem `PARTIAL`, mimo zielonego stanu końcowego i skutecznej mutacji PO.
