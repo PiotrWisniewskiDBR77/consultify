@@ -1,0 +1,108 @@
+
+<--- Last few GCs --->
+
+[57141:0xbd340c000]    70056 ms: Mark-Compact 4086.4 (4101.7) -> 4080.6 (4100.9) MB, pooled: 0 MB, 1029.88 / 0.00 ms  (average mu = 0.155, current mu = 0.011) allocation failure; scavenge might not succeed
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x104fdc2e4 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/usr/local/bin/node]
+ 2: 0x1051dc868 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/usr/local/bin/node]
+ 3: 0x10543c498 v8::internal::Heap::stack() [/usr/local/bin/node]
+ 4: 0x10543f86c v8::internal::Heap::HasLowYoungGenerationAllocationRate() [/usr/local/bin/node]
+ 5: 0x105450abc v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const [/usr/local/bin/node]
+ 6: 0x105450390 void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) [/usr/local/bin/node]
+ 7: 0x105e05d8c PushAllRegistersAndIterateStack [/usr/local/bin/node]
+ 8: 0x10543a19c v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/usr/local/bin/node]
+ 9: 0x10542eea8 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/usr/local/bin/node]
+10: 0x1054105b4 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/usr/local/bin/node]
+11: 0x10589f7d0 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/usr/local/bin/node]
+12: 0x105ef5f74 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/usr/local/bin/node]
+13: 0x12fbe2204 
+14: 0x130ef1e5c 
+15: 0x130b19d28 
+16: 0x12fe5955c 
+17: 0x12fc0e3e8 
+18: 0x12fb470b0 
+19: 0x1310f54c4 
+20: 0x12fe5eafc 
+21: 0x12fe5bc28 
+22: 0x12fcc3e2c 
+23: 0x12fe5c0a0 
+24: 0x12fcc44f8 
+25: 0x12fe5c0a0 
+26: 0x130c43e48 
+27: 0x130b80e04 
+28: 0x130d67e8c 
+29: 0x130b1ce10 
+30: 0x130eeca6c 
+31: 0x12fbf87b8 
+32: 0x12fcd99fc 
+33: 0x130b9eeb8 
+34: 0x130da4b2c 
+35: 0x1309c65fc 
+36: 0x1310d280c 
+37: 0x12fbfc14c 
+38: 0x105ed9dfc Builtins_SetPrototypeForEach [/usr/local/bin/node]
+39: 0x130a2bbb4 
+40: 0x130f37214 
+41: 0x130dd620c 
+42: 0x130f31718 
+43: 0x130e48f28 
+44: 0x130b6bce4 
+45: 0x130c46d28 
+46: 0x130cd8af0 
+47: 0x12feb0bec 
+48: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+49: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+50: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+51: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+52: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+53: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+54: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+55: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+56: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+57: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+58: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+59: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+60: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+61: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+62: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+63: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+64: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+65: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+66: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+67: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+68: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+69: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+70: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+71: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+72: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+73: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+74: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+75: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+76: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+77: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+78: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+79: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+80: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+81: 0x105e58bec Builtins_InterpreterEntryTrampoline [/usr/local/bin/node]
+82: 0x105e568cc Builtins_JSEntryTrampoline [/usr/local/bin/node]
+83: 0x105e56570 Builtins_JSEntry [/usr/local/bin/node]
+84: 0x1053806e4 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/usr/local/bin/node]
+85: 0x105380048 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::base::Vector<v8::internal::DirectHandle<v8::internal::Object> const>) [/usr/local/bin/node]
+86: 0x1051f47e0 v8::Function::Call(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/usr/local/bin/node]
+87: 0x104fb574c node::builtins::BuiltinLoader::CompileAndCall(v8::Local<v8::Context>, char const*, node::Realm*) [/usr/local/bin/node]
+88: 0x10507c960 node::Realm::ExecuteBootstrapper(char const*) [/usr/local/bin/node]
+89: 0x104f92b58 node::StartExecution(node::Environment*, char const*) [/usr/local/bin/node]
+90: 0x104f92aac node::StartExecution(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>) [/usr/local/bin/node]
+91: 0x104ee188c node::LoadEnvironment(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>, std::__1::function<void (node::Environment*, v8::Local<v8::Value>, v8::Local<v8::Value>)>) [/usr/local/bin/node]
+92: 0x10503005c node::NodeMainInstance::Run() [/usr/local/bin/node]
+93: 0x104f96344 node::Start(int, char**) [/usr/local/bin/node]
+94: 0x18721c4e4 start [/usr/lib/dyld]
+time: command terminated abnormally
+real 70.22
+user 132.73
+sys 2.02
+
+EXIT_CODE=134
