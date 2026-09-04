@@ -1,0 +1,1586 @@
+{
+  "contractVersion": "assessment-report-contract-v1",
+  "sessionId": "2e87758d-bd31-459f-b073-28080cbd7a9c",
+  "outputId": null,
+  "revision": 0,
+  "generatedAt": "2026-09-04T10:55:07.124Z",
+  "methodVersion": "day339-v1",
+  "sessionLabel": {
+    "displayName": null,
+    "source": null,
+    "projectId": null
+  },
+  "businessProfile": "Produkcja przemysłowa",
+  "employment": null,
+  "assessmentPeriod": "4 września 2026",
+  "assessor": "Anna Pomiarowa",
+  "clientSponsor": null,
+  "executiveSummary": null,
+  "criticalGaps": null,
+  "finalConclusions": null,
+  "programDecisionLine": {
+    "direction": null,
+    "priority": null,
+    "horizon": null,
+    "successCondition": null
+  },
+  "chapters": [
+    {
+      "axisId": 1,
+      "axisName": "Digital Processes",
+      "axisNamePL": "Procesy Cyfrowe",
+      "maxLevel": 7,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 9 obszarów osi 1. Kolumny poziomów pokazują skalę od 1 do 7; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "1A",
+            "unitName": "Sales Processes",
+            "unitNamePL": "Procesy Sprzedaży",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1B",
+            "unitName": "Marketing Processes",
+            "unitNamePL": "Procesy Marketingowe",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1C",
+            "unitName": "Process Technology and R&D",
+            "unitNamePL": "Technologia Procesowa i R&D",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1D",
+            "unitName": "Purchasing Processes",
+            "unitNamePL": "Procesy Zakupowe",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1E",
+            "unitName": "Logistics Processes",
+            "unitNamePL": "Procesy Logistyczne",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1F",
+            "unitName": "Production Processes",
+            "unitNamePL": "Procesy Produkcyjne",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1G",
+            "unitName": "Quality Processes",
+            "unitNamePL": "Procesy Jakości",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1H",
+            "unitName": "Financial Management",
+            "unitNamePL": "Zarządzanie Finansami",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "1I",
+            "unitName": "HR Processes",
+            "unitNamePL": "Procesy HR",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "1A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1F",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1G",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1H",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "1I",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 2,
+      "axisName": "Digital Products",
+      "axisNamePL": "Produkty Cyfrowe",
+      "maxLevel": 5,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 2. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "2A",
+            "unitName": "Digital Products",
+            "unitNamePL": "Produkty Cyfrowe",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "2B",
+            "unitName": "Community-based Products",
+            "unitNamePL": "Produkty Społecznościowe",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "2C",
+            "unitName": "ICT-based Products",
+            "unitNamePL": "Produkty ICT",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "2D",
+            "unitName": "Product Alignment to Customer Expectations",
+            "unitNamePL": "Dopasowanie Produktu do Oczekiwań Klienta",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "2E",
+            "unitName": "Product Scalability",
+            "unitNamePL": "Skalowalność Produktu",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "2A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "2B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "2C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "2D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "2E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 3,
+      "axisName": "Digital Business Models",
+      "axisNamePL": "Cyfrowe Modele Biznesowe",
+      "maxLevel": 5,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 3. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "3A",
+            "unitName": "E-commerce Models",
+            "unitNamePL": "Modele E-commerce",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "3B",
+            "unitName": "Platform Solutions",
+            "unitNamePL": "Rozwiązania Platformowe",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "3C",
+            "unitName": "As-a-Service",
+            "unitNamePL": "Model As-a-Service",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "3D",
+            "unitName": "Asset Sharing Models",
+            "unitNamePL": "Modele Współdzielenia Zasobów",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "3E",
+            "unitName": "Data Monetization Models",
+            "unitNamePL": "Modele Monetyzacji Danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "3A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "3B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "3C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "3D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "3E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 4,
+      "axisName": "Data Management",
+      "axisNamePL": "Zarządzanie Danymi",
+      "maxLevel": 7,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 4. Kolumny poziomów pokazują skalę od 1 do 7; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "4A",
+            "unitName": "Data Collection",
+            "unitNamePL": "Zbieranie Danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "4B",
+            "unitName": "Data Storage Methodology",
+            "unitNamePL": "Metodologia Przechowywania Danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "4C",
+            "unitName": "Data Communication",
+            "unitNamePL": "Komunikacja Danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "4D",
+            "unitName": "Big Data Analysis",
+            "unitNamePL": "Analiza Big Data",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "4E",
+            "unitName": "Computing",
+            "unitNamePL": "Przetwarzanie Danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "4A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "4B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "4C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "4D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "4E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 5,
+      "axisName": "Culture of Transformation",
+      "axisNamePL": "Kultura Transformacji",
+      "maxLevel": 6,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 5. Kolumny poziomów pokazują skalę od 1 do 6; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "5A",
+            "unitName": "Leadership Attitudes",
+            "unitNamePL": "Postawy przywódcze",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "5B",
+            "unitName": "Readiness for Change",
+            "unitNamePL": "Gotowość na zmianę",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "5C",
+            "unitName": "Continuous Competency Development",
+            "unitNamePL": "Ciągły rozwój kompetencji",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "5D",
+            "unitName": "Innovation Culture",
+            "unitNamePL": "Kultura innowacji",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "5E",
+            "unitName": "Resource Availability",
+            "unitNamePL": "Dostępność zasobów",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "5A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "5B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "5C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "5D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "5E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 6,
+      "axisName": "Cybersecurity",
+      "axisNamePL": "Cyberbezpieczeństwo",
+      "maxLevel": 6,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 6. Kolumny poziomów pokazują skalę od 1 do 6; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "6A",
+            "unitName": "Strategy and Risk Management",
+            "unitNamePL": "Strategia i zarządzanie ryzykiem",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "6B",
+            "unitName": "Network and System Protection",
+            "unitNamePL": "Ochrona sieci i systemów",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "6C",
+            "unitName": "Data Security",
+            "unitNamePL": "Ochrona danych",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "6D",
+            "unitName": "Security Education and System Quality",
+            "unitNamePL": "Edukacja i jakość systemów",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "6E",
+            "unitName": "Contingency Plans",
+            "unitNamePL": "Plany awaryjne",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "6A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "6B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "6C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "6D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "6E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    },
+    {
+      "axisId": 7,
+      "axisName": "AI Maturity",
+      "axisNamePL": "Dojrzałość AI",
+      "maxLevel": 5,
+      "introduction": {
+        "content": null,
+        "minWords": 120,
+        "maxWords": 180
+      },
+      "matrix": {
+        "caption": {
+          "content": "Tabela obejmuje 5 obszarów osi 7. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-09-04.",
+          "minWords": 30,
+          "maxWords": 60
+        },
+        "areas": [
+          {
+            "unitId": "7A",
+            "unitName": "Data and AI Foundations",
+            "unitNamePL": "Dane i Fundamenty AI",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "7B",
+            "unitName": "AI-Supported Processes",
+            "unitNamePL": "Procesy Wspierane przez AI",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "7C",
+            "unitName": "AI in Products and Services",
+            "unitNamePL": "AI w Produktach i Usługach",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "7D",
+            "unitName": "Governance, Security and Ethics",
+            "unitNamePL": "Governance, Bezpieczeństwo i Etyka",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          },
+          {
+            "unitId": "7E",
+            "unitName": "AI Competencies and Culture",
+            "unitNamePL": "Kompetencje i Kultura AI",
+            "currentLevel": null,
+            "targetLevel": null,
+            "gap": null,
+            "skipped": false,
+            "skipCode": null,
+            "skips": [],
+            "evidenceState": "not_assessed"
+          }
+        ]
+      },
+      "areaComments": [
+        {
+          "unitId": "7A",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "7B",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "7C",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "7D",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        },
+        {
+          "unitId": "7E",
+          "content": null,
+          "minWords": 110,
+          "maxWords": 170,
+          "microstructure": [
+            "stan_faktyczny",
+            "ocena_i_wiarygodnosc",
+            "znaczenie_dla_przedsiebiorstwa",
+            "luka_i_sens_targetu",
+            "najblizszy_krok"
+          ],
+          "skipped": false,
+          "skipCode": null,
+          "skips": [],
+          "answerRefs": [],
+          "evidenceRefs": [],
+          "sourceLocators": [],
+          "sourceFields": [],
+          "narrativeKind": null,
+          "uncertainty": "not_assessed"
+        }
+      ],
+      "conclusion": {
+        "content": null,
+        "minWords": 180,
+        "maxWords": 260,
+        "decisionLine": {
+          "direction": null,
+          "priority": null,
+          "horizon": null,
+          "successCondition": null
+        }
+      }
+    }
+  ]
+}
