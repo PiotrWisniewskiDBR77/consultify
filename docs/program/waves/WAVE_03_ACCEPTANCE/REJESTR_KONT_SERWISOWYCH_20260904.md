@@ -44,3 +44,19 @@ Stan: **ZROBIONE**.
 Ekstrakcja nazw obejmuje teraz `catch (x)`, `.catch((x) => ...)`, wariant `async`, parametr z typem oraz `.catch(function (x) { ... })`. Zakres plików nie został zawężony. Progi pozostają bez zmian: `ALTERNATE_LEAK_BASELINE = 44`, `VARIABLE_AGNOSTIC_LEAK_BASELINE = 47`.
 
 Pakiet po zmianie: 5/5 przypadków zielonych. Mutacja `.catch((problem) => res.json({ error: problem.message }))` zwiększa zmierzony dług z 47 do 48 i czerwieni właściwy test; po przywróceniu pliku przez `cp` pakiet wraca do 5/5.
+
+## R4 — seed `system` na PostgreSQL
+
+Stan: **ZROBIONE; ryzyko potwierdzone**.
+
+Po 893 migracjach, przed jakimkolwiek własnym zapisem, wykonano:
+
+```text
+SELECT id, name, status FROM organizations WHERE id = 'system';
+   id   |  name  | status
+--------+--------+--------
+ system | System | active
+(1 row)
+```
+
+Nie ma dziury w odtworzeniu tego seeda na badanym markerze. Osobna niespójność typów pozostaje realna: organizacja tekstowa istnieje, ale `tp_service_accounts.organization_id uuid` nie może jej reprezentować. R2 zabezpiecza tę sytuację jawnym `400 INVALID_IDENTIFIER` zamiast wyjątku PostgreSQL.
