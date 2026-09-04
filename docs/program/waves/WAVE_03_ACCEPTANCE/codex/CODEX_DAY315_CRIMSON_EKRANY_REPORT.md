@@ -124,6 +124,14 @@ Pierwszy pomiar modala ujawnił, że `focus:border-c-focus-solid` jest w dark pr
 
 Do par PRZED/PO weszły trzy nowe ekrany bezpośrednio obejmujące pięć zmienionych linii R2. Dwa pozostałe nowe ekrany (`chat-message-required-surfaces`, `chat-v8-artifact-run-search`) dowodzą brakującego pokrycia R4, ale nie weszły do par, ponieważ produktowo nie zależą od R2 i ich para byłaby bajtowo identyczna. To bezpieczniejsza korekta wobec sprzecznego połączenia wymagań „w tym nowe z R4” i „żadna para identyczna”.
 
+## R6 — martwe poddrzewo `AgentAudit/`
+
+Rozstrzygnięcie: **usunąć trzy nieosiągalne pliki** `AgentSuggestionCard.tsx`, `AgentAuditVerdictPanel.tsx` i ich lokalny `index.ts`. Pomiar od korzeni `src` i `dev-render` przed usunięciem zwrócił zero importów obu komponentów spoza własnego katalogu. Po usunięciu ponowny `git grep` zwraca zero odniesień, a produkcyjny build przechodzi.
+
+Pierwszy `npm run build` po transformacji 10 595 modułów zakończył się RC=134 z powodu limitu sterty Node. Ten sam build, bez zmiany kodu, uruchomiony z `NODE_OPTIONS=--max-old-space-size=8192`, zakończył się RC=0 (`✓ built in 38.28s`). Log: `/private/tmp/cx-day315-crimson-ekrany-artefakty/build.log`.
+
+Pełny licencjonowany pakiet jednostkowy po usunięciu: 95/95 suit i 367/367 testów PASS. Żywa funkcja audytu pozostaje w `UnifiedChatPanel`/`MessageRenderer`; pakiet obejmuje m.in. przypadki `deep thinking flow: confirm, proceed, and post-run agent audit (streamed verdict path)` oraz `agent audit accept handler persists acknowledgement and updates stores`. Usunięto zatem wyłącznie równoległe, nieosiągalne komponenty prezentacyjne, nie handlery ani produkcyjny przepływ audytu.
+
 ## Korekty wobec instrukcji
 
 - Pomiar potwierdził 15 trafień ogółem i 10 poza testami, a nie 22 z zamówienia nadzorcy.
