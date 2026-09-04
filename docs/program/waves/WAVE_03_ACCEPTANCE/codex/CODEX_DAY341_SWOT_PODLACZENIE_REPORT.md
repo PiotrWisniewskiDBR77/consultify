@@ -78,3 +78,20 @@ Dowód mutacyjny 2:
 Osiągalność po R3: 32 pliki pod `src/toolPacks/` (nowy plik testu zwiększył mianownik), w tym `app=3`, `test-only=29`. Żywe są `contract.ts`, `packs/dynamicSwot.pack.ts` i `runtimeReadiness.ts`; totals repo: `app=3048`, `harness-only=30`, `test-only=1014`, `unreachable=719`. `--check-baseline` jest czerwony wyłącznie przez nowy test-only plik; baseline nie został zmieniony.
 
 Pełny `tsc --noEmit` nie zakończył się w 180 sekund i został przerwany w należącej do dyżuru sesji; nie jest raportowany jako PASS.
+
+## R4 — realny PostgreSQL i zimny odczyt
+
+PostgreSQL: `cx-day341-pg`, `127.0.0.1:6377/cx341`, obraz `pgvector/pgvector:pg16`. Po pierwszym pełnym przebiegu baza miała 894 wpisy `schema_migrations`; jawny przebieg idempotencyjny podał `Applying migrations: 0` i `Postgres migrations complete`. Tabela `settings` miała 0 kluczy `smtp%`.
+
+Dowód użył realnego `ApiGateway.getInstance().initializeRoutes(app)` w osobnym procesie ESM na wyłącznym porcie 5517, bez uruchamiania `server/src/index.ts`. To omija dreny outboxu i nie jest gołym routerem. `DB_IDENTITY` procesu: `127.0.0.1:6377/cx341`.
+
+Komenda Playwright z pełnym env, `--retries=0 --workers=1` i filtrem `DAY341:` zakończyła się `2 passed (2.0s)`:
+
+- `DAY341: stage seven survives a cold authenticated read from real PostgreSQL` — zapis `wizardState.currentStep=review`, kolejności 7 faz i answers, następnie odczyt osobnym klientem HTTP.
+- `DAY341: an OFF-compatible read preserves stage-seven data` — odczyt zachował answers oraz metadane zapisane przy siedmiu fazach; payload nie jest odrzucany ani obcinany przy wycofaniu UI do OFF.
+
+Pierwszy przebieg był błędem transformacji Playwright przy bezpośrednim imporcie Gateway (`declare status`); drugi ujawnił zastany defekt `/api/test-support/cleanup`: endpoint tworzy `admin_audit_logs` wskazujący użytkownika, po czym próbuje usunąć tego użytkownika i dostaje FK 500. Test dyżuru sprząta własne dane jawnie w swojej efemerycznej bazie. Dopiero trzeci przebieg jest wynikiem zielonym.
+
+Pułapki (a)-(e): (a) `ENABLE_V8_GLOBAL=true`; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) `MOCK_DB=false DB_TYPE=postgres` oraz `DB_IDENTITY`; (d) `ENABLE_TEST_AUTH_BYPASS=false` i podpisany JWT z Gateway; (e) `RUN_DB_TESTS=1`, jawny `DATABASE_URL`, realny zapis i zimny GET. `--retries=0` wykluczył samoleczenie.
+
+Deklaracja Z30: „Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.”

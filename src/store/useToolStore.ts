@@ -2777,6 +2777,21 @@ export const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'process-automation': PROCESS_AUTOMATION_STEPS,
 };
 
+function resolveToolStepDefinitions(toolType: ToolType): StepDefinition[] {
+  if (toolType !== 'dynamic-swot') return TOOL_STEP_DEFINITIONS[toolType] || PORTER_STEPS;
+  const pack = getDynamicSwotPackForCurrentFlags();
+  if (pack === dynamicSwotPack) return SWOT_STEPS;
+  return pack.phases.map((phase) => ({
+    id: phase.id,
+    name: phase.title.en,
+    namePl: phase.title.pl,
+    description: phase.goal.en,
+    descriptionPl: phase.goal.pl,
+    required: true,
+    aiAssisted: phase.id !== 'mission' && phase.id !== 'review',
+  }));
+}
+
 const TOOL_INITIAL_DATA: Record<
   ToolType,
   | SWOTData
@@ -4200,7 +4215,7 @@ export const useToolStore = create<ToolStoreState>()(
       },
 
       hydrateSessionFromApi: (payload) => {
-        const steps = TOOL_STEP_DEFINITIONS[payload.toolType] || PORTER_STEPS;
+        const steps = resolveToolStepDefinitions(payload.toolType);
         const answers = payload.answers || {};
         // RB-023: resolve the persisted step. Prefer an explicit numeric
         // currentStep (legacy/back-compat callers); otherwise resolve the
@@ -5079,20 +5094,7 @@ export const useToolStore = create<ToolStoreState>()(
       getStepDefinitions: () => {
         const { currentSession } = get();
         if (!currentSession) return [];
-        if (currentSession.toolType === 'dynamic-swot') {
-          const pack = getDynamicSwotPackForCurrentFlags();
-          if (pack === dynamicSwotPack) return SWOT_STEPS;
-          return pack.phases.map((phase) => ({
-            id: phase.id,
-            name: phase.title.en,
-            namePl: phase.title.pl,
-            description: phase.goal.en,
-            descriptionPl: phase.goal.pl,
-            required: true,
-            aiAssisted: phase.id !== 'mission' && phase.id !== 'review',
-          }));
-        }
-        return TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
+        return resolveToolStepDefinitions(currentSession.toolType);
       },
 
       calculateProgress: () => {

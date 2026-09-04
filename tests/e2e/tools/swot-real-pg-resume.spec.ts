@@ -1,5 +1,6 @@
 import {
   expect,
+  request as playwrightRequest,
   test,
   type APIRequestContext,
   type Browser,
@@ -108,6 +109,24 @@ async function cleanup(request: APIRequestContext, runId: string): Promise<void>
     throw new Error(`cleanup ${runId}: ${response.status()} ${await response.text()}`);
 }
 
+async function cleanupDay341(persona: Persona): Promise<void> {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+  try {
+    await pool.query('DELETE FROM admin_audit_logs WHERE admin_id=$1 OR reviewed_by=$1', [
+      persona.userId,
+    ]);
+    await pool.query('DELETE FROM tool_sessions WHERE organization_id=$1', [persona.organizationId]);
+    await pool.query('DELETE FROM organization_members WHERE organization_id=$1', [
+      persona.organizationId,
+    ]);
+    await pool.query('DELETE FROM test_support_runs WHERE run_id=$1', [persona.runId]);
+    await pool.query('DELETE FROM users WHERE organization_id=$1', [persona.organizationId]);
+    await pool.query('DELETE FROM organizations WHERE id=$1', [persona.organizationId]);
+  } finally {
+    await pool.end();
+  }
+}
+
 async function assertDisposableDatabase(pool: Pool): Promise<void> {
   const prefix = process.env.TLS_BVP_DISPOSABLE_DB_PREFIX || '';
   if (!prefix) throw new Error('TLS_BVP_DISPOSABLE_DB_PREFIX is required');
@@ -203,6 +222,71 @@ const completeSwotAnswers = {
     },
   ],
 };
+
+test('DAY341: stage seven survives a cold authenticated read from real PostgreSQL', async ({ request }) => {
+  const runId = `day341-seven-${Date.now()}`;
+  let owner: Persona | undefined;
+  let sessionId = '';
+  try {
+    owner = await bootstrap(request, runId);
+    const created = await request.post(`${API_BASE_URL}/api/tools`, {
+      headers: authHeaders(owner),
+      data: { toolType: 'dynamic-swot', name: runId },
+    });
+    expect(created.status()).toBe(200);
+    const body = await created.json();
+    sessionId = body.id;
+    const saved = await request.put(`${API_BASE_URL}/api/tools/${sessionId}`, {
+      headers: authHeaders(owner),
+      data: {
+        expectedVersion: body.version,
+        answers: { ...completeSwotAnswers, day341Stage: 'review' },
+        wizardState: { currentStep: 'review', stageOrder: ['mission', 'input', 'swot', 'insights', 'recommendations', 'outputs', 'review'] },
+      },
+    });
+    expect(saved.status()).toBe(200);
+    const cold = await playwrightRequest.newContext({ extraHTTPHeaders: authHeaders(owner) });
+    const reopened = await cold.get(`${API_BASE_URL}/api/tools/${sessionId}`);
+    expect(reopened.status()).toBe(200);
+    const reopenedBody = await reopened.json();
+    expect(reopenedBody.wizardState.stageOrder).toHaveLength(7);
+    expect(reopenedBody.wizardState.currentStep).toBe('review');
+    expect(reopenedBody.answers.day341Stage).toBe('review');
+    await cold.dispose();
+  } finally {
+    if (owner) await cleanupDay341(owner);
+  }
+});
+
+test('DAY341: an OFF-compatible read preserves stage-seven data', async ({ request }) => {
+  const runId = `day341-off-${Date.now()}`;
+  let owner: Persona | undefined;
+  try {
+    owner = await bootstrap(request, runId);
+    const created = await request.post(`${API_BASE_URL}/api/tools`, {
+      headers: authHeaders(owner),
+      data: { toolType: 'dynamic-swot', name: runId },
+    });
+    const body = await created.json();
+    const marker = `preserved-${runId}`;
+    const saved = await request.put(`${API_BASE_URL}/api/tools/${body.id}`, {
+      headers: authHeaders(owner),
+      data: {
+        expectedVersion: body.version,
+        answers: { ...completeSwotAnswers, rollbackMarker: marker },
+        wizardState: { currentStep: 'review', sevenStagesEnabledWhenSaved: true },
+      },
+    });
+    expect(saved.status()).toBe(200);
+    const reopened = await request.get(`${API_BASE_URL}/api/tools/${body.id}`, { headers: authHeaders(owner) });
+    expect(reopened.status()).toBe(200);
+    const reopenedBody = await reopened.json();
+    expect(reopenedBody.answers.rollbackMarker).toBe(marker);
+    expect(reopenedBody.wizardState).toMatchObject({ currentStep: 'review', sevenStagesEnabledWhenSaved: true });
+  } finally {
+    if (owner) await cleanupDay341(owner);
+  }
+});
 
 test('TLS-02/03: mounted SWOT edit persists while empty, stale, foreign and revoked writes fail closed', async ({
   browser,
