@@ -445,39 +445,11 @@ export class LLMConfigService {
       await this.syncDatabaseWithEnv();
       await this.seedTierAssignments();
 
-      await this.runAsync(`
-                CREATE TABLE IF NOT EXISTS llm_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    trace_id TEXT,
-                    provider TEXT,
-                    model TEXT,
-                    status TEXT,
-                    latency_ms INTEGER,
-                    tokens_in INTEGER,
-                    tokens_out INTEGER,
-                    cost REAL,
-                    error_message TEXT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
       await this.runAsync(
         `CREATE INDEX IF NOT EXISTS idx_llm_logs_timestamp ON llm_logs(timestamp)`
       );
       await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
 
-      await this.runAsync(`
-                CREATE TABLE IF NOT EXISTS llm_health_events (
-                    id TEXT PRIMARY KEY,
-                    provider TEXT NOT NULL,
-                    model TEXT,
-                    status TEXT NOT NULL,
-                    available INTEGER DEFAULT 0,
-                    latency_ms INTEGER DEFAULT 0,
-                    error_message TEXT,
-                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
       await this.runAsync(
         `CREATE INDEX IF NOT EXISTS idx_llm_health_events_provider_timestamp ON llm_health_events(provider, timestamp)`
       );
@@ -503,38 +475,6 @@ export class LLMConfigService {
   }
 
   async ensureTableExists(): Promise<void> {
-    const sql = `
-            CREATE TABLE IF NOT EXISTS llm_providers (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                provider TEXT NOT NULL,
-                description TEXT,
-                api_key TEXT,
-                endpoint TEXT,
-                model_id TEXT,
-                kind TEXT DEFAULT 'TEXT_LLM',
-                provider_type TEXT DEFAULT 'aggregator',
-                origin_vendor TEXT,
-                execution_regions TEXT,
-                allowed_data_classes TEXT,
-                data_residency_attestation TEXT,
-                subprocessors_ref TEXT,
-                cost_per_1k REAL DEFAULT 0,
-                markup_multiplier REAL DEFAULT 2.0,
-                is_active BOOLEAN DEFAULT TRUE,
-                is_default BOOLEAN DEFAULT FALSE,
-                visibility TEXT DEFAULT 'public',
-                priority INTEGER DEFAULT 0,
-                tier TEXT DEFAULT 'STANDARD',
-                last_health_check TEXT,
-                health_status TEXT DEFAULT 'unknown',
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-
-    await this.runAsync(sql);
-
     // Best-effort add enterprise columns for legacy DBs (SQLite dev / older schemas).
     const addCols = [
       `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS kind TEXT DEFAULT 'TEXT_LLM'`,
@@ -589,71 +529,6 @@ export class LLMConfigService {
     } catch {
       /* ignore */
     }
-
-    const orgSettingsSql = `
-            CREATE TABLE IF NOT EXISTS organization_llm_settings (
-                organization_id TEXT,
-                provider_id TEXT,
-                is_enabled INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (organization_id, provider_id)
-            )
-        `;
-
-    await this.runAsync(orgSettingsSql);
-
-    // Tier assignments table (used by modelRouter for tier-based routing)
-    await this.runAsync(`
-            CREATE TABLE IF NOT EXISTS llm_tier_assignments (
-                id TEXT PRIMARY KEY,
-                provider_id TEXT NOT NULL,
-                tier TEXT NOT NULL CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING', 'FREE')),
-                priority INTEGER DEFAULT 0,
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(provider_id, tier)
-            )
-        `);
-
-    // Organization-level model overrides (used by modelRouter)
-    await this.runAsync(`
-            CREATE TABLE IF NOT EXISTS ai_model_overrides (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                capability TEXT NOT NULL,
-                model_id TEXT NOT NULL,
-                tier TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(organization_id, capability)
-            )
-        `);
-
-    // Organization-level provider settings (used by modelRouter)
-    await this.runAsync(`
-            CREATE TABLE IF NOT EXISTS organization_provider_settings (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                provider_id TEXT NOT NULL,
-                is_enabled INTEGER DEFAULT 1,
-                custom_priority INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(organization_id, provider_id)
-            )
-        `);
-
-    // Round-robin state for load balancing (used by modelRouter)
-    await this.runAsync(`
-            CREATE TABLE IF NOT EXISTS tier_round_robin_state (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                tier TEXT NOT NULL,
-                last_provider_id TEXT,
-                last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
 
     await this.migrateTable();
   }
