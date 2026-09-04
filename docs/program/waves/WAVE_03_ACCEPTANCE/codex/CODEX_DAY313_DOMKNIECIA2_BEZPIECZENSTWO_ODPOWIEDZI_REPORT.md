@@ -1,6 +1,6 @@
 # Dyżur 313 — domknięcia 2 — raport
 
-Stan: **W TOKU**. Marker `b3052614547b285ef5840d9c7f9729c6b8498d8e`; gałąź `codex/day313-domkniecia2-bezpieczenstwo-odpowiedzi-20260904`.
+Stan: **PARTIAL — R1-R4 wykonane, R5 bez pełnego przelotu runtime**. Marker `b3052614547b285ef5840d9c7f9729c6b8498d8e`; gałąź `codex/day313-domkniecia2-bezpieczenstwo-odpowiedzi-20260904`.
 
 ## Wejście dosłowne
 
@@ -78,6 +78,25 @@ Rekomendacja dla nadzorcy: nie scalać R5 jako zamknięcia ośmiu 500 bez brakuj
 Stan: zacommitowano częściowo w commicie R5.
 
 Czy kontynuowałem pozostałe pozycje: TAK — R6 raport i porównanie nazw.
+
+## R6 — wynik i zasięg
+
+Pakiet końcowy czysto jednostkowy/statyczny: **18/18**, 0 failed. Pakiet regresji serwerowych uruchomiony z cwd `server/`: 151 przypadków, 134 passed, 17 skipped, 0 failed. Skipped nie są liczone jako dowód runtime.
+
+Porównanie pełnych nazw bazowych testów dało 11 nazw dodanych i **0 nazw znikniętych**. Diff: `/private/tmp/cx-day313-domkniecia2-artefakty/przed-po-nazwy.diff`, SHA-256 `60cdb41d50bf34053f3bc19d3236b70656912673af42052a8f5a99dbb3438d7b`; `po-nazwy.txt` SHA-256 `d7ec9ba0ab85e3b62776c9d447068903a4314eb091f9a4058049bd082073716e`.
+
+### Bilans
+
+| Pozycja | Stan | Dowód |
+| --- | --- | --- |
+| R1 | WYKONANE z jawnym ograniczeniem runtime | własne mianowniki, rejestr i artefakty |
+| R2 | WYKONANE | 35→0, trzy mutacje RED, final GREEN |
+| R3 | WYKONANE | cztery klasy, ratchet 251, mutacja RED→GREEN |
+| R4 | WYKONANE | 255 zmian/43 pliki, 112 wyjątków, 5 grup, mutacja RED→GREEN |
+| R5 | PARTIAL / NOT_PROVEN | trzy poprawki; brak ośmiotrasowego Gateway/JWT/PG i mutacji UUID |
+| R6 | WYKONANE | raport, D14 dopisany, nazwy testów porównane |
+
+Łącznie gałąź zawiera 10 commitów R1-R5 przed finalnym commitem raportu. Nie wykonano pushu do `origin`, rebase, stash, reset, Railway ani połączenia z bazą inną niż lokalny kontener `cx-day313-pg`.
 
 ## Bezpieczeństwo wysyłki
 
