@@ -89,3 +89,38 @@ Porównanie nazw PRZED/PO: dodano trzy pełne przypadki (sonda stabilności, kon
 ## Z30
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Dyżur nie ma bazy, zgodnie z wariantem C. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
+
+## R5 — wynik końcowy
+
+Pomiar wspólny PO zmianach: liście słowników `pl 35198`, `en 33065` — bez spadku; `focus-canon=0`, `list-canon=0`, `artefakt=0`.
+
+Pełny pakiet końcowy: `numTotalTests=8`, 7 wykonanych PASS, 0 FAIL, 1 pending. Pending to jawny przypadek ochronny uruchamiany wyłącznie bez `DAY295_IDEA_HARNESS_URL`; w każdym dowodowym przebiegu URL był ustawiony na `http://127.0.0.1:5513`.
+
+Diff pełnych nazw PRZED/PO dodał dokładnie:
+
+```text
+Idea tools — complete DOM control inventory idea-table-timeline-stuck: waits for a stable terminal control inventory
+Idea tools — complete DOM control inventory idea-table-timeline-stuck: Importuj dane opens the connector wizard
+Idea tools — complete DOM control inventory idea-table-timeline-stuck: accounts for the base and opened-menu passes
+```
+
+Nie zniknął żaden przypadek.
+
+Wybrane hashe artefaktów poza repo:
+
+- trzy poprawne pomiary R2 mają identyczny SHA-256 pliku: `5d7d3a5da98bc2104c798efce10d471b320cf851cd36a841c9b1a79d25b7d8c9`;
+- RED a11y: `49a74e923aedb848d356d04a39243b2c38a1a174a4b972134ca58c8c34ae2e00`;
+- GREEN a11y: `98b51b26a8cefdf98c4b27f71102907e8fc34707d071e5749e4ade75531d0645`;
+- RED mutacji efektu: `44cf0fbaa5582c981338d15a3791d3fd139f923f3e96e8ac9bb62c1a2b5d543a`;
+- końcowy JSON GREEN: `6b277be970ba44e61b5792d22963d5bfce88452355a7137167870727052547fb`.
+
+Dowód należy do bramki **G15 — Integrator self-QA and impacted regression** modułu `07_MY_WORK_AGENT`; przed wpisaniem go do macierzy brakuje niezależnego sceptycznego odtworzenia na kandydacie integracyjnym oraz domknięcia dowodu efektu dla pozostałych 295/308 sygnatur. Wiersza macierzy nie zmieniono.
+
+## Korekty i błędy przyrządu wykryte podczas wykonania
+
+- Zimny pomiar od `waitUntil: commit` dał spóźnione próbki po kompilacji Vite — odrzucony.
+- Sama stabilność 5 × 200 ms bez readiness floor trzykrotnie zaakceptowała `1` — sfalsyfikowana i poprawiona przed commitem.
+- Pierwsze trzy polecenia R2 miały `ReferenceError: sel is not defined`, a `tee` zamaskował kod bez `pipefail` — oznaczone INVALID i niepoliczone.
+- Pierwszy kontrakt efektu użył nieobsługiwanego matchera Locator `toBeVisible()` — to RED przyrządu, nie produktu; zastąpiono go `await dialog.isVisible()`.
+
+Te rozbieżności są wynikami procesu pomiarowego; żadnej nie ukryto ani nie zaliczono jako dowodu produktu.
