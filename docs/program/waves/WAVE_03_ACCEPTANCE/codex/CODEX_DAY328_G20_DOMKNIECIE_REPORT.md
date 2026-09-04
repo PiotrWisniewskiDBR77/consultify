@@ -27,7 +27,29 @@ Pułapki (a)–(d) nie dotyczą pakietu: `grep -lE "ApiGateway|verifyToken|v8Fea
 
 ## R2 — rozstrzygnięcie 17 pozycji
 
-Do uzupełnienia po pomiarze obiekt po obiekcie.
+Komenda dla każdego wiersza: `rg -n -F <ID> <pięć wejść pathsFor>; git log --all --oneline --grep=<ID> -10`. Pełny wynik: `/private/tmp/cx-day328-g20-domkniecie-artefakty/r2-evidence.txt`. Lista własna była identyczna z listą 17 z instrukcji.
+
+| ID | Wynik pomiaru / obiekt rozstrzygnięcia | Werdykt |
+|---|---|---|
+| `ASM-OWN-001` | `DEC-2026-09-03-367` mówi „TAK, teraz”, więc nie zamyka realizacji; brak funkcyjnego SHA biblioteki metodyk | BLOKUJE |
+| `ASM-OWN-002` | ta sama DEC nakazuje zmianę kolumn; brak SHA wykonania | BLOKUJE |
+| `ASM-OWN-003` | `DEC-2026-09-03-364`, ledger: „PO BRAMKACH (fala 2)” i imienna lista obejmuje 003 | ZAMKNIETE_DEC |
+| `EXE-OWN-001` | `DEC-2026-08-24-03`: „Zamyka przyczynę EXE-OWN-001” | ZAMKNIETE_DEC |
+| `EXE-OWN-003` | źródło wymaga lokalnego seeda, a historia nie zwróciła SHA | BLOKUJE |
+| `EXE-OWN-005` | źródło nazywa zmianę „pending checkpoint”; brak commita Menu 3 | BLOKUJE |
+| `FIN-OWN-001` | źródło podaje ancestry bez jednoznacznego SHA; `d8561ed5c2` jest identyfikatorem runtime, nie dowodem naprawy | BLOKUJE |
+| `INI-OWN-001` | źródło dowodzi tylko 1 niekompletnej inicjatywy zamiast 11; brak kompletnej fikstury i przeglądu | BLOKUJE |
+| `INT-INIT-AI-OBS-001` | brak osiągalnego wołacza i dowodu z realnym providerem; statyczny git nie rozstrzyga | BLOKUJE |
+| `MYW-CAL-REC-002` | decyzje ustalają kierunek, ale dokument jawnie mówi „wdrożenie NADAL OTWARTE”; brak SHA schematu | BLOKUJE |
+| `MYW-CAL-REC-003` | `DEC-222` pozostawia wdrożenie nie rozpoczęte; brak SHA UI artefaktu | BLOKUJE |
+| `MYW-CV-REC-002` | kod jest opisany jako zastany; historia po ID nie dała SHA naprawy | BLOKUJE |
+| `RES-OWN-003` | brak licencjonowanego writera i cold readbacku 4/3/3 na PostgreSQL | BLOKUJE |
+| `RES-OWN-004` | zachowanie opisane jako pre-existing; brak SHA zmiany lub decyzji zamykającej | BLOKUJE |
+| `TLS-CHAIN-OWN-001` | `DEC-2026-08-28-238` imiennie zakazuje budowy „4 klas wyniku TLS-CHAIN” | ZAMKNIETE_DEC |
+| `TLS-MENU-OWN-001` | ta sama DEC imiennie obejmuje „menu TLS-MENU” | ZAMKNIETE_DEC |
+| `TLS-REC-OWN-001` | ta sama DEC imiennie obejmuje „etap Rekomendacji TLS-REC” | ZAMKNIETE_DEC |
+
+Po zmianie: kod 1, `BLOKUJE: 12`, wszystkie z powodem `NIEROZSTRZYGNIETE`. Spadek 17→12 wynika wyłącznie z pięciu obiektów DEC istniejących w ledgerze; pozostałe dwanaście zostało imiennie otwartych z brakującym dowodem. Zmieniona została istniejąca asercja R6: fixture dostała realną `DEC-2026-08-24-03`, a oczekiwany kontrakt EXE-OWN-001 zmienił się z nierozstrzygniętego na `ZAMKNIETE_DEC`.
 
 ## R3 — commity `checkpoint`
 

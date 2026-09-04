@@ -1,20 +1,20 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `5b1aab2bb44c540c5cfe7b2fc81b91e80836fd2b`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 5b1aab2bb44c540c5cfe7b2fc81b91e80836fd2b --snapshot-date 2026-09-04`
+Marker: `7095ffa50e0cf6153f31753e83110aacb46f0890`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 7095ffa50e0cf6153f31753e83110aacb46f0890 --snapshot-date 2026-09-04`
 
-Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
+Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 18; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
 
-**BLOKUJE: 17**
+**BLOKUJE: 12**
 
 | ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |
 |---|---|---|---|---|---|
-| `ASM-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `ASM-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA wykonania biblioteki metodyk | — | settlement |
 | `ASM-OWN-001[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-367 | R-4 → DEC-2026-09-03-367 | decisions-r1c, decisions, owner |
-| `ASM-OWN-002` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `ASM-OWN-002` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA zmiany kolumn katalogu | — | settlement |
 | `ASM-OWN-002[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-367 | R-4 → DEC-2026-09-03-367 | decisions-r1c, decisions, owner |
-| `ASM-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `ASM-OWN-003` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-364 | — | settlement |
 | `ASM-OWN-003[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-27-147, DEC-2026-09-03-364 | — | decisions-r1c, decisions, owner, wave2 |
 | `ASM-OWN-005[OF]` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-366 | — | settlement, decisions, owner |
 | `ASM-OWN-006[OF]` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-368 | — | decisions-r1c, decisions, owner, wave2 |
@@ -54,16 +54,16 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `CHAT-OWN-015` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner |
 | `CHAT-OWN-016` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner |
 | `CHAT-OWN-017` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner, wave2 |
-| `EXE-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | źródło wskazuje uncommitted local review worktree | — | settlement |
+| `EXE-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-03 | — | settlement |
 | `EXE-OWN-002` | NAPRAWIONE | SHA_OK | 673363f63c | — | settlement |
-| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak odzyskanego lokalnego seeda i SHA danych przeglądowych Execution | — | settlement |
 | `EXE-OWN-004` | NAPRAWIONE | SHA_OK | 14da3e6d0757 | — | settlement |
-| `EXE-OWN-005` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `EXE-OWN-005` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy | — | settlement |
 | `EXE-OWN-006` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-007` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-008` | NAPRAWIONE | SHA_OK | 4cd0ce6589 | — | settlement |
 | `FIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy | — | settlement |
-| `INI-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `INI-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak kompletnej fikstury 11 inicjatyw i dowodu przeglądarkowego jej pól lifecycle | — | settlement |
 | `INI-OWN-002` | NAPRAWIONE | SHA_OK | aed131a2ab | — | settlement, decisions |
 | `INI-OWN-003` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-29-344 | — | settlement, decisions |
 | `INI-OWN-004` | NAPRAWIONE | SHA_OK | 5c6d72066f | — | settlement |
@@ -76,14 +76,14 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `INT-APPROVAL-OWN-001` | NAPRAWIONE | SHA_OK | 01d1cd8057 | — | settlement |
 | `INT-ASSIGN-OWN-001` | NAPRAWIONE | SHA_OK | f3c35cecce | — | settlement |
 | `INT-CREATOR-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-67, DEC-2026-08-26-84, DEC-2026-08-28-205 | — | settlement, decisions |
-| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI | — | settlement |
 | `INT-MENU-OWN-001` | NAPRAWIONE | SHA_OK | 5189ac05d6 | — | settlement, decisions, owner |
 | `INT-PREV-OWN-001` | NAPRAWIONE | SHA_OK | 3a8c11eb4d | — | settlement, decisions |
 | `INT-QCARD-OWN-001` | NAPRAWIONE | SHA_OK | d560464f3f | — | settlement |
 | `MYW-AGT-REC-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-23 | — | settlement |
 | `MYW-CAL-REC-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
-| `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement, decisions |
-| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement, decisions |
+| `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania | — | settlement, decisions |
+| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu | — | settlement, decisions |
 | `MYW-CV-REC-001` | NAPRAWIONE | SHA_OK | af75a84e37 | — | settlement |
 | `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
 | `MYW-DEC-REC-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
@@ -115,19 +115,19 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 13; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `MYWORK-DEC-OWN-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
-| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | settlement |
+| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
 | `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | źródło mówi pre-existing bez SHA naprawy | — | settlement |
 | `RES-OWN-005` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-380 | R-17 → DEC-2026-09-03-380 | settlement, decisions, owner, wave2 |
 | `RES-OWN-006` | NAPRAWIONE | SHA_OK | 27345491d5 | — | settlement |
 | `RES-OWN-007` | NAPRAWIONE | SHA_OK | 77eb754f72 | — | settlement, decisions |
 | `RES-OWN-008` | NAPRAWIONE | SHA_OK | 66ae764a2e | — | settlement |
-| `TLS-CHAIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | decisions-r1c, decisions |
+| `TLS-CHAIN-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-238 | — | decisions-r1c, decisions |
 | `TLS-INIT-OWN-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-382 | — | decisions-r1c, decisions, owner, wave2 |
-| `TLS-MENU-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | decisions-r1c, decisions |
+| `TLS-MENU-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-238 | — | decisions-r1c, decisions |
 | `TLS-OUTPUT-OWN-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-32 | — | decisions-r1c, decisions |
 | `TLS-PREV-CONTENT-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-35 | — | settlement, decisions |
 | `TLS-READY-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-34 | — | decisions-r1c, decisions |
-| `TLS-REC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA, DEC i numeru dyżuru | — | decisions-r1c, decisions |
+| `TLS-REC-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-238 | — | decisions-r1c, decisions |
 | `TLS-REPORT-OWN-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-28-238 | — | decisions-r1c, decisions |
 | `TLS-SWOT-OWN-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-383 | — | decisions-r1c, decisions, owner, wave2 |
 | `XMOD-CARD-REC-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-29-341, DEC-2026-09-03-381 | — | settlement, decisions, owner, wave2 |

@@ -110,15 +110,16 @@ test('dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez de
 
 test('R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje', () => {
   const decision = 'DEC-2026-08-28-151';
+  const executionDecision = 'DEC-2026-08-24-03';
   const rows = evaluateCorpus(corpus({
     settlement: table(['EXE-OWN-006', 'EXE-OWN-001']),
     decisions: `## R1c\n${table(['ASM-OWN-024[OF]'], 'NAPRAWIONE', decision)}\n## Koniec`,
-    ledger: `| ${decision} | decyzja istnieje |`,
+    ledger: `| ${decision} | decyzja istnieje |\n| ${executionDecision} | decyzja istnieje |`,
   }), { floor: 3, shaCheck: (_root, sha) => sha === 'b470536a91' ? 'OK' : 'SHA_NIEISTNIEJACY' });
 
   assert.deepEqual(rows.map(({ id, verdict, reason }) => ({ id, verdict, reason })), [
     { id: 'ASM-OWN-024[OF]', verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK' },
-    { id: 'EXE-OWN-001', verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE' },
+    { id: 'EXE-OWN-001', verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK' },
     { id: 'EXE-OWN-006', verdict: 'NAPRAWIONE', reason: 'SHA_OK' },
   ]);
 });

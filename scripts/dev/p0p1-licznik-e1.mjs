@@ -18,11 +18,20 @@ export const DEFAULT_FLOOR = 100;
 // BRAK_SHA_DLA_NAPRAWIONE. Źródła właściciela pozostają bez zmian; tabela
 // utrwala znaleziony commit albo uczciwy brak jednoznacznego SHA naprawy.
 export const DAY320_RESOLUTIONS = Object.freeze({
+  'ASM-OWN-001': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA wykonania biblioteki metodyk' },
+  'ASM-OWN-002': { type: 'UNRESOLVED', detail: 'DEC-2026-09-03-367 nakazuje realizację TERAZ, ale brak SHA zmiany kolumn katalogu' },
+  'ASM-OWN-003': { type: 'DECISION', decision: 'DEC-2026-09-03-364' },
   'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
-  'EXE-OWN-001': { type: 'UNRESOLVED', detail: 'źródło wskazuje uncommitted local review worktree' },
+  'EXE-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-24-03' },
+  'EXE-OWN-003': { type: 'UNRESOLVED', detail: 'brak odzyskanego lokalnego seeda i SHA danych przeglądowych Execution' },
+  'EXE-OWN-005': { type: 'UNRESOLVED', detail: 'brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy' },
   'EXE-OWN-006': { type: 'SHA', sha: 'b470536a91' },
   'EXE-OWN-007': { type: 'SHA', sha: 'b470536a91' },
   'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy' },
+  'INI-OWN-001': { type: 'UNRESOLVED', detail: 'brak kompletnej fikstury 11 inicjatyw i dowodu przeglądarkowego jej pól lifecycle' },
+  'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI' },
+  'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
+  'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
   'MYW-CV-REC-001': { type: 'SHA', sha: 'af75a84e37' },
   'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
   'MYW-DEC-REC-001': { type: 'SHA', sha: '4a36e8a745' },
@@ -30,6 +39,10 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
   'MYWORK-DEC-OWN-001': { type: 'SHA', sha: '4a36e8a745' },
   'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
+  'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
+  'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
+  'TLS-MENU-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
+  'TLS-REC-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
 });
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
