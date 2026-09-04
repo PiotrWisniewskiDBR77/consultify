@@ -75,6 +75,17 @@ Wyłączenie mechanizmu czerwieni dokładnie jeden przypadek: `dziedziczenie DEC
 
 Pozycja bezprzedmiotowa: sprostowanie już istnieje w linii 49, wprowadzone przez commit `5b1aab2bb4` (`fix(day320): rozstrzygnij brakujace dowody E1`). Nie dopisano drugiego rejestru tej samej korekty. Komenda `node scripts/dev/p0p1-licznik-e1.mjs 2>/dev/null | rg 'MYW-PHOTO-'` sprawdziła całe rodzeństwo akapitu: `001/002/007/010` = `ODLOZONE_DEC` przez R-7/DEC-370; `003` = `ODLOZONE_DEC` przez R-8/DEC-371; `004/005` = `ZAMKNIETE_DEC` przez R-8/DEC-371; `011` = `ZAMKNIETE_DEC` przez R-7/DEC-370. Oryginalna szóstka z akapitu obejmuje ponadto `INT-INIT-AI-OBS-001` i `INI-OWN-001`; oba nadal są `BLOKUJE / NIEROZSTRZYGNIETE`.
 
+## R6 — wynik końcowy
+
+| Stan | Kod | Mianownik | NAPRAWIONE | ZAMKNIETE_DEC | ODLOZONE_DEC | W_BUDOWIE | BLOKUJE |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| przed | 1 | 121 | 33 | 13 | 58 | 0 | 17 |
+| po | 1 | 121 | 30 | 18 | 58 | 0 | 15 |
+
+Końcowy pełny klon aktualnej wypchniętej gałęzi: kod 1, `BLOKUJE 15`, wszystkie `NIEROZSTRZYGNIETE`; rozkład 30/18/58/0. Wynik jest identyczny z pełnym worktree. G20 nie jest zielona i nie wolno jej tak nazwać: pięć blokad otrzymało zamykające obiekty DEC, trzy fałszywe naprawy checkpoint zostały przywrócone jako blokady, a dwanaście pierwotnych pozycji pozostało otwartych z opisem brakującego dowodu.
+
+Zasięg testów po nazwach: przed 9 przypadków; po 11. `diff przed-nazwy.txt po-nazwy.txt` dodaje wyłącznie testy R1 i R3, nie usuwa żadnego przypadku. Końcowo 11/11 PASS, 0 FAIL. Kontrole przed/po: słowniki `pl 35198`, `en 33065`; `focus-canon=0`, `list-canon=0`, `artefakt=0`. Baza nie powstała; nie ustawiono SMTP, nie uruchomiono `server/src/index.ts` ani drenażu outboxu; niczego zewnętrznego nie wysłano.
+
 ## Korekty wobec instrukcji
 
 - Odległości SHA wynoszą 3951–4594, a nie 3952–4595.
@@ -83,4 +94,5 @@ Pozycja bezprzedmiotowa: sprostowanie już istnieje w linii 49, wprowadzone prze
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Nie wykonano realnego workflow GitHub Actions: zabrania tego `Z39`, a filtry gałęzi nie obejmują gałęzi dyżuru.
-- Nie zweryfikowano jeszcze rozstrzygnięć 17 pozycji ani treści trzech commitów `checkpoint`.
+- Nie dowiedziono implementacji dwunastu nadal otwartych pozycji ani trzech pozycji wcześniej opartych na checkpointach; raport określa dokładnie brakujący dowód dla każdej.
+- Nie wykonano testów produktu, HTTP ani PostgreSQL, ponieważ dyżur dotyczył wyłącznie deterministycznej bramki dokumentowej.
