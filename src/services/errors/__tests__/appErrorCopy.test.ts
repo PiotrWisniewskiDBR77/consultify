@@ -96,4 +96,29 @@ describe('DAY316 app error copy', () => {
     }
     await i18n.changeLanguage('pl');
   });
+
+  it('COMMAND_CAPABILITY_DENIED zachowuje komunikat serwera zamiast udawać INTERNAL', () => {
+    const source = {
+      errorCode: 'COMMAND_CAPABILITY_DENIED',
+      message: 'Nie masz uprawnien do wykonania tej operacji.',
+      correlationId: 'corr-day325-denied',
+    };
+    const copy = getAppErrorCopy(t, source);
+
+    expect(copy.code).toBe('INTERNAL');
+    expect(copy.message).toBe('Nie masz uprawnien do wykonania tej operacji.');
+    expect(copy.message).not.toBe('Coś poszło nie tak po naszej stronie.');
+    expect(source.errorCode).toBe('COMMAND_CAPABILITY_DENIED');
+  });
+
+  it('nieznany kod bez komunikatu serwera zachowuje angielski fallback INTERNAL', () => {
+    const fallbackOnly: typeof t = (_key, fallback) => fallback ?? '';
+    const copy = getAppErrorCopy(fallbackOnly, { errorCode: 'COMMAND_CAPABILITY_DENIED' });
+
+    expect(copy.code).toBe('INTERNAL');
+    expect(copy.message).toBe('Something went wrong on our side.');
+    expect(copy.action).toBe(
+      'Try again. If the problem continues, report it using the identifier below.'
+    );
+  });
 });

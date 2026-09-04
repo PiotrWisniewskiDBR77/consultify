@@ -10,6 +10,8 @@ export type AppErrorCode =
 export interface AppErrorEnvelope {
   errorCode?: unknown;
   correlationId?: unknown;
+  error?: unknown;
+  message?: unknown;
 }
 
 export interface AppErrorCopy {
@@ -97,15 +99,24 @@ export function readCorrelationId(source: unknown): string | null {
 }
 
 export function getAppErrorCopy(t: TFunc, source: unknown): AppErrorCopy {
+  const envelope = unwrapEnvelope(source);
   const code = readAppErrorCode(source);
   const slug = SLUG[code];
   const fallback = FALLBACK_EN[code];
   const correlationId = readCorrelationId(source);
   const label = String(t('errors.app.reportId', 'Report identifier'));
+  const rawCode = String(envelope.errorCode ?? '')
+    .trim()
+    .toUpperCase();
+  const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
+  const message =
+    !CODES.has(rawCode as AppErrorCode) && serverMessage
+      ? serverMessage
+      : String(t(`errors.app.${slug}.message`, fallback.message));
 
   return {
     code,
-    message: String(t(`errors.app.${slug}.message`, fallback.message)),
+    message,
     action: String(t(`errors.app.${slug}.action`, fallback.action)),
     correlationId,
     correlationLabel: correlationId ? `${label}: ${correlationId}` : null,
