@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 const BASELINE = {
   plLeaves: 34310,
   enLeaves: 32321,
-  defects: 0,
-  defektEn: 0,
+  defects: 134,
+  defektEn: 17,
 };
 
 describe('i18n locale parity baseline', () => {

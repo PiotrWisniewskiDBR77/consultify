@@ -79,3 +79,11 @@ Pakiet pięciu skanerów nie montuje `ApiGateway`, `verifyToken`, `v8FeatureGate
 - Szczelność 45 pozycji R0 bez przeprowadzonej mutacji pozostaje niezweryfikowana.
 - Klasy i liczby narzędzia dnia 297 nie zostały jeszcze odczytane z cudzej gałęzi.
 - Realność długu odsłoniętego R1–R4 nie została jeszcze sklasyfikowana.
+
+## R1 — audyt PL/EN
+
+PRZED: `defects=0`, `justified=505`, `defektEn=0`. PO: `defects=134`, `justified=371`, `defektEn=17`. Baseline zmieniono `0→134` i `0→17`; liście pozostają `34325/32336`. Surowy licznik liści: do uzupełnienia przed R7.
+
+Mutacja `Milestone` w obu słownikach dała `defects=135` i czerwony ratchet (exit 1). Mutacja EN `Zamknij dokument: {{nazwa}}` dała `defektEn=18` i czerwony ratchet (exit 1). Po obu mutacjach słowniki cofnięto; ich diff jest pusty. Testy klasyfikatora utrwalają oba kształty, a wycięcie wnętrza `{{…}}` pozostało bez zmian.
+
+Dług imienny: `/private/tmp/cx-day327-bezpieczniki-slepe-artefakty/i18n-dlug.txt` (134 DEFEKT-PL + 17 DEFEKT-EN). Klasyfikacja semantyczna wszystkich 151 pozycji nie została ukończona; dlatego nie przypisuję zmyślonych liczb „realne/fałszywe”. Próbka pokazuje trafienia prawdopodobnie uzasadnione (`Inter`, `Roboto`, strefy czasowe) oraz realne kandydaty (`Benchmark`, `Reset`). R1 ma stan `PARTIAL`: zabezpieczenie mierzy i czerwieni obie mutacje, lecz rozliczenie jakości całego odsłoniętego długu wymaga osobnego przeglądu językowego.
