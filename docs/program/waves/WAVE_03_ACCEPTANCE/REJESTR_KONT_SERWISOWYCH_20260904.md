@@ -1,6 +1,6 @@
 # Rejestr kont serwisowych — 2026-09-04
 
-Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`  
+Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`
 Baza pomiarowa: lokalny jednorazowy PostgreSQL `cx326`, port `6352`.
 
 ## R1 — macierz przed naprawą
@@ -25,3 +25,14 @@ Artefakt pełnych odpowiedzi i readbacków: `/private/tmp/cx-day326-konta-serwis
 ### Ograniczenie DoD
 
 Wymaganie realnego wiersza dla właściciela organizacji `system` jest niewykonalne na świeżym schemacie: `organizations.id` jest `text`, natomiast `tp_service_accounts.organization_id` jest `uuid`. Próba wstawienia `system` jest właśnie źródłem mierzonego błędu. Nie zastąpiono tego atrapą ani innym identyfikatorem.
+
+## R2 — bramki i koperty błędów
+
+Stan: **PARTIAL / STOP MERYTORYCZNY dla pełnego progu „każda odpowiedź błędu”**.
+
+- `POST` i `DELETE` odrzucają organizację spoza UUID jako `400 INVALID_IDENTIFIER`, przed zapytaniem do PostgreSQL.
+- Odpowiedzi błędów powstające wewnątrz routera dostają `errorCode` i `correlationId`; zmierzone realnie: `403`, `400`, `404` oraz lokalny awaryjny `500`.
+- Zachowanie UUID pozostaje: GET `200` z realnym wierszem, POST `201` z realnym wierszem, DELETE `204` z readbackiem braku wiersza.
+- Pełny próg nie jest osiągnięty: niezalogowane żądanie do `/api/admin/service-accounts` zatrzymuje wcześniejszy szeroki mount `/api/admin` i zwraca `401 {"error":"No token provided"}` zanim wejdzie do licencjonowanego routera. Czerwony kontrakt pozostaje w teście. Naprawa wymagałaby zmiany `Gateway.ts` albo wcześniejszego routera, oba poza licencją dyżuru.
+
+Dowód mutacyjny bramki POST: po usunięciu bramki test `R2 rejects non-UUID POST and DELETE before PostgreSQL with stable envelopes` jest czerwony (`expected 500 to be 400`); po przywróceniu przez `cp` jest zielony.
