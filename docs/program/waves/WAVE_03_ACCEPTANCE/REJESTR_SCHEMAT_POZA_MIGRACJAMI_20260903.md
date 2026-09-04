@@ -53,7 +53,7 @@ Komenda detekcji krótkich tokenów wykazała 18 wierszy; 7 (`tasks`×2, `teams`
 | `server/migrations/061_initiative_lifecycle.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
 | `server/migrations/066_status_reports.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
 | `server/migrations/067_economics_initiative_integration.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
-| `server/migrations/073_conversations.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/073_conversations.sql` | `PROMOWANA_URUCHAMIANA` | wyjątek `PROMOTED_LEGACY_PRODUCERS`; dyżur 333: kopia łańcucha bez pliku nie utworzyła `conversations` i zatrzymała się na zależnej migracji `515_team_chat_projects.sql`, a pełny łańcuch z plikiem utworzył `conversations` |
 | `server/migrations/100_user_onboarding_flow.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
 | `server/migrations/101_security_sessions.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
 | `server/migrations/127_consultant_project_access.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
