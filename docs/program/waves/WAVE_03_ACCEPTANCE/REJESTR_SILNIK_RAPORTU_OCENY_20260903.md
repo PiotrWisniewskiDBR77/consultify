@@ -114,3 +114,9 @@ Sesja `3c016470-a5f9-449d-9e99-822eaede71de` została utworzona przez realny `Ap
 | Model 298 | 21 | 0 braków zależnych od sesji; nadal statyczna proza prototypu, teraz jawnie oznaczona | n/d | 3974,15 ms | 21/21 |
 
 Po dosypaniu danych zniknęła wyłącznie kara silnika HTML za 32 nieodpowiedziane obszary: model ma teraz 39 dodatnich wyników. Nie zniknęły różnice strukturalne 18/9/21 stron ani hybrydowość modelu 298. Co ważniejsze, 39 komunikatów braku w DOCX pozostało także przy 39 odpowiedziach; to dowód, że sam kontrakt MethodSession nie mapuje tych zdarzeń do pól raportu i nie wolno przypisywać całych 148 braków wyłącznie rzadkości danych.
+
+### R5 — rekomendacja po pomiarze 39/39
+
+**Rekomendacja pozostaje zgodna z R7 dyżuru 339:** model 298 powinien pozostać docelowym kontraktem układu 21 stron, ale obecnego modułu nie wolno podłączać jako silnika klientowskiego. Pełna sesja usunęła 32 zera z modelu HTML, lecz nie zmieniła przewagi układu 298 (21/21 wobec 18/21 i 9/21); jednocześnie potwierdziła, że 298 nadal łączy liczby sesji ze statyczną prozą i metadanymi prototypu. Następny krok to osobny, licencjonowany etap mapowania realnych metadanych, odpowiedzi, dowodów i narracji MethodSession do kontraktu 298 oraz odbiór gotowego pliku przez właściciela. Do tego czasu HTML po naprawie licznika jest najuczciwszym działającym modelem liczbowym, ale nie docelowym układem dokumentu.
+
+**DO DECYZJI WŁAŚCICIELA:** czy priorytetem integracji ma być najpierw układ 21 stron modelu 298, czy najpierw osiągalny raport HTML. Nie rozstrzygnąłem tego samodzielnie, ponieważ zabrakło mi zatwierdzonego kryterium ważenia zgodności układu wobec gotowości produkcyjnej oraz akceptu właściciela na pliku z pełnej sesji; dyżur nie miał też licencji na podłączenie któregokolwiek silnika.
