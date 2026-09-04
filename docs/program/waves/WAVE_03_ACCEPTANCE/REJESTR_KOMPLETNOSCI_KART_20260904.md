@@ -124,3 +124,30 @@ Co zrobiłbym, gdyby zapadła decyzja X: po decyzji „osobne deskryptory boardu
 Rekomendacja dla nadzorcy: najpierw rozstrzygnąć SSOT registry-id vs board-id; promień rażenia obejmuje adapter DB→kanon, zestawy kart i walidatory kompletności.  
 Stan: zacommitowano wyłącznie pomiar.  
 Czy kontynuowałem pozostałe pozycje: TAK — zgodnie z prawem zatrzymania per pozycja.
+
+## Dyżur 338 — R5: własny inwentarz archetypu REKORD
+
+Własny mianownik: **11** wierszy §13.1. Własny licznik kontraktów: **4** (Initiative, Task, Decision, Insight). Wynik: **7 typów bez własnego kontraktu**, nie 8.
+
+| Artefakt bez kontraktu | Ekran / powierzchnia w `src/` | Szacunek osobnego dyżuru | Kolejność |
+| --- | --- | --- | ---: |
+| KPI | tak — `ResultsVNext/kpiTool/KpiToolPage.tsx`, `ResultsKpiRegistryPage.tsx` | 1 dyżur: kontrakt S + drawer + pomiar realnego rekordu | 1 |
+| Idea | tak — `MyWork/IdeaMapWorkspace.tsx`, `IdeaNodeDetailDrawer.tsx` | 1–2 dyżury: wiele równoległych powierzchni, najpierw wskazanie kanonicznej | 2 |
+| RAID | nie znaleziono samodzielnego ekranu rekordu; są sekcje osadzone (`RaidSection`, `RaidCanvas`) | 1 dyżur po decyzji o ekranie kanonicznym | 5 |
+| Milestone | nie znaleziono samodzielnego ekranu rekordu; są sekcje zadań/kamieni | 1 dyżur po wskazaniu drawera/SSOT | 6 |
+| Change Request | brak jednoznacznego samodzielnego ekranu po pełnym skanie nazw | 1–2 dyżury: najpierw osiągalność i źródło danych | 7 |
+| Stage Gate | brak jednoznacznego samodzielnego ekranu; są bramki osadzone w Initiative | 1 dyżur po decyzji, czy to rekord, czy sekcja Initiative | 4 |
+| Action Proposal | tak — `views/ActionProposalView.tsx`, `components/ai/ActionProposalDetail.tsx` | 1 dyżur: kontrakt S i ujednolicenie dwóch powierzchni | 3 |
+
+Pełne, nieobcięte listy trafień: `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r5-*.txt`.
+
+### STOP — R5
+Rodzaj: MERYTORYCZNY  
+Powód: zakres i licencja dyżuru nie obejmują powłok siedmiu innych typów, a dla czterech nie ma jednoznacznego samodzielnego ekranu rekordu.  
+Licencja, którą sprawdziłem: sześć zastanych kontraktów jest tylko do odczytu; wszystko inne poza tabelą licencji również tylko do odczytu.  
+Dowód: tabela wyżej, 11 wierszy §13.1 i 9 trafień wzorca plików kontraktowych (7 realnych + typ + false positive).  
+Co dostarczyłem ZAMIAST zmiany: imienny inwentarz siedmiu luk, osiągalnych powierzchni, estymat i kolejności.  
+Co zrobiłbym, gdyby zapadła decyzja X: w jednym dyżurze wykonałbym KPI albo Action Proposal; Idea wymaga najpierw wskazania kanonicznej powierzchni, a RAID/Milestone/Change Request/Stage Gate — decyzji o ekranie rekordu.  
+Rekomendacja dla nadzorcy: osobne dyżury w kolejności KPI, Idea, Action Proposal, Stage Gate, RAID, Milestone, Change Request.  
+Stan: zacommitowano wyłącznie pomiar.  
+Czy kontynuowałem pozostałe pozycje: TAK.
