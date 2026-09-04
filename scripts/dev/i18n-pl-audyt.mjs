@@ -92,9 +92,15 @@ export const defectPlTranslations = new Map([
 const polishWordsInEnglish = /\b(?:zakres|prezentacje|nazwa|szablonu|jest|wymagan(?:a|e|y)|zapytaj|proszę|błąd|ustawienia|utwórz|dodaj|usuń|zapisz|anuluj|wybierz|brak|nie|oraz|dla|edytuj|właściciel|zadanie|ocena|wniosek|inicjatywa|wywiad|załączniki|przypomnienia|przegląd|gotowość|dane|zebrania|sugerowana|wizualizacja|kategoria|nowy|wzorzec|sekcje|tabele|walidacja|zamiennik)\b/i;
 const allowedPolishNames = new Set(['Guided by Dr. Piotr Wiśniewski', 'Paweł Bochniarz']);
 
+// Wnetrze {{...}} to NAZWA ZMIENNEJ i18next, nie tekst dla uzytkownika. Bez tego wyciecia
+// audyt uznal 'Close: {{nazwa}}' za polski napis w pliku EN, dyzur 317 "naprawil" go na
+// {{name}} — i rozjechal placeholder z wolaczem (MyWorkHub.tsx przekazuje { nazwa: doc.name }).
+// i18next ma skipOnVariables domyslnie true, wiec w UI zostalby doslowny '{{name}}'.
+const bezPlaceholderow = (tekst) => tekst.replace(/\{\{[^}]*\}\}/g, ' ');
+
 export function polishTextReason(value) {
-  const trimmed = value.trim();
-  if (allowedPolishNames.has(trimmed)) return null;
+  const trimmed = bezPlaceholderow(value.trim());
+  if (allowedPolishNames.has(value.trim())) return null;
   if (polishWordsInEnglish.test(trimmed)) return 'polskie słowo w wartości słownika EN';
   if (/[ąćęłńóśźż]/i.test(trimmed)) return 'polskie znaki w wartości słownika EN';
   return null;
