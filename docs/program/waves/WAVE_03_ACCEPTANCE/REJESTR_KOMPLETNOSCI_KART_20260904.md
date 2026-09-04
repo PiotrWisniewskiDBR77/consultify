@@ -151,3 +151,33 @@ Co zrobiłbym, gdyby zapadła decyzja X: w jednym dyżurze wykonałbym KPI albo 
 Rekomendacja dla nadzorcy: osobne dyżury w kolejności KPI, Idea, Action Proposal, Stage Gate, RAID, Milestone, Change Request.  
 Stan: zacommitowano wyłącznie pomiar.  
 Czy kontynuowałem pozostałe pozycje: TAK.
+
+## Dyżur 338 — R6: dwie pułapki wdrożeniowe
+
+### (a) Flaga Decyzji
+
+Teza „Decyzja czyta tylko env + URL” jest obalona na markerze: `DecisionDetailView.tsx:509` zapisuje parametr do `ff.cardContract`, a `:519` odczytuje wspólny klucz. Nowy test wykonuje realne ciało resolvera z widoku: `'1'` → ON, `'0'` → OFF, brak klucza → OFF; 3/3 GREEN. Mutacja gałęzi `'1'` z `return true` na `return false` dała RED imiennie: `ff.cardContract='1' włącza kontrakt`; po cofnięciu przez `cp` 3/3 GREEN i diff widoku pusty. Logi: `/private/tmp/cx-day338-kontrakty-24-sekcji-artefakty/r6-decision-mutacja-{red,green}.log`.
+
+### (b) Zastany `localStorage` — gotowy diff NIENAŁOŻONY
+
+Rekomendowany mechanizm jest niedestrukcyjny: podnieść wersję namespace do `v3-contract` bez kasowania `v2-contract`. Użytkownik dostaje nowy domyślny układ; stary wpis zostaje w przeglądarce i można do niego wrócić przez rollback.
+
+```diff
+--- a/src/components/MyWork/TaskDetailView.tsx
++++ b/src/components/MyWork/TaskDetailView.tsx
+@@
+-    taskCardContractEnabled ? 'v2-contract' : 'v1'
++    taskCardContractEnabled ? 'v3-contract' : 'v1'
+--- a/src/components/MyWork/DecisionDetailView.tsx
++++ b/src/components/MyWork/DecisionDetailView.tsx
+@@
+-    decisionCardContractEnabled ? 'v2-contract' : 'v1'
++    decisionCardContractEnabled ? 'v3-contract' : 'v1'
+--- a/src/components/MyWork/NotificationDetailView.tsx
++++ b/src/components/MyWork/NotificationDetailView.tsx
+@@
+-  const notificationCardLayoutStorageKey = `notification:nmode:card-layout:v2-contract:${notificationId ?? 'new'}`;
++  const notificationCardLayoutStorageKey = `notification:nmode:card-layout:v3-contract:${notificationId ?? 'new'}`;
+```
+
+Promień rażenia: wyłącznie zapisane układy kart Task/Decision/Notification przy fladze kontraktu ON; brak zmian backendu i brak kasowania danych. Diffu nie nałożono, bo trzy pliki kontraktów/powłok są w tym dyżurze tylko do odczytu, a zmiana dotyka danych przeglądarkowych ludzi.
