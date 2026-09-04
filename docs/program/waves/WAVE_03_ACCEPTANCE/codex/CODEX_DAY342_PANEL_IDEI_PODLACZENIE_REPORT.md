@@ -1,6 +1,7 @@
 # CODEX DAY 342 — PANEL IDEI I NOTATNIKA: PODLACZENIE
 
-Stan: W TOKU. Baza: `74c07919cea7ab55dc9fde5fbd911f7f955ed425`.
+Stan: **PARTIAL — przewod produktu wykonany, warstwa 4 potwierdzona 2/4 ekranow
+macierzy**. Baza: `74c07919cea7ab55dc9fde5fbd911f7f955ed425`.
 
 ## Start i rozbieznosc tipa
 
@@ -231,3 +232,46 @@ zrzutow i macierzy nie zmieniono.
 Flaga konczy dyzur domyslnie **OFF**. Do decyzji wlasciciela nadaja sie w tej
 kolejnosci kadry ON: ideas-teresa light, notebook-rail light, potem ich pary dark
 i EN. Dwa identyczne ekrany nie sa materialem do akceptacji wlaczenia.
+
+## R6 — wynik koncowy
+
+### Cztery warstwy po dyzurze
+
+| Warstwa | Stan | Komenda/dowod |
+| --- | --- | --- |
+| 1. istnieje | TAK | `wc -l` + testy komponentu |
+| 2. import | TAK produkcyjnie | grep pokazuje `IdeaRightPanel.tsx` i `NotebookRightRail.tsx` |
+| 3. render realnego komponentu | TAK 2/2 hostow | 4 nowe asercje DOM produkcyjnych komponentow |
+| 4. widoczne uzytkownikowi | PARTIAL 2/4 macierzy | rozne SHA OFF/ON dla Idea/Notebook; identyczne dla pozostalych dwoch |
+
+Osiagalnosc po: prototyp i flaga przeszly z `harness-only` do `app`; totals
+`app 3046`, `harness-only 28`, `test-only 1018`, `unreachable 719`.
+`--check-baseline` zakonczyl sie exit 0 i wskazal jeden nowy plik test-only.
+
+Pomiar nazw: przed `43` suit / `125` testow, po `45` suit / `129` testow.
+Diff zawiera dokladnie cztery nazwy opisane w R3; zero nazw zniknelo.
+
+Bilans tresci: na dwoch realnych hostach ON zachowuje 100% sekcji i tresci
+przekazanej przez hosta; tekst rosnie 761->783 oraz 934->944 przez wspolny naglowek.
+Nie istnieje wspolny model per-artefakt dla pieciu struktur wskazanych w pracy 302:
+wlasciciel/status jako generyczne pola, relacje, zrodla/provenance, komentarze i
+historia per artefakt. Ten dyzur ich nie wymyslal; przekazal istniejace dane hostow.
+
+### Korekty koncowe wobec instrukcji
+
+- Teza, ze cztery ekrany sa dowodem warstwy 4, jest obalona: dwa wpisy macierzy
+  nie montuja produkcyjnego hosta panelu i prawidlowo maja identyczne SHA OFF/ON.
+- Oryginalny `PrototypeHarness` byl przyrzadem warstwy 3 i podmienial realny ekran;
+  zostal zmieniony na fail-closed host realnego ekranu.
+- `mywork-notebook-rail-speca` ma 9 bledow konsoli w kazdym mierzonym wariancie;
+  nie potwierdzono szkody wizualnej, ale nie wolno uznac tego za brak defektu.
+
+### Twierdzenia niezweryfikowane
+
+- Nie zweryfikowano breakpointu ponizej 1280 px ani urzadzenia fizycznego.
+- Nie zweryfikowano produkcyjnego deployu, demo, stagingu ani akceptacji wlasciciela.
+- Nie rozstrzygnieto 9 bledow konsoli harnessu Notatnika.
+- Nie dowiedziono warstwy 4 dla `notatnik-centrum-mysli` i
+  `mywork-idea-inspector-lekki`; pomiar dowodzi braku przewodu w tych hostach.
+
+R6 wymaga plikow przekrojowych: **NIE** — aktualizuje tylko raport.
