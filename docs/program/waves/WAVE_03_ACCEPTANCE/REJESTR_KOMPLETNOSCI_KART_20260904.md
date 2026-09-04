@@ -181,3 +181,13 @@ Rekomendowany mechanizm jest niedestrukcyjny: podnieść wersję namespace do `v
 ```
 
 Promień rażenia: wyłącznie zapisane układy kart Task/Decision/Notification przy fladze kontraktu ON; brak zmian backendu i brak kasowania danych. Diffu nie nałożono, bo trzy pliki kontraktów/powłok są w tym dyżurze tylko do odczytu, a zmiana dotyka danych przeglądarkowych ludzi.
+
+## Dyżur 338 — R7: DO DECYZJI WŁAŚCICIELA — nazwy Menu 3 Initiative
+
+| Standard §13.1 (6 nazw) | Produkt dzisiaj (5 grup) |
+| --- | --- |
+| Zadania · Definicja · Wdrożenie · Ekonomia · Governance · Zespół | Zakres i plan · Decyzje i ryzyko · Rezultaty · Ludzie · Zapisy |
+
+Kadr obecnego, kompletnego stanu za flagą ON: `evidence/kompletnosc-24-sekcji-20260904/r2/on-niepusty.png`.
+
+Czego konkretnie mi zabrakło, żeby rozstrzygnąć samodzielnie: brak decyzji właściciela, czy sześć nazw standardu jest docelową taksonomią Menu 3 wymagającą przegrupowania 24 sekcji, czy warstwą semantyczną, którą wolno mapować na pięć obecnych grup produktu.
