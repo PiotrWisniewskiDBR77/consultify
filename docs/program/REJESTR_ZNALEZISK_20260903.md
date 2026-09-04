@@ -40,6 +40,8 @@ Wszystkie commity na `github-backup/grafika/m03-20260902`.
 | B7 | 09–12 | `data-preview-pane` w Wynikach; surowy `initiativeId` w Value Capture; `htmlFor` w kreatorze szablonów; stub `reflection` w harnessie | `evidence/g14/G14_09_12_20260903.md` |
 | B8 | 01–04 | Fokus crimson → `c-focus` (5 miejsc Oceny), crimson w Wywiadzie (5) i Organizacji (14 żywych) | `evidence/g14/G14_01_04_20260903.md` |
 
+Aktualizacja B2, dyżur 319: bezpiecznik obejmuje całe `server/src`; `information_schema` na pustej bazie wykazało 7 tabel B−A dla zmierzonej ścieżki Gateway. Wszystkie 7 dostało addytywną migrację, a 9 postgresowych DDL runtime usunięto po dowodzie fresh-chain. Rejestr schematu oznacza 11 wierszy `ARTEFAKT_PARSERA` i 22/93 cytowane pliki jako `MIGRACJA_POMIJANA`. Stan rodziny: **CZĘŚCIOWE**, ponieważ 495 wystąpień DDL pozostaje; ślad: `CODEX_DAY319_DDL_ZAKRES_REPORT.md`.
+
 ## C. Znaleziska z analizy G13 OBALONE własnym pomiarem robotników
 
 | # | ID | Co twierdziła analiza | Co pokazał pomiar |

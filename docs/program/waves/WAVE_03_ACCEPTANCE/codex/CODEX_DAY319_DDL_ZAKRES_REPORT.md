@@ -114,6 +114,10 @@ PRZED: `information_schema.columns` miało 29 kolumn `llm_providers`, bez `marku
 
 Wartość 2.0 zachowuje dotychczasowy fallback rozliczeniowy `AIPipeline` (kolumna → env → 2.0); 1.0 zmieniłoby cennik dla istniejących wierszy, więc nie zostało użyte jako default migracji. Jawny insert 1.0 w `llm.routes.ts` pozostał bez zmian. Dowody: `r4-kolumny-przed.txt`, `r2-gateway-http.txt`, `r4-migracja-1.txt`, `r4-migracja-2.txt`, `r4-kolumna-po.txt`, `r4-gateway-http-po.txt`.
 
+## R5 — korekta rejestru 310
+
+Bez kasowania historycznych wierszy dopisano dwie tabele statusowe: 11 rozstrzygniętych `ARTEFAKT_PARSERA` oraz 22/93 unikalne cytowane pliki jako `MIGRACJA_POMIJANA` wraz z regułą runnera. Detektor krótkich tokenów zwrócił 18 wierszy, z których 7 było prawdziwymi nazwami (`tasks`, `teams`, `users`) i celowo nie oznaczono ich jako śmieci. Pełna lista 22: `r5-migracje-pomijane.txt`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R3–R6 pozostają niewykonane na tym etapie raportu.

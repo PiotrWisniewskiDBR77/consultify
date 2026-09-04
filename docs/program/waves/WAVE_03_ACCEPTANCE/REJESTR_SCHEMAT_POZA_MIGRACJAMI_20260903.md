@@ -23,6 +23,52 @@ Na bazie zbudowanej wyłącznie przez strict runner było 1907 tabel. Po inicjal
 | `scheduled_emails` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql`; `never-ran/099_create_email_tables.sql.sql` | `000_initdb_*`; `never-ran/`; `.sql.sql` |
 | `user_consents` | `MIGRACJA_POMIJANA` | `server/migrations/000_initdb_core_tables.sql`; `015_enterprise_customers_module.sql`; `106_security_privacy_enterprise.sql` | `000_initdb_*`; numer < 500 |
 
+### Korekta statusów statycznych — dyżur 319 / R5
+
+Historyczne wiersze poniżej pozostają w rejestrze. Ta tabela dopisuje do nich rozstrzygający status zamiast kasowania historii.
+
+| Nazwa z kolumny „Tabela” | Liczba wierszy | Status | Dowód klasyfikacji |
+|---|---:|---|---|
+| `...` | 1 | `ARTEFAKT_PARSERA` | wielokropek, nie identyfikator tabeli |
+| `and` | 1 | `ARTEFAKT_PARSERA` | słowo składni/komentarza |
+| `below` | 1 | `ARTEFAKT_PARSERA` | słowo komentarza |
+| `for` | 1 | `ARTEFAKT_PARSERA` | słowo składni/komentarza |
+| `in` | 1 | `ARTEFAKT_PARSERA` | słowo składni/komentarza |
+| `is` | 2 | `ARTEFAKT_PARSERA` | słowo składni/komentarza; jedno miało fałszywe trafienie migracji |
+| `jest` | 1 | `ARTEFAKT_PARSERA` | słowo komentarza |
+| `pass` | 1 | `ARTEFAKT_PARSERA` | słowo komentarza |
+| `w` | 1 | `ARTEFAKT_PARSERA` | słowo komentarza |
+| `won` | 1 | `ARTEFAKT_PARSERA` | fragment słowa komentarza |
+
+Komenda detekcji krótkich tokenów wykazała 18 wierszy; 7 (`tasks`×2, `teams`, `users`×5) to prawdziwe nazwy i nie dostały statusu artefaktu. Zatem rozstrzygnięto 11 wierszy śmieciowych, nie „co najmniej 13”.
+
+| Cytowany plik migracji | Status | Reguła pominięcia strict runnera |
+|---|---|---|
+| `server/migrations/000_initdb_core_tables.sql` | `MIGRACJA_POMIJANA` | `000_initdb_*` |
+| `server/migrations/015_enterprise_customers_module.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/043_security_policies.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/045_branding.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/046_compliance.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/051_memory_system.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/061_initiative_lifecycle.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/066_status_reports.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/067_economics_initiative_integration.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/073_conversations.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/100_user_onboarding_flow.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/101_security_sessions.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/127_consultant_project_access.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/160_configuration_enhancements.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/200_enterprise_feedback_system.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/201_customer_playbooks.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/249_report_system.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/292_decision_management.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/297_interview_library_templates.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/299_interview_assignments.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/335_initiative_stakeholders.sql` | `MIGRACJA_POMIJANA` | numer < 500 |
+| `server/migrations/never-ran/200_security_mvp_enterprise.sql.sql` | `MIGRACJA_POMIJANA` | `never-ran/`; `.sql.sql` |
+
+Wynik: 22 z 93 unikalnych plików cytowanych w historycznej kolumnie „Migracja” strict runner pomija. Kolumna historyczna była dopasowaniem statycznym, nie dowodem wykonania. Wiążący mianownik bieżącego stanu to pomiar `information_schema` z R2 powyżej.
+
 ## Pozycje
 
 | Plik | Linia | Tabela | Migracja | Catch blisko | Dialekt | Działanie | Commit |
