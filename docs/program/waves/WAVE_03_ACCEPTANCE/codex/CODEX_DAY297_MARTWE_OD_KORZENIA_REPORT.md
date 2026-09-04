@@ -54,3 +54,23 @@ Czy kontynuowałem pozostałe pozycje: NIE — §0.5 nakazuje zatrzymać cały d
 ## Twierdzenia niezweryfikowane
 
 Nie zweryfikowano R1–R6, osiągalności plików, martwych poddrzew, kluczy i18n, bezpiecznika, testów ani pięciu ekranów PRZED/PO. Nie należy interpretować tego raportu jako potwierdzenia lub obalenia tych tez.
+
+## Wznowienie w dyżurze 322 — 2026-09-04
+
+Historyczny STOP dyskowy jest nieaktualny: `df -h /` przed wznowieniem pokazał 63 GiB wolnego miejsca. Nie zmieniono poprzedniego opisu, ponieważ dokumentuje prawdziwy stan wcześniejszego przebiegu.
+
+Stan wznowienia: **CZĘŚCIOWA realizacja R1 i R4; bez usuwania produktu**.
+
+- Dodano analizator AST `scripts/dev/reachability-from-root.mjs`. Rozpoznaje statyczne importy/eksporty, literalne `import()`, literalne `require()`, alias `@/`, rozszerzenia TS/TSX/JS oraz `index.*`; liczy oddzielnie osiągalność z aplikacji, harnessu i testów.
+- Własny mianownik: 4 808 plików źródłowych; `app=3040`, `harness-only=29`, `test-only=1010`, `unreachable=729`.
+- 729 oznacza kandydatów do klasyfikacji, a nie pliki zatwierdzone do usunięcia. Nie ukończono walidacji rejestrów komponentów po stringu ani tabel flag/długu decyzyjnego, więc zgodnie z zasadą bezpieczniejszą nie usunięto żadnego pliku produktu.
+- Baseline zapisano w `docs/program/waves/WAVE_03_ACCEPTANCE/reachability.baseline.json`.
+- Bezpiecznik `tests/unit/canon/reachabilityFromRoot.test.ts` wykonał mutację: celowo dodany `src/__day297_reachability_probe__.ts` spowodował odrzucenie przez `--check-baseline`; po usunięciu mutacji baseline został zaakceptowany. JSON: `/private/tmp/cx-day322-reszta-domkniec-artefakty/day297-reachability-po.json`; pełne nazwy: `rejects a newly added file...`, `accepts the measured baseline...`; 2/2 PASS, `--retry=0`.
+
+### Korekta wobec instrukcji 322
+
+Teza „297 ma czysty worktree bez żadnego postępu” była nieaktualna: HEAD wejściowy `682375d322` zawierał wcześniejszy raport STOP. Nie zawierał kodu produktu ani narzędzia grafowego.
+
+### Nadal niezweryfikowane po wznowieniu
+
+Nie zweryfikowano kompletności rejestrów po stringu, porównania per plik z inwentarzem 238, czterech tabel, bezpiecznego zbioru poddrzew do usunięcia, kluczy i18n, esbuildów sąsiadów ani pięciu ekranów PRZED/PO. Pozycja 297 nie jest domknięta.
