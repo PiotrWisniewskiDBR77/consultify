@@ -1,0 +1,155 @@
+# Dyżur 335 — dryf po markerze dowodu G19
+
+Pomiar na `HEAD=1c4b5a5635bafd38ef375227824ada9b62be186e` względem `fee24bddb0`:
+
+- 543 commity;
+- 104 pliki razem;
+- 89 plików bez testów;
+- 10 plików UI pod `src/`;
+- 77 plików serwerowych bez testów;
+- 2 słowniki.
+
+Komenda źródłowa:
+
+```bash
+git diff --name-only fee24bddb0 HEAD -- \
+  src/components/standard src/components/shared src/components/ui \
+  src/index.css tailwind.config.js public/locales \
+  server/src/middleware server/src/routes
+```
+
+Surowy wynik poza repo: `/private/tmp/cx-day335-g19-regresja-artefakty/g19-dryf.txt`, SHA-256 `6e19cf2bb8ca7edda88abe0a6d2d6b3309ba994ec48ddeb8c586eb9d657afd07`.
+
+## Słowniki (2)
+
+- `public/locales/en/translation.json`
+- `public/locales/pl/translation.json`
+
+## `src/components/standard` (0)
+
+Brak plików.
+
+## `src/components/shared` (7)
+
+- `src/components/shared/AICardDraftModal.tsx`
+- `src/components/shared/NModeLayout/NModeLeftNav.tsx`
+- `src/components/shared/ToolWizard/ToolWizardShell.tsx`
+- `src/components/shared/forms/DatePicker.tsx`
+- `src/components/shared/forms/MultiSelect.tsx`
+- `src/components/shared/forms/PriorityPicker.tsx`
+- `src/components/shared/forms/Select.tsx`
+
+## `src/components/ui` (2)
+
+- `src/components/ui/HelpButton.tsx`
+- `src/components/ui/primitives/ErrorState.tsx`
+
+## `src/index.css` (1)
+
+- `src/index.css`
+
+## `tailwind.config.js` (0)
+
+Brak plików.
+
+## `server/src/middleware` (2)
+
+- `server/src/middleware/__tests__/appErrorMapper.test.ts`
+- `server/src/middleware/appErrorMapper.ts`
+
+## `server/src/routes` (90)
+
+- `server/src/routes/__tests__/day290-g19-http-flight.pg.test.ts`
+- `server/src/routes/__tests__/day307-crossorg-read-flight.pg.test.ts`
+- `server/src/routes/__tests__/day321.service-accounts-identifiers.pg.test.ts`
+- `server/src/routes/__tests__/day331.notebookConflict.gateway.pg.test.ts`
+- `server/src/routes/__tests__/deliverableTemplates.provenance.test.ts`
+- `server/src/routes/__tests__/help.routes.schema.pg.test.ts`
+- `server/src/routes/__tests__/initiativesExecutionRuntime.dropdown.pg.test.ts`
+- `server/src/routes/__tests__/service-accounts.day326.pg.test.ts`
+- `server/src/routes/__tests__/service-accounts.routes.test.ts`
+- `server/src/routes/actionDecisions.routes.ts`
+- `server/src/routes/admin/service-accounts.routes.ts`
+- `server/src/routes/adminP32.routes.ts`
+- `server/src/routes/ai.routes.ts`
+- `server/src/routes/ai/ai-health-check.routes.ts`
+- `server/src/routes/ai/ai-settings.routes.ts`
+- `server/src/routes/artifactApprovals.routes.ts`
+- `server/src/routes/artifactLineage.routes.ts`
+- `server/src/routes/artifacts.routes.ts`
+- `server/src/routes/assessment/assessment-workflow.routes.ts`
+- `server/src/routes/audits/context.ts`
+- `server/src/routes/auth.routes.ts`
+- `server/src/routes/caseWorkspace/eventInbox.routes.ts`
+- `server/src/routes/data-collection.routes.ts`
+- `server/src/routes/dataExport.routes.ts`
+- `server/src/routes/deliverableTemplates.routes.ts`
+- `server/src/routes/deliverablesGenerations.routes.ts`
+- `server/src/routes/document-studio.routes.ts`
+- `server/src/routes/documents.routes.ts`
+- `server/src/routes/economics.routes.ts`
+- `server/src/routes/finance-statements.routes.ts`
+- `server/src/routes/financeCandidateHandoffDigitizationAnalysis.routes.ts`
+- `server/src/routes/financeCandidateHandoffInvestmentCase.routes.ts`
+- `server/src/routes/financeCandidateHandoffStatementPack.routes.ts`
+- `server/src/routes/financeCandidateHandoffValuationRecommendation.routes.ts`
+- `server/src/routes/help.routes.ts`
+- `server/src/routes/ideaBusinessCase.routes.ts`
+- `server/src/routes/initiativeCandidates.routes.ts`
+- `server/src/routes/interviewCandidateHandoff.routes.ts`
+- `server/src/routes/meeting.routes.ts`
+- `server/src/routes/my-work.routes.ts`
+- `server/src/routes/my-work/object-attachments.routes.ts`
+- `server/src/routes/organization-context.routes.ts`
+- `server/src/routes/partners.routes.ts`
+- `server/src/routes/pmo/initiativeClosure.routes.ts`
+- `server/src/routes/pmo/initiatives.routes.ts`
+- `server/src/routes/presentations.routes.ts`
+- `server/src/routes/prompt-assistant.routes.ts`
+- `server/src/routes/public-booking.routes.ts`
+- `server/src/routes/public-mini-assessment.routes.ts`
+- `server/src/routes/realtime-platform.routes.ts`
+- `server/src/routes/report-builder.routes.ts`
+- `server/src/routes/results-kpi-reports.routes.ts`
+- `server/src/routes/resultsVnext/__tests__/day325.app-error-inventory.test.ts`
+- `server/src/routes/resultsVnext/__tests__/day325.komunikaty-pl.gateway.pg.test.ts`
+- `server/src/routes/resultsVnext/kpi.routes.ts`
+- `server/src/routes/resultsVnext/kpiDeviation.routes.ts`
+- `server/src/routes/resultsVnext/kpiPerspectives.routes.ts`
+- `server/src/routes/resultsVnext/kpiRecoveryChildren.routes.ts`
+- `server/src/routes/resultsVnext/kpiScorecard.routes.ts`
+- `server/src/routes/resultsVnext/okr.routes.ts`
+- `server/src/routes/resultsVnext/roi.routes.ts`
+- `server/src/routes/superadmin.routes.ts`
+- `server/src/routes/syncHub.routes.ts`
+- `server/src/routes/table-platform.ai-editor.routes.ts`
+- `server/src/routes/table-platform.conversion.routes.ts`
+- `server/src/routes/table-platform.form-intake.routes.ts`
+- `server/src/routes/table-platform.form-public.routes.ts`
+- `server/src/routes/table-platform.qa.routes.ts`
+- `server/src/routes/table-platform.routes.ts`
+- `server/src/routes/table-platform.source-pack.routes.ts`
+- `server/src/routes/v10/teresa.routes.ts`
+- `server/src/routes/v8/__tests__/day307-finance-module-gate.pg.test.ts`
+- `server/src/routes/v8/__tests__/financeRoutes.moduleGate.pg.test.ts`
+- `server/src/routes/v8/__tests__/financeStatementMountedSurface.test.ts`
+- `server/src/routes/v8/admin/partner-review.routes.ts`
+- `server/src/routes/v8/assessment.routes.ts`
+- `server/src/routes/v8/chat.routes.ts`
+- `server/src/routes/v8/execution-control.routes.ts`
+- `server/src/routes/v8/finance-value.routes.ts`
+- `server/src/routes/v8/finance.routes.ts`
+- `server/src/routes/v8/financeStatementMountedSurface.ts`
+- `server/src/routes/v8/index.ts`
+- `server/src/routes/v8/interview.routes.ts`
+- `server/src/routes/v8/my-work.routes.ts`
+- `server/src/routes/v8/partner.routes.ts`
+- `server/src/routes/v8/results.routes.ts`
+- `server/src/routes/v8/teresa.routes.ts`
+- `server/src/routes/v8/transformation-cases.routes.ts`
+- `server/src/routes/virtual-workers.routes.ts`
+- `server/src/routes/workbook.routes.ts`
+
+## Werdykt
+
+Dowód wykonany na `fee24bddb0` nie zachowuje ważności wobec badanego `HEAD`, ponieważ po markerze zmieniły się 104 pliki dokładnie w mianowniku zdefiniowanym przez G19. Historyczne znalezisko `G19-Z3` pozostaje prawdziwym zapisem poprzedniego pomiaru, lecz jego wynik `0 plików` nie opisuje bieżącego `HEAD`.
