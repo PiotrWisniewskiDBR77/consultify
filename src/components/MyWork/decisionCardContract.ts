@@ -279,7 +279,8 @@ export function buildDecisionCardSpec(): ArtifactCardSpec {
   const allCards = DECISION_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core decision', pl: 'Rdzeń decyzji' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete decision', pl: 'Kompletna decyzja' }, cards: allCards },
+    { id: 'core', label: { en: 'Core decision', pl: 'Rdzeń decyzji' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
