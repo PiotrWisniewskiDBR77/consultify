@@ -16,7 +16,7 @@ export const ConversationSearch: React.FC<ConversationSearchProps> = ({
     <div className="relative group">
       <Search
         size={14}
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors"
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 group-focus-within:text-c-focus transition-colors"
       />
       <input
         type="text"

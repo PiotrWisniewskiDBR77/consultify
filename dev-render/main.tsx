@@ -457,6 +457,21 @@ const AuthVerifyEmailScreen = React.lazy(() => import('./screens/auth-verify-ema
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
+const ChatCrimsonSearchResearchScreen = React.lazy(
+  () => import('./screens/chat-crimson-search-research')
+);
+const ChatCrimsonPrivateMessageScreen = React.lazy(
+  () => import('./screens/chat-crimson-private-message')
+);
+const ChatCrimsonProjectMembersScreen = React.lazy(
+  () => import('./screens/chat-crimson-project-members')
+);
+const ChatV8ArtifactRunSearchScreen = React.lazy(
+  () => import('./screens/chat-v8-artifact-run-search')
+);
+const ChatMessageRequiredSurfacesScreen = React.lazy(
+  () => import('./screens/chat-message-required-surfaces')
+);
 const TeresaChipySugestiiScreen = React.lazy(() => import('./screens/teresa-chipy-sugestii'));
 const TeresaChipyPanelArtefaktuScreen = React.lazy(
   () => import('./screens/teresa-chipy-panel-artefaktu')
@@ -2146,6 +2161,26 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'teresa-confirm-chip': {
     label: 'IDEE — Teresa: kontrolka potwierdzenia akcji trwałych (F1-A)',
     render: () => <TeresaConfirmChipScreen />,
+  },
+  'chat-crimson-search-research': {
+    label: 'CHAT 315 — realne wyszukiwanie + MessageRenderer/ResearchProgress',
+    render: () => <ChatCrimsonSearchResearchScreen />,
+  },
+  'chat-crimson-private-message': {
+    label: 'CHAT 315 — realny tryb prywatny + opcje/deep-thinking/przerwanie/ostrzeżenie',
+    render: () => <ChatCrimsonPrivateMessageScreen />,
+  },
+  'chat-crimson-project-members': {
+    label: 'CHAT 315 — realny modal członków projektu, pola z kanonicznym fokusem',
+    render: () => <ChatCrimsonProjectMembersScreen />,
+  },
+  'chat-v8-artifact-run-search': {
+    label: 'CHAT 315 — realna rozwinięta kontrolka V8ArtifactRunControl + wyszukiwanie',
+    render: () => <ChatV8ArtifactRunSearchScreen />,
+  },
+  'chat-message-required-surfaces': {
+    label: 'CHAT 315 — realny MessageRenderer: research/opcje/deep-thinking/przerwanie/ostrzeżenie',
+    render: () => <ChatMessageRequiredSurfacesScreen />,
   },
   'teresa-chipy-sugestii': {
     label: 'TERESA — chipy sugestii pod oknem rozmowy (kontekst raportu vs insightu)',

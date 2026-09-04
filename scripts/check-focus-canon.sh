@@ -222,7 +222,7 @@ list_untracked_scope_files() {
 
 INDEX_CSS="src/index.css"
 
-VIOLATION_RE='ring-(primary|crimson)-|outline-(primary|crimson)-|ring-offset-(primary|crimson)-'
+VIOLATION_RE='ring-(primary|crimson)-|outline-(primary|crimson)-|ring-offset-(primary|crimson)-|(focus|focus-visible|group-focus-within):(border|text)-(primary|crimson)-'
 CORRECT_RE='ring-c-focus|outline-c-focus|--c-focus'
 
 # K-39: heurystyka DRUGORZĘDNA (ostrzeżenie, nie bramka) na dynamiczną
