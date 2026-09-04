@@ -64,3 +64,107 @@ Skaner szuka sygnału sieci/bazy, więc nie widzi testów, które z produktem ni
 | E0011 | `ollama.integration.test.ts:102` — chat completions | brak funkcji produktu; blok woła bezpośrednio `localhost:11434` | SKIP przy `OLLAMA_TEST=false` | n/d | **NOT_PROVEN** | `e11-przed.json`; brak dopuszczalnego celu mutacji produktu. |
 | E0013 | `pmo-project-members.integration.test.ts:115` — typy RACI | nie uruchomiono: test importuje `server/src/index.ts` | n/d | n/d | **NOT_PROVEN** | Z30 wprost zakazuje uruchamiania pełnego `server/src/index.ts` dla testów; brak bezpiecznego celu mutacji. |
 | E0014 | `workbook.p23ext.test.ts:374` — lista workbooków | brak funkcji produktu; bezpośredni `fetch` do runtime i `return` przy jego braku/401 | n/d | n/d | **NOT_PROVEN** | Blok nie importuje handlera; instrukcja przydziela harness 5474, a test nie montuje go i ma własny adres. |
+
+## Dyżur 332 — triage 64 plików bez importu + rozstrzygnięcie 8 NOT_PROVEN
+
+Pomiar własny: `selfDefinedSubjects=190`, `selfDefinedSubjectsWithoutProductImports=64`.
+Klasa `REALNY DEFEKT` oznacza lokalny podmiot o nazwie istniejącego komponentu produktu,
+renderowany zamiast niego. `UZASADNIONY WZORZEC` oznacza jawny `Mock*`/`Harness` albo nazwę,
+której odpowiednika-komponentu nie ma w `src/` ani `server/src/`.
+
+| Plik | Podmiot | Klasa | Uzasadnienie |
+|---|---|---|---|
+| `tests/components/AIChat/ArtifactsPanel.test.tsx` | `ArtifactsPanel` | **REALNY DEFEKT** | Produkt eksportuje `src/components/AIChat/Artifacts/ArtifactsPanel.tsx`; test renderuje lokalną atrapę. |
+| `tests/components/AIChat/FocusModeSelector.test.tsx` | `FocusModeSelector` | **REALNY DEFEKT** | Produkt eksportuje `src/components/AIChat/Input/FocusModeSelector.tsx`; test renderuje lokalną atrapę. |
+| `tests/components/AIChat/MessageBubble.test.tsx` | `MessageBubble` | **REALNY DEFEKT** | Produkt eksportuje `src/components/AIChat/Messages/MessageBubble.tsx`; test renderuje lokalną atrapę. |
+| `tests/components/AIChat/ThinkingBlock.test.tsx` | `ThinkingBlock` | **REALNY DEFEKT** | Produkt eksportuje `src/components/AIChat/Messages/ThinkingBlock.tsx`; test renderuje lokalną atrapę. |
+| `tests/components/Admin/AdminLayout.test.tsx` | `AdminLayout` | UZASADNIONY WZORZEC | Brak komponentu produktu o nazwie `AdminLayout`. |
+| `tests/components/Admin/AdminSidebar.test.tsx` | `AdminSidebar` | UZASADNIONY WZORZEC | Brak komponentu produktu o nazwie `AdminSidebar`; istnieje odrębny `SuperAdminSidebar`. |
+| `tests/components/AssessmentHubDashboard.test.tsx` | `MockAssessmentHubDashboard` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`; nie podszywa się pod nazwę produktu. |
+| `tests/components/Economics/FinancialMetricsPanel.test.tsx` | `FinancialMetricsPanel` | **REALNY DEFEKT** | Produkt eksportuje `src/components/Economics/FinancialMetricsPanel.tsx`; test renderuje lokalną atrapę. |
+| `tests/components/MyWork/DecisionsPanel.test.tsx` | `MockDecisionsPanel` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`; nie podszywa się pod nazwę produktu. |
+| `tests/components/MyWork/InboxTriage.test.tsx` | `InboxTriage` | **REALNY DEFEKT** | Produkt eksportuje `src/components/MyWork/Inbox/InboxTriage.tsx`; test renderuje lokalną atrapę. Zakres zapisu MyWork jest wyłączony przez B.4.3. |
+| `tests/components/MyWork/MyWorkHub.test.tsx` | `MockMyWorkHub` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`; nie podszywa się pod nazwę produktu. |
+| `tests/components/MyWork/table/financial/FinancialCaseDialog.persistence.test.tsx` | `Harness` | UZASADNIONY WZORZEC | Jawny harness testowy, brak komponentu produktu `Harness`. |
+| `tests/components/Onboarding/OnboardingComplete.test.tsx` | `OnboardingComplete` | UZASADNIONY WZORZEC | Brak komponentu produktu o tej nazwie. |
+| `tests/components/Onboarding/OnboardingProgress.test.tsx` | `OnboardingProgress` | UZASADNIONY WZORZEC | Brak komponentu produktu o tej nazwie; występuje jedynie typ/usługa. |
+| `tests/components/Onboarding/OnboardingStep.test.tsx` | `OnboardingStep` | UZASADNIONY WZORZEC | Brak komponentu produktu o tej nazwie; występuje jedynie typ. |
+| `tests/components/Onboarding/OnboardingWelcome.test.tsx` | `OnboardingWelcome` | UZASADNIONY WZORZEC | Brak komponentu produktu o tej nazwie. |
+| `tests/components/Onboarding/OnboardingWizard.test.tsx` | `OnboardingWizard` | **REALNY DEFEKT** | Produkt eksportuje `src/views/OnboardingWizard.tsx`; test renderuje lokalną atrapę. |
+| `tests/unit/components/Assessment/RolloutPlanTab.test.tsx` | `MockRolloutPlanTab` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Demo/DemoLoadingOverlay.test.tsx` | `MockDemoLoadingOverlay` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Demo/DemoUpgradePrompt.test.tsx` | `MockDemoUpgradePrompt` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Demo/DemoWelcomeTour.test.tsx` | `MockDemoWelcomeTour` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Demo/SmartDemoBanner.test.tsx` | `MockSmartDemoBanner` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Modal/ExitIntentModal.test.tsx` | `MockExitIntentModal` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/Navigation/Sidebar.test.tsx` | `MockSidebar` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Accordion.test.tsx` | `MockAccordion` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Alert.test.tsx` | `MockAlert` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Avatar.test.tsx` | `MockAvatar` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Badge.test.tsx` | `MockBadge` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Breadcrumb.test.tsx` | `MockBreadcrumb` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Button.test.tsx` | `MockButton` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Card.test.tsx` | `MockCard` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Checkbox.test.tsx` | `MockCheckbox` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Chip.test.tsx` | `MockChip` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Collapse.test.tsx` | `MockCollapse` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/DataTable.test.tsx` | `MockDataTable` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/DatePicker.test.tsx` | `MockDatePicker` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Divider.test.tsx` | `MockDivider` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Drawer.test.tsx` | `MockDrawer` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Dropdown.test.tsx` | `MockDropdown` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/EmptyState.test.tsx` | `MockEmptyState` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/FileUpload.test.tsx` | `MockFileUpload` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/FormControl.test.tsx` | `MockFormControl` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Input.test.tsx` | `MockInput` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Label.test.tsx` | `MockLabel` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Modal.test.tsx` | `MockModal` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Pagination.test.tsx` | `MockPagination` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Popover.test.tsx` | `MockPopover` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/ProgressBar.test.tsx` | `MockProgressBar` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Radio.test.tsx` | `MockRadio` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/RadioGroup.test.tsx` | `MockRadioGroup` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Rating.test.tsx` | `MockRating` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/SearchInput.test.tsx` | `MockSearchInput` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Select.test.tsx` | `MockSelect` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Skeleton.test.tsx` | `MockSkeleton` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Slider.test.tsx` | `MockSlider` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Spinner.test.tsx` | `MockSpinner` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Stepper.test.tsx` | `MockStepper` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Switch.test.tsx` | `MockSwitch` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Tabs.test.tsx` | `MockTabs` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Textarea.test.tsx` | `MockTextarea` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Timeline.test.tsx` | `MockTimeline` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Toast.test.tsx` | `MockToast` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/components/UI/Tooltip.test.tsx` | `MockTooltip` | UZASADNIONY WZORZEC | Jawna nazwa `Mock*`. |
+| `tests/unit/naglowkiKolumnJezyk.test.ts` | `KLUCZ_NAGLOWKA` | UZASADNIONY WZORZEC | Lokalny predykat testowy, nie komponent produktu. |
+
+Wynik: **7 REALNYCH DEFEKTÓW, 57 UZASADNIONYCH WZORCÓW**. `InboxTriage` nie może być
+naprawiony w tym dyżurze, ponieważ B.4.3 jawnie wyłącza zapis w `src/components/MyWork/**`;
+pozostaje briefem dla dyżuru 331.
+
+### R2 — naprawa potwierdzonego przykładu
+
+| Plik | Kierunek zielony | Mutacja produktu | Wynik mutacji | Werdykt |
+|---|---|---|---|---|
+| `tests/components/AIChat/MessageBubble.test.tsx` | realny `MessageBubble` renderuje treść; 2/2 PASS | usunięto wyświetlenie `message.content` w produkcie | asercja treści FAIL, drugi przypadek PASS; po `cp` diff produktu pusty | **NAPRAWIONY, NIE PUSTY** |
+
+Pozostałe realne defekty R1 nie są tu oznaczone jako naprawione. `InboxTriage` jest poza
+licencją zapisu B.4.3; pięć pozostałych wymaga osobnych adaptacji kontraktów i mutacji.
+
+### R3 — ponowny pomiar ośmiu NOT_PROVEN
+
+| ID | Wynik własny dyżuru 332 | Klasa |
+|---|---|---|
+| E0001 | 13 przypadków: 11 PASS, dwa baseline FAIL przez `querySelector` na `null`, w tym badany przypadek linii 120. Brak zielonego kierunku, więc mutacja byłaby nierozstrzygająca. | **NOT_PROVEN** |
+| E0003 | Właściwy przebieg z cwd `server/`: 25/25 FAIL, `TypeError: argument handler must be a function`; badany test nie ma zielonego baseline. | **NOT_PROVEN** |
+| E0008 | Podana ścieżka jest zerwana, lecz nie istnieje też `src/components/Initiatives/CandidatesTable.tsx`; próba korekty ścieżki nadal dała 0 wykonanych testów i została cofnięta. Brak celu produktu do mutacji. | **NOT_PROVEN** |
+| E0009 | `OLLAMA_TEST=false`: SKIP; `true` wymaga żywego `localhost:11434` i łamie Z15. | **NOT_PROVEN** |
+| E0010 | Jak E0009; test bezpośrednio woła Ollama, bez funkcji produktu do mutacji. | **NOT_PROVEN** |
+| E0011 | Jak E0009; test bezpośrednio woła Ollama, bez funkcji produktu do mutacji. | **NOT_PROVEN** |
+| E0013 | Nie uruchomiono: statycznie importuje `server/src/index.js`; testowy pełny bootstrap jest zabroniony przez Z30. | **NOT_PROVEN** |
+| E0014 | Bez runtime 5498 cały plik raportuje 14/14 PASS; trzy bloki endpointów wracają przed asercjami. Brak zaimportowanego handlera/celu produktu, więc bez dwukierunkowej mutacji Z32 nie pozwala nadać `PUSTY`. | **NOT_PROVEN** |
+
+Wynik R3: **0 nowych rozstrzygnięć, 8/8 pozostaje NOT_PROVEN**. To wynik pomiaru, nie
+przepisanie werdyktu dyżuru 318. Artefakty: `e1-przed.json`, `e3-przed.json`,
+`e8-green.json`, `e9-e11-przed.json`, `e14-przed.json` w katalogu artefaktów dyżuru.
