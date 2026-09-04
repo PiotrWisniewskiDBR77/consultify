@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `fd6ecd369ebacf5dc744254acc13f323e5ee7d2b`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker fd6ecd369ebacf5dc744254acc13f323e5ee7d2b --snapshot-date 2026-09-04`
+Marker: `73f250b5bad4f2d731a3581dfa18e45c441930eb`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 73f250b5bad4f2d731a3581dfa18e45c441930eb --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -116,7 +116,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
 | `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
-| `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | źródło mówi pre-existing bez SHA naprawy | — | settlement |
+| `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; cytowany aa0cefc347 dotyka Execution, nie obiektu Results CTA | — | settlement |
 | `RES-OWN-005` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-380 | R-17 → DEC-2026-09-03-380 | settlement, decisions, owner, wave2 |
 | `RES-OWN-006` | NAPRAWIONE | SHA_OK | 27345491d5 | — | settlement |
 | `RES-OWN-007` | NAPRAWIONE | SHA_OK | 77eb754f72 | — | settlement, decisions |

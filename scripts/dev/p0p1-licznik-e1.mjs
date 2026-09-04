@@ -64,7 +64,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   // COFNIĘTE po odbiorze 334 — ten sam `7b7ec198aa` i ta sama wada co wyżej.
   // Pozycja to duplikat zgłoszenia MYW-DEC-REC-001 (rejestr modułu: 2026-08-23).
   'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137' },
-  'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
+  'RES-OWN-004': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; cytowany aa0cefc347 dotyka Execution, nie obiektu Results CTA' },
   'RES-OWN-003': { type: 'UNRESOLVED', detail: 'właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-MENU-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
