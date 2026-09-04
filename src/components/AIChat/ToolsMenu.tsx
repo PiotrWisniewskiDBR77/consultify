@@ -32,6 +32,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { pushChatSuggestionsPreferenceToServer } from '../../services/chatSuggestionsPreference';
 import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../ui/primitives/Button';
 
@@ -295,6 +296,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     const currentValue = aiConfig[modeId as keyof typeof aiConfig];
     const newValue = !currentValue;
     setAIConfig({ [modeId]: newValue });
+
+    // DEC-386: this toggle's storage moved from localStorage-only to a
+    // per-user server row (user_ai_settings.chat_suggestions_enabled) so it
+    // survives a login from another browser/machine. localStorage (via
+    // zustand persist on aiConfig, set above) stays as the optimistic cache.
+    if (modeId === 'chatSuggestionsEnabled') {
+      void pushChatSuggestionsPreferenceToServer(newValue);
+    }
 
     const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';

@@ -7,6 +7,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { syncChatSuggestionsPreferenceFromServer } from '@/services/chatSuggestionsPreference';
 import { reconcileDemoAuthProfile } from '@/services/demoSessionAdoption';
 import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
@@ -352,6 +353,12 @@ function AppContent() {
           const demoSessionOrgId = useAppStore.getState().demoSessionOrgId;
           const reconciledUser = reconcileDemoAuthProfile(user, restoredUser, demoSessionOrgId);
           const authenticatedUser: User = { ...reconciledUser, isAuthenticated: true };
+
+          // DEC-386: pull the server-side "chipy sugestii" preference once per
+          // cold session start. Fire-and-forget — never blocks auth init, and
+          // fails soft to whatever zustand persist already rehydrated from
+          // localStorage (see chatSuggestionsPreference.ts).
+          void syncChatSuggestionsPreferenceFromServer();
 
           // P0.3: konto > localStorage > navigator — re-sync on every fresh
           // profile fetch, not only when id/email/avatar/role changed (the
