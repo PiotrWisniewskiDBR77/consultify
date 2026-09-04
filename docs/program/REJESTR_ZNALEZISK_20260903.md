@@ -364,3 +364,9 @@ Pomiar dziewięciu wierszy kubełka C wykazał: wspólny dowód jest hurtowy w 9
 ## AC. Dyżur 360 — G19 kubełek A: pięć izolacji, dwa błędne założenia kubełka
 
 Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, podłoga 16) i podniósł pięć z siedmiu wierszy kubełka A do `IZOLACJA_UDOWODNIONA / MIANOWNIK_OTWARTY`: 01, 04, 05, 08, 13. Wiersze 06 i 11 pozostały `NOT_PROVEN`: runtime Execution nie ma mountu w realnym ApiGateway, a Materials nie ma wymaganej pary decka. Żaden wiersz nie dostał `PASS`; rozjazd mianownika 28/30/49 vs 106 pozostaje pytaniem właścicielskim. Ślad: `CODEX_DAY360_G19_KUBELEK_A_REPORT.md` i `evidence/g19/day360/`.
+## AD. Dyżur 359 — G20 pomierzone, lecz nadal zablokowane
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AD1 | Archeologia 13 pozycji dała 2 kwalifikowane SHA i 11 pozycji wymagających decyzji właściciela; mianownik pozostał 121. | G20 ma teraz dowód we wszystkich 16 modułach, ale nie może brzmieć jak zaliczenie: G19 pozostaje 16/16 NOT_PROVEN, a P0/P1 ma 11 BLOKUJE. | ENTRY_GATE_MEASURED / BLOCKED | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY359_G20_ZAMKNIECIE_REPORT.md`, `evidence/g20/day359/` |
+| AD2 | Dane rozstrzygnięć i funkcje miernika są w jednym pliku. | Recenzent merytoryczny ma techniczny dostęp do bezpieczników; przygotowano nienałożony rozdział danych. | OTWARTE / PATCH DO DECYZJI | `evidence/g20/day359/r5-rozdzial-danych.patch` |

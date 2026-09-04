@@ -1,12 +1,12 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `afc923d912d9a636d28798a7f035f693bb18ce8d`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker afc923d912d9a636d28798a7f035f693bb18ce8d --snapshot-date 2026-09-04`
+Marker: `8c53b61aefb596eb75a0524f1578b2c48e080497`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 8c53b61aefb596eb75a0524f1578b2c48e080497 --snapshot-date 2026-09-04`
 
-Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
+Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
-**BLOKUJE: 13**
+**BLOKUJE: 11**
 
 | ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |
 |---|---|---|---|---|---|
@@ -56,14 +56,14 @@ Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `CHAT-OWN-017` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner, wave2 |
 | `EXE-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-03 | — | settlement |
 | `EXE-OWN-002` | NAPRAWIONE | SHA_OK | 673363f63c | — | settlement |
-| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak odzyskanego lokalnego seeda i SHA danych przeglądowych Execution | — | settlement |
+| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel/nadzorca musi wskazać dopuszczalny dataset Execution i dowód jego pochodzenia; późniejsze commity nie dowodzą odzyskanego seeda ani trzech wymaganych stanów | — | settlement |
 | `EXE-OWN-004` | NAPRAWIONE | SHA_OK | 14da3e6d0757 | — | settlement |
-| `EXE-OWN-005` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy | — | settlement |
+| `EXE-OWN-005` | NAPRAWIONE | SHA_OK | aa0cefc347 | — | settlement |
 | `EXE-OWN-006` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-007` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
 | `EXE-OWN-008` | NAPRAWIONE | SHA_OK | 4cd0ce6589 | — | settlement |
-| `FIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy | — | settlement |
-| `INI-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak kompletnej fikstury 11 inicjatyw i dowodu przeglądarkowego jej pól lifecycle | — | settlement |
+| `FIN-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać kanoniczny dataset pięciu modeli Finance i kryterium poziomów agregacji; d8561ed5c2 naprawia tylko bridge ID | — | settlement |
+| `INI-OWN-001` | NAPRAWIONE | SHA_OK | 5c6d72066f | — | settlement |
 | `INI-OWN-002` | NAPRAWIONE | SHA_OK | aed131a2ab | — | settlement, decisions |
 | `INI-OWN-003` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-29-344 | — | settlement, decisions |
 | `INI-OWN-004` | NAPRAWIONE | SHA_OK | 5c6d72066f | — | settlement |
@@ -76,17 +76,17 @@ Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `INT-APPROVAL-OWN-001` | NAPRAWIONE | SHA_OK | 01d1cd8057 | — | settlement |
 | `INT-ASSIGN-OWN-001` | NAPRAWIONE | SHA_OK | f3c35cecce | — | settlement |
 | `INT-CREATOR-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-67, DEC-2026-08-26-84, DEC-2026-08-28-205 | — | settlement, decisions |
-| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI | — | settlement |
+| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel/nadzorca musi udzielić licencji na realny provider i kryterium request/response/readback; obecność wołacza w źródle nie dowodzi osiągalności ani działania | — | settlement |
 | `INT-MENU-OWN-001` | NAPRAWIONE | SHA_OK | 5189ac05d6 | — | settlement, decisions, owner |
 | `INT-PREV-OWN-001` | NAPRAWIONE | SHA_OK | 3a8c11eb4d | — | settlement, decisions |
 | `INT-QCARD-OWN-001` | NAPRAWIONE | SHA_OK | d560464f3f | — | settlement |
 | `MYW-AGT-REC-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-23 | — | settlement |
 | `MYW-CAL-REC-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
-| `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania | — | settlement, decisions |
-| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu | — | settlement, decisions |
-| `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22 | — | settlement |
-| `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
-| `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137 | — | settlement |
+| `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt attendees/guests/organizer/invitation-status; wskazany handler 2779–2822 nadal nie ma tych pól | — | settlement, decisions |
+| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt dołączania artefaktów i linku dla zaproszonych; DEC-222 pozostawia wdrożenie otwarte i brak SHA obiektu | — | settlement, decisions |
+| `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi ocenić świeży zrzut exact-candidate; FALA_4_OWNER_DECISION zabrania zamknięcia samym SHA, a af75a84e37 jest checkpointem | — | settlement |
+| `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; checkpoint af75a84e37 odpada, a późniejsze commity nie izolują naprawy right-click/kebab | — | settlement |
+| `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA lub decyzję; 4a36e8a745 jest checkpointem, a 7837e750e0 dotyka tylko testu, nie MyWorkHub.tsx:4137 | — | settlement |
 | `MYW-IDEA-REC-001` | NAPRAWIONE | SHA_OK | 655d629675 | — | settlement |
 | `MYW-IDEA-REC-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-29, DEC-2026-09-03-372 | — | settlement, decisions, owner, wave2 |
 | `MYW-IDEAS-008` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |
@@ -112,11 +112,11 @@ Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYW-PHOTO-007` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-010` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-011` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
-| `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | duplikat MYW-DEC-REC-001; checkpoint 4a36e8a745 to wspólna migawka, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-23 | — | settlement |
+| `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
-| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
-| `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | źródło mówi pre-existing bez SHA naprawy | — | settlement |
+| `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |
+| `RES-OWN-004` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; cytowany aa0cefc347 dotyka Execution, nie obiektu Results CTA | — | settlement |
 | `RES-OWN-005` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-380 | R-17 → DEC-2026-09-03-380 | settlement, decisions, owner, wave2 |
 | `RES-OWN-006` | NAPRAWIONE | SHA_OK | 27345491d5 | — | settlement |
 | `RES-OWN-007` | NAPRAWIONE | SHA_OK | 77eb754f72 | — | settlement, decisions |

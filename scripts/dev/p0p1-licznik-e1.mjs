@@ -37,35 +37,35 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'ASM-OWN-003': { type: 'DECISION', decision: 'DEC-2026-09-03-364' },
   'ASM-OWN-024[OF]': { type: 'DECISION', decision: 'DEC-2026-08-28-151' },
   'EXE-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-24-03' },
-  'EXE-OWN-003': { type: 'UNRESOLVED', detail: 'brak odzyskanego lokalnego seeda i SHA danych przeglądowych Execution' },
-  'EXE-OWN-005': { type: 'UNRESOLVED', detail: 'brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy' },
+  'EXE-OWN-003': { type: 'UNRESOLVED', detail: 'właściciel/nadzorca musi wskazać dopuszczalny dataset Execution i dowód jego pochodzenia; późniejsze commity nie dowodzą odzyskanego seeda ani trzech wymaganych stanów' },
+  'EXE-OWN-005': { type: 'SHA', sha: 'aa0cefc347' },
   'EXE-OWN-006': { type: 'SHA', sha: 'b470536a91' },
   'EXE-OWN-007': { type: 'SHA', sha: 'b470536a91' },
-  'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'runtime d8561ed5c2 nie jest jednoznacznym SHA naprawy' },
-  'INI-OWN-001': { type: 'UNRESOLVED', detail: 'brak kompletnej fikstury 11 inicjatyw i dowodu przeglądarkowego jej pól lifecycle' },
-  'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI' },
-  'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
-  'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
+  'FIN-OWN-001': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać kanoniczny dataset pięciu modeli Finance i kryterium poziomów agregacji; d8561ed5c2 naprawia tylko bridge ID' },
+  'INI-OWN-001': { type: 'SHA', sha: '5c6d72066f' },
+  'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'właściciel/nadzorca musi udzielić licencji na realny provider i kryterium request/response/readback; obecność wołacza w źródle nie dowodzi osiągalności ani działania' },
+  'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'właściciel musi zatwierdzić kontrakt attendees/guests/organizer/invitation-status; wskazany handler 2779–2822 nadal nie ma tych pól' },
+  'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'właściciel musi zatwierdzić kontrakt dołączania artefaktów i linku dla zaproszonych; DEC-222 pozostawia wdrożenie otwarte i brak SHA obiektu' },
   // COFNIĘTE po odbiorze 334. Dyżur podstawił `d0b5172c19` (2026-07-24), a uwaga
   // właściciela jest z 2026-08-22 — commit jest o MIESIĄC STARSZY od zgłoszenia.
   // Jego wersja pliku ma 152 linie i nie zawiera ani `TableWithPreviewLayout`,
   // ani `PreviewMetaCard`, które dowód cytuje w liniach 356-460.
   // ★ Dokument źródłowy (07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md, „Fala 4") stawia
   // tej pozycji status FALA_4_OWNER_DECISION i wymaga ŚWIEŻEGO ZRZUTU przed CLOSED.
-  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22' },
-  'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
+  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'właściciel musi ocenić świeży zrzut exact-candidate; FALA_4_OWNER_DECISION zabrania zamknięcia samym SHA, a af75a84e37 jest checkpointem' },
+  'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; checkpoint af75a84e37 odpada, a późniejsze commity nie izolują naprawy right-click/kebab' },
   // COFNIĘTE po odbiorze 334. Dyżur podstawił `7b7ec198aa` (2026-07-15) — PIĘĆ
   // TYGODNI przed zgłoszeniem z 2026-08-22. `--stat` tego commita dotyka wyłącznie
   // DecisionsPanelContent.tsx, a dowód pozycji wskazuje MyWorkHub.tsx:4137,
   // którego ten commit w ogóle nie rusza.
-  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137' },
+  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA lub decyzję; 4a36e8a745 jest checkpointem, a 7837e750e0 dotyka tylko testu, nie MyWorkHub.tsx:4137' },
   'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
   // COFNIĘTE po odbiorze 334 — ten sam `7b7ec198aa` i ta sama wada co wyżej.
   // Pozycja to duplikat zgłoszenia MYW-DEC-REC-001 (rejestr modułu: 2026-08-23).
-  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'duplikat MYW-DEC-REC-001; checkpoint 4a36e8a745 to wspólna migawka, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-23' },
-  'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
-  'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
+  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'właściciel musi osobno rozstrzygnąć duplikat MYW-DEC-REC-001; 4a36e8a745 jest checkpointem, a test 7837e750e0 nie dotyka MyWorkHub.tsx:4137' },
+  'RES-OWN-004': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; cytowany aa0cefc347 dotyka Execution, nie obiektu Results CTA' },
+  'RES-OWN-003': { type: 'UNRESOLVED', detail: 'właściciel musi zdecydować, czy licencjonować writer; read-modele i UI fixture nie dowodzą trwałego zapisu ani cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-MENU-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
   'TLS-REC-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
