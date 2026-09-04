@@ -34,6 +34,12 @@ Pomiar mutacyjny na kopii migracji poza repo:
 
 Wynik jest silniejszy niż samo odczytanie predykatu: plik jest koniecznym, rzeczywiście wykonywanym producentem. W rejestrze zmieniono wyłącznie jego status na `PROMOWANA_URUCHAMIANA`. Artefakty: `r2-bez-073.txt`, `r2-bez-073-result.txt`, `r2-z-073.txt`, `r2-z-073-result.txt`.
 
+## R3 — `slack_router_dedupe`
+
+Istniejąca migracja `20261670_p2_runtime_schema_repairs.sql` była no-op na czystej bazie: R0 po pełnych 893 migracjach zwrócił `to_regclass(...) = NULL`. Dodano addytywną migrację `20262020_day333_slack_router_dedupe.sql` z dokładnym runtime'owym kształtem tabeli. Pełny przebieg od zera wykonał 894 migracje, drugi przebieg wykonał 0, `to_regclass(...)` zwrócił `slack_router_dedupe`, a liczba tabel wyniosła 1803.
+
+DDL w `slackRouter.ts` pozostaje jako kompatybilnościowy strażnik: plik ma w tym dyżurze licencję tylko do odczytu. Usunięcie można wykonać osobno po potwierdzeniu wdrożenia migracji we wszystkich środowiskach. Artefakty: `r3-migracje-1.txt`, `r3-migracje-2.txt`, `r3-result.txt`.
+
 ## Korekty wobec instrukcji
 
 - Instrukcja podaje A/B `1914→1915`; na markerze dyżuru 333 własny pomiar daje **`1802→1803`**. Różnica nazw pozostaje zgodna: wyłącznie `slack_router_dedupe`.
