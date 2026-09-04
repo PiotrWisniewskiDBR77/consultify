@@ -6,7 +6,7 @@ const root = process.cwd();
 const routesRoot = join(root, 'server/src/routes');
 const mode = process.argv[2] ?? '--check';
 const inventoryPath = process.argv[3];
-const rawProperty = /(?:error|message):\s*(\((?:err|error) as Error\)|(?:err|error|e))\.message/g;
+const rawProperty = /(error|message):\s*(\((?:err|error) as Error\)|(?:err|error|e))\.message/g;
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -45,9 +45,9 @@ for (const file of files) {
     continue;
   }
   rawProperty.lastIndex = 0;
-  let after = before.replace(rawProperty, (_all, errorExpression) => {
+  let after = before.replace(rawProperty, (_all, field, errorExpression) => {
     replacements += 1;
-    return `...mapAppErrorResponse(${errorExpression}, req)`;
+    return `...mapAppErrorResponse(${errorExpression}, undefined, '${field}')`;
   });
   if (!after.includes("middleware/appErrorMapper.js'")) {
     const insertion = `import { mapAppErrorResponse } from '${importPath(file)}';\n`;
