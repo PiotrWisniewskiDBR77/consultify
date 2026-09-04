@@ -88,9 +88,10 @@ trzech zakładek; status „eskalacja” przy decyzjach zapisuje się trwale do 
 po odświeżeniu strony); dane pokazowe Skrzynki i Kalendarza pokrywają teraz wszystkie stany
 (pusty/pełny/błąd).
 
-Prawy panel Idei/Notatnika został podłączony do ścieżki produkcyjnej. Widoczne, jeżeli staging
-został zredeployowany po `660482d485`. (zdezaktualizowane przez `660482d485` — podłączenie
-panelu Idei do produkcji).
+Prawy panel Idei/Notatnika został podłączony do ścieżki produkcyjnej w `660482d485`, ale jest
+za flagą `ff_idea_notebook_right_panel_prototype`, domyślnie OFF; bez decyzji o włączeniu nadal
+zobaczysz stary panel i nie jest to defekt (`src/utils/ideaNotebookRightPanelPrototypeFlag.ts:1,27`;
+`src/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype.tsx:97`).
 
 **Czego NIE zgłaszaj**: konwersja Idei na Notatkę, zakres
 przycisku „AI Advice”, historia wersji w Notatniku, zawężanie wyszukiwania w Notatniku po
@@ -387,7 +388,7 @@ przelot to potwierdzenie na żywym stagingu.
 | --- | --- | --- | --- | --- |
 | Chat | menu Czatu | preferencja lokalna | zapis per użytkownik w bazie | widoczne, jeżeli staging zredeployowany po `15309dd3a6` |
 | Chat | panel wiadomości | martwe równoległe poddrzewo | jedna żywa ścieżka | widoczne, jeżeli staging zredeployowany po `1c4b5a5635` |
-| My Work | Idee/Notatnik | prototyp poza ścieżką | prawy panel podłączony | widoczne, jeżeli staging zredeployowany po `660482d485` |
+| My Work | Idee/Notatnik | prototyp poza ścieżką | prawy panel podłączony | kod po `660482d485`; flaga `ff_idea_notebook_right_panel_prototype` domyślnie OFF, więc bez decyzji nadal zobaczysz stary panel i nie jest to defekt (`src/utils/ideaNotebookRightPanelPrototypeFlag.ts:1,27`; `src/components/MyWork/prototypes/IdeaNotebookRightPanelPrototype.tsx:97`) |
 | Interview | karty | niespójne akcje | kontrakt menu akcji | widoczne, jeżeli staging zredeployowany po `924ebd3c7a` |
 | Tools | SWOT | pięć etapów | siedem etapów po włączeniu flagi | kod po `937f2d3193`; domyślnie OFF, więc bez decyzji nadal niewidoczne |
 | Initiatives | karta | kontrakt gubił sekcje | kontrakt zachowuje komplet | kod po `500ae7d68c`; domyślnie OFF |
