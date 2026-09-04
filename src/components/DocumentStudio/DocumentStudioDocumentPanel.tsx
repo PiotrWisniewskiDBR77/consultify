@@ -47,6 +47,7 @@ import {
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import Button from '@/components/ui/primitives/Button';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { getAppErrorLine } from '@/services/errors/appErrorCopy';
 import {
   fetchExecutionModuleManifest,
   validateExecutionModuleManifest,
@@ -721,11 +722,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
     try {
       setEntries(await getDocumentStudioAccessHistory(artifactId, { limit: 80 }));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.activityLoadFailed', 'Failed to load activity')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -811,11 +808,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       const result = await listDocumentStudioShareLinks(artifactId);
       setLinks(Array.isArray(result) ? result : []);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.shareLoadFailed', 'Failed to load share links')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -839,11 +832,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       setLinks(Array.isArray(refreshed) ? refreshed : []);
       toast.success(t('documentStudio.documentPanel.shareLinkCreated', 'Share link created'));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.shareCreateFailed', 'Failed to create share link')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -862,7 +851,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       await refresh();
       toast.success(t('documentStudio.panel.shareRotated', 'Share link rotated'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rotate share link');
+      setError(getAppErrorLine(t, err));
     } finally {
       setMutatingLinkId(null);
     }
@@ -877,7 +866,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
       await refresh();
       toast.success(t('documentStudio.panel.shareRevoked', 'Share link revoked'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to revoke share link');
+      setError(getAppErrorLine(t, err));
     } finally {
       setMutatingLinkId(null);
     }
@@ -1015,11 +1004,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
     try {
       setVariants(await listDocumentStudioVariants(artifactId));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.variantsLoadFailed', 'Failed to load audience variants')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1044,11 +1029,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         })
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.variantRenderFailed', 'Failed to render variant')
-      );
+      setError(getAppErrorLine(t, err));
     }
   };
 
@@ -1144,11 +1125,7 @@ export function SchemaDiffPanel({
     try {
       setResult(await getDocumentStudioSchemaDiff(artifactId, selectedVersionId || undefined));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.diffLoadFailed', 'Failed to load schema diff')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1186,11 +1163,7 @@ export function SchemaDiffPanel({
       setSelectedVersionId(snapshot.versionId);
       setRestoreConfirm(false);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.snapshotCreateFailed', 'Failed to create snapshot')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setCapturing(false);
     }
@@ -1214,11 +1187,7 @@ export function SchemaDiffPanel({
       setRestoreConfirm(false);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.snapshotRestoreFailed', 'Failed to restore snapshot')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setRestoring(false);
     }
@@ -1373,14 +1342,7 @@ function ManifestGatePanel(): React.ReactElement {
       const manifest = await fetchExecutionModuleManifest('doc-builder');
       setResult(await validateExecutionModuleManifest('doc-builder', manifest));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t(
-              'documentStudio.panel.manifestValidateFailed',
-              'Failed to validate DOC_BUILDER_MANIFEST'
-            )
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1530,11 +1492,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
     try {
       setApprovals(await listDocumentStudioApprovals(artifactId));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.approvalsLoadFailed', 'Failed to load approvals')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1572,11 +1530,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       setReason('');
       toast.success(t('documentStudio.documentPanel.approvalRequested', 'Approval requested'));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.approvalRequestFailed', 'Failed to request approval')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1601,11 +1555,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         t('documentStudio.documentPanel.approvalDecisionRecorded', 'Approval decision recorded')
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.decisionFailed', 'Failed to record decision')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1625,11 +1575,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
       );
       toast.success(t('documentStudio.documentPanel.approvalCancelled', 'Approval cancelled'));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.approvalCancelFailed', 'Failed to cancel approval')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1872,11 +1818,7 @@ function ContentLibraryPanel({
         })
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.libraryLoadFailed', 'Failed to load content library')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoading(false);
     }
@@ -1904,11 +1846,7 @@ function ContentLibraryPanel({
       setInstantiatedBlock(result.block);
       toast.success(t('documentStudio.panel.blockInstantiated', 'Content block instantiated'));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.blockInstantiateFailed', 'Failed to instantiate content block')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -1938,11 +1876,7 @@ function ContentLibraryPanel({
         t('documentStudio.panel.blockInserted', 'Content block inserted into document')
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.blockInsertFailed', 'Failed to insert content block')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setSubmitting(false);
     }
@@ -2302,14 +2236,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           );
           return;
         }
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : t(
-                'documentStudio.panel.titleSaveFailed',
-                'Nie udało się zapisać tytułu. Spróbuj ponownie.'
-              )
-        );
+        toast.error(getAppErrorLine(t, err));
       }
     },
     [artifactId, onSchemaUpdated, schema.sections, schema.title, schema.updatedAt, t]
@@ -2505,30 +2432,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           // but a stale policy or deep link can still surface this — refresh
           // the cached policy and show a clear message.
           setPolicy({ canOverrideQa: false, role: err.role ?? null });
-          setExportError(
-            err.message ||
-              t(
-                'documentStudio.panel.overrideUnauthorized',
-                'You are not authorized to override the export QA gate. Ask a privileged reviewer.'
-              )
-          );
+          setExportError(getAppErrorLine(t, err));
           return;
         }
-        // B4 — readable i18n framing instead of a bare technical message;
-        // the underlying detail is kept as context when available.
-        const detail = err instanceof Error && err.message.trim().length > 0 ? err.message : null;
-        setExportError(
-          detail
-            ? t('documentStudio.panel.exportFailedWithDetail', {
-                defaultValue: '{{format}} export failed: {{detail}}',
-                format: format.toUpperCase(),
-                detail,
-              })
-            : t('documentStudio.panel.exportFailedFormat', {
-                defaultValue: '{{format}} export failed. Please try again.',
-                format: format.toUpperCase(),
-              })
-        );
+        setExportError(getAppErrorLine(t, err));
       } finally {
         setExporting(null);
       }
@@ -2563,11 +2470,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       toast.success(t('documentStudio.panel.openingBuilder', 'Opening sheets builder lane…'));
       window.location.assign(targetPath);
     } catch (err) {
-      setExportError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.panel.openBuilderFailed', 'Failed to open sheets builder')
-      );
+      setExportError(getAppErrorLine(t, err));
     } finally {
       setOpeningBuilder(false);
     }
@@ -2708,10 +2611,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       );
       navigate(`/document-studio/${encodeURIComponent(created.artifactId)}`);
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.fileMenu.saveAsFailed', 'Nie udało się zduplikować dokumentu');
+      const message = getAppErrorLine(t, err);
       setSaveAsError(message);
       toast.error(message);
     } finally {

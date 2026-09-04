@@ -60,7 +60,21 @@ Dodano `src/services/errors/appErrorCopy.ts`: siedem kodów kanonicznych, bezpie
 
 Dowód zielony: 11/11 pełnych przypadków w `/private/tmp/cx-day316-front-bledy-artefakty/r2-restored-green.json`. Dowód mutacyjny: po przemianowaniu polskiego bloku `errors` test był czerwony 5/11 PASS, 6/11 FAIL (`r2-red.json`); po przywróceniu kopii wrócił do 11/11 PASS. Mutacja została cofnięta przed commitem.
 
-## R3–R7
+## R3 — podmiana wołaczy
+
+### Grupa A — transport HTTP
+
+`src/services/api.ts`: `ApiError` przenosi typowane `errorCode`, `correlationId`, `status` i pełną kopertę diagnostyczną w `data`, lecz jego `message` jest bezpiecznym tekstem lokalnym, a nie `data.error`. Centralny parser odpowiedzi oraz 48 prostych miejsc `throw new Error(data.error || fallback)` używają tego kontraktu. Nie zmieniono logiki autoryzacji, retry ani streamingu. Trafienia rodziny: PRZED 68, PO 20; pozostałe 20 to jawnie sklasyfikowane sterowanie, logowanie lub cudzy teren strumienia AI.
+
+### Grupa B — pięciu głównych konsumentów
+
+PRZED → PO: `useReportBuilder.ts` 27→0; `DocumentStudioDocumentPanel.tsx` 23→0; `useReportSections.ts` 11→0; `DocumentStudioTemplateArchitectView.tsx` 10→1 (pozostawione sterowanie po kodzie biznesowym); `PresentationTemplateArchitectView.tsx` 9→0. Każdy widoczny stan korzysta z `getAppErrorLine(t, err)`, więc nie interpoluje surowego `message`.
+
+Każdy zmieniony plik przeszedł osobny bundle `esbuild`; ostrzeżenia `import.meta` z formatu IIFE zostały wyeliminowane kontrolnym przebiegiem ESM dla dużych komponentów. ESLint dla trzech komponentów: 0 błędów, 12 zastanych ostrzeżeń.
+
+Ogon nie został jeszcze podmieniony; pozostaje jawnie policzony po zakończeniu rdzenia.
+
+## R4–R7
 
 W TOKU.
 

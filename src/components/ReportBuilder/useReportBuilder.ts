@@ -8,6 +8,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { getAppErrorLine } from '../../services/errors/appErrorCopy';
 
 // ==========================================
 // TYPES
@@ -244,7 +245,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err.message || 'Failed to fetch sources',
+          error: getAppErrorLine(t, err),
         }));
         return [];
       }
@@ -292,7 +293,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to create report',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -325,7 +326,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to load report',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -364,7 +365,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to update section config',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -407,7 +408,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to add section',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -433,7 +434,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to remove section',
+          error: getAppErrorLine(t, err),
         }));
         return false;
       }
@@ -471,7 +472,7 @@ export function useReportBuilder() {
           ...prev,
           isGenerating: false,
           generationProgress: 0,
-          error: err?.error || err.message || 'Failed to generate report',
+          error: getAppErrorLine(t, err),
         }));
         return false;
       }
@@ -511,7 +512,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to generate section',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -544,7 +545,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to save content',
+          error: getAppErrorLine(t, err),
         }));
         return false;
       }
@@ -569,7 +570,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to finalize report',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -592,7 +593,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to approve report',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -615,7 +616,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to send report back',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -638,7 +639,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to mark report as sent internally',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -661,7 +662,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to mark report as sent externally',
+        error: getAppErrorLine(t, err),
       }));
       return false;
     }
@@ -686,7 +687,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to duplicate report',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -716,7 +717,7 @@ export function useReportBuilder() {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err?.error || err.message || 'Failed to export PDF',
+        error: getAppErrorLine(t, err),
       }));
     }
   }, []);
@@ -736,7 +737,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to fetch exports',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -773,7 +774,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to create share link',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -799,7 +800,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to fetch share links',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -821,7 +822,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to revoke share link',
+          error: getAppErrorLine(t, err),
         }));
         return false;
       }
@@ -868,7 +869,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to load comments',
+          error: getAppErrorLine(t, err),
         }));
         return [];
       }
@@ -899,7 +900,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to load comment summary',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -943,7 +944,7 @@ export function useReportBuilder() {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: err?.error || err.message || 'Failed to create comment',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -986,7 +987,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to update comment',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -1009,7 +1010,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to delete comment',
+          error: getAppErrorLine(t, err),
         }));
         return false;
       }
@@ -1045,7 +1046,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to resolve comment',
+          error: getAppErrorLine(t, err),
         }));
         return null;
       }
@@ -1077,7 +1078,7 @@ export function useReportBuilder() {
       } catch (err: any) {
         setState((prev) => ({
           ...prev,
-          error: err?.error || err.message || 'Failed to bulk resolve comments',
+          error: getAppErrorLine(t, err),
         }));
         return 0;
       }

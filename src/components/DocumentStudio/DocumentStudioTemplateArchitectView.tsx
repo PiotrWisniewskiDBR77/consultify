@@ -34,6 +34,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
 import Button from '@/components/ui/primitives/Button';
+import { getAppErrorLine } from '@/services/errors/appErrorCopy';
 import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
 import {
@@ -56,7 +57,6 @@ import {
   removeSection,
   reorderSection,
 } from './templateStructureOps';
-import { normalizeTemplateFormattingSchema } from './types';
 import type {
   DocumentTemplate,
   DocumentTypeKey,
@@ -64,6 +64,7 @@ import type {
   TemplateDraftInput,
   TemplateSectionBlueprint,
 } from './types';
+import { normalizeTemplateFormattingSchema } from './types';
 
 export function getTemplateStructureSaveErrorMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : String(error ?? '');
@@ -234,9 +235,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     // `{ colorTemplateId: 'ocean' }`), and the editor below dereferences
     // `.headers`/`.footers`/`.fonts` directly. See types.ts for the contract.
     setEditFormatting(
-      selectedTemplate
-        ? normalizeTemplateFormattingSchema(selectedTemplate.formattingSchema)
-        : null
+      selectedTemplate ? normalizeTemplateFormattingSchema(selectedTemplate.formattingSchema) : null
     );
     setRequiredInputsText((selectedTemplate?.requiredInputs ?? []).join('\n'));
   }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
@@ -481,11 +480,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       const list = await listDocumentStudioTemplates();
       setTemplates(list);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.templateArchitect.errLoadTemplates', 'Failed to load templates')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setLoadingList(false);
     }
@@ -520,11 +515,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setLastDraftRefined(useLlm ? result.llmRefined : null);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.templateArchitect.errDraftTemplate', 'Failed to draft template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setDrafting(false);
     }
@@ -538,11 +529,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       onTemplateApproved?.(approved);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.templateArchitect.errApproveTemplate', 'Failed to approve template')
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -556,7 +543,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(templateId);
       setValidationIssues(result.issues);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to validate template');
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -570,7 +557,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setAuditEntries(await listDocumentStudioTemplateAudit(templateId));
       setShowHistory(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load version history');
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -584,7 +571,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await refresh();
       setSelectedTemplateId(draft.templateId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create a new version');
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -599,7 +586,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(draft.templateId);
       setShowHistory(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restore template snapshot');
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -617,7 +604,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete draft');
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
@@ -630,14 +617,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await deprecateDocumentStudioTemplate(templateId);
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t(
-              'documentStudio.templateArchitect.errDeprecateTemplate',
-              'Failed to deprecate template'
-            )
-      );
+      setError(getAppErrorLine(t, err));
     } finally {
       setBusyTemplateId(null);
     }
