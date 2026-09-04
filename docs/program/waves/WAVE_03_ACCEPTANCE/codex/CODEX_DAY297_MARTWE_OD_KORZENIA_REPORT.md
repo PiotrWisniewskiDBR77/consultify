@@ -74,3 +74,10 @@ Teza „297 ma czysty worktree bez żadnego postępu” była nieaktualna: HEAD 
 ### Nadal niezweryfikowane po wznowieniu
 
 Nie zweryfikowano kompletności rejestrów po stringu, porównania per plik z inwentarzem 238, czterech tabel, bezpiecznego zbioru poddrzew do usunięcia, kluczy i18n, esbuildów sąsiadów ani pięciu ekranów PRZED/PO. Pozycja 297 nie jest domknięta.
+
+## Domknięcie w dyżurze 329 — 2026-09-04
+
+- Analizator scalono z lokalnego refu `e843a1c2fd`; zdalny `682375d322` zawierał tylko starszy raport STOP. Własny pomiar na drzewie po scaleniu 293 dał mianownik 4817: `app=3044`, `harness-only=30`, `test-only=1017`, `unreachable=726`. Baseline przechodził bez ręcznej aktualizacji.
+- Klasa `test-only` została objęta osobnym ratchetem. Para „nowy plik produktu + jeden importujący test” dawała przed ratchetem `exit 0`, po ratchecie `exit 1`; test kontraktowy czerwienił się po usunięciu ratchetu i wrócił do zieleni po przywróceniu. 1017 pozycji to dług policzony, nie naprawiony.
+- `harness-only` nie została objęta ratchetem: oznacza celowe powierzchnie odbiorowe osiągalne z korzenia `dev-render/main.tsx`; ich dodanie nie jest samo w sobie martwym kodem produktu. Decyzja dotyczy wyłącznie bieżącego kontraktu narzędzia.
+- Kompletność rejestrów po stringu, porównanie per plik z inwentarzem 238, cztery tabele, bezpieczny zbiór poddrzew do usunięcia, klucze i18n oraz esbuildy sąsiadów: **nadal niezweryfikowane**. Nie usunięto żadnego pliku produktu.
