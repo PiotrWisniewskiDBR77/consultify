@@ -445,22 +445,6 @@ export class LLMConfigService {
       await this.syncDatabaseWithEnv();
       await this.seedTierAssignments();
 
-      await this.runAsync(`
-                CREATE TABLE IF NOT EXISTS llm_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    trace_id TEXT,
-                    provider TEXT,
-                    model TEXT,
-                    status TEXT,
-                    latency_ms INTEGER,
-                    tokens_in INTEGER,
-                    tokens_out INTEGER,
-                    cost REAL,
-                    error_message TEXT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
       await this.runAsync(
         `CREATE INDEX IF NOT EXISTS idx_llm_logs_timestamp ON llm_logs(timestamp)`
       );
