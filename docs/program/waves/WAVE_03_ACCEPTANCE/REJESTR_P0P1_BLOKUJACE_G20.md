@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `55eb0a5ba87d73e1f54476626ad60087edf37316`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 55eb0a5ba87d73e1f54476626ad60087edf37316 --snapshot-date 2026-09-04`
+Marker: `9cd2d9c3e0fff976ec8050c1f99ebe3e2d8ce676`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 9cd2d9c3e0fff976ec8050c1f99ebe3e2d8ce676 --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -76,7 +76,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `INT-APPROVAL-OWN-001` | NAPRAWIONE | SHA_OK | 01d1cd8057 | — | settlement |
 | `INT-ASSIGN-OWN-001` | NAPRAWIONE | SHA_OK | f3c35cecce | — | settlement |
 | `INT-CREATOR-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-67, DEC-2026-08-26-84, DEC-2026-08-28-205 | — | settlement, decisions |
-| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI | — | settlement |
+| `INT-INIT-AI-OBS-001` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel/nadzorca musi udzielić licencji na realny provider i kryterium request/response/readback; obecność wołacza w źródle nie dowodzi osiągalności ani działania | — | settlement |
 | `INT-MENU-OWN-001` | NAPRAWIONE | SHA_OK | 5189ac05d6 | — | settlement, decisions, owner |
 | `INT-PREV-OWN-001` | NAPRAWIONE | SHA_OK | 3a8c11eb4d | — | settlement, decisions |
 | `INT-QCARD-OWN-001` | NAPRAWIONE | SHA_OK | d560464f3f | — | settlement |
