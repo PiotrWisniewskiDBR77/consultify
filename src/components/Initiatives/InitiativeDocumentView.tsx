@@ -130,6 +130,7 @@ import {
 import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 
 import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types/initiative';
+import { isInitiativeSectionsCompleteEnabled } from '../../utils/initiativeSectionsCompleteFlag';
 import {
   type Attachment,
   type Comment,
@@ -5291,14 +5292,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // DEC-388: default OFF. Szablon zachowuje swoją rolę, ale za flagą nie
   // może już usuwać pozycji z nawigacji karty.
-  const initiativeSectionsCompleteEnabled = useMemo(() => {
-    try {
-      const raw = import.meta.env.VITE_VF1_INITIATIVE_SECTIONS_COMPLETE;
-      return ['1', 'true', 'on'].includes(String(raw ?? '').trim().toLowerCase());
-    } catch {
-      return false;
-    }
-  }, []);
+  const initiativeSectionsCompleteEnabled = useMemo(
+    () => isInitiativeSectionsCompleteEnabled(),
+    []
+  );
 
   const initiativeNSections: NModeSection[] = useMemo(() => {
     const allSections: NModeSection[] = [
