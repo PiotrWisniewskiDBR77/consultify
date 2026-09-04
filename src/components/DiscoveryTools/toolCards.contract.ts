@@ -200,7 +200,8 @@ export function buildToolCardSpec(): ArtifactCardSpec {
   const allCards = TOOL_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core method', pl: 'Rdzeń metody' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete method', pl: 'Kompletna metoda' }, cards: allCards },
+    { id: 'core', label: { en: 'Core method', pl: 'Rdzeń metody' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
