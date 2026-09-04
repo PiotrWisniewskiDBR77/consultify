@@ -287,3 +287,9 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Dyżur 358 — równoległy runtime initDb kolidował na DDL
+
+- Przyczyna niestabilności Bloku 3: wiele forków Vitest uruchamiało jednocześnie `initDb()` na jednej bazie; PostgreSQL zwracał `42701` i `23505 pg_class_relname_nsp_index` w `server/src/database/PostgresDatabase.ts:2666/2675/2777/2804`.
+- Naprawa w `server/src/database/PostgresDatabase.ts:1570-1573,3880-3883`: advisory lock na dedykowanym połączeniu serializuje cały runtime init schematu.
+- Dowód mutacyjny: bez locka 12/18 w pierwszym przebiegu i 18/18 w kolejnych; z lockiem 18/18 w 10/10 na świeżej bazie. Pełny raport: `CODEX_DAY358_NIESTABILNOSC_REPORT.md`.
