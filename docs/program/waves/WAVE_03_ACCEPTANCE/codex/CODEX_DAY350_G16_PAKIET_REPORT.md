@@ -1,6 +1,6 @@
 # CODEX DAY 350 — G16 PAKIET — RAPORT
 
-Stan roboczy: R0–R2 wykonane; R3–R6 w toku.
+Stan roboczy: R0–R5 wykonane; R6 w toku.
 
 ## R0 — twarde zasady
 
@@ -58,6 +58,42 @@ Rozbieżności wobec instrukcji: brak w mianownikach R1.
 | Partner Portal | sprawdzona, bez zmian |
 
 Każdy moduł sprawdzono pod kątem kroków, nowych zmian i pozycji „Czego NIE zgłaszaj”. Weryfikacja była statyczna w repo; nie łączono się ze stagingiem (`Z28`).
+
+## R3 — stan oczekiwany, nie zgłaszaj
+
+Pakiet otrzymał listę pięciu jawnie zmierzonych flag domyślnie OFF:
+`VITE_VF1_INITIATIVE_SECTIONS_COMPLETE`, `VITE_VF1_INITIATIVE_CARD_CONTRACT`,
+`VITE_VF1_DYNAMIC_SWOT_SEVEN_STAGES`, `VITE_VF1_DECISION_CARD_CONTRACT` i
+`VITE_VF1_DECISION_SPECA`. Źródła kodowe: `InitiativeDocumentView.tsx:5291-5302`,
+`initiativeCardContract.ts:939-960`, `dynamicSwotSevenStagesFlag.ts:1-16`,
+`DecisionDetailView.tsx:490-530`.
+
+Własny pomiar 6/24: lista sekcji w `InitiativeDocumentView.tsx` ma 24 deskryptory, a filtr
+szablonu przy niepustej konfiguracji przepuszcza zmierzone 6; wynik potwierdzają `DEC-388` i
+R1/R2 dyżuru 338 (`e25eb19b64`). Nie utożsamiam tej liczby z pojemnością kadru.
+
+Komplet pozycji fali 2 dodano z numerami decyzji na podstawie `FALA_2_PO_STAGINGU.md`. Dwie
+pozycje z tego starszego rejestru — panel Idei i preferencje Czatu — oznaczono jako później
+scalone (`660482d485`, `15309dd3a6`), zamiast nadal przedstawiać je jako niewykonane.
+
+## R4 — zobaczysz inaczej
+
+Do pakietu dodano tabelę sześciu zmian z modułem, ekranem, stanem przed/po, SHA i bezwzględnym
+warunkiem redeployu. Zmiany za flagami OFF są oznaczone jako niewidoczne bez decyzji; żadnej
+flagi nie włączono.
+
+## R5 — spójność pakietu
+
+1. Zasady wspólne poprawiono: decyzje ON dla Wyników/Finansów/Organizacji/kreatora wywiadu
+   pochodzą z `DEC-2026-09-03-347`…`350`, ale ich widoczność pozostaje niezweryfikowana (`Z28`).
+2. Wersję stagingu zmieniono na podane przez nadzorcę `1c4b5a5635`, jawnie niezweryfikowane;
+   zachowano poprzednie brzmienie `fb6547b7d0`.
+3. Format zgłoszenia pozostał bez zmian: `moduł · ekran · co widzę · co oczekiwałem · zrzut`.
+4. Dopisano, że przelot może być rozłożony na raty; źródłem jest kolumna `Data` w tabeli.
+5. W istniejących krokach dotyczących osi/sekcji pozostaje jawne polecenie „rozwiń”; nowe
+   pozycje nie każą oceniać zwiniętej sekcji.
+6. Nie zmieniano twierdzeń o wartościach PL/EN, więc nie wprowadzono wniosku opartego wyłącznie
+   na istnieniu klucza. Słowniki zostały zmierzone jako 35198/33065.
 
 ## Kontrole przed commitem R1
 
