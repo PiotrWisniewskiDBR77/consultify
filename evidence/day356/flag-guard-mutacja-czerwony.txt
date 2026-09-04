@@ -1,0 +1,5 @@
+src/utils/ideaNotebookRightPanelPrototypeFlag.ts:27 computed import.meta.env access is forbidden; use static import.meta.env.VITE_* access
+src/utils/ideaNotebookRightPanelPrototypeFlag.ts:1 required static expression import.meta.env.VITE_IDEA_NOTEBOOK_RIGHT_PANEL_PROTOTYPE is missing
+STATIC_FLAG_GUARD analyzedFiles=3 violations=2
+
+EXIT_CODE=1
