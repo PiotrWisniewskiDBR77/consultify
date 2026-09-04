@@ -124,6 +124,33 @@ po cofnieciu mutacji, kod wyjscia testow = 0
 
 Mutacja była lokalna, cofnięta przez `cp` zgodnie z Z27; nie weszła do commita.
 
+## R3 — wołacz npm i CI
+
+Dodany wpis (jedyny wpis zmieniony w `package.json`):
+
+```json
+"check:p0p1-e1": "node scripts/dev/p0p1-licznik-e1.mjs"
+```
+
+Dodany krok (jedyny krok zmieniony w `.github/workflows/test-suite.yml`):
+
+```yaml
+- name: P0/P1 E1 zero-blockers gate (G20)
+  run: npm run check:p0p1-e1
+```
+
+Lokalny przebieg dokładnie tej samej komendy:
+
+```text
+npm run check:p0p1-e1
+BLOKUJE: 25. Rejestr: /private/tmp/cx-day320-licznik-g20/docs/program/waves/WAVE_03_ACCEPTANCE/REJESTR_P0P1_BLOKUJACE_G20.md
+kod wyjscia = 1
+```
+
+To zamierzona czerwień: brak progu, `if:` i `continue-on-error`. Artefakty: `r3-ci-command-out.txt` SHA-256 `a0d38da9743ae4d92cba508e32a5ffe013126af022ece18e382e2ca6272dd58c`; `r3-ci-command-err.txt` SHA-256 `e2cdff8113edbef299abd6229b6891ef38a58ec0f7a189a6677c1b38dcec7781`.
+
+Wyzwalacze workflow: `push` oraz `pull_request` wyłącznie dla `main`, `develop`, `Londyn`, `demo`, plus ręczny `workflow_dispatch`. Nie ma filtra `paths`, więc dla wymienionych gałęzi zmiana dokumentów/skryptu nie jest pomijana przez filtr ścieżek. Gałąź `codex/day320-licznik-g20-20260904` nie znajduje się w filtrze `push`, dlatego bieżący push nie uruchomi tej bramki. Z39 zabrania ręcznego realnego workflow; dowód tej pozycji jest statyczny plus lokalne wykonanie identycznej komendy. Dodatkowo job może nie dojść do nowego kroku, jeżeli wcześniejszy lint/typecheck lub bramka zapadkowa zakończy się czerwono — to ograniczenie kolejności joba, nie fałszywa zieleń samego licznika.
+
 ## Korekty wobec instrukcji
 
 1. Instrukcja twierdzi, że „§R3 raportu 301 mówi, że `NAPRAWIONE` nie blokują”. Raport 301 nie ma samodzielnej sekcji §R3: ma zbiorczą sekcję `R2–R4`, a jedyne deklaratywne zdanie o nieblokowaniu (`:54`) dotyczy pozycji oznaczonych decyzją. Dlatego konflikt skrypt–deklaracja dla 12 pozycji ma stan `EVIDENCE_MISSING`, dopóki R6 nie zapisze jawnej decyzji reguły.
@@ -131,7 +158,7 @@ Mutacja była lokalna, cofnięta przez `cp` zgodnie z Z27; nie weszła do commit
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- R3–R7 nie zostały jeszcze wykonane ani zweryfikowane.
+- R4–R7 nie zostały jeszcze wykonane ani zweryfikowane.
 - Nie zweryfikowano produktu, UI, HTTP, bazy ani środowiska zewnętrznego; nie leżą w zakresie czysto plikowej bramki.
 - Nie ustalono jeszcze rozstrzygnięcia 12 pozycji `BRAK_SHA_DLA_NAPRAWIONE` ani liczby pozycji faktycznie zależnych od dziedziczenia rodzinnego DEC.
 - Nie uruchomiono GitHub Actions; zgodnie z Z39 dowód CI będzie lokalny i statyczny.

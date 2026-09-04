@@ -261,6 +261,7 @@
     "check:gestosc": "bash scripts/check-gestosc.sh",
     "check:artefakt": "bash scripts/check-artefakt.sh",
     "check:list-canon": "bash scripts/check-list-canon.sh --all",
+    "check:p0p1-e1": "node scripts/dev/p0p1-licznik-e1.mjs",
     "check:list-canon:update": "bash scripts/check-list-canon.sh --update",
     "check:sqlsql": "bash scripts/check-sqlsql.sh",
     "check:z31": "bash scripts/check-z31.sh",
