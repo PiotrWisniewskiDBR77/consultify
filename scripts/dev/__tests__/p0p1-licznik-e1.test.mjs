@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { evaluateCorpus, gateResult, renderRegister } from '../p0p1-licznik-e1.mjs';
+import { DAY320_RESOLUTIONS, evaluateCorpus, gateResult, gitShaState, renderRegister } from '../p0p1-licznik-e1.mjs';
 
 const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
   '| ID | Werdykt | Dowód |',
@@ -39,6 +39,32 @@ test('mutacja: nieistniejący SHA czerwieni pozycję', () => {
   }), { floor: 1, shaCheck: () => 'SHA_NIEISTNIEJACY' });
   assert.equal(rows[0].verdict, 'BLOKUJE');
   assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
+});
+
+test('R1: SHA_NIEISTNIEJACY z DAY320_RESOLUTIONS blokuje z dokładnym powodem', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+  }), {
+    floor: 1,
+    resolutions: { ...DAY320_RESOLUTIONS, 'INT-OWN-001': { type: 'SHA', sha: 'af75a84e37' } },
+    shaCheck: () => 'SHA_NIEISTNIEJACY',
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
+  assert.equal(rows[0].proof, 'af75a84e37:SHA_NIEISTNIEJACY');
+});
+
+test('R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+  }), {
+    floor: 1,
+    resolutions: { ...DAY320_RESOLUTIONS, 'INT-OWN-001': { type: 'SHA', sha: 'af75a84e37' } },
+    shaCheck: gitShaState,
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_CHECKPOINT');
+  assert.equal(rows[0].proof, 'af75a84e37:SHA_CHECKPOINT');
 });
 
 test('mutacja: mianownik poniżej podłogi zatrzymuje parser', () => {
@@ -101,15 +127,16 @@ test('dziedziczenie DEC: pozycja bez własnego DEC dziedziczy rodzinę, a bez de
 
 test('R6: rozstrzygnięcia BRAK_SHA wymagają istniejącego SHA lub DEC, a brak dowodu nadal blokuje', () => {
   const decision = 'DEC-2026-08-28-151';
+  const executionDecision = 'DEC-2026-08-24-03';
   const rows = evaluateCorpus(corpus({
     settlement: table(['EXE-OWN-006', 'EXE-OWN-001']),
     decisions: `## R1c\n${table(['ASM-OWN-024[OF]'], 'NAPRAWIONE', decision)}\n## Koniec`,
-    ledger: `| ${decision} | decyzja istnieje |`,
+    ledger: `| ${decision} | decyzja istnieje |\n| ${executionDecision} | decyzja istnieje |`,
   }), { floor: 3, shaCheck: (_root, sha) => sha === 'b470536a91' ? 'OK' : 'SHA_NIEISTNIEJACY' });
 
   assert.deepEqual(rows.map(({ id, verdict, reason }) => ({ id, verdict, reason })), [
     { id: 'ASM-OWN-024[OF]', verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK' },
-    { id: 'EXE-OWN-001', verdict: 'BLOKUJE', reason: 'NIEROZSTRZYGNIETE' },
+    { id: 'EXE-OWN-001', verdict: 'ZAMKNIETE_DEC', reason: 'DEC_OK' },
     { id: 'EXE-OWN-006', verdict: 'NAPRAWIONE', reason: 'SHA_OK' },
   ]);
 });
