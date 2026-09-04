@@ -342,3 +342,7 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AC. Dyżur 361 — etykieta oczu właściciela wyprzedziła dowód
+
+Pomiar dziewięciu wierszy kubełka C wykazał: wspólny dowód jest hurtowy w 9/9, lecz diagnozy są indywidualne; triaż daje osiem braków scenariusza, jeden brak realnego łańcucha (`03_TOOLS`) i zero pozycji, dla których udowodniono, że brakuje wyłącznie oczu właściciela. Macierz pozostaje bez zmian. Pakiet obserwacyjny G19 powstał, ale nie jest dowodem. Ślad: `evidence/g19/day361/r1-etykieta.md`, `r2-triaz.md`, `docs/program/PRZELOT_WLASCICIELA_G19_20260904.md`.
