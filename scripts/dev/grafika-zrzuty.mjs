@@ -53,6 +53,9 @@ const WYNIK_JSON = arg('wynik-json', '');
 // DOM-u, który trafia na zrzut. Pusty selektor zachowuje dotychczasowe
 // zachowanie narzędzia bit w bit.
 const MIERZ_PANEL = arg('mierz-panel', '').trim();
+// Dyżur 345: rozwijanie ostatniej sekcji może przewinąć panel. Opt-in zeruje
+// scroll wybranego poddrzewa po interakcjach, tuż przed skanem i zrzutem.
+const RESET_SCROLL = arg('reset-scroll', '').trim();
 // Dyżur 284: oba pomiary są jawnie opt-in, aby nie zmieniać historycznych
 // wywołań narzędzia. Sekcje rozwijamy po interakcjach i przed zrzutem;
 // dostępność mierzymy na dokładnie tym samym, rozwiniętym DOM-ie.
@@ -574,6 +577,22 @@ for (const ekran of EKRANY) {
         }
       }
       if (ROZWIN_SEKCJE && OSIAD_PO_ROZWINIECIU > 0) await page.waitForTimeout(OSIAD_PO_ROZWINIECIU);
+      if (RESET_SCROLL) {
+        await page.evaluate((selector) => {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          for (const root of document.querySelectorAll(selector)) {
+            let ancestor = root.parentElement;
+            while (ancestor) {
+              ancestor.scrollTop = 0;
+              ancestor = ancestor.parentElement;
+            }
+            root.scrollTop = 0;
+            for (const child of root.querySelectorAll('*')) child.scrollTop = 0;
+          }
+        }, RESET_SCROLL);
+      }
       let a11yNaruszenia = [];
       if (A11Y) {
         const wynikA11y = await new AxeBuilder({ page }).include('#dev-render-root').analyze();

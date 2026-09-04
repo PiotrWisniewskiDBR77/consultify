@@ -41,6 +41,28 @@ const installMocks = () => {
   api.getNotebookPages = async () => [];
   api.getBacklinks = async () => [];
   api.notebookSemanticSearch = async () => [];
+
+  // The relations section uses raw fetch paths in addition to Api methods.
+  // Keep the harness scoped to those read-only lookups so screenshots exercise
+  // the production component without producing known 404 console noise.
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = String(input);
+    const mockedRead = [
+      '/api/my-work/my-ideas/suggest?',
+      '/api/initiatives?',
+      '/api/my-work/tasks?',
+      '/api/decisions?',
+      '/api/my-work/link-graph/backlinks?',
+    ].some((path) => url.includes(path));
+    if (mockedRead) {
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return realFetch(input, init);
+  };
 };
 installMocks();
 
