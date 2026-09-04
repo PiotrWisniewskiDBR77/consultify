@@ -125,6 +125,9 @@ const USERS = [
  * z `?dane=pelne` dostają treść zgodną z historią SMED L3 poniżej.
  */
 const __danePelne = new URLSearchParams(window.location.search).get('dane') === 'pelne';
+// Dyżur 314/R5: jawny wariant realnego rekordu z NIEPUSTYM szablonem.
+// Parametr wpływa wyłącznie na transport harnessu; montowany komponent pozostaje produkcyjny.
+const __szablonQuickWin = new URLSearchParams(window.location.search).get('szablon') === 'quick-win';
 
 // ── INICJATYWA ────────────────────────────────────────────────────────────
 const INITIATIVE = {
@@ -144,6 +147,7 @@ const INITIATIVE = {
   progress: 42,
   axis: 'operational',
   level: 'quick_win',
+  initiativeTemplateId: __szablonQuickWin ? 'tpl-quick-win' : undefined,
   ownerId: 'user-marek-zielinski',
   sponsorId: 'user-anna-kowalczyk',
   organizationId: 'org-dbr77-demo',
@@ -1283,6 +1287,20 @@ if (__tenEkran && !g.__KARTA_INITIATIVE_FETCH__) {
     }
 
     if (url.includes('/api/')) {
+      if (url.includes('/initiatives/templates/tpl-quick-win')) {
+        return json({
+          template: {
+            id: 'tpl-quick-win',
+            visibleSections: {
+              overview: true,
+              scope: true,
+              tasks: true,
+              kpis: true,
+              attachments: true,
+            },
+          },
+        });
+      }
       if (url.includes('/decisions')) {
         // Wariant `type=GATE_APPROVAL` pyta o oczekujące zatwierdzenia bramki —
         // tu żadnych nie ma, więc pusta lista (inaczej DEC-3 udawałaby approval).
