@@ -265,7 +265,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Decision z deskryptora kanonicznego.
  *   · catalog  = wszystkie 8 kart (id = render-id, core z rdzenia),
- *   · default  = RDZEŃ + domyślne (węższy zestaw D-5),
+ *   · default  = wszystkie karty (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 8 (przywrócenie pełni jednym kliknięciem w managerze).
  */
 export function buildDecisionCardSpec(): ArtifactCardSpec {
@@ -279,7 +279,8 @@ export function buildDecisionCardSpec(): ArtifactCardSpec {
   const allCards = DECISION_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core decision', pl: 'Rdzeń decyzji' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete decision', pl: 'Kompletna decyzja' }, cards: allCards },
+    { id: 'core', label: { en: 'Core decision', pl: 'Rdzeń decyzji' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 

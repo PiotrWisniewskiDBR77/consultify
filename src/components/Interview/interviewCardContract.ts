@@ -312,7 +312,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Interview z deskryptora kanonicznego.
  *   · catalog  = wszystkie 8 kart (id = render-id, core z rdzenia),
- *   · default  = RDZEŃ + domyślne (węższy zestaw D-5: rodzina INTERVIEW),
+ *   · default  = wszystkie karty (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 8 (przywrócenie pełni jednym kliknięciem w pickerze).
  */
 export function buildInterviewCardSpec(): ArtifactCardSpec {
@@ -326,7 +326,8 @@ export function buildInterviewCardSpec(): ArtifactCardSpec {
   const allCards = INTERVIEW_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core interview', pl: 'Rdzeń wywiadu' }, cards: defaultCards },
+    { id: 'default', label: { en: 'Complete interview', pl: 'Kompletny wywiad' }, cards: allCards },
+    { id: 'core', label: { en: 'Core interview', pl: 'Rdzeń wywiadu' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
