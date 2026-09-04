@@ -100,7 +100,21 @@ Pomiar zasięgu: agregat zawiera 7610 nazw przypadków; `przed-nazwy.txt` i `po-
 
 Ścieżka artefaktów: `/private/tmp/cx-day336-g15-rozklad-artefakty`. Sumy SHA-256 serwerowych JSON-ów są w `evidence/g15/day336-r3-serwer.md`.
 
+## R4 — klasy na kompilowalnej bazie
+
+Założyłem bazowy worktree z `f65c4ff6a0` pod `/private/tmp/cx-day336-g15-rozklad-artefakty/baza`. Jedyna ingerencja polegała na skopiowaniu z HEAD pliku `src/components/shared/PreviewPane/PreviewAIHintStrip.tsx`; `git status --short` przed usunięciem pokazywał wyłącznie ten zmodyfikowany plik. `PreviewAIHintStrip.tsx` oraz wszystkie 17 unikalnych plików zawierających czerwone asercje modułów 05/06/08/16 przeszły `esbuild`.
+
+| Moduł | HEAD: pass/fail/pending | Baza: pass/fail/pending | ZASTANA | NOWA | NIEORZECZONA (plik nie wykonał czerwonej asercji) |
+| --- | --- | --- | ---: | ---: | ---: |
+| 05_INITIATIVES | 839/17/8 | 852/16/8 | 16 | 1 | 5 |
+| 06_EXECUTION | 412/13/0 | 439/12/0 | 12 | 1 | 3 |
+| 08_MEETINGS | 32/3/0 | 32/3/0 | 3 | 0 | 0 |
+| 16_PARTNER | 141/9/0 | 141/9/0 | 9 | 0 | 0 |
+
+Nowe pełne nazwy to w modułach 05 i 06 ten sam przypadek `InitiativesHub canonical intake navigation clears retired proposal context and links a scheduled initiative to Execution`. Każda pełna nazwa zastana znajduje się w `day336-dlug-zastany.md`; żadnej nie wywnioskowano z samej liczby. Osiem błędów plików w 05/06 pozostaje `NIEORZECZONA`, bo brak wykonanej asercji nie jest bazą do klasyfikacji.
+
+Przed usunięciem bazowego worktree było 43 GiB wolnego, po usunięciu 45 GiB. `git worktree list` potwierdził `BRAK WORKTREE BAZOWEGO`.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Klasy czerwieni czterech modułów na naprawionej bazie są jeszcze nieorzeczone.
 - Aktualny wynik `MYW-IDEAS-010` na HEAD jest jeszcze niezmierzony.
