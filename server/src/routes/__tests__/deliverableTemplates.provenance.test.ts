@@ -384,7 +384,12 @@ describe('POST /api/deliverables/templates/:id/provenance/approve — status map
     // TemplateNotFoundError carries no .code — the route branch for it emits
     // only `{ error }`, unlike the coded provenance error branches above.
     expect(res.body.code).toBeUndefined();
-    expect(res.body.error).toContain(TEMPLATE_ID);
+    // Dyzur 296 ("Statusy HTTP [...] nie sa zmieniane w dyzurze 296", REJESTR_WYCIEKI_BLEDOW_TRAS_20260903.md):
+    // status pozostaje 404, ale tresc bledu nie moze juz niesc identyfikatora zasobu.
+    // Kontrakt przeniesiony z surowej treci na `errorCode` + `correlationId`.
+    expect(res.body.error).not.toContain(TEMPLATE_ID);
+    expect(typeof res.body.errorCode).toBe('string');
+    expect(typeof res.body.correlationId).toBe('string');
   });
 
   it('maps an unexpected error to 500 with a generic message, never the raw error text', async () => {
