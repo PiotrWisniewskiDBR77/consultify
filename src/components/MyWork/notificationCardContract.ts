@@ -259,9 +259,10 @@ export function buildNotificationCardSpec(): ArtifactCardSpec {
   const sets: CardSet[] = [
     {
       id: 'default',
-      label: { en: 'Core notification', pl: 'Rdzeń powiadomienia' },
-      cards: defaultCards,
+      label: { en: 'Complete notification', pl: 'Kompletne powiadomienie' },
+      cards: allCards,
     },
+    { id: 'core', label: { en: 'Core notification', pl: 'Rdzeń powiadomienia' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 
