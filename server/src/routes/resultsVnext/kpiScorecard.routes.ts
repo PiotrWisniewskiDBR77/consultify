@@ -123,6 +123,7 @@ import {
   ScorecardSnapshotIdParamsSchema,
   ScorecardStatusQuerySchema,
 } from '../../validators/resultsVnextKpiScorecard.validators.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 // RN-G6-SRV / B3 — route-local param schema for the new reverse `kpi ->
 // scorecards` lookup below. Declared here rather than added to
@@ -209,15 +210,15 @@ function handleScorecardRouteError(res: Response, err: unknown, op: string): voi
     // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
     logger.warn(`[resultsVnext/kpiScorecard.routes] ${op} denied`, { capability: err.details.capability });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) });
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') || 'Not found', code: 'NOT_FOUND' });
     return;
   }
   if (err instanceof KpiNoActiveVisibilityPolicyError) {
@@ -225,11 +226,11 @@ function handleScorecardRouteError(res: Response, err: unknown, op: string): voi
     // well-formed request the org/domain's current state cannot satisfy yet
     // (no active 'kpi'-domain visibility policy provisioned — decision #1),
     // not a malformed request (400) nor a missing resource (404).
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof KpiScorecardValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   logger.error(`[resultsVnext/kpiScorecard.routes] ${op} failed`, {

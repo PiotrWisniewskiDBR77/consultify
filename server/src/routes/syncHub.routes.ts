@@ -41,6 +41,7 @@ import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -516,7 +517,7 @@ router.post(
           };
         }
       } catch (err) {
-        refreshResult = { success: false, error: (err as Error).message };
+        refreshResult = { success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') };
       }
     }
 

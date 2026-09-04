@@ -18,6 +18,7 @@ import promptAssembler from '../services/ai/promptAssembler.js';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -291,7 +292,7 @@ router.post(
       if (err instanceof AppError) {
         return res
           .status(err.statusCode)
-          .json({ success: false, error: err.message, code: err.code });
+          .json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       return res.status(500).json({ success: false, error: 'Test execution failed' });
     }
@@ -353,7 +354,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
     if (err instanceof AppError) {
       return res
         .status(err.statusCode)
-        .json({ success: false, error: err.message, code: err.code });
+        .json({ success: false, ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     }
     return res.status(500).json({ success: false, error: 'Chat failed' });
   }

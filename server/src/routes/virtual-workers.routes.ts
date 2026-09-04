@@ -14,6 +14,7 @@ import * as PreviewService from '../services/ai/virtualWorkerPreviewService.js';
 import * as WorkerService from '../services/ai/virtualWorkerService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -356,7 +357,7 @@ router.post(
       return res.status(201).json({ success: true, data: evaluation });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -389,7 +390,7 @@ router.post(
       return res.status(201).json({ success: true, data: release });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -405,7 +406,7 @@ router.post(
       return res.json({ success: true, data: release });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }
@@ -426,7 +427,7 @@ router.post(
       return res.json({ success: true, data: preview });
     } catch (error) {
       if (error instanceof WorkerService.VirtualWorkerValidationError) {
-        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+        return res.status(error.statusCode).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: error.code });
       }
       throw error;
     }

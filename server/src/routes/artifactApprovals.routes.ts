@@ -32,6 +32,7 @@ import { type Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import ArtifactApprovalService from '../services/artifactApprovalService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -61,7 +62,7 @@ function respondWithServiceError(res: Response, err: unknown): void {
     // Controlled application error (see comment above) — `.message` here is a
     // deliberately safe, user-facing string set by the service, not a raw
     // exception. Fine to forward.
-    res.status(err.status).json({ error: err.message });
+    res.status(err.status).json({ ...mapAppErrorResponse(err, undefined, 'error') });
     return;
   }
   // Genuinely unexpected error (no `.status` set by the service) — zero

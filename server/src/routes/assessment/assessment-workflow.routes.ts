@@ -16,6 +16,7 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import NotificationService from '../../services/notificationService.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -1454,7 +1455,7 @@ router.get('/:assessmentId/comments', async (req: AuthRequest, res: Response) =>
     res.json({ comments: roots });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error getting comments:', err);
-    res.status(500).json({ error: 'Failed to get comments', message: err.message });
+    res.status(500).json({ error: 'Failed to get comments', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 
@@ -1528,7 +1529,7 @@ router.post('/:assessmentId/comments', async (req: AuthRequest, res: Response) =
     res.status(201).json({ comment: created });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error creating comment:', err);
-    res.status(500).json({ error: 'Failed to create comment', message: err.message });
+    res.status(500).json({ error: 'Failed to create comment', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 
@@ -1557,7 +1558,7 @@ router.post(
       res.json({ success: true, id: commentId, is_resolved: true });
     } catch (err: any) {
       logger.error('[AssessmentWorkflow] Error resolving comment:', err);
-      res.status(500).json({ error: 'Failed to resolve comment', message: err.message });
+      res.status(500).json({ error: 'Failed to resolve comment', ...mapAppErrorResponse(err, undefined, 'message') });
     }
   }
 );
@@ -1649,7 +1650,7 @@ router.post('/:assessmentId/presence', async (req: AuthRequest, res: Response) =
     res.json({ collaborators });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error updating presence:', err);
-    res.status(500).json({ error: 'Failed to update presence', message: err.message });
+    res.status(500).json({ error: 'Failed to update presence', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 
@@ -1676,7 +1677,7 @@ router.post('/:assessmentId/presence/leave', async (req: AuthRequest, res: Respo
     res.json({ success: true });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error on presence leave:', err);
-    res.status(500).json({ error: 'Failed to update presence', message: err.message });
+    res.status(500).json({ error: 'Failed to update presence', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 
@@ -1726,7 +1727,7 @@ router.get('/:assessmentId/activities', async (req: AuthRequest, res: Response) 
     res.json({ activities });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error getting activities:', err);
-    res.status(500).json({ error: 'Failed to get activities', message: err.message });
+    res.status(500).json({ error: 'Failed to get activities', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 
@@ -1770,7 +1771,7 @@ router.post('/:assessmentId/activities', async (req: AuthRequest, res: Response)
     });
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error creating activity:', err);
-    res.status(500).json({ error: 'Failed to create activity', message: err.message });
+    res.status(500).json({ error: 'Failed to create activity', ...mapAppErrorResponse(err, undefined, 'message') });
   }
 });
 

@@ -267,6 +267,7 @@ import {
   RequestOkrDecisionSchema,
   ResolveOkrSupportRequestSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 // ==========================================
 // RN-G6-SRV / Task 3 — route-local body schema for the new
@@ -364,73 +365,73 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
   // documented contract.
   if (err instanceof CommandCapabilityDeniedError) {
     logger.warn(`[resultsVnext/okr.routes] ${op} denied`, { capability: err.details.capability });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) });
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') || 'Not found', code: 'NOT_FOUND' });
     return;
   }
   if (err instanceof OkrCycleProgramNotActiveError) {
-    res.status(409).json({ error: err.message, code: err.code });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof OkrCycleValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof OkrProgramValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof OkrSetSelfApprovalDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, ...err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrSetVisibilityWideningDeniedError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrSetNoActiveVisibilityPolicyError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrSetNotReadyForSubmissionError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrSetValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // OKR-E003 (design §14's error-mapping table).
   if (err instanceof OkrObjectiveNotFoundError || err instanceof OkrKeyResultNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, ...err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrObjectiveSetNotEditableError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrObjectiveValidationError || err instanceof OkrKeyResultValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // OKR-E004 (design §11's error-mapping table).
   if (err instanceof OkrCheckInAlreadyExistsForOccurrenceError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrCheckInNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, ...err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrCheckInValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // OKR-E005 (design §H's error-mapping table).
@@ -438,7 +439,7 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     err instanceof OkrAlignmentVisibilityDeniedError ||
     err instanceof OkrAlignmentNotOwnerError
   ) {
-    res.status(403).json({ error: err.message, code: err.code, ...err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (
@@ -446,12 +447,12 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     err instanceof OkrAlignmentCycleDetectedError ||
     err instanceof OkrAlignmentValidationError
   ) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   // OKR-E007 (design §6's error-mapping table).
   if (err instanceof OkrManagerReviewSelfApprovalDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, ...err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (
@@ -460,28 +461,28 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     err instanceof OkrSetReflectionRequiredError ||
     err instanceof OkrCycleHasOpenSetsError
   ) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrReviewNotFoundError || err instanceof OkrReflectionNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, ...err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrReviewValidationError || err instanceof OkrReflectionValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   // OKR-E006 (design §13's error-mapping table).
   if (err instanceof OkrRecognitionDisabledError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrDecisionNotYetResolvedError) {
-    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...err.details });
     return;
   }
   if (err instanceof OkrSupportRequestValidationError) {
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   logger.error(`[resultsVnext/okr.routes] ${op} failed`, {

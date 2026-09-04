@@ -45,6 +45,7 @@ import * as teresaToolOperatorService from '../../services/v8/teresaToolOperator
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
 import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -97,7 +98,7 @@ router.post(
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -134,7 +135,7 @@ router.post(
       return res.status(201).json({ data, meta: teresaMeta({ action: 'initiative_operator' }) });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -165,7 +166,7 @@ router.post(
       return res.status(201).json({ data, meta: teresaMeta({ action: 'notebook_operator' }) });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -195,7 +196,7 @@ router.post(
       return res.json({ data, meta: teresaMeta({ action: 'structured_query_operator' }) });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -222,7 +223,7 @@ router.post(
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -251,7 +252,7 @@ router.post(
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -283,7 +284,7 @@ router.post(
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -310,7 +311,7 @@ router.post(
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }
@@ -363,7 +364,7 @@ router.get(
       return res.json({ data: trail, meta: teresaMeta({ count: trail.length }) });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
-        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+        return res.status(err.statusCode).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
       }
       throw err;
     }

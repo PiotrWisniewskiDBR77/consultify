@@ -36,6 +36,7 @@ import { aiQualityMonitoring } from '../../services/ai/quality-monitoring.servic
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -937,7 +938,7 @@ router.get(
           healthyCount: 0,
           totalCount: 6,
         },
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -972,7 +973,7 @@ router.get(
       return res.status(500).json({
         timestamp: new Date().toISOString(),
         status: 'error',
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -1129,7 +1130,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         timestamp: new Date().toISOString(),
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -1172,7 +1173,7 @@ router.get(
       return res.status(500).json({
         timestamp: new Date().toISOString(),
         status: 'unhealthy',
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -1221,7 +1222,7 @@ router.get(
       return res.status(500).json({
         timestamp: new Date().toISOString(),
         status: 'unhealthy',
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -1250,7 +1251,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         timestamp: new Date().toISOString(),
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })
@@ -1370,7 +1371,7 @@ router.get(
         timestamp: new Date().toISOString(),
         responseTimeMs: Date.now() - t0,
         overall: { status: 'critical' },
-        error: (error as Error).message,
+        ...mapAppErrorResponse((error as Error), undefined, 'error'),
       });
     }
   })

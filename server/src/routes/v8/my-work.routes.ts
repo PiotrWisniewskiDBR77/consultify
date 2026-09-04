@@ -43,6 +43,7 @@ import { getTableColumns } from '../../utils/dbSchema.js';
 import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 const notebookCaptureUpload = multer({
@@ -2138,7 +2139,7 @@ router.post(
     } catch (error) {
       if (error instanceof NotebookConversionError) {
         return res.status(error.status).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
         });
       }

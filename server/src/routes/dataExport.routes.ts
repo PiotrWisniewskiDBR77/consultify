@@ -11,6 +11,7 @@ import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 async function checkLegalHoldForUser(
   db: { get: (sql: string, params: any[]) => Promise<any> },
@@ -101,7 +102,7 @@ router.post(
       });
     } catch (error: any) {
       if (error?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+        return res.status(403).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
       }
       logger.error('[DataExport] Failed to create export request:', {
         err: error,
@@ -238,7 +239,7 @@ router.get(
       res.send(exportData);
     } catch (error: any) {
       if (error?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+        return res.status(403).json({ ...mapAppErrorResponse(error, undefined, 'error'), code: 'LEGAL_HOLD' });
       }
       logger.error('[DataExport] Failed to download export:', {
         err: error,

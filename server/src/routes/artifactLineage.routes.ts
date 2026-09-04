@@ -41,6 +41,7 @@ import {
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -313,7 +314,7 @@ router.post(
       res.status(result.deduped ? 200 : 201).json(result);
     } catch (err) {
       if (err instanceof ArtifactLineageError && err.code === 'INVALID_ARGUMENT') {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ ...mapAppErrorResponse(err, undefined, 'error') });
         return;
       }
       logger.error('[ArtifactLineage] failed to record lineage event', {

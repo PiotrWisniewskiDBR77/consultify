@@ -142,6 +142,7 @@ import {
   VerifyMeasurementSchema,
 } from '../../validators/resultsVnextKpi.validators.js';
 import { buildKpiTrend } from '../../services/resultsVnext/kpi/kpiTrend.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -256,19 +257,19 @@ function handleKpiRouteError(res: Response, err: unknown, op: string): void {
     // from the wire" — it must NOT go in the HTTP response body. Log it
     // server-side only; the client gets the generic message/code alone.
     logger.warn(`[resultsVnext/kpi.routes] ${op} denied`, { capability: err.details.capability });
-    res.status(403).json({ error: err.message, code: err.code });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   if (err instanceof SelfApprovalDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    res.status(403).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, ...(err.details || {}) });
     return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error') || 'Not found', code: 'NOT_FOUND' });
     return;
   }
   if (err instanceof KpiNoActiveVisibilityPolicyError) {
@@ -277,18 +278,18 @@ function handleKpiRouteError(res: Response, err: unknown, op: string): void {
     // resource (404). 409 for the same reason `AtomicWriteConflictError`
     // gets 409: the request is well-formed but the aggregate/org state
     // cannot satisfy it right now.
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof KpiDefinitionValidationError) {
     // See file header DEVIATION note — this is the real "invalid state
     // transition" error (covers the task brief's imagined
     // DefinitionVersionNotSubmittedError case among others).
-    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    res.status(409).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   if (err instanceof KpiMeasurementNotFoundError) {
-    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    res.status(404).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   logger.error(`[resultsVnext/kpi.routes] ${op} failed`, {

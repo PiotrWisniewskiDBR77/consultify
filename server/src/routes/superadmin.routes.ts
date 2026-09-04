@@ -41,6 +41,7 @@ import {
   UpdateOrganizationAdminSchema,
   UpdateUserAdminSchema,
 } from '../validators/admin.validators.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 const STATUS_CHANGES_REQUIRING_CONFIRMATION = new Set(['suspended', 'blocked', 'cancelled']);
@@ -737,7 +738,7 @@ router.delete(
     } catch (e: any) {
       if (e?.code === 'LEGAL_HOLD') {
         return res.status(403).json({
-          error: e.message,
+          ...mapAppErrorResponse(e, undefined, 'error'),
           code: 'CROSS_TENANT_DENIED',
           guidance: 'Tenant is in compliance hold. Contact the compliance team before retrying.',
         });

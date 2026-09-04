@@ -35,6 +35,7 @@ import {
 } from '../services/interview/interviewCandidateHandoff.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -79,7 +80,7 @@ function mapError(err: unknown): { status: number; body: Record<string, unknown>
     return {
       status: err.status,
       body: {
-        error: err.message,
+        ...mapAppErrorResponse(err, undefined, 'error'),
         code: err.code,
         ...(err.details ? { details: err.details } : {}),
       },

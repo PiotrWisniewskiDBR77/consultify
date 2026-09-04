@@ -53,6 +53,7 @@ import { getTableColumns } from '../../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 const contextDocsUpload = multer({
@@ -508,7 +509,7 @@ router.post(
         error?.code === 'PROJECT_STORAGE_QUOTA_EXCEEDED'
       ) {
         return res.status(429).json({
-          error: error.message || 'Storage quota exceeded',
+          ...mapAppErrorResponse(error, undefined, 'error') || 'Storage quota exceeded',
           code: error.code,
           data: {
             document: error.document || null,
@@ -2171,7 +2172,7 @@ router.delete(
       // odmawiać tak samo, inaczej guard da się obejść wyborem endpointu.
       if (error instanceof interviewInsightService.InsightReferencedError) {
         return res.status(error.status).json({
-          error: error.message,
+          ...mapAppErrorResponse(error, undefined, 'error'),
           code: error.code,
           referencingCount: error.referencingCount,
         });

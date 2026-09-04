@@ -14,6 +14,7 @@ import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import * as bookingService from '../services/v8/publicBookingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.post(
     } catch (err) {
       const status = (err as { statusCode?: number }).statusCode ?? 500;
       if (status >= 400 && status < 500) {
-        return res.status(status).json({ success: false, error: (err as Error).message });
+        return res.status(status).json({ success: false, ...mapAppErrorResponse((err as Error), undefined, 'error') });
       }
       logger.error(`[#24c] booking failed for ${slug}: ${(err as Error).message}`);
       return res.status(500).json({ success: false, error: 'Failed to create booking' });

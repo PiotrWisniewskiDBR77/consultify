@@ -49,6 +49,7 @@ import tableAiEditorService, {
   TableAiEditorError,
 } from '../services/tablePlatform/TableAiEditorService.js';
 import logger from '../utils/Logger.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -132,14 +133,14 @@ function asPositiveInt(v: unknown, def: number, max: number): number {
 function mapServiceError(e: unknown, res: Response): boolean {
   if (e instanceof AiBudgetExhaustedError) {
     res.set('Retry-After', String(e.retryAfterSeconds)).status(e.status).json({
-      error: e.message,
+      ...mapAppErrorResponse(e, undefined, 'error'),
       code: e.code,
       retryAfterSeconds: e.retryAfterSeconds,
     });
     return true;
   }
   if (e instanceof TableAiEditorError) {
-    res.status(e.status).json({ error: e.message, code: e.code });
+    res.status(e.status).json({ ...mapAppErrorResponse(e, undefined, 'error'), code: e.code });
     return true;
   }
   return false;

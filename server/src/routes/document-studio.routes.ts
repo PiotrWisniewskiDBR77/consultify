@@ -424,6 +424,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import logger from '../utils/Logger.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -2010,7 +2011,7 @@ router.post(
         const status = mapConnectorErrorToStatus(err.code);
         res.status(status).json({
           error: err.code,
-          message: err.message,
+          ...mapAppErrorResponse(err, undefined, 'message'),
           details: err.details,
         });
         return;
@@ -2286,7 +2287,7 @@ router.post(
       if (err instanceof BrandVoiceProfileError) {
         res
           .status(mapBrandVoiceErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2356,7 +2357,7 @@ router.patch(
       if (err instanceof BrandVoiceProfileError) {
         res
           .status(mapBrandVoiceErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2385,7 +2386,7 @@ router.post(
       if (err instanceof BrandVoiceProfileError) {
         res
           .status(mapBrandVoiceErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2415,7 +2416,7 @@ router.post(
       if (err instanceof BrandVoiceProfileError) {
         res
           .status(mapBrandVoiceErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2641,7 +2642,7 @@ router.post(
       if (err instanceof AudienceProfileError) {
         res
           .status(mapAudienceProfileErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2718,7 +2719,7 @@ router.patch(
       if (err instanceof AudienceProfileError) {
         res
           .status(mapAudienceProfileErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2747,7 +2748,7 @@ router.post(
       if (err instanceof AudienceProfileError) {
         res
           .status(mapAudienceProfileErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2777,7 +2778,7 @@ router.post(
       if (err instanceof AudienceProfileError) {
         res
           .status(mapAudienceProfileErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -2940,7 +2941,7 @@ router.post(
       if (err instanceof DocumentContentBlockError) {
         res
           .status(mapContentBlockErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3018,7 +3019,7 @@ router.patch(
       if (err instanceof DocumentContentBlockError) {
         res
           .status(mapContentBlockErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3051,7 +3052,7 @@ router.post(
       if (err instanceof DocumentContentBlockError) {
         res
           .status(mapContentBlockErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3086,7 +3087,7 @@ router.post(
       if (err instanceof DocumentContentBlockError) {
         res
           .status(mapContentBlockErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3121,7 +3122,7 @@ router.post(
       if (err instanceof DocumentContentBlockError) {
         res
           .status(mapContentBlockErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3171,7 +3172,7 @@ router.post(
               : err.code === 'content_block_archived'
                 ? 409
                 : 400;
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3352,7 +3353,7 @@ router.post(
       if (err instanceof DocumentApprovalError) {
         res
           .status(mapApprovalErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3460,7 +3461,7 @@ router.post(
       if (err instanceof DocumentApprovalError) {
         res
           .status(mapApprovalErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3504,7 +3505,7 @@ router.post(
       if (err instanceof DocumentApprovalError) {
         res
           .status(mapApprovalErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       throw err;
@@ -3611,7 +3612,7 @@ router.post(
         const status = mapLifecycleErrorToStatus(err.code);
         res
           .status(status)
-          .json({ error: err.code, message: err.message, from: err.from, to: err.to });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message'), from: err.from, to: err.to });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4210,7 +4211,7 @@ router.post(
       }
       if (err instanceof DocumentRollbackError) {
         const status = mapRollbackErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4351,7 +4352,7 @@ router.post(
     } catch (err) {
       if (err instanceof DocumentCommentError) {
         const status = mapCommentErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4413,7 +4414,7 @@ router.post(
     } catch (err) {
       if (err instanceof DocumentCommentError) {
         const status = mapCommentErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4447,7 +4448,7 @@ router.post(
     } catch (err) {
       if (err instanceof DocumentCommentError) {
         const status = mapCommentErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4481,7 +4482,7 @@ router.post(
     } catch (err) {
       if (err instanceof DocumentCommentError) {
         const status = mapCommentErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4513,7 +4514,7 @@ router.delete(
     } catch (err) {
       if (err instanceof DocumentCommentError) {
         const status = mapCommentErrorToStatus(err.code);
-        res.status(status).json({ error: err.code, message: err.message });
+        res.status(status).json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -4975,7 +4976,7 @@ router.get(
       if (err instanceof QaOverrideUnauthorizedError) {
         res.status(403).json({
           error: 'qa_override_unauthorized',
-          message: err.message,
+          ...mapAppErrorResponse(err, undefined, 'message'),
           role: err.role,
         });
         return;
@@ -6328,7 +6329,7 @@ documentShareLinkPublicRoutes.post(
       if (err instanceof DocumentCommentError) {
         res
           .status(mapCommentErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const rawMessage = err instanceof Error ? err.message : 'share_link_comment_create_failed';
@@ -6382,7 +6383,7 @@ documentShareLinkPublicRoutes.post(
       if (err instanceof DocumentCommentError) {
         res
           .status(mapCommentErrorToStatus(err.code))
-          .json({ error: err.code, message: err.message });
+          .json({ error: err.code, ...mapAppErrorResponse(err, undefined, 'message') });
         return;
       }
       const rawMessage = err instanceof Error ? err.message : 'share_link_comment_reply_failed';

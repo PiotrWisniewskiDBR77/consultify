@@ -27,6 +27,7 @@ import {
   previewValuationRecommendationCandidate,
 } from '../services/finance/financeValuationRecommendationCandidateHandoff.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -47,14 +48,14 @@ function mapError(err: unknown): { status: number; body: Record<string, unknown>
     return {
       status: err.status,
       body: {
-        error: err.message,
+        ...mapAppErrorResponse(err, undefined, 'error'),
         code: err.code,
         ...(err.details ? { details: err.details } : {}),
       },
     };
   }
   if (err instanceof Error && (err as any).status === 401) {
-    return { status: 401, body: { error: err.message, code: (err as any).code || 'UNAUTHORIZED' } };
+    return { status: 401, body: { ...mapAppErrorResponse(err, undefined, 'error'), code: (err as any).code || 'UNAUTHORIZED' } };
   }
   return null;
 }

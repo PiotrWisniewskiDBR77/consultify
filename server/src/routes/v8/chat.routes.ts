@@ -30,6 +30,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
 import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -584,7 +585,7 @@ router.get(
 
 function handleChatHandoffError(err: unknown, res: Response) {
   if (err instanceof ChatHandoffError) {
-    res.status(err.httpStatus).json({ error: err.message, code: err.code });
+    res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   throw err;
@@ -628,7 +629,7 @@ function requireChatHandoffAdmin(req: AuthRequest, res: Response): boolean {
 
 function handleChatOwnerIngressError(err: unknown, res: Response) {
   if (err instanceof ChatTargetOwnerIngressError) {
-    res.status(err.httpStatus).json({ error: err.message, code: err.code });
+    res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
     return;
   }
   throw err;
@@ -715,7 +716,7 @@ router.post(
       res.status(data.replayed ? 200 : 201).json({ data, meta: { version: 'v8' } });
     } catch (err) {
       if (err instanceof GovernedSnapshotBindingError) {
-        res.status(err.httpStatus).json({ error: err.message, code: err.code });
+        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
         return;
       }
       handleChatHandoffError(err, res);
@@ -968,7 +969,7 @@ router.post(
       res.status(200).json({ data, meta: { version: 'v8', commandSchemaVersion: 'v1' } });
     } catch (err) {
       if (err instanceof ChatTargetMappingError) {
-        res.status(err.httpStatus).json({ error: err.message, code: err.code });
+        res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code });
         return;
       }
       throw err;

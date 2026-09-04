@@ -38,6 +38,7 @@ import {
 import { isPinnedEvidenceType } from '../../services/initiative/closureEvidenceSourceReader.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.use(demoContextMiddleware);
 
 function handleClosureError(res: Response, err: unknown): void {
   if (err instanceof ClosureGateFailure) {
-    res.status(err.httpStatus).json({ error: err.message, code: err.code, details: err.details });
+    res.status(err.httpStatus).json({ ...mapAppErrorResponse(err, undefined, 'error'), code: err.code, details: err.details });
     return;
   }
   res.status(500).json({

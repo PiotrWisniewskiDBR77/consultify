@@ -9,6 +9,7 @@ import {
 } from '../services/finance/financeDigitizationAnalysisCandidateHandoff.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ function mapError(error: unknown) {
   return {
     status: error.status,
     body: {
-      error: error.message,
+      ...mapAppErrorResponse(error, undefined, 'error'),
       code: error.code,
       ...(error.details ? { details: error.details } : {}),
     },
