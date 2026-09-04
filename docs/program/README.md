@@ -28,6 +28,11 @@ Dokumentacja funkcjonalna modułów jest uporządkowana według menu aplikacji w
    — raport porządków i uczciwy stan kontraktów.
 10. [`WEEKEND_COMPLETION_2026-08-01/README.md`](WEEKEND_COMPLETION_2026-08-01/README.md)
     — centrum dowodzenia odbiorem i dokończeniem aplikacji.
+11. [`REJESTR_ZNALEZISK_20260903.md`](REJESTR_ZNALEZISK_20260903.md) — rejestr znalezisk sesji
+    nadzorczej, dopisywany codziennie (sekcje wg daty); [`LEKCJE_20260904.md`](LEKCJE_20260904.md)
+    — lekcje metodyczne wydzielone z dnia 04.09; najnowsze przekazanie do kolejnej sesji:
+    [`PRZEKAZANIE_20260905.md`](PRZEKAZANIE_20260905.md) (sprawdź katalog pod kątem nowszego
+    `PRZEKAZANIE_202….md`, zanim uznasz ten za aktualny).
 
 ## Granice
 

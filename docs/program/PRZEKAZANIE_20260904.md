@@ -1,10 +1,16 @@
 ---
 doc_id: program-przekazanie-20260904
-status: canonical
+status: superseded
+superseded_by: program-przekazanie-20260905
 data: 2026-09-03 (wieczór + noc) → dla sesji 2026-09-04
 ---
 
 # Przekazanie — 3 września 2026, wieczór + noc (sesja nadzorcy #17)
+
+**Zastąpione przez [`PRZEKAZANIE_20260905.md`](PRZEKAZANIE_20260905.md)** (dla sesji nadzorcy #19,
+po domknięciu dnia 04.09 — 9 odbiorów adwersaryjnych, DEC-386/387, 10 nowych duties). Ten plik
+zostaje jako zapis stanu na 04.09 06:10, sprostowania §1–§12 poniżej pozostają aktualne dla tamtego
+punktu w czasie.
 
 Linia pracy: **`github-backup/grafika/m03-20260902`**, katalog `/private/tmp/m03`.
 Wszystko wypchnięte na kopię zapasową po każdym scaleniu (`git rev-list --left-right --count` = 0 0).
