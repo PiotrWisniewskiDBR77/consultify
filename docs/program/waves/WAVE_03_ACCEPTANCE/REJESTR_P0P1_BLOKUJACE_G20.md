@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `8954884c04ff74bc1591a888591e2f9c8b9c6e9d`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 8954884c04ff74bc1591a888591e2f9c8b9c6e9d --snapshot-date 2026-09-04`
+Marker: `8af25661dbbfdac330aa4cc4316e8be9f99b2d03`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 8af25661dbbfdac330aa4cc4316e8be9f99b2d03 --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -83,7 +83,7 @@ Mianownik: 121. NAPRAWIONE: 34; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `MYW-AGT-REC-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-25-23 | — | settlement |
 | `MYW-CAL-REC-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
 | `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt attendees/guests/organizer/invitation-status; wskazany handler 2779–2822 nadal nie ma tych pól | — | settlement, decisions |
-| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu | — | settlement, decisions |
+| `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel musi zatwierdzić kontrakt dołączania artefaktów i linku dla zaproszonych; DEC-222 pozostawia wdrożenie otwarte i brak SHA obiektu | — | settlement, decisions |
 | `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | FALA_4_OWNER_DECISION — wymaga świeżego zrzutu przed zamknięciem; checkpoint af75a84e37 nie izoluje zmiany Vault table/preview, a d0b5172c19 (2026-07-24) jest starszy niż zgłoszenie 2026-08-22 | — | settlement |
 | `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
 | `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 nie izoluje zmiany Decisions list, a 7b7ec198aa (2026-07-15) jest starszy niż zgłoszenie 2026-08-22 i nie dotyka MyWorkHub.tsx:4137 | — | settlement |
