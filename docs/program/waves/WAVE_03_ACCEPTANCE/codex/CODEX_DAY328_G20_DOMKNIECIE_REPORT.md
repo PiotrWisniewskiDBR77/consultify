@@ -53,7 +53,15 @@ Po zmianie: kod 1, `BLOKUJE: 12`, wszystkie z powodem `NIEROZSTRZYGNIETE`. Spade
 
 ## R3 — commity `checkpoint`
 
-Do uzupełnienia.
+| Pozycja | Stary dowód | `git show --stat` | Rozstrzygnięcie |
+|---|---|---|---|
+| `MYW-CV-REC-001` | `af75a84e37`, `checkpoint: preserve wave 3 owner review work` | 156 plików, 12076+/2009−; szeroka migawka wielu modułów | `NIEROZSTRZYGNIETE`: brak izolowanego SHA zmiany Vault table/preview |
+| `MYW-DEC-REC-001` | `4a36e8a745`, `checkpoint wave 3 recovery candidate` | 82 pliki, 3733+/499−; szeroka migawka | `NIEROZSTRZYGNIETE`: brak izolowanego SHA Decisions list |
+| `MYWORK-DEC-OWN-001` | ten sam `4a36e8a745` | ten sam wieloobiektowy diff | `NIEROZSTRZYGNIETE`: odwołanie do tej samej nieizolowanej zmiany |
+
+Decyzja semantyczna: commit o temacie zawierającym słowo `checkpoint` nie jest dowodem naprawy. `gitShaState()` po sprawdzeniu istnienia i ancestry odczytuje temat przez `git log -1 --format=%s` i zwraca osobny `SHA_CHECKPOINT`; klasyfikator raportuje go jako `BLOKUJE`. Trzy zastane wpisy przeklasyfikowano jawnie, więc nie stoją już na checkpointach. `BLOKUJE` wzrosło 12→15 — to celowe przywrócenie uczciwych blokad, nie przeniesienie do łagodniejszego kubełka.
+
+Test `R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę` podstawia `af75a84e37` do mapy rozstrzygnięć. Z rozróżnieniem: pełny pakiet kod 0, 11/11 PASS. Mutacja usuwająca rozróżnienie: kod 1, dokładnie ten test czerwony, `actual NAPRAWIONE / expected BLOKUJE`. Po cofnięciu przez `cp`: kod 0, 11/11 PASS; w pliku produkcyjnym została wyłącznie zamierzona zmiana R3.
 
 ## R4 — dziedziczenie DEC
 

@@ -1,12 +1,12 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `7095ffa50e0cf6153f31753e83110aacb46f0890`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 7095ffa50e0cf6153f31753e83110aacb46f0890 --snapshot-date 2026-09-04`
+Marker: `043daff6999b2babd6ee183a06df9677b6311373`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 043daff6999b2babd6ee183a06df9677b6311373 --snapshot-date 2026-09-04`
 
-Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 18; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
+Mianownik: 121. NAPRAWIONE: 30; ZAMKNIETE_DEC: 18; ODLOZONE_DEC: 58; W_BUDOWIE: 0.
 
-**BLOKUJE: 12**
+**BLOKUJE: 15**
 
 | ID | Werdykt | Powód | Dowód | Dziedziczenie DEC | Źródła |
 |---|---|---|---|---|---|
@@ -84,9 +84,9 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 18; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `MYW-CAL-REC-001` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-28-222 | — | settlement, decisions |
 | `MYW-CAL-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania | — | settlement, decisions |
 | `MYW-CAL-REC-003` | BLOKUJE | NIEROZSTRZYGNIETE | DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu | — | settlement, decisions |
-| `MYW-CV-REC-001` | NAPRAWIONE | SHA_OK | af75a84e37 | — | settlement |
+| `MYW-CV-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint af75a84e37 obejmuje 156 plików i nie izoluje zmiany Vault table/preview | — | settlement |
 | `MYW-CV-REC-002` | BLOKUJE | NIEROZSTRZYGNIETE | źródło opisuje stan istniejący bez SHA naprawy | — | settlement |
-| `MYW-DEC-REC-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
+| `MYW-DEC-REC-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 obejmuje 82 pliki i nie izoluje zmiany Decisions list | — | settlement |
 | `MYW-IDEA-REC-001` | NAPRAWIONE | SHA_OK | 655d629675 | — | settlement |
 | `MYW-IDEA-REC-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-25-29, DEC-2026-09-03-372 | — | settlement, decisions, owner, wave2 |
 | `MYW-IDEAS-008` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-372 | R-9 → DEC-2026-09-03-372 | settlement, decisions, owner |
@@ -112,7 +112,7 @@ Mianownik: 121. NAPRAWIONE: 33; ZAMKNIETE_DEC: 18; ODLOZONE_DEC: 58; W_BUDOWIE: 
 | `MYW-PHOTO-007` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-010` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
 | `MYW-PHOTO-011` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-09-03-370 | R-7 → DEC-2026-09-03-370 | settlement, decisions, owner |
-| `MYWORK-DEC-OWN-001` | NAPRAWIONE | SHA_OK | 4a36e8a745 | — | settlement |
+| `MYWORK-DEC-OWN-001` | BLOKUJE | NIEROZSTRZYGNIETE | checkpoint 4a36e8a745 jest tylko wspólną migawką dla MYW-DEC-REC-001 | — | settlement |
 | `RES-OWN-001` | NAPRAWIONE | SHA_OK | 07ee289127 | — | settlement |
 | `RES-OWN-002` | ODLOZONE_DEC | DEC_OK | DEC-2026-08-24-04 | — | settlement, decisions |
 | `RES-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL | — | settlement |

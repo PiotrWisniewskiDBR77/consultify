@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { evaluateCorpus, gateResult, renderRegister } from '../p0p1-licznik-e1.mjs';
+import { DAY320_RESOLUTIONS, evaluateCorpus, gateResult, gitShaState, renderRegister } from '../p0p1-licznik-e1.mjs';
 
 const table = (ids, verdict = 'OTWARTE', proof = 'brak') => [
   '| ID | Werdykt | Dowód |',
@@ -43,11 +43,28 @@ test('mutacja: nieistniejący SHA czerwieni pozycję', () => {
 
 test('R1: SHA_NIEISTNIEJACY z DAY320_RESOLUTIONS blokuje z dokładnym powodem', () => {
   const rows = evaluateCorpus(corpus({
-    settlement: table(['MYW-CV-REC-001']),
-  }), { floor: 1, shaCheck: () => 'SHA_NIEISTNIEJACY' });
+    settlement: table(['INT-OWN-001']),
+  }), {
+    floor: 1,
+    resolutions: { ...DAY320_RESOLUTIONS, 'INT-OWN-001': { type: 'SHA', sha: 'af75a84e37' } },
+    shaCheck: () => 'SHA_NIEISTNIEJACY',
+  });
   assert.equal(rows[0].verdict, 'BLOKUJE');
   assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
   assert.equal(rows[0].proof, 'af75a84e37:SHA_NIEISTNIEJACY');
+});
+
+test('R3: commit checkpoint jest widoczny i blokuje zamiast udawać naprawę', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['INT-OWN-001']),
+  }), {
+    floor: 1,
+    resolutions: { ...DAY320_RESOLUTIONS, 'INT-OWN-001': { type: 'SHA', sha: 'af75a84e37' } },
+    shaCheck: gitShaState,
+  });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_CHECKPOINT');
+  assert.equal(rows[0].proof, 'af75a84e37:SHA_CHECKPOINT');
 });
 
 test('mutacja: mianownik poniżej podłogi zatrzymuje parser', () => {

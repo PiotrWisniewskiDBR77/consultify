@@ -32,12 +32,12 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   'INT-INIT-AI-OBS-001': { type: 'UNRESOLVED', detail: 'brak osiągalnego wołacza fill-section i dowodu z realnym providerem AI' },
   'MYW-CAL-REC-002': { type: 'UNRESOLVED', detail: 'decyzje wyznaczają kierunek, ale brak SHA rozszerzenia schematu spotkania' },
   'MYW-CAL-REC-003': { type: 'UNRESOLVED', detail: 'DEC-222 pozostawia wdrożenie otwarte; brak SHA UI dołączania artefaktu' },
-  'MYW-CV-REC-001': { type: 'SHA', sha: 'af75a84e37' },
+  'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint af75a84e37 obejmuje 156 plików i nie izoluje zmiany Vault table/preview' },
   'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
-  'MYW-DEC-REC-001': { type: 'SHA', sha: '4a36e8a745' },
+  'MYW-DEC-REC-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 obejmuje 82 pliki i nie izoluje zmiany Decisions list' },
   'MYW-IDEA-REC-001': { type: 'SHA', sha: '655d629675' },
   'MYW-IDEAS-010': { type: 'SHA', sha: 'a995ca4c20' },
-  'MYWORK-DEC-OWN-001': { type: 'SHA', sha: '4a36e8a745' },
+  'MYWORK-DEC-OWN-001': { type: 'UNRESOLVED', detail: 'checkpoint 4a36e8a745 jest tylko wspólną migawką dla MYW-DEC-REC-001' },
   'RES-OWN-004': { type: 'UNRESOLVED', detail: 'źródło mówi pre-existing bez SHA naprawy' },
   'RES-OWN-003': { type: 'UNRESOLVED', detail: 'brak licencjonowanego writera i cold readbacku 4 KPI / 3 OKR / 3 ROI z PostgreSQL' },
   'TLS-CHAIN-OWN-001': { type: 'DECISION', decision: 'DEC-2026-08-28-238' },
@@ -157,18 +157,19 @@ export function gitShaState(root, sha) {
   }
   try {
     execFileSync('git', ['merge-base', '--is-ancestor', sha, 'HEAD'], { cwd: root, stdio: 'ignore' });
-    return 'OK';
   } catch {
     return 'SHA_NIE_JEST_PRZODKIEM_HEAD';
   }
+  const subject = execFileSync('git', ['log', '-1', '--format=%s', sha], { cwd: root, encoding: 'utf8' }).trim();
+  return /\bcheckpoint\b/i.test(subject) ? 'SHA_CHECKPOINT' : 'OK';
 }
 
-function classify(position, ledgerSet, root, shaCheck = gitShaState) {
+function classify(position, ledgerSet, root, shaCheck = gitShaState, resolutions = DAY320_RESOLUTIONS) {
   const text = position.evidence.join('\n');
   const { cited, missing } = existingDecs(text, ledgerSet);
   if (missing.length) return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${missing.join(',')}`, proof: missing.join(', ') };
 
-  const resolution = DAY320_RESOLUTIONS[position.id];
+  const resolution = resolutions[position.id];
   if (resolution?.type === 'DECISION') {
     if (!ledgerSet.has(resolution.decision)) {
       return { verdict: 'BLOKUJE', reason: `DEC_NIEISTNIEJACY:${resolution.decision}`, proof: resolution.decision };
@@ -216,7 +217,7 @@ export function evaluateCorpus({ settlement, decisions, owner, wave2, ledger }, 
   addEvidence(positions, wave2, 'wave2');
   const ledgerSet = ledgerDecisions(ledger);
   return [...positions.values()].sort((a, b) => a.id.localeCompare(b.id, 'en')).map((position) => {
-    const classification = classify(position, ledgerSet, root, options.shaCheck);
+    const classification = classify(position, ledgerSet, root, options.shaCheck, options.resolutions);
     const directDecisions = existingDecs(position.directEvidence.join('\n'), ledgerSet).cited;
     const inherited = position.inheritedDecisions.find(({ decision }) => classification.proof.includes(decision));
     return {
