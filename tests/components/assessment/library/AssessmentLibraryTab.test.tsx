@@ -95,9 +95,8 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
       .mockResolvedValueOnce({ session: canonicalSession });
     render(<AssessmentLibraryTab />);
 
-    const start = screen
-      .getAllByRole('button', { name: 'Start' })
-      .find((button) => !(button as HTMLButtonElement).disabled)!;
+    fireEvent.click(screen.getByText('Digital Readiness Diagnosis'));
+    const start = screen.getByRole('button', { name: 'Start assessment' });
     fireEvent.click(start);
     expect(await screen.findByRole('alert')).toHaveTextContent('Offline');
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -120,9 +119,8 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
       .mockResolvedValueOnce({ session: canonicalSession, roles: ['owner'] });
     render(<AssessmentLibraryTab />);
 
-    const start = screen
-      .getAllByRole('button', { name: 'Start' })
-      .find((button) => !(button as HTMLButtonElement).disabled)!;
+    fireEvent.click(screen.getByText('Digital Readiness Diagnosis'));
+    const start = screen.getByRole('button', { name: 'Start assessment' });
     fireEvent.click(start);
     expect(await screen.findByRole('alert')).toHaveTextContent(copy);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -141,10 +139,9 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
     mocks.language = 'pl';
     render(<AssessmentLibraryTab />);
     expect(screen.queryByText('Twoje kanoniczne sesje DRD')).not.toBeInTheDocument();
-    // 2026-08-26 assessment cleanup: "Wkrótce" -> "Planowane" (program rule
-    // — never "Coming soon"/"Wkrótce" wording on the client's face).
-    expect(screen.getAllByText('Planowane')).toHaveLength(4);
-    const startButtons = screen.getAllByRole('button', { name: 'Uruchom' });
-    expect(startButtons.filter((button) => (button as HTMLButtonElement).disabled)).toHaveLength(4);
+    expect(screen.getAllByText('Szkic')).toHaveLength(4);
+    expect(screen.queryByRole('button', { name: 'Rozpocznij ocenę' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Digital Readiness Diagnosis'));
+    expect(screen.getByRole('button', { name: 'Rozpocznij ocenę' })).toBeInTheDocument();
   });
 });

@@ -110,7 +110,11 @@ import {
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
-import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
+import {
+  AssessmentLibraryTab,
+  METHODOLOGY_CATALOG,
+  type MethodologyId,
+} from './library/AssessmentLibraryTab';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
@@ -459,6 +463,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [showNewAssessmentModal, setShowNewAssessmentModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [libraryAreaFilter, setLibraryAreaFilter] = useState<MethodologyId | 'all'>('all');
+  const [libraryStatusFilter, setLibraryStatusFilter] = useState<'active' | 'draft' | 'all'>('all');
   const [showInitiativesWizard, setShowInitiativesWizard] = useState(false);
   const [showNewReportModal, setShowNewReportModal] = useState(false);
 
@@ -1658,8 +1664,49 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   // rzad kopiuje (DiscoveryToolsHub), wlacza go tylko na zakladkach NIE-Library
   // — ten warunek byl pominiety przy przenoszeniu. Biblioteka wraca na chipy
   // informacyjne (nazwa zakladki + liczba pozycji), ktore mowia prawde.
+  const libraryFilterChips = useMemo(
+    () => [
+      {
+        id: 'library-all',
+        label: isPolish ? 'Wszystkie metodyki' : 'All methodologies',
+        badge: METHODOLOGY_CATALOG.length,
+        active: libraryAreaFilter === 'all' && libraryStatusFilter === 'all',
+        onClick: () => {
+          setLibraryAreaFilter('all');
+          setLibraryStatusFilter('all');
+        },
+      },
+      ...METHODOLOGY_CATALOG.map((method) => ({
+        id: `library-area-${method.id}`,
+        label: isPolish ? method.area.pl : method.area.en,
+        badge: 1,
+        active: libraryAreaFilter === method.id,
+        onClick: () => setLibraryAreaFilter(libraryAreaFilter === method.id ? 'all' : method.id),
+      })),
+      ...(['active', 'draft'] as const).map((status) => ({
+        id: `library-status-${status}`,
+        label:
+          status === 'active'
+            ? isPolish
+              ? 'Aktywne'
+              : 'Active'
+            : isPolish
+              ? 'Szkice'
+              : 'Drafts',
+        badge: METHODOLOGY_CATALOG.filter((method) => method.status === status).length,
+        active: libraryStatusFilter === status,
+        onClick: () => setLibraryStatusFilter(libraryStatusFilter === status ? 'all' : status),
+      })),
+    ],
+    [isPolish, libraryAreaFilter, libraryStatusFilter]
+  );
+
   const hubMenu3Chips =
-    menu3StatusChipsEnabled && activeTab !== 'library' ? statusFilterChips : hubMenu3InfoChips;
+    activeTab === 'library'
+      ? libraryFilterChips
+      : menu3StatusChipsEnabled
+        ? statusFilterChips
+        : hubMenu3InfoChips;
 
   /**
    * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
@@ -2098,7 +2145,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (activeTab === 'library') {
       return (
         <div className="h-full overflow-hidden">
-          <AssessmentLibraryTab />
+          <AssessmentLibraryTab
+            areaFilter={libraryAreaFilter}
+            statusFilter={libraryStatusFilter}
+          />
         </div>
       );
     }
