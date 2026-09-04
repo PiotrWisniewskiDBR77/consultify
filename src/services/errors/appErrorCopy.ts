@@ -105,11 +105,14 @@ export function getAppErrorCopy(t: TFunc, source: unknown): AppErrorCopy {
   const fallback = FALLBACK_EN[code];
   const correlationId = readCorrelationId(source);
   const label = String(t('errors.app.reportId', 'Report identifier'));
-  const rawCode = String(envelope.errorCode ?? '').trim().toUpperCase();
+  const rawCode = String(envelope.errorCode ?? '')
+    .trim()
+    .toUpperCase();
   const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
-  const message = !CODES.has(rawCode as AppErrorCode) && serverMessage
-    ? serverMessage
-    : String(t(`errors.app.${slug}.message`, fallback.message));
+  const message =
+    !CODES.has(rawCode as AppErrorCode) && serverMessage
+      ? serverMessage
+      : String(t(`errors.app.${slug}.message`, fallback.message));
 
   return {
     code,

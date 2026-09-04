@@ -158,9 +158,9 @@ kompilatora. Artefakt: `r3-tsc.log`.
 
 ## Pomiar nazw testów przed/po
 
-Przed: 159 pełnych nazw (145 czerwonych zastanych testów tras + 14 zielonych frontu). Po: 163
-pełne nazwy. `nazwy.diff` zawiera dokładnie cztery nazwy dodane: dwa przypadki R2 i dwa przypadki
-R3; nazw znikniętych: 0. Zastane 145 testów tras pozostało czerwone przed i po z tego samego
+Przed: 159 pełnych nazw (145 czerwonych zastanych testów tras + 14 zielonych frontu). Po: 164
+pełne nazwy. `nazwy.diff` zawiera dokładnie pięć nazw dodanych: dwa przypadki R2, dwa przypadki
+R3 i jeden przypadek R4; nazw znikniętych: 0. Zastane 145 testów tras pozostało czerwone przed i po z tego samego
 powodu — wymuszona realna bramka członkostwa wobec atrap auth w minimalnym routerze.
 
 Liście słowników po zmianie: PL 35198, EN 33065 — bez spadku i bez modyfikacji słowników.
@@ -220,6 +220,33 @@ odpowiedzi tekstowych/nieparsowalnych i bezpośrednich wywołań `createApiError
 `handleResponse`; dla nich angielski fallback pozostaje świadomie ostatnią deską ratunku. Nie
 udowodniono, ile z 1003 ścieżek realnie wpada w każdą kategorię.
 
+## R6 — raport końcowy
+
+Werdykt dyżuru: **PARTIAL / rdzeń R3 naprawiony, R2 uczciwie czerwony z powodu granicy licencji**.
+Nie ogłaszam pełnej lokalizacji PL: realny kontrakt nadal dowodzi angielskiego tekstu dla
+`PROGRAM_NOT_ACTIVE` przy `X-App-Language: pl`. Nie zmieniono żadnego `errorCode`.
+
+Migracje: pierwszy przebieg zastosował 893 migracje i zakończył się komunikatem
+`Postgres migrations complete`; drugi zastosował 0 i zakończył się tym samym komunikatem.
+
+Końcowe sprawdzenia:
+
+- front `appErrorCopy.test.ts`: 16/16 PASS, `--retry=0`;
+- test inwentarza R4: 1/1 PASS, `--retry=0`;
+- realny kontrakt R2: 1/2 PASS, 1/2 RED z założenia; status 409 i `errorCode` zachowany;
+- zastane suity tras z wymuszoną produkcyjną bramką: 0/145, czerwone przed i po; nie są
+  dowodem produktu i nie zostały osłabione;
+- ESLint dla trzech zmienionych plików frontu z `--quiet`: 0 błędów;
+- typecheck: `NOT_PROVEN` z powodu awarii pamięci Node;
+- liczba liści i18n: PL 35198 / EN 33065;
+- diff `.env*`, `docker-compose*`, `railway*`: pusty;
+- pliki zmienione względem markera: wyłącznie raport, rejestr, dwa nowe testy i trzy pliki
+  frontowego rdzenia wymienione w licencji.
+
+Commity pozycji: R1 `135878c240`, R2 `70e93a9f4a`, R3 `4424780b99`, R4 `e469097d84`,
+R5 `fa5a7fb7dd`; każdy został wypchnięty na `github-backup` natychmiast po pozycji. R6 zamyka
+raport i korektę formatowania pliku R3 bez zmiany zachowania.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R2 pozostaje celowo czerwony i kod produkcyjny R2 nie został zmieniony z powodu granicy licencji.
@@ -227,4 +254,4 @@ udowodniono, ile z 1003 ścieżek realnie wpada w każdą kategorię.
 - Nie rozstrzygnięto dynamicznie wszystkich kodów przekazywanych w trzecim argumencie `AppError`;
   klasyfikacja R4 jest statyczna i jawnie wydziela wyrażenia dynamiczne.
 - Nie zmierzono realnej częstości użycia fallbacku w 1003 call-site'ach `handleResponse`.
-- R6 nie jest jeszcze zamknięte na etapie commitu R5.
+- Nie wykonano niezależnego odbioru przez nadzorcę ani integracji z nowszym tipem gałęzi bazowej.
