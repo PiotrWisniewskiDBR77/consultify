@@ -53,7 +53,7 @@ export const DAY320_RESOLUTIONS = Object.freeze({
   // ★ Dokument źródłowy (07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md, „Fala 4") stawia
   // tej pozycji status FALA_4_OWNER_DECISION i wymaga ŚWIEŻEGO ZRZUTU przed CLOSED.
   'MYW-CV-REC-001': { type: 'UNRESOLVED', detail: 'właściciel musi ocenić świeży zrzut exact-candidate; FALA_4_OWNER_DECISION zabrania zamknięcia samym SHA, a af75a84e37 jest checkpointem' },
-  'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'źródło opisuje stan istniejący bez SHA naprawy' },
+  'MYW-CV-REC-002': { type: 'UNRESOLVED', detail: 'właściciel musi wskazać imienny SHA albo decyzję uznającą stan istniejący; checkpoint af75a84e37 odpada, a późniejsze commity nie izolują naprawy right-click/kebab' },
   // COFNIĘTE po odbiorze 334. Dyżur podstawił `7b7ec198aa` (2026-07-15) — PIĘĆ
   // TYGODNI przed zgłoszeniem z 2026-08-22. `--stat` tego commita dotyka wyłącznie
   // DecisionsPanelContent.tsx, a dowód pozycji wskazuje MyWorkHub.tsx:4137,
