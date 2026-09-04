@@ -342,3 +342,7 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | Z1 | 13 obejrzanych powierzchni zachowuje spójny pojedynczy empty state; `FinanceHub&tab=analysis` renderuje dwie identyczne karty „Brak powiązań” (214 px). Dwa ekrany Results były identyczne PRZED/PO, bo spread przekazywał dane mimo braku jawnego atrybutu. | Statyczny brak `relations=` nie wystarcza do określenia zmiany runtime; Finance wymaga deduplikacji po decyzji produktowej. | DO DECYZJI WŁAŚCICIELA | `evidence/podglad-relations-20260904/`, `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY352_PREVIEW_20_EKRANOW_REPORT.md` |
+
+## AB. Dyżur 360 — G19 kubełek A: pięć izolacji, dwa błędne założenia kubełka
+
+Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, podłoga 16) i podniósł pięć z siedmiu wierszy kubełka A do `IZOLACJA_UDOWODNIONA / MIANOWNIK_OTWARTY`: 01, 04, 05, 08, 13. Wiersze 06 i 11 pozostały `NOT_PROVEN`: runtime Execution nie ma mountu w realnym ApiGateway, a Materials nie ma wymaganej pary decka. Żaden wiersz nie dostał `PASS`; rozjazd mianownika 28/30/49 vs 106 pozostaje pytaniem właścicielskim. Ślad: `CODEX_DAY360_G19_KUBELEK_A_REPORT.md` i `evidence/g19/day360/`.
