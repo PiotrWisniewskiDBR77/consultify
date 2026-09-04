@@ -7,7 +7,10 @@ const BASELINE = {
   plLeaves: 34310,
   enLeaves: 32321,
   defects: 134,
-  defektEn: 17,
+  // 17 -> 0 po usunieciu galezi koncowek fleksyjnych (17/17 falszywych alarmow na
+  // angielskim 'approach'/'outreach'/'Overreach'). Ratchet zaciska sie do zera: kazdy
+  // NOWY polski napis w pliku EN czerwieni bramke natychmiast.
+  defektEn: 0,
 };
 
 describe('i18n locale parity baseline', () => {

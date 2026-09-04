@@ -90,7 +90,14 @@ export const defectPlTranslations = new Map([
 ]);
 
 const polishWordsInEnglish = /\b(?:zakres|prezentacje|nazwa|szablonu|jest|wymagan(?:a|e|y)|zapytaj|proszę|błąd|ustawienia|utwórz|dodaj|usuń|zapisz|anuluj|wybierz|brak|nie|oraz|dla|edytuj|właściciel|zadanie|ocena|wniosek|inicjatywa|wywiad|załączniki|przypomnienia|przegląd|gotowość|dane|zebrania|sugerowana|wizualizacja|kategoria|nowy|wzorzec|sekcje|tabele|walidacja|zamiennik)\b/i;
-const polishWithoutDiacritics = /\b(?:zamknij|otworz|pokaz|ukryj|wybierz|usun|utworz|dodaj|zapisz|anuluj)\s+[a-z]{3,}|\b(?:oraz|dla|bez|przez|aby|jezeli|ktory|ktora|ktore)\b|\b[a-z]{4,}(?:anie|enie|owego|owej|ami|ach)\b/i;
+// USUNIETA GALAZ (04.09, po odbiorze adwersaryjnym dyzuru 327): koncowki fleksyjne
+// /\b[a-z]{4,}(?:anie|enie|owego|owej|ami|ach)\b/ dawaly 17 na 17 FALSZYWYCH ALARMOW —
+// wszystkie na angielskich slowach konczacych sie na '-ach': approach (14x), outreach (2x),
+// Overreach (1x). Ani jednego prawdziwego trafienia. Zostawienie jej byloby bomba z opoznionym
+// zaplonem: kazdy nowy angielski napis ze slowem 'approach' czerwienilby bramke falszywie.
+// Zostaja dwie galezie, ktore realnie cos znajduja: fraza czasownik+rzeczownik i polskie
+// slowa funkcyjne.
+const polishWithoutDiacritics = /\b(?:zamknij|otworz|pokaz|ukryj|wybierz|usun|utworz|dodaj|zapisz|anuluj)\s+[a-z]{3,}|\b(?:oraz|dla|bez|przez|aby|jezeli|ktory|ktora|ktore)\b/i;
 const allowedPolishNames = new Set(['Guided by Dr. Piotr Wiśniewski', 'Paweł Bochniarz']);
 
 // Wnetrze {{...}} to NAZWA ZMIENNEJ i18next, nie tekst dla uzytkownika. Bez tego wyciecia
