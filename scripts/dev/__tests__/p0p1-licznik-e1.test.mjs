@@ -41,6 +41,15 @@ test('mutacja: nieistniejący SHA czerwieni pozycję', () => {
   assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
 });
 
+test('R1: SHA_NIEISTNIEJACY z DAY320_RESOLUTIONS blokuje z dokładnym powodem', () => {
+  const rows = evaluateCorpus(corpus({
+    settlement: table(['MYW-CV-REC-001']),
+  }), { floor: 1, shaCheck: () => 'SHA_NIEISTNIEJACY' });
+  assert.equal(rows[0].verdict, 'BLOKUJE');
+  assert.equal(rows[0].reason, 'SHA_NIEISTNIEJACY');
+  assert.equal(rows[0].proof, 'af75a84e37:SHA_NIEISTNIEJACY');
+});
+
 test('mutacja: mianownik poniżej podłogi zatrzymuje parser', () => {
   assert.throws(
     () => evaluateCorpus(corpus({ settlement: table(['INT-OWN-001']) }), { floor: 2 }),
