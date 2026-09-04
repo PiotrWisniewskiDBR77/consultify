@@ -1,6 +1,6 @@
 # CODEX DAY 327 — bezpieczniki ślepe
 
-Stan: W TOKU. Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`.
+Stan: PARTIAL / NIE DO ODBIORU JAKO PEŁNY DYŻUR. Marker: `1c3d3da844ae03c87985a8f5dc74846a073c0220`.
 
 ## Wejście
 
@@ -74,11 +74,19 @@ Imienna lista już potwierdzonych przypadków innych niż `SZCZELNY`: `noRuntime
 
 Pakiet pięciu skanerów nie montuje `ApiGateway`, `verifyToken`, `v8FeatureGate` ani `resultsInternalBetaVisibility`; pułapki (a)–(d) nie leżą na jego ścieżce. Pułapka (e) dotyczy `noRawErrorInJsx`: dotychczas asercja długości listy nie dowodziła odczytu. Przebieg przed zmianami: 16/16, pełne nazwy w `/private/tmp/cx-day327-bezpieczniki-slepe-artefakty/przed-nazwy.txt`.
 
+Przebieg końcowy: 17/17, `--retry=0`, pełne nazwy w `po-nazwy.txt`. Diff nazw ma jedną pozycję dodaną (`rejects new CREATE TABLE in __tests__ outside the explicit test-fixture allowlist`) i zero znikniętych. Trzy bramki końcowe: `list-canon=0`, `artefakt=0`, `focus-canon=0`.
+
+SHA-256: `przed.json` `9383348e...b991b386`; `przed-nazwy.txt` `a4364245...0d5bb77`; `po-final.json` `09971c06...be99`; `po-nazwy.txt` `b6584cb3...b9e`; `nazwy.diff` `471e8cd5...a77535`; `i18n-dlug.txt` `b4e6046f...a685a0`.
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Nie postawiłem bazy tego dyżuru. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane. Nie wykonywano zrzutów: dyżur nie zmienia warstwy wizualnej.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Szczelność 45 pozycji R0 bez przeprowadzonej mutacji pozostaje niezweryfikowana.
 - Klasy i liczby narzędzia dnia 297 nie zostały jeszcze odczytane z cudzej gałęzi.
 - Realność długu odsłoniętego R1–R4 nie została jeszcze sklasyfikowana.
+- Pełne 48 mutacji R0 nie zostało wykonane; tylko trzy przypadki mają własny dowód PO.
+- Dowody mutacyjne PRZED i odwrotne dla R2–R4 nie zostały wykonane lokalnie.
 
 ## R1 — audyt PL/EN
 
