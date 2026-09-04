@@ -287,3 +287,9 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 |---|---|---|---|---|
 | Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
 | Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
+
+## R. Dyżur 351 — jedna definicja kompletności
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| R1 | Wzorzec `X > 0 || target > 0` miał 12 trafień, z czego 9 liczyło kompletność; instrukcja zaniżała rdzeń do 7. Cele metodyki podnosiły licznik w żywej trasie i minach UI. | Jedna definicja per drzewo objęła 9 miejsc; 9 osobnych mutacji RED, parytet bliźniaków RED po jednostronnej zmianie, realny ApiGateway/JWT/PG potwierdził 7/39 niepełne i 39/39 pełne. | ZAMKNIĘTE lokalnie; produkcja i flagowany ekran NIEZWERYFIKOWANE | `CODEX_DAY351_LICZNIK_KOMPLETNOSCI_REPORT.md`, `evidence/licznik-kompletnosci-20260904/` |
