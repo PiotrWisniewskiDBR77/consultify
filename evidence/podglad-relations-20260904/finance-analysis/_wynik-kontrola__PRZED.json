@@ -1,0 +1,168 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "finance-hub",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/finance-analysis/finance-hub__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 7,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/economics/financial-analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/economics/financial-analyses/analysis-elmax-automation/ratios"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowa analiza\nWszystkie\n4\nSzkic\n1\nPrzegląd\n1\nZatwierdzone\n2\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nTYP\n\t\nOKRESY\n\t\nWALUTA\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nANL\n\t\nElmax Industries — Case inwestycyjny: automatyzacja linii produkcyjnej\n\t\nInvestment_case\n\t\n3\n\t\nPLN\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nANL\n\t\nTechFlow Solutions — Analiza płynności i rentowności FY2025\n\t\nComprehensive\n\t\n2\n\t\nPLN\n\t\nZatwierdzone\n\t25.08.2026\t\n\n\t\nANL\n\t\nNordic Bakery Group — Analiza porównawcza r/r 2023–2024\n\t\nComprehensive\n\t\n2\n\t\nEUR\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nANL\n\t\nGreenPack Logistics — Analiza kosztów operacyjnych 2023\n\t\nComprehensive\n\t\n2\n\t\nPLN\n\t\nZatwierdzone\n\t12.04.2026\t\nElmax Industries — Case inwestycyjny: automatyzacja linii produkcyjnej\nOtwórz\nANL\nDRAFT\ninvestment_case\nPLN\n3\n27.08.2026\nSZCZEGÓŁY\n~8 słów\n\nAnaliza finansowa: investment_case Waluta: PLN Liczba okresów: 3\n\nAI\nPodsumuj wyniki\nZnajdź anomalie\nZaproponuj działania\nPOWIĄZANIA\nBrak powiązań\nPrzelicz ponownie\nUtwórz wycenę\nZatwierdź\nZatwierdź\nPrzelicz ponownie\nUtwórz wycenę\nCzat\nDuplikuj\nEksportuj\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 246.66332234760802,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "finance-hub",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/finance-analysis/finance-hub__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 7,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/economics/financial-analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/analyses/analysis-elmax-automation/ratios"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/economics/financial-analyses/analysis-elmax-automation/ratios"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowa analiza\nWszystkie\n4\nSzkic\n1\nPrzegląd\n1\nZatwierdzone\n2\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nTYP\n\t\nOKRESY\n\t\nWALUTA\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nANL\n\t\nElmax Industries — Case inwestycyjny: automatyzacja linii produkcyjnej\n\t\nInvestment_case\n\t\n3\n\t\nPLN\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nANL\n\t\nTechFlow Solutions — Analiza płynności i rentowności FY2025\n\t\nComprehensive\n\t\n2\n\t\nPLN\n\t\nZatwierdzone\n\t25.08.2026\t\n\n\t\nANL\n\t\nNordic Bakery Group — Analiza porównawcza r/r 2023–2024\n\t\nComprehensive\n\t\n2\n\t\nEUR\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nANL\n\t\nGreenPack Logistics — Analiza kosztów operacyjnych 2023\n\t\nComprehensive\n\t\n2\n\t\nPLN\n\t\nZatwierdzone\n\t12.04.2026\t\nElmax Industries — Case inwestycyjny: automatyzacja linii produkcyjnej\nOtwórz\nANL\nDRAFT\ninvestment_case\nPLN\n3\n27.08.2026\nSZCZEGÓŁY\n~8 słów\n\nAnaliza finansowa: investment_case Waluta: PLN Liczba okresów: 3\n\nAI\nPodsumuj wyniki\nZnajdź anomalie\nZaproponuj działania\nPOWIĄZANIA\nBrak powiązań\nPrzelicz ponownie\nUtwórz wycenę\nZatwierdź\nZatwierdź\nPrzelicz ponownie\nUtwórz wycenę\nCzat\nDuplikuj\nEksportuj\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.059049104938268,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "finance-hub",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "finance-hub",
+      "roznicaLuminancji": 221.60427324266976,
+      "procentRoznychPikseli": 99.99072145061729,
+      "powod": null
+    }
+  ]
+}

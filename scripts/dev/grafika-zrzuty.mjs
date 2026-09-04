@@ -53,6 +53,9 @@ const WYNIK_JSON = arg('wynik-json', '');
 // DOM-u, który trafia na zrzut. Pusty selektor zachowuje dotychczasowe
 // zachowanie narzędzia bit w bit.
 const MIERZ_PANEL = arg('mierz-panel', '').trim();
+// Dyżur 352: opt-in wysokość wskazanego bloku z dokładnie tego samego DOM-u,
+// który trafia na PNG. Pusty selektor zachowuje historyczne wywołania bit w bit.
+const MIERZ_WYSOKOSC = arg('mierz-wysokosc', '').trim();
 // Dyżur 345: rozwijanie ostatniej sekcji może przewinąć panel. Opt-in zeruje
 // scroll wybranego poddrzewa po interakcjach, tuż przed skanem i zrzutem.
 const RESET_SCROLL = arg('reset-scroll', '').trim();
@@ -571,9 +574,20 @@ for (const ekran of EKRANY) {
       }
       if (ROZWIN_SEKCJE && KLIK_PO_ROZWINIECIU && podgladDomyslnyProbowany && !podgladDomyslnyBrak) {
         const wierszPonownie = page.locator(DOMYSLNY_KLIK_SELEKTOR).first();
-        if ((await wierszPonownie.count()) > 0) {
+        const podgladNadalOtwarty = (await page.locator('[data-preview-pane]').count()) > 0;
+        if (!podgladNadalOtwarty && (await wierszPonownie.count()) > 0) {
           await wierszPonownie.click({ timeout: 5000 }).catch(() => {});
           await page.waitForTimeout(500);
+        }
+      }
+      if (ROZWIN_SEKCJE && KLIK_PO_ROZWINIECIU && KLIK.length > 0) {
+        const podgladNadalOtwarty = (await page.locator('[data-preview-pane]').count()) > 0;
+        for (const sel of podgladNadalOtwarty ? [] : KLIK) {
+          const celPonownie = page.locator(sel).first();
+          if ((await celPonownie.count()) > 0) {
+            await celPonownie.click({ timeout: 5000, force: KLIK_SILA }).catch(() => {});
+            await page.waitForTimeout(500);
+          }
         }
       }
       if (ROZWIN_SEKCJE && OSIAD_PO_ROZWINIECIU > 0) await page.waitForTimeout(OSIAD_PO_ROZWINIECIU);
@@ -654,6 +668,16 @@ for (const ekran of EKRANY) {
             };
           }, MIERZ_PANEL)
         : undefined;
+      const wysokoscPomiar = MIERZ_WYSOKOSC
+        ? await page.evaluate((selector) => {
+            const element = document.querySelector(selector);
+            if (!(element instanceof HTMLElement)) return null;
+            return {
+              selector,
+              wysokoscPx: element.getBoundingClientRect().height,
+            };
+          }, MIERZ_WYSOKOSC)
+        : undefined;
       const localStorageState =
         LOCALSTORAGE_KEYS.length > 0
           ? await page.evaluate(
@@ -685,6 +709,7 @@ for (const ekran of EKRANY) {
         obrazJasnosc,
         zliczenia,
         panelPomiar,
+        wysokoscPomiar,
         localStorageState,
         sekcjeRozwiniete: ROZWIN_SEKCJE ? sekcjeRozwiniete : undefined,
         sekcjeNadalZwiniete: ROZWIN_SEKCJE ? sekcjeNadalZwiniete : undefined,
@@ -848,9 +873,10 @@ if (WYNIK_SELEKTOR.length > 0) {
     plikWynikow,
     JSON.stringify({ wynikSelektor: WYNIK_SELEKTOR, wyniki, pary: wszystkiePary }, null, 2)
   );
-  const zlePary = wszystkiePary.filter((p) => !p.ok).length;
+  const paryStanu = wszystkiePary.filter((p) => Object.hasOwn(p, 'ok'));
+  const zlePary = paryStanu.filter((p) => !p.ok).length;
   console.log(`Zbiorczy plik kontroli stanu → ${plikWynikow}`);
-  console.log(`Kontrola stanu (--wynik-selektor): ${wszystkiePary.length - zlePary}/${wszystkiePary.length} par przeszło.`);
+  console.log(`Kontrola stanu (--wynik-selektor): ${paryStanu.length - zlePary}/${paryStanu.length} par przeszło.`);
   if (zlePary > 0) {
     console.log(`★ ${zlePary} PARA(Y) NIE PRZESZŁY KONTROLI STANU (patrz wyżej) — kod wyjścia 1.`);
     process.exitCode = 1;

@@ -1,0 +1,941 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "finance-hub",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/finance-hub__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 5,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/finance-statements/packs/pack-vantage-fy2025"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\nWszystkie\n6\nOdrzucone importy\n2\nKolejka naprawcza\n1\nGotowe sprawozdania\n3\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\nVantage Retail Partners\n\t\n—P&L / —BS / —CF\n\t\nFY 2025\n\t\nUSD\n\t\n0\n\t\nSzkic\n\t28.08.2026\t\n\n\t\nSTM\n\t\nElmax Industries S.A.\n\t\nP&L / —BS / —CF\n\t\nFY 2025 (H1)\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nSTM\n\t\nTechFlow Solutions Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t24.08.2026\t\n\n\t\nSTM\n\t\nNordic Bakery Group\n\t\nP&L / BS / —CF\n\t\nFY 2024\n\t\nEUR\n\t\n2\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nSTM\n\t\nSilvertree Consulting Group\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nGBP\n\t\n3\n\t\nZatwierdzone\n\t18.08.2026\t\n\n\t\nSTM\n\t\nGreenPack Logistics Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2023\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t11.04.2026\t\nVantage Retail Partners\nOtwórz\nDRAFT\n—P&L / —BS / —CF\nFY 2025\nSZCZEGÓŁY\nWłaściwość\tWartość\nWaluta\tUSD\nDok.\t0\nZmapowane linie\t0 / 0\nAI\nPodsumuj sprawozdanie\nWskaż ryzyka w danych\nPOWIĄZANIA\nBrak powiązań\nOtwórz\nO\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.27051615779322,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "finance-hub",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/finance-hub__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 5,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/finance/statement-packs/pack-vantage-fy2025"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/finance-statements/packs/pack-vantage-fy2025"
+        }
+      ],
+      "tekst": "Sprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\nWszystkie\n6\nOdrzucone importy\n2\nKolejka naprawcza\n1\nGotowe sprawozdania\n3\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\nVantage Retail Partners\n\t\n—P&L / —BS / —CF\n\t\nFY 2025\n\t\nUSD\n\t\n0\n\t\nSzkic\n\t28.08.2026\t\n\n\t\nSTM\n\t\nElmax Industries S.A.\n\t\nP&L / —BS / —CF\n\t\nFY 2025 (H1)\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t27.08.2026\t\n\n\t\nSTM\n\t\nTechFlow Solutions Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t24.08.2026\t\n\n\t\nSTM\n\t\nNordic Bakery Group\n\t\nP&L / BS / —CF\n\t\nFY 2024\n\t\nEUR\n\t\n2\n\t\nPrzegląd\n\t21.08.2026\t\n\n\t\nSTM\n\t\nSilvertree Consulting Group\n\t\nP&L / BS / CF\n\t\nFY 2025\n\t\nGBP\n\t\n3\n\t\nZatwierdzone\n\t18.08.2026\t\n\n\t\nSTM\n\t\nGreenPack Logistics Sp. z o.o.\n\t\nP&L / BS / CF\n\t\nFY 2023\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t11.04.2026\t\nVantage Retail Partners\nOtwórz\nDRAFT\n—P&L / —BS / —CF\nFY 2025\nSZCZEGÓŁY\nWłaściwość\tWartość\nWaluta\tUSD\nDok.\t0\nZmapowane linie\t0 / 0\nAI\nPodsumuj sprawozdanie\nWskaż ryzyka w danych\nPOWIĄZANIA\nBrak powiązań\nOtwórz\nO\nUsuń",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.647437119598766,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "zwornik-projects",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/zwornik-projects__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moja Praca\nProjekty\nProjekty\nProgramy\nWszystkie\n3\nAktywne\n2\nZakończone\n1\nZarchiwizowane\n0\nPROJEKT\n\t\nSTATUS\n\t\nPROGRAM\n\t\nZESPÓŁ\n\t\nINICJATYWY\n\t\nUTWORZONO\n\t\n\n\nAtelier · Digital Readiness\n\t\nAktywne\n\t\n—\n\t\n3\n\t\n2\n\t\n11/06/2026\n\t\n\n\nDBR77 · Scale-Up 2026\n\t\nAktywne\n\t\nTransformacja Operacyjna\n\t\n5\n\t\n4\n\t\n04/05/2026\n\t\n\n\nGrupa · PMO Transformation\n\t\nZakończone\n\t\nTransformacja Operacyjna\n\t\n8\n\t\n6\n\t\n19/03/2026\n\t\nAtelier · Digital Readiness\nAktywne\n3 osób\n2 inicjatyw\n11/06/2026\nSZCZEGÓŁY\n~9 słów\n\nZwornik: rejestr stakeholderów i rollup finansowy projektu (tylko odczyt).\n\nSTAKEHOLDERZY (EFEKTYWNI)\n\nBrak stakeholderów dla tego projektu.\n\nFINANSE (ROLLUP)\nBudżet projektu\nPLN 4,200,000\nΣ budżety inicjatyw (plan)\nPLN 3,850,000\nΣ budżety inicjatyw (rzecz.)\nPLN 1,240,000\nWartość (KPI)\nPLN 9,600,000\nŚr. ROI oczekiwane\n128.5%\nZESPÓŁ\n\nBrak członków zespołu dla tego projektu.\n\nROLE (PRZYPISANIA)\n\nBrak przypisanych ról.\n\nZADANIA\n\nBrak zadań dla tego projektu.\n\nOdśwież",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 248.65573372935955,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "zwornik-projects",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/zwornik-projects__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moja Praca\nProjekty\nProjekty\nProgramy\nWszystkie\n3\nAktywne\n2\nZakończone\n1\nZarchiwizowane\n0\nPROJEKT\n\t\nSTATUS\n\t\nPROGRAM\n\t\nZESPÓŁ\n\t\nINICJATYWY\n\t\nUTWORZONO\n\t\n\n\nAtelier · Digital Readiness\n\t\nAktywne\n\t\n—\n\t\n3\n\t\n2\n\t\n11/06/2026\n\t\n\n\nDBR77 · Scale-Up 2026\n\t\nAktywne\n\t\nTransformacja Operacyjna\n\t\n5\n\t\n4\n\t\n04/05/2026\n\t\n\n\nGrupa · PMO Transformation\n\t\nZakończone\n\t\nTransformacja Operacyjna\n\t\n8\n\t\n6\n\t\n19/03/2026\n\t\nAtelier · Digital Readiness\nAktywne\n3 osób\n2 inicjatyw\n11/06/2026\nSZCZEGÓŁY\n~9 słów\n\nZwornik: rejestr stakeholderów i rollup finansowy projektu (tylko odczyt).\n\nSTAKEHOLDERZY (EFEKTYWNI)\n\nBrak stakeholderów dla tego projektu.\n\nFINANSE (ROLLUP)\nBudżet projektu\nPLN 4,200,000\nΣ budżety inicjatyw (plan)\nPLN 3,850,000\nΣ budżety inicjatyw (rzecz.)\nPLN 1,240,000\nWartość (KPI)\nPLN 9,600,000\nŚr. ROI oczekiwane\n128.5%\nZESPÓŁ\n\nBrak członków zespołu dla tego projektu.\n\nROLE (PRZYPISANIA)\n\nBrak przypisanych ról.\n\nZADANIA\n\nBrak zadań dla tego projektu.\n\nOdśwież",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 22.804603594907405,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "report-builder-block-types",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/report-builder-block-types__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Nowy blok\nWszystkie\n6\nSystem\n3\nOrganizacja\n3\n\t\nBLOK\n\t\nTYP\n\t\nKATEGORIA\n\t\nRENDEROWANIE\n\t\nŹRÓDŁA\n\t\nZAKTUALIZOWANO\n\t\n\n\t\nExecutive Summary\n\t\nSystem\n\t\nTreść\n\t\nMarkdown\n\t\nASSESSMENT\nINITIATIVE\n\t\n1 cze\n\t\n\n\t\nKPI Scorecard\n\t\nSystem\n\t\nDane\n\t\nTabela\n\t\nINITIATIVE\n\t\n20 maj\n\t\n\n\t\nRisk Callout\n\t\nOrganizacja\n\t\nTreść\n\t\nWyróżnienie\n\t\nASSESSMENT\n\t\n5 lip\n\t\n\n\t\nTrend Chart\n\t\nOrganizacja\n\t\nWizualne\n\t\nWykres\n\t\nTOOL\nINITIATIVE\n\t\n11 lip\n\t\n\n\t\nImpact Matrix\n\t\nSystem\n\t\nWizualne\n\t\nMacierz\n\t\nTOOL\n\t\n12 lip\n\t\n\n\t\nRaw Data Export\n\t\nOrganizacja\n\t\nDane\n\t\nJSON\n\t\nASSESSMENT\nTOOL\nINITIATIVE\n\t\n13 lip\n\t\nExecutive Summary\nOtwórz\nSystem\nTreść\nMarkdown\n1 cze\nSZCZEGÓŁY\n~25 słów\n\nHigh-level narrative summary of key findings and recommendations.\n\nŹródła: ASSESSMENT, INITIATIVE\n\nDomyślna długość: medium\n\nDomyślny styl: business\n\nSzablon promptu: Write an executive summary using: {{facts}}",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 248.06128368267744,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "report-builder-block-types",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/report-builder-block-types__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Nowy blok\nWszystkie\n6\nSystem\n3\nOrganizacja\n3\n\t\nBLOK\n\t\nTYP\n\t\nKATEGORIA\n\t\nRENDEROWANIE\n\t\nŹRÓDŁA\n\t\nZAKTUALIZOWANO\n\t\n\n\t\nExecutive Summary\n\t\nSystem\n\t\nTreść\n\t\nMarkdown\n\t\nASSESSMENT\nINITIATIVE\n\t\n1 cze\n\t\n\n\t\nKPI Scorecard\n\t\nSystem\n\t\nDane\n\t\nTabela\n\t\nINITIATIVE\n\t\n20 maj\n\t\n\n\t\nRisk Callout\n\t\nOrganizacja\n\t\nTreść\n\t\nWyróżnienie\n\t\nASSESSMENT\n\t\n5 lip\n\t\n\n\t\nTrend Chart\n\t\nOrganizacja\n\t\nWizualne\n\t\nWykres\n\t\nTOOL\nINITIATIVE\n\t\n11 lip\n\t\n\n\t\nImpact Matrix\n\t\nSystem\n\t\nWizualne\n\t\nMacierz\n\t\nTOOL\n\t\n12 lip\n\t\n\n\t\nRaw Data Export\n\t\nOrganizacja\n\t\nDane\n\t\nJSON\n\t\nASSESSMENT\nTOOL\nINITIATIVE\n\t\n13 lip\n\t\nExecutive Summary\nOtwórz\nSystem\nTreść\nMarkdown\n1 cze\nSZCZEGÓŁY\n~25 słów\n\nHigh-level narrative summary of key findings and recommendations.\n\nŹródła: ASSESSMENT, INITIATIVE\n\nDomyślna długość: medium\n\nDomyślny styl: business\n\nSzablon promptu: Write an executive summary using: {{facts}}",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 26.709075803626543,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "report-builder-templates",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/report-builder-templates__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Nowy szablon\nWszystkie\n5\nSystem\n2\nOrganizacja\n3\n\t\nTYP\n\t\nSZABLON\n\t\nMODUŁ\n\t\nODBIORCA\n\t\nFORMAT\n\t\nUŻYTKOWNIK\n\t\nSEKCJE\n\t\nZAKTUALIZOWANO\n\t\n\n\t\nSystem\n\t\nAssessment Diagnostic — Standard\nStandard diagnostic report for Assessment sourceType.\n\t\nOcena\n\t\nZarząd\n\t\nPionowy\n\t\nSystem\n\t\n2\n\t\n1 cze\n\t\n\n\t\nSystem\n\t\nInterview Debrief\nStructured debrief for stakeholder interviews.\n\t\nWywiad\n\t\nAnalityk\n\t\nPionowy\n\t\nSystem\n\t\n1\n\t\n15 maj\n\t\n\n\t\nOrganizacja\n\t\nBoard Deck — Quarterly\nHorizontal exec deck for board review.\n\t\nInicjatywa\n\t\nZarząd\n\t\nPoziomy\n\t\nPiotr Wiśniewski\n\t\n3\n\t\n10 lip\n\t\n\n\t\nOrganizacja\n\t\nTool Findings — Team Readout\nTeam-facing readout for tool-based diagnostic results.\n\t\nNarzędzie\n\t\nZespół\n\t\nPionowy\n\t\nAnna Kowalska\n\t\n1\n\t\n12 lip\n\t\n\n\t\nOrganizacja\n\t\nClient External Summary\nExternal-facing summary, no internal notes.\n\t\nOcena\n\t\nZewnętrzny\n\t\nPionowy\n\t\nMarek Zieliński\n\t\nBrak sekcji\n\t\n13 lip\n\t\nAssessment Diagnostic — Standard\nSystem\nOcena\nZarząd\n1 cze\nSZCZEGÓŁY\n~11 słów\n\nStandard diagnostic report for Assessment sourceType.\n\nSekcje: 2\n\nUtworzone przez: System\n\nDuplikuj do organizacji",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.71566910127316,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "report-builder-templates",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/report-builder-templates__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Nowy szablon\nWszystkie\n5\nSystem\n2\nOrganizacja\n3\n\t\nTYP\n\t\nSZABLON\n\t\nMODUŁ\n\t\nODBIORCA\n\t\nFORMAT\n\t\nUŻYTKOWNIK\n\t\nSEKCJE\n\t\nZAKTUALIZOWANO\n\t\n\n\t\nSystem\n\t\nAssessment Diagnostic — Standard\nStandard diagnostic report for Assessment sourceType.\n\t\nOcena\n\t\nZarząd\n\t\nPionowy\n\t\nSystem\n\t\n2\n\t\n1 cze\n\t\n\n\t\nSystem\n\t\nInterview Debrief\nStructured debrief for stakeholder interviews.\n\t\nWywiad\n\t\nAnalityk\n\t\nPionowy\n\t\nSystem\n\t\n1\n\t\n15 maj\n\t\n\n\t\nOrganizacja\n\t\nBoard Deck — Quarterly\nHorizontal exec deck for board review.\n\t\nInicjatywa\n\t\nZarząd\n\t\nPoziomy\n\t\nPiotr Wiśniewski\n\t\n3\n\t\n10 lip\n\t\n\n\t\nOrganizacja\n\t\nTool Findings — Team Readout\nTeam-facing readout for tool-based diagnostic results.\n\t\nNarzędzie\n\t\nZespół\n\t\nPionowy\n\t\nAnna Kowalska\n\t\n1\n\t\n12 lip\n\t\n\n\t\nOrganizacja\n\t\nClient External Summary\nExternal-facing summary, no internal notes.\n\t\nOcena\n\t\nZewnętrzny\n\t\nPionowy\n\t\nMarek Zieliński\n\t\nBrak sekcji\n\t\n13 lip\n\t\nAssessment Diagnostic — Standard\nSystem\nOcena\nZarząd\n1 cze\nSZCZEGÓŁY\n~11 słów\n\nStandard diagnostic report for Assessment sourceType.\n\nSekcje: 2\n\nUtworzone przez: System\n\nDuplikuj do organizacji",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.85970320177469,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/results-vnext-registry-shell__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moje\nOrganizacja\nNowy KPI\nWszystkie\n4\nZablokowane\n1\nNie do obliczenia\n1\nUwaga\nNAZWA\n\t\nSTATUS\n\t\nWŁAŚCICIEL\n\t\nWARTOŚĆ\n\t\nZAKTUALIZOWANO\n\t\n\n\nOEE linii pakowania\n\t\nW przeglądzie\n\t\nAnna Kowalska\n\t\n74 %\n\t\n2026-08-08\n\t\n\n\nRedukcja kosztów pracy (zdegenerowana baza odniesienia)\n\t\nZatwierdzony\n\t\nPiotr Wiśniewski\n\t\nN/A\n\t\n2026-08-05\n\t\n\n\nPokrycie audytu dostawców\n\t\nSzkic\n\t\nTomasz Nowak\n\t\n—\n\t\n2026-08-01\n\t\n\n\nCzas cyklu zamknięcia miesiąca\n\t\nZamknięty\n\t\nAnna Kowalska\n\t\n5 dni\n\t\n2026-07-30\n\t\nOEE linii pakowania\nOtwórz\nW przeglądzie\nRejestr KPI\n2026-08-08\nRekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.\nSZCZEGÓŁY\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalska\nWartość bieżąca\t74\nStatus\tW przeglądzie\nAI\nPodsumuj rekord\nZaproponuj kolejne kroki\nPOWIĄZANIA\nBrak powiązań\nZatwierdź\nDeleguj",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.98073870910494,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/results-vnext-registry-shell__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Moje\nOrganizacja\nNowy KPI\nWszystkie\n4\nZablokowane\n1\nNie do obliczenia\n1\nUwaga\nNAZWA\n\t\nSTATUS\n\t\nWŁAŚCICIEL\n\t\nWARTOŚĆ\n\t\nZAKTUALIZOWANO\n\t\n\n\nOEE linii pakowania\n\t\nW przeglądzie\n\t\nAnna Kowalska\n\t\n74 %\n\t\n2026-08-08\n\t\n\n\nRedukcja kosztów pracy (zdegenerowana baza odniesienia)\n\t\nZatwierdzony\n\t\nPiotr Wiśniewski\n\t\nN/A\n\t\n2026-08-05\n\t\n\n\nPokrycie audytu dostawców\n\t\nSzkic\n\t\nTomasz Nowak\n\t\n—\n\t\n2026-08-01\n\t\n\n\nCzas cyklu zamknięcia miesiąca\n\t\nZamknięty\n\t\nAnna Kowalska\n\t\n5 dni\n\t\n2026-07-30\n\t\nOEE linii pakowania\nOtwórz\nW przeglądzie\nRejestr KPI\n2026-08-08\nRekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.\nSZCZEGÓŁY\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalska\nWartość bieżąca\t74\nStatus\tW przeglądzie\nAI\nPodsumuj rekord\nZaproponuj kolejne kroki\nPOWIĄZANIA\nBrak powiązań\nZatwierdź\nDeleguj",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 23.437754792245368,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/results-vnext-attention__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "KPI\nOKR\nBrak właściciela\n2\nZaległe obowiązki\n1\nPowtarzające się odchylenia\n1\nNieskuteczne działania korygujące\n1\nObciążenie właścicieli\n2\nPokrycie procesów\n2\nRozkład wyników\n1\nKOD KPI\n\n\nDPMO-002\n\n\nDWT-003\nDPMO-002\nBrak właściciela\nSZCZEGÓŁY\nWłaściwość\tWartość\nKod KPI\tDPMO-002\nAI\nPOWIĄZANIA\nBrak powiązań\nOtwórz KPI",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 249.70236535570987,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/results-vnext-attention__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "KPI\nOKR\nBrak właściciela\n2\nZaległe obowiązki\n1\nPowtarzające się odchylenia\n1\nNieskuteczne działania korygujące\n1\nObciążenie właścicieli\n2\nPokrycie procesów\n2\nRozkład wyników\n1\nKOD KPI\n\n\nDPMO-002\n\n\nDWT-003\nDPMO-002\nBrak właściciela\nSZCZEGÓŁY\nWłaściwość\tWartość\nKod KPI\tDPMO-002\nAI\nPOWIĄZANIA\nBrak powiązań\nOtwórz KPI",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 20.55692227469136,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "model-catalog-table",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/model-catalog-table__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 942,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Katalog modeli\n\nWszystkie zarejestrowane modele tekstowe, obrazu i biznesowe\n\nTotal\n6\nActive\n4\nModel tekstowy\n4\nModel obrazu\n1\nModel biznesowy\n1\nDodaj model\nWszystkie\n6\nModel tekstowy\n4\nModel obrazu\n1\nModel biznesowy\n1\nNAME\n\t\nPROVIDER\n\t\nKIND\n\t\nSTATUS\n\t\nHEALTH\n\t\nCAPABILITIES\n\t\nREGIONS\n\t\nCOST/1K\n\t\nLATENCY\n\t\n\n\nGPT-4o\ngpt-4o\n\t\nOpenAI\ndirect\n\t\nModel tekstowy\n\t\nActive\n\t\nhealthy\n\t\n128K ctx\n\t\nus-east\neu-west\n\t\n$0.0050\n\t\n850ms\n\t\n\n\nClaude Sonnet\nclaude-sonnet-4-5\n\t\nAnthropic\ndirect\n\t\nModel tekstowy\n\t\nActive\n\t\nhealthy\n\t\n200K ctx\n\t\nus-east\n\t\n$0.0030\n\t\n620ms\n\t\n\n\nGLM-4.6 (fallback)\nglm-4.6\n\t\nZhipu via OpenRouter\naggregator\n\t\nModel tekstowy\n\t\nInactive\n\t\ndegraded\nRate limit 429\n\t\n128K ctx\n\t\nus-east\n\t\n$0.0009\n\t\n3.4s\n\t\n\n\nDALL-E 3\ndall-e-3\n\t\nOpenAI\ndirect\n\t\nModel obrazu\n\t\nActive\n\t\nhealthy\n\t\n\t\nus-east\n\t\n$0.0400\n\t\n4.2s\n\t\n\n\nLocal Llama (on-prem)\nllama-3.1-70b\n\t\nSelf-hosted\nlocal\n\t\nModel tekstowy\n\t\nInactive\n\t\nunhealthy\nNetwork 503\n\t\n32K ctx\n\t\n\t\n—\n\t\n—\n\t\n\n\nLean Suggestions Engine\nbusiness-lean-v2\n\t\nCustomer VPC\ncustomer managed\n\t\nModel biznesowy\n\t\nActive\n\t\nunknown\n\t\n16K ctx\n\t\neu-west\n\t\n$0.0010\n\t\n1.2s\n\t\nGPT-4o\nOtwórz\nTEXT_LLM\ndirect\nActive\nhealthy\nSZCZEGÓŁY\n~15 słów\n\nModel ID: gpt-4o\n\nProvider: OpenAI\n\nCost/1k: $0.0050\n\nLatency: 850ms\n\nContext window: 128K\n\nRegions: us-east, eu-west\n\nDeactivate\nTest Connection\nDelete",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 247.189214603975,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "model-catalog-table",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/model-catalog-table__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 942,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Katalog modeli\n\nWszystkie zarejestrowane modele tekstowe, obrazu i biznesowe\n\nTotal\n6\nActive\n4\nModel tekstowy\n4\nModel obrazu\n1\nModel biznesowy\n1\nDodaj model\nWszystkie\n6\nModel tekstowy\n4\nModel obrazu\n1\nModel biznesowy\n1\nNAME\n\t\nPROVIDER\n\t\nKIND\n\t\nSTATUS\n\t\nHEALTH\n\t\nCAPABILITIES\n\t\nREGIONS\n\t\nCOST/1K\n\t\nLATENCY\n\t\n\n\nGPT-4o\ngpt-4o\n\t\nOpenAI\ndirect\n\t\nModel tekstowy\n\t\nActive\n\t\nhealthy\n\t\n128K ctx\n\t\nus-east\neu-west\n\t\n$0.0050\n\t\n850ms\n\t\n\n\nClaude Sonnet\nclaude-sonnet-4-5\n\t\nAnthropic\ndirect\n\t\nModel tekstowy\n\t\nActive\n\t\nhealthy\n\t\n200K ctx\n\t\nus-east\n\t\n$0.0030\n\t\n620ms\n\t\n\n\nGLM-4.6 (fallback)\nglm-4.6\n\t\nZhipu via OpenRouter\naggregator\n\t\nModel tekstowy\n\t\nInactive\n\t\ndegraded\nRate limit 429\n\t\n128K ctx\n\t\nus-east\n\t\n$0.0009\n\t\n3.4s\n\t\n\n\nDALL-E 3\ndall-e-3\n\t\nOpenAI\ndirect\n\t\nModel obrazu\n\t\nActive\n\t\nhealthy\n\t\n\t\nus-east\n\t\n$0.0400\n\t\n4.2s\n\t\n\n\nLocal Llama (on-prem)\nllama-3.1-70b\n\t\nSelf-hosted\nlocal\n\t\nModel tekstowy\n\t\nInactive\n\t\nunhealthy\nNetwork 503\n\t\n32K ctx\n\t\n\t\n—\n\t\n—\n\t\n\n\nLean Suggestions Engine\nbusiness-lean-v2\n\t\nCustomer VPC\ncustomer managed\n\t\nModel biznesowy\n\t\nActive\n\t\nunknown\n\t\n16K ctx\n\t\neu-west\n\t\n$0.0010\n\t\n1.2s\n\t\nGPT-4o\nOtwórz\nTEXT_LLM\ndirect\nActive\nhealthy\nSZCZEGÓŁY\n~15 słów\n\nModel ID: gpt-4o\n\nProvider: OpenAI\n\nCost/1k: $0.0050\n\nLatency: 850ms\n\nContext window: 128K\n\nRegions: us-east, eu-west\n\nDeactivate\nTest Connection\nDelete",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.185681027180646,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "drd-library-entry",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/drd-library-entry__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nWszystkie metodyki\n5\nTransformacja cyfrowa\n1\nInteligentna produkcja\n1\nProdukcja cyfrowa\n1\nZdolność procesowa\n1\nLean i automatyzacja\n1\nAktywne\n1\nSzkice\n4\nAI Triage\nNAZWA METODYKI\n\t\nOBSZAR\n\t\nOPIS W JEDNYM ZDANIU\n\t\nLICZBA PYTAŃ\n\t\nCZAS TRWANIA\n\t\nSTATUS\n\t\nOSTATNIO UŻYTA\n\t\n\n\nAdvanced Digital Maturity Assessment\nADMA\n\t\nProdukcja cyfrowa\n\t\nRozszerzony model dojrzałości cyfrowej w wymiarach procesowych.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nCapability Maturity Model Integration\nCMMI\n\t\nZdolność procesowa\n\t\nModel dojrzałości i zdolności procesowych organizacji.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nDigital Readiness Diagnosis\nDRD\n\t\nTransformacja cyfrowa\n\t\nOcena dojrzałości cyfrowej w 5 osiach, obszar po obszarze.\n\t\n699\n\t\n—\n\t\nAktywna\n\t\n—\n\t\n\n\nLean 4.0\nLEAN\n\t\nLean i automatyzacja\n\t\nOcena dojrzałości Lean w produkcji.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nSmart Industry Readiness Index\nSIRI\n\t\nInteligentna produkcja\n\t\nSingapurskie ramy dojrzałości Przemysłu 4.0 (SIRI).\n\t\n0\n\t\n—\n\t\nSzkic\n\t\n—\n\t\nAdvanced Digital Maturity Assessment\nADMA\nPlanowane\nSZCZEGÓŁY\n~65 słów\n\nRozszerzony model dojrzałości cyfrowej w wymiarach procesowych.\n\n• Widok pięciu filarów dojrzałości • Struktura oceny na poziomie wymiarów • Kontekst edukacyjny metodyki\n\nOsie i obszary: • Strategy & Organization • Smart Products • Smart Operations • Smart Supply Chain • Data-Driven Services\n\nADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.\n\nWłaściwość\tWartość\nObszar\tProdukcja cyfrowa\nDostęp\tWiedza dostępna; uruchomienie wkrótce\nWarunki komercyjne\tNie skonfigurowano w katalogu",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 245.13898610165896,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "drd-library-entry",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/drd-library-entry__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nWszystkie metodyki\n5\nTransformacja cyfrowa\n1\nInteligentna produkcja\n1\nProdukcja cyfrowa\n1\nZdolność procesowa\n1\nLean i automatyzacja\n1\nAktywne\n1\nSzkice\n4\nAI Triage\nNAZWA METODYKI\n\t\nOBSZAR\n\t\nOPIS W JEDNYM ZDANIU\n\t\nLICZBA PYTAŃ\n\t\nCZAS TRWANIA\n\t\nSTATUS\n\t\nOSTATNIO UŻYTA\n\t\n\n\nAdvanced Digital Maturity Assessment\nADMA\n\t\nProdukcja cyfrowa\n\t\nRozszerzony model dojrzałości cyfrowej w wymiarach procesowych.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nCapability Maturity Model Integration\nCMMI\n\t\nZdolność procesowa\n\t\nModel dojrzałości i zdolności procesowych organizacji.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nDigital Readiness Diagnosis\nDRD\n\t\nTransformacja cyfrowa\n\t\nOcena dojrzałości cyfrowej w 5 osiach, obszar po obszarze.\n\t\n699\n\t\n—\n\t\nAktywna\n\t\n—\n\t\n\n\nLean 4.0\nLEAN\n\t\nLean i automatyzacja\n\t\nOcena dojrzałości Lean w produkcji.\n\t\n—\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n\n\nSmart Industry Readiness Index\nSIRI\n\t\nInteligentna produkcja\n\t\nSingapurskie ramy dojrzałości Przemysłu 4.0 (SIRI).\n\t\n0\n\t\n—\n\t\nSzkic\n\t\n—\n\t\nAdvanced Digital Maturity Assessment\nADMA\nPlanowane\nSZCZEGÓŁY\n~65 słów\n\nRozszerzony model dojrzałości cyfrowej w wymiarach procesowych.\n\n• Widok pięciu filarów dojrzałości • Struktura oceny na poziomie wymiarów • Kontekst edukacyjny metodyki\n\nOsie i obszary: • Strategy & Organization • Smart Products • Smart Operations • Smart Supply Chain • Data-Driven Services\n\nADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.\n\nWłaściwość\tWartość\nObszar\tProdukcja cyfrowa\nDostęp\tWiedza dostępna; uruchomienie wkrótce\nWarunki komercyjne\tNie skonfigurowano w katalogu",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 29.449139032600307,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "prompt-registry-tab",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/prompt-registry-tab__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "All\n11\nOK\n6\nDrifted\n2\nUnverifiable\n3\nID\n\t\nMODULE\n\t\nVERSION\n\t\nOWNER\n\t\nLAST REVIEWED\n\t\nCHECKSUM\n\t\n\n\npersona-core\n\t\npersona\n\t\n3.2.0\n\t\ncontent-quality\n\t\n2026-06-20\n\t\nOK\n\t\n\n\npersona-challenge-mode\n\t\npersona\n\t\n1.4.0\n\t\ncontent-quality\n\t\n2026-05-02\n\t\nDrifted\n\t\n\n\ninitiative-card-formula-a3-full\n\t\ninitiative-generation\n\t\n2.1.0\n\t\ninitiatives\n\t\n2026-07-10\n\t\nOK\n\t\n\n\ninitiative-card-formula-a3-lite\n\t\ninitiative-generation\n\t\n2.1.0\n\t\ninitiatives\n\t\n2026-07-10\n\t\nOK\n\t\n\n\ninitiative-mece-check\n\t\ninitiative-generation\n\t\n1.0.0\n\t\ninitiatives\n\t\n2026-04-11\n\t\nUnverifiable\n\t\n\n\ndeliverables-doc-outline\n\t\ndeliverables-doc\n\t\n1.6.0\n\t\ndeliverables\n\t\n2026-06-01\n\t\nOK\n\t\n\n\ndeliverables-doc-section\n\t\ndeliverables-doc\n\t\n1.6.0\n\t\ndeliverables\n\t\n2026-06-01\n\t\nOK\n\t\n\n\ndeliverables-sheet-formula-notes\n\t\ndeliverables-sheet\n\t\n1.0.0\n\t\ndeliverables\n\t\n2026-03-15\n\t\nUnverifiable\n\t\n\n\ndiscovery-tools-swot\n\t\ndiscovery-tools\n\t\n1.2.0\n\t\ndiscovery\n\t\n2026-05-20\n\t\nOK\n\t\n\n\ndiscovery-tools-porters-five\n\t\ndiscovery-tools\n\t\n1.1.0\n\t\ndiscovery\n\t\n2026-05-20\n\t\nDrifted\n\t\n\n\nv8-prompt-os-router\n\t\nv8-prompt-os\n\t\n4.0.0\n\t\nv8-platform\n\t\n2026-07-01\n\t\nUnverifiable\n\t\npersona-core\npersona\ncontent-quality\nOK\nv3.2.0\nSZCZEGÓŁY\n~19 słów\n\nTeresa's core identity, response contract, challenge mode.\n\nSource: server/src/ai/persona.ts#PERSONA_CORE\n\nLanguages: pl, en\n\nLast reviewed: 2026-06-20\n\nManaged (centralized template): yes",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 248.86044101022375,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "prompt-registry-tab",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/prompt-registry-tab__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "All\n11\nOK\n6\nDrifted\n2\nUnverifiable\n3\nID\n\t\nMODULE\n\t\nVERSION\n\t\nOWNER\n\t\nLAST REVIEWED\n\t\nCHECKSUM\n\t\n\n\npersona-core\n\t\npersona\n\t\n3.2.0\n\t\ncontent-quality\n\t\n2026-06-20\n\t\nOK\n\t\n\n\npersona-challenge-mode\n\t\npersona\n\t\n1.4.0\n\t\ncontent-quality\n\t\n2026-05-02\n\t\nDrifted\n\t\n\n\ninitiative-card-formula-a3-full\n\t\ninitiative-generation\n\t\n2.1.0\n\t\ninitiatives\n\t\n2026-07-10\n\t\nOK\n\t\n\n\ninitiative-card-formula-a3-lite\n\t\ninitiative-generation\n\t\n2.1.0\n\t\ninitiatives\n\t\n2026-07-10\n\t\nOK\n\t\n\n\ninitiative-mece-check\n\t\ninitiative-generation\n\t\n1.0.0\n\t\ninitiatives\n\t\n2026-04-11\n\t\nUnverifiable\n\t\n\n\ndeliverables-doc-outline\n\t\ndeliverables-doc\n\t\n1.6.0\n\t\ndeliverables\n\t\n2026-06-01\n\t\nOK\n\t\n\n\ndeliverables-doc-section\n\t\ndeliverables-doc\n\t\n1.6.0\n\t\ndeliverables\n\t\n2026-06-01\n\t\nOK\n\t\n\n\ndeliverables-sheet-formula-notes\n\t\ndeliverables-sheet\n\t\n1.0.0\n\t\ndeliverables\n\t\n2026-03-15\n\t\nUnverifiable\n\t\n\n\ndiscovery-tools-swot\n\t\ndiscovery-tools\n\t\n1.2.0\n\t\ndiscovery\n\t\n2026-05-20\n\t\nOK\n\t\n\n\ndiscovery-tools-porters-five\n\t\ndiscovery-tools\n\t\n1.1.0\n\t\ndiscovery\n\t\n2026-05-20\n\t\nDrifted\n\t\n\n\nv8-prompt-os-router\n\t\nv8-prompt-os\n\t\n4.0.0\n\t\nv8-platform\n\t\n2026-07-01\n\t\nUnverifiable\n\t\npersona-core\npersona\ncontent-quality\nOK\nv3.2.0\nSZCZEGÓŁY\n~19 słów\n\nTeresa's core identity, response contract, challenge mode.\n\nSource: server/src/ai/persona.ts#PERSONA_CORE\n\nLanguages: pl, en\n\nLast reviewed: 2026-06-20\n\nManaged (centralized template): yes",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 24.214985371334876,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "partner-settlements-view",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/partner-settlements-view__PRZED__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Rozliczenia z partnerami\n\nPrzegląd historycznej ekonomii partnerów\n\nOdśwież\n\nEkonomia partnerów jest tylko do odczytu\n\nZmiany prowizji, atrybucji, naliczeń i wypłat są niedostępne pod AMD-PRT-ECONOMICS-002.\n\nProwizje oczekujące\n\n12\n\n€4,820.5 łącznie\n\nWypłaty oczekujące\n\n3\n\n€15,200 łącznie\n\nProwizje w tym miesiącu\n\n€9,840.25\n\nWypłaty w tym miesiącu\n\n€21,500\n\nProwizje oczekujące\nWypłaty oczekujące\nMenedżer atrybucji\nWygasające\nAnalityka kodów\n\t\nPARTNER\n\t\nKLIENT\n\t\nTYP\n\t\nKWOTA\n\t\nPROWIZJA\n\t\nDATA\n\t\n\n\t\nNordic Consulting Group\n\t\nAtelier Toys AB\n\t\nSubscription\n\t\n€2,400\n\t\n€360(15%)\n\t\n2026-07-10\n\t\n\n\t\nDBR77 Partners\n\t\nManufacturing Co.\n\t\nOne Time\n\t\n€890\n\t\n€89(10%)\n\t\n2026-07-12\n\t\n\n\t\nNordic Consulting Group\n\t\nRetail SA\n\t\nSubscription\n\t\n€1,500\n\t\n€225(15%)\n\t\n2026-07-13\n\t\nNordic Consulting Group\nsubscription\nOczekujące\n2026-07-10\nSZCZEGÓŁY\n~10 słów\n\nKlient: Atelier Toys AB\n\nKwota brutto: €2,400\n\nProwizja: €360 (15%)",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 245.81134254976854,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "partner-settlements-view",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/core/partner-settlements-view__PRZED__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 0,
+      "bledyKonsoli": [],
+      "httpBledy": [],
+      "tekst": "Rozliczenia z partnerami\n\nPrzegląd historycznej ekonomii partnerów\n\nOdśwież\n\nEkonomia partnerów jest tylko do odczytu\n\nZmiany prowizji, atrybucji, naliczeń i wypłat są niedostępne pod AMD-PRT-ECONOMICS-002.\n\nProwizje oczekujące\n\n12\n\n€4,820.5 łącznie\n\nWypłaty oczekujące\n\n3\n\n€15,200 łącznie\n\nProwizje w tym miesiącu\n\n€9,840.25\n\nWypłaty w tym miesiącu\n\n€21,500\n\nProwizje oczekujące\nWypłaty oczekujące\nMenedżer atrybucji\nWygasające\nAnalityka kodów\n\t\nPARTNER\n\t\nKLIENT\n\t\nTYP\n\t\nKWOTA\n\t\nPROWIZJA\n\t\nDATA\n\t\n\n\t\nNordic Consulting Group\n\t\nAtelier Toys AB\n\t\nSubscription\n\t\n€2,400\n\t\n€360(15%)\n\t\n2026-07-10\n\t\n\n\t\nDBR77 Partners\n\t\nManufacturing Co.\n\t\nOne Time\n\t\n€890\n\t\n€89(10%)\n\t\n2026-07-12\n\t\n\n\t\nNordic Consulting Group\n\t\nRetail SA\n\t\nSubscription\n\t\n€1,500\n\t\n€225(15%)\n\t\n2026-07-13\n\t\nNordic Consulting Group\nsubscription\nOczekujące\n2026-07-10\nSZCZEGÓŁY\n~10 słów\n\nKlient: Atelier Toys AB\n\nKwota brutto: €2,400\n\nProwizja: €360 (15%)",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 25.562077589313272,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 0,
+          "teksty": []
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": null,
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "finance-hub",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "finance-hub",
+      "roznicaLuminancji": 221.62307903819445,
+      "procentRoznychPikseli": 99.99359567901234,
+      "powod": null
+    },
+    {
+      "ekran": "zwornik-projects",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "zwornik-projects",
+      "roznicaLuminancji": 225.85113013445215,
+      "procentRoznychPikseli": 99.99936342592592,
+      "powod": null
+    },
+    {
+      "ekran": "report-builder-block-types",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "report-builder-block-types",
+      "roznicaLuminancji": 221.3522078790509,
+      "procentRoznychPikseli": 99.99820601851852,
+      "powod": null
+    },
+    {
+      "ekran": "report-builder-templates",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "report-builder-templates",
+      "roznicaLuminancji": 221.85596589949847,
+      "procentRoznychPikseli": 99.98065200617285,
+      "powod": null
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "results-vnext-registry-shell",
+      "roznicaLuminancji": 224.54298391685958,
+      "procentRoznychPikseli": 99.99936342592592,
+      "powod": null
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "results-vnext-attention",
+      "roznicaLuminancji": 229.14544308101853,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    },
+    {
+      "ekran": "model-catalog-table",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "model-catalog-table",
+      "roznicaLuminancji": 222.00353357679435,
+      "procentRoznychPikseli": 99.97812352559566,
+      "powod": null
+    },
+    {
+      "ekran": "drd-library-entry",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "drd-library-entry",
+      "roznicaLuminancji": 215.68984706905866,
+      "procentRoznychPikseli": 99.99876543209876,
+      "powod": null
+    },
+    {
+      "ekran": "prompt-registry-tab",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "prompt-registry-tab",
+      "roznicaLuminancji": 224.64545563888888,
+      "procentRoznychPikseli": 99.99600694444445,
+      "powod": null
+    },
+    {
+      "ekran": "partner-settlements-view",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "partner-settlements-view",
+      "roznicaLuminancji": 220.24926496045526,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "wynikSelektor": [
+    "[data-preview-block=\"details\"]"
+  ],
+  "wyniki": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "light",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-outputs/audyty-piec-powierzchni__PO__pl__1440__light.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nTYTUŁ\n\t\nSTATUS\n\t\nWERSJA\n\t\nWERSJA PAKIETU\n\t\nDATA FINALIZACJI\n\t\nKTO\n\t\n\n\nWynik audytu QMS 2025 — Grupa Metalplast (v1)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nZastąpiony\n\t\n1\n\t\nv3\n\t\n15/12/2025\n\t\nAleksandra Dąbrowska\n\t\n\n\nWynik audytu QMS 2025 — Grupa Metalplast (v2, korekta redakcyjna)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nAktualny\n\t\n2\n\t\nv3\n\t\n18/12/2025\n\t\nAleksandra Dąbrowska\n\t\nWynik audytu QMS 2025 — Grupa Metalplast (v1)\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nWersja\t1\nWersja pakietu\tv3\nData finalizacji\t15/12/2025\nKto\tAleksandra Dąbrowska\nStatus\tZastąpiony nowszą wersją\nHash treści\ta13f9c2e7b40\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 246.9042893657407,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "motyw": "dark",
+      "plik": "/private/tmp/cx-day352-preview-20-ekranow/evidence/podglad-relations-20260904/audyt-outputs/audyty-piec-powierzchni__PO__pl__1440__dark.png",
+      "szer": 1440,
+      "wys": 900,
+      "bledy": 3,
+      "bledyKonsoli": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:5551/@fs/private/tmp/cx-day352-preview-20-ekranow/src/contexts/OrgContext.tsx:65:15",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpBledy": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/organizations/current"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:5551/api/v8/admin/flags"
+        }
+      ],
+      "tekst": "Biblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nTYTUŁ\n\t\nSTATUS\n\t\nWERSJA\n\t\nWERSJA PAKIETU\n\t\nDATA FINALIZACJI\n\t\nKTO\n\t\n\n\nWynik audytu QMS 2025 — Grupa Metalplast (v1)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nZastąpiony\n\t\n1\n\t\nv3\n\t\n15/12/2025\n\t\nAleksandra Dąbrowska\n\t\n\n\nWynik audytu QMS 2025 — Grupa Metalplast (v2, korekta redakcyjna)\nGrupa Metalplast — Audyt QMS 2025 (zamknięty)\n\t\nAktualny\n\t\n2\n\t\nv3\n\t\n18/12/2025\n\t\nAleksandra Dąbrowska\n\t\nWynik audytu QMS 2025 — Grupa Metalplast (v1)\nSZCZEGÓŁY\nWłaściwość\tWartość\nProgram\tGrupa Metalplast — Audyt QMS 2025 (zamknięty)\nWersja\t1\nWersja pakietu\tv3\nData finalizacji\t15/12/2025\nKto\tAleksandra Dąbrowska\nStatus\tZastąpiony nowszą wersją\nHash treści\ta13f9c2e7b40\nPOWIĄZANIA\nBrak powiązań",
+      "wynikSelektor": [
+        "[data-preview-block=\"details\"]"
+      ],
+      "hasResultMarker": true,
+      "obrazJasnosc": 22.878701699845678,
+      "zliczenia": [
+        {
+          "nazwa": "puste",
+          "css": "[data-relations-empty]",
+          "ile": 1,
+          "teksty": [
+            "Brak powiązań"
+          ]
+        },
+        {
+          "nazwa": "pigulki",
+          "css": "[data-preview-block=\"relations\"] button",
+          "ile": 0,
+          "teksty": []
+        }
+      ],
+      "wysokoscPomiar": {
+        "selector": "[data-preview-block=\"relations\"]",
+        "wysokoscPx": 107
+      },
+      "sekcjeRozwiniete": 0,
+      "sekcjeNadalZwiniete": [],
+      "status": "OK",
+      "podgladDomyslnyProbowany": false,
+      "podgladDomyslnyBrak": false
+    }
+  ],
+  "pary": [
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "ok": true,
+      "reasons": []
+    },
+    {
+      "ekran": "audyty-piec-powierzchni",
+      "roznicaLuminancji": 224.02558766589505,
+      "procentRoznychPikseli": 100,
+      "powod": null
+    }
+  ]
+}
