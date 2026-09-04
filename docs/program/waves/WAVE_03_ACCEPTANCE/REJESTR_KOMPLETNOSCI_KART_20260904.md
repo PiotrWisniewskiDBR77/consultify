@@ -245,3 +245,14 @@ Reguła prostego przecięcia id przed zmianą dała **17** braków, ponieważ bo
 Jawna mapa 24/24: `initiativeCardContract.ts:779`; pomiar po zmianie: `board=24`, `mapped=24`, `cards=36`, `missing=[]`. Osiem par kluczy etykiet było już obecnych pod `initiatives.*`; brakujący klucz `initiatives.okr` dopisano równolegle w PL i EN. Liście i18n po zmianie: PL **35199**, EN **33066** — żaden mianownik nie zmalał.
 
 Test `initiativeBoardDescriptors.day343.test.ts` jest GREEN 3/3. Kontrolne usunięcie `LESSONS_LEARNED` z katalogu dało RED z komunikatem `brak nowej karty kanonicznej: lessons-learned`; po cofnięciu przez `cp` wróciło GREEN 3/3.
+
+## Dyżur 343 — R5: para odbiorowa OFF/ON
+
+Ten sam realny rekord harnessu `init-smed-linia-pakowania`, niepusty szablon `tpl-quick-win`, pełne dane, motyw jasny, viewport 1440×900. Flaga była sterowana finalnym wejściem produktu `?ff_initiative_sections_complete=0|1`; w obu świeżych kontekstach `localStorage["ff.initiative.sections_complete"]` pozostał `null`.
+
+| Stan | Pozycje / grupy z DOM | Rozwinięte sekcje prawego panelu | Błędy konsoli / HTTP | Średnia jasność | SHA-256 |
+| --- | --- | ---: | --- | ---: | --- |
+| OFF | 6 / 3 | 5 | 0 / 0 | 243.2951538771219 | `189d6f3c1d680ada28a0c40a3f51e023cf89e544d3237125ad9b3c6523a1decb` |
+| ON | 24 / 5 | 5 | 0 / 0 | 242.91789594675924 | `0cf20b0033fc277ddc01f28fbcb37f39839450163a902ee3c62dfcffb4458602` |
+
+Pliki: `/private/tmp/cx-day343-dec388-domkniecie-artefakty/r5/karta-initiative__{PRZED,PO}__pl__1440__light.png`; metadane: `r5-off.json`, `r5-on.json`. Sumy są różne, więc para nie jest bajtowym duplikatem. Kontrolki harnessu nie weszły w kadr; aktywna sekcja „Zakres inicjatywy” ma realną, rozwiniętą treść, a pięć zwiniętych sekcji panelu artefaktu rozwinięto przed skanem i zrzutem. Flaga kończy dyżur domyślnie OFF.
