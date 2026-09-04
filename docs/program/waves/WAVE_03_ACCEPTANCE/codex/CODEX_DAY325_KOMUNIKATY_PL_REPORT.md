@@ -168,8 +168,48 @@ Liście słowników po zmianie: PL 35198, EN 33065 — bez spadku i bez modyfika
 Artefakty i sumy SHA-256 znajdują się w
 `/private/tmp/cx-day325-komunikaty-pl-artefakty/SHA256SUMS`.
 
+## R4 — 203 konstrukcje `new AppError`
+
+Parser zbilansowanych nawiasów odczytał trzeci argument każdej z 203 konstrukcji poza
+`__tests__`. Wynik statycznie rozstrzygalny względem czterech kodów `OPERATIONAL_MESSAGES`:
+
+- 1 wywołanie: kod słownikowy `ERROR_CODES.NOT_FOUND`;
+- 202 wywołania: brak kodu słownikowego albo kod spoza słownika;
+- największa rodzina: 138 wywołań bez jawnego trzeciego argumentu (domyślny
+  `INTERNAL_ERROR`), reprezentant `server/src/controllers/SuperAdminController.ts:199`;
+- następna rodzina: 29 literalnych `FEATURE_UNAVAILABLE` i 5 przez stałą
+  `FEATURE_UNAVAILABLE_CODE`.
+
+Werdykt: centralna zmiana R3 chroni front przed zamianą dostarczonego tekstu na komunikat awarii,
+ale nie tłumaczy 202 komunikatów serwera. R1 pozostaje kierunkiem docelowym, lecz słownik serwera
+ma policzony dług. Test `DAY325 pomiar AppError bez kodu słownika` jest zielony i dowodzi aktualnego
+zachowania: `Accept-Language: pl` + `new AppError('Failed to fetch organizations', 500)` daje
+`errorCode=INTERNAL_ERROR` oraz surowy angielski tekst.
+
+Gotowy diff nienałożony dla reprezentanta największej rodziny (wymaga osobnej licencji na
+kontroler oraz rozszerzenia słownika mappera w jednym commicie):
+
+```diff
+-return next(new AppError('Failed to fetch organizations', 500));
++return next(new AppError('Failed to fetch organizations', 500, 'ORGANIZATIONS_FETCH_FAILED'));
+
+ const OPERATIONAL_MESSAGES = {
+   pl: {
++    ORGANIZATIONS_FETCH_FAILED: 'Nie udało się pobrać listy organizacji.',
+   },
+   en: {
++    ORGANIZATIONS_FETCH_FAILED: 'Failed to fetch organizations.',
+   },
+ };
+```
+
+Pakiet R4 jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`), nie przechodzi przez bramki
+(a)–(d) ani przez HTTP; mierzy wyłącznie gałąź mappera dla operacyjnego AppError bez kodu.
+
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - R2 pozostaje celowo czerwony i kod produkcyjny R2 nie został zmieniony z powodu granicy licencji.
 - Pełny typecheck jest `NOT_PROVEN`: proces Node rozbił się z braku pamięci.
-- R4–R6 nie są jeszcze zweryfikowane na etapie commitu R3.
+- Nie rozstrzygnięto dynamicznie wszystkich kodów przekazywanych w trzecim argumencie `AppError`;
+  klasyfikacja R4 jest statyczna i jawnie wydziela wyrażenia dynamiczne.
+- R5–R6 nie są jeszcze zamknięte na etapie commitu R4.

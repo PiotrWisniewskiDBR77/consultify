@@ -10,3 +10,9 @@
 Na markerze zmierzono 106 wywołań `mapAppErrorResponse(..., undefined, ...)`. Żadnego nie zmieniono,
 ponieważ helpery dwóch wskazanych tras nie przyjmują `req`, a licencja nie obejmuje zmiany ich
 sygnatur ani call-site'ów. Trasy bez pełnych par dowodowych pozostają niezmienione.
+
+## Dług `AppError`
+
+203 konstrukcje poza testami: 1 ze statycznie rozpoznanym kodem obecnym w słowniku operacyjnym,
+202 bez takiego kodu. Największa rodzina: 138 bez jawnego trzeciego argumentu, następnie 34
+przypadki rodziny `FEATURE_UNAVAILABLE` (29 literałów + 5 przez stałą).
