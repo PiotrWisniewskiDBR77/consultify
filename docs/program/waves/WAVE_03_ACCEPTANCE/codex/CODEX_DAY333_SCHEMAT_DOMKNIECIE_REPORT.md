@@ -25,9 +25,19 @@ Harness zamontował `ApiGateway.getInstance().initializeRoutes(app)` na `127.0.0
 
 Artefakty: `/private/tmp/cx-day333-schemat-domkniecie-artefakty/r1-api-gateway.txt`, `b-tabele.txt`, `b-minus-a.txt`.
 
+## R2 — klasyfikacja `073_conversations.sql`
+
+Pomiar mutacyjny na kopii migracji poza repo:
+
+- bez `073_conversations.sql`: runner zgłosił 892 migracje, nie utworzył `conversations` i zatrzymał się na `515_team_chat_projects.sql` z `relation "conversations" does not exist`;
+- z przywróconym `073_conversations.sql`: runner wykonał 893 migracje, zakończył sukcesem, a `to_regclass('public.conversations')` zwrócił `conversations`.
+
+Wynik jest silniejszy niż samo odczytanie predykatu: plik jest koniecznym, rzeczywiście wykonywanym producentem. W rejestrze zmieniono wyłącznie jego status na `PROMOWANA_URUCHAMIANA`. Artefakty: `r2-bez-073.txt`, `r2-bez-073-result.txt`, `r2-z-073.txt`, `r2-z-073-result.txt`.
+
 ## Korekty wobec instrukcji
 
 - Instrukcja podaje A/B `1914→1915`; na markerze dyżuru 333 własny pomiar daje **`1802→1803`**. Różnica nazw pozostaje zgodna: wyłącznie `slack_router_dedupe`.
+- R2 nie mógł przejść pełnego łańcucha bez `073_conversations.sql`: zależna migracja `515_team_chat_projects.sql` słusznie zatrzymała runner na braku `conversations`. `to_regclass` przed awarią pozostał `NULL`; po przywróceniu pliku pełny łańcuch przeszedł i zwrócił `conversations`.
 - Krok symlinka zwrócił `File exists`, ponieważ worktree już zawierał poprawny symlink `node_modules -> /Users/piotrwisniewski/Developer/Consultify/node_modules`; nie wykonano dodatkowej zmiany.
 
 ## Z30 — brak wysyłki zewnętrznej
@@ -44,4 +54,3 @@ PRZED zmianami: 2 pełne nazwy w `/private/tmp/cx-day333-schemat-domkniecie-arte
 
 - Nie zweryfikowano zachowania produkcji, demo, stagingu ani Railway; kontakt z nimi był zakazany.
 - Pomiar B obejmuje rejestrację i kontrolowaną ścieżkę Slack, nie wszystkie możliwe ścieżki DDL-w-locie.
-
