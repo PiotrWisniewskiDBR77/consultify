@@ -1,0 +1,6 @@
+Dyżur 353, marker 29fcbd4de20ca26d2febc50d9455128cab47ffce
+Kontener: cx-day353-pg; obraz: pgvector/pgvector:pg16; DB: cx353; host: 127.0.0.1:6412
+Komenda miała jawne NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres i lokalny DATABASE_URL.
+Applying migrations: 894
+✅ Postgres migrations complete
+exit=0
