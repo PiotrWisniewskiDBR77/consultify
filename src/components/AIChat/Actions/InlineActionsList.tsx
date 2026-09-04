@@ -109,7 +109,7 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
       {hiddenCount > 0 && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+          className="flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary hover:text-c-text dark:hover:text-c-text transition-colors"
         >
           {isExpanded ? (
             <>

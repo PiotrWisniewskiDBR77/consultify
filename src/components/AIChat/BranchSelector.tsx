@@ -149,7 +149,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
           onBlur={handleRename}
           onKeyDown={(e) => e.key === 'Enter' && handleRename()}
           autoFocus
-          className="flex-1 px-1 py-0.5 text-sm bg-white dark:bg-navy-900 border border-primary-300 rounded outline-none"
+          className="flex-1 px-1 py-0.5 text-sm bg-white dark:bg-navy-900 border border-c-border rounded outline-none"
           onClick={(e) => e.stopPropagation()}
         />
       ) : (

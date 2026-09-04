@@ -51,21 +51,21 @@ export const ArtifactChip: React.FC<ArtifactChipProps> = ({ kind, title, onOpen 
     <button
       type="button"
       onClick={onOpen}
-      className="group inline-flex max-w-full items-center gap-2.5 rounded-xl border border-primary-100 dark:border-primary-800/30 bg-primary-50 dark:bg-primary-900/20 px-3 py-2 text-left transition-colors hover:border-primary-200 dark:hover:border-primary-700/50 hover:bg-primary-100/70 dark:hover:bg-primary-900/30"
+      className="group inline-flex max-w-full items-center gap-2.5 rounded-xl border border-c-border dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised px-3 py-2 text-left transition-colors hover:border-c-border-strong dark:hover:border-c-border-strong hover:bg-c-surface-hover dark:hover:bg-c-surface-hover"
       title={pl ? 'Otwórz w panelu roboczym' : 'Open in the work panel'}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-navy-800 text-primary-500 shadow-sm">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-navy-800 text-c-text-secondary shadow-sm">
         <Icon size={15} />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-xs font-semibold text-primary-700 dark:text-primary-300 max-w-[220px]">
+        <span className="block truncate text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary max-w-[220px]">
           {title}
         </span>
-        <span className="block text-[10px] text-primary-500/80 dark:text-primary-400/80">
+        <span className="block text-[10px] text-c-text-secondary dark:text-c-text-secondary">
           {kindLabel}
         </span>
       </span>
-      <span className="ml-1 inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-primary-500 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
+      <span className="ml-1 inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-c-text-secondary group-hover:text-c-text dark:group-hover:text-c-text transition-colors">
         {pl ? 'Otwórz' : 'Open'}
         <ExternalLink size={11} />
       </span>

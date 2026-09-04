@@ -354,7 +354,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               {t('aiChat.menu.aiModes', 'AI MODES')}
             </span>
             {activeModeCount > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary font-medium">
                 {activeModeCount} {t('common.active', 'active')}
               </span>
             )}
@@ -419,7 +419,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
               {t('aiChat.menu.responseStyle', 'Response style')}
               {customInstructions.trim() && (
-                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium align-middle">
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary font-medium align-middle">
                   {t('aiChat.menu.customSet', 'instrukcje')}
                 </span>
               )}
@@ -676,7 +676,7 @@ const TTSSettings: React.FC<{
               step="0.1"
               value={ttsRate ?? 1}
               onChange={(e) => setAIConfig({ ttsRate: parseFloat(e.target.value) })}
-              className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
+              className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-c-focus-solid"
             />
             <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
               <span>0.5x</span>
@@ -782,7 +782,7 @@ const TTSSettings: React.FC<{
                 window.speechSynthesis.speak(utterance);
               }
             }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-[12px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-900/10 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-[12px] font-medium text-c-text-secondary dark:text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-hover dark:hover:bg-c-surface-hover rounded-lg transition-colors"
           >
             <Volume2 size={13} />
             {t('aiChat.menu.ttsTest', 'Test voice')}

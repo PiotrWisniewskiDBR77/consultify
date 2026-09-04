@@ -119,7 +119,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
   if (loading) {
     return (
       <div
-        className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 p-4 ${className}`}
+        className={`bg-gradient-to-br from-indigo-50 to-c-surface-raised dark:from-navy-800 dark:to-c-surface-raised rounded-xl border border-indigo-200 dark:border-indigo-800/50 p-4 ${className}`}
       >
         <div className="flex items-center gap-3">
           <Loader2 size={18} className="animate-spin text-indigo-500" />
@@ -150,7 +150,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 overflow-hidden ${className}`}
+      className={`bg-gradient-to-br from-indigo-50 to-c-surface-raised dark:from-navy-800 dark:to-c-surface-raised rounded-xl border border-indigo-200 dark:border-indigo-800/50 overflow-hidden ${className}`}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-indigo-100 dark:border-indigo-800/30">

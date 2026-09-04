@@ -121,7 +121,7 @@ const tokenize = (code: string, language: string): { type: string; value: string
 const TOKEN_COLORS: Record<string, string> = {
   comment: 'text-slate-500 dark:text-slate-500 italic',
   string: 'text-green-600 dark:text-green-400',
-  keyword: 'text-primary-600 dark:text-primary-400',
+  keyword: 'text-c-text-secondary dark:text-c-text-secondary',
   literal: 'text-amber-600 dark:text-amber-400',
   number: 'text-blue-600 dark:text-blue-400',
   punctuation: 'text-slate-500 dark:text-slate-400',

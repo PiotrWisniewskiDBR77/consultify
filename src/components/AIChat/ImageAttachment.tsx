@@ -299,7 +299,7 @@ export const ImageDropZone: React.FC<ImageDropZoneProps> = ({
       onDrop={handleDrop}
       className={`
         relative transition-colors
-        ${isDragging ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-400' : ''}
+        ${isDragging ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border' : ''}
         ${className}
       `}
     >
@@ -307,10 +307,10 @@ export const ImageDropZone: React.FC<ImageDropZoneProps> = ({
 
       {/* Drag overlay */}
       {isDragging && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary-500/10 border-2 border-dashed border-primary-400 rounded-xl">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-c-surface-raised border-2 border-dashed border-c-border rounded-xl">
           <div className="text-center">
-            <Image size={32} className="mx-auto mb-2 text-primary-500" />
-            <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
+            <Image size={32} className="mx-auto mb-2 text-c-text-secondary" />
+            <p className="text-sm font-medium text-c-text-secondary dark:text-c-text-secondary">
               {t('aiChat.image.dropHere', 'Drop images here')}
             </p>
           </div>

@@ -189,7 +189,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
         data-testid="chat-workmode-button"
         className={`inline-flex items-center gap-2 px-2.5 py-2 rounded-lg transition-colors ${
           activePreset
-            ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/30'
+            ? 'text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised'
             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
         } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title={t('aiChat.workMode.title', 'Jak Teresa ma teraz pracować')}
@@ -222,21 +222,21 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
                 onClick={() => applyPreset(preset.id)}
                 className={`w-full flex items-start gap-3 px-3.5 py-2 text-left transition-colors ${
                   active
-                    ? 'bg-primary-50/60 dark:bg-primary-900/10'
+                    ? 'bg-c-surface-raised dark:bg-c-surface-raised'
                     : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'
                 }`}
               >
                 <Icon
                   size={15}
                   className={`mt-0.5 shrink-0 ${
-                    active ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                    active ? 'text-c-text-secondary' : 'text-slate-400 dark:text-slate-500'
                   }`}
                 />
                 <span className="flex-1">
                   <span
                     className={`block text-[13px] ${
                       active
-                        ? 'text-primary-700 dark:text-primary-300 font-medium'
+                        ? 'text-c-text-secondary dark:text-c-text-secondary font-medium'
                         : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >
@@ -257,7 +257,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
                   </span>
                 </span>
                 {active ? (
-                  <Check size={15} className="shrink-0 text-primary-500 mt-0.5" />
+                  <Check size={15} className="shrink-0 text-c-text-secondary mt-0.5" />
                 ) : (
                   <ChevronRight size={13} className="shrink-0 text-slate-400 mt-0.5" />
                 )}

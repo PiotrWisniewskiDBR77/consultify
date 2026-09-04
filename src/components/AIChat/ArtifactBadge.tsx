@@ -47,9 +47,9 @@ export const ArtifactBadge: React.FC<ArtifactBadgeProps> = ({
   const ArtIcon = ARTIFACT_ICONS[(artifact as any).type || ''] || FileCode;
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/30 rounded-lg text-xs group/art">
-      <ArtIcon size={13} className="text-primary-500 shrink-0" />
-      <span className="font-medium text-primary-700 dark:text-primary-300 max-w-[150px] truncate">
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-lg text-xs group/art">
+      <ArtIcon size={13} className="text-c-text-secondary shrink-0" />
+      <span className="font-medium text-c-text-secondary dark:text-c-text-secondary max-w-[150px] truncate">
         {(artifact as any).title || 'Artifact'}
       </span>
       <button
@@ -57,7 +57,7 @@ export const ArtifactBadge: React.FC<ArtifactBadgeProps> = ({
           e.stopPropagation();
           onOpenInPanel(artifact);
         }}
-        className="p-0.5 rounded text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors"
+        className="p-0.5 rounded text-c-text-secondary hover:text-c-text dark:hover:text-c-text hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
         title={t('chat.actions.openPanel', 'Open in panel')}
       >
         <ExternalLink size={11} />
@@ -67,7 +67,7 @@ export const ArtifactBadge: React.FC<ArtifactBadgeProps> = ({
           e.stopPropagation();
           onDownload(artifact);
         }}
-        className="p-0.5 rounded text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors"
+        className="p-0.5 rounded text-c-text-secondary hover:text-c-text dark:hover:text-c-text hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
         title={t('chat.actions.download', 'Download')}
       >
         <Download size={11} />

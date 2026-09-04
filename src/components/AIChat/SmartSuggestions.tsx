@@ -67,10 +67,10 @@ const SUGGESTION_ICONS: Record<string, React.ElementType> = {
 
 const SUGGESTION_COLORS: Record<string, string> = {
   continue: 'from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/50',
-  action: 'from-primary-500/10 to-primary-600/5 border-primary-200/50 dark:border-primary-800/50',
+  action: 'from-c-surface-raised to-c-surface-raised border-c-border dark:border-c-border',
   insight: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/50',
   followup: 'from-green-500/10 to-green-600/5 border-green-200/50 dark:border-green-800/50',
-  expand: 'from-primary-500/10 to-primary-600/5 border-primary-200/50 dark:border-primary-800/50',
+  expand: 'from-c-surface-raised to-c-surface-raised border-c-border dark:border-c-border',
 };
 
 export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
@@ -374,7 +374,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
             key={item.id}
             onClick={() => handleMinimalClick(item.prompt)}
             title={item.text}
-            className={`min-w-0 max-w-[calc(25%-0.5rem)] px-3 py-1.5 text-[11px] rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all duration-200 backdrop-blur-sm ${
+            className={`min-w-0 max-w-[calc(25%-0.5rem)] px-3 py-1.5 text-[11px] rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 hover:text-c-text dark:hover:text-c-text hover:border-c-border-strong dark:hover:border-c-border-strong hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-all duration-200 backdrop-blur-sm ${
               minimalFadeSlot === i ? 'opacity-0' : 'opacity-100'
             }`}
           >
@@ -439,7 +439,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     <div className={`${className}`}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={14} className="text-primary-500" />
+        <Sparkles size={14} className="text-c-text-secondary" />
         <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
           {t('aiChat.suggestions.title', 'Suggested for you')}
         </span>
@@ -508,12 +508,12 @@ export const SuggestionChip: React.FC<SuggestionChipProps> = ({ suggestion, onCl
       className="
                 inline-flex items-center gap-1.5 px-2.5 py-1
                 bg-slate-100 dark:bg-navy-800
-                hover:bg-primary-100 dark:hover:bg-primary-900/30
+                hover:bg-c-surface-hover dark:hover:bg-c-surface-hover
                 border border-slate-200 dark:border-navy-700
-                hover:border-primary-300 dark:hover:border-primary-700
+                hover:border-c-border-strong dark:hover:border-c-border-strong
                 rounded-full text-xs
                 text-slate-600 dark:text-slate-300
-                hover:text-primary-700 dark:hover:text-primary-300
+                hover:text-c-text dark:hover:text-c-text
                 transition-all duration-200
             "
     >

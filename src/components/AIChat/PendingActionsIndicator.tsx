@@ -75,7 +75,7 @@ const getActionIcon = (actionType: string) => {
     case 'CREATE_DRAFT_TASK':
       return <Briefcase size={12} className="text-blue-500" />;
     case 'CREATE_DRAFT_INITIATIVE':
-      return <FileText size={12} className="text-primary-500" />;
+      return <FileText size={12} className="text-c-text-secondary" />;
     case 'SUGGEST_ROADMAP_CHANGE':
       return <Calendar size={12} className="text-emerald-500" />;
     case 'GENERATE_REPORT':
@@ -83,7 +83,7 @@ const getActionIcon = (actionType: string) => {
     case 'ANALYZE_RISKS':
       return <AlertTriangle size={12} className="text-danger-500" />;
     default:
-      return <Zap size={12} className="text-primary-500" />;
+      return <Zap size={12} className="text-c-text-secondary" />;
   }
 };
 

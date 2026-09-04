@@ -123,7 +123,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
           className="
                         px-2 py-1 text-sm
                         bg-white dark:bg-navy-800
-                        border border-primary-500
+                        border border-c-border
                         rounded
                         text-navy-900 dark:text-white
                         focus:outline-none focus:ring-2 focus:ring-blue-500/50
@@ -234,7 +234,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
           >
             {conversation.chatProjectId ? (
               <>
-                <Folder size={14} className="text-primary-500" />
+                <Folder size={14} className="text-c-text-secondary" />
                 {t('aiChat.actions.moveProject', 'Zmień projekt')}
               </>
             ) : (

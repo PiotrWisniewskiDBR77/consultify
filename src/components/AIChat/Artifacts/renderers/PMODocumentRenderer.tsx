@@ -57,7 +57,7 @@ const FRAMEWORK_BADGES: Record<string, { color: string; label: string }> = {
     label: 'PMBOK 7',
   },
   PRINCE2: {
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+    color: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary',
     label: 'PRINCE2',
   },
 };

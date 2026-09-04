@@ -1382,7 +1382,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                     href={url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-primary-600 hover:text-primary-700 underline"
+                                    className="text-c-text-secondary hover:text-c-text underline"
                                   >
                                     {label}
                                   </a>
@@ -1464,7 +1464,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                           }
                                           className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${
                                             isActive
-                                              ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                                              ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                                               : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
                                           }`}
                                         >
@@ -1635,7 +1635,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-full bg-primary-100/70 px-2 py-0.5 text-[11px] font-medium text-primary-800 hover:bg-primary-200/70 dark:bg-primary-800/30 dark:text-primary-100 dark:hover:bg-primary-700/40"
+                            className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-hover dark:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-c-surface-hover"
                             title={name}
                           >
                             <span aria-hidden>{icon}</span>
@@ -1644,7 +1644,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         ) : (
                           <span
                             key={`${name}-${idx}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-primary-100/70 px-2 py-0.5 text-[11px] font-medium text-primary-800 dark:bg-primary-800/30 dark:text-primary-100"
+                            className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary"
                             title={name}
                           >
                             <span aria-hidden>{icon}</span>
@@ -1732,10 +1732,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             agentAuditState?.state &&
             agentAuditState.state !== 'done' &&
             agentAuditState.state !== 'error' && (
-              <div className="mt-3 p-2.5 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-lg">
+              <div className="mt-3 p-2.5 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-c-accent animate-pulse" />
-                  <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
+                  <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">
                     {agentAuditState.state === 'reviewing'
                       ? t('agentAudit.streaming.reviewing', 'Multi-Agent Review in Progress')
                       : agentAuditState.state === 'aggregating'
@@ -1743,7 +1743,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         : t('agentAudit.streaming.processing', 'Agent Audit Processing')}
                   </span>
                   {agentAuditState.agentsTotal && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary">
                       {Object.keys(agentReviewProgressByAgentId || {}).length}/
                       {agentAuditState.agentsTotal} agents
                     </span>
@@ -1818,7 +1818,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               return prevUserMsg ? (
                 <button
                   onClick={() => handleSendMessage(prevUserMsg.content)}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
                 >
                   <RefreshCw size={12} />
                   {t('aiChat.retry', 'Try again')}
@@ -1934,14 +1934,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             <button
               type="button"
               onClick={() => onEmitArtifactFromMessage(content, decision.title)}
-              className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
+              className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5 text-left transition-colors hover:border-c-border-strong hover:bg-c-surface-hover dark:hover:border-c-border-strong dark:hover:bg-c-surface-hover"
               title={t('chat.message.emitDocumentTooltip', 'Create a document from this answer')}
             >
               <FilePlus2
                 size={14}
-                className="shrink-0 text-c-text-muted group-hover:text-primary-500"
+                className="shrink-0 text-c-text-muted group-hover:text-c-text"
               />
-              <span className="truncate text-xs font-medium text-c-text-secondary group-hover:text-primary-600">
+              <span className="truncate text-xs font-medium text-c-text-secondary group-hover:text-c-text">
                 {t('chat.message.openAsDocument', 'Open as document')}
               </span>
             </button>
@@ -2240,7 +2240,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               onClick={() => setShowSourcesDetails((v) => !v)}
               className={`p-1 rounded-md transition-colors ${
                 showSourcesDetails
-                  ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
+                  ? 'text-c-text-secondary dark:text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised'
                   : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
               }`}
               title={t('chat.sources.details', 'Sources details')}
@@ -2401,10 +2401,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         (msg as any).metadata?.deepThinking?.kind === 'report' &&
         !dtDecisionSaved.has(msg.id) && (
           <div
-            className={`mt-2 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-lg`}
+            className={`mt-2 p-3 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-lg`}
           >
-            <p className="text-xs font-medium text-primary-800 dark:text-primary-200 mb-2 flex items-center gap-1.5">
-              <Sparkles size={14} className="text-primary-500" />
+            <p className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary mb-2 flex items-center gap-1.5">
+              <Sparkles size={14} className="text-c-text-secondary" />
               {t('deepThinking.ctaTitle', 'What do you want to do with this output?')}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -2421,7 +2421,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <button
                 onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover disabled:opacity-50 transition-colors flex items-center gap-1"
               >
                 <Zap size={12} />
                 {t('deepThinking.convertInitiative', 'Convert to Initiative')}
@@ -2502,15 +2502,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         interimInsight &&
         interimInsight.paths.length > 0 && (
           <div
-            className={`mt-2 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-lg`}
+            className={`mt-2 p-3 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-lg`}
           >
-            <p className="text-xs font-semibold text-primary-800 dark:text-primary-200 mb-2 flex items-center gap-1.5">
-              <BrainCircuit size={14} className="text-primary-500" />
+            <p className="text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary mb-2 flex items-center gap-1.5">
+              <BrainCircuit size={14} className="text-c-text-secondary" />
               {t('deepThinking.interimInsight', 'Preliminary insight — dominant paths emerging:')}
             </p>
             <ul className="space-y-1 mb-2">
               {interimInsight.paths.map((p) => (
-                <li key={p.id} className="text-xs text-primary-700 dark:text-primary-300">
+                <li key={p.id} className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                   <span className="font-medium">{p.label}</span>
                   {p.summary ? ` — ${p.summary}` : ''}
                 </li>
@@ -2527,7 +2527,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               </button>
               <button
                 onClick={() => handleSendMessage(t('deepThinking.goDeeper', 'Go deeper'))}
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-c-surface border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-c-surface border border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover transition-colors"
               >
                 {t('deepThinking.continueDeeper', 'Continue to full report')}
               </button>
@@ -2574,7 +2574,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       onClick={() => handleMultiSelectToggle(option.value)}
                       className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary'
                           : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
                       }`}
                     >
@@ -2600,7 +2600,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() =>
                   onOptionSelect ? onOptionSelect(option) : handleSendMessage(option.label)
                 }
-                className="px-3 py-1.5 bg-c-surface border border-c-border text-c-text-secondary text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                className="px-3 py-1.5 bg-c-surface border border-c-border text-c-text-secondary text-xs rounded-full hover:bg-c-surface-hover dark:hover:bg-c-surface-hover hover:border-c-border-strong dark:hover:border-c-border-strong hover:text-c-text dark:hover:text-c-text transition-all"
               >
                 {option.label}
               </button>

@@ -94,11 +94,11 @@ const DecisionCard: React.FC<{
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border border-slate-200 dark:border-navy-700 rounded-lg p-2.5 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+    <div className="border border-slate-200 dark:border-navy-700 rounded-lg p-2.5 bg-white dark:bg-navy-900 hover:border-c-border-strong dark:hover:border-c-border-strong transition-colors">
       <div className="flex items-start justify-between gap-2">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex-1 text-left text-xs font-medium text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="flex-1 text-left text-xs font-medium text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 hover:text-c-text dark:hover:text-c-text transition-colors"
         >
           {decision.decisionSummary || t('chat.orgMemory.untitledAnalysis', 'Untitled analysis')}
         </button>
@@ -154,7 +154,7 @@ const DecisionCard: React.FC<{
                     `[${t('chat.orgMemory.contextFromHistory', 'Context from decision history')}] ${decision.decisionSummary}`
                   )
                 }
-                className="px-2 py-1 text-[10px] font-medium rounded bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+                className="px-2 py-1 text-[10px] font-medium rounded bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover transition-colors"
               >
                 {t('chat.orgMemory.useInConversation', 'Use in conversation')}
               </button>
@@ -262,12 +262,12 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <BookOpen size={14} className="text-primary-500" />
+          <BookOpen size={14} className="text-c-text-secondary" />
           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
             {t('chat.orgMemory.title', 'Organization Memory')}
           </span>
           {totalCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
+            <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary rounded-full">
               {totalCount}
             </span>
           )}
@@ -287,7 +287,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
               onClick={() => setActiveTab('decisions')}
               className={`px-2.5 py-1 text-[10px] font-semibold rounded-t-lg transition-colors ${
                 activeTab === 'decisions'
-                  ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-b-0 border-primary-200 dark:border-primary-800'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary border border-b-0 border-c-border dark:border-c-border'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -298,7 +298,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
               onClick={() => setActiveTab('patterns')}
               className={`px-2.5 py-1 text-[10px] font-semibold rounded-t-lg transition-colors ${
                 activeTab === 'patterns'
-                  ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-b-0 border-primary-200 dark:border-primary-800'
+                  ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary border border-b-0 border-c-border dark:border-c-border'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -330,7 +330,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
           <div className="px-3 pb-3 max-h-80 overflow-y-auto space-y-2">
             {loading && (
               <div className="py-4 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-primary-300 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-c-border border-t-transparent rounded-full animate-spin" />
               </div>
             )}
 

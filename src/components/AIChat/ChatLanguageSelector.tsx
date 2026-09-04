@@ -104,7 +104,7 @@ export const ChatLanguageSelector: React.FC<ChatLanguageSelectorProps> = ({
                 </span>
                 <span className="truncate">{LANGUAGE_NAMES[lang] || lang}</span>
               </span>
-              {value === lang && <Check size={16} className="text-primary-500" />}
+              {value === lang && <Check size={16} className="text-c-text-secondary" />}
             </button>
           ))}
         </div>

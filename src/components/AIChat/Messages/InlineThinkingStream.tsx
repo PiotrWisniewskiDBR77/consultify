@@ -176,7 +176,7 @@ export const InlineThinkingStream: React.FC<InlineThinkingStreamProps> = ({
                       step.status === 'done'
                         ? 'bg-green-400 dark:bg-green-500'
                         : step.status === 'in_progress'
-                          ? 'bg-primary-400 dark:bg-primary-500 animate-pulse'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised animate-pulse'
                           : 'bg-slate-300 dark:bg-slate-600'
                     }
                   `}

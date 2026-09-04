@@ -124,7 +124,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-primary-600 underline decoration-primary-300 underline-offset-4 hover:text-primary-700 dark:text-primary-300"
+              className="font-medium text-c-text-secondary underline decoration-c-border-strong underline-offset-4 hover:text-c-text dark:text-c-text-secondary"
             >
               {children}
             </a>
@@ -133,7 +133,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             <input
               {...props}
               readOnly
-              className="mr-2 h-4 w-4 rounded border-slate-300 text-primary-600"
+              className="mr-2 h-4 w-4 rounded border-slate-300 text-c-text-secondary"
             />
           ),
         }}

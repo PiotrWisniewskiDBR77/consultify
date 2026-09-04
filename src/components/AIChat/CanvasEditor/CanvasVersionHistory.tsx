@@ -99,7 +99,7 @@ export function CanvasVersionHistory({
                 key={version.id}
                 className={`rounded-xl p-2 transition-colors ${
                   isPreviewed
-                    ? 'bg-slate-100 ring-1 ring-primary-400 dark:bg-white/10'
+                    ? 'bg-slate-100 ring-1 ring-c-focus dark:bg-white/10'
                     : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.06] dark:hover:bg-white/10'
                 }`}
                 data-testid="canvas-version-history-item"

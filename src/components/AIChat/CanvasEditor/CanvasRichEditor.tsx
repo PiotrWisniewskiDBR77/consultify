@@ -433,7 +433,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         'focus:outline-none min-h-[200px] px-6 py-4',
         'prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-white',
         'prose-p:text-slate-700 dark:prose-p:text-slate-300',
-        'prose-a:text-primary-600 dark:prose-a:text-primary-400',
+        'prose-a:text-c-text-secondary dark:prose-a:text-c-text-secondary',
         'prose-code:text-pink-600 dark:prose-code:text-pink-400',
         'prose-table:border-collapse',
         'prose-th:border prose-th:border-slate-300 dark:prose-th:border-slate-600 prose-th:px-3 prose-th:py-2 prose-th:bg-slate-50 dark:prose-th:bg-navy-800',
@@ -475,7 +475,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         {/* Streaming indicator */}
         {isStreaming && (
           <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">
-            <div className="flex items-center gap-2 rounded-full border border-primary-200 dark:border-primary-500/30 bg-white dark:bg-navy-800 px-4 py-2 shadow-lg pointer-events-auto">
+            <div className="flex items-center gap-2 rounded-full border border-c-border dark:border-c-border bg-white dark:bg-navy-800 px-4 py-2 shadow-lg pointer-events-auto">
               <div className="flex gap-1">
                 <span
                   className="w-1.5 h-1.5 rounded-full bg-navy-900 animate-bounce dark:bg-white"

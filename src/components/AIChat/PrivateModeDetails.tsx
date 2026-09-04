@@ -48,7 +48,7 @@ interface PrivateModeDetailsProps {
 }
 
 const BADGE_CLASSNAME =
-  'mr-1 inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-primary-200 bg-primary-50 px-2 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300';
+  'mr-1 inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-c-border bg-c-surface-raised px-2 text-[11px] font-medium text-c-text-secondary dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary';
 
 export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
   isEnabled = isPrivateModeDetailsEnabled,

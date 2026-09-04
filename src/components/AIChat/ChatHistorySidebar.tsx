@@ -295,7 +295,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       style={{ paddingLeft: 8 + depth * 12 }}
                       className={`group flex items-center gap-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors ${
                         dropTargetId === project.id
-                          ? 'bg-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-400/50'
+                          ? 'bg-c-surface-raised dark:bg-c-surface-raised ring-1 ring-c-focus'
                           : 'hover:bg-c-surface-raised'
                       }`}
                       onClick={() => onToggleExpanded(project.id)}
@@ -337,7 +337,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                         />
                       ) : (
                         <span
-                          className="flex-1 text-[13px] text-c-text-secondary truncate hover:text-primary-600 dark:hover:text-primary-400"
+                          className="flex-1 text-[13px] text-c-text-secondary truncate hover:text-c-text dark:hover:text-c-text"
                           onClick={(e) => {
                             if (onFolderClick) {
                               e.stopPropagation();
@@ -1160,7 +1160,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               /* Search mode: show flat grouped results (server-side when available) */
               serverSearchLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-c-border border-t-transparent rounded-full animate-spin" />
                   <span className="ml-2 text-xs text-c-text-muted">
                     {t('aiChat.searching', 'Searching...')}
                   </span>

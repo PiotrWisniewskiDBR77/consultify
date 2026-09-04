@@ -262,7 +262,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                   onClick={() => void handleSetVisibility(v)}
                   className={`flex-1 rounded-xl border px-3 py-2 text-left transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                     visibility === v
-                      ? 'border-primary-300 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20'
+                      ? 'border-c-border bg-c-surface-raised dark:border-c-border dark:bg-c-surface-raised'
                       : 'border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >
@@ -388,7 +388,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                 <button
                   onClick={() => fileRef.current?.click()}
                   disabled={knBusy}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 hover:text-primary-500 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-c-text-secondary hover:text-c-text disabled:opacity-50"
                 >
                   <Upload size={12} />
                   {t('aiChat.knowledge.uploadFile', 'Upload file')}
@@ -455,7 +455,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                     className="flex items-start gap-2 rounded-lg px-2 py-1.5 bg-slate-50 dark:bg-navy-950/40"
                   >
                     {k.kind === 'file' ? (
-                      <FileText size={13} className="shrink-0 mt-0.5 text-primary-500" />
+                      <FileText size={13} className="shrink-0 mt-0.5 text-c-text-secondary" />
                     ) : (
                       <FileText size={13} className="shrink-0 mt-0.5 text-slate-400" />
                     )}

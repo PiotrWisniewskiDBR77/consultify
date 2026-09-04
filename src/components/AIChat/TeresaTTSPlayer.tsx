@@ -84,8 +84,8 @@ export const TeresaTTSPlayer: React.FC<TeresaTTSPlayerProps> = ({
       data-testid="teresa-tts-player"
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
         isActive
-          ? 'bg-crimson-600 text-white shadow-sm hover:bg-crimson-700 active:scale-95'
-          : 'border border-crimson-200 bg-crimson-50 text-crimson-700 hover:border-crimson-300 hover:bg-crimson-100 dark:border-crimson-900/40 dark:bg-crimson-900/20 dark:text-crimson-300'
+          ? 'bg-c-surface-raised text-white shadow-sm hover:bg-c-surface-raised active:scale-95'
+          : 'border border-c-border bg-c-surface-raised text-c-text-secondary hover:border-c-border hover:bg-c-surface-raised dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary'
       } ${className}`}
       title={
         isActive
