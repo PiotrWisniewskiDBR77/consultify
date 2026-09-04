@@ -281,3 +281,9 @@ scaleń `git log --oneline --merges bc18bc7aca~40..HEAD` (27 scaleń przypada na
 - `10_FINANCE` pozostał 114/277; teza 415/415 jednej przyczyny została obalona w części Finance. Pozostaje 139 nazw ZASTANA, 2 REGRESJA, 1 NIEORZECZONA.
 - Koperta pozostała nienaruszona: mounted PG 4/4 przed i po, Day46 real ApiGateway/PG 77/77 przed i po; mutacja dopuszczająca MEMBER daje 2/4 FAIL, po cofnięciu 4/4 PASS.
 - Raport: `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY347_403_PRZYCZYNA_REPORT.md`; artefakty: `../../evidence/g15/day347/`.
+## Q. Dyżur 349 — czerwienie UI i niepowtarzalna niestabilność Bloku 3
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| Q1 | Cztery czerwienie UI były defektami produktu: fokusowalność wiersza z menu, obowiązkowy empty state Relations (2 przypadki) i fallback fokusu po zniknięciu otwieracza. | Powłoka kanonu odzyskała kontrakt bez zmiany asercji; pełny pakiet 62/62, mutacje RED-GREEN per zabezpieczenie. | ZAMKNIĘTE lokalnie | `evidence/day349/R1_ROZSTRZYGNIECIA.md`, `R2_NAPRAWA_UI.md` |
+| Q2 | Blok 3 dał raz 18/12/6 na świeżej bazie, potem 10 kolejnych 18/18 bez zmiany kodu. Advisory lock przeszedł 10 razy, ale po usunięciu locka kolejne 10 też przeszło — brak dowodu przyczynowego. | Nie wolno uznać niestabilności za naprawioną ani commitować placebo. | OTWARTE / NOT PROVEN | `evidence/day349/R3_REPRODUKCJA.md`, `R4_R5_WERDYKT.md` |
