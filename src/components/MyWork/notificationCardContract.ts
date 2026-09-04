@@ -244,7 +244,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Notification z deskryptora kanonicznego (lewa nawigacja).
  *   · catalog  = 3 karty (id = render-id, core z rdzenia),
- *   · default  = RDZEŃ (węższy zestaw D-5 — `whats-happening` + `expected-action`),
+ *   · default  = wszystkie karty (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 3 (dołożenie `ai-analysis` jednym kliknięciem w managerze).
  */
 export function buildNotificationCardSpec(): ArtifactCardSpec {

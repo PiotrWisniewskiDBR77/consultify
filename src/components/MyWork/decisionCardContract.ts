@@ -265,7 +265,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Decision z deskryptora kanonicznego.
  *   · catalog  = wszystkie 8 kart (id = render-id, core z rdzenia),
- *   · default  = RDZEŃ + domyślne (węższy zestaw D-5),
+ *   · default  = wszystkie karty (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 8 (przywrócenie pełni jednym kliknięciem w managerze).
  */
 export function buildDecisionCardSpec(): ArtifactCardSpec {

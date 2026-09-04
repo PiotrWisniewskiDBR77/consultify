@@ -88,7 +88,12 @@
  *   (default OFF) — jak POC Decision/Task. Zero regresji na demo.
  */
 
-import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
+import {
+  getCardSpec,
+  type ArtifactCardSpec,
+  type CardCatalogEntry,
+  type CardSet,
+} from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -788,7 +793,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Insight z deskryptora kanonicznego.
  *   · catalog  = wszystkie 30 kart (id=render-id, core z rdzenia); Phase-D w środku,
- *   · default  = RDZEŃ + domyślne (10 kart — węższy zestaw D-5; Phase-D poza, bo `dodawalna`),
+ *   · default  = widoczność zastanego OFF wraz z jego extras (DEC-387: bez utraty i bez dodawania),
  *   · full     = wszystkie 30 kart („Pełny").
  * Phase-D (`do-decyzji-piotra`) są teraz w katalogu → ukryte w default, włączalne z
  * pickera; applyToSections nie dokleja ich już jako „extras" (domknięcie zwężenia).
@@ -808,9 +813,18 @@ export function buildInsightCardSpec(): ArtifactCardSpec {
     .map(renderId);
 
   const allCards = admitted.map(renderId);
+  const legacySpec = getCardSpec('insight');
+  const legacyCatalogIds = new Set(legacySpec?.catalog.map((card) => card.id) ?? []);
+  const legacyVisibleIds = new Set(legacySpec?.sets[0]?.cards ?? []);
+  // DEC-387: zachowaj dokładnie zastaną widoczność OFF. Id znane staremu
+  // katalogowi zachowują jego widoczność, a sekcje, których stary katalog nie
+  // znał, pozostają widocznymi "extras" zamiast znikać po przyjęciu kontraktu.
+  const preservedDefaultCards = allCards.filter(
+    (id) => legacyVisibleIds.has(id) || !legacyCatalogIds.has(id)
+  );
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Complete insight', pl: 'Kompletny wniosek' }, cards: allCards },
+    { id: 'default', label: { en: 'Complete insight', pl: 'Kompletny wniosek' }, cards: preservedDefaultCards },
     { id: 'core', label: { en: 'Core insight', pl: 'Rdzeń wniosku' }, cards: defaultCards },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];

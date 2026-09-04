@@ -351,7 +351,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Task z deskryptora kanonicznego.
  *   · catalog  = wszystkie 10 kart (id = render-id, core z rdzenia),
- *   · default  = RDZEŃ + domyślne (węższy zestaw D-5 — 4 karty),
+ *   · default  = wszystkie karty (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 10 (przywrócenie pełni jednym kliknięciem w managerze).
  */
 export function buildTaskCardSpec(): ArtifactCardSpec {

@@ -186,7 +186,7 @@ function toCatalogEntry(karta: KanonicznaKarta): CardCatalogEntry {
 /**
  * Buduje `ArtifactCardSpec` Tool z deskryptora kanonicznego.
  *   · catalog  = wszystkie 4 sekcje (id kanoniczny, brak core — Tool read-only),
- *   · default  = RDZEŃ + domyślne = Cel/Proces/Rezultat (węższy zestaw, 3),
+ *   · default  = wszystkie sekcje (DEC-387: kontrakt nie ucina),
  *   · full     = wszystkie 4 (Przykład dołącza — jedno kliknięcie w managerze).
  */
 export function buildToolCardSpec(): ArtifactCardSpec {
