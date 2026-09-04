@@ -1,8 +1,8 @@
 # Rejestr P0/P1 blokujących G20 — E1
 
 Data migawki: 2026-09-04
-Marker: `2a7273e087cbd3e44344725b524f6ddd79d5badc`
-Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker 2a7273e087cbd3e44344725b524f6ddd79d5badc --snapshot-date 2026-09-04`
+Marker: `a2281d387123002f53ab590d222131c7ab98a69b`
+Odtworzenie: `node scripts/dev/p0p1-licznik-e1.mjs --marker a2281d387123002f53ab590d222131c7ab98a69b --snapshot-date 2026-09-04`
 
 Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 0.
 
@@ -56,7 +56,7 @@ Mianownik: 121. NAPRAWIONE: 32; ZAMKNIETE_DEC: 34; ODLOZONE_DEC: 42; W_BUDOWIE: 
 | `CHAT-OWN-017` | ODLOZONE_DEC | DEC_OK | DEC-2026-09-03-377 | R-14 → DEC-2026-09-03-377 | settlement, decisions, owner, wave2 |
 | `EXE-OWN-001` | ZAMKNIETE_DEC | DEC_OK | DEC-2026-08-24-03 | — | settlement |
 | `EXE-OWN-002` | NAPRAWIONE | SHA_OK | 673363f63c | — | settlement |
-| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | brak odzyskanego lokalnego seeda i SHA danych przeglądowych Execution | — | settlement |
+| `EXE-OWN-003` | BLOKUJE | NIEROZSTRZYGNIETE | właściciel/nadzorca musi wskazać dopuszczalny dataset Execution i dowód jego pochodzenia; późniejsze commity nie dowodzą odzyskanego seeda ani trzech wymaganych stanów | — | settlement |
 | `EXE-OWN-004` | NAPRAWIONE | SHA_OK | 14da3e6d0757 | — | settlement |
 | `EXE-OWN-005` | BLOKUJE | NIEROZSTRZYGNIETE | brak SHA pending checkpoint z nawigacją Menu 3 i powrotem do listy | — | settlement |
 | `EXE-OWN-006` | NAPRAWIONE | SHA_OK | b470536a91 | — | settlement |
