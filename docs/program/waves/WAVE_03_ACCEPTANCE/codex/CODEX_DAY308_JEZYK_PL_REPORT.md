@@ -28,3 +28,7 @@ Nie zmieniono tłumaczeń ani `src/`; nie utworzono bezpiecznika z fałszywą li
 Stan dyżuru: **CZĘŚCIOWE**.
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane. Bazy dyżuru nie utworzono.
+
+## Wznowienie 2026-09-04
+
+Pełny ponowny odczyt instrukcji i regeneracja audytu potwierdziły mianownik 631. Kontrprzykład wskazany w raporcie został usunięty z fałszywych defektów: `Tempo` ma teraz jawne `UZASADNIONE — poprawny polski termin identyczny z angielskim` (`0b9f9d73e1`). Licznik automatyczny zmienił się z 579/52 na 578 kandydatów i 53 uzasadnione. Roboczy rejestr po regeneracji nadal nie został zacommitowany, ponieważ pozostałych 578 pozycji nie przeczytano w kontekście i nazwanie ich `DEFEKT` naruszałoby R2/Z40. Stan pozostaje **CZĘŚCIOWE**; R3–R6 nadal zależą od tej klasyfikacji.
