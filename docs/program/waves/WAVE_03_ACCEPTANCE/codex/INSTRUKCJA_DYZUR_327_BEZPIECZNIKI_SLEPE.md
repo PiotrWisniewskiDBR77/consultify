@@ -771,7 +771,7 @@ czerwony kontrakt testowy + brief. Pozycja z takim produktem jest **ZROBIONA, ni
 | **Bezpiecznik 297 (R5)** | `scripts/dev/reachability-from-root.mjs`, `tests/unit/canon/reachabilityFromRoot.test.ts`, `docs/program/waves/WAVE_03_ACCEPTANCE/reachability.baseline.json` (wszystkie na **niescalonej** gałęzi `codex/day297-martwe-komponenty-od-korzenia-20260903`) | **TYLKO ODCZYT — teren dyżuru 329.** Czytasz przez `git show <gałąź>:<ścieżka>`. **Zakaz scalania tej gałęzi i zakaz tworzenia tych plików u siebie** | **Brief + gotowy diff w bloku kodu, NIENAŁOŻONY**, plus imienna lista klas, których `--check-baseline` nie pilnuje. Pozycja z takim produktem jest **ZROBIONA** |
 | **Cudze tereny** | `scripts/dev/p0p1-licznik-e1.mjs`, `scripts/dev/__tests__/p0p1-licznik-e1.test.mjs`, `.github/workflows/test-suite.yml`, `package.json`, `src/components/assessment/**` | **TYLKO ODCZYT — tereny dyżurów 328 i 329** | Wpis do raportu: plik, linia, problem, rekomendacja jako diff, nienałożony |
 | **Nowe testy** | `tests/**` (NOWE pliki) | **★ PEŁNA LICENCJA**, z zastrzeżeniem `Z18` i `Z31`. **Nowe pliki wymagają `git add -f`** | — |
-| **Raport dyżuru** | `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY327_BEZPIECZNIKI_SLEPE_REPORT.md` | `R7` — **JEDYNY nowy dokument, jaki wolno Ci utworzyć** (`Z13`) | — |
+| **Raport dyżuru** | `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY327_BEZPIECZNIKI_SLEPE_REPORT.md` (**NOWY — nie istnieje na markerze**) | `R7` — **JEDYNY nowy dokument, jaki wolno Ci utworzyć** (`Z13`) | — |
 | **Wszystko inne** | — | **TYLKO ODCZYT** | Opis potrzeby z dowodem plik:linia i idziesz dalej |
 
 ## ★★ ROZSTRZYGNIĘCIE WOBEC `§0.2c` — WARIANT (C), BEZ KONTENERA
