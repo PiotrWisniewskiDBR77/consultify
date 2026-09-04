@@ -1,2 +1,2 @@
-docs/program/PRZELOT_WLASCICIELA_STAGING_20260904.md
-evidence/day357/r2-kotwice.md
+evidence/day357/g16-po.txt
+evidence/day357/r3-dryf.md
