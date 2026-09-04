@@ -92,4 +92,45 @@ const output = [
   '',
 ];
 fs.writeFileSync(reportPath, output.join('\n'));
+const serviceCounts = Object.fromEntries(
+  [...new Set(rows.filter((row) => row.file.startsWith('server/src/services/') && !row.file.includes('/__tests__/')).map((row) => row.file))]
+    .sort()
+    .map((file) => [file, rows.filter((row) => row.file === file).length])
+);
+const guardPath = path.join(root, 'tests/unit/backend/schema/noRuntimeDdl.test.ts');
+fs.mkdirSync(path.dirname(guardPath), { recursive: true });
+fs.writeFileSync(guardPath, `import fs from 'node:fs';
+import path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const ALLOWED_RUNTIME_DDL_BY_FILE: Record<string, number> = ${JSON.stringify(serviceCounts, null, 2)};
+
+function files(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const target = path.join(dir, entry.name);
+    return entry.isDirectory() ? files(target) : [target];
+  });
+}
+
+describe('runtime DDL schema guard', () => {
+  it('rejects every new CREATE TABLE in services outside the explicit legacy allowlist', () => {
+    const actual: Record<string, number> = {};
+    for (const file of files(path.join(process.cwd(), 'server/src/services'))) {
+      if (file.includes('/__tests__/')) continue;
+      const content = fs.readFileSync(file, 'utf8');
+      const count = content.match(/CREATE TABLE IF NOT EXISTS/g)?.length ?? 0;
+      if (count > 0) actual[path.relative(process.cwd(), file)] = count;
+    }
+    expect(actual).toEqual(ALLOWED_RUNTIME_DDL_BY_FILE);
+  });
+
+  it('keeps SQLite AUTOINCREMENT out of service runtime DDL', () => {
+    const offenders = files(path.join(process.cwd(), 'server/src/services'))
+      .filter((file) => fs.readFileSync(file, 'utf8').includes('AUTOINCREMENT'))
+      .map((file) => path.relative(process.cwd(), file));
+    expect(offenders).toEqual([]);
+  });
+});
+`);
 process.stdout.write(`${JSON.stringify({ rows: rows.length, files: new Set(rows.map((row) => row.file)).size, serviceFiles: new Set(rows.filter((row) => row.file.startsWith('server/src/services/')).map((row) => row.file)).size, counts }, null, 2)}\n`);

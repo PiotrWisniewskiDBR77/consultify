@@ -2,10 +2,10 @@
 
 ## Metoda i liczby
 
-- Wystąpienia: 531.
-- Pliki: 164.
-- Pliki w `server/src/services`: 100.
-- Rozstrzygnięcia pomiarowe: DODAJ_MIGRACJE=96, DO_DECYZJI_PARSER=20, POMINIĘTE_TEST=58, USUN_DDL_W_LOCIE=357.
+- Wystąpienia: 526.
+- Pliki: 163.
+- Pliki w `server/src/services`: 99.
+- Rozstrzygnięcia pomiarowe: DODAJ_MIGRACJE=93, DO_DECYZJI_PARSER=20, POMINIĘTE_TEST=58, USUN_DDL_W_LOCIE=355.
 - „Cichy błąd” jest konserwatywnym sygnałem statycznym: blok `catch` w oknie 20 linii przed/24 po DDL. Wymaga ręcznego potwierdzenia przed zmianą.
 
 ## Pozycje
@@ -372,19 +372,14 @@
 | server/src/services/ai/knowledgeGraphService.ts | 443 | knowledge_graph_relations | server/migrations/never-ran/650_v4_unified_knowledge_graph.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/knowledgeIndexer.ts | 271 | knowledge_docs | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/ai/knowledgeIndexer.ts | 287 | knowledge_chunks | server/migrations/000_initdb_core_tables.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 449 | llm_logs | server/migrations/578_llm_logs_compat_columns.sql | NIE | SQLITE | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 470 | llm_health_events | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 507 | llm_providers | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 594 | organization_llm_settings | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 607 | llm_tier_assignments | server/migrations/000_z_core_baseline.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 621 | ai_model_overrides | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 635 | organization_provider_settings | server/migrations/576_ai_enterprise_llm_registry.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/llmConfigService.ts | 649 | tier_round_robin_state | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 454 | llm_health_events | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 491 | llm_providers | server/migrations/000_initdb_core_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 578 | organization_llm_settings | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 591 | llm_tier_assignments | server/migrations/000_z_core_baseline.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 605 | ai_model_overrides | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 619 | organization_provider_settings | server/migrations/576_ai_enterprise_llm_registry.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
+| server/src/services/ai/llmConfigService.ts | 633 | tier_round_robin_state | BRAK | NIE | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
 | server/src/services/ai/organizationMemoryStore.ts | 119 | organization_memory | server/migrations/051_memory_system.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/proactiveNudges.ts | 80 | ai_dismissed_nudges | server/migrations/520_ai_enterprise_tables.sql | TAK | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
-| server/src/services/ai/proactiveNudges.ts | 124 | ai_nudge_activity | BRAK | TAK | SQLITE | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/services/ai/proactiveNudges.ts | 170 | ai_nudge_actions | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
-| server/src/services/ai/proactiveNudges.ts | 192 | ai_nudge_suppressions | BRAK | TAK | NIEJEDNOZNACZNY | DODAJ_MIGRACJE | NIEZREALIZOWANE |
 | server/src/services/ai/routingRulesService.ts | 84 | llm_routing_rules | server/migrations/never-ran/615_llm_routing_rules.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/aiBudgetService.ts | 16 | ai_budgets | server/migrations/000_z_core_baseline.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
 | server/src/services/aiBudgetService.ts | 40 | ai_spending_alerts | server/migrations/never-ran/200_security_mvp_enterprise.sql.sql | NIE | NIEJEDNOZNACZNY | USUN_DDL_W_LOCIE | NIEZREALIZOWANE |
