@@ -210,4 +210,22 @@ describe('Day 307 paired cross-org GET flight through ApiGateway', NO_RETRY, () 
     fs.writeFileSync(registerPath, `${lines.join('\n')}\n`);
     expect(results).toHaveLength(routes.length);
   }, 15 * 60_000);
+
+  it('denies foreign workload lookup while the owner reads the seeded task', async () => {
+    const target = `/api/pmo/tasks/workload/${owner.userId}`;
+    const denied = await request(app)
+      .get(target)
+      .set('Authorization', `Bearer ${foreign.token}`);
+    expect(denied.status).toBe(404);
+    expect(denied.body).toMatchObject({ code: 'TASK_WORKLOAD_USER_NOT_FOUND' });
+
+    const allowed = await request(app)
+      .get(target)
+      .set('Authorization', `Bearer ${owner.token}`);
+    expect(allowed.status).toBe(200);
+    expect(allowed.body).toMatchObject({ userId: owner.userId, total: 1 });
+    expect(allowed.body.byProject).toEqual(
+      expect.arrayContaining([expect.objectContaining({ projectId: 'day307-project-owner', count: 1 })])
+    );
+  });
 });

@@ -2682,9 +2682,27 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { userId } = req.params;
       const { projectId } = req.query;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const user = await DbPromise.get<{ id: string }>(
+        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+        [userId, orgId]
+      );
+      if (!user) {
+        res.status(404).json({
+          error: 'User not found',
+          code: 'TASK_WORKLOAD_USER_NOT_FOUND',
+        });
+        return;
+      }
 
       const workload = await TaskAssignmentService.getUserWorkload(userId, {
         projectId: projectId as string | undefined,
+        organizationId: orgId,
       });
 
       res.json(workload);
@@ -2697,14 +2715,16 @@ export class TaskController {
   static getMyWorkload = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
       const { projectId } = req.query;
-      if (!userId) {
+      if (!userId || !orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
       const workload = await TaskAssignmentService.getUserWorkload(userId, {
         projectId: projectId as string | undefined,
+        organizationId: orgId,
       });
 
       res.json(workload);

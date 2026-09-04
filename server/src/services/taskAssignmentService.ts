@@ -593,7 +593,11 @@ export class TaskAssignmentService {
    * Get user workload (assigned tasks and their status)
    */
   static async getUserWorkload(userId: string, options: any = {}): Promise<any> {
-    const { projectId } = options;
+    const { projectId, organizationId } = options;
+
+    if (!organizationId) {
+      throw new Error('organizationId is required to read task workload');
+    }
 
     let query = `
       SELECT t.project_id, t.status, t.priority, t.sla_due_at, t.escalation_level,
@@ -601,9 +605,11 @@ export class TaskAssignmentService {
       FROM tasks t
       JOIN projects p ON p.id = t.project_id
       WHERE t.assignee_id = ?
+        AND t.organization_id = ?
+        AND p.organization_id = ?
         AND t.status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
     `;
-    const params: any[] = [userId];
+    const params: any[] = [userId, organizationId, organizationId];
 
     if (projectId) {
       query += ' AND t.project_id = ?';
