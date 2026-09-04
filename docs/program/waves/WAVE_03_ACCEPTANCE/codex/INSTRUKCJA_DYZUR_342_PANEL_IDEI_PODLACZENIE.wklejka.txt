@@ -1,0 +1,16 @@
+NOWY — DYŻUR 342
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/grafika/m03-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_342_PANEL_IDEI_PODLACZENIE.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 342.
+
+Marker: 74c07919cea7ab55dc9fde5fbd911f7f955ed425
+Zasoby wyłączne: baza 6378, runtime 5518.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
