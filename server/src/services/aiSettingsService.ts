@@ -154,6 +154,11 @@ const DEFAULT_USER = {
   share_usage_analytics: true,
   context_retention: 'session',
   auto_suggestions: true,
+  // DEC-386 (2026-09-04): server-side mirror of the AI Chat "chipy sugestii"
+  // toggle (aiConfig.chatSuggestionsEnabled in src/store/slices/chatSlice.ts),
+  // previously localStorage-only. Distinct from auto_suggestions above (that
+  // one backs an unrelated AI-autocomplete feature).
+  chat_suggestions_enabled: true,
 };
 
 // Ensure lightweight table for tiers (if not present).
@@ -421,6 +426,10 @@ class AISettingsService {
         share_usage_analytics: !!row.share_usage_analytics,
         context_retention: row.context_retention,
         auto_suggestions: !!row.auto_suggestions,
+        chat_suggestions_enabled:
+          row.chat_suggestions_enabled === null || row.chat_suggestions_enabled === undefined
+            ? DEFAULT_USER.chat_suggestions_enabled
+            : !!row.chat_suggestions_enabled,
       };
     } catch (err) {
       logger.error('[AISettingsService] Error in getUserSettings:', err);
@@ -444,8 +453,9 @@ class AISettingsService {
                 model_temperature, max_tokens, top_p, frequency_penalty, presence_penalty,
                 system_instructions, visible_model_ids, preferred_model_id,
                 enable_pii_redaction, data_retention_policy, share_usage_analytics, context_retention, auto_suggestions,
+                chat_suggestions_enabled,
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(user_id) DO UPDATE SET
                 response_style=excluded.response_style,
                 writing_tone=excluded.writing_tone,
@@ -466,6 +476,7 @@ class AISettingsService {
                 share_usage_analytics=excluded.share_usage_analytics,
                 context_retention=excluded.context_retention,
                 auto_suggestions=excluded.auto_suggestions,
+                chat_suggestions_enabled=excluded.chat_suggestions_enabled,
                 updated_at=CURRENT_TIMESTAMP`,
       [
         userId,
@@ -488,6 +499,7 @@ class AISettingsService {
         (settings.share_usage_analytics ?? current.share_usage_analytics) ? 1 : 0,
         settings.context_retention ?? current.context_retention,
         (settings.auto_suggestions ?? current.auto_suggestions) ? 1 : 0,
+        (settings.chat_suggestions_enabled ?? current.chat_suggestions_enabled) ? 1 : 0,
       ],
       { fallback: false }
     );
