@@ -1,0 +1,22 @@
+{
+  "view": "kpi-l3",
+  "theme": "dark",
+  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=kpi-l3&theme=dark&lang=pl&uwagi=0",
+  "httpStatus": 200,
+  "bledyKonsoli": 0,
+  "consoleErrors": [],
+  "networkErrors": [],
+  "dom": {
+    "aside": {
+      "count": 1
+    },
+    "table": {
+      "count": 1
+    },
+    "truncatedHeaders": [],
+    "numericCellsWithWrap": []
+  },
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Wyniki › KPI\nWielkość sprzedaży netto\n\nWyniki › KPI › Plant Balanced Scorecard — Zakład DBR77 › Wielkość sprzedaży netto · Krytyczne\n\nKPI\nOKR\nROI\nWyniki\nKontrakt\nPomiary\nOdchylenia\nDziałania\nRaporty\nHistoria\nWyniki · sierpień 2026\nCEL\n12 400\nRezultat\n11 620\nOdchylenie\n−6,3%\nYTD\n94 810 / 98 200\nKontrakt miernika\n\nSprzedaż · ↑ min. · LC/1000 · miesiąc · rozliczeniowy · Tomasz Nowak · benchmark 12 400 · limit 5%.\n\nOdchylenia i karty działania\nMIESIĄC\n\t\nCEL OSIĄGNIĘTY\n\t\nPROBLEM\n\t\nDZIAŁANIE\n\t\nODPOWIEDZIALNY\n\t\nTERMIN\n\t\nSTATUS\n\n\nSierpień 2026\n\t\nNie\n\t\nSprzedaż krajowa poniżej planu\n\t\nPlan odbiorów i wsparcie wdrożeń\n\t\nTomasz Nowak\n\t\n18.09.2026\n\t\nOTWARTY\nSzczegóły\nTeresa\nAKCJE\nOtwórz kartę działania\nWŁAŚCIWOŚCI\n\nWłaściciel · Tomasz Nowak\nCykl · Miesięczny\n\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA"
+}

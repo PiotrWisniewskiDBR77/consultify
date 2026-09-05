@@ -1,0 +1,22 @@
+{
+  "view": "okr-l3",
+  "theme": "dark",
+  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=okr-l3&theme=dark&lang=pl&uwagi=0",
+  "httpStatus": 200,
+  "bledyKonsoli": 0,
+  "consoleErrors": [],
+  "networkErrors": [],
+  "dom": {
+    "aside": {
+      "count": 1
+    },
+    "table": {
+      "count": 0
+    },
+    "truncatedHeaders": [],
+    "numericCellsWithWrap": []
+  },
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Wyniki › OKR\nSkrócić przezbrojenia bez utraty jakości\n\nWyniki › OKR › OKR zakładu — Q4 2026 › Skrócić przezbrojenia\n\nKPI\nOKR\nROI\nCel\nKluczowe rezultaty\nCheck-iny\nPowiązania\nRefleksja\nCel\n\nSkrócić przezbrojenia bez utraty jakości\n\nWłaściciel: Marek Zieliński · Zakład DBR77 · Q4 2026 · Zobowiązanie · pewność średnia\n\nKluczowe rezultaty\nSkrócić średni czas przezbrojenia z 42 do 28 min\nZagrożony\nMarek Zieliński · Produkcja L3 · termin 30.11.2026 · START / CEL / BIEŻĄCA: 42 / 28 / 31 min · postęp 79% · pewność Średnia\nCheck-in\nUtrzymać FPY podczas zmian na poziomie min. 98%\nKrytyczne\nJoanna Lis · Jakość · termin 30.11.2026 · START / CEL / BIEŻĄCA: 97,2 / 98 / 96,8% · postęp — · pewność Niska\nCheck-in\nSzczegóły\nTeresa\nAKCJE\nOtwórz kartę działania\nWŁAŚCIWOŚCI\n\nWłaściciel · Tomasz Nowak\nCykl · Miesięczny\n\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA"
+}
