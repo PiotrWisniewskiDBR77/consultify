@@ -12269,6 +12269,12 @@
     }
   },
   "execution": {
+    "review": {
+      "roles": {
+        "executionManager": "Execution Manager",
+        "controlsEngineer": "Controls Engineer"
+      }
+    },
     "title": "Execution Center",
     "initiativeLabel": "Initiative",
     "highlights": {

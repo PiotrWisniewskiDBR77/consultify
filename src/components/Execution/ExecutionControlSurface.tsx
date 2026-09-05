@@ -23,6 +23,7 @@ import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
   executionReviewPeople,
+  executionReviewRoleLabel,
   executionReviewSignals,
 } from './executionLocalReviewData';
 
@@ -85,15 +86,35 @@ interface Row extends TableRow {
 // module-scope nie reagowały na `?lang=`, PL i EN renderowały identyczny
 // tekst nagłówków (pomiar nadzorcy 03.09, execution-tab-control).
 const buildColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
-  { id: 'title', label: t('execution.control.columns.title', 'Intervention'), sortable: true, width: '240px' },
-  { id: 'status', label: t('execution.control.columns.status', 'Status'), sortable: true, filterable: true },
+  {
+    id: 'title',
+    label: t('execution.control.columns.title', 'Intervention'),
+    sortable: true,
+    width: '240px',
+  },
+  {
+    id: 'status',
+    label: t('execution.control.columns.status', 'Status'),
+    sortable: true,
+    filterable: true,
+  },
   { id: 'owner', label: t('execution.control.columns.owner', 'Owner'), sortable: true },
   { id: 'authority', label: t('execution.control.columns.authority', 'Approver'), sortable: true },
   { id: 'slaAt', label: t('execution.control.columns.slaAt', 'Review deadline'), sortable: true },
 ];
 const buildSignalColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
-  { id: 'title', label: t('execution.control.signalColumns.title', 'Signal'), sortable: true, width: '240px' },
-  { id: 'rule', label: t('execution.control.signalColumns.rule', 'Type'), sortable: true, filterable: true },
+  {
+    id: 'title',
+    label: t('execution.control.signalColumns.title', 'Signal'),
+    sortable: true,
+    width: '240px',
+  },
+  {
+    id: 'rule',
+    label: t('execution.control.signalColumns.rule', 'Type'),
+    sortable: true,
+    filterable: true,
+  },
   { id: 'source', label: t('execution.control.signalColumns.source', 'Source'), sortable: true },
   {
     id: 'severity',
@@ -101,8 +122,16 @@ const buildSignalColumns = (t: (key: string, fallback: string) => string): Table
     sortable: true,
     filterable: true,
   },
-  { id: 'occurrences', label: t('execution.control.signalColumns.occurrences', 'Occurrences'), sortable: true },
-  { id: 'updatedAt', label: t('execution.control.signalColumns.updatedAt', 'Updated'), sortable: true },
+  {
+    id: 'occurrences',
+    label: t('execution.control.signalColumns.occurrences', 'Occurrences'),
+    sortable: true,
+  },
+  {
+    id: 'updatedAt',
+    label: t('execution.control.signalColumns.updatedAt', 'Updated'),
+    sortable: true,
+  },
 ];
 const lines = (value: string) =>
   value
@@ -133,9 +162,14 @@ const formatDateTime = (value: string | null | undefined) => {
  * Zamiana zostaje wyłącznie jako ostatnia deska ratunku dla identyfikatora
  * spoza katalogu (granica po Unicode, bez `toLowerCase`).
  */
-const actorBusinessLabel = (value: string | null | undefined, fallback: string) => {
+const actorBusinessLabel = (
+  value: string | null | undefined,
+  fallback: string,
+  t: (key: string, fallback: string) => string
+) => {
   if (!value) return fallback;
   return (
+    executionReviewRoleLabel(value, t) ??
     executionReviewPeople[value] ??
     value
       .replace(/[-_]+/g, ' ')
@@ -197,17 +231,31 @@ const verificationOutcomeLabel = (value: string) =>
  */
 const optionKindLabel = (value: unknown): string | null =>
   typeof value === 'string' && value.trim()
-    ? (({ DO_NOTHING: 'Bez zmian', ACTION: 'Działanie' }) as Record<string, string>)[value] ?? value
+    ? (({ DO_NOTHING: 'Bez zmian', ACTION: 'Działanie' } as Record<string, string>)[value] ?? value)
     : null;
 /** Pewność opcji — nazwana wprost, brak nazywany „Nieznana", nie `undefined`. */
 const confidenceLabel = (value: unknown): string =>
   typeof value === 'string' && value.trim()
-    ? (({ HIGH: 'Wysoka pewność', MEDIUM: 'Średnia pewność', LOW: 'Niska pewność', UNKNOWN: 'Pewność nieznana' }) as Record<string, string>)[value] ?? value
+    ? ((
+        {
+          HIGH: 'Wysoka pewność',
+          MEDIUM: 'Średnia pewność',
+          LOW: 'Niska pewność',
+          UNKNOWN: 'Pewność nieznana',
+        } as Record<string, string>
+      )[value] ?? value)
     : 'Pewność nieznana';
 /** Odwracalność opcji — słownik kontraktu, brak nazywany wprost. */
 const reversibilityLabel = (value: unknown): string =>
   typeof value === 'string' && value.trim()
-    ? (({ REVERSIBLE: 'Odwracalna', PARTIALLY_REVERSIBLE: 'Częściowo odwracalna', IRREVERSIBLE: 'Nieodwracalna', UNKNOWN: 'Odwracalność nieznana' }) as Record<string, string>)[value] ?? value
+    ? ((
+        {
+          REVERSIBLE: 'Odwracalna',
+          PARTIALLY_REVERSIBLE: 'Częściowo odwracalna',
+          IRREVERSIBLE: 'Nieodwracalna',
+          UNKNOWN: 'Odwracalność nieznana',
+        } as Record<string, string>
+      )[value] ?? value)
     : 'Odwracalność nieznana';
 const signalFieldLabels: Record<string, string> = {
   sourceId: 'Źródło sygnału',
@@ -334,13 +382,13 @@ export const ExecutionControlSurface = ({
       }>;
       const interventionItems =
         (b.items ?? []).length > 0
-          ? b.items ?? []
+          ? (b.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewInterventions
             : [];
       const signalItems =
         (s.items ?? []).length > 0
-          ? s.items ?? []
+          ? (s.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewSignals
             : [];
@@ -358,8 +406,8 @@ export const ExecutionControlSurface = ({
           title: interventionBusinessTitle(x),
           status: interventionStatusLabel(x.status),
           rawStatus: x.status,
-          owner: actorBusinessLabel(x.ownerName || x.ownerId, 'Nieprzypisany'),
-          authority: actorBusinessLabel(x.authorityName || x.authorityId, 'Nieustalony'),
+          owner: actorBusinessLabel(x.ownerName || x.ownerId, 'Nieprzypisany', t),
+          authority: actorBusinessLabel(x.authorityName || x.authorityId, 'Nieustalony', t),
           slaAt: formatDateTime(x.verifyBy ?? x.slaAt),
           rawSlaAt: x.verifyBy ?? x.slaAt ?? null,
           version: x.version,
@@ -393,8 +441,8 @@ export const ExecutionControlSurface = ({
           title: interventionBusinessTitle(x),
           status: interventionStatusLabel(x.status),
           rawStatus: x.status,
-          owner: actorBusinessLabel(x.ownerId, 'Nieprzypisany'),
-          authority: actorBusinessLabel(x.authorityId, 'Nieustalony'),
+          owner: actorBusinessLabel(x.ownerId, 'Nieprzypisany', t),
+          authority: actorBusinessLabel(x.authorityId, 'Nieustalony', t),
           slaAt: formatDateTime(x.verifyBy ?? x.slaAt),
           rawSlaAt: x.verifyBy ?? x.slaAt ?? null,
           version: x.version,
@@ -799,34 +847,94 @@ export const ExecutionControlSurface = ({
               </button>
             </div>
           )}
-        /*
-         * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
-         * `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
-         * tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
-         * o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
-         * na wlasnej tresci. Zmierzone narzedziem
-         * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
-         */
+          /* * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx. *
+          `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie * tylko wzgledem
+          rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4` * o wysokosci `auto` przerywaly ten
+          lancuch i panel podgladu konczyl sie * na wlasnej tresci. Zmierzone narzedziem *
+          `scripts/dev/measure-preview-canon.mjs --wysokosc`. */
           <div className="flex min-h-0 flex-1 flex-col">
-          <TableWithPreviewLayout<SignalRow>
-            selectedId={selectedSignalId}
-            selectedItem={selectedSignal}
-            onSelect={setSelectedSignalId}
-            onOpenFull={(id) => {
-              setShowInterventionForm(true);
-              setInterventionComposerOpen(true);
-              setDraftSignalIds((current) => (current.includes(id) ? current : [...current, id]));
-              setSelectedSignalId(null);
-            }}
-            itemIds={signalRows.map((row) => row.id)}
-            getItemById={(id) => signalRows.find((row) => row.id === id) ?? null}
-            previewOpen={!interventionComposerOpen && Boolean(selectedSignalId)}
-            renderPreview={(row) => (
-              <StandardPreview
-                embedded
-                title={row.title}
-                onClose={() => setSelectedSignalId(null)}
-                onOpenFull={() => {
+            <TableWithPreviewLayout<SignalRow>
+              selectedId={selectedSignalId}
+              selectedItem={selectedSignal}
+              onSelect={setSelectedSignalId}
+              onOpenFull={(id) => {
+                setShowInterventionForm(true);
+                setInterventionComposerOpen(true);
+                setDraftSignalIds((current) => (current.includes(id) ? current : [...current, id]));
+                setSelectedSignalId(null);
+              }}
+              itemIds={signalRows.map((row) => row.id)}
+              getItemById={(id) => signalRows.find((row) => row.id === id) ?? null}
+              previewOpen={!interventionComposerOpen && Boolean(selectedSignalId)}
+              renderPreview={(row) => (
+                <StandardPreview
+                  embedded
+                  title={row.title}
+                  onClose={() => setSelectedSignalId(null)}
+                  onOpenFull={() => {
+                    setShowInterventionForm(true);
+                    setInterventionComposerOpen(true);
+                    setDraftSignalIds((current) =>
+                      current.includes(row.id) ? current : [...current, row.id]
+                    );
+                    setSelectedSignalId(null);
+                  }}
+                  openLabel="Otwórz przygotowanie"
+                  meta={{
+                    pills: [
+                      {
+                        label: row.severity,
+                        tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
+                      },
+                    ],
+                    recommendation: `Project ${row.signal.projectId ?? 'UNKNOWN'} · Reguła ${row.rule}`,
+                  }}
+                  details={{
+                    label: 'Sygnał zarządczy',
+                    text: `${row.signal.sourceType}:${row.signal.sourceId}`,
+                    properties: [
+                      { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
+                      { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
+                      { id: 'occurrences', label: 'Wystąpienia', value: String(row.occurrences) },
+                      { id: 'updated', label: 'Aktualizacja', value: row.updatedAt },
+                    ],
+                  }}
+                  relations={[
+                    { label: `Project ${row.signal.projectId ?? 'UNKNOWN'}` },
+                    ...Object.entries(row.signal.sourceVersions ?? {}).map(([key, value]) => ({
+                      label: `${key} v${value}`,
+                    })),
+                    ...(row.signal.occurrences ?? []).map((occurrence: any) => ({
+                      label: occurrence.evidenceRef || 'EVIDENCE_MISSING',
+                      value: occurrence.occurredAt,
+                    })),
+                  ]}
+                  relationsEmptyLabel="Brak wersjonowanych źródeł"
+                  actions={{
+                    informational: [
+                      {
+                        id: 'add-to-intervention',
+                        variant: 'neutral',
+                        label: 'Dodaj do przygotowywanej interwencji',
+                        onClick: () => {
+                          setShowInterventionForm(true);
+                          setDraftSignalIds((current) =>
+                            current.includes(row.id) ? current : [...current, row.id]
+                          );
+                          setSelectedSignalId(null);
+                        },
+                      },
+                    ],
+                  }}
+                />
+              )}
+            >
+              <StandardTable
+                columns={signalColumns}
+                data={visibleSignals}
+                selectedRowId={selectedSignalId}
+                onRowClick={(row) => setSelectedSignalId(row.id)}
+                onRowDoubleClick={(row) => {
                   setShowInterventionForm(true);
                   setInterventionComposerOpen(true);
                   setDraftSignalIds((current) =>
@@ -834,45 +942,17 @@ export const ExecutionControlSurface = ({
                   );
                   setSelectedSignalId(null);
                 }}
-                openLabel="Otwórz przygotowanie"
-                meta={{
-                  pills: [
+                rowMenu={(row) => ({
+                  primary: [
                     {
-                      label: row.severity,
-                      tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
-                    },
-                  ],
-                  recommendation: `Project ${row.signal.projectId ?? 'UNKNOWN'} · Reguła ${row.rule}`,
-                }}
-                details={{
-                  label: 'Sygnał zarządczy',
-                  text: `${row.signal.sourceType}:${row.signal.sourceId}`,
-                  properties: [
-                    { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
-                    { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
-                    { id: 'occurrences', label: 'Wystąpienia', value: String(row.occurrences) },
-                    { id: 'updated', label: 'Aktualizacja', value: row.updatedAt },
-                  ],
-                }}
-                relations={[
-                  { label: `Project ${row.signal.projectId ?? 'UNKNOWN'}` },
-                  ...Object.entries(row.signal.sourceVersions ?? {}).map(([key, value]) => ({
-                    label: `${key} v${value}`,
-                  })),
-                  ...(row.signal.occurrences ?? []).map((occurrence: any) => ({
-                    label: occurrence.evidenceRef || 'EVIDENCE_MISSING',
-                    value: occurrence.occurredAt,
-                  })),
-                ]}
-                relationsEmptyLabel="Brak wersjonowanych źródeł"
-                actions={{
-                  informational: [
-                    {
-                      id: 'add-to-intervention',
-                      variant: 'neutral',
-                      label: 'Dodaj do przygotowywanej interwencji',
+                      id: 'prepare-intervention',
+                      label: t(
+                        'execution.control.actions.prepareIntervention',
+                        'Prepare intervention'
+                      ),
                       onClick: () => {
                         setShowInterventionForm(true);
+                        setInterventionComposerOpen(true);
                         setDraftSignalIds((current) =>
                           current.includes(row.id) ? current : [...current, row.id]
                         );
@@ -880,43 +960,11 @@ export const ExecutionControlSurface = ({
                       },
                     },
                   ],
-                }}
+                  universalHandlers: { preview: () => setSelectedSignalId(row.id) },
+                })}
+                persistKey="execution.management-signals.v1"
               />
-            )}
-          >
-            <StandardTable
-              columns={signalColumns}
-              data={visibleSignals}
-              selectedRowId={selectedSignalId}
-              onRowClick={(row) => setSelectedSignalId(row.id)}
-              onRowDoubleClick={(row) => {
-                setShowInterventionForm(true);
-                setInterventionComposerOpen(true);
-                setDraftSignalIds((current) =>
-                  current.includes(row.id) ? current : [...current, row.id]
-                );
-                setSelectedSignalId(null);
-              }}
-              rowMenu={(row) => ({
-                primary: [
-                  {
-                    id: 'prepare-intervention',
-                    label: t('execution.control.actions.prepareIntervention', 'Prepare intervention'),
-                    onClick: () => {
-                      setShowInterventionForm(true);
-                      setInterventionComposerOpen(true);
-                      setDraftSignalIds((current) =>
-                        current.includes(row.id) ? current : [...current, row.id]
-                      );
-                      setSelectedSignalId(null);
-                    },
-                  },
-                ],
-                universalHandlers: { preview: () => setSelectedSignalId(row.id) },
-              })}
-              persistKey="execution.management-signals.v1"
-            />
-          </TableWithPreviewLayout>
+            </TableWithPreviewLayout>
           </div>
         </section>
       )}

@@ -11727,6 +11727,12 @@
     }
   },
   "execution": {
+    "review": {
+      "roles": {
+        "executionManager": "Menedżer realizacji",
+        "controlsEngineer": "Inżynier sterowania"
+      }
+    },
     "title": "Centrum Realizacji",
     "dashboard": "Panel",
     "calendar": "Kalendarz",
