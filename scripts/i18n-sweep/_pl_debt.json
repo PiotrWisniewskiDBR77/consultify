@@ -1,14 +1,6 @@
 [
   [
-    "finance.tabs.investment",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "finance.cta.importStatement",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "finance.cta.newInvestment",
-    "src/components/Economics/FinanceHub.tsx"
+    "vault.safes.indexingErrorsCount",
+    "src/views/vault/VaultSafesTable.tsx"
   ]
 ]

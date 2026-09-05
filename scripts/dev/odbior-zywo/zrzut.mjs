@@ -83,7 +83,8 @@ for (const sel of domSelektory) {
     dom[sel] = { liczba: n, boxy };
   } catch (e) { dom[sel] = { blad: String(e.message).split('\n')[0].slice(0, 160) }; }
 }
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
+const tekst = domSelektory.includes('body') ? await page.locator('body').innerText() : undefined;
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, ...(tekst === undefined ? {} : { tekst }), ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
 // zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).
