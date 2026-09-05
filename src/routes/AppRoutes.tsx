@@ -2010,7 +2010,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/discovery/canvas"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Discovery']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Wywiad']} noPadding>
               <RouteErrorBoundary>
                 <DiscoveryConsultantView />
               </RouteErrorBoundary>
@@ -2034,7 +2034,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.INTERVIEW}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Wywiad']} noPadding>
               <RouteErrorBoundary>
                 <InterviewHub />
               </RouteErrorBoundary>
@@ -2060,7 +2060,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.ROOT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Tools']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia']} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2076,7 +2076,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Analiza strategiczna']} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2093,7 +2093,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS}
           element={
             <MainLayout
-              breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis', 'Megatrends']}
+              breadcrumbs={breadcrumbs || ['Narzędzia', 'Analiza strategiczna', 'Megatrendy']}
               noPadding
             >
               <ProductionModuleGate
@@ -2116,7 +2116,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Operational']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Operacyjne']} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2131,7 +2131,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.DIGITAL}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Digital']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Cyfrowe']} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2146,7 +2146,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Process Automation']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Automatyzacja procesów']} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2280,7 +2280,7 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || ['Ocena']} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Assessment"
