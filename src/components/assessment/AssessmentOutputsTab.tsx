@@ -53,6 +53,7 @@ import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArti
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { PreviewPaneAside } from '../shared/PreviewPane';
+import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
 import { EmptyState } from '../shared/states';
 import {
   type MetaPill,
@@ -421,8 +422,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
               }}
             />
           </PreviewPaneAside>
-        ) : selectedRow ? (
-          <PreviewPaneAside>
+        ) : (
+          <JedenPrawyPanel rekord={selectedRow ? (
             <StandardPreview
               title={selectedRow.scope || (isPolish ? 'Bez tytułu' : 'Untitled output')}
               onClose={() => setSelectedOutputId(null)}
@@ -552,8 +553,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                 })(),
               }}
             />
-          </PreviewPaneAside>
-        ) : null}
+          ) : null} />
+        )}
       </div>
     </div>
   );

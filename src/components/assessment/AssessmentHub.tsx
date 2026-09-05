@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -2417,8 +2418,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Assessment'}
                 onClose={() => setSelectedAssessmentId(null)}
@@ -2483,8 +2483,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                     : undefined
                 }
               />
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }
@@ -2563,8 +2562,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Report'}
                 onClose={() => setSelectedReportRowId(null)}
@@ -2611,8 +2609,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                   />
                 )}
               </StandardPreview>
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }
@@ -2655,8 +2652,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Initiative'}
                 onClose={() => setSelectedInitiativeRowId(null)}
@@ -2703,8 +2699,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                 relations={[]}
                 actions={previewActions}
               />
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }
