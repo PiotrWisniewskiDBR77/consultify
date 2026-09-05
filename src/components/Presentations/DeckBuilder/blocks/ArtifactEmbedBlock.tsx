@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
 
@@ -9,8 +10,11 @@ interface Props {
 }
 
 export const ArtifactEmbedBlock: React.FC<Props> = ({ block, theme }) => {
+  const { t } = useTranslation();
   const artifactType = (block.content.artifact_type as string) || 'initiative';
-  const artifactName = (block.content.artifact_name as string) || 'Untitled artifact';
+  const artifactName =
+    (block.content.artifact_name as string) ||
+    t('presentations.builder.defaultContent.untitledArtifact', 'Artefakt bez nazwy');
   const status = (block.content.status as string) || '';
 
   return (

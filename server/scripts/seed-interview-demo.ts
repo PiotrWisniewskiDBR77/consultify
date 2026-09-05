@@ -334,7 +334,7 @@ async function main() {
         company_name: 'Novatek Manufacturing Sp. z o.o.',
         industry: 'Manufacturing (Discrete)',
         company_size: 'Mid-Market',
-        location: 'PL · Silesia',
+        location: 'PL · Śląskie',
         employee_count: 620,
         annual_revenue: '€120M',
         key_metrics: JSON.stringify([
