@@ -1,0 +1,168 @@
+{
+  "_opis": "Otwarte decyzje właściciela po rundzie 3 odbioru MVP (05.09.2026). Źródło dla strony /decyzje (port 3100). Każda pozycja: pytanie, opcje, rekomendacja CTO. Odpowiedzi zapisują się do odbior.sqlite (decyzje_zywo, klucz 'DEC:<id>').",
+  "decyzje": [
+    {
+      "id": "d01-launcher-wywiad",
+      "modul": "03 Wywiad",
+      "ekrany": [
+        "unified-create-launcher"
+      ],
+      "pytanie": "Obraz zatwierdzony pokazuje uniwersalny przycisk „+ Nowy” (launcher) w pasku Wywiadu. 27.07 sam go usunąłeś (decyzja D-01: jeden kontekstowy przycisk na zakładkę: Nowa sesja / Nowy szablon / Nowy insight / Dodaj inicjatywy / Przypisz). Dwa agenty zatrzymały się na tym konflikcie.",
+      "opcje": {
+        "A": "D-01 stoi: zostaje kontekstowy przycisk, kasujemy martwy kod launchera.",
+        "B": "Odwracamy D-01: montujemy launcher „+ Nowy” obok przycisku kontekstowego."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "siri-warsztat",
+      "modul": "05 Ocena",
+      "ekrany": [
+        "siri-workspace"
+      ],
+      "pytanie": "Ekran SIRI otwiera edytor V8 zamiast warsztatu pytań z obrazu. Warsztat istnieje w kodzie, ale nie jest zamontowany dla metody SIRI (tylko DRD).",
+      "opcje": {
+        "A": "MVP: zamontować warsztat dla SIRI tak jak dla DRD (1 agent, ryzyko średnie: inny zestaw pytań).",
+        "B": "Po MVP: SIRI zostaje w edytorze V8, warsztat w fali 2."
+      },
+      "rekomendacja": "B"
+    },
+    {
+      "id": "jednostka-formularz",
+      "modul": "05 Ocena",
+      "ekrany": [
+        "assessment-list"
+      ],
+      "pytanie": "Kolumna JEDNOSTKA na liście ocen jest już zbudowana (baza + API + tabela), ale żaden formularz nie wpisuje jednostki, więc wszystkie wiersze pokazują kreskę. Pole w formularzu nowej oceny to nowa powierzchnia (wymaga prototypu przed pokazaniem).",
+      "opcje": {
+        "A": "Dodać pole „Jednostka” do formularza nowej oceny (prototyp → mój zrzut → Twój akcept) i uzupełnić istniejące oceny DBR77.",
+        "B": "Zostawić kolumnę pustą do fali 2, uzupełnić tylko dane istniejących ocen ręcznie."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "finanse-porownanie-wersji",
+      "modul": "09 Finanse",
+      "ekrany": [
+        "finance-compare-panel"
+      ],
+      "pytanie": "Panel porównania wymaga drugiej wersji biznesowej powiązanej z pierwszą. Nie ma endpointu tworzącego to powiązanie, więc panel nigdy nie ma czego porównać.",
+      "opcje": {
+        "A": "MVP: zbudować endpoint powiązania wersji + przycisk „Porównaj z…” (1 agent Opus, serwer + front).",
+        "B": "Po MVP: panel zostaje z pustym stanem „brak drugiej wersji”."
+      },
+      "rekomendacja": "B"
+    },
+    {
+      "id": "silnik-tabeli-pomyslow",
+      "modul": "02 Moja Praca",
+      "ekrany": [
+        "idea-table-tool-grouping",
+        "idea-table-tool-sortfilter",
+        "idea-table-tool-kebab",
+        "idea-table-tool-paste",
+        "idea-table-record-templates",
+        "idea-templates-catalog"
+      ],
+      "pytanie": "Obrazy zatwierdzone tabeli Pomysłów pokazują osobny silnik z wierszem filtrów pod nagłówkiem i własnym kebabem. Dziś tabela Pomysłów stoi na kanonicznym StandardTable (filtry w pasku modułu, kebab standardowy). Sześć ekranów czeka na to jedno słowo.",
+      "opcje": {
+        "A": "Kanon: StandardTable jak w całej aplikacji; sześć obrazów uznajemy za nieaktualne i odbieramy na nowo.",
+        "B": "Przywrócić silnik z wierszem filtrów tylko dla Pomysłów (odstępstwo od kanonu, 1 agent Opus)."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "szyna-notatnika-fala2",
+      "modul": "02 Moja Praca",
+      "ekrany": [
+        "mywork-notebook-rail-speca"
+      ],
+      "pytanie": "Prawy panel Notatnika wg SPEC-A (szyna) jest za flagą fali 2 (wyłączony celowo). Obraz zatwierdzony pokazuje go włączonego.",
+      "opcje": {
+        "A": "MVP bez szyny: zostaje obecny panel; ekran przechodzi do fali 2.",
+        "B": "Włączyć szynę teraz i odebrać ją dziś."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "baseline-v3",
+      "modul": "09 Finanse",
+      "ekrany": [
+        "finance-baseline-workspace"
+      ],
+      "pytanie": "Baseline v3 jest wyłączony w bazie dla DBR77 (decyzja CTO), więc widok klasyczny jest zamierzony. Obraz zatwierdzony pokazuje v3.",
+      "opcje": {
+        "A": "MVP na widoku klasycznym; v3 po MVP.",
+        "B": "Włączyć v3 dla DBR77 dziś i odebrać."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "drd-http-source-of-truth",
+      "modul": "05 Ocena",
+      "ekrany": [
+        "drd-macierz-oceny"
+      ],
+      "pytanie": "Flaga drdHttpSourceOfTruthV1 przełącza warsztat DRD na źródło prawdy po HTTP (nowa trasa). Dziś OFF; macierz działa na dotychczasowej trasie i jest już zgodna z obrazem.",
+      "opcje": {
+        "A": "Zostawić OFF na MVP (zero ryzyka dla macierzy).",
+        "B": "Włączyć i odebrać dziś."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "teresa-w-panelu-narzedzia",
+      "modul": "10 Materiały",
+      "ekrany": [
+        "document-studio-ai-teresa",
+        "ideas-teresa-panel",
+        "chat-split-teresa-right"
+      ],
+      "pytanie": "Twoja decyzja z 01.09: „jedna Teresa, w swoim oknie” — czat znika z paneli narzędzi. Trzy obrazy zatwierdzone wcześniej pokazują czat Teresy wbudowany w panel. Potwierdź, że obrazy są nieaktualne (wtedy idą do akceptu seryjnego jako nowy wzorzec).",
+      "opcje": {
+        "A": "Potwierdzam: jedna Teresa, panele narzędzi mają tylko przycisk do niej.",
+        "B": "Wracamy do Teresy wbudowanej w panel narzędzia."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "zamrozenie-czatu",
+      "modul": "01 Czat",
+      "ekrany": [],
+      "pytanie": "Czat: grafika zatwierdzona („nie mam uwag”), Twój agent klikał funkcje. Zamrażamy Czat jako pierwszy moduł „MVP final” (mechanizm blokuje zmiany plików modułu bez Twojego słowa)?",
+      "opcje": {
+        "A": "Tak, zamrażamy Czat teraz.",
+        "B": "Jeszcze nie: czekam na wynik klikania agenta."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "finanse-wycena-zrodlo",
+      "modul": "09 Finanse",
+      "ekrany": [
+        "finance-valuation-workspace"
+      ],
+      "pytanie": "Trzy zatwierdzone wyceny CD PROJEKT pokazują „Źródło ZABLOKOWANE”: brakuje endpointu tworzącego powiązanie Baseline/Scenariusz → Wycena (znana luka pakietu B3). Most legacy→v3 i okrągłe przyciski są już naprawione.",
+      "opcje": {
+        "A": "MVP: zbudować endpoint powiązania źródła wyceny (1 agent Opus, serwer + przycisk „Wskaż źródło”).",
+        "B": "Po MVP: wycena zostaje z uczciwym stanem „brak źródła”."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "roi-wlaczenie-org",
+      "modul": "08 Wyniki",
+      "ekrany": [
+        "roi-jedna-karta",
+        "results-vnext-roi-model",
+        "results-vnext-roi-full-tool"
+      ],
+      "pytanie": "Trzy ekrany ROI pokazują uczciwy stan „ROI nie jest włączone w tej organizacji” (brak wpisu polityki widoczności dla DBR77). Kod działa; brakuje jednego kliknięcia administratora „Włącz ROI dla organizacji” na stagingu.",
+      "opcje": {
+        "A": "Włączam ROI dla DBR77 na stagingu (agent klika jako admin, odbieramy trzy ekrany).",
+        "B": "ROI zostaje wyłączone do fali 2."
+      },
+      "rekomendacja": "A"
+    }
+  ]
+}

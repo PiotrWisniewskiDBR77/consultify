@@ -61,7 +61,8 @@ const EVID = path.join(ROOT, 'evidence/grafika');
 
 import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyzji, kartaModulu, pozaOdbiorem, coDomyka } from './lib/kartyModulow.mjs';
 import { STYL_MODULOW } from './lib/stylModulow.mjs';
-import { stronaZywo } from './lib/odbiorZywo.mjs';
+import { stronaZywo, indeksZatwierdzonychLight } from './lib/odbiorZywo.mjs';
+import { stronaDecyzje } from './lib/odbiorDecyzje.mjs';
 
 /**
  * ODBIÓR NA ŻYWO 05.09 (dodane 2026-09-05). Właściciel odbiera MVP i chce
@@ -74,6 +75,25 @@ import { stronaZywo } from './lib/odbiorZywo.mjs';
 const EVIDENCE_ROOT = path.join(ROOT, 'evidence');
 const ZYWO_DIR = path.join(EVIDENCE_ROOT, 'odbior-zywo-20260905');
 const ODBIOR_ZYWO_DECYZJE = path.join(ROOT, 'docs/program/grafika/ODBIOR_ZYWO_DECYZJE.json');
+
+/**
+ * STRONA `/decyzje` (2026-09-05) — jedna lista tego, co właściciel ma DZIŚ
+ * rozstrzygnąć: otwarte decyzje produktowe, akcept seryjny „nowego wzorca” i
+ * potwierdzenie dzisiejszych napraw. Zapisuje się do TEJ SAMEJ tabeli
+ * `decyzje_zywo` co `/zywo` (klucz `DEC:<id>` dla decyzji, id ekranu dla
+ * ekranów), więc nie powstają dwa sprzeczne rejestry odpowiedzi.
+ *
+ * `ODBIOR_PAKIETY` wskazuje katalog z `pakiet-<katalog>.json` (pole
+ * `obraz_zatwierdzony_light` — wskazane ręką, nie zgadnięte). Pakiety bywają
+ * poza repo, więc gdy ich nie ma, obraz zatwierdzony bierzemy z tego samego
+ * skanu `evidence/grafika` co strona `/zywo` — strona ma działać w obu światach.
+ */
+const DECYZJE_OTWARTE = path.join(ROOT, 'docs/program/DECYZJE_OTWARTE_20260905.json');
+const ODBIOR_SERYJNY_MD = path.join(ROOT, 'docs/program/ODBIOR_SERYJNY_20260905.md');
+const DECYZJE_DZIS = path.join(ROOT, 'docs/program/grafika/DECYZJE_20260905.json');
+const PAKIETY_DIR = process.env.ODBIOR_PAKIETY || path.join(ROOT, 'docs/program/grafika/pakiety-odbior-zywo');
+/** Strona startowa pod `/` — `ODBIOR_START=decyzje` prowadzi właściciela od razu na listę decyzji. */
+const START = process.env.ODBIOR_START || '';
 
 /**
  * KOLEJNOŚĆ MODUŁÓW W WIDOKU — ustalona przez nadzorcę z rozliczenia korpusu uwag,
@@ -314,7 +334,17 @@ function zapiszDecyzjeZywo(ekran, zmiana) {
     `INSERT INTO decyzje_zywo (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)
      ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, kiedy = excluded.kiedy`
   ).run(ekran, decyzja || null, uwaga || null, teraz);
-  fs.writeFileSync(ODBIOR_ZYWO_DECYZJE, JSON.stringify(czytajDecyzjeZywo(), null, 1), 'utf8');
+  const wszystkieZywo = czytajDecyzjeZywo();
+  fs.writeFileSync(ODBIOR_ZYWO_DECYZJE, JSON.stringify(wszystkieZywo, null, 1), 'utf8');
+  // Druga, opisana kopia — dla strony /decyzje. Ten sam powód co wyżej: baza
+  // sqlite jest w .gitignore, więc plik w repo jest JEDYNYM trwałym śladem
+  // odpowiedzi właściciela. Eksport po KAŻDYM zapisie, nie na koniec dnia.
+  fs.writeFileSync(DECYZJE_DZIS, JSON.stringify({
+    _opis: 'Odpowiedzi wlasciciela 05.09 ze strony /decyzje. Klucz "DEC:<id>" = decyzja produktowa, samo id = ekran.',
+    _wyeksportowano: teraz.slice(0, 19),
+    _ile: Object.keys(wszystkieZywo).length,
+    odpowiedzi: wszystkieZywo,
+  }, null, 1), 'utf8');
   return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje_zywo WHERE ekran = ?').get(ekran);
 }
 
@@ -941,6 +971,36 @@ http
         }
       });
       return;
+    }
+    if (req.url === '/decyzje.json') {
+      // Eksport WSZYSTKICH zapisanych odpowiedzi — do odczytu bez zaglądania do sqlite.
+      return res
+        .writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+        .end(JSON.stringify(czytajDecyzjeZywo(), null, 1));
+    }
+    if (req.url === '/decyzje' || req.url.startsWith('/decyzje?')) {
+      try {
+        const html = stronaDecyzje({
+          decyzjeOtwarte: JSON.parse(fs.readFileSync(DECYZJE_OTWARTE, 'utf8')),
+          status: JSON.parse(fs.readFileSync(STATUS, 'utf8')),
+          zywoDir: ZYWO_DIR,
+          evidenceRoot: EVIDENCE_ROOT,
+          pakietyDir: PAKIETY_DIR,
+          mdSeryjny: ODBIOR_SERYJNY_MD,
+          zapisane: czytajDecyzjeZywo(),
+          zatwierdzoneZapasowe: indeksZatwierdzonychLight(path.join(EVIDENCE_ROOT, 'grafika')),
+        });
+        return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).end(html);
+      } catch (e) {
+        console.error('BLAD renderu /decyzje:', e);
+        return res
+          .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+          .end(`<h1>Strona /decyzje nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
+      }
+    }
+    if (START === 'decyzje' && (req.url === '/' || req.url === '')) {
+      // Właściciel wpisuje sam adres serwera — ma trafić tam, gdzie dziś pracuje.
+      return res.writeHead(302, { location: '/decyzje' }).end();
     }
     if (req.url.startsWith('/png/')) {
       const rel = decodeURIComponent(req.url.slice(5));
