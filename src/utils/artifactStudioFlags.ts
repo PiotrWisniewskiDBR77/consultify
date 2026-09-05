@@ -90,8 +90,9 @@ function readStorage(key: string): boolean | null {
 
 function readEnv(key: string): boolean | null {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return parseFlag(meta.env?.[key]);
+    return parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[key]
+    );
   } catch {
     return null;
   }

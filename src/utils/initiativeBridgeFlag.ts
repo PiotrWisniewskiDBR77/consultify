@@ -23,8 +23,13 @@ export function isInitiativeBridgeEnabled(): boolean {
       query === null && typeof window !== 'undefined'
         ? parseFlag(window.localStorage.getItem(LS_KEY))
         : null;
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    cached = query ?? local ?? parseFlag(meta.env?.[ENV_KEY]) ?? false;
+    cached =
+      query ??
+      local ??
+      parseFlag(
+        (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+      ) ??
+      false;
   } catch {
     cached = false;
   }

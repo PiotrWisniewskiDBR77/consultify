@@ -37,8 +37,9 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 
 function readEnvFlag(): boolean {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+    );
     // HP-4 domknięty (wejście /agent-plan + sidebar + silnik PlanBuilder),
     // zweryfikowany wizualnie w dev-render (light+dark, pełny flow) → default ON.
     return parsed === null ? true : parsed;
