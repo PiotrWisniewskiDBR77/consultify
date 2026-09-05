@@ -2260,6 +2260,26 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </button>
                 </div>
               )}
+              {/* Przełącznik lane'u governance dla metodyk BEZ własnego
+                  przełącznika powierzchni (SIRI, ADMA, CMMI, Lean). Bez niego
+                  zmiana wyżej schowałaby workbench bez drogi powrotnej. */}
+              {framework !== 'drd' && (
+                <div className="inline-flex items-center gap-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowGovernance((v) => !v)}
+                    aria-pressed={showGovernance}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+                      showGovernance
+                        ? 'bg-c-surface-raised text-c-text shadow-sm'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
+                    }`}
+                    title="Governance / Review lane (workbench)"
+                  >
+                    Governance
+                  </button>
+                </div>
+              )}
               {framework === 'drd' && drdViewMode !== 'form' && drdPositionLabel && (
                 <div className="inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-lg border border-c-border-subtle bg-white/60 dark:bg-navy-900/40 text-c-text-secondary truncate">
                   <span className="truncate">{drdPositionLabel}</span>
@@ -2434,13 +2454,31 @@ export const AssessmentSessionEditorView: React.FC = () => {
         ) : null}
 
         {/*
-          Governance lane (workbench + canon intro).
-          For DRD: this is a SECONDARY lane — the session opens on Piotr's
-          assessment surface, not on the "shared workbench / checkpoints" screen.
-          Shown only when the user opts into Governance from the subheader.
-          For other frameworks: unchanged (always visible).
+          Governance lane (workbench + canon intro) — SEKUNDARNA dla KAŻDEJ
+          metodyki, nie tylko dla DRD (poprawka 2026-09-05).
+
+          ★ CO BYŁO ZMIERZONE. Sesja SIRI otwierała się na stronie „V8 SHARED
+          WORKBENCH" — kafle „Punkty kontrolne workbencha", sekcje MOST
+          ASSESSMENTU / WARSZTAT OCENY / STAN BIEŻĄCY — a nie na zatwierdzonym
+          warsztacie pytań (drzewo wymiarów, pytanie, sześć przycisków
+          odpowiedzi, strefa dowodu, pasek Wstecz/Zapisz/Dalej). Warsztat był
+          w DOM, tylko PONIŻEJ tej ściany kafli, w kontenerze bez przewijania.
+          Dowód z tego samego pomiaru: panel „Zarządzanie" tej sesji miał
+          zmierzone `top` równe DOKŁADNIE wysokości okna (900 px przy oknie 900,
+          1600 przy oknie 1600) i nie reagował na `scrollIntoView` — czyli
+          wszystko, co ta ściana wypchnęła w dół, było dla użytkownika
+          nieosiągalne.
+          (`evidence/odbior-zywo-20260905/05-ocena/wyniki.json`: `siri-workspace`,
+          `assessment-manage-panel`, `assessment-reports-panel`,
+          `assessment-initiatives-panel` — cztery zgłoszenia, jedna przyczyna.)
+
+          ★ CO SIĘ ZMIENIA. Reguła, którą DRD dostało wcześniej, obowiązuje
+          teraz wszystkie metodyki: sesja otwiera się na powierzchni pracy,
+          a lane governance pokazuje się na żądanie (przełącznik „Governance"
+          w podnagłówku). Nic nie ubywa — ten sam panel, ten sam workbench,
+          jedno kliknięcie dalej.
         */}
-        {framework !== 'drd' || showGovernance ? (
+        {showGovernance ? (
           <>
             <div className="px-6 pb-4">
               <AssessmentV8CanonPanel mode="session" compact />

@@ -26,7 +26,9 @@ import { useTranslation } from 'react-i18next';
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
 import {
   czyTerminToPlaceholder,
+  etykietaObszaru,
   etykietyPoziomowZMetodyki,
+  minimumKolumnyMacierzy,
   skrocTerminDoKomorki,
 } from '@/components/assessment/drd/drdMatrixCellContent';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
@@ -239,25 +241,41 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
         : MATRIX_DENSITY.spacious;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hiddenPx, setHiddenPx] = useState(0);
+  /** Zmierzona szerokość kadru siatki (0 = jeszcze nie mierzone / brak DOM-u). */
+  const [kadrPx, setKadrPx] = useState(0);
 
   /**
-   * A4 (audyt): przy 9 obszarach trzy kolumny wypadały poza kadr i NIC o tym
-   * nie informowało (clientWidth 1182 vs scrollWidth 1670). Teraz: węższa
-   * kolumna etykiet i węższe minimum kolumn przy gęstych osiach, a jeśli mimo
-   * to nie mieści się — widoczny pasek przewijania, cień krawędziowy i podpis.
+   * SZEROKOŚĆ — dlaczego siatka LICZY, a nie ma zaszytych liczb (2026-09-05).
+   *
+   * Do dziś kolumny miały stałe minimum (92 px przy 9 obszarach) i stałą
+   * kolumnę etykiet 240 px. W edytorze to się mieściło, ale w raporcie z oceny
+   * ta sama siatka dostaje kadr ~500 px (macierz siedzi w dokumencie, który
+   * dzieli 1440 px z: szyną aplikacji 64 px, drzewem sesji 240 px, szyną
+   * rozdziałów raportu ~140 px i prawym panelem artefaktu ~320 px). Zmierzone
+   * na żywo 05.09: kadr 503 px, widoczne 2–3 kolumny z 9, pod spodem napis
+   * „Jeszcze 7 kolumn po prawej". Właściciel zobaczył ćwiartkę swojej macierzy.
+   *
+   * Teraz minimum kolumny jest WYLICZANE z faktycznego kadru: jeśli 9 kolumn
+   * się nie mieści przy minimum bazowym, kolumny zwężają się aż do progu
+   * czytelności `MIN_CZYTELNA_KOLUMNA_PX`. Przewijanie w bok zostaje wyłącznie
+   * jako zabezpieczenie dla kadru węższego niż ten próg — nie jest domyślnym
+   * sposobem oglądania macierzy.
+   *
+   * Kolumna etykiet też jest dwustanowa: 240 px czyta się dobrze przy 5
+   * obszarach, ale przy 9 zjada jedną trzecią kadru raportu. Etykieta
+   * „1. Basic Data Registration" mieści się w 150 px w dwóch wierszach.
    */
-  const labelColumnPx = 240;
-  const effectiveColumnMinPx =
-    areas.length >= 9
-      ? Math.min(columnMinPx, 92)
-      : areas.length >= 7
-        ? Math.min(columnMinPx, 120)
-        : columnMinPx;
+  const labelColumnPx = areas.length >= 8 ? 150 : 240;
+  const gapPx = areas.length >= 8 ? 4 : 8;
+  const gapClass = areas.length >= 8 ? 'gap-1' : density.gap;
 
   React.useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const measure = () => setHiddenPx(Math.max(0, el.scrollWidth - el.clientWidth));
+    const measure = () => {
+      setHiddenPx(Math.max(0, el.scrollWidth - el.clientWidth));
+      setKadrPx(el.clientWidth);
+    };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(measure);
@@ -266,8 +284,31 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
     return () => ro.disconnect();
   }, [areas.length, levelCount, compact, columnMinPx]);
 
+  const effectiveColumnMinPx = React.useMemo(
+    () =>
+      minimumKolumnyMacierzy({
+        kadrPx,
+        liczbaObszarow: areas.length,
+        labelColumnPx,
+        gapPx,
+        columnMinPx,
+      }),
+    [kadrPx, areas.length, labelColumnPx, gapPx, columnMinPx]
+  );
+
   const hiddenColumns =
-    hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + 8))) : 0;
+    hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + gapPx))) : 0;
+
+  /**
+   * Kolumna poniżej 80 px: oddajemy treści padding, którego przy 150 px nikt
+   * nie zauważa, a przy 74 px decyduje o tym, czy „Management" zmieści się
+   * w jednej linii, czy zostanie przełamane na „Managem / ent". Zmierzone
+   * w kadrze raportu: 74 px kolumny minus p-2 (16) minus px-1 (8) = 50 px na
+   * tekst, czyli o kilka pikseli za mało na najdłuższe terminy z nakładek.
+   */
+  const waskieKolumny = effectiveColumnMinPx < 80;
+  const cellPadding = waskieKolumny ? 'p-1' : density.cellPadding;
+  const cellInnerPadding = waskieKolumny ? 'px-0.5' : 'px-1';
 
   const levelLabels = React.useMemo(
     () => etykietyPoziomowZMetodyki(areas, levelCount),
@@ -284,7 +325,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
           }`}
         >
           <div
-            className={`grid ${density.gap}`}
+            className={`grid ${gapClass}`}
             style={{
               gridTemplateColumns: `${labelColumnPx}px repeat(${areas.length}, minmax(${effectiveColumnMinPx}px, 1fr))`,
             }}
@@ -297,7 +338,12 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                 <React.Fragment key={`row-${level}`}>
                   {/* Etykieta wiersza */}
                   <div
-                    className={`sticky left-0 z-10 rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-gradient-to-r dark:from-navy-800/60 dark:to-navy-950 ${density.rowLabelPadding}`}
+                    /* `overflow-hidden` + `break-words`: przy wąskiej kolumnie
+                       etykiet długie słowo („Registration") wystawało poza swój
+                       tor i podbijało `scrollWidth` całej siatki — czyli
+                       włączało pasek przewijania, choć TORY mieściły się co do
+                       piksela. Zmierzone: tory 854 px, scrollWidth 874 px. */
+                    className={`sticky left-0 z-10 overflow-hidden break-words rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-gradient-to-r dark:from-navy-800/60 dark:to-navy-950 ${density.rowLabelPadding}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-bold text-c-text">
@@ -370,6 +416,13 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                       <button
                         key={`${area.id}-${level}`}
                         type="button"
+                        /* Uchwyty pomiarowe: bez nich test „która komórka"
+                           musiałby celować w treść komórki, a treść komórki
+                           jest właśnie tym, co ta macierz zmienia. */
+                        data-testid="drd-matrix-cell"
+                        data-area-id={area.id}
+                        data-level={level}
+                        aria-pressed={isSelected}
                         /*
                           Natywny dymek TYLKO tam, gdzie NIE ma własnego dymka
                           najazdowego (pełny ekran). W widoku zwykłym własny
@@ -377,7 +430,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           szum, nie pomoc.
                         */
                         title={onCellMouseEnter ? undefined : fullContent || undefined}
-                        className={`group relative rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                        className={`group relative overflow-hidden rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                           density.cellPadding
                         } ${
                           isSelected
@@ -391,13 +444,15 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           onCellMouseEnter ? (e) => onCellMouseEnter(area.id, level, e) : undefined
                         }
                         onMouseLeave={onCellMouseLeave}
-                        aria-label={`${area.name}, level ${level}`}
+                        aria-label={`${etykietaObszaru(area)}, level ${level}`}
                       >
                         <div
-                          className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
+                          className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center ${cellInnerPadding}`}
                         >
                           <span
-                            className={`text-[11px] font-medium leading-tight line-clamp-2 break-words ${
+                            className={`${
+                              waskieKolumny ? 'text-[10px]' : 'text-[11px]'
+                            } font-medium leading-tight line-clamp-3 break-words ${
                               isAchieved
                                 ? MATRIX_TEXT_ACHIEVED
                                 : isTarget
@@ -430,8 +485,8 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                   key={`x-${area.id}`}
                   type="button"
                   onClick={() => onAreaClick(area.id)}
-                  title={area.name}
-                  className="sticky bottom-0 z-20 rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  title={etykietaObszaru(area)}
+                  className="sticky bottom-0 z-20 overflow-hidden rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <span className="text-[11px] font-bold text-c-text-secondary">{area.id}</span>
@@ -449,7 +504,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                     </div>
                   </div>
                   <div className="text-[11px] font-medium text-c-text leading-tight line-clamp-2">
-                    {area.name}
+                    {etykietaObszaru(area)}
                   </div>
                 </button>
               );
@@ -1017,7 +1072,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             >
               {DRD_STRUCTURE.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.id}. {a.name}
+                  {a.id}. {etykietaObszaru(a)}
                 </option>
               ))}
             </select>
@@ -1067,7 +1122,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       return null;
                     })()}
                   </div>
-                  <div className="text-sm font-medium truncate">{a.name}</div>
+                  <div className="text-sm font-medium truncate">{etykietaObszaru(a)}</div>
                   {/* Progress bar per area */}
                   {(() => {
                     const areaState = getAreaState(value, a.id, axis?.levelCount || 5);
@@ -1406,7 +1461,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 {popupLevelInfo?.title || `Level ${popupCell.level}`}
                               </div>
                               <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {popupArea?.name} · {popupCell.areaId}
+                                {popupArea ? etykietaObszaru(popupArea) : ''} · {popupCell.areaId}
                               </div>
                             </div>
                           </div>

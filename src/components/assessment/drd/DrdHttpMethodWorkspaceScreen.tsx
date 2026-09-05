@@ -42,6 +42,7 @@ import { useTranslation } from 'react-i18next';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
+import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
@@ -1110,6 +1111,35 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onLetMeWorkManually: () => setMode('guided_manual'),
             mode,
           }}
+          // ★ MACIERZ WŁAŚCICIELA, NIE `LiveMatrix` (2026-09-05). Powód i dowód
+          // pomiarowy w nagłówku `DrdOwnerMatrixPanel`. Selekcja, panel
+          // szczegółów i Esc zostają te same — zmienia się rysunek, nie mechanika.
+          matrixContent={
+            <DrdOwnerMatrixPanel
+              axisNumber={activeAxis.id}
+              rows={matrixRows}
+              selection={matrixSelection}
+              onSelect={(sel) => {
+                setMatrixSelection(sel);
+                setActiveUnitId(sel.unitId);
+              }}
+              onCloseSideSheet={() => setMatrixSelection(null)}
+              renderSideSheet={(selection, cell) => (
+                <div className="text-xs text-c-text-secondary">
+                  <p>
+                    {selection.unitId} · poziom {selection.level} —{' '}
+                    {cell?.blocker
+                      ? 'BLOKER (pierwszy niespełniony poziom)'
+                      : cell?.reviewRequired
+                        ? 'above-gap: wymaga przeglądu'
+                        : cell?.achieved
+                          ? 'osiągnięty'
+                          : 'nieosiągnięty'}
+                  </p>
+                </div>
+              )}
+            />
+          }
           matrixProps={{
             rows: matrixRows,
             levels: matrixLevels,
