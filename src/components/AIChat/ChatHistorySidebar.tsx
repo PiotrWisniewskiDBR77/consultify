@@ -1057,7 +1057,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               data-testid="chat-history-new-chat"
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-c-text text-c-bg hover:opacity-90 rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
             >
-              {t('aiChat.newChat', 'Nowy czat')}
+              {t('aiChat.newChat', 'Nowa rozmowa')}
             </button>
 
             {/* Bulk-select toolbar (F1) */}
