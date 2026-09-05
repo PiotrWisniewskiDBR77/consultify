@@ -29,7 +29,6 @@ import {
   Flag,
   Flame,
   Folder,
-  FolderKanban,
   FolderPlus,
   GanttChart,
   GitBranch,
@@ -216,17 +215,11 @@ const ClientDocumentsVault = lazyWithRetry(() =>
 // dla AgentHubShell usunięty stąd (dawne AGT-003/AGT-010). Sam komponent
 // `src/components/AIChat/AgentHubShell.tsx` zostaje w drzewie, nieużywany
 // (post-MVP), zamrożony pod 13_CHAT w MVP_FINAL_ZAMROZONE.json.
-// M03 (dyżur 20260830): brakujące wejście do ekranu Projektów (stakeholder
-// registry + finance rollup, `MyProjects.tsx`) — działał tylko pod trasą
-// `/projects`, do której nic w realnym menu nie prowadziło (WorkCenter.tsx,
-// jedyny caller starej zakładki `PillNavigation`, jest osierocony — patrz
-// komentarz przy `DecisionsPanel.tsx:193`). Ten hub jest jedynym żywym
-// paskiem nawigacji Mojej Pracy, więc zakładka wchodzi TU, tym samym
-// mechanizmem co Vault/Run agent (lazy full-screen mount, zero propsów —
-// `MyProjects` samo pobiera dane po zamontowaniu, jak `ClientDocumentsVault`).
-const MyProjects = lazyWithRetry(() =>
-  import('./MyProjects').then((m) => ({ default: m.MyProjects }))
-);
+// 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — wejście do
+// `MyProjects.tsx` (dodane dyżurem M03 20260830) usunięte z tego huba wraz z
+// pillem Menu 2 i case'em w przełączniku niżej; komponent zostaje w drzewie,
+// nieużywany tu (unimported) — patrz `AppRoutes.tsx` (`/projects`, `/my-work/projects`
+// przekierowują teraz na `/my-work`).
 
 // Types
 type ModuleTab =
@@ -678,9 +671,9 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'ideas') return { tab: 'ideas' };
   if (segments[1] === 'tasks') return { tab: 'tasks' };
   if (segments[1] === 'decisions') return { tab: 'decisions' };
-  // Zwornik (#78): /my-work/projects deep link — same shape as /my-work/manager
-  // below, no document id segment (MyProjects manages its own selection state).
-  if (segments[1] === 'projects') return { tab: 'projects' };
+  // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — the
+  // `/my-work/projects` deep link (Zwornik #78) is removed here; AppRoutes.tsx
+  // now redirects that path to `/my-work` before this component ever mounts.
   // Page-level deep link (/my-work/notebook/<pageId>) — used by canvas
   // save-as-note success links and provenance "Otwórz" entries. Previously the
   // pageId segment was DISCARDED, so a valid link landed on the notebooks
@@ -1768,18 +1761,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-blue-500',
         requiresManagerAccess: false,
       },
-      // Zwornik (#78, relokacja 2026-08-30): `MyProjects.tsx` (stakeholder
-      // registry + finance rollup, Triada standard) miało wyłącznie trasę
-      // `/projects` bez żadnego wejścia w nawigacji — patrz decyzja
-      // właściciela w dyżurze M03. Wchodzi tu, obok Decisions, tym samym
-      // mechanizmem co Vault/Run agent poniżej (lazy full-screen mount).
-      {
-        id: 'projects' as ModuleTab,
-        label: t('myWork.hub.labelProjects', 'Projects'),
-        icon: <FolderKanban size={16} />,
-        color: 'bg-emerald-500',
-        requiresManagerAccess: false,
-      },
+      // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — pill
+      // "Projekty" (dodany dyżurem M03 20260830, Zwornik #78) usunięty z Menu 2.
       // VLT-004 (relokacja Client Vault). Same gate as the old sidebar entry
       // (isClientVaultEnabled) — hidden entirely when off, so removing the
       // sidebar item doesn't leave a dangling tab if the flag is ever flipped OFF.
@@ -4224,16 +4207,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             refreshTrigger={refreshTrigger}
           />
         );
-      case 'projects':
-        // Zwornik (#78) — MyProjects is a self-contained Triada screen
-        // (StandardModuleBar + StandardTable + StandardPreview) that fetches
-        // its own data on mount; mounted the same way as ClientDocumentsVault
-        // below, zero props.
-        return (
-          <React.Suspense fallback={lazyFallback}>
-            <MyProjects />
-          </React.Suspense>
-        );
+      // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — case
+      // 'projects' (Zwornik #78) usunięty; pill niedostępny i trasa
+      // `/my-work/projects` przekierowuje wcześniej (AppRoutes.tsx), więc
+      // `activeTab === 'projects'` nie jest już osiągalne z UI (spadnie na
+      // `default: return null` poniżej, gdyby coś jednak tam trafiło).
       case 'vault':
         // VLT-004 (relokacja Client Vault z menu głównego). ClientDocumentsVault
         // self-gates on isClientVaultEnabled() — the tab entry is already filtered

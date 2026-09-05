@@ -24,7 +24,6 @@ import {
   FileQuestion,
   FileText,
   Filter,
-  FolderKanban,
   History,
   Inbox,
   LayoutDashboard,
@@ -335,21 +334,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           onClose();
         },
       },
-      {
-        id: 'action-open-projects',
-        title: t('command.action.openProjects', 'Projects'),
-        subtitle: t(
-          'command.action.openProjectsDesc',
-          'Stakeholders & project finance rollup'
-        ),
-        icon: <FolderKanban size={18} className="text-slate-500" />,
-        category: 'action',
-        keywords: ['projects', 'projekty', 'stakeholders', 'program', 'finance'],
-        action: () => {
-          navigate('/projects');
-          onClose();
-        },
-      },
+      // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) —
+      // quick action "action-open-projects" (nawigacja do `/projects`)
+      // usunięta; trasa i tak przekierowuje teraz do `/my-work` (AppRoutes.tsx).
       {
         id: 'action-new-note',
         title: t('command.action.newNote', 'New Note'),

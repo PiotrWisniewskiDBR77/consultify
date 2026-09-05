@@ -342,10 +342,17 @@ describe('InterviewHub smoke — tab rendering', () => {
     renderTab('sessions');
     fireEvent.click(await screen.findByRole('button', { name: 'New session' }));
 
-    expect(await screen.findByLabelText('Project *')).toHaveValue('');
+    // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — project
+    // is optional here now (label lost the asterisk, `RequiredProjectPicker`
+    // gets `optional`), and the Create button is no longer gated on it: a
+    // name is pre-filled when the modal opens, so Create is enabled even for
+    // a zero-project tenant. `handleConfirmNewSession` still calls
+    // `ensureProjectId()` and gracefully toasts if no project can be
+    // resolved at all — that safety net is covered separately below.
+    expect(await screen.findByLabelText('Project')).toHaveValue('');
     expect(screen.getByRole('textbox', { name: 'New project name' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create project' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create' })).not.toBeDisabled();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'New project name' }), {
       target: { value: 'Shared project' },

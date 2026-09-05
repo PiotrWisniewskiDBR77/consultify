@@ -9,11 +9,20 @@ export function RequiredProjectPicker({
   onChange,
   disabled = false,
   language = 'en',
+  // 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — niektórzy
+  // konsumenci (np. Interview session creator) mogą już zaakceptować pusty
+  // projectId (backend ma fallback), więc pole przestaje być "wymagane"
+  // wizualnie: bez gwiazdki w etykiecie i bez atrybutu `required`. Domyślnie
+  // (`optional=false`) zachowanie jest identyczne jak wcześniej — konsumenci,
+  // których backend faktycznie wymaga projectId (np. Kreator Inicjatyw AI,
+  // nowa decyzja bez initiative/task), nic tu nie zmieniają.
+  optional = false,
 }: {
   value: string;
   onChange: (projectId: string) => void;
   disabled?: boolean;
   language?: 'en' | 'pl';
+  optional?: boolean;
 }) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,14 +92,20 @@ export function RequiredProjectPicker({
         htmlFor="required-project-picker"
         className="block text-sm font-medium text-c-text-muted"
       >
-        {language === 'pl' ? 'Projekt *' : 'Project *'}
+        {optional
+          ? language === 'pl'
+            ? 'Projekt'
+            : 'Project'
+          : language === 'pl'
+            ? 'Projekt *'
+            : 'Project *'}
       </label>
       <select
         id="required-project-picker"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled || loading}
-        required
+        required={!optional}
         className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text disabled:opacity-60"
       >
         <option value="">
