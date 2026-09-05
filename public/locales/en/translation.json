@@ -32250,7 +32250,10 @@
         "fieldCount_one": "{{count}} field",
         "fieldCount_other": "{{count}} fields"
       },
-      "recordDetails": "Record details"
+      "recordDetails": "Record details",
+      "noFilterResultsTitle": "No filter results",
+      "noFilterResultsBody_one": "The only row does not match the current filter. Change the conditions or clear the filter to see every record.",
+      "noFilterResultsBody_other": "None of the {{count}} rows match the current filter. Change the conditions or clear the filter to see every record."
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} node",

@@ -34756,7 +34756,11 @@
         "fieldCount_many": "{{count}} pól",
         "fieldCount_other": "{{count}} pola"
       },
-      "recordDetails": "Szczegóły rekordu"
+      "recordDetails": "Szczegóły rekordu",
+      "noFilterResultsTitle": "Brak wyników filtra",
+      "noFilterResultsBody_one": "Jedyny wiersz nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_few": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy."
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} węzeł",
