@@ -638,7 +638,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     async (action: 'archive' | 'delete') => {
       const ids = Array.from(selectedIds);
       if (ids.length === 0) return;
-      if (action === 'delete' && !window.confirm(`Delete ${ids.length} conversation(s)?`)) return;
+      if (
+        action === 'delete' &&
+        !window.confirm(
+          t('aiChat.confirmDeleteBulk', 'Delete {{count}} conversation(s)?', { count: ids.length })
+        )
+      )
+        return;
       setBulkBusy(true);
       try {
         await bulkOperation(ids, action);
@@ -649,7 +655,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
         setBulkBusy(false);
       }
     },
-    [selectedIds, bulkOperation, exitSelectMode]
+    [selectedIds, bulkOperation, exitSelectMode, t]
   );
 
   // Fully unmount when closed to avoid any invisible click-blocking strip on some layouts/breakpoints.

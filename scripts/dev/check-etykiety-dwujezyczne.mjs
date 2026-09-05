@@ -48,7 +48,14 @@ function arg(name) {
 export function runCli() {
   const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
   const explicitScope = arg('zakres');
-  const roots = explicitScope ? [path.resolve(repoRoot, explicitScope)] : [path.join(repoRoot, 'src/components/DiscoveryTools'), path.join(repoRoot, 'src/toolPacks')];
+  const roots = explicitScope
+    ? [path.resolve(repoRoot, explicitScope)]
+    : [
+        path.join(repoRoot, 'src/components/DiscoveryTools'),
+        path.join(repoRoot, 'src/toolPacks'),
+        path.join(repoRoot, 'src/components/AIChat'),
+        path.join(repoRoot, 'src/utils/canvas'),
+      ];
   const result = scanPaths(roots);
   console.log(`etykiety: zbadane pliki=${result.files.length}, ternary=${result.rows.length}, nieuzasadnione-identyczne=${result.unjustified.length}, baseline=${baseline.maxUnjustifiedIdentical}`);
   if (result.files.length === 0 || result.rows.length === 0) {
