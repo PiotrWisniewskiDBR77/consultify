@@ -35,6 +35,10 @@ const LIBRARY_TEMPLATE_ERROR_MESSAGES: Record<string, string> = {
   TEMPLATE_ORPHANED:
     'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.',
   TEMPLATE_FORBIDDEN: 'Nie masz dostępu do tego wzorca.',
+  // ODBIÓR NA ŻYWO 05.09 — patrz `TEMPLATE_PROVENANCE_UNVERIFIED` w
+  // `server/src/services/materials/creationIntent.ts`.
+  TEMPLATE_PROVENANCE_UNVERIFIED:
+    'Ten wzorzec nie ma jeszcze zatwierdzonego pochodzenia i praw, więc nie może sterować generacją. Otwórz Bibliotekę wzorców → „Pochodzenie i prawa" i zatwierdź go (potrzebne: źródło, podstawa licencji, organ decyzyjny, wersja i dowód).',
   TEMPLATE_DEPRECATED:
     'Ten wzorzec został wycofany i nie może już sterować generacją. Wybierz aktualny wzorzec.',
   TEMPLATE_FORMAT_UNSUPPORTED: 'Ten wzorzec nie tworzy raportu z assessmentu.',

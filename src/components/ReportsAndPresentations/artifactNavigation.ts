@@ -156,3 +156,54 @@ export function appendArtifactOpenAction(path: string | null, action: string): s
 
   return serialized ? `${base}?${serialized}` : base;
 }
+
+/**
+ * ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — CZYTELNIK trasy „Edytuj".
+ *
+ * `resolveTemplateEditPath` (wyżej, w TYM pliku) produkuje dla wzorca Arkusza
+ * adres `?tab=templates&editWorkbookTemplateId=<kanoniczne id>`. Przez cały
+ * czas w `src/` NIE BYŁO ani jednego czytelnika tego parametru — kebab →
+ * „Edytuj" zmieniał adres i nic więcej: builder się nie otwierał, użytkownik
+ * zostawał na liście („martwy przewód").
+ *
+ * Ta funkcja jest tym czytelnikiem i leży CELOWO obok producenta: dopóki oba
+ * końce przewodu są w jednym pliku i pod jednym testem, nie da się znów zmienić
+ * jednego bez drugiego. Hub (`ReportsAndPresentationsHub`) tylko ją woła i
+ * przekłada wynik na swój stan.
+ */
+export interface TemplatesDeepLinkTarget {
+  /** Podwidok zakładki „Szablony": lista, Architekt (Deck) albo Generator (Excel). */
+  templatesView: 'library' | 'deckArchitect' | 'workbookTemplates';
+  /** Kanoniczne id wzorca Arkusza do otwarcia w builderze; `null` = lista. */
+  workbookTemplateId: string | null;
+  /** `true`, gdy adres wymusza zakładkę „Szablony" niezależnie od `?tab=`. */
+  forcesTemplatesTab: boolean;
+}
+
+export function resolveTemplatesDeepLink(search: string | URLSearchParams): TemplatesDeepLinkTarget {
+  const params = typeof search === 'string' ? new URLSearchParams(search) : search;
+  const editWorkbookTemplateId = (params.get('editWorkbookTemplateId') || '').trim();
+  if (editWorkbookTemplateId) {
+    return {
+      templatesView: 'workbookTemplates',
+      workbookTemplateId: editWorkbookTemplateId,
+      forcesTemplatesTab: true,
+    };
+  }
+  const tab = (params.get('tab') || '').trim();
+  if (tab === 'template_architect') {
+    return { templatesView: 'deckArchitect', workbookTemplateId: null, forcesTemplatesTab: true };
+  }
+  if (tab === 'workbook_templates') {
+    return {
+      templatesView: 'workbookTemplates',
+      workbookTemplateId: (params.get('workbookTemplateId') || '').trim() || null,
+      forcesTemplatesTab: true,
+    };
+  }
+  return {
+    templatesView: 'library',
+    workbookTemplateId: (params.get('workbookTemplateId') || '').trim() || null,
+    forcesTemplatesTab: false,
+  };
+}

@@ -509,6 +509,15 @@ export const PrezentacjeView: React.FC = () => {
         return t('prezentacje.templateForbidden', {
           defaultValue: 'Nie masz dostępu do tego wzorca.',
         });
+      // ODBIÓR NA ŻYWO 05.09 — patrz `TEMPLATE_PROVENANCE_UNVERIFIED` w
+      // `server/src/services/materials/creationIntent.ts`: własny wzorzec bez
+      // atestacji pochodzenia dostawał komunikat o braku dostępu, co było
+      // nieprawdą.
+      case 'TEMPLATE_PROVENANCE_UNVERIFIED':
+        return t('prezentacje.templateProvenanceUnverified', {
+          defaultValue:
+            'Ten wzorzec nie ma jeszcze zatwierdzonego pochodzenia i praw, więc nie może sterować generacją. Otwórz Bibliotekę wzorców → „Pochodzenie i prawa" i zatwierdź go (potrzebne: źródło, podstawa licencji, organ decyzyjny, wersja i dowód).',
+        });
       case 'TEMPLATE_DEPRECATED':
         return t('prezentacje.templateDeprecated', {
           defaultValue:

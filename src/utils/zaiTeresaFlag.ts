@@ -44,10 +44,42 @@ function parseFlag(raw: string | null | undefined): boolean | null {
   return null;
 }
 
+/**
+ * ★ ODCZYT MUSI BYĆ STATYCZNY — ZMIERZONE 05.09 (odbiór na żywo, różnica #7).
+ *
+ * Objaw: `VITE_ZAI_TERESA_ENABLED=true` w `.env.local`, a ścieżka „Z AI" i tak
+ * wchodziła w stary formularz; działało wyłącznie `?ff_zai_teresa=1`.
+ *
+ * Przyczyna (zmierzona, nie wywnioskowana — dwa pomiary):
+ *  1. `vite build`: podstawienie zmiennych to TEKSTOWE zastąpienie wyrażenia
+ *     `import.meta.env.KLUCZ`. Zapis `const meta = import.meta; meta?.env?.[K]`
+ *     nie zawiera tego wyrażenia, więc nic się nie podstawia, a w gotowym
+ *     bundlu natywne `import.meta` NIE MA własności `env` → `undefined`.
+ *     (Pomiar: mini-projekt, `dist/assets/index-*.js` — funkcja statyczna
+ *     zwraca `"true"`, dynamiczna zwraca `meta?.env?.[ENV_KEY]`.)
+ *  2. `vite dev`: obiekt `import.meta.env` JEST wstrzykiwany w preambule
+ *     modułu, ale TYLKO wtedy, gdy kod modułu (po transformacji, czyli już bez
+ *     komentarzy) zawiera dosłowny napis `import.meta.env`. Ten plik go nie
+ *     zawierał — pobrany z serwera dev `/src/utils/zaiTeresaFlag.ts` przyszedł
+ *     BEZ preambuły, więc `import.meta.env` było `undefined` także lokalnie.
+ *
+ * Innymi słowy: dynamiczny odczyt nie działał NIGDZIE — ani w buildzie, ani w
+ * devie. Warstwa `import.meta.env` była martwa od początku, a nie „wyłączona".
+ * Dlatego poniżej stoi dosłowne `import.meta.env.VITE_ZAI_TERESA_ENABLED`;
+ * `ENV_KEY` zostaje wyłącznie jako etykieta eksportowana w
+ * `ZAI_TERESA_FLAG_KEYS` (dokumentacja/diagnostyka), NIE jako indeks odczytu.
+ * Ten sam wzorzec ma już `src/utils/dynamicSwotSevenStagesFlag.ts`.
+ *
+ * ⚠️ RODZINA: ten defekt nie jest lokalny — w `src/utils/` jest ~112 modułów
+ * flag z identycznym dynamicznym odczytem. Masowa naprawa oznaczałaby
+ * jednoczesne WŁĄCZENIE kilkudziesięciu flag wizualnych na żywo, czego
+ * zabrania CLAUDE.md §9 („zakaz masowego włączania"). Naprawiona jest tylko ta
+ * jedna flaga, w zakresie zlecenia; skala rodziny idzie do raportu i do decyzji
+ * właściciela.
+ */
 function readEnvFlag(): boolean {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(import.meta.env.VITE_ZAI_TERESA_ENABLED);
     return parsed === null ? false : parsed;
   } catch {
     return false;

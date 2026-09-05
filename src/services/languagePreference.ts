@@ -98,27 +98,67 @@ const getOrganizationDefaultLanguage = async (): Promise<string | null> => {
  * navigator — unchanged fail-safe when neither account nor organization has
  * an explicit language).
  */
+/**
+ * ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — WYŚCIG DWÓCH WYWOŁAŃ.
+ *
+ * `App.tsx` woła tę funkcję DWA RAZY na jeden bootstrap i oba wywołania są
+ * `void` (bez czekania): raz dla użytkownika odtworzonego z localStorage, raz
+ * po `Api.getMe()`. Tory obu wywołań mają RÓŻNE długości — tor konta kończy się
+ * natychmiast, tor organizacji czeka na `GET /organization-context` — więc
+ * kolejność ZAKOŃCZEŃ nie jest kolejnością WYWOŁAŃ. Bez niżej wprowadzonej
+ * bariery starsze wywołanie, które poszło dłuższą drogą (organizacja), mogło
+ * nadpisać język ustawiony przez nowsze wywołanie (konto): ten sam ekran
+ * kończył raz po polsku, raz po angielsku, zależnie od czasu odpowiedzi sieci.
+ *
+ * Bariera jest kolejnością, nie blokadą: każde wywołanie dostaje numer, a wynik
+ * może zostać ZASTOSOWANY tylko wtedy, gdy żadne PÓŹNIEJSZE wywołanie już nie
+ * zastosowało swojego. Wynik spóźniony jest po prostu porzucany.
+ *
+ * ⚠️ UCZCIWIE: dla konta właściciela (zmierzone 05.09) ta bariera niczego dziś
+ * nie zmienia, bo `users.language` jest puste, a `organization_profiles
+ * .defaultLanguage` dla DBR77 to `null` (`GET /api/organization-context` →
+ * `"defaultLanguage": null`) — obie warstwy są PUSTE i funkcja i tak kończy
+ * no-opem. Zaobserwowany przeskok PL/EN miał inną przyczynę (ładowanie paczki
+ * tłumaczeń — patrz `src/i18n.ts`). Bariera zamyka realną, ale osobną dziurę.
+ */
+let languageSyncSeq = 0;
+let languageSyncApplied = -1;
+
+/** Zastosuj język tylko, jeśli nie wyprzedziło nas nowsze wywołanie. */
+async function applyIfNotStale(seq: number, language: string): Promise<void> {
+  if (seq < languageSyncApplied) return;
+  languageSyncApplied = seq;
+  await changeLanguage(language);
+}
+
 export const syncLanguageFromAccount = async (
   accountLanguage: string | null | undefined
 ): Promise<void> => {
+  const seq = ++languageSyncSeq;
   const normalized = accountLanguage ? normalizeLanguageCode(accountLanguage) : null;
   if (normalized) {
     // changeLanguage() is idempotent (i18next no-ops when already active) and
     // also refreshes the localStorage cache, so repeated bootstrap calls are cheap.
-    await changeLanguage(normalized);
+    await applyIfNotStale(seq, normalized);
     return;
   }
 
   const orgDefault = await getOrganizationDefaultLanguage();
   const normalizedOrgDefault = orgDefault ? normalizeLanguageCode(orgDefault) : null;
   if (normalizedOrgDefault) {
-    await changeLanguage(normalizedOrgDefault);
+    await applyIfNotStale(seq, normalizedOrgDefault);
     return;
   }
 
   // Neither account nor organization has an explicit language: deliberate
   // no-op, exactly as before this fix — whatever localStorage/navigator
   // already resolved to keeps being authoritative.
+};
+
+/** Tylko dla testów — zeruje barierę kolejności między przypadkami. */
+export const __resetLanguageSyncOrderingForTests = (): void => {
+  languageSyncSeq = 0;
+  languageSyncApplied = -1;
 };
 
 /**

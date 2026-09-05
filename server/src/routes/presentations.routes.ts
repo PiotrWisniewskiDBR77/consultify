@@ -371,6 +371,10 @@ const TEMPLATE_RESOLVE_STATUS: Record<TemplateResolveErrorCode, number> = {
   TEMPLATE_NOT_INDEXED: 404,
   TEMPLATE_ORPHANED: 404,
   TEMPLATE_FORBIDDEN: 403,
+  // 409, nie 403 — patrz `TEMPLATE_PROVENANCE_UNVERIFIED` w
+  // `services/materials/creationIntent.ts`: to nie brak uprawnień, tylko własny
+  // wzorzec bez zatwierdzonego pochodzenia i praw (kwarantanna MAT-POL).
+  TEMPLATE_PROVENANCE_UNVERIFIED: 409,
   TEMPLATE_DEPRECATED: 409,
   TEMPLATE_FORMAT_UNSUPPORTED: 422,
 };
@@ -1302,7 +1306,7 @@ router.get(
  *                            name, scope, status, source, legacy, slideCount } }
  * Errors: 400 templateArtifactId_required · 401 Unauthorized
  *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
- *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED | TEMPLATE_PROVENANCE_UNVERIFIED
  *         422 TEMPLATE_FORMAT_UNSUPPORTED
  */
 router.post(
@@ -2427,7 +2431,7 @@ router.post(
  * handling.
  * Errors: 400 templateArtifactId_required
  *         404 TEMPLATE_NOT_INDEXED | TEMPLATE_ORPHANED
- *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED
+ *         403 TEMPLATE_FORBIDDEN · 409 TEMPLATE_DEPRECATED | TEMPLATE_PROVENANCE_UNVERIFIED
  *         422 TEMPLATE_FORMAT_UNSUPPORTED
  */
 router.post(

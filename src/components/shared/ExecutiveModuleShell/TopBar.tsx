@@ -23,6 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { useAnchorFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
 import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { IDEA_MENU1_TOOL_SLOT_ID } from '@/utils/ideaTableGuidedBarFlag';
 
@@ -230,8 +231,17 @@ function groupOverflowSections(chips: TopBarChipDescriptor[]): OverflowSection[]
 
 /**
  * Overflow `⋯` menu — folds rare/advanced chips behind a single button
- * per editor-shell-canon § 2 STREFA GÓRNA. Portaled visually via a
- * `z-dropdown`-tokened panel (canon § 3 z-index scale).
+ * per editor-shell-canon § 2 STREFA GÓRNA.
+ *
+ * 2026-09-05 (odbiór na żywo, pakiet 10 · Materiały): the comment here used to
+ * claim the panel was "portaled visually via a z-dropdown-tokened panel" — it
+ * was not portaled at all, just `position: absolute` inside
+ * `mels-topbar-chips`, whose `overflow-x-auto` clips in BOTH axes. The
+ * measured symptom on the sibling control (`DocumentStudioFileMenu`) was a
+ * dropdown present in the DOM at full opacity and unreachable by a click; this
+ * menu shares the exact same parent, so it shared the exact same defect.
+ * The panel is now really portaled to `body` and positioned `fixed` against
+ * the trigger's rect.
  *
  * Layout follows the Notebook overflow pattern (`NotebookHamburgerMenu`):
  * chips are grouped into semantic sections by `overflowSection`, each
@@ -242,11 +252,15 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { ref: panelRef, style: panelStyle } = useAnchorFixedMenuPosition(triggerRef.current, open);
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent): void => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      if (ref.current && !ref.current.contains(target)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') setOpen(false);
@@ -267,6 +281,7 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
     <div className="relative flex-shrink-0" ref={ref}>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         title={t('mels.moreActions', 'More actions')}
@@ -277,30 +292,35 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
       >
         <MoreVertical size={16} aria-hidden="true" />
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full mt-1 z-dropdown min-w-[200px] rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
-          data-testid="mels-topbar-overflow-menu"
-          onClick={() => setOpen(false)}
-        >
-          {sections.map((section, sIdx) => (
-            <React.Fragment key={section.key}>
-              {sIdx > 0 ? (
-                <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
-              ) : null}
-              {section.heading ? (
-                <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-                  {section.heading}
-                </div>
-              ) : null}
-              {section.chips.map((chip) => (
-                <Chip key={chip.id} descriptor={chip} menuItem />
+      {open && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              role="menu"
+              ref={panelRef}
+              style={panelStyle}
+              className="z-dropdown min-w-[200px] overflow-y-auto rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+              data-testid="mels-topbar-overflow-menu"
+              onClick={() => setOpen(false)}
+            >
+              {sections.map((section, sIdx) => (
+                <React.Fragment key={section.key}>
+                  {sIdx > 0 ? (
+                    <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+                  ) : null}
+                  {section.heading ? (
+                    <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                      {section.heading}
+                    </div>
+                  ) : null}
+                  {section.chips.map((chip) => (
+                    <Chip key={chip.id} descriptor={chip} menuItem />
+                  ))}
+                </React.Fragment>
               ))}
-            </React.Fragment>
-          ))}
-        </div>
-      ) : null}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };

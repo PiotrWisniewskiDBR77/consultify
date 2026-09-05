@@ -38,6 +38,7 @@ import {
 import { DocumentStudioAiEntryPanel } from './DocumentStudioAiEntryPanel';
 import { DocumentStudioDocumentPanel } from './DocumentStudioDocumentPanel';
 import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
+import { resolveDocumentIntakeGate } from './intakeGate';
 import {
   DocumentStudioGeneratingPanel,
   type GeneratingSectionState,
@@ -104,6 +105,46 @@ function buildTemplateOutlinePreview(
     recommendedLanguageStyle: template.languageStyle,
   };
 }
+
+/**
+ * ★ Stan BLOKUJĄCY dla wzorca, którego nie da się rozwiązać (osierocony, brak
+ * dostępu, wycofany, niezaindeksowany, nieobsługiwany format). ŻADNEGO
+ * fallbacku do pickera ani do generacji z AI — uczciwy komunikat i wyjście.
+ *
+ * Wydzielone 05.09 z łańcucha renderu przy naprawie fail-open (odbiór na żywo,
+ * różnica #5): karta była wcześniej wklejona w jedną gałąź warunku, przez co
+ * blokada obowiązywała tylko dla `entry=template`. Jeden komponent = jedna
+ * karta, wołana z jednego, nadrzędnego warunku.
+ */
+const TemplateResolveBlockedCard: React.FC<{
+  message: string | null;
+  onBack: () => void;
+}> = ({ message, onBack }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+      <div
+        data-testid="template-resolve-error"
+        className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
+      >
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-surface-raised">
+          <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
+        </div>
+        <h2 className="mb-2 text-base font-semibold text-c-text">
+          {t('documentStudio.view.templateResolveTitle', 'Nie da się użyć tego wzorca')}
+        </h2>
+        <p className="text-sm leading-relaxed text-c-text-secondary">{message}</p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export const DocumentStudioView: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -312,6 +353,17 @@ export const DocumentStudioView: React.FC = () => {
         return t('documentStudio.view.templateForbidden', {
           defaultValue: 'Nie masz dostępu do tego wzorca.',
         });
+      // ODBIÓR NA ŻYWO 05.09 — do 05.09 ten stan wracał jako
+      // TEMPLATE_FORBIDDEN i mówił właścicielowi OWNER-owi, że nie ma dostępu
+      // do WŁASNEGO, oznaczonego w Bibliotece jako zatwierdzony wzorca. To był
+      // nieprawdziwy komunikat: wzorzec jest widoczny i należy do organizacji,
+      // brakuje mu jedynie zatwierdzonego POCHODZENIA I PRAW. Komunikat mówi
+      // teraz prawdę i wskazuje istniejące wyjście z kwarantanny.
+      case 'TEMPLATE_PROVENANCE_UNVERIFIED':
+        return t('documentStudio.view.templateProvenanceUnverified', {
+          defaultValue:
+            'Ten wzorzec nie ma jeszcze zatwierdzonego pochodzenia i praw, więc nie może sterować generacją. Otwórz Bibliotekę wzorców → „Pochodzenie i prawa" i zatwierdź go (potrzebne: źródło, podstawa licencji, organ decyzyjny, wersja i dowód).',
+        });
       case 'TEMPLATE_DEPRECATED':
         return t('documentStudio.view.templateDeprecated', {
           defaultValue:
@@ -327,6 +379,21 @@ export const DocumentStudioView: React.FC = () => {
         });
     }
   }, [templateResolveState, templateResolveErrorCode, t]);
+
+  // ★ JEDNA reguła wejścia do fazy `intake` (fail-closed dla wzorca) —
+  // `intakeGate.ts`. Wyliczona TU, a nie rozsypana po łańcuchu ternary, bo
+  // właśnie kolejność gałęzi w tym łańcuchu była przyczyną fail-open z 05.09.
+  const intakeGate = useMemo(
+    () =>
+      resolveDocumentIntakeGate({
+        templateArtifactId: templateArtifactIdFromQuery,
+        templateResolveState,
+        docEntryMode,
+        triMode,
+        zaiTeresaEnabled,
+      }),
+    [templateArtifactIdFromQuery, templateResolveState, docEntryMode, triMode, zaiTeresaEnabled]
+  );
 
   // Uczciwy komunikat, gdy wznowienie dokumentu (?artifactId=/:artifactId) się
   // nie powiodło — najczęściej link z listy wskazujący na rekord z INNEGO
@@ -756,9 +823,16 @@ export const DocumentStudioView: React.FC = () => {
   const blankAutoTriggered = React.useRef(false);
   useEffect(() => {
     if (docEntryMode !== 'blank' || blankAutoTriggered.current) return;
+    // Fail-closed (05.09, różnica #5): `?entry=blank&templateArtifactId=…` NIE
+    // MOŻE po cichu wyprodukować pustego dokumentu, kiedy w adresie stoi
+    // wzorzec, którego serwer jeszcze nie potwierdził albo wprost odrzucił.
+    // Sam render jest już zabezpieczony (brama wzorca idzie pierwsza), ale ten
+    // efekt woła generator NIEZALEŻNIE od tego, co się renderuje — bez tej
+    // linii powstawałby realny artefakt „w tle" za blokującym ekranem.
+    if (templateArtifactIdFromQuery && templateResolveState !== 'resolved') return;
     blankAutoTriggered.current = true;
     void handleCreateEmptyDoc();
-  }, [docEntryMode, handleCreateEmptyDoc]);
+  }, [docEntryMode, handleCreateEmptyDoc, templateArtifactIdFromQuery, templateResolveState]);
 
   // U1 (odbiór "menu pliku", 2026-07-28) — this is now reachable from more
   // than one place (File menu "Nowy" in both phases, the canvas's own
@@ -946,13 +1020,29 @@ export const DocumentStudioView: React.FC = () => {
             </div>
           </div>
         ) : phase === 'intake' ? (
-          docEntryMode === 'blank' ? (
+          // ODBIÓR NA ŻYWO 05.09 (różnica #5) — o wejściu decyduje JEDNA czysta
+          // funkcja `resolveDocumentIntakeGate` (patrz `intakeGate.ts`), a nie
+          // kolejność gałęzi w tym ternary. Wcześniej `blank`/`choose` stały
+          // wyżej niż sprawdzenie wzorca, przez co blokada „Nie da się użyć
+          // tego wzorca" działała tylko przy `entry=template` (fail-open).
+          intakeGate === 'template-resolving' ? (
+            <LoadingState
+              variant="spinner"
+              label={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
+              className="flex-1"
+            />
+          ) : intakeGate === 'template-blocked' ? (
+            <TemplateResolveBlockedCard
+              message={templateResolveMessage}
+              onBack={() => navigate('/presentations?tab=templates')}
+            />
+          ) : intakeGate === 'blank-creating' ? (
             <LoadingState
               variant="spinner"
               label={t('documentStudio.blank.creating', 'Tworzenie pustego dokumentu…')}
               className="flex-1"
             />
-          ) : triMode && docEntryMode === 'choose' ? (
+          ) : intakeGate === 'mode-chooser' ? (
             <TriModeChooser
               busy={generating}
               showTemplate={approvedTemplates.length > 0}
@@ -986,43 +1076,7 @@ export const DocumentStudioView: React.FC = () => {
               onAi={() => setDocEntryMode('ai')}
               onTemplate={() => setDocEntryMode('template')}
             />
-          ) : templateResolveState === 'resolving' ? (
-            // Serwer właśnie tłumaczy id indeksu na rekord kanoniczny — nie
-            // pokazujemy pickera, żeby użytkownik nie zaczął wybierać ręcznie
-            // wzorca, który za chwilę i tak zostanie ustawiony.
-            <LoadingState
-              variant="spinner"
-              label={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
-              className="flex-1"
-            />
-          ) : templateResolveState === 'error' ? (
-            // ★ Stan blokujący: wzorzec nie do rozwiązania (osierocony, brak
-            // dostępu, wycofany, niezaindeksowany). ŻADNEGO fallbacku do
-            // pickera ani do generacji z AI — uczciwy komunikat i wyjście.
-            <div className="flex min-h-0 flex-1 items-center justify-center p-6">
-              <div
-                data-testid="template-resolve-error"
-                className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
-              >
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-surface-raised">
-                  <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
-                </div>
-                <h2 className="mb-2 text-base font-semibold text-c-text">
-                  {t('documentStudio.view.templateResolveTitle', 'Nie da się użyć tego wzorca')}
-                </h2>
-                <p className="text-sm leading-relaxed text-c-text-secondary">
-                  {templateResolveMessage}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/presentations?tab=templates')}
-                  className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
-                </button>
-              </div>
-            </div>
-          ) : zaiTeresaEnabled && docEntryMode === 'ai' ? (
+          ) : intakeGate === 'ai-entry' ? (
             // FAZA B1 (2026-07-27, flaga `ff_zai_teresa`, default OFF) — N11:
             // „Z AI → otwiera się dokument, a Z BOKU okno AI (czat)." Zero pól
             // formularza; pierwsza wiadomość w czacie uruchamia generację.
