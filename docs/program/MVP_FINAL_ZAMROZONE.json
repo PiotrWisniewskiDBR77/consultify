@@ -1,0 +1,6 @@
+{
+ "_opis": "Rejestr modułów zamrożonych jako MVP final. Wpis powstaje TYLKO po „tak\" właściciela na odbiorze i zawiera: jego słowa (decyzja), datę, tag git, listę plików modułu i wzorce zrzutów. Bezpiecznik scripts/mvp-final/check-freeze.sh (wpięty w .husky/commit-msg) odrzuca commit dotykający tych plików, chyba że komunikat zawiera świadomy znacznik [ODMROZENIE <MODUL> DEC-<numer>]. Procedura po polsku: docs/program/MVP_FINAL_PROCEDURA.md. Zapis robi WYŁĄCZNIE scripts/mvp-final/zamroz.mjs — nie edytuj tego pliku ręcznie.",
+ "_zaktualizowano": "2026-09-05",
+ "moduly": {},
+ "wspolne": null
+}
