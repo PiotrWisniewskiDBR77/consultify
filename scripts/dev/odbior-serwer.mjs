@@ -218,6 +218,17 @@ db.exec(`
   );
 `);
 
+/*
+ * KOLUMNA `wybor` (2026-09-05, wersja 2 strony /decyzje). Na kartach sekcji A
+ * właściciel widzi JEDNĄ propozycję („Proponuję: …") i akceptuje ją przyciskiem
+ * „Akceptuję" — a nie literę A/B. Żeby w rejestrze został ślad, KTÓRĄ opcję
+ * przyjął (a nie samo „zgadza się"), litera rekomendacji jedzie osobno.
+ * ALTER dokładany warunkowo: bazy z wczorajszej sesji tej kolumny nie mają.
+ */
+if (!db.prepare('PRAGMA table_info(decyzje_zywo)').all().some((k) => k.name === 'wybor')) {
+  db.exec('ALTER TABLE decyzje_zywo ADD COLUMN wybor TEXT');
+}
+
 const czytajDecyzjeModulow = () => {
   const out = {};
   for (const w of db.prepare('SELECT modul, decyzja, powod, kiedy FROM decyzje_modulow').all()) {
@@ -314,8 +325,30 @@ function zapiszDecyzje(ekran, zmiana) {
 
 const czytajDecyzjeZywo = () => {
   const out = {};
-  for (const w of db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje_zywo').all()) {
-    out[w.ekran] = { decyzja: w.decyzja || undefined, uwaga: w.uwaga || undefined, kiedy: w.kiedy };
+  for (const w of db.prepare('SELECT ekran, decyzja, uwaga, wybor, kiedy FROM decyzje_zywo').all()) {
+    out[w.ekran] = {
+      decyzja: w.decyzja || undefined,
+      uwaga: w.uwaga || undefined,
+      wybor: w.wybor || undefined,
+      kiedy: w.kiedy,
+    };
+  }
+  return out;
+};
+
+/**
+ * JEDEN REJESTR, DWA SŁOWNIKI. Strona `/zywo` pisze i czyta `ok`/`poprawka`,
+ * strona `/decyzje` (wersja 2) `AKCEPT`/`POPRAWKA`. Obie piszą do TEJ SAMEJ
+ * tabeli — gdyby nikt tego nie tłumaczył, klik na jednej stronie wyglądałby na
+ * drugiej jak „bez decyzji" i właściciel kliknąłby to samo dwa razy, sprzecznie.
+ * Tłumaczenie robimy przy PODANIU danych stronie `/zywo`; `/decyzje` tłumaczy
+ * sobie w drugą stronę samo (`normalizujDecyzje` w lib/odbiorDecyzje.mjs).
+ */
+const naSlownikZywo = (mapa) => {
+  const out = {};
+  for (const [k, v] of Object.entries(mapa)) {
+    const d = v.decyzja === 'AKCEPT' ? 'ok' : v.decyzja === 'POPRAWKA' ? 'poprawka' : v.decyzja;
+    out[k] = { ...v, decyzja: d };
   }
   return out;
 };
@@ -327,25 +360,99 @@ const czytajDecyzjeZywo = () => {
  */
 function zapiszDecyzjeZywo(ekran, zmiana) {
   const teraz = new Date().toISOString();
-  const stary = db.prepare('SELECT decyzja, uwaga FROM decyzje_zywo WHERE ekran = ?').get(ekran) || {};
+  const stary = db.prepare('SELECT decyzja, uwaga, wybor FROM decyzje_zywo WHERE ekran = ?').get(ekran) || {};
   const decyzja = zmiana.decyzja !== undefined ? zmiana.decyzja : (stary.decyzja ?? null);
   const uwaga = zmiana.uwaga !== undefined ? zmiana.uwaga : (stary.uwaga ?? null);
+  const wybor = zmiana.wybor !== undefined ? zmiana.wybor : (stary.wybor ?? null);
   db.prepare(
-    `INSERT INTO decyzje_zywo (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)
-     ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, kiedy = excluded.kiedy`
-  ).run(ekran, decyzja || null, uwaga || null, teraz);
+    `INSERT INTO decyzje_zywo (ekran, decyzja, uwaga, wybor, kiedy) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, wybor = excluded.wybor, kiedy = excluded.kiedy`
+  ).run(ekran, decyzja || null, uwaga || null, wybor || null, teraz);
+  eksportujDecyzjeZywo(teraz);
+  return db.prepare('SELECT ekran, decyzja, uwaga, wybor, kiedy FROM decyzje_zywo WHERE ekran = ?').get(ekran);
+}
+
+/**
+ * Eksport obu plików JSON. Wydzielony z `zapiszDecyzjeZywo`, bo po jednorazowych
+ * naprawach danych przy starcie serwera pliki w repo też muszą się zgadzać z
+ * bazą — inaczej trwała kopia (jedyna, bo baza jest w .gitignore) kłamie.
+ */
+function eksportujDecyzjeZywo(teraz = new Date().toISOString()) {
   const wszystkieZywo = czytajDecyzjeZywo();
   fs.writeFileSync(ODBIOR_ZYWO_DECYZJE, JSON.stringify(wszystkieZywo, null, 1), 'utf8');
   // Druga, opisana kopia — dla strony /decyzje. Ten sam powód co wyżej: baza
   // sqlite jest w .gitignore, więc plik w repo jest JEDYNYM trwałym śladem
   // odpowiedzi właściciela. Eksport po KAŻDYM zapisie, nie na koniec dnia.
   fs.writeFileSync(DECYZJE_DZIS, JSON.stringify({
-    _opis: 'Odpowiedzi wlasciciela 05.09 ze strony /decyzje. Klucz "DEC:<id>" = decyzja produktowa, samo id = ekran.',
+    _opis: 'Odpowiedzi wlasciciela 05.09 ze strony /decyzje. Klucz "DEC:<id>" = decyzja produktowa, samo id = ekran. "wybor" = litera opcji przyjetej przy akcepcie rekomendacji.',
     _wyeksportowano: teraz.slice(0, 19),
     _ile: Object.keys(wszystkieZywo).length,
     odpowiedzi: wszystkieZywo,
   }, null, 1), 'utf8');
-  return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje_zywo WHERE ekran = ?').get(ekran);
+  return wszystkieZywo;
+}
+
+/**
+ * JEDNORAZOWE PORZĄDKI PRZY STARCIE (2026-09-05, wersja 2 strony /decyzje).
+ *
+ * (1) Właściciel odpowiedział na pierwszą decyzję wpisując „OK" w POLE UWAGI —
+ *     bo dwa przyciski „A"/„B" nie wyglądały jak coś, co się akceptuje. W bazie
+ *     został wiersz z uwagą i BEZ decyzji, czyli formalnie brak odpowiedzi.
+ *     Traktujemy to jak akcept rekomendacji (jego „OK" znaczyło zgodę) i
+ *     dopisujemy decyzję + literę rekomendacji. Uwagi NIE kasujemy — to jego
+ *     tekst, nie nasz; ma prawo zobaczyć, co napisał.
+ * (2) Wiersze `TEST:*` z prób technicznych nie mają czego szukać w rejestrze
+ *     właściciela ani w eksportowanym JSON-ie.
+ * Obie rzeczy są logowane, bo cicha zmiana cudzych danych to nie naprawa.
+ */
+function porzadkiStartowe() {
+  let zmian = 0;
+  const rekomendacje = {};
+  try {
+    const otwarte = JSON.parse(fs.readFileSync(DECYZJE_OTWARTE, 'utf8'));
+    for (const d of otwarte.decyzje || []) rekomendacje['DEC:' + d.id] = d.rekomendacja || 'A';
+  } catch (e) {
+    console.error('porzadki startowe: nie wczytano', DECYZJE_OTWARTE, String(e && e.message));
+  }
+  const doNaprawy = db
+    .prepare("SELECT ekran, uwaga FROM decyzje_zywo WHERE (decyzja IS NULL OR decyzja = '') AND lower(uwaga) = 'ok'")
+    .all();
+  for (const w of doNaprawy) {
+    const wybor = rekomendacje[w.ekran] || null;
+    db.prepare('UPDATE decyzje_zywo SET decyzja = ?, wybor = ? WHERE ekran = ?').run('AKCEPT', wybor, w.ekran);
+    console.log(
+      `porzadki startowe: "${w.ekran}" miał uwagę "${w.uwaga}" i zero decyzji → ustawiam AKCEPT` +
+        (wybor ? ` (wybór ${wybor})` : '') + '; uwaga zostaje bez zmian'
+    );
+    zmian++;
+  }
+  /*
+   * (3) PUSTE WIERSZE. Zmierzone 05.09 Playwrightem: wersja 1 strony wysyłała
+   * przy każdym opuszczeniu strony treść WSZYSTKICH pól uwag, także pustych —
+   * jedno wejście zakładało kilkanaście wierszy „bez decyzji, bez uwagi".
+   * Przyczynę usunęliśmy po stronie przeglądarki; tu sprzątamy to, co zdążyło
+   * wpaść. Wiersz bez decyzji i bez uwagi nie jest odpowiedzią właściciela.
+   */
+  const puste = db
+    .prepare("SELECT ekran FROM decyzje_zywo WHERE (decyzja IS NULL OR decyzja = '') AND (uwaga IS NULL OR uwaga = '')")
+    .all();
+  if (puste.length) {
+    db.prepare("DELETE FROM decyzje_zywo WHERE (decyzja IS NULL OR decyzja = '') AND (uwaga IS NULL OR uwaga = '')").run();
+    console.log(`porzadki startowe: usuwam ${puste.length} pustych wierszy (bez decyzji i bez uwagi)`);
+    zmian += puste.length;
+  }
+  const testowe = db.prepare("SELECT ekran FROM decyzje_zywo WHERE ekran LIKE 'TEST:%'").all();
+  for (const w of testowe) {
+    db.prepare('DELETE FROM decyzje_zywo WHERE ekran = ?').run(w.ekran);
+    console.log(`porzadki startowe: usuwam wiersz techniczny "${w.ekran}" (nie jest odpowiedzią właściciela)`);
+    zmian++;
+  }
+  // Eksport także wtedy, gdy nic nie naprawialiśmy — plik w repo ma nigdy nie być
+  // starszy niż baza. WARUNEK `ile > 0` jest tu bezpiecznikiem, nie ozdobą: baza
+  // leży w .gitignore, więc uruchomienie serwera na świeżym klonie (baza pusta)
+  // wyzerowałoby JEDYNĄ trwałą kopię odpowiedzi właściciela.
+  const ile = db.prepare('SELECT COUNT(*) AS n FROM decyzje_zywo').get().n;
+  if (zmian || ile > 0) eksportujDecyzjeZywo();
 }
 
 /** Ostatnia poprawka per ekran — to ona zapala zielony znacznik „obejrzyj ponownie". */
@@ -943,7 +1050,7 @@ http
           zywoDir: ZYWO_DIR,
           evidenceRoot: EVIDENCE_ROOT,
           decyzjeGlowne: czytajDecyzje(),
-          decyzjeZywo: czytajDecyzjeZywo(),
+          decyzjeZywo: naSlownikZywo(czytajDecyzjeZywo()),
         });
         return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
       } catch (e) {
@@ -1033,6 +1140,7 @@ http
     }
   })
   .listen(PORT, '127.0.0.1', () => {
+    porzadkiStartowe();
     console.log(`Odbiór grafiki → http://127.0.0.1:${PORT}/`);
     console.log(`Decyzje zapisują się do ${path.relative(ROOT, DECYZJE)}`);
   });

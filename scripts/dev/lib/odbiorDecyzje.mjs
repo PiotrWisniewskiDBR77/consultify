@@ -13,6 +13,21 @@
  * samo id ekranu dla ekranów — dzięki temu klik tutaj i klik na `/zywo` to jedna
  * i ta sama odpowiedź, nie dwie sprzeczne).
  *
+ * WERSJA 2 (2026-09-05, po pierwszym kontakcie właściciela ze stroną).
+ * Co poszło źle w wersji 1 — zmierzone, nie zgadnięte: w bazie leżał wiersz
+ * `DEC:d01-launcher-wywiad` z `uwaga: "OK"` i BEZ `decyzja`. Właściciel napisał
+ * „OK" w polu uwagi, bo dwa przyciski „A" i „B" (z opisami opcji pisanymi dla
+ * inżyniera) nie wyglądały jak coś, co się akceptuje. Odpowiedź nie zapisała się
+ * jako decyzja — czyli strona zebrała zero.
+ *
+ * Dlatego wersja 2 ma na KAŻDEJ karcie, w każdej z trzech sekcji, dokładnie ten
+ * sam ogon: dwa duże przyciski „Akceptuję" / „Do poprawki" i jedno pole uwagi
+ * widoczne zawsze. Nie ma trzeciego wzorca do nauczenia się. W sekcji A wybór
+ * merytoryczny robi rekomendacja CTO podana JAKO ZDANIE („Proponuję: …"), a
+ * alternatywa jest tylko dopiskiem — właściciel akceptuje propozycję albo pisze,
+ * czego chce inaczej. Techniczna proza agentów (ścieżki plików, angielskie
+ * skróty) siedzi w zwiniętych „szczegółach technicznych" i nie zasłania obrazu.
+ *
  * Osobny moduł (nie w `odbior-serwer.mjs`) z tego samego powodu co
  * `lib/odbiorZywo.mjs`: żeby dało się to zbudować i sprawdzić bez stawiania HTTP.
  */
@@ -155,7 +170,7 @@ export function wierszeNigdyNieogladane(mdPath, idNowyWzorzec) {
  * Etykiety werdyktów pomiaru — na kartach sekcji C pokazujemy je WPROST.
  * Powód: sekcja nazywa się „naprawione dziś”, ale pomiar rundy 3 dla części
  * z tych ekranów dalej brzmi RÓŻNI SIĘ (naprawa główna weszła, została
- * otoczka). Gdyby strona tego nie mówiła, właściciel klikałby „Zgodne” na
+ * otoczka). Gdyby strona tego nie mówiła, właściciel klikałby „Akceptuję” na
  * podstawie naszego nagłówka, a nie własnych oczu.
  */
 export const ETYKIETA_WERDYKTU = {
@@ -184,6 +199,24 @@ export const NAPRAWIONE_DZIS = [
   { id: 'assessment-list', katalog: '05-ocena' },
 ];
 
+/**
+ * DWIE ODPOWIEDZI, JEDNO SŁOWNICTWO.
+ *
+ * Wersja 1 zapisywała `ok`/`poprawka` (ekrany) i `A`/`B` (decyzje). Strona
+ * `/zywo`, która pisze do TEJ SAMEJ tabeli, zapisuje `ok`/`poprawka`. Wersja 2
+ * mówi jednym słowem: `AKCEPT` / `POPRAWKA`. Żeby stare kliknięcia właściciela
+ * nie zniknęły z ekranu (a to jest jedyna trwała kopia jego pracy), obie postaci
+ * czytamy przez tę funkcję. Serwer robi to samo w drugą stronę, zanim poda dane
+ * stronie `/zywo` — dzięki temu dalej jest JEDEN rejestr, nie dwa sprzeczne.
+ */
+export function normalizujDecyzje(d) {
+  const s = String(d ?? '').trim();
+  if (!s) return '';
+  if (s === 'AKCEPT' || s === 'ok' || s === 'OK') return 'AKCEPT';
+  if (s === 'POPRAWKA' || s === 'poprawka') return 'POPRAWKA';
+  return s; // 'A' / 'B' z wersji 1 rozstrzyga karta sekcji A (zna rekomendację)
+}
+
 /** Ścieżka do pliku, jeśli istnieje — inaczej pusty string. Zero zgadywania. */
 function jesliJest(root, rel) {
   try {
@@ -191,6 +224,25 @@ function jesliJest(root, rel) {
   } catch {
     return '';
   }
+}
+
+/**
+ * JEDNO ZDANIE PO POLSKU z prozy agenta — albo NIC.
+ *
+ * `opis` w `wyniki.json` pisali agenci do agentów: ścieżki plików, SHA, nazwy
+ * komponentów, angielskie wtręty. Właściciel ma na karcie widzieć jedno zdanie,
+ * które mu coś mówi. Bierzemy pierwsze zdanie TYLKO wtedy, gdy jest krótkie i
+ * nie zawiera znaków kodu — w każdym innym przypadku wolimy uczciwe zdanie
+ * domyślne niż udawanie, że proza inżynierska jest po polsku.
+ */
+export function zdaniePoPolsku(opis) {
+  const t = String(opis || '').trim();
+  if (!t) return '';
+  const m = t.match(/^[^.!?]{10,150}[.!?]/);
+  if (!m) return '';
+  const z = m[0].trim();
+  if (/[`<>{}()\[\]/\\]|https?:|[A-Za-z]+\.(tsx|ts|mjs|js|json|png|md)\b|\bSHA\b|_[a-z]/.test(z)) return '';
+  return z;
 }
 
 function obrazek(etykieta, url, klasa) {
@@ -201,33 +253,55 @@ function obrazek(etykieta, url, klasa) {
     <a href="${url}" target="_blank" rel="noopener"><img loading="lazy" src="${url}" alt="${esc(etykieta)}"></a></figure>`;
 }
 
-/** Wspólny dół każdej karty: przyciski + pole uwagi + to, co NAPRAWDĘ leży w bazie. */
-function ogonKarty(klucz, opcje, zapis) {
+/** Para obrazów „Zatwierdzone | Na żywo" — ten sam układ w każdej sekcji. */
+function paraObrazow(zatw, zywy, etykietaPrawa, klasa = 'duza') {
+  if (!zatw && !zywy) return '';
+  return `<div class="paraObrazy">
+    ${obrazek('Zatwierdzone', zatw, klasa)}
+    ${obrazek(etykietaPrawa, zywy, klasa)}
+  </div>`;
+}
+
+/** `2026-09-05T08:56:56.122Z` → `08:56` (właściciel chce godzinę, nie znacznik czasu). */
+function godzina(kiedy) {
+  if (!kiedy) return '';
+  const d = new Date(kiedy);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * OGON KARTY — identyczny w A, B i C. Dwa przyciski i jedno pole uwagi.
+ * `wybor` jedzie z przyciskiem „Akceptuję" tylko w sekcji A (litera opcji, którą
+ * rekomendujemy) — dzięki temu w rejestrze zostaje ślad, CO właściciel przyjął,
+ * a nie samo „zgadza się".
+ */
+function ogonKarty(klucz, stan, zapis, wyborAkceptu) {
   const d = zapis || {};
-  const przyciski = opcje
-    .map(
-      (o) =>
-        `<button type="button" class="opt ${o.kod === 'A' || o.kod === 'ok' ? 'tak' : 'nie'} ${d.decyzja === o.kod ? 'on' : ''}" data-k="${esc(klucz)}" data-d="${esc(o.kod)}">
-          <span class="optEtykieta">${esc(o.etykieta)}</span>
-          ${o.opis ? `<span class="optOpis">${esc(o.opis)}</span>` : ''}
-          ${o.rekomendacja ? '<span class="rek">rekomendacja CTO</span>' : ''}
-        </button>`
-    )
-    .join('');
-  const slowo = Object.fromEntries(opcje.map((o) => [o.kod, o.etykieta]));
-  return `<div class="opcje">${przyciski}</div>
-  <input class="uw" data-k="${esc(klucz)}" placeholder="uwaga (opcjonalnie) — zapisuje się sama" value="${esc(d.uwaga || '')}">
-  <div class="zapis ${d.kiedy ? 'jest' : ''}">${
-    d.kiedy
-      ? `w bazie: ${esc(slowo[d.decyzja] || (d.decyzja ? d.decyzja : 'bez odpowiedzi'))}${d.uwaga ? ', z uwagą' : ''} · ${esc(new Date(d.kiedy).toLocaleString('pl-PL'))}`
-      : ''
-  }</div>`;
+  const uwaga = d.uwaga || '';
+  const w = wyborAkceptu ? ` data-w="${esc(wyborAkceptu)}"` : '';
+  return `<div class="przyciski">
+    <button type="button" class="dbtn tak ${stan === 'AKCEPT' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="AKCEPT"${w}>Akceptuję</button>
+    <button type="button" class="dbtn nie ${stan === 'POPRAWKA' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="POPRAWKA">Do poprawki</button>
+  </div>
+  <div class="zapis ${d.kiedy ? 'jest' : ''}">${d.kiedy ? `zapisano ${esc(godzina(d.kiedy))}` : ''}</div>
+  <label class="uwPole">
+    <span class="uwEtykieta">Uwaga — co ma być inaczej</span>
+    <textarea class="uw" rows="2" data-k="${esc(klucz)}" placeholder="napisz jednym zdaniem, np. „kolumna KONTEKST ma wrócić”">${esc(uwaga)}</textarea>
+  </label>
+  <div class="podpowiedz" hidden>napisz jedną uwagę</div>`;
+}
+
+/** Zwinięte „szczegóły techniczne" — proza agentów nigdy nie wchodzi właścicielowi na twarz. */
+function szczegoly(tekst) {
+  if (!tekst) return '';
+  return `<details class="tech"><summary>szczegóły techniczne</summary><p>${esc(tekst)}</p></details>`;
 }
 
 /**
  * Buduje całą stronę `/decyzje`.
  * `p`: { decyzjeOtwarte, status, zywoDir, evidenceRoot, pakietyDir, mdSeryjny, zapisane, zatwierdzoneZapasowe }
- *  - `zapisane`: mapa klucz → { decyzja, uwaga, kiedy } z tabeli `decyzje_zywo`
+ *  - `zapisane`: mapa klucz → { decyzja, uwaga, wybor, kiedy } z tabeli `decyzje_zywo`
  *  - `zatwierdzoneZapasowe`: mapa id → ścieżka absolutna (skan evidence/grafika, ten sam co na /zywo)
  */
 export function stronaDecyzje(p) {
@@ -258,39 +332,48 @@ export function stronaDecyzje(p) {
     return '';
   };
   const nazwa = (id) => (nazwy[id] ? nazwy[id].nazwa : id);
+  const modulEkranu = (id) => (nazwy[id] ? nazwy[id].modul : '');
 
   /* ---------- A. DECYZJE ---------- */
   const decyzje = decyzjeOtwarte.decyzje || [];
+  const stanA = (d) => {
+    const zapis = zapisane['DEC:' + d.id] || {};
+    const s = normalizujDecyzje(zapis.decyzja);
+    if (s === 'AKCEPT' || s === 'POPRAWKA') return s;
+    // wersja 1 zapisywała samą literę: rekomendacja = akcept, druga opcja = poprawka
+    if (s === 'A' || s === 'B') return s === d.rekomendacja ? 'AKCEPT' : 'POPRAWKA';
+    return '';
+  };
   const kartyA = decyzje
     .map((d) => {
       const klucz = 'DEC:' + d.id;
       const zapis = zapisane[klucz];
+      const stan = stanA(d);
+      const litera = d.rekomendacja === 'B' ? 'B' : 'A';
+      const inna = litera === 'A' ? 'B' : 'A';
+      const proponuje = (d.opcje && d.opcje[litera]) || '';
+      const alternatywa = (d.opcje && d.opcje[inna]) || '';
       const miniatury = (d.ekrany || [])
         .map((id) => {
-          const zywy = urlZywego(id);
-          const zatw = urlZatwierdzonego(id);
           return `<div class="para">
             <div class="paraNazwa">${esc(nazwa(id))} <code>${esc(id)}</code></div>
-            <div class="paraObrazy">
-              ${obrazek('Zatwierdzone', zatw, 'mala')}
-              ${obrazek('Na żywo 05.09', zywy, 'mala')}
-            </div>
+            ${paraObrazow(urlZatwierdzonego(id), urlZywego(id), 'Na żywo 05.09', 'mala')}
           </div>`;
         })
         .join('');
-      const opcje = [
-        { kod: 'A', etykieta: 'A', opis: (d.opcje && d.opcje.A) || '', rekomendacja: d.rekomendacja === 'A' },
-        { kod: 'B', etykieta: 'B', opis: (d.opcje && d.opcje.B) || '', rekomendacja: d.rekomendacja === 'B' },
-      ];
-      return `<article class="karta dec" data-sek="A" data-stan="${esc((zapis && zapis.decyzja) || '')}" id="k-${esc(klucz)}">
+      return `<article class="karta dec" data-sek="A" data-stan="${esc(stan)}" id="k-${esc(klucz)}">
         <div class="modul">${esc(d.modul || '')}</div>
         <p class="pytanie">${esc(d.pytanie)}</p>
+        <div class="propozycja">
+          <p class="propTekst"><b>Proponuję:</b> ${esc(proponuje)}</p>
+          ${alternatywa ? `<p class="propInaczej"><b>Inaczej:</b> ${esc(alternatywa)}</p>` : ''}
+        </div>
         ${miniatury ? `<div class="pary">${miniatury}</div>` : ''}
-        ${ogonKarty(klucz, opcje, zapis)}
+        ${ogonKarty(klucz, stan, zapis, litera)}
       </article>`;
     })
     .join('');
-  const odpA = decyzje.filter((d) => (zapisane['DEC:' + d.id] || {}).decyzja).length;
+  const odpA = decyzje.filter((d) => stanA(d)).length;
 
   /* ---------- B. AKCEPT SERYJNY ---------- */
   const nowe = Object.values(wyniki).filter((w) => w.werdykt === 'NOWY_WZORZEC');
@@ -300,21 +383,21 @@ export function stronaDecyzje(p) {
     if (!wgKatalogu.has(w._katalog)) wgKatalogu.set(w._katalog, []);
     wgKatalogu.get(w._katalog).push(w);
   }
-  const opcjeEkranu = [
-    { kod: 'ok', etykieta: 'Akceptuję' },
-    { kod: 'poprawka', etykieta: 'Do poprawki' },
-  ];
+  const ZDANIE_B = 'Ekran przebudowany po Twoich wcześniejszych decyzjach — obraz zatwierdzony jest nieaktualny.';
   const grupyB = [...wgKatalogu.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([katalog, lista]) => {
       const karty = lista
         .map((w) => {
           const zapis = zapisane[w.id];
-          return `<article class="karta ekran" data-sek="B" data-stan="${esc((zapis && zapis.decyzja) || '')}" id="k-${esc(w.id)}">
+          const stan = normalizujDecyzje(zapis && zapis.decyzja);
+          return `<article class="karta ekran" data-sek="B" data-stan="${esc(stan)}" id="k-${esc(w.id)}">
+            <div class="modul">${esc(modulEkranu(w.id) || ladnyKatalog(katalog))}</div>
             <h4>${esc(nazwa(w.id))} <code>${esc(w.id)}</code></h4>
-            ${w.opis ? `<p class="opis">${esc(w.opis)}</p>` : ''}
-            ${obrazek('Na żywo 05.09 — kliknij, żeby otworzyć w pełnym rozmiarze', urlZywego(w.id), 'duza')}
-            ${ogonKarty(w.id, opcjeEkranu, zapis)}
+            <p class="poLudzku">${esc(zdaniePoPolsku(w.opis) || ZDANIE_B)}</p>
+            ${szczegoly(w.opis)}
+            ${paraObrazow(urlZatwierdzonego(w.id), urlZywego(w.id), 'Na żywo 05.09 — kliknij, żeby powiększyć')}
+            ${ogonKarty(w.id, stan, zapis)}
           </article>`;
         })
         .join('');
@@ -328,80 +411,87 @@ export function stronaDecyzje(p) {
     .map((w, i) => {
       const klucz = w.id || 'SER:' + i;
       const zapis = zapisane[klucz];
+      const stan = normalizujDecyzje(zapis && zapis.decyzja);
       const zywy = w.id ? urlZywego(w.id) : '';
-      return `<article class="karta ekran" data-sek="B" data-stan="${esc((zapis && zapis.decyzja) || '')}" id="k-${esc(klucz)}">
-        <h4>${esc(w.id || 'pozycja z pakietu')} ${w.id ? `<code>${esc(w.id)}</code>` : ''}</h4>
-        <p class="opis"><span class="skad">${esc(w.sekcja)}</span> ${esc(w.tekst)}</p>
-        ${zywy ? obrazek('Na żywo 05.09', zywy, 'duza') : ''}
-        ${ogonKarty(klucz, opcjeEkranu, zapis)}
+      const zatw = w.id ? urlZatwierdzonego(w.id) : '';
+      return `<article class="karta ekran" data-sek="B" data-stan="${esc(stan)}" id="k-${esc(klucz)}">
+        <div class="modul">${esc(w.sekcja)}</div>
+        <h4>${esc(w.id ? nazwa(w.id) : 'pozycja z pakietu')} ${w.id ? `<code>${esc(w.id)}</code>` : ''}</h4>
+        <p class="poLudzku">Tej pozycji nie widziałeś ani razu — obejrzyj i powiedz, czy zostaje.</p>
+        ${szczegoly(w.tekst)}
+        ${paraObrazow(zatw, zywy, 'Na żywo 05.09')}
+        ${ogonKarty(klucz, stan, zapis)}
       </article>`;
     })
     .join('');
   const razemB = nowe.length + nigdy.length;
   const odpB =
-    nowe.filter((w) => (zapisane[w.id] || {}).decyzja).length +
-    nigdy.filter((w, i) => (zapisane[w.id || 'SER:' + i] || {}).decyzja).length;
+    nowe.filter((w) => normalizujDecyzje((zapisane[w.id] || {}).decyzja)).length +
+    nigdy.filter((w, i) => normalizujDecyzje((zapisane[w.id || 'SER:' + i] || {}).decyzja)).length;
 
   /* ---------- C. NAPRAWIONE DZIŚ ---------- */
-  const opcjeNaprawy = [
-    { kod: 'ok', etykieta: 'Zgodne' },
-    { kod: 'poprawka', etykieta: 'Nadal różni się' },
-  ];
+  const ZDANIE_C = 'Naprawa weszła dziś. Sprawdź, czy wygląda jak obraz.';
   const kartyC = NAPRAWIONE_DZIS.map((n) => {
     const zapis = zapisane[n.id];
+    const stan = normalizujDecyzje(zapis && zapis.decyzja);
     const dowodRel = n.dowod ? jesliJest(evidenceRoot, path.join(path.basename(zywoDir), n.katalog, n.dowod)) : '';
     const zwykly = jesliJest(evidenceRoot, path.join(path.basename(zywoDir), n.katalog, n.id + '.png'));
     const dowodUrl = dowodRel ? urlEv(dowodRel) : zwykly ? urlEv(zwykly) : urlZywego(n.id);
     const w = wyniki[n.id];
-    return `<article class="karta ekran" data-sek="C" data-stan="${esc((zapis && zapis.decyzja) || '')}" id="k-${esc(n.id)}">
+    return `<article class="karta ekran" data-sek="C" data-stan="${esc(stan)}" id="k-${esc(n.id)}">
+      <div class="modul">${esc(modulEkranu(n.id) || ladnyKatalog(n.katalog))}</div>
       <h4>${esc(nazwa(n.id))} <code>${esc(n.id)}</code></h4>
       ${w && w.werdykt ? `<span class="werdykt w-${esc(w.werdykt)}">pomiar rundy 3: ${esc(ETYKIETA_WERDYKTU[w.werdykt] || w.werdykt)}</span>` : ''}
-      <p class="opis"><span class="skad">${esc(ladnyKatalog(n.katalog))}</span> ${esc((w && w.opis) || 'Naprawa z rundy 3 — dowód obok.')}</p>
-      <div class="paraObrazy">
-        ${obrazek('Zatwierdzone', urlZatwierdzonego(n.id), 'duza')}
-        ${obrazek(n.dowod ? 'Dowód naprawy (dziś)' : 'Na żywo 05.09', dowodUrl, 'duza')}
-      </div>
-      ${ogonKarty(n.id, opcjeNaprawy, zapis)}
+      <p class="poLudzku">${esc(ZDANIE_C)}</p>
+      ${szczegoly(w && w.opis)}
+      ${paraObrazow(urlZatwierdzonego(n.id), dowodUrl, n.dowod ? 'Dowód naprawy (dziś)' : 'Na żywo 05.09')}
+      ${ogonKarty(n.id, stan, zapis)}
     </article>`;
   }).join('');
-  const odpC = NAPRAWIONE_DZIS.filter((n) => (zapisane[n.id] || {}).decyzja).length;
+  const odpC = NAPRAWIONE_DZIS.filter((n) => normalizujDecyzje((zapisane[n.id] || {}).decyzja)).length;
 
-  const licznik = (kod, ile, razem) =>
-    `<a class="lic" href="#sek-${kod}"><b>${kod}</b> <span class="licN" data-lic="${kod}">${ile}</span> / ${razem}</a>`;
+  const chip = (kod, nazwaSek, ile, razem) =>
+    `<a class="lic" href="#sek-${kod}"><b>${kod}</b> <span class="licNazwa">${esc(nazwaSek)}</span> <span class="licN" data-lic="${kod}">${ile}</span><span class="licZ">/${razem}</span></a>`;
 
   return `<!doctype html><html lang="pl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Do decyzji i akceptu — 05.09</title><style>${STYL}</style></head><body>
 <header class="pasek">
-  <h1>Do rozstrzygnięcia dziś</h1>
-  <nav class="liczniki">
-    ${licznik('A', odpA, decyzje.length)}
-    ${licznik('B', odpB, razemB)}
-    ${licznik('C', odpC, NAPRAWIONE_DZIS.length)}
-  </nav>
-  <span class="stan" id="stan">gotowe</span>
+  <div class="paskGora">
+    <h1>Do rozstrzygnięcia dziś</h1>
+    <span class="stan" id="stan">gotowe</span>
+  </div>
+  <div class="paskDol">
+    <nav class="liczniki">
+      ${chip('A', 'Decyzje', odpA, decyzje.length)}
+      ${chip('B', 'Nowy wzorzec', odpB, razemB)}
+      ${chip('C', 'Naprawione dziś', odpC, NAPRAWIONE_DZIS.length)}
+    </nav>
+    <label class="filtr"><input type="checkbox" id="tylkoBez"> pokaż tylko bez odpowiedzi</label>
+  </div>
 </header>
 <main>
+  <p class="jakTo">Na każdej karcie są dwa przyciski. <b>Akceptuję</b> — zostaje tak, jak widać. <b>Do poprawki</b> — dopisz w polu pod spodem, co ma być inaczej. Zapisuje się od razu, nic nie trzeba wysyłać.</p>
   <section id="sek-A">
-    <h2>A. DECYZJE <small>odpowiedziano <span data-lic="A">${odpA}</span> / ${decyzje.length}</small></h2>
-    <p class="wstep">Pytania, na których stoją agenci. Wybierz A albo B — rekomendacja CTO jest oznaczona przy opcji.</p>
+    <h2>A. Decyzje <small>odpowiedziano <span data-lic="A">${odpA}</span> / ${decyzje.length}</small></h2>
+    <p class="wstep">Pytania, na których stoją agenci. Przy każdym jest moja propozycja — akceptujesz ją albo piszesz, czego chcesz inaczej.</p>
     <div class="kolumna">${kartyA || '<p class="pusto">Brak otwartych decyzji.</p>'}</div>
   </section>
   <section id="sek-B">
-    <h2>B. AKCEPT SERYJNY (nowy wzorzec) <small>odpowiedziano <span data-lic="B">${odpB}</span> / ${razemB}</small></h2>
-    <p class="wstep">Ekrany, które dziś wyglądają inaczej niż stary obraz zatwierdzony, bo zmienił się WZORZEC — nie dlatego, że coś się zepsuło. Jedno kliknięcie na ekran.</p>
+    <h2>B. Nowy wzorzec <small>odpowiedziano <span data-lic="B">${odpB}</span> / ${razemB}</small></h2>
+    <p class="wstep">Ekrany, które dziś wyglądają inaczej niż stary obraz zatwierdzony, bo zmienił się wzorzec — nie dlatego, że coś się zepsuło.</p>
     ${grupyB || '<p class="pusto">Brak ekranów z werdyktem NOWY_WZORZEC.</p>'}
     ${
       kartyNigdy
         ? `<h3 class="grupa">nigdy nieoglądane <small>${nigdy.length}</small></h3>
-           <p class="wstep">Pozycje z pakietu odbioru seryjnego, które nie mają werdyktu „nowy wzorzec" — właściciel nie widział ich ani razu.</p>
+           <p class="wstep">Pozycje z pakietu odbioru, których nie widziałeś ani razu.</p>
            <div class="siatka">${kartyNigdy}</div>`
         : ''
     }
   </section>
   <section id="sek-C">
-    <h2>C. NAPRAWIONE DZIŚ — do potwierdzenia <small>odpowiedziano <span data-lic="C">${odpC}</span> / ${NAPRAWIONE_DZIS.length}</small></h2>
-    <p class="wstep">Różnice, którymi zajęliśmy się dziś w rundzie 3. Po lewej obraz zatwierdzony, po prawej dowód z dzisiaj. Plakietka mówi, co pokazał POMIAR — jeśli brzmi „różni się”, naprawa główna weszła, ale coś jeszcze zostało. Rozstrzyga Twoje oko, nie nasz nagłówek.</p>
+    <h2>C. Naprawione dziś <small>odpowiedziano <span data-lic="C">${odpC}</span> / ${NAPRAWIONE_DZIS.length}</small></h2>
+    <p class="wstep">Po lewej obraz zatwierdzony, po prawej dowód z dzisiaj. Plakietka mówi, co pokazał pomiar — jeśli brzmi „różni się”, naprawa główna weszła, ale coś jeszcze zostało. Rozstrzyga Twoje oko, nie nasz nagłówek.</p>
     <div class="siatka">${kartyC}</div>
   </section>
 </main>
@@ -410,21 +500,29 @@ export function stronaDecyzje(p) {
 }
 
 export const STYL = `
-:root{--tlo:#f6f7f9;--karta:#fff;--tekst:#111827;--drugi:#4b5563;--kres:#dfe3e8;--ok:#15803d;--pop:#b45309;--blad:#9f1239;--nieb:#1d4ed8}
+:root{--tlo:#f6f7f9;--karta:#fff;--tekst:#111827;--drugi:#4b5563;--kres:#dfe3e8;--ok:#15803d;--pop:#b45309;--blad:#9f1239;--nieb:#1d4ed8;--wybrany:#111827}
 *{box-sizing:border-box}
 body{margin:0;background:var(--tlo);color:var(--tekst);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.pasek{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--kres);padding:14px 28px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.pasek{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--kres);padding:12px 28px 10px}
+.paskGora{display:flex;align-items:center;gap:16px}
 .pasek h1{font-size:22px;margin:0;font-weight:680;letter-spacing:-.2px}
+.paskDol{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:9px}
 .liczniki{display:flex;gap:10px}
-.lic{display:inline-flex;gap:8px;align-items:baseline;text-decoration:none;color:var(--drugi);border:1px solid var(--kres);border-radius:999px;padding:6px 14px;font-size:15px;background:#fff}
+.lic{display:inline-flex;gap:7px;align-items:baseline;text-decoration:none;color:var(--drugi);border:1px solid var(--kres);border-radius:999px;padding:6px 15px;font-size:15px;background:#fff}
 .lic b{color:var(--tekst);font-size:15px}
+.lic .licNazwa{color:var(--drugi)}
 .lic .licN{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ok)}
+.lic .licZ{font-variant-numeric:tabular-nums;color:var(--drugi)}
 .lic:hover{border-color:var(--nieb);color:var(--nieb)}
+.filtr{display:inline-flex;align-items:center;gap:8px;font-size:15px;color:var(--drugi);cursor:pointer}
+.filtr input{width:17px;height:17px;accent-color:var(--wybrany)}
 .stan{margin-left:auto;font-size:14px;padding:5px 14px;border-radius:999px;background:#eef1f5;color:var(--drugi)}
 .stan.dobrze{background:#dcfce7;color:#14532d}
 .stan.zle{background:#fee2e2;color:#7f1d1d;font-weight:650}
-main{padding:26px 28px 90px;max-width:1560px;margin:0 auto}
-section{margin-bottom:52px}
+main{padding:22px 28px 90px;max-width:1560px;margin:0 auto}
+.jakTo{margin:0 0 26px;padding:13px 18px;background:#fff;border:1px solid var(--kres);border-radius:12px;font-size:16px;color:var(--drugi);max-width:110ch}
+.jakTo b{color:var(--tekst)}
+section{margin-bottom:52px;scroll-margin-top:120px}
 h2{font-size:26px;margin:0 0 6px;font-weight:700;letter-spacing:-.3px}
 h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
 .wstep{margin:0 0 18px;color:var(--drugi);font-size:16px;max-width:96ch}
@@ -433,14 +531,23 @@ h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
 .kolumna{display:flex;flex-direction:column;gap:16px}
 .siatka{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
 .karta{background:var(--karta);border:1px solid var(--kres);border-radius:14px;padding:18px 20px}
-.karta[data-stan="ok"],.karta[data-stan="A"],.karta[data-stan="B"]{border-color:#bbf7d0;box-shadow:inset 4px 0 0 var(--ok)}
-.karta[data-stan="poprawka"]{border-color:#fde68a;box-shadow:inset 4px 0 0 var(--pop)}
+.karta[data-stan="AKCEPT"]{border-color:#bbf7d0;box-shadow:inset 4px 0 0 var(--ok)}
+.karta[data-stan="POPRAWKA"]{border-color:#fde68a;box-shadow:inset 4px 0 0 var(--pop)}
+body.tylkoBez .karta[data-stan="AKCEPT"],body.tylkoBez .karta[data-stan="POPRAWKA"]{display:none}
 .modul{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--drugi);margin-bottom:6px}
 .pytanie{font-size:18px;line-height:1.55;margin:0 0 14px}
-.karta h4{font-size:16px;margin:0 0 6px;font-weight:650}
+.propozycja{border-left:3px solid var(--kres);padding:2px 0 2px 14px;margin:0 0 14px}
+.propTekst{margin:0;font-size:17px;line-height:1.55}
+.propInaczej{margin:6px 0 0;font-size:14.5px;color:var(--drugi);line-height:1.5}
+.karta h4{font-size:16.5px;margin:0 0 6px;font-weight:650}
 .karta h4 code,.paraNazwa code{font-weight:400;font-size:12.5px;color:var(--drugi);background:#f1f3f7;border-radius:5px;padding:1px 6px;margin-left:6px}
-.opis{margin:0 0 12px;font-size:14.5px;color:var(--drugi)}
-.skad{display:inline-block;background:#eef1f5;border-radius:5px;padding:1px 7px;font-size:12px;margin-right:6px;color:var(--drugi)}
+.poLudzku{margin:0 0 8px;font-size:15.5px;color:var(--tekst);line-height:1.5}
+.tech{margin:0 0 12px}
+.tech summary{cursor:pointer;font-size:13px;color:var(--drugi);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--kres);border-radius:7px;background:#fbfcfd}
+.tech summary::-webkit-details-marker{display:none}
+.tech summary::before{content:"›";font-size:15px;line-height:1}
+.tech[open] summary::before{content:"⌄"}
+.tech p{margin:8px 0 0;font-size:13.5px;line-height:1.55;color:var(--drugi);background:#f7f9fb;border:1px solid var(--kres);border-radius:9px;padding:10px 12px;white-space:pre-wrap}
 .werdykt{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;margin:0 0 8px;background:#eef1f5;color:var(--drugi)}
 .werdykt.w-ZGODNY{background:#dcfce7;color:#14532d}
 .werdykt.w-ROZNI_SIE{background:#fef3c7;color:#78350f}
@@ -448,7 +555,7 @@ h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
 .pary{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
 .para{flex:1 1 340px;min-width:0}
 .paraNazwa{font-size:13.5px;color:var(--drugi);margin-bottom:4px}
-.paraObrazy{display:flex;gap:8px}
+.paraObrazy{display:flex;gap:8px;margin-bottom:4px}
 .fig{margin:0;flex:1;min-width:0}
 .fig figcaption{font-size:12px;color:var(--drugi);margin-bottom:4px}
 /* PUŁAPKA (05.09): pierwsza wersja kadrowała miniatury przez object-fit:cover
@@ -458,23 +565,22 @@ h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
    CAŁY zrzut, pomniejszony; pełny rozmiar jest o jedno kliknięcie dalej. */
 .fig img{width:100%;display:block;border:1px solid var(--kres);border-radius:9px;background:#f8fafc;object-fit:contain;object-position:top center}
 .fig.mala img{height:190px}
-.fig.duza img{height:330px}
+.fig.duza img{height:300px}
 .brakObrazu{border:1px dashed var(--kres);border-radius:9px;padding:26px 10px;text-align:center;font-size:13px;color:#9aa3ad;background:#fbfcfd}
-.opcje{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.opt{flex:1 1 220px;text-align:left;border:1.5px solid var(--kres);background:#fff;border-radius:11px;padding:11px 14px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:3px}
-.opt:hover{border-color:#9aa3ad}
-.optEtykieta{font-size:16px;font-weight:680}
-.optOpis{font-size:13.5px;color:var(--drugi);line-height:1.45}
-.rek{font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#166534;background:#dcfce7;border-radius:5px;padding:2px 7px;align-self:flex-start;margin-top:3px}
-.opt.on.tak{border-color:var(--ok);background:#f0fdf4}
-.opt.on.tak .optEtykieta{color:#14532d}
-.opt.on.nie{border-color:var(--pop);background:#fffbeb}
-.opt.on.nie .optEtykieta{color:#78350f}
-.opt:focus-visible,.uw:focus-visible{outline:2px solid var(--nieb);outline-offset:2px}
-.uw{width:100%;margin-top:10px;border:1px solid var(--kres);border-radius:9px;padding:9px 12px;font:15px/1.5 inherit}
-.zapis{font-size:13px;margin-top:7px;min-height:18px;color:var(--drugi)}
+.przyciski{display:flex;gap:12px;margin-top:14px}
+.dbtn{flex:1 1 0;border:1.5px solid #c9ced6;background:#fff;color:var(--tekst);border-radius:11px;padding:14px 18px;cursor:pointer;font:650 17px/1.2 inherit;text-align:center}
+.dbtn:hover{border-color:var(--wybrany)}
+.dbtn.on{background:var(--wybrany);border-color:var(--wybrany);color:#fff}
+.dbtn:focus-visible,.uw:focus-visible{outline:2px solid var(--nieb);outline-offset:2px}
+.zapis{font-size:13.5px;margin-top:8px;min-height:19px;color:var(--drugi)}
 .zapis.jest{color:var(--ok);font-weight:600}
 .zapis.blad{color:var(--blad);font-weight:700}
+.uwPole{display:block;margin-top:6px}
+.uwEtykieta{display:block;font-size:13.5px;color:var(--drugi);margin-bottom:5px}
+.uw{width:100%;border:1px solid var(--kres);border-radius:9px;padding:10px 12px;font:15.5px/1.5 inherit;resize:vertical;background:#fff;color:var(--tekst)}
+.uw::placeholder{color:#9aa3ad}
+.karta.prosiOUwage .uw{border-color:var(--pop);background:#fffbeb}
+.podpowiedz{margin-top:6px;font-size:13.5px;color:var(--pop);font-weight:600}
 .pusto{color:var(--drugi)}
 `;
 
@@ -487,6 +593,7 @@ function przelicz() {
     document.querySelectorAll('[data-lic="' + sek + '"]').forEach((x) => { x.textContent = ile; });
   }
 }
+function dwie(n) { return String(n).padStart(2, '0'); }
 function wyslij(klucz, dane) {
   const karta = document.getElementById('k-' + klucz);
   const znacznik = karta && karta.querySelector('.zapis');
@@ -497,11 +604,9 @@ function wyslij(klucz, dane) {
       const odp = await r.json().catch(() => ({}));
       if (!r.ok || !odp.ok) throw new Error(odp.blad || ('serwer odpowiedział ' + r.status));
       const w = odp.wiersz || {};
-      const btn = karta && karta.querySelector('.opt[data-d="' + (w.decyzja || '') + '"] .optEtykieta');
-      const slowo = btn ? btn.textContent.trim() : (w.decyzja || 'bez odpowiedzi');
-      const godzina = new Date(w.kiedy).toLocaleTimeString('pl-PL');
+      const d = new Date(w.kiedy);
       if (znacznik) {
-        znacznik.textContent = 'w bazie: ' + slowo + (w.uwaga ? ', z uwagą' : '') + ' · ' + godzina;
+        znacznik.textContent = 'zapisano ' + dwie(d.getHours()) + ':' + dwie(d.getMinutes());
         znacznik.className = 'zapis jest';
       }
       pokaz('zapisane w bazie', false);
@@ -512,22 +617,48 @@ function wyslij(klucz, dane) {
     });
 }
 document.addEventListener('click', (ev) => {
-  const b = ev.target.closest('.opt');
+  const b = ev.target.closest('.dbtn');
   if (!b) return;
   const karta = b.closest('.karta');
   const nowa = karta.dataset.stan === b.dataset.d ? '' : b.dataset.d;
   karta.dataset.stan = nowa;
-  karta.querySelectorAll('.opt').forEach((x) => x.classList.toggle('on', !!nowa && x.dataset.d === nowa));
+  karta.querySelectorAll('.dbtn').forEach((x) => x.classList.toggle('on', !!nowa && x.dataset.d === nowa));
   przelicz();
-  wyslij(b.dataset.k, { decyzja: nowa });
+  // „Do poprawki" bez uwagi jest bezużyteczne dla wykonawcy — prosimy o jedno
+  // zdanie, ALE decyzję zapisujemy i tak (nigdy nie gubimy kliknięcia właściciela).
+  const pole = karta.querySelector('.uw');
+  const podp = karta.querySelector('.podpowiedz');
+  const prosi = nowa === 'POPRAWKA' && pole && !pole.value.trim();
+  karta.classList.toggle('prosiOUwage', !!prosi);
+  if (podp) podp.hidden = !prosi;
+  if (prosi) pole.focus();
+  const dane = { decyzja: nowa };
+  if (nowa === 'AKCEPT' && b.dataset.w) dane.wybor = b.dataset.w;
+  if (nowa === '') dane.wybor = '';
+  wyslij(b.dataset.k, dane);
 });
 const stanPol = new Map();
 function pole(k) { let s = stanPol.get(k); if (!s) { s = { timer: null, ostatnia: undefined }; stanPol.set(k, s); } return s; }
+/*
+ * ZMIERZONE 05.09 (Playwright, wersja 2): bez tej linii KAŻDE przeładowanie
+ * strony wysyłało przez \`pagehide\` uwagę z KAŻDEGO pola — bo "ostatnia"
+ * (undefined) nigdy nie równa się treści pola. Jedno wejście na stronę zakładało
+ * 12 pustych wierszy w rejestrze właściciela i przestawiało znacznik czasu jego
+ * prawdziwej odpowiedzi. Zapamiętujemy więc stan WYRENDEROWANY: wysyłamy tylko
+ * to, co właściciel naprawdę zmienił.
+ */
+document.querySelectorAll('.uw').forEach((u) => { pole(u.dataset.k).ostatnia = u.value; });
 function wyslijUwage(u) {
   const s = pole(u.dataset.k);
   clearTimeout(s.timer); s.timer = null;
   if (s.ostatnia === u.value) return;
   s.ostatnia = u.value;
+  const karta = u.closest('.karta');
+  if (karta && u.value.trim()) {
+    karta.classList.remove('prosiOUwage');
+    const podp = karta.querySelector('.podpowiedz');
+    if (podp) podp.hidden = true;
+  }
   wyslij(u.dataset.k, { uwaga: u.value });
 }
 document.addEventListener('input', (ev) => {
@@ -537,6 +668,17 @@ document.addEventListener('input', (ev) => {
   s.timer = setTimeout(() => wyslijUwage(u), 800);
 });
 document.addEventListener('focusout', (ev) => { const u = ev.target.closest('.uw'); if (u) wyslijUwage(u); });
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Enter' || ev.shiftKey) return;
+  const u = ev.target.closest('.uw'); if (!u) return;
+  ev.preventDefault();
+  wyslijUwage(u);
+  u.blur();
+});
+const przelacznik = document.getElementById('tylkoBez');
+if (przelacznik) przelacznik.addEventListener('change', () => {
+  document.body.classList.toggle('tylkoBez', przelacznik.checked);
+});
 window.addEventListener('pagehide', () => {
   document.querySelectorAll('.uw').forEach((u) => {
     const s = pole(u.dataset.k);
