@@ -6,6 +6,7 @@ import {
   ExternalLink,
   History,
   Lightbulb,
+  LogOut,
   MessageSquare,
   Send,
   Sparkles,
@@ -43,6 +44,8 @@ import {
 import { AppView } from '@/types';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import { exportToPDF } from '@/utils/pdfExport';
+
+import { buildToolSessionOverflowItems } from './toolSessionOverflowItems';
 
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { EmbeddedView } from '../shared/NModeBlocks';
@@ -2404,6 +2407,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           lastSavedLabel,
           isDirty: saveState === 'dirty' || saveState === 'error',
           onClose: onBack,
+          // Odbiór 05.09 (04-narzędzia, defekt 7): jawne wyjście z sesji
+          // w kebabie Menu 1. Zawartość i uzasadnienie (czego tam świadomie
+          // nie ma) — src/components/DiscoveryTools/toolSessionOverflowItems.ts.
+          extraOverflowItems: buildToolSessionOverflowItems({
+            onBack,
+            isPolish,
+            exitIcon: LogOut,
+          }),
           statusLabel: statusLabel(toolStatus),
           statusTone:
             toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
