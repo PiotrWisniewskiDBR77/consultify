@@ -820,3 +820,94 @@ export async function publishRoiGovernedVisibilityPolicy(
     client.release();
   }
 }
+
+// ==========================================================================
+// AMD-FLOW-ROI-VISIBILITY-002 — read side of the governance row
+// (dodane 2026-09-05, blokada odbioru na żywo)
+// ==========================================================================
+//
+// POWÓD ISTNIENIA. `publishRoiGovernedVisibilityPolicy` powyżej jest jedyną
+// drogą, jaką organizacja może włączyć domenę ROI — i do 05.09.2026 nie
+// miała ŻADNEGO wołacza w interfejsie. Skutek zmierzony na żywo (odbiór
+// 05.09, `evidence/odbior-zywo-20260905/RUNDA2_RAPORT.md`): właściciel
+// organizacji DBR77 widzi pusty rejestr ROI („Brak spraw ROI" — bo
+// `GET /cases` przy odmowie zwraca zero wierszy, nigdy 403), a próba
+// utworzenia sprawy kończy się 403 `ROI_CASE_CREATION_NOT_AUTHORIZED`. Trzy
+// ekrany Wyników (rejestr ROI, model ROI, pełne narzędzie ROI) są przez to
+// nieosiągalne, a ekran nie mówi ani słowa DLACZEGO.
+//
+// Ta funkcja NIE zmienia żadnej reguły dostępu: jest wyłącznie odczytem —
+// „czy ta organizacja ma opublikowaną politykę i czy TEN aktor może ją
+// opublikować". Fail-closed pozostaje fail-closed (żadnego domyślnego
+// OPEN_ORG, żadnej fabrykowanej polityki); zmienia się tylko to, że
+// interfejs ma z czego zbudować uczciwy komunikat i przycisk dla
+// uprawnionego OWNER/ADMIN.
+export type RoiGovernedVisibilityPolicyPublishBlocker =
+  | 'ALREADY_PUBLISHED'
+  | 'NOT_ACTIVE_MEMBER'
+  | 'ORDINARY_MEMBER_DENIED';
+
+export interface RoiGovernedVisibilityPolicyStatus {
+  /** Czy organizacja ma wiersz w `rvn_roi_visibility_governance`. */
+  published: boolean;
+  publication: RoiGovernedVisibilityPolicyPublication | null;
+  /** Czy TEN aktor może teraz wywołać publikację (ta sama reguła co w
+   * `publishRoiGovernedVisibilityPolicy`: same-tenant ACTIVE OWNER/ADMIN,
+   * czytane wprost z `organization_members`). */
+  canPublish: boolean;
+  /** Powód, dla którego `canPublish` jest false — do uczciwego komunikatu
+   * w interfejsie, nigdy do decyzji o dostępie po stronie klienta. */
+  blocker: RoiGovernedVisibilityPolicyPublishBlocker | null;
+}
+
+export async function getRoiGovernedVisibilityPolicyStatus(input: {
+  organizationId: string;
+  userId: string;
+}): Promise<RoiGovernedVisibilityPolicyStatus> {
+  const { organizationId, userId } = input;
+
+  const client: PoolClient = await acquirePgClient();
+  try {
+    const existing = await client.query<{
+      organization_id: string;
+      published_by: string;
+      published_at: string;
+      policy_key: string;
+    }>(
+      `SELECT organization_id, published_by, published_at, policy_key
+         FROM rvn_roi_visibility_governance
+        WHERE organization_id = $1`,
+      [organizationId]
+    );
+    const row = existing.rows[0];
+    if (row) {
+      return {
+        published: true,
+        publication: {
+          organizationId: row.organization_id,
+          publishedBy: row.published_by,
+          publishedAt: row.published_at,
+          policyKey: row.policy_key,
+        },
+        canPublish: false,
+        blocker: 'ALREADY_PUBLISHED',
+      };
+    }
+
+    const role = await readSameTenantActiveMembershipRole(client, organizationId, userId);
+    if (!role) {
+      return { published: false, publication: null, canPublish: false, blocker: 'NOT_ACTIVE_MEMBER' };
+    }
+    if (role === 'OWNER' || role === 'ADMIN') {
+      return { published: false, publication: null, canPublish: true, blocker: null };
+    }
+    return {
+      published: false,
+      publication: null,
+      canPublish: false,
+      blocker: 'ORDINARY_MEMBER_DENIED',
+    };
+  } finally {
+    client.release();
+  }
+}

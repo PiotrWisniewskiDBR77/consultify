@@ -84,11 +84,13 @@ import {
   closeRoiCase,
   createRoiCase,
   getLatestRoiCalculationRun,
+  getRoiVisibilityPolicyStatus,
   listOrgRoiBenefitsRealization,
   listRoiCases,
   markRoiCasePostInvestmentReviewDueCase,
   markRoiCaseReadyForReview,
   newRoiIdempotencyKey,
+  publishRoiVisibilityPolicy,
   rejectRoiCase,
   reopenRoiCaseForRevision,
   requestChangesOnRoiCase,
@@ -97,6 +99,7 @@ import {
   type RoiCaseListItem,
   type RoiOrgBenefitsRealizationRow,
   type RoiTransitionResult,
+  type RoiVisibilityPolicyStatus,
   startModelingRoiCase,
   startPirRoiCase,
   startRoiCaseBenefitsRealizationCase,
@@ -292,6 +295,41 @@ export const ResultsRoiHub: React.FC = () => {
     undefined
   );
 
+  // --- Polityka widoczności ROI (blokada odbioru 05.09) --------------------
+  //
+  // Domena ROI jest fail-closed: bez opublikowanej polityki `ROI_GOVERNED`
+  // `GET /cases` zwraca PUSTĄ listę (nigdy 403 — celowo, żeby nie wyciekać
+  // istnienia zasobów), a `POST /cases` odmawia z
+  // `ROI_CASE_CREATION_NOT_AUTHORIZED`. Bez tego odczytu ekran pokazywał
+  // właścicielowi „Brak spraw ROI" i przycisk, który zawsze kończył się
+  // błędem — czyli kłamał o przyczynie. Teraz stan jest czytany wprost i
+  // ekran mówi, czego brakuje i kto może to włączyć.
+  const [policyStatus, setPolicyStatus] = useState<RoiVisibilityPolicyStatus | null>(null);
+  const [policyBusy, setPolicyBusy] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
+
+  const loadPolicyStatus = useCallback(() => {
+    getRoiVisibilityPolicyStatus()
+      .then((status) => setPolicyStatus(status))
+      // Odczyt stanu polityki jest DODATKIEM do rejestru, nie warunkiem jego
+      // działania — gdy sam ten odczyt padnie, tabela ma nadal pokazać to, co
+      // zwrócił `GET /cases`, a nie zamienić się w ekran błędu.
+      .catch(() => setPolicyStatus(null));
+  }, []);
+
+  const handlePublishPolicy = useCallback(() => {
+    setPolicyBusy(true);
+    setPolicyError(null);
+    publishRoiVisibilityPolicy(newRoiIdempotencyKey())
+      .then(() => {
+        loadPolicyStatus();
+        loadCases();
+      })
+      .catch((err) => setPolicyError(toUserFacingErrorMessage(err, isPolish)))
+      .finally(() => setPolicyBusy(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadPolicyStatus]);
+
   // "Benefits realization" tab state
   const [benefitsRows, setBenefitsRows] = useState<RoiOrgBenefitsRealizationRow[] | null>(null);
   const [benefitsError, setBenefitsError] = useState<string | null>(null);
@@ -450,6 +488,7 @@ export const ResultsRoiHub: React.FC = () => {
 
   useEffect(() => {
     if (tab === 'all' && cases === null && !casesLoading) loadCases();
+    if (tab === 'all' && policyStatus === null) loadPolicyStatus();
     if (tab === 'benefits' && benefitsRows === null && !benefitsLoading) loadBenefits();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -601,6 +640,22 @@ export const ResultsRoiHub: React.FC = () => {
     );
   }
 
+  // Domena ROI wygaszona dla organizacji — jedna prawda dla pustego stanu i
+  // dla przycisku Menu 2, żeby ekran nie proponował akcji, która na pewno
+  // skończy się 403.
+  const roiDisabledForOrg = policyStatus !== null && !policyStatus.published;
+  const roiActivationCta = roiDisabledForOrg && policyStatus.canPublish;
+  const activationTitle = isPolish
+    ? 'ROI nie jest włączone w tej organizacji'
+    : 'ROI is not enabled for this organization';
+  const activationDescription = roiActivationCta
+    ? isPolish
+      ? 'Sprawy ROI wymagają jednorazowego opublikowania polityki widoczności ROI przez właściciela lub administratora organizacji. Po włączeniu rejestr, model i pełne narzędzie ROI działają na realnych danych.'
+      : 'ROI cases require a one-time publication of the ROI visibility policy by an organization owner or admin. Once enabled, the registry, the model and the full ROI tool work on real data.'
+    : isPolish
+      ? 'Politykę widoczności ROI może opublikować wyłącznie właściciel lub administrator tej organizacji. Poproś go o włączenie domeny ROI.'
+      : 'Only an owner or admin of this organization can publish the ROI visibility policy. Ask them to enable the ROI domain.';
+
   const rows: TableRow[] = filteredCases.map(withId);
 
   return (
@@ -622,12 +677,31 @@ export const ResultsRoiHub: React.FC = () => {
           onChipChange: (id) => setChip(id as 'all' | RoiStatusBucket),
           // Quick create (master plan §9 Etap 3) — only meaningful on the
           // real case registry, not the read-only org rollup tab.
-          primaryCta: {
-            label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
-            icon: Plus,
-            onClick: openCreateModal,
-            testId: 'roi-registry-create-cta',
-          },
+          // Gdy domena ROI jest w tej organizacji wygaszona, przycisk Menu 2
+          // NIE proponuje tworzenia sprawy (skończyłoby się 403), tylko
+          // jednorazową publikację polityki — i tylko dla OWNER/ADMIN, bo
+          // tylko oni mają do niej uprawnienie po stronie serwera.
+          primaryCta: roiDisabledForOrg
+            ? roiActivationCta
+              ? {
+                  label: policyBusy
+                    ? isPolish
+                      ? 'Włączam…'
+                      : 'Enabling…'
+                    : isPolish
+                      ? 'Włącz ROI dla organizacji'
+                      : 'Enable ROI for this organization',
+                  icon: Plus,
+                  onClick: policyBusy ? () => undefined : handlePublishPolicy,
+                  testId: 'roi-registry-enable-cta',
+                }
+              : undefined
+            : {
+                label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                icon: Plus,
+                onClick: openCreateModal,
+                testId: 'roi-registry-create-cta',
+              },
         }}
         table={{
           columns: buildRoiCaseColumns(isPolish, resolveMemberName),
@@ -638,19 +712,38 @@ export const ResultsRoiHub: React.FC = () => {
           onRetry: loadCases,
           empty:
             !casesLoading && !casesError && rows.length === 0
-              ? {
-                  title: isPolish ? 'Brak spraw ROI' : 'No ROI cases yet',
-                  description:
-                    chip === 'all'
-                      ? isPolish
-                        ? 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.'
-                        : 'No ROI case has been created in this organization yet.'
-                      : isPolish
-                        ? 'Żadna sprawa nie pasuje do tego filtra.'
-                        : 'No case matches this filter.',
-                  actionLabel: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
-                  onAction: openCreateModal,
-                }
+              ? roiDisabledForOrg
+                ? {
+                    title: activationTitle,
+                    description: policyError
+                      ? `${activationDescription} ${policyError}`
+                      : activationDescription,
+                    ...(roiActivationCta
+                      ? {
+                          actionLabel: policyBusy
+                            ? isPolish
+                              ? 'Włączam…'
+                              : 'Enabling…'
+                            : isPolish
+                              ? 'Włącz ROI dla organizacji'
+                              : 'Enable ROI for this organization',
+                          onAction: policyBusy ? () => undefined : handlePublishPolicy,
+                        }
+                      : {}),
+                  }
+                : {
+                    title: isPolish ? 'Brak spraw ROI' : 'No ROI cases yet',
+                    description:
+                      chip === 'all'
+                        ? isPolish
+                          ? 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.'
+                          : 'No ROI case has been created in this organization yet.'
+                        : isPolish
+                          ? 'Żadna sprawa nie pasuje do tego filtra.'
+                          : 'No case matches this filter.',
+                    actionLabel: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                    onAction: openCreateModal,
+                  }
               : undefined,
           selectedRowId: selectedCaseId,
           onRowClick: (row) => setSelectedCaseId(String(row.caseId)),

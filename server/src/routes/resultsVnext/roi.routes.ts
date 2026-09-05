@@ -34,6 +34,7 @@ import { requireResultsInternalBetaVisibility } from '../../middleware/resultsIn
 import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
+  getRoiGovernedVisibilityPolicyStatus,
   publishRoiGovernedVisibilityPolicy,
   resolveRoiGovernedVisibility,
   ROI_GOVERNED_VISIBILITY_POLICY,
@@ -3168,6 +3169,32 @@ router.post(
 // server/src/services/resultsVnext/platform/visibilityResolver.ts's
 // AMD-FLOW-ROI-VISIBILITY-002 section for the full design/impossibility-
 // proof writeup.
+
+// GET /visibility-policy — stan polityki dla organizacji (dodane 2026-09-05).
+//
+// Bez tego odczytu interfejs nie miał JAK odróżnić „organizacja nie ma
+// jeszcze ani jednej sprawy ROI" od „domena ROI jest w tej organizacji
+// wygaszona" — `GET /cases` przy odmowie zwraca pustą listę (celowo, żeby
+// nie wyciekać istnienia zasobów), więc oba stany wyglądały identycznie:
+// pusty rejestr. To dokładnie ta blokada, na której zatrzymał się odbiór na
+// żywo 05.09 (trzy ekrany Wyników naraz). Sam odczyt niczego nie otwiera —
+// zwraca tylko to, co aktor i tak może wywnioskować z próby publikacji.
+router.get(
+  '/visibility-policy',
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const status = await getRoiGovernedVisibilityPolicyStatus({
+        organizationId: auth.organizationId,
+        userId: auth.userId,
+      });
+      res.status(200).json(status);
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiGovernedVisibilityPolicyStatus');
+    }
+  }
+);
 
 router.post(
   '/visibility-policy',
