@@ -522,11 +522,24 @@ export async function getRoiCaseCard(
     const horizon = horizonYears(c.analysis_start, c.analysis_end);
     const discountRatePct = policyRow ? num(policyRow.discount_rate_pct) : null;
 
+    /**
+     * DYSKONTOWANIE LICZYMY TYLKO TAM, GDZIE POLITYKA ANALIZY GO WYMAGA.
+     * Kryterium jest FAKT, nie domysł: zakończony przebieg silnika zapisał NPV.
+     * Analiza z polityką „ROI i Payback, bez NPV/IRR dla horyzontu 3-letniego"
+     * (tak stoi w `calculation_policy.notes` jednej z analiz DBR77) dostałaby
+     * inaczej policzone przez nas NPV i PI, których jej autor świadomie nie
+     * zamawiał — i karta pokazałaby ujemne NPV przy dodatnim ROI jako
+     * własną, nieuzgodnioną tezę. Bez przebiegu zostaje „—".
+     */
+    const runNpv = runRow ? num(runRow.npv) : null;
+    const discountingApplies = runRow ? runNpv !== null : false;
+    const effectiveDiscountRatePct = discountingApplies ? discountRatePct : null;
+
     const indicators = computeRoiIndicators({
       initialInvestment: capex,
       annualNetBenefit,
       horizon,
-      discountRatePct,
+      discountRatePct: effectiveDiscountRatePct,
     });
 
     const cashFlow = buildCashFlowRows({
@@ -535,7 +548,7 @@ export async function getRoiCaseCard(
       initialInvestment: capex,
       annualCosts,
       annualBenefits,
-      discountRatePct,
+      discountRatePct: effectiveDiscountRatePct,
     });
 
     const sensitivity = computeSensitivity({
@@ -543,7 +556,7 @@ export async function getRoiCaseCard(
       annualBenefits,
       annualCosts,
       horizon,
-      discountRatePct,
+      discountRatePct: effectiveDiscountRatePct,
     });
 
     const pirs: RoiCardPirDto[] = pirRows.map((r) => ({

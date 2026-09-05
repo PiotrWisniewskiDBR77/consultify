@@ -876,15 +876,57 @@ export interface PlannedRoi {
   ownerUserId: string;
   analysisStart: string;
   analysisEnd: string;
-  /** Rekomendacja GO / CONDITIONAL GO — dziś BEZ własnego pola w schemacie,
-   *  zapisywana jako jawna notatka polityki wyliczeń. */
+  /** Rekomendacja GO / CONDITIONAL GO — od migracji
+   *  `20260906_rvn_roi_card_three_parts.sql` ma WŁASNE pole
+   *  `rvn_roi_cases.investment_recommendation`; notatka polityki zostaje jako
+   *  ludzkie uzasadnienie, ale przestała być jedynym nośnikiem decyzji. */
   recommendation: string | null;
+  /** ROI (P7K C) — pola karty w trzech częściach (SSOT §4). */
+  recommendationCode: 'go' | 'conditional_go' | 'no_go' | null;
+  recommendationCondition: string | null;
+  subjectType: string;
+  optionVariant: number;
+  optionVariantLabel: string;
+  problemStatement: string;
+  scopeSummary: string;
+  bauOptionLabel: string;
+  /** Stopa dyskontowa TEJ analizy. Wcześniej seed wpisywał 8 % wszystkim, a
+   *  zapisane NPV 516 315 zł da się odtworzyć wyłącznie przy 10 % — polityka
+   *  kłamała o tym, jak policzono jej własny wynik. */
+  discountRatePct: number;
+  /** [kategoria, nazwa, opis, prawdopodobieństwo, skutek, mitygacja] */
+  risks: [string, string, string, 'low' | 'medium' | 'high', 'low' | 'medium' | 'high', string][];
+  /** [metryka, oczekiwane, wykonane] — wariancja liczona przy zapisie. */
+  variances: [string, number, number][];
+  /** [kategoria założenia, werdykt, opis] */
+  assumptionOutcomes: [string, 'confirmed' | 'partially_confirmed' | 'refuted', string][];
+  pir: {
+    milestoneMonths: 3 | 6 | 12;
+    outcome: 'benefits_fully_realized' | 'benefits_partially_realized' | 'benefits_not_realized';
+    lessons: string;
+    recommendation: string;
+    realizedRoiPct: number;
+    realizedNpv: number;
+    realizedPaybackPeriods: number;
+  } | null;
   policyNotes: string;
   requiredMetrics: string[];
   baseline: { measured: number; unit: string; asOf: string; notes: string };
   assumptions: [string, string, string | null, number, number, number, 'low' | 'medium' | 'high', string][];
   costLines: [string, string, string, number, string, 'one_time' | 'recurring'][];
-  benefitLines: [string, string, string, boolean, number, string, 'one_time' | 'recurring'][];
+  /** [kategoria, nazwa, opis, finansowa?, kwota|null, waluta|null, timing,
+   *   klasa Hard/Avoided/Soft/Strategic, łańcuch KPI → pieniądze] */
+  benefitLines: [
+    string,
+    string,
+    string,
+    boolean,
+    number | null,
+    string | null,
+    'one_time' | 'recurring',
+    'hard' | 'avoided' | 'soft' | 'strategic',
+    string | null,
+  ][];
   scenarios: [('downside' | 'upside'), string, string][];
   run: {
     totalCosts: number;
@@ -920,8 +962,49 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
       analysisStart: '2026-01-01',
       analysisEnd: '2030-12-31',
       recommendation: 'CONDITIONAL GO',
+      recommendationCode: 'conditional_go',
+      recommendationCondition:
+        'Potwierdzony wolumen dwóch zmian przez dwa kolejne kwartały przed podpisaniem umowy z integratorem.',
+      subjectType: 'Robotyzacja',
+      optionVariant: 2,
+      optionVariantLabel: 'Pełna automatyzacja gniazda',
+      problemStatement:
+        'Niestabilna wydajność gniazda nr 3 i brak spawaczy na rynku pracy: przy dwóch nieobecnościach gniazdo schodzi z taktu, a przeróbki sięgają 6,1 % detali.',
+      scopeSummary:
+        'Zakres techniczny: robot spawalniczy z pozycjonerem, ogrodzenie bezpieczeństwa, integracja z MES. Zakres organizacyjny: przeszkolenie 4 operatorów, nowa instrukcja kontroli pierwszej sztuki. Realizacja 6 miesięcy, eksploatacja 5 lat.',
+      bauOptionLabel:
+        'Wariant 0 — bez inwestycji: zatrudnienie 10 dodatkowych spawaczy w ciągu dwóch lat i utrzymanie obecnego poziomu przeróbek.',
+      discountRatePct: 10,
+      risks: [
+        ['wdrożeniowe', 'Ramp-up dłuższy niż zakładany', 'Integrator deklaruje 8 tygodni do pełnej wydajności; nie mamy własnego pomiaru z podobnego wdrożenia.', 'high', 'medium', 'Kamień milowy odbiorowy po 8 tygodniach z karą umowną za przekroczenie.'],
+        ['organizacyjne', 'Redukcja etatów niemożliwa do przeprowadzenia', 'Korzyść z pracy zakłada przesunięcie 2 etatów; bez zgody na przesunięcia korzyść nie powstaje.', 'medium', 'high', 'Plan przesunięć uzgodniony z kadrami przed decyzją, nie po wdrożeniu.'],
+        ['popytu', 'Brak wolumenu na drugą zmianę', 'Korzyść z odzyskanej zdolności wymaga sprzedaży dodatkowej produkcji.', 'medium', 'medium', 'Warunek CONDITIONAL GO: dwa kwartały potwierdzonego wolumenu.'],
+        ['CAPEX', 'Przekroczenie nakładu na integrację', 'Rezerwa 10 % przy tej dojrzałości projektu jest na dolnej granicy widełek 5-15 %.', 'medium', 'medium', 'Zamówienie w formule ryczałtowej, zmiany zakresu tylko aneksem.'],
+      ],
+      variances: [
+        ['CAPEX', 1_000_000, 1_080_000],
+        ['Roczna korzyść', 400_000, 312_000],
+        ['Redukcja FTE', 10, 7],
+        ['Payback (lata)', 2.5, 3.4615],
+      ],
+      assumptionOutcomes: [
+        ['volume', 'confirmed', 'Wolumen 78 tys. detali potwierdzony przez dwa kwartały — warunek rekomendacji spełniony.'],
+        ['labour', 'partially_confirmed', 'Przesunięto 7 z 10 etatów; trzy stanowiska pozostały ze względu na detale spoza rodziny objętej robotem.'],
+        ['ramp_up', 'refuted', 'Dojście do pełnej wydajności trwało 14 tygodni zamiast 8 — założenie integratora się nie potwierdziło.'],
+      ],
+      pir: {
+        milestoneMonths: 6,
+        outcome: 'benefits_partially_realized',
+        lessons:
+          'Ramp-up planować z własnego pomiaru, nie z deklaracji integratora. Plan przesunięć etatów uzgadniać przed decyzją inwestycyjną.',
+        recommendation:
+          'Korekta planu korzyści: roczna korzyść 312 tys. zł zamiast 400 tys. zł; utrzymać inwestycję, przegląd po 12 miesiącach.',
+        realizedRoiPct: 44.4,
+        realizedNpv: 102_727,
+        realizedPaybackPeriods: 3.4615,
+      },
       policyNotes:
-        'Rekomendacja: CONDITIONAL GO — warunek: potwierdzony wolumen 2 zmian przez 2 kolejne kwartały. (Rekomendacja nie ma dziś własnego pola w schemacie — patrz KROK_0 mapowania P7K.)',
+        'Wskaźniki liczone przy stopie dyskontowej 10 % w ujęciu rocznym, przed podatkiem. Rekomendacja CONDITIONAL GO ma własne pole na sprawie — ta notatka jest uzasadnieniem, nie nośnikiem decyzji.',
       requiredMetrics: ['roi', 'npv', 'irr', 'payback'],
       baseline: {
         measured: 1_240_000,
@@ -942,9 +1025,11 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
         ['contingency', 'Rezerwa 10% na integrację', 'Rezerwa ujęta w CAPEX 1 000 000 zł', 91_000, 'PLN', 'one_time'],
       ],
       benefitLines: [
-        ['labour_savings', 'Redukcja pracochłonności spawania', 'Hard — 2 etaty spawacza przesunięte na obsługę gniazda', true, 260_000, 'PLN', 'recurring'],
-        ['quality_cost_avoided', 'Uniknięty koszt przeróbek i reklamacji', 'Avoided — spadek udziału przeróbek z 6,1% do 1,8%', true, 90_000, 'PLN', 'recurring'],
-        ['capacity', 'Odzyskana zdolność produkcyjna gniazda', 'Hard — dodatkowa zmiana bez rozbudowy hali', true, 50_000, 'PLN', 'recurring'],
+        ['labour_savings', 'Redukcja pracochłonności spawania', '2 etaty spawacza przesunięte na obsługę gniazda', true, 260_000, 'PLN', 'recurring', 'hard', 'Roboczogodziny/szt. 0,42 → 0,18 → 2 etaty × 130 tys. zł pełnego kosztu zatrudnienia'],
+        ['quality_cost_avoided', 'Uniknięty koszt przeróbek i reklamacji', 'Spadek udziału przeróbek z 6,1 % do 1,8 %', true, 90_000, 'PLN', 'recurring', 'avoided', 'Scrap+rework 6,1 % → 1,8 % → 4,3 pp × 2,1 mln zł kosztu materiału'],
+        ['capacity', 'Odzyskana zdolność produkcyjna gniazda', 'Dodatkowa zmiana bez rozbudowy hali', true, 50_000, 'PLN', 'recurring', 'hard', 'OEE 62 % → 72 % → +4,2 tys. szt. × 12 zł marży kontrybucyjnej'],
+        ['ergonomics', 'Wyjście operatorów spod łuku spawalniczego', 'Raportowana, świadomie NIE monetyzowana (metodyka §35)', false, null, null, 'recurring', 'soft', 'Ekspozycja na dymy spawalnicze 6 h/zmianę → 0 h'],
+        ['scalability', 'Powtarzalność wdrożenia na gnieździe nr 5', 'Kompetencja i oprzyrządowanie do ponownego użycia', false, null, null, 'recurring', 'strategic', 'Czas uruchomienia kolejnego gniazda 6 → 3 miesiące'],
       ],
       scenarios: [
         ['downside', 'Wolniejszy ramp-up', 'Pełna wydajność dopiero po 14 tygodniach, korzyści przesunięte o kwartał'],
@@ -970,8 +1055,27 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
       analysisStart: '2026-01-01',
       analysisEnd: '2028-12-31',
       recommendation: 'GO',
+      recommendationCode: 'go',
+      recommendationCondition: null,
+      subjectType: 'IT / jakość',
+      optionVariant: 1,
+      optionVariantLabel: 'Modernizacja kontroli końcowej',
+      problemStatement:
+        'Wady wykrywane u klienta, nie na linii: 412 tys. zł rocznie na reklamacjach i kontroli końcowej, z czego 150 tys. zł dotyczy wad możliwych do wykrycia optycznie.',
+      scopeSummary:
+        'Zakres techniczny: dwa stanowiska wizyjne na linii montażu (kamery, oświetlenie, oprogramowanie). Zakres organizacyjny: zmiana instrukcji kontroli, przeszkolenie 6 osób. Realizacja 4 miesiące, eksploatacja 3 lata.',
+      bauOptionLabel:
+        'Wariant 0 — bez inwestycji: utrzymanie ręcznej kontroli końcowej i obecnego poziomu reklamacji.',
+      discountRatePct: 10,
+      risks: [
+        ['techniczne', 'Fałszywe odrzuty zjadają korzyść', 'Pilotaż dał 2 % fałszywych odrzutów; przy 6 % część korzyści pochłania ponowna kontrola.', 'medium', 'medium', 'Odbiór po 4 tygodniach produkcji z progiem ≤ 3 % fałszywych odrzutów.'],
+        ['dostawcy', 'Zależność od jednego integratora wizji', 'Brak drugiego źródła serwisu w kraju.', 'low', 'medium', 'Umowa serwisowa z czasem reakcji 24 h i szkolenie własnego utrzymania ruchu.'],
+      ],
+      variances: [],
+      assumptionOutcomes: [],
+      pir: null,
       policyNotes:
-        'Rekomendacja: GO. Polityka wyliczeń wymaga ROI i Payback; NPV/IRR nie są liczone dla horyzontu 3-letniego. (Rekomendacja nie ma dziś własnego pola w schemacie.)',
+        'Polityka wyliczeń wymaga ROI i Payback; NPV i IRR nie są liczone dla horyzontu 3-letniego — karta pokazuje w tych miejscach „—", nie zero.',
       requiredMetrics: ['roi', 'payback'],
       baseline: {
         measured: 412_000,
@@ -989,8 +1093,8 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
         ['contingency', 'Rezerwa 10%', 'Rezerwa ujęta w CAPEX 620 000 zł', 56_400, 'PLN', 'one_time'],
       ],
       benefitLines: [
-        ['quality_cost_avoided', 'Uniknięte reklamacje jakościowe', 'Avoided — wady wykrywane przed wysyłką', true, 150_000, 'PLN', 'recurring'],
-        ['labour_savings', 'Redukcja kontroli końcowej', 'Hard — 1 etat kontroli wizualnej', true, 88_000, 'PLN', 'recurring'],
+        ['quality_cost_avoided', 'Uniknięte reklamacje jakościowe', 'Wady wykrywane przed wysyłką', true, 150_000, 'PLN', 'recurring', 'avoided', 'FPY 94,2 % → 98,6 % → 150 tys. zł reklamacji z rejestru 2024-2025'],
+        ['labour_savings', 'Redukcja kontroli końcowej', '1 etat kontroli wizualnej', true, 88_000, 'PLN', 'recurring', 'hard', 'Roboczogodziny kontroli 1 900 h/rok → 0 h × 46 zł/h z narzutami'],
       ],
       scenarios: [
         ['downside', 'Wysoki poziom fałszywych odrzutów', 'Fałszywe odrzuty 6% — część korzyści zjedzona przez ponowną kontrolę'],
@@ -1016,6 +1120,25 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
       analysisStart: '2027-01-01',
       analysisEnd: '2031-12-31',
       recommendation: null,
+      recommendationCode: null,
+      recommendationCondition: null,
+      subjectType: 'Magazyn',
+      optionVariant: 3,
+      optionVariantLabel: 'RaaS (robot jako usługa)',
+      problemStatement:
+        'WIP leży średnio 18 dni między operacjami; magazyn międzyoperacyjny zajmuje 320 m² hali potrzebnej pod montaż.',
+      scopeSummary:
+        'Zakres w opracowaniu — trwa rozmowa z dwoma dostawcami modelu RaaS. Bez wyceny wariantu nie ma modelu kosztowego, więc analiza pozostaje na etapie założeń.',
+      bauOptionLabel:
+        'Wariant 0 — bez inwestycji: obecny magazyn WIP i rotacja 18 dni.',
+      discountRatePct: 10,
+      risks: [
+        ['dostawcy', 'Model RaaS bez gwarancji dostępności', 'Żaden z dwóch dostawców nie zaproponował dotąd SLA na dostępność.', 'high', 'high', 'Warunek wejścia do wyceny: SLA dostępności ≥ 97 % z karą umowną.'],
+        ['technologiczne', 'Brak własnych danych o rotacji po automatyzacji', 'Założenie 11 dni jest szacunkiem własnym bez pomiaru i bez benchmarku.', 'high', 'medium', 'Pilotaż na jednej rodzinie wyrobów przed decyzją.'],
+      ],
+      variances: [],
+      assumptionOutcomes: [],
+      pir: null,
       policyNotes:
         'Analiza w fazie założeń — model wariantu RaaS nie jest jeszcze policzony, dlatego CAPEX, korzyść, ROI, Payback, NPV i IRR pozostają puste („—"), a nie zerowe.',
       requiredMetrics: ['roi', 'npv', 'payback'],
@@ -1545,12 +1668,21 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
       [r.initiativeId, org, r.initiativeName, 'Automatyzacja', `Inicjatywa powiązana z analizą ROI „${r.title}".`, r.ownerUserId, NOW]
     );
     await client.query(
+      // ROI (P7K C): kolumny przedmiotu/wariantu/rekomendacji/problemu/zakresu/BAU
+      // pochodzą z migracji `20260906_rvn_roi_card_three_parts.sql` — bez nich
+      // karta w trzech częściach musiałaby czytać decyzję inwestycyjną z notatki.
       `INSERT INTO rvn_roi_cases
          (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity,
-          analysis_start, analysis_end, created_by, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,'PLN','annual',$7,$8,$9,$10,$10)
+          analysis_start, analysis_end, subject_type, option_variant, option_variant_label,
+          investment_recommendation, recommendation_condition, problem_statement, scope_summary,
+          bau_option_label, created_by, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,'PLN','annual',$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)
        ON CONFLICT (case_id) DO NOTHING`,
-      [r.caseId, org, r.initiativeId, r.title, r.ownerUserId, r.status, r.analysisStart, r.analysisEnd, actor, NOW]
+      [
+        r.caseId, org, r.initiativeId, r.title, r.ownerUserId, r.status, r.analysisStart, r.analysisEnd,
+        r.subjectType, r.optionVariant, r.optionVariantLabel, r.recommendationCode,
+        r.recommendationCondition, r.problemStatement, r.scopeSummary, r.bauOptionLabel, actor, NOW,
+      ]
     );
     await client.query(
       `INSERT INTO rvn_platform_resource_visibility
@@ -1575,9 +1707,12 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
       `INSERT INTO rvn_roi_calculation_policy
          (policy_row_id, case_id, organization_id, discount_rate_pct, tax_treatment, inflation_rate_pct,
           rounding_policy, required_metrics, notes, confidence, owner_user_id, created_by, created_at, updated_at)
-       VALUES ($1,$2,$3,8,'pre_tax',3,'half_up_2dp',$4,$5,'medium',$6,$7,$8,$8)
+       VALUES ($1,$2,$3,$4,'pre_tax',3,'half_up_2dp',$5,$6,'medium',$7,$8,$9,$9)
        ON CONFLICT (policy_row_id) DO NOTHING`,
-      [det(org, 'roi_policy', r.key), r.caseId, org, r.requiredMetrics, r.policyNotes, r.ownerUserId, actor, NOW]
+      // Stopa dyskontowa PER ANALIZA. Wcześniej seed wpisywał 8 % wszystkim, a
+      // zapisane NPV 516 315 zł odtwarza się wyłącznie przy 10 % — wiersz
+      // polityki opisywał inny rachunek niż ten, który zapisano w przebiegu.
+      [det(org, 'roi_policy', r.key), r.caseId, org, r.discountRatePct, r.requiredMetrics, r.policyNotes, r.ownerUserId, actor, NOW]
     );
     let n = 0;
     for (const [category, label, unit, base, down, up, confidence, source] of r.assumptions) {
@@ -1612,14 +1747,15 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
       );
     }
     n = 0;
-    for (const [category, label, description, isFinancial, amount, currency, timing] of r.benefitLines) {
+    for (const [category, label, description, isFinancial, amount, currency, timing, benefitClass, kpiChain] of r.benefitLines) {
       n += 1;
       await client.query(
         `INSERT INTO rvn_roi_benefit_lines
            (benefit_line_id, case_id, organization_id, category, label, description, is_financial, amount,
             currency, timing_type, one_time_period_date, recurrence_start_date, recurrence_end_date,
-            recurrence_cadence, confidence, source, owner_user_id, created_by, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'medium',$15,$16,$17,$18,$18)
+            recurrence_cadence, benefit_class, kpi_chain_note, confidence, source, owner_user_id,
+            created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'medium',$17,$18,$19,$20,$20)
          ON CONFLICT (benefit_line_id) DO NOTHING`,
         [
           det(org, 'roi_benefit', `${r.key}|${n}`), r.caseId, org, category, label, description, isFinancial, amount, currency, timing,
@@ -1627,6 +1763,7 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
           timing === 'recurring' ? r.analysisStart : null,
           timing === 'recurring' ? r.analysisEnd : null,
           timing === 'recurring' ? 'annual' : null,
+          benefitClass, kpiChain,
           SEED_TAG, r.ownerUserId, actor, NOW,
         ]
       );
@@ -1640,6 +1777,19 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8)
          ON CONFLICT (scenario_id) DO NOTHING`,
         [det(org, 'roi_scenario', `${r.key}|${n}`), r.caseId, org, scenarioType, label, description, actor, NOW]
+      );
+    }
+    // ROI (P7K C) — rejestr ryzyk analizy (metodyka §30: rodzina + mitygacja).
+    n = 0;
+    for (const [category, label, description, likelihood, impact, mitigation] of r.risks) {
+      n += 1;
+      await client.query(
+        `INSERT INTO rvn_roi_risks
+           (risk_id, case_id, organization_id, category, label, description, likelihood, impact,
+            mitigation, owner_user_id, created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12)
+         ON CONFLICT (risk_id) DO NOTHING`,
+        [det(org, 'roi_risk', `${r.key}|${n}`), r.caseId, org, category, label, description, likelihood, impact, mitigation, r.ownerUserId, actor, NOW]
       );
     }
     if (r.run) {
@@ -1661,6 +1811,63 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
         ]
       );
     }
+
+    // ROI (P7K C) — część 3 karty: przegląd po realizacji (PIR), wariancje
+    // Expected/Actual i werdykt prawdziwości per założenie. Bez tych wierszy
+    // trzecia część karty musiałaby świecić pustką dla KAŻDEJ analizy, więc
+    // nie dałoby się jej odebrać oczami.
+    const pirId = det(org, 'roi_pir', r.key);
+    if (r.pir) {
+      await client.query(
+        `INSERT INTO rvn_roi_post_investment_reviews
+           (pir_id, case_id, organization_id, sequence_number, status, started_by, started_at,
+            review_snapshot_payload, review_snapshot_hash, outcome, lessons_learned, recommendation,
+            milestone_months, realized_roi_pct, realized_npv, realized_payback_periods,
+            finalized_by, finalized_at, created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,1,'finalized',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$4,$5,$4,$5,$5)
+         ON CONFLICT (pir_id) DO NOTHING`,
+        [
+          pirId, r.caseId, org, r.ownerUserId, NOW,
+          JSON.stringify({ seed: SEED_TAG, caseKey: r.key, milestoneMonths: r.pir.milestoneMonths }),
+          crypto.createHash('sha256').update(`${SEED_TAG}|${r.key}|pir`).digest('hex'),
+          r.pir.outcome, r.pir.lessons, r.pir.recommendation, r.pir.milestoneMonths,
+          r.pir.realizedRoiPct, r.pir.realizedNpv, r.pir.realizedPaybackPeriods,
+        ]
+      );
+    }
+    n = 0;
+    for (const [metric, expected, actual] of r.variances) {
+      n += 1;
+      // Wariancja liczona ze składników, nie wpisana ręcznie — inaczej mogłaby
+      // się rozjechać z parą Expected/Actual w tym samym wierszu.
+      const amount = actual - expected;
+      const pct = expected === 0 ? null : (amount / expected) * 100;
+      await client.query(
+        `INSERT INTO rvn_roi_variances
+           (variance_id, case_id, organization_id, comparison_type, metric, baseline_value,
+            comparison_value, variance_amount, variance_pct, status, owner_user_id,
+            created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,'approved_vs_actual',$4,$5,$6,$7,$8,'explained',$9,$10,$11,$11)
+         ON CONFLICT (variance_id) DO NOTHING`,
+        [det(org, 'roi_variance', `${r.key}|${n}`), r.caseId, org, metric, expected, actual, amount, pct, r.ownerUserId, actor, NOW]
+      );
+    }
+    for (const [assumptionCategory, verdict, note] of r.assumptionOutcomes) {
+      const idx = r.assumptions.findIndex((a) => a[0] === assumptionCategory);
+      if (idx < 0) continue;
+      await client.query(
+        `INSERT INTO rvn_roi_assumption_outcomes
+           (outcome_id, case_id, organization_id, pir_id, assumption_id, verdict, note,
+            created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9)
+         ON CONFLICT (outcome_id) DO NOTHING`,
+        [
+          det(org, 'roi_outcome', `${r.key}|${assumptionCategory}`), r.caseId, org,
+          r.pir ? pirId : null,
+          det(org, 'roi_assumption', `${r.key}|${idx + 1}`), verdict, note, actor, NOW,
+        ]
+      );
+    }
   }
 }
 
@@ -1677,6 +1884,11 @@ export async function rollbackSeed(client: PoolClient, ctx: SeedContext, plan: S
     await client.query(sql, params);
   };
   // Kolejność odwrotna do zapisu — kasujemy WYŁĄCZNIE deterministyczne id seeda.
+  // ROI (P7K C) — nowe tabele idą PIERWSZE: mają FK na sprawę, PIR i założenia.
+  await del(`DELETE FROM rvn_roi_assumption_outcomes WHERE case_id = ANY($1::uuid[])`, [caseIds]);
+  await del(`DELETE FROM rvn_roi_variances WHERE case_id = ANY($1::uuid[])`, [caseIds]);
+  await del(`DELETE FROM rvn_roi_post_investment_reviews WHERE case_id = ANY($1::uuid[])`, [caseIds]);
+  await del(`DELETE FROM rvn_roi_risks WHERE case_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_calculation_runs WHERE case_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_scenarios WHERE case_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_benefit_lines WHERE case_id = ANY($1::uuid[])`, [caseIds]);
