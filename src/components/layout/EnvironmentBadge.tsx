@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useAppStore } from '@/store/useAppStore';
-import { isPublicProductionHost } from '@/utils/publicProduction';
 
 type HealthMeta = {
   gitSha?: string;
@@ -51,11 +50,16 @@ export const EnvironmentBadge: React.FC = () => {
   const role = (currentUser?.role || '').toUpperCase();
   const isPrivileged = role === 'SUPERADMIN' || role === 'ADMIN';
 
-  // Customer-facing public production should not show extra chrome by default.
+  // 2026-09-05: was `isPrivileged || !isPublicProductionHost(hostname)` — the
+  // "public production" allowlist only covers `consultify.ai`/`www.consultify.ai`,
+  // so on `demo.consultify.ai` / `staging.consultify.ai` the sha/branch chip
+  // rendered for EVERY visitor, not only admins — contradicting the comment
+  // below (this pill stacks directly above `ChatV9FlagsIndicator`, which IS
+  // admin-gated, "same ADMIN/SUPERADMIN audience"). Tightened to match that
+  // stated intent: privileged role, or local Vite dev.
   const shouldShow = useMemo(() => {
     if (!hostname) return false;
-    if (isPrivileged) return true;
-    return !isPublicProductionHost(hostname);
+    return isPrivileged || import.meta.env.DEV;
   }, [hostname, isPrivileged]);
 
   const envLabel = useMemo(() => {
