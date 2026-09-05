@@ -15857,6 +15857,22 @@
         "ai_power_user": {
           "name": "Zaawansowane użycie AI",
           "description": "Konfiguracja nastawiona na intensywne użycie AI w zaawansowanych workflow."
+        },
+        "minimal": {
+          "name": "Minimalny",
+          "description": "Przejrzyste ustawienia bez zbędnych rozpraszaczy."
+        },
+        "power_user": {
+          "name": "Zaawansowany użytkownik",
+          "description": "Wszystkie funkcje włączone."
+        },
+        "privacy_focused": {
+          "name": "Nacisk na prywatność",
+          "description": "Maksymalne ustawienia prywatności."
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Nacisk na bezpieczeństwo i zgodność."
         }
       }
     },
