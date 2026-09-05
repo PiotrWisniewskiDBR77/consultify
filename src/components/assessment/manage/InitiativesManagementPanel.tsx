@@ -37,13 +37,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
-import {
-  createInitiativeRegisterColumns,
-  createInitiativeRegisterRowMenu,
-} from '@/components/Initiatives/initiativeRegisterColumns.shared';
-import { StandardTable } from '@/components/standard';
-import { LoadingState } from '@/components/ui/primitives';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
+import type { InitiativeRegisterRow } from '@/components/Initiatives/initiativeRegisterColumns.shared';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
@@ -500,6 +495,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegisterRowId, setSelectedRegisterRowId] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showWizardModal, setShowWizardModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
@@ -803,15 +799,34 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     });
   }, [statusFilter, statusLabel, t]);
 
-  const columns = useMemo(() => createInitiativeRegisterColumns(), []);
-  const buildRowMenu = useCallback(
-    (initiative: Initiative) =>
-      createInitiativeRegisterRowMenu({
-        row: initiative as any,
-        onOpen: () => navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
-        onPreview: () => handleOpenInitiative(initiative.id),
-      }),
-    [navigate, handleOpenInitiative]
+  // ── A19 + A13 (uwagi właściciela 2026-09-05) ────────────────────────────────
+  // „Czemu to jest inna tabela inicjatyw — powinniśmy mieć jedną" oraz „to ma
+  // być normalna tabela inicjatyw na pełną szerokość, nie raport w raporcie".
+  //
+  // Było: własny `<StandardTable>` z `density="compact"`, bez podglądu, bez
+  // sortowania domyślnego i z własnym pustym stanem — te same 10 kolumn, ale
+  // inna POWŁOKA niż moduł Inicjatywy. Jest: DOKŁADNIE ten sam komponent, który
+  // renderuje `/initiatives` (`CanonicalInitiativeRegister`) — jedna tabela,
+  // jeden podgląd kanoniczny, jeden kebab, jeden pstryczek kolumn.
+  //
+  // Kontekst Oceny wchodzi jako OPCJONALNA kolumna tej samej definicji
+  // (`includeSource` → „Źródło"), nigdy jako druga tabela.
+  const registerRows = useMemo<InitiativeRegisterRow[]>(
+    () =>
+      filteredInitiatives.map(
+        (initiative) =>
+          ({
+            ...initiative,
+            name: initiative.title,
+            summary: initiative.description,
+            sourceLabel: assessmentName
+              ? t('assessment.initiativesPanel.source.assessment', 'Ocena: {{name}}', {
+                  name: assessmentName,
+                })
+              : t('assessment.initiativesPanel.source.assessmentFallback', 'Ocena'),
+          }) as unknown as InitiativeRegisterRow
+      ),
+    [filteredInitiatives, assessmentName, t]
   );
 
   return (
@@ -1092,60 +1107,47 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          {loading ? (
-            <LoadingState variant="spinner" />
-          ) : filteredInitiatives.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">
-                <Lightbulb size={24} className="text-slate-500 dark:text-slate-400" />
-              </div>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
-                {searchQuery
-                  ? t(
-                      'assessment.initiativesPanel.empty.noMatch',
-                      'No initiatives match your search'
-                    )
-                  : t('assessment.initiativesPanel.empty.none', 'No initiatives yet')}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {isApproved
-                  ? t(
-                      'assessment.initiativesPanel.empty.hintApproved',
-                      'Generate initiatives from the assessment data'
-                    )
-                  : t(
-                      'assessment.initiativesPanel.empty.hintNotApproved',
-                      'Approve the assessment to generate initiatives'
-                    )}
-              </p>
-              {isApproved && canManage && canGenerateInitiatives && (
-                <button
-                  onClick={() => setShowGenerateModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors"
-                >
-                  <Sparkles size={16} />
-                  {t('assessment.initiativesPanel.empty.generate', 'Generate Initiatives')}
-                </button>
-              )}
-            </div>
-          ) : (
-            <StandardTable
-              columns={columns}
-              data={
-                filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
-              }
-              onRowDoubleClick={(row) =>
-                handleOpenInitiative(String((row as unknown as Initiative).id))
-              }
-              rowDescription={() => null}
-              persistKey="assessment.manage.initiatives.list"
-              density="compact"
-              canvasClassName="p-0"
-              rowMenu={(row) => buildRowMenu(row as unknown as Initiative)}
-            />
-          )}
+        {/* Tabela inicjatyw — TA SAMA co /initiatives (A19/A13).
+            Host (`AssessmentManagePanel`) daje tylko `<div className="p-4">` bez
+            wysokosci, a `TableWithPreviewLayout` stoi na `h-full` — bez tego
+            kontenera wysokosc procentowa nie mialaby sie do czego odniesc i
+            podglad kanoniczny nie mialby miejsca. To SAMA wysokosc, zero ramki:
+            bez obramowania, tla i zaokraglen (kanon: nie „raport w raporcie"). */}
+        <div className="flex h-[calc(100vh-320px)] min-h-[420px] flex-col">
+          <CanonicalInitiativeRegister
+            rows={registerRows}
+            selectedId={selectedRegisterRowId}
+            onSelect={(row) => setSelectedRegisterRowId(row ? String(row.id) : null)}
+            onOpen={(row) => handleOpenInitiative(String(row.id))}
+            persistKey="assessment.manage.initiatives.list"
+            loading={loading}
+            columnOptions={{ includeSource: true }}
+            emptyTitle={
+              searchQuery
+                ? t('assessment.initiativesPanel.empty.noMatch', 'No initiatives match your search')
+                : t('assessment.initiativesPanel.empty.none', 'No initiatives yet')
+            }
+            emptyDescription={
+              isApproved
+                ? t(
+                    'assessment.initiativesPanel.empty.hintApproved',
+                    'Generate initiatives from the assessment data'
+                  )
+                : t(
+                    'assessment.initiativesPanel.empty.hintNotApproved',
+                    'Approve the assessment to generate initiatives'
+                  )
+            }
+            emptyActionLabel={t(
+              'assessment.initiativesPanel.empty.generate',
+              'Generate Initiatives'
+            )}
+            onEmptyAction={
+              isApproved && canManage && canGenerateInitiatives
+                ? () => setShowGenerateModal(true)
+                : undefined
+            }
+          />
         </div>
 
         {/* Batches Section */}

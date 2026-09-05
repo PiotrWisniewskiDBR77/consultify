@@ -195,7 +195,10 @@ export interface V8PlanningGateReadinessCheck {
   }>;
   capabilities?: {
     version: number;
-    source: 'backend';
+    // A20 (2026-09-05): 'client-fallback' oznacza zdolności wyliczone lokalnie,
+    // gdy gate-readiness-check zwraca 404 (rekordy rejestru runtime-v1).
+    // Serwer nigdy nie wysyła tej wartości — patrz gateReadinessFallback.ts.
+    source: 'backend' | 'client-fallback';
     topBar: {
       canEditPriority: boolean;
       canEditOwner: boolean;
