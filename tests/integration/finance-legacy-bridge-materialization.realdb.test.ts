@@ -321,6 +321,28 @@ describe('Finance ID BRIDGE — materializacja tożsamości (realDB)', { retry: 
     });
   });
 
+  it('9) KAŻDY nowy artefakt kanoniczny (także z rejestracji Wyceny) ma od razu wskaźnik bieżącej wersji', async () => {
+    // Do 2026-09-05 nic w kodzie produkcyjnym nie ustawiało tej kolumny — a
+    // `valuationLegacySuccessorService.pinnedIdentity` jej WYMAGA, więc nawet
+    // poprawnie zarejestrowana wycena odpowiadała 409 LEGACY_IDENTITY_UNMAPPED.
+    const { createArtifact } = await import(
+      '../../server/src/services/finance/canonical/artifactVersionService'
+    );
+    const created = await createArtifact({
+      organizationId: ORG,
+      artifactType: 'VALUATION_CASE',
+      naturalKey: `valuations:probe-${randomUUID()}`,
+      createdBy: USER,
+    });
+    const row = await pool.query<{ current_business_version_id: string | null }>(
+      `SELECT current_business_version_id FROM finance_artifacts WHERE artifact_id = $1`,
+      [created.artifact.artifact_id]
+    );
+    expect(row.rows[0].current_business_version_id).toBe(
+      created.businessVersion.business_version_id
+    );
+  });
+
   it('8) kwarantanna nie jest obchodzona — świadomie wykluczony rekord zostaje wykluczony', async () => {
     const quarantinedId = `fingate-quarantined-${randomUUID()}`;
     await pool.query(

@@ -337,6 +337,22 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
       [workingRevisionId, businessVersionId]
     );
 
+    // ★ NAPRAWA 2026-09-05 (ID BRIDGE / Wycena 409 `LEGACY_IDENTITY_UNMAPPED`):
+    // do dziś NIC w kodzie produkcyjnym nie ustawiało
+    // `finance_artifacts.current_business_version_id` — kolumna zostawała NULL
+    // na zawsze (jedyne UPDATE-y były w testach). To nie była kosmetyka:
+    // `valuationLegacySuccessorService.pinnedIdentity` wymaga
+    // `a.current_business_version_id = aa.business_version_id`, więc KAŻDA
+    // wycena — także zarejestrowana poprawnie przez
+    // `createRegisteredValuation` — odpowiadała 409 „Legacy valuation is not
+    // mapped" (zmierzone na żywo 2026-09-05). W tym momencie istnieje dokładnie
+    // JEDNA wersja biznesowa artefaktu, więc wskaźnik „bieżącej" nie może być
+    // niejednoznaczny; `reopenVersion` niżej przesuwa go na vN+1.
+    await tx.queryRun(
+      `UPDATE finance_artifacts SET current_business_version_id = ? WHERE artifact_id = ? AND organization_id = ?`,
+      [businessVersionId, artifactId, params.organizationId]
+    );
+
     await tx.queryRun(
       `INSERT INTO artifact_lifecycle_events (
          event_id, organization_id, artifact_id, business_version_id, action, from_status, to_status, actor_id, risk_tier
@@ -1429,6 +1445,14 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
         ]
       );
       if (!newVersion) throw new Error('finance_business_versions insert (reopen) returned no row');
+
+      // Wskaźnik „bieżącej wersji" musi iść za vN+1 — inaczej ustawienie go przy
+      // tworzeniu artefaktu (patrz `createArtifact`) zamroziłoby go na v1 i
+      // `GET /artifacts/:id` zaczęłoby oddawać STARĄ wersję zamiast najnowszej.
+      await tx.queryRun(
+        `UPDATE finance_artifacts SET current_business_version_id = ? WHERE artifact_id = ? AND organization_id = ?`,
+        [newBusinessVersionId, vN.artifact_id, params.organizationId]
+      );
 
       // Copy-on-write working revision. Demote the old "current" row first
       // (uq_finance_wr_one_current is a partial unique index on is_current) —
