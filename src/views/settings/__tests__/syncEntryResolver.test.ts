@@ -45,14 +45,23 @@ describe('resolveLegacySyncSettingsRedirectTarget — OAuth return path', () => 
     expect(target).toBe(`${ROUTES.SETTINGS.ROOT}/connected-apps?oauth_success=outlook#panel`);
   });
 
-  it('routes admin/owner/superadmin roles to Admin Integrations, still carrying the OAuth params', () => {
-    const target = resolveLegacySyncSettingsRedirectTarget(
-      ROUTES.SETTINGS.INTEGRATIONS,
-      '?oauth_success=gmail',
-      '',
-      'ADMIN'
-    );
-    expect(target).toBe(`${ROUTES.ADMIN.INTEGRATIONS}?oauth_success=gmail`);
+  it('ustawienia-integracje defekt 05.09: admin/owner/superadmin roles land on the SAME real connected-apps screen (no /admin/integrations dead-end)', () => {
+    // ROUTES.ADMIN.INTEGRATIONS has no domain/screen in AdminSettingsModule's
+    // taxonomy — routing admin/owner/superadmin through it produced a second,
+    // uncontrolled redirect hop (AdminSettingsModule's own alias fallback
+    // bounced 'integrations' to '/admin/security/security-policy'), so 8/8
+    // real navigations in the 05.09 acceptance run landed on one of three
+    // different wrong outcomes depending on timing. One route, one screen,
+    // for every role.
+    for (const role of ['ADMIN', 'OWNER', 'SUPERADMIN', 'USER', null, undefined]) {
+      const target = resolveLegacySyncSettingsRedirectTarget(
+        ROUTES.SETTINGS.INTEGRATIONS,
+        '?oauth_success=gmail',
+        '',
+        role
+      );
+      expect(target).toBe(`${ROUTES.SETTINGS.ROOT}/connected-apps?oauth_success=gmail`);
+    }
   });
 
   it('returns null (no redirect) for a canonical, non-legacy path', () => {
