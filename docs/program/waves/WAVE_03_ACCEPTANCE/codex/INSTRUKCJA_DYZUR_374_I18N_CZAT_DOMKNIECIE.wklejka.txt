@@ -1,0 +1,16 @@
+NOWY — DYŻUR 374
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/grafika/m03-20260902:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_374_I18N_CZAT_DOMKNIECIE.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 374.
+
+Marker: 8f60ab998734adcdf61a080f4e1270c3dbdffceb
+Zasoby wyłączne: baza 6445, runtime 5585.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
