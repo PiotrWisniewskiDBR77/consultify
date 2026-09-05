@@ -45,31 +45,31 @@ Wzorzec 1:1 z `src/components/Initiatives/initiativeRegisterProjection.ts`
 (`mergeLegacyInitiativesIntoRegister:387`).
 
 - **NOWY SSOT projekcji**: `src/components/assessment/assessmentOutputProjection.ts`
-  - `odczytajPoziomyZOdpowiedzi:117` — czyta OBA realne kształty `answers_json`:
+  - `odczytajPoziomyZOdpowiedzi:118` — czyta OBA realne kształty `answers_json`:
     `drd.areas['1A'].achievedLevel/targetLevel/levelNotes` ORAZ starszy
     `drd.<filar>.areaScores['1A'] = [obecny, docelowy]`; `areas` wygrywa przy kolizji;
     wartość 0 = BRAK pomiaru (nie „zmierzone zero").
-  - `scalOcenyZastaneZOutputami:222` — klucz `id`, przy kolizji wygrywa kanoniczne,
+  - `scalOcenyZastaneZOutputami:237` — klucz `id`, przy kolizji wygrywa kanoniczne,
     zastane doklejane na koniec, brak dodatków → ta sama referencja tablicy.
-  - `projektujOceneZastanaNaOutput:249` — `achievedLevel→current`, `targetLevel→target`,
+  - `projektujOceneZastanaNaOutput:259` — `achievedLevel→current`, `targetLevel→target`,
     `gap = target − current` (jedyne działanie arytmetyczne); `aggregation`/`findings`/
     `contentHash`/`frozenAt` puste, bo tego magazyn zastany NIE MA.
-  - przestrzeń id `ocena~<assessmentId>` (`PREFIKS_OCENY_ZASTANEJ:180`) — kolizja z jądrem
+  - przestrzeń id `ocena~<assessmentId>` (`PREFIKS_OCENY_ZASTANEJ:182`) — kolizja z jądrem
     z definicji niemożliwa.
-- **Lista**: `AssessmentOutputsTab.tsx:66` (import), `:105` (`pobierzOcenyZastane`),
-  `:158` (`Promise.all([listOutputs(), pobierzOcenyZastane()])` + scalanie),
-  `:213` (podgląd nie pyta jądra o wiersz zastany), `:299` (chip „Zapis sesji").
-- **Trasa raportu**: `report/reportApi.ts:132` (`fetchOutputForReport` — prefiks zastany
-  albo fallback po 404), `:161` (`pobierzRaportZMagazynuZastanego`), `:88`
+- **Lista**: `AssessmentOutputsTab.tsx:61` (import), `:96` (`pobierzOcenyZastane`),
+  `:153` (`Promise.all([listOutputs(), pobierzOcenyZastane()])` + scalanie),
+  `:212` (podgląd nie pyta jądra o wiersz zastany), `:318` (chip „Zapis sesji").
+- **Trasa raportu**: `report/reportApi.ts:140` (`fetchOutputForReport` — prefiks zastany
+  albo fallback po 404), `:168` (`pobierzRaportZMagazynuZastanego`), `:99`
   (`pobierzOceneZastana` — świadomie `GET /api/v8/assessment/:id`, bo
   `/api/assessments/:id` **wycina** `answers_json`, sprawdzone na żywym serwerze),
-  `:110` (`pobierzTrescRaportuZastanego`).
-- **Kontener**: `report/AssessmentReportView.tsx:66` — dla wyniku zastanego nie pyta o sesję
+  `:116` (`pobierzTrescRaportuZastanego`).
+- **Kontener**: `report/AssessmentReportView.tsx:68` — dla wyniku zastanego nie pyta o sesję
   jądra ani o ślad zatwierdzeń (dwa pewne 404).
-- **Dokument**: `report/AssessmentReportDocument.tsx` — `unitNotes` per obszar (`:251`,
-  `:305`, `:427`), baner źródła (`:731`), chip cyklu życia (`:686`), rozdział „Treść raportu
-  zapisanego w module Ocena" (`:1214`), stopka (`:1319`); osobno licznik „Jednostek z luką"
-  liczony z `current`/`target`, nie z listy wniosków (`:520`).
+- **Dokument**: `report/AssessmentReportDocument.tsx` — `unitNotes` per obszar (`:252`,
+  `:365`, `:431`), baner źródła (`:766`), chip cyklu życia (`:677`), rozdział „Treść raportu
+  zapisanego w module Ocena" (`:1236`), stopka (`:1325`); osobno licznik „Jednostek z luką"
+  liczony z `current`/`target`, nie z listy wniosków (`:626`).
 
 ## 4. Dowody
 
