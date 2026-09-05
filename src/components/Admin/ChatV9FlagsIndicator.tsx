@@ -13,6 +13,11 @@
  * - Returns `null` when the session has zero overrides. This is the
  *   common case for every admin most of the time; we do not want a
  *   permanent piece of chrome.
+ * - Returns `null` unless `shouldShowDebugOverlays()` is true (local
+ *   Vite dev, or an explicit `?debug=1` opt-in persisted for the tab
+ *   session — see `src/utils/debugOverlays.ts`). 2026-09-05: added so
+ *   the pill does not show up as noise on otherwise clean MVP
+ *   acceptance screenshots.
  * - When at least one flag is overridden, renders a compact pill in
  *   the bottom-right corner showing the count. Clicking the pill
  *   dispatches `chat-v9-flags:open` — the overlay picks it up via its
@@ -34,6 +39,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { useAppStore } from '../../store/useAppStore';
 import { getChatV9FlagOverrides } from '../../utils/chatV9FeatureFlags';
+import { shouldShowDebugOverlays } from '../../utils/debugOverlays';
 import { isV9FlagsOverlayAuthorized } from './ChatV9FlagsOverlay';
 
 const OPEN_EVENT = 'chat-v9-flags:open';
@@ -117,6 +123,12 @@ export const ChatV9FlagsIndicator: React.FC<ChatV9FlagsIndicatorProps> = ({
 
   if (!authorized) return null;
   if (count <= 0) return null;
+  // 2026-09-05: was authorized+count only — the pill rendered on every
+  // screen for an admin with a stray override, noise on otherwise clean
+  // MVP acceptance screenshots. Now also requires local Vite dev or an
+  // explicit `?debug=1` opt-in (see `src/utils/debugOverlays.ts`); the
+  // admin/count gates above are unchanged and still evaluated first.
+  if (!shouldShowDebugOverlays()) return null;
 
   return (
     <button

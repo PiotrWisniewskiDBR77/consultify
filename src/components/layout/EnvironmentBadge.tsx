@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useAppStore } from '@/store/useAppStore';
+import { isDebugOverlaysOptedIn } from '@/utils/debugOverlays';
 
 type HealthMeta = {
   gitSha?: string;
@@ -57,9 +58,18 @@ export const EnvironmentBadge: React.FC = () => {
   // below (this pill stacks directly above `ChatV9FlagsIndicator`, which IS
   // admin-gated, "same ADMIN/SUPERADMIN audience"). Tightened to match that
   // stated intent: privileged role, or local Vite dev.
+  //
+  // 2026-09-05 (later same day): even for admins, the pill rendered on
+  // *every* screen — noise on otherwise clean MVP acceptance
+  // screenshots. Narrowed further: local Vite dev always shows it;
+  // outside dev it needs BOTH the admin/superadmin role AND an
+  // explicit `?debug=1` opt-in (see `src/utils/debugOverlays.ts`) —
+  // never shown to a non-privileged visitor just for knowing the
+  // query param.
   const shouldShow = useMemo(() => {
     if (!hostname) return false;
-    return isPrivileged || import.meta.env.DEV;
+    if (import.meta.env.DEV) return true;
+    return isPrivileged && isDebugOverlaysOptedIn();
   }, [hostname, isPrivileged]);
 
   const envLabel = useMemo(() => {
