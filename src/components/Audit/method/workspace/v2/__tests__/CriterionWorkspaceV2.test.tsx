@@ -90,6 +90,7 @@ vi.mock('../../../auditsMethodApi', async () => {
   return {
     ...actual,
     getProgram: vi.fn(),
+    getProgramCoverage: vi.fn(),
     listProgramCriteria: vi.fn(),
     listReports: vi.fn(),
     listProposals: vi.fn(),
@@ -107,6 +108,7 @@ const mockedListEvidence = vi.mocked(workspaceApi.listEvidence);
 const mockedListFindings = vi.mocked(workspaceApi.listFindings);
 const mockedGetEntityHistory = vi.mocked(workspaceApi.getEntityHistory);
 const mockedGetProgram = vi.mocked(auditsMethodApi.getProgram);
+const mockedGetProgramCoverage = vi.mocked(auditsMethodApi.getProgramCoverage);
 const mockedListProgramCriteria = vi.mocked(auditsMethodApi.listProgramCriteria);
 const mockedListReports = vi.mocked(auditsMethodApi.listReports);
 const mockedListProposals = vi.mocked(auditsMethodApi.listProposals);
@@ -200,6 +202,17 @@ describe('CriterionWorkspaceV2', () => {
       scopeText: null,
       projectId: null,
       members: [],
+    });
+    // Deliberately DIFFERENT from `mockedGetProgram`'s applicableCriteria/
+    // concludedCriteria (24/9) — the real `/audits/programs/:id` response
+    // never carries those two fields (see comment above `programCoverage`
+    // in CriterionWorkspaceV2.tsx), so a test that reused the same numbers
+    // for both mocks could pass even if the component regressed to reading
+    // `program.applicableCriteria` again.
+    mockedGetProgramCoverage.mockResolvedValue({
+      applicableCriteria: 31,
+      concludedCriteria: 14,
+      insufficientEvidenceCriteria: 2,
     });
     mockedListProgramCriteria.mockResolvedValue([]);
     mockedListReports.mockResolvedValue({ items: [], total: 0 });
@@ -345,5 +358,52 @@ describe('CriterionWorkspaceV2', () => {
     const primary = await screen.findByRole('button', { name: /Poproś o odpowiedź \(ponownie\)/i });
     expect(primary).toBeDisabled();
     expect(primary.title).toMatch(/Planowane.*brak API/i);
+  });
+
+  it('renders the real criterion counts from getProgramCoverage in Właściwości, never the literal "undefined" (runda 3 odbioru)', async () => {
+    mockedGetCriterion.mockResolvedValue(baseDetail());
+    renderV2();
+    await waitFor(() => expect(mockedGetProgramCoverage).toHaveBeenCalledWith('prog-1'));
+
+    // `mockedGetProgramCoverage` (31/14) is intentionally different from
+    // `mockedGetProgram`'s applicableCriteria/concludedCriteria (24/9) —
+    // asserting on 31/14 proves the panel reads coverage, not the program
+    // object's (never populated by the real backend) fields.
+    expect(await screen.findByText(/31 kryteriów · 14 zamkniętych/i)).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+  });
+
+  it('renders "0" (a valid count), not "—" or "undefined", when coverage reports zero of either number', async () => {
+    mockedGetCriterion.mockResolvedValue(baseDetail());
+    mockedGetProgramCoverage.mockResolvedValue({
+      applicableCriteria: 0,
+      concludedCriteria: 0,
+      insufficientEvidenceCriteria: 0,
+    });
+    renderV2();
+    await waitFor(() => expect(mockedGetProgramCoverage).toHaveBeenCalledWith('prog-1'));
+
+    expect(await screen.findByText(/0 kryteriów · 0 zamkniętych/i)).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+  });
+
+  it('renders "—" (not "undefined") while coverage has not resolved yet', async () => {
+    mockedGetCriterion.mockResolvedValue(baseDetail());
+    let resolveCoverage: (value: Awaited<ReturnType<typeof auditsMethodApi.getProgramCoverage>>) => void = () => {};
+    mockedGetProgramCoverage.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCoverage = resolve;
+      })
+    );
+    renderV2();
+    await waitFor(() => expect(mockedGetProgram).toHaveBeenCalledWith('prog-1'));
+
+    expect(await screen.findByText(/— kryteriów · — zamkniętych/i)).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+
+    resolveCoverage({ applicableCriteria: 31, concludedCriteria: 14, insufficientEvidenceCriteria: 2 });
+    await waitFor(() =>
+      expect(screen.getByText(/31 kryteriów · 14 zamkniętych/i)).toBeInTheDocument()
+    );
   });
 });

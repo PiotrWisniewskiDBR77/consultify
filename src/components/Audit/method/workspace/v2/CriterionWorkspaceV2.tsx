@@ -63,6 +63,7 @@ import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import * as auditsMethodApi from '../../auditsMethodApi';
 import type {
   AuditCriterionSummary,
+  AuditProgramCoverage,
   AuditProgramDetail,
   AuditProposalSummary,
   AuditReportSummary,
@@ -416,6 +417,15 @@ export const CriterionWorkspaceV2: React.FC = () => {
 
   // ---- context nowy w V2: program, rodzeństwo kryteriów, raporty, wnioski, historia ----
   const [program, setProgram] = useState<AuditProgramDetail | null>(null);
+  // FIX (runda 3 odbioru, 05.09): GET /audits/programs/:id (`getProgram`)
+  // nie zwraca `applicableCriteria`/`concludedCriteria` — te dwa pola żyją
+  // tylko w typie `AuditProgramSummary` (list endpoint z `mapProgramSummaryRow`),
+  // NIE w surowym payloadzie `/programs/:id`, który `getProgram` rzutuje bez
+  // mapowania. Renderowanie `program.applicableCriteria` dawało dosłowne
+  // "undefined kryteriów · undefined zamkniętych" w prawym panelu. Liczymy
+  // je osobno z istniejącego `getProgramCoverage` (patrz `auditsMethodApi.ts`),
+  // które faktycznie mapuje `applicableTotal`/`concludedTotal` z backendu.
+  const [programCoverage, setProgramCoverage] = useState<AuditProgramCoverage | null>(null);
   const [siblingCriteria, setSiblingCriteria] = useState<AuditCriterionSummary[]>([]);
   const [reports, setReports] = useState<AuditReportSummary[]>([]);
   const [proposals, setProposals] = useState<AuditProposalSummary[]>([]);
@@ -492,6 +502,14 @@ export const CriterionWorkspaceV2: React.FC = () => {
       })
       .catch(() => {
         if (!cancelled) setProgram(null);
+      });
+    auditsMethodApi
+      .getProgramCoverage(programId)
+      .then((coverage) => {
+        if (!cancelled) setProgramCoverage(coverage);
+      })
+      .catch(() => {
+        if (!cancelled) setProgramCoverage(null);
       });
     auditsMethodApi
       .listProgramCriteria(programId)
@@ -1060,7 +1078,14 @@ export const CriterionWorkspaceV2: React.FC = () => {
           <PropRow
             k={t('Program', 'Program')}
             v={program?.name ?? t('Wczytywanie…', 'Loading…')}
-            sub={program ? t(`${program.applicableCriteria} kryteriów · ${program.concludedCriteria} zamkniętych`, `${program.applicableCriteria} criteria · ${program.concludedCriteria} concluded`) : undefined}
+            sub={
+              program
+                ? t(
+                    `${programCoverage ? programCoverage.applicableCriteria : '—'} kryteriów · ${programCoverage ? programCoverage.concludedCriteria : '—'} zamkniętych`,
+                    `${programCoverage ? programCoverage.applicableCriteria : '—'} criteria · ${programCoverage ? programCoverage.concludedCriteria : '—'} concluded`
+                  )
+                : undefined
+            }
           />
           <PropRow k={t('Organizacja', 'Organization')} v={currentOrganization?.name ?? '—'} />
           <PropRow k={t('Źródło wymagania', 'Requirement source')} v={criterion.sourceReference || t('Nie podano', 'Not provided')} />
