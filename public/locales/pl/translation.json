@@ -5171,12 +5171,17 @@
       "summarizeReason": "Akcja czeka na definicję zakresu",
       "noState": "To narzędzie nie prowadzi stanu elementu",
       "saveFailed": "Nie udało się zapisać zmian",
+      "actionsEmpty": "Brak dostępnych akcji.",
+      "relationsEmpty": "Brak powiązań.",
+      "evidenceEmpty": "Brak zapisanych źródeł i założeń.",
+      "commentsEmpty": "Brak komentarzy.",
       "ariaElementProperties": "Właściwości elementu",
       "labelField": "Etykieta",
       "stateField": "Stan",
       "priorityField": "Priorytet",
       "ownerField": "Właściciel",
       "semanticTypeField": "Typ semantyczny",
+      "tagsField": "Tagi",
       "openButton": "Otwórz",
       "sections": {
         "basics": "Podstawowe",
@@ -5184,7 +5189,8 @@
         "classification": "Klasyfikacja",
         "evidence": "Dowody i źródła",
         "relations": "Powiązania",
-        "outputs": "Artefakty wyjściowe"
+        "outputs": "Artefakty wyjściowe",
+        "history": "Historia"
       },
       "tool": {
         "mindmap": "Wygląd węzła",

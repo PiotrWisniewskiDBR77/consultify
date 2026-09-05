@@ -5852,12 +5852,17 @@
       "summarizeReason": "This action is waiting for its scope to be defined",
       "noState": "This tool does not track element state",
       "saveFailed": "Changes could not be saved",
+      "actionsEmpty": "No actions available.",
+      "relationsEmpty": "No relations.",
+      "evidenceEmpty": "No sources or assumptions recorded.",
+      "commentsEmpty": "No comments.",
       "ariaElementProperties": "Element properties",
       "labelField": "Label",
       "stateField": "State",
       "priorityField": "Priority",
       "ownerField": "Owner",
       "semanticTypeField": "Semantic type",
+      "tagsField": "Tags",
       "openButton": "Open",
       "sections": {
         "basics": "Basics",
@@ -5865,7 +5870,8 @@
         "classification": "Classification",
         "evidence": "Evidence and sources",
         "relations": "Relations",
-        "outputs": "Output artifacts"
+        "outputs": "Output artifacts",
+        "history": "History"
       },
       "tool": {
         "mindmap": "Node appearance",
