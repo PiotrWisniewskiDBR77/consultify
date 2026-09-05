@@ -1706,10 +1706,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits')]}>
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <Suspense fallback={<LoadingScreen message={t('layout.loading.audits')} />}>
                         <AuditsMethodHub />
                       </Suspense>
                     </AnimationWrapper>
@@ -1730,10 +1730,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Raport DRD']}>
+                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits'), t('layout.breadcrumb.page.drdReport')]}>
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
+                      <Suspense fallback={<LoadingScreen message={t('layout.loading.drdReport')} />}>
                         <DRDAuditReportRoute />
                       </Suspense>
                     </AnimationWrapper>
@@ -1752,10 +1752,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Reports']}>
+                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits'), t('layout.breadcrumb.page.reports')]}>
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message="Loading report..." />}>
+                      <Suspense fallback={<LoadingScreen message={t('layout.loading.report')} />}>
                         <AuditReportDocumentRoute />
                       </Suspense>
                     </AnimationWrapper>
@@ -1776,10 +1776,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits')]}>
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <Suspense fallback={<LoadingScreen message={t('layout.loading.audits')} />}>
                         <CriterionWorkspace />
                       </Suspense>
                     </AnimationWrapper>

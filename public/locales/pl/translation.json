@@ -279,6 +279,8 @@
     }
   },
   "layout": {
+    "breadcrumb": {"module": {"audits": "Audyty"}, "page": {"drdReport": "Raport DRD", "reports": "Raporty"}},
+    "loading": {"audits": "Ładowanie audytów…", "drdReport": "Ładowanie raportu DRD…", "report": "Ładowanie raportu…"},
     "aiPanel": {
       "open": "Otwórz panel AI",
       "close": "Zamknij panel AI"
