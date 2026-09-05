@@ -2,4 +2,15 @@
 
 # Disabled: Husky commit-msg checks (commitlint / conventional commits)
 # Requested: "remove check and husky from commit"
+
+# WYJĄTEK (2026-09-05): bezpiecznik ZAMROŻENIA MVP FINAL.
+# To jedyny hook, który dostaje PRAWDZIWY komunikat commita ($1) — w pre-commit
+# .git/COMMIT_EDITMSG zawiera jeszcze komunikat POPRZEDNIEGO commita (zmierzone,
+# nie założone). Dlatego blokada „nie ruszaj zaakceptowanego modułu, chyba że
+# napiszesz [ODMROZENIE <MODUL> DEC-<numer>]" siedzi właśnie tutaj.
+# SSOT: docs/program/MVP_FINAL_PROCEDURA.md
+if ! bash scripts/mvp-final/check-freeze.sh --commit-msg="$1"; then
+  exit 1
+fi
+
 exit 0
