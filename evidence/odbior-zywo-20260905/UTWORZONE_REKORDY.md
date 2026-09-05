@@ -65,3 +65,86 @@ do tego celu.
 | Odkryty efekt uboczny | Nawet z flagą włączoną lokalnie, jedyny kanoniczny artefakt BASELINE_MODEL dla DBR77 (0073fc01-9072-4cae-8a2b-38caa06a0b75 / businessVersionId e63de345-6f7b-45da-b9f1-d927ac452c06, utworzony w Rundzie 2) daje 409 `BASELINE_CONTEXT_NOT_CONFIGURED` — kontekst modelu nigdy nie został skonfigurowany. Nie próbowałem tego naprawić przez PUT (wymaga danych domenowych — okresy prognozy/okres otwarcia — których nie mam pewności, że dobrałbym poprawnie; ryzyko utworzenia strukturalnie złych danych). Zgłoszone jako spec dla robotnika w `09-finanse/wyniki.json` (finance-baseline-workspace, runda 6). |
 
 - 05.09 ~13:00 — feature_flags.financeBaselineWorkspaceV1 → enabled=true (decyzja właściciela POPRAWKA: Baseline v3 pełna tabela).
+
+# Działania podczas odbioru na żywo — RUNDA 7 (05.09.2026) — próba utworzenia baseline DBR77
+
+Cel: przez normalny kreator UI utworzyć kompletny baseline DBR77 (3 lata historii 2023-2025,
+integrator robotyki/automatyki, PLN) i sprawdzić czy po naprawie flagi `financeBaselineWorkspaceV1`
+ekran pokazuje pełną tabelę RZiS/Bilans/CF. Pełny opis wyniku w `09-finanse/wyniki.json`
+(`finance-baseline-workspace`, `runda: 7`) i `09-finanse/RUNDA3.md` (`## Runda 7`).
+
+| Moduł | Nazwa rekordu | id | Status | Po co / dlaczego tak zostało |
+|---|---|---|---|---|
+| Finanse → Sprawozdania | Statement pack „DBR77 Sp. z o.o." okres 2024 (por. 2023) | 19ff7554-1e82-446b-b4d5-00981eba7c24 | `needs_review` / `recoverable` (5/6 statementów — brakuje Bilansu za okres porównawczy 2023, defekt deterministycznej ekstrakcji) | Realne, spójne dane RZiS+Bilans+CF (przychód 46000/38000 tys. PLN, EBITDA ~10.5%/9%) wgrane przez „Importuj sprawozdanie"; niekwalifikowalny do „Oprzyj na sprawozdaniu" (wymaga `ready`) |
+| Finanse → Sprawozdania | Statement pack „DBR77 Sp. z o.o." okres 2025 (por. 2024) | 901581c8-0668-454e-98a1-ce316a6d9f10 | `needs_review` / `recoverable` (5/6, ten sam defekt) | Jw., przychód 57000/46000 tys. PLN, EBITDA ~12%/10.5% |
+| Finanse → Modele | Model „DBR77 — Model bazowy 2023-2025" (tryb „Rozpocznij od zera") | legacy `financial_models.id` 08b2fad8-b072-4d02-8ec4-3ff6b948ce39 / kanoniczny `artifactId` 314dfbc9-fc64-4581-a84b-039877ea6ecc / `businessVersionId` d151a83a-50b4-460c-8193-4080a0d4798c | utworzony (`status: draft`), NIE OTWIERA SIĘ — 409 `BASELINE_CONTEXT_NOT_CONFIGURED` | Dowód, że luka kontekstu jest strukturalna (ten sam błąd co przy trybie „Oprzyj na sprawozdaniu"), niezależna od trybu tworzenia — nośnik re-testu ekranu `finance-baseline-workspace` |
+| Finanse → Sprawozdania (ODRZUCONE, niedokończone) | 5 wcześniejszych prób importu tego samego sprawozdania DBR77 2024, porzuconych w trakcie iteracyjnego dochodzenia do przyczyny (bez pełnego potwierdzenia) | 1c848361-2b62-4326-bf22-9322b75a46e3, 26423c72-073a-4303-900c-f70bd45b713a, 5588ac8c-f82b-4901-97dc-11d118786b47, 50a80532-5168-4eda-a515-f545d81f56cc, a9b5ac5f-b89e-484e-9ac3-60f660795199 | `needs_review` / `pending` — DRAFT, niepotwierdzone, żadnych wartości sfinalizowanych | Zaśmiecenie powstałe podczas naprawiania formatu pliku źródłowego (odkrywałem i naprawiałem defekt ekstrakcji „dane sekcji P&L/BS wyciekają do sąsiedniej sekcji" krok po kroku); **NIE usunięte** — brak w tym zleceniu jednoznacznego przyzwolenia na kasowanie, a rekordy nie mają wpływu na produkcyjne dane właściciela (tylko śmieci w organizacji DBR77 na stagingu) |
+| Finanse → Sprawozdania (test techniczny) | Statement pack „DBR77 Sp. z o.o." okres 2024 — wariant testowy bez podpisów AKTYWA/PASYWA (weryfikacja hipotezy o przyczynie brakującego Bilansu-porównania) | 8e5fadde-491f-4802-bc32-3719216b32f3 | `needs_review` / `recoverable` (5/6, ten sam defekt — hipoteza obalona) | Test diagnostyczny, nie do użycia |
+
+Pliki źródłowe (wygenerowane lokalnie, nie w repo): `/private/tmp/dbr77-pdfs/DBR77-sprawozdanie-2024.pdf`,
+`/private/tmp/dbr77-pdfs/DBR77-sprawozdanie-2025.pdf` — realistyczne sprawozdania DBR77 (integrator
+robotyki/automatyki przemysłowej, PLN, w tys. zł) z pełnym RZiS+Bilans+CF, liczby wewnętrznie spójne
+(bilans się bilansuje, CF rekoncyliuje zmianę gotówki rok do roku).
+
+Zero zapisów do bazy przez bezpośrednie API — wszystko przez realne kliknięcia w kreatorze UI
+(Playwright ze zwykłą sesją ODBIOR_AUTH_STATE, skrypt `/private/tmp/odbior-zywo-skrypty/09-finanse/runda7-create-baseline.mjs`).
+Konfiguracja kontekstu baseline'u (PUT .../baseline/:id/context) NIE została wykonana — zgodnie z
+poleceniem, to wymaga zmiany kodu, nie API-improwizacji.
+
+# Sprzątanie — usunięcie 6 porzuconych/diagnostycznych pakietów (05.09.2026, ~11:43 UTC)
+
+Nadzorca zlecił skasowanie dokładnie 6 porzuconych/diagnostycznych pakietów sprawozdań z Rundy 7
+(zaśmiecenie z debugowania importera), zostawiając 2 użyteczne pakiety (2024 `19ff7554-…`, 2025
+`901581c8-…`) i model „DBR77 — Model bazowy 2023-2025” nietknięte. Wykonano przez oficjalny endpoint
+`DELETE /api/v8/finance/statement-packs/:packId` (soft-archive: `pack_status → 'archived'`, wersja
++1, wpis w `finance_statement_pack_archive_command_receipts`) — nie przez bezpośredni SQL DELETE.
+
+| id | okres | pack_status przed | pack_readiness przed | wynik |
+|---|---|---|---|---|
+| 1c848361-2b62-4326-bf22-9322b75a46e3 | 2024 | needs_review | pending | archived (v2) |
+| 26423c72-073a-4303-900c-f70bd45b713a | 2024 | needs_review | pending | archived (v2) |
+| 5588ac8c-f82b-4901-97dc-11d118786b47 | 2024 | needs_review | pending | archived (v2) |
+| 50a80532-5168-4eda-a515-f545d81f56cc | 2024 | needs_review | pending | archived (v2) |
+| a9b5ac5f-b89e-484e-9ac3-60f660795199 | 2024 | needs_review | pending | archived (v2) |
+| 8e5fadde-491f-4802-bc32-3719216b32f3 | 2024 (wariant testowy) | needs_review | recoverable | archived (v2) |
+
+Weryfikacja przed usunięciem: `GET /api/v8/finance/statement-packs/:packId` dla każdego z 6 —
+wszystkie: `organization_id = a3e05d4a-5397-419d-b486-8e44366c0063` (DBR77), `entity_name = "DBR77
+Sp. z o.o."`, `created_at = 2026-09-05`, `version = 1`. Żaden nie miał `pack_status = 'confirmed'`
+ani `'archived'`.
+
+Weryfikacja po usunięciu: `GET /api/v8/finance/statement-packs` (lista aktywnych, wyklucza
+`archived`) zawiera dla DBR77 wyłącznie 2 pakiety: `901581c8-0668-454e-98a1-ce316a6d9f10` (2025) i
+`19ff7554-1e82-446b-b4d5-00981eba7c24` (2024) — oba `needs_review`/`recoverable`, nietknięte.
+`GET .../statement-packs/:packId` dla każdego z 6 usuniętych zwraca `pack_status: "archived"`,
+`version: 2`. Model `08b2fad8-b072-4d02-8ec4-3ff6b948ce39` („DBR77 — Model bazowy 2023-2025”)
+sprawdzony przez `GET /api/v8/finance/models/:id` — bez zmian (`status: "draft"`, jak przed).
+
+Wykonawca: sesja Piotra Wiśniewskiego (`d2b6a316-08c5-47cf-9bf7-4ba50311d5a2`, OWNER) —
+`archivedBy` w każdej odpowiedzi to ten user id. Każde archiwum miało własny `Idempotency-Key`
+(`cleanup-diag-2026-09-05-<packId>`) i `reason`: „Sprzatanie: porzucony/diagnostyczny pakiet z
+debugowania importera 05.09.2026 (Runda 7)”.
+
+## Agent — pomiar end-to-end 05.09 (popołudnie)
+
+Utworzony przez REALNY endpoint `POST /api/ai/agent-plan` (manifestId=`market-forces`,
+tytuł „Siły Rynkowe (5 Sił Portera)”), organizacja DBR77
+(`a3e05d4a-5397-419d-b486-8e44366c0063`), user Piotr Wiśniewski (OWNER,
+`d2b6a316-08c5-47cf-9bf7-4ba50311d5a2`). NIE usunięty (brak endpointu DELETE dla
+planów agenta — patrz `AgentHubShell.tsx` nagłówek), zostawiony w stanie
+`planning`, 0/3 kroków, nigdy nie wystartował mimo dwóch prób dispatchu
+(POST tworzący + jawny POST /run) — patrz `AGENT_RUNTIME.md`.
+
+| id | tytuł | status | kroki | wynik |
+|---|---|---|---|---|
+| a775ea54-431e-4bb4-b2a8-ea088fc4b428 | Siły Rynkowe (5 Sił Portera) | planning (nigdy nie ruszył) | 0/3 | pozostawiony — brak endpointu usuwania, nieszkodliwy (nie zużywa AI, bo nigdy nie wystartował) |
+
+Dodatkowo zmierzono (bez tworzenia): w „Archiwum procesów” Agent Huba już
+PRZED tym pomiarem istniało 7 innych planów, WSZYSTKIE w stanie „Planowanie”,
+0 postępu, „—” w kolumnie „Ostatnie uruchomienie” — dowód systemowy, nie
+jednostkowy. Zrzut: `evidence/odbior-cto-20260905/agent/13-archiwum-procesow.png`.
+
+Czat: jedna wiadomość testowa DEC-396 (redukcja kosztów produkcji) utworzyła
+nową konwersację `cff44da8-274b-4bb3-bfbf-0513e3139e65` — zwykła rozmowa,
+zero rekordów utworzonych (Teresa tylko zapytała, nie kliknięto żadnego
+potwierdzenia).

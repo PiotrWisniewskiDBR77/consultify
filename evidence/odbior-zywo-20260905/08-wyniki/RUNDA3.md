@@ -40,3 +40,13 @@ wiersza governance; nie utworzono żadnej nowej sprawy demo.
 | roi-jedna-karta | DANE | **DANE** | Blokada zniknęła po publikacji polityki — powłoka karty N (5 sekcji lewego menu, prawy panel Akcje/Właściwości/Powiązania/Źródła/Komentarze/Historia) jest identyczna z obrazem; różni się tylko treść sekcji Założenia, bo jedyna realna sprawa w organizacji jest w statusie Szkic i pokazuje surowe tabele edycyjne (Baseline i polityka / Założenia) zamiast dojrzałej narracji z obrazu — brakuje sprawy z pełnym modelem w statusie W realizacji/Aktywna. |
 | results-vnext-roi-model | DANE | **ZGODNY** | Blokada zniknęła; obraz zatwierdzony to STARY, odrzucony 02.09 wzorzec 4-fazowego poziomego menu — żywa sekcja „Model" (Koszty/Korzyści/Scenariusze, realne wiersze kosztowe) jest zgodna z NOWYM zatwierdzonym wzorcem jednej karty N (ten sam co roi-jedna-karta), czyli z tym, co właściciel faktycznie zaakceptował 2026-08-30 (RoiCaseCardSections.ts). |
 | results-vnext-roi-full-tool | DANE | **ZGODNY** | Blokada zniknęła; obraz zatwierdzony to ten sam nieaktualny wzorzec 4-fazowy. Rejestr ROI (Poziom 1) pokazuje teraz realną sprawę i poprawny przycisk „Nowa sprawa ROI"; wejście w sprawę (Poziom 3) otwiera dokładnie tę samą kartę N co roi-jedna-karta, ze wszystkimi 16-17 dawnymi podwidokami zachowanymi pod nową nawigacją — zgodne z decyzją właściciela z 02.09/dokumentacją w kodzie z 2026-08-30. |
+
+## Runda 7
+
+Zlecenie: rozstrzygnąć z dowodem w kodzie, czy odrzucenie właściciela na `roi-jedna-karta`
+("Nie. Ma być taka jak zatwierdzona.") wynika z DANYCH czy z KOMPOZYCJI — bez żadnych zmian
+kodu w tym zadaniu.
+
+| id | werdykt runda 6 | werdykt runda 7 | jedno zdanie |
+|---|---|---|---|
+| roi-jedna-karta | DANE | **KOMPOZYCJA** | Runda 6 się myliła: `RoiCaseFullTool.tsx:146` renderuje surowy warsztat `RoiCaseModelWorkspace` w sekcji Założenia dla KAŻDEJ sprawy bez wyjątku (potwierdzone w kodzie, nie w danych) — narracja z zatwierdzonego obrazu istnieje wyłącznie jako statyczny JSX w prototypie `dev-render/screens/roi-jedna-karta.tsx:206-241` i nigdy nie została zbudowana na produkcji; żadna dojrzałość sprawy tego nie zmieni. Pełny spec zmiany (pliki, linie, co budować) zapisany w `wyniki.json` → pole `spec` wpisu `roi-jedna-karta`. Zero zmian kodu w tej rundzie — zgodnie ze zleceniem.

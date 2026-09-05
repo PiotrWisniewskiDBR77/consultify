@@ -30,3 +30,26 @@
 | id | werdykt runda 3 | werdykt runda 6 | jedno zdanie |
 |---|---|---|---|
 | finance-baseline-workspace | DECYZJA | **ROZNI_SIE** | Flaga `financeBaselineWorkspaceV1` jest zdalnie WYŁĄCZONA dla DBR77 w tabeli `feature_flags` (potwierdzone: GET /api/feature-flags/runtime → false), a zmiana wymaga roli superadmin (token OWNER dostaje 403) — włączyłem tylko klient-side `?ff_wave3FinanceOwnerReview=1` (bez zapisu do bazy), co odkryło DRUGI, niezależny blocker: jedyny kanoniczny artefakt BASELINE_MODEL dla DBR77 daje 409 `BASELINE_CONTEXT_NOT_CONFIGURED` na `/api/v8/finance-v2/baseline/:businessVersionId/context`, więc ekran nadal pokazuje kartę błędu zamiast pełnej tabeli RZiS/Bilans/CF z obrazu; pełna specyfikacja naprawy (SQL + endpoint do wywołania) w `wyniki.json`.
+
+## Runda 7 — próba utworzenia realnego baseline DBR77 przez normalny kreator UI (05.09, popołudnie)
+
+| id | werdykt runda 6 | werdykt runda 7 | jedno zdanie |
+|---|---|---|---|
+| finance-baseline-workspace | ROZNI_SIE | **ROZNI_SIE** | Flaga naprawiona i działa sama (bez override); przez normalny kreator UI (oba tryby: "Oprzyj na sprawozdaniu" i "Rozpocznij od zera") NIE da się skonfigurować kontekstu nowego baseline'u — żaden ekran w aplikacji tego nie robi, to luka w kodzie (`CreateModelModal.tsx` nigdy nie woła `PUT .../baseline/:id/context`), nie w danych. |
+
+Szczegóły i pełna specyfikacja dla robotnika w `wyniki.json` (pole `opis`, `runda: 7`). Skrót:
+- Zaimportowałem przez UI (Sprawozdania → „Importuj sprawozdanie") 2 realne, spójne sprawozdania DBR77
+  (integrator robotyki, PLN, RZiS+Bilans+CF, 2024 z por. 2023 i 2025 z por. 2024) — oba potwierdzone,
+  ale utknęły na `pack_readiness_status: recoverable` (deterministyczna ekstrakcja wielosekcyjna gubi
+  statement Bilansu dla okresu porównawczego — osobny zgłoszony defekt), więc żaden nie kwalifikuje się
+  do listy „Oprzyj na sprawozdaniu" (wymaga `ready`).
+- Ominąłem to trybem „Rozpocznij od zera" — model **DBR77 — Model bazowy 2023-2025** powstał
+  (`financial_models.id 08b2fad8-b072-4d02-8ec4-3ff6b948ce39`, kanoniczny
+  `artifactId 314dfbc9-fc64-4581-a84b-039877ea6ecc` / `businessVersionId d151a83a-50b4-460c-8193-4080a0d4798c`),
+  ale otwarcie od razu daje ten sam błąd „Nie można otworzyć kontekstu modelu bazowego" (409
+  `BASELINE_CONTEXT_NOT_CONFIGURED`) — **niezależnie od trybu tworzenia**, co dowodzi, że to
+  luka strukturalna kreatora, nie dane.
+- Nie improwizowałem naprawy przez bezpośrednie PUT do API (zgodnie z poleceniem) — to wymaga
+  zmiany kodu w `CreateModelModal.tsx` / endpointzie tworzącym model, żeby po utworzeniu artefaktu
+  automatycznie wołał `PUT /api/v8/finance-v2/baseline/:businessVersionId/context`.
+- Zrzut nadpisany (`finance-baseline-workspace.png` + `-pelna.png`), świeża sesja bez `?ff_wave3FinanceOwnerReview`.

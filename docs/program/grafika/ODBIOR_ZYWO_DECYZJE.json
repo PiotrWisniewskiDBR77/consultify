@@ -1,0 +1,402 @@
+{
+ "DEC:d01-launcher-wywiad": {
+  "decyzja": "AKCEPT",
+  "uwaga": "OK",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:43:20.929Z"
+ },
+ "DEC:jednostka-formularz": {
+  "decyzja": "AKCEPT",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:44:05.712Z"
+ },
+ "DEC:siri-warsztat": {
+  "decyzja": "AKCEPT",
+  "uwaga": "ale zapisz to do fali 2 po MVP",
+  "wybor": "B",
+  "kiedy": "2026-09-05T11:44:03.246Z"
+ },
+ "DEC:finanse-porownanie-wersji": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Wpisz to do fali 2 ",
+  "wybor": "B",
+  "kiedy": "2026-09-05T11:44:12.979Z"
+ },
+ "DEC:silnik-tabeli-pomyslow": {
+  "decyzja": "AKCEPT",
+  "uwaga": "ja mam tylko wielki problem z tym panelem prawym bo on powinien być zamykany jak nie jest potrzebny - a teraz nie moge go znamknać. poza tym całosć koncepcji wierze w to ze masz dorbry pomysł na to. ",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:44:34.812Z"
+ },
+ "DEC:szyna-notatnika-fala2": {
+  "decyzja": "AKCEPT",
+  "uwaga": "prawy panel jest super i pamietaj ze on przejac ma mozliwie duzo z ekranu głównego. tam ama byc super lekko. ",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:44:58.778Z"
+ },
+ "DEC:baseline-v3": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Stary, nie wiem, co mam tutaj zaakceptować. Tu nic nie ma na tym ekranie. ",
+  "kiedy": "2026-09-05T11:45:47.678Z"
+ },
+ "DEC:drd-http-source-of-truth": {
+  "decyzja": "AKCEPT",
+  "uwaga": "warto dodac widok pełnego ekranu maciezy ale tak to jest nasza maciez ",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:45:53.644Z"
+ },
+ "DEC:teresa-w-panelu-narzedzia": {
+  "decyzja": "AKCEPT",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:46:22.995Z"
+ },
+ "DEC:zamrozenie-czatu": {
+  "decyzja": "AKCEPT",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:49:14.611Z"
+ },
+ "DEC:finanse-wycena-zrodlo": {
+  "decyzja": "AKCEPT",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:49:33.531Z"
+ },
+ "DEC:roi-wlaczenie-org": {
+  "decyzja": "AKCEPT",
+  "wybor": "A",
+  "kiedy": "2026-09-05T11:49:40.645Z"
+ },
+ "chat-split-teresa-right": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:50:03.966Z"
+ },
+ "teresa-confirm-chip": {
+  "decyzja": "AKCEPT",
+  "uwaga": "masz to kurwa naprawić i nie pytac mnie wiecj o to - tak teresa rządzi !!!!!",
+  "kiedy": "2026-09-05T11:51:14.987Z"
+ },
+ "exec-summary-onelook": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:51:41.031Z"
+ },
+ "idea-table": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:52:06.815Z"
+ },
+ "ideas-teresa-panel": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:22:11.452Z"
+ },
+ "mywork-idea-inspector-lekki": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "zmian na zatwierdzony panel. Warto byłoby dodać opis problemu tak jak to jest obecnie na górze nowego panelu. ",
+  "kiedy": "2026-09-05T10:52:19.361Z"
+ },
+ "notatnik-centrum-mysli": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:53:00.354Z"
+ },
+ "notebook-quick-capture": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Słuchaj, to jest coś, z czym walczymy przez cały czas. Nie rozumiem, czemu od miesięcy nad tym walczymy. Nie może być tak, że tak strasznie dużo przycisków jest w obszarze centralnym. To wszystko musi być wyrzucone do panelu albo w ogóle usunięte.\n\nNie może być tak, że absolutnie większość ekranu to są przyciski. ",
+  "kiedy": "2026-09-05T10:53:46.805Z"
+ },
+ "tools-outputs-insights-tab": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:53:54.809Z"
+ },
+ "tools-sesja-wyjscie": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:54:19.242Z"
+ },
+ "tools-swot-library-detail": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:54:21.639Z"
+ },
+ "tools-swot-session-workspace": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:54:26.660Z"
+ },
+ "assessment-initiatives-panel": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Ja tego nie rozumiem. To są dwa zupełnie różne ekrany, więc nie wiem, co mam tutaj zatwierdzić. ",
+  "kiedy": "2026-09-05T10:55:02.370Z"
+ },
+ "assessment-initiatives-table": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:55:53.059Z"
+ },
+ "drd-library-entry": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:56:05.339Z"
+ },
+ "execution-tab-summary": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:56:27.203Z"
+ },
+ "document-studio-ai-teresa": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Nie, nie, tutaj praca się dzieje z Teresą; tu nie ma po co dodawać kolejnego okna. ",
+  "kiedy": "2026-09-05T10:56:59.251Z"
+ },
+ "document-studio-resume-error": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:57:02.443Z"
+ },
+ "document-studio-template-resolve-error": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T10:57:11.426Z"
+ },
+ "excele-edytowalna-siatka": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Słuchaj, to, co obecnie jest, jest znacząco lepsze od tego, co piszesz, że jest zatwierdzone. Tylko ja cię zaskoczę: to, co piszesz, że jest zatwierdzone, wcale nie było potwierdzone. Wręcz przeciwnie, to było odrzucone.\n\nWięc to, co teraz jest, jest jak najbardziej OK. ",
+  "kiedy": "2026-09-05T11:00:13.180Z"
+ },
+ "excele-prawy-panel-standard": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Ta sama sytuacja, ta która teraz jest, jest zatwierdzona. To, co pokazujesz jako zatwierdzone, wcale nie było zatwierdzone. ",
+  "kiedy": "2026-09-05T11:00:34.085Z"
+ },
+ "sheet-artifact": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:00:42.235Z"
+ },
+ "org-claims-sources": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:00:57.619Z"
+ },
+ "org-declared-challenges": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:00.564Z"
+ },
+ "org-evidence": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:02.732Z"
+ },
+ "org-executive-brief": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:07.467Z"
+ },
+ "org-files": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:08.612Z"
+ },
+ "org-goal-blockers": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:09.701Z"
+ },
+ "org-identity-operating": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:13.501Z"
+ },
+ "org-knowledge-graph": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:14.251Z"
+ },
+ "org-operating-model": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:15.435Z"
+ },
+ "org-position-direction": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:17.934Z"
+ },
+ "org-recommendation": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:18.867Z"
+ },
+ "org-risks-opportunities": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:19.798Z"
+ },
+ "org-root-causes": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:22.363Z"
+ },
+ "org-scenarios": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:23.431Z"
+ },
+ "org-scope-boundaries": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:24.569Z"
+ },
+ "org-source-conflicts": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:27.649Z"
+ },
+ "org-stakeholder-expectations": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:28.852Z"
+ },
+ "org-strategic-intent": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:29.934Z"
+ },
+ "org-success-metrics": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:33.368Z"
+ },
+ "org-summary": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:34.651Z"
+ },
+ "org-technology-culture-constraints": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:35.820Z"
+ },
+ "calendar-sync-settings": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:01:38.735Z"
+ },
+ "cel-jedna-karta": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Nie zatwierdzam. Zatwierdzona wersja, czyli karta KPI, jest OK. I teraz nad kartą jest ich zestawienie. To jest trzypoziomowe menu. Zwróć na to uwagę. To nie jest tradycyjne podejście, w którym mamy jedną tabelę, a pod nią kartę.\n\nTutaj mamy tabelę, pod nią kartę KPI, piętro niżej – zbiór kart KPI, a poniżej kolejna karta KPI. To jest inna, trzypoziomowa formuła. ",
+  "kiedy": "2026-09-05T11:02:46.132Z"
+ },
+ "wskaznik-jedna-karta": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:03:18.581Z"
+ },
+ "roi-jedna-karta": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Ma być taka jak zatwierdzona. ",
+  "kiedy": "2026-09-05T11:04:03.526Z"
+ },
+ "results-zestawienia": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:04:10.334Z"
+ },
+ "prawy-pas-jedna-formula-idea-teresa": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Jesna mała zmiana - spraw aby panel boczmy z prawej strony mozna było schować. tylk otyle ",
+  "kiedy": "2026-09-05T11:37:17.015Z"
+ },
+ "unified-create-launcher": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:35:01.383Z"
+ },
+ "prawy-pas-jedna-formula-idea-artefakt": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:37:33.267Z"
+ },
+ "prawy-pas-jedna-formula-notatka-teresa": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Na tym ekranie cały czas walka jest tylko jedna: w ekranie centralnym, czyli tam, gdzie jest nagłówek, nie ma być tak strasznie dużo przycisków. Te przyciski mają iść na prawą stronę. Tutaj musi być po prostu treść. Zobacz, dzisiaj praktycznie nie ma gdzie notatki robić.\n\nO tym już tyle mówiliśmy; to już było tyle razy zmieniane. Tak nie można robić notatek, jak jest taki bałagan na tym ekranie. To ma wyjść do prawego przycisku, albo gdziekolwiek. To nie może tak być. Czyli mam tu na myśli ten przycisk ziódła, AI, review – tego tu nie ma być. Tu musisz do panera. ",
+  "kiedy": "2026-09-05T11:38:44.714Z"
+ },
+ "prawy-pas-jedna-formula-notatka-artefakt": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Nie rozumiem, przed chwilą ci opisałem, co w tym nie pasuje. Dajesz mi znowu ten sam ekran. ",
+  "kiedy": "2026-09-05T11:39:10.928Z"
+ },
+ "standard-module-bar-children": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:39:25.993Z"
+ },
+ "document-studio-blocks-i18n": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Zobacz, to też było zgłaszane w poprzedniej rundzie. Tutaj, gdy jest to menu „Podgląd dokumentu”, ono także musi iść do panelu bocznego. Wtedy to menu, w którym mamy ustawienia czcionek i elementy edycyjne, przenosi się na samą górę dokumentu, tak jak jest w Łordzie. ",
+  "kiedy": "2026-09-05T11:40:28.566Z"
+ },
+ "mindmap-i18n-smoke": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Ty, sam popatrz na ten ekran – jest zupełnie popierdolony. Chłopie, weź się mu przyjrzyj. Nawaliłeś teraz; tak nie może być. Nie przeniosłeś tego ekranu, masz teraz po dwóch stronach rozkładane panele. No i jak? ",
+  "kiedy": "2026-09-05T11:41:04.181Z"
+ },
+ "mw-007-calendar-narrow-viewport": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:41:08.481Z"
+ },
+ "report-artifact": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Tutaj jest generalnie ok, poza tym, co wcześniej powiedziałem, czyli podgląd dokumentu. Ten pasek nie może być tutaj; ma być w menu poczty. ",
+  "kiedy": "2026-09-05T11:41:41.482Z"
+ },
+ "audyty-warsztat-kryterium": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:42:05.761Z"
+ },
+ "audyty-drd-report": {
+  "decyzja": "POPRAWKA",
+  "uwaga": "Ale o co się mnie tutaj pytasz? Czy ma być spinning i menu rozpierdolone? ",
+  "kiedy": "2026-09-05T11:42:20.951Z"
+ },
+ "drd-macierz-oceny": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:42:26.777Z"
+ },
+ "assessment-report-contract": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:42:43.614Z"
+ },
+ "assessment-reports-table": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:42:47.577Z"
+ },
+ "assessment-list": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T11:42:52.744Z"
+ },
+ "FINAL:01_ORGANIZATION": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:46:55.375Z"
+ },
+ "FINAL:02_INTERVIEW": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Generalnie zatwierdzam rozwiązania graficzne, tylko weź pod uwagę, że DRD nie jest w wywiadzie. Tak, dokładnie ten styl akceptujemy. ",
+  "kiedy": "2026-09-05T14:47:57.342Z"
+ },
+ "FINAL:03_TOOLS": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:49:13.823Z"
+ },
+ "FINAL:04_ASSESSMENT": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:49:58.022Z"
+ },
+ "FINAL:05_INITIATIVES": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:51:00.941Z"
+ },
+ "FINAL:06_EXECUTION": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:51:39.589Z"
+ },
+ "FINAL:07_MY_WORK_AGENT": {
+  "decyzja": "AKCEPT",
+  "uwaga": "Mam nadzieję, że ten prawy panel można zwinąć. Mówię tu o panelu w IDE. Żeby mieć wtedy cały ekran do pracy. ",
+  "kiedy": "2026-09-05T14:52:42.843Z"
+ },
+ "FINAL:08_MEETINGS": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:53:03.108Z"
+ },
+ "FINAL:09_RESULTS": {
+  "uwaga": "To nie jest, niestety, to, co wcześniej zgłosiliśmy i omawialiśmy. Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N. Tego tu nie mamy teraz. ",
+  "kiedy": "2026-09-05T14:54:43.106Z"
+ },
+ "FINAL:10_FINANCE": {
+  "uwaga": "Finanse wyrzucamy z MVP. Nie jesteś w stanie tego zrobić. To, co pokazałeś, jest gorsze niż to, co było. \n",
+  "kiedy": "2026-09-05T14:55:41.966Z"
+ },
+ "FINAL:11_MATERIALS": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:55:50.448Z"
+ },
+ "FINAL:12_AUDITS": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:55:54.043Z"
+ },
+ "FINAL:14_ADMIN": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:56:00.247Z"
+ },
+ "FINAL:15_SETTINGS": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:56:02.094Z"
+ },
+ "FINAL:16_PARTNER": {
+  "decyzja": "AKCEPT",
+  "kiedy": "2026-09-05T14:56:04.226Z"
+ }
+}
