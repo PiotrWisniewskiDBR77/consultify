@@ -27526,6 +27526,33 @@
       }
     },
     "roi": {
+      "card": {
+        "breadcrumb": "Analiza ROI",
+        "registryTitle": "Analizy ROI",
+        "registrySubtitle": "Inwestycje · ekonomika, ryzyko i rekomendacja",
+        "parts": {
+          "assumptions": "Założenia",
+          "calculations": "Wyliczenia",
+          "realization": "Realizacja"
+        },
+        "recommendation": {
+          "go": "GO",
+          "conditional_go": "CONDITIONAL GO",
+          "no_go": "NO-GO"
+        },
+        "benefitClass": {
+          "hard": "Hard",
+          "avoided": "Avoided",
+          "soft": "Soft (nie monetyzowana)",
+          "strategic": "Strategic (nie monetyzowana)"
+        },
+        "verdict": {
+          "confirmed": "Potwierdzone",
+          "partially_confirmed": "Częściowo potwierdzone",
+          "refuted": "Obalone"
+        },
+        "empty": "Brak danych"
+      },
       "totalPlanned": "Łączne planowane ROI",
       "totalRealized": "Łączne zrealizowane ROI",
       "overallVariance": "Ogólna odchylenie",

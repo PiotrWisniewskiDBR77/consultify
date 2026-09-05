@@ -193,6 +193,14 @@ const KpiCardSetPage = lazyWithRetry(() =>
 // leaving them as unreachable dead constants. See
 // `src/components/ResultsVNext/roi/RoiCaseToolPage.tsx` /
 // `src/components/ResultsVNext/okr/OkrSetToolPage.tsx` headers.
+// ROI (P7K C) — karta analizy w trzech częściach (Założenia → Wyliczenia →
+// Realizacja) na `/results/roi/:roiCaseId`. To POZIOM 2 z SSOT §4, do czytania
+// analizy; `RoiCaseToolPage` niżej zostaje jako pełne narzędzie edycyjne.
+const RoiCaseCardPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/card/RoiCaseCardPage').then((m) => ({
+    default: m.RoiCaseCardPage,
+  }))
+);
 const RoiCaseToolPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/roi/RoiCaseToolPage').then((m) => ({
     default: m.default,
@@ -3219,6 +3227,31 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsRoiPirOutcomesPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* ROI (P7K C) — poziom 2 wg SSOT §4: karta analizy w trzech częściach.
+            Ten sam łańcuch uprawnień i ta sama flaga `roiRegistry`, co
+            ROUTES.RESULTS_ROI.ROOT wyżej. Deklarowana PO trasach statycznych
+            (`cases/:roiCaseId`, `pir-outcomes`), choć React Router v6 i tak
+            rankuje po specyficzności — kolejność jest tu dla czytającego. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.CARD}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), 'ROI']}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <RoiCaseCardPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

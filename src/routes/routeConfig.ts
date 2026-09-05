@@ -187,6 +187,14 @@ export const ROUTES = {
     // ready-to-paste diff that folds this into the hub as a third Menu 2 tab
     // once that file is next touched by its owning workstream.
     PIR_OUTCOMES: '/results/roi/pir-outcomes',
+    // ROI (P7K C) — karta analizy w TRZECH częściach (Założenia → Wyliczenia →
+    // Realizacja), SSOT_WYNIKI_KPI_OKR_ROI.md §4. Trasa DYNAMICZNA na końcu
+    // gałęzi: React Router v6 rankuje po specyficzności, więc statyczne
+    // `pir-outcomes` i `cases/:roiCaseId` wygrywają z `:roiCaseId` niezależnie
+    // od kolejności deklaracji — ta sama mechanika, którą opisuje komentarz
+    // przy RESULTS_KPI.CARD_SET wyżej. CASE (pełne narzędzie, 17 podwidoków
+    // CRUD) zostaje: karta jest do CZYTANIA analizy, narzędzie do jej edycji.
+    CARD: '/results/roi/:roiCaseId',
   },
   RESULTS_OKR: {
     ROOT: '/results/okr',
