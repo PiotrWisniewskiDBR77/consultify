@@ -1314,11 +1314,25 @@ const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label
   </div>
 );
 
-const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, target }) => {
+// Eksportowany WYŁĄCZNIE po to, by test mógł sprawdzić stan pusty i wykres
+// bez montowania całej zakładki Rollout (RolloutTab.kpiTrend.test.tsx).
+export const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, target }) => {
   if (points.length < 2) {
+    /*
+     * UCZCIWY STAN PUSTY, PO POLSKU I ROZRÓŻNIALNY.
+     *
+     * Do 2026-09-05 stał tu jeden angielski napis „No history yet" na w pełni
+     * polskim ekranie — i mówił to samo w dwóch RÓŻNYCH sytuacjach: gdy KPI nie
+     * ma ANI JEDNEGO pomiaru i gdy ma dokładnie jeden (wykres wymaga dwóch).
+     * Właściciel widział „brak historii" przy KPI, który historię już miał.
+     */
     return (
       <div className="h-12 mb-3 rounded border border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center">
-        <span className="text-[10px] text-slate-600 dark:text-slate-500">No history yet</span>
+        <span className="text-[10px] text-slate-600 dark:text-slate-500">
+          {points.length === 1
+            ? 'Jeden pomiar — trend od drugiego'
+            : 'Brak pomiarów — trend pojawi się po dwóch'}
+        </span>
       </div>
     );
   }

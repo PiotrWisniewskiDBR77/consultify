@@ -130,6 +130,34 @@ router.post(
       ],
       { fallback: false }
     );
+
+    /*
+     * PIERWSZY PUNKT HISTORII przy założeniu KPI.
+     *
+     * Do 2026-09-05 wiersz w `rollout_kpi_history` powstawał WYŁĄCZNIE w PATCH
+     * niżej („Record a history point whenever current value moves"), więc
+     * wartość, z którą KPI został założony, nie trafiała do serii NIGDY.
+     * Skutek widoczny w produkcie (odbiór na żywo 05.09, `execution-tab-rollout`):
+     * kolumna Trend pisała „No history yet" dla KAŻDEGO KPI, bo wykres
+     * (`KpiSparkline`) wymaga DWÓCH punktów — a pierwsza zmiana wartości dawała
+     * dopiero jeden. Trend pojawiał się więc najwcześniej po DRUGIEJ edycji.
+     * Zapis wartości początkowej domyka serię od chwili założenia.
+     *
+     * Best-effort: nieudany zapis punktu historii nie ma prawa wywrócić
+     * utworzenia samego KPI (odpowiedź 201 poniżej jest kontraktem).
+     */
+    const createdKpi = rows[0] as { id?: string; current_value?: number } | undefined;
+    if (createdKpi?.id !== undefined) {
+      try {
+        await dbRun(
+          `INSERT INTO rollout_kpi_history (kpi_id, value) VALUES (?, ?)`,
+          [createdKpi.id, createdKpi.current_value ?? b.currentValue ?? 0],
+          { fallback: false }
+        );
+      } catch {
+        // niekrytyczne — KPI istnieje, seria dorośnie przy pierwszej edycji
+      }
+    }
     return res.status(201).json({ kpi: rows[0] });
   })
 );

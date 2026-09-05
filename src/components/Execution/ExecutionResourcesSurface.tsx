@@ -16,6 +16,7 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import { fanOutExecutionCases } from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -140,7 +141,9 @@ export const ExecutionResourcesSurface = ({
     [assessment, setAssessment] = useState<any | null>(null),
     [rationale, setRationale] = useState(''),
     [conditions, setConditions] = useState(''),
-    [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
+    [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
+    // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
+    [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
   const loadCases = useCallback(async () => {
     setState('LOADING');
     try {
@@ -152,8 +155,14 @@ export const ExecutionResourcesSurface = ({
             ? executionReviewCases
             : [];
       setCases(nextCases);
-      const allocationSets = await Promise.all(
-        nextCases.map(async (executionCase: any) => {
+      // Wachlarz odporny na JEDNĄ wiszącą realizację — patrz executionCaseFanOut.ts.
+      // Do 2026-09-05 stało tu `Promise.all`, a ta powierzchnia dodatkowo NIE MA
+      // żadnego renderu dla stanu LOADING — więc jedna realizacja, której
+      // endpoint /work nie odpowiada (zmierzone na stagingu), dawała pusty biały
+      // obszar bez tabeli, bez podglądu i bez komunikatu.
+      const fanOut = await fanOutExecutionCases<any>(
+        nextCases,
+        async (executionCase: any, signal) => {
           const isReview = executionReviewCases.some(
             (item) => item.executionCaseId === executionCase.executionCaseId
           );
@@ -163,17 +172,18 @@ export const ExecutionResourcesSurface = ({
                 getExecutionReviewWork(executionCase.executionCaseId),
               ]
             : ((await Promise.all([
-                readOperationalAllocations(executionCase.executionCaseId),
-                readExecutionWork(executionCase.executionCaseId),
+                readOperationalAllocations(executionCase.executionCaseId, signal),
+                readExecutionWork(executionCase.executionCaseId, signal),
               ])) as any[]);
           return (result.items ?? []).map((item: any) => ({
             ...item,
             executionCaseId: executionCase.executionCaseId,
             taskTitle: (work.tasks ?? []).find((task: any) => task.taskId === item.taskId)?.title,
           }));
-        })
+        }
       );
-      setItems(allocationSets.flat());
+      setItems(fanOut.items);
+      setUnreachableCaseIds(fanOut.failedCaseIds);
       setState('READY');
     } catch {
       if (!executionLocalReviewEnabled) {
@@ -181,6 +191,7 @@ export const ExecutionResourcesSurface = ({
         return;
       }
       setCases(executionReviewCases);
+      setUnreachableCaseIds([]);
       setItems(
         executionReviewCases.flatMap((executionCase) => {
           const work = getExecutionReviewWork(executionCase.executionCaseId);
@@ -201,6 +212,7 @@ export const ExecutionResourcesSurface = ({
   }, [loadCases]);
   const load = async (id: string, focusAllocationId?: string) => {
     setCaseId(id);
+    setUnreachableCaseIds([]);
     setState('LOADING');
     try {
       const reviewCase = getExecutionReviewCase(id);
@@ -450,6 +462,22 @@ export const ExecutionResourcesSurface = ({
     );
   return (
     <section aria-label="Execution Resources" className="flex h-full min-h-0 flex-col p-4">
+      {/*
+       * Stan ładowania MUSI się renderować. Do 2026-09-05 ta powierzchnia miała
+       * gałęzie wyłącznie dla `state === 'READY'`, więc dopóki dane się nie
+       * pobrały (albo nie pobrały się NIGDY), użytkownik widział pusty biały
+       * obszar bez jednego słowa wyjaśnienia — dokładnie to zgłoszono w odbiorze
+       * na żywo 05.09 (`execution-tab-resources`).
+       */}
+      {state === 'LOADING' && <p role="status">Wczytuję kanoniczny rejestr zasobów…</p>}
+      {state === 'READY' && unreachableCaseIds.length > 0 && (
+        <p
+          role="status"
+          className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
+        >
+          {`Nie udało się pobrać zasobów z ${unreachableCaseIds.length} realizacji — poniżej zasoby z pozostałych.`}
+        </p>
+      )}
       {state === 'READY' && items.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych przydziałów zasobów w dostępnych realizacjach.
