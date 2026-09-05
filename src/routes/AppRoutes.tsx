@@ -2618,7 +2618,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('sidebar.materialy', 'Materials'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                 ]
               }
@@ -2642,7 +2642,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('sidebar.materialy', 'Materials'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                   t('common.edit', 'Edit'),
                 ]
@@ -2865,7 +2865,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.outputsLibrary', 'Outputs'),
+                    t('sidebar.materialy', 'Materials'),
                     t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
                   ]
                 }

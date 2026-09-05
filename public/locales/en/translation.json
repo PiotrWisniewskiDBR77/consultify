@@ -22208,7 +22208,33 @@
         "aiGenerateDescription": "Regenerate this slide with an AI image",
         "aiGenerateInstruction": "Add a relevant AI-generated image to this slide.",
         "upload": "Upload",
-        "uploadDescription": "Upload an image from your device"
+        "uploadDescription": "Upload an image from your device",
+        "layoutItems": {
+          "twoColumns": "2 Columns",
+          "threeColumns": "3 Columns",
+          "fourColumns": "4 Columns",
+          "boxes": "Boxes",
+          "cards": "Cards"
+        },
+        "diagramItems": {
+          "processSteps": "Process Steps",
+          "funnel": "Funnel",
+          "timeline": "Timeline",
+          "matrix2x2": "Matrix 2x2",
+          "swot": "SWOT",
+          "pyramid": "Pyramid",
+          "venn2": "Venn (2)",
+          "venn3": "Venn (3)",
+          "cycle": "Cycle",
+          "roadmap": "Now/Next/Later",
+          "hierarchy": "Hierarchy",
+          "decisionTree": "Decision Tree"
+        },
+        "chartItems": {
+          "bar": "Bar Chart",
+          "line": "Line Chart",
+          "pie": "Pie Chart"
+        }
       },
       "duplicate": "Duplicate",
       "delete": "Delete",
@@ -22232,7 +22258,27 @@
       },
       "lockSlideAction": "Lock slide",
       "unlockSlideAction": "Unlock slide",
-      "unlockSlide": "Manually edited — protected from AI rewrite. Click to unlock."
+      "unlockSlide": "Manually edited — protected from AI rewrite. Click to unlock.",
+      "defaultContent": {
+        "heading": "Heading",
+        "paragraph": "Enter text here…",
+        "item1": "Item 1",
+        "item2": "Item 2",
+        "item3": "Item 3",
+        "step1": "Step 1",
+        "step2": "Step 2",
+        "step3": "Step 3",
+        "chart": "Chart",
+        "metric": "Metric",
+        "callout": "Important note",
+        "calloutInfo": "Important information",
+        "timelineStart": "Start",
+        "timelineMid": "Mid",
+        "timelineEnd": "End",
+        "image": "Image",
+        "newSlide": "New slide",
+        "untitledArtifact": "Untitled artifact"
+      }
     },
     "governance": {
       "loading": "Loading…",
