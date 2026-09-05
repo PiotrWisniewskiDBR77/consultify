@@ -34,7 +34,7 @@ export const ExecutionInitiativeStatusControl: React.FC<ExecutionInitiativeStatu
     <div className="relative group">
       <EntityStatusChip
         status={String(currentStatus)}
-        label={meta?.label || String(currentStatus)}
+        label={t(meta?.labelKey ?? 'initiatives.status.unknown')}
       />
       {canMutateStatus && (
         <select
@@ -49,10 +49,10 @@ export const ExecutionInitiativeStatusControl: React.FC<ExecutionInitiativeStatu
             }
           }}
         >
-          <option value="">{meta?.label || currentStatus}</option>
+          <option value="">{t(meta?.labelKey ?? 'initiatives.status.unknown')}</option>
           {actions.map((a) => (
             <option key={a.targetStatus} value={a.targetStatus}>
-              {a.label}
+              {t(a.labelKey)}
             </option>
           ))}
         </select>

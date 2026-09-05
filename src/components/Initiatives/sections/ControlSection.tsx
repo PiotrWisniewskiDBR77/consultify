@@ -52,7 +52,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
   const controlCardSpec = buildControlCardSpec(
     {
       module: isPolish ? moduleConfig.labelPl : moduleConfig.label,
-      status: statusMeta.label,
+      status: t(statusMeta.labelKey),
       priority: isPolish ? priorityConfig.labelPl : priorityConfig.label,
       owner,
     },
@@ -117,10 +117,8 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
               className={`w-3 h-3 rounded-full ${statusMeta.dotColor || statusMeta.color || 'bg-slate-400'} animate-pulse`}
             />
             <div className="flex-1">
-              <p className={`text-sm font-semibold ${statusMeta.color}`}>{statusMeta.label}</p>
-              {statusMeta.description && (
-                <p className="text-[10px] text-slate-600">{statusMeta.description}</p>
-              )}
+              <p className={`text-sm font-semibold ${statusMeta.color}`}>{t(statusMeta.labelKey)}</p>
+              <p className="text-[10px] text-slate-600">{t(statusMeta.descriptionKey)}</p>
             </div>
           </div>
         </div>
@@ -180,7 +178,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
                 disabled={isMutating}
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-c-info to-c-info hover:from-c-info hover:to-c-info text-white text-sm font-semibold shadow-lg shadow-c-info/30 disabled:opacity-50 transition-all"
               >
-                <span>{a.label}</span>
+                <span>{t(a.labelKey)}</span>
                 <ArrowRight size={16} />
               </button>
             ))}

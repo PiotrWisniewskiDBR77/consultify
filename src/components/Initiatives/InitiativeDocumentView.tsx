@@ -5615,7 +5615,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const gateLabel = gateConf
       ? { en: gateConf.name, pl: gateConf.namePl }
       : fallbackNextAction
-        ? { en: fallbackNextAction.label, pl: fallbackNextAction.labelPl }
+        ? {
+            en: t(fallbackNextAction.labelKey, { lng: 'en' }),
+            pl: t(fallbackNextAction.labelKey, { lng: 'pl' }),
+          }
         : { en: 'Not defined', pl: 'Nie zdefiniowano' };
     // `gateValue`/`gateOptions`/`phaseOptions` USUNIĘTE (2026-07-23): karmiły
     // WYŁĄCZNIE atrapy `<select onChange={() => {}}>` w polach „Faza" i
@@ -5810,7 +5813,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* Valid non-destructive next-states (reuse transition definitions) */}
                 {stripStatusActions.map((action) => (
                   <option key={action.targetStatus} value={action.targetStatus}>
-                    {isPolish ? action.labelPl : action.label}
+                    {t(action.labelKey)}
                   </option>
                 ))}
               </select>
@@ -9539,7 +9542,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     for (const sa of readMode ? [] : destructiveStatusActions) {
       items.push({
         id: `status-${sa.targetStatus}`,
-        label: isPolish ? sa.labelPl : sa.label,
+        label: t(sa.labelKey),
         icon:
           sa.targetStatus === InitiativeStatus.CANCELLED
             ? XCircle
@@ -10923,8 +10926,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   primaryLifecycleAction
                     ? {
                         label: {
-                          en: primaryLifecycleAction.label,
-                          pl: primaryLifecycleAction.labelPl,
+                          en: t(primaryLifecycleAction.labelKey, { lng: 'en' }),
+                          pl: t(primaryLifecycleAction.labelKey, { lng: 'pl' }),
                         },
                         icon: ArrowRight,
                         onClick: () => void handleStatusAction(primaryLifecycleAction),
@@ -11471,8 +11474,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     primaryLifecycleAction && !readMode
                       ? {
                           label: {
-                            en: primaryLifecycleAction.label,
-                            pl: primaryLifecycleAction.labelPl,
+                            en: t(primaryLifecycleAction.labelKey, { lng: 'en' }),
+                            pl: t(primaryLifecycleAction.labelKey, { lng: 'pl' }),
                           },
                           icon: ArrowRight,
                           onClick: () => void handleStatusAction(primaryLifecycleAction),
