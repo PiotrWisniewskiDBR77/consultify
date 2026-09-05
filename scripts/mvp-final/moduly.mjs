@@ -185,7 +185,7 @@ export function wyciagnijSpecyfikatory(tresc) {
 export function zbudujKanonizator(root) {
   let mapa = null;
   try {
-    const lista = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' });
+    const lista = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     mapa = new Map();
     for (const l of lista.split('\n')) {
       const s = l.trim();
@@ -259,7 +259,7 @@ export function plikiTerytorium(root, terytorium) {
   if (!terytorium || !terytorium.length) return [];
   let lista = [];
   try {
-    lista = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' })
+    lista = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
       .split('\n')
       .map((x) => x.trim())
       .filter(Boolean);
