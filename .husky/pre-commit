@@ -182,4 +182,21 @@ fi
 #     SSOT: docs/program/MVP_FINAL_PROCEDURA.md, rejestr: docs/program/MVP_FINAL_ZAMROZONE.json
 bash scripts/mvp-final/check-freeze.sh --tylko-ostrzez || true
 
+# 13) Rozdzielony odczyt import.meta.env (dyzur 2026-09-05, wave3 defekt 5) —
+#     `const meta = import.meta as unknown as {...}; ... meta?.env?.[KEY]`
+#     dzieli `import.meta` i `.env` na dwa oddzielne wyrazenia po TS, wiec
+#     Vite/esbuild NIGDY nie podstawia obiektu env w `vite build` — kazdy
+#     VITE_* ustawiony na Railway dla takiej flagi jest martwy. Odpala sie
+#     tylko gdy commit dotyka .ts/.tsx w src/ (tanio, ~kilkanascie ms esbuild).
+STAGED_ENV_FLAGS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/.*\.(ts|tsx)$')
+if [ -n "$STAGED_ENV_FLAGS" ]; then
+  if ! node scripts/check-flags-env-static.mjs; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: rozdzielony odczyt import.meta.env (import.meta i .env w" >&2
+    echo "     osobnych wyrazeniach) — Vite/esbuild nigdy tego nie podstawia w buildzie." >&2
+    echo "     Sklej w jedno wyrazenie: (import.meta as unknown as {...}).env?.[KLUCZ]." >&2
+    exit 1
+  fi
+fi
+
 exit 0
