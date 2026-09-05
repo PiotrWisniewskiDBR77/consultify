@@ -12,6 +12,10 @@ describe('executionTypeLabel', () => {
       CULTURE: { pl: 'Kultura', en: 'Culture' },
       CYBERSECURITY: { pl: 'Cyberbezpieczeństwo', en: 'Cybersecurity' },
       AI: { pl: 'AI', en: 'AI' },
+      STRATEGIC: { pl: 'Strategiczna', en: 'Strategic' },
+      OPERATIONAL: { pl: 'Operacyjna', en: 'Operational' },
+      TRANSFORMATIONAL: { pl: 'Transformacyjna', en: 'Transformational' },
+      COMPLIANCE: { pl: 'Zgodność (compliance)', en: 'Compliance' },
     });
     expect(executionTypeLabel('PROCESSES', true)).toBe('Procesy');
     expect(executionTypeLabel('DIGITAL', true)).toBe('Cyfryzacja');
@@ -42,15 +46,43 @@ describe('executionTypeLabel', () => {
     expect(executionTypeLabel('cybersecurity', true)).toBe('Cyberbezpieczeństwo');
   });
 
-  it('never exposes a raw code or an unrecognized value — falls back to an honest "unknown" label', () => {
-    expect(executionTypeLabel(undefined, true)).toBe('Nieznany typ');
-    expect(executionTypeLabel(null, true)).toBe('Nieznany typ');
-    expect(executionTypeLabel('', true)).toBe('Nieznany typ');
-    // Belongs to a DIFFERENT axis vocabulary (initiatives.axis.* — strategic/
-    // operational/tactical/transformational) that must never be silently
-    // mapped onto one of these 7 families.
-    expect(executionTypeLabel('transformational', true)).toBe('Nieznany typ');
-    expect(executionTypeLabel('transformational', false)).toBe('Unknown type');
+  // NAPRAWA (audyt MVP 06.09, RAPORT_A3.md, WAŻNY #2): `select axis,
+  // count(*) from initiatives … group by axis` na stanowisku lokalnym
+  // (org DBR77, 71 wierszy) pokazało 13/71 (18%) z `axis='transformational'`
+  // — to WALIDOWANA wartość `InitiativeAxisEnum`
+  // (server/src/validators/initiative.validators.ts:24-29:
+  // `['strategic','operational','transformational','compliance']`), inna
+  // (realna) oś tego samego pola, nie literówka i nie zgadywanie. Musi
+  // dostać własną etykietę, nie "Nieznany typ".
+  it('recognizes the sibling InitiativeAxisEnum vocabulary (strategic/operational/transformational/compliance) — validator-confirmed, not guessed', () => {
+    expect(executionTypeLabel('transformational', true)).toBe('Transformacyjna');
+    expect(executionTypeLabel('transformational', false)).toBe('Transformational');
+    expect(executionTypeLabel('strategic', true)).toBe('Strategiczna');
+    expect(executionTypeLabel('operational', true)).toBe('Operacyjna');
+    expect(executionTypeLabel('compliance', true)).toBe('Zgodność (compliance)');
+  });
+
+  // NAPRAWA (audyt MVP 06.09, RAPORT_A3.md, WAŻNY #2): 48/71 (68%) wierszy
+  // na stanowisku lokalnym mają `axis IS NULL` w bazie — sprawdzone SQL-em
+  // wprost, nie zgadywane. Brak pomiaru NIE jest tym samym co nierozpoznana
+  // wartość (CLAUDE.md / pamięć nadzorcy "Brak pomiaru nie jest wynikiem")
+  // — musi dostać osobny, uczciwy stan "—", nigdy "Nieznany typ".
+  //
+  // DOWÓD MUTACYJNY: usuń w `executionTypeLabel` gałąź `if (!trimmed) return
+  // NO_AXIS_LABEL[locale]` (albo cofnij `toPortfolioInitiative`'s `axis:
+  // (initiative as any).axis ?? ''` do starego `String(initiative.axis)`)
+  // → ten test i "no raw code" test padają, bo brak danych znów pokazuje
+  // się jako "Nieznany typ".
+  it('renders "—" for missing axis data — never "Nieznany typ" for an absent measurement', () => {
+    expect(executionTypeLabel(undefined, true)).toBe('—');
+    expect(executionTypeLabel(null, true)).toBe('—');
+    expect(executionTypeLabel('', true)).toBe('—');
+    expect(executionTypeLabel('   ', true)).toBe('—');
+    expect(executionTypeLabel(undefined, false)).toBe('—');
+  });
+
+  it('still falls back to an honest "unknown" label for a genuinely unrecognized, non-empty value', () => {
     expect(executionTypeLabel('FUTURE_AXIS', true)).toBe('Nieznany typ');
+    expect(executionTypeLabel('FUTURE_AXIS', false)).toBe('Unknown type');
   });
 });

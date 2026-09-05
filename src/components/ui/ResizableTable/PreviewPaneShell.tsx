@@ -52,27 +52,37 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
       {!embedded ? (
         <div
           data-preview-block="header"
-          className="sticky top-0 z-10 shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur"
+          className="sticky top-0 z-10 shrink-0 flex flex-col gap-2 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur"
         >
-          <div className="min-w-0 flex items-center gap-2">
-            <div
-              className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
-              title={title}
-            >
-              {title}
+          {/*
+            NAPRAWA (audyt MVP 06.09, evidence/audyt-mvp-20260906/A3/
+            RAPORT_A3.md, WAŻNY #3): tytuł i pas akcji (zakładki Rekord/Teresa
+            + „Otwórz" + X w `JedenPrawyPanel.tsx`) dzieliły JEDEN wiersz —
+            dla "Supply Chain Optimization" zostawiało to tytułowi ~5 znaków
+            szerokości, więc nawet `line-clamp-2` renderował się jako
+            "Suppl/y…". Nagłówek jest teraz DWUWIERSZOWY: wiersz 1 = tytuł
+            (pełna szerokość, `line-clamp-2`, natywny `title` na hover) + X;
+            wiersz 2 = `actions` (zakładki/„Otwórz"), wyrównane do prawej —
+            tytuł dostaje całą szerokość panelu zamiast dzielić ją z resztą.
+          */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex items-start gap-2">
+              <div
+                className="text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 break-words"
+                title={title}
+              >
+                {title}
+              </div>
+              {unreadCount && unreadCount > 0 ? (
+                <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-danger-500 text-white shrink-0">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              ) : null}
             </div>
-            {unreadCount && unreadCount > 0 ? (
-              <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-danger-500 text-white shrink-0">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {actions}
             {onClose ? (
               <button
                 onClick={onClose}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                className="inline-flex shrink-0 items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                 aria-label={closeLabel ?? t('common.close', 'Close')}
                 title={closeLabel ?? t('common.close', 'Close')}
               >
@@ -80,6 +90,9 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
               </button>
             ) : null}
           </div>
+          {actions ? (
+            <div className="flex items-center justify-end gap-1.5">{actions}</div>
+          ) : null}
         </div>
       ) : null}
 
