@@ -186,3 +186,6 @@ Kontrola:
 ```bash
 npm run check:ssot
 ```
+
+## Wyniki (KPI · OKR · ROI) — źródło prawdy produktu docelowego
+- `docs/modules/07_rezultaty/SSOT_WYNIKI_KPI_OKR_ROI.md` — decyzje właściciela 30.08 + 05.09, załączniki (`docs/modules/07_rezultaty/zalaczniki/`), metodyka ROI (`docs/program/grafika/ROI_METODYKA_WLASCICIELA_20260905.md`), założenia graficzne (`docs/program/grafika/WYNIKI_ZALOZENIA_GRAFICZNE_20260905.md`). Ma pierwszeństwo przed `CURRENT_CONTRACT.md` w zakresie nawigacji i struktury raportów.

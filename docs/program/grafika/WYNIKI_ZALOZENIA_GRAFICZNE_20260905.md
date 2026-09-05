@@ -66,8 +66,14 @@ Menu 1: `Wyniki › OKR › <raport> › <cel>`. Nawigacja: **Cel · Kluczowe re
 - *Refleksja*: ocena końca cyklu (0–1,0), nauka, decyzja kontynuuj/zamknij/przenieś.
 Prawy panel jak w KPI; Teresa: podpowiada sformułowanie rezultatu jako mierzalnego, ostrzega przed „rezultatem będącym zadaniem”.
 
-## 4. Narzędzie ROI (bez zmian koncepcji)
-Tabela analiz → karta analizy (N-type z narracją, AKCJE, WŁAŚCIWOŚCI) — zbudowana 05.09, odebrana wizualnie.
+## 4. Narzędzie ROI (inwestycja) — dwa poziomy
+**Poziom 1 — Tabela analiz** (`/results/roi`): NAZWA · PRZEDMIOT (maszyna / robotyzacja / IT / magazyn / linia / digitalizacja) · WARIANT (0/1/2/3) · CAPEX · ROCZNA KORZYŚĆ · ROI (z horyzontem) · PAYBACK · NPV · IRR · REKOMENDACJA (GO / CONDITIONAL GO / NO-GO jako chip neutralny) · FAZA (założenia / wyliczenia / realizacja) · WŁAŚCICIEL · AKTUALIZACJA. Podgląd: Executive Summary (11 wskaźników w tabeli Właściwość/Wartość) + faza + „Otwórz analizę”.
+**Poziom 2 — Karta analizy N** (`/results/roi/cases/:id`), lewa nawigacja w **trzech częściach** (słowa właściciela: założenia → wyliczenia → realizacja):
+- *Założenia*: Przedmiot i cel · Wariant bazowy i warianty · Horyzont · Nakłady (CAPEX z contingency, ΔNWC) · Koszty operacyjne (incremental) · Korzyści (osobno per kategoria: praca, produktywność, jakość, przestoje, energia, maintenance, zapasy, uniknięte, rezydualna; klasa Hard/Avoided/Soft/Strategic) · Łańcuch KPI → pieniądze · Ryzyka.
+- *Wyliczenia*: Cash flow rok 0–n (tabela) · Wskaźniki (CAPEX, Annual Net Benefit, ROI nY, ARR, PP, DPP, NPV, IRR, PI, BCR, Break-even, Margin of Safety) · Wrażliwość (tabela ±20 % per zmienna) · Scenariusze (Conservative/Base/Upside) · Scoring wielokryterialny · Rekomendacja.
+- *Realizacja*: Przegląd po 3/6/12 mies. (Expected vs Actual per KPI i korzyść, wariancja) · Prawdziwość założeń (per założenie: potwierdzone / częściowo / obalone, z opisem) · ROI po realizacji (przeliczone wskaźniki) · Wnioski.
+Prawy panel: Akcje (Przelicz · Zmień scenariusz · Rozpocznij przegląd PIR · Eksportuj raport do Materiałów) · Właściwości · Powiązania (inicjatywa, KPI źródłowe, model finansowy) · Źródła i założenia · Komentarze · Historia; Teresa jako zakładka (objaśnia wrażliwość, wskazuje podwójne liczenie).
+Puste/niepoliczone = „—” z powodem; liczby z jednostką i horyzontem („ROI 3Y 42 %”).
 
 ## 5. Sygnalizacja odchylenia (jedna mechanika dla KPI i OKR)
 Wpis rezultatu / check-in → porównanie z celem i limitem → stan → kolor na wierszu poziomu 2, w podsumowaniu poziomu 1 i na bloku w karcie → zgłoszenie do osoby odpowiedzialnej (powiadomienie + Skrzynka Mojej Pracy) → **karta działania** otwarta automatycznie dla okresu, widoczna w karcie miernika/celu i w raporcie jako ikona przy wierszu, do zamknięcia działania.
