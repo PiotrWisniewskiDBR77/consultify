@@ -165,6 +165,14 @@ export const ROUTES = {
     // verified against v6's route-ranking algorithm, not order-dependent.
     TOOL: '/results/kpi/:kpiId',
     DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
+    // Odrzucenie właściciela 2026-09-05 („trzypoziomowa formuła"): pod kartą
+    // KPI (poziom 2) leży ZBIÓR kart KPI — realne „zestawienie" (scorecard),
+    // do którego ten wskaźnik należy (`rvn_kpi_scorecard_items`, jedyna
+    // istniejąca w backendzie relacja KPI↔KPI; nie ma żadnego
+    // `parentKpiId`/`children` — zweryfikowane grepem po server/src).
+    // Z tego poziomu wchodzi się w KOLEJNĄ kartę KPI (poziom 4 = ta sama
+    // `KpiToolPage`, z zachowaną ścieżką w breadcrumbie).
+    CARD_SET: '/results/kpi/:kpiId/zestawienie/:scorecardId',
   },
   RESULTS_ROI: {
     ROOT: '/results/roi',

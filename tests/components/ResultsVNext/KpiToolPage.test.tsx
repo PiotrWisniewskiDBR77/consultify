@@ -254,7 +254,7 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
     const user = userEvent.setup();
     // Navigate to the Deviations section via the left nav.
-    const deviationsNavButtons = await screen.findAllByText('Sprawy odchyleń');
+    const deviationsNavButtons = await screen.findAllByText('Odchylenia');
     await user.click(deviationsNavButtons[0]);
 
     const caseRow = await screen.findByTestId(`kpi-deviation-case-row-${CASE_ID}`);

@@ -56,7 +56,7 @@
  * concern, unmodified here.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
@@ -77,7 +77,9 @@ import {
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeHeaderPrimaryAction, NModeSection } from '@/components/shared/NModeLayout/types';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
+import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
+import { StandardGridCard, type StandardGridCard as StandardGridCardData } from '@/components/standard/StandardGridCard';
 import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
@@ -103,9 +105,14 @@ import {
   type KpiStatus,
 } from '../kpiApi';
 import {
+  getKpiScorecard,
   listKpiScorecardsForKpi,
   type KpiScorecardDto,
 } from '../kpiScorecards/kpiScorecardApi';
+import {
+  KPI_SCORECARD_STATUS_TONE,
+  kpiScorecardStatusLabel,
+} from '../kpiScorecards/kpiScorecardMappers';
 import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
 import {
   KPI_DATA_QUALITY_STATUS_TONE,
@@ -125,6 +132,12 @@ import {
   type InitiativeKpiImpactDto,
 } from './kpiInitiativeImpactApi';
 import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
+import {
+  KPI_CARD_SET_FROM_PARAM,
+  KPI_CARD_SET_PARAM,
+  kpiCardSetPath,
+  withOwnerSampleData,
+} from './kpiCardSetPath';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   DEVIATION_CASE_STATUS_TONE,
@@ -139,11 +152,16 @@ import {
   kpiTargetGeometryLabel,
 } from './kpiToolMappers';
 
-const STATUS_TONE: Record<KpiStatus, 'info' | 'warning' | 'success' | 'neutral'> = {
-  draft: 'info',
-  pending_approval: 'warning',
-  active: 'success',
-  suspended: 'warning',
+/** Ton pigułki statusu w Menu 1 (`NModeHeaderConfig.statusTone` — ZAMKNIĘTA,
+ * inna unia niż `StatusChip`). Zatwierdzony obraz karty KPI
+ * (`evidence/grafika/26-wyniki-karty-n/wskaznik-jedna-karta__PO__light__*.png`)
+ * ma pigułkę OBOK TYTUŁU w Menu 1 — na żywo stała w centrum sekcji „Wyniki",
+ * co właściciel widział jako inną kompozycję. */
+const HEADER_STATUS_TONE: Record<KpiStatus, 'draft' | 'review' | 'approved' | 'rejected' | 'neutral'> = {
+  draft: 'draft',
+  pending_approval: 'review',
+  active: 'approved',
+  suspended: 'review',
   archived: 'neutral',
 };
 
@@ -257,6 +275,17 @@ export const KpiToolPage: React.FC = () => {
   const navigate = useNavigate();
   const { kpiId } = useParams<{ kpiId: string }>();
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
+
+  // ── POZIOM 4 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05) ──
+  // Ta sama karta KPI otwarta Z ZESTAWIENIA (poziom 3) niesie ścieżkę
+  // poziomów w querystringu — dzięki temu breadcrumb pokazuje pełne
+  // „Rejestr KPI › karta › zestawienie › karta", a ścieżka przeżywa
+  // odświeżenie i daje się podlinkować (patrz `kpiCardSetPath.ts`).
+  const [searchParams] = useSearchParams();
+  const fromCardSetId = searchParams.get(KPI_CARD_SET_PARAM);
+  const fromKpiId = searchParams.get(KPI_CARD_SET_FROM_PARAM);
+  const [pathCardSetName, setPathCardSetName] = useState<string | null>(null);
+  const [pathParentKpiName, setPathParentKpiName] = useState<string | null>(null);
 
   const [kpi, setKpi] = useState<KpiDefinitionDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -394,6 +423,28 @@ export const KpiToolPage: React.FC = () => {
         setScorecardsError(toUserFacingErrorMessage(err, isPolish));
       });
   }, [enabled, isPolish, kpiId]);
+
+  // Nazwy do ścieżki poziomów (poziom 4). Pobierane TYLKO gdy w adresie jest
+  // ścieżka — zero dodatkowych żądań na zwykłej karcie (poziom 2).
+  useEffect(() => {
+    if (!enabled || !fromCardSetId) {
+      setPathCardSetName(null);
+      return;
+    }
+    getKpiScorecard(fromCardSetId)
+      .then((sc) => setPathCardSetName(sc?.name ?? null))
+      .catch(() => setPathCardSetName(null));
+  }, [enabled, fromCardSetId]);
+
+  useEffect(() => {
+    if (!enabled || !fromKpiId) {
+      setPathParentKpiName(null);
+      return;
+    }
+    getKpi(fromKpiId)
+      .then((parent) => setPathParentKpiName(parent?.name || parent?.kpiCode || null))
+      .catch(() => setPathParentKpiName(null));
+  }, [enabled, fromKpiId]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -550,6 +601,9 @@ export const KpiToolPage: React.FC = () => {
     title: kpiTitle,
     onTitleChange: () => {},
     titleReadOnly: true,
+    // Pigułka statusu w Menu 1, obok tytułu — 1:1 z zatwierdzonym obrazem.
+    statusLabel: statusLabel(kpi.status, isPolish),
+    statusTone: HEADER_STATUS_TONE[kpi.status],
     artifactType: 'kpi',
     artifactId: kpi.kpiId,
     onSave: () => {},
@@ -588,6 +642,16 @@ export const KpiToolPage: React.FC = () => {
     { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
     { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
     { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
+    {
+      id: 'cardSets',
+      label: t('Należy do zestawień', 'Belongs to card sets'),
+      value:
+        scorecards === 'loading'
+          ? '…'
+          : scorecards.length === 0
+            ? '—'
+            : String(scorecards.length),
+    },
     { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(kpi.createdAt, isPolish) },
     { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
   ];
@@ -659,9 +723,8 @@ export const KpiToolPage: React.FC = () => {
     alwaysShow: true,
     component: (
       <div className="space-y-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <StatusChip label={statusLabel(kpi.status, isPolish)} tone={STATUS_TONE[kpi.status]} />
-        </div>
+        {/* Pigułka statusu NIE jest tu powtarzana — mieszka w Menu 1 obok
+            tytułu (zatwierdzony obraz karty KPI). */}
         <div className="rounded-xl border border-c-border-subtle p-4">
           <p className={LABEL_CLASS}>{t('Ostatni pomiar', 'Latest measurement')}</p>
           {measurement === 'loading' ? (
@@ -792,7 +855,8 @@ export const KpiToolPage: React.FC = () => {
   const deviationsSection: NModeSection = {
     id: 'deviations',
     icon: ShieldAlert,
-    label: { pl: 'Sprawy odchyleń', en: 'Deviations' },
+    label: { pl: 'Odchylenia', en: 'Deviations' },
+    title: { pl: 'Sprawy odchyleń', en: 'Deviation cases' },
     hasData: true,
     alwaysShow: true,
     component: (
@@ -885,7 +949,8 @@ export const KpiToolPage: React.FC = () => {
   const initiativesSection: NModeSection = {
     id: 'initiatives',
     icon: GitBranch,
-    label: { pl: 'Inicjatywy wpływające na KPI', en: 'Initiatives affecting KPI' },
+    label: { pl: 'Inicjatywy', en: 'Initiatives' },
+    title: { pl: 'Inicjatywy wpływające na KPI', en: 'Initiatives affecting KPI' },
     hasData: true,
     alwaysShow: true,
     component: (
@@ -1019,7 +1084,8 @@ export const KpiToolPage: React.FC = () => {
   const scorecardsSection: NModeSection = {
     id: 'scorecards',
     icon: LayoutGrid,
-    label: { pl: 'Karty wyników i konteksty', en: 'Scorecards and contexts' },
+    label: { pl: 'Zestawienia', en: 'Card sets' },
+    title: { pl: 'Zestawienia (karty wyników), do których należy ten wskaźnik', en: 'Card sets (scorecards) this indicator belongs to' },
     hasData: Array.isArray(scorecards) && scorecards.length > 0,
     alwaysShow: true,
     component: (
@@ -1030,17 +1096,34 @@ export const KpiToolPage: React.FC = () => {
       ) : scorecards.length === 0 ? (
         <EmptyState variant="new" icon={LayoutGrid} title={t('Brak kart wyników', 'No scorecards')} description={t('Ten KPI nie należy jeszcze do żadnej widocznej karty wyników.', 'This KPI does not belong to any visible scorecard yet.')} compact />
       ) : (
-        <ul className="space-y-2" data-testid="kpi-tool-scorecards-list">
-          {scorecards.map((scorecard) => (
-            <li key={scorecard.scorecardId} className="rounded-xl border border-c-border-subtle p-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-sm font-medium text-c-text">{scorecard.name}</span>
-                <StatusChip label={scorecard.lifecycleStatus} tone="neutral" />
-              </div>
-              <p className="mt-1 text-[11px] text-c-text-muted">{scorecard.description ?? t('Brak opisu', 'No description')}</p>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-3" data-testid="kpi-tool-scorecards-list">
+          <p className="text-[11px] text-c-text-muted">
+            {t(
+              'Piętro niżej: wejdź w zestawienie, żeby zobaczyć ZBIÓR kart KPI, do którego ten wskaźnik należy — i stamtąd otworzyć kolejną kartę.',
+              'One level down: open a card set to see the SET of KPI cards this indicator belongs to — and open another card from there.'
+            )}
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {scorecards.map((scorecard) => {
+              const card: StandardGridCardData = {
+                id: scorecard.scorecardId,
+                title: scorecard.name,
+                description: scorecard.description ?? t('Brak opisu', 'No description'),
+                statusLabel: kpiScorecardStatusLabel(scorecard.lifecycleStatus, isPolish),
+                statusTone: KPI_SCORECARD_STATUS_TONE[scorecard.lifecycleStatus],
+                footerRight: formatDate(scorecard.updatedAt, isPolish),
+              };
+              return (
+                <div key={scorecard.scorecardId} data-testid={`kpi-tool-scorecard-tile-${scorecard.scorecardId}`}>
+                  <StandardGridCard
+                    card={card}
+                    onClick={() => (kpiId ? navigate(withOwnerSampleData(kpiCardSetPath(kpiId, scorecard.scorecardId))) : undefined)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )
     ),
   };
@@ -1049,7 +1132,8 @@ export const KpiToolPage: React.FC = () => {
   const historySection: NModeSection = {
     id: 'history',
     icon: FileText,
-    label: { pl: 'Historia / rodowód', en: 'History / lineage' },
+    label: { pl: 'Rodowód', en: 'Lineage' },
+    title: { pl: 'Historia / rodowód', en: 'History / lineage' },
     hasData: Array.isArray(historyEntries) && historyEntries.length > 0,
     alwaysShow: true,
     component: (
@@ -1088,8 +1172,30 @@ export const KpiToolPage: React.FC = () => {
     historySection,
   ];
 
+  // ── ŚCIEŻKA POZIOMÓW (element ㉛ Menu 1, SPEC-A §9.2/§11.2) ──────────────
+  // Poziom 2: „Rejestr KPI › <ta karta>".
+  // Poziom 4 (wejście z zestawienia): „Rejestr KPI › <karta> › <zestawienie>
+  //           › <ta karta>" — dokładnie ta trzypoziomowa formuła, o którą
+  //           upomniał się właściciel 2026-09-05.
+  const breadcrumbItems: { label: string; onClick?: () => void }[] = [
+    { label: t('Rejestr KPI', 'KPI registry'), onClick: () => navigate(withOwnerSampleData(ROUTES.RESULTS_KPI.ROOT)) },
+  ];
+  if (fromKpiId && fromCardSetId) {
+    breadcrumbItems.push({
+      label: pathParentKpiName ?? t('Karta KPI', 'KPI card'),
+      onClick: () => navigate(withOwnerSampleData(`/results/kpi/${fromKpiId}`)),
+    });
+    breadcrumbItems.push({
+      label: pathCardSetName ?? t('Zestawienie', 'Card set'),
+      onClick: () => navigate(withOwnerSampleData(kpiCardSetPath(fromKpiId, fromCardSetId))),
+    });
+  }
+  breadcrumbItems.push({ label: kpiTitle });
+
   return (
-    <div className="h-full" data-testid="results-vnext-kpi-tool-page">
+    <div className="flex h-full min-h-0 flex-col" data-testid="results-vnext-kpi-tool-page">
+      <ArtifactBreadcrumb items={breadcrumbItems} />
+      <div className="min-h-0 flex-1">
       <NModeShell
         header={header}
         sections={sections}
@@ -1100,6 +1206,7 @@ export const KpiToolPage: React.FC = () => {
         showModeSwitcher={false}
         rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel KPI', 'KPI panel')} />}
       />
+      </div>
       <KpiReviewedAttributionDialog
         open={!!attributionTarget}
         isPolish={isPolish}

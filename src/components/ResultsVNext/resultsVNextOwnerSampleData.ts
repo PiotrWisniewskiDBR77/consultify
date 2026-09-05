@@ -1,4 +1,9 @@
 import type { KpiDefinitionDto, KpiDefinitionVersionDto, KpiMeasurementDto } from './kpiApi';
+import type {
+  KpiScorecardDto,
+  KpiScorecardItemDto,
+  KpiScorecardReviewSnapshotDto,
+} from './kpiScorecards/kpiScorecardApi';
 import type { OkrSetDto } from './okr/okrApi';
 import type { RoiCaseListItem, RoiOrgBenefitsRealizationRow } from './roi/roiApi';
 import { isPublicProductionHost } from '@/utils/publicProduction';
@@ -432,3 +437,137 @@ export const RESULTS_VNEXT_SAMPLE_OKR_SETS: OkrSetDto[] = [
     updatedAt: '2026-08-20T08:00:00.000Z',
   },
 ];
+
+// ── ZESTAWIENIE (poziom 3 trzypoziomowej formuły KPI, 2026-09-05) ────────────
+// Powód: właściciel odrzucił kartę KPI z uwagą, że brakuje piętra „zbiór kart
+// KPI" (`_STANDARD`/odbiór 05.09). Na stagingu tej kompozycji NIE DA SIĘ dziś
+// pokazać na realnych danych — organizacja ma DOKŁADNIE JEDEN wskaźnik i
+// DOKŁADNIE JEDNO zestawienie z ZEREM pozycji (zmierzone przez API 05.09), więc
+// realny ekran poziomu 3 renderuje uczciwy stan pusty. Fikstura poniżej istnieje
+// WYŁĄCZNIE po to, żeby kompozycję dało się obejrzeć PRZED odbiorem, i wchodzi
+// tą samą, już istniejącą, opt-in bramką co reszta danych pokazowych Wyników
+// (`?sampleData=results-vnext`, nigdy na hoście produkcyjnym) — nie podszywa się
+// pod dane organizacji i nie zapisuje niczego do bazy.
+export const RESULTS_VNEXT_SAMPLE_SCORECARD: KpiScorecardDto = {
+  scorecardId: 'sample-scorecard-operations',
+  organizationId: 'sample-org',
+  name: 'Przegląd operacyjny — linia pakowania',
+  description: 'Zestawienie okresowe: dostawy, jakość, energochłonność.',
+  scopeType: 'business_unit',
+  scopeId: null,
+  ownerUserId: 'Anna Kowalska',
+  ownerName: 'Anna Kowalska',
+  reviewFrequency: 'monthly',
+  lifecycleStatus: 'active',
+  rowVersion: 2,
+  createdBy: 'Anna Kowalska',
+  createdAt: '2026-05-20T08:00:00.000Z',
+  updatedAt: now,
+};
+
+export const RESULTS_VNEXT_SAMPLE_SCORECARD_ITEMS: KpiScorecardItemDto[] = [
+  {
+    itemId: 'sample-scorecard-item-delivery',
+    scorecardId: RESULTS_VNEXT_SAMPLE_SCORECARD.scorecardId,
+    kpiId: 'sample-kpi-delivery',
+    kpiName: 'On-time delivery',
+    organizationId: 'sample-org',
+    role: 'primary',
+    sortOrder: 1,
+    displayConfig: null,
+    addedBy: 'Anna Kowalska',
+    addedByName: 'Anna Kowalska',
+    addedAt: '2026-06-12T08:00:00.000Z',
+  },
+  {
+    itemId: 'sample-scorecard-item-quality',
+    scorecardId: RESULTS_VNEXT_SAMPLE_SCORECARD.scorecardId,
+    kpiId: 'sample-kpi-quality',
+    kpiName: 'First pass yield',
+    organizationId: 'sample-org',
+    role: 'primary',
+    sortOrder: 2,
+    displayConfig: null,
+    addedBy: 'Anna Kowalska',
+    addedByName: 'Anna Kowalska',
+    addedAt: '2026-05-20T08:00:00.000Z',
+  },
+  {
+    itemId: 'sample-scorecard-item-energy',
+    scorecardId: RESULTS_VNEXT_SAMPLE_SCORECARD.scorecardId,
+    kpiId: 'sample-kpi-energy',
+    kpiName: 'Energy intensity',
+    organizationId: 'sample-org',
+    role: 'supporting',
+    sortOrder: 3,
+    displayConfig: null,
+    addedBy: 'Marek Nowak',
+    addedByName: 'Marek Nowak',
+    addedAt: '2026-08-18T10:00:00.000Z',
+  },
+];
+
+/** Opublikowana migawka przeglądu — JEDYNE miejsce, z którego kafelki zbioru
+ * biorą liczby (pozycja zestawienia nie niesie żadnego pola z wartością KPI). */
+export const RESULTS_VNEXT_SAMPLE_SCORECARD_SNAPSHOT: KpiScorecardReviewSnapshotDto = {
+  snapshotId: 'sample-scorecard-snapshot-07',
+  scorecardId: RESULTS_VNEXT_SAMPLE_SCORECARD.scorecardId,
+  organizationId: 'sample-org',
+  reviewPeriodStart: '2026-07-01T00:00:00.000Z',
+  reviewPeriodEnd: '2026-07-31T00:00:00.000Z',
+  snapshotPayload: {
+    items: [
+      {
+        kpiId: 'sample-kpi-delivery',
+        definitionVersionId: 'sample-kpi-delivery-v2',
+        itemRole: 'primary',
+        measurementId: 'sample-measurement-delivery-07',
+        actualValue: 94.2,
+        unit: '%',
+        performanceStatus: 'on_target',
+        dataQualityStatus: 'verified',
+        periodStart: '2026-07-01T00:00:00.000Z',
+        periodEnd: '2026-07-31T00:00:00.000Z',
+      },
+      {
+        kpiId: 'sample-kpi-quality',
+        definitionVersionId: 'sample-kpi-quality-v3',
+        itemRole: 'primary',
+        measurementId: 'sample-measurement-quality-07',
+        actualValue: 88.5,
+        unit: '%',
+        performanceStatus: 'warning',
+        dataQualityStatus: 'verified',
+        periodStart: '2026-07-01T00:00:00.000Z',
+        periodEnd: '2026-07-31T00:00:00.000Z',
+      },
+      {
+        // Uczciwy brak: wskaźnik jest w zestawieniu, ale nie miał pomiaru w
+        // okresie migawki — kafelek pokazuje „—", nigdy zera.
+        kpiId: 'sample-kpi-energy',
+        definitionVersionId: 'sample-kpi-energy-v1',
+        itemRole: 'supporting',
+        measurementId: null,
+        actualValue: null,
+        unit: 'kWh/t',
+        performanceStatus: null,
+        dataQualityStatus: null,
+        periodStart: '2026-07-01T00:00:00.000Z',
+        periodEnd: '2026-07-31T00:00:00.000Z',
+      },
+    ],
+    statusCounts: { safe: 1, warning: 1, critical: 0, missing: 1 },
+  },
+  status: 'published',
+  contentHash: 'sample-hash-07',
+  publishedBy: 'Anna Kowalska',
+  publishedByName: 'Anna Kowalska',
+  publishedAt: '2026-08-05T09:00:00.000Z',
+  supersededBySnapshotId: null,
+  supersededAt: null,
+  rowVersion: 1,
+  createdBy: 'Anna Kowalska',
+  createdByName: 'Anna Kowalska',
+  createdAt: '2026-08-04T09:00:00.000Z',
+  updatedAt: '2026-08-05T09:00:00.000Z',
+};
