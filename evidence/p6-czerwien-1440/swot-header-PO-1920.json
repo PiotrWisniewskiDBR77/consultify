@@ -1,0 +1,61 @@
+{
+ "url": "http://localhost:3061/?screen=tools-swot-library-detail&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1920,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Dynamic SWOT",
+   "x": 443,
+   "y": 33,
+   "right": 588.59375,
+   "bottom": 61
+  },
+  {
+   "text": "Aktywne",
+   "x": 598.59375,
+   "y": 37,
+   "right": 660.9375,
+   "bottom": 57
+  },
+  {
+   "text": "Zapisano",
+   "x": 670.9375,
+   "y": 39,
+   "right": 722.78125,
+   "bottom": 55
+  },
+  {
+   "text": "Sekcje",
+   "x": 1002.90625,
+   "y": 39,
+   "right": 1041.03125,
+   "bottom": 55
+  },
+  {
+   "text": "Baza wiedzy",
+   "x": 1109.03125,
+   "y": 39,
+   "right": 1180.984375,
+   "bottom": 55
+  },
+  {
+   "text": "Analizuj",
+   "x": 1199.984375,
+   "y": 31,
+   "right": 1291.796875,
+   "bottom": 63
+  },
+  {
+   "text": "Rozpocznij sesję",
+   "x": 1299.796875,
+   "y": 31,
+   "right": 1441,
+   "bottom": 63
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:18:44.602Z"
+}

@@ -1,0 +1,33 @@
+{
+ "url": "http://localhost:3061/?screen=initiative-record&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1920,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Margin Leakage Recovery Sprint",
+   "x": 667,
+   "y": 32,
+   "right": 969.890625,
+   "bottom": 62
+  },
+  {
+   "text": "Szkic",
+   "x": 979.890625,
+   "y": 37,
+   "right": 1024.703125,
+   "bottom": 57
+  },
+  {
+   "text": "Niezapisane",
+   "x": 1034.703125,
+   "y": 39,
+   "right": 1103.578125,
+   "bottom": 55
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:19:53.337Z"
+}

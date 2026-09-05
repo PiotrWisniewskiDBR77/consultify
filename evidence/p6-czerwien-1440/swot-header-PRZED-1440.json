@@ -1,0 +1,54 @@
+{
+ "url": "http://localhost:3061/?screen=tools-swot-library-detail&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1440,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Aktywne",
+   "x": 413,
+   "y": 37,
+   "right": 475.34375,
+   "bottom": 57
+  },
+  {
+   "text": "Zapisano",
+   "x": 485.34375,
+   "y": 39,
+   "right": 537.1875,
+   "bottom": 55
+  },
+  {
+   "text": "Sekcje",
+   "x": 562.90625,
+   "y": 39,
+   "right": 601.03125,
+   "bottom": 55
+  },
+  {
+   "text": "Baza wiedzy",
+   "x": 669.03125,
+   "y": 39,
+   "right": 740.984375,
+   "bottom": 55
+  },
+  {
+   "text": "Analizuj",
+   "x": 759.984375,
+   "y": 31,
+   "right": 851.796875,
+   "bottom": 63
+  },
+  {
+   "text": "Rozpocznij sesję",
+   "x": 859.796875,
+   "y": 31,
+   "right": 1001,
+   "bottom": 63
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:18:58.537Z"
+}
