@@ -54,8 +54,11 @@ const noop = () => undefined;
 // granatem. Kursor `not-allowed` to sam WYGLĄD — przycisk NADAL jest klikalny
 // (patrz `locked` w StandardPrimaryCta). 1:1 z dotychczasowym wyglądem
 // w Initiatives.
+// P6_CZERWIEN_I_1440.md §5 krok 4: sam kształt (shrink-0/whitespace-nowrap) co
+// MENU_1_PRIMARY_CTA — locked CTA nie powinien łamać się przy 1280 px tak samo jak
+// wersja aktywna.
 const MENU_1_PRIMARY_CTA_LOCKED =
-  'inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed';
+  'inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium whitespace-nowrap bg-c-surface-raised text-c-text-muted cursor-not-allowed';
 
 export interface StandardBreadcrumb {
   label: string;

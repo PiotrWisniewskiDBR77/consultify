@@ -1,0 +1,40 @@
+{
+ "url": "http://localhost:3061/?screen=karta-decision&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1280,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Rezydencja danych wywiadowczych — wybór ",
+   "x": 403,
+   "y": 29,
+   "right": 1043.296875,
+   "bottom": 59
+  },
+  {
+   "text": "Oczekująca",
+   "x": 377,
+   "y": 69,
+   "right": 455.03125,
+   "bottom": 89
+  },
+  {
+   "text": "Zapisano",
+   "x": 465.03125,
+   "y": 71,
+   "right": 516.875,
+   "bottom": 87
+  },
+  {
+   "text": "AI",
+   "x": 1110.59375,
+   "y": 49,
+   "right": 1124,
+   "bottom": 69
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:20:23.676Z"
+}

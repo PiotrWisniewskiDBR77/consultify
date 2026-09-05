@@ -23,6 +23,20 @@
 #
 # Regeneracja baseline po świadomym sprzątaniu długu: --update
 #
+# ── CZĘŚĆ 3 (2026-09-05, P6_CZERWIEN_I_1440.md §5 krok 7): danger-* poza kontekstem
+# błędu w Narzędziach. Audyt Award 2026-09-05 znalazł text-danger-*/bg-danger-*
+# użyte dla stanów SPOKOJNYCH (kategoria "Oceny", status "Nieaktywny") w
+# src/components/Discovery i src/components/DiscoveryTools — dwa foldery, których
+# ŻADEN istniejący hook (ten plik PART 1/2, check-list-canon.sh, check-triada.sh) nie
+# skanuje wcale, bo nie są "powłoką SPEC-A" ani "kartą N" — są centrum per-archetyp
+# (Discovery Canvas, narzędzia DiscoveryTools). RAPORT, NIE blokada: danger-* ma w
+# tych folderach setki poprawnych użyć (błędy realne, ryzyka/zagrożenia w SWOT itp.) —
+# heurystyka rozróżniająca "stan krytyczny" od "kategoria/status spokojny" nie jest
+# możliwa bez adnotacji w kodzie (danger-ok, analogicznie do crimson-ok/karty-n-ok).
+# Baseline per plik w scripts/check-artefakt-danger.baseline.txt, regenerowany razem
+# z --update — ratchet mierzy TREND (rośnie/nie rośnie) bez blokowania nikogo, dopóki
+# ktoś świadomie nie włączy blokady (przyszła fala).
+#
 # ── CZĘŚĆ 2 (2026-07-21, fala F4a): reguły SPEC-N §5.2/§5B dla 7 KART N ──
 # Poza bezpiecznikiem crimson skrypt sprawdza trzy reguły powłoki kart N
 # (SPEC-N §2.3, §2.4, §2.1). Zakres: WYŁĄCZNIE 7 plików pełnych kart
@@ -61,6 +75,7 @@ cd "$ROOT" || exit 1
 
 BASELINE="scripts/check-artefakt.baseline.txt"
 BASELINE_KN="scripts/check-artefakt-n.baseline.txt"
+BASELINE_DANGER="scripts/check-artefakt-danger.baseline.txt"
 MODE=""
 STRICT="${KARTY_N_STRICT:-0}"
 VERBOSE=0
@@ -138,6 +153,28 @@ baseline_for_kn() {
   local rel="$1"
   [ -f "$BASELINE_KN" ] || { echo 0; return; }
   awk -F'\t' -v p="$rel" '$2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE_KN"
+}
+
+# --- PART 3 (P6 §5 krok 7): danger-* poza kontekstem błędu, Discovery/DiscoveryTools. ---
+# Zakres: WSZYSTKIE .ts/.tsx (bez testów) rekursywnie pod obu folderami — to centrum
+# per-archetyp, nie powłoka SPEC-A, więc zakres jest szerszy niż list_scope_files().
+danger_scope_files() {
+  find src/components/Discovery src/components/DiscoveryTools \
+    \( -iname '*.ts' -o -iname '*.tsx' \) ! -iname '*.test.*' 2>/dev/null | sort
+}
+
+# Naruszenia: text-danger-*/bg-danger-* bez adnotacji `danger-ok` w tej samej linii.
+# Adnotacja jest świadoma (analogicznie do crimson-ok/karty-n-ok) — patrz nagłówek
+# CZĘŚĆ 3. NIE rozstrzyga "czy to naprawdę błąd" (heurystyka niemożliwa bez adnotacji),
+# tylko liczy nieoznaczone użycia, żeby dług był mierzalny.
+danger_hits() {
+  grep -nE 'text-danger-|bg-danger-' "$1" 2>/dev/null | grep -v 'danger-ok'
+}
+
+baseline_for_danger() {
+  local rel="$1"
+  [ -f "$BASELINE_DANGER" ] || { echo 0; return; }
+  awk -F'\t' -v p="$rel" '$2==p{print $1; found=1} END{if(!found) print 0}' "$BASELINE_DANGER"
 }
 
 if [ "$MODE" = "--update" ]; then
@@ -295,6 +332,20 @@ if [ "$MODE" = "--update" ]; then
   done < <(karty_n_files)
   mv "$tmp_kn" "$BASELINE_KN"
   echo "✓ check-artefakt: baseline (PART 2, karty N) zaktualizowany → $BASELINE_KN"
+
+  tmp_danger=$(mktemp)
+  echo "# check-artefakt-danger.baseline.txt — regenerowany --update. Format: <liczba>\\t<ścieżka>." > "$tmp_danger"
+  echo "# PART 3 (P6_CZERWIEN_I_1440.md §5 krok 7): text-danger-*/bg-danger-* BEZ adnotacji" >> "$tmp_danger"
+  echo "# danger-ok, w src/components/Discovery + src/components/DiscoveryTools. RAPORT," >> "$tmp_danger"
+  echo "# NIE blokada — patrz CZĘŚĆ 3 w nagłówku check-artefakt.sh." >> "$tmp_danger"
+  echo "# Regeneruj TYLKO po świadomym sprzątnięciu długu, nigdy żeby ukryć nową regresję." >> "$tmp_danger"
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    n=$(danger_hits "$f" | grep -c . || true)
+    [ "$n" -gt 0 ] && printf '%s\t%s\n' "$n" "$f" >> "$tmp_danger"
+  done < <(danger_scope_files)
+  mv "$tmp_danger" "$BASELINE_DANGER"
+  echo "✓ check-artefakt: baseline (PART 3, danger-* Discovery/DiscoveryTools) zaktualizowany → $BASELINE_DANGER"
   exit 0
 fi
 
@@ -367,6 +418,36 @@ if [ "$STRICT" = "1" ] && [ "$kn_report" -gt 0 ]; then
   echo "  ✗ check-artefakt --strict: $kn_report naruszeń reguł blokujących kart N (zero-tolerance, niezależnie od baseline)." >&2
   echo "  Napraw: createPortal → sloty NModeShell (§2.4); comments/history/activity-log → prawy panel (§2.1)." >&2
   fail=1
+fi
+
+# =====================================================================
+# CZĘŚĆ 3 (P6 §5 krok 7) — danger-* poza kontekstem błędu, Discovery/DiscoveryTools.
+# ZAWSZE raport, NIGDY blokada (nawet z --strict) — patrz uzasadnienie w nagłówku pliku.
+# =====================================================================
+danger_total_current=0
+danger_total_baseline=0
+if [ "$VERBOSE" = "1" ]; then
+  echo ""
+  echo "── danger-* poza kontekstem błędu (P6 §5 krok 7) — tryb RAPORTU, nigdy blokady ──"
+fi
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  n_danger=$(danger_hits "$f" | grep -c . || true)
+  [ "$n_danger" -eq 0 ] && continue
+  base_danger=$(baseline_for_danger "$f")
+  danger_total_current=$((danger_total_current + n_danger))
+  danger_total_baseline=$((danger_total_baseline + base_danger))
+  [ "$VERBOSE" = "1" ] || continue
+  echo "  $f"
+  echo "    • danger-* bez adnotacji — $n_danger (baseline $base_danger)"
+  danger_hits "$f" | while IFS= read -r h; do echo "        L${h%%:*}"; done
+done < <(danger_scope_files)
+if [ "$danger_total_current" -eq 0 ]; then
+  [ "$VERBOSE" = "1" ] && echo "✓ danger-* (P6 §5 krok 7): brak użyć bez adnotacji danger-ok"
+elif [ "$VERBOSE" = "1" ]; then
+  echo "  Razem: danger-* bez adnotacji $danger_total_current / baseline $danger_total_baseline (RAPORT — nie blokuje, ratchet informacyjny)"
+else
+  echo "• danger-* poza kontekstem błędu (P6 §5 krok 7): $danger_total_current / baseline $danger_total_baseline (RAPORT — nie blokuje; szczegóły: --report)"
 fi
 
 exit $fail
