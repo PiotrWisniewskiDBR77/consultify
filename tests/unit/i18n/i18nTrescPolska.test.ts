@@ -45,6 +45,7 @@ const IDENTITY_WHITELIST = [
   'Gantt', 'Webhook', 'Administrator', 'Partner', 'Teresa', 'Consultify', 'DBR77',
   'GO', 'CONDITIONAL GO', 'NO-GO', 'Conservative', 'Base', 'Upside', 'Expected',
   'Actual', 'Payback', 'CAPEX', 'OPEX', 'FTE', 'BAU', 'YTD', 'OEE', 'MES', 'IoT',
+  'Hard', 'Avoided',
   'Jira', 'Slack', 'Teams', 'Google Drive', 'OneDrive', 'Dropbox', 'e-mail',
   'Email', 'OK', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Excel',
   'Word', 'PowerPoint',
