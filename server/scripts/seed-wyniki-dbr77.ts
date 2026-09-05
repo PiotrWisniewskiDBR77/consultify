@@ -1774,7 +1774,9 @@ async function main(): Promise<void> {
 
   const pool = new Pool({
     connectionString: databaseUrl,
-    ssl: /railway|amazonaws|render|supabase/.test(databaseUrl) ? { rejectUnauthorized: false } : undefined,
+    // SSL tylko gdy adres wprost o nie prosi — proxy Railway (`*.proxy.rlwy.net`)
+    // nie obsługuje SSL i połączenie z domyślnym `ssl:true` się wywala.
+    ssl: /sslmode=require|sslmode=verify/.test(databaseUrl) ? { rejectUnauthorized: false } : undefined,
     max: 2,
   });
   const client = await pool.connect();
