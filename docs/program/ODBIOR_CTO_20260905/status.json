@@ -185,11 +185,17 @@
     },
     "16_PARTNER": {
       "nazwa": "Partner",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Partner: pierwszy przegląd modułu (żaden ekran nie miał wcześniej akceptu na obrazku) — 21 ekranów (3 publiczne + 13 portalu przez dev-render + 5 logowania), 5 naprawionych defektów językowych/formatu waluty i jeden stacking-context (białe na białym w formularzu zgłoszeniowym). Otwarte: wariant błędu połączenia w Start nieodróżnialny od aktywnego (niepewne czy fixture czy kod), warianty 'puste' w dev-render nie są puste (fixture), ten sam błąd kolumny Typ znaleziony też w SuperAdmin (poza zakresem, zgłoszony osobno).",
+      "zrzuty": [
+        "evidence/odbior-cto-20260905/partner/become-partner-apply-po.png",
+        "evidence/odbior-cto-20260905/partner/dr-dashboard-po.png",
+        "evidence/odbior-cto-20260905/partner/dr-referral-tools-po.png",
+        "evidence/odbior-cto-20260905/partner/dr-earnings-po.png",
+        "evidence/odbior-cto-20260905/partner/dr-resources-documentation-po.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:56:00.000Z"
     }
   }
 }

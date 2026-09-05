@@ -24,9 +24,11 @@ export function retiredChatWriteCommand(input: string): RetiredChatWriteCommand 
   return {
     targetKind,
     title,
+    // 05.09.2026: Agent poza MVP (decyzja właściciela) — link wskazywał na
+    // usuniętą zakładkę Agent w My Work; zastąpiony ogólnym wskazaniem huba.
     notice:
       `Direct /${label} writes are disabled. No ${label} was created. ` +
-      'Create a source-bound proposal in [My Work → Agent](/my-work?tab=agent), ' +
+      'Create a source-bound proposal in [My Work](/my-work), ' +
       'then have an independent OWNER or ADMIN review and materialize it.',
   };
 }

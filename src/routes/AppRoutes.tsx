@@ -1698,14 +1698,14 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Run agent (HP-4 F3, Harvey-Parity) — AGT-003 (relokacja
-            2026-07-23): the surface moved from its own route into the My
-            Work "Agent" tab (MyWorkHub.tsx). This route is kept only so old
-            /agent-plan links never 404 — it always redirects to the tab;
-            MyWorkHub itself gates the tab on isAgentPlanEnabled(). */}
+        {/* 05.09.2026: Agent poza MVP (decyzja właściciela) — dawny AGT-003
+            przekierowywał /agent-plan na zakładkę "Agent" w My Work
+            (MyWorkHub.tsx); ta zakładka już nie istnieje (usunięta z Menu 2
+            i nieosiągalna przez ?tab=agent), więc stary link ląduje wprost
+            na My Work zamiast na martwy parametr. */}
         <Route
           path={ROUTES.AGENT_PLAN}
-          element={<Navigate to={`${ROUTES.MY_WORK}?tab=agent`} replace />}
+          element={<Navigate to={ROUTES.MY_WORK} replace />}
         />
 
         {/* Canonical Audits kernel — authenticated inside the app shell.

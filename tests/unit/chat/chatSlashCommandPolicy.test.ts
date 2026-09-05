@@ -11,7 +11,10 @@ describe('Chat slash-command governed write boundary', () => {
 
     expect(result).toMatchObject({ targetKind });
     expect(result?.notice).toContain('No ' + targetKind + ' was created');
-    expect(result?.notice).toContain('/my-work?tab=agent');
+    // 05.09.2026: Agent poza MVP — notatka wskazuje na sam hub /my-work, nie
+    // na usuniętą zakładkę ?tab=agent.
+    expect(result?.notice).toContain('/my-work');
+    expect(result?.notice).not.toContain('tab=agent');
     expect(result?.notice).toContain('independent OWNER or ADMIN');
   });
 
