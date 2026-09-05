@@ -17,6 +17,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell } from '@/components/ui/primitives/cells';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
@@ -450,8 +451,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           />
         </div>
 
-        {previewItem ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+        <JedenPrawyPanel rekord={previewItem ? (
             <StandardPreview
               title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
               onClose={() => setSelectedId(null)}
@@ -518,8 +518,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 ],
               }}
             />
-          </aside>
-        ) : null}
+        ) : null} />
       </div>
     </div>
   );
