@@ -36,6 +36,7 @@ import {
   type OkrSuggestNextCheckInValue,
   type RecordOkrCheckInInput,
 } from './okrCheckInApi';
+import { mapServerErrorToUserMessage } from '@/services/api/errorMessageMapper';
 import { buildOkrCheckInColumns, buildOkrCheckInPreview, buildOkrCheckInRowMenu } from './okrCheckInPresenters';
 import { OkrCheckInCorrectDialog, type OkrCheckInCorrectFormValues } from './OkrCheckInCorrectDialog';
 import { OkrCheckInRecordDialog, type OkrCheckInRecordFormValues } from './OkrCheckInRecordDialog';
@@ -67,8 +68,16 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
       : setLock.reason.en
     : krCancelled
       ? isPolish
-        ? 'Kluczowy Rezultat jest anulowany — check-iny nie są przyjmowane (kod serwera: KEY_RESULT_CANCELLED).'
-        : 'The Key Result is cancelled — check-ins are not accepted (server rule: KEY_RESULT_CANCELLED).'
+        ? mapServerErrorToUserMessage(
+            'KEY_RESULT_CANCELLED',
+            { pl: 'Check-in jest niedostępny.', en: 'Check-in is unavailable.' },
+            true
+          )
+        : mapServerErrorToUserMessage(
+            'KEY_RESULT_CANCELLED',
+            { pl: 'Check-in jest niedostępny.', en: 'Check-in is unavailable.' },
+            false
+          )
       : null;
 
   const [recordOpen, setRecordOpen] = useState(false);

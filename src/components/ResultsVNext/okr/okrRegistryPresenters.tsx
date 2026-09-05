@@ -13,6 +13,10 @@ import { Lock } from 'lucide-react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
 import { memberNameOrUnknown } from '@/hooks/useOrganizationMemberNames';
+import {
+  resultsEntityNameOrUnknown,
+  type ResultsEntityNameResolver,
+} from '@/hooks/useResultsEntityNames';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
@@ -290,6 +294,7 @@ export interface OkrSetPreviewDeps {
   /** RN-G3 lane `okr` full-tool task — optional, opens `OkrSetWorkspace`. */
   onOpenWorkspace?: (row: OkrSetDto) => void;
   resolveMemberName?: OkrMemberNameResolver;
+  resolveProgramName?: ResultsEntityNameResolver;
 }
 
 export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): StandardPreviewProps {
@@ -356,8 +361,12 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
         {
           id: 'program',
           label: isPolish ? 'Program' : 'Program',
-          value: row.programId,
-          mono: true,
+          value: resultsEntityNameOrUnknown(
+            deps.resolveProgramName,
+            row.programId,
+            isPolish,
+            'program'
+          ),
         },
         {
           id: 'progress',

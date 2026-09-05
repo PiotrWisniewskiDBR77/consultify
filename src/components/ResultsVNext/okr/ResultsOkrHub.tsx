@@ -79,6 +79,7 @@ import { useNavigate } from 'react-router-dom';
 import type { StandardBreadcrumb, StandardCounterChip, TableRow } from '@/components/standard';
 import { Button } from '@/components/ui/primitives';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
+import { useResultsEntityNames } from '@/hooks/useResultsEntityNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -232,22 +233,46 @@ export const ResultsOkrHub: React.FC = () => {
   const [programsError, setProgramsError] = useState<string | null>(null);
   const [cycles, setCycles] = useState<OkrCycleDto[]>([]);
   const [cyclesLoading, setCyclesLoading] = useState(false);
+  const resolveProgramName = useResultsEntityNames(programs);
+
+  useEffect(() => {
+    let cancelled = false;
+    setProgramsLoading(true);
+    listOkrPrograms()
+      .then((rows) => {
+        if (!cancelled) setPrograms(rows);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setPrograms([]);
+          setProgramsError(toUserFacingErrorMessage(err, isPolish));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setProgramsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isPolish]);
 
   const openCreateForm = useCallback(() => {
     setFormError(null);
     setFormIdempotencyKey(newOkrSetIdempotencyKey());
     setCycles([]);
     setFormOpen(true);
-    setProgramsLoading(true);
-    setProgramsError(null);
-    listOkrPrograms()
-      .then((rows) => setPrograms(rows))
-      .catch((err) => {
-        setPrograms([]);
-        setProgramsError(toUserFacingErrorMessage(err, isPolish));
-      })
-      .finally(() => setProgramsLoading(false));
-  }, [isPolish]);
+    if (programs.length === 0 && !programsLoading) {
+      setProgramsLoading(true);
+      setProgramsError(null);
+      listOkrPrograms()
+        .then((rows) => setPrograms(rows))
+        .catch((err) => {
+          setPrograms([]);
+          setProgramsError(toUserFacingErrorMessage(err, isPolish));
+        })
+        .finally(() => setProgramsLoading(false));
+    }
+  }, [isPolish, programs.length, programsLoading]);
 
   const handleProgramChangeInForm = useCallback((programId: string) => {
     setCycles([]);
@@ -596,6 +621,7 @@ export const ResultsOkrHub: React.FC = () => {
           ? buildOkrSetPreview(selectedSet, {
               isPolish,
               resolveMemberName,
+              resolveProgramName,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
               onOpenWorkspace: (r) =>

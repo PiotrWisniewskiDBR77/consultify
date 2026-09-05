@@ -115,6 +115,7 @@ import {
 import { type TableFilters } from '@/components/ui/ResizableTable';
 import { getTypeStyle } from '@/constants/statusColors';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
+import { normalizeTemplateCategory } from '@/labels/interviewCategoryLabels';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -2170,8 +2171,8 @@ export const InterviewHub: React.FC = () => {
     });
     return Array.from(categories)
       .sort((a, b) => a.localeCompare(b))
-      .map((c) => ({ value: c, label: c }));
-  }, [filteredTemplates]);
+      .map((c) => ({ value: c, label: normalizeTemplateCategory(c, isPolish) }));
+  }, [filteredTemplates, isPolish]);
 
   const TEMPLATE_STATUS_FILTER_OPTIONS = useMemo(
     () =>
@@ -5716,7 +5717,7 @@ export const InterviewHub: React.FC = () => {
                   style={{ backgroundColor: categoryTone(row.category)! }}
                 />
               ) : null}
-              {row.category}
+              {normalizeTemplateCategory(row.category, isPolish)}
             </span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
@@ -5968,7 +5969,7 @@ export const InterviewHub: React.FC = () => {
                   {template.questionCount} {t('interview.hub.questions2')}
                 </span>
                 {template.estimatedTimeMinutes && <span>{template.estimatedTimeMinutes} min</span>}
-                <span>{template.category}</span>
+                <span>{normalizeTemplateCategory(template.category, isPolish)}</span>
               </div>
             </div>
           );
@@ -6622,7 +6623,7 @@ Return ONLY the answer text (no markdown fences).`;
             {row.template?.category ? (
               <span
                 className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
-                title={row.template.category}
+                title={normalizeTemplateCategory(row.template.category, isPolish)}
               >
                 {categoryTone(row.template.category) ? (
                   <span
@@ -6631,7 +6632,7 @@ Return ONLY the answer text (no markdown fences).`;
                     style={{ backgroundColor: categoryTone(row.template.category)! }}
                   />
                 ) : null}
-                {row.template.category}
+                {normalizeTemplateCategory(row.template.category, isPolish)}
               </span>
             ) : null}
           </div>
@@ -6884,7 +6885,9 @@ Return ONLY the answer text (no markdown fences).`;
               <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                 {assignment.assignee?.name || assignment.assignee?.email || '—'}
                 {' · '}
-                {assignment.template?.category || assignment.template?.name || '—'}
+                {assignment.template?.category
+                  ? normalizeTemplateCategory(assignment.template.category, isPolish)
+                  : assignment.template?.name || '—'}
               </div>
             </div>
 
@@ -8734,7 +8737,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
-                    label: `${t('interview.hub.category')}: ${a.template.category}`,
+                    label: `${t('interview.hub.category')}: ${normalizeTemplateCategory(a.template.category, isPolish)}`,
                     tone: 'text-c-text-secondary',
                   });
                 // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
@@ -8934,7 +8937,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const relations: Array<{ label: string; tone: string; title?: string }> = [];
                 if (a.template?.category)
                   relations.push({
-                    label: `${t('interview.hub.category')}: ${a.template.category}`,
+                    label: `${t('interview.hub.category')}: ${normalizeTemplateCategory(a.template.category, isPolish)}`,
                     tone: 'text-c-text-secondary',
                   });
                 // FALA 1 (2026-07-27): było `Session: 409683b2…` — obcięty
