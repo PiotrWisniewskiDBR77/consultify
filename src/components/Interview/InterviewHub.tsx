@@ -10201,11 +10201,19 @@ Return ONLY the answer text (no markdown fences).`;
                 className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               />
               <div className="mb-4">
+                {/* 05.09.2026: podział na projekty = fala 2 (decyzja właściciela)
+                    — pole projektu przestaje być wymagane: `handleConfirmNewSession`
+                    już wcześniej wołało `ensureProjectId()`, które samo dobiera
+                    pierwszy projekt organizacji, gdy nic nie wybrano (backend
+                    `POST /interview/sessions` ma ten sam fallback — patrz
+                    `resolveValidProjectId` w InterviewController.ts). `optional`
+                    zdejmuje gwiazdkę z etykiety i atrybut `required` z selecta. */}
                 <RequiredProjectPicker
                   value={currentProjectId || ''}
                   onChange={setCurrentProjectId}
                   disabled={creatingSession}
                   language={isPolish ? 'pl' : 'en'}
+                  optional
                 />
               </div>
               <div className="flex gap-3">
@@ -10219,7 +10227,7 @@ Return ONLY the answer text (no markdown fences).`;
                 <button
                   type="button"
                   onClick={handleConfirmNewSession}
-                  disabled={creatingSession || !newSessionNameDraft.trim() || !currentProjectId}
+                  disabled={creatingSession || !newSessionNameDraft.trim()}
                   className="flex-1 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {creatingSession ? (

@@ -398,10 +398,10 @@ const ProjectIntelligenceView = lazyWithRetry(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
-// Projects — Zwornik (#78): stakeholder registry + finance rollup per project.
-const MyProjects = lazyWithRetry(() =>
-  import('@/components/MyWork/MyProjects').then((m) => ({ default: m.MyProjects }))
-);
+// 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) — the
+// `/projects` route (Zwornik #78, stakeholder registry + finance rollup)
+// now redirects to `/my-work` below; `MyProjects` lazy import removed here,
+// component kept under src/components/MyWork/MyProjects.tsx, unimported.
 
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
 const InterviewHub = lazyWithRetry(() =>
@@ -1638,22 +1638,13 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
-        {/* Projects — Zwornik (#78): stakeholder registry + finance rollup */}
-        <Route
-          path={ROUTES.PROJECTS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Projects']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Projects"
-              >
-                <RouteErrorBoundary>
-                  <MyProjects />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
-          }
-        />
+        {/* 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) —
+            `/projects` (Zwornik #78: stakeholder registry + finance rollup)
+            and its My Work tab deep link both retire to the My Work root;
+            `MyProjects.tsx` stays in the tree, just unreachable from nav. */}
+        <Route path={ROUTES.PROJECTS} element={<Navigate to="/my-work" replace />} />
+        <Route path="/my-work/projects" element={<Navigate to="/my-work" replace />} />
+        <Route path="/my-work/projects/*" element={<Navigate to="/my-work" replace />} />
 
         {/* Client Vault (HP-22, Harvey-Parity) — VLT-004 (relokacja
             2026-07-23): the surface moved from its own route into the My
