@@ -30,3 +30,38 @@ Zakaz usuwania i edycji istniejących rekordów właściciela pozostaje w mocy.
 |---|---|---|---|---|
 | Ocena | Zamrożenie sesji DRD 203d5476 (z rundy 2) — POST /api/method/sessions/:id/freeze wykonany jako SUPERADMIN, powstał AssessmentOutput v1 | output 92f3bd7f-7048-44c8-a023-392b982c52ee (frozenSnapshotId 40e92571-cddc-4a65-9b25-8e4b45669014, sesja 203d5476-657b-4033-9ff3-d2c177dc047c → wersja v5, stan frozen) | /assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report i .../presentation (za ?ff_assessmentOutputArtifacts=1) | Weryfikacja czy serwerowa naprawa freeze (403→200) faktycznie działa i czy AssessmentReportView/AssessmentPresentationView renderują się zgodnie z obrazem zatwierdzonym dla CZEKA_NA_SERWER: assessment-output-report/assessment-artifacts-restart/assessment-presentation-view |
 | Ocena | Report Snapshot "Raport DRD — Sesja DRD — wynik cząstkowy" wygenerowany przyciskiem "Generuj raport z Outputu" na powyższym Outpucie | (snapshot inline w AssessmentOutput, brak osobnego id widocznego w UI) | /assessment/drd/203d5476-657b-4033-9ff3-d2c177dc047c | Sprawdzenie czy przycisk generowania raportu na surowym method-core widoku działa; okazało się że to inny, uboższy widok niż docelowy raport (patrz DANE dla assessment-output-report) |
+
+- 05.09 ~12:50 — `uzupelnij-jednostki-20260905.mjs --wykonaj`: business_unit dla 10 ocen DBR77 (Zarząd Grupy / Logistyka / IT / Produkcja spawalnicza), decyzja właściciela A (jednostka-formularz).
+
+# Działania podczas odbioru na żywo — RUNDA 6 (05.09.2026) — decyzja właścicielska: włączenie ROI dla DBR77
+
+Decyzja: właściciel (rola OWNER, sesja Piotr Wiśniewski) zapisał na stronie decyzji (05.09) polecenie
+włączenia ROI dla organizacji DBR77 na stagingu. To NIE jest utworzenie rekordu demo — to jednorazowa,
+nieodwracalna publikacja polityki widoczności (governance), wykonana narzędziem UI wprost przewidzianym
+do tego celu.
+
+| Co | Szczegóły |
+|---|---|
+| Akcja | Kliknięcie przycisku „Włącz ROI dla organizacji" na `/results/roi` (Wyniki → ROI, POZIOM 1, pusty stan `roiDisabledForOrg`) |
+| Endpoint | `POST /api/vnext/results/roi/visibility-policy` (idempotencyKey losowy z klienta) → **201**, `outcome: "applied"` |
+| Organizacja | `a3e05d4a-5397-419d-b486-8e44366c0063` (DBR77) |
+| Polityka | `policyKey: "AMD-FLOW-ROI-VISIBILITY-002/v1"` |
+| Kto opublikował | `publishedBy: d2b6a316-08c5-47cf-9bf7-4ba50311d5a2` (sesja zalogowana jako Piotr Wiśniewski, OWNER) |
+| Kiedy | 2026-09-05T10:33:48.029Z |
+| Weryfikacja po fakcie | Przeładowanie `/results/roi` (bez ponownego klikania) pokazuje: przycisk zmienił się z „Włącz ROI dla organizacji" na „Nowa sprawa ROI"; `GET /api/vnext/results/roi/visibility-policy` → `published:true` (potwierdzone pośrednio zniknięciem CTA aktywacji i pojawieniem się rejestru z realną sprawą) |
+| Efekt uboczny odkryty, nie utworzony przeze mnie | W organizacji już istniała JEDNA realna sprawa ROI — „Program poprawy realizacji korzyści" (`dbedad0d-bc57-4f71-a212-dad7b1ba7a47`, status Szkic, właściciel Piotr Wiśniewski, PLN, ostatnia aktualizacja 13 sie 2026) — była niewidoczna wyłącznie z powodu braku wiersza governance. **Nie utworzyłem żadnej nowej sprawy ROI** — ta jedna wystarczyła do zweryfikowania wizualnego formuły jednej karty N, więc warunek „stwórz JEDNĄ realistyczną sprawę, jeśli ekran jest pusty" z instrukcji rundy 6 nie miał zastosowania. |
+| Skrypt użyty | `/private/tmp/odbior-zywo-skrypty/08-wyniki/runda6-enable-roi.mjs` (Playwright, ta sama sesja ODBIOR_AUTH_STATE, przechwytuje odpowiedzi sieciowe GET/POST na `visibility-policy` do `evidence/odbior-zywo-20260905/08-wyniki/runda6/klik-siec.json`) |
+
+# Działania podczas odbioru na żywo — RUNDA 6, druga sesja (05.09.2026) — Baseline v3 dla DBR77
+
+Żaden rekord NIE został utworzony ani usunięty w tej sesji. Jedyna zmiana stanu:
+
+| Co | Szczegóły |
+|---|---|
+| Akcja | Nawigacja z parametrem URL `?ff_wave3FinanceOwnerReview=1` (src/utils/financeOwnerReviewMode.ts) — istniejący, przewidziany w kodzie mechanizm "owner review mode" dla ekranów Finance v3 (baseline/prediction/analysis/valuation) |
+| Efekt | Zapisuje `ff.wave3_finance_owner_review=1` w localStorage TEJ przeglądarki/pliku sesji (`/private/tmp/odbior-auth/auth.json`) — NIE zmienia niczego w bazie ani dla innych użytkowników/przeglądarek |
+| Powód | Właściciel (05.09, decyzja przekazana nadzorcy) chce Baseline v3 (pełna tabela) zamiast klasycznego widoku; serwerowa flaga `financeBaselineWorkspaceV1` jest dla DBR77 ustawiona na `enabled=false` w tabeli `feature_flags`, a zmiana tego wiersza wymaga roli superadmin (token OWNER dostał 403 na /api/feature-flags) |
+| Próba DB write | NIE wykonana. Dokładny SQL do wykonania przez kogoś z sesją superadmin: `UPDATE feature_flags SET enabled = true, updated_at = now() WHERE flag_key = 'financeBaselineWorkspaceV1';` |
+| Odkryty efekt uboczny | Nawet z flagą włączoną lokalnie, jedyny kanoniczny artefakt BASELINE_MODEL dla DBR77 (0073fc01-9072-4cae-8a2b-38caa06a0b75 / businessVersionId e63de345-6f7b-45da-b9f1-d927ac452c06, utworzony w Rundzie 2) daje 409 `BASELINE_CONTEXT_NOT_CONFIGURED` — kontekst modelu nigdy nie został skonfigurowany. Nie próbowałem tego naprawić przez PUT (wymaga danych domenowych — okresy prognozy/okres otwarcia — których nie mam pewności, że dobrałbym poprawnie; ryzyko utworzenia strukturalnie złych danych). Zgłoszone jako spec dla robotnika w `09-finanse/wyniki.json` (finance-baseline-workspace, runda 6). |
+
+- 05.09 ~13:00 — feature_flags.financeBaselineWorkspaceV1 → enabled=true (decyzja właściciela POPRAWKA: Baseline v3 pełna tabela).

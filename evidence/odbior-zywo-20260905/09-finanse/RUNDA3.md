@@ -24,3 +24,9 @@
 |---|---|---|---|
 | finance-comments-panel | ROZNI_SIE | **ZGODNY** | Autor komentarza pokazuje teraz realne imie i nazwisko 'Piotr Wisniewski' zamiast surowego UUID. |
 | finance-workspace-bar | ROZNI_SIE | **ZGODNY** | Pasek ma juz komplet kontrolek z obrazu: przycisk 'Eksportuj', rozwijany status 'Wersja robocza' i kebab '...'. |
+
+## Runda 6 — decyzja właściciela 05.09: włączyć Baseline v3 dla DBR77
+
+| id | werdykt runda 3 | werdykt runda 6 | jedno zdanie |
+|---|---|---|---|
+| finance-baseline-workspace | DECYZJA | **ROZNI_SIE** | Flaga `financeBaselineWorkspaceV1` jest zdalnie WYŁĄCZONA dla DBR77 w tabeli `feature_flags` (potwierdzone: GET /api/feature-flags/runtime → false), a zmiana wymaga roli superadmin (token OWNER dostaje 403) — włączyłem tylko klient-side `?ff_wave3FinanceOwnerReview=1` (bez zapisu do bazy), co odkryło DRUGI, niezależny blocker: jedyny kanoniczny artefakt BASELINE_MODEL dla DBR77 daje 409 `BASELINE_CONTEXT_NOT_CONFIGURED` na `/api/v8/finance-v2/baseline/:businessVersionId/context`, więc ekran nadal pokazuje kartę błędu zamiast pełnej tabeli RZiS/Bilans/CF z obrazu; pełna specyfikacja naprawy (SQL + endpoint do wywołania) w `wyniki.json`.

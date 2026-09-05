@@ -52,3 +52,9 @@ Ustalenie ponad to co wiedziała runda 3: trasa "/assessment/drd/:id" z pakietu 
 | assessment-report-contract | ROZNI_SIE | **ZGODNY** | Jedyna roznica z rundy 3 zniknela: szyna rozdzialow po lewej pokazuje czytelne 'Os 1'...'Os 7' zamiast uciestych 'Pr...'/'Cy...'. |
 | assessment-reports-table | ROZNI_SIE | **ZGODNY** | Kolumna KONTEKST jest juz obecna miedzy NAZWA a STATUS, z nazwa zrodlowej oceny i podpisem 'Ocena'. |
 | assessment-list | DANE | **DANE** | Bez zmian: kolumna JEDNOSTKA istnieje, ale wszystkie wiersze pokazuja kreske - formularz nowej oceny wciaz nie ma pola do jej wpisania. |
+
+## Runda 7
+
+| id | werdykt runda 5 | werdykt runda 7 | jedno zdanie |
+|---|---|---|---|
+| assessment-list | DANE | **DANE** | Kolumna JEDNOSTKA teraz pokazuje wartosci dla 3/5 widocznych wierszy (dane z backfillu 10 rekordow DBR77 docieraja do UI poprawnie); pozostale 2 wiersze to sesje Method Core bez pola jednostki w ogole, a 7 backfillowanych rekordow typu DRD jest w tej zakladce calkowicie ukrytych (zastapionych przez Method Core) — API nie gubi businessUnit, UI po prostu nie renderuje tych wierszy legacy DRD. Zrzut: assessment-list.png, trasa /assessment?tab=processes, 0 bledow konsoli.

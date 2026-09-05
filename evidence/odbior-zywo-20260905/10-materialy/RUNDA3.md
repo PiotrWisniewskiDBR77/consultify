@@ -48,3 +48,9 @@ Ok. 45 minut. Największa trudność: `sheet-artifact` przy bezpośrednim wejśc
 | id | werdykt runda 3 | werdykt runda 5 | jedno zdanie |
 |---|---|---|---|
 | report-artifact | DANE | **DANE** | Bez zmian: dokument nadal otwiera sie w trybie Raport z przelacznikiem Raport/Edytor i realna trescia (7 sekcji, plakietki Zalozenie); brak tylko harnessowych pol KPI/RAG/benchmark, ktorych API nie zwraca. |
+
+## Runda 7
+
+| id | werdykt runda 4 | werdykt runda 7 | jedno zdanie |
+|---|---|---|---|
+| report-builder-library-template | ROZNI_SIE | **DANE** | Uzyty prawdziwy szablon z Biblioteki przypisany do assessmentu (DRD Full Diagnostic Report, tpl-drd-full-diagnostic-v2) — blokada TEMPLATE_SOURCE_UNSUPPORTED z rundy 4 zniknela, modal otwiera sie 1:1 jak na obrazie; jedyne roznice to dane (nazwa szablonu po angielsku bo caly katalog 6 szablonow assessment-owych jest bez polskiego tlumaczenia, i pusty dropdown ocen bo zadna ocena DBR77 nie ma statusu Zatwierdzony). Zrzut: report-builder-library-template.png, trasa /reports/builder?new=true&templateArtifactId=c7def12e-434b-4e9a-8bfc-ad46445cd451, 0 bledow konsoli.

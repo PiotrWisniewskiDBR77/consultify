@@ -23,3 +23,20 @@
 |---|---|---|---|
 | results-vnext-okr-registry | ROZNI_SIE | **ZGODNY** | Kolumna WLASCICIEL pokazuje juz realne imie i nazwisko 'Piotr Wisn...' zamiast UUID. |
 | results-vnext-okr-admin | ROZNI_SIE | **ZGODNY** | Panel podgladu programu ma juz stale wypelniony pasek akcji ('Cykle OKR', 'Kopiuj identyfikator') pod sekcja Powiazania - kod (OkrProgramsPage.tsx:286-301) wprost dokumentuje ta nasrawe jako odpowiedz na uwage z rundy 3. |
+
+## Runda 6
+
+Decyzja właściciela 05.09 (strona decyzji): włączyć ROI dla organizacji DBR77 na stagingu. Wykonano
+kliknięcie „Włącz ROI dla organizacji" na `/results/roi` → `POST /api/vnext/results/roi/visibility-policy`
+→ 201, `outcome: applied`, organizacja `a3e05d4a-5397-419d-b486-8e44366c0063`, opublikowane przez
+`d2b6a316-...` (Piotr Wiśniewski, OWNER), 2026-09-05T10:33:48Z. Szczegóły i dowód sieciowy:
+`evidence/odbior-zywo-20260905/UTWORZONE_REKORDY.md` (sekcja Runda 6) i
+`evidence/odbior-zywo-20260905/08-wyniki/runda6/klik-siec.json`. Ta sama organizacja miała już JEDNĄ
+realną sprawę ROI ("Program poprawy realizacji korzyści", status Szkic) — niewidoczną wyłącznie z braku
+wiersza governance; nie utworzono żadnej nowej sprawy demo.
+
+| id | werdykt runda 4 | werdykt runda 6 | jedno zdanie |
+|---|---|---|---|
+| roi-jedna-karta | DANE | **DANE** | Blokada zniknęła po publikacji polityki — powłoka karty N (5 sekcji lewego menu, prawy panel Akcje/Właściwości/Powiązania/Źródła/Komentarze/Historia) jest identyczna z obrazem; różni się tylko treść sekcji Założenia, bo jedyna realna sprawa w organizacji jest w statusie Szkic i pokazuje surowe tabele edycyjne (Baseline i polityka / Założenia) zamiast dojrzałej narracji z obrazu — brakuje sprawy z pełnym modelem w statusie W realizacji/Aktywna. |
+| results-vnext-roi-model | DANE | **ZGODNY** | Blokada zniknęła; obraz zatwierdzony to STARY, odrzucony 02.09 wzorzec 4-fazowego poziomego menu — żywa sekcja „Model" (Koszty/Korzyści/Scenariusze, realne wiersze kosztowe) jest zgodna z NOWYM zatwierdzonym wzorcem jednej karty N (ten sam co roi-jedna-karta), czyli z tym, co właściciel faktycznie zaakceptował 2026-08-30 (RoiCaseCardSections.ts). |
+| results-vnext-roi-full-tool | DANE | **ZGODNY** | Blokada zniknęła; obraz zatwierdzony to ten sam nieaktualny wzorzec 4-fazowy. Rejestr ROI (Poziom 1) pokazuje teraz realną sprawę i poprawny przycisk „Nowa sprawa ROI"; wejście w sprawę (Poziom 3) otwiera dokładnie tę samą kartę N co roi-jedna-karta, ze wszystkimi 16-17 dawnymi podwidokami zachowanymi pod nową nawigacją — zgodne z decyzją właściciela z 02.09/dokumentacją w kodzie z 2026-08-30. |

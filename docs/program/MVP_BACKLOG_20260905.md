@@ -172,3 +172,18 @@ Do decyzji właściciela (nie zrobione celowo): silnik tabeli Pomysłów (zastan
 | ROI dla organizacji | A | — | agent klika „Włącz ROI dla organizacji” na stagingu, mierzy 3 ekrany |
 
 Akcept seryjny (sekcja B): `chat-split-teresa-right`, `teresa-confirm-chip`, `exec-summary-onelook`, `idea-table`, `ideas-teresa-panel` — AKCEPT 10:20–10:22.
+
+## F. Uwagi właściciela z akceptu seryjnego (strona 3100, 05.09 ~13:00) — 49 odpowiedzi: 42 TAK, 6 NIE, 1 niejasne
+
+| Ekran | Werdykt właściciela | Słowa właściciela | Skutek |
+|---|---|---|---|
+| `notebook-quick-capture` | NIE | „Nie może być tak, że tak strasznie dużo przycisków jest w obszarze centralnym. To wszystko musi być wyrzucone do panelu albo w ogóle usunięte.” | agent (Opus): centrum lekkie, akcje do prawego panelu/kebaba |
+| `cel-jedna-karta` | NIE | „Zatwierdzona wersja, czyli karta KPI, jest OK. … tabela, pod nią karta KPI, piętro niżej zbiór kart KPI, a poniżej kolejna karta KPI. To jest inna, trzypoziomowa formuła.” | agent (Opus): karta jak zatwierdzona + nawigacja trzypoziomowa |
+| `mywork-idea-inspector-lekki` | NIE | „zmiana na zatwierdzony panel. Warto byłoby dodać opis problemu tak jak to jest obecnie na górze nowego panelu.” | agent: zatwierdzona kompozycja + opis problemu na górze |
+| `document-studio-ai-teresa` | NIE | „tutaj praca się dzieje z Teresą; tu nie ma po co dodawać kolejnego okna.” | **wyjątek od reguły 01.09 „jedna Teresa”** dla Document Studio: Teresa wbudowana w prawy panel (agent) |
+| `roi-jedna-karta` | NIE | „Ma być taka jak zatwierdzona.” | agent: rozstrzyga dane vs kompozycja, doprowadza do stanu z obrazu |
+| `assessment-initiatives-panel` | NIE (niezrozumiałe) | „To są dwa zupełnie różne ekrany” | źle dopasowana para → ponowna ocena na v3 (tylko obraz na żywo) |
+| `prawy-pas-jedna-formula-idea-teresa` | ? | „nie wiem, o co ty mnie tutaj pytasz” | wycofany z odbioru właściciela (pytanie kanonu dla agenta) |
+| `excele-edytowalna-siatka`, `excele-prawy-panel-standard` | TAK | „to, co piszesz, że jest zatwierdzone, wcale nie było potwierdzone. Wręcz przeciwnie, to było odrzucone.” | rejestr obrazów zatwierdzonych ma fałszywe wpisy → czyszczenie po MVP |
+
+Backlog danych (nie kod): 7 z 10 ocen DBR77 to legacy DRD zastąpione w zakładce Procesy sesjami Method Core bez pola jednostki → JEDNOSTKA widoczna dla 3/10; szablony ocen w bibliotece bez polskich nazw; żadna ocena DBR77 nie ma statusu Zatwierdzony (puste listy wyboru w kreatorach raportów); żadna wersja Baseline/Scenariusz nie jest APPROVED (chooser źródła wyceny pusty).
