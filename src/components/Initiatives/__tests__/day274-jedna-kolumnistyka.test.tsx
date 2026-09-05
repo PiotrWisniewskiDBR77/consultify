@@ -48,9 +48,7 @@ describe('Day 274 + A19/A13 — jeden kontrakt listy inicjatyw', () => {
   });
 
   it('kolumna kontekstu wchodzi jako opcja TEJ SAMEJ definicji, przed kolumną sortowania', () => {
-    const ids = createInitiativeRegisterColumns({ includeSource: true }).map(
-      (column) => column.id
-    );
+    const ids = createInitiativeRegisterColumns({ includeSource: true }).map((column) => column.id);
     expect(ids).toHaveLength(INITIATIVE_REGISTER_COLUMN_IDS.length + 1);
     expect(ids).toContain(INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS[0]);
     expect(ids.at(-1)).toBe('updatedAt');
@@ -60,16 +58,16 @@ describe('Day 274 + A19/A13 — jeden kontrakt listy inicjatyw', () => {
 
   it('czyta legacy słownik statusów Oceny tym samym kodem co rejestr kanoniczny', () => {
     // Rejestr kanoniczny (runtime-v1)
-    expect(resolveInitiativeRegisterLifecycle({ status: 'IN_EXECUTION' } as InitiativeRegisterRow)).toBe(
-      'IN_EXECUTION'
-    );
+    expect(
+      resolveInitiativeRegisterLifecycle({ status: 'IN_EXECUTION' } as InitiativeRegisterRow)
+    ).toBe('IN_EXECUTION');
     // Ocena / legacy endpointy
     expect(resolveInitiativeRegisterLifecycle({ status: 'DRAFT' } as InitiativeRegisterRow)).toBe(
       'REGISTERED_DRAFT'
     );
-    expect(resolveInitiativeRegisterLifecycle({ status: 'EXECUTING' } as InitiativeRegisterRow)).toBe(
-      'IN_EXECUTION'
-    );
+    expect(
+      resolveInitiativeRegisterLifecycle({ status: 'EXECUTING' } as InitiativeRegisterRow)
+    ).toBe('IN_EXECUTION');
   });
 
   it('utrzymuje te same pozycje kebaba niezależnie od powierzchni', () => {

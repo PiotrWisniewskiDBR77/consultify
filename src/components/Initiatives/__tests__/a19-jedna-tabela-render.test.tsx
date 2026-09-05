@@ -66,6 +66,8 @@ describe('A19 — jedna tabela inicjatyw także dla rekordów Oceny', () => {
 
   it('niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni', () => {
     renderRegister({ columnOptions: { includeSource: true } });
-    expect(within(bodyRow()).getByRole('button', { name: /Row actions|Akcje/i })).toBeInTheDocument();
+    expect(
+      within(bodyRow()).getByRole('button', { name: /Row actions|Akcje/i })
+    ).toBeInTheDocument();
   });
 });
