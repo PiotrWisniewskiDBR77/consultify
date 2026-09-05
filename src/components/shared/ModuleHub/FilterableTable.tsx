@@ -31,6 +31,7 @@ export interface TableColumn {
   id: string;
   label: string;
   width?: string;
+  dataType?: 'text' | 'status' | 'date' | 'owner' | 'number';
   /**
    * Opt-in leading selection column. When set to 'select', the HEADER renders a
    * select-all checkbox (driven by the `selection` prop) instead of the plain
