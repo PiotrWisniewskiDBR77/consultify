@@ -17659,7 +17659,7 @@ export const Api = {
 
   // Integration Settings
   getIntegrations: async (_orgId?: string) => {
-    const res = await fetchWithRetry(`${API_URL}/integrations`, { headers: getHeaders() });
+    const res = await fetchWithRetry(`${API_URL}/settings/integrations`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch integrations');
   },
 
