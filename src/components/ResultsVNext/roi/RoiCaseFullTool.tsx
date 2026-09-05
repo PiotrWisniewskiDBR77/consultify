@@ -43,8 +43,32 @@
  * „Opublikuj prognozę", „Zaplanuj przegląd"…), który już istniał i działa.
  * Prawy panel pokazuje TYLKO to, co ROI API naprawdę zwraca; sekcje bez
  * źródła danych (Komentarze, Historia) są jawnie puste, a nie zmyślone.
+ *
+ * ── ODRZUCENIE WŁAŚCICIELA (2026-09-05) I CO Z NIEGO WYNIKŁO ──────────────
+ * „Nie. Ma być taka jak zatwierdzona." Pomiar (runda 7,
+ * `evidence/odbior-zywo-20260905/08-wyniki/wyniki.json` → `roi-jedna-karta`)
+ * wykazał, że sekcja „Założenia" renderowała BEZWARUNKOWO surowy warsztat
+ * edycyjny, podczas gdy zatwierdzony obraz pokazuje NARRACJĘ (trzy bloki:
+ * parametry przypadku, na co idą pieniądze, źródła liczb). Zmiany:
+ *   • sekcja „Założenia" ma tryb domyślny `narrative`
+ *     (`RoiCaseAssumptionsNarrative`, dane z baseline/polityki/pozycji
+ *     kosztowych/założeń) — warsztat NIE zniknął, siedzi pod kebabem Menu 1
+ *     („Edytuj założenia") i pod CTA stanów pustych;
+ *   • liczniki podwidoków przy sekcjach lewej nawigacji ZDJĘTE — zatwierdzony
+ *     obraz ich nie ma, a kontrakt karty N (`RoiCaseCardSections.ts`,
+ *     `NModeSection.badge` = pole OPCJONALNE) nigdzie ich nie wymaga;
+ *   • „Właściciel" w prawym pasie to IMIĘ (`useOrganizationMemberNames`), nie
+ *     surowy UUID; doszedł wiersz „Faza cyklu" (`ROI_STATUS_BUCKET` —
+ *     istniejące grupowanie 14 statusów, zero nowej taksonomii);
+ *   • AKCJE dostały JEDEN przycisk z realnym pokryciem („Zaplanuj przegląd
+ *     PIR" → sekcja Wnioski/PIR, gdzie żyje jedyna implementacja). Pozostałe
+ *     dwa przyciski z obrazu (eksport PDF karty, zamrożenie baseline'u) NIE
+ *     mają dziś ŻADNEGO endpointu (`roiApi.ts`/`roi.routes.ts` sprawdzone) —
+ *     świadomie ich tu nie ma, zamiast martwego UI. To samo dotyczy sekcji
+ *     „Rezultaty" prawego pasa: w prototypie to lista dokumentów (business
+ *     case PDF, raport odchylenia), której ROI API nie zwraca.
  */
-import { ExternalLink, FileText, History as HistoryIcon, Link2, MessageSquare, ShieldCheck, Sparkles } from 'lucide-react';
+import { CalendarClock, ExternalLink, FileText, History as HistoryIcon, Link2, MessageSquare, Pencil, ScrollText, ShieldCheck, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
@@ -57,7 +81,10 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 
+import { useOrganizationMemberNames, memberNameOrUnknown, type MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
+
 import type { RoiCaseListItem } from './roiApi';
+import { RoiCaseAssumptionsNarrative } from './RoiCaseAssumptionsNarrative';
 import { RoiCaseModelWorkspace } from './RoiCaseModelWorkspace';
 import { RoiCaseDecisionWorkspace } from './RoiCaseDecisionWorkspace';
 import { RoiCaseRealizeValueWorkspace } from './RoiCaseRealizeValueWorkspace';
@@ -72,6 +99,8 @@ import {
 } from './RoiCaseCardSections';
 import type { RoiCasePhase } from './RoiCasePhaseNav';
 import {
+  ROI_STATUS_BUCKET,
+  ROI_STATUS_BUCKET_LABEL,
   ROI_STATUS_TONE,
   formatRoiDate,
   getRoiCaseLockInfo,
@@ -113,6 +142,16 @@ export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPol
    * na której użytkownik był poprzednio (ta sama zasada co w warsztatach,
    * które trzymały własny `tab` przez cały czas życia fazy). */
   const [tabBySection, setTabBySection] = useState<Record<string, string>>({});
+  /**
+   * Sekcja „Założenia" ma DWA tryby (odrzucenie właściciela 2026-09-05):
+   * `narrative` (domyślny, zatwierdzona kompozycja — trzy bloki narracji
+   * z realnych danych) i `edit` (nietknięty warsztat `RoiCaseModelWorkspace`
+   * z zakładkami „Baseline i polityka"/„Założenia"). Warsztat NIE został
+   * usunięty ani osłabiony — jest jedno kliknięcie dalej, w kebabie Menu 1
+   * i w CTA stanów pustych narracji.
+   */
+  const [assumptionsMode, setAssumptionsMode] = useState<'narrative' | 'edit'>('narrative');
+  const resolveMemberName = useOrganizationMemberNames();
 
   const section: RoiCardSectionDef = getRoiCardSection(activeSection) ?? ROI_CARD_SECTIONS[0];
   const activeTab = tabBySection[section.id] ?? section.subviews[0].id;
@@ -131,8 +170,26 @@ export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPol
    * Fazy `phase`/`onPhaseChange` zostają w sygnaturach warsztatów (inni
    * wołający ich używają), ale w trybie karty są martwe — pasek faz się nie
    * renderuje. */
+  /** Przeskok do konkretnego podwidoku innej sekcji (używany przez CTA stanów
+   * pustych narracji — „Dodaj pozycje kosztowe" prowadzi do Model → Koszty,
+   * gdzie mieszka jedyna implementacja CRUD-u pozycji). */
+  const goToSubview = (sectionId: string, tabId: string) => {
+    setTabBySection((prev) => ({ ...prev, [sectionId]: tabId }));
+    setActiveSection(sectionId);
+  };
+
   const canvas = (() => {
     const shared = { roiCase, isPolish, onBack, onPhaseChange: () => undefined, cardMode };
+    if (section.id === 'zalozenia' && assumptionsMode === 'narrative') {
+      return (
+        <RoiCaseAssumptionsNarrative
+          roiCase={roiCase}
+          isPolish={isPolish}
+          onEditAssumptions={() => setAssumptionsMode('edit')}
+          onEditCostLines={() => goToSubview('model', 'cost-lines')}
+        />
+      );
+    }
     switch (subview.phase) {
       case 'decision':
         return <RoiCaseDecisionWorkspace {...shared} phase="decision" />;
@@ -155,11 +212,35 @@ export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPol
     id: s.id,
     icon: SECTION_ICON[s.id],
     label: { pl: s.label.pl, en: s.label.en },
-    badge: s.subviews.length,
     component: s.id === section.id ? <div className="h-full min-h-0">{canvas}</div> : null,
   }));
 
-  const rightPanelSections = buildRoiCardRightPanel(roiCase, isPolish);
+  /** Kebab Menu 1 — jedyne kanoniczne miejsce na działania techniczne karty
+   * (standard n-Type §3.5). Tu mieszka przełącznik narracja ⇄ warsztat sekcji
+   * „Założenia", żeby centrum karty zostało pikselowo tym, co właściciel
+   * zatwierdził, a surowy edytor pozostał osiągalny jednym kliknięciem. */
+  const extraOverflowItems =
+    section.id === 'zalozenia'
+      ? [
+          assumptionsMode === 'narrative'
+            ? {
+                id: 'roi-edit-assumptions',
+                label: isPolish ? 'Edytuj założenia' : 'Edit assumptions',
+                icon: Pencil,
+                onClick: () => setAssumptionsMode('edit'),
+              }
+            : {
+                id: 'roi-back-to-narrative',
+                label: isPolish ? 'Wróć do przeglądu założeń' : 'Back to assumptions overview',
+                icon: ScrollText,
+                onClick: () => setAssumptionsMode('narrative'),
+              },
+        ]
+      : undefined;
+
+  const rightPanelSections = buildRoiCardRightPanel(roiCase, isPolish, resolveMemberName, {
+    onSchedulePir: () => goToSubview('wnioski', 'pir'),
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-c-bg" data-testid="roi-case-card">
@@ -190,6 +271,7 @@ export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPol
             onClose: onBack,
             statusLabel: roiStatusLabel(roiCase.status, isPolish),
             statusTone: STATUS_TONE_TO_HEADER[ROI_STATUS_TONE[roiCase.status]],
+            extraOverflowItems,
           }}
           sections={sections}
           activeSection={section.id}
@@ -215,6 +297,13 @@ const SECTION_ICON: Record<string, React.FC<{ size?: number; className?: string 
   wnioski: FileText,
 };
 
+/** Przycisk akcji prawego pasa — neutralny, `c-*`, fokus `c-focus`
+ * (zero `primary-*`/crimson: `scripts/check-artefakt.sh`). */
+const PANEL_ACTION_BTN =
+  'inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised ' +
+  'px-3 text-left text-xs font-medium text-c-text-secondary transition hover:bg-c-surface ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
+
 /**
  * Prawy panel — kolejność kanonu `ARTIFACT_PANEL_SECTION_ORDER`
  * (Akcje · Właściwości · Powiązania · Źródła i założenia · Komentarze ·
@@ -222,7 +311,12 @@ const SECTION_ICON: Record<string, React.FC<{ size?: number; className?: string 
  * reszta jest jawnie pusta, bo ROI API nie ma dziś ani komentarzy, ani dziennika
  * zdarzeń sprawy (sprawdzone w `roiApi.ts` — zero takich endpointów).
  */
-function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): ArtifactRightPanelSection[] {
+function buildRoiCardRightPanel(
+  roiCase: RoiCaseListItem,
+  isPolish: boolean,
+  resolveMemberName: MemberNameResolver,
+  handlers: { onSchedulePir: () => void }
+): ArtifactRightPanelSection[] {
   const lock = getRoiCaseLockInfo(roiCase.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : null;
 
@@ -234,6 +328,10 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
       defaultOpen: true,
       children: (
         <div className="flex flex-col gap-2 text-xs leading-relaxed text-c-text-secondary">
+          <button type="button" className={PANEL_ACTION_BTN} onClick={handlers.onSchedulePir} data-testid="roi-card-action-pir">
+            <CalendarClock size={13} className="shrink-0 text-c-text-muted" />
+            {isPolish ? 'Zaplanuj przegląd PIR' : 'Schedule PIR review'}
+          </button>
           {lockReason ? (
             <p data-testid="roi-card-lock-note">
               <span className="font-medium text-c-text">{isPolish ? 'Sprawa zablokowana do edycji.' : 'Case locked for editing.'}</span>{' '}
@@ -265,7 +363,19 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
           rows={[
             { id: 'caseId', label: isPolish ? 'Numer sprawy' : 'Case id', value: roiCase.caseId, mono: true },
             { id: 'status', label: 'Status', value: roiStatusLabel(roiCase.status, isPolish) },
-            { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: roiCase.ownerUserId },
+            {
+              id: 'lifecyclePhase',
+              label: isPolish ? 'Faza cyklu' : 'Lifecycle phase',
+              value: (() => {
+                const bucket = ROI_STATUS_BUCKET_LABEL[ROI_STATUS_BUCKET[roiCase.status]];
+                return isPolish ? bucket.pl : bucket.en;
+              })(),
+            },
+            {
+              id: 'owner',
+              label: isPolish ? 'Właściciel' : 'Owner',
+              value: memberNameOrUnknown(resolveMemberName, roiCase.ownerUserId, isPolish),
+            },
             { id: 'currency', label: isPolish ? 'Waluta' : 'Currency', value: roiCase.currency },
             { id: 'granularity', label: isPolish ? 'Ziarno analizy' : 'Granularity', value: roiGranularityLabel(roiCase.granularity, isPolish) },
             {
