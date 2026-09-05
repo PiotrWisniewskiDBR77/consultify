@@ -97,12 +97,17 @@ export function useFinanceLegacyBridge(
     resolveLegacyFinanceArtifact(legacyTable, legacyId, expectedArtifactType)
       .then((dto) =>
         dto.status === 'NOT_MIGRATED'
-          ? ensureLegacyFinanceArtifactIdentity(legacyTable, legacyId, expectedArtifactType).catch(
+          ? // `Promise.resolve().then(...)` (a nie gołe wywołanie) łapie także
+            // rzut SYNCHRONICZNY z warstwy API — inaczej awaria materializacji
+            // wywróciłaby ekran w stan „błąd" zamiast pokazać uczciwy widok
+            // klasyczny, który był tu przed naprawą.
+            Promise.resolve()
+              .then(() =>
+                ensureLegacyFinanceArtifactIdentity(legacyTable, legacyId, expectedArtifactType)
+              )
               // Materializacja jest naprawą, nie warunkiem oglądania rekordu:
-              // gdy padnie (brak uprawnień/5xx), pokazujemy stan sprzed niej,
-              // czyli uczciwe „nie ma jeszcze odpowiednika", a nie błąd.
-              () => dto
-            )
+              // gdy padnie (brak uprawnień/5xx), pokazujemy stan sprzed niej.
+              .catch(() => dto)
           : dto
       )
       .then((dto) => {
