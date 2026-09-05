@@ -111,7 +111,7 @@ const GovernedProposalReview: React.FC<{
             isPolish ? 'Zatwierdź zakres' : 'Approve scope',
             isPolish ? 'Poproś o korektę' : 'Request revision',
             isPolish ? 'Utwórz rewizję' : 'Create revision',
-            isPolish ? 'Rebaseline' : 'Rebaseline',
+            isPolish ? 'Ustal nowy punkt odniesienia' : 'Rebaseline',
           ].map((label) => (
             <button
               key={label}
