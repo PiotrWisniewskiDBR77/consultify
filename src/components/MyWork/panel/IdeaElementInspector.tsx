@@ -1,7 +1,11 @@
-import { ChevronDown, Loader2, Sparkles, X } from 'lucide-react';
+import { Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 
 export type IdeaInspectorTool = 'mindmap' | 'process' | 'whiteboard' | 'table';
@@ -83,54 +87,27 @@ const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 const SLUG = /\b[a-z]+-\d+(?:-[a-z0-9]+)*\b/gi;
 const safeText = (value?: string) => (value ?? '').replace(UUID, '').replace(SLUG, '').trim();
 
-const CountHeading = ({ title, count }: { title: string; count: number }) => (
-  <h3 className="flex-1 min-w-0 truncate text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-    {title} <span aria-label={`${title}: ${count}`}>{count}</span>
-  </h3>
-);
-
 /**
- * DEC-68 — „lekki charakter": accordion section with NO surrounding card/box.
- * Header = hairline top border + 44px row (L1 muted label via CountHeading +
- * chevron). Body = plain padding, no nested border. The original 6 fixed
- * sections + tool section default OPEN (matches pre-existing, already
- * evidence-logged behavior — kept unchanged here). `defaultOpen=false` is
- * used only for the new "Historia i AI" 8th section (RowDetailPanel parity,
- * P0, 2026-08-26), which the accepted prototype explicitly shows collapsed.
+ * ★ NAPRAWA 2026-09-05 (uwaga właściciela — odbiór na żywo `mywork-idea-
+ * inspector-lekki`): the DEC-68 bespoke accordion (`InspectorSection`/
+ * `CountHeading`, custom h3 headings + own collapse state) is retired in
+ * favor of the SAME canonical accordion every other artifact panel uses —
+ * `ArtifactRightPanel` (SPEC-A, `ARTIFACT_PANEL_SECTION_ORDER`: Akcje ·
+ * Właściwości · Powiązania · Źródła i założenia · Komentarze · Historia).
+ * The owner's approved reference screenshot for this exact screen (round 3,
+ * `evidence/grafika/odbior-302-303-20260904/302-flaga-on/
+ * mywork-idea-inspector-lekki__PO__pl__1440__light.png`) is byte-identical to
+ * `ideas-teresa-panel`'s screenshot — both rendered the same
+ * `IdeaNotebookRightPanelPrototype` fallback (Akcje/Udostępnij·Kopiuj link,
+ * Właściwości, Powiązania, Źródła i założenia, Komentarze, Historia — every
+ * mandatory canon section, `showZeroBadge` counts). That six-section shell
+ * (not the old eight custom sections) is the approved composition. The
+ * `sections` array built just before this component's `return` (below the
+ * empty-state early return) is the field→section mapping; the element's own
+ * `description` is promoted out of "Treść i głębia" and into a new block at
+ * the very top of the header instead (owner: "dodać opis problemu … na
+ * górze nowego panelu") — see the comment next to that block.
  */
-const InspectorSection: React.FC<{
-  title: string;
-  count: number;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}> = ({ title, count, children, defaultOpen = true }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <section className="border-t border-c-border-subtle first:border-t-0">
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            setOpen((v) => !v);
-          }
-        }}
-        className="flex h-11 w-full cursor-pointer items-center gap-2 px-4 hover:bg-c-surface-raised"
-      >
-        <CountHeading title={title} count={count} />
-        <ChevronDown
-          size={15}
-          className={`shrink-0 text-c-text-muted transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
-          aria-hidden="true"
-        />
-      </div>
-      {open ? <div className="space-y-2 px-4 pb-4 pt-0.5">{children}</div> : null}
-    </section>
-  );
-};
 
 /**
  * Quiet field row: 104px muted label + value/control. No box, no default border.
@@ -233,6 +210,18 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     }),
     [draft]
   );
+  // ArtifactRightPanel's canonical "Powiązania" section (SPEC-A) has no
+  // separate slot for "Artefakty wyjściowe" — outputs (converted artifacts)
+  // are a kind of relation, so they render inside the same section (badge
+  // counts both) instead of inventing a 7th accordion the approved
+  // composition does not have.
+  const relationsTotal = counts.relations + counts.outputs;
+  // "Treść i głębia" minus `description` — the description now renders as
+  // the "opis problemu" block at the very top of the panel (owner's note,
+  // 2026-09-05), so it is not repeated lower down.
+  const depthParagraphs = [draft?.context, draft?.goal, draft?.rationale, draft?.risk].filter(
+    (text): text is string => Boolean(text)
+  );
 
   const historyAiCount = (activity?.length ?? 0) + (aiInsights?.length ?? 0);
 
@@ -319,101 +308,31 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     );
   }
 
-  return (
-    <aside
-      ref={rootRef}
-      /*
-       * ★ NAPRAWA 2026-09-01 (dyżur 164). Inspektor był PRZYBITY do 360 px
-       * wewnątrz powłoki, która rezerwowała 400 px (`ExecutiveModuleShell`,
-       * `mels-element-inspector-rail`) — 40 px zostawało puste, a uchwyt
-       * zmiany rozmiaru (320–560 px) nic nie robił, bo treść i tak nie
-       * rosła. To jest dosłownie „niepotrzebny panel" ze zgłoszenia
-       * właściciela. Teraz inspektor WYPEŁNIA swojego gospodarza, a jedyną
-       * szerokość ustala powłoka z tokenu `--ntype-right-panel-width`.
-       */
-      className="flex h-full w-full flex-col bg-c-surface text-c-text"
-      aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') onReturnToCanvas?.();
-      }}
-    >
-      {/* Header — no box, typographic title + light meta line (DEC-68). */}
-      <header className="px-4 pb-3 pt-3.5">
-        <div className="flex items-start gap-2">
-          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-tight">
-            {safeText(draft.label) || t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
-          </h2>
-          {onReturnToCanvas ? (
-            <button
-              type="button"
-              onClick={onReturnToCanvas}
-              aria-label={t('myWork.ideaInspector.close', 'Zamknij inspektor')}
-              className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
-            >
-              <X size={15} />
-            </button>
-          ) : null}
-        </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
-          {safeText(draft.semanticType) ? <span>{safeText(draft.semanticType)}</span> : null}
-          {safeText(draft.semanticType) && safeText(draft.branch) ? (
-            <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
-          ) : null}
-          {safeText(draft.branch) ? <span>{safeText(draft.branch)}</span> : null}
-          {confirmedAt ? (
-            <>
-              <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
-              <time dateTime={confirmedAt.toISOString()}>
-                {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
-                {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
-              </time>
-            </>
-          ) : null}
-        </div>
-        {/* Quick actions — quiet text links, no borders (DEC-68). */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            disabled
-            title={t('myWork.ideaInspector.drillReason', 'Akcja czeka na definicję zakresu')}
-            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
-          >
-            {t('myWork.ideaInspector.drill', 'Drąż w głąb')}
-          </button>
-          <button
-            type="button"
-            disabled
-            title={t('myWork.ideaInspector.summarizeReason', 'Akcja czeka na definicję zakresu')}
-            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
-          >
-            {t('myWork.ideaInspector.summarize', 'AI podsumuj')}
-          </button>
-          <button
-            type="button"
-            disabled
-            title={t('myWork.ideaInspector.adviceReason', 'Akcja czeka na definicję zakresu')}
-            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
-          >
-            {t('myWork.ideaInspector.advice', 'AI porada')}
-          </button>
-        </div>
-        {saving ? (
-          <p role="status" className="mt-2 text-xs text-c-text-secondary">
-            …
-          </p>
-        ) : null}
-        {saveError ? (
-          <p role="alert" className="mt-2 text-xs text-c-danger">
-            {saveError}
-          </p>
-        ) : null}
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.basics', 'Podstawowe')}
-          count={counts.basics}
-        >
+  /**
+   * SPEC-A canon body — six mandatory sections, exact order (Akcje ·
+   * Właściwości · Powiązania · Źródła i założenia · Komentarze · Historia),
+   * `ArtifactRightPanel` enforces label/order/icon for every id below; only
+   * `children`/`badge`/`isEmpty` are this component's job. See the note above
+   * `FieldRow` for why this replaces the old bespoke 8-section accordion.
+   */
+  const sections: ArtifactRightPanelSection[] = [
+    {
+      id: 'actions',
+      label: t('myWork.ideaInspector.sections.actions', 'Akcje'),
+      defaultOpen: true,
+      isEmpty: true,
+      // Honest empty state — the real quick actions (Drąż w głąb/AI podsumuj/
+      // AI porada) live in the header next to the element's identity, same as
+      // before; there is no second, distinct set of actions to show here.
+      emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'Brak dostępnych akcji.'),
+      children: null,
+    },
+    {
+      id: 'properties',
+      label: t('myWork.ideaInspector.sections.properties', 'Właściwości'),
+      defaultOpen: true,
+      children: (
+        <>
           <FieldRow label={t('myWork.ideaInspector.labelField', 'Etykieta')} stacked>
             <input
               aria-label={t('myWork.ideaInspector.labelField', 'Etykieta')}
@@ -502,95 +421,135 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <FieldRow label={t('myWork.ideaInspector.semanticTypeField', 'Typ semantyczny')}>
             {safeText(draft.semanticType) || <span className="text-c-text-muted">—</span>}
           </FieldRow>
-        </InspectorSection>
-
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
-          count={counts.content}
-        >
-          {[draft.description, draft.context, draft.goal, draft.rationale, draft.risk]
-            .filter(Boolean)
-            .map((text, index) => (
-              <p key={index} className="text-[12.5px] leading-relaxed text-c-text-secondary">
-                {safeText(text)}
+          {draft.tags?.length ? (
+            <FieldRow label={t('myWork.ideaInspector.tagsField', 'Tagi')}>
+              <div className="flex flex-wrap gap-1.5">
+                {draft.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex h-[22px] items-center rounded-full bg-c-surface-raised px-2 text-[11px] text-c-text-secondary"
+                  >
+                    {safeText(tag)}
+                  </span>
+                ))}
+              </div>
+            </FieldRow>
+          ) : null}
+          {depthParagraphs.length ? (
+            <div className="mt-3 space-y-1.5 border-t border-c-border-subtle pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                {t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
               </p>
-            ))}
-        </InspectorSection>
-
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.classification', 'Klasyfikacja')}
-          count={draft.tags?.length ?? 0}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {draft.tags?.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex h-[22px] items-center rounded-full bg-c-surface-raised px-2 text-[11px] text-c-text-secondary"
-              >
-                {safeText(tag)}
-              </span>
-            ))}
-          </div>
-        </InspectorSection>
-
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła')}
-          count={counts.evidence}
-        >
-          {draft.evidence?.map((item) => (
-            <p key={item.id ?? item.title} className="text-[12.5px] leading-relaxed text-c-text">
-              {safeText(item.title)} · {safeText(item.type)} · {safeText(item.source)} ·{' '}
-              {safeText(item.date)}
-            </p>
-          ))}
-        </InspectorSection>
-
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.relations', 'Powiązania')}
-          count={counts.relations}
-        >
-          {draft.relations?.map((item) => (
-            <p key={item.id ?? item.title} className="text-[12.5px] leading-relaxed text-c-text">
-              {safeText(item.title)} · {safeText(item.type)} · {safeText(item.branch)}
-            </p>
-          ))}
-        </InspectorSection>
-
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
-          count={counts.outputs}
-        >
-          {draft.outputs?.map((item) => (
-            <div key={item.id ?? item.title} className="flex items-center justify-between gap-2">
-              <p className="text-[12.5px] leading-relaxed text-c-text">
-                {safeText(item.title)} · {safeText(item.type)} · {safeText(item.status)}
-              </p>
-              {item.targetId ? (
-                <button
-                  type="button"
-                  onClick={() => onOpenOutput?.(item.targetId!)}
-                  className="shrink-0 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
-                >
-                  {t('myWork.ideaInspector.openButton', 'Otwórz')}
-                </button>
-              ) : null}
+              {depthParagraphs.map((text, index) => (
+                <p key={index} className="text-[12.5px] leading-relaxed text-c-text-secondary">
+                  {safeText(text)}
+                </p>
+              ))}
             </div>
-          ))}
-        </InspectorSection>
-
-        <InspectorSection title={toolTitle} count={toolSection ? 1 : 0}>
-          {toolSection}
-        </InspectorSection>
-
-        {/* RowDetailPanel parity (P0, 2026-08-26): 8th section per the accepted
-            prototype (Question 1, picked variant) — merges the old panel's
-            "Activity" and "AI Insights" tabs. Collapsed by default like the
-            prototype's own "Historia i AI" section. */}
-        <InspectorSection
-          title={t('myWork.ideaInspector.sections.historyAi', 'Historia i AI')}
-          count={historyAiCount}
-          defaultOpen={false}
-        >
+          ) : null}
+          {toolSection ? (
+            <div className="mt-3 space-y-2 border-t border-c-border-subtle pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                {toolTitle}
+              </p>
+              {toolSection}
+            </div>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      id: 'relations',
+      label: t('myWork.ideaInspector.sections.relations', 'Powiązania'),
+      defaultOpen: false,
+      badge: relationsTotal,
+      showZeroBadge: true,
+      isEmpty: relationsTotal === 0,
+      emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'Brak powiązań.'),
+      // ArtifactRightPanel's canon has no separate "outputs" slot — converted
+      // artifacts are a kind of relation, so they render here (own labeled
+      // sub-group), not as a 7th accordion the approved composition lacks.
+      children:
+        relationsTotal === 0 ? null : (
+          <>
+            {draft.relations?.map((item) => (
+              <p
+                key={item.id ?? item.title}
+                className="text-[12.5px] leading-relaxed text-c-text"
+              >
+                {safeText(item.title)} · {safeText(item.type)} · {safeText(item.branch)}
+              </p>
+            ))}
+            {draft.outputs?.length ? (
+              <div className="mt-2 space-y-1.5 border-t border-c-border-subtle pt-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
+                </p>
+                {draft.outputs.map((item) => (
+                  <div
+                    key={item.id ?? item.title}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <p className="text-[12.5px] leading-relaxed text-c-text">
+                      {safeText(item.title)} · {safeText(item.type)} · {safeText(item.status)}
+                    </p>
+                    {item.targetId ? (
+                      <button
+                        type="button"
+                        onClick={() => onOpenOutput?.(item.targetId!)}
+                        className="shrink-0 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                      >
+                        {t('myWork.ideaInspector.openButton', 'Otwórz')}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </>
+        ),
+    },
+    {
+      id: 'evidence',
+      label: t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła'),
+      defaultOpen: false,
+      badge: counts.evidence,
+      showZeroBadge: true,
+      isEmpty: counts.evidence === 0,
+      emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'Brak zapisanych źródeł i założeń.'),
+      children:
+        counts.evidence === 0
+          ? null
+          : draft.evidence?.map((item) => (
+              <p
+                key={item.id ?? item.title}
+                className="text-[12.5px] leading-relaxed text-c-text"
+              >
+                {safeText(item.title)} · {safeText(item.type)} · {safeText(item.source)} ·{' '}
+                {safeText(item.date)}
+              </p>
+            )),
+    },
+    {
+      id: 'comments',
+      label: t('myWork.ideaInspector.sections.comments', 'Komentarze'),
+      defaultOpen: false,
+      badge: 0,
+      showZeroBadge: true,
+      isEmpty: true,
+      // Honest — this element inspector has no comment thread of its own
+      // (per-node comment threads are a separate, already-shipped surface).
+      emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'Brak komentarzy.'),
+      children: null,
+    },
+    {
+      id: 'history',
+      label: t('myWork.ideaInspector.sections.history', 'Historia'),
+      defaultOpen: false,
+      badge: historyAiCount,
+      showZeroBadge: true,
+      children: (
+        <>
           <div className="space-y-1.5">
             {(activity?.length ?? 0) === 0 ? (
               <p className="text-[12.5px] text-c-text-muted">
@@ -647,7 +606,121 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               )}
             </div>
           ) : null}
-        </InspectorSection>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <aside
+      ref={rootRef}
+      /*
+       * ★ NAPRAWA 2026-09-01 (dyżur 164). Inspektor był PRZYBITY do 360 px
+       * wewnątrz powłoki, która rezerwowała 400 px (`ExecutiveModuleShell`,
+       * `mels-element-inspector-rail`) — 40 px zostawało puste, a uchwyt
+       * zmiany rozmiaru (320–560 px) nic nie robił, bo treść i tak nie
+       * rosła. To jest dosłownie „niepotrzebny panel" ze zgłoszenia
+       * właściciela. Teraz inspektor WYPEŁNIA swojego gospodarza, a jedyną
+       * szerokość ustala powłoka z tokenu `--ntype-right-panel-width`.
+       */
+      className="flex h-full w-full flex-col bg-c-surface text-c-text"
+      aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onReturnToCanvas?.();
+      }}
+    >
+      {/* Header — no box, typographic title + light meta line (DEC-68). */}
+      <header className="px-4 pb-3 pt-3.5">
+        <div className="flex items-start gap-2">
+          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-tight">
+            {safeText(draft.label) || t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
+          </h2>
+          {onReturnToCanvas ? (
+            <button
+              type="button"
+              onClick={onReturnToCanvas}
+              aria-label={t('myWork.ideaInspector.close', 'Zamknij inspektor')}
+              className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+            >
+              <X size={15} />
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
+          {safeText(draft.semanticType) ? <span>{safeText(draft.semanticType)}</span> : null}
+          {safeText(draft.semanticType) && safeText(draft.branch) ? (
+            <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+          ) : null}
+          {safeText(draft.branch) ? <span>{safeText(draft.branch)}</span> : null}
+          {confirmedAt ? (
+            <>
+              <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+              <time dateTime={confirmedAt.toISOString()}>
+                {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
+                {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
+              </time>
+            </>
+          ) : null}
+        </div>
+        {/* ★ Opis problemu (uwaga właściciela, 2026-09-05, odbiór na żywo
+            `mywork-idea-inspector-lekki`): "Warto byłoby dodać opis problemu
+            tak jak to jest obecnie na górze nowego panelu" — the element's
+            own description, promoted to the very top of the panel (same
+            paragraph markup the old "Treść i głębia" section used), so the
+            reader sees what this Problem/element is about before opening any
+            accordion. Not repeated inside Właściwości below (see
+            `depthParagraphs`, which excludes `description`). */}
+        {safeText(draft.description) ? (
+          <p className="mt-2 text-[12.5px] leading-relaxed text-c-text-secondary">
+            {safeText(draft.description)}
+          </p>
+        ) : null}
+        {/* Quick actions — quiet text links, no borders (DEC-68). */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-4">
+          <button
+            type="button"
+            disabled
+            title={t('myWork.ideaInspector.drillReason', 'Akcja czeka na definicję zakresu')}
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
+          >
+            {t('myWork.ideaInspector.drill', 'Drąż w głąb')}
+          </button>
+          <button
+            type="button"
+            disabled
+            title={t('myWork.ideaInspector.summarizeReason', 'Akcja czeka na definicję zakresu')}
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
+          >
+            {t('myWork.ideaInspector.summarize', 'AI podsumuj')}
+          </button>
+          <button
+            type="button"
+            disabled
+            title={t('myWork.ideaInspector.adviceReason', 'Akcja czeka na definicję zakresu')}
+            className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
+          >
+            {t('myWork.ideaInspector.advice', 'AI porada')}
+          </button>
+        </div>
+        {saving ? (
+          <p role="status" className="mt-2 text-xs text-c-text-secondary">
+            …
+          </p>
+        ) : null}
+        {saveError ? (
+          <p role="alert" className="mt-2 text-xs text-c-danger">
+            {saveError}
+          </p>
+        ) : null}
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <ArtifactRightPanel
+          ariaLabel={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
+          sections={sections}
+          width="100%"
+          className="min-h-0 flex-1 border-0"
+        />
       </div>
       <footer className="border-t border-c-border-subtle px-4 py-2.5 text-[11px] text-c-text-muted">
         {safeText(draft.lineage)}

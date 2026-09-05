@@ -9,11 +9,18 @@ import {
   type IdeaInspectorElement,
 } from '../IdeaElementInspector';
 
-// RowDetailPanel parity (P0, 2026-08-26 — STOP `f864a060f0`, day 3): this
-// covers the new 8th "Historia i AI" section, which merges the old Table
-// detail panel's "Activity" and "AI Insights" tabs into the shared rail per
-// the accepted prototype (`mywork-inspektor-prototyp.html`, Question 1,
-// picked variant).
+// RowDetailPanel parity (P0, 2026-08-26 — STOP `f864a060f0`, day 3): covers
+// the section merging the old Table detail panel's "Activity" and
+// "AI Insights" tabs into the shared rail.
+//
+// ★ NAPRAWA 2026-09-05 (uwaga właściciela, odbiór na żywo
+// `mywork-idea-inspector-lekki`): the section moved into the canonical
+// `ArtifactRightPanel` shell and was renamed from "Historia i AI" to
+// "Historia" (SPEC-A's own SSOT, `ARTIFACT_PANEL_SECTION_LABELS.history`,
+// already bans the "/ AI" suffix — AI is a content type inside the stream,
+// not part of the section name). The global i18n test mock fixes
+// `i18n.language: 'en'`, so the canonical label renders as "History" here
+// (see `IdeaElementInspector.behavior.test.tsx` for the same pattern).
 
 const element: IdeaInspectorElement = {
   id: 'row-1',
@@ -39,13 +46,15 @@ const activity: IdeaInspectorActivityItem[] = [
   },
 ];
 
-describe('IdeaElementInspector — Historia i AI (RowDetailPanel parity)', () => {
+const historyButton = () => screen.getByText('History').closest('button')!;
+
+describe('IdeaElementInspector — Historia (RowDetailPanel parity)', () => {
   it('starts collapsed and shows the honest empty state with no activity/insights', () => {
     render(<IdeaElementInspector element={element} tool="table" nativeStates={['todo']} />);
-    const heading = screen.getByRole('heading', { name: /^Historia i AI/ });
-    expect(heading).toHaveTextContent('Historia i AI 0');
-    const header = heading.closest('[role="button"]');
-    expect(header).toHaveAttribute('aria-expanded', 'false');
+    const button = historyButton();
+    expect(button).toHaveTextContent('History');
+    expect(button).toHaveTextContent('0');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders real activity entries (newest first) once expanded, no fabricated content', () => {
@@ -57,8 +66,7 @@ describe('IdeaElementInspector — Historia i AI (RowDetailPanel parity)', () =>
         activity={activity}
       />
     );
-    const heading = screen.getByRole('heading', { name: /^Historia i AI/ });
-    fireEvent.click(heading.closest('[role="button"]')!);
+    fireEvent.click(historyButton());
     expect(screen.getByText(/Piotr/)).toBeInTheDocument();
     expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument();
     // Newest first — "edited" (a2, Piotr) renders before "status_change" (a1).
@@ -75,6 +83,7 @@ describe('IdeaElementInspector — Historia i AI (RowDetailPanel parity)', () =>
         activity={activity}
       />
     );
+    fireEvent.click(historyButton());
     expect(
       screen.queryByRole('button', { name: /Wygeneruj podpowiedzi AI/ })
     ).not.toBeInTheDocument();
@@ -90,8 +99,7 @@ describe('IdeaElementInspector — Historia i AI (RowDetailPanel parity)', () =>
         onGenerateInsights={onGenerateInsights}
       />
     );
-    const heading = screen.getByRole('heading', { name: /^Historia i AI/ });
-    fireEvent.click(heading.closest('[role="button"]')!);
+    fireEvent.click(historyButton());
     fireEvent.click(screen.getByRole('button', { name: /Wygeneruj podpowiedzi AI/ }));
     expect(onGenerateInsights).toHaveBeenCalledTimes(1);
 
@@ -119,8 +127,7 @@ describe('IdeaElementInspector — Historia i AI (RowDetailPanel parity)', () =>
         aiLoading
       />
     );
-    const heading = screen.getByRole('heading', { name: /^Historia i AI/ });
-    fireEvent.click(heading.closest('[role="button"]')!);
+    fireEvent.click(historyButton());
     const button = screen.getByRole('button', { name: /Generowanie/ });
     expect(button).toBeDisabled();
   });
