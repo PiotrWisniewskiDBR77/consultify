@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=podglad-pomyslu-sufit-stopki&lang=pl&sufit=1&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "PO — stopka ma sufit z kanonu (calc(100% − 386px)); blok „Szczegóły” mieści się w całości\nWejście na rynek DACH — mapa hipotez\nRośnie\nMapa myśli\n04/09/2026\nrynek\nDACH\nSZCZEGÓŁY\n~18 słów\n\nGałęzie: popyt mid-market, konkurencja lokalna, kanały sprzedaży, ryzyka regulacyjne. Priorytet na Q3: zwalidować popyt zanim ruszy budowa oferty.\n\nWłaściwość\tWartość\nObszar\tEkspansja\nPriorytet\t2\nPotencjał\tWysoki\nZłożoność\tŚrednia\nWęzły\t18\nPołączenia\t21\nŹródło\tRęcznie\nUtworzono\t11/07/2026\nZmieniono\t04/09/2026\nAI\nRozwiń pomysł\nZnajdź ryzyka\nZaproponuj następny krok\nPOWIĄZANIA\nŹródło: Ręcznie\nOtwórz Flow\nCO DALEJ\nNajpierw tworzy sesję MyWork\nInicjatywa\nRaport\nPrezentacja\nModel finansowy\nBudżet\nWycena\nAnaliza finansowa",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:07:17.161Z"
+}

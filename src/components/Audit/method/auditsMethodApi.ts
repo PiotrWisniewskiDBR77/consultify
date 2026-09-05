@@ -3,7 +3,7 @@
  * (U7, `/api/audits/*`).
  *
  * Typy w tym pliku ŚWIADOMIE duplikują (nie importują) węższy wycinek
- * `server/src/services/audits/types.ts` — kod serwera nie wchodzi do bundla
+ * `server/src/services/audits/types.ts` — implementacja backendu nie wchodzi do bundla
  * frontendu, a to jest dokładnie ten sam wzorzec, którego `auditApi.ts` już
  * używa dla starszego orkiestratora `/api/audit` ("mirrors the backend
  * AuditProgram shape"). Gdy powstanie wspólny manifest kontraktowy FE/BE,

@@ -4,7 +4,7 @@
  * Contract SHA: e3b8be6cd706e2b563c84d0b5980f91d0eb8de5c
  *
  * Adapter jest rozcięty na dwie połowy, bo `server/tsconfig.json` ma
- * `rootDir: "server"` i kod serwera nie może zaimportować kontraktu z `src/`.
+ * `rootDir: "server"` i backend nie może zaimportować kontraktu z `src/`.
  * Ten test jest jedynym miejscem, w którym obie połowy spotykają się z samym
  * kontraktem — bez niego rozjazd nazw byłby niewykrywalny do czasu awarii na
  * produkcji.

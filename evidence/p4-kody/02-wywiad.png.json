@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=karta-interview&lang=pl&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "Wywiad diagnostyczny — robotyzacja spawalni, Metalpol Kielce\nW trakcie\nZapisano\nAI\nZakończ wywiad\nOcena AI\nMarkdown\nKopiuj\nWYWIAD\nPodgląd\nPytania\n5\nNotatki\n3\nKONTEKST\nPliki i linki\n5\nFakty\nInteresariusze\nLuki\nPODSUMOWANIE\nPodsumowanie\nPytania\nWybierz tryb wywiadu\nRekomendowane\nTryb pojedynczego pytania\n\nAI prezentuje jedno skupione pytanie na raz. Prowadzony, głębszy wywiad.\n\nZALETY\n\nGłębsze odpowiedzi, prowadzony flow, lepszy dla złożonych tematów\n\nWADY\n\nWolniejszy, wymaga obecności interviewer'a\n\nTryb listy zadań\n\nAI prezentuje checklistę pytań. Rozmówca wypełnia we własnym tempie.\n\nZALETY\n\nSzybszy, self-service, przyjazny dla async\n\nWADY\n\nPłytsze odpowiedzi, mniej prowadzenia\n\nTryb konwersacyjny\n\nAI prowadzi swobodną rozmowę i sama mapuje odpowiedzi na pytania scenariusza.\n\nZALETY\n\nNaturalny przebieg, wychwytuje wątki spoza scenariusza, najmniej wysiłku dla rozmówcy\n\nWADY\n\nTrudniej o pełne pokrycie pytań, wymaga późniejszej weryfikacji przypisań\n\nNastępne brakujące\n10/15\nOgólne\nStrategia\nOperacje\nCyfryzacja\nLudzie\nFinanse\nPostęp w tej sekcji\n2/3 · 67%\nNastępne brakujące\n1\nZacznij od następnego brakującego pytania\nSTATUS\tPYTANIE\tPEWNOŚĆ\tTAGI\tODPOWIEDŹ\tAKCJE\n\n\t\nJaki jest cel biznesowy stojący za robotyzacją spawalni?\nKliknij, aby podejrzeć lub edytować odpowiedź\n\t\n\t—\t\nZarząd zakontraktował na 2027 r. dwa duże zlecenia OEM (ramy podwozi, ok. 42 tys. szt./rok). Obecna spawalnia domyka maksymalnie 26 tys. szt./rok na trzy zmiany. Celem nie jest redukcja etatów, tylko zdjęcie sufitu przepustowości bez budowy drugiej hali.\n\t\n\n\n\t\nKto jest sponsorem projektu i jaki ma mandat decyzyjny?\nKliknij, aby podejrzeć lub edytować odpowiedź\n\t\n\t—\t\nSponsor: Marek Zieliński, Dyrektor Operacyjny — mandat do 1,8 mln zł bez uchwały zarządu. Powyżej tej kwoty wymagana zgoda rady nadzorczej (posiedzenia kwartalne, najbliższe 12.09.2026).\n\t\n\n\n\t\nJakie są kryteria sukcesu wdrożenia z perspektywy zarządu i jak będą mierzone?\nBrak odpowiedzi\n\t\n\t—\t\nBrak odpowiedzi\n\t\nDodaj pytanie\nZaproponuj pytania\nAKCJE\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nSzablon\tDiagnoza gotowości do automatyzacji (DRD v3)\nPrzypisany\t-\nTermin\t—\nPostęp\t67% (10/15)\nOcena AI\tBrak oceny\nEdycja\tAktywne\nAktywność\t20.07.2026\nPOWIĄZANIA\n3\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:07:19.677Z"
+}

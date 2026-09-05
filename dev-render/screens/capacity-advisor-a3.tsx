@@ -134,6 +134,34 @@ const json = (body: unknown, status = 200) =>
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   const path = new URL(url, window.location.origin).pathname;
+  if (path === '/api/organizations/current') {
+    return json({
+      organizations: [
+        {
+          id: 'org-demo',
+          name: 'Organizacja demonstracyjna',
+          role: 'OWNER',
+          access_type: 'OWNER',
+          is_current: true,
+        },
+      ],
+    });
+  }
+  if (path === '/api/v8/admin/flags') {
+    return json({ flags: [] });
+  }
+  if (/^\/api\/organizations\/[^/]+\/members$/.test(path)) {
+    return json([
+      {
+        userId: 'resource-manager',
+        name: 'Anna Kowalska',
+        email: 'anna@example.test',
+        role: 'OWNER',
+        status: 'active',
+        joinedAt: '2026-08-01T08:00:00.000Z',
+      },
+    ]);
+  }
   if (path === '/api/initiatives/runtime-v1/capacity-scenarios') {
     return json({
       scenarios: empty

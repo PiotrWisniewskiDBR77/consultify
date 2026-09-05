@@ -11,7 +11,7 @@
  *
  * Typy w tym pliku ŚWIADOMIE duplikują (nie importują) węższy wycinek
  * `server/src/services/audits/types.ts` — dokładnie ten sam wzorzec, którego
- * `../auditsMethodApi.ts` już używa ("kod serwera nie wchodzi do bundla
+ * `../auditsMethodApi.ts` już używa ("implementacja backendu nie wchodzi do bundla
  * frontendu"). Koperta odpowiedzi: `{ success: true, data: ... }`, rozpakowana
  * przez `unwrapEnvelope`.
  *

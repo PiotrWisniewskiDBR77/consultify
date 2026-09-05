@@ -2,6 +2,7 @@ const CAPACITY_UNIT_LABELS = {
   MONTH: { pl: 'miesiąc', en: 'month' },
   WEEK: { pl: 'tydzień', en: 'week' },
   'FTE-MONTH': { pl: 'miesiąc FTE', en: 'FTE-month' },
+  'FTE-WEEK': { pl: 'tydzień FTE', en: 'FTE-week' },
 } as const;
 
 const UNKNOWN_CAPACITY_UNIT = { pl: 'nieznana jednostka', en: 'unknown unit' } as const;

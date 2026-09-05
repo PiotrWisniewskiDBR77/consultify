@@ -7,10 +7,12 @@ describe('capacityUnitLabel', () => {
       MONTH: { pl: 'miesiąc', en: 'month' },
       WEEK: { pl: 'tydzień', en: 'week' },
       'FTE-MONTH': { pl: 'miesiąc FTE', en: 'FTE-month' },
+      'FTE-WEEK': { pl: 'tydzień FTE', en: 'FTE-week' },
     });
     expect(capacityUnitLabel('MONTH', true)).toBe('miesiąc');
     expect(capacityUnitLabel('WEEK', true)).toBe('tydzień');
     expect(capacityUnitLabel('FTE-month', true)).toBe('miesiąc FTE');
+    expect(capacityUnitLabel('FTE-week', true)).toBe('tydzień FTE');
     expect(capacityUnitLabel('MONTH', false)).toBe('month');
   });
 

@@ -1,5 +1,17 @@
 const INTERVIEW_CATEGORY_LABELS = {
   commercial: { pl: 'Komercyjne', en: 'Commercial' },
+  strategy: { pl: 'Strategia', en: 'Strategy' },
+  operations: { pl: 'Operacje', en: 'Operations' },
+  operational: { pl: 'Operacyjne', en: 'Operational' },
+  digital: { pl: 'Cyfryzacja', en: 'Digital' },
+  people: { pl: 'Ludzie', en: 'People' },
+  finance: { pl: 'Finanse', en: 'Finance' },
+  cost: { pl: 'Koszty', en: 'Cost' },
+  data: { pl: 'Dane', en: 'Data' },
+  quick: { pl: 'Szybkie', en: 'Quick' },
+  custom: { pl: 'Niestandardowe', en: 'Custom' },
+  general: { pl: 'Ogólne', en: 'General' },
+  executive: { pl: 'Zarząd', en: 'Executive' },
 } as const;
 
 const UNKNOWN_INTERVIEW_CATEGORY = {
