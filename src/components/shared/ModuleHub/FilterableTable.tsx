@@ -210,6 +210,23 @@ export const AUTO_MIN_WIDTH_COLUMN_THRESHOLD = 2;
  */
 export const ROW_ACTIONS_COLUMN_WIDTH = 80;
 
+export const COLUMN_MIN_WIDTH_BY_DATA_TYPE: Record<
+  NonNullable<TableColumn['dataType']>,
+  number
+> = {
+  text: 140,
+  status: 130,
+  date: 110,
+  owner: 150,
+  number: 90,
+};
+
+const getColumnTypeFloor = (column: TableColumn): number => {
+  if (column.id === 'title' || column.id === 'name') return 200;
+  if (column.type === 'select') return 90;
+  return COLUMN_MIN_WIDTH_BY_DATA_TYPE[column.dataType ?? 'text'];
+};
+
 /**
  * Podłogi używane WYŁĄCZNIE przy dopasowaniu do kontenera (`columnFit`).
  *
@@ -781,16 +798,22 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, []);
 
   const defaultColumnConfigs = useMemo<ColumnConfig[]>(() => {
-    return columns.map((c, idx) => ({
-      id: c.id,
-      label: c.label,
-      visible: c.defaultVisible !== false,
-      order: idx,
-      width: parsePx(c.width, c.id === 'title' || c.id === 'name' ? 260 : 140),
-      minWidth: c.id === 'title' || c.id === 'name' ? 200 : 90,
-      maxWidth: c.id === 'title' || c.id === 'name' ? 520 : 320,
-      required: c.id === 'title' || c.id === 'name',
-    }));
+    return columns.map((c, idx) => {
+      const floor = getColumnTypeFloor(c);
+      return {
+        id: c.id,
+        label: c.label,
+        visible: c.defaultVisible !== false,
+        order: idx,
+        width: Math.max(
+          parsePx(c.width, c.id === 'title' || c.id === 'name' ? 260 : 140),
+          floor
+        ),
+        minWidth: floor,
+        maxWidth: c.id === 'title' || c.id === 'name' ? 520 : 320,
+        required: c.id === 'title' || c.id === 'name',
+      };
+    });
   }, [columns, parsePx]);
 
   // Merge persisted layout onto the column defaults (V-B).
@@ -802,7 +825,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         const w = persisted?.widths?.[c.id];
         const vis = persisted?.visibility?.[c.id];
         const ord = persisted?.order?.[c.id];
-        const width = typeof w === 'number' && w > 0 ? w : (c.width ?? 140);
+        const width = Math.max(
+          typeof w === 'number' && w > 0 ? w : (c.width ?? 140),
+          c.minWidth ?? 90
+        );
         widths[c.id] = width;
         return {
           ...c,
