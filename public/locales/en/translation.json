@@ -18824,6 +18824,10 @@
       "command": {
         "title": "Command Center",
         "subtitle": "Trust & control posture — SOC2 audit export, DLP, data residency, retention, and org AI policy."
+      },
+      "health": {
+        "title": "Health",
+        "subtitle": "Proof-of-life probes — round-trips against our own API and DB across critical flows."
       }
     },
     "billing": {

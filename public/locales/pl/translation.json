@@ -20071,6 +20071,10 @@
       "command": {
         "title": "Centrum dowodzenia",
         "subtitle": "Postawa zaufania i kontroli — eksport audytu SOC2, DLP, rezydencja danych, retencja i polityka AI organizacji."
+      },
+      "health": {
+        "title": "Stan systemu",
+        "subtitle": "Sondy potwierdzające działanie systemu — testy w obie strony na naszym własnym API i bazie danych w kluczowych przepływach."
       }
     },
     "billing": {
