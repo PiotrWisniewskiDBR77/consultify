@@ -296,7 +296,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       const data = await Api.getInitiativeById(initiativeId);
       setInitiative({
         id: data.id,
-        name: data.name || data.title || 'Untitled Initiative',
+        name: data.name || data.title || t('initiatives.fullView.untitled'),
         title: data.title,
         description: data.description,
         summary: data.summary,
@@ -351,11 +351,11 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       }
     } catch (err: any) {
       console.error('[InitiativeFullView] Fetch error:', err);
-      setError(err?.message || 'Failed to load initiative');
+      setError(err?.message || t('initiatives.fullView.error.title'));
     } finally {
       setIsLoading(false);
     }
-  }, [initiativeId]);
+  }, [initiativeId, t]);
 
   useEffect(() => {
     if (initiativeId) {
@@ -551,7 +551,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(i18n.resolvedLanguage || i18n.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -708,20 +708,22 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div className="flex items-center gap-3 mb-1">
                   {initiative.axis && (
                     <span className="px-2 py-0.5 text-xs font-medium rounded bg-c-info/20 text-c-info capitalize">
-                      {initiative.axis}
+                      {t(`initiatives.fullView.axis.${initiative.axis.toLowerCase()}`, initiative.axis)}
                     </span>
                   )}
                   {initiative.priority && (
                     <span
                       className={`px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(initiative.priority)}`}
                     >
-                      {initiative.priority}
+                      {t(`initiatives.priority.${initiative.priority.toLowerCase()}`)}
                     </span>
                   )}
                   {initiative.sourceType && (
                     <span className="text-xs text-slate-500 flex items-center gap-1">
                       <Zap size={10} />
-                      from {getSourceDisplayLabel(initiative.sourceType)}
+                      {t('initiatives.fullView.fromSource', {
+                        source: getSourceDisplayLabel(initiative.sourceType),
+                      })}
                     </span>
                   )}
                 </div>
@@ -815,7 +817,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                   <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
-                    Summary
+                    {t('initiatives.fullView.overview.summary')}
                   </h3>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                     {initiative.summary}
@@ -828,13 +830,21 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                     <ListTodo size={14} />
-                    Tasks ({taskStats.total})
+                    {t('initiatives.fullView.overview.tasksCount', { count: taskStats.total })}
                   </h3>
                   <div className="flex items-center gap-3 text-xs">
-                    <span className="text-green-400">{taskStats.done} Done</span>
-                    <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
+                    <span className="text-green-400">
+                      {t('initiatives.fullView.taskStats.done', { count: taskStats.done })}
+                    </span>
+                    <span className="text-blue-400">
+                      {t('initiatives.fullView.taskStats.inProgress', {
+                        count: taskStats.inProgress,
+                      })}
+                    </span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-danger-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-danger-400">
+                        {t('initiatives.fullView.taskStats.blocked', { count: taskStats.blocked })}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -937,7 +947,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               {/* Key Metrics */}
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">
-                  Key Metrics
+                  {t('initiatives.fullView.overview.keyMetrics')}
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -961,7 +971,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <TrendingUp size={14} />
-                      Expected ROI
+                      {t('initiatives.fullView.overview.expectedRoi')}
                     </span>
                     <span className="text-sm font-semibold text-green-400">
                       {formatRoiDisplay(initiative.expectedRoi)}
@@ -974,7 +984,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
-                  Timeline
+                  {t('initiatives.fullView.overview.timeline')}
                 </h3>
                 <div className="space-y-3">
                   <div>
@@ -996,7 +1006,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
-                  Ownership
+                  {t('initiatives.fullView.overview.ownership')}
                 </h3>
                 <div className="space-y-3">
                   <div>
@@ -1081,7 +1091,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       <span
                         className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
                       >
-                        {task.status.replace('_', ' ')}
+                        {t(`initiatives.fullView.taskStatus.${task.status.toLowerCase()}`)}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
@@ -1118,7 +1128,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {initiative.strategicIntent && (
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  Strategic Intent
+                  {t('initiatives.fullView.definition.strategicIntent')}
                 </h3>
                 <p className="text-sm text-slate-700 dark:text-slate-300">
                   {initiative.strategicIntent}
@@ -1128,7 +1138,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {initiative.businessValue && (
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  Business Value
+                  {t('initiatives.fullView.definition.businessValue')}
                 </h3>
                 <p className="text-sm text-slate-700 dark:text-slate-300">
                   {initiative.businessValue}
@@ -1138,7 +1148,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {initiative.problemStatement && (
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  Problem Statement
+                  {t('initiatives.fullView.definition.problemStatement')}
                 </h3>
                 <p className="text-sm text-slate-700 dark:text-slate-300">
                   {initiative.problemStatement}
@@ -1167,10 +1177,10 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div className="text-center py-12 text-slate-500">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg text-slate-900 dark:text-white mb-2">
-                    No definition details yet
+                    {t('initiatives.fullView.definition.empty')}
                   </p>
                   <p className="text-sm">
-                    Add strategic intent, business value, and problem statement
+                    {t('initiatives.fullView.definition.emptyDescription')}
                   </p>
                 </div>
               )}
@@ -1215,7 +1225,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                    Expected ROI
+                    {t('initiatives.fullView.overview.expectedRoi')}
                   </div>
                   <div className="text-2xl font-bold text-green-400">
                     {formatRoiDisplay(initiative.expectedRoi)}
@@ -1274,7 +1284,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                      Sponsor
+                      {t('initiatives.fullView.team.sponsor')}
                     </div>
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {`${initiative.sponsor.firstName} ${initiative.sponsor.lastName}`}

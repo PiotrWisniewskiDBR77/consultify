@@ -8786,6 +8786,13 @@
   "initiatives": {
     "fullView": {
       "loading": "Ładowanie inicjatywy…",
+      "untitled": "Inicjatywa bez tytułu",
+      "fromSource": "ze źródła {{source}}",
+      "axis": {
+        "strategic": "Strategiczna",
+        "operational": "Operacyjna",
+        "tactical": "Taktyczna"
+      },
       "error": {
         "title": "Nie udało się wczytać inicjatywy",
         "notFound": "Nie znaleziono inicjatywy",
@@ -8807,6 +8814,12 @@
         "history": "Historia"
       },
       "overview": {
+        "summary": "Podsumowanie",
+        "tasksCount": "Zadania ({{count}})",
+        "keyMetrics": "Kluczowe wskaźniki",
+        "expectedRoi": "Oczekiwany ROI",
+        "timeline": "Harmonogram",
+        "ownership": "Odpowiedzialność",
         "completion": "Ukończenie",
         "startDate": "Data rozpoczęcia",
         "endDate": "Data zakończenia"
@@ -8815,7 +8828,26 @@
         "empty": "Brak zadań",
         "emptyDescription": "Zadania zostaną dodane podczas planowania"
       },
-      "definition": { "deliverables": "Rezultaty", "keyRisks": "Kluczowe ryzyka" },
+      "taskStats": {
+        "done": "Ukończone: {{count}}",
+        "inProgress": "W toku: {{count}}",
+        "blocked": "Zablokowane: {{count}}"
+      },
+      "taskStatus": {
+        "todo": "Do zrobienia",
+        "in_progress": "W toku",
+        "blocked": "Zablokowane",
+        "done": "Ukończone"
+      },
+      "definition": {
+        "strategicIntent": "Intencja strategiczna",
+        "businessValue": "Wartość biznesowa",
+        "problemStatement": "Opis problemu",
+        "empty": "Brak szczegółów definicji",
+        "emptyDescription": "Dodaj intencję strategiczną, wartość biznesową i opis problemu",
+        "deliverables": "Rezultaty",
+        "keyRisks": "Kluczowe ryzyka"
+      },
       "economics": {
         "capexDescription": "Nakłady inwestycyjne",
         "opexDescription": "Roczne koszty operacyjne",

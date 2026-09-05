@@ -2024,12 +2024,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: String(initiativeId),
         type: 'initiative',
-        name: initiativeData?.name || initiativeData?.title || 'Initiative',
+        name:
+          initiativeData?.name || initiativeData?.title || t('common.documentTypes.initiative'),
         status: 'in_progress',
         data: initiativeData,
       });
     },
-    [handleOpenDocument]
+    [handleOpenDocument, t]
   );
 
   // Handle document saved/updated

@@ -9338,6 +9338,13 @@
   "initiatives": {
     "fullView": {
       "loading": "Loading initiative…",
+      "untitled": "Untitled initiative",
+      "fromSource": "from {{source}}",
+      "axis": {
+        "strategic": "Strategic",
+        "operational": "Operational",
+        "tactical": "Tactical"
+      },
       "error": {
         "title": "Failed to load initiative",
         "notFound": "Initiative not found",
@@ -9358,12 +9365,41 @@
         "team": "Team",
         "history": "History"
       },
-      "overview": { "completion": "Completion", "startDate": "Start date", "endDate": "End date" },
+      "overview": {
+        "summary": "Summary",
+        "tasksCount": "Tasks ({{count}})",
+        "keyMetrics": "Key metrics",
+        "expectedRoi": "Expected ROI",
+        "timeline": "Timeline",
+        "ownership": "Ownership",
+        "completion": "Completion",
+        "startDate": "Start date",
+        "endDate": "End date"
+      },
       "tasks": {
         "empty": "No tasks yet",
         "emptyDescription": "Tasks will be added during the planning phase"
       },
-      "definition": { "deliverables": "Deliverables", "keyRisks": "Key risks" },
+      "taskStats": {
+        "done": "Done: {{count}}",
+        "inProgress": "In progress: {{count}}",
+        "blocked": "Blocked: {{count}}"
+      },
+      "taskStatus": {
+        "todo": "To do",
+        "in_progress": "In progress",
+        "blocked": "Blocked",
+        "done": "Done"
+      },
+      "definition": {
+        "strategicIntent": "Strategic intent",
+        "businessValue": "Business value",
+        "problemStatement": "Problem statement",
+        "empty": "No definition details yet",
+        "emptyDescription": "Add strategic intent, business value, and problem statement",
+        "deliverables": "Deliverables",
+        "keyRisks": "Key risks"
+      },
       "economics": {
         "capexDescription": "Capital expenditure",
         "opexDescription": "Annual operational expenditure",
