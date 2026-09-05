@@ -1,0 +1,561 @@
+=== 1 ===
+const actionLabels: Record<CanvasActionId, string> = {
+  copy: 'Copy Markdown',
+  share: 'Share Canvas document',
+  save: 'Save Canvas document',
+  close: 'Close Canvas',
+  'view-document': 'Document view',
+  'view-md': 'Markdown view',
+  'create-presentation': 'Create presentation',
+  // #86b: this action materializes a spreadsheet resource (see
+  // server/src/routes/work-canvas.routes.ts — outputType 'table' -> 'spreadsheet'),
+  // NOT the idea-table (StandardTable/Idea Table) tool. Doktryna: Tabela(idea)≠Excel
+  // (oblicz) — label must say "sheet", not "table", to avoid promising the wrong tool.
+  'create-table': 'Create sheet',
+  'create-report': 'Create report',
+  'send-to-idea': 'Send to idea',
+  'save-as-note': 'Save as note',
+  'create-initiative': 'Create initiative',
+  // C3
+  'create-decision': 'Capture decision',
+  'create-task': 'Create task',
+};
+20
+=== 2 ===
+const datasetArtifactActions: Array<{
+  kind: 'table' | 'chart' | 'dashboard' | 'research';
+  label: string;
+  analysisKind?: DatasetAnalysisKind;
+  titlePrefix?: string;
+}> = [
+  { kind: 'table', label: 'Dataset table' },
+  { kind: 'chart', label: 'Dataset chart' },
+  { kind: 'dashboard', label: 'KPI dashboard' },
+  { kind: 'research', label: 'Findings report' },
+  {
+    kind: 'research',
+    label: 'Profile summary',
+    analysisKind: 'profile_summary',
+    titlePrefix: 'Profile Summary',
+  },
+  {
+    kind: 'chart',
+    label: 'Aggregate chart',
+    analysisKind: 'aggregate_numeric',
+    titlePrefix: 'Aggregate Chart',
+  },
+  {
+    kind: 'table',
+    label: 'Filtered table',
+    analysisKind: 'filtered_table',
+    titlePrefix: 'Filtered Table',
+  },
+];
+
+118:  applyLabel: string;
+2254:        applyLabel: `Apply ${titlePrefix || artifactKind}`,
+2512:        applyLabel: `Apply ${title}`,
+2565:          applyLabel: 'Apply edit suggestion',
+2583:        applyLabel: 'Apply edit suggestion',
+5158:                  Revise edit
+5166:                {pendingOperation.applyLabel}
+5173:                Reject
+=== 3 ===
+379:          <EvidenceList title="Findings" items={[...facts, ...findings]} />
+380:          <EvidenceList title="Sources" items={sources} />
+381:          <EvidenceList title="Limitations / contradictions" items={contradictions} />
+382:          <EvidenceList title="Gaps" items={gaps} />
+383:          <EvidenceList title="Recommendations" items={recommendations} className="md:col-span-2" />
+413:          <EvidenceList title="Options" items={options} />
+414:          <EvidenceList title="Criteria" items={criteria} />
+415:          <EvidenceList title="Risks" items={risks} />
+416:          <EvidenceList title="Assumptions" items={assumptions} />
+498:          <EvidenceList title="Narrative insights" items={insights} />
+499:          <EvidenceList title="Recommended actions" items={actions} />
+500:          <EvidenceList title="Data limitations" items={limitations} className="md:col-span-2" />
+240:              aria-label={`Filter ${block.title}`}
+310:                      aria-label={`Select row ${entry.index + 1}`}
+function BlockHeader({
+  block,
+  onCopy,
+  onExport,
+}: {
+  block: CanvasArtifactBlock;
+  onCopy: () => void;
+  onExport?: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 px-1">
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
+          {block.kind} block
+        </div>
+        <h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{block.title}</h3>
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {block.status} · projection {block.markdownProjectionStatus} · {provenanceLabel(block)}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onCopy}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+        >
+          <Copy size={13} />
+          Copy
+        </button>
+        {onExport ? (
+          <button
+            type="button"
+            onClick={onExport}
+            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+          >
+            <Download size={13} />
+            CSV
+=== 4 ===
+              {/* Footer — Reset + Save */}
+              <div className="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-200 dark:border-white/[0.06]">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCustomInstructions('');
+                    setAIConfig({ responseStyle: 'normal', customInstructions: '' } as any);
+                  }}
+                  disabled={isSavingInstructions}
+                >
+                  Reset
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={async () => {
+                    await handleSaveInstructions();
+                    setIsStyleModalOpen(false);
+                  }}
+                  loading={isSavingInstructions}
+                >
+                  {t('common.save', 'Save')}
+                </Button>
+              </div>
+=== 5 ===
+
+const QUICK_ACTIONS = [
+  {
+    id: 'expand',
+    labelEn: 'Expand',
+    labelPl: 'Rozwiń',
+    prompt: 'Expand this text with more detail.',
+  },
+  {
+    id: 'shorten',
+    labelEn: 'Shorten',
+    labelPl: 'Skróć',
+    prompt: 'Make this text shorter and more concise.',
+  },
+  {
+    id: 'rewrite',
+    labelEn: 'Rewrite',
+    labelPl: 'Przepisz',
+    prompt: 'Rewrite this text to be clearer and more professional.',
+  },
+  // C5 — parity-with-ChatGPT-Canvas presets. Each is a single prompt the
+  // backend already handles via /chat/quick; the value is in the labels (the
+  // user shouldn't need to know the exact phrasing).
+  {
+    id: 'final_polish',
+    labelEn: 'Final polish',
+    labelPl: 'Doszlifuj',
+    prompt:
+      'Polish this text: fix grammar and spelling, smooth awkward phrasing, keep meaning + tone identical, preserve markdown structure.',
+  },
+  {
+    id: 'length_concise',
+    labelEn: 'Length: concise',
+    labelPl: 'Długość: zwięzła',
+    prompt:
+      'Compress this text by about 40%. Keep every key fact and the structure. Cut filler and redundancy.',
+  },
+  {
+    id: 'length_detailed',
+    labelEn: 'Length: detailed',
+    labelPl: 'Długość: rozbudowana',
+    prompt:
+      'Expand this text by about 60%. Add concrete examples, supporting detail, and clearer transitions. Do not invent facts.',
+  },
+  {
+    id: 'level_exec',
+    labelEn: 'For: executive',
+    labelPl: 'Dla: zarządu',
+    prompt:
+      'Rewrite for an executive reader: scannable, decision-oriented, lead with the so-what, drop jargon, max 1 idea per sentence.',
+  },
+  {
+    id: 'level_expert',
+    labelEn: 'For: expert',
+    labelPl: 'Dla: eksperta',
+    prompt:
+      'Rewrite for a domain expert: precise terminology, mention trade-offs and assumptions, avoid over-simplifying.',
+  },
+  {
+    id: 'level_beginner',
+    labelEn: 'For: beginner',
+    labelPl: 'Dla: laika',
+    prompt:
+      'Rewrite for someone new to this topic: explain terms, use analogies, short paragraphs, friendly tone.',
+  },
+  {
+    id: 'translate_en',
+    labelEn: 'Translate → EN',
+    labelPl: 'Tłumacz → EN',
+    prompt: 'Translate this text to English.',
+  },
+  {
+    id: 'translate_pl',
+    labelEn: 'Translate → PL',
+    labelPl: 'Tłumacz → PL',
+    prompt: 'Translate this text to Polish.',
+  },
+] as const;
+
+// E1 — ChatGPT-Canvas-style shortcut actions surfaced directly in the toolbar
+// (no dropdown hop). All rewrite shortcuts reuse the exact same quick-action +
+// diff accept/reject pipeline as the dropdown actions; the prompts are written
+// in English (instruction language) but explicitly pin the OUTPUT language to
+// the selected text so they are bilingual-safe.
+const SHORTCUT_CONDENSE_PROMPT =
+  'Rewrite this text about 40% shorter. Keep every key fact and the meaning, preserve the markdown formatting and structure. Respond in the same language as the text.';
+
+const SHORTCUT_EXPAND_PROMPT =
+  'Expand this text with concrete, relevant detail in the same tone. Stay under roughly 2x the original length and do not invent facts. Preserve the markdown formatting. Respond in the same language as the text.';
+
+const TONE_OPTIONS = [
+  {
+    id: 'tone_formal',
+    labelEn: 'Formal',
+    labelPl: 'Formalny',
+    prompt:
+      'Rewrite this text in a formal, consulting-grade tone: precise, structured, McKinsey-style clarity and rigor. Keep the meaning and the markdown formatting. Respond in the same language as the text.',
+  },
+  {
+    id: 'tone_simple',
+    labelEn: 'Simpler',
+    labelPl: 'Prostszy',
+    prompt:
+      'Rewrite this text in plain, simple language: short sentences, everyday words, no jargon. Keep the meaning and the markdown formatting. Respond in the same language as the text.',
+  },
+] as const;
+103:      'Rewrite for someone new to this topic: explain terms, use analogies, short paragraphs, friendly tone.',
+128:  'Expand this text with concrete, relevant detail in the same tone. Stay under roughly 2x the original length and do not invent facts. Preserve the markdown formatting. Respond in the same language as the text.';
+313:              {t(`canvas.aiMenu.quickAction.${action.id}`, action.labelEn)}
+329:              {t(`canvas.aiMenu.tone.${option.id}`, option.labelEn)}
+421:          <span>{t('canvas.aiMenu.tone.label', 'Tone')}</span>
+451:          title={t('canvas.aiMenu.quickActionsTitle', 'Quick actions')}
+=== 6 ===
+canvas.aiMenu.quickAction.expand None None
+canvas.aiMenu.quickAction.shorten None None
+canvas.aiMenu.quickAction.rewrite None None
+canvas.aiMenu.quickAction.final_polish None None
+canvas.aiMenu.quickAction.length_concise None None
+canvas.aiMenu.quickAction.length_detailed None None
+canvas.aiMenu.quickAction.level_exec None None
+canvas.aiMenu.quickAction.level_expert None None
+canvas.aiMenu.quickAction.level_beginner None None
+canvas.aiMenu.quickAction.translate_en None None
+canvas.aiMenu.quickAction.translate_pl None None
+canvas.aiMenu.tone.tone_formal None None
+canvas.aiMenu.tone.tone_simple None None
+=== 7 ===
+6797:                title={t('aiChat.business', 'Business actions')}
+6798:                aria-label={t('aiChat.business', 'Business actions')}
+6883:                    ? t('aiChat.muteNow', 'Mute now')
+6890:                    ? t('aiChat.muteNow', 'Mute now')
+7490:          aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
+7495:            aria-label={t('aiChat.workPanel.resizeDivider', 'Resize Canvas panel')}
+=== 8 ===
+641:      if (action === 'delete' && !window.confirm(`Delete ${ids.length} conversation(s)?`)) return;
+903:      if (!window.confirm(msg)) return;
+941:        !window.confirm(
+src/components/AIChat/MoveToProjectModal.tsx:153:          'aiChat.confirmMovePrivateToOrganization',
+src/components/AIChat/MoveToProjectModal.tsx:168:          `${t('aiChat.visibilityConsentRecorded', 'Organization visibility recorded. Receipt')}: ${result.visibilityReceiptId}`,
+src/components/AIChat/ConversationActions.tsx:356:            {t('aiChat.actions.export', 'Export')}
+src/components/AIChat/ConversationActions.tsx:368:                'aiChat.confirmDeleteDestructive',
+src/components/AIChat/ConversationActions.tsx:392:                  'aiChat.confirmPurge',
+src/components/AIChat/ConversationActions.tsx:407:              {t('aiChat.actions.purge', 'Permanently Delete')}
+src/components/AIChat/ChatHistorySidebar.tsx:899:              'aiChat.confirmDeleteFolderWithConvs',
+src/components/AIChat/ChatHistorySidebar.tsx:902:          : t('aiChat.confirmDeleteFolder', `Delete folder "${name}"?`);
+src/components/AIChat/ChatHistorySidebar.tsx:910:            t('aiChat.deleteFolderFailed', 'Could not delete folder. Please try again.')
+src/components/AIChat/ChatHistorySidebar.tsx:943:            'aiChat.confirmMovePrivateToOrganization',
+src/components/AIChat/ChatHistorySidebar.tsx:956:            `${t('aiChat.visibilityConsentRecorded', 'Organization visibility recorded. Receipt')}: ${result.visibilityReceiptId}`,
+=== 8b ===
+src/components/AIChat/UnifiedChatPanel.tsx:1374	chat.governedHandoff.defaultTitle	Document from Chat
+src/components/AIChat/UnifiedChatPanel.tsx:1387	chat.governedHandoff.createFailed	Proposal creation failed.
+src/components/AIChat/UnifiedChatPanel.tsx:1514	myWork.ideas.savedFromChatToast	Saved from chat to My Ideas
+src/components/AIChat/UnifiedChatPanel.tsx:1515	myWork.ideas.sentToWorkspaceToast	Opened in Ideas workspace
+src/components/AIChat/UnifiedChatPanel.tsx:1556	myWork.ideas.savedFromChatToast	Saved from chat to My Ideas
+src/components/AIChat/UnifiedChatPanel.tsx:1614	myWork.notebook.savedFromChatToast	Saved from chat to Notebook
+src/components/AIChat/UnifiedChatPanel.tsx:2265	myWork.ideas.sentToWorkspaceToast	Opened in Ideas workspace
+src/components/AIChat/UnifiedChatPanel.tsx:2285	myWork.notebook.savedFromChatToast	Saved from chat to Notebook
+src/components/AIChat/UnifiedChatPanel.tsx:2304	myWork.tasks.createdFromChatToast	Task created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2305	myWork.decisions.createdFromChatToast	Decision created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2325	chat.initiativeHandoff.createdDraft	The initiative draft is ready. Review it before passing it to execution.
+src/components/AIChat/UnifiedChatPanel.tsx:2340	myWork.initiatives.createdFromChatToast	Initiative created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2353	myWork.initiatives.createdFromChatToast	Initiative created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2914	chat.suggestions.generateReport	Create document
+src/components/AIChat/UnifiedChatPanel.tsx:2920	chat.suggestions.generatePresentation	Create presentation
+src/components/AIChat/UnifiedChatPanel.tsx:2926	chat.suggestions.browseTemplates	Browse templates
+src/components/AIChat/UnifiedChatPanel.tsx:2934	chat.suggestions.useTemplate	Use this template
+src/components/AIChat/UnifiedChatPanel.tsx:2946	chat.suggestions.recordKpi	Record KPI value
+src/components/AIChat/UnifiedChatPanel.tsx:4581	aiChat.errors.messageSaveFailed	Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds.
+src/components/AIChat/UnifiedChatPanel.tsx:5854	branch.loadFailed	Could not load branches.
+src/components/AIChat/UnifiedChatPanel.tsx:5890	branch.switchFailed	Could not switch to that branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5919	branch.createFailed	Could not create branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5938	branch.renameFailed	Could not rename branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5960	branch.deleteFailed	Could not delete branch.
+src/components/AIChat/UnifiedChatPanel.tsx:6764	branch.backToParent	Back to source conversation
+src/components/AIChat/UnifiedChatPanel.tsx:6765	branch.backToParent	Back to source conversation
+src/components/AIChat/UnifiedChatPanel.tsx:6797	aiChat.business	Business actions
+src/components/AIChat/UnifiedChatPanel.tsx:6798	aiChat.business	Business actions
+src/components/AIChat/UnifiedChatPanel.tsx:6869	voice.bargeInToast	Reading interrupted.
+src/components/AIChat/UnifiedChatPanel.tsx:6883	aiChat.muteNow	Mute now
+src/components/AIChat/UnifiedChatPanel.tsx:6890	aiChat.muteNow	Mute now
+src/components/AIChat/UnifiedChatPanel.tsx:6993	aiChat.streamError	Last request failed. You can retry.
+src/components/AIChat/UnifiedChatPanel.tsx:7042	aiChat.quickClicks.brief.prompt	Give me a short daily brief: priorities, risks, decisions, and next best actions.
+src/components/AIChat/UnifiedChatPanel.tsx:7377	aiChat.streamError	Last request failed. You can retry.
+src/components/AIChat/UnifiedChatPanel.tsx:7490	aiChat.workPanel.title	Canvas work area
+src/components/AIChat/UnifiedChatPanel.tsx:7495	aiChat.workPanel.resizeDivider	Resize Canvas panel
+36 src/components/AIChat/UnifiedChatPanel.tsx
+src/components/AIChat/ChatHistorySidebar.tsx:386	aiChat.folderColor	Color
+src/components/AIChat/ChatHistorySidebar.tsx:895	aiChat.folder	folder
+src/components/AIChat/ChatHistorySidebar.tsx:898	aiChat.confirmDeleteFolderWithConvs	Delete folder "${name}"? The ${count} conversation(s) inside will NOT be deleted, just detached from this folder.
+src/components/AIChat/ChatHistorySidebar.tsx:902	aiChat.confirmDeleteFolder	Delete folder "${name}"?
+src/components/AIChat/ChatHistorySidebar.tsx:910	aiChat.deleteFolderFailed	Could not delete folder. Please try again.
+src/components/AIChat/ChatHistorySidebar.tsx:942	aiChat.confirmMovePrivateToOrganization	Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.
+src/components/AIChat/ChatHistorySidebar.tsx:956	aiChat.visibilityConsentRecorded	Organization visibility recorded. Receipt
+7 src/components/AIChat/ChatHistorySidebar.tsx
+src/components/AIChat/ConversationActions.tsx:340	aiChat.exportTooLarge	This conversation is too large for full export. Please use date filters.
+src/components/AIChat/ConversationActions.tsx:356	aiChat.actions.export	Export
+src/components/AIChat/ConversationActions.tsx:367	aiChat.confirmDeleteDestructive	Delete "${title}"?\n\nThis action is destructive. The conversation will be moved to trash and permanently removed after 30 days. This cannot be undone.
+src/components/AIChat/ConversationActions.tsx:391	aiChat.confirmPurge	Permanently delete "${conversation.title || 'this conversation'}"?\n\nAll messages and attachments will be irreversibly removed. An audit record will be kept. This CANNOT be undone.
+src/components/AIChat/ConversationActions.tsx:407	aiChat.actions.purge	Permanently Delete
+5 src/components/AIChat/ConversationActions.tsx
+src/components/AIChat/MoveToProjectModal.tsx:88	aiChat.visibilityHistoryUnavailable	Visibility history could not be loaded.
+src/components/AIChat/MoveToProjectModal.tsx:152	aiChat.confirmMovePrivateToOrganization	Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.
+src/components/AIChat/MoveToProjectModal.tsx:168	aiChat.visibilityConsentRecorded	Organization visibility recorded. Receipt
+src/components/AIChat/MoveToProjectModal.tsx:337	aiChat.visibilityHistory	Visibility history
+src/components/AIChat/MoveToProjectModal.tsx:349	aiChat.noVisibilityChanges	No organization visibility changes recorded.
+src/components/AIChat/MoveToProjectModal.tsx:356	aiChat.visibilityChanged	Visibility changed
+src/components/AIChat/MoveToProjectModal.tsx:365	aiChat.visibilityChangedBy	Actor
+7 src/components/AIChat/MoveToProjectModal.tsx
+src/components/SystemHealth.tsx:118	system.demoDataTitle	Demo data session
+src/components/SystemHealth.tsx:122	system.demoData	Demo Data
+src/components/SystemHealth.tsx:191	system.dataAccess	Data Access
+3 src/components/SystemHealth.tsx
+RAZEM: 58
+=== 9 ===
+191:                {t('system.dataAccess', 'Data Access')}
+False
+=== 10 ===
+canvas.versionHistory.confirmRestore Przywrócić tę wersję? Restore this version?
+canvas.versionHistory.confirmYes Tak, przywróć Yes, restore
+canvas.versionHistory.cancel Anuluj Cancel
+canvas.versionHistory.title Historia wersji Version history
+canvas.versionHistory.justNow przed chwilą just now
+=== 11 ===
+src/components/AIChat/MessageRenderer.tsx:742	policy.refusal.title	Request blocked by policy
+src/components/AIChat/MessageRenderer.tsx:753	policy.refusal.nextSteps	What to do next
+src/components/AIChat/MessageRenderer.tsx:768	policy.uncertainty.title	Uncertainty marker
+src/components/AIChat/MessageRenderer.tsx:773	policy.uncertainty.body	This response includes factual claims without sufficient citations from available sources.
+src/components/AIChat/MessageRenderer.tsx:785	policy.noSources.title	No sources found
+src/components/AIChat/MessageRenderer.tsx:790	policy.noSources.body	This answer could not be verified against available sources in your allowed scope.
+src/components/AIChat/MessageRenderer.tsx:1282	myWork.ideas.gardenSpark	Idea Garden Spark
+src/components/AIChat/MessageRenderer.tsx:1300	myWork.ideas.plantInGarden	Plant in Idea Garden
+src/components/AIChat/MessageRenderer.tsx:1303	myWork.ideas.plantInGarden	Plant
+src/components/AIChat/MessageRenderer.tsx:1684	stream.retrying	Connection issue, retrying...
+src/components/AIChat/MessageRenderer.tsx:1695	stream.complete	Response complete
+src/components/AIChat/MessageRenderer.tsx:1701	stream.costEstimateTooltip	Estimated AI cost for this response based on token usage
+src/components/AIChat/MessageRenderer.tsx:1722	stream.stoppedPartial	Response stopped. Partial answer shown above.
+src/components/AIChat/MessageRenderer.tsx:1725	stream.cancelled	Response cancelled.
+src/components/AIChat/MessageRenderer.tsx:1843	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:1852	chat.actions.edit	Edit
+src/components/AIChat/MessageRenderer.tsx:1864	chat.actions.savedToContext	Saved to Context OS
+src/components/AIChat/MessageRenderer.tsx:1865	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2073	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:2074	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:2092	chat.actions.stop	Stop
+src/components/AIChat/MessageRenderer.tsx:2093	chat.actions.speak	Speak
+src/components/AIChat/MessageRenderer.tsx:2095	chat.actions.speak	Speak
+src/components/AIChat/MessageRenderer.tsx:2110	chat.actions.toggleResponseActions	More actions
+src/components/AIChat/MessageRenderer.tsx:2111	chat.actions.toggleResponseActions	More actions
+src/components/AIChat/MessageRenderer.tsx:2208	chat.governedHandoff.proposeDocument	Propose governed document
+src/components/AIChat/MessageRenderer.tsx:2209	chat.governedHandoff.proposeDocument	Propose governed document
+src/components/AIChat/MessageRenderer.tsx:2225	chat.actions.savedToContext	Saved to Context OS
+src/components/AIChat/MessageRenderer.tsx:2226	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2228	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2246	chat.sources.details	Sources details
+src/components/AIChat/MessageRenderer.tsx:2247	chat.sources.details	Sources details
+src/components/AIChat/MessageRenderer.tsx:2373	deepThinking.hint	This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.
+src/components/AIChat/MessageRenderer.tsx:2384	deepThinking.enableHint	Enable Deep Thinking
+src/components/AIChat/MessageRenderer.tsx:2390	deepThinking.dismissHint	Not now
+src/components/AIChat/MessageRenderer.tsx:2408	deepThinking.ctaTitle	What do you want to do with this output?
+src/components/AIChat/MessageRenderer.tsx:2418	deepThinking.saving	Saving…
+src/components/AIChat/MessageRenderer.tsx:2419	deepThinking.saveDecision	Save as Decision
+src/components/AIChat/MessageRenderer.tsx:2427	deepThinking.convertInitiative	Convert to Initiative
+src/components/AIChat/MessageRenderer.tsx:2455	deepThinking.exportReport	Export Report
+src/components/AIChat/MessageRenderer.tsx:2469	deepThinking.saveToNotebook	Save to Notebook
+src/components/AIChat/MessageRenderer.tsx:2480	deepThinking.listenBrief	Listen to Brief
+src/components/AIChat/MessageRenderer.tsx:2493	deepThinking.decisionSaved	Decision saved successfully
+src/components/AIChat/MessageRenderer.tsx:2509	deepThinking.interimInsight	Preliminary insight — dominant paths emerging:
+src/components/AIChat/MessageRenderer.tsx:2522	deepThinking.narrowFocus	Narrow focus on the first path
+src/components/AIChat/MessageRenderer.tsx:2526	deepThinking.narrowFocusBtn	Narrow focus
+src/components/AIChat/MessageRenderer.tsx:2529	deepThinking.goDeeper	Go deeper
+src/components/AIChat/MessageRenderer.tsx:2532	deepThinking.continueDeeper	Continue to full report
+48 src/components/AIChat/MessageRenderer.tsx
+src/components/AIChat/ArtifactBadge.tsx:61	chat.actions.openPanel	Open in panel
+src/components/AIChat/ArtifactBadge.tsx:71	chat.actions.download	Download
+2 src/components/AIChat/ArtifactBadge.tsx
+src/components/AIChat/CitationList.tsx:88	aiChat.citationUnavailable	Source unavailable
+src/components/AIChat/CitationList.tsx:96	aiChat.citationStale	Source may be outdated
+src/components/AIChat/CitationList.tsx:104	aiChat.citationNoAccess	Source not accessible to you
+src/components/AIChat/CitationList.tsx:196	aiChat.deepSearchSources	Deep search sources
+src/components/AIChat/CitationList.tsx:255	aiChat.citationExternalBadge	External
+src/components/AIChat/CitationList.tsx:263	aiChat.citationFragmentBadge	Fragment ${(citation.fragmentIndex as number) + 1}
+src/components/AIChat/CitationList.tsx:313	aiChat.citationFragmentOpenLabel	Fragment ${(citation.fragmentIndex as number) + 1}
+src/components/AIChat/CitationList.tsx:319	aiChat.citationFragmentEmpty	No excerpt available.
+src/components/AIChat/CitationList.tsx:327	aiChat.citationOpenSource	Open source
+9 src/components/AIChat/CitationList.tsx
+src/components/AIChat/ExecutionProposalMessage.tsx:108	chatProposal.step.untitled	Step
+src/components/AIChat/ExecutionProposalMessage.tsx:185	chatProposal.state.proposed	Proposal drafted
+src/components/AIChat/ExecutionProposalMessage.tsx:193	chatProposal.state.pendingReview	Awaiting review
+src/components/AIChat/ExecutionProposalMessage.tsx:201	chatProposal.state.approved	Approved
+src/components/AIChat/ExecutionProposalMessage.tsx:209	chatProposal.state.executing	Executing
+src/components/AIChat/ExecutionProposalMessage.tsx:217	chatProposal.state.executed	Executed
+src/components/AIChat/ExecutionProposalMessage.tsx:233	chatProposal.state.audited	Audited
+src/components/AIChat/ExecutionProposalMessage.tsx:241	chatProposal.state.closed	Closed
+src/components/AIChat/ExecutionProposalMessage.tsx:249	chatProposal.state.rejected	Rejected
+src/components/AIChat/ExecutionProposalMessage.tsx:274	chatProposal.risk.high	High risk
+src/components/AIChat/ExecutionProposalMessage.tsx:281	chatProposal.risk.medium	Medium risk
+src/components/AIChat/ExecutionProposalMessage.tsx:288	chatProposal.risk.low	Low risk
+src/components/AIChat/ExecutionProposalMessage.tsx:404	chatProposal.ariaLabel	Governed execution proposal
+src/components/AIChat/ExecutionProposalMessage.tsx:428	chatProposal.stepCount	{{count}} steps
+src/components/AIChat/ExecutionProposalMessage.tsx:437	chatProposal.expiresAt	Expires {{when}}
+src/components/AIChat/ExecutionProposalMessage.tsx:457	chatProposal.rejectionReason	Reason
+src/components/AIChat/ExecutionProposalMessage.tsx:469	chatProposal.reviewer	Reviewed by {{name}}
+src/components/AIChat/ExecutionProposalMessage.tsx:537	chatProposal.action.execute	Execute
+18 src/components/AIChat/ExecutionProposalMessage.tsx
+src/components/AIChat/GovernedChatHandoffCard.tsx:141	chat.governedHandoff.citations	{{count}} source references preserved.
+1 src/components/AIChat/GovernedChatHandoffCard.tsx
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:62	chat.initiativeHandoff.missing.project	project
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:63	chat.initiativeHandoff.missing.owner	initiative owner
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:64	chat.initiativeHandoff.missing.problem	problem statement
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:75	chat.initiativeHandoff.readFailed	Could not verify the initiative draft.
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:107	chat.initiativeHandoff.adoptionFailed	Adoption failed.
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:114	chat.initiativeHandoff.state.idle	Awaiting consent
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:115	chat.initiativeHandoff.state.checking	Checking
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:118	chat.initiativeHandoff.state.blocked	Needs details
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:120	chat.initiativeHandoff.state.ready	Ready
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:121	chat.initiativeHandoff.state.adopting	Adopting
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:122	chat.initiativeHandoff.state.adopted	Adopted
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:123	chat.initiativeHandoff.state.failed	Failed
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:144	chat.initiativeHandoff.title	Pass the initiative to execution?
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:153	chat.initiativeHandoff.missingPrefix	Missing
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:164	chat.initiativeHandoff.check	Check before handoff
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:173	chat.initiativeHandoff.consent	Pass to execution
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:182	chat.initiativeHandoff.complete	Complete in Initiatives
+17 src/components/AIChat/GovernedInitiativeHandoffCard.tsx
+src/components/AIChat/InlineResponseFeedback.tsx:252	aiChat.feedback.saving	Zapisywanie…
+src/components/AIChat/InlineResponseFeedback.tsx:274	aiChat.feedback.forbidden	Nie można zapisać oceny dla tej wiadomości.
+src/components/AIChat/InlineResponseFeedback.tsx:275	aiChat.feedback.saveFailed	Nie udało się zapisać oceny.
+3 src/components/AIChat/InlineResponseFeedback.tsx
+src/components/AIChat/ResearchProgress.tsx:117	research.followUp	Follow-up
+src/components/AIChat/ResearchProgress.tsx:274	research.searchingRound	Searching (round ${round}/${totalRounds})...
+src/components/AIChat/ResearchProgress.tsx:279	research.deepening	Deepening research with follow-up queries...
+src/components/AIChat/ResearchProgress.tsx:329	research.generatingFollowUp	Analyzing gaps and generating follow-up queries...
+src/components/AIChat/ResearchProgress.tsx:338	research.synthesizingReport	Synthesizing comprehensive report...
+src/components/AIChat/ResearchProgress.tsx:391	research.round	Round ${round}/${totalRounds}
+src/components/AIChat/ResearchProgress.tsx:427	research.activity	Activity
+src/components/AIChat/ResearchProgress.tsx:439	research.waitingForActivity	Starting research...
+src/components/AIChat/ResearchProgress.tsx:457	research.initialQueries	Initial Queries
+src/components/AIChat/ResearchProgress.tsx:471	research.followUpQueries	Follow-up Queries (Iterative Deepening)
+src/components/AIChat/ResearchProgress.tsx:504	research.noSourcesYet	No sources found yet...
+11 src/components/AIChat/ResearchProgress.tsx
+src/components/AIChat/TeresaProposalCard.tsx:102	aiChat.teresaProposal.approved	Teresa proposal approved.
+src/components/AIChat/TeresaProposalCard.tsx:112	aiChat.teresaProposal.rejected	Teresa proposal rejected.
+src/components/AIChat/TeresaProposalCard.tsx:122	aiChat.teresaProposal.undone	Teresa workbook change undone.
+src/components/AIChat/TeresaProposalCard.tsx:132	aiChat.teresaProposal.executed	Teresa handoff executed.
+src/components/AIChat/TeresaProposalCard.tsx:197	aiChat.teresaProposal.approve	Approve
+src/components/AIChat/TeresaProposalCard.tsx:227	aiChat.teresaProposal.execute	Execute
+src/components/AIChat/TeresaProposalCard.tsx:242	aiChat.teresaProposal.undo	Undo change
+src/components/AIChat/TeresaProposalCard.tsx:252	aiChat.teresaProposal.navigate	Open target
+8 src/components/AIChat/TeresaProposalCard.tsx
+src/components/AIChat/TrustBadge.tsx:384	trust.badge.sources	{{count}} sources
+src/components/AIChat/TrustBadge.tsx:385	trust.badge.noSources	No cited sources
+src/components/AIChat/TrustBadge.tsx:404	trust.badge.ariaLabel	Response sources
+src/components/AIChat/TrustBadge.tsx:422	trust.badge.dialogLabel	Sources for this response
+src/components/AIChat/TrustBadge.tsx:428	trust.badge.dialogLabel	Sources for this response
+src/components/AIChat/TrustBadge.tsx:443	trust.badge.answeredBy	Answered by
+src/components/AIChat/TrustBadge.tsx:492	trust.badge.openSource	Open source in a new tab: {{title}}
+src/components/AIChat/TrustBadge.tsx:508	trust.badge.citationDomain	Source domain: {{domain}}
+src/components/AIChat/TrustBadge.tsx:537	trust.badge.noSourcesBody	This reply is based on the model\u2019s own reasoning, not on retrieved documents or search results.
+src/components/AIChat/TrustBadge.tsx:571	trust.badge.reasoningToggle	Why this answer?
+src/components/AIChat/TrustBadge.tsx:604	trust.badge.copyReasoningAriaLabel	Copy reasoning observations to clipboard
+src/components/AIChat/TrustBadge.tsx:619	trust.badge.copied	Copied
+src/components/AIChat/TrustBadge.tsx:624	trust.badge.copyFailed	Copy failed
+src/components/AIChat/TrustBadge.tsx:629	trust.badge.copy	Copy
+src/components/AIChat/TrustBadge.tsx:645	trust.badge.disclaimer	Sources tell you what was retrieved. Always verify claims that matter to you.
+src/components/AIChat/TrustBadge.tsx:663	trust.badge.copyCitationsAriaLabel	Copy citation list to clipboard
+src/components/AIChat/TrustBadge.tsx:678	trust.badge.copied	Copied
+src/components/AIChat/TrustBadge.tsx:683	trust.badge.copyFailed	Copy failed
+src/components/AIChat/TrustBadge.tsx:688	trust.badge.copy	Copy
+19 src/components/AIChat/TrustBadge.tsx
+RAZEM: 136
+=== 12 ===
+pl 35200
+en 33067
+focus=0
+list=0
+artefakt=0
+reach=1
+=== 13 ===
+New test-only files (1):
+src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts
+=== 14 ===
+51:  const roots = explicitScope ? [path.resolve(repoRoot, explicitScope)] : [path.join(repoRoot, 'src/components/DiscoveryTools'), path.join(repoRoot, 'src/toolPacks')];
+29:if ! node scripts/dev/check-etykiety-dwujezyczne.mjs; then
+New test-only files (1):
+src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts
+reach=1
+=== 13 ===
+New test-only files (1):
+src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts
+reach=1
+=== 14 ===
+51:  const roots = explicitScope ? [path.resolve(repoRoot, explicitScope)] : [path.join(repoRoot, 'src/components/DiscoveryTools'), path.join(repoRoot, 'src/toolPacks')];
+29:if ! node scripts/dev/check-etykiety-dwujezyczne.mjs; then
+=== klasa c ===
+25 podejrzanych (klucz w obu, wartosc identyczna, wyglada na angielska)
+chat.coThinker.title = 'Co-Thinker'
+chat.orgMemory.problemLabel = 'Problem:'
+aiChat.composer.commands.agents.label = 'Multi-agent'
+aiChat.chatMenuTitle = 'Menu'
+aiChat.homeCards.finance.m16.monteCarlo.min = 'Min'
+aiChat.homeCards.finance.m16.monteCarlo.max = 'Max'
+aiChat.homeCards.finance.m16.monteCarlo.addDriver = '+ driver'
+aiChat.homeCards.finance.m16.monteCarlo.seed = 'Seed'
+aiChat.homeCards.finance.m16.monteCarlo.p10 = 'P10'
+aiChat.homeCards.finance.m16.monteCarlo.p90 = 'P90'
+aiChat.homeCards.finance.m16.monteCarlo.probPositive = 'P(NPV > 0)'
+aiChat.homeCards.finance.m16.monteCarlo.var5 = 'VaR (5%)'
+aiChat.homeCards.finance.m16.sensitivity.addDriver = '+ driver'
+aiChat.menu.urlLabel = 'URL'
+aiChat.menu.urlPlaceholder = 'https://…'
+aiChat.menu.sources.pmoDocuments.desc = 'ISO 21500, PMBOK, PRINCE2'
+system.online = 'Online'
+system.offline = 'Offline'
+canvas.viewMode.markdown = 'MD'
+canvas.panel.addElement.diagram = 'Diagram'
+canvas.panel.diagnostics.format = 'Format'
+canvas.workShell.statusLabel = 'Status'
+canvas.workShell.kind.markdown = 'markdown'
+canvas.workShell.target.project_brief = 'Brief'
+canvas.workShell.readBack.status = 'Status'
