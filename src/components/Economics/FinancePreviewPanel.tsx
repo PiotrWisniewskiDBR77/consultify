@@ -169,7 +169,10 @@ interface FinancePreviewPanelProps {
   loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
-  loadAnalysisPreviewRatios: (id: string) => Promise<void>;
+  loadAnalysisPreviewRatios: (
+    id: string,
+    canonicalBusinessVersionId?: string | null
+  ) => Promise<void>;
   loadBudgets: () => Promise<void>;
   loadBudgetPreviewScenarios: (id: string) => Promise<void>;
   loadPredictionPreview: (id: string) => Promise<void>;
@@ -477,11 +480,13 @@ export function useFinancePreview({
           row.kind === 'investment'
             ? t('finance.preview.investmentCaseLabel', 'Investment case')
             : t('finance.preview.financialAnalysisLabel', 'Financial analysis');
+        // F-P5 §5 — bez tego podgląd renderował „Analiza finansowa: \nWaluta: \nLiczba okresów: 0"
+        // (puste wartości przed dwukropkiem). Brak danych ma wyglądać jak „—", nie jak zero.
         detailsText = t('finance.preview.analysisDetails', '{{kindLabel}}: {{analysisType}}', {
           kindLabel,
-          analysisType: row.analysisType,
-          currency: row.currency,
-          periods: row.periodCount,
+          analysisType: row.analysisType || '—',
+          currency: row.currency || '—',
+          periods: row.periodCount ? String(row.periodCount) : '—',
         });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
@@ -582,7 +587,10 @@ export function useFinancePreview({
                           {statement.statementType}
                         </span>
                         <span className="font-mono text-slate-900 dark:text-white">
-                          {statementReadinessLabel(statement.readinessStatus || 'pending', isPolishLocale)}{' '}
+                          {statementReadinessLabel(
+                            statement.readinessStatus || 'pending',
+                            isPolishLocale
+                          )}{' '}
                           / {statement.mappedLineCount}
                         </span>
                       </div>
@@ -1102,7 +1110,7 @@ export function useFinancePreview({
             try {
               await runCanonicalFinancialAnalysis(row.id);
               await loadAnalyses();
-              await loadAnalysisPreviewRatios(row.id);
+              await loadAnalysisPreviewRatios(row.id, row.canonicalBusinessVersionId ?? null);
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
             } catch (e: any) {
               toast.error(
