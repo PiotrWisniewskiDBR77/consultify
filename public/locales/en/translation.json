@@ -33779,7 +33779,22 @@
       "applying": "Applying…",
       "useTemplate": "Use template",
       "aiFill": "AI fill",
-      "replaceExistingElementsDesc": "The canvas contains {{value}} {{word}}. Applying a template will overwrite all content. This cannot be undone."
+      "replaceExistingElementsDesc": "The canvas contains {{value}} {{word}}. Applying a template will overwrite all content. This cannot be undone.",
+      "otherTemplates": "Other",
+      "seedUnit": {
+        "branches_one": "{{count}} branch",
+        "branches_other": "{{count}} branches",
+        "columns_one": "{{count}} column",
+        "columns_other": "{{count}} columns",
+        "lanes_one": "{{count}} lane",
+        "lanes_other": "{{count}} lanes",
+        "rows_one": "{{count}} row",
+        "rows_other": "{{count}} rows",
+        "sections_one": "{{count}} section",
+        "sections_other": "{{count}} sections",
+        "steps_one": "{{count}} step",
+        "steps_other": "{{count}} steps"
+      }
     },
     "aiSuggestionsPanel": {
       "aiSuggestions": "AI Suggestions",

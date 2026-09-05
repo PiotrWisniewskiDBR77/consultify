@@ -36344,7 +36344,28 @@
       "applying": "Stosowanie…",
       "useTemplate": "Użyj szablonu",
       "aiFill": "AI wypełni",
-      "replaceExistingElementsDesc": "Na kanwie znajduje się {{value}} {{word}}. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć."
+      "replaceExistingElementsDesc": "Na kanwie znajduje się {{value}} {{word}}. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć.",
+      "otherTemplates": "Pozostałe",
+      "seedUnit": {
+        "branches_few": "{{count}} gałęzie",
+        "branches_many": "{{count}} gałęzi",
+        "branches_one": "{{count}} gałąź",
+        "columns_few": "{{count}} kolumny",
+        "columns_many": "{{count}} kolumn",
+        "columns_one": "{{count}} kolumna",
+        "lanes_few": "{{count}} pasy",
+        "lanes_many": "{{count}} pasów",
+        "lanes_one": "{{count}} pas",
+        "rows_few": "{{count}} wiersze",
+        "rows_many": "{{count}} wierszy",
+        "rows_one": "{{count}} wiersz",
+        "sections_few": "{{count}} sekcje",
+        "sections_many": "{{count}} sekcji",
+        "sections_one": "{{count}} sekcja",
+        "steps_few": "{{count}} kroki",
+        "steps_many": "{{count}} kroków",
+        "steps_one": "{{count}} krok"
+      }
     },
     "aiSuggestionsPanel": {
       "aiSuggestions": "Sugestie AI",
