@@ -56,4 +56,28 @@ describe('AdminSeatsLicencesPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
     expect(update).toHaveBeenCalledWith(false, 75);
   });
+
+  it('admin-billing-seats-licences defekt 05.09: never shows a contradictory 0-total/0%-used summary when no plan is configured', async () => {
+    // Real-world shape: an org with active members but no seat-limited plan
+    // wired up yet (e.g. base_seats_included frozen at 0 from init, no
+    // organization_billing/subscription_plans row). seats_used is real (8);
+    // seats_limit_configured says so honestly instead of implying "0 total".
+    seats.mockResolvedValue({
+      total_seats_available: 0,
+      seats_used: 8,
+      seats_limit_configured: false,
+      auto_add_seats_on_invite: 0,
+      auto_add_seats_threshold: 80,
+    });
+    history.mockResolvedValue([]);
+    render(<AdminSeatsLicencesPanel />);
+    // "Zajęte" (used) is the one real number we know — still shown.
+    expect(await screen.findByText('8')).toBeInTheDocument();
+    // Total / Remaining / Utilization must NOT claim "0" — that reads as a
+    // hard limit that's already been breached. They must say honestly that
+    // no limit is configured.
+    const honestLabels = screen.getAllByText('Brak ustawionego limitu');
+    expect(honestLabels).toHaveLength(3); // Łącznie, Wolne, Wykorzystanie
+    expect(screen.queryByText('0%')).not.toBeInTheDocument();
+  });
 });

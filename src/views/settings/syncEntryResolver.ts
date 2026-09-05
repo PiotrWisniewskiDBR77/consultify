@@ -16,9 +16,20 @@ export function resolveLegacySyncSettingsEntry(
     case ROUTES.SETTINGS.NOTIFICATIONS:
       return `${ROUTES.SETTINGS.ROOT}/notifications-overview`;
     case ROUTES.SETTINGS.INTEGRATIONS:
-      return isAdminOwnerOrSuperAdminRole(role)
-        ? ROUTES.ADMIN.INTEGRATIONS
-        : `${ROUTES.SETTINGS.ROOT}/connected-apps`;
+      // ustawienia-integracje defekt 05.09: ROUTES.ADMIN.INTEGRATIONS
+      // ('/admin/integrations') has no corresponding domain/screen in
+      // AdminSettingsModule's taxonomy (adminNavigation.ts defines no
+      // 'integrations' entry) — it only existed as a legacy redirect
+      // target. AdminSettingsModule's own alias table then silently
+      // reinterpreted the unrecognized 'integrations' path segment as the
+      // 'security' domain and auto-canonicalized the URL a SECOND time to
+      // '/admin/security/security-policy'. Routing admin/owner/superadmin
+      // through that dead alias produced a two-hop redirect chain whose
+      // final (and every intermediate) state depended on render/effect
+      // timing — 8/8 real navigations in the 05.09 acceptance run landed
+      // on three different, all-wrong outcomes. Every role now gets the
+      // one real, working destination — same as everyone else.
+      return `${ROUTES.SETTINGS.ROOT}/connected-apps`;
     case ROUTES.SETTINGS.ORGANIZATION:
       return `${ROUTES.SETTINGS.ROOT}/tenant-defaults`;
     case ROUTES.SETTINGS.SECURITY:

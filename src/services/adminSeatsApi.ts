@@ -7,6 +7,8 @@ export interface SeatConfiguration {
   utilization_percent?: string;
   auto_add_seats_on_invite?: number;
   auto_add_seats_threshold?: number;
+  /** False when the org has no subscription plan configuring a seat limit yet. */
+  seats_limit_configured?: boolean;
 }
 export interface SeatTransaction {
   id: string;

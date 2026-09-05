@@ -572,7 +572,14 @@ export class ApiGateway {
 
       const internalToolsGuard = [gatewayVerifyToken, requireInternalToolsAccess];
       app.use('/api/ai/actions', ...internalToolsGuard);
-      app.use('/api/ai/prompts', ...internalToolsGuard);
+      // NOTE: '/api/ai/prompts' (legacy alias) and '/api/ai-prompts' (canonical,
+      // below) are the AI Governance "Personas" screen (Admin nav → AI → Persony) —
+      // a customer/admin-facing feature, not an internal engineering tool. The
+      // router (ai-prompts.routes.ts) already enforces verifyToken + requireRole
+      // ('super_admin'/'admin') per-endpoint, so stacking this internal-tools
+      // gate on top only served to 404 the whole screen for every org whenever
+      // INTERNAL_TOOLS_ENABLED is unset (every non-dev/test environment,
+      // including staging/demo) — admin-ai-personas defekt 05.09.
       app.use('/api/ai-context', ...internalToolsGuard);
       app.use('/api/ai-connectors', ...internalToolsGuard);
       app.use('/api/ai-agents', ...internalToolsGuard);
@@ -588,7 +595,6 @@ export class ApiGateway {
       app.use('/api/ai-memory', ...internalToolsGuard);
       app.use('/api/ai-operator', highRiskSurfaceGuard({ categories: ['autopilot'] }));
       app.use('/api/ai-memory', highRiskSurfaceGuard({ categories: ['ai_memory'] }));
-      app.use('/api/ai-prompts', ...internalToolsGuard);
       app.use('/api/ai-training', ...internalToolsGuard);
       app.use('/api/ai-analytics', ...internalToolsGuard);
       app.use('/api/ai-budgets', ...internalToolsGuard);

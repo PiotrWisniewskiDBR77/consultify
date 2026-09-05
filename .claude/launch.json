@@ -615,6 +615,17 @@
         "--strictPort"
       ],
       "port": 5324
+    },
+    {
+      "name": "admin-ustawienia-defekty-20260905",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "3011",
+        "--strictPort"
+      ],
+      "port": 3011
     }
   ]
 }
