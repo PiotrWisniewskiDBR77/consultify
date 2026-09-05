@@ -122,6 +122,48 @@ describe('AssessmentReportContractView', () => {
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
+  // ★ PIĄTE ZGŁOSZENIE TEJ SAMEJ SPRAWY (2026-09-05). Ekran raportu rysował
+  // WŁASNĄ tabelę „Obszar / Poziom obecny / Poziom docelowy / Luka / Stan
+  // dowodów" (aria-label „Axis matrix table") — kształt odrzucony przez
+  // właściciela (DZIENNIK_GRAFIKA Z-10). Ten test pilnuje, że rozdział osi
+  // rysuje macierz DRD właściciela (`DRDMatrixGrid` przez `DRDMatrixReadOnly`)
+  // i że odrzucona tabela nie ma jak wrócić.
+  it('rysuje macierz DRD właściciela w rozdziale osi (a nie odrzuconej tabeli 5 kolumn)', async () => {
+    localStorage.setItem('ff.assessment_report_view', '1');
+    resetAssessmentReportViewFlagCache();
+    vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(contract);
+    const { container } = render(<AssessmentReportContractView sessionId="session-1" />);
+    await screen.findByTestId('assessment-report-contract-view');
+
+    const matrix = await screen.findByTestId('assessment-report-drd-matrix');
+    // Siatka właściciela: wiersze = poziomy, najwyższy u góry (oś 1 = 7 poziomów
+    // wg DRD_STRUCTURE, NIE `chapter.maxLevel` — liczba poziomów jest cechą osi).
+    expect(matrix.textContent).toContain('7. AI Support');
+    expect(matrix.textContent).toContain('1. Basic Data Registration');
+    // Treść komórek z kanonu (MACIERZ_TRESC_KOMOREK.md §4.3) — wiodąca
+    // technologia obszaru na poziomie, a nie pusta krata.
+    expect(matrix.textContent).toContain('Order Management System');
+    // Dolny pasek obszarów z chipami AS/TO — element, o który właściciel się upomina.
+    expect(matrix.textContent).toContain('TO 3');
+    expect(matrix.textContent).toContain('Sales Processes');
+    // ...i ani jednej tabeli w miejscu macierzy.
+    expect(matrix.querySelector('table')).toBeNull();
+  });
+
+  it('nie renderuje odrzuconej tabeli macierzy osi („Axis matrix table")', async () => {
+    localStorage.setItem('ff.assessment_report_view', '1');
+    resetAssessmentReportViewFlagCache();
+    vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(contract);
+    const { container } = render(<AssessmentReportContractView sessionId="session-1" />);
+    await screen.findByTestId('assessment-report-contract-view');
+
+    expect(container.querySelector('[aria-label*="Axis matrix table"]')).toBeNull();
+    expect(container.querySelector('[aria-label*="regionLabel"]')).toBeNull();
+    for (const key of ['area', 'current', 'target', 'gap', 'evidence'])
+      expect(screen.queryByText(`assessment.reportView.matrix.${key}`)).not.toBeInTheDocument();
+    expect(screen.queryByText(/assessment\.reportView\.notAssessedValue/)).not.toBeInTheDocument();
+  });
+
   it('distinguishes a 404 and allows retry', async () => {
     localStorage.setItem('ff.assessment_report_view', '1');
     resetAssessmentReportViewFlagCache();
