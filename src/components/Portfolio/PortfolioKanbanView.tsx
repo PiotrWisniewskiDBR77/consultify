@@ -157,6 +157,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
     : t('initiatives.kanban.notApplicable');
   const healthLabel =
     health.label === '—' ? health.label : t(`initiatives.kanban.health.${health.level}`);
+  const nextStepLabel = nextStep?.gate
+    ? nextStep.label
+    : nextStep
+      ? t(STATUS_METADATA[nextStep.targetStatus as InitiativeStatus]?.labelKey)
+      : '';
 
   return (
     <div
@@ -214,7 +219,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
           <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
             {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
-          <div className="text-xs text-c-text-secondary font-medium truncate">{nextStep.label}</div>
+          <div className="text-xs text-c-text-secondary font-medium truncate">{nextStepLabel}</div>
           {nextStep.role && (
             <div className="text-[10px] text-c-text-muted mt-0.5">{nextStep.role}</div>
           )}
