@@ -153,3 +153,22 @@ Scalone dziś do linii m03 (raporty agentów, każdy z testem i dowodem mutacyjn
 - `AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905.md` — wzorce systemowe atestacja
 
 Do decyzji właściciela (nie zrobione celowo): silnik tabeli Pomysłów (zastany vs platformowy), prawy panel Pomysłu/Notatnika (fala 2), chipy statusu Biblioteki ocen (obraz nieaktualny), Baseline v3 (wyłączony do czasu danych), `drdHttpSourceOfTruthV1` (go-live licencyjny), SWOT 7 etapów (fala 2), warsztat SIRI (brak montażu w produkcie — osobne zlecenie), rejestr 4 prototypów Wyników istniejących tylko w przyrządzie.
+
+## E. Decyzje właściciela ze strony 3100 (05.09, 10:20–11:40) — źródło `docs/program/grafika/DECYZJE_20260905.json`
+
+| Decyzja | Odpowiedź | Uwaga właściciela (dosłownie) | Skutek |
+|---|---|---|---|
+| Launcher „+ Nowy” w Wywiadzie | A (D-01 stoi) | „OK” | kasujemy martwy kod launchera (agent) |
+| Pole „Jednostka” w formularzu oceny | A | — | agent buduje pole + skrypt uzupełnienia jednostek DBR77 |
+| Warsztat SIRI | B | „ale zapisz to do fali 2 po MVP” | **FALA 2**: montaż warsztatu pytań dla metody SIRI |
+| Porównanie wersji finansowych | B | „Wpisz to do fali 2” | **FALA 2**: endpoint powiązania drugiej wersji + „Porównaj z…” |
+| Silnik tabeli Pomysłów | A (kanon StandardTable) | „mam tylko wielki problem z tym panelem prawym bo on powinien być zamykany jak nie jest potrzebny — a teraz nie mogę go zamknąć” | **MVP**: prawy panel Pomysłów musi mieć zamknięcie (agent) |
+| Szyna Notatnika (fala 2) | A (MVP bez szyny) | „prawy panel jest super i pamiętaj że on przejąć ma możliwie dużo z ekranu głównego. tam ma być super lekko” | zasada do kanonu prawego panelu: przejmuje maksimum treści, ekran główny lekki |
+| Baseline v3 | **POPRAWKA** | „to co teraz mamy to nie jest nawet cień rozwiązania dla finansistów. pracujemy tutaj nie na uproszczonych liczbach tylko na całej tabeli” | **MVP**: włączyć Baseline v3 (pełna tabela) dla DBR77 i odebrać (agent) |
+| drdHttpSourceOfTruth | A (OFF) | „warto dodać widok pełnego ekranu macierzy ale tak to jest nasza macierz” | przycisk „Pełny ekran” już jest w otoczce macierzy (runda 3) — pokazać przy odbiorze |
+| Teresa w panelu narzędzia | A (jedna Teresa) | — | 3 obrazy nieaktualne → akcept seryjny |
+| Zamrożenie Czatu | A | — | `zamroz.mjs --modul=13_CHAT` wykonane 05.09 |
+| Źródło wyceny | A (MVP) | — | agent Opus: endpoint powiązania + chooser „Wskaż źródło” |
+| ROI dla organizacji | A | — | agent klika „Włącz ROI dla organizacji” na stagingu, mierzy 3 ekrany |
+
+Akcept seryjny (sekcja B): `chat-split-teresa-right`, `teresa-confirm-chip`, `exec-summary-onelook`, `idea-table`, `ideas-teresa-panel` — AKCEPT 10:20–10:22.
