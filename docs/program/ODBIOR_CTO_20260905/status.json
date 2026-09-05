@@ -79,12 +79,17 @@
       "sprawdzono": "2026-09-05T14:23"
     },
     "07_MY_WORK_AGENT": {
-      "nazwa": "Moja praca / Agent",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "nazwa": "Moja Praca",
+      "stan": "GOTOWY",
+      "cto_werdykt": "Moja Praca: jeden prawy panel wszędzie (mapa myśli, tablica, tabela, przepływ, Notatnik) z Teresą jako zakładką, lekkie centrum Notatnika, panel Pomysłów zamykany, nic nie pływa nad płótnem; pasek Menu 2 na MVP: Pomysły · Notatnik · Skrzynka · Kalendarz · Zadania · Decyzje · Sejf klienta (Projekty, Menedżer, Agent = fala 2). Otwarte po stronie serwera: status integracji kalendarza (501).",
+      "zrzuty": [
+        "evidence/odbior-cto-20260905/moja-praca/polish/a-table-no-selection.png",
+        "evidence/odbior-zywo-20260905/02-moja-praca/mapa-jeden-panel/02-element.png",
+        "evidence/odbior-cto-20260905/moja-praca/polish/d-notebook-open.png",
+        "evidence/odbior-cto-20260905/moja-praca/01-pomysly.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T16:24"
     },
     "08_MEETINGS": {
       "nazwa": "Spotkania",
