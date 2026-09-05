@@ -1,4 +1,7 @@
-import type { RegisteredInitiativeReadModel } from '@/services/initiatives-execution/runtimeApi';
+import type {
+  LegacyInitiativeApiRow,
+  RegisteredInitiativeReadModel,
+} from '@/services/initiatives-execution/runtimeApi';
 import { InitiativeStatus, type PortfolioInitiative } from '@/types';
 
 export type InitiativeLifecyclePreset =
@@ -301,4 +304,93 @@ export const toCanonicalInitiativeRegisterItem = (
     createdAt: updatedAt,
     updatedAt,
   } as PortfolioInitiative;
+};
+
+const KNOWN_INITIATIVE_STATUSES = new Set<string>(Object.values(InitiativeStatus) as string[]);
+
+/**
+ * A legacy row's `status` already speaks the `InitiativeStatus` vocabulary
+ * directly (unlike the runtime-v1 `lifecycleState`, which needs
+ * `lifecycleToInitiativeStatus`). Guard defensively anyway: an org's classic
+ * table can in principle carry a value from before the enum was extended, or
+ * a data-quality slip. Per the "brak danych nie ukrywa rekordu" rule, an
+ * unrecognized status must not drop the row — bucket it as DRAFT (visible,
+ * safest default lifecycle bucket) while the untouched raw value stays on
+ * `displayStatus` for diagnosis.
+ */
+const normalizeLegacyInitiativeStatus = (raw: unknown): InitiativeStatus => {
+  const value = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  return KNOWN_INITIATIVE_STATUSES.has(value) ? (value as InitiativeStatus) : InitiativeStatus.DRAFT;
+};
+
+/**
+ * Adapter for a row from the classic `GET /api/initiatives` table (see
+ * `listLegacyInitiatives`). Used only to backfill initiatives that exist in
+ * that legacy store but were never promoted into the runtime-v1 projection —
+ * see `mergeLegacyInitiativesIntoRegister`.
+ */
+export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
+  row: LegacyInitiativeApiRow
+): PortfolioInitiative => {
+  const rawStatus = String(row.status ?? '').trim().toUpperCase();
+  const ownerBusiness = row.ownerBusiness?.id
+    ? {
+        id: row.ownerBusiness.id,
+        firstName: row.ownerBusiness.firstName || '',
+        lastName: row.ownerBusiness.lastName || '',
+        avatarUrl: row.ownerBusiness.avatarUrl || undefined,
+      }
+    : undefined;
+  const ownerExecution = row.ownerExecution?.id
+    ? {
+        id: row.ownerExecution.id,
+        firstName: row.ownerExecution.firstName || '',
+        lastName: row.ownerExecution.lastName || '',
+        avatarUrl: row.ownerExecution.avatarUrl || undefined,
+      }
+    : undefined;
+  return {
+    id: String(row.id),
+    name: row.name || row.title || row.summary || row.id,
+    title: row.title || row.name || undefined,
+    summary: row.summary || row.hypothesis || undefined,
+    description: row.summary || row.hypothesis || undefined,
+    axis: 'operational',
+    status: normalizeLegacyInitiativeStatus(row.status),
+    displayStatus: rawStatus || undefined,
+    priority: (String(row.priority || 'MEDIUM').toUpperCase() ||
+      'MEDIUM') as PortfolioInitiative['priority'],
+    progress: typeof row.progress === 'number' ? row.progress : 0,
+    budget: typeof row.estimatedBudget === 'number' ? row.estimatedBudget : 0,
+    plannedStartDate: row.plannedStartDate || undefined,
+    plannedEndDate: row.plannedEndDate || undefined,
+    projectId: row.projectId || undefined,
+    sourceId: row.sourceId || undefined,
+    sourceType: row.sourceType || 'LEGACY',
+    ownerBusiness,
+    ownerExecution,
+    createdAt: row.createdAt || row.updatedAt || new Date(0).toISOString(),
+    updatedAt: row.updatedAt || row.createdAt || new Date(0).toISOString(),
+  } as PortfolioInitiative;
+};
+
+/**
+ * Merge canonical (runtime-v1) rows with legacy classic-table rows that
+ * never made it into the event-sourced projection. Canonical wins on id
+ * collision (richer, authoritative shape); legacy rows only fill the gap —
+ * a record must never disappear purely because of which write path created
+ * it. Measured 2026-09-05 on org DBR77: 71 legacy rows, 0 canonical rows,
+ * list rendered empty before this bridge existed.
+ */
+export const mergeLegacyInitiativesIntoRegister = (
+  canonicalRows: PortfolioInitiative[],
+  legacyRows: PortfolioInitiative[]
+): PortfolioInitiative[] => {
+  if (legacyRows.length === 0) return canonicalRows;
+  const knownIds = new Set(canonicalRows.map((row) => row.id));
+  const extraRows = legacyRows.filter((row) => row.id && !knownIds.has(row.id));
+  if (extraRows.length === 0) return canonicalRows;
+  return [...canonicalRows, ...extraRows];
 };
